@@ -1199,7 +1199,7 @@ export module Protocol {
     /**
      * The type of rendering context backing the canvas element.
      */
-    export type ContextType = "canvas-2d"|"bitmaprenderer"|"webgl"|"webgl2"|"webgpu";
+    export type ContextType = "canvas-2d"|"bitmaprenderer"|"webgl"|"webgl2";
     export type ProgramType = "compute"|"render";
     export type ShaderType = "compute"|"fragment"|"vertex";
     /**
@@ -1235,7 +1235,7 @@ export module Protocol {
        */
       failIfMajorPerformanceCaveat?: boolean;
       /**
-       * WebGL, WebGL2, WebGPU
+       * WebGL, WebGL2
        */
       powerPreference?: string;
     }
@@ -1273,16 +1273,12 @@ export module Protocol {
       backtrace?: Console.CallFrame[];
     }
     /**
-     * Information about a WebGL/WebGL2 shader program or WebGPU shader pipeline.
+     * Information about a WebGL/WebGL2 shader program.
      */
     export interface ShaderProgram {
       programId: ProgramId;
       programType: ProgramType;
       canvasId: CanvasId;
-      /**
-       * Indicates whether the vertex and fragment shader modules are the same object for a render shader pipleine for a WebGPU device.
-       */
-      sharesVertexFragmentShader?: boolean;
     }
     
     export type canvasAddedPayload = {
@@ -5924,6 +5920,21 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     export type interceptWithResponseReturnValue = {
     }
     /**
+     * Fail response with given error type.
+     */
+    export type interceptResponseWithErrorParameters = {
+      /**
+       * Identifier for the intercepted Network response to fail.
+       */
+      requestId: RequestId;
+      /**
+       * Deliver error reason for the request failure.
+       */
+      errorType: ResourceErrorType;
+    }
+    export type interceptResponseWithErrorReturnValue = {
+    }
+    /**
      * Provide response for an intercepted request. Request completely bypasses the network in this case and is immediately fulfilled with the provided data.
      */
     export type interceptRequestWithResponseParameters = {
@@ -8967,6 +8978,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Network.interceptContinue": Network.interceptContinueParameters;
     "Network.interceptWithRequest": Network.interceptWithRequestParameters;
     "Network.interceptWithResponse": Network.interceptWithResponseParameters;
+    "Network.interceptResponseWithError": Network.interceptResponseWithErrorParameters;
     "Network.interceptRequestWithResponse": Network.interceptRequestWithResponseParameters;
     "Network.interceptRequestWithError": Network.interceptRequestWithErrorParameters;
     "Network.setEmulateOfflineState": Network.setEmulateOfflineStateParameters;
@@ -9264,6 +9276,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Network.interceptContinue": Network.interceptContinueReturnValue;
     "Network.interceptWithRequest": Network.interceptWithRequestReturnValue;
     "Network.interceptWithResponse": Network.interceptWithResponseReturnValue;
+    "Network.interceptResponseWithError": Network.interceptResponseWithErrorReturnValue;
     "Network.interceptRequestWithResponse": Network.interceptRequestWithResponseReturnValue;
     "Network.interceptRequestWithError": Network.interceptRequestWithErrorReturnValue;
     "Network.setEmulateOfflineState": Network.setEmulateOfflineStateReturnValue;
