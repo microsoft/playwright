@@ -110,7 +110,7 @@ const context = await browser.newContext({ storageState: 'state.json' });
 
 ```java
 // Save storage state into the file.
-context.storageState(new BrowserContext.StorageStateOptions().setPath("state.json"));
+context.storageState(new BrowserContext.StorageStateOptions().setPath(Paths.get("state.json")));
 
 // Create a new context with the saved storage state.
 BrowserContext context = browser.newContext(
