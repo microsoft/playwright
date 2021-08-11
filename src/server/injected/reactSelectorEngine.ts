@@ -15,11 +15,13 @@
  */
 
 import { SelectorEngine, SelectorRoot } from './selectorEngine';
+import { checkComponentAttribute, parseComponentSelector } from '../common/componentUtils';
 
 type ComponentNode = {
   name: string,
   children: ComponentNode[],
   rootElements: Element[],
+  props: any,
 };
 
 type ReactVNode = {
@@ -28,6 +30,7 @@ type ReactVNode = {
   child?: ReactVNode,
   sibling?: ReactVNode,
   stateNode?: Node,
+  memoizedProps?: any,
 
   // React 15
   _hostNode?: any,
@@ -84,11 +87,26 @@ function getChildren(reactElement: ReactVNode): ReactVNode[] {
   return [];
 }
 
+function getProps(reactElement: ReactVNode) {
+  const props =
+      // React 16+
+      reactElement.memoizedProps ||
+      // React 15
+      reactElement._currentElement?.props;
+  if (!props || typeof props === 'string')
+    return props;
+  const result = { ...props };
+
+  delete result.children;
+  return result;
+}
+
 function buildComponentsTree(reactElement: ReactVNode): ComponentNode {
   const treeNode: ComponentNode = {
     name: getComponentName(reactElement),
     children: getChildren(reactElement).map(buildComponentsTree),
     rootElements: [],
+    props: getProps(reactElement),
   };
 
   const rootElement =
@@ -130,16 +148,22 @@ function findReactRoot(): ReactVNode | undefined {
 }
 
 export const ReactEngine: SelectorEngine = {
-  queryAll(scope: SelectorRoot, name: string): Element[] {
+  queryAll(scope: SelectorRoot, selector: string): Element[] {
+    const {name, attributes} = parseComponentSelector(selector);
+
     const reactRoot = findReactRoot();
     if (!reactRoot)
       return [];
     const tree = buildComponentsTree(reactRoot);
     const treeNodes = filterComponentsTree(tree, treeNode => {
-      if (treeNode.name !== name)
+      if (name && treeNode.name !== name)
         return false;
       if (treeNode.rootElements.some(domNode => !scope.contains(domNode)))
         return false;
+      for (const attr of attributes) {
+        if (!checkComponentAttribute(treeNode.props, attr))
+          return false;
+      }
       return true;
     });
     const allRootElements: Set<Element> = new Set();
