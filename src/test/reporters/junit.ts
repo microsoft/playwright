@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import { FullConfig, FullResult, Reporter, Suite, TestCase } from '../../../types/testReporter';
 import { monotonicTime } from '../util';
-import { formatFailure, formatTestTitle, stripAscii } from './base';
+import { formatFailure, formatTestTitle, stripAnsiEscapes } from './base';
 
 class JUnitReporter implements Reporter {
   private config!: FullConfig;
@@ -142,7 +142,7 @@ class JUnitReporter implements Reporter {
           message: `${path.basename(test.location.file)}:${test.location.line}:${test.location.column} ${test.title}`,
           type: 'FAILURE',
         },
-        text: stripAscii(formatFailure(this.config, test))
+        text: stripAnsiEscapes(formatFailure(this.config, test))
       });
     }
     for (const result of test.results) {

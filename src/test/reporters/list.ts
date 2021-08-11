@@ -27,7 +27,6 @@ const POSITIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'ok' : '✓';
 const NEGATIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'x' : '✘';
 
 class ListReporter extends BaseReporter {
-  private _failure = 0;
   private _lastRow = 0;
   private _testRows = new Map<TestCase, number>();
   private _needNewLine = false;
@@ -44,16 +43,18 @@ class ListReporter extends BaseReporter {
         process.stdout.write('\n');
         this._lastRow++;
       }
-      process.stdout.write('     ' + colors.gray(formatTestTitle(this.config, test) + ': ') + '\n');
+      process.stdout.write('     ' + colors.gray(formatTestTitle(this.config, test)) + '\n');
     }
     this._testRows.set(test, this._lastRow++);
   }
 
-  onStdOut(chunk: string | Buffer, test?: TestCase) {
+  onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
+    super.onStdOut(chunk, test, result);
     this._dumpToStdio(test, chunk, process.stdout);
   }
 
-  onStdErr(chunk: string | Buffer, test?: TestCase) {
+  onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
+    super.onStdErr(chunk, test, result);
     this._dumpToStdio(test, chunk, process.stdout);
   }
 
@@ -76,13 +77,13 @@ class ListReporter extends BaseReporter {
     const title = formatTestTitle(this.config, test);
     let text = '';
     if (result.status === 'skipped') {
-      text = colors.green('  - ') + colors.cyan(title);
+      text = colors.green('  -  ') + colors.cyan(title);
     } else {
       const statusMark = ('  ' + (result.status === 'passed' ? POSITIVE_STATUS_MARK : NEGATIVE_STATUS_MARK)).padEnd(5);
       if (result.status === test.expectedStatus)
         text = '\u001b[2K\u001b[0G' + colors.green(statusMark) + colors.gray(title) + duration;
       else
-        text = '\u001b[2K\u001b[0G' + colors.red(`${statusMark}${++this._failure}) ` + title) + duration;
+        text = '\u001b[2K\u001b[0G' + colors.red(statusMark + title) + duration;
     }
 
     const testRow = this._testRows.get(test)!;
