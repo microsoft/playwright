@@ -62,7 +62,7 @@ export class SnapshotServer {
 
   private _serveServiceWorker(request: http.IncomingMessage, response: http.ServerResponse): boolean {
     function serviceWorkerMain(self: any /* ServiceWorkerGlobalScope */) {
-      const snapshotResources = new Map<string, { [key: string]: { resourceId?: string, sha1?: string } }>();
+      const snapshotIds = new Map<string, { frameId: string, index: number }>();
 
       self.addEventListener('install', function(event: any) {
       });
@@ -70,10 +70,6 @@ export class SnapshotServer {
       self.addEventListener('activate', function(event: any) {
         event.waitUntil(self.clients.claim());
       });
-
-      function respond404(): Response {
-        return new Response(null, { status: 404 });
-      }
 
       function respondNotAvailable(): Response {
         return new Response('<body style="background: #ddd"></body>', { status: 200, headers: { 'Content-Type': 'text/html' } });
@@ -100,34 +96,26 @@ export class SnapshotServer {
 
         if (request.mode === 'navigate') {
           const htmlResponse = await fetch(event.request);
-          const { html, resources }: RenderedFrameSnapshot  = await htmlResponse.json();
+          const { html, frameId, index }: RenderedFrameSnapshot  = await htmlResponse.json();
           if (!html)
             return respondNotAvailable();
-          snapshotResources.set(snapshotUrl, resources);
+          snapshotIds.set(snapshotUrl, { frameId, index });
           const response = new Response(html, { status: 200, headers: { 'Content-Type': 'text/html' } });
           return response;
         }
 
-        const resources = snapshotResources.get(snapshotUrl)!;
-        const urlWithoutHash = removeHash(request.url);
-        const resource = resources[urlWithoutHash];
-        if (!resource)
-          return respond404();
-
-        const fetchUrl = resource.sha1 ?
-          `/resources/${resource.resourceId}/override/${resource.sha1}` :
-          `/resources/${resource.resourceId}`;
+        const { frameId, index } = snapshotIds.get(snapshotUrl)!;
+        const url = removeHash(request.url);
+        const complexUrl = btoa(JSON.stringify({ frameId, index, url }));
+        const fetchUrl = `/resources/${complexUrl}`;
         const fetchedResponse = await fetch(fetchUrl);
-        const headers = new Headers(fetchedResponse.headers);
         // We make a copy of the response, instead of just forwarding,
         // so that response url is not inherited as "/resources/...", but instead
         // as the original request url.
+
         // Response url turns into resource base uri that is used to resolve
         // relative links, e.g. url(/foo/bar) in style sheets.
-        if (resource.sha1) {
-          // No cache, so that we refetch overridden resources.
-          headers.set('Cache-Control', 'no-cache');
-        }
+        const headers = new Headers(fetchedResponse.headers);
         const response = new Response(fetchedResponse.body, {
           status: fetchedResponse.status,
           statusText: fetchedResponse.statusText,
@@ -178,32 +166,13 @@ export class SnapshotServer {
   }
 
   private _serveResource(request: http.IncomingMessage, response: http.ServerResponse): boolean {
-    // - /resources/<resourceId>
-    // - /resources/<resourceId>/override/<overrideSha1>
-    const parts = request.url!.split('/');
-    if (!parts[0])
-      parts.shift();
-    if (!parts[parts.length - 1])
-      parts.pop();
-    if (parts[0] !== 'resources')
-      return false;
-
-    let resourceId;
-    let overrideSha1;
-    if (parts.length === 2) {
-      resourceId = parts[1];
-    } else if (parts.length === 4 && parts[2] === 'override') {
-      resourceId = parts[1];
-      overrideSha1 = parts[3];
-    } else {
-      return false;
-    }
-
-    const resource = this._snapshotStorage.resourceById(resourceId);
+    const { frameId, index, url } = JSON.parse(Buffer.from(request.url!.substring('/resources/'.length), 'base64').toString());
+    const snapshot = this._snapshotStorage.snapshotByIndex(frameId, index);
+    const resource = snapshot?.resourceByUrl(url);
     if (!resource)
       return false;
 
-    const sha1 = overrideSha1 || resource.responseSha1;
+    const sha1 = resource.responseSha1;
     try {
       const content = this._snapshotStorage.resourceContent(sha1);
       if (!content)

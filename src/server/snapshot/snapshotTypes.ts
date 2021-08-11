@@ -15,7 +15,6 @@
  */
 
 export type ResourceSnapshot = {
-  resourceId: string,
   pageId: string,
   frameId: string,
   url: string,
@@ -65,5 +64,7 @@ export type FrameSnapshot = {
 
 export type RenderedFrameSnapshot = {
   html: string;
-  resources: { [key: string]: { resourceId: string, sha1?: string } };
+  pageId: string;
+  frameId: string;
+  index: number;
 };

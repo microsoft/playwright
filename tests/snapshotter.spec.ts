@@ -62,9 +62,8 @@ it.describe('snapshots', () => {
     });
     await page.setContent('<link rel="stylesheet" href="style.css"><button>Hello</button>');
     const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot');
-    const { resources } = snapshot.render();
-    const cssHref = `http://localhost:${server.PORT}/style.css`;
-    expect(resources[cssHref]).toBeTruthy();
+    const resource = snapshot.resourceByUrl(`http://localhost:${server.PORT}/style.css`);
+    expect(resource).toBeTruthy();
   });
 
   it('should collect multiple', async ({ page, toImpl, snapshotter }) => {
@@ -126,10 +125,8 @@ it.describe('snapshots', () => {
 
     await page.evaluate(() => { (document.styleSheets[0].cssRules[0] as any).style.color = 'blue'; });
     const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
-    const { resources } = snapshot2.render();
-    const cssHref = `http://localhost:${server.PORT}/style.css`;
-    const { sha1 } = resources[cssHref];
-    expect(snapshotter.resourceContent(sha1).toString()).toBe('button { color: blue; }');
+    const resource = snapshot2.resourceByUrl(`http://localhost:${server.PORT}/style.css`);
+    expect(snapshotter.resourceContent(resource.responseSha1).toString()).toBe('button { color: blue; }');
   });
 
   it('should capture iframe', async ({ page, contextFactory, server, toImpl, browserName, snapshotter, snapshotPort }) => {
