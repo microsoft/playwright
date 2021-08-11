@@ -179,14 +179,24 @@ const internalCauseToResourceType: {[key: string]: string} = {
 class InterceptableRequest {
   readonly request: network.Request;
   readonly _id: string;
+  private _redirectedTo: InterceptableRequest | undefined;
 
   constructor(frame: frames.Frame, redirectedFrom: InterceptableRequest | null, payload: Protocol.Network.requestWillBeSentPayload) {
     this._id = payload.requestId;
+    if (redirectedFrom)
+      redirectedFrom._redirectedTo = this;
     let postDataBuffer = null;
     if (payload.postData)
       postDataBuffer = Buffer.from(payload.postData, 'base64');
     this.request = new network.Request(frame, redirectedFrom ? redirectedFrom.request : null, payload.navigationId,
         payload.url, internalCauseToResourceType[payload.internalCause] || causeToResourceType[payload.cause] || 'other', payload.method, postDataBuffer, payload.headers);
+  }
+
+  _finalRequest(): InterceptableRequest {
+    let request: InterceptableRequest = this;
+    while (request._redirectedTo)
+      request = request._redirectedTo;
+    return request;
   }
 }
 
@@ -199,12 +209,9 @@ class FFRouteImpl implements network.RouteDelegate {
     this._request = request;
   }
 
-  async responseBody(forFulfill: boolean): Promise<Buffer> {
-    // Empty buffer will result in the response being used.
-    if (forFulfill)
-      return Buffer.from('');
+  async responseBody(): Promise<Buffer> {
     const response = await this._session.send('Network.getResponseBody', {
-      requestId: this._request._id
+      requestId: this._request._finalRequest()._id
     });
     return Buffer.from(response.base64body, 'base64');
   }

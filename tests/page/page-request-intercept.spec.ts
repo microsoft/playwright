@@ -40,6 +40,21 @@ it('should fulfill intercepted response', async ({page, server, browserName}) =>
   expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
 });
 
+it('should fulfill response with empty body', async ({page, server, browserName}) => {
+  it.fail(browserName === 'firefox');
+  await page.route('**/*', async route => {
+    // @ts-expect-error
+    await route._intercept({});
+    await route.fulfill({
+      status: 201,
+      body: ''
+    });
+  });
+  const response = await page.goto(server.PREFIX + '/title.html');
+  expect(response.status()).toBe(201);
+  expect(await response.text()).toBe('');
+});
+
 it('should throw on continue after intercept', async ({page, server, browserName}) => {
   let routeCallback;
   const routePromise = new Promise<Route>(f => routeCallback = f);
