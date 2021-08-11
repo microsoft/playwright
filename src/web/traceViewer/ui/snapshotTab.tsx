@@ -19,14 +19,12 @@ import './snapshotTab.css';
 import './tabbedPane.css';
 import * as React from 'react';
 import { useMeasure } from './helpers';
-import type { Point } from '../../../common/types';
 import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
 
 export const SnapshotTab: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,
-  snapshotSizes: { [snapshotName: string]: Size },
   defaultSnapshotSize: Size,
-}> = ({ action, snapshotSizes, defaultSnapshotSize }) => {
+}> = ({ action, defaultSnapshotSize }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [snapshotIndex, setSnapshotIndex] = React.useState(0);
 
@@ -36,35 +34,44 @@ export const SnapshotTab: React.FunctionComponent<{
   const actionSnapshot = snapshotMap.get('action') || snapshotMap.get('after');
   const snapshots = [actionSnapshot ? { ...actionSnapshot, title: 'action' } : undefined, snapshotMap.get('before'), snapshotMap.get('after')].filter(Boolean) as { title: string, snapshotName: string }[];
 
+  let snapshotUrl = 'data:text/html,<body style="background: #ddd"></body>';
+  let snapshotSizeUrl: string | undefined;
+  let pointX: number | undefined;
+  let pointY: number | undefined;
+  if (action) {
+    const snapshot = snapshots[snapshotIndex];
+    if (snapshot && snapshot.snapshotName) {
+      snapshotUrl = `${window.location.origin}/snapshot/${action.metadata.pageId}?name=${snapshot.snapshotName}`;
+      snapshotSizeUrl = `${window.location.origin}/snapshotSize/${action.metadata.pageId}?name=${snapshot.snapshotName}`;
+      if (snapshot.snapshotName.includes('action')) {
+        pointX = action.metadata.point?.x;
+        pointY = action.metadata.point?.y;
+      }
+    }
+  }
+
   React.useEffect(() => {
     if (snapshots.length >= 1 && snapshotIndex >= snapshots.length)
       setSnapshotIndex(snapshots.length - 1);
   }, [snapshotIndex, snapshots]);
 
-  const iframeRef = React.createRef<HTMLIFrameElement>();
+  const iframeRef = React.useRef<HTMLIFrameElement>(null);
+  const [snapshotSize, setSnapshotSize] = React.useState(defaultSnapshotSize);
   React.useEffect(() => {
-    if (!iframeRef.current)
-      return;
-    let snapshotUri = undefined;
-    let point: Point | undefined = undefined;
-    if (action) {
-      const snapshot = snapshots[snapshotIndex];
-      if (snapshot && snapshot.snapshotName) {
-        snapshotUri = `${action.metadata.pageId}?name=${snapshot.snapshotName}`;
-        if (snapshot.snapshotName.includes('action'))
-          point = action.metadata.point;
+    (async () => {
+      if (snapshotSizeUrl) {
+        const response = await fetch(snapshotSizeUrl);
+        setSnapshotSize(await response.json());
       }
-    }
-    const snapshotUrl = snapshotUri ? `${window.location.origin}/snapshot/${snapshotUri}` : 'data:text/html,<body style="background: #ddd"></body>';
-    try {
-      (iframeRef.current.contentWindow as any).showSnapshot(snapshotUrl, { point });
-    } catch (e) {
-    }
-  }, [action, snapshotIndex, iframeRef, snapshots]);
-
-  let snapshotSize = defaultSnapshotSize;
-  if (snapshots[snapshotIndex] && snapshots[snapshotIndex].snapshotName)
-    snapshotSize = snapshotSizes[snapshots[snapshotIndex].snapshotName] || defaultSnapshotSize;
+      if (!iframeRef.current)
+        return;
+      try {
+        const point = pointX === undefined ? undefined : { x: pointX, y: pointY };
+        (iframeRef.current.contentWindow as any).showSnapshot(snapshotUrl, { point });
+      } catch (e) {
+      }
+    })();
+  }, [iframeRef, snapshotUrl, snapshotSizeUrl, pointX, pointY]);
 
   const scale = Math.min(measure.width / snapshotSize.width, measure.height / snapshotSize.height);
   const scaledSize = {

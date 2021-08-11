@@ -33,6 +33,10 @@ export class SnapshotRenderer {
     return this._snapshots[this._index];
   }
 
+  viewport(): { width: number, height: number } {
+    return this._snapshots[this._index].viewport;
+  }
+
   render(): RenderedFrameSnapshot {
     const visit = (n: NodeSnapshot, snapshotIndex: number): string => {
       // Text node.

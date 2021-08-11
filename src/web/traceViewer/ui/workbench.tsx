@@ -89,7 +89,7 @@ export const Workbench: React.FunctionComponent<{
     </div>
     <SplitView sidebarSize={300} orientation='horizontal' sidebarIsFirst={true}>
       <SplitView sidebarSize={300} orientation='horizontal'>
-        <SnapshotTab action={selectedAction} snapshotSizes={context.snapshotSizes} defaultSnapshotSize={defaultSnapshotSize} />
+        <SnapshotTab action={selectedAction} defaultSnapshotSize={defaultSnapshotSize} />
         <TabbedPane tabs={[
           { id: 'logs', title: 'Call', count: 0, render: () => <CallTab action={selectedAction} /> },
           { id: 'console', title: 'Console', count: consoleCount, render: () => <ConsoleTab action={selectedAction} /> },
@@ -125,5 +125,4 @@ const emptyContext: ContextEntry = {
   },
   pages: [],
   resources: [],
-  snapshotSizes: {},
 };

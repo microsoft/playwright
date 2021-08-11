@@ -28,6 +28,7 @@ export class SnapshotServer {
     this._snapshotStorage = snapshotStorage;
 
     server.routePrefix('/snapshot/', this._serveSnapshot.bind(this));
+    server.routePrefix('/snapshotSize/', this._serveSnapshotSize.bind(this));
     server.routePrefix('/resources/', this._serveResource.bind(this));
   }
 
@@ -152,16 +153,28 @@ export class SnapshotServer {
       return this._serveSnapshotRoot(request, response);
     if (request.url!.endsWith('/snapshot/service-worker.js'))
       return this._serveServiceWorker(request, response);
+    const snapshot = this._snapshot(request.url!.substring('/snapshot/'.length));
+    this._respondWithJson(response, snapshot ? snapshot.render() : { html: '' });
+    return true;
+  }
 
+  private _serveSnapshotSize(request: http.IncomingMessage, response: http.ServerResponse): boolean {
+    const snapshot = this._snapshot(request.url!.substring('/snapshotSize/'.length));
+    this._respondWithJson(response, snapshot ? snapshot.viewport() : {});
+    return true;
+  }
+
+  private _snapshot(uri: string) {
+    const [ pageOrFrameId, query ] = uri.split('?');
+    const parsed: any = querystring.parse(query);
+    return this._snapshotStorage.snapshotByName(pageOrFrameId, parsed.name);
+  }
+
+  private _respondWithJson(response: http.ServerResponse, object: any) {
     response.statusCode = 200;
     response.setHeader('Cache-Control', 'public, max-age=31536000');
     response.setHeader('Content-Type', 'application/json');
-    const [ pageOrFrameId, query ] = request.url!.substring('/snapshot/'.length).split('?');
-    const parsed: any = querystring.parse(query);
-    const snapshot = this._snapshotStorage.snapshotByName(pageOrFrameId, parsed.name);
-    const snapshotData: any = snapshot ? snapshot.render() : { html: '' };
-    response.end(JSON.stringify(snapshotData));
-    return true;
+    response.end(JSON.stringify(object));
   }
 
   private _serveResource(request: http.IncomingMessage, response: http.ServerResponse): boolean {

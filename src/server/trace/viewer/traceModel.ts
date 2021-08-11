@@ -38,7 +38,6 @@ export class TraceModel {
       options: { sdkLanguage: '' },
       pages: [],
       resources: [],
-      snapshotSizes: {},
     };
   }
 
@@ -98,8 +97,6 @@ export class TraceModel {
         break;
       case 'frame-snapshot':
         this._snapshotStorage.addFrameSnapshot(event.snapshot);
-        if (event.snapshot.snapshotName && event.snapshot.isMainFrame)
-          this.contextEntry.snapshotSizes[event.snapshot.snapshotName] = event.snapshot.viewport;
         break;
     }
     if (event.type === 'action' || event.type === 'event') {
@@ -142,7 +139,6 @@ export type ContextEntry = {
   options: BrowserContextOptions;
   pages: PageEntry[];
   resources: ResourceSnapshot[];
-  snapshotSizes: { [snapshotName: string]: { width: number, height: number } };
 };
 
 export type PageEntry = {
