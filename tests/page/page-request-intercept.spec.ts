@@ -147,7 +147,6 @@ it('should be abortable after interception', async ({page, server, browserName})
 });
 
 it('should fulfill after redirects', async ({page, server, browserName}) => {
-  it.fixme(browserName === 'firefox');
   server.setRedirect('/redirect/1.html', '/redirect/2.html');
   server.setRedirect('/redirect/2.html', '/empty.html');
   const expectedUrls = ['/redirect/1.html', '/redirect/2.html', '/empty.html'].map(s => server.PREFIX + s);
@@ -190,7 +189,6 @@ it('should fulfill after redirects', async ({page, server, browserName}) => {
 });
 
 it('should fulfill original response after redirects', async ({page, browserName, server}) => {
-  it.fixme(browserName === 'firefox');
   server.setRedirect('/redirect/1.html', '/redirect/2.html');
   server.setRedirect('/redirect/2.html', '/title.html');
   const expectedUrls = ['/redirect/1.html', '/redirect/2.html', '/title.html'].map(s => server.PREFIX + s);
@@ -224,7 +222,6 @@ it('should fulfill original response after redirects', async ({page, browserName
 });
 
 it('should abort after redirects', async ({page, browserName, server}) => {
-  it.fixme(browserName === 'firefox');
   server.setRedirect('/redirect/1.html', '/redirect/2.html');
   server.setRedirect('/redirect/2.html', '/title.html');
   const expectedUrls = ['/redirect/1.html', '/redirect/2.html', '/title.html'].map(s => server.PREFIX + s);
@@ -249,8 +246,10 @@ it('should abort after redirects', async ({page, browserName, server}) => {
   } catch (e) {
     if (browserName === 'webkit')
       expect(e.message).toContain('Request intercepted');
-    else
+    else if (browserName === 'chromium')
       expect(e.message).toContain('ERR_CONNECTION_RESET');
+    else
+      expect(e.message).toContain('NS_ERROR_NET_RESET');
   }
   expect(requestUrls).toEqual(expectedUrls);
   expect(responseUrls).toEqual(expectedUrls.slice(0, -1));
