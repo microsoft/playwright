@@ -344,7 +344,6 @@ class NetworkRequest {
       status = status || originalResponse.status;
       statusText = statusText || originalResponse.statusText;
       headers = headers || originalResponse.headers;
-      body = body || originalResponse.body;
     }
     this._interceptedChannel.synthesizeStatus(status, statusText);
     for (const header of headers) {
