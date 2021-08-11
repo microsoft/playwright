@@ -37,6 +37,16 @@ test('should check types of fixtures', async ({runTSC}) => {
       const good7 = test.extend<{ baz: boolean }>({
         baz: [ false, { auto: true } ],
       });
+      const good8 = test.extend<{ foo: string }>({
+        foo: [ async ({}, use) => {
+          await use('foo');
+        }, { scope: 'test' } ],
+      });
+      const good9 = test.extend<{}, {}>({
+        bar: [ async ({}, use) => {
+          await use(42);
+        }, { scope: 'worker' } ],
+      });
 
       // @ts-expect-error
       const fail1 = test.extend<{}>({ foo: 42 });
@@ -59,6 +69,18 @@ test('should check types of fixtures', async ({runTSC}) => {
       const fail8 = test.extend<{}, { baz: boolean }>({
         // @ts-expect-error
         baz: true,
+      });
+      const fail9 = test.extend<{ foo: string }>({
+        foo: [ async ({}, use) => {
+          await use('foo');
+        // @ts-expect-error
+        }, { scope: 'test', auto: true } ],
+      });
+      const fail10 = test.extend<{}, {}>({
+        bar: [ async ({}, use) => {
+          await use(42);
+        // @ts-expect-error
+        }, { scope: 'test' } ],
       });
     `,
     'playwright.config.ts': `
