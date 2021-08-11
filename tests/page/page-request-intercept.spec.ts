@@ -57,8 +57,7 @@ it('should throw on continue after intercept', async ({page, server, browserName
   }
 });
 
-it('should support fulfill after intercept', async ({page, server, browserName, browserMajorVersion}) => {
-  it.fail(browserName === 'webkit', 'Response body is empty');
+it('should support fulfill after intercept', async ({page, server}) => {
   const requestPromise = server.waitForRequest('/title.html');
   await page.route('**', async route => {
     // @ts-expect-error
@@ -71,8 +70,7 @@ it('should support fulfill after intercept', async ({page, server, browserName, 
   expect(await response.text()).toBe('<title>Woof-Woof</title>' + os.EOL);
 });
 
-it('should support request overrides', async ({page, server, browserName, browserMajorVersion}) => {
-  it.skip(browserName === 'chromium' && browserMajorVersion <= 91);
+it('should support request overrides', async ({page, server}) => {
   const requestPromise = server.waitForRequest('/empty.html');
   await page.route('**/foo', async route => {
     // @ts-expect-error
@@ -92,7 +90,7 @@ it('should support request overrides', async ({page, server, browserName, browse
   expect((await request.postBody).toString('utf8')).toBe('my data');
 });
 
-it('should give access to the intercepted response', async ({page, server, browserName}) => {
+it('should give access to the intercepted response', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
 
   let routeCallback;
@@ -113,7 +111,7 @@ it('should give access to the intercepted response', async ({page, server, brows
   await Promise.all([route.fulfill(), evalPromise]);
 });
 
-it('should give access to the intercepted response body', async ({page, server, browserName}) => {
+it('should give access to the intercepted response body', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
 
   let routeCallback;
@@ -132,8 +130,6 @@ it('should give access to the intercepted response body', async ({page, server, 
 });
 
 it('should be abortable after interception', async ({page, server, browserName}) => {
-  it.fixme(browserName === 'webkit');
-
   await page.route(/\.css$/, async route => {
     // @ts-expect-error
     await route._intercept();
@@ -151,7 +147,7 @@ it('should be abortable after interception', async ({page, server, browserName})
 });
 
 it('should fulfill after redirects', async ({page, server, browserName}) => {
-  it.fixme(browserName !== 'chromium');
+  it.fixme(browserName === 'firefox');
   server.setRedirect('/redirect/1.html', '/redirect/2.html');
   server.setRedirect('/redirect/2.html', '/empty.html');
   const expectedUrls = ['/redirect/1.html', '/redirect/2.html', '/empty.html'].map(s => server.PREFIX + s);
@@ -194,7 +190,7 @@ it('should fulfill after redirects', async ({page, server, browserName}) => {
 });
 
 it('should fulfill original response after redirects', async ({page, browserName, server}) => {
-  it.fixme(browserName !== 'chromium');
+  it.fixme(browserName === 'firefox');
   server.setRedirect('/redirect/1.html', '/redirect/2.html');
   server.setRedirect('/redirect/2.html', '/title.html');
   const expectedUrls = ['/redirect/1.html', '/redirect/2.html', '/title.html'].map(s => server.PREFIX + s);
@@ -228,7 +224,7 @@ it('should fulfill original response after redirects', async ({page, browserName
 });
 
 it('should abort after redirects', async ({page, browserName, server}) => {
-  it.fixme(browserName !== 'chromium');
+  it.fixme(browserName === 'firefox');
   server.setRedirect('/redirect/1.html', '/redirect/2.html');
   server.setRedirect('/redirect/2.html', '/title.html');
   const expectedUrls = ['/redirect/1.html', '/redirect/2.html', '/title.html'].map(s => server.PREFIX + s);
@@ -251,7 +247,10 @@ it('should abort after redirects', async ({page, browserName, server}) => {
   try {
     await page.goto(server.PREFIX + '/redirect/1.html');
   } catch (e) {
-    expect(e.message).toContain('ERR_CONNECTION_RESET');
+    if (browserName === 'webkit')
+      expect(e.message).toContain('Request intercepted');
+    else
+      expect(e.message).toContain('ERR_CONNECTION_RESET');
   }
   expect(requestUrls).toEqual(expectedUrls);
   expect(responseUrls).toEqual(expectedUrls.slice(0, -1));
