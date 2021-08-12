@@ -41,6 +41,32 @@ it.describe('download event', () => {
     });
   });
 
+  it('should report download when navigation turns into download', async ({browser, server, browserName}) => {
+    const page = await browser.newPage({ acceptDownloads: true });
+    const [ download, responseOrError ] = await Promise.all([
+      page.waitForEvent('download'),
+      page.goto(server.PREFIX + '/download').catch(e => e)
+    ]);
+    expect(download.page()).toBe(page);
+    expect(download.url()).toBe(`${server.PREFIX}/download`);
+    const path = await download.path();
+    expect(fs.existsSync(path)).toBeTruthy();
+    expect(fs.readFileSync(path).toString()).toBe('Hello world');
+    if (browserName === 'chromium') {
+      expect(responseOrError instanceof Error).toBeTruthy();
+      expect(responseOrError.message).toContain('net::ERR_ABORTED');
+      expect(page.url()).toBe('about:blank');
+    } else if (browserName === 'webkit') {
+      expect(responseOrError instanceof Error).toBeTruthy();
+      expect(responseOrError.message).toContain('Download is starting');
+      expect(page.url()).toBe('about:blank');
+    } else {
+      expect(responseOrError.status()).toBe(200);
+      expect(page.url()).toBe(server.PREFIX + '/download');
+    }
+    await page.close();
+  });
+
   it('should report downloads with acceptDownloads: false', async ({browser, server}) => {
     const page = await browser.newPage();
     await page.setContent(`<a href="${server.PREFIX}/downloadWithFilename">download</a>`);
