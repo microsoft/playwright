@@ -223,14 +223,23 @@ export class FixtureRunner {
   }
 
   async teardownScope(scope: FixtureScope) {
+    let error: Error | undefined;
     // Teardown fixtures in the reverse order.
     const fixtures = Array.from(this.instanceForId.values()).reverse();
     for (const fixture of fixtures) {
-      if (fixture.registration.scope === scope)
-        await fixture.teardown();
+      if (fixture.registration.scope === scope) {
+        try {
+          await fixture.teardown();
+        } catch (e) {
+          if (error === undefined)
+            error = e;
+        }
+      }
     }
     if (scope === 'test')
       this.testScopeClean = true;
+    if (error !== undefined)
+      throw error;
   }
 
   async resolveParametersAndRunHookOrTest(fn: Function, workerInfo: WorkerInfo, testInfo: TestInfo | undefined) {

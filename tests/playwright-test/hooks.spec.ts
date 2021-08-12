@@ -349,3 +349,55 @@ test('beforeAll failure should prevent the test, but not afterAll', async ({ run
     '%%afterAll',
   ]);
 });
+
+test('fixture error should not prevent afterAll', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const test = pwt.test.extend({
+        foo: async ({}, use) => {
+          await use('foo');
+          throw new Error('bad fixture');
+        },
+      });
+      test('good test', ({ foo }) => {
+        console.log('\\n%%test');
+      });
+      test.afterAll(() => {
+        console.log('\\n%%afterAll');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('bad fixture');
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%test',
+    '%%afterAll',
+  ]);
+});
+
+test('afterEach failure should not prevent afterAll', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('good test', ({ }) => {
+        console.log('\\n%%test');
+      });
+      test.afterEach(() => {
+        console.log('\\n%%afterEach');
+        throw new Error('bad afterEach');
+      })
+      test.afterAll(() => {
+        console.log('\\n%%afterAll');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('bad afterEach');
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%test',
+    '%%afterEach',
+    '%%afterAll',
+  ]);
+});
