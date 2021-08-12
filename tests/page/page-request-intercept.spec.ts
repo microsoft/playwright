@@ -70,7 +70,8 @@ it('should support fulfill after intercept', async ({page, server}) => {
   expect(await response.text()).toBe('<title>Woof-Woof</title>' + os.EOL);
 });
 
-it('should support request overrides', async ({page, server}) => {
+it('should support request overrides', async ({page, server, browserName, browserMajorVersion}) => {
+  it.skip(browserName === 'chromium' && browserMajorVersion <= 91);
   const requestPromise = server.waitForRequest('/empty.html');
   await page.route('**/foo', async route => {
     // @ts-expect-error
