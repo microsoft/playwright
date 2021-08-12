@@ -7064,8 +7064,9 @@ export interface Locator {
    * The method finds all elements matching the specified locator and passes an array of matched elements as a first argument
    * to `pageFunction`. Returns the result of `pageFunction` invocation.
    *
-   * If `pageFunction` returns a [Promise], then [`Locator.evaluateAll`] would wait for the promise to resolve and return its
-   * value.
+   * If `pageFunction` returns a [Promise], then
+   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all) would
+   * wait for the promise to resolve and return its value.
    *
    * Examples:
    *
