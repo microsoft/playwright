@@ -106,7 +106,11 @@
   color: var(--blue);
 }
 
-.action-entry .codicon-error {
+.action-entry .codicon {
+  padding: 0 2px;
+}
+
+.action-entry .codicon-error, .action-entry .codicon-issues {
   color: red;
 }
 
