@@ -383,7 +383,7 @@ Optional argument to pass to [`param: expression`].
 The method finds all elements matching the specified locator and passes an array of matched elements as
 a first argument to [`param: expression`]. Returns the result of [`param: expression`] invocation.
 
-If [`param: expression`] returns a [Promise], then [`Locator.evaluateAll`] would wait for the promise
+If [`param: expression`] returns a [Promise], then [`method: Locator.evaluateAll`] would wait for the promise
 to resolve and return its value.
 
 Examples:
