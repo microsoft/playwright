@@ -272,7 +272,11 @@ export class WorkerRunner extends EventEmitter {
         };
         if (reportEvents)
           this.emit('stepBegin', payload);
+        let callbackHandled = false;
         return (error?: Error | TestError) => {
+          if (callbackHandled)
+            return;
+          callbackHandled = true;
           if (error instanceof Error)
             error = serializeError(error);
           const payload: StepEndPayload = {
@@ -378,7 +382,6 @@ export class WorkerRunner extends EventEmitter {
   }
 
   private async _runBeforeHooks(test: TestCase, testInfo: TestInfoImpl) {
-    let completeStep: CompleteStepCallback | undefined;
     try {
       const beforeEachModifiers: Modifier[] = [];
       for (let s = test.parent; s; s = s.parent) {
@@ -390,7 +393,6 @@ export class WorkerRunner extends EventEmitter {
         const result = await this._fixtureRunner.resolveParametersAndRunHookOrTest(modifier.fn, this._workerInfo, testInfo);
         testInfo[modifier.type](!!result, modifier.description!);
       }
-      completeStep = testInfo._addStep('hook', 'Before Hooks');
       await this._runHooks(test.parent!, 'beforeEach', testInfo);
     } catch (error) {
       if (error instanceof SkipError) {
@@ -402,19 +404,21 @@ export class WorkerRunner extends EventEmitter {
       }
       // Continue running afterEach hooks even after the failure.
     }
-    completeStep?.(testInfo.error);
   }
 
   private async _runTestWithBeforeHooks(test: TestCase, testInfo: TestInfoImpl) {
+    const completeStep = testInfo._addStep('hook', 'Before Hooks');
     if (test._type === 'test')
       await this._runBeforeHooks(test, testInfo);
 
     // Do not run the test when beforeEach hook fails.
-    if (testInfo.status === 'failed' || testInfo.status === 'skipped')
+    if (testInfo.status === 'failed' || testInfo.status === 'skipped') {
+      completeStep?.(testInfo.error);
       return;
+    }
 
     try {
-      await this._fixtureRunner.resolveParametersAndRunHookOrTest(test.fn, this._workerInfo, testInfo);
+      await this._fixtureRunner.resolveParametersAndRunHookOrTest(test.fn, this._workerInfo, testInfo, completeStep);
     } catch (error) {
       if (error instanceof SkipError) {
         if (testInfo.status === 'passed')
@@ -428,6 +432,8 @@ export class WorkerRunner extends EventEmitter {
         if (!('error' in  testInfo))
           testInfo.error = serializeError(error);
       }
+    } finally {
+      completeStep?.(testInfo.error);
     }
   }
 

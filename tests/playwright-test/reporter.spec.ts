@@ -217,9 +217,9 @@ test('should report expect steps', async ({ runInlineTest }) => {
     `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
     `%% end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
     `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
-    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
     `%% begin {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
+    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
     `%% begin {\"title\":\"expect.not.toHaveTitle\",\"category\":\"expect\"}`,
     `%% begin {\"title\":\"page.title\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"page.title\",\"category\":\"pw:api\"}`,
@@ -296,9 +296,9 @@ test('should report api steps', async ({ runInlineTest }) => {
   expect(result.output.split('\n').filter(line => line.startsWith('%%')).map(stripEscapedAscii)).toEqual([
     `%%%% test begin pass`,
     `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
-    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
     `%% begin {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
+    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
     `%% begin {\"title\":\"page.setContent\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"page.setContent\",\"category\":\"pw:api\"}`,
     `%% begin {\"title\":\"page.click\",\"category\":\"pw:api\"}`,
@@ -367,9 +367,9 @@ test('should report api step failure', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.output.split('\n').filter(line => line.startsWith('%%')).map(stripEscapedAscii)).toEqual([
     `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
-    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
     `%% begin {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
+    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
     `%% begin {\"title\":\"page.setContent\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"page.setContent\",\"category\":\"pw:api\"}`,
     `%% begin {\"title\":\"page.click\",\"category\":\"pw:api\"}`,
@@ -421,9 +421,9 @@ test('should report test.step', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.output.split('\n').filter(line => line.startsWith('%%')).map(stripEscapedAscii)).toEqual([
     `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
-    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
     `%% begin {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
+    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
     `%% begin {\"title\":\"First step\",\"category\":\"test.step\"}`,
     `%% begin {\"title\":\"expect.toBe\",\"category\":\"expect\"}`,
     `%% end {\"title\":\"expect.toBe\",\"category\":\"expect\",\"error\":{\"message\":\"expect(received).toBe(expected) // Object.is equality\\n\\nExpected: 2\\nReceived: 1\",\"stack\":\"<stack>\"}}`,
