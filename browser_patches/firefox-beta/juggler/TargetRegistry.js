@@ -917,11 +917,13 @@ class BrowserContext {
 
   async setVideoRecordingOptions(options) {
     this.videoRecordingOptions = options;
-    if (!options)
-      return;
     const promises = [];
-    for (const page of this.pages)
-      promises.push(page._startVideoRecording(options));
+    for (const page of this.pages) {
+      if (options)
+        promises.push(page._startVideoRecording(options));
+      else if (page._videoRecordingInfo)
+        promises.push(page._stopVideoRecording());
+    }
     await Promise.all(promises);
   }
 }
