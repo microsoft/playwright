@@ -629,7 +629,8 @@ BrowserContext:
 
     newCDPSession:
       parameters:
-        page: Page
+        page: Page?
+        frame: Frame?
       returns:
         session: CDPSession
 

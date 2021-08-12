@@ -37,10 +37,15 @@ it('should send events', async function({page, server}) {
   expect(events.length).toBe(1);
 });
 
-it('should only accept a page', async function({page}) {
-  // @ts-expect-error newCDPSession expects a Page
+it('should only accept a page or frame', async function({page}) {
+  // @ts-expect-error newCDPSession expects a Page or Frame
   const error = await page.context().newCDPSession(page.context()).catch(e => e);
-  expect(error.message).toContain('page: expected Page');
+  expect(error.message).toContain('page: expected Page or Frame');
+
+  // non-channelable types hit validation at a different layer
+  // @ts-expect-error newCDPSession expects a Page or Frame
+  const errorAlt = await page.context().newCDPSession({}).catch(e => e);
+  expect(errorAlt.message).toContain('page: expected Page or Frame');
 });
 
 it('should enable and disable domains independently', async function({page}) {
@@ -86,6 +91,26 @@ it('should throw nice errors', async function({page}) {
     // @ts-expect-error invalid command
     await client.send('ThisCommand.DoesNotExist');
   }
+});
+
+it('should work with main frame', async function({page}) {
+  const client = await page.context().newCDPSession(page.mainFrame());
+
+  await Promise.all([
+    client.send('Runtime.enable'),
+    client.send('Runtime.evaluate', { expression: 'window.foo = "bar"' })
+  ]);
+  const foo = await page.evaluate(() => window['foo']);
+  expect(foo).toBe('bar');
+});
+
+it('should throw if target is part of main', async function({server, page}){
+  await page.goto(server.PREFIX + '/frames/one-frame.html');
+  expect(page.frames()[0].url()).toContain('/frames/one-frame.html');
+  expect(page.frames()[1].url()).toContain('/frames/frame.html');
+
+  const error = await page.context().newCDPSession(page.frames()[1]).catch(e => e);
+  expect(error.message).toContain(`This frame does not have a separate CDP session, it is a part of the parent frame's session`);
 });
 
 browserTest('should not break page.close()', async function({browser}) {
