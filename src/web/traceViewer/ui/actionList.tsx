@@ -75,6 +75,7 @@ export const ActionList: React.FC<ActionListProps> = ({
         const { metadata } = action;
         const selectedSuffix = action === selectedAction ? ' selected' : '';
         const highlightedSuffix = action === highlightedAction ? ' highlighted' : '';
+        const error = metadata.error?.error?.message;
         const { errors, warnings } = modelUtil.stats(action);
         return <div
           className={'action-entry' + selectedSuffix + highlightedSuffix}
@@ -92,6 +93,7 @@ export const ActionList: React.FC<ActionListProps> = ({
             {!!errors && <div className='action-icon'><span className={'codicon codicon-error'}></span><span className="action-icon-value">{errors}</span></div>}
             {!!warnings && <div className='action-icon'><span className={'codicon codicon-warning'}></span><span className="action-icon-value">{warnings}</span></div>}
           </div>
+          {error && <div className='codicon codicon-issues' title={error} />}
         </div>;
       })}
     </div>
