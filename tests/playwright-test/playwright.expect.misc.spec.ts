@@ -159,7 +159,7 @@ test('should support toHaveURL', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
 });
 
-test('should support respect actionTimeout', async ({ runInlineTest }) => {
+test('should support respect expect.timeout', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.js': `module.exports = { expect: { timeout: 1000 } }`,
     'a.test.ts': `

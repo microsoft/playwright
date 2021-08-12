@@ -235,7 +235,7 @@ const config = {
     reuseExistingServer: !process.env.CI,
   },
 };
-mode.exports = config;
+module.exports = config;
 ```
 
 Now you can use a relative path when navigating the page, or use `baseURL` fixture:
