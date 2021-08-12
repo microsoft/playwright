@@ -41,7 +41,6 @@ it('should fulfill intercepted response', async ({page, server, browserName}) =>
 });
 
 it('should fulfill response with empty body', async ({page, server, browserName}) => {
-  it.fail(browserName === 'firefox');
   await page.route('**/*', async route => {
     // @ts-expect-error
     await route._intercept({});
