@@ -123,16 +123,8 @@ export class WKPage implements PageDelegate {
       for (const [key, value] of this._browserContext._permissions)
         promises.push(this._grantPermissions(key, value));
     }
-    if (this._browserContext._options.recordVideo) {
-      const outputFile = path.join(this._browserContext._options.recordVideo.dir, createGuid() + '.webm');
-      promises.push(this._browserContext._ensureVideosPath().then(() => {
-        return this._startVideo({
-          // validateBrowserContextOptions ensures correct video size.
-          ...this._browserContext._options.recordVideo!.size!,
-          outputFile,
-        });
-      }));
-    }
+    if (this._browserContext._videoOptions)
+      promises.push(this._startVideo(this._browserContext._videoOptions));
     await Promise.all(promises);
   }
 
@@ -778,19 +770,20 @@ export class WKPage implements PageDelegate {
     return 0;
   }
 
-  private async _startVideo(options: types.PageScreencastOptions): Promise<void> {
+  async _startVideo(options: types.VideoOptions): Promise<void> {
+    const outputFile = path.join(options.dir, createGuid() + '.webm');
     assert(!this._recordingVideoFile);
     const { screencastId } = await this._pageProxySession.send('Screencast.startVideo', {
-      file: options.outputFile,
-      width: options.width,
-      height: options.height,
+      file: outputFile,
+      width: options.size.width,
+      height: options.size.height,
       toolbarHeight: this._toolbarHeight()
     });
-    this._recordingVideoFile = options.outputFile;
-    this._browserContext._browser._videoStarted(this._browserContext, screencastId, options.outputFile, this.pageOrError());
+    this._recordingVideoFile = outputFile;
+    this._browserContext._browser._videoStarted(this._browserContext, screencastId, outputFile, this.pageOrError());
   }
 
-  private async _stopVideo(): Promise<void> {
+  async _stopVideo(): Promise<void> {
     if (!this._recordingVideoFile)
       return;
     await this._pageProxySession.sendMayFail('Screencast.stopVideo');

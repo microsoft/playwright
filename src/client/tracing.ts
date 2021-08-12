@@ -15,7 +15,9 @@
  */
 
 import * as api from '../../types/types';
+import { Size } from '../common/types';
 import * as channels from '../protocol/channels';
+import { addSuffixToFilePath } from '../utils/utils';
 import { Artifact } from './artifact';
 import { BrowserContext } from './browserContext';
 
@@ -26,29 +28,46 @@ export class Tracing implements api.Tracing {
     this._context = channel;
   }
 
-  async start(options: { name?: string, snapshots?: boolean, screenshots?: boolean } = {}) {
+  async start(options: { name?: string, snapshots?: boolean, screenshots?: boolean, video?: boolean | Size } = {}) {
     await this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
-      return await channel.tracingStart(options);
+      return await channel.tracingStart({
+        ...options,
+        video: !!options.video,
+        videoSize: typeof options.video === 'object' ? options.video : undefined,
+      });
     });
   }
 
   async _export(options: { path: string }) {
-    await this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
-      await this._doExport(channel, options.path);
+    return await this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
+      return await this._doExport(channel, options.path);
     });
   }
 
   async stop(options: { path?: string } = {}) {
-    await this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
-      if (options.path)
-        await this._doExport(channel, options.path);
+    return await this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
+      const result = options.path ? await this._doExport(channel, options.path) : { videoFiles: [] };
       await channel.tracingStop();
+      return result;
     });
   }
 
-  private async _doExport(channel: channels.BrowserContextChannel, path: string) {
+  private async _doExport(channel: channels.BrowserContextChannel, path: string): Promise<{ videoFiles: string[] }> {
     const result = await channel.tracingExport();
-    const artifact = Artifact.from(result.artifact);
+    const videoFiles: string[] = [];
+    await Promise.all([
+      this._saveAndDelete(result.trace, path),
+      ...result.video.map((artifact, index) => {
+        const videoPath = addSuffixToFilePath(path, '-video-' + (index + 1), '.webm');
+        videoFiles.push(videoPath);
+        return this._saveAndDelete(artifact, videoPath);
+      }),
+    ]);
+    return { videoFiles };
+  }
+
+  private async _saveAndDelete(artifactChannel: channels.ArtifactChannel, path: string) {
+    const artifact = Artifact.from(artifactChannel);
     if (this._context.browser()?._remoteType)
       artifact._isRemote = true;
     await artifact.saveAs(path);

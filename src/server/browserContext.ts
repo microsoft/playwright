@@ -45,6 +45,7 @@ export abstract class BrowserContext extends SdkObject {
     RequestFinished: 'requestfinished',
     BeforeClose: 'beforeclose',
     VideoStarted: 'videostarted',
+    VideoStartedWithoutRecordVideoOption: 'videostartedwithoutrecordvideooption',
   };
 
   readonly _timeoutSettings = new TimeoutSettings();
@@ -63,6 +64,7 @@ export abstract class BrowserContext extends SdkObject {
   private _origins = new Set<string>();
   private _harTracer: HarTracer | undefined;
   readonly tracing: Tracing;
+  _videoOptions: types.VideoOptions | undefined;
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super(browser, 'browser-context');
@@ -96,6 +98,10 @@ export abstract class BrowserContext extends SdkObject {
     const contextDebugger = new Debugger(this);
     this.instrumentation.addListener(contextDebugger);
 
+    const videoOptions = validateVideoOptions(this._options);
+    if (videoOptions)
+      await this.startVideoRecording(videoOptions);
+
     // When PWDEBUG=1, show inspector for each context.
     if (debugMode() === 'inspector')
       await RecorderSupplement.show(this, { pauseOnNextStatement: true });
@@ -109,11 +115,6 @@ export abstract class BrowserContext extends SdkObject {
 
     if (debugMode() === 'console')
       await this.extendInjectedScript('main', consoleApiSource.source);
-  }
-
-  async _ensureVideosPath() {
-    if (this._options.recordVideo)
-      await mkdirIfNeeded(path.join(this._options.recordVideo.dir, 'dummy'));
   }
 
   _browserClosed() {
@@ -155,6 +156,8 @@ export abstract class BrowserContext extends SdkObject {
   abstract _doClose(): Promise<void>;
   abstract _onClosePersistent(): void;
   abstract _doCancelDownload(uuid: string): Promise<void>;
+  abstract _doStartVideoRecording(): Promise<void>;
+  abstract _doStopVideoRecording(): Promise<void>;
 
   async cookies(urls: string | string[] | undefined = []): Promise<types.NetworkCookie[]> {
     if (urls && !Array.isArray(urls))
@@ -380,6 +383,21 @@ export abstract class BrowserContext extends SdkObject {
     this.on(BrowserContext.Events.Page, installInPage);
     return Promise.all(this.pages().map(installInPage));
   }
+
+  async startVideoRecording(options: types.VideoOptions) {
+    if (this._videoOptions)
+      await this.stopVideoRecording();
+    this._videoOptions = options;
+    await mkdirIfNeeded(path.join(options.dir, 'dummy'));
+    await this._doStartVideoRecording();
+  }
+
+  async stopVideoRecording() {
+    if (!this._videoOptions)
+      return;
+    this._videoOptions = undefined;
+    await this._doStopVideoRecording();
+  }
 }
 
 export function assertBrowserContextIsNotOwned(context: BrowserContext) {
@@ -396,23 +414,6 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
     throw new Error(`"isMobile" option is not supported with null "viewport"`);
   if (!options.viewport && !options.noDefaultViewport)
     options.viewport = { width: 1280, height: 720 };
-  if (options.recordVideo) {
-    if (!options.recordVideo.size) {
-      if (options.noDefaultViewport) {
-        options.recordVideo.size = { width: 800, height: 600 };
-      } else {
-        const size = options.viewport!;
-        const scale = Math.min(1, 800 / Math.max(size.width, size.height));
-        options.recordVideo.size = {
-          width: Math.floor(size.width * scale),
-          height: Math.floor(size.height * scale)
-        };
-      }
-    }
-    // Make sure both dimensions are odd, this is required for vp8
-    options.recordVideo.size!.width &= ~1;
-    options.recordVideo.size!.height &= ~1;
-  }
   if (options.proxy) {
     if (!browserOptions.proxy && browserOptions.isChromium && os.platform() === 'win32')
       throw new Error(`Browser needs to be launched with the global proxy. If all contexts override the proxy, global proxy will be never used and can be any string, for example "launch({ proxy: { server: 'http://per-context' } })"`);
@@ -423,6 +424,31 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
   verifyGeolocation(options.geolocation);
   if (!options._debugName)
     options._debugName = createGuid();
+}
+
+function validateVideoOptions(options: types.BrowserContextOptions): types.VideoOptions | null {
+  if (!options.recordVideo)
+    return null;
+
+  const result = { dir: options.recordVideo.dir, size: { width: 800, height: 600 } };
+  if (options.recordVideo.size) {
+    result.size = options.recordVideo.size;
+  } else {
+    if (options.noDefaultViewport) {
+      result.size = { width: 800, height: 600 };
+    } else {
+      const size = options.viewport!;
+      const scale = Math.min(1, 800 / Math.max(size.width, size.height));
+      result.size = {
+        width: Math.floor(size.width * scale),
+        height: Math.floor(size.height * scale)
+      };
+    }
+  }
+  // Make sure both dimensions are odd, this is required for vp8
+  result.size.width &= ~1;
+  result.size.height &= ~1;
+  return result;
 }
 
 export function verifyGeolocation(geolocation?: types.Geolocation) {

@@ -101,6 +101,12 @@ export abstract class Browser extends SdkObject {
   _videoStarted(context: BrowserContext, videoId: string, path: string, pageOrError: Promise<Page | Error>) {
     const artifact = new Artifact(context, path);
     this._idToVideo.set(videoId, { context, artifact });
+    if (!context._options.recordVideo) {
+      // Videos started for custom startVideoRecording without recordVideo option
+      // should not be reported to the client.
+      context.emit(BrowserContext.Events.VideoStartedWithoutRecordVideoOption, artifact);
+      return;
+    }
     context.emit(BrowserContext.Events.VideoStarted, artifact);
     pageOrError.then(page => {
       if (page instanceof Page) {

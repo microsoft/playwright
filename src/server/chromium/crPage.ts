@@ -37,7 +37,7 @@ import { CRBrowserContext } from './crBrowser';
 import * as types from '../types';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { assert, headersArrayToObject, createGuid, canAccessFile } from '../../utils/utils';
-import { VideoRecorder } from './videoRecorder';
+import { VideoRecorder, VideoRecorderOptions } from './videoRecorder';
 import { Progress } from '../progress';
 import { DragManager } from './crDragDrop';
 import { registry } from '../../utils/registry';
@@ -60,7 +60,7 @@ export class CRPage implements PageDelegate {
   readonly _browserContext: CRBrowserContext;
   private readonly _pagePromise: Promise<Page | Error>;
   _initializedPage: Page | null = null;
-  private _isBackgroundPage: boolean;
+  readonly _isBackgroundPage: boolean;
 
   // Holds window features for the next popup being opened via window.open,
   // until the popup target arrives. This could be racy if two oopifs
@@ -74,7 +74,7 @@ export class CRPage implements PageDelegate {
     return crPage._mainFrameSession;
   }
 
-  constructor(client: CRSession, targetId: string, browserContext: CRBrowserContext, opener: CRPage | null, hasUIWindow: boolean, isBackgroundPage: boolean) {
+  constructor(client: CRSession, targetId: string, browserContext: CRBrowserContext, opener: CRPage | null, isBackgroundPage: boolean) {
     this._targetId = targetId;
     this._opener = opener;
     this._isBackgroundPage = isBackgroundPage;
@@ -97,7 +97,7 @@ export class CRPage implements PageDelegate {
     }
     // Note: it is important to call |reportAsNew| before resolving pageOrError promise,
     // so that anyone who awaits pageOrError got a ready and reported page.
-    this._pagePromise = this._mainFrameSession._initialize(hasUIWindow).then(async r => {
+    this._pagePromise = this._mainFrameSession._initialize().then(async r => {
       await this._page.initOpener(this._opener);
       return r;
     }).catch(async e => {
@@ -427,31 +427,24 @@ class FrameSession {
     ]);
   }
 
-  async _initialize(hasUIWindow: boolean) {
-    if (hasUIWindow &&
+  _canRecordVideo() {
+    return this._isMainFrame() && !this._crPage._isBackgroundPage;
+  }
+
+  async _initialize() {
+    if (this._isMainFrame() &&
+      !this._crPage._isBackgroundPage &&
       !this._crPage._browserContext._browser.isClank() &&
       !this._crPage._browserContext._options.noDefaultViewport) {
       const { windowId } = await this._client.send('Browser.getWindowForTarget');
       this._windowId = windowId;
     }
 
-    let screencastOptions: types.PageScreencastOptions | undefined;
-    if (this._isMainFrame() && this._crPage._browserContext._options.recordVideo && hasUIWindow) {
-      const screencastId = createGuid();
-      const outputFile = path.join(this._crPage._browserContext._options.recordVideo.dir, screencastId + '.webm');
-      screencastOptions = {
-        // validateBrowserContextOptions ensures correct video size.
-        ...this._crPage._browserContext._options.recordVideo.size!,
-        outputFile,
-      };
-      await this._crPage._browserContext._ensureVideosPath();
+    let videoRecorderOptions: VideoRecorderOptions | undefined;
+    if (this._canRecordVideo() && this._crPage._browserContext._videoOptions) {
       // Note: it is important to start video recorder before sending Page.startScreencast,
       // and it is equally important to send Page.startScreencast before sending Runtime.runIfWaitingForDebugger.
-      await this._createVideoRecorder(screencastId, screencastOptions);
-      this._crPage.pageOrError().then(p => {
-        if (p instanceof Error)
-          this._stopVideoRecording().catch(() => {});
-      });
+      videoRecorderOptions = await this._createVideoRecorder(this._crPage._browserContext._videoOptions);
     }
 
     let lifecycleEventsEnabled: Promise<any>;
@@ -532,8 +525,8 @@ class FrameSession {
       promises.push(this._evaluateOnNewDocument(source, 'main'));
     for (const source of this._crPage._page._evaluateOnNewDocumentSources)
       promises.push(this._evaluateOnNewDocument(source, 'main'));
-    if (screencastOptions)
-      promises.push(this._startVideoRecording(screencastOptions));
+    if (videoRecorderOptions)
+      promises.push(this._startVideoRecording(videoRecorderOptions));
     promises.push(this._client.send('Runtime.runIfWaitingForDebugger'));
     promises.push(this._firstNonInitialNavigationCommittedPromise);
     await Promise.all(promises);
@@ -672,7 +665,7 @@ class FrameSession {
       this._page._frameManager.removeChildFramesRecursively(frame);
       const frameSession = new FrameSession(this._crPage, session, targetId, this);
       this._crPage._sessions.set(targetId, frameSession);
-      frameSession._initialize(false).catch(e => e);
+      frameSession._initialize().catch(e => e);
       return;
     }
 
@@ -843,8 +836,12 @@ class FrameSession {
     });
   }
 
-  async _createVideoRecorder(screencastId: string, options: types.PageScreencastOptions): Promise<void> {
+  async _createVideoRecorder(options: types.VideoOptions): Promise<VideoRecorderOptions> {
     assert(!this._screencastId);
+
+    const screencastId = createGuid();
+    const outputFile = path.join(options.dir, screencastId + '.webm');
+
     const ffmpegPath = registry.findExecutable('ffmpeg')!.executablePath();
     // TODO: use default error message once it's ready.
     if (!ffmpegPath || !canAccessFile(ffmpegPath)) {
@@ -863,11 +860,22 @@ class FrameSession {
 ============================================================
       `);
     }
-    this._videoRecorder = await VideoRecorder.launch(this._crPage._page, ffmpegPath, options);
+
+    const recorderOptions: VideoRecorderOptions = {
+      width: options.size.width,
+      height: options.size.height,
+      outputFile,
+    };
+    this._videoRecorder = await VideoRecorder.launch(this._crPage._page, ffmpegPath, recorderOptions);
     this._screencastId = screencastId;
+    this._crPage.pageOrError().then(p => {
+      if (p instanceof Error)
+        this._stopVideoRecording().catch(() => {});
+    });
+    return recorderOptions;
   }
 
-  async _startVideoRecording(options: types.PageScreencastOptions) {
+  async _startVideoRecording(options: VideoRecorderOptions) {
     const screencastId = this._screencastId;
     assert(screencastId);
     this._page.once(Page.Events.Close, () => this._stopVideoRecording().catch(() => {}));
@@ -878,9 +886,12 @@ class FrameSession {
       maxWidth: options.width,
       maxHeight: options.height,
     });
-    // Wait for the first frame before reporting video to the client.
     gotFirstFrame.then(() => {
-      this._crPage._browserContext._browser._videoStarted(this._crPage._browserContext, screencastId, options.outputFile, this._crPage.pageOrError());
+      // Wait for the first frame before reporting video to the client.
+      // However, we can stop the video before the first frame comes, so double check
+      // that we are still recording this exact video.
+      if (this._screencastId === screencastId)
+        this._crPage._browserContext._browser._videoStarted(this._crPage._browserContext, screencastId, options.outputFile, this._crPage.pageOrError());
     });
   }
 
@@ -893,7 +904,7 @@ class FrameSession {
     this._videoRecorder = null;
     await this._stopScreencast(recorder);
     await recorder.stop().catch(() => {});
-    // Keep the video artifact in the map utntil encoding is fully finished, if the context
+    // Keep the video artifact in the map until encoding is fully finished, if the context
     // starts closing before the video is fully written to disk it will wait for it.
     const video = this._crPage._browserContext._browser._takeVideo(screencastId);
     video?.reportFinished();

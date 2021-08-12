@@ -20,9 +20,14 @@ import { Page } from '../page';
 import { launchProcess } from '../../utils/processLauncher';
 import { Progress, ProgressController } from '../progress';
 import { internalCallMetadata } from '../instrumentation';
-import * as types from '../types';
 
 const fps = 25;
+
+export type VideoRecorderOptions = {
+  width: number,
+  height: number,
+  outputFile: string,
+};
 
 export class VideoRecorder {
   private _process: ChildProcess | null = null;
@@ -36,7 +41,7 @@ export class VideoRecorder {
   private _isStopped = false;
   private _ffmpegPath: string;
 
-  static async launch(page: Page, ffmpegPath: string, options: types.PageScreencastOptions): Promise<VideoRecorder> {
+  static async launch(page: Page, ffmpegPath: string, options: VideoRecorderOptions): Promise<VideoRecorder> {
     if (!options.outputFile.endsWith('.webm'))
       throw new Error('File must have .webm extension');
 
@@ -55,7 +60,7 @@ export class VideoRecorder {
     page.on(Page.Events.ScreencastFrame, frame => this.writeFrame(frame.buffer, frame.timestamp));
   }
 
-  private async _launch(options: types.PageScreencastOptions) {
+  private async _launch(options: VideoRecorderOptions) {
     // How to tune the codec:
     // 1. Read vp8 documentation to figure out the options.
     //   https://www.webmproject.org/docs/encoder-parameters/

@@ -3,7 +3,7 @@
 API for collecting and saving Playwright traces. Playwright traces can be opened using the Playwright CLI after
 Playwright script runs.
 
-Start with specifying the folder traces will be stored in:
+Start recording a trace, then perform actions, and later stop recording and export trace to a file.
 
 ```js
 const browser = await chromium.launch();
@@ -126,7 +126,18 @@ a timeline preview.
 
 Whether to capture DOM snapshot on every action.
 
+### option: Tracing.start.video
+- `video` <[boolean]|[Object]>
+  - `width` <[int]> Video frame width.
+  - `height` <[int]> Video frame height.
+
+Whether to record video for all pages.
+
+Alternatively, specifies the dimensions of the recorded video. Actual picture of each page will be scaled down if necessary to fit the specified size.
+
 ## async method: Tracing.stop
+- returns: <[Object]>
+  - `videoFiles` <[Array]<[string]>> The list of video files created next to the exported trace file.
 
 Stop tracing.
 
@@ -134,3 +145,5 @@ Stop tracing.
 - `path` <[path]>
 
 Export trace into the file with the given name.
+
+If started with the `video` option, a few additional video files will be exported next to the trace file.

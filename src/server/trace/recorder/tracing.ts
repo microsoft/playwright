@@ -19,7 +19,7 @@ import path from 'path';
 import yazl from 'yazl';
 import readline from 'readline';
 import { EventEmitter } from 'events';
-import { createGuid, mkdirIfNeeded, monotonicTime } from '../../../utils/utils';
+import { addSuffixToFilePath, createGuid, mkdirIfNeeded, monotonicTime } from '../../../utils/utils';
 import { Artifact } from '../../artifact';
 import { BrowserContext } from '../../browserContext';
 import { ElementHandle } from '../../dom';
@@ -28,29 +28,30 @@ import { CallMetadata, InstrumentationListener, SdkObject } from '../../instrume
 import { Page } from '../../page';
 import * as trace from '../common/traceEvents';
 import { TraceSnapshotter } from './traceSnapshotter';
-import { commandsWithTracingSnapshots } from '../../../protocol/channels';
-
-export type TracerOptions = {
-  name?: string;
-  snapshots?: boolean;
-  screenshots?: boolean;
-};
+import { BrowserContextTracingStartOptions, commandsWithTracingSnapshots } from '../../../protocol/channels';
+import { Size } from '../../../common/types';
 
 export const VERSION = 2;
 
 type RecordingState = {
-  options: TracerOptions,
+  snapshots?: boolean;
+  screenshots?: boolean;
+  video?: boolean;
+  screencastSize: Size,
   traceFile: string,
   lastReset: number,
   sha1s: Set<string>,
+  videoArtifacts: Artifact[],
 };
 
-const kScreencastOptions = { width: 800, height: 600, quality: 90 };
+const kScreencastQuality = 90;
+const kDefaultScreencastSize = { width: 800, height: 600 };
 
 export class Tracing implements InstrumentationListener {
   private _appendEventChain = Promise.resolve();
   private _snapshotter: TraceSnapshotter;
   private _screencastListeners: RegisteredListener[] = [];
+  private _videoListeners: RegisteredListener[] = [];
   private _pendingCalls = new Map<string, { sdkObject: SdkObject, metadata: CallMetadata, beforeSnapshot: Promise<void>, actionSnapshot?: Promise<void>, afterSnapshot?: Promise<void> }>();
   private _context: BrowserContext;
   private _resourcesDir: string;
@@ -65,17 +66,31 @@ export class Tracing implements InstrumentationListener {
     this._snapshotter = new TraceSnapshotter(this._context, this._resourcesDir, traceEvent => this._appendTraceEvent(traceEvent));
   }
 
-  async start(options: TracerOptions): Promise<void> {
+  async start(options: BrowserContextTracingStartOptions): Promise<void> {
     if (this._isStopping)
       throw new Error('Cannot start tracing while stopping');
+    if (options.video && this._context._options.recordVideo)
+      throw new Error('Cannot start tracing with video because context has been already created with recordVideo option');
     // context + page must be the first events added, this method can't have awaits before them.
+
+    // Note that screencast frames share the size with video frames.
+    const screencastSize = (options.video && options.videoSize) ? options.videoSize : kDefaultScreencastSize;
 
     const state = this._recording;
     if (!state) {
       // TODO: passing the same name for two contexts makes them write into a single file
       // and conflict.
       const traceFile = path.join(this._tracesDir, (options.name || createGuid()) + '.trace');
-      this._recording = { options, traceFile, lastReset: 0, sha1s: new Set() };
+      this._recording = {
+        snapshots: options.snapshots,
+        screenshots: options.screenshots,
+        video: options.video,
+        screencastSize,
+        traceFile,
+        lastReset: 0,
+        sha1s: new Set(),
+        videoArtifacts: [],
+      };
       this._appendEventChain = mkdirIfNeeded(traceFile);
       const event: trace.ContextCreatedTraceEvent = {
         version: VERSION,
@@ -86,24 +101,43 @@ export class Tracing implements InstrumentationListener {
       this._appendTraceEvent(event);
     }
 
-    if (!state?.options?.screenshots && options.screenshots)
-      this._startScreencast();
-    else if (state?.options?.screenshots && !options.screenshots)
-      this._stopScreencast();
+    const screencastSizeEquals = screencastSize.width === state?.screencastSize.width && screencastSize.height === state?.screencastSize.height;
+
+    if (!options.screenshots && !state?.screenshots) {
+      // Keep screencast disabled.
+    } else if (options.screenshots && state?.screenshots && screencastSizeEquals) {
+      // Keep screencast enabled.
+    } else {
+      if (state?.screenshots)
+        this._stopScreencast();
+      if (options.screenshots)
+        this._startScreencast(screencastSize);
+    }
 
     // context + page must be the first events added, no awaits above this line.
     await fs.promises.mkdir(this._resourcesDir, { recursive: true });
+
+    if (!options.video && !state?.video) {
+      // Keep video disabled.
+    } else if (options.video && state?.video && screencastSizeEquals) {
+      // Keep video enabled.
+    } else {
+      if (state?.video)
+        await this._stopVideoRecording();
+      if (options.video)
+        await this._startVideoRecording(screencastSize);
+    }
 
     if (!state)
       this._context.instrumentation.addListener(this);
 
     await this._appendTraceOperation(async () => {
-      if (options.snapshots && state?.options?.snapshots) {
+      if (options.snapshots && state?.snapshots) {
         // Reset snapshots to avoid back-references.
         await this._snapshotter.reset();
       } else if (options.snapshots) {
         await this._snapshotter.start();
-      } else if (state?.options?.snapshots) {
+      } else if (state?.snapshots) {
         await this._snapshotter.stop();
       }
 
@@ -114,15 +148,19 @@ export class Tracing implements InstrumentationListener {
       }
     });
 
-    if (this._recording)
-      this._recording.options = options;
+    if (this._recording) {
+      this._recording.screenshots = options.screenshots;
+      this._recording.snapshots = options.snapshots;
+      this._recording.video = options.video;
+      this._recording.screencastSize = screencastSize;
+    }
   }
 
-  private _startScreencast() {
+  private _startScreencast(screencastSize: Size) {
     for (const page of this._context.pages())
-      this._startScreencastInPage(page);
+      this._startScreencastInPage(screencastSize, page);
     this._screencastListeners.push(
-        eventsHelper.addEventListener(this._context, BrowserContext.Events.Page, this._startScreencastInPage.bind(this)),
+        eventsHelper.addEventListener(this._context, BrowserContext.Events.Page, this._startScreencastInPage.bind(this, screencastSize)),
     );
   }
 
@@ -132,12 +170,27 @@ export class Tracing implements InstrumentationListener {
       page.setScreencastOptions(null);
   }
 
+  private async _startVideoRecording(videoSize: Size) {
+    const onVideoStarted = (artifact: Artifact) => {
+      if (this._recording)
+        this._recording.videoArtifacts.push(artifact);
+    };
+    this._videoListeners.push(eventsHelper.addEventListener(this._context, BrowserContext.Events.VideoStartedWithoutRecordVideoOption, onVideoStarted));
+    await this._context.startVideoRecording({ dir: this._tracesDir, size: videoSize });
+  }
+
+  private async _stopVideoRecording() {
+    eventsHelper.removeEventListeners(this._videoListeners);
+    await this._context.stopVideoRecording();
+  }
+
   async stop(): Promise<void> {
     if (!this._recording || this._isStopping)
       return;
     this._isStopping = true;
     this._context.instrumentation.removeListener(this);
     this._stopScreencast();
+    await this._stopVideoRecording();
     await this._snapshotter.stop();
     // Ensure all writes are finished.
     await this._appendEventChain;
@@ -149,7 +202,7 @@ export class Tracing implements InstrumentationListener {
     await this._snapshotter.dispose();
   }
 
-  async export(): Promise<Artifact> {
+  async export(): Promise<{ trace: Artifact, video: Artifact[] }> {
     for (const { sdkObject, metadata, beforeSnapshot, actionSnapshot, afterSnapshot } of this._pendingCalls.values()) {
       await Promise.all([beforeSnapshot, actionSnapshot, afterSnapshot]);
       let callMetadata = metadata;
@@ -170,6 +223,7 @@ export class Tracing implements InstrumentationListener {
     // so that neither trace file nor sha1s change during the export.
     return await this._appendTraceOperation(async () => {
       await this._snapshotter.checkpoint();
+      await this._stopVideoRecording();
 
       const recording = this._recording!;
       let state = recording;
@@ -192,17 +246,22 @@ export class Tracing implements InstrumentationListener {
         artifact.reportFinished();
         fulfill(artifact);
       });
-      return Promise.race([failedPromise, succeededPromise]).finally(async () => {
+      const traceArtifact = await Promise.race([failedPromise, succeededPromise]).finally(async () => {
         // Remove the filtered trace.
         if (recording.lastReset)
           await fs.promises.unlink(state.traceFile).catch(() => {});
       });
+
+      await Promise.all(recording.videoArtifacts.map(artifact => artifact.finishedPromise()));
+      const result = { trace: traceArtifact, video: recording.videoArtifacts };
+      recording.videoArtifacts = [];
+      recording.video = false;
+      return result;
     });
   }
 
   private async _filterTrace(state: RecordingState, sinceResetIndex: number): Promise<RecordingState> {
-    const ext = path.extname(state.traceFile);
-    const traceFileCopy = state.traceFile.substring(0, state.traceFile.length - ext.length) + '-copy' + sinceResetIndex + ext;
+    const traceFileCopy = addSuffixToFilePath(state.traceFile, '-copy' + sinceResetIndex);
     const sha1s = new Set<string>();
     await new Promise<void>((resolve, reject) => {
       const fileStream = fs.createReadStream(state.traceFile, 'utf8');
@@ -218,7 +277,7 @@ export class Tracing implements InstrumentationListener {
           if (event.type === 'marker') {
             if (event.resetIndex === sinceResetIndex)
               foundMarker = true;
-          } else if ((event.type === 'resource-snapshot' && state.options.snapshots) || event.type === 'context-options' || foundMarker) {
+          } else if ((event.type === 'resource-snapshot' && state.snapshots) || event.type === 'context-options' || foundMarker) {
             // We keep:
             // - old resource events for snapshots;
             // - initial context options event;
@@ -238,7 +297,7 @@ export class Tracing implements InstrumentationListener {
         resolve();
       });
     });
-    return { options: state.options, lastReset: state.lastReset, sha1s, traceFile: traceFileCopy };
+    return { ...state, sha1s, traceFile: traceFileCopy };
   }
 
   async _captureSnapshot(name: 'before' | 'after' | 'action' | 'event', sdkObject: SdkObject, metadata: CallMetadata, element?: ElementHandle) {
@@ -287,8 +346,8 @@ export class Tracing implements InstrumentationListener {
     this._appendTraceEvent(event);
   }
 
-  private _startScreencastInPage(page: Page) {
-    page.setScreencastOptions(kScreencastOptions);
+  private _startScreencastInPage(screencastSize: Size, page: Page) {
+    page.setScreencastOptions({ ...screencastSize, quality: kScreencastQuality });
     const prefix = page.guid;
     let frameSeq = 0;
     this._screencastListeners.push(

@@ -203,18 +203,6 @@ export class FFBrowserContext extends BrowserContext {
       browserContextId,
       reducedMotion: this._options.reducedMotion !== undefined  ? this._options.reducedMotion : 'no-preference',
     }));
-    if (this._options.recordVideo) {
-      promises.push(this._ensureVideosPath().then(() => {
-        return this._browser._connection.send('Browser.setVideoRecordingOptions', {
-          // validateBrowserContextOptions ensures correct video size.
-          options: {
-            ...this._options.recordVideo!.size!,
-            dir: this._options.recordVideo!.dir,
-          },
-          browserContextId: this._browserContextId
-        });
-      }));
-    }
     if (this._options.proxy) {
       promises.push(this._browser._connection.send('Browser.setContextProxy', {
         browserContextId: this._browserContextId,
@@ -334,6 +322,23 @@ export class FFBrowserContext extends BrowserContext {
 
   async _doCancelDownload(uuid: string) {
     await this._browser._connection.send('Browser.cancelDownload', { uuid });
+  }
+
+  async _doStartVideoRecording() {
+    await this._browser._connection.send('Browser.setVideoRecordingOptions', {
+      options: {
+        ...this._videoOptions!.size,
+        dir: this._videoOptions!.dir,
+      },
+      browserContextId: this._browserContextId,
+    });
+  }
+
+  async _doStopVideoRecording() {
+    await this._browser._connection.send('Browser.setVideoRecordingOptions', {
+      options: undefined,
+      browserContextId: this._browserContextId,
+    });
   }
 }
 

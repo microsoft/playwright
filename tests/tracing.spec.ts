@@ -17,6 +17,24 @@
 import { expect, contextTest as test, browserTest } from './config/browserTest';
 import yauzl from 'yauzl';
 import jpeg from 'jpeg-js';
+import { registry } from '../src/utils/registry';
+import { spawnSync } from 'child_process';
+
+const ffmpeg = registry.findExecutable('ffmpeg')!.executablePath();
+
+class VideoPlayer {
+  videoWidth: number;
+  videoHeight: number;
+
+  constructor(fileName: string) {
+    const output = spawnSync(ffmpeg, ['-i', fileName, '-r', '25', `${fileName}-%03d.png`]).stderr.toString();
+    const lines = output.split('\n');
+    const streamLine = lines.find(l => l.trim().startsWith('Stream #0:0'));
+    const resolutionMatch = streamLine.match(/, (\d+)x(\d+),/);
+    this.videoWidth = parseInt(resolutionMatch![1], 10);
+    this.videoHeight = parseInt(resolutionMatch![2], 10);
+  }
+}
 
 test('should collect trace with resources, but no js', async ({ context, page, server }, testInfo) => {
   await context.tracing.start({ screenshots: true, snapshots: true });
@@ -194,6 +212,58 @@ test('should include interrupted actions', async ({ context, page, server }, tes
   const clickEvent = events.find(e => e.metadata?.apiName === 'page.click');
   expect(clickEvent).toBeTruthy();
   expect(clickEvent.metadata.error.error.message).toBe('Action was interrupted');
+});
+
+test('should record video on and off', async ({ context, page, server }, testInfo) => {
+  await context.tracing.start({ video: false });
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent('<button>Click</button>');
+  await page.waitForTimeout(1000);
+  // @ts-expect-error
+  const { videoFiles: videoFiles1 } = await context.tracing._export({ path: testInfo.outputPath('trace1.zip') });
+
+  await context.tracing.start({ video: true });
+  await page.click('button');
+  await page.waitForTimeout(1000);
+  // @ts-expect-error
+  const { videoFiles: videoFiles2 } = await context.tracing._export({ path: testInfo.outputPath('trace2.zip') });
+
+  await context.tracing.start({ video: { width: 320, height: 240 } });
+  await page.click('button');
+  await page.waitForTimeout(1000);
+  // @ts-expect-error
+  const { videoFiles: videoFiles3 } = await context.tracing._export({ path: testInfo.outputPath('trace3.zip') });
+
+  await page.click('button');
+  const { videoFiles: videoFiles4 } = await context.tracing.stop({ path: testInfo.outputPath('trace4.zip') });
+  await context.close();
+
+  expect(videoFiles1).toEqual([]);
+
+  expect(videoFiles2).toEqual([
+    testInfo.outputPath('trace2-video-1.webm'),
+  ]);
+  const videoPlayer2 = new VideoPlayer(videoFiles2[0]);
+  expect(videoPlayer2.videoWidth).toBe(800);
+  expect(videoPlayer2.videoHeight).toBe(600);
+
+  expect(videoFiles3).toEqual([
+    testInfo.outputPath('trace3-video-1.webm'),
+  ]);
+  const videoPlayer3 = new VideoPlayer(videoFiles3[0]);
+  expect(videoPlayer3.videoWidth).toBe(320);
+  expect(videoPlayer3.videoHeight).toBe(240);
+
+  expect(videoFiles4).toEqual([]);
+});
+
+test('should throw for video when recordVideo option is set', async ({ browser }, testInfo) => {
+  const context = await browser.newContext({
+    recordVideo: { dir: testInfo.outputPath('') },
+  });
+  const error = await context.tracing.start({ video: true }).catch(e => e);
+  await context.close();
+  expect(error.message).toContain('Cannot start tracing with video because context has been already created with recordVideo option');
 });
 
 test('should reset to different options', async ({ context, page, server }, testInfo) => {

@@ -859,11 +859,21 @@ export type BrowserContextTracingStartParams = {
   name?: string,
   snapshots?: boolean,
   screenshots?: boolean,
+  video?: boolean,
+  videoSize?: {
+    width: number,
+    height: number,
+  },
 };
 export type BrowserContextTracingStartOptions = {
   name?: string,
   snapshots?: boolean,
   screenshots?: boolean,
+  video?: boolean,
+  videoSize?: {
+    width: number,
+    height: number,
+  },
 };
 export type BrowserContextTracingStartResult = void;
 export type BrowserContextTracingStopParams = {};
@@ -872,7 +882,8 @@ export type BrowserContextTracingStopResult = void;
 export type BrowserContextTracingExportParams = {};
 export type BrowserContextTracingExportOptions = {};
 export type BrowserContextTracingExportResult = {
-  artifact: ArtifactChannel,
+  trace: ArtifactChannel,
+  video: ArtifactChannel[],
 };
 
 // ----------- Page -----------

@@ -639,12 +639,21 @@ BrowserContext:
         name: string?
         snapshots: boolean?
         screenshots: boolean?
+        video: boolean?
+        videoSize:
+          type: object?
+          properties:
+            width: number
+            height: number
 
     tracingStop:
 
     tracingExport:
       returns:
-        artifact: Artifact
+        trace: Artifact
+        video:
+          type: array
+          items: Artifact
 
   events:
 

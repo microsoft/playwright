@@ -328,4 +328,12 @@ export class WKBrowserContext extends BrowserContext {
   async _doCancelDownload(uuid: string) {
     await this._browser._browserSession.send('Playwright.cancelDownload', { uuid });
   }
+
+  async _doStartVideoRecording() {
+    await Promise.all(this._wkPages().map(page => page._startVideo(this._videoOptions!)));
+  }
+
+  async _doStopVideoRecording() {
+    await Promise.all(this._wkPages().map(page => page._stopVideo()));
+  }
 }

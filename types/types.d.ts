@@ -11970,7 +11970,7 @@ export interface Touchscreen {
  * API for collecting and saving Playwright traces. Playwright traces can be opened using the Playwright CLI after
  * Playwright script runs.
  *
- * Start with specifying the folder traces will be stored in:
+ * Start recording a trace, then perform actions, and later stop recording and export trace to a file.
  *
  * ```js
  * const browser = await chromium.launch();
@@ -12011,6 +12011,24 @@ export interface Tracing {
      * Whether to capture DOM snapshot on every action.
      */
     snapshots?: boolean;
+
+    /**
+     * Whether to record video for all pages.
+     *
+     * Alternatively, specifies the dimensions of the recorded video. Actual picture of each page will be scaled down if
+     * necessary to fit the specified size.
+     */
+    video?: boolean|{
+      /**
+       * Video frame width.
+       */
+      width: number;
+
+      /**
+       * Video frame height.
+       */
+      height: number;
+    };
   }): Promise<void>;
 
   /**
@@ -12020,9 +12038,16 @@ export interface Tracing {
   stop(options?: {
     /**
      * Export trace into the file with the given name.
+     *
+     * If started with the `video` option, a few additional video files will be exported next to the trace file.
      */
     path?: string;
-  }): Promise<void>;
+  }): Promise<{
+    /**
+     * The list of video files created next to the exported trace file.
+     */
+    videoFiles: Array<string>;
+  }>;
 }
 
 /**

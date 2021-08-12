@@ -58,12 +58,6 @@ export type ScreenshotOptions = ElementScreenshotOptions & {
   clip?: Rect,
 };
 
-export type PageScreencastOptions = {
-  width: number,
-  height: number,
-  outputFile: string,
-};
-
 export type Credentials = {
   username: string;
   password: string;
@@ -244,6 +238,7 @@ export type SetNetworkCookieParam = {
 
 export type EmulatedSize = { viewport: Size, screen: Size };
 
+export type VideoOptions = { dir: string, size: Size };
 export type BrowserContextOptions = {
   sdkLanguage: string,
   viewport?: Size,

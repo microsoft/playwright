@@ -147,14 +147,14 @@ export class CRBrowser extends Browser {
     assert(!this._serviceWorkers.has(targetInfo.targetId), 'Duplicate target ' + targetInfo.targetId);
 
     if (targetInfo.type === 'background_page') {
-      const backgroundPage = new CRPage(session, targetInfo.targetId, context, null, false, true);
+      const backgroundPage = new CRPage(session, targetInfo.targetId, context, null, true);
       this._backgroundPages.set(targetInfo.targetId, backgroundPage);
       return;
     }
 
     if (targetInfo.type === 'page') {
       const opener = targetInfo.openerId ? this._crPages.get(targetInfo.openerId) || null : null;
-      const crPage = new CRPage(session, targetInfo.targetId, context, opener, true, false);
+      const crPage = new CRPage(session, targetInfo.targetId, context, opener, false);
       this._crPages.set(targetInfo.targetId, crPage);
       return;
     }
@@ -324,10 +324,14 @@ export class CRBrowserContext extends BrowserContext {
     await Promise.all(promises);
   }
 
+  _crPages(): CRPage[] {
+    return Array.from(this._browser._crPages.values()).filter(page => page._browserContext === this);
+  }
+
   pages(): Page[] {
     const result: Page[] = [];
-    for (const crPage of this._browser._crPages.values()) {
-      if (crPage._browserContext === this && crPage._initializedPage)
+    for (const crPage of this._crPages()) {
+      if (crPage._initializedPage)
         result.push(crPage._initializedPage);
     }
     return result;
@@ -489,6 +493,19 @@ export class CRBrowserContext extends BrowserContext {
       guid: guid,
       browserContextId: this._browserContextId,
     });
+  }
+
+  async _doStartVideoRecording() {
+    await Promise.all(this._crPages().map(async page => {
+      if (!page._mainFrameSession._canRecordVideo())
+        return;
+      const videoRecorderOptions = await page._mainFrameSession._createVideoRecorder(this._videoOptions!);
+      await page._mainFrameSession._startVideoRecording(videoRecorderOptions);
+    }));
+  }
+
+  async _doStopVideoRecording() {
+    await Promise.all(this._crPages().map(page => page._mainFrameSession._stopVideoRecording()));
   }
 
   backgroundPages(): Page[] {

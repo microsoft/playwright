@@ -413,6 +413,11 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     name: tOptional(tString),
     snapshots: tOptional(tBoolean),
     screenshots: tOptional(tBoolean),
+    video: tOptional(tBoolean),
+    videoSize: tOptional(tObject({
+      width: tNumber,
+      height: tNumber,
+    })),
   });
   scheme.BrowserContextTracingStopParams = tOptional(tObject({}));
   scheme.BrowserContextTracingExportParams = tOptional(tObject({}));

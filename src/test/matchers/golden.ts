@@ -23,6 +23,7 @@ import jpeg from 'jpeg-js';
 import pixelmatch from 'pixelmatch';
 import { diff_match_patch, DIFF_INSERT, DIFF_DELETE, DIFF_EQUAL } from '../../third_party/diff_match_patch';
 import { UpdateSnapshots } from '../types';
+import { addSuffixToFilePath } from '../../utils/utils';
 
 // Note: we require the pngjs version of pixelmatch to avoid version mismatches.
 const { PNG } = require(require.resolve('pngjs', { paths: [require.resolve('pixelmatch')] }));
@@ -91,9 +92,9 @@ export function compare(
 ): { pass: boolean; message?: string; expectedPath?: string, actualPath?: string, diffPath?: string, mimeType?: string } {
   const snapshotFile = snapshotPath(name);
   const outputFile = outputPath(name);
-  const expectedPath = addSuffix(outputFile, '-expected');
-  const actualPath = addSuffix(outputFile, '-actual');
-  const diffPath = addSuffix(outputFile, '-diff');
+  const expectedPath = addSuffixToFilePath(outputFile, '-expected');
+  const actualPath = addSuffixToFilePath(outputFile, '-actual');
+  const diffPath = addSuffixToFilePath(outputFile, '-diff');
 
   if (!fs.existsSync(snapshotFile)) {
     const isWriteMissingMode = updateSnapshots === 'all' || updateSnapshots === 'missing';
@@ -189,13 +190,6 @@ export function compare(
 
 function indent(lines: string, tab: string) {
   return lines.replace(/^(?=.+$)/gm, tab);
-}
-
-function addSuffix(filePath: string, suffix: string, customExtension?: string): string {
-  const dirname = path.dirname(filePath);
-  const ext = path.extname(filePath);
-  const name = path.basename(filePath, ext);
-  return path.join(dirname, name + suffix + (customExtension || ext));
 }
 
 function diff_prettyTerminal(diffs: diff_match_patch.Diff[]) {

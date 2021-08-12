@@ -392,3 +392,10 @@ export function wrapInASCIIBox(text: string, padding = 0): string {
     '╚' + '═'.repeat(maxLength + padding * 2) + '╝',
   ].join('\n');
 }
+
+export function addSuffixToFilePath(filePath: string, suffix: string, customExtension?: string): string {
+  const dirname = path.dirname(filePath);
+  const ext = path.extname(filePath);
+  const name = path.basename(filePath, ext);
+  return path.join(dirname, name + suffix + (customExtension || ext));
+}
