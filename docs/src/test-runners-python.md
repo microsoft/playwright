@@ -52,11 +52,11 @@ addopts = --headed --browser firefox
 
 - `--headed`: Run tests in headed mode (default: headless).
 - `--browser`: Run tests in a different browser `chromium`, `firefox`, or `webkit`. It can be specified multiple times (default: all browsers).
-- `--browser-channel` Browser channel to be used.
+- `--browser-channel` [Browser channel](./browsers.md) to be used.
 - `--slowmo` Run tests with slow mo.
-- `--device` Device to be emulated.
+- `--device` [Device](./emulation.md) to be emulated.
 - `--output` Directory for artifacts produced by tests (default: `test-results`).
-- `--tracing` Whether to record a trace for each test. `on`, `off`, or `retain-on-failure` (default: `off`).
+- `--tracing` Whether to record a [trace](./trace-viewer.md) for each test. `on`, `off`, or `retain-on-failure` (default: `off`).
 - `--video` Whether to record video for each test. `on`, `off`, or `retain-on-failure` (default: `off`).
 - `--screenshot` Whether to automatically capture a screenshot after each test. `on`, `off`, or `only-on-failure` (default: `off`).
 
