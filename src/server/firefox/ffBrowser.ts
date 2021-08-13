@@ -207,8 +207,10 @@ export class FFBrowserContext extends BrowserContext {
       promises.push(this._ensureVideosPath().then(() => {
         return this._browser._connection.send('Browser.setVideoRecordingOptions', {
           // validateBrowserContextOptions ensures correct video size.
-          ...this._options.recordVideo!.size!,
-          dir: this._options.recordVideo!.dir,
+          options: {
+            ...this._options.recordVideo!.size!,
+            dir: this._options.recordVideo!.dir,
+          },
           browserContextId: this._browserContextId
         });
       }));
