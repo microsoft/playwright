@@ -7046,7 +7046,7 @@ export interface Locator {
    * Examples:
    *
    * ```js
-   * const tweets = await page.locator('.tweet .retweets');
+   * const tweets = page.locator('.tweet .retweets');
    * expect(await tweets.evaluate(node => node.innerText)).toBe('10 retweets');
    * ```
    *
