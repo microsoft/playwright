@@ -113,7 +113,7 @@ it('should give access to the intercepted response', async ({page, server}) => {
   const routePromise = new Promise<Route>(f => routeCallback = f);
   await page.route('**/title.html', routeCallback);
 
-  const evalPromise = page.evaluate(url => fetch(url), server.PREFIX + '/title.html').catch(console.log);
+  const evalPromise = page.evaluate(url => fetch(url), server.PREFIX + '/title.html');
 
   const route = await routePromise;
   // @ts-expect-error
@@ -123,6 +123,29 @@ it('should give access to the intercepted response', async ({page, server}) => {
   expect(response.ok()).toBeTruthy();
   expect(response.url()).toBe(server.PREFIX + '/title.html');
   expect(response.headers()['content-type']).toBe('text/html; charset=utf-8');
+
+  await Promise.all([route.fulfill(), evalPromise]);
+});
+
+it('should give access to the intercepted response status text', async ({page, server, browserName}) => {
+  it.fail(browserName === 'chromium', 'Status line is not reported for intercepted responses');
+  await page.goto(server.EMPTY_PAGE);
+  server.setRoute('/title.html', (req, res) => {
+    res.statusCode = 200;
+    res.statusMessage = 'You are awesome';
+    res.setHeader('Content-Type', 'text/plain');
+    res.end();
+  });
+  let routeCallback;
+  const routePromise = new Promise<Route>(f => routeCallback = f);
+  await page.route('**/title.html', routeCallback);
+  const evalPromise = page.evaluate(url => fetch(url), server.PREFIX + '/title.html');
+  const route = await routePromise;
+  // @ts-expect-error
+  const response = await route._intercept();
+
+  expect(response.statusText()).toBe('You are awesome');
+  expect(response.url()).toBe(server.PREFIX + '/title.html');
 
   await Promise.all([route.fulfill(), evalPromise]);
 });
