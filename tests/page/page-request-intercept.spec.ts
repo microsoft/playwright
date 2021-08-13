@@ -85,6 +85,30 @@ it('should support fulfill after intercept', async ({page, server}) => {
   expect(await response.text()).toBe('<title>Woof-Woof</title>' + os.EOL);
 });
 
+it.only('should intercept failures', async ({page, browserName, server}) => {
+  server.setRoute('/title.html', (req, res) => {
+    req.destroy();
+  });
+  const requestPromise = server.waitForRequest('/title.html');
+  let error;
+  await page.route('**', async route => {
+    try {
+      // @ts-expect-error
+      await route._intercept();
+      await route.fulfill();
+    } catch (e) {
+      error = e;
+    }
+  });
+  const [request] = await Promise.all([
+    requestPromise,
+    page.goto(server.PREFIX + '/title.html').catch(e => {})
+  ]);
+  expect(error).toBeTruthy();
+  expect(error.message).toContain('Request failed');
+  expect(request.url).toBe('/title.html');
+});
+
 it('should support request overrides', async ({page, server, browserName, browserMajorVersion}) => {
   it.skip(browserName === 'chromium' && browserMajorVersion <= 91);
   const requestPromise = server.waitForRequest('/empty.html');

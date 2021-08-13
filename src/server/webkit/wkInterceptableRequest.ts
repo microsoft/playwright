@@ -97,8 +97,8 @@ export class WKRouteImpl implements network.RouteDelegate {
   private readonly _requestId: string;
   _requestInterceptedCallback: () => void = () => {};
   private readonly _requestInterceptedPromise: Promise<unknown>;
-  _responseInterceptedCallback: ((responsePayload: Protocol.Network.Response) => void) | undefined;
-  private _responseInterceptedPromise: Promise<Protocol.Network.Response> | undefined;
+  _responseInterceptedCallback: ((payload: { response?: Protocol.Network.Response, error?: Protocol.Network.loadingFailedPayload }) => void) | undefined;
+  private _responseInterceptedPromise: Promise<{ response?: Protocol.Network.Response, error?: Protocol.Network.loadingFailedPayload }> | undefined;
   private readonly _page: WKPage;
 
   constructor(session: WKSession, page: WKPage, requestId: string) {
@@ -165,8 +165,10 @@ export class WKRouteImpl implements network.RouteDelegate {
     });
     if (!this._responseInterceptedPromise)
       return null;
-    const responsePayload = await this._responseInterceptedPromise;
-    return new InterceptedResponse(request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers));
+    const { response, error } = await this._responseInterceptedPromise;
+    if (error)
+      throw new Error(`Request failed: ${error.errorText}`);
+    return new InterceptedResponse(request, response!.status, response!.statusText, headersObjectToArray(response!.headers));
   }
 }
 
