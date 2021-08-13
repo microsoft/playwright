@@ -18,7 +18,8 @@
 
 const path = require('path');
 const Documentation = require('./documentation');
-const XmlDoc = require('./xmlDocumentation')
+const XmlDoc = require('./xmlDocumentation');
+const { generateChannels } = require('../generate_dotnet_channels');
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 const fs = require('fs');
 const { parseApi } = require('./api_parser');
@@ -223,6 +224,8 @@ for (let [name, type] of modelTypes)
 
 for (let [name, literals] of enumTypes)
   renderEnum(name, literals);
+
+generateChannels(enumTypes);
 
 if (process.argv[3] !== "--skip-format") {
   // run the formatting tool for .net, to ensure the files are prepped
