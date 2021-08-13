@@ -54,7 +54,7 @@ Learn more in the [react selectors documentation](https://playwright.dev/docs/se
 // select the first button among all buttons
 await button.ClickAsync("button >> nth=0");
 // or if you are using locators, you can use First, Nth() and Last
-await page.locator("button").First.ClickAsync();
+await page.Locator("button").First.ClickAsync();
 
 // click a visible button
 await button.ClickAsync("button >> visible=true");
