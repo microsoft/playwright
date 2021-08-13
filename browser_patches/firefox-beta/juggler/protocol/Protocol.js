@@ -453,9 +453,11 @@ const Browser = {
     'setVideoRecordingOptions': {
       params: {
         browserContextId: t.Optional(t.String),
-        dir: t.String,
-        width: t.Number,
-        height: t.Number,
+        options: t.Optional({
+          dir: t.String,
+          width: t.Number,
+          height: t.Number,
+        }),
       },
     },
     'cancelDownload': {

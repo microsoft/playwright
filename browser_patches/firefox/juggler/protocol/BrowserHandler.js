@@ -213,8 +213,8 @@ class BrowserHandler {
     await this._targetRegistry.browserContextForId(browserContextId).setForcedColors(nullToUndefined(forcedColors));
   }
 
-  async ['Browser.setVideoRecordingOptions']({browserContextId, dir, width, height, scale}) {
-    await this._targetRegistry.browserContextForId(browserContextId).setVideoRecordingOptions({dir, width, height, scale});
+  async ['Browser.setVideoRecordingOptions']({browserContextId, options}) {
+    await this._targetRegistry.browserContextForId(browserContextId).setVideoRecordingOptions(options);
   }
 
   async ['Browser.setUserAgentOverride']({browserContextId, userAgent}) {
