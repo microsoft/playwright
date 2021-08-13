@@ -5,6 +5,68 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.14
+
+#### ⚡️ New "strict" mode
+
+Selector ambiguity is a common problem in automation testing. **"strict" mode**
+ensures that your selector points to a single element and throws otherwise.
+
+Set `setStrict(true)` in your action calls to opt in.
+
+```csharp
+// This will throw if you have more than one button!
+await page.ClickAsync("button", new Page.ClickOptions().setStrict(true));
+```
+
+#### 📍 New [**Locators API**](https://playwright.dev/docs/api/class-locator)
+
+Locator represents a view to the element(s) on the page. It captures the logic sufficient to retrieve the element at any given moment.
+
+The difference between the [Locator](https://playwright.dev/docs/api/class-locator) and [ElementHandle](https://playwright.dev/docs/api/class-elementhandle) is that the latter points to a particular element, while [Locator](https://playwright.dev/docs/api/class-locator) captures the logic of how to retrieve that element.
+
+Also, locators are **"strict" by default**!
+
+```csharp
+var locator = page.Locator("button");
+await locator.ClickAsync();
+```
+
+Learn more in the [documentation](https://playwright.dev/docs/api/class-locator).
+
+#### 🧩 Experimental [**React**](https://playwright.dev/docs/selectors#react-selectors) and [**Vue**](https://playwright.dev/docs/selectors#vue-selectors) selector engines
+
+React and Vue selectors allow selecting elements by its component name and/or property values. The syntax is very similar to [attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors) and supports all attribute selector operators.
+
+```csharp
+await page.ClickAsync("_react=SubmitButton[enabled=true]");
+await page.ClickAsync("_vue=submit-button[enabled=true]");
+```
+
+Learn more in the [react selectors documentation](https://playwright.dev/docs/selectors#react-selectors) and the [vue selectors documentation](https://playwright.dev/docs/selectors#vue-selectors).
+
+#### ✨ New [**`nth`**](https://playwright.dev/docs/selectors#n-th-element-selector) and [**`visible`**](https://playwright.dev/docs/selectors#selecting-visible-elements) selector engines
+
+- [`nth`](https://playwright.dev/docs/selectors#n-th-element-selector) selector engine is equivalent to the `:nth-match` pseudo class, but could be combined with other selector engines.
+- [`visible`](https://playwright.dev/docs/selectors#selecting-visible-elements) selector engine is equivalent to the `:visible` pseudo class, but could be combined with other selector engines.
+
+```csharp
+// select the first button among all buttons
+await button.ClickAsync("button >> nth=0");
+// or if you are using locators, you can use First, Nth() and Last
+await page.locator("button").First.ClickAsync();
+
+// click a visible button
+await button.ClickAsync("button >> visible=true");
+```
+
+### Browser Versions
+
+- Chromium 94.0.4595.0
+- Mozilla Firefox 91.0
+- WebKit 15.0
+
+
 ## Version 1.13
 
 #### Playwright
