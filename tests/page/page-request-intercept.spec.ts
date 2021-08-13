@@ -141,7 +141,7 @@ it('should give access to the intercepted response status text', async ({page, s
   await page.route('**/title.html', routeCallback);
   const evalPromise = page.evaluate(url => fetch(url), server.PREFIX + '/title.html');
   const route = await routePromise;
-  // // @ts-expect-error
+  // @ts-expect-error
   const response = await route._intercept();
 
   expect(response.statusText()).toBe('You are awesome');
