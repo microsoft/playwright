@@ -21,6 +21,18 @@ import { FullResult, TestCase, TestResult } from '../../../types/testReporter';
 class DotReporter extends BaseReporter {
   private _counter = 0;
 
+  onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
+    super.onStdOut(chunk, test, result);
+    if (!this.config.quiet)
+      process.stdout.write(chunk);
+  }
+
+  onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
+    super.onStdErr(chunk, test, result);
+    if (!this.config.quiet)
+      process.stderr.write(chunk);
+  }
+
   onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
     if (this._counter === 80) {

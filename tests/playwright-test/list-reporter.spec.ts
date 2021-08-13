@@ -32,14 +32,18 @@ test('render each test with project name', async ({ runInlineTest }) => {
       test('passes', async ({}) => {
         expect(0).toBe(0);
       });
+      test.skip('skipped', async () => {
+      });
     `,
   }, { reporter: 'list' });
   const text = stripAscii(result.output);
   const positiveStatusMarkPrefix = process.platform === 'win32' ? 'ok' : '✓ ';
   const negativateStatusMarkPrefix = process.platform === 'win32' ? 'x ' : '✘ ';
-  expect(text).toContain(`${negativateStatusMarkPrefix} 1) [foo] › a.test.ts:6:7 › fails`);
-  expect(text).toContain(`${negativateStatusMarkPrefix} 2) [bar] › a.test.ts:6:7 › fails`);
+  expect(text).toContain(`${negativateStatusMarkPrefix} [foo] › a.test.ts:6:7 › fails`);
+  expect(text).toContain(`${negativateStatusMarkPrefix} [bar] › a.test.ts:6:7 › fails`);
   expect(text).toContain(`${positiveStatusMarkPrefix} [foo] › a.test.ts:9:7 › passes`);
   expect(text).toContain(`${positiveStatusMarkPrefix} [bar] › a.test.ts:9:7 › passes`);
+  expect(text).toContain(`-  [foo] › a.test.ts:12:12 › skipped`);
+  expect(text).toContain(`-  [bar] › a.test.ts:12:12 › skipped`);
   expect(result.exitCode).toBe(1);
 });
