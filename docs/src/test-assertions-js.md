@@ -37,7 +37,7 @@ By default, the timeout for assertions is not set, so it'll wait forever, until 
 Ensures [Locator] points to the checked input.
 
 ```js
-const locator = await page.locator('.subscribe');
+const locator = page.locator('.subscribe');
 await expect(locator).toBeChecked();
 ```
 
@@ -48,7 +48,7 @@ await expect(locator).toBeChecked();
 Ensures [Locator] points to a disabled element.
 
 ```js
-const locator = await page.locator('button.submit');
+const locator = page.locator('button.submit');
 await expect(locator).toBeDisabled();
 ```
 
@@ -59,7 +59,7 @@ await expect(locator).toBeDisabled();
 Ensures [Locator] points to an editable element.
 
 ```js
-const locator = await page.locator('input');
+const locator = page.locator('input');
 await expect(locator).toBeEditable();
 ```
 
@@ -70,7 +70,7 @@ await expect(locator).toBeEditable();
 Ensures [Locator] points to an empty editable element or to a DOM node that has no text.
 
 ```js
-const locator = await page.locator('div.warning');
+const locator = page.locator('div.warning');
 await expect(locator).toBeEmpty();
 ```
 
@@ -81,7 +81,7 @@ await expect(locator).toBeEmpty();
 Ensures [Locator] points to an enabled element.
 
 ```js
-const locator = await page.locator('button.submit');
+const locator = page.locator('button.submit');
 await expect(locator).toBeEnabled();
 ```
 
@@ -92,7 +92,7 @@ await expect(locator).toBeEnabled();
 Ensures [Locator] points to a focused DOM node.
 
 ```js
-const locator = await page.locator('input');
+const locator = page.locator('input');
 await expect(locator).toBeFocused();
 ```
 
@@ -103,7 +103,7 @@ await expect(locator).toBeFocused();
 Ensures [Locator] points to a hidden DOM node, which is the opposite of [visible](./actionability.md#visible).
 
 ```js
-const locator = await page.locator('.my-element');
+const locator = page.locator('.my-element');
 await expect(locator).toBeHidden();
 ```
 
@@ -114,7 +114,7 @@ await expect(locator).toBeHidden();
 Ensures [Locator] points to a [visible](./actionability.md#visible) DOM node.
 
 ```js
-const locator = await page.locator('.my-element');
+const locator = page.locator('.my-element');
 await expect(locator).toBeVisible();
 ```
 
@@ -127,7 +127,7 @@ await expect(locator).toBeVisible();
 Ensures [Locator] points to a selected option.
 
 ```js
-const locator = await page.locator('.title');
+const locator = page.locator('.title');
 await expect(locator).toContainText('substring');
 ```
 
@@ -140,7 +140,7 @@ await expect(locator).toContainText('substring');
 Ensures [Locator] points to an element with given attribute.
 
 ```js
-const locator = await page.locator('input');
+const locator = page.locator('input');
 await expect(locator).toHaveAttribute('type', 'text');
 ```
 
@@ -152,14 +152,14 @@ await expect(locator).toHaveAttribute('type', 'text');
 Ensures [Locator] points to an element with given CSS class.
 
 ```js
-const locator = await page.locator('#component');
+const locator = page.locator('#component');
 await expect(locator).toHaveClass(/selected/);
 ```
 
 Note that if array is passed as an expected value, entire lists can be asserted:
 
 ```js
-const locator = await page.locator('list > #component');
+const locator = page.locator('list > #component');
 await expect(locator).toHaveClass(['component', 'component selected', 'component']);
 ```
 
@@ -171,7 +171,7 @@ await expect(locator).toHaveClass(['component', 'component selected', 'component
 Ensures [Locator] resolves to an exact number of DOM nodes.
 
 ```js
-const list = await page.locator('list > #component');
+const list = page.locator('list > #component');
 await expect(list).toHaveCount(3);
 ```
 
@@ -184,7 +184,7 @@ await expect(list).toHaveCount(3);
 Ensures [Locator] resolves to an element with the given computed CSS style
 
 ```js
-const locator = await page.locator('button');
+const locator = page.locator('button');
 await expect(locator).toHaveCSS('display', 'flex');
 ```
 
@@ -196,7 +196,7 @@ await expect(locator).toHaveCSS('display', 'flex');
 Ensures [Locator] points to an element with the given DOM Node ID.
 
 ```js
-const locator = await page.locator('input');
+const locator = page.locator('input');
 await expect(locator).toHaveId('lastname');
 ```
 
@@ -210,7 +210,7 @@ Ensures [Locator] points to an element with given JavaScript property. Note that
 of a primitive type as well as a plain serializable JavaScript object.
 
 ```js
-const locator = await page.locator('.component');
+const locator = page.locator('.component');
 await expect(locator).toHaveJSProperty('loaded', true);
 ```
 
@@ -223,14 +223,14 @@ await expect(locator).toHaveJSProperty('loaded', true);
 Ensures [Locator] points to an element with the given text. You can use regular expressions for the value as well.
 
 ```js
-const locator = await page.locator('.title');
+const locator = page.locator('.title');
 await expect(locator).toHaveText(/Welcome, .*/);
 ```
 
 Note that if array is passed as an expected value, entire lists can be asserted:
 
 ```js
-const locator = await page.locator('list > #component');
+const locator = page.locator('list > #component');
 await expect(locator).toHaveText(['Text 1', 'Text 2', 'Text 3']);
 ```
 
@@ -264,6 +264,6 @@ await expect(page).toHaveURL(/.*checkout/);
 Ensures [Locator] points to an element with the given input value. You can use regular expressions for the value as well.
 
 ```js
-const locator = await page.locator('input[type=number]');
+const locator = page.locator('input[type=number]');
 await expect(locator).toHaveValue(/[0-9]/);
 ```

@@ -3,7 +3,7 @@ id: browsers
 title: "Browsers"
 ---
 
-Each version of Playwright needs specific versions of browser binaries to operate. Depending on the language you use, Playwright will either download these browsers at package install time for you will use [Playwright CLI](./cli.md) to install these browsers.
+Each version of Playwright needs specific versions of browser binaries to operate. Depending on the language you use, Playwright will either download these browsers at package install time for you, or you will need to use [Playwright CLI](./cli.md) to install these browsers.
 
 With every release, Playwright updates the versions of the browsers it supports, so that the latest Playwright would support the latest browsers at any moment. It means that every time you update playwright, you might need to re-run the `install` CLI command.
 
@@ -136,7 +136,6 @@ you can still opt into stable channels on the bots that are typically free of su
 ## Installing browsers
 
 ### Prerequisites for .NET
-This conversation was marked as resolved by pavelfeldman
 * langs: csharp
 
 All examples require the `Microsoft.Playwright.CLI` to be installed. You only have to do this once:
