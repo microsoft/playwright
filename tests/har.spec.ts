@@ -125,6 +125,18 @@ it('should include redirectURL', async ({ contextFactory, server }, testInfo) =>
   expect(entry.response.redirectURL).toBe(server.EMPTY_PAGE);
 });
 
+it('should handle redirects from favicons', async ({ contextFactory, server }, testInfo) => {
+  const hashedFaviconUrl = '/favicon-hashed.ico';
+  server.setRedirect('/favicon.ico', hashedFaviconUrl);
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  await page.goto(server.PREFIX + '/favicon.ico');
+  const log = await getLog();
+  expect(log.entries.length).toBe(1);
+  const entry = log.entries[0];
+  expect(entry.request.url).toBe(server.PREFIX + hashedFaviconUrl);
+  expect(entry.response.redirectURL).toBe('');
+});
+
 it('should include query params', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.PREFIX + '/har.html?name=value');
