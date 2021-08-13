@@ -19,11 +19,11 @@ Pass `strict=true` into your action calls to opt in.
 page.click("button", strict=true)
 ```
 
-#### 📍 New [**Locators API**](https://playwright.dev/docs/api/class-locator)
+#### 📍 New [**Locators API**](./api/class-locator)
 
 Locator represents a view to the element(s) on the page. It captures the logic sufficient to retrieve the element at any given moment.
 
-The difference between the [Locator](https://playwright.dev/docs/api/class-locator) and [ElementHandle](https://playwright.dev/docs/api/class-elementhandle) is that the latter points to a particular element, while [Locator](https://playwright.dev/docs/api/class-locator) captures the logic of how to retrieve that element.
+The difference between the [Locator](./api/class-locator) and [ElementHandle](./api/class-elementhandle) is that the latter points to a particular element, while [Locator](./api/class-locator) captures the logic of how to retrieve that element.
 
 Also, locators are **"strict" by default**!
 
@@ -32,9 +32,9 @@ locator = page.locator("button")
 locator.click()
 ```
 
-Learn more in the [documentation](https://playwright.dev/docs/api/class-locator).
+Learn more in the [documentation](./api/class-locator).
 
-#### 🧩 Experimental [**React**](https://playwright.dev/docs/selectors#react-selectors) and [**Vue**](https://playwright.dev/docs/selectors#vue-selectors) selector engines
+#### 🧩 Experimental [**React**](./selectors#react-selectors) and [**Vue**](./selectors#vue-selectors) selector engines
 
 React and Vue selectors allow selecting elements by its component name and/or property values. The syntax is very similar to [attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors) and supports all attribute selector operators.
 
@@ -43,12 +43,12 @@ page.click("_react=SubmitButton[enabled=true]");
 page.click("_vue=submit-button[enabled=true]");
 ```
 
-Learn more in the [react selectors documentation](https://playwright.dev/docs/selectors#react-selectors) and the [vue selectors documentation](https://playwright.dev/docs/selectors#vue-selectors).
+Learn more in the [react selectors documentation](./selectors#react-selectors) and the [vue selectors documentation](./selectors#vue-selectors).
 
-#### ✨ New [**`nth`**](https://playwright.dev/docs/selectors#n-th-element-selector) and [**`visible`**](https://playwright.dev/docs/selectors#selecting-visible-elements) selector engines
+#### ✨ New [**`nth`**](./selectors#n-th-element-selector) and [**`visible`**](./selectors#selecting-visible-elements) selector engines
 
-- [`nth`](https://playwright.dev/docs/selectors#n-th-element-selector) selector engine is equivalent to the `:nth-match` pseudo class, but could be combined with other selector engines.
-- [`visible`](https://playwright.dev/docs/selectors#selecting-visible-elements) selector engine is equivalent to the `:visible` pseudo class, but could be combined with other selector engines.
+- [`nth`](./selectors#n-th-element-selector) selector engine is equivalent to the `:nth-match` pseudo class, but could be combined with other selector engines.
+- [`visible`](./selectors#selecting-visible-elements) selector engine is equivalent to the `:visible` pseudo class, but could be combined with other selector engines.
 
 ```py
 # select the first button among all buttons

@@ -21,11 +21,11 @@ Pass `strict: true` into your action calls to opt in.
 await page.click('button', { strict: true });
 ```
 
-#### 📍 New [**Locators API**](https://playwright.dev/docs/api/class-locator)
+#### 📍 New [**Locators API**](./api/class-locator)
 
 Locator represents a view to the element(s) on the page. It captures the logic sufficient to retrieve the element at any given moment.
 
-The difference between the [Locator](https://playwright.dev/docs/api/class-locator) and [ElementHandle](https://playwright.dev/docs/api/class-elementhandle) is that the latter points to a particular element, while [Locator](https://playwright.dev/docs/api/class-locator) captures the logic of how to retrieve that element.
+The difference between the [Locator](./api/class-locator) and [ElementHandle](./api/class-elementhandle) is that the latter points to a particular element, while [Locator](./api/class-locator) captures the logic of how to retrieve that element.
 
 Also, locators are **"strict" by default**!
 
@@ -34,9 +34,9 @@ const locator = page.locator('button');
 await locator.click();
 ```
 
-Learn more in the [documentation](https://playwright.dev/docs/api/class-locator).
+Learn more in the [documentation](./api/class-locator).
 
-#### 🧩 Experimental [**React**](https://playwright.dev/docs/selectors#react-selectors) and [**Vue**](https://playwright.dev/docs/selectors#vue-selectors) selector engines
+#### 🧩 Experimental [**React**](./selectors#react-selectors) and [**Vue**](./selectors#vue-selectors) selector engines
 
 React and Vue selectors allow selecting elements by its component name and/or property values. The syntax is very similar to [attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors) and supports all attribute selector operators.
 
@@ -45,12 +45,12 @@ await page.click('_react=SubmitButton[enabled=true]');
 await page.click('_vue=submit-button[enabled=true]');
 ```
 
-Learn more in the [react selectors documentation](https://playwright.dev/docs/selectors#react-selectors) and the [vue selectors documentation](https://playwright.dev/docs/selectors#vue-selectors).
+Learn more in the [react selectors documentation](./selectors#react-selectors) and the [vue selectors documentation](./selectors#vue-selectors).
 
-#### ✨ New [**`nth`**](https://playwright.dev/docs/selectors#n-th-element-selector) and [**`visible`**](https://playwright.dev/docs/selectors#selecting-visible-elements) selector engines
+#### ✨ New [**`nth`**](./selectors#n-th-element-selector) and [**`visible`**](./selectors#selecting-visible-elements) selector engines
 
-- [`nth`](https://playwright.dev/docs/selectors#n-th-element-selector) selector engine is equivalent to the `:nth-match` pseudo class, but could be combined with other selector engines.
-- [`visible`](https://playwright.dev/docs/selectors#selecting-visible-elements) selector engine is equivalent to the `:visible` pseudo class, but could be combined with other selector engines.
+- [`nth`](./selectors#n-th-element-selector) selector engine is equivalent to the `:nth-match` pseudo class, but could be combined with other selector engines.
+- [`visible`](./selectors#selecting-visible-elements) selector engine is equivalent to the `:visible` pseudo class, but could be combined with other selector engines.
 
 ```js
 // select the first button among all buttons
@@ -74,33 +74,33 @@ Consider the following example:
 await expect(page.locator('.status')).toHaveText('Submitted');
 ```
 
-Playwright Test will be re-testing the node with the selector `.status` until fetched Node has the `"Submitted"` text. It will be re-fetching the node and checking it over and over, until the condition is met or until the timeout is reached. You can either pass this timeout or configure it once via the [`testProject.expect`](https://playwright.dev/docs/api/class-testproject/#test-project-expect) value in test config.
+Playwright Test will be re-testing the node with the selector `.status` until fetched Node has the `"Submitted"` text. It will be re-fetching the node and checking it over and over, until the condition is met or until the timeout is reached. You can either pass this timeout or configure it once via the [`testProject.expect`](./api/class-testproject/#test-project-expect) value in test config.
 
 By default, the timeout for assertions is not set, so it'll wait forever, until the whole test times out.
 
 List of all new assertions:
 
-- [`expect(locator).toBeChecked()`](https://playwright.dev/docs/test-assertions#expectlocatortobechecked)
-- [`expect(locator).toBeDisabled()`](https://playwright.dev/docs/test-assertions#expectlocatortobedisabled)
-- [`expect(locator).toBeEditable()`](https://playwright.dev/docs/test-assertions#expectlocatortobeeditable)
-- [`expect(locator).toBeEmpty()`](https://playwright.dev/docs/test-assertions#expectlocatortobeempty)
-- [`expect(locator).toBeEnabled()`](https://playwright.dev/docs/test-assertions#expectlocatortobeenabled)
-- [`expect(locator).toBeFocused()`](https://playwright.dev/docs/test-assertions#expectlocatortobefocused)
-- [`expect(locator).toBeHidden()`](https://playwright.dev/docs/test-assertions#expectlocatortobehidden)
-- [`expect(locator).toBeVisible()`](https://playwright.dev/docs/test-assertions#expectlocatortobevisible)
-- [`expect(locator).toContainText(text, options?)`](https://playwright.dev/docs/test-assertions#expectlocatortocontaintexttext-options)
-- [`expect(locator).toHaveAttribute(name, value)`](https://playwright.dev/docs/test-assertions#expectlocatortohaveattributename-value)
-- [`expect(locator).toHaveClass(expected)`](https://playwright.dev/docs/test-assertions#expectlocatortohaveclassexpected)
-- [`expect(locator).toHaveCount(count)`](https://playwright.dev/docs/test-assertions#expectlocatortohavecountcount)
-- [`expect(locator).toHaveCSS(name, value)`](https://playwright.dev/docs/test-assertions#expectlocatortohavecssname-value)
-- [`expect(locator).toHaveId(id)`](https://playwright.dev/docs/test-assertions#expectlocatortohaveidid)
-- [`expect(locator).toHaveJSProperty(name, value)`](https://playwright.dev/docs/test-assertions#expectlocatortohavejspropertyname-value)
-- [`expect(locator).toHaveText(expected, options)`](https://playwright.dev/docs/test-assertions#expectlocatortohavetextexpected-options)
-- [`expect(page).toHaveTitle(title)`](https://playwright.dev/docs/test-assertions#expectpagetohavetitletitle)
-- [`expect(page).toHaveURL(url)`](https://playwright.dev/docs/test-assertions#expectpagetohaveurlurl)
-- [`expect(locator).toHaveValue(value)`](https://playwright.dev/docs/test-assertions#expectlocatortohavevaluevalue)
+- [`expect(locator).toBeChecked()`](./test-assertions#expectlocatortobechecked)
+- [`expect(locator).toBeDisabled()`](./test-assertions#expectlocatortobedisabled)
+- [`expect(locator).toBeEditable()`](./test-assertions#expectlocatortobeeditable)
+- [`expect(locator).toBeEmpty()`](./test-assertions#expectlocatortobeempty)
+- [`expect(locator).toBeEnabled()`](./test-assertions#expectlocatortobeenabled)
+- [`expect(locator).toBeFocused()`](./test-assertions#expectlocatortobefocused)
+- [`expect(locator).toBeHidden()`](./test-assertions#expectlocatortobehidden)
+- [`expect(locator).toBeVisible()`](./test-assertions#expectlocatortobevisible)
+- [`expect(locator).toContainText(text, options?)`](./test-assertions#expectlocatortocontaintexttext-options)
+- [`expect(locator).toHaveAttribute(name, value)`](./test-assertions#expectlocatortohaveattributename-value)
+- [`expect(locator).toHaveClass(expected)`](./test-assertions#expectlocatortohaveclassexpected)
+- [`expect(locator).toHaveCount(count)`](./test-assertions#expectlocatortohavecountcount)
+- [`expect(locator).toHaveCSS(name, value)`](./test-assertions#expectlocatortohavecssname-value)
+- [`expect(locator).toHaveId(id)`](./test-assertions#expectlocatortohaveidid)
+- [`expect(locator).toHaveJSProperty(name, value)`](./test-assertions#expectlocatortohavejspropertyname-value)
+- [`expect(locator).toHaveText(expected, options)`](./test-assertions#expectlocatortohavetextexpected-options)
+- [`expect(page).toHaveTitle(title)`](./test-assertions#expectpagetohavetitletitle)
+- [`expect(page).toHaveURL(url)`](./test-assertions#expectpagetohaveurlurl)
+- [`expect(locator).toHaveValue(value)`](./test-assertions#expectlocatortohavevaluevalue)
 
-#### ⛓ Serial mode with [`describe.serial`](https://playwright.dev/docs/api/class-test#test-describe-serial)
+#### ⛓ Serial mode with [`describe.serial`](./api/class-test#test-describe-serial)
 
 Declares a group of tests that should always be run serially. If one of the tests fails, all subsequent tests are skipped. All tests in a group are retried together.
 
@@ -111,9 +111,9 @@ test.describe.serial('group', () => {
 });
 ```
 
-Learn more in the [documentation](https://playwright.dev/docs/api/class-test#test-describe-serial).
+Learn more in the [documentation](./api/class-test#test-describe-serial).
 
-#### 🐾 Steps API with [`test.step`](https://playwright.dev/docs/api/class-test#test-step)
+#### 🐾 Steps API with [`test.step`](./api/class-test#test-step)
 
 Split long tests into multiple steps using `test.step()` API:
 
@@ -134,7 +134,7 @@ Step information is exposed in reporters API.
 
 #### 🌎 Launch web server before running tests
 
-To launch a server during the tests, use the [`webServer`](https://playwright.dev/docs/test-advanced/#launching-a-development-web-server-during-the-tests) option in the configuration file. The server will wait for a given port to be available before running the tests, and the port will be passed over to Playwright as a [`baseURL`](https://playwright.dev/docs/api/class-fixtures#fixtures-base-url) when creating a context.
+To launch a server during the tests, use the [`webServer`](./test-advanced/#launching-a-development-web-server-during-the-tests) option in the configuration file. The server will wait for a given port to be available before running the tests, and the port will be passed over to Playwright as a [`baseURL`](./api/class-fixtures#fixtures-base-url) when creating a context.
 
 ```ts
 // playwright.config.ts
@@ -150,7 +150,7 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
-Learn more in the [documentation](https://playwright.dev/docs/test-advanced#launching-a-development-web-server-during-the-tests).
+Learn more in the [documentation](./test-advanced#launching-a-development-web-server-during-the-tests).
 
 ### Browser Versions
 
