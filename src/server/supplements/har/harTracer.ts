@@ -166,9 +166,8 @@ export class HarTracer {
         receive: -1
       },
     };
-    const redirectedFrom = request.redirectedFrom();
-    if (redirectedFrom && !redirectedFrom._isFavicon) {
-      const fromEntry = this._entries.get(redirectedFrom!)!;
+    if (request.redirectedFrom()) {
+      const fromEntry = this._entries.get(request.redirectedFrom()!)!;
       fromEntry.response.redirectURL = request.url();
     }
     this._log.entries.push(harEntry);
