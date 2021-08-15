@@ -17,7 +17,7 @@
 import { ChildProcess } from 'child_process';
 import { assert, monotonicTime } from '../../utils/utils';
 import { Page } from '../page';
-import { launchProcess } from '../processLauncher';
+import { launchProcess } from '../../utils/processLauncher';
 import { Progress, ProgressController } from '../progress';
 import { internalCallMetadata } from '../instrumentation';
 import * as types from '../types';
@@ -92,7 +92,7 @@ export class VideoRecorder {
     const progress = this._progress;
 
     const { launchedProcess, gracefullyClose } = await launchProcess({
-      executablePath: this._ffmpegPath,
+      command: this._ffmpegPath,
       args,
       stdio: 'stdin',
       log: (message: string) => progress.log(message),

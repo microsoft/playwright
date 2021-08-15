@@ -15,6 +15,7 @@
  */
 
 import { Point } from '../../../common/types';
+import { SerializedError } from '../../../protocol/channels';
 
 export type Mode = 'inspecting' | 'recording' | 'none';
 
@@ -36,7 +37,7 @@ export type CallLog = {
   title: string;
   messages: string[];
   status: CallLogStatus;
-  error?: string;
+  error?: SerializedError;
   reveal?: boolean;
   duration?: number;
   params: {

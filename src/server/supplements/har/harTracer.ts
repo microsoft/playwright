@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 
+import { URL } from 'url';
 import fs from 'fs';
 import { BrowserContext } from '../../browserContext';
 import { helper } from '../../helper';
 import * as network from '../../network';
 import { Page } from '../../page';
 import * as har from './har';
+import * as types from '../../types';
+
+const FALLBACK_HTTP_VERSION = 'HTTP/1.1';
 
 type HarOptions = {
   path: string;
@@ -51,6 +55,7 @@ export class HarTracer {
     };
     context.on(BrowserContext.Events.Page, (page: Page) => this._ensurePageEntry(page));
     context.on(BrowserContext.Events.Request, (request: network.Request) => this._onRequest(request));
+    context.on(BrowserContext.Events.RequestFinished, (request: network.Request) => this._onRequestFinished(request).catch(() => {}));
     context.on(BrowserContext.Events.Response, (response: network.Response) => this._onResponse(response));
   }
 
@@ -128,27 +133,28 @@ export class HarTracer {
       request: {
         method: request.method(),
         url: request.url(),
-        httpVersion: 'HTTP/1.1',
+        httpVersion: FALLBACK_HTTP_VERSION,
         cookies: [],
         headers: [],
         queryString: [...url.searchParams].map(e => ({ name: e[0], value: e[1] })),
-        postData: undefined,
+        postData: postDataForHar(request),
         headersSize: -1,
-        bodySize: -1,
+        bodySize: calculateRequestBodySize(request) || 0,
       },
       response: {
         status: -1,
         statusText: '',
-        httpVersion: 'HTTP/1.1',
+        httpVersion: FALLBACK_HTTP_VERSION,
         cookies: [],
         headers: [],
         content: {
           size: -1,
-          mimeType: request.headerValue('content-type') || 'application/octet-stream',
+          mimeType: request.headerValue('content-type') || 'x-unknown',
         },
         headersSize: -1,
         bodySize: -1,
-        redirectURL: ''
+        redirectURL: '',
+        _transferSize: -1
       },
       cache: {
         beforeRequest: null,
@@ -168,29 +174,63 @@ export class HarTracer {
     this._entries.set(request, harEntry);
   }
 
+  private async _onRequestFinished(request: network.Request) {
+    const page = request.frame()._page;
+    const harEntry = this._entries.get(request)!;
+    const response = await request.response();
+
+    if (!response)
+      return;
+
+    const httpVersion = normaliseHttpVersion(response._httpVersion);
+    const transferSize = response._transferSize || -1;
+    const headersSize = calculateResponseHeadersSize(httpVersion, response.status(), response.statusText(), response.headers());
+    const bodySize = transferSize !== -1 ? transferSize - headersSize : -1;
+
+    harEntry.request.httpVersion = httpVersion;
+    harEntry.response.bodySize = bodySize;
+    harEntry.response.headersSize = headersSize;
+    harEntry.response._transferSize = transferSize;
+    harEntry.request.headersSize = calculateRequestHeadersSize(request.method(), request.url(), httpVersion, request.headers());
+
+    const promise = response.body().then(buffer => {
+      const content = harEntry.response.content;
+      content.size = buffer.length;
+      content.compression = harEntry.response.bodySize !== -1 ? buffer.length - harEntry.response.bodySize : 0;
+
+      if (!this._options.omitContent && buffer && buffer.length > 0) {
+        content.text = buffer.toString('base64');
+        content.encoding = 'base64';
+      }
+    }).catch(() => {});
+    this._addBarrier(page, promise);
+  }
+
   private _onResponse(response: network.Response) {
     const page = response.frame()._page;
     const pageEntry = this._ensurePageEntry(page);
     const harEntry = this._entries.get(response.request())!;
     // Rewrite provisional headers with actual
     const request = response.request();
+
     harEntry.request.headers = request.headers().map(header => ({ name: header.name, value: header.value }));
     harEntry.request.cookies = cookiesForHar(request.headerValue('cookie'), ';');
-    harEntry.request.postData = postDataForHar(request) || undefined;
+    harEntry.request.postData = postDataForHar(request);
 
     harEntry.response = {
       status: response.status(),
       statusText: response.statusText(),
-      httpVersion: 'HTTP/1.1',
+      httpVersion: normaliseHttpVersion(response._httpVersion),
       cookies: cookiesForHar(response.headerValue('set-cookie'), '\n'),
       headers: response.headers().map(header => ({ name: header.name, value: header.value })),
       content: {
         size: -1,
-        mimeType: response.headerValue('content-type') || 'application/octet-stream',
+        mimeType: response.headerValue('content-type') || 'x-unknown',
       },
       headersSize: -1,
       bodySize: -1,
-      redirectURL: ''
+      redirectURL: '',
+      _transferSize: -1
     };
     const timing = response.timing();
     if (pageEntry.startedDateTime.valueOf() > timing.startTime)
@@ -220,14 +260,6 @@ export class HarTracer {
       if (details)
         harEntry._securityDetails = details;
     }));
-
-    if (!this._options.omitContent && response.status() === 200) {
-      const promise = response.body().then(buffer => {
-        harEntry.response.content.text = buffer.toString('base64');
-        harEntry.response.content.encoding = 'base64';
-      }).catch(() => {});
-      this._addBarrier(page, promise);
-    }
   }
 
   async flush() {
@@ -246,10 +278,10 @@ export class HarTracer {
   }
 }
 
-function postDataForHar(request: network.Request): har.PostData | null {
+function postDataForHar(request: network.Request): har.PostData | undefined {
   const postData = request.postDataBuffer();
   if (!postData)
-    return null;
+    return;
 
   const contentType = request.headerValue('content-type') || 'application/octet-stream';
   const result: har.PostData = {
@@ -304,4 +336,34 @@ function parseCookie(c: string): har.Cookie {
       cookie.secure = true;
   }
   return cookie;
+}
+
+function calculateResponseHeadersSize(protocol: string, status: number, statusText: string , headers: types.HeadersArray) {
+  let rawHeaders = `${protocol} ${status} ${statusText}\r\n`;
+  for (const header of headers)
+    rawHeaders += `${header.name}: ${header.value}\r\n`;
+  rawHeaders += '\r\n';
+  return rawHeaders.length;
+}
+
+function calculateRequestHeadersSize(method: string, url: string, httpVersion: string, headers: types.HeadersArray) {
+  let rawHeaders = `${method} ${(new URL(url)).pathname} ${httpVersion}\r\n`;
+  for (const header of headers)
+    rawHeaders += `${header.name}: ${header.value}\r\n`;
+  return rawHeaders.length;
+}
+
+function normaliseHttpVersion(httpVersion?: string) {
+  if (!httpVersion)
+    return FALLBACK_HTTP_VERSION;
+  if (httpVersion === 'http/1.1')
+    return 'HTTP/1.1';
+  return httpVersion;
+}
+
+function calculateRequestBodySize(request: network.Request): number|undefined {
+  const postData = request.postDataBuffer();
+  if (!postData)
+    return;
+  return new TextEncoder().encode(postData.toString('utf8')).length;
 }

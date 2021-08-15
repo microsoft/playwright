@@ -22,7 +22,6 @@ import { assert, debugAssert, isUnderTest, monotonicTime } from '../utils/utils'
 import { tOptional } from '../protocol/validatorPrimitives';
 import { kBrowserOrContextClosedError } from '../utils/errors';
 import { CallMetadata, SdkObject } from '../server/instrumentation';
-import { StackFrame } from '../common/types';
 import { rewriteErrorMessage } from '../utils/stackTrace';
 
 export const dispatcherSymbol = Symbol('dispatcher');
@@ -77,7 +76,7 @@ export class Dispatcher<Type extends { guid: string }, Initializer> extends Even
 
     (object as any)[dispatcherSymbol] = this;
     if (this._parent)
-      this._connection.sendMessageToClient(this._parent._guid, type, '__create__', { type, initializer, guid });
+      this._connection.sendMessageToClient(this._parent._guid, type, '__create__', { type, initializer, guid }, this._parent._object);
   }
 
   _dispatchEvent(method: string, params: Dispatcher<any, any> | any = {}) {
@@ -133,7 +132,7 @@ export class DispatcherConnection {
   private _rootDispatcher: Root;
   onmessage = (message: object) => {};
   private _validateParams: (type: string, method: string, params: any) => any;
-  private _validateMetadata: (metadata: any) => { stack?: StackFrame[] };
+  private _validateMetadata: (metadata: any) => { stack?: channels.StackFrame[] };
   private _waitOperations = new Map<string, CallMetadata>();
 
   sendMessageToClient(guid: string, type: string, method: string, params: any, sdkObject?: SdkObject) {
@@ -142,8 +141,8 @@ export class DispatcherConnection {
       const eventMetadata: CallMetadata = {
         id: `event@${++lastEventId}`,
         objectId: sdkObject?.guid,
-        pageId: sdkObject?.attribution.page?.guid,
-        frameId: sdkObject?.attribution.frame?.guid,
+        pageId: sdkObject?.attribution?.page?.guid,
+        frameId: sdkObject?.attribution?.frame?.guid,
         startTime: monotonicTime(),
         endTime: 0,
         type,
@@ -152,7 +151,7 @@ export class DispatcherConnection {
         log: [],
         snapshots: []
       };
-      sdkObject.instrumentation.onEvent(sdkObject, eventMetadata);
+      sdkObject.instrumentation?.onEvent(sdkObject, eventMetadata);
     }
     this.onmessage({ guid, method, params });
   }
@@ -176,8 +175,6 @@ export class DispatcherConnection {
     };
     const scheme = createScheme(tChannel);
     this._validateParams = (type: string, method: string, params: any): any => {
-      if (method === 'waitForEventInfo')
-        return tOptional(scheme['WaitForEventInfo'])(params.info, '');
       const name = type + method[0].toUpperCase() + method.substring(1) + 'Params';
       if (!scheme[name])
         throw new ValidationError(`Unknown scheme for ${type}.${method}`);
@@ -221,8 +218,8 @@ export class DispatcherConnection {
       id: `call@${id}`,
       ...validMetadata,
       objectId: sdkObject?.guid,
-      pageId: sdkObject?.attribution.page?.guid,
-      frameId: sdkObject?.attribution.frame?.guid,
+      pageId: sdkObject?.attribution?.page?.guid,
+      frameId: sdkObject?.attribution?.frame?.guid,
       startTime: monotonicTime(),
       endTime: 0,
       type: dispatcher._type,
@@ -237,7 +234,6 @@ export class DispatcherConnection {
       const info = params.info;
       switch (info.phase) {
         case 'before': {
-          callMetadata.apiName = info.apiName;
           this._waitOperations.set(info.waitId, callMetadata);
           await sdkObject.instrumentation.onBeforeCall(sdkObject, callMetadata);
           return;
@@ -249,7 +245,7 @@ export class DispatcherConnection {
         } case 'after': {
           const originalMetadata = this._waitOperations.get(info.waitId)!;
           originalMetadata.endTime = monotonicTime();
-          originalMetadata.error = info.error;
+          originalMetadata.error = info.error ? { error: { name: 'Error', message: info.error } } : undefined;
           this._waitOperations.delete(info.waitId);
           await sdkObject.instrumentation.onAfterCall(sdkObject, originalMetadata);
           return;
@@ -258,26 +254,27 @@ export class DispatcherConnection {
     }
 
 
-    let result: any;
     let error: any;
     await sdkObject?.instrumentation.onBeforeCall(sdkObject, callMetadata);
     try {
-      result = await (dispatcher as any)[method](validParams, callMetadata);
+      const result = await (dispatcher as any)[method](validParams, callMetadata);
+      callMetadata.result = this._replaceDispatchersWithGuids(result);
     } catch (e) {
       // Dispatching error
-      callMetadata.error = e.message;
+      // We want original, unmodified error in metadata.
+      callMetadata.error = serializeError(e);
       if (callMetadata.log.length)
-        rewriteErrorMessage(e, e.message + formatLogRecording(callMetadata.log) + kLoggingNote);
+        rewriteErrorMessage(e, e.message + formatLogRecording(callMetadata.log));
       error = serializeError(e);
     } finally {
       callMetadata.endTime = monotonicTime();
       await sdkObject?.instrumentation.onAfterCall(sdkObject, callMetadata);
     }
 
-    if (error)
-      this.onmessage({ id, error });
+    if (callMetadata.error)
+      this.onmessage({ id, error: error });
     else
-      this.onmessage({ id, result: this._replaceDispatchersWithGuids(result) });
+      this.onmessage({ id, result: callMetadata.result });
   }
 
   private _replaceDispatchersWithGuids(payload: any): any {
@@ -296,8 +293,6 @@ export class DispatcherConnection {
     return payload;
   }
 }
-
-const kLoggingNote = `\nNote: use DEBUG=pw:api environment variable to capture Playwright logs.`;
 
 function formatLogRecording(log: string[]): string {
   if (!log.length)

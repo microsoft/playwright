@@ -58,10 +58,6 @@ const applySetting = {
     docShell.languageOverride = locale;
   },
 
-  javaScriptDisabled: (javaScriptDisabled) => {
-    docShell.allowJavascript = !javaScriptDisabled;
-  },
-
   scrollbarsHidden: (hidden) => {
     frameTree.setScrollbarsHidden(hidden);
   },

@@ -16,14 +16,14 @@
 
 import fs from 'fs';
 import path from 'path';
-import { CRPage } from '../../chromium/crPage';
 import { Page } from '../../page';
 import { ProgressController } from '../../progress';
 import { EventEmitter } from 'events';
 import { internalCallMetadata } from '../../instrumentation';
 import type { CallLog, EventData, Mode, Source } from './recorderTypes';
 import { BrowserContext } from '../../browserContext';
-import { existsAsync, isUnderTest } from '../../../utils/utils';
+import { isUnderTest } from '../../../utils/utils';
+import { installAppIcon } from '../../chromium/crApp';
 
 declare global {
   interface Window {
@@ -53,11 +53,7 @@ export class RecorderApp extends EventEmitter {
   }
 
   private async _init() {
-    const icon = await fs.promises.readFile(require.resolve('../../../web/recorder/app_icon.png'));
-    const crPopup = this._page._delegate as CRPage;
-    await crPopup._mainFrameSession._client.send('Browser.setDockTile', {
-      image: icon.toString('base64')
-    });
+    await installAppIcon(this._page);
 
     await this._page._setServerRequestInterceptor(async route => {
       if (route.request().url().startsWith('https://playwright/')) {
@@ -101,8 +97,7 @@ export class RecorderApp extends EventEmitter {
     let executablePath: string | undefined;
     if (inspectedContext._browser.options.isChromium) {
       channel = inspectedContext._browser.options.channel;
-      const defaultExecutablePath = recorderPlaywright.chromium.executablePath(channel);
-      if (!(await existsAsync(defaultExecutablePath)))
+      if (!channel)
         executablePath = inspectedContext._browser.options.customExecutablePath;
     }
     const context = await recorderPlaywright.chromium.launchPersistentContext(internalCallMetadata(), '', {

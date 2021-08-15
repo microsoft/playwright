@@ -1,15 +1,17 @@
 const path = require('path');
 const HtmlWebPackPlugin = require('html-webpack-plugin');
 
+const mode = process.env.NODE_ENV === 'production' ? 'production' : 'development';
+
 module.exports = {
-  mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
+  mode,
   entry: {
     app: path.join(__dirname, 'index.tsx'),
   },
   resolve: {
     extensions: ['.ts', '.js', '.tsx', '.jsx']
   },
-  devtool: 'source-map',
+  devtool: mode === 'production' ? false : 'source-map',
   output: {
     globalObject: 'self',
     filename: '[name].bundle.js',

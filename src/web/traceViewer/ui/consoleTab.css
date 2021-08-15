@@ -1,0 +1,74 @@
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+
+.console-tab {
+  flex: auto;
+  line-height: 16px;
+  white-space: pre;
+  overflow: auto;
+  padding-top: 3px;
+  user-select: text;
+}
+
+.console-line {
+  flex: none;
+  padding: 3px 0 3px 3px;
+  align-items: center;
+  border-top: 1px solid transparent;
+  border-bottom: 1px solid transparent;
+}
+
+.console-line.error {
+  background: #fff0f0;
+  border-top-color: #ffd6d6;
+  border-bottom-color: #ffd6d6;
+  color: red;
+}
+
+.console-line.warning {
+  background: #fffbe5;
+  border-top-color: #fff5c2;
+  border-bottom-color: #fff5c2;
+}
+
+.console-line .codicon {
+  padding: 0 2px 0 3px;
+  position: relative;
+  flex: none;
+  top: 1px;
+}
+
+.console-line.warning .codicon {
+  color: darkorange;
+}
+
+.console-line-message {
+  white-space: initial;
+  word-break: break-word;
+  position: relative;
+  top: -2px;
+}
+
+.console-location {
+  padding-right: 3px;
+  float: right;
+}
+
+.console-stack {
+  white-space: pre-wrap;
+  margin: 3px;
+}

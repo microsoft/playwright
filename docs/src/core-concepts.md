@@ -72,7 +72,7 @@ class Program
     public static async Task Main()
     {
         using var playwright = await Playwright.CreateAsync();
-        await using var firefox = playwright.Firefox.LaunchAsync(new BrowserTypeLaunchOptions
+        await using var firefox = playwright.Firefox.LaunchAsync(new()
         {
             Headless = false
         });
@@ -208,7 +208,7 @@ class PlaywrightExample
         await using var browser = await playwright.Webkit.LaunchAsync();
         var options = new BrowserContextNewOptions(Playwright.Devices["iPhone 11 Pro"])
         {
-            Geolocation = new Geolocation() { Longitude = 12.492507f, Latitude = 41.889938f },
+            Geolocation = new() { Longitude = 12.492507f, Latitude = 41.889938f },
             Permissions = new[] { "geolocation" },
             Locale = "de-DE"
         };
@@ -716,7 +716,7 @@ page.wait_for_selector('#promo')
 
 ```csharp
 // Wait for #search to appear in the DOM.
-await page.WaitForSelectorAsync("#search", WaitForSelectorState.Attached);
+await page.WaitForSelectorAsync("#search", new() { State = WaitForSelectorState.Attached });
 // Wait for #promo to become visible, for example with `visibility:visible`.
 await page.WaitForSelectorAsync("#promo");
 ```
@@ -755,9 +755,9 @@ page.wait_for_selector('#promo', state='detached')
 
 ```csharp
 // Wait for #details to become hidden, for example with "display:none".
-await page.WaitForSelectorAsync("#details", WaitForSelectorState.Hidden);
+await page.WaitForSelectorAsync("#details", new() { State = WaitForSelectorState.Hidden });
 // Wait for #promo to be removed from the DOM.
-await page.WaitForSelectorAsync("#promo", WaitForSelectorState.Detached);
+await page.WaitForSelectorAsync("#promo", new() { State = WaitForSelectorState.Detached });
 ```
 
 ### API reference

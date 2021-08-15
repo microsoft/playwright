@@ -35,14 +35,6 @@ export type Metadata = {
   apiName?: string,
 };
 
-export type WaitForEventInfo = {
-  waitId: string,
-  phase: 'before' | 'after' | 'log',
-  apiName?: string,
-  message?: string,
-  error?: string,
-};
-
 export type Point = {
   x: number,
   y: number,
@@ -337,6 +329,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   colorScheme?: 'dark' | 'light' | 'no-preference',
   reducedMotion?: 'reduce' | 'no-preference',
   acceptDownloads?: boolean,
+  baseURL?: string,
   _debugName?: string,
   recordVideo?: {
     dir: string,
@@ -407,6 +400,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   colorScheme?: 'dark' | 'light' | 'no-preference',
   reducedMotion?: 'reduce' | 'no-preference',
   acceptDownloads?: boolean,
+  baseURL?: string,
   _debugName?: string,
   recordVideo?: {
     dir: string,
@@ -497,6 +491,7 @@ export type BrowserNewContextParams = {
   colorScheme?: 'dark' | 'light' | 'no-preference',
   reducedMotion?: 'reduce' | 'no-preference',
   acceptDownloads?: boolean,
+  baseURL?: string,
   _debugName?: string,
   recordVideo?: {
     dir: string,
@@ -554,6 +549,7 @@ export type BrowserNewContextOptions = {
   colorScheme?: 'dark' | 'light' | 'no-preference',
   reducedMotion?: 'reduce' | 'no-preference',
   acceptDownloads?: boolean,
+  baseURL?: string,
   _debugName?: string,
   recordVideo?: {
     dir: string,
@@ -604,11 +600,30 @@ export type BrowserStopTracingResult = {
   binary: Binary,
 };
 
+// ----------- EventTarget -----------
+export type EventTargetInitializer = {};
+export interface EventTargetChannel extends Channel {
+  waitForEventInfo(params: EventTargetWaitForEventInfoParams, metadata?: Metadata): Promise<EventTargetWaitForEventInfoResult>;
+}
+export type EventTargetWaitForEventInfoParams = {
+  info: {
+    waitId: string,
+    phase: 'before' | 'after' | 'log',
+    event?: string,
+    message?: string,
+    error?: string,
+  },
+};
+export type EventTargetWaitForEventInfoOptions = {
+
+};
+export type EventTargetWaitForEventInfoResult = void;
+
 // ----------- BrowserContext -----------
 export type BrowserContextInitializer = {
   isChromium: boolean,
 };
-export interface BrowserContextChannel extends Channel {
+export interface BrowserContextChannel extends EventTargetChannel {
   on(event: 'bindingCall', callback: (params: BrowserContextBindingCallEvent) => void): this;
   on(event: 'close', callback: (params: BrowserContextCloseEvent) => void): this;
   on(event: 'page', callback: (params: BrowserContextPageEvent) => void): this;
@@ -868,7 +883,7 @@ export type PageInitializer = {
   isClosed: boolean,
   opener?: PageChannel,
 };
-export interface PageChannel extends Channel {
+export interface PageChannel extends EventTargetChannel {
   on(event: 'bindingCall', callback: (params: PageBindingCallEvent) => void): this;
   on(event: 'close', callback: (params: PageCloseEvent) => void): this;
   on(event: 'console', callback: (params: PageConsoleEvent) => void): this;
@@ -1295,6 +1310,7 @@ export interface FrameChannel extends Channel {
   check(params: FrameCheckParams, metadata?: Metadata): Promise<FrameCheckResult>;
   click(params: FrameClickParams, metadata?: Metadata): Promise<FrameClickResult>;
   content(params?: FrameContentParams, metadata?: Metadata): Promise<FrameContentResult>;
+  dragAndDrop(params: FrameDragAndDropParams, metadata?: Metadata): Promise<FrameDragAndDropResult>;
   dblclick(params: FrameDblclickParams, metadata?: Metadata): Promise<FrameDblclickResult>;
   dispatchEvent(params: FrameDispatchEventParams, metadata?: Metadata): Promise<FrameDispatchEventResult>;
   evaluateExpression(params: FrameEvaluateExpressionParams, metadata?: Metadata): Promise<FrameEvaluateExpressionResult>;
@@ -1342,11 +1358,13 @@ export type FrameNavigatedEvent = {
 };
 export type FrameEvalOnSelectorParams = {
   selector: string,
+  strict?: boolean,
   expression: string,
   isFunction?: boolean,
   arg: SerializedArgument,
 };
 export type FrameEvalOnSelectorOptions = {
+  strict?: boolean,
   isFunction?: boolean,
 };
 export type FrameEvalOnSelectorResult = {
@@ -1390,6 +1408,7 @@ export type FrameAddStyleTagResult = {
 };
 export type FrameCheckParams = {
   selector: string,
+  strict?: boolean,
   force?: boolean,
   noWaitAfter?: boolean,
   position?: Point,
@@ -1397,6 +1416,7 @@ export type FrameCheckParams = {
   trial?: boolean,
 };
 export type FrameCheckOptions = {
+  strict?: boolean,
   force?: boolean,
   noWaitAfter?: boolean,
   position?: Point,
@@ -1406,6 +1426,7 @@ export type FrameCheckOptions = {
 export type FrameCheckResult = void;
 export type FrameClickParams = {
   selector: string,
+  strict?: boolean,
   force?: boolean,
   noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
@@ -1417,6 +1438,7 @@ export type FrameClickParams = {
   trial?: boolean,
 };
 export type FrameClickOptions = {
+  strict?: boolean,
   force?: boolean,
   noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
@@ -1433,8 +1455,28 @@ export type FrameContentOptions = {};
 export type FrameContentResult = {
   value: string,
 };
+export type FrameDragAndDropParams = {
+  source: string,
+  target: string,
+  force?: boolean,
+  noWaitAfter?: boolean,
+  timeout?: number,
+  trial?: boolean,
+  sourcePosition?: Point,
+  targetPosition?: Point,
+};
+export type FrameDragAndDropOptions = {
+  force?: boolean,
+  noWaitAfter?: boolean,
+  timeout?: number,
+  trial?: boolean,
+  sourcePosition?: Point,
+  targetPosition?: Point,
+};
+export type FrameDragAndDropResult = void;
 export type FrameDblclickParams = {
   selector: string,
+  strict?: boolean,
   force?: boolean,
   noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
@@ -1445,6 +1487,7 @@ export type FrameDblclickParams = {
   trial?: boolean,
 };
 export type FrameDblclickOptions = {
+  strict?: boolean,
   force?: boolean,
   noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
@@ -1457,11 +1500,13 @@ export type FrameDblclickOptions = {
 export type FrameDblclickResult = void;
 export type FrameDispatchEventParams = {
   selector: string,
+  strict?: boolean,
   type: string,
   eventInit: SerializedArgument,
   timeout?: number,
 };
 export type FrameDispatchEventOptions = {
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameDispatchEventResult = void;
@@ -1489,12 +1534,14 @@ export type FrameEvaluateExpressionHandleResult = {
 };
 export type FrameFillParams = {
   selector: string,
+  strict?: boolean,
   value: string,
   force?: boolean,
   timeout?: number,
   noWaitAfter?: boolean,
 };
 export type FrameFillOptions = {
+  strict?: boolean,
   force?: boolean,
   timeout?: number,
   noWaitAfter?: boolean,
@@ -1502,9 +1549,11 @@ export type FrameFillOptions = {
 export type FrameFillResult = void;
 export type FrameFocusParams = {
   selector: string,
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameFocusOptions = {
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameFocusResult = void;
@@ -1515,10 +1564,12 @@ export type FrameFrameElementResult = {
 };
 export type FrameGetAttributeParams = {
   selector: string,
+  strict?: boolean,
   name: string,
   timeout?: number,
 };
 export type FrameGetAttributeOptions = {
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameGetAttributeResult = {
@@ -1540,6 +1591,7 @@ export type FrameGotoResult = {
 };
 export type FrameHoverParams = {
   selector: string,
+  strict?: boolean,
   force?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
   position?: Point,
@@ -1547,6 +1599,7 @@ export type FrameHoverParams = {
   trial?: boolean,
 };
 export type FrameHoverOptions = {
+  strict?: boolean,
   force?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
   position?: Point,
@@ -1556,9 +1609,11 @@ export type FrameHoverOptions = {
 export type FrameHoverResult = void;
 export type FrameInnerHTMLParams = {
   selector: string,
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameInnerHTMLOptions = {
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameInnerHTMLResult = {
@@ -1566,9 +1621,11 @@ export type FrameInnerHTMLResult = {
 };
 export type FrameInnerTextParams = {
   selector: string,
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameInnerTextOptions = {
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameInnerTextResult = {
@@ -1576,9 +1633,11 @@ export type FrameInnerTextResult = {
 };
 export type FrameInputValueParams = {
   selector: string,
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameInputValueOptions = {
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameInputValueResult = {
@@ -1586,9 +1645,11 @@ export type FrameInputValueResult = {
 };
 export type FrameIsCheckedParams = {
   selector: string,
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameIsCheckedOptions = {
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameIsCheckedResult = {
@@ -1596,9 +1657,11 @@ export type FrameIsCheckedResult = {
 };
 export type FrameIsDisabledParams = {
   selector: string,
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameIsDisabledOptions = {
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameIsDisabledResult = {
@@ -1606,9 +1669,11 @@ export type FrameIsDisabledResult = {
 };
 export type FrameIsEnabledParams = {
   selector: string,
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameIsEnabledOptions = {
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameIsEnabledResult = {
@@ -1616,9 +1681,11 @@ export type FrameIsEnabledResult = {
 };
 export type FrameIsHiddenParams = {
   selector: string,
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameIsHiddenOptions = {
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameIsHiddenResult = {
@@ -1626,9 +1693,11 @@ export type FrameIsHiddenResult = {
 };
 export type FrameIsVisibleParams = {
   selector: string,
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameIsVisibleOptions = {
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameIsVisibleResult = {
@@ -1636,9 +1705,11 @@ export type FrameIsVisibleResult = {
 };
 export type FrameIsEditableParams = {
   selector: string,
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameIsEditableOptions = {
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameIsEditableResult = {
@@ -1646,12 +1717,14 @@ export type FrameIsEditableResult = {
 };
 export type FramePressParams = {
   selector: string,
+  strict?: boolean,
   key: string,
   delay?: number,
   noWaitAfter?: boolean,
   timeout?: number,
 };
 export type FramePressOptions = {
+  strict?: boolean,
   delay?: number,
   noWaitAfter?: boolean,
   timeout?: number,
@@ -1659,24 +1732,27 @@ export type FramePressOptions = {
 export type FramePressResult = void;
 export type FrameQuerySelectorParams = {
   selector: string,
+  strict?: boolean,
 };
 export type FrameQuerySelectorOptions = {
-
+  strict?: boolean,
 };
 export type FrameQuerySelectorResult = {
   element?: ElementHandleChannel,
 };
 export type FrameQuerySelectorAllParams = {
   selector: string,
+  strict?: boolean,
 };
 export type FrameQuerySelectorAllOptions = {
-
+  strict?: boolean,
 };
 export type FrameQuerySelectorAllResult = {
   elements: ElementHandleChannel[],
 };
 export type FrameSelectOptionParams = {
   selector: string,
+  strict?: boolean,
   elements?: ElementHandleChannel[],
   options?: {
     value?: string,
@@ -1688,6 +1764,7 @@ export type FrameSelectOptionParams = {
   noWaitAfter?: boolean,
 };
 export type FrameSelectOptionOptions = {
+  strict?: boolean,
   elements?: ElementHandleChannel[],
   options?: {
     value?: string,
@@ -1713,6 +1790,7 @@ export type FrameSetContentOptions = {
 export type FrameSetContentResult = void;
 export type FrameSetInputFilesParams = {
   selector: string,
+  strict?: boolean,
   files: {
     name: string,
     mimeType?: string,
@@ -1722,12 +1800,14 @@ export type FrameSetInputFilesParams = {
   noWaitAfter?: boolean,
 };
 export type FrameSetInputFilesOptions = {
+  strict?: boolean,
   timeout?: number,
   noWaitAfter?: boolean,
 };
 export type FrameSetInputFilesResult = void;
 export type FrameTapParams = {
   selector: string,
+  strict?: boolean,
   force?: boolean,
   noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
@@ -1736,6 +1816,7 @@ export type FrameTapParams = {
   trial?: boolean,
 };
 export type FrameTapOptions = {
+  strict?: boolean,
   force?: boolean,
   noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
@@ -1746,9 +1827,11 @@ export type FrameTapOptions = {
 export type FrameTapResult = void;
 export type FrameTextContentParams = {
   selector: string,
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameTextContentOptions = {
+  strict?: boolean,
   timeout?: number,
 };
 export type FrameTextContentResult = {
@@ -1761,12 +1844,14 @@ export type FrameTitleResult = {
 };
 export type FrameTypeParams = {
   selector: string,
+  strict?: boolean,
   text: string,
   delay?: number,
   noWaitAfter?: boolean,
   timeout?: number,
 };
 export type FrameTypeOptions = {
+  strict?: boolean,
   delay?: number,
   noWaitAfter?: boolean,
   timeout?: number,
@@ -1774,6 +1859,7 @@ export type FrameTypeOptions = {
 export type FrameTypeResult = void;
 export type FrameUncheckParams = {
   selector: string,
+  strict?: boolean,
   force?: boolean,
   noWaitAfter?: boolean,
   position?: Point,
@@ -1781,6 +1867,7 @@ export type FrameUncheckParams = {
   trial?: boolean,
 };
 export type FrameUncheckOptions = {
+  strict?: boolean,
   force?: boolean,
   noWaitAfter?: boolean,
   position?: Point,
@@ -1805,10 +1892,12 @@ export type FrameWaitForFunctionResult = {
 };
 export type FrameWaitForSelectorParams = {
   selector: string,
+  strict?: boolean,
   timeout?: number,
   state?: 'attached' | 'detached' | 'visible' | 'hidden',
 };
 export type FrameWaitForSelectorOptions = {
+  strict?: boolean,
   timeout?: number,
   state?: 'attached' | 'detached' | 'visible' | 'hidden',
 };
@@ -1955,11 +2044,13 @@ export interface ElementHandleChannel extends JSHandleChannel {
 }
 export type ElementHandleEvalOnSelectorParams = {
   selector: string,
+  strict?: boolean,
   expression: string,
   isFunction?: boolean,
   arg: SerializedArgument,
 };
 export type ElementHandleEvalOnSelectorOptions = {
+  strict?: boolean,
   isFunction?: boolean,
 };
 export type ElementHandleEvalOnSelectorResult = {
@@ -2157,9 +2248,10 @@ export type ElementHandlePressOptions = {
 export type ElementHandlePressResult = void;
 export type ElementHandleQuerySelectorParams = {
   selector: string,
+  strict?: boolean,
 };
 export type ElementHandleQuerySelectorOptions = {
-
+  strict?: boolean,
 };
 export type ElementHandleQuerySelectorResult = {
   element?: ElementHandleChannel,
@@ -2302,10 +2394,12 @@ export type ElementHandleWaitForElementStateOptions = {
 export type ElementHandleWaitForElementStateResult = void;
 export type ElementHandleWaitForSelectorParams = {
   selector: string,
+  strict?: boolean,
   timeout?: number,
   state?: 'attached' | 'detached' | 'visible' | 'hidden',
 };
 export type ElementHandleWaitForSelectorOptions = {
+  strict?: boolean,
   timeout?: number,
   state?: 'attached' | 'detached' | 'visible' | 'hidden',
 };
@@ -2460,7 +2554,7 @@ export type RemoteAddr = {
 export type WebSocketInitializer = {
   url: string,
 };
-export interface WebSocketChannel extends Channel {
+export interface WebSocketChannel extends EventTargetChannel {
   on(event: 'open', callback: (params: WebSocketOpenEvent) => void): this;
   on(event: 'frameSent', callback: (params: WebSocketFrameSentEvent) => void): this;
   on(event: 'frameReceived', callback: (params: WebSocketFrameReceivedEvent) => void): this;
@@ -2717,7 +2811,7 @@ export type ElectronLaunchResult = {
 export type ElectronApplicationInitializer = {
   context: BrowserContextChannel,
 };
-export interface ElectronApplicationChannel extends Channel {
+export interface ElectronApplicationChannel extends EventTargetChannel {
   on(event: 'close', callback: (params: ElectronApplicationCloseEvent) => void): this;
   browserWindow(params: ElectronApplicationBrowserWindowParams, metadata?: Metadata): Promise<ElectronApplicationBrowserWindowResult>;
   evaluateExpression(params: ElectronApplicationEvaluateExpressionParams, metadata?: Metadata): Promise<ElectronApplicationEvaluateExpressionResult>;
@@ -2807,7 +2901,7 @@ export type AndroidDeviceInitializer = {
   model: string,
   serial: string,
 };
-export interface AndroidDeviceChannel extends Channel {
+export interface AndroidDeviceChannel extends EventTargetChannel {
   on(event: 'webViewAdded', callback: (params: AndroidDeviceWebViewAddedEvent) => void): this;
   on(event: 'webViewRemoved', callback: (params: AndroidDeviceWebViewRemovedEvent) => void): this;
   wait(params: AndroidDeviceWaitParams, metadata?: Metadata): Promise<AndroidDeviceWaitResult>;
@@ -3235,3 +3329,81 @@ export type SocksSocketConnectedResult = void;
 export type SocksSocketEndParams = {};
 export type SocksSocketEndOptions = {};
 export type SocksSocketEndResult = void;
+
+export const commandsWithTracingSnapshots = new Set([
+  'EventTarget.waitForEventInfo',
+  'BrowserContext.waitForEventInfo',
+  'Page.waitForEventInfo',
+  'WebSocket.waitForEventInfo',
+  'ElectronApplication.waitForEventInfo',
+  'AndroidDevice.waitForEventInfo',
+  'Page.goBack',
+  'Page.goForward',
+  'Page.reload',
+  'Page.setViewportSize',
+  'Page.keyboardDown',
+  'Page.keyboardUp',
+  'Page.keyboardInsertText',
+  'Page.keyboardType',
+  'Page.keyboardPress',
+  'Page.mouseMove',
+  'Page.mouseDown',
+  'Page.mouseUp',
+  'Page.mouseClick',
+  'Page.touchscreenTap',
+  'Frame.evalOnSelector',
+  'Frame.evalOnSelectorAll',
+  'Frame.addScriptTag',
+  'Frame.addStyleTag',
+  'Frame.check',
+  'Frame.click',
+  'Frame.dblclick',
+  'Frame.dispatchEvent',
+  'Frame.evaluateExpression',
+  'Frame.evaluateExpressionHandle',
+  'Frame.fill',
+  'Frame.focus',
+  'Frame.getAttribute',
+  'Frame.goto',
+  'Frame.hover',
+  'Frame.innerHTML',
+  'Frame.innerText',
+  'Frame.inputValue',
+  'Frame.isChecked',
+  'Frame.isDisabled',
+  'Frame.isEnabled',
+  'Frame.isHidden',
+  'Frame.isEditable',
+  'Frame.press',
+  'Frame.selectOption',
+  'Frame.setContent',
+  'Frame.setInputFiles',
+  'Frame.tap',
+  'Frame.textContent',
+  'Frame.type',
+  'Frame.uncheck',
+  'Frame.waitForFunction',
+  'Frame.waitForSelector',
+  'JSHandle.evaluateExpression',
+  'ElementHandle.evaluateExpression',
+  'JSHandle.evaluateExpressionHandle',
+  'ElementHandle.evaluateExpressionHandle',
+  'ElementHandle.evalOnSelector',
+  'ElementHandle.evalOnSelectorAll',
+  'ElementHandle.check',
+  'ElementHandle.click',
+  'ElementHandle.dblclick',
+  'ElementHandle.dispatchEvent',
+  'ElementHandle.fill',
+  'ElementHandle.hover',
+  'ElementHandle.press',
+  'ElementHandle.scrollIntoViewIfNeeded',
+  'ElementHandle.selectOption',
+  'ElementHandle.selectText',
+  'ElementHandle.setInputFiles',
+  'ElementHandle.tap',
+  'ElementHandle.type',
+  'ElementHandle.uncheck',
+  'ElementHandle.waitForElementState',
+  'ElementHandle.waitForSelector'
+]);

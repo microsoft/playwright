@@ -19,8 +19,8 @@ import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as pirates from 'pirates';
-import * as babel from '@babel/core';
 import * as sourceMapSupport from 'source-map-support';
+import * as url from 'url';
 import type { Location } from './types';
 
 const version = 4;
@@ -63,6 +63,7 @@ export function installTransform(): () => void {
     // We don't use any browserslist data, but babel checks it anyway.
     // Silence the annoying warning.
     process.env.BROWSERSLIST_IGNORE_OLD_DATA = 'true';
+    const babel: typeof import('@babel/core') = require('@babel/core');
     const result = babel.transformFileSync(filename, {
       babelrc: false,
       configFile: false,
@@ -107,8 +108,11 @@ export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Lo
     const oldPrepareStackTrace = Error.prepareStackTrace;
     Error.prepareStackTrace = (error, stackFrames) => {
       const frame: NodeJS.CallSite = sourceMapSupport.wrapCallSite(stackFrames[1]);
+      const fileName = frame.getFileName();
+      // Node error stacks for modules use file:// urls instead of paths.
+      const file = (fileName && fileName.startsWith('file://')) ? url.fileURLToPath(fileName) : fileName;
       return {
-        file: frame.getFileName(),
+        file,
         line: frame.getLineNumber(),
         column: frame.getColumnNumber(),
       };

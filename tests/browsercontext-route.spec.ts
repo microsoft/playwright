@@ -45,11 +45,10 @@ it('should unroute', async ({browser, server}) => {
   const page = await context.newPage();
 
   let intercepted = [];
-  const handler1 = route => {
+  await context.route('**/*', route => {
     intercepted.push(1);
     route.continue();
-  };
-  await context.route('**/empty.html', handler1);
+  });
   await context.route('**/empty.html', route => {
     intercepted.push(2);
     route.continue();
@@ -58,22 +57,23 @@ it('should unroute', async ({browser, server}) => {
     intercepted.push(3);
     route.continue();
   });
-  await context.route('**/*', route => {
+  const handler4 = route => {
     intercepted.push(4);
     route.continue();
-  });
+  };
+  await context.route('**/empty.html', handler4);
   await page.goto(server.EMPTY_PAGE);
-  expect(intercepted).toEqual([1]);
+  expect(intercepted).toEqual([4]);
 
   intercepted = [];
-  await context.unroute('**/empty.html', handler1);
+  await context.unroute('**/empty.html', handler4);
   await page.goto(server.EMPTY_PAGE);
-  expect(intercepted).toEqual([2]);
+  expect(intercepted).toEqual([3]);
 
   intercepted = [];
   await context.unroute('**/empty.html');
   await page.goto(server.EMPTY_PAGE);
-  expect(intercepted).toEqual([4]);
+  expect(intercepted).toEqual([1]);
 
   await context.close();
 });
@@ -124,7 +124,7 @@ it('should support Set-Cookie header', async ({contextFactory, server, browserNa
   });
   await page.goto('https://example.com');
   expect(await context.cookies()).toEqual([{
-    sameSite: 'None',
+    sameSite: browserName === 'chromium' ? 'Lax' : 'None',
     name: 'name',
     value: 'value',
     domain: '.example.com',
@@ -170,7 +170,7 @@ it('should use Set-Cookie header in future requests', async ({contextFactory, se
   });
   await page.goto(server.EMPTY_PAGE);
   expect(await context.cookies()).toEqual([{
-    sameSite: 'None',
+    sameSite: browserName === 'chromium' ? 'Lax' : 'None',
     name: 'name',
     value: 'value',
     domain: 'localhost',

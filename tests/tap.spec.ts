@@ -200,3 +200,14 @@ async function trackEvents(target: ElementHandle) {
   });
   return eventsHandle;
 }
+
+it.describe('locators', () => {
+  it('should send all of the correct events', async ({ page }) => {
+    await page.setContent(`
+      <div id="a" style="background: lightblue; width: 50px; height: 50px">a</div>
+      <div id="b" style="background: pink; width: 50px; height: 50px">b</div>
+    `);
+    await page.locator('#a').tap();
+    await page.locator('#b').tap();
+  });
+});

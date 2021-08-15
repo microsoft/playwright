@@ -1,0 +1,164 @@
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+.sidebar {
+  line-height: 24px;
+  color: #fff6;
+  background-color: #2c2c2c;
+  font-size: 14px;
+  flex: 0 0 80px;
+}
+
+.sidebar > div {
+  padding: 12px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+}
+
+.sidebar > div.selected {
+  color: white;
+}
+
+.suite-tree {
+  line-height: 18px;
+  flex: auto;
+  overflow: auto;
+  color: #616161;
+  background-color: #f3f3f3;
+}
+
+.tree-item-title {
+  padding: 8px 0;
+  cursor: pointer;
+}
+
+.tree-item-body {
+  min-height: 18px;
+}
+
+.suite-tree .tree-item-title:not(.selected):hover {
+  background-color: #e8e8e8;
+}
+
+.suite-tree .tree-item-title.selected {
+  background-color: #0060c0;
+  color: white;
+}
+
+.suite-tree .tree-item-title.selected * {
+  color: white !important;
+}
+
+
+.test-case {
+  flex: auto;
+}
+
+.test-case .tab-content {
+  overflow: auto;
+}
+
+.error-message {
+  white-space: pre;
+  font-family: monospace;
+  background: #000;
+  color: white;  
+  padding: 5px;
+  overflow: auto;
+  margin: 20px 0;
+}
+
+.status-icon {
+  padding-right: 3px;
+}
+
+.codicon {
+  padding-right: 3px;
+}
+
+.codicon-clock.status-icon,
+.codicon-error.status-icon {
+  color: red;
+}
+
+.codicon-alert.status-icon {
+  color: orange;
+}
+
+.codicon-circle-filled.status-icon {
+  color: green;
+}
+
+.test-result {
+  padding: 10px;
+  flex: auto;
+}
+
+.test-overview-title {
+  padding: 10px 0;
+  font-size: 18px;
+  flex: none;
+}
+
+.test-overview-property {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  max-width: 450px;
+  line-height: 24px;
+}
+
+.awesome {
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.image-preview img {
+  max-width: 500px;
+  max-height: 500px;
+}
+
+.test-result .tabbed-pane {
+  margin-top: 50px;
+  width: 550px;
+}
+
+.image-preview {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 550px;
+  height: 550px;
+}
+
+.test-result .tabbed-pane .tab-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.attachment-body {
+  white-space: pre-wrap;
+  font-family: monospace;
+  background-color: #dadada;
+  border: 1px solid #ccc;
+  margin-left: 24px;
+}

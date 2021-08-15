@@ -79,7 +79,6 @@ export function stripFragmentFromUrl(url: string): string {
 }
 
 export class Request extends SdkObject {
-  readonly _routeDelegate: RouteDelegate | null;
   private _response: Response | null = null;
   private _redirectedFrom: Request | null;
   private _redirectedTo: Request | null = null;
@@ -97,12 +96,10 @@ export class Request extends SdkObject {
   private _waitForResponsePromiseCallback: (value: Response | null) => void = () => {};
   _responseEndTiming = -1;
 
-  constructor(routeDelegate: RouteDelegate | null, frame: frames.Frame, redirectedFrom: Request | null, documentId: string | undefined,
+  constructor(frame: frames.Frame, redirectedFrom: Request | null, documentId: string | undefined,
     url: string, resourceType: string, method: string, postData: Buffer | null, headers: types.HeadersArray) {
     super(frame, 'request');
     assert(!url.startsWith('data:'), 'Data urls should not fire requests');
-    assert(!(routeDelegate && redirectedFrom), 'Should not be able to intercept redirects');
-    this._routeDelegate = routeDelegate;
     this._frame = frame;
     this._redirectedFrom = redirectedFrom;
     if (redirectedFrom)
@@ -185,12 +182,6 @@ export class Request extends SdkObject {
     };
   }
 
-  _route(): Route | null {
-    if (!this._routeDelegate)
-      return null;
-    return new Route(this, this._routeDelegate);
-  }
-
   updateWithRawHeaders(headers: types.HeadersArray) {
     this._headers = headers;
     this._headersMap.clear();
@@ -231,9 +222,9 @@ export class Route extends SdkObject {
     this._handled = true;
     let body = overrides.body;
     let isBase64 = overrides.isBase64 || false;
-    if (!body) {
+    if (body === undefined) {
       if (this._response) {
-        body = (await this._delegate.responseBody(true)).toString('utf8');
+        body = (await this._delegate.responseBody()).toString('utf8');
         isBase64 = false;
       } else {
         body = '';
@@ -257,13 +248,13 @@ export class Route extends SdkObject {
       if (oldUrl.protocol !== newUrl.protocol)
         throw new Error('New URL must have same protocol as overridden URL');
     }
-    this._response = await this._delegate.continue(overrides);
+    this._response = await this._delegate.continue(this._request, overrides);
     return this._response;
   }
 
   async responseBody(): Promise<Buffer> {
     assert(!this._handled, 'Route is already handled!');
-    return this._delegate.responseBody(false);
+    return this._delegate.responseBody();
   }
 }
 
@@ -311,8 +302,10 @@ export class Response extends SdkObject {
   private _serverAddrPromiseCallback: (arg?: RemoteAddr) => void = () => {};
   private _securityDetailsPromise: Promise<SecurityDetails|undefined>;
   private _securityDetailsPromiseCallback: (arg?: SecurityDetails) => void = () => {};
+  _httpVersion: string | undefined;
+  _transferSize: number | undefined;
 
-  constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback) {
+  constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback, httpVersion?: string) {
     super(request.frame(), 'response');
     this._request = request;
     this._timing = timing;
@@ -333,6 +326,7 @@ export class Response extends SdkObject {
       this._finishedPromiseCallback = f;
     });
     this._request._setResponse(this);
+    this._httpVersion = httpVersion;
   }
 
   _serverAddrFinished(addr?: RemoteAddr) {
@@ -343,9 +337,14 @@ export class Response extends SdkObject {
     this._securityDetailsPromiseCallback(securityDetails);
   }
 
-  _requestFinished(responseEndTiming: number, error?: string) {
+  _requestFinished(responseEndTiming: number, error?: string, transferSize?: number) {
     this._request._responseEndTiming = Math.max(responseEndTiming, this._timing.responseStart);
+    this._transferSize = transferSize;
     this._finishedPromiseCallback({ error });
+  }
+
+  _setHttpVersion(httpVersion: string) {
+    this._httpVersion = httpVersion;
   }
 
   url(): string {
@@ -412,7 +411,7 @@ export class InterceptedResponse extends SdkObject {
 
   constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray) {
     super(request.frame(), 'interceptedResponse');
-    this._request = request;
+    this._request = request._finalRequest();
     this._status = status;
     this._statusText = statusText;
     this._headers = headers;
@@ -474,8 +473,8 @@ export class WebSocket extends SdkObject {
 export interface RouteDelegate {
   abort(errorCode: string): Promise<void>;
   fulfill(response: types.NormalizedFulfillResponse): Promise<void>;
-  continue(overrides: types.NormalizedContinueOverrides): Promise<InterceptedResponse|null>;
-  responseBody(forFulfill: boolean): Promise<Buffer>;
+  continue(request: Request, overrides: types.NormalizedContinueOverrides): Promise<InterceptedResponse|null>;
+  responseBody(): Promise<Buffer>;
 }
 
 // List taken from https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml with extra 306 and 418 codes.

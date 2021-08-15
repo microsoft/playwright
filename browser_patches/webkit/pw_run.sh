@@ -2,7 +2,9 @@
 
 function runOSX() {
   # if script is run as-is
-  if [[ -d $SCRIPT_PATH/checkout/WebKitBuild/Release/Playwright.app ]]; then
+  if [[ -f "${SCRIPT_PATH}/EXPECTED_BUILDS" && -n "$WK_CHECKOUT_PATH" && -d "$WK_CHECKOUT_PATH/WebKitBuild/Release/Playwright.app" ]]; then
+    DYLIB_PATH="$WK_CHECKOUT_PATH/WebKitBuild/Release"
+  elif [[ -f "${SCRIPT_PATH}/EXPECTED_BUILDS" && -d $SCRIPT_PATH/checkout/WebKitBuild/Release/Playwright.app ]]; then
     DYLIB_PATH="$SCRIPT_PATH/checkout/WebKitBuild/Release"
   elif [[ -d $SCRIPT_PATH/Playwright.app ]]; then
     DYLIB_PATH="$SCRIPT_PATH"

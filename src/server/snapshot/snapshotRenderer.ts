@@ -14,23 +14,29 @@
  * limitations under the License.
  */
 
-import { ContextResources, FrameSnapshot, NodeSnapshot, RenderedFrameSnapshot } from './snapshotTypes';
+import { FrameSnapshot, NodeSnapshot, RenderedFrameSnapshot, ResourceSnapshot } from './snapshotTypes';
 
 export class SnapshotRenderer {
   private _snapshots: FrameSnapshot[];
   private _index: number;
-  private _contextResources: ContextResources;
   readonly snapshotName: string | undefined;
+  private _resources: ResourceSnapshot[];
+  private _snapshot: FrameSnapshot;
 
-  constructor(contextResources: ContextResources, snapshots: FrameSnapshot[], index: number) {
-    this._contextResources = contextResources;
+  constructor(resources: ResourceSnapshot[], snapshots: FrameSnapshot[], index: number) {
+    this._resources = resources;
     this._snapshots = snapshots;
     this._index = index;
+    this._snapshot = snapshots[index];
     this.snapshotName = snapshots[index].snapshotName;
   }
 
   snapshot(): FrameSnapshot {
     return this._snapshots[this._index];
+  }
+
+  viewport(): { width: number, height: number } {
+    return this._snapshots[this._index].viewport;
   }
 
   render(): RenderedFrameSnapshot {
@@ -69,10 +75,10 @@ export class SnapshotRenderer {
       return (n as any)._string;
     };
 
-    const snapshot = this._snapshots[this._index];
+    const snapshot = this._snapshot;
     let html = visit(snapshot.html, this._index);
     if (!html)
-      return { html: '', resources: {} };
+      return { html: '', pageId: snapshot.pageId, frameId: snapshot.frameId, index: this._index };
 
     if (snapshot.doctype)
       html = `<!DOCTYPE ${snapshot.doctype}>` + html;
@@ -81,17 +87,46 @@ export class SnapshotRenderer {
       <script>${snapshotScript()}</script>
     `;
 
-    const resources: { [key: string]: { resourceId: string, sha1?: string } } = {};
-    for (const [url, contextResources] of this._contextResources) {
-      const contextResource = contextResources.find(r => r.frameId === snapshot.frameId) || contextResources[0];
-      if (contextResource)
-        resources[url] = { resourceId: contextResource.resourceId };
+    return { html, pageId: snapshot.pageId, frameId: snapshot.frameId, index: this._index };
+  }
+
+  resourceByUrl(url: string): ResourceSnapshot | undefined {
+    const snapshot = this._snapshot;
+    let result: ResourceSnapshot | undefined;
+
+    // First try locating exact resource belonging to this frame.
+    for (const resource of this._resources) {
+      if (resource.timestamp >= snapshot.timestamp)
+        break;
+      if (resource.frameId !== snapshot.frameId)
+        continue;
+      if (resource.url === url) {
+        result = resource;
+        break;
+      }
     }
-    for (const o of snapshot.resourceOverrides) {
-      const resource = resources[o.url];
-      resource.sha1 = o.sha1;
+
+    if (!result) {
+      // Then fall back to resource with this URL to account for memory cache.
+      for (const resource of this._resources) {
+        if (resource.timestamp >= snapshot.timestamp)
+          break;
+        if (resource.url === url)
+          return resource;
+      }
     }
-    return { html, resources };
+
+    if (result) {
+      // Patch override if necessary.
+      for (const o of snapshot.resourceOverrides) {
+        if (url === o.url && o.sha1) {
+          result = { ...result, responseSha1: o.sha1 };
+          break;
+        }
+      }
+    }
+
+    return result;
   }
 }
 

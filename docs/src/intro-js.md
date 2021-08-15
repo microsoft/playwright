@@ -1,9 +1,9 @@
 ---
 id: intro
-title: "Playwright Test"
+title: "Getting Started"
 ---
 
-Playwright can either be used as a part of the Playwright Test, or as a [Playwright Library](./library.md). If you intend to use Playwright for testing, read on.
+Playwright can either be used as a part of the Playwright Test (this guide), or as a [Playwright Library](./library.md).
 
 Playwright Test was created specifically to accommodate the needs of the end-to-end testing. It does everything you would expect from the regular test runner, and more. Playwright test allows to:
 
@@ -26,15 +26,11 @@ Playwright has its own test runner for end-to-end tests, we call it Playwright T
 
 ```bash
 npm i -D @playwright/test
-```
-
-Unlike Playwright Library, Playwright Test does not bundle browsers by default, so you need to install them explicitly:
-
-```bash
+# install supported browsers
 npx playwright install
 ```
 
-You can optionally install only selected browsers, see [Playwright CLI](./cli.md) for more details. Or you can install no browsers at all and use existing [browser channels](./browsers.md).
+You can optionally install only selected browsers, see [installing browsers](./browsers.md#installing-browsers) for more details. Or you can install no browsers at all and use existing [browser channels](./browsers.md).
 
 ## First test
 
@@ -45,8 +41,8 @@ const { test, expect } = require('@playwright/test');
 
 test('basic test', async ({ page }) => {
   await page.goto('https://playwright.dev/');
-  const name = await page.innerText('.navbar__title');
-  expect(name).toBe('Playwright');
+  const title = page.locator('.navbar__title');
+  await expect(title).toHaveText('Playwright');
 });
 ```
 
@@ -55,8 +51,8 @@ import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ page }) => {
   await page.goto('https://playwright.dev/');
-  const name = await page.innerText('.navbar__title');
-  expect(name).toBe('Playwright');
+  const title = page.locator('.navbar__title');
+  await expect(title).toHaveText('Playwright');
 });
 ```
 
@@ -86,148 +82,15 @@ npx playwright test --browser=all
 
 Refer to [configuration](./test-configuration.md) section for configuring test runs in different modes with different browsers.
 
-## Test fixtures
 
-You noticed an argument `{ page }` that the test above has access to:
+## Writing assertions
 
-```js js-flavor=js
-test('basic test', async ({ page }) => {
-  ...
-```
+Playwright Test uses [expect](https://jestjs.io/docs/expect) library for test assertions. It extends it with the Playwright-specific matchers to achieve greater testing ergonomics.
 
-```js js-flavor=ts
-test('basic test', async ({ page }) => {
-  ...
-```
+Learn more about [test assertions here](./test-assertions.md).
 
-We call these arguments `fixtures`. Fixtures are objects that are created for each test run. Playwright Test comes loaded with those fixtures, and you can add your own fixtures as well. When running tests, Playwright Test looks at each test declaration, analyses the set of fixtures the test needs and prepares those fixtures specifically for the test.
+Here is a quick example of using them:
 
-Here is a list of the pre-defined fixtures that you are likely to use most of the time:
-
-|Fixture    |Type             |Description                      |
-|:----------|:----------------|:--------------------------------|
-|page       |[Page]           |Isolated page for this test run. |
-|context    |[BrowserContext] |Isolated context for this test run. The `page` fixture belongs to this context as well. Learn how to [configure context](./test-configuration.md). |
-|browser    |[Browser]        |Browsers are shared across tests to optimize resources. Learn how to [configure browser](./test-configuration.md). |
-|browserName|[string]         |The name of the browser currently running the test. Either `chromium`, `firefox` or `webkit`.|
-
-## Test and assertion features
-
-If you are familiar with test runners like Jest, Mocha and Ava, you will find the Playwright Test syntax familiar. These are the basic things you can do with the test:
-
-### Focus a test
-
-You can focus some tests. When there are focused tests, only they run.
-
-```js js-flavor=js
-test.only('focus this test', async ({ page }) => {
-  // Run only focused tests in the entire project.
-});
-```
-
-```js js-flavor=ts
-test.only('focus this test', async ({ page }) => {
-  // Run only focused tests in the entire project.
-});
-```
-
-### Skip a test
-
-You can skip certain test based on the condition.
-
-```js js-flavor=js
-test('skip this test', async ({ page, browserName }) => {
-  test.skip(browserName === 'firefox', 'Still working on it');
-});
-```
-
-```js js-flavor=ts
-test('skip this test', async ({ page, browserName }) => {
-  test.skip(browserName === 'firefox', 'Still working on it');
-});
-```
-
-### Group tests
-
-You can group tests to give them a logical name or to scope before/after hooks to the group.
-```js js-flavor=js
-const { test, expect } = require('@playwright/test');
-
-test.describe('two tests', () => {
-  test('one', async ({ page }) => {
-    // ...
-  });
-
-  test('two', async ({ page }) => {
-    // ...
-  });
-});
-```
-
-```js js-flavor=ts
-import { test, expect } from '@playwright/test';
-
-test.describe('two tests', () => {
-  test('one', async ({ page }) => {
-    // ...
-  });
-
-  test('two', async ({ page }) => {
-    // ...
-  });
-});
-```
-
-### Use test hooks
-
-You can use `test.beforeAll` and `test.afterAll` hooks to set up and tear down resources shared between tests.
-And you can use `test.beforeEach` and `test.afterEach` hooks to set up and tear down resources for each test individually.
-
-```js js-flavor=js
-// example.spec.js
-const { test, expect } = require('@playwright/test');
-
-test.describe('feature foo', () => {
-  test.beforeEach(async ({ page }) => {
-    // Go to the starting url before each test.
-    await page.goto('https://my.start.url/');
-  });
-
-  test('my test', async ({ page }) => {
-    // Assertions use the expect API.
-    expect(page.url()).toBe('https://my.start.url/');
-  });
-});
-```
-
-```js js-flavor=ts
-// example.spec.ts
-import { test, expect } from '@playwright/test';
-
-test.describe('feature foo', () => {
-  test.beforeEach(async ({ page }) => {
-    // Go to the starting url before each test.
-    await page.goto('https://my.start.url/');
-  });
-
-  test('my test', async ({ page }) => {
-    // Assertions use the expect API.
-    expect(page.url()).toBe('https://my.start.url/');
-  });
-});
-```
-
-### Write assertions
-
-Playwright Test uses [expect](https://jestjs.io/docs/expect) library for test assertions. It provides a lot of matchers like `toEqual`, `toContain`, `toMatch`, `toMatchSnapshot` and many more.
-
-Combine `expect` with various Playwright methods to create expectations for your test:
-- [`method: Page.isVisible`]
-- [`method: Page.waitForSelector`]
-- [`method: Page.textContent`]
-- [`method: Page.getAttribute`]
-- [`method: Page.screenshot`]
-- Find out more in the [assertions](./assertions.md) guide
 
 ```js js-flavor=js
 // example.spec.js
@@ -237,17 +100,17 @@ test('my test', async ({ page }) => {
   await page.goto('https://playwright.dev/');
 
   // Expect a title "to contain" a substring.
-  expect(await page.title()).toContain('Playwright');
+  await expect(page).toHaveTitle('Playwright');
 
   // Expect an attribute "to be strictly equal" to the value.
-  expect(await page.getAttribute('text=Get Started', 'href')).toBe('/docs/intro');
+  await expect(page.locator('text=Get Started').toHaveAttribute('href', '/docs/intro');
 
   // Expect an element "to be visible".
-  expect(await page.isVisible('text=Learn more')).toBeTruthy();
+  await expect(page.locator('text=Learn more')).toBeVisible();
 
   await page.click('text=Get Started');
   // Expect some text to be visible on the page.
-  expect(await page.waitForSelector('text=System requirements')).toBeTruthy();
+  await expect(page.locator('text=System requirements')).toBeVisible();
 
   // Compare screenshot with a stored reference.
   expect(await page.screenshot()).toMatchSnapshot('get-started.png');
@@ -262,14 +125,17 @@ test('my test', async ({ page }) => {
   await page.goto('https://playwright.dev/');
 
   // Expect a title "to contain" a substring.
-  expect(await page.title()).toContain('Playwright');
+  await expect(page).toHaveTitle('Playwright');
 
   // Expect an attribute "to be strictly equal" to the value.
-  expect(await page.getAttribute('text=Get Started', 'href')).toBe('/docs/intro');
+  await expect(page.locator('text=Get Started').toHaveAttribute('href', '/docs/intro');
+
+  // Expect an element "to be visible".
+  await expect(page.locator('text=Learn more')).toBeVisible();
 
   await page.click('text=Get Started');
   // Expect some text to be visible on the page.
-  expect(await page.waitForSelector('text=System requirements')).toBeTruthy();
+  await expect(page.locator('text=System requirements')).toBeVisible();
 
   // Compare screenshot with a stored reference.
   expect(await page.screenshot()).toMatchSnapshot('get-started.png');
@@ -298,7 +164,72 @@ npx playwright test --update-snapshots
 ```
 
 
-## Learn the command line
+## Using test fixtures
+
+You noticed an argument `{ page }` that the test above has access to:
+
+```js js-flavor=js
+test('basic test', async ({ page }) => {
+  ...
+```
+
+```js js-flavor=ts
+test('basic test', async ({ page }) => {
+  ...
+```
+
+We call these arguments `fixtures`. Fixtures are objects that are created for each test run. Playwright Test comes loaded with those fixtures, and you can add your own fixtures as well. When running tests, Playwright Test looks at each test declaration, analyses the set of fixtures the test needs and prepares those fixtures specifically for the test.
+
+Here is a list of the pre-defined fixtures that you are likely to use most of the time:
+
+|Fixture    |Type             |Description                      |
+|:----------|:----------------|:--------------------------------|
+|page       |[Page]           |Isolated page for this test run. |
+|context    |[BrowserContext] |Isolated context for this test run. The `page` fixture belongs to this context as well. Learn how to [configure context](./test-configuration.md). |
+|browser    |[Browser]        |Browsers are shared across tests to optimize resources. Learn how to [configure browser](./test-configuration.md). |
+|browserName|[string]         |The name of the browser currently running the test. Either `chromium`, `firefox` or `webkit`.|
+
+## Using test hooks
+
+You can use `test.beforeAll` and `test.afterAll` hooks to set up and tear down resources shared between tests.
+And you can use `test.beforeEach` and `test.afterEach` hooks to set up and tear down resources for each test individually.
+
+```js js-flavor=js
+// example.spec.js
+const { test, expect } = require('@playwright/test');
+
+test.describe('feature foo', () => {
+  test.beforeEach(async ({ page }) => {
+    // Go to the starting url before each test.
+    await page.goto('https://my.start.url/');
+  });
+
+  test('my test', async ({ page }) => {
+    // Assertions use the expect API.
+    await expect(page).toHaveURL('https://my.start.url/');
+  });
+});
+```
+
+```js js-flavor=ts
+// example.spec.ts
+import { test, expect } from '@playwright/test';
+
+test.describe('feature foo', () => {
+  test.beforeEach(async ({ page }) => {
+    // Go to the starting url before each test.
+    await page.goto('https://my.start.url/');
+  });
+
+  test('my test', async ({ page }) => {
+    // Assertions use the expect API.
+    await expect(page).toHaveURL('https://my.start.url/');
+  });
+});
+```
+
+
+## Learning the command line
 
 Here are the most common options available in the [command line](./test-cli.md).
 
@@ -361,7 +292,7 @@ Here are the most common options available in the [command line](./test-cli.md).
   npx playwright test
   ```
 
-## Create a configuration file
+## Creating a configuration file
 
 So far, we've looked at the zero-config operation of Playwright Test. For a real world application, it is likely that you would want to use a config.
 
@@ -454,12 +385,12 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
-Configure NPM script to run tests. Test runner will automatically pick up `playwright.config.js` or `playwright.config.ts`.
+Configure NPM script to run tests. Playwright Test will automatically pick up `playwright.config.js` or `playwright.config.ts`.
 
 ```json
 {
   "scripts": {
-    "test": "npx playwright test"
+    "test": "playwright test"
   }
 }
 ```
@@ -469,7 +400,7 @@ If you put your configuration file in a different place, pass it with `--config`
 ```json
 {
   "scripts": {
-    "test": "npx playwright test --config=tests/example.config.js"
+    "test": "playwright test --config=tests/example.config.js"
   }
 }
 ```

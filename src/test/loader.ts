@@ -16,13 +16,16 @@
 
 import { installTransform } from './transform';
 import type { FullConfig, Config, FullProject, Project, ReporterDescription, PreserveOutput } from './types';
-import { isRegExp, mergeObjects } from './util';
+import { isRegExp, mergeObjects, errorWithFile } from './util';
 import { setCurrentlyLoadingFileSuite } from './globals';
 import { Suite } from './test';
 import { SerializedLoaderData } from './ipc';
 import * as path from 'path';
+import * as url from 'url';
+import * as fs from 'fs';
 import { ProjectImpl } from './project';
-import { Reporter } from './reporter';
+import { Reporter } from '../../types/testReporter';
+import { BuiltInReporter, builtInReporters } from './runner';
 
 export class Loader {
   private _defaultConfig: Config;
@@ -39,31 +42,26 @@ export class Loader {
     this._fullConfig = baseFullConfig;
   }
 
-  static deserialize(data: SerializedLoaderData): Loader {
+  static async deserialize(data: SerializedLoaderData): Promise<Loader> {
     const loader = new Loader(data.defaultConfig, data.overrides);
     if ('file' in data.configFile)
-      loader.loadConfigFile(data.configFile.file);
+      await loader.loadConfigFile(data.configFile.file);
     else
       loader.loadEmptyConfig(data.configFile.rootDir);
     return loader;
   }
 
-  loadConfigFile(file: string): Config {
+  async loadConfigFile(file: string): Promise<Config> {
     if (this._configFile)
       throw new Error('Cannot load two config files');
-    const revertBabelRequire = installTransform();
-    try {
-      let config = require(file);
-      if (config && typeof config === 'object' && ('default' in config))
-        config = config['default'];
-      this._config = config;
-      this._configFile = file;
-      const rawConfig = { ...config };
-      this._processConfigObject(path.dirname(file));
-      return rawConfig;
-    } finally {
-      revertBabelRequire();
-    }
+    let config = await this._requireOrImport(file);
+    if (config && typeof config === 'object' && ('default' in config))
+      config = config['default'];
+    this._config = config;
+    this._configFile = file;
+    const rawConfig = { ...config };
+    this._processConfigObject(path.dirname(file));
+    return rawConfig;
   }
 
   loadEmptyConfig(rootDir: string) {
@@ -76,14 +74,14 @@ export class Loader {
 
     // Resolve script hooks relative to the root dir.
     if (this._config.globalSetup)
-      this._config.globalSetup = path.resolve(rootDir, this._config.globalSetup);
+      this._config.globalSetup = resolveScript(this._config.globalSetup, rootDir);
     if (this._config.globalTeardown)
-      this._config.globalTeardown = path.resolve(rootDir, this._config.globalTeardown);
+      this._config.globalTeardown = resolveScript(this._config.globalTeardown, rootDir);
 
     const configUse = mergeObjects(this._defaultConfig.use, this._config.use);
     this._config = mergeObjects(mergeObjects(this._defaultConfig, this._config), { use: configUse });
 
-    if (('testDir' in this._config) && this._config.testDir !== undefined && !path.isAbsolute(this._config.testDir))
+    if (this._config.testDir !== undefined)
       this._config.testDir = path.resolve(rootDir, this._config.testDir);
     const projects: Project[] = ('projects' in this._config) && this._config.projects !== undefined ? this._config.projects : [this._config];
 
@@ -96,62 +94,51 @@ export class Loader {
     this._fullConfig.grepInvert = takeFirst(this._configOverrides.grepInvert, this._config.grepInvert, baseFullConfig.grepInvert);
     this._fullConfig.maxFailures = takeFirst(this._configOverrides.maxFailures, this._config.maxFailures, baseFullConfig.maxFailures);
     this._fullConfig.preserveOutput = takeFirst<PreserveOutput>(this._configOverrides.preserveOutput, this._config.preserveOutput, baseFullConfig.preserveOutput);
-    this._fullConfig.reporter = takeFirst(toReporters(this._configOverrides.reporter), toReporters(this._config.reporter), baseFullConfig.reporter);
+    this._fullConfig.reporter = takeFirst(toReporters(this._configOverrides.reporter as any), resolveReporters(this._config.reporter, rootDir), baseFullConfig.reporter);
     this._fullConfig.reportSlowTests = takeFirst(this._configOverrides.reportSlowTests, this._config.reportSlowTests, baseFullConfig.reportSlowTests);
     this._fullConfig.quiet = takeFirst(this._configOverrides.quiet, this._config.quiet, baseFullConfig.quiet);
     this._fullConfig.shard = takeFirst(this._configOverrides.shard, this._config.shard, baseFullConfig.shard);
     this._fullConfig.updateSnapshots = takeFirst(this._configOverrides.updateSnapshots, this._config.updateSnapshots, baseFullConfig.updateSnapshots);
     this._fullConfig.workers = takeFirst(this._configOverrides.workers, this._config.workers, baseFullConfig.workers);
+    this._fullConfig.webServer = takeFirst(this._configOverrides.webServer, this._config.webServer, baseFullConfig.webServer);
 
     for (const project of projects)
       this._addProject(project, this._fullConfig.rootDir);
     this._fullConfig.projects = this._projects.map(p => p.config);
   }
 
-  loadTestFile(file: string) {
+  async loadTestFile(file: string) {
     if (this._fileSuites.has(file))
       return this._fileSuites.get(file)!;
-    const revertBabelRequire = installTransform();
     try {
-      const suite = new Suite('');
+      const suite = new Suite(path.relative(this._fullConfig.rootDir, file) || path.basename(file));
       suite._requireFile = file;
-      suite.file = file;
+      suite.location = { file, line: 0, column: 0 };
       setCurrentlyLoadingFileSuite(suite);
-      require(file);
+      await this._requireOrImport(file);
       this._fileSuites.set(file, suite);
       return suite;
     } finally {
-      revertBabelRequire();
       setCurrentlyLoadingFileSuite(undefined);
     }
   }
 
-  loadGlobalHook(file: string, name: string): (config: FullConfig) => any {
-    const revertBabelRequire = installTransform();
-    try {
-      let hook = require(file);
-      if (hook && typeof hook === 'object' && ('default' in hook))
-        hook = hook['default'];
-      if (typeof hook !== 'function')
-        throw errorWithFile(file, `${name} file must export a single function.`);
-      return hook;
-    } finally {
-      revertBabelRequire();
-    }
+  async loadGlobalHook(file: string, name: string): Promise<(config: FullConfig) => any> {
+    let hook = await this._requireOrImport(file);
+    if (hook && typeof hook === 'object' && ('default' in hook))
+      hook = hook['default'];
+    if (typeof hook !== 'function')
+      throw errorWithFile(file, `${name} file must export a single function.`);
+    return hook;
   }
 
-  loadReporter(file: string): new (arg?: any) => Reporter {
-    const revertBabelRequire = installTransform();
-    try {
-      let func = require(path.resolve(this._fullConfig.rootDir, file));
-      if (func && typeof func === 'object' && ('default' in func))
-        func = func['default'];
-      if (typeof func !== 'function')
-        throw errorWithFile(file, `reporter file must export a single class.`);
-      return func;
-    } finally {
-      revertBabelRequire();
-    }
+  async loadReporter(file: string): Promise<new (arg?: any) => Reporter> {
+    let func = await this._requireOrImport(path.resolve(this._fullConfig.rootDir, file));
+    if (func && typeof func === 'object' && ('default' in func))
+      func = func['default'];
+    if (typeof func !== 'function')
+      throw errorWithFile(file, `reporter file must export a single class.`);
+    return func;
   }
 
   fullConfig(): FullConfig {
@@ -191,11 +178,38 @@ export class Loader {
       name: takeFirst(this._configOverrides.name, projectConfig.name, this._config.name, ''),
       testDir,
       testIgnore: takeFirst(this._configOverrides.testIgnore, projectConfig.testIgnore, this._config.testIgnore, []),
-      testMatch: takeFirst(this._configOverrides.testMatch, projectConfig.testMatch, this._config.testMatch, '**/?(*.)+(spec|test).[jt]s'),
+      testMatch: takeFirst(this._configOverrides.testMatch, projectConfig.testMatch, this._config.testMatch, '**/?(*.)@(spec|test).@(ts|js|mjs)'),
       timeout: takeFirst(this._configOverrides.timeout, projectConfig.timeout, this._config.timeout, 10000),
       use: mergeObjects(mergeObjects(this._config.use, projectConfig.use), this._configOverrides.use),
     };
     this._projects.push(new ProjectImpl(fullProject, this._projects.length));
+  }
+
+
+  private async _requireOrImport(file: string) {
+    const revertBabelRequire = installTransform();
+    try {
+      const esmImport = () => eval(`import(${JSON.stringify(url.pathToFileURL(file))})`);
+      if (file.endsWith('.mjs')) {
+        return await esmImport();
+      } else {
+        try {
+          return require(file);
+        } catch (e) {
+          // Attempt to load this module as ESM if a normal require didn't work.
+          if (e.code === 'ERR_REQUIRE_ESM')
+            return await esmImport();
+          throw e;
+        }
+      }
+    } catch (error) {
+      if (error instanceof SyntaxError && error.message.includes('Cannot use import statement outside a module'))
+        throw errorWithFile(file, 'JavaScript files must end with .mjs to use import.');
+
+      throw error;
+    } finally {
+      revertBabelRequire();
+    }
   }
 }
 
@@ -207,16 +221,12 @@ function takeFirst<T>(...args: (T | undefined)[]): T {
   return undefined as any as T;
 }
 
-function toReporters(reporters: 'dot' | 'line' | 'list' | 'junit' | 'json' | 'null' | ReporterDescription[] | undefined): ReporterDescription[] | undefined {
+function toReporters(reporters: BuiltInReporter | ReporterDescription[] | undefined): ReporterDescription[] | undefined {
   if (!reporters)
     return;
   if (typeof reporters === 'string')
     return [ [reporters] ];
   return reporters;
-}
-
-function errorWithFile(file: string, message: string) {
-  return new Error(`${file}: ${message}`);
 }
 
 function validateConfig(file: string, config: Config) {
@@ -296,10 +306,8 @@ function validateConfig(file: string, config: Config) {
         if (!Array.isArray(item) || item.length <= 0 || item.length > 2 || typeof item[0] !== 'string')
           throw errorWithFile(file, `config.reporter[${index}] must be a tuple [name, optionalArgument]`);
       });
-    } else {
-      const builtinReporters = ['dot', 'line', 'list', 'junit', 'json', 'null'];
-      if (typeof config.reporter !== 'string' || !builtinReporters.includes(config.reporter))
-        throw errorWithFile(file, `config.reporter must be one of ${builtinReporters.map(name => `"${name}"`).join(', ')}`);
+    } else if (typeof config.reporter !== 'string') {
+      throw errorWithFile(file, `config.reporter must be a string`);
     }
   }
 
@@ -418,4 +426,20 @@ const baseFullConfig: FullConfig = {
   shard: null,
   updateSnapshots: 'missing',
   workers: 1,
+  webServer: null,
 };
+
+function resolveReporters(reporters: Config['reporter'], rootDir: string): ReporterDescription[]|undefined {
+  return toReporters(reporters as any)?.map(([id, arg]) => {
+    if (builtInReporters.includes(id as any))
+      return [id, arg];
+    return [require.resolve(id, { paths: [ rootDir ] }), arg];
+  });
+}
+
+function resolveScript(id: string, rootDir: string) {
+  const localPath = path.resolve(rootDir, id);
+  if (fs.existsSync(localPath))
+    return localPath;
+  return require.resolve(id, { paths: [rootDir] });
+}

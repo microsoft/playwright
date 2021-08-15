@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-import * as reporterTypes from './reporter';
+import type { FixturePool } from './fixtures';
+import * as reporterTypes from '../../types/testReporter';
 import type { TestTypeImpl } from './testType';
-import { Location } from './types';
+import { Annotations, FixturesWithLocation, Location } from './types';
 
 class Base {
   title: string;
-  file: string = '';
-  line: number = 0;
-  column: number = 0;
   parent?: Suite;
 
   _only = false;
@@ -33,57 +31,37 @@ class Base {
   }
 
   titlePath(): string[] {
-    if (!this.parent)
-      return [];
-    if (!this.title)
-      return this.parent.titlePath();
-    return [...this.parent.titlePath(), this.title];
+    const titlePath = this.parent ? this.parent.titlePath() : [];
+    titlePath.push(this.title);
+    return titlePath;
   }
 }
 
-export class Spec extends Base implements reporterTypes.Spec {
-  suite!: Suite;
-  fn: Function;
-  tests: Test[] = [];
-  _ordinalInFile: number;
-  _testType: TestTypeImpl;
-
-  constructor(title: string, fn: Function, ordinalInFile: number, testType: TestTypeImpl) {
-    super(title);
-    this.fn = fn;
-    this._ordinalInFile = ordinalInFile;
-    this._testType = testType;
-  }
-
-  ok(): boolean {
-    return !this.tests.find(r => !r.ok());
-  }
-
-  fullTitle(): string {
-    return this.titlePath().join(' ');
-  }
-
-  _testFullTitle(projectName: string) {
-    return (projectName ? `[${projectName}] ` : '') + this.fullTitle();
-  }
-}
+export type Modifier = {
+  type: 'slow' | 'fixme' | 'skip' | 'fail',
+  fn: Function,
+  location: Location,
+  description: string | undefined
+};
 
 export class Suite extends Base implements reporterTypes.Suite {
   suites: Suite[] = [];
-  specs: Spec[] = [];
-  _fixtureOverrides: any = {};
-  _entries: (Suite | Spec)[] = [];
-  _hooks: {
-    type: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll',
-    fn: Function,
-    location: Location,
-  } [] = [];
+  tests: TestCase[] = [];
+  location?: Location;
+  _use: FixturesWithLocation[] = [];
+  _isDescribe = false;
+  _entries: (Suite | TestCase)[] = [];
+  _allHooks: TestCase[] = [];
+  _eachHooks: { type: 'beforeEach' | 'afterEach', fn: Function, location: Location }[] = [];
+  _timeout: number | undefined;
+  _annotations: Annotations = [];
+  _modifiers: Modifier[] = [];
+  _serial = false;
 
-  _addSpec(spec: Spec) {
-    spec.parent = this;
-    spec.suite = this;
-    this.specs.push(spec);
-    this._entries.push(spec);
+  _addTest(test: TestCase) {
+    test.parent = this;
+    this.tests.push(test);
+    this._entries.push(test);
   }
 
   _addSuite(suite: Suite) {
@@ -92,122 +70,102 @@ export class Suite extends Base implements reporterTypes.Suite {
     this._entries.push(suite);
   }
 
-  findTest(fn: (test: Test) => boolean | void): boolean {
-    for (const entry of this._entries) {
-      if (entry instanceof Suite) {
-        if (entry.findTest(fn))
-          return true;
-      } else {
-        for (const test of entry.tests) {
-          if (fn(test))
-            return true;
-        }
+  _addAllHook(hook: TestCase) {
+    hook.parent = this;
+    this._allHooks.push(hook);
+  }
+
+  allTests(): TestCase[] {
+    const result: TestCase[] = [];
+    const visit = (suite: Suite) => {
+      for (const entry of suite._entries) {
+        if (entry instanceof Suite)
+          visit(entry);
+        else
+          result.push(entry);
       }
-    }
-    return false;
-  }
-
-  findSpec(fn: (spec: Spec) => boolean | void): boolean {
-    for (const entry of this._entries) {
-      if (entry instanceof Suite) {
-        if (entry.findSpec(fn))
-          return true;
-      } else {
-        if (fn(entry))
-          return true;
-      }
-    }
-    return false;
-  }
-
-  findSuite(fn: (suite: Suite) => boolean | void): boolean {
-    if (fn(this))
-      return true;
-    for (const suite of this.suites) {
-      if (suite.findSuite(fn))
-        return true;
-    }
-    return false;
-  }
-
-  totalTestCount(): number {
-    let total = 0;
-    for (const suite of this.suites)
-      total += suite.totalTestCount();
-    for (const spec of this.specs)
-      total += spec.tests.length;
-    return total;
-  }
-
-  _allSpecs(): Spec[] {
-    const result: Spec[] = [];
-    this.findSpec(test => { result.push(test); });
+    };
+    visit(this);
     return result;
   }
 
-  _hasOnly(): boolean {
+  _getOnlyItems(): (TestCase | Suite)[] {
+    const items: (TestCase | Suite)[] = [];
     if (this._only)
-      return true;
-    if (this.suites.find(suite => suite._hasOnly()))
-      return true;
-    if (this.specs.find(spec => spec._only))
-      return true;
-    return false;
+      items.push(this);
+    for (const suite of this.suites)
+      items.push(...suite._getOnlyItems());
+    items.push(...this.tests.filter(test => test._only));
+    return items;
   }
 
-  _buildFixtureOverrides(): any {
-    return this.parent ? { ...this.parent._buildFixtureOverrides(), ...this._fixtureOverrides } : this._fixtureOverrides;
+  _clone(): Suite {
+    const suite = new Suite(this.title);
+    suite._only = this._only;
+    suite.location = this.location;
+    suite._requireFile = this._requireFile;
+    suite._use = this._use.slice();
+    suite._eachHooks = this._eachHooks.slice();
+    suite._timeout = this._timeout;
+    suite._annotations = this._annotations.slice();
+    suite._modifiers = this._modifiers.slice();
+    suite._isDescribe = this._isDescribe;
+    suite._serial = this._serial;
+    return suite;
   }
 }
 
-export class Test implements reporterTypes.Test {
-  spec: Spec;
+export class TestCase extends Base implements reporterTypes.TestCase {
+  fn: Function;
   results: reporterTypes.TestResult[] = [];
+  location: Location;
 
-  skipped = false;
   expectedStatus: reporterTypes.TestStatus = 'passed';
   timeout = 0;
-  annotations: { type: string, description?: string }[] = [];
+  annotations: Annotations = [];
   projectName = '';
   retries = 0;
 
+  _type: 'beforeAll' | 'afterAll' | 'test';
+  _ordinalInFile: number;
+  _testType: TestTypeImpl;
   _id = '';
+  _workerHash = '';
+  _pool: FixturePool | undefined;
   _repeatEachIndex = 0;
   _projectIndex = 0;
-  _workerHash = '';
 
-  constructor(spec: Spec) {
-    this.spec = spec;
+  constructor(type: 'beforeAll' | 'afterAll' | 'test', title: string, fn: Function, ordinalInFile: number, testType: TestTypeImpl, location: Location) {
+    super(title);
+    this._type = type;
+    this.fn = fn;
+    this._ordinalInFile = ordinalInFile;
+    this._testType = testType;
+    this.location = location;
   }
 
-  status(): 'skipped' | 'expected' | 'unexpected' | 'flaky' {
-    if (this.skipped)
+  outcome(): 'skipped' | 'expected' | 'unexpected' | 'flaky' {
+    const nonSkipped = this.results.filter(result => result.status !== 'skipped');
+    if (!nonSkipped.length)
       return 'skipped';
-    // List mode bail out.
-    if (!this.results.length)
-      return 'skipped';
-    if (this.results.length === 1 && this.expectedStatus === this.results[0].status)
+    if (nonSkipped.every(result => result.status === this.expectedStatus))
       return 'expected';
-    let hasPassedResults = false;
-    for (const result of this.results) {
-      // Missing status is Ok when running in shards mode.
-      if (!result.status)
-        return 'skipped';
-      if (result.status === this.expectedStatus)
-        hasPassedResults = true;
-    }
-    if (hasPassedResults)
+    if (nonSkipped.some(result => result.status === this.expectedStatus))
       return 'flaky';
     return 'unexpected';
   }
 
   ok(): boolean {
-    const status = this.status();
+    const status = this.outcome();
     return status === 'expected' || status === 'flaky' || status === 'skipped';
   }
 
-  fullTitle(): string {
-    return this.spec._testFullTitle(this.projectName);
+  _clone(): TestCase {
+    const test = new TestCase(this._type, this.title, this.fn, this._ordinalInFile, this._testType, this.location);
+    test._only = this._only;
+    test._requireFile = this._requireFile;
+    test.expectedStatus = this.expectedStatus;
+    return test;
   }
 
   _appendTestResult(): reporterTypes.TestResult {
@@ -215,8 +173,12 @@ export class Test implements reporterTypes.Test {
       retry: this.results.length,
       workerIndex: 0,
       duration: 0,
+      startTime: new Date(),
       stdout: [],
       stderr: [],
+      attachments: [],
+      status: 'skipped',
+      steps: []
     };
     this.results.push(result);
     return result;

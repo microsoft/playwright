@@ -19,9 +19,10 @@ import { spawn } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import type { ReportFormat } from '../../src/test/reporters/json';
+import type { JSONReport, JSONReportSuite } from '../../src/test/reporters/json';
 import rimraf from 'rimraf';
 import { promisify } from 'util';
+import * as url from 'url';
 
 const removeFolderAsync = promisify(rimraf);
 
@@ -32,7 +33,7 @@ type RunResult = {
   failed: number,
   flaky: number,
   skipped: number,
-  report: ReportFormat,
+  report: JSONReport,
   results: any[],
 };
 
@@ -55,6 +56,9 @@ async function writeFiles(testInfo: TestInfo, files: Files) {
   const headerTS = `
     import * as pwt from ${internalPath};
   `;
+  const headerMJS = `
+    import * as pwt from ${JSON.stringify(url.pathToFileURL(path.join(__dirname, 'entry', 'index.mjs')))};
+  `;
 
   const hasConfig = Object.keys(files).some(name => name.includes('.config.'));
   if (!hasConfig) {
@@ -69,9 +73,12 @@ async function writeFiles(testInfo: TestInfo, files: Files) {
   await Promise.all(Object.keys(files).map(async name => {
     const fullName = path.join(baseDir, name);
     await fs.promises.mkdir(path.dirname(fullName), { recursive: true });
-    const isTypeScriptSourceFile = name.endsWith('ts') && !name.endsWith('d.ts');
-    const header = isTypeScriptSourceFile ? headerTS : headerJS;
-    if (/(spec|test)\.(js|ts)$/.test(name)) {
+    const isTypeScriptSourceFile = name.endsWith('.ts') && !name.endsWith('.d.ts');
+    const isJSModule = name.endsWith('.mjs');
+    const header = isTypeScriptSourceFile ? headerTS : (isJSModule ? headerMJS : headerJS);
+    if (typeof files[name] === 'string' && files[name].includes('//@no-header')) {
+      await fs.promises.writeFile(fullName, files[name]);
+    } else if (/(spec|test)\.(js|ts|mjs)$/.test(name)) {
       const fileHeader = header + 'const { expect } = pwt;\n';
       await fs.promises.writeFile(fullName, fileHeader + files[name]);
     } else if (/\.(js|ts)$/.test(name) && !name.endsWith('d.ts')) {
@@ -107,7 +114,7 @@ async function runTSC(baseDir: string): Promise<TSCResult> {
   };
 }
 
-async function runPlaywrightTest(baseDir: string, params: any, env: Env): Promise<RunResult> {
+async function runPlaywrightTest(baseDir: string, params: any, env: Env, options: RunOptions): Promise<RunResult> {
   const paramList = [];
   let additionalArgs = '';
   for (const key of Object.keys(params)) {
@@ -138,14 +145,16 @@ async function runPlaywrightTest(baseDir: string, params: any, env: Env): Promis
   const testProcess = spawn('node', args, {
     env: {
       ...process.env,
-      ...env,
       PLAYWRIGHT_JSON_OUTPUT_NAME: reportFile,
       PWTEST_CACHE_DIR: cacheDir,
       PWTEST_CLI_ALLOW_TEST_COMMAND: '1',
+      PWTEST_SKIP_TEST_OUTPUT: '1',
+      ...env,
     },
     cwd: baseDir
   });
   let output = '';
+  let didSendSigint = false;
   testProcess.stderr.on('data', chunk => {
     output += String(chunk);
     if (process.env.PW_RUNNER_DEBUG)
@@ -153,6 +162,10 @@ async function runPlaywrightTest(baseDir: string, params: any, env: Env): Promis
   });
   testProcess.stdout.on('data', chunk => {
     output += String(chunk);
+    if (options.sendSIGINTAfter && !didSendSigint && countTimes(output, '%%SEND-SIGINT%%') >= options.sendSIGINTAfter) {
+      didSendSigint = true;
+      process.kill(testProcess.pid, 'SIGINT');
+    }
     if (process.env.PW_RUNNER_DEBUG)
       process.stdout.write(String(chunk));
   });
@@ -181,7 +194,7 @@ async function runPlaywrightTest(baseDir: string, params: any, env: Env): Promis
   }
 
   const results = [];
-  function visitSuites(suites?: ReportFormat['suites']) {
+  function visitSuites(suites?: JSONReportSuite[]) {
     if (!suites)
       return;
     for (const suite of suites) {
@@ -207,9 +220,12 @@ async function runPlaywrightTest(baseDir: string, params: any, env: Env): Promis
   };
 }
 
+type RunOptions = {
+  sendSIGINTAfter?: number;
+};
 type Fixtures = {
   writeFiles: (files: Files) => Promise<string>;
-  runInlineTest: (files: Files, params?: Params, env?: Env) => Promise<RunResult>;
+  runInlineTest: (files: Files, params?: Params, env?: Env, options?: RunOptions) => Promise<RunResult>;
   runTSC: (files: Files) => Promise<TSCResult>;
 };
 
@@ -220,13 +236,13 @@ export const test = base.extend<Fixtures>({
 
   runInlineTest: async ({}, use, testInfo: TestInfo) => {
     let runResult: RunResult | undefined;
-    await use(async (files: Files, params: Params = {}, env: Env = {}) => {
+    await use(async (files: Files, params: Params = {}, env: Env = {}, options: RunOptions = {}) => {
       const baseDir = await writeFiles(testInfo, files);
-      runResult = await runPlaywrightTest(baseDir, params, env);
+      runResult = await runPlaywrightTest(baseDir, params, env, options);
       return runResult;
     });
     if (testInfo.status !== testInfo.expectedStatus && runResult && !process.env.PW_RUNNER_DEBUG)
-      console.log(runResult.output);
+      console.log('\n' + runResult.output + '\n');
   },
 
   runTSC: async ({}, use, testInfo) => {
@@ -237,7 +253,7 @@ export const test = base.extend<Fixtures>({
       return tscResult;
     });
     if (testInfo.status !== testInfo.expectedStatus && tscResult && !process.env.PW_RUNNER_DEBUG)
-      console.log(tscResult.output);
+      console.log('\n' + tscResult.output + '\n');
   },
 });
 
@@ -262,4 +278,16 @@ export { expect } from '../config/test-runner';
 const asciiRegex = new RegExp('[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))', 'g');
 export function stripAscii(str: string): string {
   return str.replace(asciiRegex, '');
+}
+
+function countTimes(s: string, sub: string): number {
+  let result = 0;
+  for (let index = 0; index !== -1;) {
+    index = s.indexOf(sub, index);
+    if (index !== -1) {
+      result++;
+      index += sub.length;
+    }
+  }
+  return result;
 }

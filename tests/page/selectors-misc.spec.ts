@@ -58,6 +58,26 @@ it('should work with :visible', async ({page}) => {
   expect(await page.$eval('div:visible', div => div.id)).toBe('target2');
 });
 
+it('should work with >> visible=', async ({page}) => {
+  await page.setContent(`
+    <section>
+      <div id=target1></div>
+      <div id=target2></div>
+    </section>
+  `);
+  expect(await page.$('div >> visible=true')).toBe(null);
+
+  const error = await page.waitForSelector(`div >> visible=true`, { timeout: 100 }).catch(e => e);
+  expect(error.message).toContain('100ms');
+
+  const promise = page.waitForSelector(`div >> visible=true`, { state: 'attached' });
+  await page.$eval('#target2', div => div.textContent = 'Now visible');
+  const element = await promise;
+  expect(await element.evaluate(e => e.id)).toBe('target2');
+
+  expect(await page.$eval('div >> visible=true', div => div.id)).toBe('target2');
+});
+
 it('should work with :nth-match', async ({page}) => {
   await page.setContent(`
     <section>
@@ -84,6 +104,30 @@ it('should work with :nth-match', async ({page}) => {
   expect(error.message).toContain(`"nth-match" engine expects a one-based index as the last argument`);
 
   const promise = page.waitForSelector(`:nth-match(div, 3)`, { state: 'attached' });
+  await page.$eval('section', section => {
+    const div = document.createElement('div');
+    div.setAttribute('id', 'target3');
+    section.appendChild(div);
+  });
+  const element = await promise;
+  expect(await element.evaluate(e => e.id)).toBe('target3');
+});
+
+it('should work with nth=', async ({page}) => {
+  await page.setContent(`
+    <section>
+      <div id=target1></div>
+      <div id=target2></div>
+    </section>
+  `);
+  expect(await page.$('div >> nth=2')).toBe(null);
+  expect(await page.$eval('div >> nth=0', e => e.id)).toBe('target1');
+  expect(await page.$eval('div >> nth=1', e => e.id)).toBe('target2');
+  expect(await page.$eval('section > div >> nth=1', e => e.id)).toBe('target2');
+  expect(await page.$eval('section, div >> nth=1', e => e.id)).toBe('target1');
+  expect(await page.$eval('div, section >> nth=2', e => e.id)).toBe('target2');
+
+  const promise = page.waitForSelector(`div >> nth=2`, { state: 'attached' });
   await page.$eval('section', section => {
     const div = document.createElement('div');
     div.setAttribute('id', 'target3');

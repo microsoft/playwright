@@ -33,7 +33,7 @@ const playwright = require(requireName);
 
 // Requiring internals should work.
 const errors = require(requireName + '/lib/utils/errors');
-const installer = require(requireName + '/lib/install/installer');
+const registry = require(requireName + '/lib/utils/registry');
 
 (async () => {
   for (const browserType of success) {

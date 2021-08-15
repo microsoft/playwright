@@ -36,7 +36,7 @@ it('should work with expires=-1', async ({context, page}) => {
     expires: -1,
     httpOnly: false,
     secure: false,
-    sameSite: 'None',
+    sameSite: 'Lax',
   }]);
   await page.route('**/*', route => {
     route.fulfill({ body: '<html></html>' }).catch(() => {});
@@ -202,11 +202,11 @@ it('should have |expires| set to |-1| for session cookies', async ({context, ser
   expect(cookies[0].expires).toBe(-1);
 });
 
-it('should set cookie with reasonable defaults', async ({context, server}) => {
+it('should set cookie with reasonable defaults', async ({context, server, browserName}) => {
   await context.addCookies([{
     url: server.EMPTY_PAGE,
     name: 'defaults',
-    value: '123456'
+    value: '123456',
   }]);
   const cookies = await context.cookies();
   expect(cookies.sort((a, b) => a.name.localeCompare(b.name))).toEqual([{
@@ -217,17 +217,18 @@ it('should set cookie with reasonable defaults', async ({context, server}) => {
     expires: -1,
     httpOnly: false,
     secure: false,
-    sameSite: 'None',
+    sameSite: browserName === 'chromium' ? 'Lax' : 'None',
   }]);
 });
 
-it('should set a cookie with a path', async ({context, page, server}) => {
+it('should set a cookie with a path', async ({context, page, server, browserName, isWindows}) => {
   await page.goto(server.PREFIX + '/grid.html');
   await context.addCookies([{
     domain: 'localhost',
     path: '/grid.html',
     name: 'gridcookie',
     value: 'GRID',
+    sameSite: 'Lax',
   }]);
   expect(await context.cookies()).toEqual([{
     name: 'gridcookie',
@@ -237,7 +238,7 @@ it('should set a cookie with a path', async ({context, page, server}) => {
     expires: -1,
     httpOnly: false,
     secure: false,
-    sameSite: 'None',
+    sameSite: (browserName === 'webkit' && isWindows) ? 'None' : 'Lax',
   }]);
   expect(await page.evaluate('document.cookie')).toBe('gridcookie=GRID');
   await page.goto(server.EMPTY_PAGE);
@@ -295,12 +296,13 @@ it('should be able to set unsecure cookie for HTTP website', async ({context, pa
   expect(cookie.secure).toBe(false);
 });
 
-it('should set a cookie on a different domain', async ({context, page, server}) => {
+it('should set a cookie on a different domain', async ({context, page, server, browserName, isWindows}) => {
   await page.goto(server.EMPTY_PAGE);
   await context.addCookies([{
     url: 'https://www.example.com',
     name: 'example-cookie',
     value: 'best',
+    sameSite: 'Lax',
   }]);
   expect(await page.evaluate('document.cookie')).toBe('');
   expect(await context.cookies('https://www.example.com')).toEqual([{
@@ -311,7 +313,7 @@ it('should set a cookie on a different domain', async ({context, page, server}) 
     expires: -1,
     httpOnly: false,
     secure: true,
-    sameSite: 'None',
+    sameSite: (browserName === 'webkit' && isWindows) ? 'None' : 'Lax',
   }]);
 });
 
@@ -346,7 +348,7 @@ it('should(not) block third party cookies', async ({context, page, server, brows
   }, server.CROSS_PROCESS_PREFIX + '/grid.html');
   await page.frames()[1].evaluate(`document.cookie = 'username=John Doe'`);
   await page.waitForTimeout(2000);
-  const allowsThirdParty = browserName === 'chromium' || browserName === 'firefox';
+  const allowsThirdParty = browserName === 'firefox';
   const cookies = await context.cookies(server.CROSS_PROCESS_PREFIX + '/grid.html');
   if (allowsThirdParty) {
     expect(cookies).toEqual([

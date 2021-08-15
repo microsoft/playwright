@@ -3,25 +3,26 @@ set -e
 set +x
 
 trap "cd $(pwd -P)" EXIT
-cd "$(dirname $0)"
+cd "$(dirname "$0")"
 
 USAGE=$(cat<<EOF
-  usage: $(basename $0) [--mirror|--mirror-linux|--mirror-win32|--mirror-win64|--mirror-mac|--compile-mac-arm64|--compile-linux|--compile-win32|--compile-win64|--compile-mac]
+  usage: $(basename "$0") [--mirror|--mirror-linux|--mirror-win32|--mirror-win64|--mirror-mac|--compile-mac-arm64|--compile-linux|--compile-win32|--compile-win64|--compile-mac]
 
   Either compiles chromium or mirrors it from Chromium Continuous Builds CDN.
 EOF
 )
 
-SCRIPT_PATH=$(pwd -P)
+SCRIPT_FOLDER=$(pwd -P)
+source "${SCRIPT_FOLDER}/../utils.sh"
 
 main() {
   if [[ $1 == "--help" || $1 == "-h" ]]; then
     echo "$USAGE"
     exit 0
   elif [[ $1 == "--mirror"* ]]; then
-    mirror_chromium $1
+    mirror_chromium "$1"
   elif [[ $1 == "--compile"* ]]; then
-    compile_chromium $1
+    compile_chromium "$1"
   else
     echo "ERROR: unknown first argument. Use --help for details."
     exit 1
@@ -40,16 +41,11 @@ compile_chromium() {
     exit 1
   fi
 
-  source "${SCRIPT_PATH}/ensure_depot_tools.sh"
+  source "${SCRIPT_FOLDER}/ensure_depot_tools.sh"
 
   if [[ $1 == "--compile-mac"* ]]; then
     # As of Jan, 2021 Chromium mac compilation requires Xcode12.2
-    if [[ ! -d /Applications/Xcode12.2.app ]]; then
-      echo "ERROR: chromium mac compilation requires /Applications/Xcode12.2.app"
-      echo "Download one from https://developer.apple.com/download/more/"
-      exit 1
-    fi
-    export DEVELOPER_DIR=/Applications/Xcode12.2.app/Contents/Developer
+    selectXcodeVersionOrDie "12.2"
     # As of Jan, 2021 Chromium mac compilation is only possible on Intel macbooks.
     # See https://chromium.googlesource.com/chromium/src.git/+/master/docs/mac_arm64.md
     if [[ $1 == "--compile-mac-arm64" && $(uname -m) != "x86_64" ]]; then
@@ -63,6 +59,7 @@ compile_chromium() {
   # Prepare build folder.
   mkdir -p "./out/Default"
   echo "is_debug = false" > ./out/Default/args.gn
+  echo "dcheck_always_on = false" >> ./out/Default/args.gn
   if [[ $2 == "--symbols" ]]; then
     echo "symbol_level = 1" >> ./out/Default/args.gn
   else
@@ -76,7 +73,7 @@ compile_chromium() {
   fi
 
   if [[ ! -z "$USE_GOMA" ]]; then
-    PLAYWRIGHT_GOMA_PATH="${SCRIPT_PATH}/electron-build-tools/third_party/goma"
+    PLAYWRIGHT_GOMA_PATH="${SCRIPT_FOLDER}/electron-build-tools/third_party/goma"
     if [[ $1 == "--compile-win"* ]]; then
       PLAYWRIGHT_GOMA_PATH=$(cygpath -w "${PLAYWRIGHT_GOMA_PATH}")
     fi
@@ -86,9 +83,9 @@ compile_chromium() {
 
   if [[ $1 == "--compile-win"* ]]; then
     if [[ -z "$USE_GOMA" ]]; then
-      /c/Windows/System32/cmd.exe "/c $(cygpath -w ${SCRIPT_PATH}/buildwin.bat)"
+      /c/Windows/System32/cmd.exe "/c $(cygpath -w "${SCRIPT_FOLDER}"/buildwin.bat)"
     else
-      /c/Windows/System32/cmd.exe "/c $(cygpath -w ${SCRIPT_PATH}/buildwingoma.bat)"
+      /c/Windows/System32/cmd.exe "/c $(cygpath -w "${SCRIPT_FOLDER}"/buildwingoma.bat)"
     fi
   else
     gn gen out/Default
@@ -106,7 +103,7 @@ compile_chromium() {
 }
 
 mirror_chromium() {
-  cd "$SCRIPT_PATH"
+  cd "$SCRIPT_FOLDER"
   rm -rf output
   mkdir -p output
   cd output
@@ -128,7 +125,7 @@ mirror_chromium() {
     fi
   fi
 
-  CRREV=$(head -1 "${SCRIPT_PATH}/BUILD_NUMBER")
+  CRREV=$(head -1 "${SCRIPT_FOLDER}/BUILD_NUMBER")
   if [[ "${PLATFORM}" == "--mirror-win32" ]]; then
     CHROMIUM_URL="https://storage.googleapis.com/chromium-browser-snapshots/Win/${CRREV}/chrome-win.zip"
   elif [[ "${PLATFORM}" == "--mirror-win64" ]]; then
@@ -148,4 +145,4 @@ mirror_chromium() {
   unzip chromium-upstream.zip
 }
 
-main $1
+main "$1"

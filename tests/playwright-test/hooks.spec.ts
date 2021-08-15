@@ -20,6 +20,7 @@ test('hooks should work with fixtures', async ({ runInlineTest }) => {
   const { results } = await runInlineTest({
     'helper.ts': `
       global.logs = [];
+      let counter = 0;
       export const test = pwt.test.extend({
         w: [ async ({}, run) => {
           global.logs.push('+w');
@@ -29,7 +30,8 @@ test('hooks should work with fixtures', async ({ runInlineTest }) => {
 
         t: async ({}, run) => {
           global.logs.push('+t');
-          await run(42);
+          await run(42 + counter);
+          ++counter;
           global.logs.push('-t');
         },
       });
@@ -37,36 +39,39 @@ test('hooks should work with fixtures', async ({ runInlineTest }) => {
     'a.test.js': `
       const { test } = require('./helper');
       test.describe('suite', () => {
-        test.beforeAll(async ({ w }) => {
-          global.logs.push('beforeAll-' + w);
+        test.beforeAll(async ({ w, t }) => {
+          global.logs.push('beforeAll-' + w + '-' + t);
         });
-        test.afterAll(async ({ w }) => {
-          global.logs.push('afterAll-' + w);
-        });
-
-        test.beforeEach(async ({t}) => {
-          global.logs.push('beforeEach-' + t);
-        });
-        test.afterEach(async ({t}) => {
-          global.logs.push('afterEach-' + t);
+        test.afterAll(async ({ w, t }) => {
+          global.logs.push('afterAll-' + w + '-' + t);
         });
 
-        test('one', async ({t}) => {
-          global.logs.push('test');
-          expect(t).toBe(42);
+        test.beforeEach(async ({ w, t }) => {
+          global.logs.push('beforeEach-' + w + '-' + t);
+        });
+        test.afterEach(async ({ w, t }) => {
+          global.logs.push('afterEach-' + w + '-' + t);
+        });
+
+        test('one', async ({ w, t }) => {
+          global.logs.push('test-' + w + '-' + t);
         });
       });
 
-      test('two', async ({t}) => {
+      test('two', async ({ t }) => {
         expect(global.logs).toEqual([
           '+w',
-          'beforeAll-17',
           '+t',
-          'beforeEach-42',
-          'test',
-          'afterEach-42',
+          'beforeAll-17-42',
           '-t',
-          'afterAll-17',
+          '+t',
+          'beforeEach-17-43',
+          'test-17-43',
+          'afterEach-17-43',
+          '-t',
+          '+t',
+          'afterAll-17-44',
+          '-t',
           '+t',
         ]);
       });
@@ -189,4 +194,210 @@ test('beforeAll from a helper file should throw', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('beforeAll hook can only be called in a test file');
+});
+
+test('beforeAll hooks are skipped when no tests in the suite are run', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test.describe('suite1', () => {
+        test.beforeAll(() => {
+          console.log('\\n%%beforeAll1');
+        });
+        test('skipped', () => {});
+      });
+      test.describe('suite2', () => {
+        test.beforeAll(() => {
+          console.log('\\n%%beforeAll2');
+        });
+        test.only('passed', () => {});
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('%%beforeAll2');
+  expect(result.output).not.toContain('%%beforeAll1');
+});
+
+test('should run hooks after failure', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test.describe('suite', () => {
+        test('faled', ({}) => {
+          console.log('\\n%%test');
+          expect(1).toBe(2);
+        });
+        test.afterEach(() => {
+          console.log('\\n%%afterEach-1');
+        });
+        test.afterAll(() => {
+          console.log('\\n%%afterAll-1');
+        });
+      });
+      test.afterEach(async () => {
+        await new Promise(f => setTimeout(f, 1000));
+        console.log('\\n%%afterEach-2');
+      });
+      test.afterAll(async () => {
+        await new Promise(f => setTimeout(f, 1000));
+        console.log('\\n%%afterAll-2');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%test',
+    '%%afterEach-1',
+    '%%afterEach-2',
+    '%%afterAll-1',
+    '%%afterAll-2',
+  ]);
+});
+
+test('beforeAll hook should get retry index of the first test', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test.beforeAll(({}, testInfo) => {
+        console.log('\\n%%beforeall-retry-' + testInfo.retry);
+      });
+      test('passed', ({}, testInfo) => {
+        console.log('\\n%%test-retry-' + testInfo.retry);
+        expect(testInfo.retry).toBe(1);
+      });
+    `,
+  }, { retries: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.flaky).toBe(1);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%beforeall-retry-0',
+    '%%test-retry-0',
+    '%%beforeall-retry-1',
+    '%%test-retry-1',
+  ]);
+});
+
+test('afterAll exception should fail the run', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test.afterAll(() => {
+        throw new Error('From the afterAll');
+      });
+      test('passed', () => {
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('From the afterAll');
+});
+
+test('max-failures should still run afterEach/afterAll', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.js': `
+      const { test } = pwt;
+      test.afterAll(() => {
+        console.log('\\n%%afterAll');
+      });
+      test.afterEach(() => {
+        console.log('\\n%%afterEach');
+      });
+      test('failed', async () => {
+        console.log('\\n%%test');
+        test.expect(1).toBe(2);
+      });
+      test('skipped', async () => {
+        console.log('\\n%%skipped');
+      });
+    `,
+  }, { 'max-failures': 1 });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.failed).toBe(1);
+  expect(result.skipped).toBe(1);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%test',
+    '%%afterEach',
+    '%%afterAll',
+  ]);
+});
+
+test('beforeAll failure should prevent the test, but not afterAll', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test.beforeAll(() => {
+        console.log('\\n%%beforeAll');
+        throw new Error('From a beforeAll');
+      });
+      test.afterAll(() => {
+        console.log('\\n%%afterAll');
+      });
+      test('skipped', () => {
+        console.log('\\n%%test');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%beforeAll',
+    '%%afterAll',
+  ]);
+});
+
+test('fixture error should not prevent afterAll', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const test = pwt.test.extend({
+        foo: async ({}, use) => {
+          await use('foo');
+          throw new Error('bad fixture');
+        },
+      });
+      test('good test', ({ foo }) => {
+        console.log('\\n%%test');
+      });
+      test.afterAll(() => {
+        console.log('\\n%%afterAll');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('bad fixture');
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%test',
+    '%%afterAll',
+  ]);
+});
+
+test('afterEach failure should not prevent afterAll', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('good test', ({ }) => {
+        console.log('\\n%%test');
+      });
+      test.afterEach(() => {
+        console.log('\\n%%afterEach');
+        throw new Error('bad afterEach');
+      })
+      test.afterAll(() => {
+        console.log('\\n%%afterAll');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('bad afterEach');
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%test',
+    '%%afterEach',
+    '%%afterAll',
+  ]);
 });

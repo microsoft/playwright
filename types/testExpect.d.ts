@@ -29,17 +29,18 @@ export declare type Expect = {
   stringMatching(expected: string | RegExp): AsymmetricMatcher;
 };
 
+type OverriddenExpectProperties = 
+'not' |
+'resolves' |
+'rejects' |
+'toMatchInlineSnapshot' |
+'toThrowErrorMatchingInlineSnapshot' |
+'toMatchSnapshot' |
+'toThrowErrorMatchingSnapshot';
+
 declare global {
   export namespace PlaywrightTest {
-    type OverriddenProperties = 
-      'not' |
-      'resolves' |
-      'rejects' |
-      'toMatchInlineSnapshot' |
-      'toThrowErrorMatchingInlineSnapshot' |
-      'toMatchSnapshot' | 
-      'toThrowErrorMatchingSnapshot';
-    export interface Matchers<R> extends Omit<expect.Matchers<R>, OverriddenProperties> {
+    export interface Matchers<R> extends Omit<expect.Matchers<R>, OverriddenExpectProperties> {
       /**
        * If you know how to test something, `.not` lets you test its opposite.
        */
@@ -67,6 +68,101 @@ declare global {
       toMatchSnapshot(name: string, options?: {
         threshold?: number
       }): R;
+
+      /**
+       * Asserts input is checked.
+       */
+      toBeChecked(options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts input is disabled.
+       */
+      toBeDisabled(options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts input is editable.
+       */
+      toBeEditable(options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts given DOM node or input has no text content or no input value.
+       */
+      toBeEmpty(options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts input is enabled.
+       */
+      toBeEnabled(options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts given DOM is a focused (active) in document.
+       */
+      toBeFocused(options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts given DOM node is hidden or detached from DOM.
+       */
+      toBeHidden(options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts given DOM node visible on the screen.
+       */
+      toBeVisible(options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts element's text content matches given pattern or contains given substring.
+       */
+      toContainText(expected: string, options?: { timeout?: number, useInnerText?: boolean }): Promise<R>;
+
+      /**
+       * Asserts element's attributes `name` matches expected value.
+       */
+      toHaveAttribute(expected: string | RegExp, name: string, options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts that DOM node has a given CSS class.
+       */
+      toHaveClass(className: string | RegExp | string[], options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts number of DOM nodes matching given locator.
+       */
+      toHaveCount(expected: number, options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts element's computed CSS property `name` matches expected value.
+       */
+      toHaveCSS(expected: string | RegExp, name: string, options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts element's `id` attribute matches expected value.
+       */
+      toHaveId(expected: string | RegExp, options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts JavaScript object that corresponds to the Node has a property with given value.
+       */
+      toHaveJSProperty(name: string, value: any, options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts element's text content.
+       */
+      toHaveText(expected: string | RegExp | string[], options?: { timeout?: number, useInnerText?: boolean }): Promise<R>;
+
+      /**
+       * Asserts page's title.
+       */
+      toHaveTitle(expected: string | RegExp, options?: { timeout?: number }): Promise<R>;
+
+      /**
+       * Asserts page's title.
+       */
+      toHaveURL(expected: string | RegExp, options?: { timeout?: number }): Promise<R>;
+
+       /**
+       * Asserts input element's value.
+       */
+      toHaveValue(expected: string | RegExp, options?: { timeout?: number }): Promise<R>;
     }
   }
 }

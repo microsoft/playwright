@@ -18,7 +18,7 @@
 import * as dialog from '../dialog';
 import * as dom from '../dom';
 import * as frames from '../frames';
-import { helper, RegisteredListener } from '../helper';
+import { eventsHelper, RegisteredListener } from '../../utils/eventsHelper';
 import { assert } from '../../utils/utils';
 import { Page, PageBinding, PageDelegate, Worker } from '../page';
 import * as types from '../types';
@@ -67,32 +67,32 @@ export class FFPage implements PageDelegate {
     this._page.on(Page.Events.FrameDetached, frame => this._removeContextsForFrame(frame));
     // TODO: remove Page.willOpenNewWindowAsynchronously from the protocol.
     this._eventListeners = [
-      helper.addEventListener(this._session, 'Page.eventFired', this._onEventFired.bind(this)),
-      helper.addEventListener(this._session, 'Page.frameAttached', this._onFrameAttached.bind(this)),
-      helper.addEventListener(this._session, 'Page.frameDetached', this._onFrameDetached.bind(this)),
-      helper.addEventListener(this._session, 'Page.navigationAborted', this._onNavigationAborted.bind(this)),
-      helper.addEventListener(this._session, 'Page.navigationCommitted', this._onNavigationCommitted.bind(this)),
-      helper.addEventListener(this._session, 'Page.navigationStarted', this._onNavigationStarted.bind(this)),
-      helper.addEventListener(this._session, 'Page.sameDocumentNavigation', this._onSameDocumentNavigation.bind(this)),
-      helper.addEventListener(this._session, 'Runtime.executionContextCreated', this._onExecutionContextCreated.bind(this)),
-      helper.addEventListener(this._session, 'Runtime.executionContextDestroyed', this._onExecutionContextDestroyed.bind(this)),
-      helper.addEventListener(this._session, 'Page.linkClicked', event => this._onLinkClicked(event.phase)),
-      helper.addEventListener(this._session, 'Page.uncaughtError', this._onUncaughtError.bind(this)),
-      helper.addEventListener(this._session, 'Runtime.console', this._onConsole.bind(this)),
-      helper.addEventListener(this._session, 'Page.dialogOpened', this._onDialogOpened.bind(this)),
-      helper.addEventListener(this._session, 'Page.bindingCalled', this._onBindingCalled.bind(this)),
-      helper.addEventListener(this._session, 'Page.fileChooserOpened', this._onFileChooserOpened.bind(this)),
-      helper.addEventListener(this._session, 'Page.workerCreated', this._onWorkerCreated.bind(this)),
-      helper.addEventListener(this._session, 'Page.workerDestroyed', this._onWorkerDestroyed.bind(this)),
-      helper.addEventListener(this._session, 'Page.dispatchMessageFromWorker', this._onDispatchMessageFromWorker.bind(this)),
-      helper.addEventListener(this._session, 'Page.crashed', this._onCrashed.bind(this)),
-      helper.addEventListener(this._session, 'Page.videoRecordingStarted', this._onVideoRecordingStarted.bind(this)),
+      eventsHelper.addEventListener(this._session, 'Page.eventFired', this._onEventFired.bind(this)),
+      eventsHelper.addEventListener(this._session, 'Page.frameAttached', this._onFrameAttached.bind(this)),
+      eventsHelper.addEventListener(this._session, 'Page.frameDetached', this._onFrameDetached.bind(this)),
+      eventsHelper.addEventListener(this._session, 'Page.navigationAborted', this._onNavigationAborted.bind(this)),
+      eventsHelper.addEventListener(this._session, 'Page.navigationCommitted', this._onNavigationCommitted.bind(this)),
+      eventsHelper.addEventListener(this._session, 'Page.navigationStarted', this._onNavigationStarted.bind(this)),
+      eventsHelper.addEventListener(this._session, 'Page.sameDocumentNavigation', this._onSameDocumentNavigation.bind(this)),
+      eventsHelper.addEventListener(this._session, 'Runtime.executionContextCreated', this._onExecutionContextCreated.bind(this)),
+      eventsHelper.addEventListener(this._session, 'Runtime.executionContextDestroyed', this._onExecutionContextDestroyed.bind(this)),
+      eventsHelper.addEventListener(this._session, 'Page.linkClicked', event => this._onLinkClicked(event.phase)),
+      eventsHelper.addEventListener(this._session, 'Page.uncaughtError', this._onUncaughtError.bind(this)),
+      eventsHelper.addEventListener(this._session, 'Runtime.console', this._onConsole.bind(this)),
+      eventsHelper.addEventListener(this._session, 'Page.dialogOpened', this._onDialogOpened.bind(this)),
+      eventsHelper.addEventListener(this._session, 'Page.bindingCalled', this._onBindingCalled.bind(this)),
+      eventsHelper.addEventListener(this._session, 'Page.fileChooserOpened', this._onFileChooserOpened.bind(this)),
+      eventsHelper.addEventListener(this._session, 'Page.workerCreated', this._onWorkerCreated.bind(this)),
+      eventsHelper.addEventListener(this._session, 'Page.workerDestroyed', this._onWorkerDestroyed.bind(this)),
+      eventsHelper.addEventListener(this._session, 'Page.dispatchMessageFromWorker', this._onDispatchMessageFromWorker.bind(this)),
+      eventsHelper.addEventListener(this._session, 'Page.crashed', this._onCrashed.bind(this)),
+      eventsHelper.addEventListener(this._session, 'Page.videoRecordingStarted', this._onVideoRecordingStarted.bind(this)),
 
-      helper.addEventListener(this._session, 'Page.webSocketCreated', this._onWebSocketCreated.bind(this)),
-      helper.addEventListener(this._session, 'Page.webSocketClosed', this._onWebSocketClosed.bind(this)),
-      helper.addEventListener(this._session, 'Page.webSocketFrameReceived', this._onWebSocketFrameReceived.bind(this)),
-      helper.addEventListener(this._session, 'Page.webSocketFrameSent', this._onWebSocketFrameSent.bind(this)),
-      helper.addEventListener(this._session, 'Page.screencastFrame', this._onScreencastFrame.bind(this)),
+      eventsHelper.addEventListener(this._session, 'Page.webSocketCreated', this._onWebSocketCreated.bind(this)),
+      eventsHelper.addEventListener(this._session, 'Page.webSocketClosed', this._onWebSocketClosed.bind(this)),
+      eventsHelper.addEventListener(this._session, 'Page.webSocketFrameReceived', this._onWebSocketFrameReceived.bind(this)),
+      eventsHelper.addEventListener(this._session, 'Page.webSocketFrameSent', this._onWebSocketFrameSent.bind(this)),
+      eventsHelper.addEventListener(this._session, 'Page.screencastFrame', this._onScreencastFrame.bind(this)),
 
     ];
     this._pagePromise = new Promise(f => this._pageCallback = f);
@@ -228,12 +228,11 @@ export class FFPage implements PageDelegate {
   }
 
   _onUncaughtError(params: Protocol.Page.uncaughtErrorPayload) {
-    const {name, message} = splitErrorMessage(params.message);
-
+    const { name, message } = splitErrorMessage(params.message);
     const error = new Error(message);
-    error.stack = params.stack;
+    error.stack = params.message + '\n' + params.stack.split('\n').filter(Boolean).map(a => a.replace(/([^@]*)@(.*)/, '    at $1 ($2)')).join('\n');
     error.name = name;
-    this._page.emit(Page.Events.PageError, error);
+    this._page.firePageError(error);
   }
 
   _onConsole(payload: Protocol.Runtime.consolePayload) {
@@ -325,7 +324,7 @@ export class FFPage implements PageDelegate {
 
   didClose() {
     this._session.dispose();
-    helper.removeEventListeners(this._eventListeners);
+    eventsHelper.removeEventListeners(this._eventListeners);
     this._networkManager.dispose();
     this._page._didClose();
   }

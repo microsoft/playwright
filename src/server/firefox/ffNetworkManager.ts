@@ -15,13 +15,14 @@
  * limitations under the License.
  */
 
-import { helper, RegisteredListener } from '../helper';
+import { eventsHelper, RegisteredListener } from '../../utils/eventsHelper';
 import { FFSession } from './ffConnection';
 import { Page } from '../page';
 import * as network from '../network';
 import * as frames from '../frames';
 import * as types from '../types';
 import { Protocol } from './protocol';
+import { InterceptedResponse } from '../network';
 
 export class FFNetworkManager {
   private _session: FFSession;
@@ -37,15 +38,15 @@ export class FFNetworkManager {
     this._page = page;
 
     this._eventListeners = [
-      helper.addEventListener(session, 'Network.requestWillBeSent', this._onRequestWillBeSent.bind(this)),
-      helper.addEventListener(session, 'Network.responseReceived', this._onResponseReceived.bind(this)),
-      helper.addEventListener(session, 'Network.requestFinished', this._onRequestFinished.bind(this)),
-      helper.addEventListener(session, 'Network.requestFailed', this._onRequestFailed.bind(this)),
+      eventsHelper.addEventListener(session, 'Network.requestWillBeSent', this._onRequestWillBeSent.bind(this)),
+      eventsHelper.addEventListener(session, 'Network.responseReceived', this._onResponseReceived.bind(this)),
+      eventsHelper.addEventListener(session, 'Network.requestFinished', this._onRequestFinished.bind(this)),
+      eventsHelper.addEventListener(session, 'Network.requestFailed', this._onRequestFailed.bind(this)),
     ];
   }
 
   dispose() {
-    helper.removeEventListeners(this._eventListeners);
+    eventsHelper.removeEventListeners(this._eventListeners);
   }
 
   async setRequestInterception(enabled: boolean) {
@@ -59,9 +60,12 @@ export class FFNetworkManager {
       return;
     if (redirectedFrom)
       this._requests.delete(redirectedFrom._id);
-    const request = new InterceptableRequest(this._session, frame, redirectedFrom, event);
+    const request = new InterceptableRequest(frame, redirectedFrom, event);
+    let route;
+    if (event.isIntercepted)
+      route = new FFRouteImpl(this._session, request);
     this._requests.set(request._id, request);
-    this._page._frameManager.requestStarted(request.request);
+    this._page._frameManager.requestStarted(request.request, route);
   }
 
   _onResponseReceived(event: Protocol.Network.responseReceivedPayload) {
@@ -118,7 +122,7 @@ export class FFNetworkManager {
       response._requestFinished(this._relativeTiming(event.responseEndTime), 'Response body is unavailable for redirect responses');
     } else {
       this._requests.delete(request._id);
-      response._requestFinished(this._relativeTiming(event.responseEndTime));
+      response._requestFinished(this._relativeTiming(event.responseEndTime), undefined, event.transferSize);
     }
     this._page._frameManager.requestFinished(request.request);
   }
@@ -172,43 +176,65 @@ const internalCauseToResourceType: {[key: string]: string} = {
   TYPE_INTERNAL_EVENTSOURCE: 'eventsource',
 };
 
-class InterceptableRequest implements network.RouteDelegate {
+class InterceptableRequest {
   readonly request: network.Request;
-  _id: string;
-  private _session: FFSession;
+  readonly _id: string;
+  private _redirectedTo: InterceptableRequest | undefined;
 
-  constructor(session: FFSession, frame: frames.Frame, redirectedFrom: InterceptableRequest | null, payload: Protocol.Network.requestWillBeSentPayload) {
+  constructor(frame: frames.Frame, redirectedFrom: InterceptableRequest | null, payload: Protocol.Network.requestWillBeSentPayload) {
     this._id = payload.requestId;
-    this._session = session;
+    if (redirectedFrom)
+      redirectedFrom._redirectedTo = this;
     let postDataBuffer = null;
     if (payload.postData)
       postDataBuffer = Buffer.from(payload.postData, 'base64');
-    this.request = new network.Request(payload.isIntercepted ? this : null, frame, redirectedFrom ? redirectedFrom.request : null, payload.navigationId,
+    this.request = new network.Request(frame, redirectedFrom ? redirectedFrom.request : null, payload.navigationId,
         payload.url, internalCauseToResourceType[payload.internalCause] || causeToResourceType[payload.cause] || 'other', payload.method, postDataBuffer, payload.headers);
   }
 
-  responseBody(): Promise<Buffer> {
-    throw new Error('Method not implemented.');
+  _finalRequest(): InterceptableRequest {
+    let request: InterceptableRequest = this;
+    while (request._redirectedTo)
+      request = request._redirectedTo;
+    return request;
+  }
+}
+
+class FFRouteImpl implements network.RouteDelegate {
+  private _request: InterceptableRequest;
+  private _session: FFSession;
+
+  constructor(session: FFSession, request: InterceptableRequest) {
+    this._session = session;
+    this._request = request;
   }
 
-  async continue(overrides: types.NormalizedContinueOverrides): Promise<network.InterceptedResponse|null> {
-    await this._session.sendMayFail('Network.resumeInterceptedRequest', {
-      requestId: this._id,
+  async responseBody(): Promise<Buffer> {
+    const response = await this._session.send('Network.getResponseBody', {
+      requestId: this._request._finalRequest()._id
+    });
+    return Buffer.from(response.base64body, 'base64');
+  }
+
+  async continue(request: network.Request, overrides: types.NormalizedContinueOverrides): Promise<network.InterceptedResponse|null> {
+    const result = await this._session.sendMayFail('Network.resumeInterceptedRequest', {
+      requestId: this._request._id,
       url: overrides.url,
       method: overrides.method,
       headers: overrides.headers,
-      postData: overrides.postData ? Buffer.from(overrides.postData).toString('base64') : undefined
-    });
-    if (overrides.interceptResponse)
-      throw new Error('Response interception not implemented');
-    return null;
+      postData: overrides.postData ? Buffer.from(overrides.postData).toString('base64') : undefined,
+      interceptResponse: overrides.interceptResponse,
+    }) as any;
+    if (!overrides.interceptResponse)
+      return null;
+    return new InterceptedResponse(request, result.response.status, result.response.statusText, result.response.headers);
   }
 
   async fulfill(response: types.NormalizedFulfillResponse) {
     const base64body = response.isBase64 ? response.body : Buffer.from(response.body).toString('base64');
 
     await this._session.sendMayFail('Network.fulfillInterceptedRequest', {
-      requestId: this._id,
+      requestId: this._request._id,
       status: response.status,
       statusText: network.STATUS_TEXTS[String(response.status)] || '',
       headers: response.headers,
@@ -218,7 +244,7 @@ class InterceptableRequest implements network.RouteDelegate {
 
   async abort(errorCode: string) {
     await this._session.sendMayFail('Network.abortInterceptedRequest', {
-      requestId: this._id,
+      requestId: this._request._id,
       errorCode,
     });
   }

@@ -9,6 +9,7 @@ on:
       - utils/docker/**
       - browsers.json
       - .github/workflows/publish_canary_docker.yml
+      - src/nativeDeps.ts
 
 jobs:
   publish-canary-docker:

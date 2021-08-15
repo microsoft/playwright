@@ -47,7 +47,7 @@ it('should work with data-test-id selector', async ({page, server}) => {
   expect(idAttribute).toBe('testAttribute');
 });
 
-it('should work with text selector', async ({page, server}) => {
+it('should work with text selector in quotes', async ({page, server}) => {
   await page.setContent('<section id="testAttribute">43543</section>');
   const idAttribute = await page.$eval('text="43543"', e => e.id);
   expect(idAttribute).toBe('testAttribute');

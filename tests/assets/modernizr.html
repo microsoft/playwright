@@ -1,0 +1,16 @@
+<script src='modernizr.js'></script>
+<body></body>
+<script>
+const report = {};
+for (const name in Modernizr) {
+  if (name.startsWith('_'))
+    continue;
+  if (['on', 'testAllProps', 'testProp', 'addTest', 'prefixed'].includes(name))
+    continue;
+  let value = Modernizr[name];
+  report[name] = value;
+}
+document.body.style.whiteSpace = 'pre';
+document.body.textContent = JSON.stringify(report, undefined, 4);
+window.report = JSON.parse(document.body.textContent);
+</script>

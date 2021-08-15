@@ -179,6 +179,42 @@ methods accept [`param: selector`] as their first argument.
   await page.ClickAsync("xpath=//button");
   ```
   Learn more about [XPath selector][xpath].
+- React selector (experimental)
+  ```js
+  await page.click('_react=ListItem[text *= "milk" i]');
+  ```
+  ```java
+  page.click("_react=ListItem[text *= 'milk' i]");
+  ```
+  ```python async
+  await page.click("_react=ListItem[text *= 'milk' i]")
+  ```
+  ```python sync
+  page.click("_react=ListItem[text *= 'milk' i]")
+  ```
+  ```csharp
+  await page.ClickAsync("_react=ListItem[text *= 'milk' i]");
+  ```
+  Learn more about [React selectors][react].
+- Vue selector (experimental)
+  ```js
+  await page.click('_vue=list-item[text *= "milk" i]');
+  ```
+  ```java
+  page.click("_vue=list-item[text *= 'milk' i]");
+  ```
+  ```python async
+  await page.click("_vue=list-item[text *= "milk" i]")
+  ```
+  ```python sync
+  page.click("_vue=list-item[text *= 'milk' i]")
+  ```
+  ```csharp
+  await page.ClickAsync("_vue=list-item[text *= 'milk' i]");
+  ```
+  Learn more about [Vue selectors][vue].
+
+
 
 ## Text selector
 
@@ -371,10 +407,15 @@ await page.ClickAsync("button");
 
 ## Selecting visible elements
 
-The `:visible` pseudo-class in CSS selectors matches the elements that are
-[visible](./actionability.md#visible). For example, `input` matches all the inputs on the page, while
-`input:visible` matches only visible inputs. This is useful to distinguish elements that are very
-similar but differ in visibility.
+There are two ways of selecting only [visible](./actionability.md#visible) elements with Playwright:
+- `:visible` pseudo-class in CSS selectors
+- `visible=` selector engine
+
+If you prefer your selectors to be CSS and don't want to rely on [chaining selectors](#chaining-selectors), use `:visible` pseudo class like so: `input:visible`. If you prefer combining selector engines, use `input >> visible=true`. The latter allows you combining `text=`, `xpath=` and other selector engines with the visibility filter.
+
+For example, `input` matches all the inputs on the page, while
+`input:visible` and `input >> visible=true` only match visible inputs. This is useful to distinguish elements
+that are very similar but differ in visibility.
 
 :::note
 It's usually better to follow the [best practices](#best-practices) and find a more reliable way to
@@ -410,27 +451,28 @@ Consider a page with two buttons, first invisible and second visible.
   await page.ClickAsync("button");
   ```
 
-* This will find a second button, because it is visible, and then click it.
+* These will find a second button, because it is visible, and then click it.
 
   ```js
   await page.click('button:visible');
+  await page.click('button >> visible=true');
   ```
   ```java
   page.click("button:visible");
+  page.click("button >> visible=true");
   ```
   ```python async
   await page.click("button:visible")
+  await page.click("button >> visible=true")
   ```
   ```python sync
   page.click("button:visible")
+  page.click("button >> visible=true")
   ```
   ```csharp
   await page.ClickAsync("button:visible");
+  await page.ClickAsync("button >> visible=true");
   ```
-
-Use `:visible` with caution, because it has two major drawbacks:
-* When elements change their visibility dynamically, `:visible` will give unpredictable results based on the timing.
-* `:visible` forces a layout and may lead to querying being slow, especially when used with `page.waitForSelector(selector[, options])` method.
 
 ## Selecting elements that contain other elements
 
@@ -624,6 +666,120 @@ converts `'//html/body'` to `'xpath=//html/body'`.
 :::note
 `xpath` does not pierce shadow roots
 :::
+
+## N-th element selector
+
+You can narrow down query to the n-th match using the `nth=` selector. Unlike CSS's nth-match, provided index is 0-based.
+
+```js
+// Click first button
+await page.click('button >> nth=0');
+
+// Click last button
+await page.click('button >> nth=-1');
+```
+
+```java
+// Click first button
+page.click("button >> nth=0");
+
+// Click last button
+page.click("button >> nth=-1");
+```
+
+```python async
+# Click first button
+await page.click("button >> nth=0")
+
+# Click last button
+await page.click("button >> nth=-1")
+```
+
+```python sync
+# Click first button
+page.click("button >> nth=0")
+
+# Click last button
+page.click("button >> nth=-1")
+```
+
+```csharp
+// Click first button
+await page.ClickAsync("button >> nth=0");
+
+// Click last button
+await page.ClickAsync("button >> nth=-1");
+```
+
+## React selectors
+
+:::note
+React selectors are experimental and prefixed with `_`. The functionality might change in future.
+:::
+
+React selectors allow selecting elements by its component name and property values. The syntax is very similar to [attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors) and supports all attribute selector operators.
+
+In react selectors, component names are transcribed with **CamelCase**.
+
+Selector examples:
+
+- match by **component**: `_react=BookItem`
+- match by component and **exact property value**, case-sensetive: `_react=BookItem[author = "Steven King"]`
+- match by property value only, **case-insensetive**: `_react=[author = "steven king" i]`
+- match by component and **truthy property value**: `_react=MyButton[enabled]`
+- match by component and **boolean value**: `_react=MyButton[enabled = false]`
+- match by property **value substring**: `_react=[author *= "King"]`
+- match by component and **multiple properties**: `_react=BookItem[author *= "king" i][year = 1990]`
+- match by **nested** property value: `_react=[some.nested.value = 12]`
+- match by component and property value **prefix**: `_react=BookItem[author ^= "Steven"]`
+- match by component and property value **suffix**: `_react=BookItem[author $= "Steven"]`
+
+
+
+To find React element names in a tree use [React DevTools](https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi).
+
+
+:::note
+React selectors support React 15 and above.
+:::
+
+:::note
+React selectors, as well as [React DevTools](https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi), only work against **unminified** application builds.
+:::
+
+## Vue selectors
+
+:::note
+Vue selectors are experimental and prefixed with `_`. The functionality might change in future.
+:::
+
+Vue selectors allow selecting elements by its component name and property values. The syntax is very similar to [attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors) and supports all attribute selector operators.
+
+In vue selectors, component names are transcribed with **kebab-case**.
+
+Selector examples:
+
+- match by **component**: `_vue=book-item`
+- match by component and **exact property value**, case-sensetive: `_vue=book-item[author = "Steven King"]`
+- match by property value only, **case-insensetive**: `_vue=[author = "steven king" i]`
+- match by component and **truthy property value**: `_vue=my-button[enabled]`
+- match by component and **boolean value**: `_vue=my-button[enabled = false]`
+- match by property **value substring**: `_vue=[author *= "King"]`
+- match by component and **multiple properties**: `_vue=book-item[author *= "king" i][year = 1990]`
+- match by **nested** property value: `_vue=[some.nested.value = 12]`
+- match by component and property value **prefix**: `_vue=book-item[author ^= "Steven"]`
+- match by component and property value **suffix**: `_vue=book-item[author $= "Steven"]`
+
+To find Vue element names in a tree use [Vue DevTools](https://chrome.google.com/webstore/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd?hl=en).
+
+:::note
+Vue selectors support Vue2 and above.
+:::
+
+:::note
+Vue selectors, as well as [Vue DevTools](https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi), only work against **unminified** application builds.
+:::
+
 
 ## id, data-testid, data-test-id, data-test selectors
 
@@ -966,4 +1122,6 @@ await page.ClickAsync("//*[@id='tsf']/div[2]/div[1]/div[1]/div/div[2]/input");
 [text]: #text-selector
 [css]: #css-selector
 [xpath]: #xpath-selectors
+[react]: #react-selectors
+[vue]: #vue-selectors
 [id]: #id-data-testid-data-test-id-data-test-selectors

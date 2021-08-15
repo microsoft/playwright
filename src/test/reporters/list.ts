@@ -19,7 +19,7 @@ import colors from 'colors/safe';
 // @ts-ignore
 import milliseconds from 'ms';
 import { BaseReporter, formatTestTitle } from './base';
-import { FullConfig, Suite, Test, TestResult } from '../reporter';
+import { FullConfig, FullResult, Suite, TestCase, TestResult } from '../../../types/testReporter';
 
 // Allow it in the Visual Studio Code Terminal and the new Windows Terminal
 const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
@@ -27,9 +27,8 @@ const POSITIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'ok' : '✓';
 const NEGATIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'x' : '✘';
 
 class ListReporter extends BaseReporter {
-  private _failure = 0;
   private _lastRow = 0;
-  private _testRows = new Map<Test, number>();
+  private _testRows = new Map<TestCase, number>();
   private _needNewLine = false;
 
   onBegin(config: FullConfig, suite: Suite) {
@@ -37,28 +36,29 @@ class ListReporter extends BaseReporter {
     console.log();
   }
 
-  onTestBegin(test: Test) {
-    super.onTestBegin(test);
+  onTestBegin(test: TestCase) {
     if (process.stdout.isTTY) {
       if (this._needNewLine) {
         this._needNewLine = false;
         process.stdout.write('\n');
         this._lastRow++;
       }
-      process.stdout.write('    ' + colors.gray(formatTestTitle(this.config, test) + ': ') + '\n');
+      process.stdout.write('     ' + colors.gray(formatTestTitle(this.config, test)) + '\n');
     }
     this._testRows.set(test, this._lastRow++);
   }
 
-  onStdOut(chunk: string | Buffer, test?: Test) {
+  onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
+    super.onStdOut(chunk, test, result);
     this._dumpToStdio(test, chunk, process.stdout);
   }
 
-  onStdErr(chunk: string | Buffer, test?: Test) {
+  onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
+    super.onStdErr(chunk, test, result);
     this._dumpToStdio(test, chunk, process.stdout);
   }
 
-  private _dumpToStdio(test: Test | undefined, chunk: string | Buffer, stream: NodeJS.WriteStream) {
+  private _dumpToStdio(test: TestCase | undefined, chunk: string | Buffer, stream: NodeJS.WriteStream) {
     if (this.config.quiet)
       return;
     const text = chunk.toString('utf-8');
@@ -70,20 +70,20 @@ class ListReporter extends BaseReporter {
     stream.write(chunk);
   }
 
-  onTestEnd(test: Test, result: TestResult) {
+  onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
 
     const duration = colors.dim(` (${milliseconds(result.duration)})`);
     const title = formatTestTitle(this.config, test);
     let text = '';
     if (result.status === 'skipped') {
-      text = colors.green('  - ') + colors.cyan(title);
+      text = colors.green('  -  ') + colors.cyan(title);
     } else {
       const statusMark = ('  ' + (result.status === 'passed' ? POSITIVE_STATUS_MARK : NEGATIVE_STATUS_MARK)).padEnd(5);
       if (result.status === test.expectedStatus)
         text = '\u001b[2K\u001b[0G' + colors.green(statusMark) + colors.gray(title) + duration;
       else
-        text = '\u001b[2K\u001b[0G' + colors.red(`${statusMark}${++this._failure}) ` + title) + duration;
+        text = '\u001b[2K\u001b[0G' + colors.red(statusMark + title) + duration;
     }
 
     const testRow = this._testRows.get(test)!;
@@ -107,8 +107,8 @@ class ListReporter extends BaseReporter {
     }
   }
 
-  onEnd() {
-    super.onEnd();
+  async onEnd(result: FullResult) {
+    await super.onEnd(result);
     process.stdout.write('\n');
     this.epilogue(true);
   }

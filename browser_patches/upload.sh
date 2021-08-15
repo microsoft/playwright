@@ -6,9 +6,9 @@ trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
 
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
-  echo "usage: $(basename $0) [BLOB-PATH] [--check|ZIP-PATH]"
+  echo "usage: $(basename "$0") [BLOB-PATH] [--check|ZIP-PATH]"
   echo
-  echo "Upload ZIP-PATH to BLOB-PATH in `builds` container."
+  echo "Upload ZIP-PATH to BLOB-PATH in 'builds' container."
   echo
   echo "--check      pass |--check| as a second parameter instead of a zip-path to check for"
   echo "             existance of BLOB-PATH"
@@ -27,7 +27,7 @@ fi
 
 if [[ $# < 2 ]]; then
   echo "not enought arguments!"
-  echo "try '$(basename $0) --help' for more information"
+  echo "try '$(basename "$0") --help' for more information"
   exit 1
 fi
 
@@ -35,7 +35,7 @@ BLOB_PATH="$1"
 ZIP_PATH="$2"
 
 if [[ ("$2" == '--check') ]]; then
-  EXISTS=$(az storage blob exists -c builds --account-key $AZ_ACCOUNT_KEY --account-name $AZ_ACCOUNT_NAME -n "$BLOB_PATH" --query "exists")
+  EXISTS=$(az storage blob exists -c builds --account-key "$AZ_ACCOUNT_KEY" --account-name "$AZ_ACCOUNT_NAME" -n "$BLOB_PATH" --query "exists")
   if [[ $EXISTS == "true" ]]; then
     exit 0
   else
@@ -53,11 +53,11 @@ if [[ "${ZIP_PATH}" != *.zip && "${ZIP_PATH}" != *.gz ]]; then
 fi
 if [[ $(uname) == MINGW* ]]; then
   # Convert POSIX path to MSYS
-  WIN_PATH=$({ cd $(dirname $ZIP_PATH) && pwd -W; } | sed 's|/|\\|g')
-  WIN_PATH="${WIN_PATH}\\$(basename $ZIP_PATH)"
-  az storage blob upload -c builds --account-key $AZ_ACCOUNT_KEY --account-name $AZ_ACCOUNT_NAME -f $WIN_PATH -n $BLOB_PATH
+  WIN_PATH=$({ cd $(dirname "$ZIP_PATH") && pwd -W; } | sed 's|/|\\|g')
+  WIN_PATH="${WIN_PATH}\\$(basename "$ZIP_PATH")"
+  az storage blob upload -c builds --account-key "$AZ_ACCOUNT_KEY" --account-name "$AZ_ACCOUNT_NAME" -f "$WIN_PATH" -n "$BLOB_PATH"
 else
-  az storage blob upload -c builds --account-key $AZ_ACCOUNT_KEY --account-name $AZ_ACCOUNT_NAME -f $ZIP_PATH -n "$BLOB_PATH"
+  az storage blob upload -c builds --account-key "$AZ_ACCOUNT_KEY" --account-name "$AZ_ACCOUNT_NAME" -f "$ZIP_PATH" -n "$BLOB_PATH"
 fi
 
 echo "UPLOAD SUCCESSFUL!"

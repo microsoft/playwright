@@ -20,7 +20,7 @@ import * as ws from 'ws';
 import { DispatcherConnection, DispatcherScope } from '../dispatchers/dispatcher';
 import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
 import { createPlaywright } from '../server/playwright';
-import { gracefullyCloseAll } from '../server/processLauncher';
+import { gracefullyCloseAll } from '../utils/processLauncher';
 
 const debugLog = debug('pw:server');
 
@@ -33,6 +33,7 @@ export interface PlaywrightServerDelegate {
 
 export type PlaywrightServerOptions = {
   acceptForwardedPorts?: boolean
+  onDisconnect?: () => void;
 };
 
 export class PlaywrightServer {
@@ -40,7 +41,7 @@ export class PlaywrightServer {
   private _clientsCount = 0;
   private _delegate: PlaywrightServerDelegate;
 
-  static async startDefault({ acceptForwardedPorts }: PlaywrightServerOptions = {}): Promise<PlaywrightServer> {
+  static async startDefault({ acceptForwardedPorts, onDisconnect }: PlaywrightServerOptions = {}): Promise<PlaywrightServer> {
     const cleanup = async () => {
       await gracefullyCloseAll().catch(e => {});
     };
@@ -57,6 +58,7 @@ export class PlaywrightServer {
           cleanup();
           playwright._disablePortForwarding();
           playwright.selectors.unregisterAll();
+          onDisconnect?.();
         };
       },
     };

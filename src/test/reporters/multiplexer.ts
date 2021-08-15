@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { FullConfig, Suite, Test, TestError, TestResult, Reporter } from '../reporter';
+import { FullConfig, Suite, TestCase, TestError, TestResult, Reporter, FullResult, TestStep } from '../../../types/testReporter';
 
 export class Multiplexer implements Reporter {
   private _reporters: Reporter[];
@@ -25,41 +25,46 @@ export class Multiplexer implements Reporter {
 
   onBegin(config: FullConfig, suite: Suite) {
     for (const reporter of this._reporters)
-      reporter.onBegin(config, suite);
+      reporter.onBegin?.(config, suite);
   }
 
-  onTestBegin(test: Test) {
+  onTestBegin(test: TestCase, result: TestResult) {
     for (const reporter of this._reporters)
-      reporter.onTestBegin(test);
+      reporter.onTestBegin?.(test, result);
   }
 
-  onStdOut(chunk: string | Buffer, test?: Test) {
+  onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     for (const reporter of this._reporters)
-      reporter.onStdOut(chunk, test);
+      reporter.onStdOut?.(chunk, test, result);
   }
 
-  onStdErr(chunk: string | Buffer, test?: Test) {
+  onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     for (const reporter of this._reporters)
-      reporter.onStdErr(chunk, test);
+      reporter.onStdErr?.(chunk, test, result);
   }
 
-  onTestEnd(test: Test, result: TestResult) {
+  onTestEnd(test: TestCase, result: TestResult) {
     for (const reporter of this._reporters)
-      reporter.onTestEnd(test, result);
+      reporter.onTestEnd?.(test, result);
   }
 
-  onTimeout(timeout: number) {
+  async onEnd(result: FullResult) {
     for (const reporter of this._reporters)
-      reporter.onTimeout(timeout);
-  }
-
-  onEnd() {
-    for (const reporter of this._reporters)
-      reporter.onEnd();
+      await reporter.onEnd?.(result);
   }
 
   onError(error: TestError) {
     for (const reporter of this._reporters)
-      reporter.onError(error);
+      reporter.onError?.(error);
+  }
+
+  onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
+    for (const reporter of this._reporters)
+      (reporter as any).onStepBegin?.(test, result, step);
+  }
+
+  onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
+    for (const reporter of this._reporters)
+      (reporter as any).onStepEnd?.(test, result, step);
   }
 }

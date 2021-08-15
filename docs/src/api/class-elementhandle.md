@@ -4,93 +4,107 @@
 ElementHandle represents an in-page DOM element. ElementHandles can be created with the [`method: Page.querySelector`] method.
 
 ```js
-const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
-
-(async () => {
-  const browser = await chromium.launch();
-  const page = await browser.newPage();
-  await page.goto('https://example.com');
-  const hrefElement = await page.$('a');
-  await hrefElement.click();
-  // ...
-})();
+const hrefElement = await page.$('a');
+await hrefElement.click();
 ```
 
 ```java
-import com.microsoft.playwright.*;
-
-public class Example {
-  public static void main(String[] args) {
-    try (Playwright playwright = Playwright.create()) {
-      BrowserType chromium = playwright.chromium();
-      Browser browser = chromium.launch();
-      Page page = browser.newPage();
-      page.navigate("https://example.com");
-      ElementHandle hrefElement = page.querySelector("a");
-      hrefElement.click();
-      // ...
-    }
-  }
-}
+ElementHandle hrefElement = page.querySelector("a");
+hrefElement.click();
 ```
 
 ```python async
-import asyncio
-from playwright.async_api import async_playwright
-
-async def run(playwright):
-    chromium = playwright.chromium
-    browser = await chromium.launch()
-    page = await browser.new_page()
-    await page.goto("https://example.com")
-    href_element = await page.query_selector("a")
-    await href_element.click()
-    # ...
-
-async def main():
-    async with async_playwright() as playwright:
-        await run(playwright)
-asyncio.run(main())
+href_element = await page.query_selector("a")
+await href_element.click()
 ```
 
 ```python sync
-from playwright.sync_api import sync_playwright
-
-def run(playwright):
-    chromium = playwright.chromium
-    browser = chromium.launch()
-    page = browser.new_page()
-    page.goto("https://example.com")
-    href_element = page.query_selector("a")
-    href_element.click()
-    # ...
-
-with sync_playwright() as playwright:
-    run(playwright)
+href_element = page.query_selector("a")
+href_element.click()
 ```
 
 ```csharp
-using Microsoft.Playwright;
-using System.Threading.Tasks;
-
-class HandleExamples
-{
-    public static async Task Run()
-    {
-        using var playwright = await Playwright.CreateAsync();
-        var browser = await playwright.Chromium.LaunchAsync();
-        var page = await browser.NewPageAsync();
-        await page.GotoAsync("https://www.bing.com");
-        var handle = await page.QuerySelectorAsync("a");
-        await handle.ClickAsync();
-    }
-}
+var handle = await page.QuerySelectorAsync("a");
+await handle.ClickAsync();
 ```
 
 ElementHandle prevents DOM element from garbage collection unless the handle is disposed with
 [`method: JSHandle.dispose`]. ElementHandles are auto-disposed when their origin frame gets navigated.
 
 ElementHandle instances can be used as an argument in [`method: Page.evalOnSelector`] and [`method: Page.evaluate`] methods.
+
+:::note
+In most cases, you would want to use the [Locator] object instead. You should only use [ElementHandle] if you want to retain
+a handle to a particular DOM Node that you intend to pass into [`method: Page.evaluate`] as an argument.
+:::
+
+The difference between the [Locator] and ElementHandle is that the ElementHandle points to a particular element, while [Locator] captures the logic of how to retrieve an element.
+
+In the example below, handle points to a particular DOM element on page. If that element changes text or is used by React to render an entirely different component, handle is still pointing to that very DOM element. This can lead to unexpected behaviors.
+
+```js
+const handle = await page.$('text=Submit');
+// ...
+await handle.hover();
+await handle.click();
+```
+
+```java
+ElementHandle handle = page.querySelector("text=Submit");
+handle.hover();
+handle.click();
+```
+
+```python async
+handle = await page.query_selector("text=Submit")
+await handle.hover()
+await handle.click()
+```
+
+```python sync
+handle = page.query_selector("text=Submit")
+handle.hover()
+handle.click()
+```
+
+```csharp
+var handle = await page.QuerySelectorAsync("text=Submit");
+await handle.HoverAsync();
+await handle.ClickAsync();
+```
+
+With the locator, every time the `element` is used, up-to-date DOM element is located in the page using the selector. So in the snippet below, underlying DOM element is going to be located twice.
+
+```js
+const locator = page.locator('text=Submit');
+// ...
+await locator.hover();
+await locator.click();
+```
+
+```java
+Locator locator = page.locator("text=Submit");
+locator.hover();
+locator.click();
+```
+
+```python async
+locator = page.locator("text=Submit")
+await locator.hover()
+await locator.click()
+```
+
+```python sync
+locator = page.locator("text=Submit")
+locator.hover()
+locator.click()
+```
+
+```csharp
+var locator = page.Locator("text=Submit");
+await locator.HoverAsync();
+await locator.ClickAsync();
+```
 
 ## async method: ElementHandle.boundingBox
 - returns: <[null]|[Object]>
@@ -304,8 +318,8 @@ element_handle.dispatch_event("#source", "dragstart", {"dataTransfer": data_tran
 ```
 
 ```csharp
-var handle = await page.EvaluateHandleAsync("() => new DataTransfer()");
-await handle.AsElement().DispatchEventAsync("dragstart", new Dictionary<string, object>
+var dataTransfer = await page.EvaluateHandleAsync("() => new DataTransfer()");
+await elementHandle.DispatchEventAsync("dragstart", new Dictionary<string, object>
 {
     { "dataTransfer", dataTransfer }
 });
@@ -502,7 +516,7 @@ Returns the `element.innerText`.
 ## async method: ElementHandle.inputValue
 - returns: <[string]>
 
-Returns `input.value` for `<input>` or `<textarea>` element. Throws for non-input elements.
+Returns `input.value` for `<input>` or `<textarea>` or `<select>` element. Throws for non-input elements.
 
 ### option: ElementHandle.inputValue.timeout = %%-input-timeout-%%
 

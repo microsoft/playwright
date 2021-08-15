@@ -13,8 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-module.exports = {
-  ...require('./lib/inprocess'),
-  ...require('./lib/test/index')
+const pwt = require('./lib/test/index');
+const playwright = require('./lib/inprocess');
+const combinedExports = {
+  ...playwright,
+  ...pwt,
 };
+
+Object.defineProperty(combinedExports, '__esModule', { value: true });
+
+module.exports = combinedExports;

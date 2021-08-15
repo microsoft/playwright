@@ -57,6 +57,11 @@ Script to be evaluated in all pages in the browser context. Optional.
 ### param: Page.selectOption.value = %%-python-select-options-value-%%
 ### param: Page.selectOption.label = %%-python-select-options-label-%%
 
+### param: Locator.selectOption.element = %%-python-select-options-element-%%
+### param: Locator.selectOption.index = %%-python-select-options-index-%%
+### param: Locator.selectOption.value = %%-python-select-options-value-%%
+### param: Locator.selectOption.label = %%-python-select-options-label-%%
+
 ### option: Page.frame.name
 * langs: python
 - `name` <[string]>

@@ -225,7 +225,7 @@ function cssFallback(injectedScript: InjectedScript, targetElement: Element): Se
       path.unshift(prefix);
     const selector = path.join(' ');
     const parsedSelector = injectedScript.parseSelector(selector);
-    const node = injectedScript.querySelector(parsedSelector, targetElement.ownerDocument);
+    const node = injectedScript.querySelector(parsedSelector, targetElement.ownerDocument, false);
     return node === targetElement ? selector : undefined;
   }
 
@@ -282,7 +282,7 @@ function escapeForRegex(text: string): string {
 }
 
 function quoteString(text: string): string {
-  return `"${text.replaceAll(/"/g, '\\"').replaceAll(/\n/g, '\\n')}"`;
+  return `"${text.replace(/"/g, '\\"').replace(/\n/g, '\\n')}"`;
 }
 
 function joinTokens(tokens: SelectorToken[]): string {

@@ -14,11 +14,20 @@
  * limitations under the License.
  */
 
-import type { Fixtures } from '../../types/test';
+import type { Fixtures, TestError, TestInfo } from '../../types/test';
+import type { Location } from '../../types/testReporter';
 export * from '../../types/test';
+export { Location } from '../../types/testReporter';
 
-export type Location = { file: string, line: number, column: number };
 export type FixturesWithLocation = {
   fixtures: Fixtures;
   location: Location;
 };
+export type Annotations = { type: string, description?: string }[];
+
+export type CompleteStepCallback = (error?: Error | TestError) => void;
+
+export interface TestInfoImpl extends TestInfo {
+  _testFinished: Promise<void>;
+  _addStep: (category: string, title: string) => CompleteStepCallback;
+}

@@ -53,6 +53,7 @@ function copy_test_scripts {
   cp "${SCRIPTS_PATH}/driver-client.js" .
   cp "${SCRIPTS_PATH}/sample.spec.js" .
   cp "${SCRIPTS_PATH}/read-json-report.js" .
+  cp "${SCRIPTS_PATH}/playwright-test-types.ts" .
 }
 
 function run_tests {
@@ -107,6 +108,7 @@ function test_screencast {
 
 function test_typescript_types {
   initialize_test "${FUNCNAME[0]}"
+  copy_test_scripts
 
   # install all packages.
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_CORE_TGZ}
@@ -114,6 +116,7 @@ function test_typescript_types {
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_FIREFOX_TGZ}
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_WEBKIT_TGZ}
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_CHROMIUM_TGZ}
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_TEST_TGZ}
 
   # typecheck all packages.
   for PKG_NAME in "playwright" \
@@ -125,6 +128,9 @@ function test_typescript_types {
     echo "Checking types of ${PKG_NAME}"
     echo "import { Page } from '${PKG_NAME}';" > "${PKG_NAME}.ts" && npx -p typescript@3.7.5 tsc "${PKG_NAME}.ts"
   done;
+
+  echo "Checking types of @playwright/test"
+  echo npx -p typescript@3.7.5 tsc "playwright-test-types.ts"
 
   echo "${FUNCNAME[0]} success"
 }

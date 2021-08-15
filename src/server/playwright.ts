@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import path from 'path';
 import { Android } from './android/android';
 import { AdbBackend } from './android/backendAdb';
 import { PlaywrightOptions } from './browser';
@@ -23,7 +22,6 @@ import { Electron } from './electron/electron';
 import { Firefox } from './firefox/firefox';
 import { Selectors } from './selectors';
 import { WebKit } from './webkit/webkit';
-import { Registry } from '../utils/registry';
 import { CallMetadata, createInstrumentation, SdkObject } from './instrumentation';
 import { debugLogger } from '../utils/debugLogger';
 import { PortForwardingServer } from './socksSocket';
@@ -48,7 +46,6 @@ export class Playwright extends SdkObject {
       }
     });
     this.options = {
-      registry: new Registry(path.join(__dirname, '..', '..')),
       rootSdkObject: this,
       selectors: new Selectors(),
     };

@@ -135,14 +135,30 @@ export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTest
     await run(contextOptions);
   },
 
-  contextFactory: async ({ browser, contextOptions }, run) => {
+  contextFactory: async ({ browser, contextOptions, video }, run, testInfo) => {
     const contexts: BrowserContext[] = [];
     await run(async options => {
       const context = await browser.newContext({ ...contextOptions, ...options });
+      (context as any)._csi = {
+        onApiCall: (name: string) => {
+          return (testInfo as any)._addStep('pw:api', name);
+        },
+      };
       contexts.push(context);
       return context;
     });
-    await Promise.all(contexts.map(context => context.close()));
+    await Promise.all(contexts.map(async context => {
+      const videos = context.pages().map(p => p.video()).filter(Boolean);
+      await context.close();
+      for (const v of videos) {
+        const videoPath = await v.path().catch(() => null);
+        if (!videoPath)
+          continue;
+        const savedPath = testInfo.outputPath(path.basename(videoPath));
+        await v.saveAs(savedPath);
+        testInfo.attachments.push({ name: 'video', path: savedPath, contentType: 'video/webm' });
+      }
+    }));
   },
 
   context: async ({ contextFactory }, run) => {

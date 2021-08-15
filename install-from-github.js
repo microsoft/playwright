@@ -40,8 +40,8 @@ try {
 }
 
 console.log(`Downloading browsers...`);
-const { installBrowsersWithProgressBar } = require('./lib/install/installer');
-installBrowsersWithProgressBar().catch(e =>  {
+const { installDefaultBrowsersForNpmInstall } = require('./lib/utils/registry');
+installDefaultBrowsersForNpmInstall().catch(e =>  {
   console.error(`Failed to install browsers, caused by\n${e.stack}`);
   process.exit(1);
 });

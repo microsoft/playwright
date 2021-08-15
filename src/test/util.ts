@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
+import type { TestInfoImpl } from './types';
 import util from 'util';
-import type { TestError } from './types';
+import path from 'path';
+import type { TestError, Location } from './types';
 import { default as minimatch } from 'minimatch';
+import { errors } from '../..';
 
 export class DeadlineRunner<T> {
   private _timer: NodeJS.Timer | undefined;
@@ -67,6 +70,48 @@ export class DeadlineRunner<T> {
 export async function raceAgainstDeadline<T>(promise: Promise<T>, deadline: number | undefined): Promise<{ result?: T, timedOut?: boolean }> {
   return (new DeadlineRunner(promise, deadline)).result;
 }
+
+export async function pollUntilDeadline(testInfo: TestInfoImpl, func: (remainingTime: number) => Promise<boolean>, pollTime: number | undefined, deadlinePromise: Promise<void>): Promise<void> {
+  let defaultExpectTimeout = testInfo.project.expect?.timeout;
+  if (typeof defaultExpectTimeout === 'undefined')
+    defaultExpectTimeout = 5000;
+  pollTime = pollTime === 0 ? 0 : pollTime || defaultExpectTimeout;
+  const deadline = pollTime ? monotonicTime() + pollTime : 0;
+
+  let aborted = false;
+  const abortedPromise = deadlinePromise.then(() => {
+    aborted = true;
+    return true;
+  });
+
+  const pollIntervals = [100, 250, 500];
+  let attempts = 0;
+  while (!aborted) {
+    const remainingTime = deadline ? deadline - monotonicTime() : 1000 * 3600 * 24;
+    if (remainingTime <= 0)
+      break;
+
+    try {
+      // Either aborted, or func() returned truthy.
+      const result = await Promise.race([
+        func(remainingTime),
+        abortedPromise,
+      ]);
+      if (result)
+        return;
+    } catch (e) {
+      if (e instanceof errors.TimeoutError)
+        return;
+      throw e;
+    }
+
+    let timer: NodeJS.Timer;
+    const timeoutPromise = new Promise(f => timer = setTimeout(f, pollIntervals[attempts++] || 1000));
+    await Promise.race([abortedPromise, timeoutPromise]);
+    clearTimeout(timer!);
+  }
+}
+
 
 export function serializeError(error: Error | any): TestError {
   if (error instanceof Error) {
@@ -146,4 +191,31 @@ export function forceRegExp(pattern: string): RegExp {
   if (match)
     return new RegExp(match[1], match[2]);
   return new RegExp(pattern, 'g');
+}
+
+export function relativeFilePath(file: string): string {
+  if (!path.isAbsolute(file))
+    return file;
+  return path.relative(process.cwd(), file);
+}
+
+export function formatLocation(location: Location) {
+  return relativeFilePath(location.file) + ':' + location.line + ':' + location.column;
+}
+
+export function errorWithFile(file: string, message: string) {
+  return new Error(`${relativeFilePath(file)}: ${message}`);
+}
+
+export function errorWithLocation(location: Location, message: string) {
+  return new Error(`${formatLocation(location)}: ${message}`);
+}
+
+export function expectType(receiver: any, type: string, matcherName: string) {
+  if (typeof receiver !== 'object' || receiver.constructor.name !== type)
+    throw new Error(`${matcherName} can be only used with ${type} object`);
+}
+
+export function sanitizeForFilePath(s: string) {
+  return s.replace(/[\x00-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F]+/g, '-');
 }

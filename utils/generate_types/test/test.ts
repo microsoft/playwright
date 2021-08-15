@@ -572,15 +572,6 @@ playwright.chromium.launch().then(async browser => {
   await browser.close();
 })();
 
-(async () => {
-  const browser = await playwright.firefox.launch();
-  const page = await browser.newPage();
-  const context = page.context();
-  const oneTwoThree = ('pageTarget' in context) ? context['pageTarget'] : 123;
-  const assertion: AssertType<123, typeof oneTwoThree> = true;
-  await browser.close();
-})();
-
 // $eval
 
 (async () => {

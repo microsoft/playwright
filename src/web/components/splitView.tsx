@@ -24,7 +24,7 @@ export interface SplitViewProps {
   orientation?: 'vertical' | 'horizontal',
 }
 
-const kMinSidebarSize = 50;
+const kMinSize = 50;
 
 export const SplitView: React.FC<SplitViewProps> = ({
   sidebarSize,
@@ -33,7 +33,7 @@ export const SplitView: React.FC<SplitViewProps> = ({
   orientation = 'vertical',
   children
 }) => {
-  let [size, setSize] = React.useState<number>(Math.max(kMinSidebarSize, sidebarSize));
+  const [size, setSize] = React.useState<number>(Math.max(kMinSize, sidebarSize));
   const [resizing, setResizing] = React.useState<{ offset: number, size: number } | null>(null);
 
   const childrenArray = React.Children.toArray(children);
@@ -44,7 +44,7 @@ export const SplitView: React.FC<SplitViewProps> = ({
       resizerStyle = { top: resizing ? 0 : size - 4, bottom: resizing ? 0 : undefined, height: resizing ? 'initial' : 8 };
     else
       resizerStyle = { bottom: resizing ? 0 : size - 4, top: resizing ? 0 : undefined, height: resizing ? 'initial' : 8 };
-} else {
+  } else {
     if (sidebarIsFirst)
       resizerStyle = { left: resizing ? 0 : size - 4, right: resizing ? 0 : undefined, width: resizing ? 'initial' : 8 };
     else
@@ -63,9 +63,14 @@ export const SplitView: React.FC<SplitViewProps> = ({
         if (!event.buttons) {
           setResizing(null);
         } else if (resizing) {
-          const clientOffset = orientation === 'vertical' ? event.clientY : event.clientX;
-          const resizingPosition = sidebarIsFirst ? clientOffset : resizing.size - clientOffset + resizing.offset;
-          setSize(Math.max(kMinSidebarSize, resizingPosition));
+          const offset = orientation === 'vertical' ? event.clientY : event.clientX;
+          const delta = offset - resizing.offset;
+          const newSize = sidebarIsFirst ? resizing.size + delta : resizing.size - delta;
+
+          const splitView = (event.target as HTMLElement).parentElement!;
+          const rect = splitView.getBoundingClientRect();
+          const size = Math.min(Math.max(kMinSize, newSize), (orientation === 'vertical' ? rect.height : rect.width) - kMinSize);
+          setSize(size);
         }
       }}
     ></div> }

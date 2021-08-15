@@ -74,7 +74,7 @@ process.on('message', async message => {
     workerIndex = initParams.workerIndex;
     startProfiling();
     workerRunner = new WorkerRunner(initParams);
-    for (const event of ['testBegin', 'testEnd', 'done'])
+    for (const event of ['testBegin', 'testEnd', 'stepBegin', 'stepEnd', 'done'])
       workerRunner.on(event, sendMessageToParent.bind(null, event));
     return;
   }
@@ -97,7 +97,7 @@ async function gracefullyCloseAndExit() {
   // Meanwhile, try to gracefully shutdown.
   try {
     if (workerRunner) {
-      workerRunner.stop();
+      await workerRunner.stop();
       await workerRunner.cleanup();
     }
     if (workerIndex !== undefined)

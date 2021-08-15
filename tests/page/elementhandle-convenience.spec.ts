@@ -42,6 +42,9 @@ it('getAttribute should work', async ({ page, server }) => {
 it('inputValue should work', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
 
+  await page.selectOption('#select', 'foo');
+  expect(await page.inputValue('#select')).toBe('foo');
+
   await page.fill('#textarea', 'text value');
   expect(await page.inputValue('#textarea')).toBe('text value');
 
@@ -50,9 +53,9 @@ it('inputValue should work', async ({ page, server }) => {
   const handle = await page.$('#input');
   expect(await handle.inputValue()).toBe('input value');
 
-  expect(await page.inputValue('#inner').catch(e => e.message)).toContain('Node is not an HTMLInputElement or HTMLTextAreaElement');
+  expect(await page.inputValue('#inner').catch(e => e.message)).toContain('Node is not an HTMLInputElement or HTMLTextAreaElement or HTMLSelectElement');
   const handle2 = await page.$('#inner');
-  expect(await handle2.inputValue().catch(e => e.message)).toContain('Node is not an HTMLInputElement or HTMLTextAreaElement');
+  expect(await handle2.inputValue().catch(e => e.message)).toContain('Node is not an HTMLInputElement or HTMLTextAreaElement or HTMLSelectElement');
 });
 
 it('innerHTML should work', async ({ page, server }) => {
@@ -206,6 +209,25 @@ it('element state checks should work for label with zero-sized input', async ({p
   // Enabled checks the input.
   expect(await page.isEnabled('text=Click me')).toBe(false);
   expect(await page.isDisabled('text=Click me')).toBe(true);
+});
+
+it('isVisible should not throw when the DOM element is not connected', async ({page}) => {
+  await page.setContent(`<div id="root"></div>`);
+  await page.evaluate(() => {
+    function insert() {
+      document.getElementById('root').innerHTML = '<div id="problem">Problem</div>';
+      window.requestAnimationFrame(remove);
+    }
+    function remove() {
+      const node = document.getElementById('problem');
+      node?.parentNode?.removeChild(node);
+      window.requestAnimationFrame(insert);
+    }
+    window.requestAnimationFrame(insert);
+  });
+
+  for (let i = 0; i < 10; i++)
+    await page.isVisible('#problem');
 });
 
 it('isEnabled and isDisabled should work', async ({ page }) => {

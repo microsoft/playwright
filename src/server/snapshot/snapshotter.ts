@@ -17,7 +17,7 @@
 import { BrowserContext } from '../browserContext';
 import { Page } from '../page';
 import * as network from '../network';
-import { helper, RegisteredListener } from '../helper';
+import { eventsHelper, RegisteredListener } from '../../utils/eventsHelper';
 import { debugLogger } from '../../utils/debugLogger';
 import { Frame } from '../frames';
 import { frameSnapshotStreamer, SnapshotData } from './snapshotterInjected';
@@ -62,13 +62,18 @@ export class Snapshotter {
       this._initialized = true;
       await this._initialize();
     }
-    await this._runInAllFrames(`window["${this._snapshotStreamer}"].reset()`);
+    await this.reset();
 
     // Replay resources loaded in all pages.
     for (const page of this._context.pages()) {
       for (const response of page._frameManager._responses)
         this._saveResource(response).catch(e => debugLogger.log('error', e));
     }
+  }
+
+  async reset() {
+    if (this._started)
+      await this._runInAllFrames(`window["${this._snapshotStreamer}"].reset()`);
   }
 
   async stop() {
@@ -79,8 +84,8 @@ export class Snapshotter {
     for (const page of this._context.pages())
       this._onPage(page);
     this._eventListeners = [
-      helper.addEventListener(this._context, BrowserContext.Events.Page, this._onPage.bind(this)),
-      helper.addEventListener(this._context, BrowserContext.Events.Response, (response: network.Response) => {
+      eventsHelper.addEventListener(this._context, BrowserContext.Events.Page, this._onPage.bind(this)),
+      eventsHelper.addEventListener(this._context, BrowserContext.Events.Response, (response: network.Response) => {
         this._saveResource(response).catch(e => debugLogger.log('error', e));
       }),
     ];
@@ -100,7 +105,7 @@ export class Snapshotter {
   }
 
   dispose() {
-    helper.removeEventListeners(this._eventListeners);
+    eventsHelper.removeEventListeners(this._eventListeners);
   }
 
   async captureSnapshot(page: Page, snapshotName: string, element?: ElementHandle): Promise<void> {
@@ -132,10 +137,10 @@ export class Snapshotter {
         resourceOverrides: [],
         isMainFrame: page.mainFrame() === frame
       };
-      for (const { url, content } of data.resourceOverrides) {
+      for (const { url, content, contentType } of data.resourceOverrides) {
         if (typeof content === 'string') {
           const buffer = Buffer.from(content);
-          const sha1 = calculateSha1(buffer);
+          const sha1 = calculateSha1(buffer) + mimeToExtension(contentType);
           this._delegate.onBlob({ sha1, buffer });
           snapshot.resourceOverrides.push({ url, sha1 });
         } else {
@@ -151,7 +156,7 @@ export class Snapshotter {
     // Annotate frame hierarchy so that snapshots could include frame ids.
     for (const frame of page.frames())
       this._annotateFrameHierarchy(frame);
-    this._eventListeners.push(helper.addEventListener(page, Page.Events.FrameAttached, frame => this._annotateFrameHierarchy(frame)));
+    this._eventListeners.push(eventsHelper.addEventListener(page, Page.Events.FrameAttached, frame => this._annotateFrameHierarchy(frame)));
   }
 
   private async _saveResource(response: network.Response) {
@@ -159,6 +164,9 @@ export class Snapshotter {
       return;
     const isRedirect = response.status() >= 300 && response.status() <= 399;
     if (isRedirect)
+      return;
+    // We do not need scripts for snapshots.
+    if (response.request().resourceType() === 'script')
       return;
 
     // Shortcut all redirects - we cannot intercept them properly.
@@ -176,7 +184,7 @@ export class Snapshotter {
     const method = original.method();
     const status = response.status();
     const requestBody = original.postDataBuffer();
-    const requestSha1 = requestBody ? calculateSha1(requestBody) : '';
+    const requestSha1 = requestBody ? calculateSha1(requestBody) + mimeToExtension(contentType) : '';
     if (requestBody)
       this._delegate.onBlob({ sha1: requestSha1, buffer: requestBody });
     const requestHeaders = original.headers();
@@ -189,7 +197,7 @@ export class Snapshotter {
         // Bail out after each async hop.
         if (!this._started)
           return;
-        responseSha1 = body ? calculateSha1(body) : '';
+        responseSha1 = body ? calculateSha1(body) + mimeToExtension(contentType) : '';
         if (body)
           this._delegate.onBlob({ sha1: responseSha1, buffer: body });
         this._fetchedResponses.set(response, responseSha1);
@@ -199,7 +207,6 @@ export class Snapshotter {
     const resource: ResourceSnapshot = {
       pageId: response.frame()._page.guid,
       frameId: response.frame().guid,
-      resourceId: response.guid,
       url,
       type: response.request().resourceType(),
       contentType,
@@ -228,4 +235,31 @@ export class Snapshotter {
     } catch (e) {
     }
   }
+}
+
+const kMimeToExtension: { [key: string]: string } = {
+  'application/javascript': 'js',
+  'application/json': 'json',
+  'application/json5': 'json5',
+  'application/pdf': 'pdf',
+  'application/xhtml+xml': 'xhtml',
+  'application/zip': 'zip',
+  'font/otf': 'otf',
+  'font/woff': 'woff',
+  'font/woff2': 'woff2',
+  'image/bmp': 'bmp',
+  'image/gif': 'gif',
+  'image/jpeg': 'jpeg',
+  'image/png': 'png',
+  'image/tiff': 'tiff',
+  'text/css': 'css',
+  'text/csv': 'csv',
+  'text/html': 'html',
+  'text/plain': 'text',
+  'video/mp4': 'mp4',
+  'video/mpeg': 'mpeg',
+};
+
+function mimeToExtension(contentType: string): string {
+  return '.' + (kMimeToExtension[contentType] || 'dat');
 }

@@ -37,6 +37,70 @@ playwright
 }
 ```
 
+## Install browsers
+
+Playwright can install supported browsers.
+
+```bash js
+# Running without arguments will install default browsers
+npx playwright install
+```
+
+```bash java
+# Running without arguments will install default browsers
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
+```
+
+```bash python
+# Running without arguments will install default browsers
+playwright install
+```
+
+```bash csharp
+# Running without arguments will install default browsers
+playwright install
+```
+
+You can also install specific browsers by providing an argument:
+
+```bash js
+# Install WebKit
+npx playwright install webkit
+```
+
+```bash java
+# Install WebKit
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install webkit"
+```
+
+```bash python
+# Install WebKit
+playwright install webkit
+```
+
+```bash csharp
+# Install WebKit
+playwright install webkit
+```
+
+See all supported browsers:
+
+```bash js
+npx playwright install --help
+```
+
+```bash java
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --help"
+```
+
+```bash python
+playwright install --help
+```
+
+```bash csharp
+playwright install --help
+```
+
 ## Generate code
 
 ```bash js

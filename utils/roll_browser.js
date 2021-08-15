@@ -73,12 +73,12 @@ Example:
   if (descriptor.installByDefault) {
     // 3. Download new browser.
     console.log('\nDownloading new browser...');
-    const { installBrowsersWithProgressBar } = require('../lib/install/installer');
-    await installBrowsersWithProgressBar();
+    const registry = new Registry(ROOT_PATH);
+    await registry.install();
 
     // 4. Generate types.
     console.log('\nGenerating protocol types...');
-    const executablePath = new Registry(ROOT_PATH).executablePath(browserName);
+    const executablePath = registry.findExecutable(browserName).executablePathOrDie();
     await protocolGenerator.generateProtocol(browserName, executablePath).catch(console.warn);
 
     // 5. Update docs.

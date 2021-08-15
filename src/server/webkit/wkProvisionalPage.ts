@@ -16,7 +16,7 @@
 
 import { WKSession } from './wkConnection';
 import { WKPage } from './wkPage';
-import { RegisteredListener, helper } from '../helper';
+import { RegisteredListener, eventsHelper } from '../../utils/eventsHelper';
 import { Protocol } from './protocol';
 import { assert } from '../../utils/utils';
 
@@ -42,19 +42,19 @@ export class WKProvisionalPage {
     const wkPage = this._wkPage;
 
     this._sessionListeners = [
-      helper.addEventListener(session, 'Network.requestWillBeSent', overrideFrameId(e => wkPage._onRequestWillBeSent(session, e))),
-      helper.addEventListener(session, 'Network.requestIntercepted', overrideFrameId(e => wkPage._onRequestIntercepted(session, e))),
-      helper.addEventListener(session, 'Network.responseIntercepted', overrideFrameId(e => wkPage._onResponseIntercepted(session, e))),
-      helper.addEventListener(session, 'Network.responseReceived', overrideFrameId(e => wkPage._onResponseReceived(e))),
-      helper.addEventListener(session, 'Network.loadingFinished', overrideFrameId(e => wkPage._onLoadingFinished(e))),
-      helper.addEventListener(session, 'Network.loadingFailed', overrideFrameId(e => wkPage._onLoadingFailed(e))),
+      eventsHelper.addEventListener(session, 'Network.requestWillBeSent', overrideFrameId(e => wkPage._onRequestWillBeSent(session, e))),
+      eventsHelper.addEventListener(session, 'Network.requestIntercepted', overrideFrameId(e => wkPage._onRequestIntercepted(session, e))),
+      eventsHelper.addEventListener(session, 'Network.responseIntercepted', overrideFrameId(e => wkPage._onResponseIntercepted(session, e))),
+      eventsHelper.addEventListener(session, 'Network.responseReceived', overrideFrameId(e => wkPage._onResponseReceived(e))),
+      eventsHelper.addEventListener(session, 'Network.loadingFinished', overrideFrameId(e => wkPage._onLoadingFinished(e))),
+      eventsHelper.addEventListener(session, 'Network.loadingFailed', overrideFrameId(e => wkPage._onLoadingFailed(e))),
     ];
 
     this.initializationPromise = this._wkPage._initializeSession(session, true, ({frameTree}) => this._handleFrameTree(frameTree));
   }
 
   dispose() {
-    helper.removeEventListeners(this._sessionListeners);
+    eventsHelper.removeEventListeners(this._sessionListeners);
   }
 
   commit() {

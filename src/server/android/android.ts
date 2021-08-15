@@ -40,7 +40,7 @@ export interface Backend {
 export interface DeviceBackend {
   serial: string;
   status: string;
-  close(): void;
+  close(): Promise<void>;
   init(): Promise<void>;
   runCommand(command: string): Promise<Buffer>;
   open(command: string): Promise<SocketBackend>;

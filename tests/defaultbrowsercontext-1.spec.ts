@@ -19,7 +19,7 @@ import { playwrightTest as it, expect } from './config/browserTest';
 import { verifyViewport } from './config/utils';
 import fs from 'fs';
 
-it('context.cookies() should work', async ({server, launchPersistent}) => {
+it('context.cookies() should work', async ({server, launchPersistent, browserName}) => {
   const {page} = await launchPersistent();
   await page.goto(server.EMPTY_PAGE);
   const documentCookie = await page.evaluate(() => {
@@ -35,17 +35,18 @@ it('context.cookies() should work', async ({server, launchPersistent}) => {
     expires: -1,
     httpOnly: false,
     secure: false,
-    sameSite: 'None',
+    sameSite: browserName === 'chromium' ? 'Lax' : 'None',
   }]);
 });
 
-it('context.addCookies() should work', async ({server, launchPersistent}) => {
+it('context.addCookies() should work', async ({server, launchPersistent, browserName, isWindows}) => {
   const {page} = await launchPersistent();
   await page.goto(server.EMPTY_PAGE);
   await page.context().addCookies([{
     url: server.EMPTY_PAGE,
     name: 'username',
-    value: 'John Doe'
+    value: 'John Doe',
+    sameSite: 'Lax',
   }]);
   expect(await page.evaluate(() => document.cookie)).toBe('username=John Doe');
   expect(await page.context().cookies()).toEqual([{
@@ -56,7 +57,7 @@ it('context.addCookies() should work', async ({server, launchPersistent}) => {
     expires: -1,
     httpOnly: false,
     secure: false,
-    sameSite: 'None',
+    sameSite: (browserName === 'webkit' && isWindows) ? 'None' : 'Lax',
   }]);
 });
 
@@ -96,7 +97,7 @@ it('should(not) block third party cookies', async ({server, launchPersistent, br
     return document.cookie;
   });
   await page.waitForTimeout(2000);
-  const allowsThirdParty = browserName === 'chromium' || browserName === 'firefox';
+  const allowsThirdParty = browserName === 'firefox';
   expect(documentCookie).toBe(allowsThirdParty ? 'username=John Doe' : '');
   const cookies = await context.cookies(server.CROSS_PROCESS_PREFIX + '/grid.html');
   if (allowsThirdParty) {

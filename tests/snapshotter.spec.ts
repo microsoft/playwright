@@ -44,6 +44,17 @@ it.describe('snapshots', () => {
     expect(distillSnapshot(snapshot)).toBe('<BUTTON>Hello</BUTTON>');
   });
 
+  it('should preserve BASE and other content on reset', async ({ page, toImpl, snapshotter, server }) => {
+    await page.goto(server.EMPTY_PAGE);
+    const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
+    const html1 = snapshot1.render().html;
+    expect(html1).toContain(`<BASE href="${server.EMPTY_PAGE}"`);
+    await snapshotter.reset();
+    const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot2');
+    const html2 = snapshot2.render().html;
+    expect(html2.replace(`"snapshot2"`, `"snapshot1"`)).toEqual(html1);
+  });
+
   it('should capture resources', async ({ page, toImpl, server, snapshotter }) => {
     await page.goto(server.EMPTY_PAGE);
     await page.route('**/style.css', route => {
@@ -51,9 +62,8 @@ it.describe('snapshots', () => {
     });
     await page.setContent('<link rel="stylesheet" href="style.css"><button>Hello</button>');
     const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot');
-    const { resources } = snapshot.render();
-    const cssHref = `http://localhost:${server.PORT}/style.css`;
-    expect(resources[cssHref]).toBeTruthy();
+    const resource = snapshot.resourceByUrl(`http://localhost:${server.PORT}/style.css`);
+    expect(resource).toBeTruthy();
   });
 
   it('should collect multiple', async ({ page, toImpl, snapshotter }) => {
@@ -73,6 +83,26 @@ it.describe('snapshots', () => {
     await page.evaluate(() => { (document.styleSheets[0].cssRules[0] as any).style.color = 'blue'; });
     const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot2');
     expect(distillSnapshot(snapshot2)).toBe('<style>button { color: blue; }</style><BUTTON>Hello</BUTTON>');
+  });
+
+  it('should respect node removal', async ({ page, toImpl, snapshotter }) => {
+    page.on('console', console.log);
+    await page.setContent('<div><button id="button1"></button><button id="button2"></button></div>');
+    const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
+    expect(distillSnapshot(snapshot1)).toBe('<DIV><BUTTON id=\"button1\"></BUTTON><BUTTON id=\"button2\"></BUTTON></DIV>');
+    await page.evaluate(() => document.getElementById('button2').remove());
+    const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot2');
+    expect(distillSnapshot(snapshot2)).toBe('<DIV><BUTTON id=\"button1\"></BUTTON></DIV>');
+  });
+
+  it('should respect attr removal', async ({ page, toImpl, snapshotter }) => {
+    page.on('console', console.log);
+    await page.setContent('<div id="div" attr1="1" attr2="2"></div>');
+    const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
+    expect(distillSnapshot(snapshot1)).toBe('<DIV id=\"div\" attr1=\"1\" attr2=\"2\"></DIV>');
+    await page.evaluate(() => document.getElementById('div').removeAttribute('attr2'));
+    const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot2');
+    expect(distillSnapshot(snapshot2)).toBe('<DIV id=\"div\" attr1=\"1\"></DIV>');
   });
 
   it('should have a custom doctype', async ({page, server, toImpl, snapshotter}) => {
@@ -95,10 +125,8 @@ it.describe('snapshots', () => {
 
     await page.evaluate(() => { (document.styleSheets[0].cssRules[0] as any).style.color = 'blue'; });
     const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
-    const { resources } = snapshot2.render();
-    const cssHref = `http://localhost:${server.PORT}/style.css`;
-    const { sha1 } = resources[cssHref];
-    expect(snapshotter.resourceContent(sha1).toString()).toBe('button { color: blue; }');
+    const resource = snapshot2.resourceByUrl(`http://localhost:${server.PORT}/style.css`);
+    expect(snapshotter.resourceContent(resource.responseSha1).toString()).toBe('button { color: blue; }');
   });
 
   it('should capture iframe', async ({ page, contextFactory, server, toImpl, browserName, snapshotter, snapshotPort }) => {
@@ -216,6 +244,45 @@ it.describe('snapshots', () => {
     });
     expect(divColor).toBe('rgb(0, 0, 255)');
     await previewContext.close();
+  });
+
+  it('should restore scroll positions', async ({ page, contextFactory, toImpl, snapshotter, snapshotPort, browserName }) => {
+    it.skip(browserName === 'firefox');
+
+    await page.setContent(`
+      <style>
+        li { height: 20px; margin: 0; padding: 0; }
+        div { height: 60px; overflow-x: hidden; overflow-y: scroll; background: green; padding: 0; margin: 0; }
+      </style>
+      <div>
+        <ul>
+          <li>Item 1</li>
+          <li>Item 2</li>
+          <li>Item 3</li>
+          <li>Item 4</li>
+          <li>Item 5</li>
+          <li>Item 6</li>
+          <li>Item 7</li>
+          <li>Item 8</li>
+          <li>Item 9</li>
+          <li>Item 10</li>
+        </ul>
+      </div>
+    `);
+
+    await (await page.$('text=Item 8')).scrollIntoViewIfNeeded();
+    const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'scrolled');
+
+    // Render snapshot, check expectations.
+    const previewContext = await contextFactory();
+    const previewPage = await previewContext.newPage();
+    await previewPage.goto(`http://localhost:${snapshotPort}/snapshot/`);
+    await previewPage.evaluate(snapshotId => {
+      (window as any).showSnapshot(snapshotId);
+    }, `${snapshot.snapshot().pageId}?name=scrolled`);
+    const div = await previewPage.frames()[1].waitForSelector('div');
+    await previewPage.frames()[1].waitForLoadState();
+    expect(await div.evaluate(div => div.scrollTop)).toBe(136);
   });
 });
 

@@ -41,6 +41,32 @@ it.describe('download event', () => {
     });
   });
 
+  it('should report download when navigation turns into download', async ({browser, server, browserName}) => {
+    const page = await browser.newPage({ acceptDownloads: true });
+    const [ download, responseOrError ] = await Promise.all([
+      page.waitForEvent('download'),
+      page.goto(server.PREFIX + '/download').catch(e => e)
+    ]);
+    expect(download.page()).toBe(page);
+    expect(download.url()).toBe(`${server.PREFIX}/download`);
+    const path = await download.path();
+    expect(fs.existsSync(path)).toBeTruthy();
+    expect(fs.readFileSync(path).toString()).toBe('Hello world');
+    if (browserName === 'chromium') {
+      expect(responseOrError instanceof Error).toBeTruthy();
+      expect(responseOrError.message).toContain('net::ERR_ABORTED');
+      expect(page.url()).toBe('about:blank');
+    } else if (browserName === 'webkit') {
+      expect(responseOrError instanceof Error).toBeTruthy();
+      expect(responseOrError.message).toContain('Download is starting');
+      expect(page.url()).toBe('about:blank');
+    } else {
+      expect(responseOrError.status()).toBe(200);
+      expect(page.url()).toBe(server.PREFIX + '/download');
+    }
+    await page.close();
+  });
+
   it('should report downloads with acceptDownloads: false', async ({browser, server}) => {
     const page = await browser.newPage();
     await page.setContent(`<a href="${server.PREFIX}/downloadWithFilename">download</a>`);
@@ -474,14 +500,13 @@ it.describe('download event', () => {
   it('should be able to cancel pending downloads', async ({browser, server, browserName, browserVersion}) => {
     // The exact upstream change is in b449b5c, which still does not appear in the first few 91.* tags until 91.0.4437.0.
     it.fixme(browserName === 'chromium' && Number(browserVersion.split('.')[0]) < 91, 'The upstream Browser.cancelDownload command is not available before Chrome 91');
-    it.fixme(browserName !== 'chromium', 'Download cancellation currently implemented for only Chromium');
     const page = await browser.newPage({ acceptDownloads: true });
     await page.setContent(`<a href="${server.PREFIX}/downloadWithDelay">download</a>`);
     const [ download ] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
     ]);
-    await (download as any)._cancel();
+    await download.cancel();
     const failure = await download.failure();
     expect(failure).toBe('canceled');
     await page.close();
@@ -490,7 +515,6 @@ it.describe('download event', () => {
   it('should not fail explicitly to cancel a download even if that is already finished', async ({browser, server, browserName, browserVersion}) => {
     // The exact upstream change is in b449b5c, which still does not appear in the first few 91.* tags until 91.0.4437.0.
     it.fixme(browserName === 'chromium' && Number(browserVersion.split('.')[0]) < 91, 'The upstream Browser.cancelDownload command is not available before Chrome 91');
-    it.fixme(browserName !== 'chromium', 'Download cancellation currently implemented for only Chromium');
     const page = await browser.newPage({ acceptDownloads: true });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [ download ] = await Promise.all([
@@ -500,7 +524,7 @@ it.describe('download event', () => {
     const path = await download.path();
     expect(fs.existsSync(path)).toBeTruthy();
     expect(fs.readFileSync(path).toString()).toBe('Hello world');
-    await (download as any)._cancel();
+    await download.cancel();
     const failure = await download.failure();
     expect(failure).toBe(null);
     await page.close();

@@ -136,7 +136,7 @@ it('should dispatch drag drop events', async ({page, server}) => {
   }, {source, target})).toBeTruthy();
 });
 
-it('should dispatch drag drop events', async ({page, server}) => {
+it('should dispatch drag drop events via ElementHandles', async ({page, server}) => {
   await page.goto(server.PREFIX + '/drag-n-drop.html');
   const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
   const source = await page.$('#source');
@@ -148,7 +148,7 @@ it('should dispatch drag drop events', async ({page, server}) => {
   }, {source, target})).toBeTruthy();
 });
 
-it('should dispatch click event', async ({page, server}) => {
+it('should dispatch click event via ElementHandles', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/button.html');
   const button = await page.$('button');
   await button.dispatchEvent('click');

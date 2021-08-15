@@ -25,4 +25,5 @@ export const errors = playwright.errors;
 export const _electron = playwright._electron;
 export const _android = playwright._android;
 export const test = playwright.test;
-export default playwright;
+export const expect = playwright.expect;
+export default playwright.test;

@@ -58,8 +58,6 @@ export const Timeline: React.FunctionComponent<{
     const bars: TimelineBar[] = [];
     for (const page of context.pages) {
       for (const entry of page.actions) {
-        if (!entry.metadata.params)
-          console.log(entry);
         let detail = trimRight(entry.metadata.params.selector || '', 50);
         if (entry.metadata.method === 'goto')
           detail = trimRight(entry.metadata.params.url || '', 50);
@@ -170,8 +168,8 @@ export const Timeline: React.FunctionComponent<{
         return <div key={index}
           className={'timeline-label ' + bar.className + (targetBar === bar ? ' selected' : '')}
           style={{
-            left: bar.leftPosition + 'px',
-            width: Math.max(1, bar.rightPosition - bar.leftPosition) + 'px',
+            left: bar.leftPosition,
+            maxWidth: 100,
           }}
         >
           {bar.label}

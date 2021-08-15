@@ -19,7 +19,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { CRBrowser } from './crBrowser';
-import { Env } from '../processLauncher';
+import { Env } from '../../utils/processLauncher';
 import { kBrowserCloseMessageId } from './crConnection';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { BrowserType } from '../browserType';
@@ -27,14 +27,14 @@ import { ConnectionTransport, ProtocolRequest, WebSocketTransport } from '../tra
 import { CRDevTools } from './crDevTools';
 import { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
 import * as types from '../types';
-import { assert, debugMode, headersArrayToObject, removeFolders } from '../../utils/utils';
+import { debugMode, headersArrayToObject, removeFolders } from '../../utils/utils';
 import { RecentLogsCollector } from '../../utils/debugLogger';
 import { ProgressController } from '../progress';
 import { TimeoutSettings } from '../../utils/timeoutSettings';
 import { helper } from '../helper';
 import { CallMetadata } from '../instrumentation';
-import { findChromiumChannel } from './findChromiumChannel';
 import http from 'http';
+import { registry } from '../../utils/registry';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
@@ -46,20 +46,6 @@ export class Chromium extends BrowserType {
 
     if (debugMode())
       this._devtools = this._createDevTools();
-  }
-
-  executablePath(channel?: string): string {
-    if (channel) {
-      let executablePath = undefined;
-      if ((channel as any) === 'chromium-with-symbols')
-        executablePath = this._registry.executablePath('chromium-with-symbols');
-      else
-        executablePath = findChromiumChannel(channel);
-      assert(executablePath, `unsupported chromium channel "${channel}"`);
-      assert(fs.existsSync(executablePath), `"${channel}" channel is not installed. Try running 'npx playwright install ${channel}'`);
-      return executablePath;
-    }
-    return super.executablePath(channel);
   }
 
   async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number, sdkLanguage: string, headers?: types.HeadersArray }, timeout?: number) {
@@ -102,7 +88,9 @@ export class Chromium extends BrowserType {
   }
 
   private _createDevTools() {
-    return new CRDevTools(path.join(this._registry.browserDirectory('chromium'), 'devtools-preferences.json'));
+    // TODO: this is totally wrong when using channels.
+    const directory = registry.findExecutable('chromium').directory;
+    return directory ? new CRDevTools(path.join(directory, 'devtools-preferences.json')) : undefined;
   }
 
   async _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<CRBrowser> {
@@ -150,6 +138,11 @@ export class Chromium extends BrowserType {
       throw new Error('Arguments can not specify page to be opened');
     const chromeArguments = [...DEFAULT_ARGS];
     chromeArguments.push(`--user-data-dir=${userDataDir}`);
+
+    // See https://github.com/microsoft/playwright/issues/7362
+    if (os.platform() === 'darwin')
+      chromeArguments.push('--enable-use-zoom-for-dsf=false');
+
     if (options.useWebSocket)
       chromeArguments.push('--remote-debugging-port=0');
     else
@@ -204,8 +197,7 @@ const DEFAULT_ARGS = [
   '--disable-default-apps',
   '--disable-dev-shm-usage',
   '--disable-extensions',
-  // BlinkGenPropertyTrees disabled due to crbug.com/937609
-  '--disable-features=TranslateUI,BlinkGenPropertyTrees,ImprovedCookieControls,SameSiteByDefaultCookies,LazyFrameLoading,GlobalMediaControls',
+  '--disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter',
   '--allow-pre-commit-input',
   '--disable-hang-monitor',
   '--disable-ipc-flooding-protection',

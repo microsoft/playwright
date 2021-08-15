@@ -18,6 +18,7 @@ import { EventEmitter } from 'events';
 import { rewriteErrorMessage } from '../utils/stackTrace';
 import { TimeoutError } from '../utils/errors';
 import { createGuid } from '../utils/utils';
+import * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 
 export class Waiter {
@@ -26,21 +27,23 @@ export class Waiter {
   private _immediateError?: Error;
   // TODO: can/should we move these logs into wrapApiCall?
   private _logs: string[] = [];
-  private _channelOwner: ChannelOwner;
+  private _channel: channels.EventTargetChannel;
   private _waitId: string;
   private _error: string | undefined;
 
-  constructor(channelOwner: ChannelOwner, apiName: string) {
+  constructor(channelOwner: ChannelOwner<channels.EventTargetChannel>, event: string) {
     this._waitId = createGuid();
-    this._channelOwner = channelOwner;
-    this._channelOwner._waitForEventInfoBefore(this._waitId, apiName);
+    this._channel = channelOwner._channel;
+    channelOwner._wrapApiCall(async (channel: channels.EventTargetChannel) => {
+      channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'before', event } }).catch(() => {});
+    });
     this._dispose = [
-      () => this._channelOwner._waitForEventInfoAfter(this._waitId, this._error)
+      () => this._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'after', error: this._error } }).catch(() => {})
     ];
   }
 
-  static createForEvent(channelOwner: ChannelOwner, target: string, event: string) {
-    return new Waiter(channelOwner, `${target}.waitForEvent(${event})`);
+  static createForEvent(channelOwner: ChannelOwner<channels.EventTargetChannel>, event: string) {
+    return new Waiter(channelOwner, event);
   }
 
   async waitForEvent<T = void>(emitter: EventEmitter, event: string, predicate?: (arg: T) => boolean | Promise<boolean>): Promise<T> {
@@ -82,14 +85,14 @@ export class Waiter {
         dispose();
       this._error = e.message;
       this.dispose();
-      rewriteErrorMessage(e, e.message + formatLogRecording(this._logs) + kLoggingNote);
+      rewriteErrorMessage(e, e.message + formatLogRecording(this._logs));
       throw e;
     }
   }
 
   log(s: string) {
     this._logs.push(s);
-    this._channelOwner._waitForEventInfoLog(this._waitId, s);
+    this._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'log', message: s } }).catch(() => {});
   }
 
   private _rejectOn(promise: Promise<any>, dispose?: () => void) {
@@ -125,8 +128,6 @@ function waitForTimeout(timeout: number): { promise: Promise<void>, dispose: () 
   const dispose = () => clearTimeout(timeoutId);
   return { promise, dispose };
 }
-
-const kLoggingNote = `\nNote: use DEBUG=pw:api environment variable to capture Playwright logs.`;
 
 function formatLogRecording(log: string[]): string {
   if (!log.length)

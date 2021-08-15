@@ -23,6 +23,7 @@ export type SnapshotData = {
     url: string,
     // String is the content. Number is "x snapshots ago", same url.
     content: string | number,
+    contentType: 'text/css'
   }[],
   viewport: { width: number, height: number },
   url: string,
@@ -44,6 +45,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
   // Symbols for our own info on Nodes/StyleSheets.
   const kSnapshotFrameId = Symbol('__playwright_snapshot_frameid_');
   const kCachedData = Symbol('__playwright_snapshot_cache_');
+  const kEndOfList = Symbol('__playwright_end_of_list_');
   type CachedData = {
     cached?: any[], // Cached values to determine whether the snapshot will be the same.
     ref?: [number, number], // Previous snapshotNumber and nodeIndex.
@@ -176,6 +178,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
           visitNode(child);
       };
       visitNode(document.documentElement);
+      visitNode(this._fakeBase);
     }
 
     private _sanitizeUrl(url: string): string {
@@ -321,19 +324,15 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
               attrs['checked'] = '';
             }
           }
-          if (element === document.scrollingElement) {
-            // TODO: restoring scroll positions of all elements
-            // is somewhat expensive. Figure this out.
-            if (element.scrollTop) {
-              expectValue(kScrollTopAttribute);
-              expectValue(element.scrollTop);
-              attrs[kScrollTopAttribute] = '' + element.scrollTop;
-            }
-            if (element.scrollLeft) {
-              expectValue(kScrollLeftAttribute);
-              expectValue(element.scrollLeft);
-              attrs[kScrollLeftAttribute] = '' + element.scrollLeft;
-            }
+          if (element.scrollTop) {
+            expectValue(kScrollTopAttribute);
+            expectValue(element.scrollTop);
+            attrs[kScrollTopAttribute] = '' + element.scrollTop;
+          }
+          if (element.scrollLeft) {
+            expectValue(kScrollLeftAttribute);
+            expectValue(element.scrollLeft);
+            attrs[kScrollLeftAttribute] = '' + element.scrollLeft;
           }
           if (element.shadowRoot) {
             ++shadowDomNesting;
@@ -355,6 +354,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
           }
           for (let child = node.firstChild; child; child = child.nextSibling)
             visitChild(child);
+          expectValue(kEndOfList);
           let documentOrShadowRoot = null;
           if (node.ownerDocument!.documentElement === node)
             documentOrShadowRoot = node.ownerDocument;
@@ -363,20 +363,19 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
           if (documentOrShadowRoot) {
             for (const sheet of (documentOrShadowRoot as any).adoptedStyleSheets || [])
               visitChildStyleSheet(sheet);
+            expectValue(kEndOfList);
           }
         }
 
         // Process iframe src attribute before bailing out since it depends on a symbol, not the DOM.
         if (nodeName === 'IFRAME' || nodeName === 'FRAME') {
           const element = node as Element;
-          for (let i = 0; i < element.attributes.length; i++) {
-            const frameId = (element as any)[kSnapshotFrameId];
-            const name = 'src';
-            const value = frameId ? `/snapshot/${frameId}` : '';
-            expectValue(name);
-            expectValue(value);
-            attrs[name] = value;
-          }
+          const frameId = (element as any)[kSnapshotFrameId];
+          const name = 'src';
+          const value = frameId ? `/snapshot/${frameId}` : '';
+          expectValue(name);
+          expectValue(value);
+          attrs[name] = value;
         }
 
         // We can skip attributes comparison because nothing else has changed,
@@ -409,6 +408,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
             expectValue(value);
             attrs[name] = value;
           }
+          expectValue(kEndOfList);
         }
 
         if (result.length === 2 && !Object.keys(attrs).length)
@@ -444,8 +444,8 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
         doctype: document.doctype ? document.doctype.name : undefined,
         resourceOverrides: [],
         viewport: {
-          width: Math.max(document.body ? document.body.offsetWidth : 0, document.documentElement ? document.documentElement.offsetWidth : 0),
-          height: Math.max(document.body ? document.body.offsetHeight : 0, document.documentElement ? document.documentElement.offsetHeight : 0),
+          width: window.innerWidth,
+          height: window.innerHeight,
         },
         url: location.href,
         timestamp,
@@ -462,7 +462,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
         }
         const base = this._getSheetBase(sheet);
         const url = removeHash(this._resolveUrl(base, sheet.href!));
-        result.resourceOverrides.push({ url, content });
+        result.resourceOverrides.push({ url, content, contentType: 'text/css' },);
       }
 
       result.collectionTime = performance.now() - result.timestamp;

@@ -4,7 +4,7 @@ set +x
 set -o pipefail
 
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
-  echo "usage: $(basename $0) [firefox-linux|firefox-win32|firefox-win64|webkit-gtk|webkit-wpe|webkit-gtk-wpe|webkit-win64|webkit-mac-10.14|webkit-mac-10.15] [-f|--force]"
+  echo "usage: $(basename "$0") [firefox-linux|firefox-win32|firefox-win64|webkit-gtk|webkit-wpe|webkit-gtk-wpe|webkit-win64|webkit-mac-10.14|webkit-mac-10.15] [-f|--force]"
   echo
   echo "Prepares checkout under browser folder, applies patches, builds, archives, and uploads if build is missing."
   echo "Script will bail out early if the build for the browser version is already present."
@@ -17,7 +17,7 @@ fi
 
 if [[ $# == 0 ]]; then
   echo "missing build flavor!"
-  echo "try './$(basename $0) --help' for more information"
+  echo "try './$(basename "$0") --help' for more information"
   exit 1
 fi
 
@@ -354,7 +354,7 @@ else
   LOG_PATH="/tmp/log-$BROWSER_NAME.zip"
 fi
 
-if [[ -f $ZIP_PATH ]]; then
+if [[ -f "$ZIP_PATH" ]]; then
   echo "Archive $ZIP_PATH already exists - remove and re-run the script."
   exit 1
 fi
@@ -392,12 +392,12 @@ function generate_and_upload_browser_build {
   fi
 
   echo "-- archiving to $ZIP_PATH"
-  if ! ./$BROWSER_NAME/archive.sh $ZIP_PATH "$EXTRA_ARCHIVE_ARGS"; then
+  if ! ./$BROWSER_NAME/archive.sh "$ZIP_PATH" "$EXTRA_ARCHIVE_ARGS"; then
     return 23
   fi
 
   echo "-- uploading"
-  if ! ./upload.sh $BUILD_BLOB_PATH $ZIP_PATH; then
+  if ! ./upload.sh "$BUILD_BLOB_PATH" "$ZIP_PATH"; then
     return 24
   fi
   return 0
@@ -419,7 +419,7 @@ if generate_and_upload_browser_build 2>&1 | ./sanitize_and_compress_log.js $LOG_
   (
     for i in $(cat "${BROWSER_NAME}/${BUILDS_LIST}"); do
       URL="https://playwright2.blob.core.windows.net/builds/${BROWSER_NAME}/${BUILD_NUMBER}/$i"
-      if ! [[ $(curl -s -L -I $URL | head -1 | cut -f2 -d' ') == 200 ]]; then
+      if ! [[ $(curl -s -L -I "$URL" | head -1 | cut -f2 -d' ') == 200 ]]; then
         # Exit subshell
         echo "Missing build at ${URL}"
         exit
@@ -448,7 +448,7 @@ else
     FAILED_STEP="<unknown step>"
   fi
   # Upload logs only in case of failure and report failure.
-  ./upload.sh ${LOG_BLOB_PATH} ${LOG_PATH} || true
+  ./upload.sh "${LOG_BLOB_PATH}" ${LOG_PATH} || true
   send_telegram_message "$BUILD_ALIAS -- ${FAILED_STEP} failed! ❌ <a href='https://playwright.azureedge.net/builds/${LOG_BLOB_PATH}'>${LOG_BLOB_NAME}</a>"
   exit 1
 fi

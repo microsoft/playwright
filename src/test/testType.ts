@@ -16,10 +16,10 @@
 
 import { expect } from './expect';
 import { currentlyLoadingFileSuite, currentTestInfo, setCurrentlyLoadingFileSuite } from './globals';
-import { Spec, Suite } from './test';
+import { TestCase, Suite } from './test';
 import { wrapFunctionWithLocation } from './transform';
-import { Fixtures, FixturesWithLocation, Location, TestInfo, TestType } from './types';
-import { inheritFixtureParameterNames } from './fixtures';
+import { Fixtures, FixturesWithLocation, Location, TestType } from './types';
+import { errorWithLocation, serializeError } from './util';
 
 const countByFile = new Map<string, number>();
 
@@ -35,11 +35,13 @@ export class TestTypeImpl {
   constructor(fixtures: (FixturesWithLocation | DeclaredFixtures)[]) {
     this.fixtures = fixtures;
 
-    const test: any = wrapFunctionWithLocation(this._spec.bind(this, 'default'));
+    const test: any = wrapFunctionWithLocation(this._createTest.bind(this, 'default'));
     test.expect = expect;
-    test.only = wrapFunctionWithLocation(this._spec.bind(this, 'only'));
+    test.only = wrapFunctionWithLocation(this._createTest.bind(this, 'only'));
     test.describe = wrapFunctionWithLocation(this._describe.bind(this, 'default'));
     test.describe.only = wrapFunctionWithLocation(this._describe.bind(this, 'only'));
+    test.describe.serial = wrapFunctionWithLocation(this._describe.bind(this, 'serial'));
+    test.describe.serial.only = wrapFunctionWithLocation(this._describe.bind(this, 'serial.only'));
     test.beforeEach = wrapFunctionWithLocation(this._hook.bind(this, 'beforeEach'));
     test.afterEach = wrapFunctionWithLocation(this._hook.bind(this, 'afterEach'));
     test.beforeAll = wrapFunctionWithLocation(this._hook.bind(this, 'beforeAll'));
@@ -48,46 +50,58 @@ export class TestTypeImpl {
     test.fixme = wrapFunctionWithLocation(this._modifier.bind(this, 'fixme'));
     test.fail = wrapFunctionWithLocation(this._modifier.bind(this, 'fail'));
     test.slow = wrapFunctionWithLocation(this._modifier.bind(this, 'slow'));
-    test.setTimeout = this._setTimeout.bind(this);
+    test.setTimeout = wrapFunctionWithLocation(this._setTimeout.bind(this));
+    test.step = wrapFunctionWithLocation(this._step.bind(this));
     test.use = wrapFunctionWithLocation(this._use.bind(this));
     test.extend = wrapFunctionWithLocation(this._extend.bind(this));
     test.declare = wrapFunctionWithLocation(this._declare.bind(this));
     this.test = test;
   }
 
-  private _spec(type: 'default' | 'only', location: Location, title: string, fn: Function) {
+  private _createTest(type: 'default' | 'only' | 'skip', location: Location, title: string, fn: Function) {
+    throwIfRunningInsideJest();
     const suite = currentlyLoadingFileSuite();
     if (!suite)
-      throw new Error(`test() can only be called in a test file`);
+      throw errorWithLocation(location, `test() can only be called in a test file`);
 
     const ordinalInFile = countByFile.get(suite._requireFile) || 0;
     countByFile.set(suite._requireFile, ordinalInFile + 1);
 
-    const spec = new Spec(title, fn, ordinalInFile, this);
-    spec._requireFile = suite._requireFile;
-    spec.file = location.file;
-    spec.line = location.line;
-    spec.column = location.column;
-    suite._addSpec(spec);
+    const test = new TestCase('test', title, fn, ordinalInFile, this, location);
+    test._requireFile = suite._requireFile;
+    suite._addTest(test);
 
     if (type === 'only')
-      spec._only = true;
+      test._only = true;
+    if (type === 'skip')
+      test.expectedStatus = 'skipped';
   }
 
-  private _describe(type: 'default' | 'only', location: Location, title: string, fn: Function) {
+  private _describe(type: 'default' | 'only' | 'serial' | 'serial.only', location: Location, title: string, fn: Function) {
+    throwIfRunningInsideJest();
     const suite = currentlyLoadingFileSuite();
     if (!suite)
-      throw new Error(`describe() can only be called in a test file`);
+      throw errorWithLocation(location, `describe() can only be called in a test file`);
+
+    if (typeof title === 'function') {
+      throw errorWithLocation(location, [
+        'It looks like you are calling describe() without the title. Pass the title as a first argument:',
+        `test.describe('my test group', () => {`,
+        `  // Declare tests here`,
+        `});`,
+      ].join('\n'));
+    }
 
     const child = new Suite(title);
     child._requireFile = suite._requireFile;
-    child.file = location.file;
-    child.line = location.line;
-    child.column = location.column;
+    child._isDescribe = true;
+    child.location = location;
     suite._addSuite(child);
 
-    if (type === 'only')
+    if (type === 'only' || type === 'serial.only')
       child._only = true;
+    if (type === 'serial' || type === 'serial.only')
+      child._serial =  true;
 
     setCurrentlyLoadingFileSuite(child);
     fn();
@@ -97,45 +111,76 @@ export class TestTypeImpl {
   private _hook(name: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', location: Location, fn: Function) {
     const suite = currentlyLoadingFileSuite();
     if (!suite)
-      throw new Error(`${name} hook can only be called in a test file`);
-    suite._hooks.push({ type: name, fn, location });
+      throw errorWithLocation(location, `${name} hook can only be called in a test file`);
+    if (name === 'beforeAll' || name === 'afterAll') {
+      const hook = new TestCase(name, name, fn, 0, this, location);
+      hook._requireFile = suite._requireFile;
+      suite._addAllHook(hook);
+    } else {
+      suite._eachHooks.push({ type: name, fn, location });
+    }
   }
 
-  private _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', location: Location, ...modiferAgs: [arg?: any | Function, description?: string]) {
+  private _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', location: Location, ...modifierArgs: [arg?: any | Function, description?: string]) {
     const suite = currentlyLoadingFileSuite();
     if (suite) {
-      if (typeof modiferAgs[0] === 'function') {
-        const [conditionFn, description] = modiferAgs;
-        const fn = (args: any, testInfo: TestInfo) => testInfo[type](conditionFn(args), description!);
-        inheritFixtureParameterNames(conditionFn, fn, location);
-        suite._hooks.unshift({ type: 'beforeEach', fn, location });
+      if (typeof modifierArgs[0] === 'string' && typeof modifierArgs[1] === 'function') {
+        // Support for test.skip('title', () => {})
+        this._createTest('skip', location, modifierArgs[0], modifierArgs[1]);
+        return;
+      }
+
+      if (typeof modifierArgs[0] === 'function') {
+        suite._modifiers.push({ type, fn: modifierArgs[0], location, description: modifierArgs[1] });
       } else {
-        const fn = ({}: any, testInfo: TestInfo) => testInfo[type](...modiferAgs as [any, any]);
-        suite._hooks.unshift({ type: 'beforeEach', fn, location });
+        if (modifierArgs.length >= 1 && !modifierArgs[0])
+          return;
+        const description = modifierArgs[1];
+        suite._annotations.push({ type, description });
       }
       return;
     }
 
     const testInfo = currentTestInfo();
     if (!testInfo)
-      throw new Error(`test.${type}() can only be called inside test, describe block or fixture`);
-    if (typeof modiferAgs[0] === 'function')
-      throw new Error(`test.${type}() with a function can only be called inside describe block`);
-    testInfo[type](...modiferAgs as [any, any]);
+      throw errorWithLocation(location, `test.${type}() can only be called inside test, describe block or fixture`);
+    if (typeof modifierArgs[0] === 'function')
+      throw errorWithLocation(location, `test.${type}() with a function can only be called inside describe block`);
+    testInfo[type](...modifierArgs as [any, any]);
   }
 
-  private _setTimeout(timeout: number) {
+  private _setTimeout(location: Location, timeout: number) {
+    const suite = currentlyLoadingFileSuite();
+    if (suite) {
+      suite._timeout = timeout;
+      return;
+    }
+
     const testInfo = currentTestInfo();
     if (!testInfo)
-      throw new Error(`test.setTimeout() can only be called inside test or fixture`);
+      throw errorWithLocation(location, `test.setTimeout() can only be called from a test`);
     testInfo.setTimeout(timeout);
   }
 
   private _use(location: Location, fixtures: Fixtures) {
     const suite = currentlyLoadingFileSuite();
     if (!suite)
-      throw new Error(`test.use() can only be called in a test file`);
-    suite._fixtureOverrides = { ...suite._fixtureOverrides, ...fixtures };
+      throw errorWithLocation(location, `test.use() can only be called in a test file`);
+    suite._use.push({ fixtures, location });
+  }
+
+  private async _step(location: Location, title: string, body: () => Promise<void>): Promise<void> {
+    const testInfo = currentTestInfo();
+    if (!testInfo)
+      throw errorWithLocation(location, `test.step() can only be called from a test`);
+    const complete = testInfo._addStep('test.step', title);
+    try {
+      await body();
+      complete();
+    } catch (e) {
+      complete(serializeError(e));
+      throw e;
+    }
   }
 
   private _extend(location: Location, fixtures: Fixtures) {
@@ -149,6 +194,16 @@ export class TestTypeImpl {
     const child = new TestTypeImpl([...this.fixtures, declared]);
     declared.testType = child;
     return child.test;
+  }
+}
+
+function throwIfRunningInsideJest() {
+  if (process.env.JEST_WORKER_ID) {
+    throw new Error(
+        `Playwright Test needs to be invoked via 'npx playwright test' and excluded from Jest test runs.\n` +
+        `Creating one directory for Playwright tests and one for Jest is the recommended way of doing it.\n` +
+        `See https://playwright.dev/docs/intro/ for more information about Playwright Test.`,
+    );
   }
 }
 

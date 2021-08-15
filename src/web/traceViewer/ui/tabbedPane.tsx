@@ -19,30 +19,33 @@ import * as React from 'react';
 
 export interface TabbedPaneTab {
   id: string;
-  title: string;
+  title: string | JSX.Element;
+  count?: number;
   render: () => React.ReactElement;
 }
 
 export const TabbedPane: React.FunctionComponent<{
   tabs: TabbedPaneTab[],
-}> = ({ tabs }) => {
-  const [selected, setSelected] = React.useState<string>(tabs.length ? tabs[0].id : '');
+  selectedTab: string,
+  setSelectedTab: (tab: string) => void
+}> = ({ tabs, selectedTab, setSelectedTab }) => {
   return <div className='tabbed-pane'>
     <div className='vbox'>
       <div className='hbox' style={{ flex: 'none' }}>
         <div className='tab-strip'>{
-          tabs.map(tab => {
-            return <div className={'tab-element ' + (selected === tab.id ? 'selected' : '')}
-              onClick={() => setSelected(tab.id)}
+          tabs.map(tab => (
+            <div className={'tab-element ' + (selectedTab === tab.id ? 'selected' : '')}
+              onClick={() => setSelectedTab(tab.id)}
               key={tab.id}>
               <div className='tab-label'>{tab.title}</div>
+              <div className='tab-count'>{tab.count || ''}</div>
             </div>
-          })
+          ))
         }</div>
       </div>
       {
         tabs.map(tab => {
-          if (selected === tab.id)
+          if (selectedTab === tab.id)
             return <div key={tab.id} className='tab-content'>{tab.render()}</div>;
         })
       }

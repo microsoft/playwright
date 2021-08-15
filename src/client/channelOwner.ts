@@ -18,9 +18,10 @@ import { EventEmitter } from 'events';
 import * as channels from '../protocol/channels';
 import { createScheme, ValidationError, Validator } from '../protocol/validator';
 import { debugLogger } from '../utils/debugLogger';
-import { rewriteErrorMessage } from '../utils/stackTrace';
+import { captureStackTrace, ParsedStackTrace } from '../utils/stackTrace';
+import { isUnderTest } from '../utils/utils';
 import type { Connection } from './connection';
-import type { Logger } from './types';
+import type { ClientSideInstrumentation, Logger } from './types';
 
 export abstract class ChannelOwner<T extends channels.Channel = channels.Channel, Initializer = {}> extends EventEmitter {
   protected _connection: Connection;
@@ -32,6 +33,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
   readonly _channel: T;
   readonly _initializer: Initializer;
   _logger: Logger | undefined;
+  _csi: ClientSideInstrumentation | undefined;
 
   constructor(parent: ChannelOwner | Connection, type: string, guid: string, initializer: Initializer) {
     super();
@@ -47,7 +49,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
       this._logger = this._parent._logger;
     }
 
-    this._channel = this._createChannel(new EventEmitter(), '');
+    this._channel = this._createChannel(new EventEmitter(), null);
     this._initializer = initializer;
   }
 
@@ -70,15 +72,15 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     };
   }
 
-  _createChannel(base: Object, apiName: string): T {
+  private _createChannel(base: Object, stackTrace: ParsedStackTrace | null): T {
     const channel = new Proxy(base, {
       get: (obj: any, prop) => {
         if (prop === 'debugScopeState')
-          return (params: any) => this._connection.sendMessageToServer(this, prop, params, apiName);
+          return (params: any) => this._connection.sendMessageToServer(this, prop, params, stackTrace);
         if (typeof prop === 'string') {
           const validator = scheme[paramsName(this._type, prop)];
           if (validator)
-            return (params: any) => this._connection.sendMessageToServer(this, prop, validator(params, ''), apiName);
+            return (params: any) => this._connection.sendMessageToServer(this, prop, validator(params, ''), stackTrace);
         }
         return obj[prop];
       },
@@ -87,31 +89,32 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     return channel;
   }
 
-  async _wrapApiCall<R, C extends channels.Channel>(apiName: string, func: (channel: C) => Promise<R>, logger?: Logger): Promise<R> {
+  async _wrapApiCall<R, C extends channels.Channel>(func: (channel: C, stackTrace: ParsedStackTrace) => Promise<R>, logger?: Logger): Promise<R> {
     logger = logger || this._logger;
+    const stackTrace = captureStackTrace();
+    const { apiName, frameTexts } = stackTrace;
+    const channel = this._createChannel({}, stackTrace);
+
+    let ancestorWithCSI: ChannelOwner<any> = this;
+    while (!ancestorWithCSI._csi && ancestorWithCSI._parent)
+      ancestorWithCSI = ancestorWithCSI._parent;
+    let csiCallback: ((e?: Error) => void) | undefined;
+
     try {
       logApiCall(logger, `=> ${apiName} started`);
-      const channel = this._createChannel({}, apiName);
-      const result = await func(channel as any);
+      csiCallback = ancestorWithCSI._csi?.onApiCall(apiName);
+      const result = await func(channel as any, stackTrace);
+      csiCallback?.();
       logApiCall(logger, `<= ${apiName} succeeded`);
       return result;
     } catch (e) {
+      const innerError = ((process.env.PWDEBUGIMPL || isUnderTest()) && e.stack) ? '\n<inner error>\n' + e.stack : '';
+      e.message = apiName + ': ' + e.message;
+      e.stack = e.message + '\n' + frameTexts.join('\n') + innerError;
+      csiCallback?.(e);
       logApiCall(logger, `<= ${apiName} failed`);
-      rewriteErrorMessage(e, `${apiName}: ` + e.message);
       throw e;
     }
-  }
-
-  _waitForEventInfoBefore(waitId: string, apiName: string) {
-    this._connection.sendMessageToServer(this, 'waitForEventInfo', { info: { apiName, waitId, phase: 'before' } }, undefined).catch(() => {});
-  }
-
-  _waitForEventInfoAfter(waitId: string, error?: string) {
-    this._connection.sendMessageToServer(this, 'waitForEventInfo', { info: { waitId, phase: 'after', error } }, undefined).catch(() => {});
-  }
-
-  _waitForEventInfoLog(waitId: string, message: string) {
-    this._connection.sendMessageToServer(this, 'waitForEventInfo', { info: { waitId, phase: 'log', message } }, undefined).catch(() => {});
   }
 
   private toJSON() {

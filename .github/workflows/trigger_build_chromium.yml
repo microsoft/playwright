@@ -1,6 +1,12 @@
-name: "Chromium Builder"
+name: "Trigger: Chromium Builds"
 
 on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Playwright SHA / ref to build Chromium'
+        required: true
+        default: 'master'
   push:
     branches:
       - master
@@ -18,7 +24,8 @@ jobs:
         curl -X POST \
           -H "Accept: application/vnd.github.v3+json" \
           -H "Authorization: token ${GH_TOKEN}" \
-          --data '{"event_type": "build_chromium"}' \
+          --data "{\"event_type\": \"build_chromium\", \"client_payload\": {\"ref\": \"${GHREF}\"}}" \
           https://api.github.com/repos/microsoft/playwright-internal/dispatches
       env:
         GH_TOKEN: ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}
+        GHREF: ${{ github.event_name == 'workflow_dispatch' &&  github.event.inputs.ref || github.sha  }}

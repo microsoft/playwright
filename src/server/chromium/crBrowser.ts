@@ -298,12 +298,11 @@ export class CRBrowserContext extends BrowserContext {
     ServiceWorker: 'serviceworker',
   };
 
-  readonly _browser: CRBrowser;
+  declare readonly _browser: CRBrowser;
   readonly _evaluateOnNewDocumentSources: string[];
 
   constructor(browser: CRBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
-    this._browser = browser;
     this._evaluateOnNewDocumentSources = [];
     this._authenticateProxyViaCredentials();
   }
@@ -362,7 +361,7 @@ export class CRBrowserContext extends BrowserContext {
   async _doCookies(urls: string[]): Promise<types.NetworkCookie[]> {
     const { cookies } = await this._browser._session.send('Storage.getCookies', { browserContextId: this._browserContextId });
     return network.filterCookies(cookies.map(c => {
-      const copy: any = { sameSite: 'None', ...c };
+      const copy: any = { sameSite: 'Lax', ...c };
       delete copy.size;
       delete copy.priority;
       delete copy.session;

@@ -31,21 +31,6 @@ Metadata:
     apiName: string?
 
 
-WaitForEventInfo:
-  type: object
-  properties:
-    waitId: string
-    phase:
-      type: enum
-      literals:
-      - before
-      - after
-      - log
-    apiName: string?
-    message: string?
-    error: string?
-
-
 Point:
   type: object
   properties:
@@ -322,6 +307,7 @@ ContextOptions:
       - reduce
       - no-preference
     acceptDownloads: boolean?
+    baseURL: string?
     _debugName: string?
     recordVideo:
       type: object?
@@ -504,9 +490,32 @@ Browser:
     close:
 
 
+EventTarget:
+  type: interface
+
+  commands:
+    waitForEventInfo:
+      parameters:
+        info:
+          type: object
+          properties:
+            waitId: string
+            phase:
+              type: enum
+              literals:
+              - before
+              - after
+              - log
+            event: string?
+            message: string?
+            error: string?
+      tracing:
+        snapshot: true
 
 BrowserContext:
   type: interface
+
+  extends: EventTarget
 
   initializer:
     isChromium: boolean
@@ -691,6 +700,8 @@ BrowserContext:
 Page:
   type: interface
 
+  extends: EventTarget
+
   initializer:
     mainFrame: Frame
     viewportSize:
@@ -764,6 +775,8 @@ Page:
           - networkidle
       returns:
         response: Response?
+      tracing:
+        snapshot: true
 
     goForward:
       parameters:
@@ -776,6 +789,8 @@ Page:
           - networkidle
       returns:
         response: Response?
+      tracing:
+        snapshot: true
 
     reload:
       parameters:
@@ -788,6 +803,8 @@ Page:
           - networkidle
       returns:
         response: Response?
+      tracing:
+        snapshot: true
 
     screenshot:
       parameters:
@@ -821,34 +838,48 @@ Page:
           properties:
             width: number
             height: number
+      tracing:
+        snapshot: true
 
     keyboardDown:
       parameters:
         key: string
+      tracing:
+        snapshot: true
 
     keyboardUp:
       parameters:
         key: string
+      tracing:
+        snapshot: true
 
     keyboardInsertText:
       parameters:
         text: string
+      tracing:
+        snapshot: true
 
     keyboardType:
       parameters:
         text: string
         delay: number?
+      tracing:
+        snapshot: true
 
     keyboardPress:
       parameters:
         key: string
         delay: number?
+      tracing:
+        snapshot: true
 
     mouseMove:
       parameters:
         x: number
         y: number
         steps: number?
+      tracing:
+        snapshot: true
 
     mouseDown:
       parameters:
@@ -859,6 +890,8 @@ Page:
           - right
           - middle
         clickCount: number?
+      tracing:
+        snapshot: true
 
     mouseUp:
       parameters:
@@ -869,6 +902,8 @@ Page:
           - right
           - middle
         clickCount: number?
+      tracing:
+        snapshot: true
 
     mouseClick:
       parameters:
@@ -882,11 +917,15 @@ Page:
           - right
           - middle
         clickCount: number?
+      tracing:
+        snapshot: true
 
     touchscreenTap:
       parameters:
         x: number
         y: number
+      tracing:
+        snapshot: true
 
     accessibilitySnapshot:
       parameters:
@@ -1057,11 +1096,14 @@ Frame:
     evalOnSelector:
       parameters:
         selector: string
+        strict: boolean?
         expression: string
         isFunction: boolean?
         arg: SerializedArgument
       returns:
         value: SerializedValue
+      tracing:
+        snapshot: true
 
     evalOnSelectorAll:
       parameters:
@@ -1071,6 +1113,8 @@ Frame:
         arg: SerializedArgument
       returns:
         value: SerializedValue
+      tracing:
+        snapshot: true
 
     addScriptTag:
       parameters:
@@ -1079,6 +1123,8 @@ Frame:
         type: string?
       returns:
         element: ElementHandle
+      tracing:
+        snapshot: true
 
     addStyleTag:
       parameters:
@@ -1086,19 +1132,25 @@ Frame:
         content: string?
       returns:
         element: ElementHandle
+      tracing:
+        snapshot: true
 
     check:
       parameters:
         selector: string
+        strict: boolean?
         force: boolean?
         noWaitAfter: boolean?
         position: Point?
         timeout: number?
         trial: boolean?
+      tracing:
+        snapshot: true
 
     click:
       parameters:
         selector: string
+        strict: boolean?
         force: boolean?
         noWaitAfter: boolean?
         modifiers:
@@ -1121,14 +1173,28 @@ Frame:
         clickCount: number?
         timeout: number?
         trial: boolean?
+      tracing:
+        snapshot: true
 
     content:
       returns:
         value: string
 
+    dragAndDrop:
+      parameters:
+        source: string
+        target: string
+        force: boolean?
+        noWaitAfter: boolean?
+        timeout: number?
+        trial: boolean?
+        sourcePosition: Point?
+        targetPosition: Point?
+
     dblclick:
       parameters:
         selector: string
+        strict: boolean?
         force: boolean?
         noWaitAfter: boolean?
         modifiers:
@@ -1150,13 +1216,18 @@ Frame:
           - middle
         timeout: number?
         trial: boolean?
+      tracing:
+        snapshot: true
 
     dispatchEvent:
       parameters:
         selector: string
+        strict: boolean?
         type: string
         eventInit: SerializedArgument
         timeout: number?
+      tracing:
+        snapshot: true
 
     evaluateExpression:
       parameters:
@@ -1165,6 +1236,8 @@ Frame:
         arg: SerializedArgument
       returns:
         value: SerializedValue
+      tracing:
+        snapshot: true
 
     evaluateExpressionHandle:
       parameters:
@@ -1173,19 +1246,27 @@ Frame:
         arg: SerializedArgument
       returns:
         handle: JSHandle
+      tracing:
+        snapshot: true
 
     fill:
       parameters:
         selector: string
+        strict: boolean?
         value: string
         force: boolean?
         timeout: number?
         noWaitAfter: boolean?
+      tracing:
+        snapshot: true
 
     focus:
       parameters:
         selector: string
+        strict: boolean?
         timeout: number?
+      tracing:
+        snapshot: true
 
     frameElement:
       returns:
@@ -1194,10 +1275,13 @@ Frame:
     getAttribute:
       parameters:
         selector: string
+        strict: boolean?
         name: string
         timeout: number?
       returns:
         value: string?
+      tracing:
+        snapshot: true
 
     goto:
       parameters:
@@ -1212,10 +1296,13 @@ Frame:
         referer: string?
       returns:
         response: Response?
+      tracing:
+        snapshot: true
 
     hover:
       parameters:
         selector: string
+        strict: boolean?
         force: boolean?
         modifiers:
           type: array?
@@ -1229,59 +1316,83 @@ Frame:
         position: Point?
         timeout: number?
         trial: boolean?
+      tracing:
+        snapshot: true
 
     innerHTML:
       parameters:
         selector: string
+        strict: boolean?
         timeout: number?
       returns:
         value: string
+      tracing:
+        snapshot: true
 
     innerText:
       parameters:
         selector: string
+        strict: boolean?
         timeout: number?
       returns:
         value: string
+      tracing:
+        snapshot: true
 
     inputValue:
       parameters:
         selector: string
+        strict: boolean?
         timeout: number?
       returns:
         value: string
+      tracing:
+        snapshot: true
 
     isChecked:
       parameters:
         selector: string
+        strict: boolean?
         timeout: number?
       returns:
         value: boolean
+      tracing:
+        snapshot: true
 
     isDisabled:
       parameters:
         selector: string
+        strict: boolean?
         timeout: number?
       returns:
         value: boolean
+      tracing:
+        snapshot: true
 
     isEnabled:
       parameters:
         selector: string
+        strict: boolean?
         timeout: number?
       returns:
         value: boolean
+      tracing:
+        snapshot: true
 
     isHidden:
       parameters:
         selector: string
+        strict: boolean?
         timeout: number?
       returns:
         value: boolean
+      tracing:
+        snapshot: true
 
     isVisible:
       parameters:
         selector: string
+        strict: boolean?
         timeout: number?
       returns:
         value: boolean
@@ -1289,27 +1400,35 @@ Frame:
     isEditable:
       parameters:
         selector: string
+        strict: boolean?
         timeout: number?
       returns:
         value: boolean
+      tracing:
+        snapshot: true
 
     press:
       parameters:
         selector: string
+        strict: boolean?
         key: string
         delay: number?
         noWaitAfter: boolean?
         timeout: number?
+      tracing:
+        snapshot: true
 
     querySelector:
       parameters:
         selector: string
+        strict: boolean?
       returns:
         element: ElementHandle?
 
     querySelectorAll:
       parameters:
         selector: string
+        strict: boolean?
       returns:
         elements:
           type: array
@@ -1318,6 +1437,7 @@ Frame:
     selectOption:
       parameters:
         selector: string
+        strict: boolean?
         elements:
           type: array?
           items: ElementHandle
@@ -1336,6 +1456,8 @@ Frame:
         values:
           type: array
           items: string
+      tracing:
+        snapshot: true
 
     setContent:
       parameters:
@@ -1347,10 +1469,13 @@ Frame:
           - load
           - domcontentloaded
           - networkidle
+      tracing:
+        snapshot: true
 
     setInputFiles:
       parameters:
         selector: string
+        strict: boolean?
         files:
           type: array
           items:
@@ -1361,10 +1486,13 @@ Frame:
               buffer: binary
         timeout: number?
         noWaitAfter: boolean?
+      tracing:
+        snapshot: true
 
     tap:
       parameters:
         selector: string
+        strict: boolean?
         force: boolean?
         noWaitAfter: boolean?
         modifiers:
@@ -1379,13 +1507,18 @@ Frame:
         position: Point?
         timeout: number?
         trial: boolean?
+      tracing:
+        snapshot: true
 
     textContent:
       parameters:
         selector: string
+        strict: boolean?
         timeout: number?
       returns:
         value: string?
+      tracing:
+        snapshot: true
 
     title:
       returns:
@@ -1394,19 +1527,25 @@ Frame:
     type:
       parameters:
         selector: string
+        strict: boolean?
         text: string
         delay: number?
         noWaitAfter: boolean?
         timeout: number?
+      tracing:
+        snapshot: true
 
     uncheck:
       parameters:
         selector: string
+        strict: boolean?
         force: boolean?
         noWaitAfter: boolean?
         position: Point?
         timeout: number?
         trial: boolean?
+      tracing:
+        snapshot: true
 
     waitForFunction:
       parameters:
@@ -1418,10 +1557,13 @@ Frame:
         pollingInterval: number?
       returns:
         handle: JSHandle
+      tracing:
+        snapshot: true
 
     waitForSelector:
       parameters:
         selector: string
+        strict: boolean?
         timeout: number?
         state:
           type: enum?
@@ -1432,6 +1574,8 @@ Frame:
           - hidden
       returns:
         element: ElementHandle?
+      tracing:
+        snapshot: true
 
   events:
 
@@ -1508,6 +1652,8 @@ JSHandle:
         arg: SerializedArgument
       returns:
         value: SerializedValue
+      tracing:
+        snapshot: true
 
     evaluateExpressionHandle:
       parameters:
@@ -1516,6 +1662,8 @@ JSHandle:
         arg: SerializedArgument
       returns:
         handle: JSHandle
+      tracing:
+        snapshot: true
 
     getPropertyList:
       returns:
@@ -1555,11 +1703,14 @@ ElementHandle:
     evalOnSelector:
       parameters:
         selector: string
+        strict: boolean?
         expression: string
         isFunction: boolean?
         arg: SerializedArgument
       returns:
         value: SerializedValue
+      tracing:
+        snapshot: true
 
     evalOnSelectorAll:
       parameters:
@@ -1569,6 +1720,8 @@ ElementHandle:
         arg: SerializedArgument
       returns:
         value: SerializedValue
+      tracing:
+        snapshot: true
 
     boundingBox:
       returns:
@@ -1581,6 +1734,8 @@ ElementHandle:
         position: Point?
         timeout: number?
         trial: boolean?
+      tracing:
+        snapshot: true
 
     click:
       parameters:
@@ -1606,6 +1761,8 @@ ElementHandle:
         clickCount: number?
         timeout: number?
         trial: boolean?
+      tracing:
+        snapshot: true
 
     contentFrame:
       returns:
@@ -1634,11 +1791,15 @@ ElementHandle:
           - middle
         timeout: number?
         trial: boolean?
+      tracing:
+        snapshot: true
 
     dispatchEvent:
       parameters:
         type: string
         eventInit: SerializedArgument
+      tracing:
+        snapshot: true
 
     fill:
       parameters:
@@ -1646,6 +1807,8 @@ ElementHandle:
         force: boolean?
         timeout: number?
         noWaitAfter: boolean?
+      tracing:
+        snapshot: true
 
     focus:
 
@@ -1670,6 +1833,8 @@ ElementHandle:
         position: Point?
         timeout: number?
         trial: boolean?
+      tracing:
+        snapshot: true
 
     innerHTML:
       returns:
@@ -1717,10 +1882,13 @@ ElementHandle:
         delay: number?
         timeout: number?
         noWaitAfter: boolean?
+      tracing:
+        snapshot: true
 
     querySelector:
       parameters:
         selector: string
+        strict: boolean?
       returns:
         element: ElementHandle?
 
@@ -1748,6 +1916,8 @@ ElementHandle:
     scrollIntoViewIfNeeded:
       parameters:
         timeout: number?
+      tracing:
+        snapshot: true
 
     selectOption:
       parameters:
@@ -1769,11 +1939,15 @@ ElementHandle:
         values:
           type: array
           items: string
+      tracing:
+        snapshot: true
 
     selectText:
       parameters:
         force: boolean?
         timeout: number?
+      tracing:
+        snapshot: true
 
     setInputFiles:
       parameters:
@@ -1787,6 +1961,8 @@ ElementHandle:
               buffer: binary
         timeout: number?
         noWaitAfter: boolean?
+      tracing:
+        snapshot: true
 
     tap:
       parameters:
@@ -1804,6 +1980,8 @@ ElementHandle:
         position: Point?
         timeout: number?
         trial: boolean?
+      tracing:
+        snapshot: true
 
     textContent:
       returns:
@@ -1815,6 +1993,8 @@ ElementHandle:
         delay: number?
         noWaitAfter: boolean?
         timeout: number?
+      tracing:
+        snapshot: true
 
     uncheck:
       parameters:
@@ -1823,6 +2003,8 @@ ElementHandle:
         position: Point?
         timeout: number?
         trial: boolean?
+      tracing:
+        snapshot: true
 
     waitForElementState:
       parameters:
@@ -1836,10 +2018,13 @@ ElementHandle:
           - disabled
           - editable
         timeout: number?
+      tracing:
+        snapshot: true
 
     waitForSelector:
       parameters:
         selector: string
+        strict: boolean?
         timeout: number?
         state:
           type: enum?
@@ -1850,6 +2035,8 @@ ElementHandle:
           - hidden
       returns:
         element: ElementHandle?
+      tracing:
+        snapshot: true
 
 
 Request:
@@ -1993,6 +2180,8 @@ RemoteAddr:
 
 WebSocket:
   type: interface
+
+  extends: EventTarget
 
   initializer:
     url: string
@@ -2212,6 +2401,8 @@ Electron:
 ElectronApplication:
   type: interface
 
+  extends: EventTarget
+
   initializer:
     context: BrowserContext
 
@@ -2278,6 +2469,8 @@ AndroidSocket:
 
 AndroidDevice:
   type: interface
+
+  extends: EventTarget
 
   initializer:
     model: string

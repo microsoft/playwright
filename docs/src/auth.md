@@ -110,7 +110,7 @@ const context = await browser.newContext({ storageState: 'state.json' });
 
 ```java
 // Save storage state into the file.
-context.storageState(new BrowserContext.StorageStateOptions().setPath("state.json"));
+context.storageState(new BrowserContext.StorageStateOptions().setPath(Paths.get("state.json")));
 
 // Create a new context with the saved storage state.
 BrowserContext context = browser.newContext(
@@ -162,7 +162,7 @@ This approach will also **work in CI environments**, since it does not rely on a
 ### Reuse authentication in Playwright Test
 * langs: js
 
-When using [Playwright Test](./test-intro.md), you can log in once in the global setup
+When using [Playwright Test](./intro.md), you can log in once in the global setup
 and then reuse authentication state in tests. That way all your tests are completely
 isolated, yet you only waste time logging in once for the entire test suite run.
 
@@ -258,7 +258,7 @@ await context.addInitScript(storage => {
 
 ```java
 // Get session storage and store as env variable
-String sessionStorage = (String) page.evaluate("() => JSON.stringify(sessionStorage");
+String sessionStorage = (String) page.evaluate("JSON.stringify(sessionStorage)");
 System.getenv().put("SESSION_STORAGE", sessionStorage);
 
 // Set session storage in a new context

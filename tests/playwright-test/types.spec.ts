@@ -16,17 +16,6 @@
 
 import { test, expect } from './playwright-test-fixtures';
 
-test('sanity', async ({runTSC}) => {
-  const result = await runTSC({
-    'a.spec.ts': `
-      const { test } = pwt;
-      // @ts-expect-error
-      test.foo();
-    `
-  });
-  expect(result.exitCode).toBe(0);
-});
-
 test('should check types of fixtures', async ({runTSC}) => {
   const result = await runTSC({
     'helper.ts': `
@@ -47,6 +36,16 @@ test('should check types of fixtures', async ({runTSC}) => {
       });
       const good7 = test.extend<{ baz: boolean }>({
         baz: [ false, { auto: true } ],
+      });
+      const good8 = test.extend<{ foo: string }>({
+        foo: [ async ({}, use) => {
+          await use('foo');
+        }, { scope: 'test' } ],
+      });
+      const good9 = test.extend<{}, {}>({
+        bar: [ async ({}, use) => {
+          await use(42);
+        }, { scope: 'worker' } ],
       });
 
       // @ts-expect-error
@@ -70,6 +69,18 @@ test('should check types of fixtures', async ({runTSC}) => {
       const fail8 = test.extend<{}, { baz: boolean }>({
         // @ts-expect-error
         baz: true,
+      });
+      const fail9 = test.extend<{ foo: string }>({
+        foo: [ async ({}, use) => {
+          await use('foo');
+        // @ts-expect-error
+        }, { scope: 'test', auto: true } ],
+      });
+      const fail10 = test.extend<{}, {}>({
+        bar: [ async ({}, use) => {
+          await use(42);
+        // @ts-expect-error
+        }, { scope: 'test' } ],
       });
     `,
     'playwright.config.ts': `
@@ -125,9 +136,7 @@ test('should check types of fixtures', async ({runTSC}) => {
 
       // @ts-expect-error
       test.beforeAll(async ({ a }) => {});
-      // @ts-expect-error
       test.beforeAll(async ({ foo, bar }) => {});
-      test.beforeAll(async ({ bar }) => {});
       test.beforeAll(() => {});
 
       // @ts-expect-error
@@ -137,9 +146,7 @@ test('should check types of fixtures', async ({runTSC}) => {
 
       // @ts-expect-error
       test.afterAll(async ({ a }) => {});
-      // @ts-expect-error
       test.afterAll(async ({ foo, bar }) => {});
-      test.afterAll(async ({ bar }) => {});
       test.afterAll(() => {});
     `
   });

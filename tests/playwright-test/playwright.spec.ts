@@ -18,10 +18,9 @@ import { test, expect, stripAscii } from './playwright-test-fixtures';
 import fs from 'fs';
 import path from 'path';
 import { spawnSync } from 'child_process';
-import { Registry } from '../../src/utils/registry';
+import { registry } from '../../src/utils/registry';
 
-const registry = new Registry(path.join(__dirname, '..', '..'));
-const ffmpeg = registry.executablePath('ffmpeg') || '';
+const ffmpeg = registry.findExecutable('ffmpeg')!.executablePath();
 
 export class VideoPlayer {
   videoWidth: number;
@@ -122,6 +121,105 @@ test('should complain with projects and --browser', async ({ runInlineTest }) =>
   expect(result.output).toContain('Cannot use --browser option when configuration file defines projects');
 });
 
+test('should not override use:browserName without projects', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { browserName: 'webkit' } };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('pass', async ({ page, browserName }) => {
+        console.log('\\n%%browser=' + browserName);
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%')).sort()).toEqual([
+    '%%browser=webkit',
+  ]);
+});
+
+test('should override use:browserName with --browser', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { browserName: 'webkit' } };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('pass', async ({ page, browserName }) => {
+        console.log('\\n%%browser=' + browserName);
+      });
+    `,
+  }, { browser: 'firefox', workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%')).sort()).toEqual([
+    '%%browser=firefox',
+  ]);
+});
+
+test('should respect context options in various contexts', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { viewport: { width: 500, height: 500 } } };
+    `,
+    'a.test.ts': `
+      import fs from 'fs';
+      import os from 'os';
+      import path from 'path';
+      import rimraf from 'rimraf';
+
+      const { test } = pwt;
+      test.use({ locale: 'fr-CH' });
+
+      let context;
+      test.beforeAll(async ({ browser }) => {
+        context = await browser.newContext();
+      });
+
+      test.afterAll(async () => {
+        await context.close();
+      });
+
+      test('shared context', async ({}) => {
+        const page = await context.newPage();
+        expect(page.viewportSize()).toEqual({ width: 500, height: 500 });
+        expect(await page.evaluate(() => navigator.language)).toBe('fr-CH');
+      });
+
+      test('own context', async ({ browser }) => {
+        const page = await browser.newPage();
+        expect(page.viewportSize()).toEqual({ width: 500, height: 500 });
+        expect(await page.evaluate(() => navigator.language)).toBe('fr-CH');
+        await page.close();
+      });
+
+      test('default context', async ({ page }) => {
+        expect(page.viewportSize()).toEqual({ width: 500, height: 500 });
+        expect(await page.evaluate(() => navigator.language)).toBe('fr-CH');
+      });
+
+      test('persistent context', async ({ playwright, browserName }) => {
+        const dir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'user-data-dir-'));
+        const context = await playwright[browserName].launchPersistentContext(dir);
+        const page = context.pages()[0];
+
+        expect(page.viewportSize()).toEqual({ width: 500, height: 500 });
+        expect(await page.evaluate(() => navigator.language)).toBe('fr-CH');
+
+        await context.close();
+        rimraf.sync(dir);
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(4);
+});
+
 test('should report error and pending operations on timeout', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'a.test.ts': `
@@ -146,37 +244,49 @@ test('should report error and pending operations on timeout', async ({ runInline
   expect(stripAscii(result.output)).toContain(`10 |           page.textContent('text=More missing'),`);
 });
 
-test('should work with screenshot: only-on-failure', async ({ runInlineTest }, testInfo) => {
+test('should throw when using page in beforeAll', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
-    'playwright.config.ts': `
-      module.exports = { use: { screenshot: 'only-on-failure' } };
-    `,
     'a.test.ts': `
       const { test } = pwt;
-      test('pass', async ({ page }) => {
-        await page.setContent('<div>PASS</div>');
-        test.expect(1 + 1).toBe(2);
+      test.beforeAll(async ({ page }) => {
       });
-      test('fail', async ({ page }) => {
-        await page.setContent('<div>FAIL</div>');
-        test.expect(1 + 1).toBe(1);
+      test('ok', async ({ page }) => {
       });
     `,
   }, { workers: 1 });
 
   expect(result.exitCode).toBe(1);
-  expect(result.passed).toBe(1);
-  expect(result.failed).toBe(1);
-  const screenshotPass = testInfo.outputPath('test-results', 'a-pass-chromium', 'test-failed-1.png');
-  const screenshotFail = testInfo.outputPath('test-results', 'a-fail-chromium', 'test-failed-1.png');
-  expect(fs.existsSync(screenshotPass)).toBe(false);
-  expect(fs.existsSync(screenshotFail)).toBe(true);
+  expect(result.passed).toBe(0);
+  expect(result.output).toContain(`Error: "context" and "page" fixtures are not suppoted in beforeAll. Use browser.newContext() instead.`);
+});
+
+test('should report click error on sigint', async ({ runInlineTest }) => {
+  test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
+
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      test('timedout', async ({ page }) => {
+        await page.setContent('<div>Click me</div>');
+        const promise = page.click('text=Missing');
+        await new Promise(f => setTimeout(f, 100));
+        console.log('\\n%%SEND-SIGINT%%');
+        await promise;
+      });
+    `,
+  }, { workers: 1 }, {}, { sendSIGINTAfter: 1 });
+
+  expect(result.exitCode).toBe(130);
+  expect(result.passed).toBe(0);
+  expect(result.failed).toBe(0);
+  expect(result.skipped).toBe(1);
+  expect(stripAscii(result.output)).toContain(`8 |         const promise = page.click('text=Missing');`);
 });
 
 test('should work with video: retain-on-failure', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { video: 'retain-on-failure' } };
+      module.exports = { use: { video: 'retain-on-failure' }, name: 'chromium' };
     `,
     'a.test.ts': `
       const { test } = pwt;
@@ -208,7 +318,7 @@ test('should work with video: retain-on-failure', async ({ runInlineTest }, test
 test('should work with video: on-first-retry', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { video: 'on-first-retry' }, retries: 1 };
+      module.exports = { use: { video: 'on-first-retry' }, retries: 1, name: 'chromium' };
     `,
     'a.test.ts': `
       const { test } = pwt;
@@ -235,15 +345,24 @@ test('should work with video: on-first-retry', async ({ runInlineTest }, testInf
   const dirFail = testInfo.outputPath('test-results', 'a-fail-chromium');
   expect(fs.existsSync(dirFail)).toBeFalsy();
 
-  const videoFailRetry = fs.readdirSync(testInfo.outputPath('test-results', 'a-fail-chromium-retry1')).find(file => file.endsWith('webm'));
+  const dirRetry = testInfo.outputPath('test-results', 'a-fail-chromium-retry1');
+  const videoFailRetry = fs.readdirSync(dirRetry).find(file => file.endsWith('webm'));
   expect(videoFailRetry).toBeTruthy();
+
+  expect(result.report.suites[0].specs[1].tests[0].results[0].attachments).toEqual([]);
+  expect(result.report.suites[0].specs[1].tests[0].results[1].attachments).toEqual([{
+    name: 'video',
+    contentType: 'video/webm',
+    path: path.join(dirRetry, videoFailRetry),
+  }]);
 });
 
-test('should work with video size', async ({ runInlineTest, browserName }, testInfo) => {
+test('should work with video size', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.js': `
       module.exports = {
         use: { video: { mode: 'on', size: { width: 220, height: 110 } } },
+        name: 'chromium',
         preserveOutput: 'always',
       };
     `,
@@ -258,7 +377,7 @@ test('should work with video size', async ({ runInlineTest, browserName }, testI
   }, { workers: 1 });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  const folder = testInfo.outputPath(`test-results/a-pass-${browserName}/`);
+  const folder = testInfo.outputPath(`test-results/a-pass-chromium/`);
   const [file] = fs.readdirSync(folder);
   const videoPlayer = new VideoPlayer(path.join(folder, file));
   expect(videoPlayer.videoWidth).toBe(220);

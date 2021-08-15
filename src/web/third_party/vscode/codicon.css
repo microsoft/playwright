@@ -10,6 +10,7 @@
 
 .codicon {
 	font: normal normal normal 16px/1 codicon;
+	flex: none;
 	display: inline-block;
 	text-decoration: none;
 	text-rendering: auto;
@@ -22,6 +23,7 @@
 	user-select: none;
 }
 
+.codicon-blank:before { content: '\81'; }
 .codicon-add:before { content: '\ea60'; }
 .codicon-plus:before { content: '\ea60'; }
 .codicon-gist-new:before { content: '\ea60'; }

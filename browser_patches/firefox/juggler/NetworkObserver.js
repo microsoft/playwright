@@ -38,7 +38,7 @@ const SINK_CATEGORY_NAME = "net-channel-event-sinks";
 const pageNetworkSymbol = Symbol('PageNetwork');
 
 class PageNetwork {
-  static _forPageTarget(target) {
+  static forPageTarget(target) {
     let result = target[pageNetworkSymbol];
     if (!result) {
       result = new PageNetwork(target);
@@ -73,8 +73,15 @@ class PageNetwork {
     this._interceptedRequests.clear();
   }
 
-  resumeInterceptedRequest(requestId, url, method, headers, postData) {
+  async resumeInterceptedRequest(requestId, url, method, headers, postData, interceptResponse) {
+    if (interceptResponse) {
+      const intercepted = this._interceptedRequests.get(requestId);
+      if (!intercepted)
+        throw new Error(`Cannot find request "${requestId}"`);
+      return { response: await new ResponseInterceptor(intercepted).interceptResponse(url, method, headers, postData) };
+    }
     this._takeIntercepted(requestId).resume(url, method, headers, postData);
+    return {};
   }
 
   fulfillInterceptedRequest(requestId, status, statusText, headers, base64body) {
@@ -97,6 +104,141 @@ class PageNetwork {
       throw new Error(`Cannot find request "${requestId}"`);
     this._interceptedRequests.delete(requestId);
     return intercepted;
+  }
+}
+
+class ResponseInterceptor {
+  constructor(request) {
+    this._originalRequest = request;
+    this._finalRequest = request;
+    this._responseChannel = null;
+    this._interceptedResponse = null;
+    if (request._responseInterceptor)
+      throw new Error('Already intercepting response for this request');
+    request._responseInterceptor = this;
+  }
+
+  async interceptResponse(url, method, headers, postData) {
+    const httpChannel = this._originalRequest.httpChannel;
+    const uri = url ? Services.io.newURI(url) : httpChannel.URI;
+    const newChannel = NetUtil.newChannel({
+      uri,
+      loadingNode: httpChannel.loadInfo.loadingContext,
+      loadingPrincipal: httpChannel.loadInfo.loadingPrincipal || httpChannel.loadInfo.principalToInherit,
+      triggeringPrincipal: httpChannel.loadInfo.triggeringPrincipal,
+      securityFlags: httpChannel.loadInfo.securityFlags,
+      contentPolicyType: httpChannel.loadInfo.internalContentPolicyType,
+    }).QueryInterface(Ci.nsIRequest).QueryInterface(Ci.nsIHttpChannel);
+    newChannel.loadInfo = httpChannel.loadInfo;
+    newChannel.loadGroup = httpChannel.loadGroup;
+
+    for (const header of (headers || requestHeaders(httpChannel)))
+      newChannel.setRequestHeader(header.name, header.value, false /* merge */);
+
+    if (postData) {
+      setPostData(newChannel, postData, headers);
+    } else if (httpChannel instanceof Ci.nsIUploadChannel) {
+      newChannel.QueryInterface(Ci.nsIUploadChannel);
+      newChannel.setUploadStream(httpChannel.uploadStream, '', -1);
+    }
+    // We must set this after setting the upload stream, otherwise it
+    // will always be 'PUT'. (from another place in the source base)
+    newChannel.requestMethod = method || httpChannel.requestMethod;
+
+    this._responseChannel = newChannel;
+    const networkObserver = this._originalRequest._networkObserver;
+    networkObserver._responseInterceptionChannels.add(newChannel);
+    // We add {newChannerl -> original request} mapping so that if the alternative
+    // channel gets redirected we report the redirect on the original(paused)
+    // request.
+    networkObserver._channelToRequest.set(newChannel, this._originalRequest);
+    const body = await new Promise((resolve, reject) => {
+      NetUtil.asyncFetch(newChannel, (stream, status) => {
+        networkObserver._responseInterceptionChannels.delete(newChannel);
+        networkObserver._channelToRequest.delete(newChannel);
+        if (!Components.isSuccessCode(status)) {
+          reject(status);
+          return;
+        }
+        try {
+          resolve(NetUtil.readInputStreamToString(stream, stream.available()));
+        } catch (e) {
+          if (e.result == Cr.NS_BASE_STREAM_CLOSED) {
+            // The stream was empty.
+            resolve('');
+          } else {
+            reject(e);
+          }
+        } finally {
+          stream.close();
+        }
+      });
+    });
+
+    const finalRequest = this._finalRequest;
+    const responseChannel = finalRequest === this._originalRequest ? this._responseChannel : finalRequest.httpChannel;
+    const pageNetwork = this._originalRequest._pageNetwork;
+    if (pageNetwork)
+      pageNetwork._responseStorage.addResponseBody(finalRequest, responseChannel, body);
+    const response = responseHead(responseChannel);
+    this._interceptedResponse = Object.assign({ body }, response);
+    return response;
+  }
+
+  isInterceptedRequest(request) {
+    return this._originalRequest === request;
+  }
+
+  interceptOnResponse(request, fromCache, opt_statusCode, opt_statusText) {
+    const isFullfillingResponse = this._interceptedResponse;
+    if (isFullfillingResponse) {
+      if (request !== this._originalRequest)
+        dump(`ERROR: unexpected request ${request.requestId}, expected ${this._originalRequest.requestId}\n`);
+      this._finalRequest._sendOnResponseImpl(this._originalRequest.httpChannel, fromCache, opt_statusCode, opt_statusText);
+      return;
+    }
+    // When fetching original response first redirect is reported using original request id
+    // but with data received via the alternative response channel.
+    const httpChannel = (this._originalRequest === request) ? this._responseChannel : request.httpChannel;
+    if (this._isRedirectResponse(httpChannel))
+      request._sendOnResponseImpl(httpChannel, fromCache, opt_statusCode, opt_statusText);
+    // Drop non-redirect response on the floor, it will be fulfilled later.
+  }
+
+  interceptOnRequestFinished(request) {
+    const isFullfillingResponse = this._interceptedResponse;
+    if (isFullfillingResponse) {
+      if (request !== this._originalRequest)
+        dump(`ERROR: unexpected request ${request.requestId}, expected ${this._originalRequest.requestId}\n`);
+      this._finalRequest._sendOnRequestFinishedImpl(this._originalRequest.httpChannel);
+      return;
+    }
+    // When fetching original response first redirect is reported using original request id
+    // but with data received via the alternative response channel.
+    const httpChannel = (this._originalRequest === request) ? this._responseChannel : request.httpChannel;
+    if (this._isRedirectResponse(httpChannel))
+      request._sendOnRequestFinishedImpl(httpChannel);
+    // Drop non-redirect response on the floor, it will be fulfilled later.
+  }
+
+  interceptOnRequestFailed(error) {
+    this._finalRequest._sendOnRequestFailedImpl(error);
+  }
+
+  interceptAddResponseBody(request, body) {
+    const isFullfillingResponse = this._interceptedResponse;
+    let key = request;
+    if (isFullfillingResponse) {
+      if (request !== this._originalRequest)
+        dump(`ERROR: unexpected request ${request.requestId}, expected ${this._originalRequest.requestId}\n`);
+      key = this._finalRequest;
+    }
+    request._pageNetwork._responseStorage.addResponseBody(key, request.httpChannel, body);
+  }
+
+  _isRedirectResponse(httpChannel) {
+    const status = httpChannel.responseStatus;
+    return (300 <= status && status < 400);
   }
 }
 
@@ -123,15 +265,8 @@ class NetworkRequest {
     this.requestId = httpChannel.channelId + '';
     this.navigationId = httpChannel.isMainDocumentChannel ? this.requestId : undefined;
 
-    const internalCauseType = this.httpChannel.loadInfo ? this.httpChannel.loadInfo.internalContentPolicyType : Ci.nsIContentPolicy.TYPE_OTHER;
-
     this._redirectedIndex = 0;
-    const ignoredRedirect = redirectedFrom && !redirectedFrom._sentOnResponse;
-    if (ignoredRedirect) {
-      // We just ignore redirect that did not hit the network before being redirected.
-      // This happens, for example, for automatic http->https redirects.
-      this.navigationId = redirectedFrom.navigationId;
-    } else if (redirectedFrom) {
+    if (redirectedFrom) {
       this.redirectedFromId = redirectedFrom.requestId;
       this._redirectedIndex = redirectedFrom._redirectedIndex + 1;
       this.requestId = this.requestId + '-redirect' + this._redirectedIndex;
@@ -139,14 +274,18 @@ class NetworkRequest {
       // Finish previous request now. Since we inherit the listener, we could in theory
       // use onStopRequest, but that will only happen after the last redirect has finished.
       redirectedFrom._sendOnRequestFinished();
+      if (redirectedFrom._responseInterceptor) {
+        this._responseInterceptor = redirectedFrom._responseInterceptor;
+        this._responseInterceptor._finalRequest = this;
+      }
     }
 
-    this._maybeInactivePageNetwork = this._findPageNetwork();
+    this._pageNetwork = redirectedFrom ? redirectedFrom._pageNetwork : networkObserver._findPageNetwork(httpChannel);
     this._expectingInterception = false;
     this._expectingResumedRequest = undefined;  // { method, headers, postData }
     this._sentOnResponse = false;
 
-    const pageNetwork = this._activePageNetwork();
+    const pageNetwork = this._pageNetwork;
     if (pageNetwork) {
       appendExtraHTTPHeaders(httpChannel, pageNetwork._target.browserContext().extraHTTPHeaders);
       appendExtraHTTPHeaders(httpChannel, pageNetwork._extraHTTPHeaders);
@@ -156,7 +295,10 @@ class NetworkRequest {
 
     httpChannel.QueryInterface(Ci.nsITraceableChannel);
     this._originalListener = httpChannel.setNewListener(this);
-    if (redirectedFrom) {
+    // When fetching original response ResponseInterceptor creates a new HttpChannel
+    // with custom listener which is different from the original request's listener.
+    // In that case we should not inherit the listener from the original request here.
+    if (redirectedFrom && !redirectedFrom._responseInterceptor?.isInterceptedRequest(redirectedFrom)) {
       // Listener is inherited for regular redirects, so we'd like to avoid
       // calling into previous NetworkRequest.
       this._originalListener = redirectedFrom._originalListener;
@@ -196,6 +338,13 @@ class NetworkRequest {
 
   // Public interception API.
   fulfill(status, statusText, headers, base64body) {
+    let body = base64body ? atob(base64body) : '';
+    const originalResponse = this._responseInterceptor?._interceptedResponse;
+    if (originalResponse) {
+      status = status || originalResponse.status;
+      statusText = statusText || originalResponse.statusText;
+      headers = headers || originalResponse.headers;
+    }
     this._interceptedChannel.synthesizeStatus(status, statusText);
     for (const header of headers) {
       this._interceptedChannel.synthesizeHeader(header.name, header.value);
@@ -205,7 +354,6 @@ class NetworkRequest {
       }
     }
     const synthesized = Cc["@mozilla.org/io/string-input-stream;1"].createInstance(Ci.nsIStringInputStream);
-    const body = base64body ? atob(base64body) : '';
     synthesized.data = body;
     this._interceptedChannel.startSynthesizedResponse(synthesized, null, null, '', false);
     this._interceptedChannel.finishSynthesizedResponse();
@@ -240,30 +388,8 @@ class NetworkRequest {
     }
     if (method)
       this.httpChannel.requestMethod = method;
-    if (postData && this.httpChannel instanceof Ci.nsIUploadChannel2) {
-      const synthesized = Cc["@mozilla.org/io/string-input-stream;1"].createInstance(Ci.nsIStringInputStream);
-      const body = atob(postData);
-      synthesized.setData(body, body.length);
-
-      const overriddenHeader = (lowerCaseName, defaultValue) => {
-        if (headers) {
-          for (const header of headers) {
-            if (header.name.toLowerCase() === lowerCaseName) {
-              return header.value;
-            }
-          }
-        }
-        return defaultValue;
-      }
-      // Clear content-length, so that upload stream resets it.
-      this.httpChannel.setRequestHeader('content-length', overriddenHeader('content-length', ''), false /* merge */);
-      this.httpChannel.explicitSetUploadStream(synthesized, overriddenHeader('content-type', 'application/octet-stream'), -1, this.httpChannel.requestMethod, false);
-    }
-  }
-
-  // Instrumentation called by NetworkObserver.
-  _onResponse(fromCache) {
-    this._sendOnResponse(fromCache);
+    if (postData)
+      setPostData(this.httpChannel, postData, headers);
   }
 
   // nsIInterfaceRequestor
@@ -307,7 +433,7 @@ class NetworkRequest {
   promptAuth(aChannel, level, authInfo) {
     if (authInfo.flags & Ci.nsIAuthInformation.PREVIOUS_FAILED)
       return false;
-    const pageNetwork = this._activePageNetwork();
+    const pageNetwork = this._pageNetwork;
     if (!pageNetwork)
       return false;
     let credentials = null;
@@ -374,7 +500,7 @@ class NetworkRequest {
     this._expectingInterception = false;
     this._interceptedChannel = intercepted.QueryInterface(Ci.nsIInterceptedChannel);
 
-    const pageNetwork = this._activePageNetwork();
+    const pageNetwork = this._pageNetwork;
     if (!pageNetwork) {
       // Just in case we disabled instrumentation while intercepting, resume and forget.
       this.resume();
@@ -442,9 +568,13 @@ class NetworkRequest {
       // we do not get onResponse normally, but we do get nsIRequestObserver notifications.
       this._sendOnResponse(false);
       const body = this._responseBodyChunks.join('');
-      const pageNetwork = this._activePageNetwork();
-      if (pageNetwork)
-        pageNetwork._responseStorage.addResponseBody(this, body);
+      const pageNetwork = this._pageNetwork;
+      if (pageNetwork) {
+        if (this._responseInterceptor)
+          this._responseInterceptor.interceptAddResponseBody(this, body);
+        else
+          pageNetwork._responseStorage.addResponseBody(this, this.httpChannel, body);
+      }
       this._sendOnRequestFinished();
     } else {
       this._sendOnRequestFailed(aStatusCode);
@@ -454,7 +584,7 @@ class NetworkRequest {
   }
 
   _shouldIntercept() {
-    const pageNetwork = this._activePageNetwork();
+    const pageNetwork = this._pageNetwork;
     if (!pageNetwork)
       return false;
     if (pageNetwork._requestInterceptionEnabled)
@@ -473,26 +603,10 @@ class NetworkRequest {
     return this._previousCallbacks.getInterface(Ci.nsINetworkInterceptController);
   }
 
-  _activePageNetwork() {
-    if (!this._maybeInactivePageNetwork)
-      return undefined;
-    return this._maybeInactivePageNetwork;
-  }
-
-  _findPageNetwork() {
-    let loadContext = helper.getLoadContext(this.httpChannel);
-    if (!loadContext)
-      return;
-    const target = this._networkObserver._targetRegistry.targetForBrowser(loadContext.topFrameElement);
-    if (!target)
-      return;
-    return PageNetwork._forPageTarget(target);
-  }
-
   _sendOnRequest(isIntercepted) {
     // Note: we call _sendOnRequest either after we intercepted the request,
     // or at the first moment we know that we are not going to intercept.
-    const pageNetwork = this._activePageNetwork();
+    const pageNetwork = this._pageNetwork;
     if (!pageNetwork)
       return;
     const loadInfo = this.httpChannel.loadInfo;
@@ -513,55 +627,50 @@ class NetworkRequest {
     }, this._frameId);
   }
 
-  _sendOnResponse(fromCache) {
+  _sendOnResponse(fromCache, opt_statusCode, opt_statusText) {
+    if (this._responseInterceptor) {
+      this._responseInterceptor.interceptOnResponse(this, fromCache, opt_statusCode, opt_statusText)
+      return;
+    }
+    this._sendOnResponseImpl(this.httpChannel, fromCache, opt_statusCode, opt_statusText);
+  }
+
+  _sendOnResponseImpl(httpChannel, fromCache, opt_statusCode, opt_statusText) {
     if (this._sentOnResponse) {
       // We can come here twice because of internal redirects, e.g. service workers.
       return;
     }
     this._sentOnResponse = true;
-    const pageNetwork = this._activePageNetwork();
+    const pageNetwork = this._pageNetwork;
     if (!pageNetwork)
       return;
 
-    this.httpChannel.QueryInterface(Ci.nsIHttpChannelInternal);
-    this.httpChannel.QueryInterface(Ci.nsITimedChannel);
+    httpChannel.QueryInterface(Ci.nsIHttpChannelInternal);
+    httpChannel.QueryInterface(Ci.nsITimedChannel);
     const timing = {
-      startTime: this.httpChannel.channelCreationTime,
-      domainLookupStart: this.httpChannel.domainLookupStartTime,
-      domainLookupEnd: this.httpChannel.domainLookupEndTime,
-      connectStart: this.httpChannel.connectStartTime,
-      secureConnectionStart: this.httpChannel.secureConnectionStartTime,
-      connectEnd: this.httpChannel.connectEndTime,
-      requestStart: this.httpChannel.requestStartTime,
-      responseStart: this.httpChannel.responseStartTime,
+      startTime: httpChannel.channelCreationTime,
+      domainLookupStart: httpChannel.domainLookupStartTime,
+      domainLookupEnd: httpChannel.domainLookupEndTime,
+      connectStart: httpChannel.connectStartTime,
+      secureConnectionStart: httpChannel.secureConnectionStartTime,
+      connectEnd: httpChannel.connectEndTime,
+      requestStart: httpChannel.requestStartTime,
+      responseStart: httpChannel.responseStartTime,
     };
 
-    const headers = [];
-    let status = 0;
-    let statusText = '';
-    try {
-      status = this.httpChannel.responseStatus;
-      statusText = this.httpChannel.responseStatusText;
-      this.httpChannel.visitResponseHeaders({
-        visitHeader: (name, value) => headers.push({name, value}),
-      });
-    } catch (e) {
-      // Response headers, status and/or statusText are not available
-      // when redirect did not actually hit the network.
-    }
-
+    const { status, statusText, headers } = responseHead(httpChannel, opt_statusCode, opt_statusText);
     let remoteIPAddress = undefined;
     let remotePort = undefined;
     try {
-      remoteIPAddress = this.httpChannel.remoteAddress;
-      remotePort = this.httpChannel.remotePort;
+      remoteIPAddress = httpChannel.remoteAddress;
+      remotePort = httpChannel.remotePort;
     } catch (e) {
       // remoteAddress is not defined for cached requests.
     }
 
     pageNetwork.emit(PageNetwork.Events.Response, {
       requestId: this.requestId,
-      securityDetails: getSecurityDetails(this.httpChannel),
+      securityDetails: getSecurityDetails(httpChannel),
       fromCache,
       headers,
       remoteIPAddress,
@@ -573,7 +682,15 @@ class NetworkRequest {
   }
 
   _sendOnRequestFailed(error) {
-    const pageNetwork = this._activePageNetwork();
+    if (this._responseInterceptor) {
+      this._responseInterceptor.interceptOnRequestFailed(error);
+      return;
+    }
+    this._sendOnRequestFailedImpl(error);
+  }
+
+  _sendOnRequestFailedImpl(error) {
+    const pageNetwork = this._pageNetwork;
     if (pageNetwork) {
       pageNetwork.emit(PageNetwork.Events.RequestFailed, {
         requestId: this.requestId,
@@ -584,14 +701,23 @@ class NetworkRequest {
   }
 
   _sendOnRequestFinished() {
-    const pageNetwork = this._activePageNetwork();
+    if (this._responseInterceptor) {
+      this._responseInterceptor.interceptOnRequestFinished(this);
+      return;
+    }
+    this._sendOnRequestFinishedImpl(this.httpChannel);
+  }
+
+  _sendOnRequestFinishedImpl(httpChannel) {
+    const pageNetwork = this._pageNetwork;
     if (pageNetwork) {
       pageNetwork.emit(PageNetwork.Events.RequestFinished, {
         requestId: this.requestId,
-        responseEndTime: this.httpChannel.responseEndTime,
+        responseEndTime: httpChannel.responseEndTime,
+        transferSize: httpChannel.transferSize,
       }, this._frameId);
     }
-    this._networkObserver._channelToRequest.delete(this.httpChannel);
+    this._networkObserver._channelToRequest.delete(httpChannel);
   }
 }
 
@@ -608,6 +734,7 @@ class NetworkObserver {
 
     this._channelToRequest = new Map();  // http channel -> network request
     this._expectedRedirect = new Map();  // expected redirect channel id (string) -> network request
+    this._responseInterceptionChannels = new Set(); // http channels created for response interception
 
     const protocolProxyService = Cc['@mozilla.org/network/protocol-proxy-service;1'].getService();
     this._channelProxyFilter = {
@@ -665,23 +792,38 @@ class NetworkObserver {
       return;
     const oldHttpChannel = oldChannel.QueryInterface(Ci.nsIHttpChannel);
     const newHttpChannel = newChannel.QueryInterface(Ci.nsIHttpChannel);
-    if (!(flags & Ci.nsIChannelEventSink.REDIRECT_INTERNAL)) {
-      const previous = this._channelToRequest.get(oldHttpChannel);
-      if (previous)
-        this._expectRedirect(newHttpChannel.channelId + '', previous);
-    } else {
-      const request = this._channelToRequest.get(oldHttpChannel);
+    const request = this._channelToRequest.get(oldHttpChannel);
+    if (flags & Ci.nsIChannelEventSink.REDIRECT_INTERNAL) {
       if (request)
         request._onInternalRedirect(newHttpChannel);
+    } else if (flags & Ci.nsIChannelEventSink.REDIRECT_STS_UPGRADE) {
+      if (request) {
+        // This is an internal HSTS upgrade. The original http request is canceled, and a new
+        // equivalent https request is sent. We forge 307 redirect to follow Chromium here:
+        // https://source.chromium.org/chromium/chromium/src/+/main:net/url_request/url_request_http_job.cc;l=211
+        request._sendOnResponse(false, 307, 'Temporary Redirect');
+        this._expectRedirect(newHttpChannel.channelId + '', request);
+      }
+    } else {
+      if (request)
+        this._expectRedirect(newHttpChannel.channelId + '', request);
     }
   }
 
-  pageNetworkForTarget(target) {
-    return PageNetwork._forPageTarget(target);
+  _findPageNetwork(httpChannel) {
+    let loadContext = helper.getLoadContext(httpChannel);
+    if (!loadContext)
+      return;
+    const target = this._targetRegistry.targetForBrowser(loadContext.topFrameElement);
+    if (!target)
+      return;
+    return PageNetwork.forPageTarget(target);
   }
 
   _onRequest(channel, topic) {
     if (!(channel instanceof Ci.nsIHttpChannel))
+      return;
+    if (this._responseInterceptionChannels.has(channel))
       return;
     const httpChannel = channel.QueryInterface(Ci.nsIHttpChannel);
     const channelId = httpChannel.channelId + '';
@@ -701,7 +843,7 @@ class NetworkObserver {
   _onResponse(fromCache, httpChannel, topic) {
     const request = this._channelToRequest.get(httpChannel);
     if (request)
-      request._onResponse(fromCache);
+      request._sendOnResponse(fromCache);
   }
 
   dispose() {
@@ -809,7 +951,7 @@ class ResponseStorage {
     this._responses = new Map();
   }
 
-  addResponseBody(request, body) {
+  addResponseBody(request, httpChannel, body) {
     if (body.length > this._maxResponseSize) {
       this._responses.set(request.requestId, {
         evicted: true,
@@ -818,8 +960,8 @@ class ResponseStorage {
       return;
     }
     let encodings = [];
-    if ((request.httpChannel instanceof Ci.nsIEncodedChannel) && request.httpChannel.contentEncodings && !request.httpChannel.applyConversion) {
-      const encodingHeader = request.httpChannel.getResponseHeader("Content-Encoding");
+    if ((httpChannel instanceof Ci.nsIEncodedChannel) && httpChannel.contentEncodings && !httpChannel.applyConversion) {
+      const encodingHeader = httpChannel.getResponseHeader("Content-Encoding");
       encodings = encodingHeader.split(/\s*\t*,\s*\t*/);
     }
     this._responses.set(request.requestId, {body, encodings});
@@ -848,6 +990,45 @@ class ResponseStorage {
     }
     return {base64body: btoa(result)};
   }
+}
+
+function responseHead(httpChannel, opt_statusCode, opt_statusText) {
+  const headers = [];
+  let status = opt_statusCode || 0;
+  let statusText = opt_statusText || '';
+  try {
+    status = httpChannel.responseStatus;
+    statusText = httpChannel.responseStatusText;
+    httpChannel.visitResponseHeaders({
+      visitHeader: (name, value) => headers.push({name, value}),
+    });
+  } catch (e) {
+    // Response headers, status and/or statusText are not available
+    // when redirect did not actually hit the network.
+  }
+  return { status, statusText, headers };
+}
+
+function setPostData(httpChannel, postData, headers) {
+  if (!(httpChannel instanceof Ci.nsIUploadChannel2))
+    return;
+  const synthesized = Cc["@mozilla.org/io/string-input-stream;1"].createInstance(Ci.nsIStringInputStream);
+  const body = atob(postData);
+  synthesized.setData(body, body.length);
+
+  const overriddenHeader = (lowerCaseName, defaultValue) => {
+    if (headers) {
+      for (const header of headers) {
+        if (header.name.toLowerCase() === lowerCaseName) {
+          return header.value;
+        }
+      }
+    }
+    return defaultValue;
+  }
+  // Clear content-length, so that upload stream resets it.
+  httpChannel.setRequestHeader('content-length', overriddenHeader('content-length', ''), false /* merge */);
+  httpChannel.explicitSetUploadStream(synthesized, overriddenHeader('content-type', 'application/octet-stream'), -1, httpChannel.requestMethod, false);
 }
 
 function convertString(s, source, dest) {

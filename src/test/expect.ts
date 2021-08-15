@@ -14,31 +14,98 @@
  * limitations under the License.
  */
 
-import type { Expect } from './types';
 import expectLibrary from 'expect';
+import {
+  toBeChecked,
+  toBeDisabled,
+  toBeEditable,
+  toBeEmpty,
+  toBeEnabled,
+  toBeFocused,
+  toBeHidden,
+  toBeVisible,
+  toContainText,
+  toHaveAttribute,
+  toHaveClass,
+  toHaveCount,
+  toHaveCSS,
+  toHaveId,
+  toHaveJSProperty,
+  toHaveText,
+  toHaveTitle,
+  toHaveURL,
+  toHaveValue
+} from './matchers/matchers';
+import { toMatchSnapshot } from './matchers/toMatchSnapshot';
+import type { Expect, TestError } from './types';
+import matchers from 'expect/build/matchers';
 import { currentTestInfo } from './globals';
-import { compare } from './golden';
+import { serializeError } from './util';
 
-export const expect: Expect = expectLibrary;
+export const expect: Expect = expectLibrary as any;
+expectLibrary.setState({ expand: false });
+const customMatchers = {
+  toBeChecked,
+  toBeDisabled,
+  toBeEditable,
+  toBeEmpty,
+  toBeEnabled,
+  toBeFocused,
+  toBeHidden,
+  toBeVisible,
+  toContainText,
+  toHaveAttribute,
+  toHaveClass,
+  toHaveCount,
+  toHaveCSS,
+  toHaveId,
+  toHaveJSProperty,
+  toHaveText,
+  toHaveTitle,
+  toHaveURL,
+  toHaveValue,
+  toMatchSnapshot,
+};
 
-function toMatchSnapshot(received: Buffer | string, nameOrOptions: string | { name: string, threshold?: number }, optOptions: { threshold?: number } = {}) {
-  let options: { name: string, threshold?: number };
-  const testInfo = currentTestInfo();
-  if (!testInfo)
-    throw new Error(`toMatchSnapshot() must be called during the test`);
-  if (typeof nameOrOptions === 'string')
-    options = { name: nameOrOptions, ...optOptions };
-  else
-    options = { ...nameOrOptions };
-  if (!options.name)
-    throw new Error(`toMatchSnapshot() requires a "name" parameter`);
+function wrap(matcherName: string, matcher: any) {
+  return function(this: any, ...args: any[]) {
+    const testInfo = currentTestInfo();
+    if (!testInfo)
+      return matcher.call(this, ...args);
 
-  const projectThreshold = testInfo.project.expect?.toMatchSnapshot?.threshold;
-  if (options.threshold === undefined && projectThreshold !== undefined)
-    options.threshold = projectThreshold;
+    const infix = this.isNot ? '.not' : '';
+    const completeStep = testInfo._addStep('expect', `expect${infix}.${matcherName}`);
+    const stack = new Error().stack;
 
-  const { pass, message } = compare(received, options.name, testInfo.snapshotPath, testInfo.outputPath, testInfo.config.updateSnapshots, options);
-  return { pass, message: () => message };
+    const reportStepEnd = (result: any) => {
+      const success = result.pass !== this.isNot;
+      let error: TestError | undefined;
+      if (!success)
+        error = { message: result.message(), stack };
+      completeStep?.(error);
+      return result;
+    };
+
+    const reportStepError = (error: Error) => {
+      completeStep?.(serializeError(error));
+      throw error;
+    };
+
+    try {
+      const result = matcher.call(this, ...args);
+      if (result instanceof Promise)
+        return result.then(reportStepEnd).catch(reportStepError);
+      return reportStepEnd(result);
+    } catch (e) {
+      reportStepError(e);
+    }
+  };
 }
 
-expectLibrary.extend({ toMatchSnapshot });
+const wrappedMatchers: any = {};
+for (const matcherName in matchers)
+  wrappedMatchers[matcherName] = wrap(matcherName, matchers[matcherName]);
+for (const matcherName in customMatchers)
+  wrappedMatchers[matcherName] = wrap(matcherName, (customMatchers as any)[matcherName]);
+
+expectLibrary.extend(wrappedMatchers);

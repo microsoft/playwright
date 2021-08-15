@@ -147,11 +147,10 @@ export class FFBrowser extends Browser {
 }
 
 export class FFBrowserContext extends BrowserContext {
-  readonly _browser: FFBrowser;
+  declare readonly _browser: FFBrowser;
 
   constructor(browser: FFBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
-    this._browser = browser;
   }
 
   async _initialize() {
@@ -208,8 +207,10 @@ export class FFBrowserContext extends BrowserContext {
       promises.push(this._ensureVideosPath().then(() => {
         return this._browser._connection.send('Browser.setVideoRecordingOptions', {
           // validateBrowserContextOptions ensures correct video size.
-          ...this._options.recordVideo!.size!,
-          dir: this._options.recordVideo!.dir,
+          options: {
+            ...this._options.recordVideo!.size!,
+            dir: this._options.recordVideo!.dir,
+          },
           browserContextId: this._browserContextId
         });
       }));
@@ -332,8 +333,7 @@ export class FFBrowserContext extends BrowserContext {
   }
 
   async _doCancelDownload(uuid: string) {
-    // TODO: Have this implemented
-    throw new Error('Download cancellation not yet implemented in Firefox');
+    await this._browser._connection.send('Browser.cancelDownload', { uuid });
   }
 }
 

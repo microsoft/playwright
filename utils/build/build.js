@@ -14,11 +14,25 @@
  * limitations under the License.
  */
 
+// @ts-check
+
 const child_process = require('child_process');
 const path = require('path');
 const chokidar = require('chokidar');
 const fs = require('fs');
 
+/**
+ * @typedef {{
+ *   command: string,
+ *   args: string[],
+ *   shell: boolean,
+ *   env?: NodeJS.ProcessEnv,
+ * }} Step
+ */
+
+/**
+ * @type {Step[]}
+ */
 const steps = [];
 const onChanges = [];
 const copyFiles = [];
@@ -59,17 +73,23 @@ function runWatch() {
 }
 
 async function runBuild() {
-  function runStep(command, args, shell) {
-    const out = child_process.spawnSync(command, args, { stdio: 'inherit', shell });
+  /**
+   * @param {Step} step 
+   */
+  function runStep(step) {
+    const out = child_process.spawnSync(step.command, step.args, { stdio: 'inherit', shell: step.shell, env: {
+      ...process.env,
+      ...step.env
+    } });
     if (out.status)
       process.exit(out.status);
   }
 
   for (const step of steps)
-    runStep(step.command, step.args, step.shell);
+    runStep(step);
   for (const onChange of onChanges) {
     if (!onChange.committed)
-      runStep('node', [filePath(onChange.script)], false);
+      runStep({ command: 'node', args: [filePath(onChange.script)], shell: false });
   }
   for (const {files, from, to, ignored} of copyFiles) {
     const watcher = chokidar.watch([filePath(files)], {
@@ -94,6 +114,7 @@ const webPackFiles = [
   'src/server/injected/webpack.config.js',
   'src/web/traceViewer/webpack.config.js',
   'src/web/recorder/webpack.config.js',
+  'src/web/htmlReport/webpack.config.js',
 ];
 for (const file of webPackFiles) {
   steps.push({
@@ -109,7 +130,7 @@ for (const file of webPackFiles) {
 // Run Babel.
 steps.push({
   command: 'npx',
-  args: ['babel', ...(watchMode ? ['-w'] : []), '-s', '--extensions', '.ts', '--out-dir', filePath('./lib/'), filePath('./src/')],
+  args: ['babel', ...(watchMode ? ['-w', '--source-maps'] : []), '--extensions', '.ts', '--out-dir', filePath('./lib/'), filePath('./src/')],
   shell: true,
 });
 
@@ -127,17 +148,20 @@ onChanges.push({
   committed: false,
   inputs: [
     'docs/src/api/',
+    'docs/src/test-api/',
+    'docs/src/test-reporter-api/',
     'utils/generate_types/overrides.d.ts',
+    'utils/generate_types/overrides-test.d.ts',
+    'utils/generate_types/overrides-testReporter.d.ts',
     'utils/generate_types/exported.json',
     'src/server/chromium/protocol.d.ts',
-    'src/trace/traceTypes.ts',
   ],
   script: 'utils/generate_types/index.js',
 });
 
-// The recorder has an app_icon.png that needs to be copied.
+// The recorder and trace viewer have an app_icon.png that needs to be copied.
 copyFiles.push({
-  files: 'src/web/recorder/*.png',
+  files: 'src/server/chromium/*.png',
   from: 'src',
   to: 'lib',
 });

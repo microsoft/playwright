@@ -21,20 +21,21 @@ import fs from 'fs';
 import milliseconds from 'ms';
 import path from 'path';
 import StackUtils from 'stack-utils';
-import { FullConfig, TestStatus, Test, Spec, Suite, TestResult, TestError, Reporter } from '../reporter';
+import { FullConfig, TestCase, Suite, TestResult, TestError, Reporter, FullResult } from '../../../types/testReporter';
 
 const stackUtils = new StackUtils();
+
+type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
+const kOutputSymbol = Symbol('output');
 
 export class BaseReporter implements Reporter  {
   duration = 0;
   config!: FullConfig;
   suite!: Suite;
-  timeout: number = 0;
+  result!: FullResult;
   fileDurations = new Map<string, number>();
   monotonicStartTime: number = 0;
-
-  constructor() {
-  }
+  private printTestOutput = !process.env.PWTEST_SKIP_TEST_OUTPUT;
 
   onBegin(config: FullConfig, suite: Suite) {
     this.monotonicStartTime = monotonicTime();
@@ -42,22 +43,25 @@ export class BaseReporter implements Reporter  {
     this.suite = suite;
   }
 
-  onTestBegin(test: Test) {
+  onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
+    this._appendOutput({ chunk, type: 'stdout' }, result);
   }
 
-  onStdOut(chunk: string | Buffer) {
-    if (!this.config.quiet)
-      process.stdout.write(chunk);
+  onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
+    this._appendOutput({ chunk, type: 'stderr' }, result);
   }
 
-  onStdErr(chunk: string | Buffer) {
-    if (!this.config.quiet)
-      process.stderr.write(chunk);
+  private _appendOutput(output: TestResultOutput, result: TestResult | undefined) {
+    if (!result)
+      return;
+    (result as any)[kOutputSymbol] = (result as any)[kOutputSymbol] || [];
+    (result as any)[kOutputSymbol].push(output);
   }
 
-  onTestEnd(test: Test, result: TestResult) {
-    const relativePath = relativeSpecPath(this.config, test.spec);
-    const fileAndProject = relativePath + (test.projectName ? ` [${test.projectName}]` : '');
+  onTestEnd(test: TestCase, result: TestResult) {
+    const projectName = test.titlePath()[1];
+    const relativePath = relativeTestPath(this.config, test);
+    const fileAndProject = (projectName ? `[${projectName}] › ` : '') + relativePath;
     const duration = this.fileDurations.get(fileAndProject) || 0;
     this.fileDurations.set(fileAndProject, duration + result.duration);
   }
@@ -66,12 +70,9 @@ export class BaseReporter implements Reporter  {
     console.log(formatError(error));
   }
 
-  onTimeout(timeout: number) {
-    this.timeout = timeout;
-  }
-
-  onEnd() {
+  async onEnd(result: FullResult) {
     this.duration = monotonicTime() - this.monotonicStartTime;
+    this.result = result;
   }
 
   private _printSlowTests() {
@@ -91,21 +92,27 @@ export class BaseReporter implements Reporter  {
   epilogue(full: boolean) {
     let skipped = 0;
     let expected = 0;
-    const unexpected: Test[] = [];
-    const flaky: Test[] = [];
+    const skippedWithError: TestCase[] = [];
+    const unexpected: TestCase[] = [];
+    const flaky: TestCase[] = [];
 
-    this.suite.findTest(test => {
-      switch (test.status()) {
-        case 'skipped': ++skipped; break;
+    this.suite.allTests().forEach(test => {
+      switch (test.outcome()) {
+        case 'skipped': {
+          ++skipped;
+          if (test.results.some(result => !!result.error))
+            skippedWithError.push(test);
+          break;
+        }
         case 'expected': ++expected; break;
         case 'unexpected': unexpected.push(test); break;
         case 'flaky': flaky.push(test); break;
       }
     });
 
-    if (full && unexpected.length) {
+    if (full && (unexpected.length || skippedWithError.length)) {
       console.log('');
-      this._printFailures(unexpected);
+      this._printFailures([...unexpected, ...skippedWithError]);
     }
 
     this._printSlowTests();
@@ -123,74 +130,84 @@ export class BaseReporter implements Reporter  {
       console.log(colors.yellow(`  ${skipped} skipped`));
     if (expected)
       console.log(colors.green(`  ${expected} passed`) + colors.dim(` (${milliseconds(this.duration)})`));
-    if (this.timeout)
-      console.log(colors.red(`  Timed out waiting ${this.timeout / 1000}s for the entire test run`));
+    if (this.result.status === 'timedout')
+      console.log(colors.red(`  Timed out waiting ${this.config.globalTimeout / 1000}s for the entire test run`));
   }
 
-  private _printTestHeaders(tests: Test[]) {
+  private _printTestHeaders(tests: TestCase[]) {
     tests.forEach(test => {
       console.log(formatTestHeader(this.config, test, '    '));
     });
   }
 
-  private _printFailures(failures: Test[]) {
+  private _printFailures(failures: TestCase[]) {
     failures.forEach((test, index) => {
-      console.log(formatFailure(this.config, test, index + 1));
+      console.log(formatFailure(this.config, test, index + 1, this.printTestOutput));
     });
   }
 
-  hasResultWithStatus(test: Test, status: TestStatus): boolean {
-    return !!test.results.find(r => r.status === status);
-  }
-
-  willRetry(test: Test, result: TestResult): boolean {
+  willRetry(test: TestCase, result: TestResult): boolean {
     return result.status !== 'passed' && result.status !== test.expectedStatus && test.results.length <= test.retries;
   }
 }
 
-export function formatFailure(config: FullConfig, test: Test, index?: number): string {
+export function formatFailure(config: FullConfig, test: TestCase, index?: number, stdio?: boolean): string {
   const tokens: string[] = [];
   tokens.push(formatTestHeader(config, test, '  ', index));
   for (const result of test.results) {
-    if (result.status === 'passed')
+    const resultTokens = formatResultFailure(test, result, '    ');
+    if (!resultTokens.length)
       continue;
-    tokens.push(formatFailedResult(test, result));
+    const statusSuffix = (result.status === 'passed' && test.expectedStatus === 'failed') ? ' -- passed unexpectedly' : '';
+    if (result.retry) {
+      tokens.push('');
+      tokens.push(colors.gray(pad(`    Retry #${result.retry}${statusSuffix}`, '-')));
+    }
+    tokens.push(...resultTokens);
+    const output = ((result as any)[kOutputSymbol] || []) as TestResultOutput[];
+    if (stdio && output.length) {
+      const outputText = output.map(({ chunk, type }) => {
+        const text = chunk.toString('utf8');
+        if (type === 'stderr')
+          return colors.red(stripAnsiEscapes(text));
+        return text;
+      }).join('');
+      tokens.push('');
+      tokens.push(colors.gray(pad('--- Test output', '-')) + '\n\n' + outputText + '\n' + pad('', '-'));
+    }
   }
   tokens.push('');
   return tokens.join('\n');
 }
 
-function relativeSpecPath(config: FullConfig, spec: Spec): string {
-  return path.relative(config.rootDir, spec.file) || path.basename(spec.file);
+export function formatResultFailure(test: TestCase, result: TestResult, initialIndent: string): string[] {
+  const resultTokens: string[] = [];
+  if (result.status === 'timedOut') {
+    resultTokens.push('');
+    resultTokens.push(indent(colors.red(`Timeout of ${test.timeout}ms exceeded.`), initialIndent));
+  }
+  if (result.error !== undefined)
+    resultTokens.push(indent(formatError(result.error, test.location.file), initialIndent));
+  return resultTokens;
 }
 
-export function formatTestTitle(config: FullConfig, test: Test): string {
-  const spec = test.spec;
-  let relativePath = relativeSpecPath(config, spec);
-  relativePath += ':' + spec.line + ':' + spec.column;
-  return `${relativePath} › ${test.fullTitle()}`;
+function relativeTestPath(config: FullConfig, test: TestCase): string {
+  return path.relative(config.rootDir, test.location.file) || path.basename(test.location.file);
 }
 
-function formatTestHeader(config: FullConfig, test: Test, indent: string, index?: number): string {
+export function formatTestTitle(config: FullConfig, test: TestCase): string {
+  // root, project, file, ...describes, test
+  const [, projectName, , ...titles] = test.titlePath();
+  const location = `${relativeTestPath(config, test)}:${test.location.line}:${test.location.column}`;
+  const projectTitle = projectName ? `[${projectName}] › ` : '';
+  return `${projectTitle}${location} › ${titles.join(' ')}`;
+}
+
+function formatTestHeader(config: FullConfig, test: TestCase, indent: string, index?: number): string {
   const title = formatTestTitle(config, test);
-  const passedUnexpectedlySuffix = test.results[0].status === 'passed' ? ' -- passed unexpectedly' : '';
+  const passedUnexpectedlySuffix = (test.results[0].status === 'passed' && test.expectedStatus === 'failed') ? ' -- passed unexpectedly' : '';
   const header = `${indent}${index ? index + ') ' : ''}${title}${passedUnexpectedlySuffix}`;
   return colors.red(pad(header, '='));
-}
-
-function formatFailedResult(test: Test, result: TestResult): string {
-  const tokens: string[] = [];
-  if (result.retry)
-    tokens.push(colors.gray(pad(`\n    Retry #${result.retry}`, '-')));
-  if (result.status === 'timedOut') {
-    tokens.push('');
-    tokens.push(indent(colors.red(`Timeout of ${test.timeout}ms exceeded.`), '    '));
-    if (result.error !== undefined)
-      tokens.push(indent(formatError(result.error, test.spec.file), '    '));
-  } else {
-    tokens.push(indent(formatError(result.error!, test.spec.file), '    '));
-  }
-  return tokens.join('\n');
 }
 
 function formatError(error: TestError, file?: string) {
@@ -222,14 +239,16 @@ function formatError(error: TestError, file?: string) {
 }
 
 function pad(line: string, char: string): string {
-  return line + ' ' + colors.gray(char.repeat(Math.max(0, 100 - line.length - 1)));
+  if (line)
+    line += ' ';
+  return line + colors.gray(char.repeat(Math.max(0, 100 - line.length)));
 }
 
 function indent(lines: string, tab: string) {
   return lines.replace(/^(?=.+$)/gm, tab);
 }
 
-function positionInFile(stack: string, file: string): { column: number; line: number; } {
+function positionInFile(stack: string, file: string): { column: number; line: number; } | undefined {
   // Stack will have /private/var/folders instead of /var/folders on Mac.
   file = fs.realpathSync(file);
   for (const line of stack.split('\n')) {
@@ -239,7 +258,6 @@ function positionInFile(stack: string, file: string): { column: number; line: nu
     if (path.resolve(process.cwd(), parsed.file) === file)
       return {column: parsed.column || 0, line: parsed.line || 0};
   }
-  return { column: 0, line: 0 };
 }
 
 function monotonicTime(): number {
@@ -248,6 +266,6 @@ function monotonicTime(): number {
 }
 
 const asciiRegex = new RegExp('[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))', 'g');
-export function stripAscii(str: string): string {
+export function stripAnsiEscapes(str: string): string {
   return str.replace(asciiRegex, '');
 }

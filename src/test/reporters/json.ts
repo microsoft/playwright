@@ -16,32 +16,72 @@
 
 import fs from 'fs';
 import path from 'path';
-import EmptyReporter from './empty';
-import { FullConfig, Test, Suite, Spec, TestResult, TestError } from '../reporter';
+import { FullConfig, TestCase, Suite, TestResult, TestError, FullResult, TestStatus, Location, Reporter } from '../../../types/testReporter';
 
-interface SerializedSuite {
+export interface JSONReport {
+  config: Omit<FullConfig, 'projects'> & {
+    projects: {
+      outputDir: string,
+      repeatEach: number,
+      retries: number,
+      metadata: any,
+      name: string,
+      testDir: string,
+      testIgnore: string[],
+      testMatch: string[],
+      timeout: number,
+    }[],
+  };
+  suites: JSONReportSuite[];
+  errors: TestError[];
+}
+export interface JSONReportSuite {
   title: string;
   file: string;
   column: number;
   line: number;
-  specs: ReturnType<JSONReporter['_serializeTestSpec']>[];
-  suites?: SerializedSuite[];
+  specs: JSONReportSpec[];
+  suites?: JSONReportSuite[];
 }
+export interface JSONReportSpec {
+  title: string;
+  ok: boolean;
+  tests: JSONReportTest[];
+  file: string;
+  line: number;
+  column: number;
+}
+export interface JSONReportTest {
+  timeout: number;
+  annotations: { type: string, description?: string }[],
+  expectedStatus: TestStatus;
+  projectName: string;
+  results: JSONReportTestResult[];
+  status: 'skipped' | 'expected' | 'unexpected' | 'flaky';
+}
+export interface JSONReportTestResult {
+  workerIndex: number;
+  status: TestStatus | undefined;
+  duration: number;
+  error: TestError | undefined;
+  stdout: JSONReportSTDIOEntry[],
+  stderr: JSONReportSTDIOEntry[],
+  retry: number;
+  attachments: { name: string, path?: string, body?: string, contentType: string }[];
+}
+export type JSONReportSTDIOEntry = { text: string } | { buffer: string };
 
-export type ReportFormat = ReturnType<JSONReporter['_serializeReport']>;
-
-function toPosixPath(aPath: string): string {
+export function toPosixPath(aPath: string): string {
   return aPath.split(path.sep).join(path.posix.sep);
 }
 
-class JSONReporter extends EmptyReporter {
+class JSONReporter implements Reporter {
   config!: FullConfig;
   suite!: Suite;
   private _errors: TestError[] = [];
   private _outputFile: string | undefined;
 
   constructor(options: { outputFile?: string } = {}) {
-    super();
     this._outputFile = options.outputFile;
   }
 
@@ -50,19 +90,15 @@ class JSONReporter extends EmptyReporter {
     this.suite = suite;
   }
 
-  onTimeout() {
-    this.onEnd();
-  }
-
   onError(error: TestError): void {
     this._errors.push(error);
   }
 
-  onEnd() {
+  async onEnd(result: FullResult) {
     outputReport(this._serializeReport(), this._outputFile);
   }
 
-  private _serializeReport() {
+  private _serializeReport(): JSONReport {
     return {
       config: {
         ...this.config,
@@ -81,47 +117,102 @@ class JSONReporter extends EmptyReporter {
           };
         })
       },
-      suites: this.suite.suites.map(suite => this._serializeSuite(suite)).filter(s => s),
+      suites: this._mergeSuites(this.suite.suites),
       errors: this._errors
     };
   }
 
-  private _serializeSuite(suite: Suite): null | SerializedSuite {
-    if (!suite.findSpec(test => true))
+  private _mergeSuites(suites: Suite[]): JSONReportSuite[] {
+    const fileSuites = new Map<string, JSONReportSuite>();
+    const result: JSONReportSuite[] = [];
+    for (const projectSuite of suites) {
+      for (const fileSuite of projectSuite.suites) {
+        const file = fileSuite.location!.file;
+        if (!fileSuites.has(file)) {
+          const serialized = this._serializeSuite(fileSuite);
+          if (serialized) {
+            fileSuites.set(file, serialized);
+            result.push(serialized);
+          }
+        } else {
+          this._mergeTestsFromSuite(fileSuites.get(file)!, fileSuite);
+        }
+      }
+    }
+    return result;
+  }
+
+  private _relativeLocation(location: Location | undefined): Location {
+    if (!location)
+      return { file: '', line: 0, column: 0 };
+    return {
+      file: toPosixPath(path.relative(this.config.rootDir, location.file)),
+      line: location.line,
+      column: location.column,
+    };
+  }
+
+  private _locationMatches(s: JSONReportSuite | JSONReportSpec, location: Location | undefined) {
+    const relative = this._relativeLocation(location);
+    return s.file === relative.file && s.line === relative.line && s.column === relative.column;
+  }
+
+  private _mergeTestsFromSuite(to: JSONReportSuite, from: Suite) {
+    for (const fromSuite of from.suites) {
+      const toSuite = (to.suites || []).find(s => s.title === fromSuite.title && this._locationMatches(s, from.location));
+      if (toSuite) {
+        this._mergeTestsFromSuite(toSuite, fromSuite);
+      } else {
+        const serialized = this._serializeSuite(fromSuite);
+        if (serialized) {
+          if (!to.suites)
+            to.suites = [];
+          to.suites.push(serialized);
+        }
+      }
+    }
+    for (const test of from.tests) {
+      const toSpec = to.specs.find(s => s.title === test.title && s.file === toPosixPath(path.relative(this.config.rootDir, test.location.file)) && s.line === test.location.line && s.column === test.location.column);
+      if (toSpec)
+        toSpec.tests.push(this._serializeTest(test));
+      else
+        to.specs.push(this._serializeTestSpec(test));
+    }
+  }
+
+  private _serializeSuite(suite: Suite): null | JSONReportSuite {
+    if (!suite.allTests().length)
       return null;
-    const suites = suite.suites.map(suite => this._serializeSuite(suite)).filter(s => s) as SerializedSuite[];
+    const suites = suite.suites.map(suite => this._serializeSuite(suite)).filter(s => s) as JSONReportSuite[];
     return {
       title: suite.title,
-      file: toPosixPath(path.relative(this.config.rootDir, suite.file)),
-      line: suite.line,
-      column: suite.column,
-      specs: suite.specs.map(test => this._serializeTestSpec(test)),
+      ...this._relativeLocation(suite.location),
+      specs: suite.tests.map(test => this._serializeTestSpec(test)),
       suites: suites.length ? suites : undefined,
     };
   }
 
-  private _serializeTestSpec(spec: Spec) {
+  private _serializeTestSpec(test: TestCase): JSONReportSpec {
     return {
-      title: spec.title,
-      ok: spec.ok(),
-      tests: spec.tests.map(r => this._serializeTest(r)),
-      file: toPosixPath(path.relative(this.config.rootDir, spec.file)),
-      line: spec.line,
-      column: spec.column,
+      title: test.title,
+      ok: test.ok(),
+      tests: [ this._serializeTest(test) ],
+      ...this._relativeLocation(test.location),
     };
   }
 
-  private _serializeTest(test: Test) {
+  private _serializeTest(test: TestCase): JSONReportTest {
     return {
       timeout: test.timeout,
       annotations: test.annotations,
       expectedStatus: test.expectedStatus,
-      projectName: test.projectName,
+      projectName: test.titlePath()[1],
       results: test.results.map(r => this._serializeTestResult(r)),
+      status: test.outcome(),
     };
   }
 
-  private _serializeTestResult(result: TestResult) {
+  private _serializeTestResult(result: TestResult): JSONReportTestResult {
     return {
       workerIndex: result.workerIndex,
       status: result.status,
@@ -130,11 +221,17 @@ class JSONReporter extends EmptyReporter {
       stdout: result.stdout.map(s => stdioEntry(s)),
       stderr: result.stderr.map(s => stdioEntry(s)),
       retry: result.retry,
+      attachments: result.attachments.map(a => ({
+        name: a.name,
+        contentType: a.contentType,
+        path: a.path,
+        body: a.body?.toString('base64')
+      })),
     };
   }
 }
 
-function outputReport(report: ReportFormat, outputFile: string | undefined) {
+function outputReport(report: JSONReport, outputFile: string | undefined) {
   const reportString = JSON.stringify(report, undefined, 2);
   outputFile = outputFile || process.env[`PLAYWRIGHT_JSON_OUTPUT_NAME`];
   if (outputFile) {
@@ -151,7 +248,7 @@ function stdioEntry(s: string | Buffer): any {
   return { buffer: s.toString('base64') };
 }
 
-function serializePatterns(patterns: string | RegExp | (string | RegExp)[]): string[] {
+export function serializePatterns(patterns: string | RegExp | (string | RegExp)[]): string[] {
   if (!Array.isArray(patterns))
     patterns = [patterns];
   return patterns.map(s => s.toString());

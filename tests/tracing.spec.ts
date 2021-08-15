@@ -18,9 +18,9 @@ import { expect, contextTest as test, browserTest } from './config/browserTest';
 import yauzl from 'yauzl';
 import jpeg from 'jpeg-js';
 
-test('should collect trace', async ({ context, page, server }, testInfo) => {
-  await context.tracing.start({ name: 'test', screenshots: true, snapshots: true });
-  await page.goto(server.EMPTY_PAGE);
+test('should collect trace with resources, but no js', async ({ context, page, server }, testInfo) => {
+  await context.tracing.start({ screenshots: true, snapshots: true });
+  await page.goto(server.PREFIX + '/frames/frame.html');
   await page.setContent('<button>Click</button>');
   await page.click('"Click"');
   await page.waitForTimeout(2000);  // Give it some time to produce screenshots.
@@ -35,7 +35,8 @@ test('should collect trace', async ({ context, page, server }, testInfo) => {
   expect(events.find(e => e.metadata?.apiName === 'page.close')).toBeTruthy();
 
   expect(events.some(e => e.type === 'frame-snapshot')).toBeTruthy();
-  expect(events.some(e => e.type === 'resource-snapshot')).toBeTruthy();
+  expect(events.some(e => e.type === 'resource-snapshot' && e.snapshot.url.endsWith('style.css'))).toBeTruthy();
+  expect(events.some(e => e.type === 'resource-snapshot' && e.snapshot.url.endsWith('script.js'))).toBeFalsy();
   expect(events.some(e => e.type === 'screencast-frame')).toBeTruthy();
 });
 
@@ -180,6 +181,72 @@ for (const params of [
     expectBlue(image.data, previewWidth * previewHeight * 4 / 2 + (previewWidth - 5) * 4); // right
   });
 }
+
+test('should include interrupted actions', async ({ context, page, server }, testInfo) => {
+  await context.tracing.start({ screenshots: true, snapshots: true });
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent('<button>Click</button>');
+  page.click('"ClickNoButton"').catch(() =>  {});
+  await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
+  await context.close();
+
+  const { events } = await parseTrace(testInfo.outputPath('trace.zip'));
+  const clickEvent = events.find(e => e.metadata?.apiName === 'page.click');
+  expect(clickEvent).toBeTruthy();
+  expect(clickEvent.metadata.error.error.message).toBe('Action was interrupted');
+});
+
+test('should reset to different options', async ({ context, page, server }, testInfo) => {
+  await context.tracing.start({ screenshots: true, snapshots: true });
+  await page.goto(server.PREFIX + '/frames/frame.html');
+  await context.tracing.start({ screenshots: false, snapshots: false });
+  await page.setContent('<button>Click</button>');
+  await page.click('"Click"');
+  await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
+
+  const { events } = await parseTrace(testInfo.outputPath('trace.zip'));
+  expect(events[0].type).toBe('context-options');
+  expect(events.find(e => e.metadata?.apiName === 'page.goto')).toBeFalsy();
+  expect(events.find(e => e.metadata?.apiName === 'page.setContent')).toBeTruthy();
+  expect(events.find(e => e.metadata?.apiName === 'page.click')).toBeTruthy();
+
+  expect(events.some(e => e.type === 'frame-snapshot')).toBeFalsy();
+  expect(events.some(e => e.type === 'resource-snapshot')).toBeFalsy();
+});
+
+test('should reset and export', async ({ context, page, server }, testInfo) => {
+  await context.tracing.start({ screenshots: true, snapshots: true });
+  await page.goto(server.PREFIX + '/frames/frame.html');
+
+  await context.tracing.start({ screenshots: true, snapshots: true });
+  await page.setContent('<button>Click</button>');
+  await page.click('"Click"');
+  page.click('"ClickNoButton"').catch(() =>  {});
+  // @ts-expect-error
+  await context.tracing._export({ path: testInfo.outputPath('trace.zip') });
+
+  await context.tracing.start({ screenshots: true, snapshots: true });
+  await page.hover('"Click"');
+  await context.tracing.stop({ path: testInfo.outputPath('trace2.zip') });
+
+  const trace1 = await parseTrace(testInfo.outputPath('trace.zip'));
+  expect(trace1.events[0].type).toBe('context-options');
+  expect(trace1.events.find(e => e.metadata?.apiName === 'page.goto')).toBeFalsy();
+  expect(trace1.events.find(e => e.metadata?.apiName === 'page.setContent')).toBeTruthy();
+  expect(trace1.events.find(e => e.metadata?.apiName === 'page.click' && !!e.metadata.error)).toBeTruthy();
+  expect(trace1.events.find(e => e.metadata?.apiName === 'page.hover')).toBeFalsy();
+  expect(trace1.events.find(e => e.metadata?.apiName === 'page.click' && e.metadata?.error?.error?.message === 'Action was interrupted')).toBeTruthy();
+  expect(trace1.events.some(e => e.type === 'frame-snapshot')).toBeTruthy();
+  expect(trace1.events.some(e => e.type === 'resource-snapshot' && e.snapshot.url.endsWith('style.css'))).toBeTruthy();
+
+  const trace2 = await parseTrace(testInfo.outputPath('trace2.zip'));
+  expect(trace2.events[0].type).toBe('context-options');
+  expect(trace2.events.find(e => e.metadata?.apiName === 'page.goto')).toBeFalsy();
+  expect(trace2.events.find(e => e.metadata?.apiName === 'page.setContent')).toBeFalsy();
+  expect(trace2.events.find(e => e.metadata?.apiName === 'page.click')).toBeFalsy();
+  expect(trace2.events.find(e => e.metadata?.apiName === 'page.hover')).toBeTruthy();
+  expect(trace2.events.some(e => e.type === 'frame-snapshot')).toBeTruthy();
+});
 
 async function parseTrace(file: string): Promise<{ events: any[], resources: Map<string, Buffer> }> {
   const entries = await new Promise<any[]>(f => {

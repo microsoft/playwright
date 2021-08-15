@@ -3,7 +3,7 @@ set -e
 set +x
 
 if [[ ("$1" == "-h") || ("$1" == "--help") ]]; then
-  echo "usage: $(basename $0) [output-absolute-path]"
+  echo "usage: $(basename "$0") [output-absolute-path]"
   echo
   echo "Generate distributable .zip archive from ./checkout folder that was previously built."
   echo
@@ -23,13 +23,13 @@ if [[ -f $ZIP_PATH ]]; then
   echo "ERROR: path $ZIP_PATH exists; can't do anything."
   exit 1
 fi
-if ! [[ -d $(dirname $ZIP_PATH) ]]; then
+if ! [[ -d $(dirname "$ZIP_PATH") ]]; then
   echo "ERROR: folder for path $($ZIP_PATH) does not exist."
   exit 1
 fi
 
 trap "cd $(pwd -P)" EXIT
-cd "$(dirname $0)"
+cd "$(dirname "$0")"
 SCRIPT_FOLDER="$(pwd -P)"
 
 if [[ ! -z "${FF_CHECKOUT_PATH}" ]]; then
@@ -42,7 +42,7 @@ fi
 OBJ_FOLDER="obj-build-playwright"
 
 ./mach package
-node "${SCRIPT_FOLDER}"/install-preferences.js $PWD/$OBJ_FOLDER/dist/firefox
+node "${SCRIPT_FOLDER}"/install-preferences.js "$PWD"/$OBJ_FOLDER/dist/firefox
 
 if ! [[ -d $OBJ_FOLDER/dist/firefox ]]; then
   echo "ERROR: cannot find $OBJ_FOLDER/dist/firefox folder in the checkout/. Did you build?"
@@ -57,4 +57,4 @@ fi
 
 # tar resulting directory and cleanup TMP.
 cd $OBJ_FOLDER/dist
-zip -r $ZIP_PATH firefox
+zip -r "$ZIP_PATH" firefox

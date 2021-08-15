@@ -19,15 +19,14 @@ import './snapshotTab.css';
 import './tabbedPane.css';
 import * as React from 'react';
 import { useMeasure } from './helpers';
-import type { Point } from '../../../common/types';
 import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
 
 export const SnapshotTab: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,
-  snapshotSize: Size,
-}> = ({ action, snapshotSize }) => {
+  defaultSnapshotSize: Size,
+}> = ({ action, defaultSnapshotSize }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
-  let [snapshotIndex, setSnapshotIndex] = React.useState(0);
+  const [snapshotIndex, setSnapshotIndex] = React.useState(0);
 
   const snapshotMap = new Map<string, { title: string, snapshotName: string }>();
   for (const snapshot of action?.metadata.snapshots || [])
@@ -35,29 +34,44 @@ export const SnapshotTab: React.FunctionComponent<{
   const actionSnapshot = snapshotMap.get('action') || snapshotMap.get('after');
   const snapshots = [actionSnapshot ? { ...actionSnapshot, title: 'action' } : undefined, snapshotMap.get('before'), snapshotMap.get('after')].filter(Boolean) as { title: string, snapshotName: string }[];
 
-  if (snapshotIndex >= snapshots.length)
-    snapshotIndex = snapshots.length - 1;
-
-  const iframeRef = React.createRef<HTMLIFrameElement>();
-  React.useEffect(() => {
-    if (!iframeRef.current)
-      return;
-    let snapshotUri = undefined;
-    let point: Point | undefined = undefined;
-    if (action) {
-      const snapshot = snapshots[snapshotIndex];
-      if (snapshot && snapshot.snapshotName) {
-        snapshotUri = `${action.metadata.pageId}?name=${snapshot.snapshotName}`;
-        if (snapshot.snapshotName.includes('action'))
-          point = action.metadata.point;
+  let snapshotUrl = 'data:text/html,<body style="background: #ddd"></body>';
+  let snapshotSizeUrl: string | undefined;
+  let pointX: number | undefined;
+  let pointY: number | undefined;
+  if (action) {
+    const snapshot = snapshots[snapshotIndex];
+    if (snapshot && snapshot.snapshotName) {
+      snapshotUrl = `${window.location.origin}/snapshot/${action.metadata.pageId}?name=${snapshot.snapshotName}`;
+      snapshotSizeUrl = `${window.location.origin}/snapshotSize/${action.metadata.pageId}?name=${snapshot.snapshotName}`;
+      if (snapshot.snapshotName.includes('action')) {
+        pointX = action.metadata.point?.x;
+        pointY = action.metadata.point?.y;
       }
     }
-    const snapshotUrl = snapshotUri ? `${window.location.origin}/snapshot/${snapshotUri}` : 'data:text/html,<body style="background: #ddd"></body>';
-    try {
-      (iframeRef.current.contentWindow as any).showSnapshot(snapshotUrl, { point });
-    } catch (e) {
-    }
-  }, [action, snapshotIndex]);
+  }
+
+  React.useEffect(() => {
+    if (snapshots.length >= 1 && snapshotIndex >= snapshots.length)
+      setSnapshotIndex(snapshots.length - 1);
+  }, [snapshotIndex, snapshots]);
+
+  const iframeRef = React.useRef<HTMLIFrameElement>(null);
+  const [snapshotSize, setSnapshotSize] = React.useState(defaultSnapshotSize);
+  React.useEffect(() => {
+    (async () => {
+      if (snapshotSizeUrl) {
+        const response = await fetch(snapshotSizeUrl);
+        setSnapshotSize(await response.json());
+      }
+      if (!iframeRef.current)
+        return;
+      try {
+        const point = pointX === undefined ? undefined : { x: pointX, y: pointY };
+        (iframeRef.current.contentWindow as any).showSnapshot(snapshotUrl, { point });
+      } catch (e) {
+      }
+    })();
+  }, [iframeRef, snapshotUrl, snapshotSizeUrl, pointX, pointY]);
 
   const scale = Math.min(measure.width / snapshotSize.width, measure.height / snapshotSize.height);
   const scaledSize = {
@@ -79,7 +93,7 @@ export const SnapshotTab: React.FunctionComponent<{
           onClick={() => setSnapshotIndex(index)}
           key={snapshot.title}>
           <div className='tab-label'>{renderTitle(snapshot.title)}</div>
-        </div>
+        </div>;
       })}
     </div>
     <div ref={ref} className='snapshot-wrapper'>

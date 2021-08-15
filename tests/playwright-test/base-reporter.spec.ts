@@ -16,6 +16,7 @@
 
 import { test, expect, stripAscii } from './playwright-test-fixtures';
 import * as path from 'path';
+import colors from 'colors/safe';
 
 test('handle long test names', async ({ runInlineTest }) => {
   const title = 'title'.repeat(30);
@@ -123,14 +124,14 @@ test('should print slow tests', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(8);
-  expect(stripAscii(result.output)).toContain(`Slow test: dir${path.sep}a.test.js [foo] (`);
-  expect(stripAscii(result.output)).toContain(`Slow test: dir${path.sep}a.test.js [bar] (`);
-  expect(stripAscii(result.output)).toContain(`Slow test: dir${path.sep}a.test.js [baz] (`);
-  expect(stripAscii(result.output)).toContain(`Slow test: dir${path.sep}a.test.js [qux] (`);
-  expect(stripAscii(result.output)).not.toContain(`Slow test: dir${path.sep}b.test.js [foo] (`);
-  expect(stripAscii(result.output)).not.toContain(`Slow test: dir${path.sep}b.test.js [bar] (`);
-  expect(stripAscii(result.output)).not.toContain(`Slow test: dir${path.sep}b.test.js [baz] (`);
-  expect(stripAscii(result.output)).not.toContain(`Slow test: dir${path.sep}b.test.js [qux] (`);
+  expect(stripAscii(result.output)).toContain(`Slow test: [foo] › dir${path.sep}a.test.js (`);
+  expect(stripAscii(result.output)).toContain(`Slow test: [bar] › dir${path.sep}a.test.js (`);
+  expect(stripAscii(result.output)).toContain(`Slow test: [baz] › dir${path.sep}a.test.js (`);
+  expect(stripAscii(result.output)).toContain(`Slow test: [qux] › dir${path.sep}a.test.js (`);
+  expect(stripAscii(result.output)).not.toContain(`Slow test: [foo] › dir${path.sep}b.test.js (`);
+  expect(stripAscii(result.output)).not.toContain(`Slow test: [bar] › dir${path.sep}b.test.js (`);
+  expect(stripAscii(result.output)).not.toContain(`Slow test: [baz] › dir${path.sep}b.test.js (`);
+  expect(stripAscii(result.output)).not.toContain(`Slow test: [qux] › dir${path.sep}b.test.js (`);
 });
 
 test('should not print slow tests', async ({ runInlineTest }) => {
@@ -157,4 +158,26 @@ test('should not print slow tests', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(4);
   expect(stripAscii(result.output)).not.toContain('Slow test');
+});
+
+test('should print stdio for failures', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('fails', async ({}) => {
+        console.log('my log 1');
+        console.error('my error');
+        console.log('my log 2');
+        expect(1).toBe(2);
+      });
+    `,
+  }, {}, { PWTEST_SKIP_TEST_OUTPUT: '' });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Test output');
+  expect(result.output).toContain([
+    'my log 1\n',
+    colors.red('my error\n'),
+    'my log 2\n',
+  ].join(''));
 });

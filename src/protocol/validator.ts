@@ -43,13 +43,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     stack: tOptional(tArray(tType('StackFrame'))),
     apiName: tOptional(tString),
   });
-  scheme.WaitForEventInfo = tObject({
-    waitId: tString,
-    phase: tEnum(['before', 'after', 'log']),
-    apiName: tOptional(tString),
-    message: tOptional(tString),
-    error: tOptional(tString),
-  });
   scheme.Point = tObject({
     x: tNumber,
     y: tNumber,
@@ -245,6 +238,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
     reducedMotion: tOptional(tEnum(['reduce', 'no-preference'])),
     acceptDownloads: tOptional(tBoolean),
+    baseURL: tOptional(tString),
     _debugName: tOptional(tString),
     recordVideo: tOptional(tObject({
       dir: tString,
@@ -304,6 +298,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
     reducedMotion: tOptional(tEnum(['reduce', 'no-preference'])),
     acceptDownloads: tOptional(tBoolean),
+    baseURL: tOptional(tString),
     _debugName: tOptional(tString),
     recordVideo: tOptional(tObject({
       dir: tString,
@@ -335,6 +330,20 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     categories: tOptional(tArray(tString)),
   });
   scheme.BrowserStopTracingParams = tOptional(tObject({}));
+  scheme.EventTargetWaitForEventInfoParams = tObject({
+    info: tObject({
+      waitId: tString,
+      phase: tEnum(['before', 'after', 'log']),
+      event: tOptional(tString),
+      message: tOptional(tString),
+      error: tOptional(tString),
+    }),
+  });
+  scheme.BrowserContextWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
+  scheme.PageWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
+  scheme.WebSocketWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
+  scheme.ElectronApplicationWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
+  scheme.AndroidDeviceWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
   scheme.BrowserContextAddCookiesParams = tObject({
     cookies: tArray(tType('SetNetworkCookie')),
   });
@@ -538,6 +547,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.PageBringToFrontParams = tOptional(tObject({}));
   scheme.FrameEvalOnSelectorParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
     expression: tString,
     isFunction: tOptional(tBoolean),
     arg: tType('SerializedArgument'),
@@ -559,6 +569,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.FrameCheckParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
     force: tOptional(tBoolean),
     noWaitAfter: tOptional(tBoolean),
     position: tOptional(tType('Point')),
@@ -567,6 +578,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.FrameClickParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
     force: tOptional(tBoolean),
     noWaitAfter: tOptional(tBoolean),
     modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'Meta', 'Shift']))),
@@ -578,8 +590,19 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     trial: tOptional(tBoolean),
   });
   scheme.FrameContentParams = tOptional(tObject({}));
+  scheme.FrameDragAndDropParams = tObject({
+    source: tString,
+    target: tString,
+    force: tOptional(tBoolean),
+    noWaitAfter: tOptional(tBoolean),
+    timeout: tOptional(tNumber),
+    trial: tOptional(tBoolean),
+    sourcePosition: tOptional(tType('Point')),
+    targetPosition: tOptional(tType('Point')),
+  });
   scheme.FrameDblclickParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
     force: tOptional(tBoolean),
     noWaitAfter: tOptional(tBoolean),
     modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'Meta', 'Shift']))),
@@ -591,6 +614,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.FrameDispatchEventParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
     type: tString,
     eventInit: tType('SerializedArgument'),
     timeout: tOptional(tNumber),
@@ -607,6 +631,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.FrameFillParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
     value: tString,
     force: tOptional(tBoolean),
     timeout: tOptional(tNumber),
@@ -614,11 +639,13 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.FrameFocusParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
     timeout: tOptional(tNumber),
   });
   scheme.FrameFrameElementParams = tOptional(tObject({}));
   scheme.FrameGetAttributeParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
     name: tString,
     timeout: tOptional(tNumber),
   });
@@ -630,6 +657,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.FrameHoverParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
     force: tOptional(tBoolean),
     modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'Meta', 'Shift']))),
     position: tOptional(tType('Point')),
@@ -638,42 +666,52 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.FrameInnerHTMLParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
     timeout: tOptional(tNumber),
   });
   scheme.FrameInnerTextParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
     timeout: tOptional(tNumber),
   });
   scheme.FrameInputValueParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
     timeout: tOptional(tNumber),
   });
   scheme.FrameIsCheckedParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
     timeout: tOptional(tNumber),
   });
   scheme.FrameIsDisabledParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
     timeout: tOptional(tNumber),
   });
   scheme.FrameIsEnabledParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
     timeout: tOptional(tNumber),
   });
   scheme.FrameIsHiddenParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
     timeout: tOptional(tNumber),
   });
   scheme.FrameIsVisibleParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
     timeout: tOptional(tNumber),
   });
   scheme.FrameIsEditableParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
     timeout: tOptional(tNumber),
   });
   scheme.FramePressParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
     key: tString,
     delay: tOptional(tNumber),
     noWaitAfter: tOptional(tBoolean),
@@ -681,12 +719,15 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.FrameQuerySelectorParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
   });
   scheme.FrameQuerySelectorAllParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
   });
   scheme.FrameSelectOptionParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
     elements: tOptional(tArray(tChannel('ElementHandle'))),
     options: tOptional(tArray(tObject({
       value: tOptional(tString),
@@ -704,6 +745,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.FrameSetInputFilesParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
     files: tArray(tObject({
       name: tString,
       mimeType: tOptional(tString),
@@ -714,6 +756,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.FrameTapParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
     force: tOptional(tBoolean),
     noWaitAfter: tOptional(tBoolean),
     modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'Meta', 'Shift']))),
@@ -723,11 +766,13 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.FrameTextContentParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
     timeout: tOptional(tNumber),
   });
   scheme.FrameTitleParams = tOptional(tObject({}));
   scheme.FrameTypeParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
     text: tString,
     delay: tOptional(tNumber),
     noWaitAfter: tOptional(tBoolean),
@@ -735,6 +780,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.FrameUncheckParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
     force: tOptional(tBoolean),
     noWaitAfter: tOptional(tBoolean),
     position: tOptional(tType('Point')),
@@ -750,6 +796,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.FrameWaitForSelectorParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
     timeout: tOptional(tNumber),
     state: tOptional(tEnum(['attached', 'detached', 'visible', 'hidden'])),
   });
@@ -787,6 +834,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.ElementHandleJsonValueParams = tType('JSHandleJsonValueParams');
   scheme.ElementHandleEvalOnSelectorParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
     expression: tString,
     isFunction: tOptional(tBoolean),
     arg: tType('SerializedArgument'),
@@ -866,6 +914,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.ElementHandleQuerySelectorParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
   });
   scheme.ElementHandleQuerySelectorAllParams = tObject({
     selector: tString,
@@ -931,6 +980,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.ElementHandleWaitForSelectorParams = tObject({
     selector: tString,
+    strict: tOptional(tBoolean),
     timeout: tOptional(tNumber),
     state: tOptional(tEnum(['attached', 'detached', 'visible', 'hidden'])),
   });

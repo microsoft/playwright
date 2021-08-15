@@ -111,3 +111,14 @@ browserTest('should report null viewportSize when given null viewport', async ({
   expect(page.viewportSize()).toBe(null);
   await context.close();
 });
+
+browserTest('should drag with high dpi', async ({ browser, server}) => {
+  const page = await browser.newPage({ deviceScaleFactor: 2 });
+  await page.goto(server.PREFIX + '/drag-n-drop.html');
+  await page.hover('#source');
+  await page.mouse.down();
+  await page.hover('#target');
+  await page.mouse.up();
+  expect(await page.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true); // could not find source in target
+  await page.close();
+});

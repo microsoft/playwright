@@ -104,12 +104,12 @@ test('should respect excluded tests', async ({ runInlineTest }) => {
         expect(1 + 1).toBe(2);
       });
 
-      test('excluded test', () => {
+      test('excluded test 1', () => {
         test.skip();
         expect(1 + 1).toBe(3);
       });
 
-      test('excluded test', () => {
+      test('excluded test 2', () => {
         test.skip();
         expect(1 + 1).toBe(3);
       });
@@ -350,4 +350,35 @@ test('should work with test helper', async ({ runInlineTest }) => {
     '%%test2',
     '%%suite2.test2',
   ]);
+});
+
+test('should help with describe() misuse', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.js': `
+      pwt.test.describe(() => {});
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain([
+    'Error: a.spec.js:5:16: It looks like you are calling describe() without the title. Pass the title as a first argument:',
+    `test.describe('my test group', () => {`,
+    `  // Declare tests here`,
+    `});`,
+  ].join('\n'));
+});
+
+test('test.skip should define a skipped test', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      const logs = [];
+      test.skip('foo', () => {
+        console.log('%%dontseethis');
+        throw new Error('foo');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.skipped).toBe(1);
+  expect(result.output).not.toContain('%%dontseethis');
 });

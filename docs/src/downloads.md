@@ -14,7 +14,7 @@ can obtain the download url, file system path and payload stream using the [Down
 You can specify where to persist downloaded files using the [`option: downloadsPath`] option in [`method: BrowserType.launch`].
 
 :::note
-Unless [`option: downloadsPath`] is set, downloaded files are deleted when the browser context that produced them is closed.
+Downloaded files are deleted when the browser context that produced them is closed.
 :::
 
 Here is the simplest way to handle the file download:
@@ -28,6 +28,16 @@ const [ download ] = await Promise.all([
 ]);
 // Wait for the download process to complete
 const path = await download.path();
+```
+
+```java
+// Wait for the download to start
+Download download = page.waitForDownload(() -> {
+    // Perform the action that initiates download
+    page.click("button#delayed-download");
+});
+// Wait for the download process to complete
+Path path = download.path();
 ```
 
 ```python async

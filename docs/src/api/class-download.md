@@ -2,8 +2,8 @@
 
 [Download] objects are dispatched by page via the [`event: Page.download`] event.
 
-If `downloadsPath` isn't specified, all the downloaded files belonging to the browser context are deleted when the
-browser context is closed. And all downloaded files are deleted when the browser closes.
+All the downloaded files belonging to the browser context are deleted when the
+browser context is closed.
 
 Download event is emitted once the download starts. Download path becomes available once download completes:
 
@@ -62,6 +62,11 @@ downloaded content. If [`option: acceptDownloads`] is not set, download events a
 not performed and user has no access to the downloaded files.
 :::
 
+## async method: Download.cancel
+
+Cancels a download. Will not fail if the download is already finished or canceled.
+Upon successful cancellations, `download.failure()` would resolve to `'canceled'`.
+
 ## async method: Download.createReadStream
 * langs: java, js, csharp
 - returns: <[null]|[Readable]>
@@ -87,6 +92,9 @@ Get the page that the download belongs to.
 
 Returns path to the downloaded file in case of successful download. The method will
 wait for the download to finish if necessary. The method throws when connected remotely.
+
+Note that the download's file name is a random GUID, use [`method: Download.suggestedFilename`]
+to get suggested file name.
 
 ## async method: Download.saveAs
 

@@ -44,7 +44,7 @@ export class FileChooser implements api.FileChooser {
   }
 
   async setFiles(files: string | FilePayload | string[] | FilePayload[], options?: channels.ElementHandleSetInputFilesOptions) {
-    return this._page._wrapApiCall('fileChooser.setFiles', async () => {
+    return this._page._wrapApiCall(async () => {
       return this._elementHandle.setInputFiles(files, options);
     });
   }

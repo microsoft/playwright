@@ -37,10 +37,17 @@ run().catch(e => {
 });;
 
 async function run() {
-  const documentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
+  const apiDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
+  apiDocumentation.filterForLanguage('js');
+  const testDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'test-api'), path.join(PROJECT_DIR, 'docs', 'src', 'api', 'params.md'));
+  testDocumentation.filterForLanguage('js');
+  const testRerpoterDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'test-reporter-api'));
+  testRerpoterDocumentation.filterForLanguage('js');
+  const documentation = apiDocumentation.mergeWith(testDocumentation).mergeWith(testRerpoterDocumentation);
+  documentation.mergeWith(testDocumentation);
+
   // This validates member links.
   documentation.setLinkRenderer(() => undefined);
-  documentation.filterForLanguage('js');
 
   // Patch README.md
   const versions = await getBrowserVersions();
@@ -69,13 +76,33 @@ async function run() {
   {
     const devicesDescriptorsSourceFile = path.join(PROJECT_DIR, 'src', 'server', 'deviceDescriptorsSource.json')
     const devicesDescriptors = require(devicesDescriptorsSourceFile)
-    for (const deviceName of Object.keys(devicesDescriptors))
-      if (devicesDescriptors[deviceName].defaultBrowserType === 'chromium') {
-        devicesDescriptors[deviceName].userAgent = devicesDescriptors[deviceName].userAgent.replace(
-          /(.*Chrome\/)(.*?)( .*)/,
-          `$1${versions.chromium}$3`
-        )
+    for (const deviceName of Object.keys(devicesDescriptors)) {
+      switch (devicesDescriptors[deviceName].defaultBrowserType) {
+        case 'chromium':
+          devicesDescriptors[deviceName].userAgent = devicesDescriptors[deviceName].userAgent.replace(
+            /(.*Chrome\/)(.*?)( .*)/,
+            `$1${versions.chromium}$3`
+          ).replace(
+            /(.*Edg\/)(.*?)$/,
+            `$1${versions.chromium}`
+          )
+          break;
+        case 'firefox':
+          devicesDescriptors[deviceName].userAgent = devicesDescriptors[deviceName].userAgent.replace(
+            /^(.*Firefox\/)(.*?)( .*?)?$/,
+            `$1${versions.firefox}$3`
+          ).replace(/(.*rv:)(.*)\)(.*?)/, `$1${versions.firefox}$3`)
+          break;
+        case 'webkit':
+          devicesDescriptors[deviceName].userAgent = devicesDescriptors[deviceName].userAgent.replace(
+            /(.*Version\/)(.*?)( .*)/,
+            `$1${versions.webkit}$3`
+          )
+          break;
+        default:
+          break;
       }
+    }
     writeAssumeNoop(devicesDescriptorsSourceFile, JSON.stringify(devicesDescriptors, null, 2), dirtyFiles);
   }
 
@@ -93,7 +120,7 @@ async function run() {
   {
     const srcClient = path.join(PROJECT_DIR, 'src', 'client');
     const sources = fs.readdirSync(srcClient).map(n => path.join(srcClient, n));
-    const errors = missingDocs(documentation, sources, path.join(srcClient, 'api.ts'));
+    const errors = missingDocs(apiDocumentation, sources, path.join(srcClient, 'api.ts'));
     if (errors.length) {
       console.log('============================');
       console.log('ERROR: missing documentation:');
