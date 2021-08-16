@@ -16,6 +16,7 @@
  */
 
 import { Page, BindingCall } from './page';
+import { Frame } from './frame';
 import * as network from './network';
 import * as channels from '../protocol/channels';
 import fs from 'fs';
@@ -308,9 +309,12 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     return [...this._serviceWorkers];
   }
 
-  async newCDPSession(page: Page): Promise<api.CDPSession> {
+  async newCDPSession(page: Page | Frame): Promise<api.CDPSession> {
+    // channelOwner.ts's validation messages don't handle the pseudo-union type, so we're explicit here
+    if (!(page instanceof Page) && !(page instanceof Frame))
+      throw new Error('page: expected Page or Frame');
     return this._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
-      const result = await channel.newCDPSession({ page: page._channel });
+      const result = await channel.newCDPSession(page instanceof Page ? { page: page._channel } : { frame: page._channel });
       return CDPSession.from(result.session);
     });
   }

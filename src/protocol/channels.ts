@@ -845,10 +845,12 @@ export type BrowserContextRecorderSupplementEnableOptions = {
 };
 export type BrowserContextRecorderSupplementEnableResult = void;
 export type BrowserContextNewCDPSessionParams = {
-  page: PageChannel,
+  page?: PageChannel,
+  frame?: FrameChannel,
 };
 export type BrowserContextNewCDPSessionOptions = {
-
+  page?: PageChannel,
+  frame?: FrameChannel,
 };
 export type BrowserContextNewCDPSessionResult = {
   session: CDPSessionChannel,

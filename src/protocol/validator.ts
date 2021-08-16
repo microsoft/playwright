@@ -406,7 +406,8 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     outputFile: tOptional(tString),
   });
   scheme.BrowserContextNewCDPSessionParams = tObject({
-    page: tChannel('Page'),
+    page: tOptional(tChannel('Page')),
+    frame: tOptional(tChannel('Frame')),
   });
   scheme.BrowserContextTracingStartParams = tObject({
     name: tOptional(tString),

@@ -349,7 +349,7 @@ context.clear_permissions()
 ```csharp
 var context = await browser.NewContextAsync();
 await context.GrantPermissionsAsync(new[] { "clipboard-read" });
-// Alternatively, you can use the helper class ContextPermissions 
+// Alternatively, you can use the helper class ContextPermissions
 //  to specify the permissions...
 // do stuff ...
 await context.ClearPermissionsAsync();
@@ -589,7 +589,7 @@ await page.SetContentAsync("<script>\n" +
   "<div>Or click me</div>\n");
 
 await page.ClickAsync("div");
-// Note: it makes sense to await the result here, because otherwise, the context 
+// Note: it makes sense to await the result here, because otherwise, the context
 //  gets closed and the binding function will throw an exception.
 Assert.Equal("Click me", await result.Task);
 ```
@@ -834,9 +834,10 @@ CDP sessions are only supported on Chromium-based browsers.
 Returns the newly created session.
 
 ### param: BrowserContext.newCDPSession.page
-- `page` <[Page]>
+- `page` <[Page]|[Frame]>
 
-Page to create new session for.
+Target to create new session for. For backwards-compatability, this parameter is
+named `page`, but it can be a `Page` or `Frame` type.
 
 ## async method: BrowserContext.newPage
 - returns: <[Page]>

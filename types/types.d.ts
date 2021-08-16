@@ -5482,9 +5482,9 @@ export interface BrowserContext {
    * > NOTE: CDP sessions are only supported on Chromium-based browsers.
    *
    * Returns the newly created session.
-   * @param page Page to create new session for.
+   * @param page Target to create new session for. For backwards-compatability, this parameter is named `page`, but it can be a `Page` or `Frame` type.
    */
-  newCDPSession(page: Page): Promise<CDPSession>;
+  newCDPSession(page: Page|Frame): Promise<CDPSession>;
 
   /**
    * Creates a new page in the browser context.
