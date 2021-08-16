@@ -85,7 +85,7 @@ it('should support fulfill after intercept', async ({page, server}) => {
   expect(await response.text()).toBe('<title>Woof-Woof</title>' + os.EOL);
 });
 
-it.only('should intercept failures', async ({page, browserName, server}) => {
+it('should intercept failures', async ({page, browserName, server}) => {
   server.setRoute('/title.html', (req, res) => {
     req.destroy();
   });
