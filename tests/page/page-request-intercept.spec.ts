@@ -41,7 +41,7 @@ it('should fulfill intercepted response', async ({page, server, browserName}) =>
 });
 
 it('should fulfill response with empty body', async ({page, server, browserName, browserMajorVersion}) => {
-  it.skip(browserName === 'chromium' && browserMajorVersion <= 91);
+  it.skip(browserName === 'chromium' && browserMajorVersion <= 91, 'Fails in Electron that uses old Chromium');
   await page.route('**/*', async route => {
     // @ts-expect-error
     await route._intercept({});
@@ -85,7 +85,8 @@ it('should support fulfill after intercept', async ({page, server}) => {
   expect(await response.text()).toBe('<title>Woof-Woof</title>' + os.EOL);
 });
 
-it('should intercept failures', async ({page, browserName, server}) => {
+it('should intercept failures', async ({page, browserName, browserMajorVersion, server}) => {
+  it.skip(browserName === 'chromium' && browserMajorVersion <= 91, 'Fails in Electron that uses old Chromium');
   server.setRoute('/title.html', (req, res) => {
     req.destroy();
   });
@@ -110,7 +111,7 @@ it('should intercept failures', async ({page, browserName, server}) => {
 });
 
 it('should support request overrides', async ({page, server, browserName, browserMajorVersion}) => {
-  it.skip(browserName === 'chromium' && browserMajorVersion <= 91);
+  it.skip(browserName === 'chromium' && browserMajorVersion <= 91, 'Fails in Electron that uses old Chromium');
   const requestPromise = server.waitForRequest('/empty.html');
   await page.route('**/foo', async route => {
     // @ts-expect-error
