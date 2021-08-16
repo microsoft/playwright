@@ -31,21 +31,9 @@ export function rewriteErrorMessage(e: Error, newMessage: string): Error {
   return e;
 }
 
-const PW_LIB_DIRS = [
-  'playwright',
-  'playwright-chromium',
-  'playwright-firefox',
-  'playwright-webkit',
-  path.join('@playwright', 'test'),
-].map(packageName => path.sep + packageName);
-
-const runnerNpmPkgLib = path.join('@playwright', 'test', 'lib', 'test');
-const runnerLib = path.join('lib', 'test');
-const runnerSrc = path.join('src', 'test');
-
-function includesFileInPlaywrightSubDir(subDir: string, fileName: string) {
-  return PW_LIB_DIRS.map(p => path.join(p, subDir)).some(libDir => fileName.includes(libDir));
-}
+const ROOT_DIR = path.resolve(__dirname, '..', '..');
+const CLIENT_LIB = path.join(ROOT_DIR, 'lib', 'client');
+const CLIENT_SRC = path.join(ROOT_DIR, 'src', 'client');
 
 export type ParsedStackTrace = {
   frames: StackFrame[];
@@ -59,44 +47,52 @@ export function captureStackTrace(): ParsedStackTrace {
   const error = new Error();
   const stack = error.stack!;
   Error.stackTraceLimit = stackTraceLimit;
-  const frames: StackFrame[] = [];
-  const frameTexts: string[] = [];
-  const lines = stack.split('\n').reverse();
-  let apiName = '';
 
-  const isTesting = !!process.env.PWTEST_CLI_ALLOW_TEST_COMMAND || isUnderTest();
-
-  for (const line of lines) {
+  const isTesting = isUnderTest();
+  type ParsedFrame = {
+    frame: StackFrame;
+    frameText: string;
+    inClient: boolean;
+  };
+  let parsedFrames = stack.split('\n').map(line => {
     const frame = stackUtils.parseLine(line);
     if (!frame || !frame.file)
-      continue;
+      return null;
     if (frame.file.startsWith('internal'))
-      continue;
+      return null;
     const fileName = path.resolve(process.cwd(), frame.file);
     if (isTesting && fileName.includes(path.join('playwright', 'tests', 'config', 'coverage.js')))
-      continue;
-    if (isFilePartOfPlaywright(isTesting, fileName)) {
+      return null;
+    const parsed: ParsedFrame = {
+      frame: {
+        file: fileName,
+        line: frame.line,
+        column: frame.column,
+        function: frame.function,
+      },
+      frameText: line,
+      inClient: fileName.startsWith(CLIENT_LIB) || fileName.startsWith(CLIENT_SRC),
+    };
+    return parsed;
+  }).filter(frame => !!frame) as ParsedFrame[];
+
+  let apiName = '';
+  // Deepest transition between non-client code calling into client code
+  // is the api entry.
+  for (let i = 0; i < parsedFrames.length - 1; i++) {
+    if (parsedFrames[i].inClient && !parsedFrames[i + 1].inClient) {
+      const frame = parsedFrames[i].frame;
       apiName = frame.function ? frame.function[0].toLowerCase() + frame.function.slice(1) : '';
+      parsedFrames = parsedFrames.slice(i + 1);
       break;
     }
-    frameTexts.push(line);
-    frames.push({
-      file: fileName,
-      line: frame.line,
-      column: frame.column,
-      function: frame.function,
-    });
   }
-  frames.reverse();
-  frameTexts.reverse();
-  return { frames, frameTexts, apiName };
-}
 
-function isFilePartOfPlaywright(isTesting: boolean, fileName: string): boolean {
-  const isPlaywrightTest = fileName.includes(runnerNpmPkgLib);
-  const isLocalPlaywright = isTesting && (fileName.includes(runnerSrc) || fileName.includes(runnerLib));
-  const isInPlaywright = (includesFileInPlaywrightSubDir('src', fileName) || includesFileInPlaywrightSubDir('lib', fileName));
-  return !isPlaywrightTest && !isLocalPlaywright && isInPlaywright;
+  return {
+    frames: parsedFrames.map(p => p.frame),
+    frameTexts: parsedFrames.map(p => p.frameText),
+    apiName
+  };
 }
 
 export function splitErrorMessage(message: string): { name: string, message: string } {
