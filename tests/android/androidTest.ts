@@ -52,14 +52,18 @@ export const androidFixtures: Fixtures<PageTestFixtures, AndroidWorkerFixtures &
   isElectron: false,
 
   androidContext: [ async ({ androidDevice }, run) => {
-    await run(await androidDevice.launchBrowser());
+    const context = await androidDevice.launchBrowser();
+    const [ page ] = context.pages();
+    await page.goto('data:text/html,Default page');
+    await run(context);
   }, { scope: 'worker' } ],
 
   page: async ({ androidContext }, run) => {
+    // Retain default page, otherwise Clank will re-create it.
+    while (androidContext.pages().length > 1)
+      await androidContext.pages()[1].close();
     const page = await androidContext.newPage();
     await run(page);
-    for (const page of androidContext.pages())
-      await page.close();
   },
 };
 
