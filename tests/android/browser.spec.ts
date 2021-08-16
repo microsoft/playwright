@@ -17,7 +17,7 @@
 import { androidTest as test, expect } from './androidTest';
 
 test('androidDevice.model', async function({ androidDevice }) {
-  expect(androidDevice.model()).toBe('sdk_gphone_x86_arm');
+  expect(androidDevice.model()).toBe('sdk_gphone64_x86_64');
 });
 
 test('androidDevice.launchBrowser', async function({ androidDevice }) {

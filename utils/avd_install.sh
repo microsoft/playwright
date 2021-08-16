@@ -13,7 +13,7 @@ mkdir ${SDKDIR}/cmdline-tools
 echo Downloading Android SDK...
 cd ${SDKDIR}/cmdline-tools
 COMMAND_LINE_TOOLS_ZIP=${SDKDIR}/commandlinetools.zip
-curl https://dl.google.com/android/repository/commandlinetools-mac-6858069_latest.zip -o ${COMMAND_LINE_TOOLS_ZIP}
+curl https://dl.google.com/android/repository/commandlinetools-mac-7583922_latest.zip -o ${COMMAND_LINE_TOOLS_ZIP}
 unzip ${COMMAND_LINE_TOOLS_ZIP}
 rm ${COMMAND_LINE_TOOLS_ZIP}
 mv cmdline-tools latest
@@ -23,7 +23,7 @@ echo Installing emulator...
 yes | ${ANDROID_HOME}/tools/bin/sdkmanager --install platform-tools emulator
 
 echo Installing platform SDK...
-yes | ${ANDROID_HOME}/tools/bin/sdkmanager --install "platforms;android-30"
+yes | ${ANDROID_HOME}/tools/bin/sdkmanager --install "platforms;android-31"
 
 echo Starting ADB...
 ${ANDROID_HOME}/platform-tools/adb devices
