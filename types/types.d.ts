@@ -13032,7 +13032,7 @@ type Devices = {
   "Desktop Firefox HiDPI": DeviceDescriptor;
   "Desktop Safari": DeviceDescriptor;
   "Desktop Chrome": DeviceDescriptor;
-  "Dekstop Edge": DeviceDescriptor;
+  "Desktop Edge": DeviceDescriptor;
   "Desktop Firefox": DeviceDescriptor;
   [key: string]: DeviceDescriptor;
 }
