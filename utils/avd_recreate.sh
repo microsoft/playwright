@@ -8,7 +8,7 @@ if [[ -z "${ANDROID_HOME}" ]]; then
     export ANDROID_SDK_ROOT=${SDKDIR}
 fi
 
-${ANDROID_HOME}/tools/bin/avdmanager delete avd --name android30 || true
-echo "y" | ${ANDROID_HOME}/tools/bin/sdkmanager --install "system-images;android-30;google_apis;x86"
-echo "no" | ${ANDROID_HOME}/tools/bin/avdmanager create avd --force --name android30 --device "Nexus 5X" --package "system-images;android-30;google_apis;x86"
+${ANDROID_HOME}/tools/bin/avdmanager delete avd --name android31 || true
+echo "y" | ${ANDROID_HOME}/tools/bin/sdkmanager --install "system-images;android-31;google_apis;x86_64"
+echo "no" | ${ANDROID_HOME}/tools/bin/avdmanager create avd --force --name android31 --device "Nexus 5X" --package "system-images;android-31;google_apis;x86_64"
 ${ANDROID_HOME}/emulator/emulator -list-avds
