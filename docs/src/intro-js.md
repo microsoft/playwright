@@ -103,7 +103,7 @@ test('my test', async ({ page }) => {
   await expect(page).toHaveTitle('Playwright');
 
   // Expect an attribute "to be strictly equal" to the value.
-  await expect(page.locator('text=Get Started').toHaveAttribute('href', '/docs/intro');
+  await expect(page.locator('text=Get Started')).toHaveAttribute('href', '/docs/intro');
 
   // Expect an element "to be visible".
   await expect(page.locator('text=Learn more')).toBeVisible();
@@ -128,7 +128,7 @@ test('my test', async ({ page }) => {
   await expect(page).toHaveTitle('Playwright');
 
   // Expect an attribute "to be strictly equal" to the value.
-  await expect(page.locator('text=Get Started').toHaveAttribute('href', '/docs/intro');
+  await expect(page.locator('text=Get Started')).toHaveAttribute('href', '/docs/intro');
 
   // Expect an element "to be visible".
   await expect(page.locator('text=Learn more')).toBeVisible();
