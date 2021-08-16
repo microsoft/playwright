@@ -35,7 +35,7 @@ fs.mkdirSync(channelsDir, { recursive: true });
 fs.mkdirSync(eventArgsDir, { recursive: true });
 
 const namePrettyMap = new Map([
-  ["loadstate", "LoadState"]
+  ["loadstate", "LoadState"],
 ]);
 
 var enumTypes = null;
@@ -96,7 +96,7 @@ function inlineType(type, indent = '', parentName) {
   }
   if (type.type.startsWith('enum')) {
     // check our existing ones, I know it's slow, but it'll do for now
-    for (let [ enumName, enumType ] of enumTypes) {
+    for (let [enumName, enumType] of enumTypes) {
       if (enumType.map(x => x.replace(/"/g, '')).sort().join(',') === type.literals.sort().join(','))
         return { ts: enumName, scheme: `tEnum`, optional: false };
     }
@@ -282,7 +282,9 @@ function generateChannels(mappedEnumTypes) {
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Playwright.Core;
+using Microsoft.Playwright.Helpers;
 
+#nullable enable
 namespace Microsoft.Playwright.Transport.Channels
 {
 internal class ${channelName} : Channel<${name}>
@@ -305,42 +307,76 @@ internal class ${channelName} : Channel<${name}>
         // channels_ts.push(`  on(event: '${eventName}', callback: (params: ${paramsName}) => void): this;`);
       }
 
-      for (let [methodName, method] of Object.entries(item.commands || {})) {
+      for (let [originalMethodName, method] of Object.entries(item.commands || {})) {
         if (method === null)
           method = {};
-        channel.push(`// method: ${methodName}`);
-        // if (method.tracing && method.tracing.snapshot) {
-        //   tracingSnapshots.push(name + '.' + methodName);
-        //   for (const derived of derivedClasses.get(name) || [])
-        //     tracingSnapshots.push(derived + '.' + methodName);
-        // }
-        // const parameters = objectType(method.parameters || {}, '');
-        // const paramsName = `${channelName}${titleCase(methodName)}Params`;
-        // const optionsName = `${channelName}${titleCase(methodName)}Options`;
-        // ts_types.set(paramsName, parameters.ts);
-        // ts_types.set(optionsName, objectType(method.parameters || {}, '', true).ts);
-        // addScheme(paramsName, method.parameters ? parameters.scheme : `tOptional(tObject({}))`);
-        // for (const key of inherits.keys()) {
-        //   if (inherits.get(key) === channelName)
-        //     addScheme(`${key}${titleCase(methodName)}Params`, `tType('${paramsName}')`);
-        // }
 
-        // const resultName = `${channelName}${titleCase(methodName)}Result`;
-        // const returns = objectType(method.returns || {}, '');
-        // ts_types.set(resultName, method.returns ? returns.ts : 'void');
+        const methodName = titleCase(originalMethodName) + 'Async';
+        let returnDefinition = {
+          type: null,
+          optional: false,
+          name: null,
+          taskType: 'JsonElement?'
+        };
 
-        // channels_ts.push(`  ${methodName}(params${method.parameters ? '' : '?'}: ${paramsName}, metadata?: Metadata): Promise<${resultName}>;`);
+        if (method.returns) {
+          const [returnsName, returnsType] = Object.entries(method.returns)[0];
+          console.log(`Returns: ${returnsName} of ${returnsType}`);
+          var inlinedType = inlineType(returnsType);
+          returnDefinition.type = inlinedType.ts;
+          returnDefinition.optional = inlinedType.optional;
+          returnDefinition.name = returnsName;
+        }
+
+        let methodSignature = `internal virtual async `;
+        if (returnDefinition.type) {
+          methodSignature += `Task<${returnDefinition.type}${returnDefinition.optional ? '?' : ''}> `
+        } else {
+          methodSignature += `Task `
+        }
+        methodSignature += methodName;
+
+        let arguments = [];
+        if (method.parameters) {
+          for (const [paramName, paramType] of Object.entries(method.parameters)) {
+            arguments.push(`${paramType} ${paramName}`);
+          }
+        }
+
+        methodSignature += `(${arguments.join(', ')})`;
+
+        let pushIndented = function (val) {
+          channel.push(`\t\t${val}`);
+        }
+
+        channel.push(methodSignature);
+        channel.push(`\t=> ${returnDefinition.type === 'string' ? '(' : ''}await Connection.SendMessageToServerAsync<${returnDefinition.taskType}>(`);
+        pushIndented(`Guid,`)
+        pushIndented(`"${originalMethodName}",`)
+        if (method.parameters) {
+          pushIndented(`new`);
+          pushIndented(`{`);
+          for (const [paramName, paramType] of Object.entries(method.parameters))
+            pushIndented(`\t${paramName},`);
+          pushIndented(`})`)
+        } else {
+          pushIndented('null)');
+        }
+
+        if (returnDefinition.type === 'string')
+          if (returnDefinition.optional)
+            pushIndented(`.ConfigureAwait(false)).ToOptionalString("${returnDefinition.name}");`);
+          else
+            pushIndented(`.ConfigureAwait(false))?.GetProperty("${originalMethodName}").ToString()`);
+        else
+          pushIndented(`.ConfigureAwait(false);`);
       }
       channel.push(`}`); // end of class
       channel.push(`}`); // end of namespace
+      channel.push(`#nullable disable`);
       writeFile(`${channelName}.cs`, channel.join(`\n`), channelsDir);
     }
   }
 }
-
-// if (process.argv[3] !== "--skip-format") {
-//   // run the formatting tool for .net, to ensure the files are prepped
-//   execSync(`dotnet format -f "${process.argv[2]}" --include-generated --fix-whitespace`);
-// }
 
 module.exports = { generateChannels }
