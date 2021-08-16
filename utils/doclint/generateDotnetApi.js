@@ -208,7 +208,7 @@ function renderOptionType(name, type) {
 
   for (const member of type.properties)
     renderMember(member, member.type, {}, body);
-  writeFile('public class', name, null, body, optionsDir);
+  writeFile('public class', name, null, body, optionsDir, "IOptions");
 }
 
 for (const element of documentation.classesArray) {
