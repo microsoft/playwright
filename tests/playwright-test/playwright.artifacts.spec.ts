@@ -277,3 +277,44 @@ test('should work with trace: on-first-retry', async ({ runInlineTest }, testInf
     'report.json',
   ]);
 });
+
+test('should stop tracing with trace: on-first-retry, when not retrying', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { trace: 'on-first-retry' } };
+    `,
+    'a.spec.ts': `
+      const { test } = pwt;
+
+      test.describe('shared', () => {
+        let page;
+        test.beforeAll(async ({ browser }) => {
+          page = await browser.newPage();
+        });
+
+        test.afterAll(async () => {
+          await page.close();
+        });
+
+        test('flaky', async ({}, testInfo) => {
+          expect(testInfo.retry).toBe(1);
+        });
+
+        test('no tracing', async ({}, testInfo) => {
+          const error = await page.context().tracing._export({ path: testInfo.outputPath('none.zip') }).catch(e => e);
+          expect(error.message).toContain('Must start tracing before exporting');
+        });
+      });
+    `,
+  }, { workers: 1, retries: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.flaky).toBe(1);
+  expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
+    'a-flaky-retry1',
+    '  trace.zip',
+    'a-no-tracing',  // Empty dir created because of testInfo.outputPath() call.
+    'report.json',
+  ]);
+});
