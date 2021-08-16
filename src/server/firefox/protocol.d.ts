@@ -935,6 +935,7 @@ export module Protocol {
           value: string;
         }[];
       };
+      error?: string;
     };
     export type fulfillInterceptedRequestParameters = {
       requestId: string;

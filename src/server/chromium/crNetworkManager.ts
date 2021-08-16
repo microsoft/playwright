@@ -488,6 +488,12 @@ class RouteImpl implements network.RouteDelegate {
     const event = await this._responseInterceptedPromise;
     this._interceptionId = event.requestId;
     // FIXME: plumb status text from browser
+    if (event.responseErrorReason) {
+      this._client._sendMayFail('Fetch.continueRequest', {
+        requestId: event.requestId
+      });
+      throw new Error(`Request failed: ${event.responseErrorReason}`);
+    }
     return new network.InterceptedResponse(request, event.responseStatusCode!, '', event.responseHeaders!);
   }
 
