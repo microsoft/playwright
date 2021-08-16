@@ -155,7 +155,7 @@ export class Page extends SdkObject {
       mediaType: null,
       colorScheme: browserContext._options.colorScheme !== undefined  ? browserContext._options.colorScheme : 'light',
       reducedMotion: browserContext._options.reducedMotion !== undefined  ? browserContext._options.reducedMotion : 'no-preference',
-      forcedColors: browserContext._options.forcedColors !== undefined  ? browserContext._options.forcedColors: 'none',
+      forcedColors: browserContext._options.forcedColors !== undefined  ? browserContext._options.forcedColors : 'none',
       extraHTTPHeaders: null,
     };
     this.accessibility = new accessibility.Accessibility(delegate.getAccessibilityTree.bind(delegate));
