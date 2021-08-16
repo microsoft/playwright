@@ -375,3 +375,10 @@ export type SetStorageState = {
   cookies?: SetNetworkCookieParam[],
   origins?: OriginStorage[]
 };
+
+export type FetchOptions = {
+  url: string,
+  method?: string,
+  headers?:  { [name: string]: string },
+  postData?: Buffer,
+};

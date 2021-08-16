@@ -19,7 +19,7 @@ import { Dispatcher, DispatcherScope, lookupDispatcher } from './dispatcher';
 import { PageDispatcher, BindingCallDispatcher, WorkerDispatcher } from './pageDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 import * as channels from '../protocol/channels';
-import { RouteDispatcher, RequestDispatcher, ResponseDispatcher } from './networkDispatchers';
+import { RouteDispatcher, RequestDispatcher, ResponseDispatcher, FetchResponseDispatcher } from './networkDispatchers';
 import { CRBrowserContext } from '../server/chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { RecorderSupplement } from '../server/supplements/recorderSupplement';
@@ -27,6 +27,7 @@ import { CallMetadata } from '../server/instrumentation';
 import { ArtifactDispatcher } from './artifactDispatcher';
 import { Artifact } from '../server/artifact';
 import { Request, Response } from '../server/network';
+import { headersArrayToObject } from '../utils/utils';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextInitializer> implements channels.BrowserContextChannel {
   private _context: BrowserContext;
@@ -102,6 +103,19 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       this._dispatchEvent('bindingCall', { binding });
       return binding.promise();
     }, 'main');
+  }
+
+  async fetch(params: channels.BrowserContextFetchParams): Promise<channels.BrowserContextFetchResult> {
+    const { response, error } = await this._context.fetch({
+      url: params.url,
+      method: params.method,
+      headers: params.headers ? headersArrayToObject(params.headers, false) : undefined,
+      postData: params.postData ? Buffer.from(params.postData, 'base64') : undefined,
+    });
+    return {
+      response: FetchResponseDispatcher.fromNullable(this, response),
+      error
+    };
   }
 
   async newPage(params: channels.BrowserContextNewPageParams, metadata: CallMetadata): Promise<channels.BrowserContextNewPageResult> {

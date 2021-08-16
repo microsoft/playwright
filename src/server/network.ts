@@ -434,6 +434,47 @@ export class InterceptedResponse extends SdkObject {
   }
 }
 
+export class FetchRequest extends SdkObject {
+  response?: FetchResponse;
+  url: string;
+  method: string;
+  headers: { [name: string]: string };
+  postData?: Buffer;
+
+  constructor(parent: SdkObject, url: string, method: string, headers?: { [name: string]: string }, postData?: Buffer) {
+    super(parent, 'fetchRequest');
+    this.url = url;
+    this.method = method;
+    this.headers = headers || {};
+    this.postData = postData;
+  }
+}
+
+export class FetchResponse extends SdkObject {
+  readonly request: FetchRequest;
+  url: string;
+  status: number;
+  statusText: string;
+  headers: types.HeadersArray;
+  body: Promise<Buffer>;
+
+  constructor(request: FetchRequest,
+    url: string,
+    status: number,
+    statusText: string,
+    headers: types.HeadersArray,
+    body: Promise<Buffer>) {
+    super(request, 'fetchResponse');
+    this.request = request;
+    request.response = this;
+    this.url = url;
+    this.status = status;
+    this.statusText = statusText;
+    this.headers = headers;
+    this.body = body;
+  }
+}
+
 export class WebSocket extends SdkObject {
   private _url: string;
 

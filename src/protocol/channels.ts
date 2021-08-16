@@ -152,6 +152,46 @@ export type InterceptedResponse = {
   }[],
 };
 
+// ----------- FetchRequest -----------
+export type FetchRequestInitializer = {
+  url: string,
+  method: string,
+  postData?: Binary,
+  headers: {
+    name: string,
+    value: string,
+  }[],
+  redirectedFrom?: FetchRequestChannel,
+};
+export interface FetchRequestChannel extends Channel {
+  response(params?: FetchRequestResponseParams, metadata?: Metadata): Promise<FetchRequestResponseResult>;
+}
+export type FetchRequestResponseParams = {};
+export type FetchRequestResponseOptions = {};
+export type FetchRequestResponseResult = {
+  response?: FetchResponseChannel,
+};
+
+// ----------- FetchResponse -----------
+export type FetchResponseInitializer = {
+  request: FetchRequestChannel,
+  url: string,
+  status: number,
+  statusText: string,
+  headers: {
+    name: string,
+    value: string,
+  }[],
+};
+export interface FetchResponseChannel extends Channel {
+  responseBody(params?: FetchResponseResponseBodyParams, metadata?: Metadata): Promise<FetchResponseResponseBodyResult>;
+}
+export type FetchResponseResponseBodyParams = {};
+export type FetchResponseResponseBodyOptions = {};
+export type FetchResponseResponseBodyResult = {
+  binary: Binary,
+};
+
 // ----------- Root -----------
 export type RootInitializer = {};
 export interface RootChannel extends Channel {
@@ -706,6 +746,7 @@ export interface BrowserContextChannel extends EventTargetChannel {
   close(params?: BrowserContextCloseParams, metadata?: Metadata): Promise<BrowserContextCloseResult>;
   cookies(params: BrowserContextCookiesParams, metadata?: Metadata): Promise<BrowserContextCookiesResult>;
   exposeBinding(params: BrowserContextExposeBindingParams, metadata?: Metadata): Promise<BrowserContextExposeBindingResult>;
+  fetch(params: BrowserContextFetchParams, metadata?: Metadata): Promise<BrowserContextFetchResult>;
   grantPermissions(params: BrowserContextGrantPermissionsParams, metadata?: Metadata): Promise<BrowserContextGrantPermissionsResult>;
   newPage(params?: BrowserContextNewPageParams, metadata?: Metadata): Promise<BrowserContextNewPageResult>;
   setDefaultNavigationTimeoutNoReply(params: BrowserContextSetDefaultNavigationTimeoutNoReplyParams, metadata?: Metadata): Promise<BrowserContextSetDefaultNavigationTimeoutNoReplyResult>;
@@ -802,6 +843,21 @@ export type BrowserContextExposeBindingOptions = {
   needsHandle?: boolean,
 };
 export type BrowserContextExposeBindingResult = void;
+export type BrowserContextFetchParams = {
+  url: string,
+  method?: string,
+  headers?: NameValue[],
+  postData?: Binary,
+};
+export type BrowserContextFetchOptions = {
+  method?: string,
+  headers?: NameValue[],
+  postData?: Binary,
+};
+export type BrowserContextFetchResult = {
+  response?: FetchResponseChannel,
+  error?: string,
+};
 export type BrowserContextGrantPermissionsParams = {
   permissions: string[],
   origin?: string,
