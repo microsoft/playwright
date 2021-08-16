@@ -536,6 +536,7 @@ const Network = {
       },
       returns: {
         response: t.Optional(networkTypes.InterceptedResponse),
+        error: t.Optional(t.String),
       },
     },
     'fulfillInterceptedRequest': {

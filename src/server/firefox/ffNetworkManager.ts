@@ -227,6 +227,8 @@ class FFRouteImpl implements network.RouteDelegate {
     }) as any;
     if (!overrides.interceptResponse)
       return null;
+    if (result.error)
+      throw new Error(`Request failed: ${result.error}`);
     return new InterceptedResponse(request, result.response.status, result.response.statusText, result.response.headers);
   }
 
