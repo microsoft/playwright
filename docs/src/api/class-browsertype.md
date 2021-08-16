@@ -90,7 +90,6 @@ class BrowserTypeExamples
 This methods attaches Playwright to an existing browser instance.
 
 ### param: BrowserType.connect.wsEndpoint
-* langs: java, python, js
 - `wsEndpoint` <[string]>
 
 A browser websocket endpoint to connect to.
