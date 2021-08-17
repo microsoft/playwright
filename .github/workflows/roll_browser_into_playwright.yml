@@ -14,6 +14,8 @@ jobs:
         node-version: 14
     - run: npm ci
     - run: npm run build
+    - run: Install dependencies
+    - run: node lib/cli/cli install-deps
     - name: Roll to new revision
       run: |
         ./utils/roll_browser.js ${{ github.event.client_payload.browser }} ${{ github.event.client_payload.revision }}

@@ -407,7 +407,7 @@ function create_roll_into_playwright_pr {
   curl -X POST \
   -H "Accept: application/vnd.github.v3+json" \
   -H "Authorization: token ${GH_TOKEN}" \
-  --data '{"event_type": "roll_into_pw", "client_payload": {"browser": "'"$1"'", "revision": "'"$1"'"}}' \
+  --data '{"event_type": "roll_into_pw", "client_payload": {"browser": "'"$1"'", "revision": "'"$2"'"}}' \
   https://api.github.com/repos/microsoft/playwright/dispatches
 }
 
