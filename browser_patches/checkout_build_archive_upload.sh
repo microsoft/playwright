@@ -403,6 +403,14 @@ function generate_and_upload_browser_build {
   return 0
 }
 
+function create_roll_into_playwright_pr {
+  curl -X POST \
+  -H "Accept: application/vnd.github.v3+json" \
+  -H "Authorization: token ${GH_TOKEN}" \
+  --data '{"event_type": "roll_into_pw", "client_payload": {"browser": "'"$1"'", "revision": "'"$1"'"}}' \
+  https://api.github.com/repos/microsoft/playwright/dispatches
+}
+
 source ./send_telegram_message.sh
 BUILD_ALIAS="$BUILD_FLAVOR r$BUILD_NUMBER"
 send_telegram_message "$BUILD_ALIAS -- started"
@@ -427,6 +435,7 @@ if generate_and_upload_browser_build 2>&1 | ./sanitize_and_compress_log.js $LOG_
     done;
     LAST_COMMIT_MESSAGE=$(git log --format=%s -n 1 HEAD -- "./${BROWSER_NAME}/BUILD_NUMBER")
     send_telegram_message "<b>${BROWSER_DISPLAY_NAME} r${BUILD_NUMBER} COMPLETE! ✅</b> ${LAST_COMMIT_MESSAGE}"
+    create_roll_into_playwright_pr $BROWSER_NAME $BUILD_NUMBER
   )
 else
   RESULT_CODE="$?"
