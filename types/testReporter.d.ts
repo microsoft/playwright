@@ -228,10 +228,19 @@ export interface TestStep {
    */
   title: string;
   /**
+   * Returns a list of step titles from the root step down to this step.
+   */
+  titlePath(): string[];
+  /**
+   * Parent step, if any.
+   */
+  parent?: TestStep;
+  /**
    * Step category to differentiate steps with different origin and verbosity. Built-in categories are:
    * - `hook` for fixtures and hooks initialization and teardown
    * - `expect` for expect calls
    * - `pw:api` for Playwright API calls.
+   * - `test.step` for test.step API calls.
    */
   category: string,
   /**
