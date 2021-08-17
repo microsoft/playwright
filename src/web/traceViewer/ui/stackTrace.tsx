@@ -26,6 +26,8 @@ export const StackTraceView: React.FunctionComponent<{
   const frames = action?.metadata.stack || [];
   return <div className='stack-trace'>{
     frames.map((frame, index) => {
+      // Windows frames are E:\path\to\file
+      const pathSep = frame.file[1] === ':' ? '\\' : '/';
       return <div
         key={index}
         className={'stack-trace-frame' + (selectedFrame === index ? ' selected' : '')}
@@ -37,7 +39,7 @@ export const StackTraceView: React.FunctionComponent<{
           {frame.function || '(anonymous)'}
         </span>
         <span className='stack-trace-frame-location'>
-          {frame.file.split('/').pop()}
+          {frame.file.split(pathSep).pop()}
         </span>
         <span className='stack-trace-frame-line'>
           {':' + frame.line}
