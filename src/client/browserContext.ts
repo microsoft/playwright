@@ -71,7 +71,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     this.tracing = new Tracing(this);
 
     this._channel.on('bindingCall', ({binding}) => this._onBinding(BindingCall.from(binding)));
-    this._channel.on('close', () => this._onClose());
+    this._channel.on('close', () => this._didClose());
     this._channel.on('page', ({page}) => this._onPage(Page.from(page)));
     this._channel.on('route', ({ route, request }) => this._onRoute(network.Route.from(route), network.Request.from(request)));
     this._channel.on('backgroundPage', ({ page }) => {
@@ -319,7 +319,11 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     });
   }
 
-  _onClose() {
+  _didClose() {
+    for (const page of this._pages)
+      page._didClose();
+    for (const backgroundPage of this._backgroundPages)
+      backgroundPage._didClose();
     if (this._browser)
       this._browser._contexts.delete(this);
     this._browserType?._contexts?.delete(this);

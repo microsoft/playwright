@@ -110,7 +110,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this._opener = Page.fromNullable(initializer.opener);
 
     this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));
-    this._channel.on('close', () => this._onClose());
+    this._channel.on('close', () => this._didClose());
     this._channel.on('console', ({ message }) => this.emit(Events.Page.Console, ConsoleMessage.from(message)));
     this._channel.on('crash', () => this._onCrash());
     this._channel.on('dialog', ({ dialog }) => {
@@ -185,7 +185,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this.emit(Events.Page.Worker, worker);
   }
 
-  _onClose() {
+  _didClose() {
     this._closed = true;
     this._browserContext._pages.delete(this);
     this._browserContext._backgroundPages.delete(this);

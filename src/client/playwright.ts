@@ -63,14 +63,19 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel, channel
     this.selectors._addChannel(this._selectorsOwner);
 
     this._channel.on('incomingSocksSocket', ({socket}) => SocksSocket.from(socket));
+
+    this._connection.on('disconnect', () => {
+      this.selectors._removeChannel(this._selectorsOwner);
+
+      // Emulate all pages, contexts and the browser closing upon disconnect.
+      this.chromium._didClose();
+      this.firefox._didClose();
+      this.webkit._didClose();
+    });
   }
 
   async _enablePortForwarding(ports: number[]) {
     this._forwardPorts = ports;
     await this._channel.setForwardedPorts({ports});
-  }
-
-  _cleanup() {
-    this.selectors._removeChannel(this._selectorsOwner);
   }
 }

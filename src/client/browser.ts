@@ -50,6 +50,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
 
   _setBrowserType(browserType: BrowserType) {
     this._browserType = browserType;
+    browserType._browsers.add(this);
     for (const context of this._contexts)
       context._setBrowserType(browserType);
   }
@@ -123,6 +124,9 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
   }
 
   _didClose() {
+    for (const context of this._contexts)
+      context._didClose();
+    this._browserType._browsers.delete(this);
     this._isConnected = false;
     this.emit(Events.Browser.Disconnected, this);
   }

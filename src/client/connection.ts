@@ -135,11 +135,11 @@ export class Connection extends EventEmitter {
   }
 
   didDisconnect(errorMessage: string) {
+    this.emit('disconnect');
     this._disconnectedErrorMessage = errorMessage;
     for (const callback of this._callbacks.values())
       callback.reject(new Error(errorMessage));
     this._callbacks.clear();
-    this.emit('disconnect');
   }
 
   isDisconnected() {

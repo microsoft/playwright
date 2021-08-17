@@ -46,6 +46,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
   private _timeoutSettings = new TimeoutSettings();
   _serverLauncher?: BrowserServerLauncher;
   _contexts = new Set<BrowserContext>();
+  _browsers = new Set<Browser>();
 
   // Instrumentation.
   _defaultContextOptions: BrowserContextOptions = {};
@@ -131,6 +132,9 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
     const logger = params.logger;
     const paramsHeaders = Object.assign({'User-Agent': getUserAgent()}, params.headers);
     return this._wrapApiCall(async () => {
+      if ((params as any).__testHookBeforeCreateBrowser)
+        await (params as any).__testHookBeforeCreateBrowser();
+
       const ws = new WebSocket(wsEndpoint, [], {
         perMessageDeflate: false,
         maxPayload: 256 * 1024 * 1024, // 256Mb,
@@ -170,13 +174,6 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
       const timer = params.timeout ? setTimeout(() => timeoutCallback(new Error(`Timeout ${params.timeout}ms exceeded.`)), params.timeout) : undefined;
 
       const successPromise = new Promise<Browser>(async (fulfill, reject) => {
-        if ((params as any).__testHookBeforeCreateBrowser) {
-          try {
-            await (params as any).__testHookBeforeCreateBrowser();
-          } catch (e) {
-            reject(e);
-          }
-        }
         ws.addEventListener('open', async () => {
           const prematureCloseListener = (event: { code: number, reason: string }) => {
             reject(new Error(`WebSocket server disconnected (${event.code}) ${event.reason}`));
@@ -190,35 +187,32 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
             return;
           }
 
-          const browser = Browser.from(playwright._initializer.preLaunchedBrowser!);
-          browser._logger = logger;
-          browser._remoteType = 'owns-connection';
-          browser._setBrowserType((playwright as any)[browser._name]);
-          const closeListener = () => {
-            // Emulate all pages, contexts and the browser closing upon disconnect.
-            for (const context of browser.contexts()) {
-              for (const page of context.pages())
-                page._onClose();
-              context._onClose();
-            }
-            browser._didClose();
-            connection.didDisconnect(kBrowserClosedError);
-          };
-          ws.removeEventListener('close', prematureCloseListener);
-          ws.addEventListener('close', closeListener);
-          browser.on(Events.Browser.Disconnected, () => {
-            playwright._cleanup();
-            ws.removeEventListener('close', closeListener);
-            ws.close();
-          });
           if (params._forwardPorts) {
             try {
               await playwright._enablePortForwarding(params._forwardPorts);
             } catch (err) {
               reject(err);
+              ws.close();
               return;
             }
           }
+
+          const browser = Browser.from(playwright._initializer.preLaunchedBrowser!);
+          browser._logger = logger;
+          browser._remoteType = 'owns-connection';
+          browser._setBrowserType((playwright as any)[browser._name]);
+
+          ws.removeEventListener('close', prematureCloseListener);
+
+          const closeListener = () => {
+            browser.off(Events.Browser.Disconnected, closeListener);
+            ws.removeEventListener('close', closeListener);
+            connection.didDisconnect(kBrowserClosedError);
+            ws.close();
+          };
+          ws.addEventListener('close', closeListener);
+          browser.on(Events.Browser.Disconnected, closeListener);
+
           fulfill(browser);
         });
         ws.addEventListener('error', event => {
@@ -268,5 +262,12 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
       browser._setBrowserType(this);
       return browser;
     }, logger);
+  }
+
+  _didClose() {
+    for (const context of this._contexts)
+      context._didClose();
+    for (const browser of this._browsers)
+      browser._didClose();
   }
 }
