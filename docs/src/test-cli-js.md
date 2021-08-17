@@ -44,7 +44,7 @@ All the options are available in the [configuration file](./test-advanced.md). H
 
 - `--retries <number>`: The maximum number of [retries](./test-retries.md) for flaky tests, defaults to zero (no retries).
 
-- `--shard <shard>`: [Shard](./test-parallel.md#shards) tests and execute only selected shard, specified in the form `current/all`, 1-based, for example `3/5`.
+- `--shard <shard>`: [Shard](./test-parallel.md#shard-tests-between-multiple-machines) tests and execute only selected shard, specified in the form `current/all`, 1-based, for example `3/5`.
 
 - `--timeout <number>`: Maximum timeout in milliseconds for each test, defaults to 30 seconds.
 
