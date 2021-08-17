@@ -17,6 +17,7 @@
 import { playwrightTest as it, expect } from './config/browserTest';
 import socks from 'socksv5';
 import net from 'net';
+import { LaunchOptions } from '../index';
 
 it('should throw for bad server value', async ({browserType, browserOptions}) => {
   const error = await browserType.launch({
@@ -73,6 +74,62 @@ it('should work with IP:PORT notion', async ({browserType, browserOptions, serve
   await page.goto('http://non-existent.com/target.html');
   expect(await page.title()).toBe('Served by the proxy');
   await browser.close();
+});
+
+it('should not work with localhost by default on Chromium (unless Linux Headful)', async ({browserType, platform, browserOptions }) => {
+  let proxiedRequest = false;
+  const server = net.createServer(socket => {
+    socket.on('data', () => {
+      proxiedRequest = true;
+      socket.end();
+    });
+  });
+  await new Promise(f => server.listen(0, f));
+
+  const opts: LaunchOptions = {
+    ...browserOptions,
+    proxy: { server: `http://127.0.0.1:${(server.address() as any).port}` },
+  };
+
+  const browser = await browserType.launch(opts);
+
+  const page = await browser.newPage();
+
+  await page.goto('http://localhost:9999/request').catch(() => {});
+  await browser.close();
+  server.close();
+  if (browserType.name() !== 'chromium' || platform === 'linux' && !browserOptions.headless)
+    expect(proxiedRequest).toBeTruthy();
+  else
+    expect(proxiedRequest).toBeFalsy();
+});
+
+it('should work with localhost', async ({ browserType, platform, browserOptions }) => {
+  let proxiedRequest = false;
+  const server = net.createServer(socket => {
+    socket.on('data', () => {
+      proxiedRequest = true;
+      socket.end();
+    });
+  });
+  await new Promise(f => server.listen(0, f));
+
+  const opts: LaunchOptions = {
+    ...browserOptions,
+    proxy: { server: `http://127.0.0.1:${(server.address() as any).port}` },
+  };
+
+  if (browserType.name() === 'chromium' && !(platform === 'linux' && !browserOptions.headless))
+    opts.proxy.bypass = '<-loopback>';
+
+  const browser = await browserType.launch(opts);
+
+  const page = await browser.newPage();
+
+  await page.goto('http://localhost:9999/request').catch(() => {});
+  await browser.close();
+  server.close();
+  expect(proxiedRequest).toBeTruthy();
 });
 
 it('should authenticate', async ({browserType, browserOptions, server}) => {

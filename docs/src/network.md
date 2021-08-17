@@ -71,6 +71,19 @@ for the entire browser, or for each browser context individually.
 You can optionally specify username and password for HTTP(S) proxy, you can also specify hosts to
 bypass proxy for.
 
+:::note
+Chromium, unlike WebKit and Firefox, will **not** proxy localhost, link locals
+(i.e. 169.254/16), and loopback addresses by default (unless
+running in headful mode on Linux).
+
+If you need these requests (e.g. `page.goto("http://localhost:3030")`) to route
+through the configured proxy, add the special token `<-loopback>` to the `bypass`
+option.
+
+Do not pass `<-loopback>` to non-Chromium browsers as behavior will be undefined
+or broken.
+:::
+
 Here is an example of a global proxy:
 
 ```js
