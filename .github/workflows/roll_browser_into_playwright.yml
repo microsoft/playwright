@@ -14,8 +14,8 @@ jobs:
         node-version: 14
     - run: npm ci
     - run: npm run build
-    - run: Install dependencies
-    - run: node lib/cli/cli install-deps
+    - name: Install dependencies
+      run: node lib/cli/cli install-deps
     - name: Roll to new revision
       run: |
         ./utils/roll_browser.js ${{ github.event.client_payload.browser }} ${{ github.event.client_payload.revision }}
@@ -40,5 +40,5 @@ jobs:
             repo: 'playwright',
             head: 'microsoft:${{ steps.prepare-branch.outputs.BRANCH_NAME }}',
             base: 'master',
-            title: 'feat(${{ github.event.client_payload.browser }}): roll to r${{ github.event.client_payload.revison }}',
+            title: 'feat(${{ github.event.client_payload.browser }}): roll to r${{ github.event.client_payload.revision }}',
           });
