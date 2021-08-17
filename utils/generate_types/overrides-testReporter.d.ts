@@ -64,6 +64,7 @@ export interface TestStep {
   startTime: Date;
   duration: number;
   error?: TestError;
+  steps: TestStep[];
 }
 
 /**

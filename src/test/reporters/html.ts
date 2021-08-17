@@ -199,7 +199,7 @@ class HtmlReporter {
       attachments: await this._createAttachments(testId, result),
       stdout: result.stdout,
       stderr: result.stderr,
-      steps: this._serializeSteps(result.steps)
+      steps: serializeSteps(result.steps)
     };
   }
 
@@ -249,43 +249,19 @@ class HtmlReporter {
       sha1
     };
   }
-
-  private _serializeSteps(steps: TestStep[]): JsonTestStep[] {
-    const stepStack: TestStep[] = [];
-    const result: JsonTestStep[] = [];
-    const stepMap = new Map<TestStep, JsonTestStep>();
-    for (const step of steps) {
-      let lastStep = stepStack[stepStack.length - 1];
-      while (lastStep && !containsStep(lastStep, step)) {
-        stepStack.pop();
-        lastStep = stepStack[stepStack.length - 1];
-      }
-      const collection = stepMap.get(lastStep!)?.steps || result;
-      const jsonStep = {
-        title: step.title,
-        category: step.category,
-        startTime: step.startTime.toISOString(),
-        duration: step.duration,
-        error: step.error,
-        steps: []
-      };
-      collection.push(jsonStep);
-      stepMap.set(step, jsonStep);
-      stepStack.push(step);
-    }
-    return result;
-  }
 }
 
-
-function containsStep(outer: TestStep, inner: TestStep): boolean {
-  if (outer.startTime.getTime() > inner.startTime.getTime())
-    return false;
-  if (outer.startTime.getTime() + outer.duration < inner.startTime.getTime() + inner.duration)
-    return false;
-  if (outer.startTime.getTime() + outer.duration <= inner.startTime.getTime())
-    return false;
-  return true;
+function serializeSteps(steps: TestStep[]): JsonTestStep[] {
+  return steps.map(step => {
+    return {
+      title: step.title,
+      category: step.category,
+      startTime: step.startTime.toISOString(),
+      duration: step.duration,
+      error: step.error,
+      steps: serializeSteps(step.steps),
+    };
+  });
 }
 
 function isTextAttachment(contentType: string) {
