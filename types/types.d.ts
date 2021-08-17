@@ -12822,7 +12822,7 @@ export interface Cookie {
   sameSite: "Strict"|"Lax"|"None";
 }
 
-interface PageWaitForSelectorOptions {
+export interface PageWaitForSelectorOptions {
   /**
    * Defaults to `'visible'`. Can be either:
    * - `'attached'` - wait for element to be present in DOM.
