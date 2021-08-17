@@ -475,3 +475,51 @@ it('should contain http2 for http2 requests', async ({ contextFactory, browserNa
   expect(log.entries[0].response.httpVersion).toBe('h2');
   server.close();
 });
+
+it('should filter favicon and favicon redirects', async ({server, browserName, channel, headless, asset, contextFactory}, testInfo) => {
+  it.skip(headless && browserName !== 'firefox', 'headless browsers, except firefox, do not request favicons');
+  it.skip(!headless && browserName === 'webkit' && !channel, 'headed webkit does not have a favicon feature');
+
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+
+  // Browsers aggresively cache favicons, so force bust with the
+  // `d` parameter to make iterating on this test more predictable and isolated.
+  const favicon = `/favicon.ico`;
+  const hashedFaviconUrl = `/favicon-hashed.ico?d=${Date.now()}`;
+  server.setRedirect(favicon, hashedFaviconUrl);
+  server.setRoute(hashedFaviconUrl, (req, res) => {
+    server.serveFile(req, res, asset('media-query-prefers-color-scheme.svg'));
+  });
+
+  server.setRoute('/page.html', (_, res) => {
+    res.end(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <link rel="icon" type="image/svg+xml" href="${favicon}">
+          <title>SVG Favicon Test</title>
+        </head>
+        <body>
+          favicons
+        </body>
+      </html>
+`);
+  });
+
+  await Promise.all([
+    server.waitForRequest(favicon),
+    server.waitForRequest(hashedFaviconUrl),
+    page.goto(server.PREFIX + '/page.html'),
+  ]);
+
+  await page.waitForTimeout(500);
+  // Text still being around ensures we haven't actually lost our browser to a crash.
+  await page.waitForSelector('text=favicons');
+
+  // favicon and 302 redirects to favicons should be filtered out of request logs
+  const log = await getLog();
+  expect(log.entries.length).toBe(1);
+  const entry = log.entries[0];
+  expect(entry.request.url).toBe(server.PREFIX + '/page.html');
+});
