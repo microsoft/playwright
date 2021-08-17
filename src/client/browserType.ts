@@ -24,8 +24,8 @@ import { Connection } from './connection';
 import { Events } from './events';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { ChildProcess } from 'child_process';
-import { envObjectToArray } from './clientHelper';
-import { assert, headersObjectToArray, makeWaitForNextTask, getUserAgent } from '../utils/utils';
+import { connectToWebSocket, envObjectToArray } from './clientHelper';
+import { assert, headersObjectToArray, getUserAgent } from '../utils/utils';
 import { kBrowserClosedError } from '../utils/errors';
 import * as api from '../../types/types';
 import type { Playwright } from './playwright';
@@ -46,6 +46,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
   private _timeoutSettings = new TimeoutSettings();
   _serverLauncher?: BrowserServerLauncher;
   _contexts = new Set<BrowserContext>();
+  _browsers = new Set<Browser>();
 
   // Instrumentation.
   _defaultContextOptions: BrowserContextOptions = {};
@@ -137,98 +138,32 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
         handshakeTimeout: this._timeoutSettings.timeout(params),
         headers: paramsHeaders,
       });
-      const connection = new Connection(() => ws.close());
+      const connection = new Connection();
+      connectToWebSocket(connection, ws, params.slowMo);
 
-      // The 'ws' module in node sometimes sends us multiple messages in a single task.
-      const waitForNextTask = params.slowMo
-        ? (cb: () => any) => setTimeout(cb, params.slowMo)
-        : makeWaitForNextTask();
-      connection.onmessage = message => {
-        // Connection should handle all outgoing message in disconnected().
-        if (ws.readyState !== WebSocket.OPEN)
-          return;
-        ws.send(JSON.stringify(message));
-      };
-      ws.addEventListener('message', event => {
-        waitForNextTask(() => {
-          try {
-            // Since we may slow down the messages, but disconnect
-            // synchronously, we might come here with a message
-            // after disconnect.
-            if (!connection.isDisconnected())
-              connection.dispatch(JSON.parse(event.data));
-          } catch (e) {
-            console.error(`Playwright: Connection dispatch error`);
-            console.error(e);
-            ws.close();
-          }
-        });
-      });
-
-      let timeoutCallback = (e: Error) => {};
-      const timeoutPromise = new Promise<Browser>((f, r) => timeoutCallback = r);
-      const timer = params.timeout ? setTimeout(() => timeoutCallback(new Error(`Timeout ${params.timeout}ms exceeded.`)), params.timeout) : undefined;
-
-      const successPromise = new Promise<Browser>(async (fulfill, reject) => {
-        if ((params as any).__testHookBeforeCreateBrowser) {
-          try {
-            await (params as any).__testHookBeforeCreateBrowser();
-          } catch (e) {
-            reject(e);
-          }
-        }
-        ws.addEventListener('open', async () => {
-          const prematureCloseListener = (event: { code: number, reason: string }) => {
-            reject(new Error(`WebSocket server disconnected (${event.code}) ${event.reason}`));
-          };
-          ws.addEventListener('close', prematureCloseListener);
-          const playwright = await connection.waitForObjectWithKnownName('Playwright') as Playwright;
-
-          if (!playwright._initializer.preLaunchedBrowser) {
-            reject(new Error('Malformed endpoint. Did you use launchServer method?'));
-            ws.close();
-            return;
-          }
-
-          const browser = Browser.from(playwright._initializer.preLaunchedBrowser!);
-          browser._logger = logger;
-          browser._remoteType = 'owns-connection';
-          browser._setBrowserType((playwright as any)[browser._name]);
-          const closeListener = () => {
-            // Emulate all pages, contexts and the browser closing upon disconnect.
-            for (const context of browser.contexts()) {
-              for (const page of context.pages())
-                page._onClose();
-              context._onClose();
-            }
-            browser._didClose();
-            connection.didDisconnect(kBrowserClosedError);
-          };
-          ws.removeEventListener('close', prematureCloseListener);
-          ws.addEventListener('close', closeListener);
-          browser.on(Events.Browser.Disconnected, () => {
-            playwright._cleanup();
-            ws.removeEventListener('close', closeListener);
-            ws.close();
-          });
-          if (params._forwardPorts) {
-            try {
-              await playwright._enablePortForwarding(params._forwardPorts);
-            } catch (err) {
-              reject(err);
-              return;
-            }
-          }
-          fulfill(browser);
-        });
-        ws.addEventListener('error', event => {
-          ws.close();
-          reject(new Error(event.message + '. Most likely ws endpoint is incorrect'));
-        });
-      });
+      const timer = params.timeout ? setTimeout(() => {
+        connection.close(`Timeout ${params.timeout}ms exceeded.`);
+      }, params.timeout) : undefined;
 
       try {
-        return await Promise.race([successPromise, timeoutPromise]);
+        if ((params as any).__testHookBeforeCreateBrowser)
+          await (params as any).__testHookBeforeCreateBrowser();
+
+        const playwright = await connection.waitForObjectWithKnownName('Playwright') as Playwright;
+        if (!playwright._initializer.preLaunchedBrowser)
+          throw new Error('Malformed endpoint. Did you use launchServer method?');
+        if (params._forwardPorts)
+          await playwright._enablePortForwarding(params._forwardPorts);
+
+        const browser = Browser.from(playwright._initializer.preLaunchedBrowser!);
+        browser._logger = logger;
+        browser._remoteType = 'owns-connection';
+        browser._setBrowserType((playwright as any)[browser._name]);
+        browser.on(Events.Browser.Disconnected, () => connection.close(kBrowserClosedError));
+        return browser;
+      } catch (e) {
+        await connection.close(e.message);
+        throw e;
       } finally {
         if (timer)
           clearTimeout(timer);
@@ -268,5 +203,12 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
       browser._setBrowserType(this);
       return browser;
     }, logger);
+  }
+
+  _didClose() {
+    for (const context of this._contexts)
+      context._didClose();
+    for (const browser of this._browsers)
+      browser._didClose();
   }
 }

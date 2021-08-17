@@ -168,7 +168,7 @@ test('should throw when used after isConnected returns false', async ({browserTy
   ]);
   expect(browser.isConnected()).toBe(false);
   const error = await page.evaluate('1 + 1').catch(e => e) as Error;
-  expect(error.message).toContain('has been closed');
+  expect(error.message).toContain('page.evaluate: WebSocket server disconnected (1005)');
 });
 
 test('should throw when calling waitForNavigation after disconnect', async ({browserType, startRemoteServer}) => {
@@ -413,14 +413,13 @@ test('should properly disconnect when connection closes from the client side', a
   const waitForNavigationPromise = page.waitForNavigation().catch(e => e);
 
   const disconnectedPromise = new Promise(f => browser.once('disconnected', f));
-  // This closes the websocket.
-  (browser as any)._connection.close();
+  await (browser as any)._connection.close('Some reason');
   await disconnectedPromise;
   expect(browser.isConnected()).toBe(false);
 
-  expect((await navigationPromise).message).toContain('has been closed');
+  expect((await navigationPromise).message).toContain('page.goto: Some reason');
   expect((await waitForNavigationPromise).message).toContain('Navigation failed because page was closed');
-  expect((await page.goto(server.EMPTY_PAGE).catch(e => e)).message).toContain('has been closed');
+  expect((await page.goto(server.EMPTY_PAGE).catch(e => e)).message).toContain('page.goto: Some reason');
   expect((await page.waitForNavigation().catch(e => e)).message).toContain('Navigation failed because page was closed');
 });
 
@@ -440,9 +439,9 @@ test('should properly disconnect when connection closes from the server side', a
   await disconnectedPromise;
   expect(browser.isConnected()).toBe(false);
 
-  expect((await navigationPromise).message).toContain('has been closed');
+  expect((await navigationPromise).message).toContain('page.goto: WebSocket server disconnected');
   expect((await waitForNavigationPromise).message).toContain('Navigation failed because page was closed');
-  expect((await page.goto(server.EMPTY_PAGE).catch(e => e)).message).toContain('has been closed');
+  expect((await page.goto(server.EMPTY_PAGE).catch(e => e)).message).toContain('page.goto: WebSocket server disconnected');
   expect((await page.waitForNavigation().catch(e => e)).message).toContain('Navigation failed because page was closed');
 });
 
@@ -452,4 +451,11 @@ test('should be able to connect when the wsEndpont is passed as the first argume
   const page = await browser.newPage();
   expect(await page.evaluate('1 + 2')).toBe(3);
   await browser.close();
+});
+
+test('should throw for non-existent websocket', async ({browserType, startRemoteServer, server}) => {
+  const e = await browserType.connect({
+    wsEndpoint: `ws://localhost:1111`,
+  }).catch(e => e);
+  expect(e.message).toContain('Most likely ws endpoint is incorrect');
 });

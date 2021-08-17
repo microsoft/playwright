@@ -54,6 +54,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   readonly _backgroundPages = new Set<Page>();
   readonly _serviceWorkers = new Set<Worker>();
   readonly _isChromium: boolean;
+  private _closed = false;
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
     return (context as any)._object;
@@ -71,7 +72,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     this.tracing = new Tracing(this);
 
     this._channel.on('bindingCall', ({binding}) => this._onBinding(BindingCall.from(binding)));
-    this._channel.on('close', () => this._onClose());
+    this._channel.on('close', () => this._didClose());
     this._channel.on('page', ({page}) => this._onPage(Page.from(page)));
     this._channel.on('route', ({ route, request }) => this._onRoute(network.Route.from(route), network.Request.from(request)));
     this._channel.on('backgroundPage', ({ page }) => {
@@ -319,14 +320,21 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     });
   }
 
-  _onClose() {
+  _didClose() {
+    for (const page of this._pages)
+      page._didClose();
+    for (const backgroundPage of this._backgroundPages)
+      backgroundPage._didClose();
     if (this._browser)
       this._browser._contexts.delete(this);
     this._browserType?._contexts?.delete(this);
+    this._closed = true;
     this.emit(Events.BrowserContext.Close, this);
   }
 
   async close(): Promise<void> {
+    if (this._closed)
+      return;
     try {
       await this._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
         await this._browserType?._onWillCloseContext?.(this);

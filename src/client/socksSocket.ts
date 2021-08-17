@@ -54,7 +54,7 @@ export class SocksSocket extends ChannelOwner<channels.SocksSocketChannel, chann
     });
     this._channel.on('close', () => this._socket.end());
 
-    this._connection.on('disconnect', () => this._socket.end());
+    this._connection.on('close', () => this._socket.end());
   }
 
   async write(data: Buffer): Promise<void> {

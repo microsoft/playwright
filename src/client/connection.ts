@@ -48,24 +48,24 @@ class Root extends ChannelOwner<channels.Channel, {}> {
 
 export class Connection extends EventEmitter {
   readonly _objects = new Map<string, ChannelOwner>();
-  private _waitingForObject = new Map<string, any>();
+  private _waitingForObject = new Map<string, { resolve: (o: any) => void, reject: (e: Error) => void }>();
   onmessage = (message: object): void => {};
+  onclose?: () => Promise<void>;
   private _lastId = 0;
   private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void, metadata: channels.Metadata }>();
   private _rootObject: ChannelOwner;
-  private _disconnectedErrorMessage: string | undefined;
-  private _onClose?: () => void;
+  private _closed = false;
+  private _closedErrorMessage = 'Connection closed';
 
-  constructor(onClose?: () => void) {
+  constructor() {
     super();
     this._rootObject = new Root(this);
-    this._onClose = onClose;
   }
 
   async waitForObjectWithKnownName(guid: string): Promise<any> {
     if (this._objects.has(guid))
       return this._objects.get(guid)!;
-    return new Promise(f => this._waitingForObject.set(guid, f));
+    return new Promise((resolve, reject) => this._waitingForObject.set(guid, { resolve, reject }));
   }
 
   pendingProtocolCalls(): channels.Metadata[] {
@@ -77,6 +77,9 @@ export class Connection extends EventEmitter {
   }
 
   async sendMessageToServer(object: ChannelOwner, method: string, params: any, stackTrace: ParsedStackTrace | null): Promise<any> {
+    if (this._closed)
+      throw new Error(this._closedErrorMessage);
+
     const guid = object._guid;
     const { frames, apiName }: ParsedStackTrace = stackTrace || { frameTexts: [], frames: [], apiName: '' };
 
@@ -86,9 +89,6 @@ export class Connection extends EventEmitter {
     debugLogger.log('channel:command', converted);
     const metadata: channels.Metadata = { stack: frames, apiName };
     this.onmessage({ ...converted, metadata });
-
-    if (this._disconnectedErrorMessage)
-      throw new Error(this._disconnectedErrorMessage);
     return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, metadata }));
   }
 
@@ -129,21 +129,24 @@ export class Connection extends EventEmitter {
     object._channel.emit(method, this._replaceGuidsWithChannels(params));
   }
 
-  close() {
-    if (this._onClose)
-      this._onClose();
-  }
-
-  didDisconnect(errorMessage: string) {
-    this._disconnectedErrorMessage = errorMessage;
+  async close(errorMessage?: string) {
+    if (this._closed)
+      return;
+    this._closed = true;
+    if (errorMessage)
+      this._closedErrorMessage = errorMessage;
     for (const callback of this._callbacks.values())
       callback.reject(new Error(errorMessage));
     this._callbacks.clear();
-    this.emit('disconnect');
+    for (const callback of this._waitingForObject.values())
+      callback.reject(new Error(this._closedErrorMessage));
+    this._waitingForObject.clear();
+    this.emit('close');
+    await this.onclose?.();
   }
 
-  isDisconnected() {
-    return !!this._disconnectedErrorMessage;
+  isClosed() {
+    return this._closed;
   }
 
   private _replaceGuidsWithChannels(payload: any): any {
@@ -252,8 +255,8 @@ export class Connection extends EventEmitter {
     }
     const callback = this._waitingForObject.get(guid);
     if (callback) {
-      callback(result);
       this._waitingForObject.delete(guid);
+      callback.resolve(result);
     }
     return result;
   }

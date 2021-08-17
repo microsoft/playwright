@@ -20,7 +20,7 @@ import { Page } from './page';
 import { ChannelOwner } from './channelOwner';
 import { Events } from './events';
 import { BrowserContextOptions } from './types';
-import { isSafeCloseError } from '../utils/errors';
+import { isSafeCloseError, kBrowserClosedError } from '../utils/errors';
 import * as api from '../../types/types';
 import { CDPSession } from './cdpSession';
 import type { BrowserType } from './browserType';
@@ -50,6 +50,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
 
   _setBrowserType(browserType: BrowserType) {
     this._browserType = browserType;
+    browserType._browsers.add(this);
     for (const context of this._contexts)
       context._setBrowserType(browserType);
   }
@@ -107,10 +108,12 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
   }
 
   async close(): Promise<void> {
+    if (!this._isConnected)
+      return;
     try {
       await this._wrapApiCall(async (channel: channels.BrowserChannel) => {
         if (this._remoteType === 'owns-connection')
-          this._connection.close();
+          this._connection.close(kBrowserClosedError);
         else
           await channel.close();
         await this._closedPromise;
@@ -123,6 +126,9 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
   }
 
   _didClose() {
+    for (const context of this._contexts)
+      context._didClose();
+    this._browserType._browsers.delete(this);
     this._isConnected = false;
     this.emit(Events.Browser.Disconnected, this);
   }

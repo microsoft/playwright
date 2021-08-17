@@ -17,7 +17,9 @@
 
 import * as types from './types';
 import fs from 'fs';
-import { isString, isRegExp, constructURLBasedOnBaseURL } from '../utils/utils';
+import { isString, isRegExp, constructURLBasedOnBaseURL, makeWaitForNextTask } from '../utils/utils';
+import { Connection } from './connection';
+import WebSocket from 'ws';
 
 const deprecatedHits = new Set();
 export function deprecate(methodName: string, message: string) {
@@ -142,4 +144,31 @@ export function globToRegex(glob: string): RegExp {
   }
   tokens.push('$');
   return new RegExp(tokens.join(''));
+}
+
+export function connectToWebSocket(connection: Connection, ws: WebSocket, slowMo?: number) {
+  connection.onclose = async () => {
+    ws.close();
+    if (ws.readyState !== WebSocket.CLOSED)
+      await new Promise(f => { ws.on('close', f); ws.on('error', f); });
+  };
+  connection.onmessage = message => ws.send(JSON.stringify(message));
+  ws.addEventListener('close', event => connection.close(`WebSocket server disconnected (${event.code}) ${event.reason}`));
+  ws.addEventListener('error', event => connection.close(event.message + '. Most likely ws endpoint is incorrect'));
+  // The 'ws' module in node sometimes sends us multiple messages in a single task.
+  const waitForNextTask = slowMo ? (cb: () => void) => setTimeout(cb, slowMo) : makeWaitForNextTask();
+  ws.addEventListener('message', event => {
+    waitForNextTask(() => {
+      try {
+        // Since we may slow down the messages but close synchronously,
+        // we might come here with a message after close.
+        if (!connection.isClosed())
+          connection.dispatch(JSON.parse(event.data));
+      } catch (e) {
+        console.error(`Playwright: Connection dispatch error`);
+        console.error(e);
+        connection.close(e.message);
+      }
+    });
+  });
 }

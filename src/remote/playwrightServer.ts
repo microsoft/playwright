@@ -89,6 +89,7 @@ export class PlaywrightServer {
     this._wsServer = new ws.Server({ server, path });
     this._wsServer.on('connection', async socket => {
       if (this._clientsCount && !this._delegate.allowMultipleClients) {
+        debugLog('Too many clients, closing incoming connection');
         socket.close();
         return;
       }
