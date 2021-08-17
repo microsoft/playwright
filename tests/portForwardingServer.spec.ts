@@ -22,7 +22,7 @@ import fs from 'fs';
 import net from 'net';
 
 import { contextTest, expect } from './config/browserTest';
-import { PlaywrightClient } from '../lib/remote/playwrightClient';
+import { PlaywrightClient } from '../lib/client/playwrightClient';
 import { createGuid } from '../src/utils/utils';
 import type { PlaywrightServerOptions } from '../src/remote/playwrightServer';
 import type { LaunchOptions, ConnectOptions } from '../index';
@@ -78,11 +78,11 @@ const it = contextTest.extend<{ pageFactory: (options?: PageFactoryOptions) => P
           acceptForwardedPorts,
         });
         playwrightServers.push(server);
-        const service = await PlaywrightClient.connect({
+        const client = new PlaywrightClient();
+        const playwright = await client.connect({
           wsEndpoint: await server.wsEndpoint(),
-          forwardPorts,
+          _forwardPorts: forwardPorts,
         });
-        const playwright = service.playwright();
         const browser = await playwright[browserName].launch(browserOptions);
         return await browser.newPage();
       }

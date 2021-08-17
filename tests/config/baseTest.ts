@@ -22,7 +22,7 @@ import socks from 'socksv5';
 import { installCoverageHooks } from './coverage';
 import * as childProcess from 'child_process';
 import { start } from '../../lib/outofprocess';
-import { PlaywrightClient } from '../../lib/remote/playwrightClient';
+import { PlaywrightClient } from '../../lib/client/playwrightClient';
 import type { LaunchOptions } from '../../index';
 
 export type BrowserName = 'chromium' | 'firefox' | 'webkit';
@@ -73,8 +73,8 @@ class ServiceMode {
       });
     });
     this._serviceProcess.on('exit', this._onExit);
-    this._client = await PlaywrightClient.connect({wsEndpoint: `ws://localhost:${port}/ws`});
-    return this._client.playwright();
+    this._client = new PlaywrightClient();
+    return await this._client.connect({wsEndpoint: `ws://localhost:${port}/ws`});
   }
 
   async teardown() {

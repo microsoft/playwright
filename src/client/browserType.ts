@@ -19,16 +19,13 @@ import { Browser } from './browser';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { LaunchOptions, LaunchServerOptions, ConnectOptions, LaunchPersistentContextOptions, BrowserContextOptions } from './types';
-import WebSocket from 'ws';
-import { Connection } from './connection';
 import { Events } from './events';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { ChildProcess } from 'child_process';
 import { envObjectToArray } from './clientHelper';
-import { assert, headersObjectToArray, makeWaitForNextTask, getUserAgent } from '../utils/utils';
-import { kBrowserClosedError } from '../utils/errors';
+import { assert, headersObjectToArray, getUserAgent } from '../utils/utils';
 import * as api from '../../types/types';
-import type { Playwright } from './playwright';
+import { PlaywrightClient } from './playwrightClient';
 
 export interface BrowserServerLauncher {
   launchServer(options?: LaunchServerOptions): Promise<api.BrowserServer>;
@@ -129,105 +126,26 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
     return this._connect(optionsOrWsEndpoint.wsEndpoint, optionsOrWsEndpoint);
   }
   async _connect(wsEndpoint: string, params: Partial<ConnectOptions> = {}): Promise<Browser> {
-    const logger = params.logger;
-    const paramsHeaders = Object.assign({'User-Agent': getUserAgent()}, params.headers);
     return this._wrapApiCall(async () => {
       if ((params as any).__testHookBeforeCreateBrowser)
         await (params as any).__testHookBeforeCreateBrowser();
 
-      const ws = new WebSocket(wsEndpoint, [], {
-        perMessageDeflate: false,
-        maxPayload: 256 * 1024 * 1024, // 256Mb,
-        handshakeTimeout: this._timeoutSettings.timeout(params),
-        headers: paramsHeaders,
-      });
-      const connection = new Connection(() => ws.close());
+      let browser: Browser | undefined = undefined;
+      const client = new PlaywrightClient();
+      const playwright = await client.connect({ ...params, wsEndpoint });
 
-      // The 'ws' module in node sometimes sends us multiple messages in a single task.
-      const waitForNextTask = params.slowMo
-        ? (cb: () => any) => setTimeout(cb, params.slowMo)
-        : makeWaitForNextTask();
-      connection.onmessage = message => {
-        // Connection should handle all outgoing message in disconnected().
-        if (ws.readyState !== WebSocket.OPEN)
-          return;
-        ws.send(JSON.stringify(message));
-      };
-      ws.addEventListener('message', event => {
-        waitForNextTask(() => {
-          try {
-            // Since we may slow down the messages, but disconnect
-            // synchronously, we might come here with a message
-            // after disconnect.
-            if (!connection.isDisconnected())
-              connection.dispatch(JSON.parse(event.data));
-          } catch (e) {
-            console.error(`Playwright: Connection dispatch error`);
-            console.error(e);
-            ws.close();
-          }
-        });
-      });
-
-      let timeoutCallback = (e: Error) => {};
-      const timeoutPromise = new Promise<Browser>((f, r) => timeoutCallback = r);
-      const timer = params.timeout ? setTimeout(() => timeoutCallback(new Error(`Timeout ${params.timeout}ms exceeded.`)), params.timeout) : undefined;
-
-      const successPromise = new Promise<Browser>(async (fulfill, reject) => {
-        ws.addEventListener('open', async () => {
-          const prematureCloseListener = (event: { code: number, reason: string }) => {
-            reject(new Error(`WebSocket server disconnected (${event.code}) ${event.reason}`));
-          };
-          ws.addEventListener('close', prematureCloseListener);
-          const playwright = await connection.waitForObjectWithKnownName('Playwright') as Playwright;
-
-          if (!playwright._initializer.preLaunchedBrowser) {
-            reject(new Error('Malformed endpoint. Did you use launchServer method?'));
-            ws.close();
-            return;
-          }
-
-          if (params._forwardPorts) {
-            try {
-              await playwright._enablePortForwarding(params._forwardPorts);
-            } catch (err) {
-              reject(err);
-              ws.close();
-              return;
-            }
-          }
-
-          const browser = Browser.from(playwright._initializer.preLaunchedBrowser!);
-          browser._logger = logger;
-          browser._remoteType = 'owns-connection';
-          browser._setBrowserType((playwright as any)[browser._name]);
-
-          ws.removeEventListener('close', prematureCloseListener);
-
-          const closeListener = () => {
-            browser.off(Events.Browser.Disconnected, closeListener);
-            ws.removeEventListener('close', closeListener);
-            connection.didDisconnect(kBrowserClosedError);
-            ws.close();
-          };
-          ws.addEventListener('close', closeListener);
-          browser.on(Events.Browser.Disconnected, closeListener);
-
-          fulfill(browser);
-        });
-        ws.addEventListener('error', event => {
-          ws.close();
-          reject(new Error(event.message + '. Most likely ws endpoint is incorrect'));
-        });
-      });
-
-      try {
-        return await Promise.race([successPromise, timeoutPromise]);
-      } finally {
-        if (timer)
-          clearTimeout(timer);
+      if (!playwright._initializer.preLaunchedBrowser) {
+        await client.close();
+        throw new Error('Malformed endpoint. Did you use launchServer method?');
       }
-    }, logger);
+
+      browser = Browser.from(playwright._initializer.preLaunchedBrowser!);
+      browser._logger = params.logger;
+      browser._remoteType = 'owns-connection';
+      browser._setBrowserType(playwright[browser._name as 'chromium' | 'firefox' | 'webkit']);
+      browser.on(Events.Browser.Disconnected, () => client.close());
+      return browser;
+    }, params.logger);
   }
 
   connectOverCDP(options: api.ConnectOverCDPOptions  & { wsEndpoint?: string }): Promise<api.Browser>;
