@@ -165,11 +165,11 @@ test('should report expect steps', async ({ runInlineTest }) => {
         process.stdout.write(chunk);
       }
       onStepBegin(test, result, step) {
-        const copy = { ...step, startTime: undefined, duration: undefined };
+        const copy = { ...step, startTime: undefined, duration: undefined, steps: undefined };
         console.log('%%%% begin', JSON.stringify(copy));
       }
       onStepEnd(test, result, step) {
-        const copy = { ...step, startTime: undefined, duration: undefined };
+        const copy = { ...step, startTime: undefined, duration: undefined, steps: undefined };
         if (copy.error?.stack)
           copy.error.stack = '<stack>';
         console.log('%%%% end', JSON.stringify(copy));
@@ -244,11 +244,11 @@ test('should report api steps', async ({ runInlineTest }) => {
         console.log('%%%% test end ' + test.title);
       }
       onStepBegin(test, result, step) {
-        const copy = { ...step, startTime: undefined, duration: undefined };
+        const copy = { ...step, startTime: undefined, duration: undefined, steps: undefined };
         console.log('%%%% begin', JSON.stringify(copy));
       }
       onStepEnd(test, result, step) {
-        const copy = { ...step, startTime: undefined, duration: undefined };
+        const copy = { ...step, startTime: undefined, duration: undefined, steps: undefined };
         if (copy.error?.stack)
           copy.error.stack = '<stack>';
         console.log('%%%% end', JSON.stringify(copy));
@@ -335,11 +335,11 @@ test('should report api step failure', async ({ runInlineTest }) => {
         process.stdout.write(chunk);
       }
       onStepBegin(test, result, step) {
-        const copy = { ...step, startTime: undefined, duration: undefined };
+        const copy = { ...step, startTime: undefined, duration: undefined, steps: undefined };
         console.log('%%%% begin', JSON.stringify(copy));
       }
       onStepEnd(test, result, step) {
-        const copy = { ...step, startTime: undefined, duration: undefined };
+        const copy = { ...step, startTime: undefined, duration: undefined, steps: undefined };
         if (copy.error?.stack)
           copy.error.stack = '<stack>';
         console.log('%%%% end', JSON.stringify(copy));
@@ -388,11 +388,11 @@ test('should report test.step', async ({ runInlineTest }) => {
         process.stdout.write(chunk);
       }
       onStepBegin(test, result, step) {
-        const copy = { ...step, startTime: undefined, duration: undefined };
+        const copy = { ...step, startTime: undefined, duration: undefined, steps: undefined };
         console.log('%%%% begin', JSON.stringify(copy));
       }
       onStepEnd(test, result, step) {
-        const copy = { ...step, startTime: undefined, duration: undefined };
+        const copy = { ...step, startTime: undefined, duration: undefined, steps: undefined };
         if (copy.error?.stack)
           copy.error.stack = '<stack>';
         console.log('%%%% end', JSON.stringify(copy));
@@ -432,6 +432,139 @@ test('should report test.step', async ({ runInlineTest }) => {
     `%% begin {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+  ]);
+});
+
+test('should report api step hierarchy', async ({ runInlineTest }) => {
+  const expectReporterJS = `
+    class Reporter {
+      onBegin(config: FullConfig, suite: Suite) {
+        this.suite = suite;
+      }
+
+      async onEnd() {
+        const processSuite = (suite: Suite) => {
+          for (const child of suite.suites)
+            processSuite(child);
+          for (const test of suite.tests) {
+            for (const result of test.results) {
+              for (const step of result.steps) {
+                console.log('%% ' + JSON.stringify(step));
+              }
+            }
+          }
+        };
+        processSuite(this.suite);
+      }
+    }
+    module.exports = Reporter;
+  `;
+
+  const result = await runInlineTest({
+    'reporter.ts': expectReporterJS,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('pass', async ({ page }) => {
+        await test.step('outer step 1', async () => {
+          await test.step('inner step 1.1', async () => {});
+          await test.step('inner step 1.2', async () => {});
+        });
+        await test.step('outer step 2', async () => {
+          await test.step('inner step 2.1', async () => {});
+          await test.step('inner step 2.2', async () => {});
+        });
+      });
+    `
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  const objects = result.output.split('\n').filter(line => line.startsWith('%% ')).map(line => line.substring(3).trim()).filter(Boolean).map(line => JSON.parse(line));
+  const distill = step => {
+    step.duration = 1;
+    step.startTime = 'time';
+    step.steps.forEach(distill);
+  };
+  objects.forEach(distill);
+  expect(objects).toEqual([
+    {
+      category: 'hook',
+      title: 'Before Hooks',
+      duration: 1,
+      startTime: 'time',
+      steps: [
+        {
+          category: 'pw:api',
+          title: 'browserContext.newPage',
+          duration: 1,
+          startTime: 'time',
+          steps: [],
+        },
+      ],
+    },
+    {
+      category: 'test.step',
+      title: 'outer step 1',
+      duration: 1,
+      startTime: 'time',
+      steps: [
+        {
+          category: 'test.step',
+          title: 'inner step 1.1',
+          duration: 1,
+          startTime: 'time',
+          steps: [],
+        },
+        {
+          category: 'test.step',
+          title: 'inner step 1.2',
+          duration: 1,
+          startTime: 'time',
+          steps: [],
+        },
+      ],
+    },
+    {
+      category: 'test.step',
+      title: 'outer step 2',
+      duration: 1,
+      startTime: 'time',
+      steps: [
+        {
+          category: 'test.step',
+          title: 'inner step 2.1',
+          duration: 1,
+          startTime: 'time',
+          steps: [],
+        },
+        {
+          category: 'test.step',
+          title: 'inner step 2.2',
+          duration: 1,
+          startTime: 'time',
+          steps: [],
+        },
+      ],
+    },
+    {
+      category: 'hook',
+      title: 'After Hooks',
+      duration: 1,
+      startTime: 'time',
+      steps: [
+        {
+          category: 'pw:api',
+          title: 'browserContext.close',
+          duration: 1,
+          startTime: 'time',
+          steps: [],
+        },
+      ],
+    },
   ]);
 });
 

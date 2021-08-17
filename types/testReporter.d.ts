@@ -246,6 +246,10 @@ export interface TestStep {
    * An error thrown during the step execution, if any.
    */
   error?: TestError;
+  /**
+   * List of steps inside this step.
+   */
+  steps: TestStep[];
 }
 
 /**

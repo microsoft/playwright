@@ -35,7 +35,7 @@ export class Dispatcher {
   private _freeWorkers: Worker[] = [];
   private _workerClaimers: (() => void)[] = [];
 
-  private _testById = new Map<string, { test: TestCase, result: TestResult, steps: Map<string, TestStep> }>();
+  private _testById = new Map<string, { test: TestCase, result: TestResult, steps: Map<string, TestStep>, stepStack: Set<TestStep> }>();
   private _queue: TestGroup[] = [];
   private _stopCallback = () => {};
   readonly _loader: Loader;
@@ -52,7 +52,7 @@ export class Dispatcher {
       for (const test of group.tests) {
         const result = test._appendTestResult();
         // When changing this line, change the one in retry too.
-        this._testById.set(test._id, { test, result, steps: new Map() });
+        this._testById.set(test._id, { test, result, steps: new Map(), stepStack: new Set() });
       }
     }
   }
@@ -197,6 +197,7 @@ export class Dispatcher {
         if (!this._isStopped && pair.test.expectedStatus === 'passed' && pair.test.results.length < pair.test.retries + 1) {
           pair.result = pair.test._appendTestResult();
           pair.steps = new Map();
+          pair.stepStack = new Set();
           remaining.push(pair.test);
         }
       }
@@ -280,19 +281,22 @@ export class Dispatcher {
       this._reportTestEnd(test, result);
     });
     worker.on('stepBegin', (params: StepBeginPayload) => {
-      const { test, result, steps } = this._testById.get(params.testId)!;
+      const { test, result, steps, stepStack } = this._testById.get(params.testId)!;
       const step: TestStep = {
         title: params.title,
         category: params.category,
         startTime: new Date(params.wallTime),
         duration: 0,
+        steps: [],
       };
       steps.set(params.stepId, step);
-      result.steps.push(step);
+      const parentStep = [...stepStack].pop() || result;
+      parentStep.steps.push(step);
+      stepStack.add(step);
       this._reporter.onStepBegin?.(test, result, step);
     });
     worker.on('stepEnd', (params: StepEndPayload) => {
-      const { test, result, steps } = this._testById.get(params.testId)!;
+      const { test, result, steps, stepStack } = this._testById.get(params.testId)!;
       const step = steps.get(params.stepId);
       if (!step) {
         this._reporter.onStdErr?.('Internal error: step end without step begin: ' + params.stepId, test, result);
@@ -301,6 +305,7 @@ export class Dispatcher {
       step.duration = params.wallTime - step.startTime.getTime();
       if (params.error)
         step.error = params.error;
+      stepStack.delete(step);
       steps.delete(params.stepId);
       this._reporter.onStepEnd?.(test, result, step);
     });

@@ -26,6 +26,11 @@ An error thrown during the step execution, if any.
 
 Start time of this particular test step.
 
+## property: TestStep.steps
+- type: <[Array]<[TestStep]>>
+
+List of steps inside this step.
+
 ## property: TestStep.title
 - type: <[string]>
 
