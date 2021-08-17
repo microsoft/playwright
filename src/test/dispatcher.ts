@@ -282,16 +282,21 @@ export class Dispatcher {
     });
     worker.on('stepBegin', (params: StepBeginPayload) => {
       const { test, result, steps, stepStack } = this._testById.get(params.testId)!;
+      const parentStep = [...stepStack].pop();
       const step: TestStep = {
         title: params.title,
+        titlePath: () => {
+          const parentPath = parentStep?.titlePath() || [];
+          return [...parentPath, params.title];
+        },
+        parent: parentStep,
         category: params.category,
         startTime: new Date(params.wallTime),
         duration: 0,
         steps: [],
       };
       steps.set(params.stepId, step);
-      const parentStep = [...stepStack].pop() || result;
-      parentStep.steps.push(step);
+      (parentStep || result).steps.push(step);
       stepStack.add(step);
       this._reporter.onStepBegin?.(test, result, step);
     });

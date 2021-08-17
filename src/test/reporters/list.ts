@@ -19,7 +19,7 @@ import colors from 'colors/safe';
 // @ts-ignore
 import milliseconds from 'ms';
 import { BaseReporter, formatTestTitle } from './base';
-import { FullConfig, FullResult, Suite, TestCase, TestResult } from '../../../types/testReporter';
+import { FullConfig, FullResult, Suite, TestCase, TestResult, TestStep } from '../../../types/testReporter';
 
 // Allow it in the Visual Studio Code Terminal and the new Windows Terminal
 const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
@@ -30,6 +30,12 @@ class ListReporter extends BaseReporter {
   private _lastRow = 0;
   private _testRows = new Map<TestCase, number>();
   private _needNewLine = false;
+  private _liveTerminal: string | boolean | undefined;
+
+  constructor() {
+    super();
+    this._liveTerminal = process.stdout.isTTY || process.env.PWTEST_SKIP_TEST_OUTPUT;
+  }
 
   onBegin(config: FullConfig, suite: Suite) {
     super.onBegin(config, suite);
@@ -37,7 +43,7 @@ class ListReporter extends BaseReporter {
   }
 
   onTestBegin(test: TestCase) {
-    if (process.stdout.isTTY) {
+    if (this._liveTerminal) {
       if (this._needNewLine) {
         this._needNewLine = false;
         process.stdout.write('\n');
@@ -58,12 +64,28 @@ class ListReporter extends BaseReporter {
     this._dumpToStdio(test, chunk, process.stdout);
   }
 
+  onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
+    if (!this._liveTerminal)
+      return;
+    if (step.category !== 'test.step')
+      return;
+    this._updateTestLine(test, '     ' + colors.gray(formatTestTitle(this.config, test, step)));
+  }
+
+  onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
+    if (!this._liveTerminal)
+      return;
+    if (step.category !== 'test.step')
+      return;
+    this._updateTestLine(test, '     ' + colors.gray(formatTestTitle(this.config, test, step.parent)));
+  }
+
   private _dumpToStdio(test: TestCase | undefined, chunk: string | Buffer, stream: NodeJS.WriteStream) {
     if (this.config.quiet)
       return;
     const text = chunk.toString('utf-8');
     this._needNewLine = text[text.length - 1] !== '\n';
-    if (process.stdout.isTTY) {
+    if (this._liveTerminal) {
       const newLineCount = text.split('\n').length - 1;
       this._lastRow += newLineCount;
     }
@@ -86,25 +108,41 @@ class ListReporter extends BaseReporter {
         text = '\u001b[2K\u001b[0G' + colors.red(statusMark + title) + duration;
     }
 
-    const testRow = this._testRows.get(test)!;
-    // Go up if needed
-    if (process.stdout.isTTY && testRow !== this._lastRow)
-      process.stdout.write(`\u001B[${this._lastRow - testRow}A`);
-    // Erase line
-    if (process.stdout.isTTY)
-      process.stdout.write('\u001B[2K');
-    if (!process.stdout.isTTY && this._needNewLine) {
-      this._needNewLine = false;
+    if (this._liveTerminal) {
+      this._updateTestLine(test, text);
+    } else {
+      if (this._needNewLine) {
+        this._needNewLine = false;
+        process.stdout.write('\n');
+      }
+      process.stdout.write(text);
       process.stdout.write('\n');
     }
-    process.stdout.write(text);
+  }
+
+  private _updateTestLine(test: TestCase, line: string) {
+    if (process.env.PWTEST_SKIP_TEST_OUTPUT)
+      this._updateTestLineForTest(test,line);
+    else
+      this._updateTestLineForTTY(test,line);
+  }
+
+  private _updateTestLineForTTY(test: TestCase, line: string) {
+    const testRow = this._testRows.get(test)!;
+    // Go up if needed
+    if (testRow !== this._lastRow)
+      process.stdout.write(`\u001B[${this._lastRow - testRow}A`);
+    // Erase line
+    process.stdout.write('\u001B[2K');
+    process.stdout.write(line);
     // Go down if needed.
-    if (testRow !== this._lastRow) {
-      if (process.stdout.isTTY)
-        process.stdout.write(`\u001B[${this._lastRow - testRow}E`);
-      else
-        process.stdout.write('\n');
-    }
+    if (testRow !== this._lastRow)
+      process.stdout.write(`\u001B[${this._lastRow - testRow}E`);
+  }
+
+  private _updateTestLineForTest(test: TestCase, line: string) {
+    const testRow = this._testRows.get(test)!;
+    process.stdout.write(testRow + ' : ' + line + '\n');
   }
 
   async onEnd(result: FullResult) {
