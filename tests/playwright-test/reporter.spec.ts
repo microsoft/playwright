@@ -34,6 +34,32 @@ class Reporter {
 module.exports = Reporter;
 `;
 
+const stepsReporterJS = `
+class Reporter {
+  onStdOut(chunk) {
+    process.stdout.write(chunk);
+  }
+  distillStep(step) {
+    return {
+      ...step,
+      startTime: undefined,
+      duration: undefined,
+      parent: undefined,
+      steps: step.steps.length ? step.steps.map(s => this.distillStep(s)) : undefined,
+    };
+  }
+  onStepBegin(test, result, step) {
+    console.log('%%%% begin', JSON.stringify(this.distillStep(step)));
+  }
+  onStepEnd(test, result, step) {
+    if (step.error?.stack)
+      step.error.stack = '<stack>';
+    console.log('%%%% end', JSON.stringify(this.distillStep(step)));
+  }
+}
+module.exports = Reporter;
+`;
+
 test('should work with custom reporter', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': `
@@ -159,27 +185,8 @@ test('should load reporter from node_modules', async ({ runInlineTest }) => {
 });
 
 test('should report expect steps', async ({ runInlineTest }) => {
-  const expectReporterJS = `
-    class Reporter {
-      onStdOut(chunk) {
-        process.stdout.write(chunk);
-      }
-      onStepBegin(test, result, step) {
-        const copy = { ...step, startTime: undefined, duration: undefined, steps: undefined };
-        console.log('%%%% begin', JSON.stringify(copy));
-      }
-      onStepEnd(test, result, step) {
-        const copy = { ...step, startTime: undefined, duration: undefined, steps: undefined };
-        if (copy.error?.stack)
-          copy.error.stack = '<stack>';
-        console.log('%%%% end', JSON.stringify(copy));
-      }
-    }
-    module.exports = Reporter;
-  `;
-
   const result = await runInlineTest({
-    'reporter.ts': expectReporterJS,
+    'reporter.ts': stepsReporterJS,
     'playwright.config.ts': `
       module.exports = {
         reporter: './reporter',
@@ -219,46 +226,21 @@ test('should report expect steps', async ({ runInlineTest }) => {
     `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
     `%% begin {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}]}`,
     `%% begin {\"title\":\"expect.not.toHaveTitle\",\"category\":\"expect\"}`,
     `%% begin {\"title\":\"page.title\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"page.title\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"expect.not.toHaveTitle\",\"category\":\"expect\"}`,
+    `%% end {\"title\":\"expect.not.toHaveTitle\",\"category\":\"expect\",\"steps\":[{\"title\":\"page.title\",\"category\":\"pw:api\"}]}`,
     `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
     `%% begin {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"browserContext.close\",\"category\":\"pw:api\"}]}`,
   ]);
 });
 
 test('should report api steps', async ({ runInlineTest }) => {
-  const expectReporterJS = `
-    class Reporter {
-      onStdOut(chunk) {
-        process.stdout.write(chunk);
-      }
-      onTestBegin(test) {
-        console.log('%%%% test begin ' + test.title);
-      }
-      onTestEnd(test) {
-        console.log('%%%% test end ' + test.title);
-      }
-      onStepBegin(test, result, step) {
-        const copy = { ...step, startTime: undefined, duration: undefined, steps: undefined };
-        console.log('%%%% begin', JSON.stringify(copy));
-      }
-      onStepEnd(test, result, step) {
-        const copy = { ...step, startTime: undefined, duration: undefined, steps: undefined };
-        if (copy.error?.stack)
-          copy.error.stack = '<stack>';
-        console.log('%%%% end', JSON.stringify(copy));
-      }
-    }
-    module.exports = Reporter;
-  `;
-
   const result = await runInlineTest({
-    'reporter.ts': expectReporterJS,
+    'reporter.ts': stepsReporterJS,
     'playwright.config.ts': `
       module.exports = {
         reporter: './reporter',
@@ -294,11 +276,10 @@ test('should report api steps', async ({ runInlineTest }) => {
 
   expect(result.exitCode).toBe(0);
   expect(result.output.split('\n').filter(line => line.startsWith('%%')).map(stripEscapedAscii)).toEqual([
-    `%%%% test begin pass`,
     `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
     `%% begin {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}]}`,
     `%% begin {\"title\":\"page.setContent\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"page.setContent\",\"category\":\"pw:api\"}`,
     `%% begin {\"title\":\"page.click\",\"category\":\"pw:api\"}`,
@@ -306,50 +287,26 @@ test('should report api steps', async ({ runInlineTest }) => {
     `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
     `%% begin {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
-    `%%%% test end pass`,
-    `%%%% test begin pass1`,
+    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"browserContext.close\",\"category\":\"pw:api\"}]}`,
     `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
     `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
     `%% begin {\"title\":\"page.click\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"page.click\",\"category\":\"pw:api\"}`,
     `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
     `%% end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
-    `%%%% test end pass1`,
-    `%%%% test begin pass2`,
     `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
     `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
     `%% begin {\"title\":\"page.click\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"page.click\",\"category\":\"pw:api\"}`,
     `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
     `%% end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
-    `%%%% test end pass2`,
   ]);
 });
 
 
 test('should report api step failure', async ({ runInlineTest }) => {
-  const expectReporterJS = `
-    class Reporter {
-      onStdOut(chunk) {
-        process.stdout.write(chunk);
-      }
-      onStepBegin(test, result, step) {
-        const copy = { ...step, startTime: undefined, duration: undefined, steps: undefined };
-        console.log('%%%% begin', JSON.stringify(copy));
-      }
-      onStepEnd(test, result, step) {
-        const copy = { ...step, startTime: undefined, duration: undefined, steps: undefined };
-        if (copy.error?.stack)
-          copy.error.stack = '<stack>';
-        console.log('%%%% end', JSON.stringify(copy));
-      }
-    }
-    module.exports = Reporter;
-  `;
-
   const result = await runInlineTest({
-    'reporter.ts': expectReporterJS,
+    'reporter.ts': stepsReporterJS,
     'playwright.config.ts': `
       module.exports = {
         reporter: './reporter',
@@ -369,7 +326,7 @@ test('should report api step failure', async ({ runInlineTest }) => {
     `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
     `%% begin {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}]}`,
     `%% begin {\"title\":\"page.setContent\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"page.setContent\",\"category\":\"pw:api\"}`,
     `%% begin {\"title\":\"page.click\",\"category\":\"pw:api\"}`,
@@ -377,32 +334,13 @@ test('should report api step failure', async ({ runInlineTest }) => {
     `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
     `%% begin {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"browserContext.close\",\"category\":\"pw:api\"}]}`,
   ]);
 });
 
 test('should report test.step', async ({ runInlineTest }) => {
-  const expectReporterJS = `
-    class Reporter {
-      onStdOut(chunk) {
-        process.stdout.write(chunk);
-      }
-      onStepBegin(test, result, step) {
-        const copy = { ...step, startTime: undefined, duration: undefined, steps: undefined };
-        console.log('%%%% begin', JSON.stringify(copy));
-      }
-      onStepEnd(test, result, step) {
-        const copy = { ...step, startTime: undefined, duration: undefined, steps: undefined };
-        if (copy.error?.stack)
-          copy.error.stack = '<stack>';
-        console.log('%%%% end', JSON.stringify(copy));
-      }
-    }
-    module.exports = Reporter;
-  `;
-
   const result = await runInlineTest({
-    'reporter.ts': expectReporterJS,
+    'reporter.ts': stepsReporterJS,
     'playwright.config.ts': `
       module.exports = {
         reporter: './reporter',
@@ -423,15 +361,15 @@ test('should report test.step', async ({ runInlineTest }) => {
     `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
     `%% begin {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}]}`,
     `%% begin {\"title\":\"First step\",\"category\":\"test.step\"}`,
     `%% begin {\"title\":\"expect.toBe\",\"category\":\"expect\"}`,
     `%% end {\"title\":\"expect.toBe\",\"category\":\"expect\",\"error\":{\"message\":\"expect(received).toBe(expected) // Object.is equality\\n\\nExpected: 2\\nReceived: 1\",\"stack\":\"<stack>\"}}`,
-    `%% end {\"title\":\"First step\",\"category\":\"test.step\",\"error\":{\"message\":\"expect(received).toBe(expected) // Object.is equality\\n\\nExpected: 2\\nReceived: 1\",\"stack\":\"<stack>\"}}`,
+    `%% end {\"title\":\"First step\",\"category\":\"test.step\",\"steps\":[{\"title\":\"expect.toBe\",\"category\":\"expect\",\"error\":{\"message\":\"expect(received).toBe(expected) // Object.is equality\\n\\nExpected: 2\\nReceived: 1\",\"stack\":\"<stack>\"}}],\"error\":{\"message\":\"expect(received).toBe(expected) // Object.is equality\\n\\nExpected: 2\\nReceived: 1\",\"stack\":\"<stack>\"}}`,
     `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
     `%% begin {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"browserContext.close\",\"category\":\"pw:api\"}]}`,
   ]);
 });
 
@@ -442,6 +380,16 @@ test('should report api step hierarchy', async ({ runInlineTest }) => {
         this.suite = suite;
       }
 
+      distillStep(step) {
+        return {
+          ...step,
+          startTime: undefined,
+          duration: undefined,
+          parent: undefined,
+          steps: step.steps.length ? step.steps.map(s => this.distillStep(s)) : undefined,
+        };
+      }
+    
       async onEnd() {
         const processSuite = (suite: Suite) => {
           for (const child of suite.suites)
@@ -449,7 +397,7 @@ test('should report api step hierarchy', async ({ runInlineTest }) => {
           for (const test of suite.tests) {
             for (const result of test.results) {
               for (const step of result.steps) {
-                console.log('%% ' + JSON.stringify(step));
+                console.log('%% ' + JSON.stringify(this.distillStep(step)));
               }
             }
           }
@@ -484,84 +432,52 @@ test('should report api step hierarchy', async ({ runInlineTest }) => {
 
   expect(result.exitCode).toBe(0);
   const objects = result.output.split('\n').filter(line => line.startsWith('%% ')).map(line => line.substring(3).trim()).filter(Boolean).map(line => JSON.parse(line));
-  const distill = step => {
-    step.duration = 1;
-    step.startTime = 'time';
-    step.steps.forEach(distill);
-  };
-  objects.forEach(distill);
   expect(objects).toEqual([
     {
       category: 'hook',
       title: 'Before Hooks',
-      duration: 1,
-      startTime: 'time',
       steps: [
         {
           category: 'pw:api',
           title: 'browserContext.newPage',
-          duration: 1,
-          startTime: 'time',
-          steps: [],
         },
       ],
     },
     {
       category: 'test.step',
       title: 'outer step 1',
-      duration: 1,
-      startTime: 'time',
       steps: [
         {
           category: 'test.step',
           title: 'inner step 1.1',
-          duration: 1,
-          startTime: 'time',
-          steps: [],
         },
         {
           category: 'test.step',
           title: 'inner step 1.2',
-          duration: 1,
-          startTime: 'time',
-          steps: [],
         },
       ],
     },
     {
       category: 'test.step',
       title: 'outer step 2',
-      duration: 1,
-      startTime: 'time',
       steps: [
         {
           category: 'test.step',
           title: 'inner step 2.1',
-          duration: 1,
-          startTime: 'time',
-          steps: [],
         },
         {
           category: 'test.step',
           title: 'inner step 2.2',
-          duration: 1,
-          startTime: 'time',
-          steps: [],
         },
       ],
     },
     {
       category: 'hook',
       title: 'After Hooks',
-      duration: 1,
-      startTime: 'time',
       steps: [
         {
           category: 'pw:api',
           title: 'browserContext.close',
-          duration: 1,
-          startTime: 'time',
-          steps: [],
         },
       ],
     },

@@ -60,6 +60,8 @@ export interface TestResult {
 
 export interface TestStep {
   title: string;
+  titlePath(): string[];
+  parent?: TestStep;
   category: string,
   startTime: Date;
   duration: number;
