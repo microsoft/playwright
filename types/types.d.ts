@@ -2070,8 +2070,6 @@ export interface Page {
    * element immediately before performing an action, so a series of actions on the same locator can in fact be performed on
    * different DOM elements. That would happen if the DOM structure between those actions has changed.
    *
-   * Note that locator always implies visibility, so it will always be locating visible elements.
-   *
    * Shortcut for main frame's [frame.locator(selector)](https://playwright.dev/docs/api/class-frame#frame-locator).
    * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    */
@@ -4338,8 +4336,6 @@ export interface Frame {
    * The method returns an element locator that can be used to perform actions in the frame. Locator is resolved to the
    * element immediately before performing an action, so a series of actions on the same locator can in fact be performed on
    * different DOM elements. That would happen if the DOM structure between those actions has changed.
-   *
-   * Note that locator always implies visibility, so it will always be locating visible elements.
    * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    */
   locator(selector: string): Locator;
