@@ -95,6 +95,51 @@ await locator.HoverAsync();
 await locator.ClickAsync();
 ```
 
+**Strictness**
+
+Locators are strict. This means that all operations on locators that imply
+some target DOM element will throw if more than one element matches given
+selector.
+
+```js
+// Throws if there are several buttons in DOM:
+await page.locator('button').click();
+
+// Works because we explicitly tell locator to pick the first element:
+await page.locator('button').first().click();
+```
+
+```python async
+# Throws if there are several buttons in DOM:
+await page.locator('button').click()
+
+# Works because we explicitly tell locator to pick the first element:
+await page.locator('button').first.click()
+```
+
+```python sync
+# Throws if there are several buttons in DOM:
+page.locator('button').click()
+
+# Works because we explicitly tell locator to pick the first element:
+page.locator('button').first.click()
+```
+
+```java
+// Throws if there are several buttons in DOM:
+page.locator("button").click();
+
+// Works because you explicitly tell locator to pick the first element:
+page.locator("button").first().click();
+```
+
+```csharp
+// Throws if there are several buttons in DOM:
+await page.Locator("button").ClickAsync();
+// Works because you explicitly tell locator to pick the first element:
+await page.Locator("button").First.ClickAsync();
+```
+
 ## async method: Locator.allInnerTexts
 - returns: <[Array]<[string]>>
 
