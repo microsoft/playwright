@@ -183,8 +183,14 @@ export class SnapshotServer {
       if (isTextEncoding && !contentType.includes('charset'))
         contentType = `${contentType}; charset=utf-8`;
       response.setHeader('Content-Type', contentType);
-      for (const { name, value } of resource.responseHeaders)
-        response.setHeader(name, value);
+      for (const { name, value } of resource.responseHeaders) {
+        try {
+          response.setHeader(name, value.split('\n'));
+        } catch (e) {
+          // Browser is able to handle the header, but Node is not.
+          // Swallow the error since we cannot do anything meaningful.
+        }
+      }
 
       response.removeHeader('Content-Encoding');
       response.removeHeader('Access-Control-Allow-Origin');

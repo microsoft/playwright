@@ -18,8 +18,9 @@ import { contextTest, expect } from './config/browserTest';
 import { InMemorySnapshotter } from '../lib/server/snapshot/inMemorySnapshotter';
 import { HttpServer } from '../lib/utils/httpServer';
 import { SnapshotServer } from '../lib/server/snapshot/snapshotServer';
+import type { Frame } from '..';
 
-const it = contextTest.extend<{ snapshotPort: number, snapshotter: InMemorySnapshotter }>({
+const it = contextTest.extend<{ snapshotPort: number, snapshotter: InMemorySnapshotter, showSnapshot: (snapshot: any) => Promise<Frame> }>({
   snapshotPort: async ({}, run, testInfo) => {
     await run(11000 + testInfo.workerIndex);
   },
@@ -34,6 +35,25 @@ const it = contextTest.extend<{ snapshotPort: number, snapshotter: InMemorySnaps
     await run(snapshotter);
     await snapshotter.dispose();
     await httpServer.stop();
+  },
+
+  showSnapshot: async ({ contextFactory, snapshotPort }, use) => {
+    await use(async (snapshot: any) => {
+      const previewContext = await contextFactory();
+      const previewPage = await previewContext.newPage();
+      previewPage.on('console', console.log);
+      await previewPage.goto(`http://localhost:${snapshotPort}/snapshot/`);
+      const frameSnapshot = snapshot.snapshot();
+      await previewPage.evaluate(snapshotId => {
+        (window as any).showSnapshot(snapshotId);
+      }, `${frameSnapshot.pageId}?name=${frameSnapshot.snapshotName}`);
+      // wait for the render frame to load
+      while (previewPage.frames().length < 2)
+        await new Promise(f => previewPage.once('frameattached', f));
+      const frame = previewPage.frames()[1];
+      await frame.waitForLoadState();
+      return frame;
+    });
   },
 });
 
@@ -129,7 +149,7 @@ it.describe('snapshots', () => {
     expect(snapshotter.resourceContent(resource.responseSha1).toString()).toBe('button { color: blue; }');
   });
 
-  it('should capture iframe', async ({ page, contextFactory, server, toImpl, browserName, snapshotter, snapshotPort }) => {
+  it('should capture iframe', async ({ page, server, toImpl, browserName, snapshotter, showSnapshot }) => {
     it.skip(browserName === 'firefox');
 
     await page.route('**/empty.html', route => {
@@ -158,15 +178,10 @@ it.describe('snapshots', () => {
     }
 
     // Render snapshot, check expectations.
-    const previewContext = await contextFactory();
-    const previewPage = await previewContext.newPage();
-    await previewPage.goto(`http://localhost:${snapshotPort}/snapshot/`);
-    await previewPage.evaluate(snapshotId => {
-      (window as any).showSnapshot(snapshotId);
-    }, `${snapshot.snapshot().pageId}?name=snapshot${counter}`);
-    while (previewPage.frames().length < 3)
-      await new Promise(f => previewPage.once('frameattached', f));
-    const button = await previewPage.frames()[2].waitForSelector('button');
+    const frame = await showSnapshot(snapshot);
+    while (frame.childFrames().length < 1)
+      await new Promise(f => frame.page().once('frameattached', f));
+    const button = await frame.childFrames()[0].waitForSelector('button');
     expect(await button.textContent()).toBe('Hello iframe');
   });
 
@@ -203,7 +218,7 @@ it.describe('snapshots', () => {
     }
   });
 
-  it('should contain adopted style sheets', async ({ page, toImpl, contextFactory, snapshotPort, snapshotter, browserName }) => {
+  it('should contain adopted style sheets', async ({ page, toImpl, showSnapshot, snapshotter, browserName }) => {
     it.skip(browserName !== 'chromium', 'Constructed stylesheets are only in Chromium.');
     await page.setContent('<button>Hello</button>');
     await page.evaluate(() => {
@@ -223,30 +238,19 @@ it.describe('snapshots', () => {
     });
     const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
 
-    const previewContext = await contextFactory();
-    const previewPage = await previewContext.newPage();
-    previewPage.on('console', console.log);
-    await previewPage.goto(`http://localhost:${snapshotPort}/snapshot/`);
-    await previewPage.evaluate(snapshotId => {
-      (window as any).showSnapshot(snapshotId);
-    }, `${snapshot1.snapshot().pageId}?name=snapshot1`);
-    // wait for the render frame to load
-    while (previewPage.frames().length < 2)
-      await new Promise(f => previewPage.once('frameattached', f));
-    // wait for it to render
-    await previewPage.frames()[1].waitForSelector('button');
-    const buttonColor = await previewPage.frames()[1].$eval('button', button => {
+    const frame = await showSnapshot(snapshot1);
+    await frame.waitForSelector('button');
+    const buttonColor = await frame.$eval('button', button => {
       return window.getComputedStyle(button).color;
     });
     expect(buttonColor).toBe('rgb(255, 0, 0)');
-    const divColor = await previewPage.frames()[1].$eval('div', div => {
+    const divColor = await frame.$eval('div', div => {
       return window.getComputedStyle(div).color;
     });
     expect(divColor).toBe('rgb(0, 0, 255)');
-    await previewContext.close();
   });
 
-  it('should restore scroll positions', async ({ page, contextFactory, toImpl, snapshotter, snapshotPort, browserName }) => {
+  it('should restore scroll positions', async ({ page, showSnapshot, toImpl, snapshotter, browserName }) => {
     it.skip(browserName === 'firefox');
 
     await page.setContent(`
@@ -274,15 +278,27 @@ it.describe('snapshots', () => {
     const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'scrolled');
 
     // Render snapshot, check expectations.
-    const previewContext = await contextFactory();
-    const previewPage = await previewContext.newPage();
-    await previewPage.goto(`http://localhost:${snapshotPort}/snapshot/`);
-    await previewPage.evaluate(snapshotId => {
-      (window as any).showSnapshot(snapshotId);
-    }, `${snapshot.snapshot().pageId}?name=scrolled`);
-    const div = await previewPage.frames()[1].waitForSelector('div');
-    await previewPage.frames()[1].waitForLoadState();
+    const frame = await showSnapshot(snapshot);
+    const div = await frame.waitForSelector('div');
     expect(await div.evaluate(div => div.scrollTop)).toBe(136);
+  });
+
+  it('should handle multiple headers', async ({ page, server, showSnapshot, toImpl, snapshotter, browserName }) => {
+    it.skip(browserName === 'firefox');
+
+    server.setRoute('/foo.css', (req, res) => {
+      res.statusCode = 200;
+      res.setHeader('vary', ['accepts-encoding', 'accepts-encoding']);
+      res.end('body { padding: 42px }');
+    });
+
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent(`<head><link rel=stylesheet href="/foo.css"></head><body><div>Hello</div></body>`);
+    const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot');
+    const frame = await showSnapshot(snapshot);
+    await frame.waitForSelector('div');
+    const padding = await frame.$eval('body', body => window.getComputedStyle(body).paddingLeft);
+    expect(padding).toBe('42px');
   });
 });
 
