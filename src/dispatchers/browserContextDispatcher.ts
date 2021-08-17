@@ -192,10 +192,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async tracingExport(params: channels.BrowserContextTracingExportParams): Promise<channels.BrowserContextTracingExportResult> {
-    const result = await this._context.tracing.export();
-    return {
-      trace: new ArtifactDispatcher(this._scope, result.trace),
-      video: result.video.map(artifact => new ArtifactDispatcher(this._scope, artifact)),
-    };
+    const artifact = await this._context.tracing.export();
+    return { artifact: new ArtifactDispatcher(this._scope, artifact) };
   }
 }

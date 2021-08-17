@@ -136,8 +136,6 @@ Whether to record video for all pages.
 Alternatively, specifies the dimensions of the recorded video. Actual picture of each page will be scaled down if necessary to fit the specified size.
 
 ## async method: Tracing.stop
-- returns: <[Object]>
-  - `videoFiles` <[Array]<[string]>> The list of video files created next to the exported trace file.
 
 Stop tracing.
 
@@ -145,5 +143,3 @@ Stop tracing.
 - `path` <[path]>
 
 Export trace into the file with the given name.
-
-If started with the `video` option, a few additional video files will be exported next to the trace file.

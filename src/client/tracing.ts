@@ -17,7 +17,6 @@
 import * as api from '../../types/types';
 import { Size } from '../common/types';
 import * as channels from '../protocol/channels';
-import { addSuffixToFilePath } from '../utils/utils';
 import { Artifact } from './artifact';
 import { BrowserContext } from './browserContext';
 
@@ -39,35 +38,22 @@ export class Tracing implements api.Tracing {
   }
 
   async _export(options: { path: string }) {
-    return await this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
-      return await this._doExport(channel, options.path);
+    await this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
+      await this._doExport(channel, options.path);
     });
   }
 
   async stop(options: { path?: string } = {}) {
-    return await this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
-      const result = options.path ? await this._doExport(channel, options.path) : { videoFiles: [] };
+    await this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
+      if (options.path)
+        await this._doExport(channel, options.path);
       await channel.tracingStop();
-      return result;
     });
   }
 
-  private async _doExport(channel: channels.BrowserContextChannel, path: string): Promise<{ videoFiles: string[] }> {
+  private async _doExport(channel: channels.BrowserContextChannel, path: string) {
     const result = await channel.tracingExport();
-    const videoFiles: string[] = [];
-    await Promise.all([
-      this._saveAndDelete(result.trace, path),
-      ...result.video.map((artifact, index) => {
-        const videoPath = addSuffixToFilePath(path, '-video-' + (index + 1), '.webm');
-        videoFiles.push(videoPath);
-        return this._saveAndDelete(artifact, videoPath);
-      }),
-    ]);
-    return { videoFiles };
-  }
-
-  private async _saveAndDelete(artifactChannel: channels.ArtifactChannel, path: string) {
-    const artifact = Artifact.from(artifactChannel);
+    const artifact = Artifact.from(result.artifact);
     if (this._context.browser()?._remoteType)
       artifact._isRemote = true;
     await artifact.saveAs(path);

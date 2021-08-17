@@ -17,6 +17,7 @@
 import { expect, contextTest as test, browserTest } from './config/browserTest';
 import yauzl from 'yauzl';
 import jpeg from 'jpeg-js';
+import fs from 'fs';
 import { registry } from '../src/utils/registry';
 import { spawnSync } from 'child_process';
 
@@ -220,41 +221,43 @@ test('should record video on and off', async ({ context, page, server }, testInf
   await page.setContent('<button>Click</button>');
   await page.waitForTimeout(1000);
   // @ts-expect-error
-  const { videoFiles: videoFiles1 } = await context.tracing._export({ path: testInfo.outputPath('trace1.zip') });
+  await context.tracing._export({ path: testInfo.outputPath('trace1.zip') });
+  const { videos: videoFiles1 } = await parseTrace(testInfo.outputPath('trace1.zip'));
 
   await context.tracing.start({ video: true });
   await page.click('button');
   await page.waitForTimeout(1000);
   // @ts-expect-error
-  const { videoFiles: videoFiles2 } = await context.tracing._export({ path: testInfo.outputPath('trace2.zip') });
+  await context.tracing._export({ path: testInfo.outputPath('trace2.zip') });
+  const { videos: videoFiles2 } = await parseTrace(testInfo.outputPath('trace2.zip'));
 
   await context.tracing.start({ video: { width: 320, height: 240 } });
   await page.click('button');
   await page.waitForTimeout(1000);
   // @ts-expect-error
-  const { videoFiles: videoFiles3 } = await context.tracing._export({ path: testInfo.outputPath('trace3.zip') });
+  await context.tracing._export({ path: testInfo.outputPath('trace3.zip') });
+  const { videos: videoFiles3 } = await parseTrace(testInfo.outputPath('trace3.zip'));
 
   await page.click('button');
-  const { videoFiles: videoFiles4 } = await context.tracing.stop({ path: testInfo.outputPath('trace4.zip') });
+  await context.tracing.stop({ path: testInfo.outputPath('trace4.zip') });
+  const { videos: videoFiles4 } = await parseTrace(testInfo.outputPath('trace4.zip'));
   await context.close();
 
-  expect(videoFiles1).toEqual([]);
+  expect(videoFiles1).toHaveLength(0);
 
-  expect(videoFiles2).toEqual([
-    testInfo.outputPath('trace2-video-1.webm'),
-  ]);
-  const videoPlayer2 = new VideoPlayer(videoFiles2[0]);
+  expect(videoFiles2).toHaveLength(1);
+  fs.writeFileSync(testInfo.outputPath('video2.webm'), videoFiles2[0]);
+  const videoPlayer2 = new VideoPlayer(testInfo.outputPath('video2.webm'));
   expect(videoPlayer2.videoWidth).toBe(800);
   expect(videoPlayer2.videoHeight).toBe(600);
 
-  expect(videoFiles3).toEqual([
-    testInfo.outputPath('trace3-video-1.webm'),
-  ]);
-  const videoPlayer3 = new VideoPlayer(videoFiles3[0]);
+  expect(videoFiles3).toHaveLength(1);
+  fs.writeFileSync(testInfo.outputPath('video3.webm'), videoFiles3[0]);
+  const videoPlayer3 = new VideoPlayer(testInfo.outputPath('video3.webm'));
   expect(videoPlayer3.videoWidth).toBe(320);
   expect(videoPlayer3.videoHeight).toBe(240);
 
-  expect(videoFiles4).toEqual([]);
+  expect(videoFiles4).toHaveLength(0);
 });
 
 test('should throw for video when recordVideo option is set', async ({ browser }, testInfo) => {
@@ -318,7 +321,7 @@ test('should reset and export', async ({ context, page, server }, testInfo) => {
   expect(trace2.events.some(e => e.type === 'frame-snapshot')).toBeTruthy();
 });
 
-async function parseTrace(file: string): Promise<{ events: any[], resources: Map<string, Buffer> }> {
+async function parseTrace(file: string): Promise<{ events: any[], resources: Map<string, Buffer>, videos: string[] }> {
   const entries = await new Promise<any[]>(f => {
     const entries: Promise<any>[] = [];
     yauzl.open(file, (err, zipFile) => {
@@ -340,12 +343,18 @@ async function parseTrace(file: string): Promise<{ events: any[], resources: Map
     });
   });
   const resources = new Map<string, Buffer>();
-  for (const { name, buffer } of await Promise.all(entries))
-    resources.set(name, buffer);
+  const videos: string[] = [];
+  for (const { name, buffer } of await Promise.all(entries)) {
+    if (name.endsWith('.webm'))
+      videos.push(buffer);
+    else
+      resources.set(name, buffer);
+  }
   const events = resources.get('trace.trace').toString().split('\n').map(line => line ? JSON.parse(line) : false).filter(Boolean);
   return {
     events,
     resources,
+    videos,
   };
 }
 

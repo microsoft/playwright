@@ -202,7 +202,7 @@ export class Tracing implements InstrumentationListener {
     await this._snapshotter.dispose();
   }
 
-  async export(): Promise<{ trace: Artifact, video: Artifact[] }> {
+  async export(): Promise<Artifact> {
     for (const { sdkObject, metadata, beforeSnapshot, actionSnapshot, afterSnapshot } of this._pendingCalls.values()) {
       await Promise.all([beforeSnapshot, actionSnapshot, afterSnapshot]);
       let callMetadata = metadata;
@@ -222,10 +222,12 @@ export class Tracing implements InstrumentationListener {
     // Chain the export operation against write operations,
     // so that neither trace file nor sha1s change during the export.
     return await this._appendTraceOperation(async () => {
+      const recording = this._recording!;
+
       await this._snapshotter.checkpoint();
       await this._stopVideoRecording();
+      const videoFiles = await Promise.all(recording.videoArtifacts.map(artifact => artifact.localPathAfterFinished()));
 
-      const recording = this._recording!;
       let state = recording;
       // Make a filtered trace if needed.
       if (recording.lastReset)
@@ -238,6 +240,10 @@ export class Tracing implements InstrumentationListener {
         const zipFileName = state.traceFile + '.zip';
         for (const sha1 of state.sha1s)
           zipFile.addFile(path.join(this._resourcesDir!, sha1), path.join('resources', sha1));
+        for (const videoFile of videoFiles) {
+          if (videoFile)
+            zipFile.addFile(videoFile, path.basename(videoFile));
+        }
         zipFile.end();
         await new Promise(f => {
           zipFile.outputStream.pipe(fs.createWriteStream(zipFileName)).on('close', f);
@@ -246,17 +252,14 @@ export class Tracing implements InstrumentationListener {
         artifact.reportFinished();
         fulfill(artifact);
       });
-      const traceArtifact = await Promise.race([failedPromise, succeededPromise]).finally(async () => {
+      return Promise.race([failedPromise, succeededPromise]).finally(async () => {
         // Remove the filtered trace.
         if (recording.lastReset)
           await fs.promises.unlink(state.traceFile).catch(() => {});
+        // Clear videos.
+        recording.video = false;
+        recording.videoArtifacts = [];
       });
-
-      await Promise.all(recording.videoArtifacts.map(artifact => artifact.finishedPromise()));
-      const result = { trace: traceArtifact, video: recording.videoArtifacts };
-      recording.videoArtifacts = [];
-      recording.video = false;
-      return result;
     });
   }
 

@@ -650,10 +650,7 @@ BrowserContext:
 
     tracingExport:
       returns:
-        trace: Artifact
-        video:
-          type: array
-          items: Artifact
+        artifact: Artifact
 
   events:
 

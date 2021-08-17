@@ -882,8 +882,7 @@ export type BrowserContextTracingStopResult = void;
 export type BrowserContextTracingExportParams = {};
 export type BrowserContextTracingExportOptions = {};
 export type BrowserContextTracingExportResult = {
-  trace: ArtifactChannel,
-  video: ArtifactChannel[],
+  artifact: ArtifactChannel,
 };
 
 // ----------- Page -----------

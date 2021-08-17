@@ -12038,16 +12038,9 @@ export interface Tracing {
   stop(options?: {
     /**
      * Export trace into the file with the given name.
-     *
-     * If started with the `video` option, a few additional video files will be exported next to the trace file.
      */
     path?: string;
-  }): Promise<{
-    /**
-     * The list of video files created next to the exported trace file.
-     */
-    videoFiles: Array<string>;
-  }>;
+  }): Promise<void>;
 }
 
 /**
