@@ -684,7 +684,7 @@ export class Frame extends SdkObject {
 
   async querySelector(selector: string, options: types.StrictOptions): Promise<dom.ElementHandle<Element> | null> {
     debugLogger.log('api', `    finding element using the selector "${selector}"`);
-    return this._page.selectors._query(this, selector, !!options.strict);
+    return this._page.selectors.query(this, selector, options);
   }
 
   async waitForSelector(metadata: CallMetadata, selector: string, options: types.WaitForElementOptions = {}): Promise<dom.ElementHandle<Element> | null> {
@@ -696,7 +696,7 @@ export class Frame extends SdkObject {
     const { state = 'visible' } = options;
     if (!['attached', 'detached', 'visible', 'hidden'].includes(state))
       throw new Error(`state: expected one of (attached|detached|visible|hidden)`);
-    const info = this._page.selectors._parseSelector(selector, !!options.strict);
+    const info = this._page.parseSelector(selector, options);
     const task = dom.waitForSelectorTask(info, state);
     return controller.run(async progress => {
       progress.log(`waiting for selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);
@@ -725,7 +725,7 @@ export class Frame extends SdkObject {
 
   async dispatchEvent(metadata: CallMetadata, selector: string, type: string, eventInit?: Object, options: types.QueryOnSelectorOptions = {}): Promise<void> {
     const controller = new ProgressController(metadata, this);
-    const info = this._page.selectors._parseSelector(selector, !!options.strict);
+    const info = this._page.parseSelector(selector, options);
     const task = dom.dispatchEventTask(info, type, eventInit || {});
     await controller.run(async progress => {
       progress.log(`Dispatching "${type}" event on selector "${selector}"...`);
@@ -938,7 +938,7 @@ export class Frame extends SdkObject {
     selector: string,
     strict: boolean,
     action: (handle: dom.ElementHandle<Element>) => Promise<R | 'error:notconnected'>): Promise<R> {
-    const info = this._page.selectors._parseSelector(selector, strict);
+    const info = this._page.parseSelector(selector, { strict });
     while (progress.isRunning()) {
       progress.log(`waiting for selector "${selector}"`);
       const task = dom.waitForSelectorTask(info, 'attached');
@@ -1031,7 +1031,7 @@ export class Frame extends SdkObject {
 
   async textContent(metadata: CallMetadata, selector: string, options: types.QueryOnSelectorOptions = {}): Promise<string | null> {
     const controller = new ProgressController(metadata, this);
-    const info = this._page.selectors._parseSelector(selector, !!options.strict);
+    const info = this._page.parseSelector(selector, options);
     const task = dom.textContentTask(info);
     return controller.run(async progress => {
       progress.log(`  retrieving textContent from "${selector}"`);
@@ -1041,7 +1041,7 @@ export class Frame extends SdkObject {
 
   async innerText(metadata: CallMetadata, selector: string, options: types.QueryOnSelectorOptions = {}): Promise<string> {
     const controller = new ProgressController(metadata, this);
-    const info = this._page.selectors._parseSelector(selector, !!options.strict);
+    const info = this._page.parseSelector(selector, options);
     const task = dom.innerTextTask(info);
     return controller.run(async progress => {
       progress.log(`  retrieving innerText from "${selector}"`);
@@ -1052,7 +1052,7 @@ export class Frame extends SdkObject {
 
   async innerHTML(metadata: CallMetadata, selector: string, options: types.QueryOnSelectorOptions = {}): Promise<string> {
     const controller = new ProgressController(metadata, this);
-    const info = this._page.selectors._parseSelector(selector, !!options.strict);
+    const info = this._page.parseSelector(selector, options);
     const task = dom.innerHTMLTask(info);
     return controller.run(async progress => {
       progress.log(`  retrieving innerHTML from "${selector}"`);
@@ -1062,7 +1062,7 @@ export class Frame extends SdkObject {
 
   async getAttribute(metadata: CallMetadata, selector: string, name: string, options: types.QueryOnSelectorOptions = {}): Promise<string | null> {
     const controller = new ProgressController(metadata, this);
-    const info = this._page.selectors._parseSelector(selector, !!options.strict);
+    const info = this._page.parseSelector(selector, options);
     const task = dom.getAttributeTask(info, name);
     return controller.run(async progress => {
       progress.log(`  retrieving attribute "${name}" from "${selector}"`);
@@ -1072,7 +1072,7 @@ export class Frame extends SdkObject {
 
   async inputValue(metadata: CallMetadata, selector: string, options: types.TimeoutOptions & types.StrictOptions = {}): Promise<string> {
     const controller = new ProgressController(metadata, this);
-    const info = this._page.selectors._parseSelector(selector, !!options.strict);
+    const info = this._page.parseSelector(selector, options);
     const task = dom.inputValueTask(info);
     return controller.run(async progress => {
       progress.log(`  retrieving value from "${selector}"`);
@@ -1082,7 +1082,7 @@ export class Frame extends SdkObject {
 
   private async _checkElementState(metadata: CallMetadata, selector: string, state: ElementStateWithoutStable, options: types.QueryOnSelectorOptions = {}): Promise<boolean> {
     const controller = new ProgressController(metadata, this);
-    const info = this._page.selectors._parseSelector(selector, !!options.strict);
+    const info = this._page.parseSelector(selector, options);
     const task = dom.elementStateTask(info, state);
     const result = await controller.run(async progress => {
       progress.log(`  checking "${state}" state of "${selector}"`);

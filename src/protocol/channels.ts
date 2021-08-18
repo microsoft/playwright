@@ -342,6 +342,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
     omitContent?: boolean,
     path: string,
   },
+  strictSelectors?: boolean,
   userDataDir: string,
   slowMo?: number,
 };
@@ -413,6 +414,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
     omitContent?: boolean,
     path: string,
   },
+  strictSelectors?: boolean,
   slowMo?: number,
 };
 export type BrowserTypeLaunchPersistentContextResult = {
@@ -504,6 +506,7 @@ export type BrowserNewContextParams = {
     omitContent?: boolean,
     path: string,
   },
+  strictSelectors?: boolean,
   proxy?: {
     server: string,
     bypass?: string,
@@ -562,6 +565,7 @@ export type BrowserNewContextOptions = {
     omitContent?: boolean,
     path: string,
   },
+  strictSelectors?: boolean,
   proxy?: {
     server: string,
     bypass?: string,
@@ -2766,6 +2770,7 @@ export type ElectronLaunchParams = {
       height: number,
     },
   },
+  strictSelectors?: boolean,
   timezoneId?: string,
 };
 export type ElectronLaunchOptions = {
@@ -2801,6 +2806,7 @@ export type ElectronLaunchOptions = {
       height: number,
     },
   },
+  strictSelectors?: boolean,
   timezoneId?: string,
 };
 export type ElectronLaunchResult = {
@@ -3132,6 +3138,7 @@ export type AndroidDeviceLaunchBrowserParams = {
     omitContent?: boolean,
     path: string,
   },
+  strictSelectors?: boolean,
   proxy?: {
     server: string,
     bypass?: string,
@@ -3177,6 +3184,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
     omitContent?: boolean,
     path: string,
   },
+  strictSelectors?: boolean,
   proxy?: {
     server: string,
     bypass?: string,

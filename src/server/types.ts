@@ -274,6 +274,7 @@ export type BrowserContextOptions = {
     omitContent?: boolean,
     path: string
   },
+  strictSelectors?: boolean,
   proxy?: ProxySettings,
   baseURL?: string,
   _debugName?: string,
