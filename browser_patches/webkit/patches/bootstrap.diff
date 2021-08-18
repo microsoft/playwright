@@ -22395,6 +22395,25 @@ index 296c902f375b1189f45ee56bb3ffd4d826dd26f6..45d8ca4bdd18e2467b26b0c6998b4dc5
 +
 +
  } // namespace WTR
+diff --git a/Tools/glib/apply-build-revision-to-files.py b/Tools/glib/apply-build-revision-to-files.py
+index a40c717362536ff5117160cd1a2d5f9f25594e3b..d20cd71927194c1d0966cc2e29673e72ef6912d3 100644
+--- a/Tools/glib/apply-build-revision-to-files.py
++++ b/Tools/glib/apply-build-revision-to-files.py
+@@ -37,7 +37,13 @@ def get_build_revision():
+                     revision = "r%s" % contents.decode('utf-8').strip()
+                     break
+         elif os.path.isdir('.git'):
+-            commit_message = subprocess.check_output(("git", "log", "-1", "--pretty=%B", "origin/HEAD"), stderr=devnull)
++            try:
++                commit_message = subprocess.check_output(("git", "log", "-1", "--pretty=%B", "origin/HEAD"), stderr=devnull)
++            except subprocess.CalledProcessError:
++                # This may happen with shallow checkouts whose HEAD has been
++                # modified; there is no origin reference anymore, and git
++                # will fail - let's pretend that this is not a repo at all
++                commit_message = ""
+             # Commit messages tend to be huge and the metadata we're looking
+             # for is at the very end. Also a spoofed 'Canonical link' mention
+             # could appear early on. So make sure we get the right metadata by
 diff --git a/Tools/glib/dependencies/apt b/Tools/glib/dependencies/apt
 index 02fa9bff0ab4bd094fd9498b042e06f35c25e7fc..f33f29a9a26d1219aa5780b1860792353a70f4ee 100644
 --- a/Tools/glib/dependencies/apt
