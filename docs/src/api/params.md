@@ -511,6 +511,13 @@ contexts override the proxy, global proxy will be never used and can be any stri
 `launch({ proxy: { server: 'http://per-context' } })`.
 :::
 
+## context-option-strict
+- `strictSelectors` <[boolean]>
+
+It specified, enables strict selectors mode for this context. In the strict selectors mode all operations
+on selectors that imply single target DOM element will throw when more than one element matches the selector.
+See [Locator] to learn more about the strict mode.
+
 ## select-options-values
 * langs: java, js, csharp
 - `values` <[null]|[string]|[ElementHandle]|[Array]<[string]>|[Object]|[Array]<[ElementHandle]>|[Array]<[Object]>>
@@ -637,6 +644,7 @@ using the [`method: AndroidDevice.setDefaultTimeout`] method.
 - %%-context-option-recordvideo-%%
 - %%-context-option-recordvideo-dir-%%
 - %%-context-option-recordvideo-size-%%
+- %%-context-option-strict-%%
 
 ## browser-option-args
 - `args` <[Array]<[string]>>

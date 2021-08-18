@@ -251,6 +251,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       omitContent: tOptional(tBoolean),
       path: tString,
     })),
+    strictSelectors: tOptional(tBoolean),
     userDataDir: tString,
     slowMo: tOptional(tNumber),
   });
@@ -311,6 +312,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       omitContent: tOptional(tBoolean),
       path: tString,
     })),
+    strictSelectors: tOptional(tBoolean),
     proxy: tOptional(tObject({
       server: tString,
       bypass: tOptional(tString),
@@ -1090,6 +1092,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
         height: tNumber,
       })),
     })),
+    strictSelectors: tOptional(tBoolean),
     timezoneId: tOptional(tString),
   });
   scheme.ElectronApplicationBrowserWindowParams = tObject({
@@ -1232,6 +1235,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       omitContent: tOptional(tBoolean),
       path: tString,
     })),
+    strictSelectors: tOptional(tBoolean),
     proxy: tOptional(tObject({
       server: tString,
       bypass: tOptional(tString),

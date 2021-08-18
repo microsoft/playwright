@@ -672,7 +672,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async querySelector(selector: string, options: types.StrictOptions): Promise<ElementHandle | null> {
-    return this._page.selectors._query(this._context.frame, selector, !!options.strict, this);
+    return this._page.selectors.query(this._context.frame, selector, options, this);
   }
 
   async querySelectorAll(selector: string): Promise<ElementHandle<Element>[]> {
@@ -680,7 +680,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async evalOnSelectorAndWaitForSignals(selector: string, strict: boolean, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
-    const handle = await this._page.selectors._query(this._context.frame, selector, strict, this);
+    const handle = await this._page.selectors.query(this._context.frame, selector, { strict }, this);
     if (!handle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
     const result = await handle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
@@ -743,7 +743,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const { state = 'visible' } = options;
     if (!['attached', 'detached', 'visible', 'hidden'].includes(state))
       throw new Error(`state: expected one of (attached|detached|visible|hidden)`);
-    const info = this._page.selectors._parseSelector(selector, !!options.strict);
+    const info = this._page.parseSelector(selector, options);
     const task = waitForSelectorTask(info, state, this);
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
