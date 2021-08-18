@@ -270,3 +270,18 @@ test('should allow nonAscii characters in the output dir', async ({ runInlineTes
   const outputDir = result.output.split('\n').filter(x => x.startsWith('%%'))[0].slice('%%'.length);
   expect(outputDir).toBe(path.join(testInfo.outputDir, 'test-results', 'my-test-こんにちは世界'));
 });
+
+test('should allow include the describe name the output dir', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'my-test.spec.js': `
+      const { test } = pwt;
+      test.describe('hello', () => {
+        test('world', async ({}, testInfo) => {
+          console.log('\\n%%' + testInfo.outputDir);
+        });
+      });
+    `,
+  });
+  const outputDir = result.output.split('\n').filter(x => x.startsWith('%%'))[0].slice('%%'.length);
+  expect(outputDir).toBe(path.join(testInfo.outputDir, 'test-results', 'my-test-hello-world'));
+});
