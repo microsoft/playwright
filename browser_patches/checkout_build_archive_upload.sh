@@ -458,7 +458,7 @@ else
   fi
   # Upload logs only in case of failure and report failure.
   ./upload.sh "${LOG_BLOB_PATH}" ${LOG_PATH} || true
-  send_telegram_message "$BUILD_ALIAS -- ${FAILED_STEP} failed! ❌ <a href='https://playwright.azureedge.net/builds/${LOG_BLOB_PATH}'>${LOG_BLOB_NAME}</a> <a href='$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/runs/$GITHUB_RUN_ID?check_suite_focus=true'>GitHub Action Logs</a>"
+  send_telegram_message "$BUILD_ALIAS -- ${FAILED_STEP} failed! ❌ <a href='https://playwright.azureedge.net/builds/${LOG_BLOB_PATH}'>${LOG_BLOB_NAME}</a> <a href='$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/runs/$GITHUB_RUN_NUMBER?check_suite_focus=true'>GitHub Action Logs</a>"
   exit 1
 fi
 

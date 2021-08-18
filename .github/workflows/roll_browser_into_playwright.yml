@@ -23,7 +23,7 @@ jobs:
       id: prepare-branch
       run: |
         BASE_POSITION="${{ steps.bump-chromium.outputs.BASE_POSITION }}"
-        BRANCH_NAME="roll-${{ github.event.client_payload.browser }}/${{ github.event.client_payload.revision }}"
+        BRANCH_NAME="roll-into-pw-${{ github.event.client_payload.browser }}/${{ github.event.client_payload.revision }}"
         echo "::set-output name=BRANCH_NAME::$BRANCH_NAME"
         git config --global user.name github-actions
         git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
