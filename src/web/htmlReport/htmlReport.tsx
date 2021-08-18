@@ -128,7 +128,8 @@ const SuiteTreeItem: React.FC<{
   </div>
   } loadChildren={() => {
     const suiteChildren = suite?.suites.map((s, i) => <SuiteTreeItem key={i} suite={s} setSelectedTest={setSelectedTest} selectedTest={selectedTest} depth={depth + 1} showFileName={false}></SuiteTreeItem>) || [];
-    const testChildren = suite?.tests.map((t, i) => <TestTreeItem key={i} test={t} setSelectedTest={setSelectedTest} selectedTest={selectedTest} showFileName={false} depth={depth + 1}></TestTreeItem>) || [];
+    const suiteCount = suite ? suite.suites.length : 0;
+    const testChildren = suite?.tests.map((t, i) => <TestTreeItem key={i + suiteCount} test={t} setSelectedTest={setSelectedTest} selectedTest={selectedTest} showFileName={false} depth={depth + 1}></TestTreeItem>) || [];
     return [...suiteChildren, ...testChildren];
   }} depth={depth}></TreeItem>;
 };
@@ -169,12 +170,13 @@ const TestOverview: React.FC<{
   test: JsonTestCase,
   result: JsonTestResult,
 }> = ({ test, result }) => {
-  const { screenshots, attachmentsMap } = React.useMemo(() => {
+  const { screenshots, video, attachmentsMap } = React.useMemo(() => {
     const attachmentsMap = new Map<string, JsonAttachment>();
     const screenshots = result.attachments.filter(a => a.name === 'screenshot');
+    const video = result.attachments.filter(a => a.name === 'video');
     for (const a of result.attachments)
       attachmentsMap.set(a.name, a);
-    return { attachmentsMap, screenshots };
+    return { attachmentsMap, screenshots, video };
   }, [ result ]);
   return <div className="test-result">
     <div className='test-overview-title'>{test?.title}</div>
@@ -184,6 +186,12 @@ const TestOverview: React.FC<{
     {attachmentsMap.has('expected') && attachmentsMap.has('actual') && <ImageDiff actual={attachmentsMap.get('actual')!} expected={attachmentsMap.get('expected')!} diff={attachmentsMap.get('diff')}></ImageDiff>}
     {!!screenshots.length && <div className='test-overview-title'>Screenshots</div>}
     {screenshots.map(a => <div className='image-preview'><img src={'resources/' + a.sha1} /></div>)}
+    {!!video.length && <div className='test-overview-title'>Video</div>}
+    {video.map(a => <div className='image-preview'>
+      <video controls>
+        <source src={'resources/' + a.sha1} type={a.contentType}/>
+      </video>
+    </div>)}
     {!!result.attachments && <div className='test-overview-title'>Attachments</div>}
     {result.attachments.map(a => <AttachmentLink attachment={a}></AttachmentLink>)}
     <div className='test-overview-title'></div>
