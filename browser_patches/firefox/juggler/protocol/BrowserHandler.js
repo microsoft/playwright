@@ -305,7 +305,12 @@ async function waitForWindowClosed(browserWindow) {
   await new Promise((resolve => {
     const listener = {
       onCloseWindow: window => {
-        if (window === browserWindow) {
+        let domWindow;
+        if (window instanceof Ci.nsIAppWindow)
+          domWindow = window.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowInternal || Ci.nsIDOMWindow);
+        else
+          domWindow = window;
+        if (domWindow === browserWindow) {
           Services.wm.removeListener(listener);
           resolve();
         }
