@@ -30,7 +30,7 @@ import { FileChooser } from './fileChooser';
 import { Progress, ProgressController } from './progress';
 import { assert, isError } from '../utils/utils';
 import { debugLogger } from '../utils/debugLogger';
-import { Selectors } from './selectors';
+import { SelectorInfo, Selectors } from './selectors';
 import { CallMetadata, SdkObject } from './instrumentation';
 import { Artifact } from './artifact';
 
@@ -505,6 +505,11 @@ export class Page extends SdkObject {
 
   firePageError(error: Error) {
     this.emit(Page.Events.PageError, error);
+  }
+
+  parseSelector(selector: string, options?: types.StrictOptions): SelectorInfo {
+    const strict = typeof options?.strict === 'boolean' ? options.strict : !!this.context()._options.strictSelectors;
+    return this.selectors.parseSelector(selector, strict);
   }
 }
 

@@ -323,6 +323,7 @@ ContextOptions:
       properties:
         omitContent: boolean?
         path: string
+    strictSelectors: boolean?
 
 
 Playwright:
@@ -2393,6 +2394,7 @@ Electron:
               properties:
                 width: number
                 height: number
+        strictSelectors: boolean?
         timezoneId: string?
 
       returns:
@@ -2659,6 +2661,7 @@ AndroidDevice:
           properties:
             omitContent: boolean?
             path: string
+        strictSelectors: boolean?
         proxy:
           type: object?
           properties:

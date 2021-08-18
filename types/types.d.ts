@@ -8511,6 +8511,13 @@ export interface BrowserType<Unused = {}> {
     slowMo?: number;
 
     /**
+     * It specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
+     * that imply single target DOM element will throw when more than one element matches the selector. See [Locator] to learn
+     * more about the strict mode.
+     */
+    strictSelectors?: boolean;
+
+    /**
      * Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to
      * disable timeout.
      */
@@ -9563,6 +9570,13 @@ export interface AndroidDevice {
     };
 
     /**
+     * It specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
+     * that imply single target DOM element will throw when more than one element matches the selector. See [Locator] to learn
+     * more about the strict mode.
+     */
+    strictSelectors?: boolean;
+
+    /**
      * Changes the timezone of the context. See
      * [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
      * for a list of supported timezone IDs.
@@ -10416,6 +10430,13 @@ export interface Browser extends EventEmitter {
         }>;
       }>;
     };
+
+    /**
+     * It specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
+     * that imply single target DOM element will throw when more than one element matches the selector. See [Locator] to learn
+     * more about the strict mode.
+     */
+    strictSelectors?: boolean;
 
     /**
      * Changes the timezone of the context. See
@@ -12534,6 +12555,13 @@ export interface BrowserContextOptions {
       }>;
     }>;
   };
+
+  /**
+   * It specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
+   * that imply single target DOM element will throw when more than one element matches the selector. See [Locator] to learn
+   * more about the strict mode.
+   */
+  strictSelectors?: boolean;
 
   /**
    * Changes the timezone of the context. See
