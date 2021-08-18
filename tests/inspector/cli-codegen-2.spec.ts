@@ -16,6 +16,7 @@
 
 import { test, expect } from './inspectorTest';
 import * as url from 'url';
+import fs from 'fs';
 
 test.describe('cli codegen', () => {
   test.skip(({ mode }) => mode !== 'default');
@@ -636,5 +637,12 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`page.waitForNavigation(/*{ url: '${server.EMPTY_PAGE}' }*/)`);
+  });
+
+  test('should --save-trace', async ({ runCLI }, testInfo) => {
+    const traceFileName = testInfo.outputPath('trace.zip');
+    const cli = runCLI([`--save-trace=${traceFileName}`]);
+    await cli.exited;
+    expect(fs.existsSync(traceFileName)).toBeTruthy();
   });
 });
