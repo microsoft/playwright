@@ -115,6 +115,26 @@ it('should use proxy for second page', async ({contextFactory, server}) => {
   await context.close();
 });
 
+it('should use proxy for https urls', async ({ contextFactory, server, httpsServer, proxyServer }) => {
+  httpsServer.setRoute('/target.html', async (req, res) => {
+    res.end('<html><title>Served by the proxy</title></html>');
+  });
+  let connectedToProxy = false;
+  proxyServer.onConnect(req => {
+    req.url = `localhost:${httpsServer.PORT}`;
+    connectedToProxy = true;
+  });
+  const context = await contextFactory({
+    ignoreHTTPSErrors: true,
+    proxy: { server: `localhost:${proxyServer.PORT}` }
+  });
+  const page = await context.newPage();
+  await page.goto('https://non-existent.com/target.html');
+  expect(connectedToProxy).toBeTruthy();
+  expect(await page.title()).toBe('Served by the proxy');
+  await context.close();
+});
+
 it('should work with IP:PORT notion', async ({contextFactory, server}) => {
   server.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by the proxy</title></html>');
