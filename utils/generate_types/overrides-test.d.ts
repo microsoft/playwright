@@ -29,6 +29,7 @@ export type ReporterDescription =
   [string] | [string, any];
 
 export type Shard = { total: number, current: number } | null;
+export type ReportFlakyFailures = 'all' | 'none';
 export type ReportSlowTests = { max: number, threshold: number } | null;
 export type PreserveOutput = 'always' | 'never' | 'failures-only';
 export type UpdateSnapshots = 'all' | 'none' | 'missing';
@@ -108,6 +109,7 @@ interface TestConfig {
   projects?: Project[];
   quiet?: boolean;
   reporter?: LiteralUnion<'list'|'dot'|'line'|'json'|'junit'|'null', string> | ReporterDescription[];
+  reportFlakyFailures?: ReportFlakyFailures;
   reportSlowTests?: ReportSlowTests;
   shard?: Shard;
   updateSnapshots?: UpdateSnapshots;
@@ -143,6 +145,7 @@ export interface FullConfig {
   preserveOutput: PreserveOutput;
   projects: FullProject[];
   reporter: ReporterDescription[];
+  reportFlakyFailures: ReportFlakyFailures;
   reportSlowTests: ReportSlowTests;
   rootDir: string;
   quiet: boolean;

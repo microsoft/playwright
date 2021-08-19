@@ -30,6 +30,7 @@ export type ReporterDescription =
   [string] | [string, any];
 
 export type Shard = { total: number, current: number } | null;
+export type ReportFlakyFailures = 'all' | 'none';
 export type ReportSlowTests = { max: number, threshold: number } | null;
 export type PreserveOutput = 'always' | 'never' | 'failures-only';
 export type UpdateSnapshots = 'all' | 'none' | 'missing';
@@ -672,6 +673,12 @@ interface TestConfig {
    */
   reporter?: LiteralUnion<'list'|'dot'|'line'|'json'|'junit'|'null', string> | ReporterDescription[];
   /**
+   * Whether to show failure details for flaky test runs. Defaults to `'none'`.
+   * - `'all'` - Show failure details for all flaky runs.
+   * - `'none'` - Do not show failure details for flaky runs.
+   */
+  reportFlakyFailures?: ReportFlakyFailures;
+  /**
    * Whether to report slow tests. Pass `null` to disable this feature.
    *
    * Tests that took more than `threshold` milliseconds are considered slow, and the slowest ones are reported, no more than
@@ -1017,6 +1024,12 @@ export interface FullConfig {
    *
    */
   reporter: ReporterDescription[];
+  /**
+   * Whether to show failure details for flaky test runs. Defaults to `'none'`.
+   * - `'all'` - Show failure details for all flaky runs.
+   * - `'none'` - Do not show failure details for flaky runs.
+   */
+  reportFlakyFailures: ReportFlakyFailures;
   /**
    * Whether to report slow tests. Pass `null` to disable this feature.
    *

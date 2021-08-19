@@ -207,6 +207,13 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
+## property: TestConfig.reportFlakyFailures
+- type: <[ReportFlakyFailures]<"all"|"none">>
+
+Whether to show failure details for flaky test runs. Defaults to `'none'`.
+* `'all'` - Show failure details for all flaky runs.
+* `'none'` - Do not show failure details for flaky runs.
+
 ## property: TestConfig.reportSlowTests
 - type: <[Object]>
   - `max` <[int]> The maximum number of slow tests to report. Defaults to `5`.

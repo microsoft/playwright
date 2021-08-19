@@ -95,6 +95,7 @@ export class Loader {
     this._fullConfig.maxFailures = takeFirst(this._configOverrides.maxFailures, this._config.maxFailures, baseFullConfig.maxFailures);
     this._fullConfig.preserveOutput = takeFirst<PreserveOutput>(this._configOverrides.preserveOutput, this._config.preserveOutput, baseFullConfig.preserveOutput);
     this._fullConfig.reporter = takeFirst(toReporters(this._configOverrides.reporter as any), resolveReporters(this._config.reporter, rootDir), baseFullConfig.reporter);
+    this._fullConfig.reportFlakyFailures = takeFirst(this._configOverrides.reportFlakyFailures, this._config.reportFlakyFailures, baseFullConfig.reportFlakyFailures);
     this._fullConfig.reportSlowTests = takeFirst(this._configOverrides.reportSlowTests, this._config.reportSlowTests, baseFullConfig.reportSlowTests);
     this._fullConfig.quiet = takeFirst(this._configOverrides.quiet, this._config.quiet, baseFullConfig.quiet);
     this._fullConfig.shard = takeFirst(this._configOverrides.shard, this._config.shard, baseFullConfig.shard);
@@ -420,6 +421,7 @@ const baseFullConfig: FullConfig = {
   preserveOutput: 'always',
   projects: [],
   reporter: [ ['list'] ],
+  reportFlakyFailures: 'none',
   reportSlowTests: null,
   rootDir: path.resolve(process.cwd()),
   quiet: false,

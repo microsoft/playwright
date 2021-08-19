@@ -110,9 +110,13 @@ export class BaseReporter implements Reporter  {
       }
     });
 
-    if (full && (unexpected.length || skippedWithError.length)) {
+    const failuresToPrint: TestCase[] = [...unexpected, ...skippedWithError];
+    if (this.config.reportFlakyFailures === 'all')
+      failuresToPrint.push(...flaky);
+
+    if (full && failuresToPrint.length) {
       console.log('');
-      this._printFailures([...unexpected, ...skippedWithError]);
+      this._printFailures(failuresToPrint);
     }
 
     this._printSlowTests();
