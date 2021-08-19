@@ -107,6 +107,7 @@ for (const [name, url] of Object.entries(vues)) {
       await page.evaluate(() => {
         const anotherRoot = document.createElement('div');
         document.body.append(anotherRoot);
+        // @ts-ignore
         window.mountApp(anotherRoot);
       });
       await expect(page.locator(`_vue=book-item`)).toHaveCount(6);

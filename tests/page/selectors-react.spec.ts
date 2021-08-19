@@ -110,6 +110,7 @@ for (const [name, url] of Object.entries(reacts)) {
       await page.evaluate(() => {
         const anotherRoot = document.createElement('div');
         document.body.append(anotherRoot);
+        // @ts-ignore
         window.mountApp(anotherRoot);
       });
       await expect(page.locator(`_react=BookItem`)).toHaveCount(6);
