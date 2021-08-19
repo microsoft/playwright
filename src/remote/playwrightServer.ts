@@ -50,7 +50,7 @@ export class PlaywrightServer {
           playwright = createPlaywright();
           const dispatcher = new PlaywrightDispatcher(rootScope, playwright);
           if (process.env.PW_SOCKS_PROXY_PORT)
-            dispatcher.enableSocksProxy(+process.env.PW_SOCKS_PROXY_PORT);
+            await dispatcher.enableSocksProxy();
           return dispatcher;
         });
         return () => {

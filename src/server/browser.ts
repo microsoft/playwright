@@ -33,8 +33,9 @@ export interface BrowserProcess {
 }
 
 export type PlaywrightOptions = {
-  rootSdkObject: SdkObject,
-  selectors: Selectors,
+  rootSdkObject: SdkObject;
+  selectors: Selectors;
+  socksProxyPort?: number;
 };
 
 export type BrowserOptions = PlaywrightOptions & {
