@@ -57,6 +57,7 @@ test('should be able to connect two browsers at the same time', async ({browserT
   expect(browser1.contexts().length).toBe(1);
 
   await browser1.close();
+  expect(browser2.contexts().length).toBe(1);
   const page2 = await browser2.newPage();
   expect(await page2.evaluate(() => 7 * 6)).toBe(42); // original browser should still work
 

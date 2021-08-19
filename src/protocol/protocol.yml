@@ -325,6 +325,16 @@ ContextOptions:
         path: string
     strictSelectors: boolean?
 
+Root:
+  type: interface
+
+  commands:
+
+    initialize:
+      parameters:
+        language: string
+      returns:
+        playwright: Playwright
 
 Playwright:
   type: interface

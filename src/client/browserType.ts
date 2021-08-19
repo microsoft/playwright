@@ -28,7 +28,6 @@ import { envObjectToArray } from './clientHelper';
 import { assert, headersObjectToArray, makeWaitForNextTask, getUserAgent } from '../utils/utils';
 import { kBrowserClosedError } from '../utils/errors';
 import * as api from '../../types/types';
-import type { Playwright } from './playwright';
 
 export interface BrowserServerLauncher {
   launchServer(options?: LaunchServerOptions): Promise<api.BrowserServer>;
@@ -182,7 +181,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
             reject(new Error(`WebSocket server disconnected (${event.code}) ${event.reason}`));
           };
           ws.addEventListener('close', prematureCloseListener);
-          const playwright = await connection.waitForObjectWithKnownName('Playwright') as Playwright;
+          const playwright = await connection.initializePlaywright();
 
           if (!playwright._initializer.preLaunchedBrowser) {
             reject(new Error('Malformed endpoint. Did you use launchServer method?'));

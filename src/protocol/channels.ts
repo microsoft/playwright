@@ -152,6 +152,21 @@ export type InterceptedResponse = {
   }[],
 };
 
+// ----------- Root -----------
+export type RootInitializer = {};
+export interface RootChannel extends Channel {
+  initialize(params: RootInitializeParams, metadata?: Metadata): Promise<RootInitializeResult>;
+}
+export type RootInitializeParams = {
+  language: string,
+};
+export type RootInitializeOptions = {
+
+};
+export type RootInitializeResult = {
+  playwright: PlaywrightChannel,
+};
+
 // ----------- Playwright -----------
 export type PlaywrightInitializer = {
   chromium: BrowserTypeChannel,
