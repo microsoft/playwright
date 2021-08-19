@@ -104,6 +104,16 @@ for (const [name, url] of Object.entries(reacts)) {
     it('should support truthy querying', async ({page}) => {
       expect(await page.$$eval(`_react=ColorButton[enabled]`, els => els.length)).toBe(5);
     });
+
+    it('should work with multiroot react', async ({page}) => {
+      await expect(page.locator(`_react=BookItem`)).toHaveCount(3);
+      await page.evaluate(() => {
+        const anotherRoot = document.createElement('div');
+        document.body.append(anotherRoot);
+        window.mountApp(anotherRoot);
+      });
+      await expect(page.locator(`_react=BookItem`)).toHaveCount(6);
+    });
   });
 }
 

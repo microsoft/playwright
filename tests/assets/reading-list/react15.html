@@ -101,9 +101,7 @@ class App extends React.Component {
   }
 }
 
-ReactDOM.render(
-  e(App, null, null),
-  document.getElementById('root'),
-);
+window.mountApp = element => ReactDOM.render(e(App, null, null), element);
+window.mountApp(document.getElementById('root'));
 
 </script>

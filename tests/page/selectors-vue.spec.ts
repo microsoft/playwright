@@ -101,6 +101,16 @@ for (const [name, url] of Object.entries(vues)) {
     it('should support truthy querying', async ({page}) => {
       expect(await page.$$eval(`_vue=color-button[enabled]`, els => els.length)).toBe(5);
     });
+
+    it('should work with multiroot react', async ({page}) => {
+      await expect(page.locator(`_vue=book-item`)).toHaveCount(3);
+      await page.evaluate(() => {
+        const anotherRoot = document.createElement('div');
+        document.body.append(anotherRoot);
+        window.mountApp(anotherRoot);
+      });
+      await expect(page.locator(`_vue=book-item`)).toHaveCount(6);
+    });
   });
 }
 
