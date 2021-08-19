@@ -27,8 +27,9 @@ import { eventsHelper, RegisteredListener } from '../../../utils/eventsHelper';
 import { CallMetadata, InstrumentationListener, SdkObject } from '../../instrumentation';
 import { Page } from '../../page';
 import * as trace from '../common/traceEvents';
-import { TraceSnapshotter } from './traceSnapshotter';
 import { commandsWithTracingSnapshots } from '../../../protocol/channels';
+import { Snapshotter, SnapshotterBlob, SnapshotterDelegate } from '../../snapshot/snapshotter';
+import { FrameSnapshot, ResourceSnapshot } from '../../snapshot/snapshotTypes';
 
 export type TracerOptions = {
   name?: string;
@@ -47,9 +48,9 @@ type RecordingState = {
 
 const kScreencastOptions = { width: 800, height: 600, quality: 90 };
 
-export class Tracing implements InstrumentationListener {
-  private _appendEventChain = Promise.resolve();
-  private _snapshotter: TraceSnapshotter;
+export class Tracing implements InstrumentationListener, SnapshotterDelegate {
+  private _writeChain = Promise.resolve();
+  private _snapshotter: Snapshotter;
   private _screencastListeners: RegisteredListener[] = [];
   private _pendingCalls = new Map<string, { sdkObject: SdkObject, metadata: CallMetadata, beforeSnapshot: Promise<void>, actionSnapshot?: Promise<void>, afterSnapshot?: Promise<void> }>();
   private _context: BrowserContext;
@@ -57,12 +58,13 @@ export class Tracing implements InstrumentationListener {
   private _recording: RecordingState | undefined;
   private _isStopping = false;
   private _tracesDir: string;
+  private _allResources = new Set<string>();
 
   constructor(context: BrowserContext) {
     this._context = context;
     this._tracesDir = context._browser.options.tracesDir;
     this._resourcesDir = path.join(this._tracesDir, 'resources');
-    this._snapshotter = new TraceSnapshotter(this._context, this._resourcesDir, traceEvent => this._appendTraceEvent(traceEvent));
+    this._snapshotter = new Snapshotter(context, this);
   }
 
   async start(options: TracerOptions): Promise<void> {
@@ -76,7 +78,7 @@ export class Tracing implements InstrumentationListener {
       // and conflict.
       const traceFile = path.join(this._tracesDir, (options.name || createGuid()) + '.trace');
       this._recording = { options, traceFile, lastReset: 0, sha1s: new Set() };
-      this._appendEventChain = mkdirIfNeeded(traceFile);
+      this._writeChain = mkdirIfNeeded(traceFile);
       const event: trace.ContextCreatedTraceEvent = {
         version: VERSION,
         type: 'context-options',
@@ -140,13 +142,14 @@ export class Tracing implements InstrumentationListener {
     this._stopScreencast();
     await this._snapshotter.stop();
     // Ensure all writes are finished.
-    await this._appendEventChain;
+    await this._writeChain;
     this._recording = undefined;
     this._isStopping = false;
   }
 
   async dispose() {
-    await this._snapshotter.dispose();
+    this._snapshotter.dispose();
+    await this._writeChain;
   }
 
   async export(): Promise<Artifact> {
@@ -169,8 +172,6 @@ export class Tracing implements InstrumentationListener {
     // Chain the export operation against write operations,
     // so that neither trace file nor sha1s change during the export.
     return await this._appendTraceOperation(async () => {
-      await this._snapshotter.checkpoint();
-
       const recording = this._recording!;
       let state = recording;
       // Make a filtered trace if needed.
@@ -183,7 +184,7 @@ export class Tracing implements InstrumentationListener {
         zipFile.addFile(state.traceFile, 'trace.trace');
         const zipFileName = state.traceFile + '.zip';
         for (const sha1 of state.sha1s)
-          zipFile.addFile(path.join(this._resourcesDir!, sha1), path.join('resources', sha1));
+          zipFile.addFile(path.join(this._resourcesDir, sha1), path.join('resources', sha1));
         zipFile.end();
         await new Promise(f => {
           zipFile.outputStream.pipe(fs.createWriteStream(zipFileName)).on('close', f);
@@ -250,7 +251,7 @@ export class Tracing implements InstrumentationListener {
       return;
     const snapshotName = `${name}@${metadata.id}`;
     metadata.snapshots.push({ title: name, snapshotName });
-    await this._snapshotter!.captureSnapshot(sdkObject.attribution.page, snapshotName, element);
+    await this._snapshotter.captureSnapshot(sdkObject.attribution.page, snapshotName, element).catch(() => {});
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
@@ -287,6 +288,18 @@ export class Tracing implements InstrumentationListener {
     this._appendTraceEvent(event);
   }
 
+  onBlob(blob: SnapshotterBlob): void {
+    this._appendResource(blob.sha1, blob.buffer);
+  }
+
+  onResourceSnapshot(snapshot: ResourceSnapshot): void {
+    this._appendTraceEvent({ type: 'resource-snapshot', snapshot });
+  }
+
+  onFrameSnapshot(snapshot: FrameSnapshot): void {
+    this._appendTraceEvent({ type: 'frame-snapshot', snapshot });
+  }
+
   private _startScreencastInPage(page: Page) {
     page.setScreencastOptions(kScreencastOptions);
     const prefix = page.guid;
@@ -304,15 +317,13 @@ export class Tracing implements InstrumentationListener {
             timestamp: monotonicTime()
           };
           // Make sure to write the screencast frame before adding a reference to it.
-          this._appendTraceOperation(async () => {
-            await fs.promises.writeFile(path.join(this._resourcesDir!, sha1), params.buffer).catch(() => {});
-          });
+          this._appendResource(sha1, params.buffer);
           this._appendTraceEvent(event);
         }),
     );
   }
 
-  private _appendTraceEvent(event: any) {
+  private _appendTraceEvent(event: trace.TraceEvent) {
     // Serialize all writes to the trace file.
     this._appendTraceOperation(async () => {
       visitSha1s(event, this._recording!.sha1s);
@@ -320,17 +331,34 @@ export class Tracing implements InstrumentationListener {
     });
   }
 
+  private _appendResource(sha1: string, buffer: Buffer) {
+    if (this._allResources.has(sha1))
+      return;
+    this._allResources.add(sha1);
+    this._appendTraceOperation(async () => {
+      const resourcePath = path.join(this._resourcesDir, sha1);
+      try {
+        // Perhaps we've already written this resource?
+        await fs.promises.access(resourcePath);
+      } catch (e) {
+        // If not, let's write! Note that async access is safe because we
+        // never remove resources until the very end.
+        await fs.promises.writeFile(resourcePath, buffer).catch(() => {});
+      }
+    });
+  }
+
   private async _appendTraceOperation<T>(cb: () => Promise<T>): Promise<T> {
     let error: Error | undefined;
     let result: T | undefined;
-    this._appendEventChain = this._appendEventChain.then(async () => {
+    this._writeChain = this._writeChain.then(async () => {
       try {
         result = await cb();
       } catch (e) {
         error = e;
       }
     });
-    await this._appendEventChain;
+    await this._writeChain;
     if (error)
       throw error;
     return result!;

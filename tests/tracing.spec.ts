@@ -248,6 +248,22 @@ test('should reset and export', async ({ context, page, server }, testInfo) => {
   expect(trace2.events.some(e => e.type === 'frame-snapshot')).toBeTruthy();
 });
 
+test('should export trace concurrently to second navigation', async ({ context, page, server }, testInfo) => {
+  for (let timeout = 0; timeout < 200; timeout += 20) {
+    await context.tracing.start({ screenshots: true, snapshots: true });
+    await page.goto(server.PREFIX + '/grid.html');
+
+    // Navigate to the same page to produce the same trace resources
+    // that might be concurrently exported.
+    const promise = page.goto(server.PREFIX + '/grid.html');
+    await page.waitForTimeout(timeout);
+    await Promise.all([
+      promise,
+      context.tracing.stop({ path: testInfo.outputPath('trace.zip') }),
+    ]);
+  }
+});
+
 async function parseTrace(file: string): Promise<{ events: any[], resources: Map<string, Buffer> }> {
   const entries = await new Promise<any[]>(f => {
     const entries: Promise<any>[] = [];
