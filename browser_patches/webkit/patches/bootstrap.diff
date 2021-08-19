@@ -10046,6 +10046,27 @@ index 001558dd58f4d85f360d5711caa03db33889011e..1e0898f985f1d13036d31e3e284258a3
  #if USE(APPKIT)
      NSEvent* nativeEvent() const { return m_nativeEvent.get(); }
  #elif PLATFORM(GTK)
+diff --git a/Source/WebKit/Shared/SandboxExtension.h b/Source/WebKit/Shared/SandboxExtension.h
+index c359eeaa440586fa61d3bc31def069ffcfa6e771..311cc74c62bdda4d147c221f85b3e55ed4ee481c 100644
+--- a/Source/WebKit/Shared/SandboxExtension.h
++++ b/Source/WebKit/Shared/SandboxExtension.h
+@@ -162,12 +162,12 @@ inline const SandboxExtension::Handle* SandboxExtension::HandleArray::end() cons
+ inline void SandboxExtension::HandleArray::encode(IPC::Encoder&) const { }
+ inline auto SandboxExtension::HandleArray::decode(IPC::Decoder&) -> std::optional<HandleArray> { return { HandleArray() }; }
+ inline RefPtr<SandboxExtension> SandboxExtension::create(Handle&&) { return nullptr; }
+-inline auto SandboxExtension::createHandle(const String&, Type) -> std::optional<Handle> { return {{ }}; }
++inline auto SandboxExtension::createHandle(const String&, Type) -> std::optional<Handle> { return Handle { }; }
+ inline SandboxExtension::HandleArray SandboxExtension::createReadOnlyHandlesForFiles(ASCIILiteral, const Vector<String>&) { return { }; }
+-inline auto SandboxExtension::createHandleWithoutResolvingPath(const String&, Type) -> std::optional<Handle> { return {{ }}; }
+-inline auto SandboxExtension::createHandleForReadWriteDirectory(const String&) -> std::optional<Handle> { return {{ }}; }
++inline auto SandboxExtension::createHandleWithoutResolvingPath(const String&, Type) -> std::optional<Handle> { return Handle { }; }
++inline auto SandboxExtension::createHandleForReadWriteDirectory(const String&) -> std::optional<Handle> { return Handle { }; }
+ inline auto SandboxExtension::createHandleForTemporaryFile(const String& /*prefix*/, Type) -> std::optional<std::pair<Handle, String>> { return std::optional<std::pair<Handle, String>> { std::pair<Handle, String> { Handle { }, String { } } }; }
+-inline auto SandboxExtension::createHandleForGenericExtension(ASCIILiteral /*extensionClass*/) -> std::optional<Handle> { return {{ }}; }
++inline auto SandboxExtension::createHandleForGenericExtension(ASCIILiteral /*extensionClass*/) -> std::optional<Handle> { return Handle { }; }
+ inline SandboxExtension::~SandboxExtension() { }
+ inline bool SandboxExtension::revoke() { return true; }
+ inline bool SandboxExtension::consume() { return true; }
 diff --git a/Source/WebKit/Shared/WebCoreArgumentCoders.cpp b/Source/WebKit/Shared/WebCoreArgumentCoders.cpp
 index 92756f422b12860ac604beaccc9e0b41f8f38832..eb9d55c7c5b8b9f62b690c30ce15c71d1838a16f 100644
 --- a/Source/WebKit/Shared/WebCoreArgumentCoders.cpp
