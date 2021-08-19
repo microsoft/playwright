@@ -667,7 +667,8 @@ Enable Chromium sandboxing. Defaults to `false`.
 - `downloadsPath` <[path]>
 
 If specified, accepted downloads are downloaded into this directory. Otherwise, temporary directory is created and is
-deleted when browser is closed.
+deleted when browser is closed. In either case, the downloads are deleted when the browser context they were created in
+is closed.
 
 ## browser-option-executablepath
 - `executablePath` <[path]>
