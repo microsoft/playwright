@@ -110,9 +110,10 @@ export class BaseReporter implements Reporter  {
       }
     });
 
-    if (full && (unexpected.length || skippedWithError.length)) {
+    const failuresToPrint = [...unexpected, ...flaky, ...skippedWithError];
+    if (full && failuresToPrint.length) {
       console.log('');
-      this._printFailures([...unexpected, ...skippedWithError]);
+      this._printFailures(failuresToPrint);
     }
 
     this._printSlowTests();
@@ -147,7 +148,7 @@ export class BaseReporter implements Reporter  {
   }
 
   willRetry(test: TestCase, result: TestResult): boolean {
-    return result.status !== 'passed' && result.status !== test.expectedStatus && test.results.length <= test.retries;
+    return test.outcome() === 'unexpected' && result.status !== 'passed' && test.results.length <= test.retries;
   }
 }
 

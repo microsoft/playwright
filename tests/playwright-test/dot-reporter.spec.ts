@@ -71,7 +71,7 @@ test('render flaky', async ({ runInlineTest }) => {
   expect(text).toContain('×××±');
   expect(result.output).toContain(colors.yellow('±'));
   expect(text).toContain('1 flaky');
-  expect(text).not.toContain('Retry #1');
+  expect(text).toContain('Retry #1');
   expect(result.exitCode).toBe(0);
 });
 

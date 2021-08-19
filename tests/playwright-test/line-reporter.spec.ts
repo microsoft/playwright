@@ -48,3 +48,17 @@ test('render flaky', async ({ runInlineTest }) => {
   expect(text).toContain('1 flaky');
   expect(result.exitCode).toBe(0);
 });
+
+test('should print flaky failures', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const { test } = pwt;
+      test('foobar', async ({}, testInfo) => {
+        expect(testInfo.retry).toBe(1);
+      });
+    `
+  }, { retries: '1', reporter: 'line' });
+  expect(result.exitCode).toBe(0);
+  expect(result.flaky).toBe(1);
+  expect(stripAscii(result.output)).toContain('expect(testInfo.retry).toBe(1)');
+});
