@@ -210,14 +210,6 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
             ws.removeEventListener('close', closeListener);
             ws.close();
           });
-          if (params._forwardPorts) {
-            try {
-              await playwright._enablePortForwarding(params._forwardPorts);
-            } catch (err) {
-              reject(err);
-              return;
-            }
-          }
           fulfill(browser);
         });
         ws.addEventListener('error', event => {

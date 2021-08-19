@@ -152,8 +152,25 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.RootInitializeParams = tObject({
     language: tString,
   });
-  scheme.PlaywrightSetForwardedPortsParams = tObject({
-    ports: tArray(tNumber),
+  scheme.PlaywrightSocksConnectedParams = tObject({
+    uid: tString,
+    host: tString,
+    port: tNumber,
+  });
+  scheme.PlaywrightSocksFailedParams = tObject({
+    uid: tString,
+    errorCode: tString,
+  });
+  scheme.PlaywrightSocksDataParams = tObject({
+    uid: tString,
+    data: tBinary,
+  });
+  scheme.PlaywrightSocksErrorParams = tObject({
+    uid: tString,
+    error: tString,
+  });
+  scheme.PlaywrightSocksEndParams = tObject({
+    uid: tString,
   });
   scheme.SelectorsRegisterParams = tObject({
     name: tString,
@@ -1315,14 +1332,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     scrollable: tBoolean,
     selected: tBoolean,
   });
-  scheme.SocksSocketWriteParams = tObject({
-    data: tBinary,
-  });
-  scheme.SocksSocketErrorParams = tObject({
-    error: tString,
-  });
-  scheme.SocksSocketConnectedParams = tOptional(tObject({}));
-  scheme.SocksSocketEndParams = tOptional(tObject({}));
 
   return scheme;
 }

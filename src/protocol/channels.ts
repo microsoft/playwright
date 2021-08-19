@@ -196,19 +196,67 @@ export type PlaywrightInitializer = {
   preLaunchedBrowser?: BrowserChannel,
 };
 export interface PlaywrightChannel extends Channel {
-  on(event: 'incomingSocksSocket', callback: (params: PlaywrightIncomingSocksSocketEvent) => void): this;
-  setForwardedPorts(params: PlaywrightSetForwardedPortsParams, metadata?: Metadata): Promise<PlaywrightSetForwardedPortsResult>;
+  on(event: 'socksRequested', callback: (params: PlaywrightSocksRequestedEvent) => void): this;
+  on(event: 'socksData', callback: (params: PlaywrightSocksDataEvent) => void): this;
+  on(event: 'socksClosed', callback: (params: PlaywrightSocksClosedEvent) => void): this;
+  socksConnected(params: PlaywrightSocksConnectedParams, metadata?: Metadata): Promise<PlaywrightSocksConnectedResult>;
+  socksFailed(params: PlaywrightSocksFailedParams, metadata?: Metadata): Promise<PlaywrightSocksFailedResult>;
+  socksData(params: PlaywrightSocksDataParams, metadata?: Metadata): Promise<PlaywrightSocksDataResult>;
+  socksError(params: PlaywrightSocksErrorParams, metadata?: Metadata): Promise<PlaywrightSocksErrorResult>;
+  socksEnd(params: PlaywrightSocksEndParams, metadata?: Metadata): Promise<PlaywrightSocksEndResult>;
 }
-export type PlaywrightIncomingSocksSocketEvent = {
-  socket: SocksSocketChannel,
+export type PlaywrightSocksRequestedEvent = {
+  uid: string,
+  host: string,
+  port: number,
 };
-export type PlaywrightSetForwardedPortsParams = {
-  ports: number[],
+export type PlaywrightSocksDataEvent = {
+  uid: string,
+  data: Binary,
 };
-export type PlaywrightSetForwardedPortsOptions = {
+export type PlaywrightSocksClosedEvent = {
+  uid: string,
+};
+export type PlaywrightSocksConnectedParams = {
+  uid: string,
+  host: string,
+  port: number,
+};
+export type PlaywrightSocksConnectedOptions = {
 
 };
-export type PlaywrightSetForwardedPortsResult = void;
+export type PlaywrightSocksConnectedResult = void;
+export type PlaywrightSocksFailedParams = {
+  uid: string,
+  errorCode: string,
+};
+export type PlaywrightSocksFailedOptions = {
+
+};
+export type PlaywrightSocksFailedResult = void;
+export type PlaywrightSocksDataParams = {
+  uid: string,
+  data: Binary,
+};
+export type PlaywrightSocksDataOptions = {
+
+};
+export type PlaywrightSocksDataResult = void;
+export type PlaywrightSocksErrorParams = {
+  uid: string,
+  error: string,
+};
+export type PlaywrightSocksErrorOptions = {
+
+};
+export type PlaywrightSocksErrorResult = void;
+export type PlaywrightSocksEndParams = {
+  uid: string,
+};
+export type PlaywrightSocksEndOptions = {
+
+};
+export type PlaywrightSocksEndResult = void;
 
 // ----------- Selectors -----------
 export type SelectorsInitializer = {};
@@ -3316,44 +3364,6 @@ export type AndroidElementInfo = {
   scrollable: boolean,
   selected: boolean,
 };
-
-// ----------- SocksSocket -----------
-export type SocksSocketInitializer = {
-  dstAddr: string,
-  dstPort: number,
-};
-export interface SocksSocketChannel extends Channel {
-  on(event: 'data', callback: (params: SocksSocketDataEvent) => void): this;
-  on(event: 'close', callback: (params: SocksSocketCloseEvent) => void): this;
-  write(params: SocksSocketWriteParams, metadata?: Metadata): Promise<SocksSocketWriteResult>;
-  error(params: SocksSocketErrorParams, metadata?: Metadata): Promise<SocksSocketErrorResult>;
-  connected(params?: SocksSocketConnectedParams, metadata?: Metadata): Promise<SocksSocketConnectedResult>;
-  end(params?: SocksSocketEndParams, metadata?: Metadata): Promise<SocksSocketEndResult>;
-}
-export type SocksSocketDataEvent = {
-  data: Binary,
-};
-export type SocksSocketCloseEvent = {};
-export type SocksSocketWriteParams = {
-  data: Binary,
-};
-export type SocksSocketWriteOptions = {
-
-};
-export type SocksSocketWriteResult = void;
-export type SocksSocketErrorParams = {
-  error: string,
-};
-export type SocksSocketErrorOptions = {
-
-};
-export type SocksSocketErrorResult = void;
-export type SocksSocketConnectedParams = {};
-export type SocksSocketConnectedOptions = {};
-export type SocksSocketConnectedResult = void;
-export type SocksSocketEndParams = {};
-export type SocksSocketEndOptions = {};
-export type SocksSocketEndResult = void;
 
 export const commandsWithTracingSnapshots = new Set([
   'EventTarget.waitForEventInfo',
