@@ -74,6 +74,7 @@ export class FrameManager {
   readonly _signalBarriers = new Set<SignalBarrier>();
   private _webSockets = new Map<string, network.WebSocket>();
   readonly _responses: network.Response[] = [];
+  _dialogCounter = 0;
 
   constructor(page: Page) {
     this._page = page;
@@ -297,6 +298,17 @@ export class FrameManager {
     this._page._browserContext.emit(BrowserContext.Events.RequestFailed, request);
   }
 
+  dialogDidOpen() {
+    // Any ongoing evaluations will be stalled until the dialog is closed.
+    for (const frame of this._frames.values())
+      frame._invalidateNonStallingEvaluations('JavaScript dialog interrupted evaluation');
+    this._dialogCounter++;
+  }
+
+  dialogWillClose() {
+    this._dialogCounter--;
+  }
+
   removeChildFramesRecursively(frame: Frame) {
     for (const child of frame.childFrames())
       this._removeFramesRecursively(child);
@@ -461,17 +473,17 @@ export class Frame extends SdkObject {
   setPendingDocument(documentInfo: DocumentInfo | undefined) {
     this._pendingDocument = documentInfo;
     if (documentInfo)
-      this._invalidateNonStallingEvaluations();
+      this._invalidateNonStallingEvaluations('Navigation interrupted the evaluation');
   }
 
   pendingDocument(): DocumentInfo | undefined {
     return this._pendingDocument;
   }
 
-  private async _invalidateNonStallingEvaluations() {
+  _invalidateNonStallingEvaluations(message: string) {
     if (!this._nonStallingEvaluations)
       return;
-    const error = new Error('Navigation interrupted the evaluation');
+    const error = new Error(message);
     for (const callback of this._nonStallingEvaluations)
       callback(error);
   }
@@ -479,6 +491,8 @@ export class Frame extends SdkObject {
   async nonStallingRawEvaluateInExistingMainContext(expression: string): Promise<any> {
     if (this._pendingDocument)
       throw new Error('Frame is currently attempting a navigation');
+    if (this._page._frameManager._dialogCounter)
+      throw new Error('Open JavaScript dialog prevents evaluation');
     const context = this._existingMainContext();
     if (!context)
       throw new Error('Frame does not yet have a main execution context');

@@ -264,6 +264,16 @@ test('should export trace concurrently to second navigation', async ({ context, 
   }
 });
 
+test('should not hang for clicks that open dialogs', async ({ context, page }) => {
+  await context.tracing.start({ screenshots: true, snapshots: true });
+  const dialogPromise = page.waitForEvent('dialog');
+  await page.setContent(`<div onclick='window.alert(123)'>Click me</div>`);
+  await page.click('div', { timeout: 2000 }).catch(() => {});
+  const dialog = await dialogPromise;
+  await dialog.dismiss();
+  await context.tracing.stop();
+});
+
 async function parseTrace(file: string): Promise<{ events: any[], resources: Map<string, Buffer> }> {
   const entries = await new Promise<any[]>(f => {
     const entries: Promise<any>[] = [];
