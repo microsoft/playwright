@@ -76,7 +76,7 @@ const it = contextTest.extend<{ pageFactory: (redirectPortForTest?: number) => P
   },
 });
 
-it.fixme(({ platform, browserName }) => browserName === 'webkit' && platform !== 'linux');
+it.fixme(({ platform, browserName }) => browserName === 'webkit' && platform === 'win32');
 it.skip(({ mode }) => mode !== 'default');
 
 async function startTestServer() {
@@ -102,7 +102,8 @@ it('should forward non-forwarded requests', async ({ pageFactory, server }) => {
   expect(reachedOriginalTarget).toBe(true);
 });
 
-it('should proxy local requests', async ({ pageFactory, server }, workerInfo) => {
+it('should proxy localhost requests', async ({ pageFactory, server, browserName, platform }, workerInfo) => {
+  it.skip(browserName === 'webkit' && platform === 'darwin');
   const { testServerPort, stopTestServer } = await startTestServer();
   let reachedOriginalTarget = false;
   server.setRoute('/foo.html', async (req, res) => {
@@ -112,6 +113,22 @@ it('should proxy local requests', async ({ pageFactory, server }, workerInfo) =>
   const examplePort = 20_000 + workerInfo.workerIndex * 3;
   const page = await pageFactory(testServerPort);
   await page.goto(`http://localhost:${examplePort}/foo.html`);
+  expect(await page.content()).toContain('from-retargeted-server');
+  expect(reachedOriginalTarget).toBe(false);
+  stopTestServer();
+});
+
+it('should proxy local.playwright requests', async ({ pageFactory, server, browserName }, workerInfo) => {
+  it.fixme(browserName === 'firefox', 'Firefox performs DNS on browser side');
+  const { testServerPort, stopTestServer } = await startTestServer();
+  let reachedOriginalTarget = false;
+  server.setRoute('/foo.html', async (req, res) => {
+    reachedOriginalTarget = true;
+    res.end('<html><body></body></html>');
+  });
+  const examplePort = 20_000 + workerInfo.workerIndex * 3;
+  const page = await pageFactory(testServerPort);
+  await page.goto(`http://local.playwright:${examplePort}/foo.html`);
   expect(await page.content()).toContain('from-retargeted-server');
   expect(reachedOriginalTarget).toBe(false);
   stopTestServer();
