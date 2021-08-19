@@ -123,12 +123,16 @@ export class Dispatcher<Type extends { guid: string }, Initializer> extends Even
 
 export type DispatcherScope = Dispatcher<any, any>;
 export class Root extends Dispatcher<{ guid: '' }, {}> {
+  private _initialized = false;
+
   constructor(connection: DispatcherConnection, private readonly createPlaywright?: (scope: DispatcherScope) => Promise<PlaywrightDispatcher>) {
-    super(connection, { guid: '' }, '', {}, true);
+    super(connection, { guid: '' }, 'Root', {}, true);
   }
 
   async initialize(params: { language?: string }): Promise<channels.RootInitializeResult> {
     assert(this.createPlaywright);
+    assert(!this._initialized);
+    this._initialized = true;
     return {
       playwright: await this.createPlaywright(this),
     };
@@ -180,8 +184,6 @@ export class DispatcherConnection {
     };
     const scheme = createScheme(tChannel);
     this._validateParams = (type: string, method: string, params: any): any => {
-      if (type === '')
-        type = 'Root';
       const name = type + method[0].toUpperCase() + method.substring(1) + 'Params';
       if (!scheme[name])
         throw new ValidationError(`Unknown scheme for ${type}.${method}`);

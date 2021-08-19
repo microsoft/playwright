@@ -42,7 +42,7 @@ import { EventEmitter } from 'events';
 
 class Root extends ChannelOwner<channels.RootChannel, {}> {
   constructor(connection: Connection) {
-    super(connection, '', '', {});
+    super(connection, 'Root', '', {});
   }
 
   async initialize(): Promise<Playwright> {

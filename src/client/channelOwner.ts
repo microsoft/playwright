@@ -78,7 +78,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
         if (prop === 'debugScopeState')
           return (params: any) => this._connection.sendMessageToServer(this, prop, params, stackTrace);
         if (typeof prop === 'string') {
-          const validator = scheme[paramsName(this._type === '' ? 'Root' : this._type, prop)];
+          const validator = scheme[paramsName(this._type, prop)];
           if (validator)
             return (params: any) => this._connection.sendMessageToServer(this, prop, validator(params, ''), stackTrace);
         }
