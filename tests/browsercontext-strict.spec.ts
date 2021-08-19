@@ -35,6 +35,12 @@ it.describe('strict context mode', () => {
     expect(error.message).toContain('strict mode violation');
   });
 
+  it('should fail page.click in strict mode', async ({ page }) => {
+    await page.setContent(`<button>button1</button><button>target</button>`);
+    const error = await page.click('button').catch(e => e);
+    expect(error.message).toContain('strict mode violation');
+  });
+
   it('should opt out of strict mode', async ({ page }) => {
     await page.setContent(`<span>span1</span><div><span>target</span></div>`);
     expect(await page.textContent('span', { strict: false })).toBe('span1');
