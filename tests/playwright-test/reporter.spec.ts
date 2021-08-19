@@ -373,6 +373,28 @@ test('should report test.step', async ({ runInlineTest }) => {
   ]);
 });
 
+test('should not have internal error when steps are finished after timeout', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const test = pwt.test.extend({
+        page: async ({ page }, use) => {
+          await use(page);
+          // Timeout in fixture teardown that will resolve on browser.close.
+          await page.waitForNavigation();
+        },
+      });
+      test('pass', async ({ page }) => {
+        // Timeout in the test.
+        await page.click('foo');
+      });
+    `
+  }, { workers: 1, timeout: 1000, reporter: 'dot', retries: 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).not.toContain('Internal error');
+});
+
 test('should report api step hierarchy', async ({ runInlineTest }) => {
   const expectReporterJS = `
     class Reporter {
@@ -389,7 +411,7 @@ test('should report api step hierarchy', async ({ runInlineTest }) => {
           steps: step.steps.length ? step.steps.map(s => this.distillStep(s)) : undefined,
         };
       }
-    
+
       async onEnd() {
         const processSuite = (suite: Suite) => {
           for (const child of suite.suites)

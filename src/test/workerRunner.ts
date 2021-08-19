@@ -212,6 +212,7 @@ export class WorkerRunner extends EventEmitter {
     })();
 
     let testFinishedCallback = () => {};
+    let testFinished = false;
     let lastStepId = 0;
     const testInfo: TestInfoImpl = {
       workerIndex: this._params.workerIndex,
@@ -270,7 +271,10 @@ export class WorkerRunner extends EventEmitter {
           title,
           wallTime: Date.now()
         };
-        if (reportEvents)
+        // Steps can begin/end after the test did timeout, but before the worker has been
+        // completely shutdown, because test code might still be running.
+        // Sending steps after 'testEnd' to the dispatcher confuses it, so we just drop them.
+        if (reportEvents && !testFinished)
           this.emit('stepBegin', payload);
         let callbackHandled = false;
         return (error?: Error | TestError) => {
@@ -285,7 +289,7 @@ export class WorkerRunner extends EventEmitter {
             wallTime: Date.now(),
             error
           };
-          if (reportEvents)
+          if (reportEvents && !testFinished)
             this.emit('stepEnd', payload);
         };
       },
@@ -360,6 +364,7 @@ export class WorkerRunner extends EventEmitter {
 
     this._currentDeadlineRunner = undefined;
     testInfo.duration = monotonicTime() - startTime;
+    testFinished = true;
     if (reportEvents)
       this.emit('testEnd', buildTestEndPayload(testId, testInfo));
 
