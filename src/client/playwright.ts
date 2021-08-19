@@ -76,6 +76,8 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel, channel
   }
 
   private async _onSocksRequested(uid: string, host: string, port: number): Promise<void> {
+    if (host === 'local.playwright')
+      host = 'localhost';
     try {
       if (this._redirectPortForTest)
         port = this._redirectPortForTest;
