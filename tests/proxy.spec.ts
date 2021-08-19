@@ -18,6 +18,8 @@ import { playwrightTest as it, expect } from './config/browserTest';
 import socks from 'socksv5';
 import net from 'net';
 
+it.beforeEach(({isDocker}) => it.skip(isDocker));
+
 it('should throw for bad server value', async ({browserType, browserOptions}) => {
   const error = await browserType.launch({
     ...browserOptions,

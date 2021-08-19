@@ -18,9 +18,10 @@
 import fs from 'fs';
 import { playwrightTest as test, expect } from './config/browserTest';
 
-test('browserType.executablePath should work', async ({ browserType, channel, browserOptions }) => {
+test('browserType.executablePath should work', async ({ browserType, channel, browserOptions, isDocker }) => {
   test.skip(!!channel, 'We skip browser download when testing a channel');
   test.skip(!!browserOptions.executablePath, 'Skip with custom executable path');
+  test.skip(isDocker);
 
   const executablePath = browserType.executablePath();
   expect(fs.existsSync(executablePath)).toBe(true);

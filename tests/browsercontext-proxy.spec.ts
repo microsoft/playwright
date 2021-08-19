@@ -24,6 +24,8 @@ it.beforeEach(({ server }) => {
   });
 });
 
+it.beforeEach(({isDocker}) => it.skip(isDocker));
+
 it('should throw for missing global proxy on Chromium Windows', async ({ browserName, platform, browserType, browserOptions, server }) => {
   it.skip(browserName !== 'chromium' || platform !== 'win32');
 

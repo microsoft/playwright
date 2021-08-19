@@ -32,7 +32,7 @@ type CLITestArgs = {
 export const test = contextTest.extend<CLITestArgs>({
   recorderPageGetter: async ({ context, toImpl, mode }, run, testInfo) => {
     process.env.PWTEST_RECORDER_PORT = String(10907 + testInfo.workerIndex);
-    testInfo.skip(mode === 'service');
+    testInfo.skip(mode === 'service' || mode === 'docker');
     await run(async () => {
       while (!toImpl(context).recorderAppForTest)
         await new Promise(f => setTimeout(f, 100));
@@ -51,7 +51,7 @@ export const test = contextTest.extend<CLITestArgs>({
 
   runCLI: async ({ browserName, channel, headless, mode, executablePath }, run, testInfo) => {
     process.env.PWTEST_RECORDER_PORT = String(10907 + testInfo.workerIndex);
-    testInfo.skip(mode === 'service');
+    testInfo.skip(mode === 'service' || mode === 'docker');
 
     let cli: CLIMock | undefined;
     await run(cliArgs => {

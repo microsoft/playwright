@@ -43,7 +43,8 @@ it.describe('downloads path', () => {
     expect(fs.existsSync(testInfo.outputPath(''))).toBeTruthy();
   });
 
-  it('should delete downloads when context closes', async ({browserType, browserOptions, server}, testInfo) => {
+  it('should delete downloads when context closes', async ({browserType, browserOptions, server, isDocker}, testInfo) => {
+    it.skip(isDocker);
     const downloadsBrowser = await browserType.launch({ ...browserOptions, downloadsPath: testInfo.outputPath('') });
     const page = await downloadsBrowser.newPage({ acceptDownloads: true });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
@@ -58,7 +59,8 @@ it.describe('downloads path', () => {
     await downloadsBrowser.close();
   });
 
-  it('should report downloads in downloadsPath folder', async ({browserType, browserOptions, server}, testInfo) => {
+  it('should report downloads in downloadsPath folder', async ({browserType, browserOptions, server, isDocker}, testInfo) => {
+    it.skip(isDocker);
     const downloadsBrowser = await browserType.launch({ ...browserOptions, downloadsPath: testInfo.outputPath('') });
     const page = await downloadsBrowser.newPage({ acceptDownloads: true });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
@@ -72,7 +74,8 @@ it.describe('downloads path', () => {
     await downloadsBrowser.close();
   });
 
-  it('should report downloads in downloadsPath folder with a relative path', async ({browserType, browserOptions, server}, testInfo) => {
+  it('should report downloads in downloadsPath folder with a relative path', async ({browserType, browserOptions, server, isDocker}, testInfo) => {
+    it.skip(isDocker);
     const downloadsBrowser = await browserType.launch({ ...browserOptions, downloadsPath: path.relative(process.cwd(), testInfo.outputPath('')) });
     const page = await downloadsBrowser.newPage({ acceptDownloads: true });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
@@ -100,7 +103,8 @@ it.describe('downloads path', () => {
     await context.close();
   });
 
-  it('should delete downloads when persistent context closes', async ({launchPersistent, server}, testInfo) => {
+  it('should delete downloads when persistent context closes', async ({launchPersistent, server, isDocker}, testInfo) => {
+    it.skip(isDocker);
     const { context, page } = await launchPersistent({ acceptDownloads: true, downloadsPath: testInfo.outputPath('') });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [ download ] = await Promise.all([

@@ -19,17 +19,18 @@ import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { Page } from './page';
 import { ChannelOwner } from './channelOwner';
 import { Events } from './events';
-import { BrowserContextOptions } from './types';
+import { BrowserContextOptions, Logger } from './types';
 import { isSafeCloseError } from '../utils/errors';
 import * as api from '../../types/types';
 import { CDPSession } from './cdpSession';
 import type { BrowserType } from './browserType';
 
+type RemoteType = 'owns-connection' | 'uses-connection' | null;
 export class Browser extends ChannelOwner<channels.BrowserChannel, channels.BrowserInitializer> implements api.Browser {
   readonly _contexts = new Set<BrowserContext>();
   private _isConnected = true;
   private _closedPromise: Promise<void>;
-  _remoteType: 'owns-connection' | 'uses-connection' | null = null;
+  _remoteType: RemoteType = null;
   private _browserType!: BrowserType;
   readonly _name: string;
 
@@ -48,7 +49,9 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
     this._closedPromise = new Promise(f => this.once(Events.Browser.Disconnected, f));
   }
 
-  _setBrowserType(browserType: BrowserType) {
+  _connectToParent({browserType, logger, remoteType}: {browserType: BrowserType, logger: Logger|undefined, remoteType: RemoteType}) {
+    this._logger = logger;
+    this._remoteType = remoteType;
     this._browserType = browserType;
     for (const context of this._contexts)
       context._setBrowserType(browserType);

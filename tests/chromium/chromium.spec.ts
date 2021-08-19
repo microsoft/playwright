@@ -176,7 +176,8 @@ playwrightTest('should connect to existing service workers', async ({browserType
   }
 });
 
-playwrightTest('should connect over a ws endpoint', async ({browserType, browserOptions, server}, testInfo) => {
+playwrightTest('should connect over a ws endpoint', async ({browserType, browserOptions, server, isDocker}, testInfo) => {
+  playwrightTest.skip(isDocker);
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({
     ...browserOptions,
@@ -209,7 +210,8 @@ playwrightTest('should connect over a ws endpoint', async ({browserType, browser
   }
 });
 
-playwrightTest('should send extra headers with connect request', async ({browserType, browserOptions, server}, testInfo) => {
+playwrightTest('should send extra headers with connect request', async ({browserType, browserOptions, server, isDocker}, testInfo) => {
+  playwrightTest.skip(isDocker);
   {
     const [request] = await Promise.all([
       server.waitForWebSocketConnectionRequest(),
@@ -242,8 +244,9 @@ playwrightTest('should send extra headers with connect request', async ({browser
   }
 });
 
-playwrightTest('should send default User-Agent header with connect request', async ({browserType, browserOptions, server}, testInfo) => {
+playwrightTest('should send default User-Agent header with connect request', async ({browserType, browserOptions, server, isDocker}, testInfo) => {
   {
+    playwrightTest.skip(isDocker);
     const [request] = await Promise.all([
       server.waitForWebSocketConnectionRequest(),
       browserType.connectOverCDP({
@@ -343,7 +346,8 @@ playwrightTest('should return valid browser from context.browser()', async ({ br
   }
 });
 
-test('should report an expected error when the endpointURL returns a non-expected status code', async ({ browserType, server }) => {
+test('should report an expected error when the endpointURL returns a non-expected status code', async ({ browserType, server, isDocker }) => {
+  test.skip(isDocker);
   server.setRoute('/json/version/', (req, resp) => {
     resp.statusCode = 404;
     resp.end(JSON.stringify({
@@ -355,7 +359,8 @@ test('should report an expected error when the endpointURL returns a non-expecte
   })).rejects.toThrowError(`browserType.connectOverCDP: Unexpected status 404 when connecting to ${server.PREFIX}/json/version/`);
 });
 
-test('should report an expected error when the endpoint URL JSON webSocketDebuggerUrl is undefined', async ({ browserType, server }) => {
+test('should report an expected error when the endpoint URL JSON webSocketDebuggerUrl is undefined', async ({ browserType, server, isDocker }) => {
+  test.skip(isDocker);
   server.setRoute('/json/version/', (req, resp) => {
     resp.end(JSON.stringify({
       webSocketDebuggerUrl: undefined,

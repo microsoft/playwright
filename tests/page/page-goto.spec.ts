@@ -25,8 +25,8 @@ it('should work', async ({page, server}) => {
   expect(page.url()).toBe(server.EMPTY_PAGE);
 });
 
-it('should work with file URL', async ({page, asset, isAndroid}) => {
-  it.skip(isAndroid, 'No files on Android');
+it('should work with file URL', async ({page, asset, isDocker, isAndroid}) => {
+  it.skip(isAndroid || isDocker, 'No files on Android or Docker');
 
   const fileurl = url.pathToFileURL(asset('frames/two-frames.html')).href;
   await page.goto(fileurl);
@@ -213,7 +213,8 @@ it('should throw if networkidle2 is passed as an option', async ({page, server})
   expect(error.message).toContain(`waitUntil: expected one of (load|domcontentloaded|networkidle)`);
 });
 
-it('should fail when main resources failed to load', async ({page, browserName, isWindows}) => {
+it('should fail when main resources failed to load', async ({page, browserName, isWindows, isDocker}) => {
+  it.skip(isDocker);
   let error = null;
   await page.goto('http://localhost:44123/non-existing-url').catch(e => error = e);
   if (browserName === 'chromium')

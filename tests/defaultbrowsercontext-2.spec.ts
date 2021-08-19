@@ -87,7 +87,8 @@ it('should support extraHTTPHeaders option', async ({server, launchPersistent}) 
   expect(request.headers['foo']).toBe('bar');
 });
 
-it('should accept userDataDir', async ({createUserDataDir, browserType, browserOptions}) => {
+it('should accept userDataDir', async ({createUserDataDir, browserType, browserOptions, isDocker}) => {
+  it.skip(isDocker);
   const userDataDir = await createUserDataDir();
   const context = await browserType.launchPersistentContext(userDataDir, browserOptions);
   expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);

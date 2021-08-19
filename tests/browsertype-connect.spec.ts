@@ -22,6 +22,7 @@ import { getUserAgent } from '../lib/utils/utils';
 import WebSocket from 'ws';
 
 test.slow(true, 'All connect tests are slow');
+test.skip(({isDocker}) => isDocker);
 
 test('should connect over wss', async ({browserType , startRemoteServer, httpsServer, mode}) => {
   test.skip(mode !== 'default'); // Out of process transport does not allow us to set env vars dynamically.

@@ -23,6 +23,8 @@ import { registry } from '../src/utils/registry';
 
 const ffmpeg = registry.findExecutable('ffmpeg')!.executablePath();
 
+it.skip(({isDocker}) => !!isDocker);
+
 export class VideoPlayer {
   fileName: string;
   output: string;

@@ -44,6 +44,8 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
   _serverLauncher?: BrowserServerLauncher;
   _contexts = new Set<BrowserContext>();
 
+  _isRemote: boolean = false;
+
   // Instrumentation.
   _defaultContextOptions: BrowserContextOptions = {};
   _defaultLaunchOptions: LaunchOptions = {};
@@ -81,8 +83,11 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
         env: options.env ? envObjectToArray(options.env) : undefined,
       };
       const browser = Browser.from((await channel.launch(launchOptions)).browser);
-      browser._logger = logger;
-      browser._setBrowserType(this);
+      browser._connectToParent({
+        remoteType: this._isRemote ? 'uses-connection' : null,
+        logger,
+        browserType: this,
+      });
       return browser;
     }, logger);
   }
@@ -172,9 +177,11 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
             return;
           }
           browser = Browser.from(playwright._initializer.preLaunchedBrowser!);
-          browser._logger = logger;
-          browser._remoteType = 'owns-connection';
-          browser._setBrowserType((playwright as any)[browser._name]);
+          browser._connectToParent({
+            logger,
+            remoteType: this._isRemote ? 'uses-connection' : 'owns-connection',
+            browserType: (playwright as any)[browser._name],
+          });
           browser.on(Events.Browser.Disconnected, () => {
             playwright._cleanup();
             closePipe();
@@ -221,9 +228,11 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
       const browser = Browser.from(result.browser);
       if (result.defaultContext)
         browser._contexts.add(BrowserContext.from(result.defaultContext));
-      browser._remoteType = 'uses-connection';
-      browser._logger = logger;
-      browser._setBrowserType(this);
+      browser._connectToParent({
+        remoteType: 'uses-connection',
+        logger,
+        browserType: this,
+      });
       return browser;
     }, logger);
   }

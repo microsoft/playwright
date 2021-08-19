@@ -21,6 +21,7 @@ import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWor
 import { rootTestType } from './testType';
 import { createGuid, removeFolders } from '../utils/utils';
 import { TestInfoImpl } from './types';
+import { PlaywrightDocker } from './playwrightDocker';
 export { expect } from './expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
@@ -36,7 +37,18 @@ type WorkerAndFileFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
 export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
   defaultBrowserType: [ 'chromium', { scope: 'worker' } ],
   browserName: [ ({ defaultBrowserType }, use) => use(defaultBrowserType), { scope: 'worker' } ],
-  playwright: [ require('../inprocess'), { scope: 'worker' } ],
+  docker: [ undefined, { scope: 'worker' } ],
+  playwright: [async ({docker}, use, workerInfo) => {
+    if (!docker) {
+      use(require('../inprocess'));
+    } else {
+      const playwrightDocker = new PlaywrightDocker();
+      const playwright = await playwrightDocker.setup(workerInfo.workerIndex);
+      await use(playwright);
+      await playwrightDocker.teardown();
+    }
+  }, { scope: 'worker' }],
+
   headless: [ undefined, { scope: 'worker' } ],
   channel: [ undefined, { scope: 'worker' } ],
   launchOptions: [ {}, { scope: 'worker' } ],
@@ -179,8 +191,8 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
     });
   },
 
-  _setupContextOptionsAndArtifacts: [async ({ _browserType, _combinedContextOptions, _artifactsDir, trace, screenshot, actionTimeout, navigationTimeout }, use, testInfo) => {
-    testInfo.snapshotSuffix = process.platform;
+  _setupContextOptionsAndArtifacts: [async ({ _browserType, _combinedContextOptions, _artifactsDir, trace, screenshot, actionTimeout, navigationTimeout, docker }, use, testInfo) => {
+    testInfo.snapshotSuffix = docker ? 'docker' : process.platform;
     if (process.env.PWDEBUG)
       testInfo.setTimeout(0);
 

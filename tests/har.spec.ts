@@ -23,6 +23,8 @@ import type { BrowserContext, BrowserContextOptions } from '../index';
 import type { AddressInfo } from 'net';
 import type { Log } from '../src/server/supplements/har/har';
 
+it.skip(({isDocker}) => !!isDocker);
+
 async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any, outputPath: string = 'test.har') {
   const harPath = testInfo.outputPath(outputPath);
   const context = await contextFactory({ recordHar: { path: harPath }, ignoreHTTPSErrors: true });

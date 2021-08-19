@@ -56,6 +56,10 @@ export class PlaywrightServer {
         return () => {
           cleanup();
           playwright?.selectors.unregisterAll();
+          // Terminate process when client disconnects.
+          // This will terminate running docker container.
+          if (process.env.PW_DOCKER_CONNECTION_TIMEOUT)
+            process.exit(0);
         };
       },
     };
@@ -83,8 +87,17 @@ export class PlaywrightServer {
 
     debugLog('Listening at ' + wsEndpoint);
 
+    const connectionTimeoutMs = process.env.PW_DOCKER_CONNECTION_TIMEOUT ? +process.env.PW_DOCKER_CONNECTION_TIMEOUT : 0;
+    const connectionTimeout = connectionTimeoutMs ? setTimeout(() => {
+      // Terminate process if noone connects to it in 20 seconds.
+      // This will terminate running docker container.
+      process.exit(0);
+    }, connectionTimeoutMs) : undefined;
+
     this._wsServer = new ws.Server({ server, path });
     this._wsServer.on('connection', async socket => {
+      if (connectionTimeout)
+        clearTimeout(connectionTimeout);
       if (this._clientsCount && !this._delegate.allowMultipleClients) {
         socket.close();
         return;

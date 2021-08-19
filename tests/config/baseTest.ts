@@ -25,9 +25,10 @@ import { start } from '../../lib/outofprocess';
 import { PlaywrightClient } from '../../lib/remote/playwrightClient';
 import type { LaunchOptions } from '../../index';
 import { TestProxy } from './proxy';
+import { PlaywrightDocker } from '../../lib/test/playwrightDocker';
 
 export type BrowserName = 'chromium' | 'firefox' | 'webkit';
-type Mode = 'default' | 'driver' | 'service';
+type Mode = 'default' | 'driver' | 'service' | 'docker';
 type BaseOptions = {
   mode: Mode;
   browserName: BrowserName;
@@ -43,6 +44,7 @@ type BaseFixtures = {
   isWindows: boolean;
   isMac: boolean;
   isLinux: boolean;
+  isDocker: boolean;
 };
 
 class DriverMode {
@@ -92,6 +94,22 @@ class ServiceMode {
   }
 }
 
+class DockerMode {
+  private _playwrightDocker: PlaywrightDocker;
+
+  constructor() {
+    this._playwrightDocker = new PlaywrightDocker(process.env.PWTEST_DOCKER_IMAGE || 'playwright:localbuild-focal');
+  }
+
+  async setup(workerIndex: number) {
+    return await this._playwrightDocker.setup(workerIndex);
+  }
+
+  async teardown() {
+    return await this._playwrightDocker.teardown();
+  }
+}
+
 class DefaultMode {
   async setup(workerIndex: number) {
     return require('../../index');
@@ -108,12 +126,16 @@ const baseFixtures: Fixtures<{}, BaseOptions & BaseFixtures> = {
   video: [ undefined, { scope: 'worker' } ],
   trace: [ undefined, { scope: 'worker' } ],
   headless: [ undefined, { scope: 'worker' } ],
-  platform: [ process.platform as 'win32' | 'darwin' | 'linux', { scope: 'worker' } ],
+  isDocker: [ async ({ mode }, run) => run(mode === 'docker'), { scope: 'worker' } ],
+  platform: [ async ({ isDocker }, run, workerInfo) => {
+    await run(isDocker ? 'linux' : process.platform as 'win32' | 'darwin' | 'linux');
+  }, { scope: 'worker' }],
   playwright: [ async ({ mode }, run, workerInfo) => {
     const modeImpl = {
       default: new DefaultMode(),
       service: new ServiceMode(),
       driver: new DriverMode(),
+      docker: new DockerMode(),
     }[mode];
     require('../../lib/utils/utils').setUnderTest();
     const playwright = await modeImpl.setup(workerInfo.workerIndex);
@@ -121,9 +143,9 @@ const baseFixtures: Fixtures<{}, BaseOptions & BaseFixtures> = {
     await modeImpl.teardown();
   }, { scope: 'worker' } ],
   toImpl: [ async ({ playwright }, run) => run((playwright as any)._toImpl), { scope: 'worker' } ],
-  isWindows: [ process.platform === 'win32', { scope: 'worker' } ],
-  isMac: [ process.platform === 'darwin', { scope: 'worker' } ],
-  isLinux: [ process.platform === 'linux', { scope: 'worker' } ],
+  isWindows: [ async ({ platform }, run) => run(platform === 'win32'), { scope: 'worker' } ],
+  isMac: [ async ({ platform }, run) => run(platform === 'darwin'), { scope: 'worker' } ],
+  isLinux: [ async ({ platform }, run) => run(platform === 'linux'), { scope: 'worker' } ],
 };
 
 type ServerOptions = {

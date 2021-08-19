@@ -66,3 +66,34 @@ jobs:
     - run: npm run build
     - run: node lib/cli/cli install --with-deps
     - run: npm run ttest
+
+  test_docker_mode:
+    name: Docker Mode ${{ matrix.os }} (${{ matrix.browser }})
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: 12
+    - run: npm ci
+      env:
+        DEBUG: pw:install
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - run: npm run build
+    - run: ./utils/docker/build.sh focal playwright:localbuild-focal
+      shell: bash
+    - run: npm run test -- --project=${{ matrix.browser }}
+      env:
+        PWTEST_MODE: docker
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: always()
+    - uses: actions/upload-artifact@v1
+      if: always()
+      with:
+        name: docker-mode-${{ matrix.browser }}-${{ matrix.os }}-test-results
+        path: test-results

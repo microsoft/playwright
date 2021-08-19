@@ -31,7 +31,7 @@ import { helper } from './helper';
 import { RecentLogsCollector } from '../utils/debugLogger';
 import { CallMetadata, SdkObject } from './instrumentation';
 
-const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
+const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts', 'artifacts-');
 
 export abstract class BrowserType extends SdkObject {
   private _name: BrowserName;
@@ -140,6 +140,7 @@ export abstract class BrowserType extends SdkObject {
     if (options.tracesDir)
       await fs.promises.mkdir(options.tracesDir, { recursive: true });
 
+    await fs.promises.mkdir(path.dirname(ARTIFACTS_FOLDER), { recursive: true });
     const artifactsDir = await fs.promises.mkdtemp(ARTIFACTS_FOLDER);
     tempDirectories.push(artifactsDir);
 

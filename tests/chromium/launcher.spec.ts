@@ -52,7 +52,8 @@ it('should open devtools when "devtools: true" option is given', async ({browser
   await browser.close();
 });
 
-it('should return background pages', async ({browserType, browserOptions, createUserDataDir, asset}) => {
+it('should return background pages', async ({browserType, browserOptions, createUserDataDir, asset, isDocker}) => {
+  it.skip(isDocker, 'cannot mount extension inside docker');
   const userDataDir = await createUserDataDir();
   const extensionPath = asset('simple-extension');
   const extensionOptions = {...browserOptions,
@@ -75,7 +76,8 @@ it('should return background pages', async ({browserType, browserOptions, create
   expect(context.backgroundPages().length).toBe(0);
 });
 
-it('should return background pages when recording video', async ({browserType, browserOptions, createUserDataDir, asset}, testInfo) => {
+it('should return background pages when recording video', async ({browserType, browserOptions, createUserDataDir, asset, isDocker}, testInfo) => {
+  it.skip(isDocker, 'cannot mount extension inside docker');
   const userDataDir = await createUserDataDir();
   const extensionPath = asset('simple-extension');
   const extensionOptions = {...browserOptions,

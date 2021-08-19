@@ -65,6 +65,7 @@ export class Connection extends EventEmitter {
 
   constructor(onClose?: () => void) {
     super();
+    this.setMaxListeners(0);
     this._rootObject = new Root(this);
     this._onClose = onClose;
   }

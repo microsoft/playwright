@@ -40,6 +40,10 @@ export type ParsedStackTrace = {
   apiName: string;
 };
 
+type Translator = (path: string) => string;
+let pathTranslation: Translator = (path: string) => path;
+export const setStackTranslator = (t: Translator) => pathTranslation = t;
+
 export function captureStackTrace(): ParsedStackTrace {
   const stackTraceLimit = Error.stackTraceLimit;
   Error.stackTraceLimit = 30;
@@ -64,7 +68,7 @@ export function captureStackTrace(): ParsedStackTrace {
       return null;
     const parsed: ParsedFrame = {
       frame: {
-        file: fileName,
+        file: pathTranslation(fileName),
         line: frame.line,
         column: frame.column,
         function: frame.function,

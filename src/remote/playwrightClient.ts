@@ -58,6 +58,9 @@ export class PlaywrightClient {
 
   constructor(playwright: Playwright, ws: WebSocket) {
     this._playwright = playwright;
+    this._playwright.webkit._isRemote = true;
+    this._playwright.chromium._isRemote = true;
+    this._playwright.firefox._isRemote = true;
     this._ws = ws;
     this._closePromise = new Promise(f => ws.on('close', f));
   }

@@ -64,7 +64,8 @@ it('should throw if page argument is passed', async ({browserType, browserOption
   expect(waitError.message).toContain('can not specify page');
 });
 
-it('should reject if launched browser fails immediately', async ({browserType, browserOptions, asset}) => {
+it('should reject if launched browser fails immediately', async ({browserType, browserOptions, asset, isDocker}) => {
+  it.skip(isDocker);
   const options = Object.assign({}, browserOptions, {executablePath: asset('dummy_bad_browser_executable.js')});
   let waitError = null;
   await browserType.launch(options).catch(e => waitError = e);

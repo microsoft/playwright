@@ -191,7 +191,7 @@ DEPS['src/utils/'] = ['src/common/', 'src/protocol/'];
 DEPS['src/server/trace/common/'] = ['src/server/snapshot/', ...DEPS['src/server/']];
 DEPS['src/server/trace/recorder/'] = ['src/server/trace/common/', ...DEPS['src/server/trace/common/']];
 DEPS['src/server/trace/viewer/'] = ['src/server/trace/common/', 'src/server/trace/recorder/', 'src/server/chromium/', ...DEPS['src/server/trace/common/']];
-DEPS['src/test/'] = ['src/test/**', 'src/utils/utils.ts', 'src/utils/**'];
+DEPS['src/test/'] = ['src/test/**', 'src/utils/utils.ts', 'src/utils/**', 'src/remote/**'];
 
 // HTML report
 DEPS['src/web/htmlReport/'] = ['src/test/**', 'src/web/'];

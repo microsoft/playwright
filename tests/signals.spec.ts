@@ -20,6 +20,8 @@ import { execSync } from 'child_process';
 
 test.slow();
 
+test.skip(({isDocker}) => isDocker);
+
 test('should close the browser when the node process closes', async ({startRemoteServer, isWindows, server}) => {
   const remoteServer = await startRemoteServer({ url: server.EMPTY_PAGE });
   if (isWindows)

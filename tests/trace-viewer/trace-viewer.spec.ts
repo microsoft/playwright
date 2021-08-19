@@ -96,6 +96,8 @@ const test = playwrightTest.extend<{ showTraceViewer: (trace: string) => Promise
   }
 });
 
+test.beforeEach(({isDocker}) => test.skip(isDocker));
+
 let traceFile: string;
 
 test.beforeAll(async function recordTrace({ browser, browserName, browserType }, workerInfo) {
