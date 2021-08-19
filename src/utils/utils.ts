@@ -379,7 +379,7 @@ export const hostPlatform = ((): HostPlatform => {
     return 'ubuntu20.04';
   }
   if (platform === 'win32')
-    return os.arch() === 'x64' ? 'win64' : 'win32';
+    return 'win64';
   return platform as HostPlatform;
 })();
 
