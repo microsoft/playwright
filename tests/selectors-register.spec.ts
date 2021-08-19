@@ -134,7 +134,7 @@ it('should not rely on engines working from the root', async ({ playwright, brow
   expect(await page.$eval('input >> __value=value2', e => e.id)).toBe('input2');
 });
 
-it.only('should throw a nice error if the selector returns a bad value', async ({ playwright, browser }) => {
+it('should throw a nice error if the selector returns a bad value', async ({ playwright, browser }) => {
   const page = await browser.newPage();
   const createFakeEngine = () => ({
     query(root, selector) {
