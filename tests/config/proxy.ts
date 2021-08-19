@@ -21,22 +21,25 @@ import createProxy from 'proxy';
 export class TestProxy {
   readonly PORT: number;
   readonly URL: string;
-  readonly server: Server;
 
+  connectHosts: string[] = [];
+  requestUrls: string[] = [];
+
+  private readonly _server: Server;
   private readonly _sockets = new Set<Socket>();
-  private _connectHandlers = [];
+  private _handlers: { event: string, handler: (...args: any[]) => void }[] = [];
 
   static async create(port: number): Promise<TestProxy> {
     const proxy = new TestProxy(port);
-    await new Promise(f => proxy.server.listen(port, f));
+    await new Promise(f => proxy._server.listen(port, f));
     return proxy;
   }
 
   private constructor(port: number) {
     this.PORT = port;
     this.URL = `http://localhost:${port}`;
-    this.server = createProxy();
-    this.server.on('connection', socket => this._onSocket(socket));
+    this._server = createProxy();
+    this._server.on('connection', socket => this._onSocket(socket));
   }
 
   async stop(): Promise<void> {
@@ -44,18 +47,44 @@ export class TestProxy {
     for (const socket of this._sockets)
       socket.destroy();
     this._sockets.clear();
-    await new Promise(x => this.server.close(x));
+    await new Promise(x => this._server.close(x));
   }
 
-  onConnect(handler: (req: IncomingMessage) => void) {
-    this._connectHandlers.push(handler);
-    this.server.prependListener('connect', handler);
+  forwardTo(port: number) {
+    this._prependHandler('request', (req: IncomingMessage) => {
+      this.requestUrls.push(req.url);
+      const url = new URL(req.url);
+      url.host = `localhost:${port}`;
+      req.url = url.toString();
+    });
+    this._prependHandler('connect', (req: IncomingMessage) => {
+      this.connectHosts.push(req.url);
+      req.url = `localhost:${port}`;
+    });
+  }
+
+  setAuthHandler(handler: (req: IncomingMessage) => boolean) {
+    (this._server as any).authenticate = (req: IncomingMessage, callback) => {
+      try {
+        callback(null, handler(req));
+      } catch (e) {
+        callback(e, false);
+      }
+    };
   }
 
   reset() {
-    for (const handler of this._connectHandlers)
-      this.server.removeListener('connect', handler);
-    this._connectHandlers = [];
+    this.connectHosts = [];
+    this.requestUrls = [];
+    for (const { event, handler } of this._handlers)
+      this._server.removeListener(event, handler);
+    this._handlers = [];
+    (this._server as any).authenticate = undefined;
+  }
+
+  private _prependHandler(event: string, handler: (...args: any[]) => void) {
+    this._handlers.push({ event, handler });
+    this._server.prependListener(event, handler);
   }
 
   private _onSocket(socket: Socket) {
