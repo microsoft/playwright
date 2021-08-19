@@ -23,7 +23,7 @@ import { tOptional } from '../protocol/validatorPrimitives';
 import { kBrowserOrContextClosedError } from '../utils/errors';
 import { CallMetadata, SdkObject } from '../server/instrumentation';
 import { rewriteErrorMessage } from '../utils/stackTrace';
-import { createPlaywright } from '../server/playwright';
+import type { PlaywrightDispatcher } from './playwrightDispatcher';
 
 export const dispatcherSymbol = Symbol('dispatcher');
 
@@ -122,21 +122,21 @@ export class Dispatcher<Type extends { guid: string }, Initializer> extends Even
 }
 
 export type DispatcherScope = Dispatcher<any, any>;
-class Root extends Dispatcher<{ guid: '' }, {}> {
-  constructor(connection: DispatcherConnection) {
+export class Root extends Dispatcher<{ guid: '' }, {}> {
+  constructor(connection: DispatcherConnection, private readonly createPlaywright?: (scope: DispatcherScope) => Promise<PlaywrightDispatcher>) {
     super(connection, { guid: '' }, '', {}, true);
   }
 
-  initialize(params: { language?: string }): import('./playwrightDispatcher').PlaywrightDispatcher {
-    const { PlaywrightDispatcher } = require('./playwrightDispatcher');
-    const playwright = createPlaywright();
-    return new PlaywrightDispatcher(this, playwright);
+  async initialize(params: { language?: string }): Promise<channels.RootInitializeResult> {
+    assert(this.createPlaywright);
+    return {
+      playwright: await this.createPlaywright(this),
+    };
   }
 }
 
 export class DispatcherConnection {
   readonly _dispatchers = new Map<string, Dispatcher<any, any>>();
-  private _rootDispatcher: Root;
   onmessage = (message: object) => {};
   private _validateParams: (type: string, method: string, params: any) => any;
   private _validateMetadata: (metadata: any) => { stack?: channels.StackFrame[] };
@@ -164,8 +164,6 @@ export class DispatcherConnection {
   }
 
   constructor() {
-    this._rootDispatcher = new Root(this);
-
     const tChannel = (name: string): Validator => {
       return (arg: any, path: string) => {
         if (arg && typeof arg === 'object' && typeof arg.guid === 'string') {
@@ -194,10 +192,6 @@ export class DispatcherConnection {
     };
   }
 
-  rootDispatcher(): Dispatcher<any, any> {
-    return this._rootDispatcher;
-  }
-
   async dispatch(message: object) {
     const { id, guid, method, params, metadata } = message as any;
     const dispatcher = this._dispatchers.get(guid);
@@ -206,7 +200,8 @@ export class DispatcherConnection {
       return;
     }
     if (method === 'debugScopeState') {
-      this.onmessage({ id, result: this._rootDispatcher._debugScopeState() });
+      const rootDispatcher = this._dispatchers.get('')!;
+      this.onmessage({ id, result: rootDispatcher._debugScopeState() });
       return;
     }
 

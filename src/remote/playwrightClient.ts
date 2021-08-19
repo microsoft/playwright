@@ -37,11 +37,13 @@ export class PlaywrightClient {
     ws.on('message', message => connection.dispatch(JSON.parse(message.toString())));
     const errorPromise = new Promise((_, reject) => ws.on('error', error => reject(error)));
     const closePromise = new Promise((_, reject) => ws.on('close', () => reject(new Error('Connection closed'))));
-    const playwrightClientPromise = new Promise<PlaywrightClient>(async (resolve, reject) => {
-      const playwright = await connection.initializePlaywright();
-      if (forwardPorts)
-        await playwright._enablePortForwarding(forwardPorts).catch(reject);
-      resolve(new PlaywrightClient(playwright, ws));
+    const playwrightClientPromise = new Promise<PlaywrightClient>((resolve, reject) => {
+      ws.on('open', async () => {
+        const playwright = await connection.initializePlaywright();
+        if (forwardPorts)
+          await playwright._enablePortForwarding(forwardPorts).catch(reject);
+        resolve(new PlaywrightClient(playwright, ws));
+      });
     });
     let timer: NodeJS.Timeout;
     try {

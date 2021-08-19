@@ -20,9 +20,11 @@ import fs from 'fs';
 import * as playwright from '../..';
 import { BrowserType } from '../client/browserType';
 import { LaunchServerOptions } from '../client/types';
-import { DispatcherConnection } from '../dispatchers/dispatcher';
+import { DispatcherConnection, Root } from '../dispatchers/dispatcher';
+import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
 import { Transport } from '../protocol/transport';
 import { PlaywrightServer, PlaywrightServerOptions } from '../remote/playwrightServer';
+import { createPlaywright } from '../server/playwright';
 import { gracefullyCloseAll } from '../utils/processLauncher';
 
 export function printApiJson() {
@@ -32,6 +34,10 @@ export function printApiJson() {
 
 export function runDriver() {
   const dispatcherConnection = new DispatcherConnection();
+  new Root(dispatcherConnection, async rootScope => {
+    const playwright = createPlaywright();
+    return new PlaywrightDispatcher(rootScope, playwright);
+  });
   const transport = new Transport(process.stdout, process.stdin);
   transport.onmessage = message => dispatcherConnection.dispatch(JSON.parse(message));
   dispatcherConnection.onmessage = message => transport.send(JSON.stringify(message));
