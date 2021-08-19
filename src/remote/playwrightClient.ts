@@ -20,7 +20,6 @@ import { Playwright } from '../client/playwright';
 
 export type PlaywrightClientConnectOptions = {
   wsEndpoint: string;
-  forwardPorts?: number[];
   timeout?: number
 };
 
@@ -30,7 +29,7 @@ export class PlaywrightClient {
   private _closePromise: Promise<void>;
 
   static async connect(options: PlaywrightClientConnectOptions): Promise<PlaywrightClient> {
-    const {wsEndpoint, forwardPorts, timeout = 30000} = options;
+    const { wsEndpoint, timeout = 30000 } = options;
     const connection = new Connection();
     const ws = new WebSocket(wsEndpoint);
     connection.onmessage = message => ws.send(JSON.stringify(message));
@@ -40,8 +39,6 @@ export class PlaywrightClient {
     const playwrightClientPromise = new Promise<PlaywrightClient>((resolve, reject) => {
       ws.on('open', async () => {
         const playwright = await connection.initializePlaywright();
-        if (forwardPorts)
-          await playwright._enablePortForwarding(forwardPorts).catch(reject);
         resolve(new PlaywrightClient(playwright, ws));
       });
     });

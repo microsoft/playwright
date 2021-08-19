@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import net from 'net';
 import * as channels from '../protocol/channels';
 import { Playwright } from '../server/playwright';
 import { AndroidDispatcher } from './androidDispatcher';
@@ -22,10 +23,12 @@ import { Dispatcher, DispatcherScope } from './dispatcher';
 import { ElectronDispatcher } from './electronDispatcher';
 import { SelectorsDispatcher } from './selectorsDispatcher';
 import * as types from '../server/types';
-import { SocksSocketDispatcher } from './socksSocketDispatcher';
-import { SocksInterceptedSocketHandler } from '../server/socksServer';
+import { SocksConnection, SocksConnectionClient } from '../utils/socksProxy';
+import { createGuid } from '../utils/utils';
 
 export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.PlaywrightInitializer> implements channels.PlaywrightChannel {
+  private _socksProxy: SocksProxy | undefined;
+
   constructor(scope: DispatcherScope, playwright: Playwright, customSelectors?: channels.SelectorsChannel, preLaunchedBrowser?: channels.BrowserChannel) {
     const descriptors = require('../server/deviceDescriptors') as types.Devices;
     const deviceDescriptors = Object.entries(descriptors)
@@ -40,12 +43,81 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
       selectors: customSelectors || new SelectorsDispatcher(scope, playwright.selectors),
       preLaunchedBrowser,
     }, false);
-    this._object.on('incomingSocksSocket', (socket: SocksInterceptedSocketHandler) => {
-      this._dispatchEvent('incomingSocksSocket', { socket: new SocksSocketDispatcher(this, socket) });
+  }
+
+  enableSocksProxy(port: number) {
+    this._socksProxy = new SocksProxy(this);
+    this._socksProxy.listen(port);
+  }
+
+  async socksConnected(params: channels.PlaywrightSocksConnectedParams, metadata?: channels.Metadata): Promise<void> {
+    this._socksProxy?.socketConnected(params);
+  }
+
+  async socksFailed(params: channels.PlaywrightSocksFailedParams, metadata?: channels.Metadata): Promise<void> {
+    this._socksProxy?.socketFailed(params);
+  }
+
+  async socksData(params: channels.PlaywrightSocksDataParams, metadata?: channels.Metadata): Promise<void> {
+    this._socksProxy?.sendSocketData(params);
+  }
+
+  async socksError(params: channels.PlaywrightSocksErrorParams, metadata?: channels.Metadata): Promise<void> {
+    this._socksProxy?.sendSocketError(params);
+  }
+
+  async socksEnd(params: channels.PlaywrightSocksEndParams, metadata?: channels.Metadata): Promise<void> {
+    this._socksProxy?.sendSocketEnd(params);
+  }
+}
+
+class SocksProxy implements SocksConnectionClient {
+  private _server: net.Server;
+  private _connections = new Map<string, SocksConnection>();
+  private _dispatcher: PlaywrightDispatcher;
+
+  constructor(dispatcher: PlaywrightDispatcher) {
+    this._dispatcher = dispatcher;
+    this._server = new net.Server((socket: net.Socket) => {
+      const uid = createGuid();
+      const connection = new SocksConnection(uid, socket, this);
+      this._connections.set(uid, connection);
     });
   }
 
-  async setForwardedPorts(params: channels.PlaywrightSetForwardedPortsParams): Promise<void> {
-    this._object._setForwardedPorts(params.ports);
+  listen(port: number) {
+    this._server.listen(port);
+  }
+
+  onSocketRequested(uid: string, host: string, port: number): void {
+    this._dispatcher._dispatchEvent('socksRequested', { uid, host, port });
+  }
+
+  onSocketData(uid: string, data: Buffer): void {
+    this._dispatcher._dispatchEvent('socksData', { uid, data: data.toString('base64') });
+  }
+
+  onSocketClosed(uid: string): void {
+    this._dispatcher._dispatchEvent('socksClosed', { uid });
+  }
+
+  socketConnected(params: channels.PlaywrightSocksConnectedParams) {
+    this._connections.get(params.uid)?.socketConnected(params.host, params.port);
+  }
+
+  socketFailed(params: channels.PlaywrightSocksFailedParams) {
+    this._connections.get(params.uid)?.socketFailed(params.errorCode);
+  }
+
+  sendSocketData(params: channels.PlaywrightSocksDataParams) {
+    this._connections.get(params.uid)?.sendData(Buffer.from(params.data, 'base64'));
+  }
+
+  sendSocketEnd(params: channels.PlaywrightSocksEndParams) {
+    this._connections.get(params.uid)?.end();
+  }
+
+  sendSocketError(params: channels.PlaywrightSocksErrorParams) {
+    this._connections.get(params.uid)?.error(params.error);
   }
 }

@@ -44,8 +44,6 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
 
   async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
     const playwright = createPlaywright();
-    if (options._acceptForwardedPorts)
-      await playwright._enablePortForwarding();
     // 1. Pre-launch the browser
     const browser = await playwright[this._browserName].launch(internalCallMetadata(), {
       ...options,
@@ -57,10 +55,8 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     // 2. Start the server
     const delegate: PlaywrightServerDelegate = {
       path: '/' + createGuid(),
-      allowMultipleClients: options._acceptForwardedPorts ? false : true,
-      onClose: () => {
-        playwright._disablePortForwarding();
-      },
+      allowMultipleClients: true,
+      onClose: () => {},
       onConnect: this._onConnect.bind(this, playwright, browser),
     };
     const server = new PlaywrightServer(delegate);

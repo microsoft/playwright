@@ -380,18 +380,47 @@ Playwright:
 
   commands:
 
-    setForwardedPorts:
+    socksConnected:
       parameters:
-        ports:
-          type: array
-          items: number
+        uid: string
+        host: string
+        port: number
+
+    socksFailed:
+      parameters:
+        uid: string
+        errorCode: string
+
+    socksData:
+      parameters:
+        uid: string
+        data: binary
+
+    socksError:
+      parameters:
+        uid: string
+        error: string
+
+    socksEnd:
+      parameters:
+        uid: string
 
   events:
-
-    incomingSocksSocket:
+    socksRequested:
       parameters:
-        socket: SocksSocket
+        uid: string
+        host: string
+        port: number
 
+    socksData:
+      parameters:
+        uid: string
+        data: binary
+
+    socksClosed:
+      parameters:
+        uid: string
+    
 
 Selectors:
   type: interface
@@ -2788,29 +2817,3 @@ AndroidElementInfo:
     longClickable: boolean
     scrollable: boolean
     selected: boolean
-
-SocksSocket:
-  type: interface
-
-  initializer:
-    dstAddr: string
-    dstPort: number
-
-  commands:
-    write:
-      parameters:
-        data: binary
-
-    error:
-      parameters:
-        error: string
-
-    connected:
-
-    end:
-
-  events:
-    data:
-      parameters:
-        data: binary
-    close:
