@@ -33,6 +33,7 @@ type BaseOptions = {
   browserName: BrowserName;
   channel: LaunchOptions['channel'];
   video: boolean | undefined;
+  trace: boolean | undefined;
   headless: boolean | undefined;
 };
 type BaseFixtures = {
@@ -105,6 +106,7 @@ const baseFixtures: Fixtures<{}, BaseOptions & BaseFixtures> = {
   browserName: [ 'chromium' , { scope: 'worker' } ],
   channel: [ undefined, { scope: 'worker' } ],
   video: [ undefined, { scope: 'worker' } ],
+  trace: [ undefined, { scope: 'worker' } ],
   headless: [ undefined, { scope: 'worker' } ],
   platform: [ process.platform as 'win32' | 'darwin' | 'linux', { scope: 'worker' } ],
   playwright: [ async ({ mode }, run, workerInfo) => {

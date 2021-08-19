@@ -16,6 +16,8 @@
 
 import { contextTest as it, expect } from '../config/browserTest';
 
+it.skip(({ trace }) => !!trace);
+
 it('should work', async function({page, server}) {
   await page.coverage.startJSCoverage();
   await page.goto(server.PREFIX + '/jscoverage/simple.html', { waitUntil: 'load' });

@@ -50,7 +50,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   };
 
   readonly tracing: Tracing;
-
+  private _closed = false;
   readonly _backgroundPages = new Set<Page>();
   readonly _serviceWorkers = new Set<Worker>();
   readonly _isChromium: boolean;
@@ -320,6 +320,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   }
 
   _onClose() {
+    this._closed = true;
     if (this._browser)
       this._browser._contexts.delete(this);
     this._browserType?._contexts?.delete(this);

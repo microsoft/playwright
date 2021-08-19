@@ -24,7 +24,6 @@ import { RemoteServer, RemoteServerOptions } from './remoteServer';
 import { baseTest, CommonWorkerFixtures } from './baseTest';
 
 type PlaywrightWorkerOptions = {
-  tracesDir: LaunchOptions['tracesDir'];
   executablePath: LaunchOptions['executablePath'];
   proxy: LaunchOptions['proxy'];
   args: LaunchOptions['args'];
@@ -50,7 +49,6 @@ type PlaywrightTestFixtures = {
 export type PlaywrightOptions = PlaywrightWorkerOptions & PlaywrightTestOptions;
 
 export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTestFixtures, PlaywrightWorkerOptions & PlaywrightWorkerFixtures, {}, CommonWorkerFixtures> = {
-  tracesDir: [ undefined, { scope: 'worker' } ],
   executablePath: [ undefined, { scope: 'worker' } ],
   proxy: [ undefined, { scope: 'worker' } ],
   args: [ undefined, { scope: 'worker' } ],
@@ -60,12 +58,11 @@ export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTest
     await run(playwright[browserName]);
   }, { scope: 'worker' } ],
 
-  browserOptions: [async ({ headless, channel, executablePath, tracesDir, proxy, args }, run) => {
+  browserOptions: [async ({ headless, channel, executablePath, proxy, args }, run) => {
     await run({
       headless,
       channel,
       executablePath,
-      tracesDir,
       proxy,
       args,
       handleSIGINT: false,
@@ -125,7 +122,7 @@ export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTest
       await remoteServer.close();
   },
 
-  contextOptions: async ({ video, hasTouch, browserVersion }, run, testInfo) => {
+  contextOptions: async ({ video, hasTouch }, run, testInfo) => {
     const debugName = path.relative(testInfo.project.outputDir, testInfo.outputDir).replace(/[\/\\]/g, '-');
     const contextOptions = {
       recordVideo: video ? { dir: testInfo.outputPath('') } : undefined,
@@ -135,10 +132,12 @@ export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTest
     await run(contextOptions);
   },
 
-  contextFactory: async ({ browser, contextOptions, video }, run, testInfo) => {
+  contextFactory: async ({ browser, contextOptions, trace }, run, testInfo) => {
     const contexts: BrowserContext[] = [];
     await run(async options => {
       const context = await browser.newContext({ ...contextOptions, ...options });
+      if (trace)
+        await context.tracing.start({ screenshots: true, snapshots: true });
       (context as any)._csi = {
         onApiCall: (name: string) => {
           return (testInfo as any)._addStep('pw:api', name);
@@ -149,6 +148,8 @@ export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTest
     });
     await Promise.all(contexts.map(async context => {
       const videos = context.pages().map(p => p.video()).filter(Boolean);
+      if (!(context as any)._closed && trace)
+        await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
       await context.close();
       for (const v of videos) {
         const videoPath = await v.path().catch(() => null);
