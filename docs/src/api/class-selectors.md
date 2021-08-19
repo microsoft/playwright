@@ -98,7 +98,6 @@ async def run(playwright):
     # Can use it in any methods supporting selectors.
     button_count = await page.eval_on_selector_all('tag=button', 'buttons => buttons.length')
     print(button_count)
-    await page.goto("https://example.com")
     await browser.close()
 
 async def main():
@@ -137,7 +136,6 @@ def run(playwright):
     # Can use it in any methods supporting selectors.
     button_count = page.eval_on_selector_all('tag=button', 'buttons => buttons.length')
     print(button_count)
-    page.goto("https://example.com")
     browser.close()
 
 with sync_playwright() as playwright:
