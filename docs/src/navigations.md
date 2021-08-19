@@ -34,7 +34,7 @@ Navigations can be initiated by changing the URL bar, reloading the page or goin
 ### Auto-wait
 
 Navigating to a URL auto-waits for the page to fire the `load` event. If the page does a client-side redirect before
-`load`, `page.goto` will auto-wait for the redirected page to fire the `load` event.
+`load`, [`method: Page.goto`] will auto-wait for the redirected page to fire the `load` event.
 
 ```js
 // Navigate the page
