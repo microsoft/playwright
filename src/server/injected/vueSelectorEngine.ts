@@ -204,27 +204,34 @@ function filterComponentsTree(treeNode: ComponentNode, searchFn: (node: Componen
   return result;
 }
 
-function findVueRoot(): undefined|{version: number, root: VueVNode} {
-  const walker = document.createTreeWalker(document);
-  while (walker.nextNode()) {
-    // Vue3 root
-    if ((walker.currentNode as any)._vnode && (walker.currentNode as any)._vnode.component)
-      return {root: (walker.currentNode as any)._vnode.component, version: 3};
-    // Vue2 root
-    if ((walker.currentNode as any).__vue__)
-      return {root: (walker.currentNode as any).__vue__, version: 2};
-  }
-  return undefined;
+type VueRoot = {version: number, root: VueVNode};
+function findVueRoots(): VueRoot[] {
+  const roots: VueRoot[] = [];
+  const walker = document.createTreeWalker(document, NodeFilter.SHOW_ELEMENT, {
+    acceptNode: function(node) {
+      // Vue3 root
+      if ((node as any)._vnode && (node as any)._vnode.component) {
+        roots.push({root: (node as any)._vnode.component, version: 3});
+        return NodeFilter.FILTER_REJECT;
+      }
+      // Vue2 root
+      if ((node as any).__vue__) {
+        roots.push({root: (node as any).__vue__, version: 2});
+        return NodeFilter.FILTER_REJECT;
+      }
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  while (walker.nextNode());
+  return roots;
 }
 
 export const VueEngine: SelectorEngine = {
   queryAll(scope: SelectorRoot, selector: string): Element[] {
     const {name, attributes} = parseComponentSelector(selector);
-    const vueRoot = findVueRoot();
-    if (!vueRoot)
-      return [];
-    const tree = vueRoot.version === 3 ? buildComponentsTreeVue3(vueRoot.root) : buildComponentsTreeVue2(vueRoot.root);
-    const treeNodes = filterComponentsTree(tree, treeNode => {
+    const vueRoots = findVueRoots();
+    const trees = vueRoots.map(vueRoot => vueRoot.version === 3 ? buildComponentsTreeVue3(vueRoot.root) : buildComponentsTreeVue2(vueRoot.root));
+    const treeNodes = trees.map(tree => filterComponentsTree(tree, treeNode => {
       if (name && treeNode.name !== name)
         return false;
       if (treeNode.rootElements.some(rootElement => !scope.contains(rootElement)))
@@ -233,9 +240,8 @@ export const VueEngine: SelectorEngine = {
         if (!checkComponentAttribute(treeNode.props, attr))
           return false;
       }
-
       return true;
-    });
+    })).flat();
     const allRootElements: Set<Element> = new Set();
     for (const treeNode of treeNodes) {
       for (const rootElement of treeNode.rootElements)
