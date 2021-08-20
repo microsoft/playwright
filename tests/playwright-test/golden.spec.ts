@@ -487,3 +487,78 @@ test('should write missing expectations with sanitized snapshot name', async ({r
   const data = fs.readFileSync(snapshotOutputPath);
   expect(data.toString()).toBe('Hello world');
 });
+
+test('should attach expected/actual/diff', async ({runInlineTest}, testInfo) => {
+  const result = await runInlineTest({
+    ...files,
+    'a.spec.js-snapshots/snapshot.png':
+        Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg==', 'base64'),
+    'a.spec.js': `
+      const { test } = require('./helper');
+      test.afterEach(async ({}, testInfo) => {
+        console.log('## ' + JSON.stringify(testInfo.attachments));
+      });
+      test('is a test', ({}) => {
+        expect(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVQYV2NgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII==', 'base64')).toMatchSnapshot('snapshot.png');
+      });
+    `
+  });
+
+  const outputText = stripAscii(result.output);
+  const attachments = outputText.split('\n').filter(l => l.startsWith('## ')).map(l => l.substring(3)).map(l => JSON.parse(l))[0];
+  for (const attachment of attachments)
+    attachment.path = attachment.path.replace(/\\/g, '/').replace(/.*test-results\//, '');
+  expect(attachments).toEqual([
+    {
+      name: 'expected',
+      contentType: 'image/png',
+      path: 'a-is-a-test/snapshot-expected.png'
+    },
+    {
+      name: 'actual',
+      contentType: 'image/png',
+      path: 'a-is-a-test/snapshot-actual.png'
+    },
+    {
+      name: 'diff',
+      contentType: 'image/png',
+      path: 'a-is-a-test/snapshot-diff.png'
+    }
+  ]);
+});
+
+test('should attach expected/actual and no diff', async ({runInlineTest}, testInfo) => {
+  const result = await runInlineTest({
+    ...files,
+    'a.spec.js-snapshots/snapshot.png':
+        Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAEklEQVR42mP8z8AARAwMjDAGACwBA/9IB8FMAAAAAElFTkSuQmCC', 'base64'),
+    'a.spec.js': `
+      const { test } = require('./helper');
+      test.afterEach(async ({}, testInfo) => {
+        console.log('## ' + JSON.stringify(testInfo.attachments));
+      });
+      test('is a test', ({}) => {
+        expect(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVQYV2NgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII==', 'base64')).toMatchSnapshot('snapshot.png');
+      });
+    `
+  });
+
+  const outputText = stripAscii(result.output);
+  expect(outputText).toContain('Sizes differ; expected image 2px X 2px, but got 1px X 1px.');
+  const attachments = outputText.split('\n').filter(l => l.startsWith('## ')).map(l => l.substring(3)).map(l => JSON.parse(l))[0];
+  for (const attachment of attachments)
+    attachment.path = attachment.path.replace(/\\/g, '/').replace(/.*test-results\//, '');
+  expect(attachments).toEqual([
+    {
+      name: 'expected',
+      contentType: 'image/png',
+      path: 'a-is-a-test/snapshot-expected.png'
+    },
+    {
+      name: 'actual',
+      contentType: 'image/png',
+      path: 'a-is-a-test/snapshot-actual.png'
+    },
+  ]);
+});
+
