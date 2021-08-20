@@ -61,3 +61,18 @@ test('should get stdio from env afterAll', async ({runInlineTest}) => {
   ]);
 });
 
+test('should ignore stdio when quiet', async ({runInlineTest}) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { quiet: true };
+    `,
+    'a.spec.js': `
+      const { test } = pwt;
+      test('is a test', () => {
+        console.log('\\n%% stdout in a test');
+        console.error('\\n%% stderr in a test');
+      });
+    `
+  }, { reporter: 'list' }, { PWTEST_SKIP_TEST_OUTPUT: '' });
+  expect(result.output).not.toContain('%%');
+});

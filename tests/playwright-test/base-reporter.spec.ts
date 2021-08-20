@@ -181,3 +181,32 @@ test('should print stdio for failures', async ({ runInlineTest }) => {
     'my log 2\n',
   ].join(''));
 });
+
+test('should print flaky failures', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const { test } = pwt;
+      test('foobar', async ({}, testInfo) => {
+        expect(testInfo.retry).toBe(1);
+      });
+    `
+  }, { retries: '1', reporter: 'list' });
+  expect(result.exitCode).toBe(0);
+  expect(result.flaky).toBe(1);
+  expect(stripAscii(result.output)).toContain('expect(testInfo.retry).toBe(1)');
+});
+
+test('should print flaky timeouts', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const { test } = pwt;
+      test('foobar', async ({}, testInfo) => {
+        if (!testInfo.retry)
+          await new Promise(f => setTimeout(f, 2000));
+      });
+    `
+  }, { retries: '1', reporter: 'list', timeout: '1000' });
+  expect(result.exitCode).toBe(0);
+  expect(result.flaky).toBe(1);
+  expect(stripAscii(result.output)).toContain('Timeout of 1000ms exceeded.');
+});
