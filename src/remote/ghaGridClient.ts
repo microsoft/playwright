@@ -26,16 +26,22 @@ export class GhaGridClient {
   private _ws: WebSocket | undefined;
 
   async connect(): Promise<Playwright> {
-    this._ws = new WebSocket(gridProxy + `/claimWorker?access_token=${gridAccessToken}&repo=${gridRepo}`);
-    await new Promise(f => this._ws!.once('message', f));
+    console.log('PWGRID_PROXY' in process.env);
+    console.log('PWGRID_REPO' in process.env);
+    console.log('PWGRID_ACCESS_TOKEN' in process.env);
+    console.log('========' + gridProxy!.length, gridAccessToken!.length, gridRepo!.length);
+    // this._ws = new WebSocket(gridProxy + `/claimWorker?access_token=${gridAccessToken}&repo=${gridRepo}`);
+    // await new Promise(f => this._ws!.once('message', f));
 
-    const connection = new Connection();
-    connection.onmessage = message => this._ws!.send(JSON.stringify(message));
-    this._ws!.on('message', message => connection.dispatch(JSON.parse(message.toString())));
+    // const connection = new Connection();
+    // connection.onmessage = message => this._ws!.send(JSON.stringify(message));
+    // this._ws!.on('message', message => connection.dispatch(JSON.parse(message.toString())));
 
-    const playwright = await connection.initializePlaywright();
-    playwright._enablePortForwarding();
-    return playwright;
+    // const playwright = await connection.initializePlaywright();
+    // playwright._enablePortForwarding();
+    // return playwright;
+    await new Promise(() => {});
+    return null as any;
   }
 
   disconnect() {

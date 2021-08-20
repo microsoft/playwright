@@ -27,6 +27,14 @@ import { GhaGridClient } from '../../lib/remote/ghaGridClient';
 import type { LaunchOptions } from '../../index';
 import { TestProxy } from './proxy';
 
+console.log('BASE TEST');
+console.log('PWGRID_PROXY' in process.env);
+console.log('PWGRID_REPO' in process.env);
+console.log('PWGRID_ACCESS_TOKEN' in process.env);
+console.log(process.env.PWGRID_PROXY.length);
+console.log(process.env.PWGRID_REPO.length);
+console.log(process.env.PWGRID_ACCESS_TOKEN.length);
+
 export type BrowserName = 'chromium' | 'firefox' | 'webkit';
 type Mode = 'default' | 'driver' | 'service' | 'grid';
 type BaseOptions = {
@@ -97,7 +105,10 @@ class GridMode {
   private _client: any;
 
   async setup(workerIndex: number) {
+    console.log('SETUP CLIENT', GhaGridClient);
     this._client = new GhaGridClient();
+    console.log('SETUP CLIENT INSTANCE', this._client);
+    console.log('SETUP CLIENT INSTANCE CONNECT', this._client.connect);
     return await this._client.connect();
   }
 
@@ -124,12 +135,14 @@ const baseFixtures: Fixtures<{}, BaseOptions & BaseFixtures> = {
   headless: [ undefined, { scope: 'worker' } ],
   platform: [ process.platform as 'win32' | 'darwin' | 'linux', { scope: 'worker' } ],
   playwright: [ async ({ mode }, run, workerInfo) => {
+    console.log('MODE ==== ', mode);
     const modeImpl = {
       default: new DefaultMode(),
       service: new ServiceMode(),
       driver: new DriverMode(),
       grid: new GridMode(),
     }[mode];
+    console.log('MODE_IMPL ==== ', modeImpl);
     require('../../lib/utils/utils').setUnderTest();
     const playwright = await modeImpl.setup(workerInfo.workerIndex);
     await run(playwright);
