@@ -19,6 +19,8 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 
+it.skip(({ mode }) => mode === 'grid');
+
 it.describe('download event', () => {
   it.beforeEach(async ({server}) => {
     server.setRoute('/download', (req, res) => {

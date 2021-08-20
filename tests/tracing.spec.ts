@@ -19,6 +19,7 @@ import yauzl from 'yauzl';
 import jpeg from 'jpeg-js';
 
 test.skip(({ trace }) => !!trace);
+test.skip(({ mode }) => mode === 'grid');
 
 test('should collect trace with resources, but no js', async ({ context, page, server }, testInfo) => {
   await context.tracing.start({ screenshots: true, snapshots: true });

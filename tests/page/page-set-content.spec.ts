@@ -19,26 +19,26 @@ import { test as it, expect } from './pageTest';
 
 const expectedOutput = '<html><head></head><body><div>hello</div></body></html>';
 
-it('should work', async ({page, server}) => {
+it('should work', async ({page}) => {
   await page.setContent('<div>hello</div>');
   const result = await page.content();
   expect(result).toBe(expectedOutput);
 });
 
-it('should work with domcontentloaded', async ({page, server}) => {
+it('should work with domcontentloaded', async ({page}) => {
   await page.setContent('<div>hello</div>', { waitUntil: 'domcontentloaded' });
   const result = await page.content();
   expect(result).toBe(expectedOutput);
 });
 
-it('should work with doctype', async ({page, server}) => {
+it('should work with doctype', async ({page}) => {
   const doctype = '<!DOCTYPE html>';
   await page.setContent(`${doctype}<div>hello</div>`);
   const result = await page.content();
   expect(result).toBe(`${doctype}${expectedOutput}`);
 });
 
-it('should work with HTML 4 doctype', async ({page, server}) => {
+it('should work with HTML 4 doctype', async ({page}) => {
   const doctype = '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" ' +
     '"http://www.w3.org/TR/html4/strict.dtd">';
   await page.setContent(`${doctype}<div>hello</div>`);
@@ -77,27 +77,27 @@ it('should await resources to load', async ({page, server}) => {
   await contentPromise;
 });
 
-it('should work fast enough', async ({page, server}) => {
+it('should work fast enough', async ({page}) => {
   for (let i = 0; i < 20; ++i)
     await page.setContent('<div>yo</div>');
 });
 
-it('should work with tricky content', async ({page, server}) => {
+it('should work with tricky content', async ({page}) => {
   await page.setContent('<div>hello world</div>' + '\x7F');
   expect(await page.$eval('div', div => div.textContent)).toBe('hello world');
 });
 
-it('should work with accents', async ({page, server}) => {
+it('should work with accents', async ({page}) => {
   await page.setContent('<div>aberración</div>');
   expect(await page.$eval('div', div => div.textContent)).toBe('aberración');
 });
 
-it('should work with emojis', async ({page, server}) => {
+it('should work with emojis', async ({page}) => {
   await page.setContent('<div>🐥</div>');
   expect(await page.$eval('div', div => div.textContent)).toBe('🐥');
 });
 
-it('should work with newline', async ({page, server}) => {
+it('should work with newline', async ({page}) => {
   await page.setContent('<div>\n</div>');
   expect(await page.$eval('div', div => div.textContent)).toBe('\n');
 });

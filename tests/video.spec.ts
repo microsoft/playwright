@@ -21,6 +21,8 @@ import { spawnSync } from 'child_process';
 import { PNG } from 'pngjs';
 import { registry } from '../src/utils/registry';
 
+it.skip(({ mode }) => mode === 'grid');
+
 const ffmpeg = registry.findExecutable('ffmpeg')!.executablePath();
 
 export class VideoPlayer {

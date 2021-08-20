@@ -18,6 +18,8 @@ import { playwrightTest as it, expect } from './config/browserTest';
 import fs from 'fs';
 import path from 'path';
 
+it.skip(({ mode }) => mode === 'grid');
+
 it.describe('downloads path', () => {
   it.beforeEach(async ({server}) => {
     server.setRoute('/download', (req, res) => {

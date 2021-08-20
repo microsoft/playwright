@@ -22,6 +22,8 @@ import http2 from 'http2';
 import type { BrowserContext, BrowserContextOptions } from '../index';
 import type { AddressInfo } from 'net';
 
+it.skip(({ mode }) => mode === 'grid');
+
 async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any) {
   const harPath = testInfo.outputPath('test.har');
   const context = await contextFactory({ recordHar: { path: harPath }, ignoreHTTPSErrors: true });

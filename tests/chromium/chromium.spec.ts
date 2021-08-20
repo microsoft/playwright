@@ -20,6 +20,8 @@ import { playwrightTest } from '../config/browserTest';
 import http from 'http';
 import { getUserAgent } from '../../lib/utils/utils';
 
+test.skip(({ mode }) => mode === 'grid');
+
 test('should create a worker from a service worker', async ({page, server}) => {
   const [worker] = await Promise.all([
     page.context().waitForEvent('serviceworker'),

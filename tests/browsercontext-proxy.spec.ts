@@ -16,6 +16,7 @@
 
 import { browserTest as it, expect } from './config/browserTest';
 
+it.skip(({ mode }) => mode === 'grid');
 it.use({ proxy: { server: 'per-context' } });
 
 it.beforeEach(({ server }) => {

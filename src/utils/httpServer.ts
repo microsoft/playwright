@@ -14,19 +14,21 @@
  * limitations under the License.
  */
 
-import * as http from 'http';
 import fs from 'fs';
+import http from 'http';
 import path from 'path';
+import { Server as WebSocketServer } from 'ws';
 
 export type ServerRouteHandler = (request: http.IncomingMessage, response: http.ServerResponse) => boolean;
 
 export class HttpServer {
-  private _server: http.Server | undefined;
+  private _server: http.Server;
   private _urlPrefix: string;
   private _routes: { prefix?: string, exact?: string, handler: ServerRouteHandler }[] = [];
 
   constructor() {
     this._urlPrefix = '';
+    this._server = http.createServer(this._onRequest.bind(this));
   }
 
   routePrefix(prefix: string, handler: ServerRouteHandler) {
@@ -37,8 +39,11 @@ export class HttpServer {
     this._routes.push({ exact: path, handler });
   }
 
+  createWebSocketServer() {
+    return new WebSocketServer({ server: this._server });
+  }
+
   async start(port?: number): Promise<string> {
-    this._server = http.createServer(this._onRequest.bind(this));
     this._server.listen(port);
     await new Promise(cb => this._server!.once('listening', cb));
     const address = this._server.address();

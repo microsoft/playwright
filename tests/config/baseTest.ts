@@ -23,11 +23,12 @@ import { installCoverageHooks } from './coverage';
 import * as childProcess from 'child_process';
 import { start } from '../../lib/outofprocess';
 import { PlaywrightClient } from '../../lib/remote/playwrightClient';
+import { GhaGridClient } from '../../lib/remote/ghaGridClient';
 import type { LaunchOptions } from '../../index';
 import { TestProxy } from './proxy';
 
 export type BrowserName = 'chromium' | 'firefox' | 'webkit';
-type Mode = 'default' | 'driver' | 'service';
+type Mode = 'default' | 'driver' | 'service' | 'grid';
 type BaseOptions = {
   mode: Mode;
   browserName: BrowserName;
@@ -92,6 +93,19 @@ class ServiceMode {
   }
 }
 
+class GridMode {
+  private _client: any;
+
+  async setup(workerIndex: number) {
+    this._client = new GhaGridClient();
+    return await this._client.connect();
+  }
+
+  async teardown() {
+    await this._client.disconnect();
+  }
+}
+
 class DefaultMode {
   async setup(workerIndex: number) {
     return require('../../index');
@@ -114,6 +128,7 @@ const baseFixtures: Fixtures<{}, BaseOptions & BaseFixtures> = {
       default: new DefaultMode(),
       service: new ServiceMode(),
       driver: new DriverMode(),
+      grid: new GridMode(),
     }[mode];
     require('../../lib/utils/utils').setUnderTest();
     const playwright = await modeImpl.setup(workerInfo.workerIndex);

@@ -1,0 +1,40 @@
+name: "tests grid"
+
+on:
+  push:
+    branches:
+      - master
+      - release-*
+  pull_request:
+    paths-ignore:
+      - 'browser_patches/**'
+      - 'docs/**'
+    branches:
+      - master
+      - release-*
+
+
+env:
+  # Force terminal colors. @see https://www.npmjs.com/package/colors
+  FORCE_COLOR: 1
+
+jobs:
+  chrome_stable_grid:
+    name: "Chrome Stable (Grid)"
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: 12
+    - run: npm ci
+      env:
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - run: npm run build
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest -- --workers=10
+      env:
+        PWTEST_MODE: grid
+        PWTEST_CHANNEL: chrome
+        PWGRID_PROXY: ${{ secrets.PWGRID_PROXY }}
+        PWGRID_REPO: ${{ secrets.PWGRID_REPO }}
+        PWGRID_ACCESS_TOKEN: ${{ secrets.PWGRID_ACCESS_TOKEN }}

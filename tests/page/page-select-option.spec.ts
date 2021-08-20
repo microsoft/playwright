@@ -108,7 +108,7 @@ it('should select multiple options with attributes', async ({page, server}) => {
   expect(await page.evaluate(() => window['result'].onChange)).toEqual(['blue', 'gray', 'green']);
 });
 
-it('should select options with sibling label', async ({page, server}) => {
+it('should select options with sibling label', async ({page}) => {
   await page.setContent(`<label for=pet-select>Choose a pet</label>
     <select id='pet-select'>
       <option value='dog'>Dog</option>
@@ -118,7 +118,7 @@ it('should select options with sibling label', async ({page, server}) => {
   expect(await page.$eval('select', select => select.options[select.selectedIndex].text)).toEqual('Cat');
 });
 
-it('should select options with outer label', async ({page, server}) => {
+it('should select options with outer label', async ({page}) => {
   await page.setContent(`<label for=pet-select>Choose a pet
     <select id='pet-select'>
       <option value='dog'>Dog</option>
@@ -199,7 +199,7 @@ it('should deselect all options when passed no values for a select without multi
   expect(await page.$eval('select', select => Array.from(select.options).every(option => !option.selected))).toEqual(true);
 });
 
-it('should throw if passed wrong types', async ({page, server}) => {
+it('should throw if passed wrong types', async ({page}) => {
   let error;
   await page.setContent('<select><option value="12"/></select>');
 

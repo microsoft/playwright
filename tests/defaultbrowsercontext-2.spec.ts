@@ -80,65 +80,69 @@ it('should support extraHTTPHeaders option', async ({server, launchPersistent}) 
   expect(request.headers['foo']).toBe('bar');
 });
 
-it('should accept userDataDir', async ({createUserDataDir, browserType, browserOptions}) => {
-  const userDataDir = await createUserDataDir();
-  const context = await browserType.launchPersistentContext(userDataDir, browserOptions);
-  expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
-  await context.close();
-  expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
-});
+it.describe('user data dir', () => {
+  it.skip(({ mode }) => mode === 'grid');
 
-it('should restore state from userDataDir', async ({browserType, browserOptions, server, createUserDataDir}) => {
-  it.slow();
-
-  const userDataDir = await createUserDataDir();
-  const browserContext = await browserType.launchPersistentContext(userDataDir, browserOptions);
-  const page = await browserContext.newPage();
-  await page.goto(server.EMPTY_PAGE);
-  await page.evaluate(() => localStorage.hey = 'hello');
-  await browserContext.close();
-
-  const browserContext2 = await browserType.launchPersistentContext(userDataDir, browserOptions);
-  const page2 = await browserContext2.newPage();
-  await page2.goto(server.EMPTY_PAGE);
-  expect(await page2.evaluate(() => localStorage.hey)).toBe('hello');
-  await browserContext2.close();
-
-  const userDataDir2 = await createUserDataDir();
-  const browserContext3 = await browserType.launchPersistentContext(userDataDir2, browserOptions);
-  const page3 = await browserContext3.newPage();
-  await page3.goto(server.EMPTY_PAGE);
-  expect(await page3.evaluate(() => localStorage.hey)).not.toBe('hello');
-  await browserContext3.close();
-});
-
-it('should restore cookies from userDataDir', async ({browserType, browserOptions,  server, createUserDataDir, platform, channel}) => {
-  it.fixme(platform === 'win32' && channel === 'chrome');
-  it.slow();
-
-  const userDataDir = await createUserDataDir();
-  const browserContext = await browserType.launchPersistentContext(userDataDir, browserOptions);
-  const page = await browserContext.newPage();
-  await page.goto(server.EMPTY_PAGE);
-  const documentCookie = await page.evaluate(() => {
-    document.cookie = 'doSomethingOnlyOnce=true; expires=Fri, 31 Dec 9999 23:59:59 GMT';
-    return document.cookie;
+  it('should accept userDataDir', async ({createUserDataDir, browserType, browserOptions}) => {
+    const userDataDir = await createUserDataDir();
+    const context = await browserType.launchPersistentContext(userDataDir, browserOptions);
+    expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
+    await context.close();
+    expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
   });
-  expect(documentCookie).toBe('doSomethingOnlyOnce=true');
-  await browserContext.close();
 
-  const browserContext2 = await browserType.launchPersistentContext(userDataDir, browserOptions);
-  const page2 = await browserContext2.newPage();
-  await page2.goto(server.EMPTY_PAGE);
-  expect(await page2.evaluate(() => document.cookie)).toBe('doSomethingOnlyOnce=true');
-  await browserContext2.close();
+  it('should restore state from userDataDir', async ({browserType, browserOptions, server, createUserDataDir}) => {
+    it.slow();
 
-  const userDataDir2 = await createUserDataDir();
-  const browserContext3 = await browserType.launchPersistentContext(userDataDir2, browserOptions);
-  const page3 = await browserContext3.newPage();
-  await page3.goto(server.EMPTY_PAGE);
-  expect(await page3.evaluate(() => document.cookie)).not.toBe('doSomethingOnlyOnce=true');
-  await browserContext3.close();
+    const userDataDir = await createUserDataDir();
+    const browserContext = await browserType.launchPersistentContext(userDataDir, browserOptions);
+    const page = await browserContext.newPage();
+    await page.goto(server.EMPTY_PAGE);
+    await page.evaluate(() => localStorage.hey = 'hello');
+    await browserContext.close();
+
+    const browserContext2 = await browserType.launchPersistentContext(userDataDir, browserOptions);
+    const page2 = await browserContext2.newPage();
+    await page2.goto(server.EMPTY_PAGE);
+    expect(await page2.evaluate(() => localStorage.hey)).toBe('hello');
+    await browserContext2.close();
+
+    const userDataDir2 = await createUserDataDir();
+    const browserContext3 = await browserType.launchPersistentContext(userDataDir2, browserOptions);
+    const page3 = await browserContext3.newPage();
+    await page3.goto(server.EMPTY_PAGE);
+    expect(await page3.evaluate(() => localStorage.hey)).not.toBe('hello');
+    await browserContext3.close();
+  });
+
+  it('should restore cookies from userDataDir', async ({browserType, browserOptions,  server, createUserDataDir, platform, channel}) => {
+    it.fixme(platform === 'win32' && channel === 'chrome');
+    it.slow();
+
+    const userDataDir = await createUserDataDir();
+    const browserContext = await browserType.launchPersistentContext(userDataDir, browserOptions);
+    const page = await browserContext.newPage();
+    await page.goto(server.EMPTY_PAGE);
+    const documentCookie = await page.evaluate(() => {
+      document.cookie = 'doSomethingOnlyOnce=true; expires=Fri, 31 Dec 9999 23:59:59 GMT';
+      return document.cookie;
+    });
+    expect(documentCookie).toBe('doSomethingOnlyOnce=true');
+    await browserContext.close();
+
+    const browserContext2 = await browserType.launchPersistentContext(userDataDir, browserOptions);
+    const page2 = await browserContext2.newPage();
+    await page2.goto(server.EMPTY_PAGE);
+    expect(await page2.evaluate(() => document.cookie)).toBe('doSomethingOnlyOnce=true');
+    await browserContext2.close();
+
+    const userDataDir2 = await createUserDataDir();
+    const browserContext3 = await browserType.launchPersistentContext(userDataDir2, browserOptions);
+    const page3 = await browserContext3.newPage();
+    await page3.goto(server.EMPTY_PAGE);
+    expect(await page3.evaluate(() => document.cookie)).not.toBe('doSomethingOnlyOnce=true');
+    await browserContext3.close();
+  });
 });
 
 it('should have default URL when launching browser', async ({launchPersistent}) => {
