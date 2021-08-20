@@ -125,16 +125,16 @@ export type DispatcherScope = Dispatcher<any, any>;
 export class Root extends Dispatcher<{ guid: '' }, {}> {
   private _initialized = false;
 
-  constructor(connection: DispatcherConnection, private readonly createPlaywright?: (scope: DispatcherScope) => Promise<PlaywrightDispatcher>) {
+  constructor(connection: DispatcherConnection, private readonly createPlaywright?: (scope: DispatcherScope, options: channels.RootInitializeParams) => Promise<PlaywrightDispatcher>) {
     super(connection, { guid: '' }, 'Root', {}, true);
   }
 
-  async initialize(params: { language?: string }): Promise<channels.RootInitializeResult> {
+  async initialize(params: channels.RootInitializeParams): Promise<channels.RootInitializeResult> {
     assert(this.createPlaywright);
     assert(!this._initialized);
     this._initialized = true;
     return {
-      playwright: await this.createPlaywright(this),
+      playwright: await this.createPlaywright(this, params),
     };
   }
 }

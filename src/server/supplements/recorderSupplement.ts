@@ -78,7 +78,7 @@ export class RecorderSupplement implements InstrumentationListener {
     context.instrumentation.addListener(this);
     this._params = params;
     this._mode = params.startRecording ? 'recording' : 'none';
-    const language = params.language || context._options.sdkLanguage;
+    const language = params.language || context._browser.options.sdkLanguage;
 
     const languages = new Set([
       new JavaLanguageGenerator(),

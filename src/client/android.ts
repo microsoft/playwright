@@ -394,7 +394,7 @@ export class AndroidWebView extends EventEmitter implements api.AndroidWebView {
 
   private async _fetchPage(): Promise<Page> {
     return this._device._wrapApiCall(async (channel: channels.AndroidDeviceChannel) => {
-      const { context } = await channel.connectToWebView({ pid: this._data.pid, sdkLanguage: 'javascript' });
+      const { context } = await channel.connectToWebView({ pid: this._data.pid });
       return BrowserContext.from(context).pages()[0];
     });
   }

@@ -126,7 +126,7 @@ export class TraceViewer {
   async show(headless: boolean): Promise<BrowserContext> {
     const urlPrefix = await this._server.start();
 
-    const traceViewerPlaywright = createPlaywright(true);
+    const traceViewerPlaywright = createPlaywright('javascript', true);
     const traceViewerBrowser = isUnderTest() ? 'chromium' : this._browserName;
     const args = traceViewerBrowser === 'chromium' ? [
       '--app=data:text/html,',
@@ -141,7 +141,7 @@ export class TraceViewer {
     if (traceViewerBrowser === 'chromium') {
       for (const name of ['chromium', 'chrome', 'msedge']) {
         try {
-          registry.findExecutable(name)!.executablePathOrDie();
+          registry.findExecutable(name)!.executablePathOrDie(traceViewerPlaywright.options.sdkLanguage);
           channel = name === 'chromium' ? undefined : name;
           break;
         } catch (e) {
@@ -161,7 +161,6 @@ Please run 'npx playwright install' to install Playwright browsers
     const context = await traceViewerPlaywright[traceViewerBrowser as 'chromium'].launchPersistentContext(internalCallMetadata(), '', {
       // TODO: store language in the trace.
       channel: channel as any,
-      sdkLanguage: 'javascript',
       args,
       noDefaultViewport: true,
       headless,

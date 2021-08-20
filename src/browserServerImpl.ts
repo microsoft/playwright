@@ -43,7 +43,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
   }
 
   async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
-    const playwright = createPlaywright();
+    const playwright = createPlaywright('javascript');
     // 1. Pre-launch the browser
     const browser = await playwright[this._browserName].launch(internalCallMetadata(), {
       ...options,

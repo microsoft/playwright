@@ -48,7 +48,7 @@ export class Chromium extends BrowserType {
       this._devtools = this._createDevTools();
   }
 
-  async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number, sdkLanguage: string, headers?: types.HeadersArray }, timeout?: number) {
+  async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number, headers?: types.HeadersArray }, timeout?: number) {
     const controller = new ProgressController(metadata, this);
     controller.setLogName('browser');
     const browserLogsCollector = new RecentLogsCollector();
@@ -75,7 +75,7 @@ export class Chromium extends BrowserType {
         slowMo: options.slowMo,
         name: 'chromium',
         isChromium: true,
-        persistent: { sdkLanguage: options.sdkLanguage, noDefaultViewport: true },
+        persistent: { noDefaultViewport: true },
         browserProcess,
         protocolLogger: helper.debugProtocolLogger(),
         browserLogsCollector,

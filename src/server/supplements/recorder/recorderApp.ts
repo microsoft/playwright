@@ -103,7 +103,6 @@ export class RecorderApp extends EventEmitter {
     const context = await recorderPlaywright.chromium.launchPersistentContext(internalCallMetadata(), '', {
       channel,
       executablePath,
-      sdkLanguage: inspectedContext._options.sdkLanguage,
       args,
       noDefaultViewport: true,
       headless: !!process.env.PWTEST_CLI_HEADLESS || (isUnderTest() && !inspectedContext._browser.options.headful),

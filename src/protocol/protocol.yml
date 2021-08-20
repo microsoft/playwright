@@ -256,7 +256,6 @@ LaunchOptions:
 ContextOptions:
   type: mixin
   properties:
-    sdkLanguage: string
     noDefaultViewport: boolean?
     viewport:
       type: object?
@@ -332,7 +331,7 @@ Root:
 
     initialize:
       parameters:
-        language: string
+        sdkLanguage: string
       returns:
         playwright: Playwright
 
@@ -462,7 +461,6 @@ BrowserType:
 
     connectOverCDP:
       parameters:
-        sdkLanguage: string
         endpointURL: string
         headers:
           type: array?
@@ -2384,7 +2382,6 @@ Electron:
 
     launch:
       parameters:
-        sdkLanguage: string
         executablePath: string?
         args:
           type: array?
@@ -2644,7 +2641,6 @@ AndroidDevice:
 
     launchBrowser:
       parameters:
-        sdkLanguage: string
         pkg: string?
         ignoreHTTPSErrors: boolean?
         javaScriptEnabled: boolean?
@@ -2743,7 +2739,6 @@ AndroidDevice:
 
     connectToWebView:
       parameters:
-        sdkLanguage: string
         pid: number
       returns:
         context: BrowserContext

@@ -165,7 +165,7 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
   }
 
   async connectToWebView(params: channels.AndroidDeviceConnectToWebViewParams): Promise<channels.AndroidDeviceConnectToWebViewResult> {
-    return { context: new BrowserContextDispatcher(this._scope, await this._object.connectToWebView(params.pid, params.sdkLanguage)) };
+    return { context: new BrowserContextDispatcher(this._scope, await this._object.connectToWebView(params.pid)) };
   }
 }
 

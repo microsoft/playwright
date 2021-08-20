@@ -34,8 +34,8 @@ export function printApiJson() {
 
 export function runDriver() {
   const dispatcherConnection = new DispatcherConnection();
-  new Root(dispatcherConnection, async rootScope => {
-    const playwright = createPlaywright();
+  new Root(dispatcherConnection, async (rootScope, { sdkLanguage }) => {
+    const playwright = createPlaywright(sdkLanguage);
     return new PlaywrightDispatcher(rootScope, playwright);
   });
   const transport = new Transport(process.stdout, process.stdin);
