@@ -36,6 +36,7 @@ export type PlaywrightOptions = {
   rootSdkObject: SdkObject;
   selectors: Selectors;
   socksProxyPort?: number;
+  sdkLanguage: string,
 };
 
 export type BrowserOptions = PlaywrightOptions & {

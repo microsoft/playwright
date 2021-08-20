@@ -245,7 +245,6 @@ export type SetNetworkCookieParam = {
 export type EmulatedSize = { viewport: Size, screen: Size };
 
 export type BrowserContextOptions = {
-  sdkLanguage: string,
   viewport?: Size,
   screen?: Size,
   noDefaultViewport?: boolean,

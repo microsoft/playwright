@@ -22,7 +22,7 @@ import { Connection } from './client/connection';
 import { BrowserServerLauncherImpl } from './browserServerImpl';
 
 function setupInProcess(): PlaywrightAPI {
-  const playwright = createPlaywright();
+  const playwright = createPlaywright('javascript');
 
   const clientConnection = new Connection();
   const dispatcherConnection = new DispatcherConnection();

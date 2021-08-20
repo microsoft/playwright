@@ -47,7 +47,7 @@ export class PlaywrightServer {
       onConnect: async (connection: DispatcherConnection) => {
         let playwright: Playwright | undefined;
         new Root(connection, async (rootScope): Promise<PlaywrightDispatcher> => {
-          playwright = createPlaywright();
+          playwright = createPlaywright('javascript');
           const dispatcher = new PlaywrightDispatcher(rootScope, playwright);
           if (process.env.PW_SOCKS_PROXY_PORT)
             await dispatcher.enableSocksProxy();

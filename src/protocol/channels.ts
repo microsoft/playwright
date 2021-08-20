@@ -158,7 +158,7 @@ export interface RootChannel extends Channel {
   initialize(params: RootInitializeParams, metadata?: Metadata): Promise<RootInitializeResult>;
 }
 export type RootInitializeParams = {
-  language: string,
+  sdkLanguage: string,
 };
 export type RootInitializeOptions = {
 
@@ -358,7 +358,6 @@ export type BrowserTypeLaunchPersistentContextParams = {
   downloadsPath?: string,
   tracesDir?: string,
   chromiumSandbox?: boolean,
-  sdkLanguage: string,
   noDefaultViewport?: boolean,
   viewport?: {
     width: number,
@@ -484,7 +483,6 @@ export type BrowserTypeLaunchPersistentContextResult = {
   context: BrowserContextChannel,
 };
 export type BrowserTypeConnectOverCDPParams = {
-  sdkLanguage: string,
   endpointURL: string,
   headers?: NameValue[],
   slowMo?: number,
@@ -522,7 +520,6 @@ export type BrowserKillForTestsParams = {};
 export type BrowserKillForTestsOptions = {};
 export type BrowserKillForTestsResult = void;
 export type BrowserNewContextParams = {
-  sdkLanguage: string,
   noDefaultViewport?: boolean,
   viewport?: {
     width: number,
@@ -2802,7 +2799,6 @@ export interface ElectronChannel extends Channel {
   launch(params: ElectronLaunchParams, metadata?: Metadata): Promise<ElectronLaunchResult>;
 }
 export type ElectronLaunchParams = {
-  sdkLanguage: string,
   executablePath?: string,
   args?: string[],
   cwd?: string,
@@ -3165,7 +3161,6 @@ export type AndroidDeviceInputDragOptions = {
 };
 export type AndroidDeviceInputDragResult = void;
 export type AndroidDeviceLaunchBrowserParams = {
-  sdkLanguage: string,
   pkg?: string,
   ignoreHTTPSErrors?: boolean,
   javaScriptEnabled?: boolean,
@@ -3303,7 +3298,6 @@ export type AndroidDeviceSetDefaultTimeoutNoReplyOptions = {
 };
 export type AndroidDeviceSetDefaultTimeoutNoReplyResult = void;
 export type AndroidDeviceConnectToWebViewParams = {
-  sdkLanguage: string,
   pid: number,
 };
 export type AndroidDeviceConnectToWebViewOptions = {
