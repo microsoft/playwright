@@ -33,7 +33,7 @@ class OutOfProcessPlaywrightServer {
       detached: true,
       env: {
         ...process.env,
-        PW_SOCKS_PROXY_PORT: String(proxyPort)
+        PW_SOCKS_PROXY_PORT: '1'
       }
     });
     this._driverProcess.unref();
@@ -43,6 +43,9 @@ class OutOfProcessPlaywrightServer {
         const line = data.toString();
         if (line.startsWith(prefix))
           resolve(line.substr(prefix.length));
+      });
+      this._driverProcess.stderr.on('data', (data: Buffer) => {
+        console.log(data.toString());
       });
       this._driverProcess.on('exit', () => reject());
     });

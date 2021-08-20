@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import net from 'net';
+import net, { AddressInfo } from 'net';
 import * as channels from '../protocol/channels';
 import { Playwright } from '../server/playwright';
 import { AndroidDispatcher } from './androidDispatcher';
@@ -25,6 +25,7 @@ import { SelectorsDispatcher } from './selectorsDispatcher';
 import * as types from '../server/types';
 import { SocksConnection, SocksConnectionClient } from '../utils/socksProxy';
 import { createGuid } from '../utils/utils';
+import { debugLogger } from '../utils/debugLogger';
 
 export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.PlaywrightInitializer> implements channels.PlaywrightChannel {
   private _socksProxy: SocksProxy | undefined;
@@ -45,9 +46,10 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
     }, false);
   }
 
-  enableSocksProxy(port: number) {
+  async enableSocksProxy() {
     this._socksProxy = new SocksProxy(this);
-    this._socksProxy.listen(port);
+    this._object.options.socksProxyPort = await this._socksProxy.listen(0);
+    debugLogger.log('proxy', `Starting socks proxy server on port ${this._object.options.socksProxyPort}`);
   }
 
   async socksConnected(params: channels.PlaywrightSocksConnectedParams, metadata?: channels.Metadata): Promise<void> {
@@ -85,8 +87,12 @@ class SocksProxy implements SocksConnectionClient {
     });
   }
 
-  listen(port: number) {
-    this._server.listen(port);
+  async listen(port: number): Promise<number> {
+    return new Promise(f => {
+      this._server.listen(port, () => {
+        f((this._server.address() as AddressInfo).port);
+      });
+    });
   }
 
   onSocketRequested(uid: string, host: string, port: number): void {

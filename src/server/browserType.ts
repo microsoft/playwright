@@ -53,7 +53,7 @@ export abstract class BrowserType extends SdkObject {
   }
 
   async launch(metadata: CallMetadata, options: types.LaunchOptions, protocolLogger?: types.ProtocolLogger): Promise<Browser> {
-    options = validateLaunchOptions(options);
+    options = this._validateLaunchOptions(options);
     const controller = new ProgressController(metadata, this);
     controller.setLogName('browser');
     const browser = await controller.run(progress => {
@@ -63,7 +63,7 @@ export abstract class BrowserType extends SdkObject {
   }
 
   async launchPersistentContext(metadata: CallMetadata, userDataDir: string, options: types.LaunchPersistentOptions): Promise<BrowserContext> {
-    options = validateLaunchOptions(options);
+    options = this._validateLaunchOptions(options);
     const controller = new ProgressController(metadata, this);
     const persistent: types.BrowserContextOptions = options;
     controller.setLogName('browser');
@@ -243,6 +243,18 @@ export abstract class BrowserType extends SdkObject {
     throw new Error('CDP connections are only supported by Chromium');
   }
 
+  private _validateLaunchOptions<Options extends types.LaunchOptions>(options: Options): Options {
+    const { devtools = false } = options;
+    let { headless = !devtools, downloadsPath, proxy } = options;
+    if (debugMode())
+      headless = false;
+    if (downloadsPath && !path.isAbsolute(downloadsPath))
+      downloadsPath = path.join(process.cwd(), downloadsPath);
+    if (this._playwrightOptions.socksProxyPort)
+      proxy = { server: `socks5://127.0.0.1:${this._playwrightOptions.socksProxyPort}` };
+    return { ...options, devtools, headless, downloadsPath, proxy };
+  }
+
   abstract _defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[];
   abstract _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<Browser>;
   abstract _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env;
@@ -255,16 +267,4 @@ function copyTestHooks(from: object, to: object) {
     if (key.startsWith('__testHook'))
       (to as any)[key] = value;
   }
-}
-
-function validateLaunchOptions<Options extends types.LaunchOptions>(options: Options): Options {
-  const { devtools = false } = options;
-  let { headless = !devtools, downloadsPath, proxy } = options;
-  if (debugMode())
-    headless = false;
-  if (downloadsPath && !path.isAbsolute(downloadsPath))
-    downloadsPath = path.join(process.cwd(), downloadsPath);
-  if (process.env.PW_SOCKS_PROXY_PORT)
-    proxy = { server: `socks5://127.0.0.1:${process.env.PW_SOCKS_PROXY_PORT}` };
-  return { ...options, devtools, headless, downloadsPath, proxy };
 }
