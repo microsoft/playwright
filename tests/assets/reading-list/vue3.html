@@ -1,7 +1,7 @@
 <link rel=stylesheet href='./style.css'>
 <script src="./vue_3.1.5.js"></script>
 
-<div id=root></div>
+<div id=root><div></div></div>
 
 <script>
 
@@ -110,6 +110,6 @@ window.mountApp = element => {
   app.mount(element);
 }
 
-window.mountApp(document.querySelector('#root'));
+window.mountApp(document.querySelector('#root div'));
 
 </script>
