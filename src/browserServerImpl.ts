@@ -52,9 +52,13 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
       env: options.env ? envObjectToArray(options.env) : undefined,
     }, toProtocolLogger(options.logger));
 
+    let path = `/${createGuid()}`;
+    if (options.wsPath)
+      path = options.wsPath.startsWith('/') ? options.wsPath : `/${options.wsPath}`;
+
     // 2. Start the server
     const delegate: PlaywrightServerDelegate = {
-      path: '/' + createGuid(),
+      path,
       allowMultipleClients: true,
       onClose: () => {},
       onConnect: this._onConnect.bind(this, playwright, browser),

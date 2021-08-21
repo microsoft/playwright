@@ -8725,6 +8725,14 @@ export interface BrowserType<Unused = {}> {
      * If specified, traces are saved into this directory.
      */
     tracesDir?: string;
+
+    /**
+     * Path at which to serve the Browser Server. For security, this defaults to an unguessable string.
+     *
+     * > NOTE: Any process or web page (including those running in Playwright) with knowledge of the `wsPath` can take control
+     * of the OS user. For this reason, you should use an unguessable token when using this option.
+     */
+    wsPath?: string;
   }): Promise<BrowserServer>;
 
   /**

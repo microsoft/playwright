@@ -100,6 +100,7 @@ export type LaunchServerOptions = {
   downloadsPath?: string,
   chromiumSandbox?: boolean,
   port?: number,
+  wsPath?: string,
   logger?: Logger,
 } & FirefoxUserPrefs;
 
