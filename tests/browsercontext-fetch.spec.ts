@@ -80,7 +80,7 @@ it('should add cookies from Set-Cookie header', async ({context, page, server}) 
   // @ts-expect-error
   await context._fetch(server.PREFIX + '/setcookie.html');
   const cookies = await context.cookies();
-  expect(cookies.map(c => ({ name: c.name, value: c.value }))).toEqual([
+  expect(new Set(cookies.map(c => ({ name: c.name, value: c.value })))).toEqual(new Set([
     {
       name: 'session',
       value: 'value'
@@ -89,7 +89,7 @@ it('should add cookies from Set-Cookie header', async ({context, page, server}) 
       name: 'foo',
       value: 'bar'
     },
-  ]);
+  ]));
   // console.log(`server headers: ${JSON.stringify(req.headers)}`);
   await page.goto(server.EMPTY_PAGE);
   expect(await page.evaluate(() => document.cookie)).toEqual('session=value; foo=bar');
