@@ -284,6 +284,18 @@ const { chromium } = require('playwright');  // Or 'webkit' or 'firefox'.
 
 Port to use for the web socket. Defaults to 0 that picks any available port.
 
+### option: BrowserType.launchServer.wsPath
+- `wsPath` <[string]>
+
+Path at which to serve the Browser Server. For security, this defaults to an
+unguessable string.
+
+:::warning
+Any process or web page (including those running in Playwright) with knowledge
+of the `wsPath` can take control of the OS user. For this reason, you should
+use an unguessable token when using this option.
+:::
+
 ## method: BrowserType.name
 - returns: <[string]>
 
