@@ -23,19 +23,6 @@ const playwright = require('playwright');
 })();
 ```
 
-```python sync
-from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
-
-with sync_playwright() as p:
-    browser = p.chromium.launch()
-    page = browser.new_page()
-    try:
-      page.click("text=Example", timeout=100)
-    except PlaywrightTimeoutError:
-      print("Timeout!")
-    browser.close()
-```
-
 ```python async
 import asyncio
 from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
@@ -54,6 +41,19 @@ async def main():
         await run(playwright)
 
 asyncio.run(main())
+```
+
+```python sync
+from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
+
+with sync_playwright() as p:
+    browser = p.chromium.launch()
+    page = browser.new_page()
+    try:
+      page.click("text=Example", timeout=100)
+    except PlaywrightTimeoutError:
+      print("Timeout!")
+    browser.close()
 ```
 
 ```java
