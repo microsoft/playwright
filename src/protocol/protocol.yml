@@ -419,7 +419,7 @@ Playwright:
     socksClosed:
       parameters:
         uid: string
-    
+
 
 Selectors:
   type: interface
@@ -1422,17 +1422,13 @@ Frame:
       parameters:
         selector: string
         strict: boolean?
-        timeout: number?
       returns:
         value: boolean
-      tracing:
-        snapshot: true
 
     isVisible:
       parameters:
         selector: string
         strict: boolean?
-        timeout: number?
       returns:
         value: boolean
 
