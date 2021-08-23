@@ -17,6 +17,7 @@
 import { BrowserContext } from '../server/browserContext';
 import { Dispatcher, DispatcherScope, lookupDispatcher } from './dispatcher';
 import { PageDispatcher, BindingCallDispatcher, WorkerDispatcher } from './pageDispatcher';
+import { playwrightFetch } from '../server/fetch';
 import { FrameDispatcher } from './frameDispatcher';
 import * as channels from '../protocol/channels';
 import { RouteDispatcher, RequestDispatcher, ResponseDispatcher } from './networkDispatchers';
@@ -106,7 +107,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async fetch(params: channels.BrowserContextFetchParams): Promise<channels.BrowserContextFetchResult> {
-    const { fetchResponse, error } = await this._context.fetch({
+    const { fetchResponse, error } = await playwrightFetch(this._context, {
       url: params.url,
       method: params.method,
       headers: params.headers ? headersArrayToObject(params.headers, false) : undefined,
