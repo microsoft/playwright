@@ -44,7 +44,7 @@ export async function playwrightFetch(context: BrowserContext, params: types.Fet
       agent = new HttpsProxyAgent(proxyOpts);
     }
 
-    // TODO: set user agent
+    // TODO(https://github.com/microsoft/playwright/issues/8381): set user agent
     const response = await nodeFetch(params.url, {
       method: params.method,
       headers: params.headers,
@@ -54,6 +54,9 @@ export async function playwrightFetch(context: BrowserContext, params: types.Fet
     const body = await response.buffer();
     const setCookies = response.headers.raw()['set-cookie'];
     if (setCookies) {
+      const url = new URL(response.url);
+      // https://datatracker.ietf.org/doc/html/rfc6265#section-5.1.4
+      const defaultPath = '/' + url.pathname.split('/').slice(0, -1).join('/');
       const cookies: types.SetNetworkCookieParam[] = [];
       for (const header of setCookies) {
         // Decode cookie value?
@@ -61,7 +64,12 @@ export async function playwrightFetch(context: BrowserContext, params: types.Fet
         if (!cookie)
           continue;
         if (!cookie.domain)
-          cookie.url = params.url;
+          cookie.domain = url.hostname;
+        if (!canSetCookie(cookie.domain!, url.hostname))
+          continue;
+        // https://datatracker.ietf.org/doc/html/rfc6265#section-5.2.4
+        if (!cookie.path || !cookie.path.startsWith('/'))
+          cookie.path = defaultPath;
         cookies.push(cookie);
       }
       if (cookies.length)
@@ -83,6 +91,14 @@ export async function playwrightFetch(context: BrowserContext, params: types.Fet
   } catch (e) {
     return { error: String(e) };
   }
+}
+
+function canSetCookie(cookieDomain: string, hostname: string) {
+  // TODO: check public suffix list?
+  hostname = '.' + hostname;
+  if (!cookieDomain.startsWith('.'))
+    cookieDomain = '.' + cookieDomain;
+  return hostname.endsWith(cookieDomain);
 }
 
 

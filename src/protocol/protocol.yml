@@ -228,11 +228,7 @@ FetchResponse:
     statusText: string
     headers:
       type: array
-      items:
-        type: object
-        properties:
-          name: string
-          value: string
+      items: NameValue
     body: binary
 
 LaunchOptions:
