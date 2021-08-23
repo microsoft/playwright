@@ -10,7 +10,7 @@ title: "Troubleshooting"
 Playwright does self-inspection every time it runs to make sure the browsers can be launched successfully. If there are missing
 dependencies, playwright will print instructions to acquire them.
 
-See also in the [Command Line Interface](./cli.md#install-system-dependencies)
+See also in the [Command line tools](./cli.md#install-system-dependencies)
 which has a command to install all necessary dependencies automatically for Ubuntu
 LTS releases.
 

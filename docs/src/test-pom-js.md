@@ -9,65 +9,69 @@ We will create a `PlaywrightDevPage` helper class to encapsulate common operatio
 
 ```js js-flavor=js
 // playwright-dev-page.js
+const { expect } = require('@playwright/test');
+
 exports.PlaywrightDevPage = class PlaywrightDevPage {
+
   /**
-   * @param {import('playwright').Page} page 
+   * @param {import('@playwright/test').Page} page
    */
   constructor(page) {
     this.page = page;
+    this.getStartedLink = page.locator('text=Get started');
+    this.coreConceptsLink = page.locator('text=Core concepts');
+    this.tocList = page.locator('article ul > li > a');
   }
 
   async goto() {
     await this.page.goto('https://playwright.dev');
   }
 
-  async toc() {
-    const text = await this.page.innerText('article ul');
-    return text.split('\n').filter(line => !!line);
-  }
-
   async getStarted() {
-    await this.page.click('text=Get started');
-    await this.page.waitForSelector(`text=Core concepts`);
+    await this.getStartedLink.first().click();
+    await expect(this.coreConceptsLink).toBeVisible();
   }
 
   async coreConcepts() {
     await this.getStarted();
-    await this.page.click('text=Core concepts');
-    await this.page.waitForSelector(`h1:has-text("Core concepts")`);
+    await this.page.click('text=Guides');
+    await this.coreConceptsLink.click();
+    await expect(this.page.locator('h1').locator("text=Core concepts")).toBeVisible();
   }
 }
 ```
 
 ```js js-flavor=ts
 // playwright-dev-page.ts
-import type { Page } from 'playwright';
+import { expect, Locator, Page } from '@playwright/test';
 
 export class PlaywrightDevPage {
   readonly page: Page;
+  readonly getStartedLink: Locator;
+  readonly coreConceptsLink: Locator;
+  readonly tocList: Locator;
 
   constructor(page: Page) {
     this.page = page;
+    this.getStartedLink = page.locator('text=Get started');
+    this.coreConceptsLink = page.locator('text=Core concepts');
+    this.tocList = page.locator('article ul > li > a');
   }
 
   async goto() {
     await this.page.goto('https://playwright.dev');
   }
 
-  async toc() {
-    const text = await this.page.innerText('article ul');
-    return text.split('\n').filter(line => !!line);
-  }
-
   async getStarted() {
-    await this.page.click('text=Get started');
-    await this.page.waitForSelector(`text=Core concepts`);
+    await this.getStartedLink.first().click();
+    await expect(this.coreConceptsLink).toBeVisible();
   }
 
   async coreConcepts() {
     await this.getStarted();
-    await this.page.click('text=Core concepts');
-    await this.page.waitForSelector(`h1:has-text("Core concepts")`);
+    await this.page.click('text=Guides');
+    await this.coreConceptsLink.click();
+    await expect(this.page.locator('h1').locator("text=Core concepts")).toBeVisible();
   }
 }
 ```
@@ -83,14 +87,15 @@ test('Get Started table of contents', async ({ page }) => {
   const playwrightDev = new PlaywrightDevPage(page);
   await playwrightDev.goto();
   await playwrightDev.getStarted();
-  expect(await playwrightDev.toc()).toEqual([
+  await expect(playwrightDev.tocList).toHaveText([
     'Installation',
-    'Usage',
-    'First script',
-    'Record scripts',
-    'TypeScript support',
-    'System requirements',
-    'Release notes'
+    'First test',
+    'Writing assertions',
+    'Using test fixtures',
+    'Using test hooks',
+    'Learning the command line',
+    'Creating a configuration file',
+    'Release notes',
   ]);
 });
 
@@ -98,15 +103,7 @@ test('Core Concepts table of contents', async ({ page }) => {
   const playwrightDev = new PlaywrightDevPage(page);
   await playwrightDev.goto();
   await playwrightDev.coreConcepts();
-  expect(await playwrightDev.toc()).toEqual([
-    'Browser',
-    'Browser contexts',
-    'Pages and frames',
-    'Selectors',
-    'Auto-waiting',
-    'Execution contexts: Playwright and Browser',
-    'Evaluation Argument'
-  ]);
+  await expect(playwrightDev.tocList.first()).toHaveText('Browser');
 });
 ```
 
@@ -119,14 +116,15 @@ test('Get Started table of contents', async ({ page }) => {
   const playwrightDev = new PlaywrightDevPage(page);
   await playwrightDev.goto();
   await playwrightDev.getStarted();
-  expect(await playwrightDev.toc()).toEqual([
+  await expect(playwrightDev.tocList).toHaveText([
     'Installation',
-    'Usage',
-    'First script',
-    'Record scripts',
-    'TypeScript support',
-    'System requirements',
-    'Release notes'
+    'First test',
+    'Writing assertions',
+    'Using test fixtures',
+    'Using test hooks',
+    'Learning the command line',
+    'Creating a configuration file',
+    'Release notes',
   ]);
 });
 
@@ -134,14 +132,6 @@ test('Core Concepts table of contents', async ({ page }) => {
   const playwrightDev = new PlaywrightDevPage(page);
   await playwrightDev.goto();
   await playwrightDev.coreConcepts();
-  expect(await playwrightDev.toc()).toEqual([
-    'Browser',
-    'Browser contexts',
-    'Pages and frames',
-    'Selectors',
-    'Auto-waiting',
-    'Execution contexts: Playwright and Browser',
-    'Evaluation Argument'
-  ]);
+  await expect(playwrightDev.tocList.first()).toHaveText('Browser');
 });
 ```
