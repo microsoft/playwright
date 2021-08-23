@@ -17,7 +17,6 @@
 import fs from 'fs';
 import path from 'path';
 import yazl from 'yazl';
-import readline from 'readline';
 import { EventEmitter } from 'events';
 import { createGuid, mkdirIfNeeded, monotonicTime } from '../../../utils/utils';
 import { Artifact } from '../../artifact';
@@ -41,6 +40,8 @@ export const VERSION = 2;
 
 type RecordingState = {
   options: TracerOptions,
+  traceName: string,
+  networkFile: string,
   traceFile: string,
   lastReset: number,
   sha1s: Set<string>,
@@ -59,12 +60,19 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate {
   private _isStopping = false;
   private _tracesDir: string;
   private _allResources = new Set<string>();
+  private _contextCreatedEvent: trace.ContextCreatedTraceEvent;
 
   constructor(context: BrowserContext) {
     this._context = context;
     this._tracesDir = context._browser.options.tracesDir;
     this._resourcesDir = path.join(this._tracesDir, 'resources');
     this._snapshotter = new Snapshotter(context, this);
+    this._contextCreatedEvent = {
+      version: VERSION,
+      type: 'context-options',
+      browserName: this._context._browser.options.name,
+      options: this._context._options
+    };
   }
 
   async start(options: TracerOptions): Promise<void> {
@@ -76,16 +84,12 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate {
     if (!state) {
       // TODO: passing the same name for two contexts makes them write into a single file
       // and conflict.
-      const traceFile = path.join(this._tracesDir, (options.name || createGuid()) + '.trace');
-      this._recording = { options, traceFile, lastReset: 0, sha1s: new Set() };
-      this._writeChain = mkdirIfNeeded(traceFile);
-      const event: trace.ContextCreatedTraceEvent = {
-        version: VERSION,
-        type: 'context-options',
-        browserName: this._context._browser.options.name,
-        options: this._context._options
-      };
-      this._appendTraceEvent(event);
+      const traceName = options.name || createGuid();
+      const traceFile = path.join(this._tracesDir, traceName + '.trace');
+      const networkFile = path.join(this._tracesDir, traceName + '.network');
+      this._recording = { options, traceName, traceFile, networkFile, lastReset: 0, sha1s: new Set() };
+      this._writeChain = mkdirIfNeeded(traceFile).then(() => fs.promises.writeFile(networkFile, ''));
+      this._appendTraceEvent(this._contextCreatedEvent);
     }
 
     if (!state?.options?.screenshots && options.screenshots)
@@ -111,8 +115,8 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate {
 
       if (state) {
         state.lastReset++;
-        const markerEvent: trace.MarkerTraceEvent = { type: 'marker', resetIndex: state.lastReset };
-        await fs.promises.appendFile(state.traceFile, JSON.stringify(markerEvent) + '\n');
+        state.traceFile = path.join(this._tracesDir, `${state.traceName}-${state.lastReset}.trace`);
+        await fs.promises.appendFile(state.traceFile, JSON.stringify(this._contextCreatedEvent) + '\n');
       }
     });
 
@@ -170,18 +174,14 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate {
       throw new Error('Must start tracing before exporting');
 
     // Chain the export operation against write operations,
-    // so that neither trace file nor sha1s change during the export.
+    // so that neither trace files nor sha1s change during the export.
     return await this._appendTraceOperation(async () => {
-      const recording = this._recording!;
-      let state = recording;
-      // Make a filtered trace if needed.
-      if (recording.lastReset)
-        state = await this._filterTrace(recording, recording.lastReset);
-
+      const state = this._recording!;
       const zipFile = new yazl.ZipFile();
       const failedPromise = new Promise<Artifact>((_, reject) => (zipFile as any as EventEmitter).on('error', reject));
       const succeededPromise = new Promise<Artifact>(async fulfill => {
         zipFile.addFile(state.traceFile, 'trace.trace');
+        zipFile.addFile(state.networkFile, 'trace.network');
         const zipFileName = state.traceFile + '.zip';
         for (const sha1 of state.sha1s)
           zipFile.addFile(path.join(this._resourcesDir, sha1), path.join('resources', sha1));
@@ -193,53 +193,8 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate {
         artifact.reportFinished();
         fulfill(artifact);
       });
-      return Promise.race([failedPromise, succeededPromise]).finally(async () => {
-        // Remove the filtered trace.
-        if (recording.lastReset)
-          await fs.promises.unlink(state.traceFile).catch(() => {});
-      });
+      return Promise.race([failedPromise, succeededPromise]);
     });
-  }
-
-  private async _filterTrace(state: RecordingState, sinceResetIndex: number): Promise<RecordingState> {
-    const ext = path.extname(state.traceFile);
-    const traceFileCopy = state.traceFile.substring(0, state.traceFile.length - ext.length) + '-copy' + sinceResetIndex + ext;
-    const sha1s = new Set<string>();
-    await new Promise<void>((resolve, reject) => {
-      const fileStream = fs.createReadStream(state.traceFile, 'utf8');
-      const rl = readline.createInterface({
-        input: fileStream,
-        crlfDelay: Infinity
-      });
-      let copyChain = Promise.resolve();
-      let foundMarker = false;
-      rl.on('line', line => {
-        try {
-          const event = JSON.parse(line) as trace.TraceEvent;
-          if (event.type === 'marker') {
-            if (event.resetIndex === sinceResetIndex)
-              foundMarker = true;
-          } else if ((event.type === 'resource-snapshot' && state.options.snapshots) || event.type === 'context-options' || foundMarker) {
-            // We keep:
-            // - old resource events for snapshots;
-            // - initial context options event;
-            // - all events after the marker that are not markers.
-            visitSha1s(event, sha1s);
-            copyChain = copyChain.then(() => fs.promises.appendFile(traceFileCopy, line + '\n'));
-          }
-        } catch (e) {
-          reject(e);
-          fileStream.close();
-          rl.close();
-        }
-      });
-      rl.on('error', reject);
-      rl.on('close', async () => {
-        await copyChain;
-        resolve();
-      });
-    });
-    return { options: state.options, lastReset: state.lastReset, sha1s, traceFile: traceFileCopy };
   }
 
   async _captureSnapshot(name: 'before' | 'after' | 'action' | 'event', sdkObject: SdkObject, metadata: CallMetadata, element?: ElementHandle) {
@@ -293,7 +248,11 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate {
   }
 
   onResourceSnapshot(snapshot: ResourceSnapshot): void {
-    this._appendTraceEvent({ type: 'resource-snapshot', snapshot });
+    const event: trace.ResourceSnapshotTraceEvent = { type: 'resource-snapshot', snapshot };
+    this._appendTraceOperation(async () => {
+      visitSha1s(event, this._recording!.sha1s);
+      await fs.promises.appendFile(this._recording!.networkFile, JSON.stringify(event) + '\n');
+    });
   }
 
   onFrameSnapshot(snapshot: FrameSnapshot): void {
@@ -324,7 +283,6 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate {
   }
 
   private _appendTraceEvent(event: trace.TraceEvent) {
-    // Serialize all writes to the trace file.
     this._appendTraceOperation(async () => {
       visitSha1s(event, this._recording!.sha1s);
       await fs.promises.appendFile(this._recording!.traceFile, JSON.stringify(event) + '\n');
@@ -349,6 +307,7 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate {
   }
 
   private async _appendTraceOperation<T>(cb: () => Promise<T>): Promise<T> {
+    // This method serializes all writes to the trace.
     let error: Error | undefined;
     let result: T | undefined;
     this._writeChain = this._writeChain.then(async () => {
