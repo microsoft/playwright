@@ -1,0 +1,31 @@
+name: "Check PR client side changes"
+on:
+  pull_request:
+    branches:
+      - master
+      - release-*
+    paths:
+      - 'src/client/**/*'
+jobs:
+  update-descrption:
+    name: Check PR
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Update Pull Request description
+        uses: actions/github-script@v4
+        with:
+          script: |
+            const body = JSON.parse('${{ github.event.pull_request.body }}');
+            const suffix = `Howdy! It looks like the Playwright client code has changed.
+
+            - [ ] It's not relevant for the language bindings
+            - [ ] If relevant, I have created a tracking issue ([new issue](https://github.com/microsoft/playwright/issues/new?title=Backport%20client%20change%20to%20language%20ports&body=%2320+made+changes+to+the+client%2C+this+needs+to+get+applied+in%3A%0A%0A-+%5B%C2%A0%5D+Python%0A-+%5B%C2%A0%5D+Java%0A-+%5B%C2%A0%5D+.NET))
+
+            Happy coding!`
+            const newBody = body ? ('---\n' + suffix) : suffix;
+            await github.pulls.update({
+              owner: '${{ github.event.pull_request.head.repo.owner.login }}',
+              repo: '${{ github.event.pull_request.head.repo.name }}',
+              pull_number: '${{ github.event.number }}',
+              body: newBody,
+            });
