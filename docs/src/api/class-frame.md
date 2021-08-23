@@ -919,7 +919,10 @@ Returns whether the element is hidden, the opposite of [visible](./actionability
 ### param: Frame.isHidden.selector = %%-input-selector-%%
 
 ### option: Frame.isHidden.strict = %%-input-strict-%%
-### option: Frame.isHidden.timeout = %%-input-timeout-%%
+### option: Frame.isHidden.timeout
+- `timeout` <[float]>
+
+**DEPRECATED** This option is ignored. [`method: Frame.isHidden`] does not wait for the element to become hidden and returns immediately.
 
 ## async method: Frame.isVisible
 - returns: <[boolean]>
@@ -929,7 +932,10 @@ Returns whether the element is [visible](./actionability.md#visible). [`option: 
 ### param: Frame.isVisible.selector = %%-input-selector-%%
 
 ### option: Frame.isVisible.strict = %%-input-strict-%%
-### option: Frame.isVisible.timeout = %%-input-timeout-%%
+### option: Frame.isVisible.timeout
+- `timeout` <[float]>
+
+**DEPRECATED** This option is ignored. [`method: Frame.isVisible`] does not wait for the element to become visible and returns immediately.
 
 ## method: Frame.locator
 - returns: <[Locator]>
