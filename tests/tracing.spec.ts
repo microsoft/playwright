@@ -213,7 +213,7 @@ test('should reset to different options', async ({ context, page, server }, test
   expect(events.find(e => e.metadata?.apiName === 'page.click')).toBeTruthy();
 
   expect(events.some(e => e.type === 'frame-snapshot')).toBeFalsy();
-  expect(events.some(e => e.type === 'resource-snapshot')).toBeFalsy();
+  expect(events.some(e => e.type === 'resource-snapshot')).toBeTruthy();
 });
 
 test('should reset and export', async ({ context, page, server }, testInfo) => {
@@ -300,7 +300,15 @@ async function parseTrace(file: string): Promise<{ events: any[], resources: Map
   const resources = new Map<string, Buffer>();
   for (const { name, buffer } of await Promise.all(entries))
     resources.set(name, buffer);
-  const events = resources.get('trace.trace').toString().split('\n').map(line => line ? JSON.parse(line) : false).filter(Boolean);
+  const events = [];
+  for (const line of resources.get('trace.trace').toString().split('\n')) {
+    if (line)
+      events.push(JSON.parse(line));
+  }
+  for (const line of resources.get('trace.network').toString().split('\n')) {
+    if (line)
+      events.push(JSON.parse(line));
+  }
   return {
     events,
     resources,
