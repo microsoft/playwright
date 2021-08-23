@@ -45,8 +45,6 @@ it('should add session cookies to request', async ({context, server}) => {
     // @ts-expect-error
     context._fetch(`http://www.my.localhost:${server.PORT}/simple.json`),
   ]);
-  // console.log(`server headers: ${JSON.stringify(req.headers)}`);
-  // console.log(`server req: `, req.url);
   expect(req.headers.cookie).toEqual('username=John Doe');
 });
 
@@ -63,13 +61,13 @@ it('should follow redirects', async ({context, page, server}) => {
     secure: false,
     sameSite: 'Lax',
   }]);
-  const [req] = await Promise.all([
+  const [req, response] = await Promise.all([
     server.waitForRequest('/simple.json'),
-    page.goto(`http://www.my.localhost:${server.PORT}/simple.json`),
+    // @ts-expect-error
+    context._fetch(`http://www.my.localhost:${server.PORT}/redirect1`),
   ]);
-  // console.log(`server headers: ${JSON.stringify(req.headers)}`);
   expect(req.headers.cookie).toEqual('username=John Doe');
-  expect(await page.evaluate(() => document.cookie)).toEqual('username=John Doe');
+  expect(await response.json()).toEqual({foo: 'bar'});
 });
 
 it('should add cookies from Set-Cookie header', async ({context, page, server}) => {
@@ -90,7 +88,6 @@ it('should add cookies from Set-Cookie header', async ({context, page, server}) 
       value: 'bar'
     },
   ]));
-  // console.log(`server headers: ${JSON.stringify(req.headers)}`);
   await page.goto(server.EMPTY_PAGE);
   expect(await page.evaluate(() => document.cookie)).toEqual('session=value; foo=bar');
 });
