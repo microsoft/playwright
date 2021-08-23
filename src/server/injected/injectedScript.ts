@@ -157,8 +157,11 @@ export class InjectedScript {
         queryResults[index] = all;
       }
 
-      for (const element of all)
+      for (const element of all) {
+        if (!('nodeName' in element))
+          throw new Error(`Expected a Node but got ${Object.prototype.toString.call(element)}`);
         result.push({ element, capture });
+      }
     }
     return this._querySelectorRecursively(result, selector, index + 1, queryCache);
   }
