@@ -1748,11 +1748,9 @@ export type FrameIsEnabledResult = {
 export type FrameIsHiddenParams = {
   selector: string,
   strict?: boolean,
-  timeout?: number,
 };
 export type FrameIsHiddenOptions = {
   strict?: boolean,
-  timeout?: number,
 };
 export type FrameIsHiddenResult = {
   value: boolean,
@@ -1760,11 +1758,9 @@ export type FrameIsHiddenResult = {
 export type FrameIsVisibleParams = {
   selector: string,
   strict?: boolean,
-  timeout?: number,
 };
 export type FrameIsVisibleOptions = {
   strict?: boolean,
-  timeout?: number,
 };
 export type FrameIsVisibleResult = {
   value: boolean,
@@ -3401,7 +3397,6 @@ export const commandsWithTracingSnapshots = new Set([
   'Frame.isChecked',
   'Frame.isDisabled',
   'Frame.isEnabled',
-  'Frame.isHidden',
   'Frame.isEditable',
   'Frame.press',
   'Frame.selectOption',

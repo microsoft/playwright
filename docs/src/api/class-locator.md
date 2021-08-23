@@ -602,14 +602,20 @@ Returns whether the element is [enabled](./actionability.md#enabled).
 
 Returns whether the element is hidden, the opposite of [visible](./actionability.md#visible).
 
-### option: Locator.isHidden.timeout = %%-input-timeout-%%
+### option: Locator.isHidden.timeout
+- `timeout` <[float]>
+
+**DEPRECATED** This option is ignored. [`method: Locator.isHidden`] does not wait for the element to become hidden and returns immediately.
 
 ## async method: Locator.isVisible
 - returns: <[boolean]>
 
 Returns whether the element is [visible](./actionability.md#visible).
 
-### option: Locator.isVisible.timeout = %%-input-timeout-%%
+### option: Locator.isVisible.timeout
+- `timeout` <[float]>
+
+**DEPRECATED** This option is ignored. [`method: Locator.isVisible`] does not wait for the element to become visible and returns immediately.
 
 ## method: Locator.last
 - returns: <[Locator]>
