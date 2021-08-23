@@ -8802,6 +8802,26 @@ export namespace errors {
  * TimeoutError is emitted whenever certain operations are terminated due to timeout, e.g.
  * [page.waitForSelector(selector[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-selector) or
  * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch).
+ *
+ * ```js
+ * const playwright = require('playwright');
+ *
+ * (async () => {
+ *   const browser = await playwright.chromium.launch();
+ *   const context = await browser.newContext();
+ *   const page = await context.newPage();
+ *   try {
+ *     await page.click("text=Foo", {
+ *       timeout: 100,
+ *     })
+ *   } catch (error) {
+ *     if (error instanceof playwright.errors.TimeoutError)
+ *       console.log("Timeout!")
+ *   }
+ *   await browser.close();
+ * })();
+ * ```
+ *
  */
 class TimeoutError extends Error {}
 
