@@ -15,7 +15,7 @@ jobs:
         uses: actions/github-script@v4
         with:
           script: |
-            const body = JSON.parse('${{ github.event.pull_request.body }}');
+            const body = JSON.parse('${{ toJSON(github.event.pull_request.body) }}');
             const suffix = `Howdy! It looks like the Playwright client code has changed.
 
             - [ ] It's not relevant for the language bindings
