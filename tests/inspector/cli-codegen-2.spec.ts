@@ -645,4 +645,40 @@ test.describe('cli codegen', () => {
     await cli.exited;
     expect(fs.existsSync(traceFileName)).toBeTruthy();
   });
+
+  test('should fill tricky characters', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
+    await recorder.setContentAndWait(`<textarea id="textarea" name="name" oninput="console.log(textarea.value)"></textarea>`);
+    const selector = await recorder.focusElement('textarea');
+    expect(selector).toBe('textarea[name="name"]');
+
+    const [message, sources] = await Promise.all([
+      page.waitForEvent('console', msg => msg.type() !== 'error'),
+      recorder.waitForOutput('JavaScript', 'fill'),
+      page.fill('textarea', 'Hello\'\"\`\nWorld')
+    ]);
+
+    expect(sources.get('JavaScript').text).toContain(`
+  // Fill textarea[name="name"]
+  await page.fill('textarea[name="name"]', 'Hello\\'"\`\\nWorld');`);
+    expect(sources.get('Java').text).toContain(`
+      // Fill textarea[name="name"]
+      page.fill("textarea[name=\\\"name\\\"]", "Hello'\\"\`\\nWorld");`);
+
+    expect(sources.get('Python').text).toContain(`
+    # Fill textarea[name="name"]
+    page.fill(\"textarea[name=\\\"name\\\"]\", \"Hello'\\"\`\\nWorld\")`);
+
+    expect(sources.get('Python Async').text).toContain(`
+    # Fill textarea[name="name"]
+    await page.fill(\"textarea[name=\\\"name\\\"]\", \"Hello'\\"\`\\nWorld\")`);
+
+    expect(sources.get('C#').text).toContain(`
+        // Fill textarea[name="name"]
+        await page.FillAsync(\"textarea[name=\\\"name\\\"]\", \"Hello'\\"\`\\nWorld\");`);
+
+    expect(message.text()).toBe('Hello\'\"\`\nWorld');
+  });
+
 });
