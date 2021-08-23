@@ -217,13 +217,13 @@ export class Route extends SdkObject {
     await this._delegate.abort(errorCode);
   }
 
-  async fulfill(overrides: { status?: number, headers?: types.HeadersArray, body?: string, isBase64?: boolean }) {
+  async fulfill(overrides: { status?: number, headers?: types.HeadersArray, body?: string, isBase64?: boolean, useInterceptedResponseBody?: boolean }) {
     assert(!this._handled, 'Route is already handled!');
     this._handled = true;
     let body = overrides.body;
     let isBase64 = overrides.isBase64 || false;
     if (body === undefined) {
-      if (this._response) {
+      if (this._response && overrides.useInterceptedResponseBody) {
         body = (await this._delegate.responseBody()).toString('utf8');
         isBase64 = false;
       } else {

@@ -2134,6 +2134,7 @@ Route:
           items: NameValue
         body: string?
         isBase64: boolean?
+        useInterceptedResponseBody: boolean?
 
     responseBody:
       returns:

@@ -245,6 +245,8 @@ type InterceptResponse = true;
 type NotInterceptResponse = false;
 
 export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteInitializer> implements api.Route {
+  private _interceptedResponse: api.Response | undefined;
+
   static from(route: channels.RouteChannel): Route {
     return (route as any)._object;
   }
@@ -263,8 +265,21 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
     });
   }
 
-  async fulfill(options: { status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}) {
+  async fulfill(options: { _response?: Response, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}) {
     return this._wrapApiCall(async (channel: channels.RouteChannel) => {
+      let useInterceptedResponseBody;
+      let { status: statusOption, headers: headersOption, body: bodyOption } = options;
+      if (options._response) {
+        statusOption = statusOption || options._response.status();
+        headersOption = headersOption || options._response.headers();
+        if (options.body === undefined && options.path === undefined) {
+          if (options._response === this._interceptedResponse)
+            useInterceptedResponseBody = true;
+          else
+            bodyOption = await options._response.body();
+        }
+      }
+
       let body = undefined;
       let isBase64 = false;
       let length = 0;
@@ -273,19 +288,19 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
         body = buffer.toString('base64');
         isBase64 = true;
         length = buffer.length;
-      } else if (isString(options.body)) {
-        body = options.body;
+      } else if (isString(bodyOption)) {
+        body = bodyOption;
         isBase64 = false;
         length = Buffer.byteLength(body);
-      } else if (options.body) {
-        body = options.body.toString('base64');
+      } else if (bodyOption) {
+        body = bodyOption.toString('base64');
         isBase64 = true;
-        length = options.body.length;
+        length = bodyOption.length;
       }
 
       const headers: Headers = {};
-      for (const header of Object.keys(options.headers || {}))
-        headers[header.toLowerCase()] = String(options.headers![header]);
+      for (const header of Object.keys(headersOption || {}))
+        headers[header.toLowerCase()] = String(headersOption![header]);
       if (options.contentType)
         headers['content-type'] = String(options.contentType);
       else if (options.path)
@@ -294,16 +309,18 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
         headers['content-length'] = String(length);
 
       await channel.fulfill({
-        status: options.status || 200,
+        status: statusOption || 200,
         headers: headersObjectToArray(headers),
         body,
-        isBase64
+        isBase64,
+        useInterceptedResponseBody
       });
     });
   }
 
-  async _intercept(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer, interceptResponse?: boolean } = {}): Promise<api.Response> {
-    return await this._continue(options, true);
+  async _continueToResponse(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer, interceptResponse?: boolean } = {}): Promise<api.Response> {
+    this._interceptedResponse = await this._continue(options, true);
+    return this._interceptedResponse;
   }
 
   async continue(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer } = {}) {
