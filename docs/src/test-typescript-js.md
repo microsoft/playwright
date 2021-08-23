@@ -29,6 +29,6 @@ In my `package.json`, I have two scripts:
 }
 ```
 
-The `pretest` script runs typescript on the tests.  `test` will run the tests that have been generated to the `tests-out` directory. The `-c` argument configures the test runner to look for tests inside the `tests-out` directory.
+The `pretest` script runs typescript on the tests. `test` will run the tests that have been generated to the `tests-out` directory. The `-c` argument configures the test runner to look for tests inside the `tests-out` directory.
 
 Then `npm run test` will build the tests and run them.
