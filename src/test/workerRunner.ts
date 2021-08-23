@@ -162,7 +162,8 @@ export class WorkerRunner extends EventEmitter {
       // TODO: separate timeout for beforeAll modifiers?
       const result = await raceAgainstDeadline(this._fixtureRunner.resolveParametersAndRunHookOrTest(beforeAllModifier.fn, this._workerInfo, undefined), this._deadline());
       if (result.timedOut) {
-        this._fatalError = serializeError(new Error(`Timeout of ${this._project.config.timeout}ms exceeded while running ${beforeAllModifier.type} modifier`));
+        if (!this._fatalError)
+          this._fatalError = serializeError(new Error(`Timeout of ${this._project.config.timeout}ms exceeded while running ${beforeAllModifier.type} modifier`));
         this.stop();
       }
       if (!!result.result)
@@ -375,7 +376,7 @@ export class WorkerRunner extends EventEmitter {
     if (testInfo.status !== 'passed' && testInfo.status !== 'skipped') {
       if (test._type === 'test')
         this._failedTestId = testId;
-      else
+      else if (!this._fatalError)
         this._fatalError = testInfo.error;
       this.stop();
     }

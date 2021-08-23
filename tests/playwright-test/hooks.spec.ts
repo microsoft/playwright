@@ -401,3 +401,22 @@ test('afterEach failure should not prevent afterAll', async ({ runInlineTest }) 
     '%%afterAll',
   ]);
 });
+
+test('afterAll error should not mask beforeAll', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test.beforeAll(() => {
+        throw new Error('from beforeAll');
+      });
+      test.afterAll(() => {
+        throw new Error('from afterAll');
+      })
+      test('test', () => {
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('from beforeAll');
+});
