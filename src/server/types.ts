@@ -211,14 +211,6 @@ export type NormalizedContinueOverrides = {
   interceptResponse?: boolean,
 };
 
-export type NormalizedResponseContinueOverrides = {
-  status?: number,
-  statusText?: string,
-  headers?: HeadersArray,
-  body?: string,
-  isBase64?: boolean,
-};
-
 export type NetworkCookie = {
   name: string,
   value: string,
@@ -381,4 +373,15 @@ export type FetchOptions = {
   method?: string,
   headers?:  { [name: string]: string },
   postData?: Buffer,
+};
+
+export type FetchResponse = {
+  url: string,
+  status: number,
+  statusText: string,
+  headers: {
+    name: string,
+    value: string,
+  }[],
+  body: Buffer,
 };

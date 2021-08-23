@@ -149,8 +149,16 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       value: tString,
     })),
   });
-  scheme.FetchRequestResponseParams = tOptional(tObject({}));
-  scheme.FetchResponseResponseBodyParams = tOptional(tObject({}));
+  scheme.FetchResponse = tObject({
+    url: tString,
+    status: tNumber,
+    statusText: tString,
+    headers: tArray(tObject({
+      name: tString,
+      value: tString,
+    })),
+    body: tBinary,
+  });
   scheme.RootInitializeParams = tObject({
     sdkLanguage: tString,
   });

@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-import { FetchRequest, FetchResponse, Request, Response, Route, WebSocket } from '../server/network';
+import { Request, Response, Route, WebSocket } from '../server/network';
 import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
-import { headersObjectToArray } from '../utils/utils';
 
 export class RequestDispatcher extends Dispatcher<Request, channels.RequestInitializer> implements channels.RequestChannel {
 
@@ -148,56 +147,4 @@ export class WebSocketDispatcher extends Dispatcher<WebSocket, channels.WebSocke
     webSocket.on(WebSocket.Events.SocketError, (error: string) => this._dispatchEvent('socketError', { error }));
     webSocket.on(WebSocket.Events.Close, () => this._dispatchEvent('close', {}));
   }
-}
-
-export class FetchRequestDispatcher extends Dispatcher<FetchRequest, channels.FetchRequestInitializer> implements channels.FetchRequestChannel {
-
-  static from(scope: DispatcherScope, request: FetchRequest): FetchRequestDispatcher {
-    const result = existingDispatcher<FetchRequestDispatcher>(request);
-    return result || new FetchRequestDispatcher(scope, request);
-  }
-
-  static fromNullable(scope: DispatcherScope, request: FetchRequest | null): FetchRequestDispatcher | undefined {
-    return request ? FetchRequestDispatcher.from(scope, request) : undefined;
-  }
-
-  private constructor(scope: DispatcherScope, request: FetchRequest) {
-    super(scope, request, 'FetchRequest', {
-      url: request.url,
-      method: request.method!,
-      headers: headersObjectToArray(request.headers!)
-    });
-  }
-
-  async response(params?: channels.FetchRequestResponseParams, metadata?: channels.Metadata): Promise<channels.FetchRequestResponseResult> {
-    return { response: lookupNullableDispatcher<FetchResponseDispatcher>(this._object.response) };
-  }
-}
-
-
-export class FetchResponseDispatcher extends Dispatcher<FetchResponse, channels.FetchResponseInitializer> implements channels.FetchResponseChannel {
-
-  static from(scope: DispatcherScope, response: FetchResponse): FetchResponseDispatcher {
-    const result = existingDispatcher<FetchResponseDispatcher>(response);
-    return result || new FetchResponseDispatcher(scope, response);
-  }
-
-  static fromNullable(scope: DispatcherScope, response?: FetchResponse): FetchResponseDispatcher | undefined {
-    return response ? FetchResponseDispatcher.from(scope, response) : undefined;
-  }
-
-  private constructor(scope: DispatcherScope, response: FetchResponse) {
-    super(scope, response, 'FetchResponse', {
-      request: FetchRequestDispatcher.from(scope, response.request),
-      url: response.url,
-      status: response.status,
-      statusText: response.statusText,
-      headers: response.headers
-    });
-  }
-
-  async responseBody(params?: channels.FetchResponseResponseBodyParams, metadata?: channels.Metadata): Promise<channels.FetchResponseResponseBodyResult> {
-    return { binary: (await this._object.body).toString('base64') };
-  }
-
 }

@@ -67,6 +67,7 @@ it('should follow redirects', async ({context, page, server}) => {
     context._fetch(`http://www.my.localhost:${server.PORT}/redirect1`),
   ]);
   expect(req.headers.cookie).toEqual('username=John Doe');
+  expect(response.url()).toBe(`http://www.my.localhost:${server.PORT}/simple.json`);
   expect(await response.json()).toEqual({foo: 'bar'});
 });
 

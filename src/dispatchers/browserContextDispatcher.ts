@@ -19,7 +19,7 @@ import { Dispatcher, DispatcherScope, lookupDispatcher } from './dispatcher';
 import { PageDispatcher, BindingCallDispatcher, WorkerDispatcher } from './pageDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 import * as channels from '../protocol/channels';
-import { RouteDispatcher, RequestDispatcher, ResponseDispatcher, FetchResponseDispatcher } from './networkDispatchers';
+import { RouteDispatcher, RequestDispatcher, ResponseDispatcher } from './networkDispatchers';
 import { CRBrowserContext } from '../server/chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { RecorderSupplement } from '../server/supplements/recorderSupplement';
@@ -106,16 +106,23 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async fetch(params: channels.BrowserContextFetchParams): Promise<channels.BrowserContextFetchResult> {
-    const { response, error } = await this._context.fetch({
+    const { fetchResponse, error } = await this._context.fetch({
       url: params.url,
       method: params.method,
       headers: params.headers ? headersArrayToObject(params.headers, false) : undefined,
       postData: params.postData ? Buffer.from(params.postData, 'base64') : undefined,
     });
-    return {
-      response: FetchResponseDispatcher.fromNullable(this, response),
-      error
-    };
+    let response;
+    if (fetchResponse) {
+      response = {
+        url: fetchResponse.url,
+        status: fetchResponse.status,
+        statusText: fetchResponse.statusText,
+        headers: fetchResponse.headers,
+        body: fetchResponse.body.toString('base64')
+      };
+    }
+    return { response, error };
   }
 
   async newPage(params: channels.BrowserContextNewPageParams, metadata: CallMetadata): Promise<channels.BrowserContextNewPageResult> {

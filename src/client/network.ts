@@ -452,147 +452,15 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
   }
 }
 
-export class FetchRequest  extends ChannelOwner<channels.FetchRequestChannel, channels.FetchRequestInitializer> implements api.Request {
-  private readonly _redirectedFrom: FetchRequest | null = null;
-  private _redirectedTo: FetchRequest | null = null;
+export class FetchResponse {
+  private readonly _initializer: channels.FetchResponse;
   private readonly _headers: Headers;
-  private readonly _postData: Buffer | null;
+  private readonly _body: Buffer;
 
-  static from(request: channels.FetchRequestChannel): FetchRequest {
-    return (request as any)._object;
-  }
-
-  static fromNullable(request: channels.FetchRequestChannel | undefined): FetchRequest | null {
-    return request ? FetchRequest.from(request) : null;
-  }
-
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.FetchRequestInitializer) {
-    super(parent, type, guid, initializer);
-    this._redirectedFrom = FetchRequest.fromNullable(initializer.redirectedFrom);
-    if (this._redirectedFrom)
-      this._redirectedFrom._redirectedTo = this;
-    this._headers = headersArrayToObject(initializer.headers, true /* lowerCase */);
-    this._postData = initializer.postData ? Buffer.from(initializer.postData, 'base64') : null;
-  }
-
-  url(): string {
-    return this._initializer.url;
-  }
-
-  resourceType(): string {
-    return '';
-  }
-
-  method(): string {
-    return this._initializer.method;
-  }
-
-  postData(): string | null {
-    return this._postData ? this._postData.toString('utf8') : null;
-  }
-
-  postDataBuffer(): Buffer | null {
-    return this._postData;
-  }
-
-  postDataJSON(): Object | null {
-    const postData = this.postData();
-    if (!postData)
-      return null;
-
-    const contentType = this.headers()['content-type'];
-    if (contentType === 'application/x-www-form-urlencoded') {
-      const entries: Record<string, string> = {};
-      const parsed = new URLSearchParams(postData);
-      for (const [k, v] of parsed.entries())
-        entries[k] = v;
-      return entries;
-    }
-
-    try {
-      return JSON.parse(postData);
-    } catch (e) {
-      throw new Error('POST data is not a valid JSON object: ' + postData);
-    }
-  }
-
-  headers(): Headers {
-    return { ...this._headers };
-  }
-
-  async response(): Promise<FetchResponse | null> {
-    return this._wrapApiCall(async (channel: channels.FetchRequestChannel) => {
-      return FetchResponse.fromNullable((await channel.response()).response);
-    });
-  }
-
-  frame(): Frame {
-    throw new Error('Fetch request is not associated with any frame');
-  }
-
-  isNavigationRequest(): boolean {
-    return false;
-  }
-
-  redirectedFrom(): FetchRequest | null {
-    return this._redirectedFrom;
-  }
-
-  redirectedTo(): FetchRequest | null {
-    return this._redirectedTo;
-  }
-
-  failure(): { errorText: string; } | null {
-    return null;
-  }
-
-  timing(): ResourceTiming {
-    return {
-      startTime: 0,
-      domainLookupStart: -1,
-      domainLookupEnd: -1,
-      connectStart: -1,
-      secureConnectionStart: -1,
-      connectEnd: -1,
-      requestStart: -1,
-      responseStart: -1,
-      responseEnd: -1,
-    };
-  }
-}
-
-export class FetchResponse  extends ChannelOwner<channels.FetchResponseChannel, channels.FetchResponseInitializer> implements api.Response {
-  private readonly _request: FetchRequest;
-  private readonly _headers: Headers;
-
-  static from(response: channels.FetchResponseChannel): FetchResponse {
-    return (response as any)._object;
-  }
-
-  static fromNullable(response: channels.FetchResponseChannel | undefined): FetchResponse | null {
-    return response ? FetchResponse.from(response) : null;
-  }
-
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.FetchResponseInitializer) {
-    super(parent, type, guid, initializer);
-    this._headers = headersArrayToObject(initializer.headers, true /* lowerCase */);
-    this._request = FetchRequest.from(initializer.request);
-  }
-
-  async securityDetails(): Promise<{ issuer?: string | undefined; protocol?: string | undefined; subjectName?: string | undefined; validFrom?: number | undefined; validTo?: number | undefined; } | null> {
-    return null;
-  }
-
-  async serverAddr(): Promise<{ ipAddress: string; port: number; } | null> {
-    return null;
-  }
-
-  async finished(): Promise<Error | null> {
-    return null;
-  }
-
-  frame(): api.Frame {
-    throw new Error(`Fetch response is not associated with a frame`);
+  constructor(initializer: channels.FetchResponse) {
+    this._initializer = initializer;
+    this._headers = headersArrayToObject(this._initializer.headers, true /* lowerCase */);
+    this._body = Buffer.from(initializer.body, 'base64');
   }
 
   ok(): boolean {
@@ -600,7 +468,7 @@ export class FetchResponse  extends ChannelOwner<channels.FetchResponseChannel, 
   }
 
   url(): string {
-    return this._request.url();
+    return this._initializer.url;
   }
 
   status(): number {
@@ -616,9 +484,7 @@ export class FetchResponse  extends ChannelOwner<channels.FetchResponseChannel, 
   }
 
   async body(): Promise<Buffer> {
-    return this._wrapApiCall(async (channel: channels.RouteChannel) => {
-      return Buffer.from((await channel.responseBody()).binary, 'base64');
-    });
+    return this._body;
   }
 
   async text(): Promise<string> {
@@ -629,10 +495,6 @@ export class FetchResponse  extends ChannelOwner<channels.FetchResponseChannel, 
   async json(): Promise<object> {
     const content = await this.text();
     return JSON.parse(content);
-  }
-
-  request(): FetchRequest {
-    return this._request;
   }
 }
 

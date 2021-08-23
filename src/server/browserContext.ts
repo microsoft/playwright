@@ -183,7 +183,7 @@ export abstract class BrowserContext extends SdkObject {
     await this._doExposeBinding(binding);
   }
 
-  async fetch(params: types.FetchOptions): Promise<{response?: network.FetchResponse, error?: string}> {
+  async fetch(params: types.FetchOptions): Promise<{fetchResponse?: types.FetchResponse, error?: string}> {
     try {
       const cookies = await this.cookies(params.url);
       const valueArray = cookies.map(c => `${c.name}=${c.value}`);
@@ -200,19 +200,20 @@ export abstract class BrowserContext extends SdkObject {
         params.method = 'GET';
       let agent;
       if (this._options.proxy) {
+        // TODO: support bypass proxy
         const proxyOpts = url.parse(this._options.proxy.server);
         if (this._options.proxy.username)
           proxyOpts.auth = `${this._options.proxy.username}:${this._options.proxy.password || ''}`;
         agent = new HttpsProxyAgent(proxyOpts);
       }
 
-      const request = new network.FetchRequest(this, params.url, params.method, params.headers, params.postData);
       // TODO: set user agent
       const response = await fetch(params.url, {
         method: params.method,
         headers: params.headers,
         body: params.postData,
         agent});
+      const body = await response.buffer();
       const setCookies = response.headers.raw()['set-cookie'];
       if (setCookies) {
         const cookies: types.SetNetworkCookieParam[] = [];
@@ -229,11 +230,17 @@ export abstract class BrowserContext extends SdkObject {
           await this.addCookies(cookies);
       }
 
-      const responseHeaders: types.HeadersArray = [];
+      const headers: types.HeadersArray = [];
       for (const [name, value] of response.headers.entries())
-        responseHeaders.push({ name, value });
+        headers.push({ name, value });
       return {
-        response: new network.FetchResponse(request, response.url, response.status, response.statusText, responseHeaders, response.buffer())
+        fetchResponse: {
+          url: response.url,
+          status: response.status,
+          statusText: response.statusText,
+          headers,
+          body
+        }
       };
     } catch (e) {
       return { error: String(e) };

@@ -220,34 +220,9 @@ InterceptedResponse:
           value: string
 
 
-FetchRequest:
-  type: interface
-
-  initializer:
-    url: string
-    method: string
-    postData: binary?
-    headers:
-      type: array
-      items:
-        type: object
-        properties:
-          name: string
-          value: string
-    redirectedFrom: FetchRequest?
-
-  commands:
-
-    response:
-      returns:
-        response: FetchResponse?
-
-
 FetchResponse:
-  type: interface
-
-  initializer:
-    request: FetchRequest
+  type: object
+  properties:
     url: string
     status: number
     statusText: string
@@ -258,13 +233,7 @@ FetchResponse:
         properties:
           name: string
           value: string
-
-  commands:
-
-    responseBody:
-      returns:
-        binary: binary
-
+    body: binary
 
 LaunchOptions:
   type: mixin

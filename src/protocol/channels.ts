@@ -152,29 +152,7 @@ export type InterceptedResponse = {
   }[],
 };
 
-// ----------- FetchRequest -----------
-export type FetchRequestInitializer = {
-  url: string,
-  method: string,
-  postData?: Binary,
-  headers: {
-    name: string,
-    value: string,
-  }[],
-  redirectedFrom?: FetchRequestChannel,
-};
-export interface FetchRequestChannel extends Channel {
-  response(params?: FetchRequestResponseParams, metadata?: Metadata): Promise<FetchRequestResponseResult>;
-}
-export type FetchRequestResponseParams = {};
-export type FetchRequestResponseOptions = {};
-export type FetchRequestResponseResult = {
-  response?: FetchResponseChannel,
-};
-
-// ----------- FetchResponse -----------
-export type FetchResponseInitializer = {
-  request: FetchRequestChannel,
+export type FetchResponse = {
   url: string,
   status: number,
   statusText: string,
@@ -182,14 +160,7 @@ export type FetchResponseInitializer = {
     name: string,
     value: string,
   }[],
-};
-export interface FetchResponseChannel extends Channel {
-  responseBody(params?: FetchResponseResponseBodyParams, metadata?: Metadata): Promise<FetchResponseResponseBodyResult>;
-}
-export type FetchResponseResponseBodyParams = {};
-export type FetchResponseResponseBodyOptions = {};
-export type FetchResponseResponseBodyResult = {
-  binary: Binary,
+  body: Binary,
 };
 
 // ----------- Root -----------
@@ -855,7 +826,7 @@ export type BrowserContextFetchOptions = {
   postData?: Binary,
 };
 export type BrowserContextFetchResult = {
-  response?: FetchResponseChannel,
+  response?: FetchResponse,
   error?: string,
 };
 export type BrowserContextGrantPermissionsParams = {

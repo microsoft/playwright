@@ -209,7 +209,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     });
   }
 
-  async _fetch(url: string, options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer } = {}): Promise<api.Response> {
+  async _fetch(url: string, options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer } = {}): Promise<network.FetchResponse> {
     return this._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
       const postDataBuffer = isString(options.postData) ? Buffer.from(options.postData, 'utf8') : options.postData;
       const result = await channel.fetch({
@@ -220,7 +220,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
       });
       if (result.error)
         throw new Error(`Request failed: ${result.error}`);
-      return network.FetchResponse.from(result.response!);
+      return new network.FetchResponse(result.response!);
     });
   }
 

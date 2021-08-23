@@ -21,7 +21,7 @@ import { ChannelOwner } from './channelOwner';
 import { ElementHandle } from './elementHandle';
 import { Frame } from './frame';
 import { JSHandle } from './jsHandle';
-import { FetchRequest, FetchResponse, Request, Response, Route, WebSocket } from './network';
+import { Request, Response, Route, WebSocket } from './network';
 import { Page, BindingCall } from './page';
 import { Worker } from './worker';
 import { ConsoleMessage } from './consoleMessage';
@@ -217,13 +217,7 @@ export class Connection extends EventEmitter {
       case 'Frame':
         result = new Frame(parent, type, guid, initializer);
         break;
-      case 'FetchRequest':
-        result = new FetchRequest(parent, type, guid, initializer);
-        break;
-      case 'FetchResponse':
-        result = new FetchResponse(parent, type, guid, initializer);
-        break;
-        case 'JSHandle':
+      case 'JSHandle':
         result = new JSHandle(parent, type, guid, initializer);
         break;
       case 'Page':
