@@ -836,7 +836,7 @@ Returns the newly created session.
 ### param: BrowserContext.newCDPSession.page
 - `page` <[Page]|[Frame]>
 
-Target to create new session for. For backwards-compatability, this parameter is
+Target to create new session for. For backwards-compatibility, this parameter is
 named `page`, but it can be a `Page` or `Frame` type.
 
 ## async method: BrowserContext.newPage
