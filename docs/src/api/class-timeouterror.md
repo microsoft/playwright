@@ -61,7 +61,7 @@ package org.example;
 
 import com.microsoft.playwright.*;
 
-public class EvaluateInBrowserContext {
+public class TimeoutErrorExample {
   public static void main(String[] args) {
     try (Playwright playwright = Playwright.create()) {
       Browser browser = playwright.firefox().launch();
