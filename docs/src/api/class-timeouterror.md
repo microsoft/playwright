@@ -16,7 +16,8 @@ const playwright = require('playwright');
       timeout: 100,
     })
   } catch (error) {
-    console.log(error instanceof playwright.errors.TimeoutError)
+    if (error instanceof playwright.errors.TimeoutError)
+      console.log("Timeout!")
   }
   await browser.close();
 })();
@@ -29,9 +30,9 @@ with sync_playwright() as p:
     browser = p.chromium.launch()
     page = browser.new_page()
     try:
-      page.click("text=Fooo", timeout=1000)
+      page.click("text=Example", timeout=100)
     except PlaywrightTimeoutError:
-      print("timeout reached")
+      print("Timeout!")
     browser.close()
 ```
 
@@ -43,9 +44,9 @@ async def run(playwright):
     browser = await playwright.chromium.launch()
     page = await browser.new_page()
     try:
-      await page.click("text=Fooo", timeout=1000)
+      await page.click("text=Example", timeout=100)
     except PlaywrightTimeoutError:
-      print("timeout reached")
+      print("Timeout!")
     await browser.close()
 
 async def main():
@@ -53,4 +54,49 @@ async def main():
         await run(playwright)
 
 asyncio.run(main())
+```
+
+```java
+package org.example;
+
+import com.microsoft.playwright.*;
+
+public class EvaluateInBrowserContext {
+  public static void main(String[] args) {
+    try (Playwright playwright = Playwright.create()) {
+      Browser browser = playwright.firefox().launch();
+      BrowserContext context = browser.newContext();
+      Page page = context.newPage();
+      try {
+        page.click("text=Example", new Page.ClickOptions().setTimeout(100));
+      } catch (TimeoutError e) {
+        System.out.println("Timeout!");
+      }
+    }
+  }
+}
+```
+
+```csharp
+using System.Threading.Tasks;
+using Microsoft.Playwright;
+using System;
+
+class Program
+{
+    public static async Task Main()
+    {
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync();
+        var page = await browser.NewPageAsync();
+        try
+        {
+            await page.ClickAsync("text=Example", new() { Timeout = 100 });
+        }
+        catch (TimeoutException)
+        {
+            Console.WriteLine("Timeout!");
+        }
+    }
+}
 ```

@@ -8807,7 +8807,8 @@ export namespace errors {
  *       timeout: 100,
  *     })
  *   } catch (error) {
- *     console.log(error instanceof playwright.errors.TimeoutError)
+ *     if (error instanceof playwright.errors.TimeoutError)
+ *       console.log("Timeout!")
  *   }
  *   await browser.close();
  * })();
