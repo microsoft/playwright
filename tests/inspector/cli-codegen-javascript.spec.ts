@@ -128,13 +128,13 @@ test('should print load/save storageState', async ({ browserName, channel, runCL
     ${launchOptions(channel)}
   });
   const context = await browser.newContext({
-    storageState: '${loadFileName}'
+    storageState: '${loadFileName.replace(/\\/g, '\\\\')}'
   });`;
   await cli.waitFor(expectedResult1);
 
   const expectedResult2 = `
   // ---------------------
-  await context.storageState({ path: '${saveFileName}' });
+  await context.storageState({ path: '${saveFileName.replace(/\\/g, '\\\\')}' });
   await context.close();
   await browser.close();
 })();`;

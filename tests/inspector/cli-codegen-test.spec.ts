@@ -83,7 +83,7 @@ test('should print load storageState', async ({ browserName, channel, runCLI }, 
   const expectedResult = `const { test, expect } = require('@playwright/test');
 
 test.use({
-  storageState: '${loadFileName}'
+  storageState: '${loadFileName.replace(/\\/g, '\\\\')}'
 });
 
 test('test', async ({ page }) => {`;
