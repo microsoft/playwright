@@ -16,6 +16,7 @@ See [system requirements](#system-requirements).
 [![PyPI version](https://badge.fury.io/py/playwright.svg)](https://pypi.python.org/pypi/playwright/)
 
 ```bash
+pip install --upgrade pip
 pip install playwright
 playwright install
 ```
