@@ -24,8 +24,8 @@ jobs:
             Happy coding!`
             const newBody = body ? ('---\n' + suffix) : suffix;
             await github.pulls.update({
-              owner: '${{ github.event.pull_request.head.repo.owner.login }}',
-              repo: '${{ github.event.pull_request.head.repo.name }}',
+              owner: '${{ github.event.pull_request.base.repo.owner.login }}',
+              repo: '${{ github.event.pull_request.base.repo.name }}',
               pull_number: '${{ github.event.number }}',
               body: newBody,
             });
