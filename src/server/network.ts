@@ -232,8 +232,8 @@ export class Route extends SdkObject {
       }
     }
     await this._delegate.fulfill({
-      status: overrides.status || this._response?.status() || 200,
-      headers: overrides.headers || this._response?.headers() || [],
+      status: overrides.status || 200,
+      headers: overrides.headers || [],
       body,
       isBase64,
     });
