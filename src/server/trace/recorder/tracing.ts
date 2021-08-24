@@ -331,7 +331,7 @@ function visitSha1s(object: any, sha1s: Set<string>) {
   }
   if (typeof object === 'object') {
     for (const key in object) {
-      if (key === 'sha1' || key.endsWith('Sha1')) {
+      if (key === 'sha1' || key === '_sha1' || key.endsWith('Sha1')) {
         const sha1 = object[key];
         if (sha1)
           sha1s.add(sha1);

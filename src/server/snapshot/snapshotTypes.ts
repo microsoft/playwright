@@ -15,18 +15,25 @@
  */
 
 export type ResourceSnapshot = {
-  pageId: string,
-  frameId: string,
-  url: string,
-  type: string,
-  contentType: string,
-  responseHeaders: { name: string, value: string }[],
-  requestHeaders: { name: string, value: string }[],
-  method: string,
-  status: number,
-  requestSha1: string,
-  responseSha1: string,
-  timestamp: number,
+  _frameref: string,
+  request: {
+    url: string,
+    method: string,
+    headers: { name: string, value: string }[],
+    postData?: {
+      text: string,
+      _sha1?: string,
+    },
+  },
+  response: {
+    status: number,
+    headers: { name: string, value: string }[],
+    content: {
+      mimeType: string,
+      _sha1?: string,
+    },
+  },
+  _monotonicTime: number,
 };
 
 export type NodeSnapshot =

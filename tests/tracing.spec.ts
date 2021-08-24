@@ -37,8 +37,8 @@ test('should collect trace with resources, but no js', async ({ context, page, s
   expect(events.find(e => e.metadata?.apiName === 'page.close')).toBeTruthy();
 
   expect(events.some(e => e.type === 'frame-snapshot')).toBeTruthy();
-  expect(events.some(e => e.type === 'resource-snapshot' && e.snapshot.url.endsWith('style.css'))).toBeTruthy();
-  expect(events.some(e => e.type === 'resource-snapshot' && e.snapshot.url.endsWith('script.js'))).toBeFalsy();
+  expect(events.some(e => e.type === 'resource-snapshot' && e.snapshot.request.url.endsWith('style.css'))).toBeTruthy();
+  expect(events.some(e => e.type === 'resource-snapshot' && e.snapshot.request.url.endsWith('script.js'))).toBeFalsy();
   expect(events.some(e => e.type === 'screencast-frame')).toBeTruthy();
 });
 
@@ -239,7 +239,7 @@ test('should reset and export', async ({ context, page, server }, testInfo) => {
   expect(trace1.events.find(e => e.metadata?.apiName === 'page.hover')).toBeFalsy();
   expect(trace1.events.find(e => e.metadata?.apiName === 'page.click' && e.metadata?.error?.error?.message === 'Action was interrupted')).toBeTruthy();
   expect(trace1.events.some(e => e.type === 'frame-snapshot')).toBeTruthy();
-  expect(trace1.events.some(e => e.type === 'resource-snapshot' && e.snapshot.url.endsWith('style.css'))).toBeTruthy();
+  expect(trace1.events.some(e => e.type === 'resource-snapshot' && e.snapshot.request.url.endsWith('style.css'))).toBeTruthy();
 
   const trace2 = await parseTrace(testInfo.outputPath('trace2.zip'));
   expect(trace2.events[0].type).toBe('context-options');
