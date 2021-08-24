@@ -205,18 +205,22 @@ export class Snapshotter {
     }
 
     const resource: ResourceSnapshot = {
-      pageId: response.frame()._page.guid,
-      frameId: response.frame().guid,
-      url,
-      type: response.request().resourceType(),
-      contentType,
-      responseHeaders: response.headers(),
-      requestHeaders,
-      method,
-      status,
-      requestSha1,
-      responseSha1,
-      timestamp: monotonicTime()
+      _frameref: response.frame().guid,
+      request: {
+        url,
+        method,
+        headers: requestHeaders,
+        postData: requestSha1 ? { text: '', _sha1: requestSha1 } : undefined,
+      },
+      response: {
+        status,
+        headers: response.headers(),
+        content: {
+          mimeType: contentType,
+          _sha1: responseSha1,
+        },
+      },
+      _monotonicTime: monotonicTime()
     };
     this._delegate.onResourceSnapshot(resource);
   }
@@ -252,6 +256,7 @@ const kMimeToExtension: { [key: string]: string } = {
   'image/jpeg': 'jpeg',
   'image/png': 'png',
   'image/tiff': 'tiff',
+  'image/svg+xml': 'svg',
   'text/css': 'css',
   'text/csv': 'csv',
   'text/html': 'html',

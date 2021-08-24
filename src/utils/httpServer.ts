@@ -97,6 +97,7 @@ const extensionToMime: { [key: string]: string } = {
   'html': 'text/html',
   'jpeg': 'image/jpeg',
   'jpg': 'image/jpeg',
+  'gif': 'image/gif',
   'js': 'application/javascript',
   'png': 'image/png',
   'ttf': 'font/ttf',

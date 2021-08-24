@@ -146,7 +146,7 @@ it.describe('snapshots', () => {
     await page.evaluate(() => { (document.styleSheets[0].cssRules[0] as any).style.color = 'blue'; });
     const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
     const resource = snapshot2.resourceByUrl(`http://localhost:${server.PORT}/style.css`);
-    expect(snapshotter.resourceContent(resource.responseSha1).toString()).toBe('button { color: blue; }');
+    expect(snapshotter.resourceContent(resource.response.content._sha1).toString()).toBe('button { color: blue; }');
   });
 
   it('should capture iframe', async ({ page, server, toImpl, browserName, snapshotter, showSnapshot }) => {

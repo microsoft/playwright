@@ -36,15 +36,19 @@ export const NetworkResourceDetails: React.FunctionComponent<{
 
   React.useEffect(() => {
     const readResources = async  () => {
-      if (resource.requestSha1) {
-        const response = await fetch(`/sha1/${resource.requestSha1}`);
-        const requestResource = await response.text();
-        setRequestBody(requestResource);
+      if (resource.request.postData) {
+        if (resource.request.postData._sha1) {
+          const response = await fetch(`/sha1/${resource.request.postData}`);
+          const requestResource = await response.text();
+          setRequestBody(requestResource);
+        } else {
+          setRequestBody(resource.request.postData.text);
+        }
       }
 
-      if (resource.responseSha1) {
-        const useBase64 = resource.contentType.includes('image');
-        const response = await fetch(`/sha1/${resource.responseSha1}`);
+      if (resource.response.content._sha1) {
+        const useBase64 = resource.response.content.mimeType.includes('image');
+        const response = await fetch(`/sha1/${resource.response.content._sha1}`);
         if (useBase64) {
           const blob = await response.blob();
           const reader = new FileReader();
@@ -58,7 +62,7 @@ export const NetworkResourceDetails: React.FunctionComponent<{
     };
 
     readResources();
-  }, [expanded, resource.responseSha1, resource.requestSha1, resource.contentType]);
+  }, [expanded, resource]);
 
   function formatBody(body: string | null, contentType: string): string {
     if (body === null)
@@ -93,33 +97,33 @@ export const NetworkResourceDetails: React.FunctionComponent<{
     return 'status-neutral';
   }
 
-  const requestContentTypeHeader = resource.requestHeaders.find(q => q.name === 'Content-Type');
+  const requestContentTypeHeader = resource.request.headers.find(q => q.name === 'Content-Type');
   const requestContentType = requestContentTypeHeader ? requestContentTypeHeader.value : '';
-  const resourceName = resource.url.substring(resource.url.lastIndexOf('/') + 1);
+  const resourceName = resource.request.url.substring(resource.request.url.lastIndexOf('/') + 1);
 
   return <div
     className={'network-request ' + (selected ? 'selected' : '')} onClick={() => setSelected(index)}>
     <Expandable expanded={expanded} setExpanded={setExpanded} style={{ width: '100%' }} title={
       <div className='network-request-title'>
-        <div className={'network-request-title-status ' + formatStatus(resource.status)}>{resource.status}</div>
-        <div className='network-request-title-method'>{resource.method}</div>
+        <div className={'network-request-title-status ' + formatStatus(resource.response.status)}>{resource.response.status}</div>
+        <div className='network-request-title-method'>{resource.request.method}</div>
         <div className='network-request-title-url'>{resourceName}</div>
-        <div className='network-request-title-content-type'>{resource.type}</div>
+        <div className='network-request-title-content-type'>{resource.response.content.mimeType}</div>
       </div>
     } body={
       <div className='network-request-details'>
         <div className='network-request-details-header'>URL</div>
-        <div className='network-request-details-url'>{resource.url}</div>
+        <div className='network-request-details-url'>{resource.request.url}</div>
         <div className='network-request-details-header'>Request Headers</div>
-        <div className='network-request-headers'>{resource.requestHeaders.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
+        <div className='network-request-headers'>{resource.request.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
         <div className='network-request-details-header'>Response Headers</div>
-        <div className='network-request-headers'>{resource.responseHeaders.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
-        {resource.requestSha1 ? <div className='network-request-details-header'>Request Body</div> : ''}
-        {resource.requestSha1 ? <div className='network-request-body'>{formatBody(requestBody, requestContentType)}</div> : ''}
+        <div className='network-request-headers'>{resource.response.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
+        {resource.request.postData ? <div className='network-request-details-header'>Request Body</div> : ''}
+        {resource.request.postData ? <div className='network-request-body'>{formatBody(requestBody, requestContentType)}</div> : ''}
         <div className='network-request-details-header'>Response Body</div>
-        {!resource.responseSha1 ? <div className='network-request-response-body'>Response body is not available for this request.</div> : ''}
+        {!resource.response.content._sha1 ? <div className='network-request-response-body'>Response body is not available for this request.</div> : ''}
         {responseBody !== null && responseBody.dataUrl ? <img src={responseBody.dataUrl} /> : ''}
-        {responseBody !== null && responseBody.text ? <div className='network-request-response-body'>{formatBody(responseBody.text, resource.contentType)}</div> : ''}
+        {responseBody !== null && responseBody.text ? <div className='network-request-response-body'>{formatBody(responseBody.text, resource.response.content.mimeType)}</div> : ''}
       </div>
     }/>
   </div>;
