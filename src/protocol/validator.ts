@@ -1018,6 +1018,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     headers: tOptional(tArray(tType('NameValue'))),
     body: tOptional(tString),
     isBase64: tOptional(tBoolean),
+    useInterceptedResponseBody: tOptional(tBoolean),
   });
   scheme.RouteResponseBodyParams = tOptional(tObject({}));
   scheme.ResourceTiming = tObject({

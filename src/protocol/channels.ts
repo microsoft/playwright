@@ -2531,12 +2531,14 @@ export type RouteFulfillParams = {
   headers?: NameValue[],
   body?: string,
   isBase64?: boolean,
+  useInterceptedResponseBody?: boolean,
 };
 export type RouteFulfillOptions = {
   status?: number,
   headers?: NameValue[],
   body?: string,
   isBase64?: boolean,
+  useInterceptedResponseBody?: boolean,
 };
 export type RouteFulfillResult = void;
 export type RouteResponseBodyParams = {};

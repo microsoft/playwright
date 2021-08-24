@@ -11928,6 +11928,11 @@ export interface Route {
    */
   fulfill(options?: {
     /**
+     * Intercepted response. Will be used to populate all response fields not explicitely overridden.
+     */
+    _response?: Response;
+
+    /**
      * Response body.
      */
     body?: string|Buffer;
