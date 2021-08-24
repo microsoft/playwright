@@ -145,9 +145,9 @@ test('should work with screenshot: on', async ({ runInlineTest }, testInfo) => {
     '  test-failed-1.png',
     'artifacts-persistent-passing',
     '  test-finished-1.png',
-    'artifacts-shared-failing',
+    'artifacts-shared-shared-failing',
     '  test-failed-1.png',
-    'artifacts-shared-passing',
+    'artifacts-shared-shared-passing',
     '  test-finished-1.png',
     'artifacts-two-contexts',
     '  test-finished-1.png',
@@ -177,7 +177,7 @@ test('should work with screenshot: only-on-failure', async ({ runInlineTest }, t
     '  test-failed-1.png',
     'artifacts-persistent-failing',
     '  test-failed-1.png',
-    'artifacts-shared-failing',
+    'artifacts-shared-shared-failing',
     '  test-failed-1.png',
     'artifacts-two-contexts-failing',
     '  test-failed-1.png',
@@ -210,9 +210,9 @@ test('should work with trace: on', async ({ runInlineTest }, testInfo) => {
     '  trace.zip',
     'artifacts-persistent-passing',
     '  trace.zip',
-    'artifacts-shared-failing',
+    'artifacts-shared-shared-failing',
     '  trace.zip',
-    'artifacts-shared-passing',
+    'artifacts-shared-shared-passing',
     '  trace.zip',
     'artifacts-two-contexts',
     '  trace-1.zip',
@@ -242,7 +242,7 @@ test('should work with trace: retain-on-failure', async ({ runInlineTest }, test
     '  trace.zip',
     'artifacts-persistent-failing',
     '  trace.zip',
-    'artifacts-shared-failing',
+    'artifacts-shared-shared-failing',
     '  trace.zip',
     'artifacts-two-contexts-failing',
     '  trace-1.zip',
@@ -269,7 +269,7 @@ test('should work with trace: on-first-retry', async ({ runInlineTest }, testInf
     '  trace.zip',
     'artifacts-persistent-failing-retry1',
     '  trace.zip',
-    'artifacts-shared-failing-retry1',
+    'artifacts-shared-shared-failing-retry1',
     '  trace.zip',
     'artifacts-two-contexts-failing-retry1',
     '  trace-1.zip',
@@ -312,9 +312,9 @@ test('should stop tracing with trace: on-first-retry, when not retrying', async 
   expect(result.passed).toBe(1);
   expect(result.flaky).toBe(1);
   expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
-    'a-flaky-retry1',
+    'a-shared-flaky-retry1',
     '  trace.zip',
-    'a-no-tracing',  // Empty dir created because of testInfo.outputPath() call.
+    'a-shared-no-tracing',  // Empty dir created because of testInfo.outputPath() call.
     'report.json',
   ]);
 });

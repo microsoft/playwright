@@ -202,7 +202,8 @@ export class WorkerRunner extends EventEmitter {
     const baseOutputDir = (() => {
       const relativeTestFilePath = path.relative(this._project.config.testDir, test._requireFile.replace(/\.(spec|test)\.(js|ts|mjs)$/, ''));
       const sanitizedRelativePath = relativeTestFilePath.replace(process.platform === 'win32' ? new RegExp('\\\\', 'g') : new RegExp('/', 'g'), '-');
-      let testOutputDir = sanitizedRelativePath + '-' + sanitizeForFilePath(test.title);
+      const fullTitleWithoutSpec = test.titlePath().slice(1).join(' ');
+      let testOutputDir = sanitizedRelativePath + '-' + sanitizeForFilePath(fullTitleWithoutSpec);
       if (this._uniqueProjectNamePathSegment)
         testOutputDir += '-' + this._uniqueProjectNamePathSegment;
       if (retry)
