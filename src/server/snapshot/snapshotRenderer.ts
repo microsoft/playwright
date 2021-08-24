@@ -96,11 +96,11 @@ export class SnapshotRenderer {
 
     // First try locating exact resource belonging to this frame.
     for (const resource of this._resources) {
-      if (resource.timestamp >= snapshot.timestamp)
+      if (resource._monotonicTime >= snapshot.timestamp)
         break;
-      if (resource.frameId !== snapshot.frameId)
+      if (resource._frameref !== snapshot.frameId)
         continue;
-      if (resource.url === url) {
+      if (resource.request.url === url) {
         result = resource;
         break;
       }
@@ -109,9 +109,9 @@ export class SnapshotRenderer {
     if (!result) {
       // Then fall back to resource with this URL to account for memory cache.
       for (const resource of this._resources) {
-        if (resource.timestamp >= snapshot.timestamp)
+        if (resource._monotonicTime >= snapshot.timestamp)
           break;
-        if (resource.url === url)
+        if (resource.request.url === url)
           return resource;
       }
     }
@@ -120,7 +120,16 @@ export class SnapshotRenderer {
       // Patch override if necessary.
       for (const o of snapshot.resourceOverrides) {
         if (url === o.url && o.sha1) {
-          result = { ...result, responseSha1: o.sha1 };
+          result = {
+            ...result,
+            response: {
+              ...result.response,
+              content: {
+                ...result.response.content,
+                _sha1: o.sha1,
+              }
+            },
+          };
           break;
         }
       }

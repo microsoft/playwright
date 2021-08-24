@@ -22,6 +22,7 @@ import * as network from '../../network';
 import { Page } from '../../page';
 import * as har from './har';
 import * as types from '../../types';
+import { monotonicTime } from '../../../utils/utils';
 
 const FALLBACK_HTTP_VERSION = 'HTTP/1.1';
 
@@ -128,6 +129,8 @@ export class HarTracer {
     const pageEntry = this._ensurePageEntry(page);
     const harEntry: har.Entry = {
       pageref: pageEntry.id,
+      _frameref: request.frame().guid,
+      _monotonicTime: monotonicTime(),
       startedDateTime: new Date(),
       time: -1,
       request: {
