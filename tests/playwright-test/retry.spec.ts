@@ -154,12 +154,15 @@ test('should retry beforeAll failure', async ({ runInlineTest }) => {
       });
       test('passing test', async () => {
       });
+      test('another passing test', async () => {
+      });
     `
   }, { retries: 2 });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
-  expect(stripAscii(result.output).split('\n')[0]).toBe('××F');
+  expect(result.skipped).toBe(1);
+  expect(stripAscii(result.output).split('\n')[0]).toBe('×°×°F°');
   expect(result.output).toContain('BeforeAll is bugged!');
 });
 
