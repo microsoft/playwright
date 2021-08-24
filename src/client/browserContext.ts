@@ -21,7 +21,7 @@ import * as network from './network';
 import * as channels from '../protocol/channels';
 import fs from 'fs';
 import { ChannelOwner } from './channelOwner';
-import { deprecate, evaluationScript, urlMatches } from './clientHelper';
+import { deprecate, evaluationScript } from './clientHelper';
 import { Browser } from './browser';
 import { Worker } from './worker';
 import { Events } from './events';
@@ -38,7 +38,7 @@ import type { BrowserType } from './browserType';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel, channels.BrowserContextInitializer> implements api.BrowserContext {
   _pages = new Set<Page>();
-  private _routes: { url: URLMatch, handler: network.RouteHandler }[] = [];
+  private _routes: network.RouteHandler[] = [];
   readonly _browser: Browser | null = null;
   private _browserType: BrowserType | undefined;
   readonly _bindings = new Map<string, (source: structs.BindingSource, ...args: any[]) => any>();
@@ -132,9 +132,9 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   }
 
   _onRoute(route: network.Route, request: network.Request) {
-    for (const {url, handler} of this._routes) {
-      if (urlMatches(this._options.baseURL, request.url(), url)) {
-        handler(route, request);
+    for (const routeHandler of this._routes) {
+      if (routeHandler.matches(request.url())) {
+        routeHandler.handle(route, request);
         return;
       }
     }
@@ -258,15 +258,15 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     });
   }
 
-  async route(url: URLMatch, handler: network.RouteHandler): Promise<void> {
+  async route(url: URLMatch, handler: network.RouteHandlerCallback, options: { times?: number } = {}): Promise<void> {
     return this._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
-      this._routes.unshift({ url, handler });
+      this._routes.unshift(new network.RouteHandler(this._options.baseURL, url, handler, options.times));
       if (this._routes.length === 1)
         await channel.setNetworkInterceptionEnabled({ enabled: true });
     });
   }
 
-  async unroute(url: URLMatch, handler?: network.RouteHandler): Promise<void> {
+  async unroute(url: URLMatch, handler?: network.RouteHandlerCallback): Promise<void> {
     return this._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
       this._routes = this._routes.filter(route => route.url !== url || (handler && route.handler !== handler));
       if (this._routes.length === 0)

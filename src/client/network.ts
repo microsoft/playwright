@@ -26,6 +26,8 @@ import { Events } from './events';
 import { Page } from './page';
 import { Waiter } from './waiter';
 import * as api from '../../types/types';
+import { URLMatch } from '../common/types';
+import { urlMatches } from './clientHelper';
 
 export type NetworkCookie = {
   name: string,
@@ -352,7 +354,7 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
   }
 }
 
-export type RouteHandler = (route: Route, request: Request) => void;
+export type RouteHandlerCallback = (route: Route, request: Request) => void;
 
 export type ResourceTiming = {
   startTime: number;
@@ -514,5 +516,31 @@ export function validateHeaders(headers: Headers) {
     const value = headers[key];
     if (!Object.is(value, undefined) && !isString(value))
       throw new Error(`Expected value of header "${key}" to be String, but "${typeof value}" is found.`);
+  }
+}
+
+export class RouteHandler {
+  private handledCount = 0;
+  private readonly _baseURL: string | undefined;
+  private readonly _times: number | undefined;
+  readonly url: URLMatch;
+  readonly handler: RouteHandlerCallback;
+
+  constructor(baseURL: string | undefined, url: URLMatch, handler: RouteHandlerCallback, times?: number) {
+    this._baseURL = baseURL;
+    this._times = times;
+    this.url = url;
+    this.handler = handler;
+  }
+
+  public matches(requestURL: string): boolean {
+    if (this._times && this.handledCount >= this._times)
+      return false;
+    return urlMatches(this._baseURL, requestURL, this.url);
+  }
+
+  public handle(route: Route, request: Request) {
+    this.handler(route, request);
+    this.handledCount++;
   }
 }

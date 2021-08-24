@@ -198,3 +198,15 @@ it('should work with ignoreHTTPSErrors', async ({browser, httpsServer}) => {
   expect(response.status()).toBe(200);
   await context.close();
 });
+
+it('should support the times parameter with route matching', async ({context, page, server}) => {
+  const intercepted = [];
+  await context.route('**/empty.html', route => {
+    intercepted.push(1);
+    route.continue();
+  }, { times: 1});
+  await page.goto(server.EMPTY_PAGE);
+  await page.goto(server.EMPTY_PAGE);
+  await page.goto(server.EMPTY_PAGE);
+  expect(intercepted).toHaveLength(1);
+});

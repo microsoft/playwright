@@ -2561,6 +2561,11 @@ handler function to route the request.
 
 handler function to route the request.
 
+### option: Page.route.times
+- `times` <[int]>
+
+How often a route should be used. By default it will be used every time.
+
 ## async method: Page.screenshot
 - returns: <[Buffer]>
 
