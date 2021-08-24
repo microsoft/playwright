@@ -1,3 +1,8 @@
+---
+id: test-typescript
+title: "Advanced: TypeScript"
+---
+
 ## Manually compile tests with TypeScript
 
 Playwright Test supports TypeScript out the box. We automatically transform
@@ -7,6 +12,7 @@ However if you find that the TypeScript code is not being transpiled correctly,
 you can perform your own TypeScript compilation before sending the tests to Playwright.
 
 First I add a `tsconfig.json` file inside my tests directory.
+
 ```json
 {
     "compilerOptions": {
@@ -20,6 +26,7 @@ First I add a `tsconfig.json` file inside my tests directory.
 ```
 
 In my `package.json`, I have two scripts:
+
 ```json
 {
   "scripts": {
