@@ -1,6 +1,6 @@
 ---
 id: intro
-title: "Getting Started"
+title: "Getting started"
 ---
 
 Playwright can either be used as a part of the Playwright Test (this guide), or as a [Playwright Library](./library.md).
@@ -229,23 +229,13 @@ test.describe('feature foo', () => {
 ```
 
 
-## Learning the command line
+## Command line
 
-Here are the most common options available in the [command line](./test-cli.md).
+Following are the usual command line patterns. Learn more about the [command line](./test-cli.md).
 
-- Run tests in headed browsers
+- Run all the tests
   ```bash
-  npx playwright test --headed
-  ```
-
-- Run tests in a particular browser
-  ```bash
-  npx playwright test --browser=webkit
-  ```
-
-- Run tests in all browsers
-  ```bash
-  npx playwright test --browser=all
+  npx playwright test
   ```
 
 - Run a single test file
@@ -258,14 +248,29 @@ Here are the most common options available in the [command line](./test-cli.md).
   npx playwright test tests/todo-page/ tests/landing-page/
   ```
 
-- Run a test with specific title
+- Run files that have `my-spec` or `my-spec-2` in the file name
+  ```bash
+  npx playwright test my-spec my-spec-2
+  ```
+
+- Run the test with the title
   ```bash
   npx playwright test -g "add a todo item"
   ```
 
-- Run tests [in parallel](./test-parallel.md) - that's the default
+- Run tests in headed browsers
   ```bash
-  npx playwright test
+  npx playwright test --headed
+  ```
+
+- Run tests in a particular browser (config-less mode)
+  ```bash
+  npx playwright test --browser=webkit
+  ```
+
+- Run tests in all browsers (config-less mode)
+  ```bash
+  npx playwright test --browser=all
   ```
 
 - Disable [parallelization](./test-parallel.md)
@@ -290,6 +295,11 @@ Here are the most common options available in the [command line](./test-cli.md).
   # Windows with PowerShell
   $env:PWDEBUG=1
   npx playwright test
+  ```
+
+- Ask for help
+  ```bash
+  npx playwright test --help
   ```
 
 ## Creating a configuration file

@@ -39,7 +39,7 @@ configurations for common CI providers.
 
 ## CI configurations
 
-The [Command Line Interface](./cli.md#install-system-dependencies) can be used to install all operating system dependencies on GitHub Actions.
+The [Command line tools](./cli.md#install-system-dependencies) can be used to install all operating system dependencies on GitHub Actions.
 
 ### GitHub Actions
 

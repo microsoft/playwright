@@ -63,7 +63,7 @@ firefox.launch({ headless: false, slowMo: 50 });
 
 ## Record scripts
 
-Command Line Interface [CLI](./cli.md) can be used to record user interactions and generate JavaScript code.
+[Command line tools](./cli.md) can be used to record user interactions and generate JavaScript code.
 
 ```bash
 npx playwright codegen wikipedia.org
@@ -117,6 +117,6 @@ dependencies to run the browsers.
 Only Ubuntu 18.04 and Ubuntu 20.04 are officially supported.
 :::
 
-See also in the [Command Line Interface](./cli.md#install-system-dependencies)
+See also in the [Command line tools](./cli.md#install-system-dependencies)
 which has a command to install all necessary dependencies automatically for Ubuntu
 LTS releases.

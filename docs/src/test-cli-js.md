@@ -1,16 +1,86 @@
 ---
 id: test-cli
-title: "Advanced: command line"
+title: "Command line"
 ---
 
-```bash
-# Ask for help!
-npx playwright test --help
-```
+<!-- TOC -->
 
-Arguments passed to `npx playwright test` are treated as a filter for test files. For example, `npx playwright test my-spec` will only run tests from files with `my-spec` in the name.
+## Examples
 
-All the options are available in the [configuration file](./test-advanced.md). However, selected options can be passed to a command line and take a priority over the configuration file.
+Here are the most common options available in the command line.
+
+- Run all the tests
+  ```bash
+  npx playwright test
+  ```
+
+- Run a single test file
+  ```bash
+  npx playwright test tests/todo-page.spec.ts
+  ```
+
+- Run a set of test files
+  ```bash
+  npx playwright test tests/todo-page/ tests/landing-page/
+  ```
+
+- Run files that have `my-spec` or `my-spec-2` in the file name
+  ```bash
+  npx playwright test my-spec my-spec-2
+  ```
+
+- Run the test with the title
+  ```bash
+  npx playwright test -g "add a todo item"
+  ```
+
+- Run tests in headed browsers
+  ```bash
+  npx playwright test --headed
+  ```
+
+- Run tests in a particular browser (config-less mode)
+  ```bash
+  npx playwright test --browser=webkit
+  ```
+
+- Run tests in all browsers (config-less mode)
+  ```bash
+  npx playwright test --browser=all
+  ```
+
+- Disable [parallelization](./test-parallel.md)
+  ```bash
+  npx playwright test --workers=1
+  ```
+
+- Choose a [reporter](./test-reporters.md)
+  ```bash
+  npx playwright test --reporter=dot
+  ```
+
+- Run in debug mode with [Playwright Inspector](./inspector.md)
+  ```bash
+  # Linux/macOS
+  PWDEBUG=1 npx playwright test
+
+  # Windows with cmd.exe
+  set PWDEBUG=1
+  npx playwright test
+
+  # Windows with PowerShell
+  $env:PWDEBUG=1
+  npx playwright test
+  ```
+
+- Ask for help
+  ```bash
+  npx playwright test --help
+  ```
+
+## Reference
+
+Complete set of Playwright Test options is available in the [configuration file](./test-advanced.md). Following options can be passed to a command line and take a priority over the configuration file:
 
 - `--headed`: Run tests in headed browsers. Useful for debugging.
 
