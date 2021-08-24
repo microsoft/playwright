@@ -25,9 +25,8 @@ it.beforeAll(() => {
     lookup: (hostname, options, callback) => {
       if (hostname === 'localhost' || hostname.endsWith('playwright.dev'))
         callback(null, '127.0.0.1', 4);
-      else {
+      else
         throw new Error(`Failed to resolve hostname: ${hostname}`);
-      }
     }
   });
 });
