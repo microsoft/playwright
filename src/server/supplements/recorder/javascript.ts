@@ -181,7 +181,7 @@ ${useText ? '\ntest.use(' + useText + ');\n' : ''}
   }
 
   generateStandaloneFooter(saveStorage: string | undefined): string {
-    const storageStateLine = saveStorage ? `\n  await context.storageState({ path: '${saveStorage}' });` : '';
+    const storageStateLine = saveStorage ? `\n  await context.storageState({ path: ${quote(saveStorage)} });` : '';
     return `\n  // ---------------------${storageStateLine}
   await context.close();
   await browser.close();
@@ -228,7 +228,7 @@ function formatContextOptions(options: BrowserContextOptions, deviceName: string
   if (!serializedObject)
     serializedObject = '{\n}';
   const lines = serializedObject.split('\n');
-  lines.splice(1, 0, `...devices['${deviceName}'],`);
+  lines.splice(1, 0, `...devices[${quote(deviceName!)}],`);
   return lines.join('\n');
 }
 
