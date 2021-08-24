@@ -63,7 +63,6 @@ it('should override with defaults when intercepted response not provided', async
     res.end('my content');
   });
   await page.route('**/*', async route => {
-    route.continue();
     // @ts-expect-error
     await route._continueToResponse({});
     await route.fulfill({
@@ -73,11 +72,15 @@ it('should override with defaults when intercepted response not provided', async
   const response = await page.goto(server.EMPTY_PAGE);
   expect(response.status()).toBe(201);
   expect(await response.text()).toBe('');
-  expect(response.headers()).toEqual({});
+  if (browserName === 'webkit')
+    expect(response.headers()).toEqual({'content-type': 'text/plain'});
+  else
+    expect(response.headers()).toEqual({ });
 });
 
 it('should fulfill with any response', async ({page, server, browserName, browserMajorVersion}) => {
   it.skip(browserName === 'chromium' && browserMajorVersion <= 91, 'Fails in Electron that uses old Chromium');
+  it.fail(browserName === 'webkit', 'Network.responseReceived comes twice');
 
   server.setRoute('/sample', (req, res) => {
     res.setHeader('foo', 'bar');
