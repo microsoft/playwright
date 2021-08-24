@@ -272,8 +272,8 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
       let useInterceptedResponseBody;
       let { status: statusOption, headers: headersOption, body: bodyOption } = options;
       if (options._response) {
-        statusOption = statusOption || options._response.status();
-        headersOption = headersOption || options._response.headers();
+        statusOption ||= options._response.status();
+        headersOption ||= options._response.headers();
         if (options.body === undefined && options.path === undefined) {
           if (options._response === this._interceptedResponse)
             useInterceptedResponseBody = true;
