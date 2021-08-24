@@ -42,7 +42,7 @@ it('should add session cookies to request', async ({context, server, isLinux}) =
   const [req] = await Promise.all([
     server.waitForRequest('/simple.json'),
     // @ts-expect-error
-    context._fetch(`http://${isLinux ? 'www.my.localhost' : 'localhost' }:${server.PORT}/simple.json`),
+    context._fetch(`http://${isLinux ? 'www.my.localhost' : 'localhost'}:${server.PORT}/simple.json`),
   ]);
   expect(req.headers.cookie).toEqual('username=John Doe');
 });
@@ -63,10 +63,10 @@ it('should follow redirects', async ({context, server, isLinux}) => {
   const [req, response] = await Promise.all([
     server.waitForRequest('/simple.json'),
     // @ts-expect-error
-    context._fetch(`http://${ isLinux ? 'www.my.localhost' : 'localhost' }:${server.PORT}/redirect1`),
+    context._fetch(`http://${isLinux ? 'www.my.localhost' : 'localhost'}:${server.PORT}/redirect1`),
   ]);
   expect(req.headers.cookie).toEqual('username=John Doe');
-  expect(response.url()).toBe(`http://${isLinux ? 'www.my.localhost' : 'localhost' }:${server.PORT}/simple.json`);
+  expect(response.url()).toBe(`http://${isLinux ? 'www.my.localhost' : 'localhost'}:${server.PORT}/simple.json`);
   expect(await response.json()).toEqual({foo: 'bar'});
 });
 
@@ -100,7 +100,7 @@ it('should work with context level proxy', async ({browserOptions, browserType, 
   const browser = await browserType.launch({
     ...browserOptions,
     proxy: { server: 'http://per-context' }
-  })
+  });
 
   try {
     proxyServer.forwardTo(server.PORT);
