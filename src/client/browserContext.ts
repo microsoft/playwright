@@ -28,7 +28,7 @@ import { Events } from './events';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { Waiter } from './waiter';
 import { URLMatch, Headers, WaitForEventOptions, BrowserContextOptions, StorageState, LaunchOptions } from './types';
-import { isUnderTest, headersObjectToArray, mkdirIfNeeded } from '../utils/utils';
+import { isUnderTest, headersObjectToArray, mkdirIfNeeded, isString } from '../utils/utils';
 import { isSafeCloseError } from '../utils/errors';
 import * as api from '../../types/types';
 import * as structs from '../../types/structs';
@@ -206,6 +206,21 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   async clearPermissions(): Promise<void> {
     return this._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
       await channel.clearPermissions();
+    });
+  }
+
+  async _fetch(url: string, options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer } = {}): Promise<network.FetchResponse> {
+    return this._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
+      const postDataBuffer = isString(options.postData) ? Buffer.from(options.postData, 'utf8') : options.postData;
+      const result = await channel.fetch({
+        url,
+        method: options.method,
+        headers: options.headers ? headersObjectToArray(options.headers) : undefined,
+        postData: postDataBuffer ? postDataBuffer.toString('base64') : undefined,
+      });
+      if (result.error)
+        throw new Error(`Request failed: ${result.error}`);
+      return new network.FetchResponse(result.response!);
     });
   }
 

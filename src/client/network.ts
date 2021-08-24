@@ -454,6 +454,52 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
   }
 }
 
+export class FetchResponse {
+  private readonly _initializer: channels.FetchResponse;
+  private readonly _headers: Headers;
+  private readonly _body: Buffer;
+
+  constructor(initializer: channels.FetchResponse) {
+    this._initializer = initializer;
+    this._headers = headersArrayToObject(this._initializer.headers, true /* lowerCase */);
+    this._body = Buffer.from(initializer.body, 'base64');
+  }
+
+  ok(): boolean {
+    return this._initializer.status === 0 || (this._initializer.status >= 200 && this._initializer.status <= 299);
+  }
+
+  url(): string {
+    return this._initializer.url;
+  }
+
+  status(): number {
+    return this._initializer.status;
+  }
+
+  statusText(): string {
+    return this._initializer.statusText;
+  }
+
+  headers(): Headers {
+    return { ...this._headers };
+  }
+
+  async body(): Promise<Buffer> {
+    return this._body;
+  }
+
+  async text(): Promise<string> {
+    const content = await this.body();
+    return content.toString('utf8');
+  }
+
+  async json(): Promise<object> {
+    const content = await this.text();
+    return JSON.parse(content);
+  }
+}
+
 export class WebSocket extends ChannelOwner<channels.WebSocketChannel, channels.WebSocketInitializer> implements api.WebSocket {
   private _page: Page;
   private _isClosed: boolean;

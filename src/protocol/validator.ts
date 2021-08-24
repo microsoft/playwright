@@ -149,6 +149,13 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       value: tString,
     })),
   });
+  scheme.FetchResponse = tObject({
+    url: tString,
+    status: tNumber,
+    statusText: tString,
+    headers: tArray(tType('NameValue')),
+    body: tBinary,
+  });
   scheme.RootInitializeParams = tObject({
     sdkLanguage: tString,
   });
@@ -378,6 +385,12 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.BrowserContextExposeBindingParams = tObject({
     name: tString,
     needsHandle: tOptional(tBoolean),
+  });
+  scheme.BrowserContextFetchParams = tObject({
+    url: tString,
+    method: tOptional(tString),
+    headers: tOptional(tArray(tType('NameValue'))),
+    postData: tOptional(tBinary),
   });
   scheme.BrowserContextGrantPermissionsParams = tObject({
     permissions: tArray(tString),

@@ -220,6 +220,17 @@ InterceptedResponse:
           value: string
 
 
+FetchResponse:
+  type: object
+  properties:
+    url: string
+    status: number
+    statusText: string
+    headers:
+      type: array
+      items: NameValue
+    body: binary
+
 LaunchOptions:
   type: mixin
   properties:
@@ -590,6 +601,18 @@ BrowserContext:
       parameters:
         name: string
         needsHandle: boolean?
+
+    fetch:
+      parameters:
+        url: string
+        method: string?
+        headers:
+          type: array?
+          items: NameValue
+        postData: binary?
+      returns:
+        response: FetchResponse?
+        error: string?
 
     grantPermissions:
       parameters:

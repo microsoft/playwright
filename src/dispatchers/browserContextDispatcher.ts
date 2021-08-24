@@ -17,6 +17,7 @@
 import { BrowserContext } from '../server/browserContext';
 import { Dispatcher, DispatcherScope, lookupDispatcher } from './dispatcher';
 import { PageDispatcher, BindingCallDispatcher, WorkerDispatcher } from './pageDispatcher';
+import { playwrightFetch } from '../server/fetch';
 import { FrameDispatcher } from './frameDispatcher';
 import * as channels from '../protocol/channels';
 import { RouteDispatcher, RequestDispatcher, ResponseDispatcher } from './networkDispatchers';
@@ -27,6 +28,7 @@ import { CallMetadata } from '../server/instrumentation';
 import { ArtifactDispatcher } from './artifactDispatcher';
 import { Artifact } from '../server/artifact';
 import { Request, Response } from '../server/network';
+import { headersArrayToObject } from '../utils/utils';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextInitializer> implements channels.BrowserContextChannel {
   private _context: BrowserContext;
@@ -102,6 +104,26 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       this._dispatchEvent('bindingCall', { binding });
       return binding.promise();
     }, 'main');
+  }
+
+  async fetch(params: channels.BrowserContextFetchParams): Promise<channels.BrowserContextFetchResult> {
+    const { fetchResponse, error } = await playwrightFetch(this._context, {
+      url: params.url,
+      method: params.method,
+      headers: params.headers ? headersArrayToObject(params.headers, false) : undefined,
+      postData: params.postData ? Buffer.from(params.postData, 'base64') : undefined,
+    });
+    let response;
+    if (fetchResponse) {
+      response = {
+        url: fetchResponse.url,
+        status: fetchResponse.status,
+        statusText: fetchResponse.statusText,
+        headers: fetchResponse.headers,
+        body: fetchResponse.body.toString('base64')
+      };
+    }
+    return { response, error };
   }
 
   async newPage(params: channels.BrowserContextNewPageParams, metadata: CallMetadata): Promise<channels.BrowserContextNewPageResult> {
