@@ -116,7 +116,7 @@ async function runTSC(baseDir: string): Promise<TSCResult> {
 
 async function runPlaywrightTest(baseDir: string, params: any, env: Env, options: RunOptions): Promise<RunResult> {
   const paramList = [];
-  let additionalArgs = '';
+  let additionalArgs: string[] = null;
   for (const key of Object.keys(params)) {
     if (key === 'args') {
       additionalArgs = params[key];

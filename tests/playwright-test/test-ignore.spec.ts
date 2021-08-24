@@ -390,3 +390,28 @@ test('should only match files with JS/TS file extensions', async ({ runInlineTes
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
 });
+
+test('should work against a source mapped file', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'out/foo.spec.js': `"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+//@no-header
+const test_1 = require(${JSON.stringify(path.join(__dirname, 'entry'))});
+test_1.default('passes', async () => {
+});
+//# sourceMappingURL=foo.spec.js.map`,
+
+    'out/foo.spec.js.map': `{"version":3,"file":"foo.spec.js","sourceRoot":"","sources":["../src/foo.spec.ts"],"names":[],"mappings":";;AAAA,YAAY;AACZ,2CAAoC;AAEpC,cAAI,CAAC,QAAQ,EAAE,KAAK,IAAG,EAAE;AACzB,CAAC,CAAC,CAAC"}`,
+
+    'src/foo.test.ts': `//@no-header
+import test from '@playwright/test';
+
+test('passes', async() => {
+});
+`
+  }, {
+    args: ['-c', 'out', 'foo.spec.ts']
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});

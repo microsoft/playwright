@@ -21,7 +21,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
 import { Dispatcher, TestGroup } from './dispatcher';
-import { createMatcher, FilePatternFilter, monotonicTime, raceAgainstDeadline } from './util';
+import { createMatcher, FilePatternFilter, Matcher, monotonicTime, raceAgainstDeadline } from './util';
 import { TestCase, Suite } from './test';
 import { Loader } from './loader';
 import { Reporter } from '../../types/testReporter';
@@ -36,6 +36,7 @@ import { ProjectImpl } from './project';
 import { Minimatch } from 'minimatch';
 import { Config, FullConfig } from './types';
 import { WebServer } from './webServer';
+import { mapSourcePosition, retrieveSourceMap } from 'source-map-support';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -137,7 +138,7 @@ export class Runner {
   }
 
   async _run(list: boolean, testFileReFilters: FilePatternFilter[], projectName?: string): Promise<RunResult> {
-    const testFileFilter = testFileReFilters.length ? createMatcher(testFileReFilters.map(e => e.re)) : () => true;
+    const testFileFilter = testFileReFilters.length ? createSourceMapMatcher(testFileReFilters.map(e => e.re)) : () => true;
     const config = this._loader.fullConfig();
 
     const projects = this._loader.projects().filter(project => {
@@ -319,6 +320,22 @@ export class Runner {
       await webServer?.kill();
     }
   }
+}
+
+
+export function createSourceMapMatcher(patterns: string | RegExp | (string | RegExp)[]): Matcher {
+  const matcher = createMatcher(patterns);
+  return (filePath: string) => {
+    const sourceMap = retrieveSourceMap(filePath);
+    if (sourceMap) {
+      const map = JSON.parse(sourceMap.map.toString());
+      for (const source of map.sources) {
+        if (matcher(path.resolve(sourceMap.url, source)))
+          return true;
+      }
+    }
+    return matcher(filePath);
+  };
 }
 
 function filterOnly(suite: Suite) {
