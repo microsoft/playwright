@@ -72,7 +72,7 @@ Current working directory to launch application from.
 
 Specifies environment variables that will be visible to Electron. Defaults to `process.env`.
 
-#### option: Electron.launch.timeout
+### option: Electron.launch.timeout
 - `timeout` <[float]>
 
 Maximum time in milliseconds to wait for the application to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
