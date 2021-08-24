@@ -38,7 +38,7 @@ export class InMemorySnapshotter extends BaseSnapshotStorage implements Snapshot
     this._server = new HttpServer();
     new SnapshotServer(this._server, this);
     this._snapshotter = new Snapshotter(context, this);
-    this._harTracer = new HarTracer(context, this, { content: 'sha1', waitOnFlush: false, skipScripts: true });
+    this._harTracer = new HarTracer(context, this, { content: 'sha1', waitForContentOnStop: false, skipScripts: true });
   }
 
   async initialize(): Promise<string> {
@@ -73,9 +73,6 @@ export class InMemorySnapshotter extends BaseSnapshotStorage implements Snapshot
         }
       });
     });
-  }
-
-  onPageEntry(entry: har.Page) {
   }
 
   onEntryStarted(entry: har.Entry) {

@@ -28,7 +28,7 @@ import { Page } from '../../page';
 import * as trace from '../common/traceEvents';
 import { commandsWithTracingSnapshots } from '../../../protocol/channels';
 import { Snapshotter, SnapshotterBlob, SnapshotterDelegate } from '../../snapshot/snapshotter';
-import { FrameSnapshot, ResourceSnapshot } from '../../snapshot/snapshotTypes';
+import { FrameSnapshot } from '../../snapshot/snapshotTypes';
 import { HarTracer, HarTracerDelegate } from '../../supplements/har/harTracer';
 import * as har from '../../supplements/har/har';
 
@@ -72,7 +72,7 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
     this._snapshotter = new Snapshotter(context, this);
     this._harTracer = new HarTracer(context, this, {
       content: 'sha1',
-      waitOnFlush: false,
+      waitForContentOnStop: false,
       skipScripts: true,
     });
     this._contextCreatedEvent = {
@@ -252,9 +252,6 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
       return;
     const event: trace.ActionTraceEvent = { type: 'event', metadata, hasSnapshot: false };
     this._appendTraceEvent(event);
-  }
-
-  onPageEntry(entry: har.Page) {
   }
 
   onEntryStarted(entry: har.Entry) {

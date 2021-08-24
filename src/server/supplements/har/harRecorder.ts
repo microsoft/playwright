@@ -27,23 +27,16 @@ type HarOptions = {
 export class HarRecorder {
   private _options: HarOptions;
   private _tracer: HarTracer;
-  private _pages: har.Page[] = [];
   private _entries: har.Entry[] = [];
-  private _context: BrowserContext;
 
   constructor(context: BrowserContext, options: HarOptions) {
     this._options = options;
-    this._context = context;
     this._tracer = new HarTracer(context, this, {
       content: options.omitContent ? 'omit' : 'embedded',
-      waitOnFlush: true,
+      waitForContentOnStop: true,
       skipScripts: false,
     });
     this._tracer.start();
-  }
-
-  onPageEntry(entry: har.Page) {
-    this._pages.push(entry);
   }
 
   onEntryStarted(entry: har.Entry) {
@@ -56,23 +49,9 @@ export class HarRecorder {
   onContentBlob(sha1: string, buffer: Buffer) {
   }
 
-  async stop() {
-    await this._tracer.stop();
-
-    const log: har.Log = {
-      version: '1.2',
-      creator: {
-        name: 'Playwright',
-        version: require('../../../../package.json')['version'],
-      },
-      browser: {
-        name: this._context._browser.options.name,
-        version: this._context._browser.version()
-      },
-      pages: this._pages,
-      entries: this._entries,
-    };
-    log.pages.forEach(pageEntry => this._tracer.fixupPageEntry(pageEntry));
+  async flush() {
+    const log = await this._tracer.stop();
+    log.entries = this._entries;
     await fs.promises.writeFile(this._options.path, JSON.stringify({ log }, undefined, 2));
   }
 }

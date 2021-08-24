@@ -27,7 +27,6 @@ import { eventsHelper, RegisteredListener } from '../../../utils/eventsHelper';
 const FALLBACK_HTTP_VERSION = 'HTTP/1.1';
 
 export interface HarTracerDelegate {
-  onPageEntry(entry: har.Page): void;
   onEntryStarted(entry: har.Entry): void;
   onEntryFinished(entry: har.Entry): void;
   onContentBlob(sha1: string, buffer: Buffer): void;
@@ -36,7 +35,7 @@ export interface HarTracerDelegate {
 type HarTracerOptions = {
   content: 'omit' | 'sha1' | 'embedded';
   skipScripts: boolean;
-  waitOnFlush: boolean;
+  waitForContentOnStop: boolean;
 };
 
 export class HarTracer {
@@ -44,13 +43,16 @@ export class HarTracer {
   private _barrierPromises = new Set<Promise<void>>();
   private _delegate: HarTracerDelegate;
   private _options: HarTracerOptions;
+  private _pageEntries = new Map<Page, har.Page>();
   private _eventListeners: RegisteredListener[] = [];
   private _started = false;
+  private _entrySymbol: symbol;
 
   constructor(context: BrowserContext, delegate: HarTracerDelegate, options: HarTracerOptions) {
     this._context = context;
     this._delegate = delegate;
     this._options = options;
+    this._entrySymbol = Symbol('requestHarEntry');
   }
 
   start() {
@@ -65,8 +67,12 @@ export class HarTracer {
     ];
   }
 
+  private _entryForRequest(request: network.Request): har.Entry | undefined {
+    return (request as any)[this._entrySymbol];
+  }
+
   private _ensurePageEntry(page: Page) {
-    let pageEntry = (page as any)[kPageEntry] as har.Page | undefined;
+    let pageEntry = this._pageEntries.get(page);
     if (!pageEntry) {
       page.on(Page.Events.DOMContentLoaded, () => this._onDOMContentLoaded(page));
       page.on(Page.Events.Load, () => this._onLoad(page));
@@ -80,9 +86,7 @@ export class HarTracer {
           onLoad: -1,
         },
       };
-      (page as any)[kPageEntry] = pageEntry;
-      if (this._started)
-        this._delegate.onPageEntry(pageEntry);
+      this._pageEntries.set(page, pageEntry);
     }
     return pageEntry;
   }
@@ -116,7 +120,7 @@ export class HarTracer {
   }
 
   private _addBarrier(page: Page, promise: Promise<void>) {
-    if (!this._options.waitOnFlush)
+    if (!this._options.waitForContentOnStop)
       return;
     const race = Promise.race([
       new Promise<void>(f => page.on('close', () => {
@@ -181,17 +185,18 @@ export class HarTracer {
       },
     };
     if (request.redirectedFrom()) {
-      const fromEntry = entryForRequest(request.redirectedFrom()!)!;
-      fromEntry.response.redirectURL = request.url();
+      const fromEntry = this._entryForRequest(request.redirectedFrom()!);
+      if (fromEntry)
+        fromEntry.response.redirectURL = request.url();
     }
-    (request as any)[kRequestEntry] = harEntry;
+    (request as any)[this._entrySymbol] = harEntry;
     if (this._started)
       this._delegate.onEntryStarted(harEntry);
   }
 
   private async _onRequestFinished(request: network.Request) {
     const page = request.frame()._page;
-    const harEntry = entryForRequest(request);
+    const harEntry = this._entryForRequest(request);
     if (!harEntry)
       return;
     const response = await request.response();
@@ -209,14 +214,37 @@ export class HarTracer {
     harEntry.response._transferSize = transferSize;
     harEntry.request.headersSize = calculateRequestHeadersSize(request.method(), request.url(), httpVersion, request.headers());
 
-    const promise = this._finishResponseAsync(harEntry, response);
+    const promise = response.body().then(buffer => {
+      const content = harEntry.response.content;
+      content.size = buffer.length;
+      content.compression = harEntry.response.bodySize !== -1 ? buffer.length - harEntry.response.bodySize : 0;
+      if (buffer && buffer.length > 0) {
+        if (this._options.content === 'embedded') {
+          content.text = buffer.toString('base64');
+          content.encoding = 'base64';
+        } else if (this._options.content === 'sha1') {
+          content._sha1 = calculateSha1(buffer) + mimeToExtension(content.mimeType);
+          if (this._started)
+            this._delegate.onContentBlob(content._sha1, buffer);
+        }
+      }
+    }).catch(() => {}).then(() => {
+      const postData = response.request().postDataBuffer();
+      if (postData && harEntry.request.postData && this._options.content === 'sha1') {
+        harEntry.request.postData._sha1 = calculateSha1(postData) + mimeToExtension(harEntry.request.postData.mimeType);
+        if (this._started)
+          this._delegate.onContentBlob(harEntry.request.postData._sha1, postData);
+      }
+      if (this._started)
+        this._delegate.onEntryFinished(harEntry);
+    });
     this._addBarrier(page, promise);
   }
 
   private _onResponse(response: network.Response) {
     const page = response.frame()._page;
     const pageEntry = this._ensurePageEntry(page);
-    const harEntry = entryForRequest(response.request());
+    const harEntry = this._entryForRequest(response.request());
     if (!harEntry)
       return;
     const request = response.request();
@@ -258,62 +286,50 @@ export class HarTracer {
       receive,
     };
     harEntry.time = [dns, connect, ssl, wait, receive].reduce((pre, cur) => cur > 0 ? cur + pre : pre, 0);
-  }
-
-  private async _finishResponseAsync(harEntry: har.Entry, response: network.Response) {
-    await Promise.all([
-      response.serverAddr().then(server => {
-        if (server?.ipAddress)
-          harEntry.serverIPAddress = server.ipAddress;
-        if (server?.port)
-          harEntry._serverPort = server.port;
-      }),
-      response.securityDetails().then(details => {
-        if (details)
-          harEntry._securityDetails = details;
-      }),
-      response.body().then(buffer => {
-        const content = harEntry.response.content;
-        content.size = buffer.length;
-        content.compression = harEntry.response.bodySize !== -1 ? buffer.length - harEntry.response.bodySize : 0;
-        if (buffer && buffer.length > 0) {
-          if (this._options.content === 'embedded') {
-            content.text = buffer.toString('base64');
-            content.encoding = 'base64';
-          } else if (this._options.content === 'sha1') {
-            content._sha1 = calculateSha1(buffer) + mimeToExtension(content.mimeType);
-            if (this._started)
-              this._delegate.onContentBlob(content._sha1, buffer);
-          }
-        }
-      }).catch(() => {}),
-    ]);
-    const postData = response.request().postDataBuffer();
-    if (postData && harEntry.request.postData && this._options.content === 'sha1') {
-      harEntry.request.postData._sha1 = calculateSha1(postData) + mimeToExtension(harEntry.request.postData.mimeType);
-      if (this._started)
-        this._delegate.onContentBlob(harEntry.request.postData._sha1, postData);
-    }
-    if (this._started)
-      this._delegate.onEntryFinished(harEntry);
+    this._addBarrier(page, response.serverAddr().then(server => {
+      if (server?.ipAddress)
+        harEntry.serverIPAddress = server.ipAddress;
+      if (server?.port)
+        harEntry._serverPort = server.port;
+    }));
+    this._addBarrier(page, response.securityDetails().then(details => {
+      if (details)
+        harEntry._securityDetails = details;
+    }));
   }
 
   async stop() {
     this._started = false;
     eventsHelper.removeEventListeners(this._eventListeners);
+
     await Promise.all(this._barrierPromises);
     this._barrierPromises.clear();
-  }
 
-  fixupPageEntry(pageEntry: har.Page) {
-    if (pageEntry.pageTimings.onContentLoad >= 0)
-      pageEntry.pageTimings.onContentLoad -= pageEntry.startedDateTime.valueOf();
-    else
-      pageEntry.pageTimings.onContentLoad = -1;
-    if (pageEntry.pageTimings.onLoad >= 0)
-      pageEntry.pageTimings.onLoad -= pageEntry.startedDateTime.valueOf();
-    else
-      pageEntry.pageTimings.onLoad = -1;
+    const log: har.Log = {
+      version: '1.2',
+      creator: {
+        name: 'Playwright',
+        version: require('../../../../package.json')['version'],
+      },
+      browser: {
+        name: this._context._browser.options.name,
+        version: this._context._browser.version()
+      },
+      pages: Array.from(this._pageEntries.values()),
+      entries: [],
+    };
+    for (const pageEntry of log.pages) {
+      if (pageEntry.pageTimings.onContentLoad >= 0)
+        pageEntry.pageTimings.onContentLoad -= pageEntry.startedDateTime.valueOf();
+      else
+        pageEntry.pageTimings.onContentLoad = -1;
+      if (pageEntry.pageTimings.onLoad >= 0)
+        pageEntry.pageTimings.onLoad -= pageEntry.startedDateTime.valueOf();
+      else
+        pageEntry.pageTimings.onLoad = -1;
+    }
+    this._pageEntries.clear();
+    return log;
   }
 }
 
@@ -409,12 +425,6 @@ function calculateRequestBodySize(request: network.Request): number|undefined {
   if (!postData)
     return;
   return new TextEncoder().encode(postData.toString('utf8')).length;
-}
-
-const kPageEntry = Symbol('pageHarEntry');
-const kRequestEntry = Symbol('requestHarEntry');
-function entryForRequest(request: network.Request): har.Entry | undefined {
-  return (request as any)[kRequestEntry];
 }
 
 const kMimeToExtension: { [key: string]: string } = {

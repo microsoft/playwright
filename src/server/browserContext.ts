@@ -272,7 +272,7 @@ export abstract class BrowserContext extends SdkObject {
       this.emit(BrowserContext.Events.BeforeClose);
       this._closedStatus = 'closing';
 
-      await this._harRecorder?.stop();
+      await this._harRecorder?.flush();
       await this.tracing.dispose();
 
       // Cleanup.
