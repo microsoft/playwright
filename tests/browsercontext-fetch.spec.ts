@@ -28,11 +28,11 @@ it('should work', async ({context, server}) => {
   expect(await response.text()).toBe('{"foo": "bar"}\n');
 });
 
-it('should add session cookies to request', async ({context, server, isMac}) => {
+it('should add session cookies to request', async ({context, server, isLinux}) => {
   await context.addCookies([{
     name: 'username',
     value: 'John Doe',
-    domain: isMac ? 'localhost' : '.my.localhost',
+    domain: isLinux ? '.my.localhost' : 'localhost',
     path: '/',
     expires: -1,
     httpOnly: false,
@@ -42,18 +42,18 @@ it('should add session cookies to request', async ({context, server, isMac}) => 
   const [req] = await Promise.all([
     server.waitForRequest('/simple.json'),
     // @ts-expect-error
-    context._fetch(`http://${isMac ? 'localhost' : 'www.my.localhost'}:${server.PORT}/simple.json`),
+    context._fetch(`http://${isLinux ? 'www.my.localhost' : 'localhost' }:${server.PORT}/simple.json`),
   ]);
   expect(req.headers.cookie).toEqual('username=John Doe');
 });
 
-it('should follow redirects', async ({context, server, isMac}) => {
+it('should follow redirects', async ({context, server, isLinux}) => {
   server.setRedirect('/redirect1', '/redirect2');
   server.setRedirect('/redirect2', '/simple.json');
   await context.addCookies([{
     name: 'username',
     value: 'John Doe',
-    domain: isMac ? 'localhost' : '.my.localhost',
+    domain: isLinux ? '.my.localhost' : 'localhost',
     path: '/',
     expires: -1,
     httpOnly: false,
@@ -63,10 +63,10 @@ it('should follow redirects', async ({context, server, isMac}) => {
   const [req, response] = await Promise.all([
     server.waitForRequest('/simple.json'),
     // @ts-expect-error
-    context._fetch(`http://${isMac ? 'localhost' : 'www.my.localhost'}:${server.PORT}/redirect1`),
+    context._fetch(`http://${ isLinux ? 'www.my.localhost' : 'localhost' }:${server.PORT}/redirect1`),
   ]);
   expect(req.headers.cookie).toEqual('username=John Doe');
-  expect(response.url()).toBe(`http://${isMac ? 'localhost' : 'www.my.localhost'}:${server.PORT}/simple.json`);
+  expect(response.url()).toBe(`http://${isLinux ? 'www.my.localhost' : 'localhost' }:${server.PORT}/simple.json`);
   expect(await response.json()).toEqual({foo: 'bar'});
 });
 
