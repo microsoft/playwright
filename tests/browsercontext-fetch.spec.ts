@@ -14,7 +14,26 @@
  * limitations under the License.
  */
 
+import http from 'http';
 import { contextTest as it, expect } from './config/browserTest';
+
+let prevAgent: http.Agent;
+it.beforeAll(() => {
+  prevAgent = http.globalAgent;
+  http.globalAgent = new http.Agent({
+    // @ts-expect-error
+    lookup: (hostname, options, callback) => {
+      if (hostname === 'localhost' || hostname.endsWith('playwright.dev'))
+        callback(null, '127.0.0.1', 4);
+      else
+        throw new Error(`Failed to resolve hostname: ${hostname}`);
+    }
+  });
+});
+
+it.afterAll(() => {
+  http.globalAgent = prevAgent;
+});
 
 it('should work', async ({context, server}) => {
   // @ts-expect-error
@@ -28,11 +47,11 @@ it('should work', async ({context, server}) => {
   expect(await response.text()).toBe('{"foo": "bar"}\n');
 });
 
-it('should add session cookies to request', async ({context, server, isLinux}) => {
+it('should add session cookies to request', async ({context, server}) => {
   await context.addCookies([{
     name: 'username',
     value: 'John Doe',
-    domain: isLinux ? '.my.localhost' : 'localhost',
+    domain: '.my.playwright.dev',
     path: '/',
     expires: -1,
     httpOnly: false,
@@ -42,18 +61,18 @@ it('should add session cookies to request', async ({context, server, isLinux}) =
   const [req] = await Promise.all([
     server.waitForRequest('/simple.json'),
     // @ts-expect-error
-    context._fetch(`http://${isLinux ? 'www.my.localhost' : 'localhost'}:${server.PORT}/simple.json`),
+    context._fetch(`http://www.my.playwright.dev:${server.PORT}/simple.json`),
   ]);
   expect(req.headers.cookie).toEqual('username=John Doe');
 });
 
-it('should follow redirects', async ({context, server, isLinux}) => {
+it('should follow redirects', async ({context, server}) => {
   server.setRedirect('/redirect1', '/redirect2');
   server.setRedirect('/redirect2', '/simple.json');
   await context.addCookies([{
     name: 'username',
     value: 'John Doe',
-    domain: isLinux ? '.my.localhost' : 'localhost',
+    domain: '.my.playwright.dev',
     path: '/',
     expires: -1,
     httpOnly: false,
@@ -63,10 +82,10 @@ it('should follow redirects', async ({context, server, isLinux}) => {
   const [req, response] = await Promise.all([
     server.waitForRequest('/simple.json'),
     // @ts-expect-error
-    context._fetch(`http://${isLinux ? 'www.my.localhost' : 'localhost'}:${server.PORT}/redirect1`),
+    context._fetch(`http://www.my.playwright.dev:${server.PORT}/redirect1`),
   ]);
   expect(req.headers.cookie).toEqual('username=John Doe');
-  expect(response.url()).toBe(`http://${isLinux ? 'www.my.localhost' : 'localhost'}:${server.PORT}/simple.json`);
+  expect(response.url()).toBe(`http://www.my.playwright.dev:${server.PORT}/simple.json`);
   expect(await response.json()).toEqual({foo: 'bar'});
 });
 
