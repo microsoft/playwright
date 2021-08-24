@@ -116,12 +116,12 @@ test('should print load/save storage_state', async ({ runCLI, channel, browserNa
 
 def run(playwright: Playwright) -> None:
     browser = playwright.${browserName}.launch(${launchOptions(channel)})
-    context = browser.new_context(storage_state="${loadFileName}")`;
+    context = browser.new_context(storage_state="${loadFileName.replace(/\\/g, '\\\\')}")`;
   await cli.waitFor(expectedResult1);
 
   const expectedResult2 = `
     # ---------------------
-    context.storage_state(path="${saveFileName}")
+    context.storage_state(path="${saveFileName.replace(/\\/g, '\\\\')}")
     context.close()
     browser.close()
 

@@ -649,7 +649,7 @@ test.describe('cli codegen', () => {
   test('should fill tricky characters', async ({ page, openRecorder }) => {
     const recorder = await openRecorder();
 
-    await recorder.setContentAndWait(`<textarea id="textarea" name="name" oninput="console.log(textarea.value)"></textarea>`);
+    await recorder.setContentAndWait(`<textarea spellcheck=false id="textarea" name="name" oninput="console.log(textarea.value)"></textarea>`);
     const selector = await recorder.focusElement('textarea');
     expect(selector).toBe('textarea[name="name"]');
 
