@@ -78,9 +78,9 @@ it('should override with defaults when intercepted response not provided', async
     expect(response.headers()).toEqual({ });
 });
 
-it('should fulfill with any response', async ({page, server, browserName, browserMajorVersion}) => {
+it('should fulfill with any response', async ({page, server, browserName, browserMajorVersion, isLinux}) => {
   it.skip(browserName === 'chromium' && browserMajorVersion <= 91, 'Fails in Electron that uses old Chromium');
-  it.fail(browserName === 'webkit', 'Network.responseReceived comes twice');
+  it.fail(browserName === 'webkit' && isLinux, 'Network.responseReceived comes twice');
 
   server.setRoute('/sample', (req, res) => {
     res.setHeader('foo', 'bar');
