@@ -21,6 +21,7 @@ import fs from 'fs';
 import http2 from 'http2';
 import type { BrowserContext, BrowserContextOptions } from '../index';
 import type { AddressInfo } from 'net';
+import type { Log } from '../src/server/supplements/har/har';
 
 async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any) {
   const harPath = testInfo.outputPath('test.har');
@@ -31,7 +32,7 @@ async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => 
     context,
     getLog: async () => {
       await context.close();
-      return JSON.parse(fs.readFileSync(harPath).toString())['log'];
+      return JSON.parse(fs.readFileSync(harPath).toString())['log'] as Log;
     }
   };
 }
@@ -66,7 +67,7 @@ it('should have pages', async ({ contextFactory, server }, testInfo) => {
   const log = await getLog();
   expect(log.pages.length).toBe(1);
   const pageEntry = log.pages[0];
-  expect(pageEntry.id).toBe('page_0');
+  expect(pageEntry.id).toBeTruthy();
   expect(pageEntry.title).toBe('Hello');
   expect(new Date(pageEntry.startedDateTime).valueOf()).toBeGreaterThan(Date.now() - 3600 * 1000);
   expect(pageEntry.pageTimings.onContentLoad).toBeGreaterThan(0);
@@ -83,7 +84,7 @@ it('should have pages in persistent context', async ({ launchPersistent }, testI
   const log = JSON.parse(fs.readFileSync(harPath).toString())['log'];
   expect(log.pages.length).toBe(1);
   const pageEntry = log.pages[0];
-  expect(pageEntry.id).toBe('page_0');
+  expect(pageEntry.id).toBeTruthy();
   expect(pageEntry.title).toBe('Hello');
 });
 
@@ -93,7 +94,7 @@ it('should include request', async ({ contextFactory, server }, testInfo) => {
   const log = await getLog();
   expect(log.entries.length).toBe(1);
   const entry = log.entries[0];
-  expect(entry.pageref).toBe('page_0');
+  expect(entry.pageref).toBe(log.pages[0].id);
   expect(entry.request.url).toBe(server.EMPTY_PAGE);
   expect(entry.request.method).toBe('GET');
   expect(entry.request.httpVersion).toBe('HTTP/1.1');
@@ -339,10 +340,8 @@ it('should have popup requests', async ({ contextFactory, server }, testInfo) =>
   const log = await getLog();
 
   expect(log.pages.length).toBe(2);
-  expect(log.pages[0].id).toBe('page_0');
-  expect(log.pages[1].id).toBe('page_1');
 
-  const entries = log.entries.filter(entry => entry.pageref === 'page_1');
+  const entries = log.entries.filter(entry => entry.pageref === log.pages[1].id);
   expect(entries.length).toBe(2);
   expect(entries[0].request.url).toBe(server.PREFIX + '/one-style.html');
   expect(entries[0].response.status).toBe(200);

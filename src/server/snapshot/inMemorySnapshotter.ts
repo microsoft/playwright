@@ -18,37 +18,45 @@ import { HttpServer } from '../../utils/httpServer';
 import { BrowserContext } from '../browserContext';
 import { eventsHelper } from '../../utils/eventsHelper';
 import { Page } from '../page';
-import { FrameSnapshot, ResourceSnapshot } from './snapshotTypes';
+import { FrameSnapshot } from './snapshotTypes';
 import { SnapshotRenderer } from './snapshotRenderer';
 import { SnapshotServer } from './snapshotServer';
 import { BaseSnapshotStorage } from './snapshotStorage';
 import { Snapshotter, SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
 import { ElementHandle } from '../dom';
+import { HarTracer, HarTracerDelegate } from '../supplements/har/harTracer';
+import * as har from '../supplements/har/har';
 
-export class InMemorySnapshotter extends BaseSnapshotStorage implements SnapshotterDelegate {
+export class InMemorySnapshotter extends BaseSnapshotStorage implements SnapshotterDelegate, HarTracerDelegate {
   private _blobs = new Map<string, Buffer>();
   private _server: HttpServer;
   private _snapshotter: Snapshotter;
+  private _harTracer: HarTracer;
 
   constructor(context: BrowserContext) {
     super();
     this._server = new HttpServer();
     new SnapshotServer(this._server, this);
     this._snapshotter = new Snapshotter(context, this);
+    this._harTracer = new HarTracer(context, this, { content: 'sha1', waitOnFlush: false, skipScripts: true });
   }
 
   async initialize(): Promise<string> {
     await this._snapshotter.start();
+    this._harTracer.start();
     return await this._server.start();
   }
 
   async reset() {
     await this._snapshotter.reset();
+    await this._harTracer.stop();
+    this._harTracer.start();
     this.clear();
   }
 
   async dispose() {
     this._snapshotter.dispose();
+    await this._harTracer.stop();
     await this._server.stop();
   }
 
@@ -67,12 +75,22 @@ export class InMemorySnapshotter extends BaseSnapshotStorage implements Snapshot
     });
   }
 
-  onBlob(blob: SnapshotterBlob): void {
-    this._blobs.set(blob.sha1, blob.buffer);
+  onPageEntry(entry: har.Page) {
   }
 
-  onResourceSnapshot(resource: ResourceSnapshot): void {
-    this.addResource(resource);
+  onEntryStarted(entry: har.Entry) {
+  }
+
+  onEntryFinished(entry: har.Entry) {
+    this.addResource(entry);
+  }
+
+  onContentBlob(sha1: string, buffer: Buffer) {
+    this._blobs.set(sha1, buffer);
+  }
+
+  onSnapshotterBlob(blob: SnapshotterBlob): void {
+    this._blobs.set(blob.sha1, blob.buffer);
   }
 
   onFrameSnapshot(snapshot: FrameSnapshot): void {
