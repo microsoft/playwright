@@ -697,10 +697,10 @@ index 0000000000000000000000000000000000000000..347a01b3fdd1a8277cb4104558e8bbfa
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Input.json b/Source/JavaScriptCore/inspector/protocol/Input.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..587287d52fde2735cbae34a27a0f673b7e38e1a7
+index 0000000000000000000000000000000000000000..b9ab57a2b5739ed997231399b4bd4042a0cb0935
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Input.json
-@@ -0,0 +1,188 @@
+@@ -0,0 +1,223 @@
 +{
 +    "domain": "Input",
 +    "availability": ["web"],
@@ -847,6 +847,41 @@ index 0000000000000000000000000000000000000000..587287d52fde2735cbae34a27a0f673b
 +                {
 +                    "name": "clickCount",
 +                    "description": "Number of times the mouse button was clicked (default: 0).",
++                    "optional": true,
++                    "type": "integer"
++                },
++                {
++                    "name": "deltaX",
++                    "description": "X delta in CSS pixels for mouse wheel event (default: 0).",
++                    "optional": true,
++                    "type": "integer"
++                },
++                {
++                    "name": "deltaY",
++                    "description": "Y delta in CSS pixels for mouse wheel event (default: 0).",
++                    "optional": true,
++                    "type": "integer"
++                }
++            ]
++        },
++        {
++            "name": "dispatchWheelEvent",
++            "description": "Dispatches a wheel event to the page.",
++            "async": true,
++            "parameters": [
++                {
++                    "name": "x",
++                    "description": "X coordinate of the event relative to the main frame's viewport in CSS pixels.",
++                    "type": "integer"
++                },
++                {
++                    "name": "y",
++                    "description": "Y coordinate of the event relative to the main frame's viewport in CSS pixels. 0 refers to\nthe top of the viewport and Y increases as it proceeds towards the bottom of the viewport.",
++                    "type": "integer"
++                },
++                {
++                    "name": "modifiers",
++                    "description": "Bit field representing pressed modifier keys. Alt=1, Ctrl=2, Meta/Command=4, Shift=8\n(default: 0).",
 +                    "optional": true,
 +                    "type": "integer"
 +                },
@@ -10046,6 +10081,20 @@ index 001558dd58f4d85f360d5711caa03db33889011e..1e0898f985f1d13036d31e3e284258a3
  #if USE(APPKIT)
      NSEvent* nativeEvent() const { return m_nativeEvent.get(); }
  #elif PLATFORM(GTK)
+diff --git a/Source/WebKit/Shared/NativeWebWheelEvent.h b/Source/WebKit/Shared/NativeWebWheelEvent.h
+index f48dc00755b6847f2c13e5f7dac652c2a91f66ea..eb9c890c52f47913a8dc7950d6d3fa1e037e5aca 100644
+--- a/Source/WebKit/Shared/NativeWebWheelEvent.h
++++ b/Source/WebKit/Shared/NativeWebWheelEvent.h
+@@ -67,7 +67,8 @@ public:
+ #elif PLATFORM(WIN)
+     NativeWebWheelEvent(HWND, UINT message, WPARAM, LPARAM);
+ #endif
+-
++    NativeWebWheelEvent(const WebWheelEvent & webWheelEvent)
++        : WebWheelEvent(webWheelEvent) { }
+ #if USE(APPKIT)
+     NSEvent* nativeEvent() const { return m_nativeEvent.get(); }
+ #elif PLATFORM(GTK)
 diff --git a/Source/WebKit/Shared/SandboxExtension.h b/Source/WebKit/Shared/SandboxExtension.h
 index c359eeaa440586fa61d3bc31def069ffcfa6e771..311cc74c62bdda4d147c221f85b3e55ed4ee481c 100644
 --- a/Source/WebKit/Shared/SandboxExtension.h
@@ -16891,10 +16940,10 @@ index 0000000000000000000000000000000000000000..b3bb4880a866ee6132b8b26acf8dad81
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..61d1f18d8b7ba5eda1ec1e3c7fd59f3dd90f546d
+index 0000000000000000000000000000000000000000..64a07aecf03b294abdafec044b235c84f6fe9016
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
-@@ -0,0 +1,288 @@
+@@ -0,0 +1,329 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -16925,6 +16974,8 @@ index 0000000000000000000000000000000000000000..61d1f18d8b7ba5eda1ec1e3c7fd59f3d
 +
 +#include "NativeWebKeyboardEvent.h"
 +#include "NativeWebMouseEvent.h"
++#include "NativeWebWheelEvent.h"
++#include "WebWheelEvent.h"
 +#include "WebPageProxy.h"
 +#include <wtf/MathExtras.h>
 +#include <wtf/HexNumber.h>
@@ -16971,6 +17022,9 @@ index 0000000000000000000000000000000000000000..61d1f18d8b7ba5eda1ec1e3c7fd59f3d
 +class WebPageInspectorInputAgent::MouseCallbacks : public CallbackList<Inspector::InputBackendDispatcherHandler::DispatchMouseEventCallback> {
 +};
 +
++class WebPageInspectorInputAgent::WheelCallbacks : public CallbackList<Inspector::InputBackendDispatcherHandler::DispatchWheelEventCallback> {
++};
++
 +WebPageInspectorInputAgent::WebPageInspectorInputAgent(Inspector::BackendDispatcher& backendDispatcher, WebPageProxy& page)
 +    : InspectorAgentBase("Input"_s)
 +    , m_backendDispatcher(InputBackendDispatcher::create(backendDispatcher, this))
@@ -16991,16 +17045,23 @@ index 0000000000000000000000000000000000000000..61d1f18d8b7ba5eda1ec1e3c7fd59f3d
 +    m_mouseCallbacks->sendSuccess();
 +}
 +
++void WebPageInspectorInputAgent::didProcessAllPendingWheelEvents()
++{
++    m_wheelCallbacks->sendSuccess();
++}
++
 +void WebPageInspectorInputAgent::didCreateFrontendAndBackend(Inspector::FrontendRouter*, Inspector::BackendDispatcher*)
 +{
 +    m_keyboardCallbacks = makeUnique<KeyboardCallbacks>();
 +    m_mouseCallbacks = makeUnique<MouseCallbacks>();
++    m_wheelCallbacks = makeUnique<WheelCallbacks>();
 +}
 +
 +void WebPageInspectorInputAgent::willDestroyFrontendAndBackend(Inspector::DisconnectReason)
 +{
 +    m_keyboardCallbacks = nullptr;
 +    m_mouseCallbacks = nullptr;
++    m_wheelCallbacks = nullptr;
 +}
 +
 +static String keyIdentifierForKey(const String& key)
@@ -17182,13 +17243,42 @@ index 0000000000000000000000000000000000000000..61d1f18d8b7ba5eda1ec1e3c7fd59f3d
 +        callback->sendSuccess();
 +    });
 +}
++
++void WebPageInspectorInputAgent::dispatchWheelEvent(int x, int y, std::optional<int>&& modifiers, std::optional<int>&& deltaX, std::optional<int>&& deltaY, Ref<DispatchWheelEventCallback>&& callback)
++{
++    OptionSet<WebEvent::Modifier> eventModifiers;
++    if (modifiers)
++        eventModifiers = eventModifiers.fromRaw(*modifiers);
++
++    float eventDeltaX = 0.0f;
++    if (deltaX)
++        eventDeltaX = *deltaX;
++    float eventDeltaY = 0.0f;
++    if (deltaY)
++        eventDeltaY = *deltaY;
++    m_wheelCallbacks->append(WTFMove(callback));
++
++    // Convert css coordinates to view coordinates (dip).
++    double totalScale = m_page.pageScaleFactor() * m_page.viewScaleFactor();
++    x = clampToInteger(roundf(x * totalScale));
++    y = clampToInteger(roundf(y * totalScale));
++
++    WallTime timestamp = WallTime::now();
++    WebCore::FloatSize delta = {eventDeltaX, eventDeltaY};
++    WebCore::FloatSize wheelTicks = delta;
++    wheelTicks.scale(1.0f / WebCore::Scrollbar::pixelsPerLineStep());
++    WebWheelEvent webEvent(WebEvent::Wheel, {x, y}, {x, y}, delta, wheelTicks, WebWheelEvent::ScrollByPixelWheelEvent, eventModifiers, timestamp);
++    NativeWebWheelEvent event(webEvent);
++    m_page.handleWheelEvent(event);
++}
++
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorInputAgent.h b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..fb4855b939efdd36acd011a41244a579152bf574
+index 0000000000000000000000000000000000000000..48c9ccc420c1b4ae3259e1d5ba17fd8fbea24b96
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.h
-@@ -0,0 +1,82 @@
+@@ -0,0 +1,86 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -17244,6 +17334,7 @@ index 0000000000000000000000000000000000000000..fb4855b939efdd36acd011a41244a579
 +
 +    void didProcessAllPendingKeyboardEvents();
 +    void didProcessAllPendingMouseEvents();
++    void didProcessAllPendingWheelEvents();
 +
 +    void didCreateFrontendAndBackend(Inspector::FrontendRouter*, Inspector::BackendDispatcher*) override;
 +    void willDestroyFrontendAndBackend(Inspector::DisconnectReason) override;
@@ -17252,6 +17343,7 @@ index 0000000000000000000000000000000000000000..fb4855b939efdd36acd011a41244a579
 +    void dispatchKeyEvent(const String& type, std::optional<int>&& modifiers, const String& text, const String& unmodifiedText, const String& code, const String& key, std::optional<int>&& windowsVirtualKeyCode, std::optional<int>&& nativeVirtualKeyCode, std::optional<bool>&& autoRepeat, std::optional<bool>&& isKeypad, std::optional<bool>&& isSystemKey, RefPtr<JSON::Array>&&, Ref<DispatchKeyEventCallback>&& callback) override;
 +    void dispatchMouseEvent(const String& type, int x, int y, std::optional<int>&& modifiers, const String& button, std::optional<int>&& buttons, std::optional<int>&& clickCount, std::optional<int>&& deltaX, std::optional<int>&& deltaY, Ref<DispatchMouseEventCallback>&& callback) override;
 +    void dispatchTapEvent(int x, int y, std::optional<int>&& modifiers, Ref<DispatchTapEventCallback>&& callback) override;
++    void dispatchWheelEvent(int x, int y, std::optional<int>&& modifiers, std::optional<int>&& deltaX, std::optional<int>&& deltaY, Ref<DispatchWheelEventCallback>&& callback) override;
 +
 +private:
 +    void platformDispatchKeyEvent(WebKeyboardEvent::Type type, const String& text, const String& unmodifiedText, const String& key, const String& code, const String& keyIdentifier, int windowsVirtualKeyCode, int nativeVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<WebEvent::Modifier> modifiers, Vector<String>& commands, WallTime timestamp);
@@ -17268,6 +17360,8 @@ index 0000000000000000000000000000000000000000..fb4855b939efdd36acd011a41244a579
 +    std::unique_ptr<KeyboardCallbacks> m_keyboardCallbacks;
 +    class MouseCallbacks;
 +    std::unique_ptr<MouseCallbacks> m_mouseCallbacks;
++    class WheelCallbacks;
++    std::unique_ptr<WheelCallbacks> m_wheelCallbacks;
 +};
 +
 +} // namespace WebKit
