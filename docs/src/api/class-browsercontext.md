@@ -1021,6 +1021,11 @@ handler function to route the request.
 
 handler function to route the request.
 
+### option: BrowserContext.route.times
+- `times` <[int]>
+
+How often a route should be used. By default it will be used every time.
+
 ## method: BrowserContext.serviceWorkers
 * langs: js, python
 - returns: <[Array]<[Worker]>>

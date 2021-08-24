@@ -32,7 +32,7 @@ import { Worker } from './worker';
 import { Frame, verifyLoadState, WaitForNavigationOptions } from './frame';
 import { Keyboard, Mouse, Touchscreen } from './input';
 import { assertMaxArguments, serializeArgument, parseResult, JSHandle } from './jsHandle';
-import { Request, Response, Route, RouteHandler, WebSocket, validateHeaders } from './network';
+import { Request, Response, Route, RouteHandlerCallback, WebSocket, validateHeaders, RouteHandler } from './network';
 import { FileChooser } from './fileChooser';
 import { Buffer } from 'buffer';
 import { Coverage } from './coverage';
@@ -71,7 +71,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   private _closed = false;
   _closedOrCrashedPromise: Promise<void>;
   private _viewportSize: Size | null;
-  private _routes: { url: URLMatch, handler: RouteHandler }[] = [];
+  private _routes: RouteHandler[] = [];
 
   readonly accessibility: Accessibility;
   readonly coverage: Coverage;
@@ -161,9 +161,9 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   }
 
   private _onRoute(route: Route, request: Request) {
-    for (const {url, handler} of this._routes) {
-      if (urlMatches(this._browserContext._options.baseURL, request.url(), url)) {
-        handler(route, request);
+    for (const routeHandler of this._routes) {
+      if (routeHandler.matches(request.url())) {
+        routeHandler.handle(route, request);
         return;
       }
     }
@@ -443,15 +443,15 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     });
   }
 
-  async route(url: URLMatch, handler: RouteHandler): Promise<void> {
+  async route(url: URLMatch, handler: RouteHandlerCallback, options: { times?: number } = {}): Promise<void> {
     return this._wrapApiCall(async (channel: channels.PageChannel) => {
-      this._routes.unshift({ url, handler });
+      this._routes.unshift(new RouteHandler(this._browserContext._options.baseURL, url, handler, options.times));
       if (this._routes.length === 1)
         await channel.setNetworkInterceptionEnabled({ enabled: true });
     });
   }
 
-  async unroute(url: URLMatch, handler?: RouteHandler): Promise<void> {
+  async unroute(url: URLMatch, handler?: RouteHandlerCallback): Promise<void> {
     return this._wrapApiCall(async (channel: channels.PageChannel) => {
       this._routes = this._routes.filter(route => route.url !== url || (handler && route.handler !== handler));
       if (this._routes.length === 0)

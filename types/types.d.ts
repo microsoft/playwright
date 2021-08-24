@@ -507,8 +507,8 @@ export interface Page {
 
   /**
    * Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests, see
-   * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route) or
-   * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
+   * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route) or
+   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
    */
   on(event: 'request', listener: (request: Request) => void): this;
 
@@ -778,8 +778,8 @@ export interface Page {
 
   /**
    * Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests, see
-   * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route) or
-   * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
+   * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route) or
+   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
    */
   addListener(event: 'request', listener: (request: Request) => void): this;
 
@@ -2339,9 +2339,9 @@ export interface Page {
    * Once routing is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.
    *
    * > NOTE: The handler will only be called for the first url if the response is a redirect.
-   * > NOTE: [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route) will not intercept requests
-   * intercepted by Service Worker. See [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend
-   * disabling Service Workers when using request interception. Via `await context.addInitScript(() => delete
+   * > NOTE: [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route) will not intercept
+   * requests intercepted by Service Worker. See [this](https://github.com/microsoft/playwright/issues/1090) issue. We
+   * recommend disabling Service Workers when using request interception. Via `await context.addInitScript(() => delete
    * window.navigator.serviceWorker);`
    *
    * An example of a naive handler that aborts all image requests:
@@ -2375,8 +2375,8 @@ export interface Page {
    * ```
    *
    * Page routes take precedence over browser context routes (set up with
-   * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)) when
-   * request matches both handlers.
+   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route))
+   * when request matches both handlers.
    *
    * To remove a route with its handler you can use
    * [page.unroute(url[, handler])](https://playwright.dev/docs/api/class-page#page-unroute).
@@ -2385,8 +2385,14 @@ export interface Page {
    * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while routing. When a `baseURL` via the context options was provided and the passed URL is a path, it gets merged via the
    * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
    * @param handler handler function to route the request.
+   * @param options
    */
-  route(url: string|RegExp|((url: URL) => boolean), handler: ((route: Route, request: Request) => void)): Promise<void>;
+  route(url: string|RegExp|((url: URL) => boolean), handler: ((route: Route, request: Request) => void), options?: {
+    /**
+     * How often a route should be used. By default it will be used every time.
+     */
+    times?: number;
+  }): Promise<void>;
 
   /**
    * Returns the buffer with the captured screenshot.
@@ -2853,8 +2859,9 @@ export interface Page {
   }): Promise<void>;
 
   /**
-   * Removes a route created with [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route). When
-   * `handler` is not specified, removes all routes for the `url`.
+   * Removes a route created with
+   * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route). When `handler` is not
+   * specified, removes all routes for the `url`.
    * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
    * @param handler Optional handler function to route the request.
    */
@@ -3019,8 +3026,8 @@ export interface Page {
 
   /**
    * Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests, see
-   * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route) or
-   * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
+   * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route) or
+   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
    */
   waitForEvent(event: 'request', optionsOrPredicate?: { predicate?: (request: Request) => boolean | Promise<boolean>, timeout?: number } | ((request: Request) => boolean | Promise<boolean>)): Promise<Request>;
 
@@ -5029,8 +5036,8 @@ export interface BrowserContext {
    * [page.on('request')](https://playwright.dev/docs/api/class-page#page-event-request).
    *
    * In order to intercept and mutate requests, see
-   * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browser-context-route) or
-   * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route).
+   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
+   * or [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route).
    */
   on(event: 'request', listener: (request: Request) => void): this;
 
@@ -5156,8 +5163,8 @@ export interface BrowserContext {
    * [page.on('request')](https://playwright.dev/docs/api/class-page#page-event-request).
    *
    * In order to intercept and mutate requests, see
-   * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browser-context-route) or
-   * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route).
+   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
+   * or [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route).
    */
   addListener(event: 'request', listener: (request: Request) => void): this;
 
@@ -5500,9 +5507,9 @@ export interface BrowserContext {
    * Routing provides the capability to modify network requests that are made by any page in the browser context. Once route
    * is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.
    *
-   * > NOTE: [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route) will not intercept requests
-   * intercepted by Service Worker. See [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend
-   * disabling Service Workers when using request interception. Via `await context.addInitScript(() => delete
+   * > NOTE: [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route) will not intercept
+   * requests intercepted by Service Worker. See [this](https://github.com/microsoft/playwright/issues/1090) issue. We
+   * recommend disabling Service Workers when using request interception. Via `await context.addInitScript(() => delete
    * window.navigator.serviceWorker);`
    *
    * An example of a naive handler that aborts all image requests:
@@ -5537,8 +5544,8 @@ export interface BrowserContext {
    * });
    * ```
    *
-   * Page routes (set up with [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route)) take
-   * precedence over browser context routes when request matches both handlers.
+   * Page routes (set up with [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route))
+   * take precedence over browser context routes when request matches both handlers.
    *
    * To remove a route with its handler you can use
    * [browserContext.unroute(url[, handler])](https://playwright.dev/docs/api/class-browsercontext#browser-context-unroute).
@@ -5547,8 +5554,14 @@ export interface BrowserContext {
    * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while routing. When a `baseURL` via the context options was provided and the passed URL is a path, it gets merged via the
    * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
    * @param handler handler function to route the request.
+   * @param options
    */
-  route(url: string|RegExp|((url: URL) => boolean), handler: ((route: Route, request: Request) => void)): Promise<void>;
+  route(url: string|RegExp|((url: URL) => boolean), handler: ((route: Route, request: Request) => void), options?: {
+    /**
+     * How often a route should be used. By default it will be used every time.
+     */
+    times?: number;
+  }): Promise<void>;
 
   /**
    * > NOTE: Service workers are only supported on Chromium-based browsers.
@@ -5693,10 +5706,10 @@ export interface BrowserContext {
 
   /**
    * Removes a route created with
-   * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browser-context-route). When
-   * `handler` is not specified, removes all routes for the `url`.
-   * @param url A glob pattern, regex pattern or predicate receiving [URL] used to register a routing with [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
-   * @param handler Optional handler function used to register a routing with [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
+   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
+   * When `handler` is not specified, removes all routes for the `url`.
+   * @param url A glob pattern, regex pattern or predicate receiving [URL] used to register a routing with [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
+   * @param handler Optional handler function used to register a routing with [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
    */
   unroute(url: string|RegExp|((url: URL) => boolean), handler?: ((route: Route, request: Request) => void)): Promise<void>;
 
@@ -5749,8 +5762,8 @@ export interface BrowserContext {
    * [page.on('request')](https://playwright.dev/docs/api/class-page#page-event-request).
    *
    * In order to intercept and mutate requests, see
-   * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browser-context-route) or
-   * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route).
+   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
+   * or [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route).
    */
   waitForEvent(event: 'request', optionsOrPredicate?: { predicate?: (request: Request) => boolean | Promise<boolean>, timeout?: number } | ((request: Request) => boolean | Promise<boolean>)): Promise<Request>;
 
@@ -8250,7 +8263,7 @@ export interface BrowserType<Unused = {}> {
 
     /**
      * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
-     * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route),
+     * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route),
      * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
      * [page.waitForRequest(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-request), or
      * [page.waitForResponse(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-response) it
@@ -9430,7 +9443,7 @@ export interface AndroidDevice {
 
     /**
      * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
-     * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route),
+     * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route),
      * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
      * [page.waitForRequest(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-request), or
      * [page.waitForResponse(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-response) it
@@ -10202,7 +10215,7 @@ export interface Browser extends EventEmitter {
 
     /**
      * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
-     * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route),
+     * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route),
      * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
      * [page.waitForRequest(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-request), or
      * [page.waitForResponse(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-response) it
@@ -11838,9 +11851,9 @@ export interface Response {
 
 /**
  * Whenever a network route is set up with
- * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route) or
- * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browser-context-route), the
- * `Route` object allows to handle the route.
+ * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route) or
+ * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route),
+ * the `Route` object allows to handle the route.
  */
 export interface Route {
   /**
@@ -12357,7 +12370,7 @@ export interface BrowserContextOptions {
 
   /**
    * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
-   * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route),
+   * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route),
    * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
    * [page.waitForRequest(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-request), or
    * [page.waitForResponse(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-response) it
