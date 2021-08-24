@@ -92,24 +92,33 @@ it('should add cookies from Set-Cookie header', async ({context, page, server}) 
   expect((await page.evaluate(() => document.cookie)).split(';').map(s => s.trim()).sort()).toEqual(['foo=bar', 'session=value']);
 });
 
-it('should work with context level proxy', async ({browser, contextOptions, server, proxyServer}) => {
+it('should work with context level proxy', async ({browserOptions, browserType, contextOptions, server, proxyServer}) => {
   server.setRoute('/target.html', async (req, res) => {
     res.end('<title>Served by the proxy</title>');
   });
 
-  proxyServer.forwardTo(server.PORT);
-  const context = await browser.newContext({
-    ...contextOptions,
-    proxy: { server: `localhost:${proxyServer.PORT}` }
-  });
+  const browser = await browserType.launch({
+    ...browserOptions,
+    proxy: { server: 'http://per-context' }
+  })
 
-  const [request, response] = await Promise.all([
-    server.waitForRequest('/target.html'),
-    // @ts-expect-error
-    context._fetch(`http://non-existent.com/target.html`)
-  ]);
-  expect(response.status()).toBe(200);
-  expect(request.url).toBe('/target.html');
+  try {
+    proxyServer.forwardTo(server.PORT);
+    const context = await browser.newContext({
+      ...contextOptions,
+      proxy: { server: `localhost:${proxyServer.PORT}` }
+    });
+
+    const [request, response] = await Promise.all([
+      server.waitForRequest('/target.html'),
+      // @ts-expect-error
+      context._fetch(`http://non-existent.com/target.html`)
+    ]);
+    expect(response.status()).toBe(200);
+    expect(request.url).toBe('/target.html');
+  } finally {
+    await browser.close();
+  }
 });
 
 it('should work with http credentials', async ({context, server}) => {
