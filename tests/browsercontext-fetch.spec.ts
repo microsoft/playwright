@@ -15,7 +15,6 @@
  */
 
 import { contextTest as it, expect } from './config/browserTest';
-import os from 'os';
 
 it('should work', async ({context, server}) => {
   // @ts-expect-error
@@ -26,14 +25,14 @@ it('should work', async ({context, server}) => {
   expect(response.ok()).toBeTruthy();
   expect(response.url()).toBe(server.PREFIX + '/simple.json');
   expect(response.headers()['content-type']).toBe('application/json; charset=utf-8');
-  expect(await response.text()).toBe('{"foo": "bar"}' + os.EOL);
+  expect(await response.text()).toBe('{"foo": "bar"}\n');
 });
 
-it('should add session cookies to request', async ({context, server}) => {
+it('should add session cookies to request', async ({context, server, isMac}) => {
   await context.addCookies([{
     name: 'username',
     value: 'John Doe',
-    domain: '.my.localhost',
+    domain: isMac ? 'localhost' : '.my.localhost',
     path: '/',
     expires: -1,
     httpOnly: false,
@@ -43,18 +42,18 @@ it('should add session cookies to request', async ({context, server}) => {
   const [req] = await Promise.all([
     server.waitForRequest('/simple.json'),
     // @ts-expect-error
-    context._fetch(`http://www.my.localhost:${server.PORT}/simple.json`),
+    context._fetch(`http://${isMac ? 'localhost' : 'www.my.localhost'}:${server.PORT}/simple.json`),
   ]);
   expect(req.headers.cookie).toEqual('username=John Doe');
 });
 
-it('should follow redirects', async ({context, page, server}) => {
+it('should follow redirects', async ({context, server, isMac}) => {
   server.setRedirect('/redirect1', '/redirect2');
   server.setRedirect('/redirect2', '/simple.json');
   await context.addCookies([{
     name: 'username',
     value: 'John Doe',
-    domain: '.my.localhost',
+    domain: isMac ? 'localhost' : '.my.localhost',
     path: '/',
     expires: -1,
     httpOnly: false,
@@ -64,10 +63,10 @@ it('should follow redirects', async ({context, page, server}) => {
   const [req, response] = await Promise.all([
     server.waitForRequest('/simple.json'),
     // @ts-expect-error
-    context._fetch(`http://www.my.localhost:${server.PORT}/redirect1`),
+    context._fetch(`http://${isMac ? 'localhost' : 'www.my.localhost'}:${server.PORT}/redirect1`),
   ]);
   expect(req.headers.cookie).toEqual('username=John Doe');
-  expect(response.url()).toBe(`http://www.my.localhost:${server.PORT}/simple.json`);
+  expect(response.url()).toBe(`http://${isMac ? 'localhost' : 'www.my.localhost'}:${server.PORT}/simple.json`);
   expect(await response.json()).toEqual({foo: 'bar'});
 });
 
@@ -90,7 +89,7 @@ it('should add cookies from Set-Cookie header', async ({context, page, server}) 
     },
   ]));
   await page.goto(server.EMPTY_PAGE);
-  expect(await page.evaluate(() => document.cookie)).toEqual('session=value; foo=bar');
+  expect((await page.evaluate(() => document.cookie)).split(';').map(s => s.trim()).sort()).toEqual(['foo=bar', 'session=value']);
 });
 
 it('should work with context level proxy', async ({browser, contextOptions, server, proxyServer}) => {
