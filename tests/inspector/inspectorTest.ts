@@ -221,11 +221,18 @@ class CLIMock {
     });
   }
 
-  async waitFor(text: string): Promise<void> {
+  async waitFor(text: string, timeout = 10_000): Promise<void> {
     if (this.data.includes(text))
       return Promise.resolve();
     this.waitForText = text;
-    return new Promise(f => this.waitForCallback = f);
+    return new Promise((f, r) => {
+      this.waitForCallback = f;
+      if (timeout) {
+        setTimeout(() => {
+          r(new Error('Timed out waiting for text:\n' + text + '\n\nRecieved:\n' + this.text()));
+        }, timeout);
+      }
+    });
   }
 
   text() {
