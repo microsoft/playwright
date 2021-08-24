@@ -2187,6 +2187,23 @@ index 1e9bea1655af731fc003f8d0cab3ad4d2ad29f5d..5081c0e1ee0c41c6a79bd2ed358a5744
      // Prevents new window animations on MacOS and Windows. Currently
      // ignored for Linux.
      const unsigned long CHROME_SUPPRESS_ANIMATION     = 0x01000000;
+diff --git a/toolkit/components/enterprisepolicies/EnterprisePoliciesParent.jsm b/toolkit/components/enterprisepolicies/EnterprisePoliciesParent.jsm
+index 733782457c8e654fc2431df874439e24fe7bd4f0..9bdd6dccd1e907c0776e3bd01bb0659d35218787 100644
+--- a/toolkit/components/enterprisepolicies/EnterprisePoliciesParent.jsm
++++ b/toolkit/components/enterprisepolicies/EnterprisePoliciesParent.jsm
+@@ -115,6 +115,12 @@ EnterprisePoliciesManager.prototype = {
+       Services.prefs.clearUserPref(PREF_POLICIES_APPLIED);
+     }
+ 
++    // Playwright: Disable enterprise policies
++    if (true) {
++      this.status = Ci.nsIEnterprisePolicies.INACTIVE;
++      return;
++    }
++
+     let provider = this._chooseProvider();
+ 
+     if (provider.failed) {
 diff --git a/toolkit/components/startup/nsAppStartup.cpp b/toolkit/components/startup/nsAppStartup.cpp
 index 023a2b06931b4c25963a0126ec830e460dc23559..160d521fa17dba14829686da5aa95490eedfda47 100644
 --- a/toolkit/components/startup/nsAppStartup.cpp
