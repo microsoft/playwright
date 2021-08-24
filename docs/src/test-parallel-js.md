@@ -57,9 +57,9 @@ You can disable any parallelism by allowing just a single worker at any time. Ei
 npx playwright test --workers=1
 ```
 
-## Failed tests, retires and serial mode
+## Failed tests, retries and serial mode
 
-Should any test fail, Playwright Test will discard entire worker process along with the browsers used and will start a new one. Testing will continue in the new worker process, starting with retrying the failed test, or from the next test if retires are disabled.
+Should any test fail, Playwright Test will discard entire worker process along with the browsers used and will start a new one. Testing will continue in the new worker process, starting with retrying the failed test, or from the next test if retries are disabled.
 
 This scheme works perfectly for independent tests and guarantees that failing tests can't affect healthy ones. Consider the following snippet:
 
