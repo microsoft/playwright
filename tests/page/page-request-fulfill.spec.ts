@@ -35,6 +35,19 @@ it('should work', async ({page, server}) => {
   expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
 });
 
+it('should work with buffer as body', async ({page, server, browserName, isLinux}) => {
+  it.fail(browserName === 'webkit' && isLinux, 'Loading of application/octet-stream resource fails');
+  await page.route('**/*', route => {
+    route.fulfill({
+      status: 200,
+      body: Buffer.from('Yo, page!')
+    });
+  });
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(response.status()).toBe(200);
+  expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
+});
+
 it('should work with status code 422', async ({page, server}) => {
   await page.route('**/*', route => {
     route.fulfill({
