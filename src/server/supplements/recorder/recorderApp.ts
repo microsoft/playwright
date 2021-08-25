@@ -85,7 +85,7 @@ export class RecorderApp extends EventEmitter {
   }
 
   static async open(inspectedContext: BrowserContext): Promise<RecorderApp> {
-    const recorderPlaywright = require('../../playwright').createPlaywright(true) as import('../../playwright').Playwright;
+    const recorderPlaywright = (require('../../playwright').createPlaywright as typeof import('../../playwright').createPlaywright)('javascript', true) as import('../../playwright').Playwright;
     const args = [
       '--app=data:text/html,',
       '--window-size=600,600',

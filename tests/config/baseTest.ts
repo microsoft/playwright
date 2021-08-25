@@ -59,7 +59,7 @@ class DriverMode {
 }
 
 class ServiceMode {
-  private _client: any;
+  private _client: import('../../src/remote/playwrightClient').PlaywrightClient;
   private _serviceProcess: childProcess.ChildProcess;
 
   async setup(workerIndex: number) {
