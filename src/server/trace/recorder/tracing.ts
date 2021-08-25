@@ -28,7 +28,9 @@ import { Page } from '../../page';
 import * as trace from '../common/traceEvents';
 import { commandsWithTracingSnapshots } from '../../../protocol/channels';
 import { Snapshotter, SnapshotterBlob, SnapshotterDelegate } from '../../snapshot/snapshotter';
-import { FrameSnapshot, ResourceSnapshot } from '../../snapshot/snapshotTypes';
+import { FrameSnapshot } from '../../snapshot/snapshotTypes';
+import { HarTracer, HarTracerDelegate } from '../../supplements/har/harTracer';
+import * as har from '../../supplements/har/har';
 
 export type TracerOptions = {
   name?: string;
@@ -49,9 +51,10 @@ type RecordingState = {
 
 const kScreencastOptions = { width: 800, height: 600, quality: 90 };
 
-export class Tracing implements InstrumentationListener, SnapshotterDelegate {
+export class Tracing implements InstrumentationListener, SnapshotterDelegate, HarTracerDelegate {
   private _writeChain = Promise.resolve();
   private _snapshotter: Snapshotter;
+  private _harTracer: HarTracer;
   private _screencastListeners: RegisteredListener[] = [];
   private _pendingCalls = new Map<string, { sdkObject: SdkObject, metadata: CallMetadata, beforeSnapshot: Promise<void>, actionSnapshot?: Promise<void>, afterSnapshot?: Promise<void> }>();
   private _context: BrowserContext;
@@ -67,6 +70,11 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate {
     this._tracesDir = context._browser.options.tracesDir;
     this._resourcesDir = path.join(this._tracesDir, 'resources');
     this._snapshotter = new Snapshotter(context, this);
+    this._harTracer = new HarTracer(context, this, {
+      content: 'sha1',
+      waitForContentOnStop: false,
+      skipScripts: true,
+    });
     this._contextCreatedEvent = {
       version: VERSION,
       type: 'context-options',
@@ -109,8 +117,10 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate {
         await this._snapshotter.reset();
       } else if (options.snapshots) {
         await this._snapshotter.start();
+        this._harTracer.start();
       } else if (state?.options?.snapshots) {
         await this._snapshotter.stop();
+        await this._harTracer.stop();
       }
 
       if (state) {
@@ -145,6 +155,7 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate {
     this._context.instrumentation.removeListener(this);
     this._stopScreencast();
     await this._snapshotter.stop();
+    await this._harTracer.stop();
     // Ensure all writes are finished.
     await this._writeChain;
     this._recording = undefined;
@@ -243,16 +254,23 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate {
     this._appendTraceEvent(event);
   }
 
-  onBlob(blob: SnapshotterBlob): void {
-    this._appendResource(blob.sha1, blob.buffer);
+  onEntryStarted(entry: har.Entry) {
   }
 
-  onResourceSnapshot(snapshot: ResourceSnapshot): void {
-    const event: trace.ResourceSnapshotTraceEvent = { type: 'resource-snapshot', snapshot };
+  onEntryFinished(entry: har.Entry) {
+    const event: trace.ResourceSnapshotTraceEvent = { type: 'resource-snapshot', snapshot: entry };
     this._appendTraceOperation(async () => {
       visitSha1s(event, this._recording!.sha1s);
       await fs.promises.appendFile(this._recording!.networkFile, JSON.stringify(event) + '\n');
     });
+  }
+
+  onContentBlob(sha1: string, buffer: Buffer) {
+    this._appendResource(sha1, buffer);
+  }
+
+  onSnapshotterBlob(blob: SnapshotterBlob): void {
+    this._appendResource(blob.sha1, blob.buffer);
   }
 
   onFrameSnapshot(snapshot: FrameSnapshot): void {

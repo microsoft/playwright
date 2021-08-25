@@ -15,49 +15,60 @@
  */
 
 import { URL } from 'url';
-import fs from 'fs';
 import { BrowserContext } from '../../browserContext';
 import { helper } from '../../helper';
 import * as network from '../../network';
 import { Page } from '../../page';
 import * as har from './har';
 import * as types from '../../types';
-import { monotonicTime } from '../../../utils/utils';
+import { calculateSha1, monotonicTime } from '../../../utils/utils';
+import { eventsHelper, RegisteredListener } from '../../../utils/eventsHelper';
 
 const FALLBACK_HTTP_VERSION = 'HTTP/1.1';
 
-type HarOptions = {
-  path: string;
-  omitContent?: boolean;
+export interface HarTracerDelegate {
+  onEntryStarted(entry: har.Entry): void;
+  onEntryFinished(entry: har.Entry): void;
+  onContentBlob(sha1: string, buffer: Buffer): void;
+}
+
+type HarTracerOptions = {
+  content: 'omit' | 'sha1' | 'embedded';
+  skipScripts: boolean;
+  waitForContentOnStop: boolean;
 };
 
 export class HarTracer {
-  private _options: HarOptions;
-  private _log: har.Log;
-  private _pageEntries = new Map<Page, har.Page>();
-  private _entries = new Map<network.Request, har.Entry>();
-  private _lastPage = 0;
+  private _context: BrowserContext;
   private _barrierPromises = new Set<Promise<void>>();
+  private _delegate: HarTracerDelegate;
+  private _options: HarTracerOptions;
+  private _pageEntries = new Map<Page, har.Page>();
+  private _eventListeners: RegisteredListener[] = [];
+  private _started = false;
+  private _entrySymbol: symbol;
 
-  constructor(context: BrowserContext, options: HarOptions) {
+  constructor(context: BrowserContext, delegate: HarTracerDelegate, options: HarTracerOptions) {
+    this._context = context;
+    this._delegate = delegate;
     this._options = options;
-    this._log = {
-      version: '1.2',
-      creator: {
-        name: 'Playwright',
-        version: require('../../../../package.json')['version'],
-      },
-      browser: {
-        name: context._browser.options.name,
-        version: context._browser.version()
-      },
-      pages: [],
-      entries: []
-    };
-    context.on(BrowserContext.Events.Page, (page: Page) => this._ensurePageEntry(page));
-    context.on(BrowserContext.Events.Request, (request: network.Request) => this._onRequest(request));
-    context.on(BrowserContext.Events.RequestFinished, (request: network.Request) => this._onRequestFinished(request).catch(() => {}));
-    context.on(BrowserContext.Events.Response, (response: network.Response) => this._onResponse(response));
+    this._entrySymbol = Symbol('requestHarEntry');
+  }
+
+  start() {
+    if (this._started)
+      return;
+    this._started = true;
+    this._eventListeners = [
+      eventsHelper.addEventListener(this._context, BrowserContext.Events.Page, (page: Page) => this._ensurePageEntry(page)),
+      eventsHelper.addEventListener(this._context, BrowserContext.Events.Request, (request: network.Request) => this._onRequest(request)),
+      eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestFinished, (request: network.Request) => this._onRequestFinished(request).catch(() => {})),
+      eventsHelper.addEventListener(this._context, BrowserContext.Events.Response, (response: network.Response) => this._onResponse(response)),
+    ];
+  }
+
+  private _entryForRequest(request: network.Request): har.Entry | undefined {
+    return (request as any)[this._entrySymbol];
   }
 
   private _ensurePageEntry(page: Page) {
@@ -68,7 +79,7 @@ export class HarTracer {
 
       pageEntry = {
         startedDateTime: new Date(),
-        id: `page_${this._lastPage++}`,
+        id: page.guid,
         title: '',
         pageTimings: {
           onContentLoad: -1,
@@ -76,7 +87,6 @@ export class HarTracer {
         },
       };
       this._pageEntries.set(page, pageEntry);
-      this._log.pages.push(pageEntry);
     }
     return pageEntry;
   }
@@ -110,6 +120,8 @@ export class HarTracer {
   }
 
   private _addBarrier(page: Page, promise: Promise<void>) {
+    if (!this._options.waitForContentOnStop)
+      return;
     const race = Promise.race([
       new Promise<void>(f => page.on('close', () => {
         this._barrierPromises.delete(race);
@@ -121,6 +133,9 @@ export class HarTracer {
   }
 
   private _onRequest(request: network.Request) {
+    if (this._options.skipScripts && request.resourceType() === 'script')
+      return;
+
     const page = request.frame()._page;
     const url = network.parsedURL(request.url());
     if (!url)
@@ -140,7 +155,7 @@ export class HarTracer {
         cookies: [],
         headers: [],
         queryString: [...url.searchParams].map(e => ({ name: e[0], value: e[1] })),
-        postData: postDataForHar(request),
+        postData: postDataForHar(request, this._options.content),
         headersSize: -1,
         bodySize: calculateRequestBodySize(request) || 0,
       },
@@ -170,18 +185,21 @@ export class HarTracer {
       },
     };
     if (request.redirectedFrom()) {
-      const fromEntry = this._entries.get(request.redirectedFrom()!)!;
-      fromEntry.response.redirectURL = request.url();
+      const fromEntry = this._entryForRequest(request.redirectedFrom()!);
+      if (fromEntry)
+        fromEntry.response.redirectURL = request.url();
     }
-    this._log.entries.push(harEntry);
-    this._entries.set(request, harEntry);
+    (request as any)[this._entrySymbol] = harEntry;
+    if (this._started)
+      this._delegate.onEntryStarted(harEntry);
   }
 
   private async _onRequestFinished(request: network.Request) {
     const page = request.frame()._page;
-    const harEntry = this._entries.get(request)!;
+    const harEntry = this._entryForRequest(request);
+    if (!harEntry)
+      return;
     const response = await request.response();
-
     if (!response)
       return;
 
@@ -200,25 +218,41 @@ export class HarTracer {
       const content = harEntry.response.content;
       content.size = buffer.length;
       content.compression = harEntry.response.bodySize !== -1 ? buffer.length - harEntry.response.bodySize : 0;
-
-      if (!this._options.omitContent && buffer && buffer.length > 0) {
-        content.text = buffer.toString('base64');
-        content.encoding = 'base64';
+      if (buffer && buffer.length > 0) {
+        if (this._options.content === 'embedded') {
+          content.text = buffer.toString('base64');
+          content.encoding = 'base64';
+        } else if (this._options.content === 'sha1') {
+          content._sha1 = calculateSha1(buffer) + mimeToExtension(content.mimeType);
+          if (this._started)
+            this._delegate.onContentBlob(content._sha1, buffer);
+        }
       }
-    }).catch(() => {});
+    }).catch(() => {}).then(() => {
+      const postData = response.request().postDataBuffer();
+      if (postData && harEntry.request.postData && this._options.content === 'sha1') {
+        harEntry.request.postData._sha1 = calculateSha1(postData) + mimeToExtension(harEntry.request.postData.mimeType);
+        if (this._started)
+          this._delegate.onContentBlob(harEntry.request.postData._sha1, postData);
+      }
+      if (this._started)
+        this._delegate.onEntryFinished(harEntry);
+    });
     this._addBarrier(page, promise);
   }
 
   private _onResponse(response: network.Response) {
     const page = response.frame()._page;
     const pageEntry = this._ensurePageEntry(page);
-    const harEntry = this._entries.get(response.request())!;
-    // Rewrite provisional headers with actual
+    const harEntry = this._entryForRequest(response.request());
+    if (!harEntry)
+      return;
     const request = response.request();
 
+    // Rewrite provisional headers with actual
     harEntry.request.headers = request.headers().map(header => ({ name: header.name, value: header.value }));
     harEntry.request.cookies = cookiesForHar(request.headerValue('cookie'), ';');
-    harEntry.request.postData = postDataForHar(request);
+    harEntry.request.postData = postDataForHar(request, this._options.content);
 
     harEntry.response = {
       status: response.status(),
@@ -252,7 +286,6 @@ export class HarTracer {
       receive,
     };
     harEntry.time = [dns, connect, ssl, wait, receive].reduce((pre, cur) => cur > 0 ? cur + pre : pre, 0);
-
     this._addBarrier(page, response.serverAddr().then(server => {
       if (server?.ipAddress)
         harEntry.serverIPAddress = server.ipAddress;
@@ -265,9 +298,27 @@ export class HarTracer {
     }));
   }
 
-  async flush() {
+  async stop() {
+    this._started = false;
+    eventsHelper.removeEventListeners(this._eventListeners);
+
     await Promise.all(this._barrierPromises);
-    for (const pageEntry of this._log.pages) {
+    this._barrierPromises.clear();
+
+    const log: har.Log = {
+      version: '1.2',
+      creator: {
+        name: 'Playwright',
+        version: require('../../../../package.json')['version'],
+      },
+      browser: {
+        name: this._context._browser.options.name,
+        version: this._context._browser.version()
+      },
+      pages: Array.from(this._pageEntries.values()),
+      entries: [],
+    };
+    for (const pageEntry of log.pages) {
       if (pageEntry.pageTimings.onContentLoad >= 0)
         pageEntry.pageTimings.onContentLoad -= pageEntry.startedDateTime.valueOf();
       else
@@ -277,11 +328,12 @@ export class HarTracer {
       else
         pageEntry.pageTimings.onLoad = -1;
     }
-    await fs.promises.writeFile(this._options.path, JSON.stringify({ log: this._log }, undefined, 2));
+    this._pageEntries.clear();
+    return log;
   }
 }
 
-function postDataForHar(request: network.Request): har.PostData | undefined {
+function postDataForHar(request: network.Request, content: 'omit' | 'sha1' | 'embedded'): har.PostData | undefined {
   const postData = request.postDataBuffer();
   if (!postData)
     return;
@@ -289,9 +341,13 @@ function postDataForHar(request: network.Request): har.PostData | undefined {
   const contentType = request.headerValue('content-type') || 'application/octet-stream';
   const result: har.PostData = {
     mimeType: contentType,
-    text: contentType === 'application/octet-stream' ? '' : postData.toString(),
+    text: '',
     params: []
   };
+
+  if (content === 'embedded' && contentType !== 'application/octet-stream')
+    result.text = postData.toString();
+
   if (contentType === 'application/x-www-form-urlencoded') {
     const parsed = new URLSearchParams(postData.toString());
     for (const [name, value] of parsed.entries())
@@ -369,4 +425,32 @@ function calculateRequestBodySize(request: network.Request): number|undefined {
   if (!postData)
     return;
   return new TextEncoder().encode(postData.toString('utf8')).length;
+}
+
+const kMimeToExtension: { [key: string]: string } = {
+  'application/javascript': 'js',
+  'application/json': 'json',
+  'application/json5': 'json5',
+  'application/pdf': 'pdf',
+  'application/xhtml+xml': 'xhtml',
+  'application/zip': 'zip',
+  'font/otf': 'otf',
+  'font/woff': 'woff',
+  'font/woff2': 'woff2',
+  'image/bmp': 'bmp',
+  'image/gif': 'gif',
+  'image/jpeg': 'jpeg',
+  'image/png': 'png',
+  'image/tiff': 'tiff',
+  'image/svg+xml': 'svg',
+  'text/css': 'css',
+  'text/csv': 'csv',
+  'text/html': 'html',
+  'text/plain': 'text',
+  'video/mp4': 'mp4',
+  'video/mpeg': 'mpeg',
+};
+
+function mimeToExtension(contentType: string): string {
+  return '.' + (kMimeToExtension[contentType] || 'dat');
 }

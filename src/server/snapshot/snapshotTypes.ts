@@ -14,27 +14,9 @@
  * limitations under the License.
  */
 
-export type ResourceSnapshot = {
-  _frameref: string,
-  request: {
-    url: string,
-    method: string,
-    headers: { name: string, value: string }[],
-    postData?: {
-      text: string,
-      _sha1?: string,
-    },
-  },
-  response: {
-    status: number,
-    headers: { name: string, value: string }[],
-    content: {
-      mimeType: string,
-      _sha1?: string,
-    },
-  },
-  _monotonicTime: number,
-};
+import { Entry as HAREntry } from '../supplements/har/har';
+
+export type ResourceSnapshot = HAREntry;
 
 export type NodeSnapshot =
   // Text node.
