@@ -140,6 +140,7 @@ class PageAgent {
         describeNode: this._describeNode.bind(this),
         dispatchKeyEvent: this._dispatchKeyEvent.bind(this),
         dispatchMouseEvent: this._dispatchMouseEvent.bind(this),
+        dispatchWheelEvent: this._dispatchWheelEvent.bind(this),
         dispatchTouchEvent: this._dispatchTouchEvent.bind(this),
         dispatchTapEvent: this._dispatchTapEvent.bind(this),
         getContentQuads: this._getContentQuads.bind(this),
@@ -758,6 +759,26 @@ class PageAgent {
     } else {
       this._cancelDragIfNeeded();
     }
+  }
+
+  async _dispatchWheelEvent({x, y, button, deltaX, deltaY, deltaZ, modifiers }) {
+    const deltaMode = 0; // WheelEvent.DOM_DELTA_PIXEL
+    const lineOrPageDeltaX = deltaX > 0 ? Math.floor(deltaX) : Math.ceil(deltaX);
+    const lineOrPageDeltaY = deltaY > 0 ? Math.floor(deltaY) : Math.ceil(deltaY);
+
+    const frame = this._frameTree.mainFrame();
+
+    frame.domWindow().windowUtils.sendWheelEvent(
+      x,
+      y,
+      deltaX,
+      deltaY,
+      deltaZ,
+      deltaMode,
+      modifiers,
+      lineOrPageDeltaX,
+      lineOrPageDeltaY,
+      0 /* options */);
   }
 
   async _insertText({text}) {
