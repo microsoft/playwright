@@ -16,18 +16,19 @@
  */
 
 import { Page, BindingCall } from './page';
+import { Frame } from './frame';
 import * as network from './network';
 import * as channels from '../protocol/channels';
 import fs from 'fs';
 import { ChannelOwner } from './channelOwner';
-import { deprecate, evaluationScript, urlMatches } from './clientHelper';
+import { deprecate, evaluationScript } from './clientHelper';
 import { Browser } from './browser';
 import { Worker } from './worker';
 import { Events } from './events';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { Waiter } from './waiter';
 import { URLMatch, Headers, WaitForEventOptions, BrowserContextOptions, StorageState, LaunchOptions } from './types';
-import { isUnderTest, headersObjectToArray, mkdirIfNeeded } from '../utils/utils';
+import { isUnderTest, headersObjectToArray, mkdirIfNeeded, isString } from '../utils/utils';
 import { isSafeCloseError } from '../utils/errors';
 import * as api from '../../types/types';
 import * as structs from '../../types/structs';
@@ -37,19 +38,17 @@ import type { BrowserType } from './browserType';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel, channels.BrowserContextInitializer> implements api.BrowserContext {
   _pages = new Set<Page>();
-  private _routes: { url: URLMatch, handler: network.RouteHandler }[] = [];
+  private _routes: network.RouteHandler[] = [];
   readonly _browser: Browser | null = null;
   private _browserType: BrowserType | undefined;
   readonly _bindings = new Map<string, (source: structs.BindingSource, ...args: any[]) => any>();
   _timeoutSettings = new TimeoutSettings();
   _ownerPage: Page | undefined;
   private _closedPromise: Promise<void>;
-  _options: channels.BrowserNewContextParams = {
-    sdkLanguage: 'javascript'
-  };
+  _options: channels.BrowserNewContextParams = { };
 
   readonly tracing: Tracing;
-
+  private _closed = false;
   readonly _backgroundPages = new Set<Page>();
   readonly _serviceWorkers = new Set<Worker>();
   readonly _isChromium: boolean;
@@ -133,9 +132,9 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   }
 
   _onRoute(route: network.Route, request: network.Request) {
-    for (const {url, handler} of this._routes) {
-      if (urlMatches(this._options.baseURL, request.url(), url)) {
-        handler(route, request);
+    for (const routeHandler of this._routes) {
+      if (routeHandler.matches(request.url())) {
+        routeHandler.handle(route, request);
         return;
       }
     }
@@ -210,6 +209,21 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     });
   }
 
+  async _fetch(url: string, options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer } = {}): Promise<network.FetchResponse> {
+    return this._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
+      const postDataBuffer = isString(options.postData) ? Buffer.from(options.postData, 'utf8') : options.postData;
+      const result = await channel.fetch({
+        url,
+        method: options.method,
+        headers: options.headers ? headersObjectToArray(options.headers) : undefined,
+        postData: postDataBuffer ? postDataBuffer.toString('base64') : undefined,
+      });
+      if (result.error)
+        throw new Error(`Request failed: ${result.error}`);
+      return new network.FetchResponse(result.response!);
+    });
+  }
+
   async setGeolocation(geolocation: { longitude: number, latitude: number, accuracy?: number } | null): Promise<void> {
     return this._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
       await channel.setGeolocation({ geolocation: geolocation || undefined });
@@ -259,15 +273,15 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     });
   }
 
-  async route(url: URLMatch, handler: network.RouteHandler): Promise<void> {
+  async route(url: URLMatch, handler: network.RouteHandlerCallback, options: { times?: number } = {}): Promise<void> {
     return this._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
-      this._routes.unshift({ url, handler });
+      this._routes.unshift(new network.RouteHandler(this._options.baseURL, url, handler, options.times));
       if (this._routes.length === 1)
         await channel.setNetworkInterceptionEnabled({ enabled: true });
     });
   }
 
-  async unroute(url: URLMatch, handler?: network.RouteHandler): Promise<void> {
+  async unroute(url: URLMatch, handler?: network.RouteHandlerCallback): Promise<void> {
     return this._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
       this._routes = this._routes.filter(route => route.url !== url || (handler && route.handler !== handler));
       if (this._routes.length === 0)
@@ -308,14 +322,18 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     return [...this._serviceWorkers];
   }
 
-  async newCDPSession(page: Page): Promise<api.CDPSession> {
+  async newCDPSession(page: Page | Frame): Promise<api.CDPSession> {
+    // channelOwner.ts's validation messages don't handle the pseudo-union type, so we're explicit here
+    if (!(page instanceof Page) && !(page instanceof Frame))
+      throw new Error('page: expected Page or Frame');
     return this._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
-      const result = await channel.newCDPSession({ page: page._channel });
+      const result = await channel.newCDPSession(page instanceof Page ? { page: page._channel } : { frame: page._channel });
       return CDPSession.from(result.session);
     });
   }
 
   _onClose() {
+    this._closed = true;
     if (this._browser)
       this._browser._contexts.delete(this);
     this._browserType?._contexts?.delete(this);
@@ -326,6 +344,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     try {
       await this._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
         await this._browserType?._onWillCloseContext?.(this);
+        if (this._options.recordHar)  {
+          const har = await this._channel.harExport();
+          await har.artifact.saveAs({ path: this._options.recordHar.path });
+        }
         await channel.close();
         await this._closedPromise;
       });
@@ -355,7 +377,6 @@ export async function prepareBrowserContextParams(options: BrowserContextOptions
   if (options.extraHTTPHeaders)
     network.validateHeaders(options.extraHTTPHeaders);
   const contextParams: channels.BrowserNewContextParams = {
-    sdkLanguage: 'javascript',
     ...options,
     viewport: options.viewport === null ? undefined : options.viewport,
     noDefaultViewport: options.viewport === null,

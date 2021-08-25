@@ -117,7 +117,7 @@ declare global {
       /**
        * Asserts element's attributes `name` matches expected value.
        */
-      toHaveAttribute(expected: string | RegExp, name: string, options?: { timeout?: number }): Promise<R>;
+      toHaveAttribute(name: string, expected: string | RegExp, options?: { timeout?: number }): Promise<R>;
 
       /**
        * Asserts that DOM node has a given CSS class.

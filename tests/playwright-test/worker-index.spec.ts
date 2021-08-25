@@ -115,7 +115,7 @@ test('should reuse worker after test.skip()', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should use new worker after test.fail()', async ({ runInlineTest }) => {
+test('should not use new worker after test.fail()', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
       const { test } = pwt;
@@ -129,7 +129,7 @@ test('should use new worker after test.fail()', async ({ runInlineTest }) => {
       });
 
       test('succeeds 2', async ({}, testInfo) => {
-        expect(testInfo.workerIndex).toBe(1);
+        expect(testInfo.workerIndex).toBe(0);
       });
     `,
   });

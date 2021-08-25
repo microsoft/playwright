@@ -24,9 +24,6 @@ import { Selectors } from './selectors';
 import { WebKit } from './webkit/webkit';
 import { CallMetadata, createInstrumentation, SdkObject } from './instrumentation';
 import { debugLogger } from '../utils/debugLogger';
-import { PortForwardingServer } from './socksSocket';
-import { SocksInterceptedSocketHandler } from './socksServer';
-import { assert } from '../utils/utils';
 
 export class Playwright extends SdkObject {
   readonly selectors: Selectors;
@@ -36,9 +33,8 @@ export class Playwright extends SdkObject {
   readonly firefox: Firefox;
   readonly webkit: WebKit;
   readonly options: PlaywrightOptions;
-  private _portForwardingServer: PortForwardingServer | undefined;
 
-  constructor(isInternal: boolean) {
+  constructor(sdkLanguage: string, isInternal: boolean) {
     super({ attribution: { isInternal }, instrumentation: createInstrumentation() } as any, undefined, 'Playwright');
     this.instrumentation.addListener({
       onCallLog: (logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata) => {
@@ -48,6 +44,7 @@ export class Playwright extends SdkObject {
     this.options = {
       rootSdkObject: this,
       selectors: new Selectors(),
+      sdkLanguage: sdkLanguage,
     };
     this.chromium = new Chromium(this.options);
     this.firefox = new Firefox(this.options);
@@ -56,29 +53,8 @@ export class Playwright extends SdkObject {
     this.android = new Android(new AdbBackend(), this.options);
     this.selectors = this.options.selectors;
   }
-
-  async _enablePortForwarding() {
-    assert(!this._portForwardingServer);
-    this._portForwardingServer = await PortForwardingServer.create(this);
-    this.options.loopbackProxyOverride = () => this._portForwardingServer!.proxyServer();
-    this._portForwardingServer.on('incomingSocksSocket', (socket: SocksInterceptedSocketHandler) => {
-      this.emit('incomingSocksSocket', socket);
-    });
-  }
-
-  _disablePortForwarding() {
-    if (!this._portForwardingServer)
-      return;
-    this._portForwardingServer.stop();
-  }
-
-  _setForwardedPorts(ports: number[]) {
-    if (!this._portForwardingServer)
-      throw new Error(`Port forwarding needs to be enabled when launching the server via BrowserType.launchServer.`);
-    this._portForwardingServer.setForwardedPorts(ports);
-  }
 }
 
-export function createPlaywright(isInternal = false) {
-  return new Playwright(isInternal);
+export function createPlaywright(sdkLanguage: string, isInternal: boolean = false) {
+  return new Playwright(sdkLanguage, isInternal);
 }

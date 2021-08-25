@@ -62,6 +62,7 @@ export class SnapshotServer {
 
   private _serveServiceWorker(request: http.IncomingMessage, response: http.ServerResponse): boolean {
     function serviceWorkerMain(self: any /* ServiceWorkerGlobalScope */) {
+      const kBlobUrlPrefix = 'http://playwright.bloburl/#';
       const snapshotIds = new Map<string, { frameId: string, index: number }>();
 
       self.addEventListener('install', function(event: any) {
@@ -105,7 +106,7 @@ export class SnapshotServer {
         }
 
         const { frameId, index } = snapshotIds.get(snapshotUrl)!;
-        const url = removeHash(request.url);
+        const url = request.url.startsWith(kBlobUrlPrefix) ? request.url.substring(kBlobUrlPrefix.length) : removeHash(request.url);
         const complexUrl = btoa(JSON.stringify({ frameId, index, url }));
         const fetchUrl = `/resources/${complexUrl}`;
         const fetchedResponse = await fetch(fetchUrl);
@@ -172,19 +173,28 @@ export class SnapshotServer {
     if (!resource)
       return false;
 
-    const sha1 = resource.responseSha1;
+    const sha1 = resource.response.content._sha1;
+    if (!sha1)
+      return false;
+
     try {
       const content = this._snapshotStorage.resourceContent(sha1);
       if (!content)
         return false;
       response.statusCode = 200;
-      let contentType = resource.contentType;
+      let contentType = resource.response.content.mimeType;
       const isTextEncoding = /^text\/|^application\/(javascript|json)/.test(contentType);
       if (isTextEncoding && !contentType.includes('charset'))
         contentType = `${contentType}; charset=utf-8`;
       response.setHeader('Content-Type', contentType);
-      for (const { name, value } of resource.responseHeaders)
-        response.setHeader(name, value);
+      for (const { name, value } of resource.response.headers) {
+        try {
+          response.setHeader(name, value.split('\n'));
+        } catch (e) {
+          // Browser is able to handle the header, but Node is not.
+          // Swallow the error since we cannot do anything meaningful.
+        }
+      }
 
       response.removeHeader('Content-Encoding');
       response.removeHeader('Access-Control-Allow-Origin');

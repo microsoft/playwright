@@ -48,6 +48,18 @@ If you want to add the CLI arguments automatically without specifying them, you 
 addopts = --headed --browser firefox
 ```
 
+## CLI arguments
+
+- `--headed`: Run tests in headed mode (default: headless).
+- `--browser`: Run tests in a different browser `chromium`, `firefox`, or `webkit`. It can be specified multiple times (default: all browsers).
+- `--browser-channel` [Browser channel](./browsers.md) to be used.
+- `--slowmo` Run tests with slow mo.
+- `--device` [Device](./emulation.md) to be emulated.
+- `--output` Directory for artifacts produced by tests (default: `test-results`).
+- `--tracing` Whether to record a [trace](./trace-viewer.md) for each test. `on`, `off`, or `retain-on-failure` (default: `off`).
+- `--video` Whether to record video for each test. `on`, `off`, or `retain-on-failure` (default: `off`).
+- `--screenshot` Whether to automatically capture a screenshot after each test. `on`, `off`, or `only-on-failure` (default: `off`).
+
 ## Fixtures
 
 This plugin configures Playwright-specific [fixtures for pytest](https://docs.pytest.org/en/latest/fixture.html). To use these fixtures, use the fixture name as an argument to the test function.
@@ -125,7 +137,7 @@ def test_visit_example(page):
 ```bash
 pytest --browser-channel chrome
 ```
-py
+
 ```python
 # test_my_application.py
 def test_example(page):
@@ -153,7 +165,7 @@ def test_visit_example(page):
 # conftest.py
 import pytest
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def browser_context_args(browser_context_args):
     return {
         **browser_context_args,
@@ -167,7 +179,7 @@ def browser_context_args(browser_context_args):
 # conftest.py
 import pytest
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def browser_context_args(browser_context_args):
     return {
         **browser_context_args,
@@ -184,7 +196,7 @@ def browser_context_args(browser_context_args):
 # conftest.py
 import pytest
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def browser_context_args(browser_context_args, playwright):
     iphone_11 = playwright.devices['iPhone 11 Pro']
     return {
@@ -192,6 +204,8 @@ def browser_context_args(browser_context_args, playwright):
         **iphone_11,
     }
 ```
+
+Or via the CLI `--device="iPhone 11 Pro"`
 
 ### Persistent context
 
@@ -253,26 +267,6 @@ def test_bing_is_working(page):
     page.goto("https://bing.com")
     breakpoint()
     # ...
-```
-
-### Screenshot on test failure
-
-You can capture screenshots for failed tests with a [pytest runtest hook](https://docs.pytest.org/en/6.1.0/reference.html?highlight=pytest_runtest_makereport#test-running-runtest-hooks). Add this to your `conftest.py` file.
-
-Note that this snippet uses `slugify` to convert test names to file paths, which can be installed with `pip install python-slugify`.
-
-```py
-# conftest.py
-from slugify import slugify
-from pathlib import Path
-
-def pytest_runtest_makereport(item, call) -> None:
-    if call.when == "call":
-        if call.excinfo is not None and "page" in item.funcargs:
-            page = item.funcargs["page"]
-            screenshot_dir = Path(".playwright-screenshots")
-            screenshot_dir.mkdir(exist_ok=True)
-            page.screenshot(path=str(screenshot_dir / f"{slugify(item.nodeid)}.png"))
 ```
 
 ## Deploy to CI

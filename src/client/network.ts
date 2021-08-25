@@ -26,6 +26,8 @@ import { Events } from './events';
 import { Page } from './page';
 import { Waiter } from './waiter';
 import * as api from '../../types/types';
+import { URLMatch } from '../common/types';
+import { urlMatches } from './clientHelper';
 
 export type NetworkCookie = {
   name: string,
@@ -245,6 +247,8 @@ type InterceptResponse = true;
 type NotInterceptResponse = false;
 
 export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteInitializer> implements api.Route {
+  private _interceptedResponse: api.Response | undefined;
+
   static from(route: channels.RouteChannel): Route {
     return (route as any)._object;
   }
@@ -263,8 +267,21 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
     });
   }
 
-  async fulfill(options: { status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}) {
+  async fulfill(options: { _response?: Response, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}) {
     return this._wrapApiCall(async (channel: channels.RouteChannel) => {
+      let useInterceptedResponseBody;
+      let { status: statusOption, headers: headersOption, body: bodyOption } = options;
+      if (options._response) {
+        statusOption ||= options._response.status();
+        headersOption ||= options._response.headers();
+        if (options.body === undefined && options.path === undefined) {
+          if (options._response === this._interceptedResponse)
+            useInterceptedResponseBody = true;
+          else
+            bodyOption = await options._response.body();
+        }
+      }
+
       let body = undefined;
       let isBase64 = false;
       let length = 0;
@@ -273,19 +290,19 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
         body = buffer.toString('base64');
         isBase64 = true;
         length = buffer.length;
-      } else if (isString(options.body)) {
-        body = options.body;
+      } else if (isString(bodyOption)) {
+        body = bodyOption;
         isBase64 = false;
         length = Buffer.byteLength(body);
-      } else if (options.body) {
-        body = options.body.toString('base64');
+      } else if (bodyOption) {
+        body = bodyOption.toString('base64');
         isBase64 = true;
-        length = options.body.length;
+        length = bodyOption.length;
       }
 
       const headers: Headers = {};
-      for (const header of Object.keys(options.headers || {}))
-        headers[header.toLowerCase()] = String(options.headers![header]);
+      for (const header of Object.keys(headersOption || {}))
+        headers[header.toLowerCase()] = String(headersOption![header]);
       if (options.contentType)
         headers['content-type'] = String(options.contentType);
       else if (options.path)
@@ -294,16 +311,18 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
         headers['content-length'] = String(length);
 
       await channel.fulfill({
-        status: options.status || 200,
+        status: statusOption || 200,
         headers: headersObjectToArray(headers),
         body,
-        isBase64
+        isBase64,
+        useInterceptedResponseBody
       });
     });
   }
 
-  async _intercept(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer, interceptResponse?: boolean } = {}): Promise<api.Response> {
-    return await this._continue(options, true);
+  async _continueToResponse(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer, interceptResponse?: boolean } = {}): Promise<api.Response> {
+    this._interceptedResponse = await this._continue(options, true);
+    return this._interceptedResponse;
   }
 
   async continue(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer } = {}) {
@@ -335,7 +354,7 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
   }
 }
 
-export type RouteHandler = (route: Route, request: Request) => void;
+export type RouteHandlerCallback = (route: Route, request: Request) => void;
 
 export type ResourceTiming = {
   startTime: number;
@@ -435,6 +454,52 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
   }
 }
 
+export class FetchResponse {
+  private readonly _initializer: channels.FetchResponse;
+  private readonly _headers: Headers;
+  private readonly _body: Buffer;
+
+  constructor(initializer: channels.FetchResponse) {
+    this._initializer = initializer;
+    this._headers = headersArrayToObject(this._initializer.headers, true /* lowerCase */);
+    this._body = Buffer.from(initializer.body, 'base64');
+  }
+
+  ok(): boolean {
+    return this._initializer.status === 0 || (this._initializer.status >= 200 && this._initializer.status <= 299);
+  }
+
+  url(): string {
+    return this._initializer.url;
+  }
+
+  status(): number {
+    return this._initializer.status;
+  }
+
+  statusText(): string {
+    return this._initializer.statusText;
+  }
+
+  headers(): Headers {
+    return { ...this._headers };
+  }
+
+  async body(): Promise<Buffer> {
+    return this._body;
+  }
+
+  async text(): Promise<string> {
+    const content = await this.body();
+    return content.toString('utf8');
+  }
+
+  async json(): Promise<object> {
+    const content = await this.text();
+    return JSON.parse(content);
+  }
+}
+
 export class WebSocket extends ChannelOwner<channels.WebSocketChannel, channels.WebSocketInitializer> implements api.WebSocket {
   private _page: Page;
   private _isClosed: boolean;
@@ -497,5 +562,31 @@ export function validateHeaders(headers: Headers) {
     const value = headers[key];
     if (!Object.is(value, undefined) && !isString(value))
       throw new Error(`Expected value of header "${key}" to be String, but "${typeof value}" is found.`);
+  }
+}
+
+export class RouteHandler {
+  private handledCount = 0;
+  private readonly _baseURL: string | undefined;
+  private readonly _times: number | undefined;
+  readonly url: URLMatch;
+  readonly handler: RouteHandlerCallback;
+
+  constructor(baseURL: string | undefined, url: URLMatch, handler: RouteHandlerCallback, times?: number) {
+    this._baseURL = baseURL;
+    this._times = times;
+    this.url = url;
+    this.handler = handler;
+  }
+
+  public matches(requestURL: string): boolean {
+    if (this._times && this.handledCount >= this._times)
+      return false;
+    return urlMatches(this._baseURL, requestURL, this.url);
+  }
+
+  public handle(route: Route, request: Request) {
+    this.handler(route, request);
+    this.handledCount++;
   }
 }

@@ -32,7 +32,7 @@ if (process.argv[2] === '--today-date') {
   }).toString('utf8').trim();
   packageJSON.version = `${packageJSON.version}-${timestamp}000`;
 } else {
-  throw new Error('This script must be run with either --timestamp or --today-date parameter');
+  throw new Error('This script must be run with either --commit-timestamp or --today-date parameter');
 }
 console.log('Setting version to ' + packageJSON.version);
 fs.writeFileSync(path.join(__dirname, '..', '..', 'package.json'), JSON.stringify(packageJSON, undefined, 2) + '\n');

@@ -24,6 +24,7 @@ import * as childProcess from 'child_process';
 import { start } from '../../lib/outofprocess';
 import { PlaywrightClient } from '../../lib/remote/playwrightClient';
 import type { LaunchOptions } from '../../index';
+import { TestProxy } from './proxy';
 
 export type BrowserName = 'chromium' | 'firefox' | 'webkit';
 type Mode = 'default' | 'driver' | 'service';
@@ -32,6 +33,7 @@ type BaseOptions = {
   browserName: BrowserName;
   channel: LaunchOptions['channel'];
   video: boolean | undefined;
+  trace: boolean | undefined;
   headless: boolean | undefined;
 };
 type BaseFixtures = {
@@ -57,7 +59,7 @@ class DriverMode {
 }
 
 class ServiceMode {
-  private _client: any;
+  private _client: import('../../src/remote/playwrightClient').PlaywrightClient;
   private _serviceProcess: childProcess.ChildProcess;
 
   async setup(workerIndex: number) {
@@ -104,6 +106,7 @@ const baseFixtures: Fixtures<{}, BaseOptions & BaseFixtures> = {
   browserName: [ 'chromium' , { scope: 'worker' } ],
   channel: [ undefined, { scope: 'worker' } ],
   video: [ undefined, { scope: 'worker' } ],
+  trace: [ undefined, { scope: 'worker' } ],
   headless: [ undefined, { scope: 'worker' } ],
   platform: [ process.platform as 'win32' | 'darwin' | 'linux', { scope: 'worker' } ],
   playwright: [ async ({ mode }, run, workerInfo) => {
@@ -130,6 +133,7 @@ type ServerFixtures = {
   server: TestServer;
   httpsServer: TestServer;
   socksPort: number;
+  proxyServer: TestProxy;
   asset: (p: string) => string;
 };
 
@@ -140,7 +144,7 @@ const serverFixtures: Fixtures<ServerFixtures, ServerOptions & { __servers: Serv
     const assetsPath = path.join(__dirname, '..', 'assets');
     const cachedPath = path.join(__dirname, '..', 'assets', 'cached');
 
-    const port = 8907 + workerInfo.workerIndex * 3;
+    const port = 8907 + workerInfo.workerIndex * 4;
     const server = await TestServer.create(assetsPath, port, loopback);
     server.enableHTTPCache(cachedPath);
 
@@ -168,11 +172,15 @@ const serverFixtures: Fixtures<ServerFixtures, ServerOptions & { __servers: Serv
     socksServer.listen(socksPort, 'localhost');
     socksServer.useAuth(socks.auth.None());
 
+    const proxyPort = port + 3;
+    const proxyServer = await TestProxy.create(proxyPort);
+
     await run({
       asset: (p: string) => path.join(__dirname, '..', 'assets', ...p.split('/')),
       server,
       httpsServer,
       socksPort,
+      proxyServer,
       socksServer,
     });
 
@@ -180,6 +188,7 @@ const serverFixtures: Fixtures<ServerFixtures, ServerOptions & { __servers: Serv
       server.stop(),
       httpsServer.stop(),
       socksServer.close(),
+      proxyServer.stop(),
     ]);
   }, { scope: 'worker' } ],
 
@@ -195,6 +204,11 @@ const serverFixtures: Fixtures<ServerFixtures, ServerOptions & { __servers: Serv
 
   socksPort: async ({ __servers }, run) => {
     await run(__servers.socksPort);
+  },
+
+  proxyServer: async ({ __servers }, run) => {
+    __servers.proxyServer.reset();
+    await run(__servers.proxyServer);
   },
 
   asset: async ({ __servers }, run) => {

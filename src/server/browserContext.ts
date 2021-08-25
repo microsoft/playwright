@@ -31,7 +31,7 @@ import path from 'path';
 import { CallMetadata, internalCallMetadata, createInstrumentation, SdkObject } from './instrumentation';
 import { Debugger } from './supplements/debugger';
 import { Tracing } from './trace/recorder/tracing';
-import { HarTracer } from './supplements/har/harTracer';
+import { HarRecorder } from './supplements/har/harRecorder';
 import { RecorderSupplement } from './supplements/recorderSupplement';
 import * as consoleApiSource from '../generated/consoleApiSource';
 
@@ -61,7 +61,7 @@ export abstract class BrowserContext extends SdkObject {
   readonly _browserContextId: string | undefined;
   private _selectors?: Selectors;
   private _origins = new Set<string>();
-  private _harTracer: HarTracer | undefined;
+  readonly _harRecorder: HarRecorder | undefined;
   readonly tracing: Tracing;
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
@@ -74,7 +74,8 @@ export abstract class BrowserContext extends SdkObject {
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
 
     if (this._options.recordHar)
-      this._harTracer = new HarTracer(this, this._options.recordHar);
+      this._harRecorder = new HarRecorder(this, {...this._options.recordHar, path: path.join(this._browser.options.artifactsDir, `${createGuid()}.har`)});
+
     this.tracing = new Tracing(this);
   }
 
@@ -272,7 +273,7 @@ export abstract class BrowserContext extends SdkObject {
       this.emit(BrowserContext.Events.BeforeClose);
       this._closedStatus = 'closing';
 
-      await this._harTracer?.flush();
+      await this._harRecorder?.flush();
       await this.tracing.dispose();
 
       // Cleanup.

@@ -18,7 +18,7 @@ import type { BrowserContextOptions } from '../../../..';
 import { LanguageGenerator, LanguageGeneratorOptions, sanitizeDeviceOptions, toSignalMap } from './language';
 import { ActionInContext } from './codeGenerator';
 import { actionTitle, Action } from './recorderActions';
-import { MouseClickOptions, toModifiers } from './utils';
+import { escapeWithQuotes, MouseClickOptions, toModifiers } from './utils';
 import deviceDescriptors from '../../deviceDescriptors';
 
 export class PythonLanguageGenerator implements LanguageGenerator {
@@ -160,7 +160,7 @@ def run(playwright: Playwright) -> None {
 
   generateFooter(saveStorage: string | undefined): string {
     if (this._isAsync) {
-      const storageStateLine = saveStorage ? `\n    await context.storage_state(path="${saveStorage}")` : '';
+      const storageStateLine = saveStorage ? `\n    await context.storage_state(path=${quote(saveStorage)})` : '';
       return `\n    # ---------------------${storageStateLine}
     await context.close()
     await browser.close()
@@ -174,7 +174,7 @@ async def main() -> None:
 asyncio.run(main())
 `;
     } else {
-      const storageStateLine = saveStorage ? `\n    context.storage_state(path="${saveStorage}")` : '';
+      const storageStateLine = saveStorage ? `\n    context.storage_state(path=${quote(saveStorage)})` : '';
       return `\n    # ---------------------${storageStateLine}
     context.close()
     browser.close()
@@ -217,7 +217,7 @@ function formatContextOptions(options: BrowserContextOptions, deviceName: string
   const device = deviceName && deviceDescriptors[deviceName];
   if (!device)
     return formatOptions(options, false);
-  return `**playwright.devices["${deviceName}"]` + formatOptions(sanitizeDeviceOptions(device, options), true);
+  return `**playwright.devices[${quote(deviceName!)}]` + formatOptions(sanitizeDeviceOptions(device, options), true);
 }
 
 class PythonFormatter {
@@ -264,12 +264,6 @@ class PythonFormatter {
   }
 }
 
-function quote(text: string, char: string = '\"') {
-  if (char === '\'')
-    return char + text.replace(/[']/g, '\\\'') + char;
-  if (char === '"')
-    return char + text.replace(/["]/g, '\\"') + char;
-  if (char === '`')
-    return char + text.replace(/[`]/g, '\\`') + char;
-  throw new Error('Invalid escape char');
+function quote(text: string) {
+  return escapeWithQuotes(text, '\"');
 }

@@ -10,10 +10,36 @@ Playwright Trace Viewer is a GUI tool that helps exploring recorded Playwright t
 <!-- TOC -->
 
 ## Recording a trace
+* langs: js
 
-Traces can be recorded using the [`property: BrowserContext.tracing`] API as follows:
+Set the `trace: 'on-first-retry'` option in the test configuration file. This will produce `trace.zip` file for each test that was retried.
 
-```js
+```js js-flavor=js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  retries: 1,
+  use: {
+    trace: 'on-first-retry',
+  },
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+import { PlaywrightTestConfig } from '@playwright/test';
+const config: PlaywrightTestConfig = {
+  retries: 1,
+  use: {
+    trace: 'on-first-retry',
+  },
+};
+export default config;
+```
+
+```js js-flavor=library
 const browser = await chromium.launch();
 const context = await browser.newContext();
 
@@ -27,20 +53,35 @@ await page.goto('https://playwright.dev');
 await context.tracing.stop({ path: 'trace.zip' });
 ```
 
+You can also use `trace: 'retain-on-failure'` if you do not enable retries but still want traces for failed tests.
+
+Available options to record a trace:
+- `'off'` - Do not record a trace.
+- `'on'` - Record a trace for each test.
+- `'retain-on-failure'` - Record a trace for each test, but remove it from successful test runs.
+- `'on-first-retry'` - Record a trace only when retrying a test for the first time.
+
+If you are not using Playwright Test, use the [`property: BrowserContext.tracing`] API instead.
+
+## Recording a trace
+* langs: java, csharp, python
+
+Traces can be recorded using the [`property: BrowserContext.tracing`] API as follows:
+
 ```java
-Browser browser = chromium.launch();
+Browser browser = browserType.launch();
 BrowserContext context = browser.newContext();
 
 // Start tracing before creating / navigating a page.
-context.tracing.start(new Tracing.StartOptions()
+context.tracing().start(new Tracing.StartOptions()
   .setScreenshots(true)
-  .setSnapshots(true);
+  .setSnapshots(true));
 
 Page page = context.newPage();
-page.goto("https://playwright.dev");
+page.navigate("https://playwright.dev");
 
 // Stop tracing and export it into a zip archive.
-context.tracing.stop(new Tracing.StopOptions()
+context.tracing().stop(new Tracing.StopOptions()
   .setPath(Paths.get("trace.zip")));
 ```
 

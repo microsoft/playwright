@@ -652,3 +652,15 @@ it('should support cors for different methods', async ({page, server}) => {
     expect(resp).toEqual(['DELETE', 'electric', 'gas']);
   }
 });
+
+it('should support the times parameter with route matching', async ({page, server}) => {
+  const intercepted = [];
+  await page.route('**/empty.html', route => {
+    intercepted.push(1);
+    route.continue();
+  }, { times: 1});
+  await page.goto(server.EMPTY_PAGE);
+  await page.goto(server.EMPTY_PAGE);
+  await page.goto(server.EMPTY_PAGE);
+  expect(intercepted).toHaveLength(1);
+});

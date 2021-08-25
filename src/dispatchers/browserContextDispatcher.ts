@@ -17,6 +17,8 @@
 import { BrowserContext } from '../server/browserContext';
 import { Dispatcher, DispatcherScope, lookupDispatcher } from './dispatcher';
 import { PageDispatcher, BindingCallDispatcher, WorkerDispatcher } from './pageDispatcher';
+import { playwrightFetch } from '../server/fetch';
+import { FrameDispatcher } from './frameDispatcher';
 import * as channels from '../protocol/channels';
 import { RouteDispatcher, RequestDispatcher, ResponseDispatcher } from './networkDispatchers';
 import { CRBrowserContext } from '../server/chromium/crBrowser';
@@ -26,6 +28,7 @@ import { CallMetadata } from '../server/instrumentation';
 import { ArtifactDispatcher } from './artifactDispatcher';
 import { Artifact } from '../server/artifact';
 import { Request, Response } from '../server/network';
+import { headersArrayToObject } from '../utils/utils';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextInitializer> implements channels.BrowserContextChannel {
   private _context: BrowserContext;
@@ -103,6 +106,26 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     }, 'main');
   }
 
+  async fetch(params: channels.BrowserContextFetchParams): Promise<channels.BrowserContextFetchResult> {
+    const { fetchResponse, error } = await playwrightFetch(this._context, {
+      url: params.url,
+      method: params.method,
+      headers: params.headers ? headersArrayToObject(params.headers, false) : undefined,
+      postData: params.postData ? Buffer.from(params.postData, 'base64') : undefined,
+    });
+    let response;
+    if (fetchResponse) {
+      response = {
+        url: fetchResponse.url,
+        status: fetchResponse.status,
+        statusText: fetchResponse.statusText,
+        headers: fetchResponse.headers,
+        body: fetchResponse.body.toString('base64')
+      };
+    }
+    return { response, error };
+  }
+
   async newPage(params: channels.BrowserContextNewPageParams, metadata: CallMetadata): Promise<channels.BrowserContextNewPageResult> {
     return { page: lookupDispatcher<PageDispatcher>(await this._context.newPage(metadata)) };
   }
@@ -176,8 +199,10 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   async newCDPSession(params: channels.BrowserContextNewCDPSessionParams): Promise<channels.BrowserContextNewCDPSessionResult> {
     if (!this._object._browser.options.isChromium)
       throw new Error(`CDP session is only available in Chromium`);
+    if (!params.page && !params.frame || params.page && params.frame)
+      throw new Error(`CDP session must be initiated with either Page or Frame, not none or both`);
     const crBrowserContext = this._object as CRBrowserContext;
-    return { session: new CDPSessionDispatcher(this._scope, await crBrowserContext.newCDPSession((params.page as PageDispatcher)._object)) };
+    return { session: new CDPSessionDispatcher(this._scope, await crBrowserContext.newCDPSession((params.page ? params.page as PageDispatcher : params.frame as FrameDispatcher)._object)) };
   }
 
   async tracingStart(params: channels.BrowserContextTracingStartParams): Promise<channels.BrowserContextTracingStartResult> {
@@ -190,6 +215,13 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
 
   async tracingExport(params: channels.BrowserContextTracingExportParams): Promise<channels.BrowserContextTracingExportResult> {
     const artifact = await this._context.tracing.export();
+    return { artifact: new ArtifactDispatcher(this._scope, artifact) };
+  }
+
+  async harExport(params: channels.BrowserContextHarExportParams): Promise<channels.BrowserContextHarExportResult> {
+    const artifact = await this._context._harRecorder?.export();
+    if (!artifact)
+      throw new Error('No HAR artifact. Ensure record.harPath is set.');
     return { artifact: new ArtifactDispatcher(this._scope, artifact) };
   }
 }

@@ -1,6 +1,6 @@
 ---
 id: cli
-title: "Command Line Interface"
+title: "Command line tools"
 ---
 
 Playwright comes with the command line tools.
@@ -571,6 +571,3 @@ playwright install-deps chromium
 ```bash csharp
 playwright install-deps chromium
 ```
-
-## Known limitations
-Opening WebKit Web Inspector will disconnect Playwright from the browser. In such cases, code generation will stop.

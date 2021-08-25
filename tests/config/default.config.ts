@@ -42,13 +42,14 @@ const mode = (process.env.PWTEST_MODE || 'default') as ('default' | 'driver' | '
 const headed = !!process.env.HEADFUL;
 const channel = process.env.PWTEST_CHANNEL as any;
 const video = !!process.env.PWTEST_VIDEO;
+const trace = !!process.env.PWTEST_TRACE;
 
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');
 const config: Config<CommonOptions & PlaywrightOptions> = {
   testDir,
   outputDir,
-  timeout: video || process.env.PWTRACE ? 60000 : 30000,
+  timeout: video ? 60000 : 30000,
   globalTimeout: 5400000,
   workers: process.env.CI ? 1 : undefined,
   forbidOnly: !!process.env.CI,
@@ -79,7 +80,7 @@ for (const browserName of browserNames) {
       channel,
       video,
       executablePath,
-      tracesDir: process.env.PWTRACE ? path.join(outputDir, 'trace') : undefined,
+      trace,
       coverageName: browserName,
     },
     define: { test: pageTest, fixtures: pageFixtures },
@@ -91,6 +92,7 @@ for (const browserName of browserNames) {
       channel,
       mode,
       video: !!video,
+      trace: !!trace,
     },
   });
 }

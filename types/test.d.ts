@@ -2508,7 +2508,7 @@ export interface PlaywrightTestOptions {
   viewport: ViewportSize | null | undefined;
   /**
    * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
-   * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route),
+   * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route),
    * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
    * [page.waitForRequest(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-request), or
    * [page.waitForResponse(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-response) it

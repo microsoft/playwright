@@ -283,9 +283,11 @@ export module Protocol {
     export type setForcedColorsReturnValue = void;
     export type setVideoRecordingOptionsParameters = {
       browserContextId?: string;
-      dir: string;
-      width: number;
-      height: number;
+      options?: {
+        dir: string;
+        width: number;
+        height: number;
+      };
     };
     export type setVideoRecordingOptionsReturnValue = void;
     export type cancelDownloadParameters = {
@@ -933,6 +935,7 @@ export module Protocol {
           value: string;
         }[];
       };
+      error?: string;
     };
     export type fulfillInterceptedRequestParameters = {
       requestId: string;

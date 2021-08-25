@@ -149,8 +149,35 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       value: tString,
     })),
   });
-  scheme.PlaywrightSetForwardedPortsParams = tObject({
-    ports: tArray(tNumber),
+  scheme.FetchResponse = tObject({
+    url: tString,
+    status: tNumber,
+    statusText: tString,
+    headers: tArray(tType('NameValue')),
+    body: tBinary,
+  });
+  scheme.RootInitializeParams = tObject({
+    sdkLanguage: tString,
+  });
+  scheme.PlaywrightSocksConnectedParams = tObject({
+    uid: tString,
+    host: tString,
+    port: tNumber,
+  });
+  scheme.PlaywrightSocksFailedParams = tObject({
+    uid: tString,
+    errorCode: tString,
+  });
+  scheme.PlaywrightSocksDataParams = tObject({
+    uid: tString,
+    data: tBinary,
+  });
+  scheme.PlaywrightSocksErrorParams = tObject({
+    uid: tString,
+    error: tString,
+  });
+  scheme.PlaywrightSocksEndParams = tObject({
+    uid: tString,
   });
   scheme.SelectorsRegisterParams = tObject({
     name: tString,
@@ -204,7 +231,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     downloadsPath: tOptional(tString),
     tracesDir: tOptional(tString),
     chromiumSandbox: tOptional(tBoolean),
-    sdkLanguage: tString,
     noDefaultViewport: tOptional(tBoolean),
     viewport: tOptional(tObject({
       width: tNumber,
@@ -251,11 +277,11 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       omitContent: tOptional(tBoolean),
       path: tString,
     })),
+    strictSelectors: tOptional(tBoolean),
     userDataDir: tString,
     slowMo: tOptional(tNumber),
   });
   scheme.BrowserTypeConnectOverCDPParams = tObject({
-    sdkLanguage: tString,
     endpointURL: tString,
     headers: tOptional(tArray(tType('NameValue'))),
     slowMo: tOptional(tNumber),
@@ -264,7 +290,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.BrowserCloseParams = tOptional(tObject({}));
   scheme.BrowserKillForTestsParams = tOptional(tObject({}));
   scheme.BrowserNewContextParams = tObject({
-    sdkLanguage: tString,
     noDefaultViewport: tOptional(tBoolean),
     viewport: tOptional(tObject({
       width: tNumber,
@@ -311,6 +336,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       omitContent: tOptional(tBoolean),
       path: tString,
     })),
+    strictSelectors: tOptional(tBoolean),
     proxy: tOptional(tObject({
       server: tString,
       bypass: tOptional(tString),
@@ -360,6 +386,12 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     name: tString,
     needsHandle: tOptional(tBoolean),
   });
+  scheme.BrowserContextFetchParams = tObject({
+    url: tString,
+    method: tOptional(tString),
+    headers: tOptional(tArray(tType('NameValue'))),
+    postData: tOptional(tBinary),
+  });
   scheme.BrowserContextGrantPermissionsParams = tObject({
     permissions: tArray(tString),
     origin: tOptional(tString),
@@ -406,7 +438,8 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     outputFile: tOptional(tString),
   });
   scheme.BrowserContextNewCDPSessionParams = tObject({
-    page: tChannel('Page'),
+    page: tOptional(tChannel('Page')),
+    frame: tOptional(tChannel('Frame')),
   });
   scheme.BrowserContextTracingStartParams = tObject({
     name: tOptional(tString),
@@ -415,6 +448,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.BrowserContextTracingStopParams = tOptional(tObject({}));
   scheme.BrowserContextTracingExportParams = tOptional(tObject({}));
+  scheme.BrowserContextHarExportParams = tOptional(tObject({}));
   scheme.PageSetDefaultNavigationTimeoutNoReplyParams = tObject({
     timeout: tNumber,
   });
@@ -697,12 +731,10 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.FrameIsHiddenParams = tObject({
     selector: tString,
     strict: tOptional(tBoolean),
-    timeout: tOptional(tNumber),
   });
   scheme.FrameIsVisibleParams = tObject({
     selector: tString,
     strict: tOptional(tBoolean),
-    timeout: tOptional(tNumber),
   });
   scheme.FrameIsEditableParams = tObject({
     selector: tString,
@@ -723,7 +755,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.FrameQuerySelectorAllParams = tObject({
     selector: tString,
-    strict: tOptional(tBoolean),
   });
   scheme.FrameSelectOptionParams = tObject({
     selector: tString,
@@ -1000,6 +1031,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     headers: tOptional(tArray(tType('NameValue'))),
     body: tOptional(tString),
     isBase64: tOptional(tBoolean),
+    useInterceptedResponseBody: tOptional(tBoolean),
   });
   scheme.RouteResponseBodyParams = tOptional(tObject({}));
   scheme.ResourceTiming = tObject({
@@ -1056,7 +1088,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.CDPSessionDetachParams = tOptional(tObject({}));
   scheme.ElectronLaunchParams = tObject({
-    sdkLanguage: tString,
     executablePath: tOptional(tString),
     args: tOptional(tArray(tString)),
     cwd: tOptional(tString),
@@ -1089,6 +1120,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
         height: tNumber,
       })),
     })),
+    strictSelectors: tOptional(tBoolean),
     timezoneId: tOptional(tString),
   });
   scheme.ElectronApplicationBrowserWindowParams = tObject({
@@ -1193,7 +1225,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     steps: tNumber,
   });
   scheme.AndroidDeviceLaunchBrowserParams = tObject({
-    sdkLanguage: tString,
     pkg: tOptional(tString),
     ignoreHTTPSErrors: tOptional(tBoolean),
     javaScriptEnabled: tOptional(tBoolean),
@@ -1231,6 +1262,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       omitContent: tOptional(tBoolean),
       path: tString,
     })),
+    strictSelectors: tOptional(tBoolean),
     proxy: tOptional(tObject({
       server: tString,
       bypass: tOptional(tString),
@@ -1257,7 +1289,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     timeout: tNumber,
   });
   scheme.AndroidDeviceConnectToWebViewParams = tObject({
-    sdkLanguage: tString,
     pid: tNumber,
   });
   scheme.AndroidDeviceCloseParams = tOptional(tObject({}));
@@ -1307,14 +1338,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     scrollable: tBoolean,
     selected: tBoolean,
   });
-  scheme.SocksSocketWriteParams = tObject({
-    data: tBinary,
-  });
-  scheme.SocksSocketErrorParams = tObject({
-    error: tString,
-  });
-  scheme.SocksSocketConnectedParams = tOptional(tObject({}));
-  scheme.SocksSocketEndParams = tOptional(tObject({}));
 
   return scheme;
 }

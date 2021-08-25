@@ -21,7 +21,7 @@ import fs from 'fs';
 import milliseconds from 'ms';
 import path from 'path';
 import StackUtils from 'stack-utils';
-import { FullConfig, TestCase, Suite, TestResult, TestError, Reporter, FullResult } from '../../../types/testReporter';
+import { FullConfig, TestCase, Suite, TestResult, TestError, Reporter, FullResult, TestStep } from '../../../types/testReporter';
 
 const stackUtils = new StackUtils();
 
@@ -110,9 +110,10 @@ export class BaseReporter implements Reporter  {
       }
     });
 
-    if (full && (unexpected.length || skippedWithError.length)) {
+    const failuresToPrint = [...unexpected, ...flaky, ...skippedWithError];
+    if (full && failuresToPrint.length) {
       console.log('');
-      this._printFailures([...unexpected, ...skippedWithError]);
+      this._printFailures(failuresToPrint);
     }
 
     this._printSlowTests();
@@ -146,8 +147,8 @@ export class BaseReporter implements Reporter  {
     });
   }
 
-  willRetry(test: TestCase, result: TestResult): boolean {
-    return result.status !== 'passed' && result.status !== test.expectedStatus && test.results.length <= test.retries;
+  willRetry(test: TestCase): boolean {
+    return test.outcome() === 'unexpected' && test.results.length <= test.retries;
   }
 }
 
@@ -158,10 +159,9 @@ export function formatFailure(config: FullConfig, test: TestCase, index?: number
     const resultTokens = formatResultFailure(test, result, '    ');
     if (!resultTokens.length)
       continue;
-    const statusSuffix = (result.status === 'passed' && test.expectedStatus === 'failed') ? ' -- passed unexpectedly' : '';
     if (result.retry) {
       tokens.push('');
-      tokens.push(colors.gray(pad(`    Retry #${result.retry}${statusSuffix}`, '-')));
+      tokens.push(colors.gray(pad(`    Retry #${result.retry}`, '-')));
     }
     tokens.push(...resultTokens);
     const output = ((result as any)[kOutputSymbol] || []) as TestResultOutput[];
@@ -186,6 +186,10 @@ export function formatResultFailure(test: TestCase, result: TestResult, initialI
     resultTokens.push('');
     resultTokens.push(indent(colors.red(`Timeout of ${test.timeout}ms exceeded.`), initialIndent));
   }
+  if (result.status === 'passed' && test.expectedStatus === 'failed') {
+    resultTokens.push('');
+    resultTokens.push(indent(colors.red(`Expected to fail, but passed.`), initialIndent));
+  }
   if (result.error !== undefined)
     resultTokens.push(indent(formatError(result.error, test.location.file), initialIndent));
   return resultTokens;
@@ -195,18 +199,22 @@ function relativeTestPath(config: FullConfig, test: TestCase): string {
   return path.relative(config.rootDir, test.location.file) || path.basename(test.location.file);
 }
 
-export function formatTestTitle(config: FullConfig, test: TestCase): string {
+function stepSuffix(step: TestStep | undefined) {
+  const stepTitles = step ? step.titlePath() : [];
+  return stepTitles.map(t => ' › ' + t).join('');
+}
+
+export function formatTestTitle(config: FullConfig, test: TestCase, step?: TestStep): string {
   // root, project, file, ...describes, test
   const [, projectName, , ...titles] = test.titlePath();
   const location = `${relativeTestPath(config, test)}:${test.location.line}:${test.location.column}`;
   const projectTitle = projectName ? `[${projectName}] › ` : '';
-  return `${projectTitle}${location} › ${titles.join(' ')}`;
+  return `${projectTitle}${location} › ${titles.join(' ')}${stepSuffix(step)}`;
 }
 
 function formatTestHeader(config: FullConfig, test: TestCase, indent: string, index?: number): string {
   const title = formatTestTitle(config, test);
-  const passedUnexpectedlySuffix = (test.results[0].status === 'passed' && test.expectedStatus === 'failed') ? ' -- passed unexpectedly' : '';
-  const header = `${indent}${index ? index + ') ' : ''}${title}${passedUnexpectedlySuffix}`;
+  const header = `${indent}${index ? index + ') ' : ''}${title}`;
   return colors.red(pad(header, '='));
 }
 

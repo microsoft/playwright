@@ -5,6 +5,160 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.14
+
+### 🎭 Playwright Library
+
+#### ⚡️ New "strict" mode
+
+Selector ambiguity is a common problem in automation testing. **"strict" mode**
+ensures that your selector points to a single element and throws otherwise.
+
+Pass `strict: true` into your action calls to opt in.
+
+```js
+// This will throw if you have more than one button!
+await page.click('button', { strict: true });
+```
+
+#### 📍 New [**Locators API**](./api/class-locator)
+
+Locator represents a view to the element(s) on the page. It captures the logic sufficient to retrieve the element at any given moment.
+
+The difference between the [Locator](./api/class-locator) and [ElementHandle](./api/class-elementhandle) is that the latter points to a particular element, while [Locator](./api/class-locator) captures the logic of how to retrieve that element.
+
+Also, locators are **"strict" by default**!
+
+```js
+const locator = page.locator('button');
+await locator.click();
+```
+
+Learn more in the [documentation](./api/class-locator).
+
+#### 🧩 Experimental [**React**](./selectors#react-selectors) and [**Vue**](./selectors#vue-selectors) selector engines
+
+React and Vue selectors allow selecting elements by its component name and/or property values. The syntax is very similar to [attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors) and supports all attribute selector operators.
+
+```js
+await page.click('_react=SubmitButton[enabled=true]');
+await page.click('_vue=submit-button[enabled=true]');
+```
+
+Learn more in the [react selectors documentation](./selectors#react-selectors) and the [vue selectors documentation](./selectors#vue-selectors).
+
+#### ✨ New [**`nth`**](./selectors#n-th-element-selector) and [**`visible`**](./selectors#selecting-visible-elements) selector engines
+
+- [`nth`](./selectors#n-th-element-selector) selector engine is equivalent to the `:nth-match` pseudo class, but could be combined with other selector engines.
+- [`visible`](./selectors#selecting-visible-elements) selector engine is equivalent to the `:visible` pseudo class, but could be combined with other selector engines.
+
+```js
+// select the first button among all buttons
+await button.click('button >> nth=0');
+// or if you are using locators, you can use first(), nth() and last()
+await page.locator('button').first().click();
+
+// click a visible button
+await button.click('button >> visible=true');
+```
+
+### 🎭 Playwright Test
+
+#### ✅ Web-First Assertions
+
+`expect` now supports lots of new web-first assertions.
+
+Consider the following example:
+
+```js
+await expect(page.locator('.status')).toHaveText('Submitted');
+```
+
+Playwright Test will be re-testing the node with the selector `.status` until fetched Node has the `"Submitted"` text. It will be re-fetching the node and checking it over and over, until the condition is met or until the timeout is reached. You can either pass this timeout or configure it once via the [`testProject.expect`](./api/class-testproject/#test-project-expect) value in test config.
+
+By default, the timeout for assertions is not set, so it'll wait forever, until the whole test times out.
+
+List of all new assertions:
+
+- [`expect(locator).toBeChecked()`](./test-assertions#expectlocatortobechecked)
+- [`expect(locator).toBeDisabled()`](./test-assertions#expectlocatortobedisabled)
+- [`expect(locator).toBeEditable()`](./test-assertions#expectlocatortobeeditable)
+- [`expect(locator).toBeEmpty()`](./test-assertions#expectlocatortobeempty)
+- [`expect(locator).toBeEnabled()`](./test-assertions#expectlocatortobeenabled)
+- [`expect(locator).toBeFocused()`](./test-assertions#expectlocatortobefocused)
+- [`expect(locator).toBeHidden()`](./test-assertions#expectlocatortobehidden)
+- [`expect(locator).toBeVisible()`](./test-assertions#expectlocatortobevisible)
+- [`expect(locator).toContainText(text, options?)`](./test-assertions#expectlocatortocontaintexttext-options)
+- [`expect(locator).toHaveAttribute(name, value)`](./test-assertions#expectlocatortohaveattributename-value)
+- [`expect(locator).toHaveClass(expected)`](./test-assertions#expectlocatortohaveclassexpected)
+- [`expect(locator).toHaveCount(count)`](./test-assertions#expectlocatortohavecountcount)
+- [`expect(locator).toHaveCSS(name, value)`](./test-assertions#expectlocatortohavecssname-value)
+- [`expect(locator).toHaveId(id)`](./test-assertions#expectlocatortohaveidid)
+- [`expect(locator).toHaveJSProperty(name, value)`](./test-assertions#expectlocatortohavejspropertyname-value)
+- [`expect(locator).toHaveText(expected, options)`](./test-assertions#expectlocatortohavetextexpected-options)
+- [`expect(page).toHaveTitle(title)`](./test-assertions#expectpagetohavetitletitle)
+- [`expect(page).toHaveURL(url)`](./test-assertions#expectpagetohaveurlurl)
+- [`expect(locator).toHaveValue(value)`](./test-assertions#expectlocatortohavevaluevalue)
+
+#### ⛓ Serial mode with [`describe.serial`](./api/class-test#test-describe-serial)
+
+Declares a group of tests that should always be run serially. If one of the tests fails, all subsequent tests are skipped. All tests in a group are retried together.
+
+```ts
+test.describe.serial('group', () => {
+  test('runs first', async ({ page }) => { /* ... */ });
+  test('runs second', async ({ page }) => { /* ... */ });
+});
+```
+
+Learn more in the [documentation](./api/class-test#test-describe-serial).
+
+#### 🐾 Steps API with [`test.step`](./api/class-test#test-step)
+
+Split long tests into multiple steps using `test.step()` API:
+
+```ts
+import { test, expect } from '@playwright/test';
+
+test('test', async ({ page }) => {
+  await test.step('Log in', async () => {
+    // ...
+  });
+  await test.step('news feed', async () => {
+    // ...
+  });
+});
+```
+
+Step information is exposed in reporters API.
+
+#### 🌎 Launch web server before running tests
+
+To launch a server during the tests, use the [`webServer`](./test-advanced/#launching-a-development-web-server-during-the-tests) option in the configuration file. The server will wait for a given port to be available before running the tests, and the port will be passed over to Playwright as a [`baseURL`](./api/class-fixtures#fixtures-base-url) when creating a context.
+
+```ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+const config: PlaywrightTestConfig = {
+  webServer: {
+    command: 'npm run start', // command to launch
+    port: 3000, // port to await for 
+    timeout: 120 * 1000, 
+    reuseExistingServer: !process.env.CI,
+  },
+};
+export default config;
+```
+
+Learn more in the [documentation](./test-advanced#launching-a-development-web-server-during-the-tests).
+
+### Browser Versions
+
+- Chromium 94.0.4595.0
+- Mozilla Firefox 91.0
+- WebKit 15.0
+
+
 ## Version 1.13
 
 

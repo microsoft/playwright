@@ -221,6 +221,10 @@ class BrowserHandler {
     await this._targetRegistry.browserContextForId(browserContextId).setDefaultUserAgent(userAgent);
   }
 
+  async ['Browser.setPlatformOverride']({browserContextId, platform}) {
+    await this._targetRegistry.browserContextForId(browserContextId).setDefaultPlatform(platform);
+  }
+
   async ['Browser.setBypassCSP']({browserContextId, bypassCSP}) {
     await this._targetRegistry.browserContextForId(browserContextId).applySetting('bypassCSP', nullToUndefined(bypassCSP));
   }
@@ -305,7 +309,12 @@ async function waitForWindowClosed(browserWindow) {
   await new Promise((resolve => {
     const listener = {
       onCloseWindow: window => {
-        if (window === browserWindow) {
+        let domWindow;
+        if (window instanceof Ci.nsIAppWindow)
+          domWindow = window.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowInternal || Ci.nsIDOMWindow);
+        else
+          domWindow = window;
+        if (domWindow === browserWindow) {
           Services.wm.removeListener(listener);
           resolve();
         }

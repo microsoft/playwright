@@ -18,7 +18,7 @@ import type { BrowserContextOptions } from '../../../..';
 import { LanguageGenerator, LanguageGeneratorOptions, sanitizeDeviceOptions, toSignalMap } from './language';
 import { ActionInContext } from './codeGenerator';
 import { Action, actionTitle } from './recorderActions';
-import { MouseClickOptions, toModifiers } from './utils';
+import { escapeWithQuotes, MouseClickOptions, toModifiers } from './utils';
 import deviceDescriptors from '../../deviceDescriptors';
 
 export class JavaScriptLanguageGenerator implements LanguageGenerator {
@@ -181,7 +181,7 @@ ${useText ? '\ntest.use(' + useText + ');\n' : ''}
   }
 
   generateStandaloneFooter(saveStorage: string | undefined): string {
-    const storageStateLine = saveStorage ? `\n  await context.storageState({ path: '${saveStorage}' });` : '';
+    const storageStateLine = saveStorage ? `\n  await context.storageState({ path: ${quote(saveStorage)} });` : '';
     return `\n  // ---------------------${storageStateLine}
   await context.close();
   await browser.close();
@@ -228,7 +228,7 @@ function formatContextOptions(options: BrowserContextOptions, deviceName: string
   if (!serializedObject)
     serializedObject = '{\n}';
   const lines = serializedObject.split('\n');
-  lines.splice(1, 0, `...devices['${deviceName}'],`);
+  lines.splice(1, 0, `...devices[${quote(deviceName!)}],`);
   return lines.join('\n');
 }
 
@@ -275,12 +275,6 @@ export class JavaScriptFormatter {
   }
 }
 
-function quote(text: string, char: string = '\'') {
-  if (char === '\'')
-    return char + text.replace(/[']/g, '\\\'') + char;
-  if (char === '"')
-    return char + text.replace(/["]/g, '\\"') + char;
-  if (char === '`')
-    return char + text.replace(/[`]/g, '\\`') + char;
-  throw new Error('Invalid escape char');
+function quote(text: string) {
+  return escapeWithQuotes(text, '\'');
 }

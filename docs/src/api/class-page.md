@@ -1877,19 +1877,19 @@ Navigate to the next page in history.
 Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
 last redirect.
 
-`page.goto` will throw an error if:
+The method will throw an error if:
 * there's an SSL error (e.g. in case of self-signed certificates).
 * target URL is invalid.
 * the [`option: timeout`] is exceeded during navigation.
 * the remote server does not respond or is unreachable.
 * the main resource failed to load.
 
-`page.goto` will not throw an error when any valid HTTP status code is returned by the remote server, including 404 "Not
+The method will not throw an error when any valid HTTP status code is returned by the remote server, including 404 "Not
 Found" and 500 "Internal Server Error".  The status code for such responses can be retrieved by calling
 [`method: Response.status`].
 
 :::note
-`page.goto` either throws an error or returns a main resource response. The only exceptions are navigation to
+The method either throws an error or returns a main resource response. The only exceptions are navigation to
 `about:blank` or navigation to the same URL with a different hash, which would succeed and return `null`.
 :::
 
@@ -2026,7 +2026,10 @@ Returns whether the element is hidden, the opposite of [visible](./actionability
 ### param: Page.isHidden.selector = %%-input-selector-%%
 
 ### option: Page.isHidden.strict = %%-input-strict-%%
-### option: Page.isHidden.timeout = %%-input-timeout-%%
+### option: Page.isHidden.timeout
+- `timeout` <[float]>
+
+**DEPRECATED** This option is ignored. [`method: Page.isHidden`] does not wait for the element to become hidden and returns immediately.
 
 ## async method: Page.isVisible
 - returns: <[boolean]>
@@ -2036,7 +2039,10 @@ Returns whether the element is [visible](./actionability.md#visible). [`option: 
 ### param: Page.isVisible.selector = %%-input-selector-%%
 
 ### option: Page.isVisible.strict = %%-input-strict-%%
-### option: Page.isVisible.timeout = %%-input-timeout-%%
+### option: Page.isVisible.timeout
+- `timeout` <[float]>
+
+**DEPRECATED** This option is ignored. [`method: Page.isVisible`] does not wait for the element to become visible and returns immediately.
 
 ## property: Page.keyboard
 - type: <[Keyboard]>
@@ -2046,8 +2052,6 @@ Returns whether the element is [visible](./actionability.md#visible). [`option: 
 
 The method returns an element locator that can be used to perform actions on the page.
 Locator is resolved to the element immediately before performing an action, so a series of actions on the same locator can in fact be performed on different DOM elements. That would happen if the DOM structure between those actions has changed.
-
-Note that locator always implies visibility, so it will always be locating visible elements.
 
 Shortcut for main frame's [`method: Frame.locator`].
 
@@ -2406,6 +2410,10 @@ Once routing is enabled, every request matching the url pattern will stall unles
 The handler will only be called for the first url if the response is a redirect.
 :::
 
+:::note
+[`method: Page.route`] will not intercept requests intercepted by Service Worker. See [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when using request interception. Via `await context.addInitScript(() => delete window.navigator.serviceWorker);`
+:::
+
 An example of a naive handler that aborts all image requests:
 
 ```js
@@ -2553,6 +2561,11 @@ handler function to route the request.
 
 handler function to route the request.
 
+### option: Page.route.times
+- `times` <[int]>
+
+How often a route should be used. By default it will be used every time.
+
 ## async method: Page.screenshot
 - returns: <[Buffer]>
 
@@ -2650,7 +2663,7 @@ page.select_option("select#colors", value=["red", "green", "blue"])
 await page.SelectOptionAsync("select#colors", new[] { "blue" });
 // single selection matching both the value and the label
 await page.SelectOptionAsync("select#colors", new[] { new SelectOptionValue() { Label = "blue" } });
-// multiple 
+// multiple
 await page.SelectOptionAsync("select#colors", new[] { "red", "green", "blue" });
 ```
 

@@ -178,7 +178,7 @@ Test that has been started.
 Result of the test run, this object gets populated while the test runs.
 
 ### param: Reporter.onStepBegin.step
-- `result` <[TestStep]>
+- `step` <[TestStep]>
 
 Test step instance.
 
@@ -197,7 +197,7 @@ Test that has been finished.
 Result of the test run.
 
 ### param: Reporter.onStepEnd.step
-- `result` <[TestStep]>
+- `step` <[TestStep]>
 
 Test step instance.
 

@@ -476,8 +476,9 @@ it('should fail when canceled by another navigation', async ({page, server}) => 
   expect(error.message).toBeTruthy();
 });
 
-it('should work with lazy loading iframes', async ({page, server, isElectron}) => {
+it('should work with lazy loading iframes', async ({page, server, isElectron, isAndroid}) => {
   it.fixme(isElectron);
+  it.fixme(isAndroid);
 
   await page.goto(server.PREFIX + '/frames/lazy-frame.html');
   expect(page.frames().length).toBe(2);

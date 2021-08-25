@@ -133,3 +133,19 @@ it('should not rely on engines working from the root', async ({ playwright, brow
   await page.setContent(`<input id=input1 value=value1><input id=input2 value=value2>`);
   expect(await page.$eval('input >> __value=value2', e => e.id)).toBe('input2');
 });
+
+it('should throw a nice error if the selector returns a bad value', async ({ playwright, browser }) => {
+  const page = await browser.newPage();
+  const createFakeEngine = () => ({
+    query(root, selector) {
+      return [document.body];
+    },
+    queryAll(root, selector) {
+      return [[document.body]];
+    },
+  });
+
+  await playwright.selectors.register('__fake', createFakeEngine);
+  const error = await page.$('__fake=value2').catch(e => e);
+  expect(error.message).toContain('Expected a Node but got [object Array]');
+});

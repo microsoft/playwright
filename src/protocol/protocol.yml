@@ -220,6 +220,17 @@ InterceptedResponse:
           value: string
 
 
+FetchResponse:
+  type: object
+  properties:
+    url: string
+    status: number
+    statusText: string
+    headers:
+      type: array
+      items: NameValue
+    body: binary
+
 LaunchOptions:
   type: mixin
   properties:
@@ -256,7 +267,6 @@ LaunchOptions:
 ContextOptions:
   type: mixin
   properties:
-    sdkLanguage: string
     noDefaultViewport: boolean?
     viewport:
       type: object?
@@ -323,7 +333,18 @@ ContextOptions:
       properties:
         omitContent: boolean?
         path: string
+    strictSelectors: boolean?
 
+Root:
+  type: interface
+
+  commands:
+
+    initialize:
+      parameters:
+        sdkLanguage: string
+      returns:
+        playwright: Playwright
 
 Playwright:
   type: interface
@@ -369,17 +390,46 @@ Playwright:
 
   commands:
 
-    setForwardedPorts:
+    socksConnected:
       parameters:
-        ports:
-          type: array
-          items: number
+        uid: string
+        host: string
+        port: number
+
+    socksFailed:
+      parameters:
+        uid: string
+        errorCode: string
+
+    socksData:
+      parameters:
+        uid: string
+        data: binary
+
+    socksError:
+      parameters:
+        uid: string
+        error: string
+
+    socksEnd:
+      parameters:
+        uid: string
 
   events:
-
-    incomingSocksSocket:
+    socksRequested:
       parameters:
-        socket: SocksSocket
+        uid: string
+        host: string
+        port: number
+
+    socksData:
+      parameters:
+        uid: string
+        data: binary
+
+    socksClosed:
+      parameters:
+        uid: string
 
 
 Selectors:
@@ -422,7 +472,6 @@ BrowserType:
 
     connectOverCDP:
       parameters:
-        sdkLanguage: string
         endpointURL: string
         headers:
           type: array?
@@ -553,6 +602,18 @@ BrowserContext:
         name: string
         needsHandle: boolean?
 
+    fetch:
+      parameters:
+        url: string
+        method: string?
+        headers:
+          type: array?
+          items: NameValue
+        postData: binary?
+      returns:
+        response: FetchResponse?
+        error: string?
+
     grantPermissions:
       parameters:
         permissions:
@@ -629,7 +690,8 @@ BrowserContext:
 
     newCDPSession:
       parameters:
-        page: Page
+        page: Page?
+        frame: Frame?
       returns:
         session: CDPSession
 
@@ -642,6 +704,10 @@ BrowserContext:
     tracingStop:
 
     tracingExport:
+      returns:
+        artifact: Artifact
+
+    harExport:
       returns:
         artifact: Artifact
 
@@ -1383,17 +1449,13 @@ Frame:
       parameters:
         selector: string
         strict: boolean?
-        timeout: number?
       returns:
         value: boolean
-      tracing:
-        snapshot: true
 
     isVisible:
       parameters:
         selector: string
         strict: boolean?
-        timeout: number?
       returns:
         value: boolean
 
@@ -1428,7 +1490,6 @@ Frame:
     querySelectorAll:
       parameters:
         selector: string
-        strict: boolean?
       returns:
         elements:
           type: array
@@ -2099,6 +2160,7 @@ Route:
           items: NameValue
         body: string?
         isBase64: boolean?
+        useInterceptedResponseBody: boolean?
 
     responseBody:
       returns:
@@ -2343,7 +2405,6 @@ Electron:
 
     launch:
       parameters:
-        sdkLanguage: string
         executablePath: string?
         args:
           type: array?
@@ -2392,6 +2453,7 @@ Electron:
               properties:
                 width: number
                 height: number
+        strictSelectors: boolean?
         timezoneId: string?
 
       returns:
@@ -2602,7 +2664,6 @@ AndroidDevice:
 
     launchBrowser:
       parameters:
-        sdkLanguage: string
         pkg: string?
         ignoreHTTPSErrors: boolean?
         javaScriptEnabled: boolean?
@@ -2658,6 +2719,7 @@ AndroidDevice:
           properties:
             omitContent: boolean?
             path: string
+        strictSelectors: boolean?
         proxy:
           type: object?
           properties:
@@ -2700,7 +2762,6 @@ AndroidDevice:
 
     connectToWebView:
       parameters:
-        sdkLanguage: string
         pid: number
       returns:
         context: BrowserContext
@@ -2774,29 +2835,3 @@ AndroidElementInfo:
     longClickable: boolean
     scrollable: boolean
     selected: boolean
-
-SocksSocket:
-  type: interface
-
-  initializer:
-    dstAddr: string
-    dstPort: number
-
-  commands:
-    write:
-      parameters:
-        data: binary
-
-    error:
-      parameters:
-        error: string
-
-    connected:
-
-    end:
-
-  events:
-    data:
-      parameters:
-        data: binary
-    close:

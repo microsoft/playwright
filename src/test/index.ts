@@ -194,6 +194,8 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
       context.setDefaultNavigationTimeout(navigationTimeout || actionTimeout || 0);
       if (captureTrace)
         await context.tracing.start({ screenshots: true, snapshots: true });
+      else
+        await context.tracing.stop();
       (context as any)._csi = {
         onApiCall: (name: string) => {
           return (testInfo as any)._addStep('pw:api', name);

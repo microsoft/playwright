@@ -47,3 +47,38 @@ test('render each test with project name', async ({ runInlineTest }) => {
   expect(text).toContain(`-  [bar] › a.test.ts:12:12 › skipped`);
   expect(result.exitCode).toBe(1);
 });
+
+test('render steps', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      test('passes', async ({}) => {
+        await test.step('outer 1.0', async () => {
+          await test.step('inner 1.1', async () => {});
+          await test.step('inner 1.1', async () => {});
+        });
+        await test.step('outer 2.0', async () => {
+          await test.step('inner 2.1', async () => {});
+          await test.step('inner 2.1', async () => {});
+        });
+      });
+    `,
+  }, { reporter: 'list' });
+  const text = stripAscii(result.output);
+  const lines = text.split('\n').filter(l => l.startsWith('0 :'));
+  lines.pop(); // Remove last item that contains [v] and time in ms.
+  expect(lines).toEqual([
+    '0 :      a.test.ts:6:7 › passes › outer 1.0',
+    '0 :      a.test.ts:6:7 › passes › outer 1.0 › inner 1.1',
+    '0 :      a.test.ts:6:7 › passes › outer 1.0',
+    '0 :      a.test.ts:6:7 › passes › outer 1.0 › inner 1.1',
+    '0 :      a.test.ts:6:7 › passes › outer 1.0',
+    '0 :      a.test.ts:6:7 › passes',
+    '0 :      a.test.ts:6:7 › passes › outer 2.0',
+    '0 :      a.test.ts:6:7 › passes › outer 2.0 › inner 2.1',
+    '0 :      a.test.ts:6:7 › passes › outer 2.0',
+    '0 :      a.test.ts:6:7 › passes › outer 2.0 › inner 2.1',
+    '0 :      a.test.ts:6:7 › passes › outer 2.0',
+    '0 :      a.test.ts:6:7 › passes',
+  ]);
+});

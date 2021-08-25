@@ -1,7 +1,7 @@
 <link rel=stylesheet href='./style.css'>
 <script src="./vue_2.6.14.js"></script>
 
-<div id=root></div>
+<div id=root><div></div></div>
 
 <script>
 
@@ -82,9 +82,8 @@ Vue.component('button-grid', {
   }
 });
 
-
-new Vue({
-  el: '#root',
+window.mountApp = element => new Vue({
+  el: element,
 
   template: `
     <div>
@@ -112,5 +111,6 @@ new Vue({
     }
   },
 });
+window.mountApp(document.querySelector('#root div'));
 
 </script>

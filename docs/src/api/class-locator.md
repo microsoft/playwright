@@ -95,6 +95,51 @@ await locator.HoverAsync();
 await locator.ClickAsync();
 ```
 
+**Strictness**
+
+Locators are strict. This means that all operations on locators that imply
+some target DOM element will throw if more than one element matches given
+selector.
+
+```js
+// Throws if there are several buttons in DOM:
+await page.locator('button').click();
+
+// Works because we explicitly tell locator to pick the first element:
+await page.locator('button').first().click();
+```
+
+```python async
+# Throws if there are several buttons in DOM:
+await page.locator('button').click()
+
+# Works because we explicitly tell locator to pick the first element:
+await page.locator('button').first.click()
+```
+
+```python sync
+# Throws if there are several buttons in DOM:
+page.locator('button').click()
+
+# Works because we explicitly tell locator to pick the first element:
+page.locator('button').first.click()
+```
+
+```java
+// Throws if there are several buttons in DOM:
+page.locator("button").click();
+
+// Works because you explicitly tell locator to pick the first element:
+page.locator("button").first().click();
+```
+
+```csharp
+// Throws if there are several buttons in DOM:
+await page.Locator("button").ClickAsync();
+// Works because you explicitly tell locator to pick the first element:
+await page.Locator("button").First.ClickAsync();
+```
+
 ## async method: Locator.allInnerTexts
 - returns: <[Array]<[string]>>
 
@@ -344,7 +389,7 @@ its value.
 Examples:
 
 ```js
-const tweets = await page.locator('.tweet .retweets');
+const tweets = page.locator('.tweet .retweets');
 expect(await tweets.evaluate(node => node.innerText)).toBe('10 retweets');
 ```
 
@@ -354,7 +399,7 @@ assertEquals("10 retweets", tweets.evaluate("node => node.innerText"));
 ```
 
 ```python async
-tweets = await page.locator(".tweet .retweets")
+tweets = page.locator(".tweet .retweets")
 assert await tweets.evaluate("node => node.innerText") == "10 retweets"
 ```
 
@@ -557,14 +602,20 @@ Returns whether the element is [enabled](./actionability.md#enabled).
 
 Returns whether the element is hidden, the opposite of [visible](./actionability.md#visible).
 
-### option: Locator.isHidden.timeout = %%-input-timeout-%%
+### option: Locator.isHidden.timeout
+- `timeout` <[float]>
+
+**DEPRECATED** This option is ignored. [`method: Locator.isHidden`] does not wait for the element to become hidden and returns immediately.
 
 ## async method: Locator.isVisible
 - returns: <[boolean]>
 
 Returns whether the element is [visible](./actionability.md#visible).
 
-### option: Locator.isVisible.timeout = %%-input-timeout-%%
+### option: Locator.isVisible.timeout
+- `timeout` <[float]>
+
+**DEPRECATED** This option is ignored. [`method: Locator.isVisible`] does not wait for the element to become visible and returns immediately.
 
 ## method: Locator.last
 - returns: <[Locator]>

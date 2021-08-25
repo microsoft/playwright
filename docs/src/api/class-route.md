@@ -166,7 +166,7 @@ await page.route('**/xhr_endpoint', route => route.fulfill({ path: 'mock_data.js
 
 ```java
 page.route("**/xhr_endpoint", route -> route.fulfill(
-  new Route.FulfillOptions().setPath(Paths.get("mock_data.json")));
+  new Route.FulfillOptions().setPath(Paths.get("mock_data.json"))));
 ```
 
 ```python async
@@ -180,6 +180,11 @@ page.route("**/xhr_endpoint", lambda route: route.fulfill(path="mock_data.json")
 ```csharp
 await page.RouteAsync("**/xhr_endpoint", route => route.FulfillAsync(new RouteFulfillOptions { Path = "mock_data.json" }));
 ```
+
+### option: Route.fulfill._response
+- `_response` <[Response]>
+
+Intercepted response. Will be used to populate all response fields not explicitely overridden.
 
 ### option: Route.fulfill.status
 - `status` <[int]>

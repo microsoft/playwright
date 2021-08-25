@@ -17,7 +17,7 @@
 import { LaunchServerOptions, Logger } from './client/types';
 import { Browser } from './server/browser';
 import { EventEmitter } from 'ws';
-import { Dispatcher, DispatcherScope } from './dispatchers/dispatcher';
+import { Dispatcher, DispatcherConnection, DispatcherScope, Root } from './dispatchers/dispatcher';
 import { BrowserContextDispatcher } from './dispatchers/browserContextDispatcher';
 import * as channels from './protocol/channels';
 import { BrowserServerLauncher, BrowserServer } from './client/browserType';
@@ -43,9 +43,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
   }
 
   async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
-    const playwright = createPlaywright();
-    if (options._acceptForwardedPorts)
-      await playwright._enablePortForwarding();
+    const playwright = createPlaywright('javascript');
     // 1. Pre-launch the browser
     const browser = await playwright[this._browserName].launch(internalCallMetadata(), {
       ...options,
@@ -54,13 +52,15 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
       env: options.env ? envObjectToArray(options.env) : undefined,
     }, toProtocolLogger(options.logger));
 
+    let path = `/${createGuid()}`;
+    if (options.wsPath)
+      path = options.wsPath.startsWith('/') ? options.wsPath : `/${options.wsPath}`;
+
     // 2. Start the server
     const delegate: PlaywrightServerDelegate = {
-      path: '/' + createGuid(),
-      allowMultipleClients: options._acceptForwardedPorts ? false : true,
-      onClose: () => {
-        playwright._disablePortForwarding();
-      },
+      path,
+      allowMultipleClients: true,
+      onClose: () => {},
       onConnect: this._onConnect.bind(this, playwright, browser),
     };
     const server = new PlaywrightServer(delegate);
@@ -80,18 +80,21 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     return browserServer;
   }
 
-  private async _onConnect(playwright: Playwright, browser: Browser, scope: DispatcherScope, forceDisconnect: () => void) {
-    const selectors = new Selectors();
-    const selectorsDispatcher = new SelectorsDispatcher(scope, selectors);
-    const browserDispatcher = new ConnectedBrowserDispatcher(scope, browser, selectors);
-    browser.on(Browser.Events.Disconnected, () => {
-      // Underlying browser did close for some reason - force disconnect the client.
-      forceDisconnect();
+  private async _onConnect(playwright: Playwright, browser: Browser, connection: DispatcherConnection, forceDisconnect: () => void) {
+    let browserDispatcher: ConnectedBrowserDispatcher | undefined;
+    new Root(connection, async (scope: DispatcherScope): Promise<PlaywrightDispatcher> => {
+      const selectors = new Selectors();
+      const selectorsDispatcher = new SelectorsDispatcher(scope, selectors);
+      browserDispatcher = new ConnectedBrowserDispatcher(scope, browser, selectors);
+      browser.on(Browser.Events.Disconnected, () => {
+        // Underlying browser did close for some reason - force disconnect the client.
+        forceDisconnect();
+      });
+      return new PlaywrightDispatcher(scope, playwright, selectorsDispatcher, browserDispatcher);
     });
-    new PlaywrightDispatcher(scope, playwright, selectorsDispatcher, browserDispatcher);
     return () => {
       // Cleanup contexts upon disconnect.
-      browserDispatcher.cleanupContexts().catch(e => {});
+      browserDispatcher?.cleanupContexts().catch(e => {});
     };
   }
 }

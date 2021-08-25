@@ -243,14 +243,14 @@ export class AndroidDevice extends SdkObject {
     return await this._connectToBrowser(socketName, options);
   }
 
-  async connectToWebView(pid: number, sdkLanguage: string): Promise<BrowserContext> {
+  async connectToWebView(pid: number): Promise<BrowserContext> {
     const webView = this._webViews.get(pid);
     if (!webView)
       throw new Error('WebView has been closed');
-    return await this._connectToBrowser(`webview_devtools_remote_${pid}`, { sdkLanguage });
+    return await this._connectToBrowser(`webview_devtools_remote_${pid}`);
   }
 
-  private async _connectToBrowser(socketName: string, options: types.BrowserContextOptions): Promise<BrowserContext> {
+  private async _connectToBrowser(socketName: string, options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
     const socket = await this._waitForLocalAbstract(socketName);
     const androidBrowser = new AndroidBrowser(this, socket);
     await androidBrowser._init();

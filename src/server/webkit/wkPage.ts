@@ -1008,7 +1008,7 @@ export class WKPage implements PageDelegate {
       session.sendMayFail('Network.interceptContinue', { requestId: event.requestId, stage: 'response' });
       return;
     }
-    route._responseInterceptedCallback(event.response);
+    route._responseInterceptedCallback({ response: event.response });
   }
 
   _onResponseReceived(event: Protocol.Network.responseReceivedPayload) {
@@ -1068,6 +1068,9 @@ export class WKPage implements PageDelegate {
     // @see https://crbug.com/750469
     if (!request)
       return;
+    const route = request._routeForRedirectChain();
+    if (route?._responseInterceptedCallback)
+      route._responseInterceptedCallback({ error: event });
     const response = request.request._existingResponse();
     if (response) {
       response._serverAddrFinished();

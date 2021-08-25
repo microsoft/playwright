@@ -21,12 +21,11 @@ import {
 
 import {
   EXPECTED_COLOR,
-  getLabelPrinter,
   matcherErrorMessage,
   matcherHint, MatcherHintOptions,
   printExpected,
-  printReceived,
   printWithType,
+  printDiffOrStringify,
 } from 'jest-matcher-utils';
 import { currentTestInfo } from '../globals';
 import type { Expect } from '../types';
@@ -107,14 +106,17 @@ export async function toMatchText(
       const labelExpected = `Expected ${typeof expected === 'string' ? stringSubstring : 'pattern'
       }`;
       const labelReceived = 'Received string';
-      const printLabel = getLabelPrinter(labelExpected, labelReceived);
 
       return (
         matcherHint(matcherName, undefined, undefined, matcherOptions) +
         '\n\n' +
-        `${printLabel(labelExpected)}${printExpected(expected)}\n` +
-        `${printLabel(labelReceived)}${printReceived(received)}`
-      );
+        printDiffOrStringify(
+            expected,
+            received,
+            labelExpected,
+            labelReceived,
+            this.expand !== false,
+        ));
     };
 
   return { message, pass };

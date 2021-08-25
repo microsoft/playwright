@@ -6,6 +6,7 @@
     ["@babel/plugin-transform-typescript", { "allowDeclareFields": true } ],
     "@babel/plugin-proposal-export-namespace-from",
     "@babel/plugin-proposal-class-properties",
+    "@babel/plugin-proposal-logical-assignment-operators",
     "@babel/plugin-proposal-optional-chaining",
     "@babel/plugin-transform-modules-commonjs"
   ],

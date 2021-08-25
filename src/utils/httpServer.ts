@@ -17,6 +17,7 @@
 import * as http from 'http';
 import fs from 'fs';
 import path from 'path';
+import * as mime from 'mime';
 
 export type ServerRouteHandler = (request: http.IncomingMessage, response: http.ServerResponse) => boolean;
 
@@ -58,7 +59,7 @@ export class HttpServer {
     try {
       const content = fs.readFileSync(absoluteFilePath);
       response.statusCode = 200;
-      const contentType = extensionToMime[path.extname(absoluteFilePath).substring(1)] || 'application/octet-stream';
+      const contentType = mime.getType(path.extname(absoluteFilePath)) || 'application/octet-stream';
       response.setHeader('Content-Type', contentType);
       response.setHeader('Content-Length', content.byteLength);
       for (const [name, value] of Object.entries(headers || {}))
@@ -91,17 +92,3 @@ export class HttpServer {
     }
   }
 }
-
-const extensionToMime: { [key: string]: string } = {
-  'css': 'text/css',
-  'html': 'text/html',
-  'jpeg': 'image/jpeg',
-  'jpg': 'image/jpeg',
-  'js': 'application/javascript',
-  'png': 'image/png',
-  'ttf': 'font/ttf',
-  'svg': 'image/svg+xml',
-  'webp': 'image/webp',
-  'woff': 'font/woff',
-  'woff2': 'font/woff2',
-};

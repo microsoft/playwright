@@ -292,6 +292,21 @@ it('should click', async function({page, browser, server}) {
   expect(await handle1.evaluate(() => window['_clicked'])).toBe(true);
 });
 
+it('should allow cdp sessions on oopifs', async function({page, browser, server}) {
+  await page.goto(server.PREFIX + '/dynamic-oopif.html');
+  expect(await countOOPIFs(browser)).toBe(1);
+  expect(page.frames().length).toBe(2);
+  expect(await page.frames()[1].evaluate(() => '' + location.href)).toBe(server.CROSS_PROCESS_PREFIX + '/grid.html');
+
+  const parentCDP = await page.context().newCDPSession(page.frames()[0]);
+  const parent = await parentCDP.send('DOM.getDocument', { pierce: true, depth: -1 });
+  expect(JSON.stringify(parent)).not.toContain('./digits/1.png');
+
+  const oopifCDP = await page.context().newCDPSession(page.frames()[1]);
+  const oopif = await oopifCDP.send('DOM.getDocument', { pierce: true, depth: -1});
+  expect(JSON.stringify(oopif)).toContain('./digits/1.png');
+});
+
 async function countOOPIFs(browser) {
   const browserSession = await browser.newBrowserCDPSession();
   const oopifs = [];

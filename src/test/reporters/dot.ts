@@ -21,19 +21,19 @@ import { FullResult, TestCase, TestResult } from '../../../types/testReporter';
 class DotReporter extends BaseReporter {
   private _counter = 0;
 
-  onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
+  override onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     super.onStdOut(chunk, test, result);
     if (!this.config.quiet)
       process.stdout.write(chunk);
   }
 
-  onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
+  override onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     super.onStdErr(chunk, test, result);
     if (!this.config.quiet)
       process.stderr.write(chunk);
   }
 
-  onTestEnd(test: TestCase, result: TestResult) {
+  override onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
     if (this._counter === 80) {
       process.stdout.write('\n');
@@ -44,7 +44,7 @@ class DotReporter extends BaseReporter {
       process.stdout.write(colors.yellow('°'));
       return;
     }
-    if (this.willRetry(test, result)) {
+    if (this.willRetry(test)) {
       process.stdout.write(colors.gray('×'));
       return;
     }
@@ -55,7 +55,7 @@ class DotReporter extends BaseReporter {
     }
   }
 
-  async onEnd(result: FullResult) {
+  override async onEnd(result: FullResult) {
     await super.onEnd(result);
     process.stdout.write('\n');
     this.epilogue(true);

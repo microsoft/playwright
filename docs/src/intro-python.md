@@ -1,6 +1,6 @@
 ---
 id: intro
-title: "Getting Started"
+title: "Getting started"
 ---
 
 <!-- TOC -->
@@ -16,6 +16,7 @@ See [system requirements](#system-requirements).
 [![PyPI version](https://badge.fury.io/py/playwright.svg)](https://pypi.python.org/pypi/playwright/)
 
 ```bash
+pip install --upgrade pip
 pip install playwright
 playwright install
 ```
@@ -88,7 +89,7 @@ firefox.launch(headless=False, slow_mo=50)
 
 ## Record scripts
 
-Command Line Interface [CLI](./cli.md) can be used to record user interactions and generate Python code.
+[Command line tools](./cli.md) can be used to record user interactions and generate Python code.
 
 ```bash
 playwright codegen wikipedia.org
@@ -181,6 +182,13 @@ It is recommended to only bundle the browsers you use.
 
 You should use `page.wait_for_timeout(5000)` instead of `time.sleep(5)` and it is better to not wait for a timeout at all, but sometimes it is useful for debugging. In these cases, use our wait method instead of the `time` module. This is because we internally rely on asynchronous operations and when using `time.sleep(5)` they can't get processed correctly.
 
+
+### incompatible with `SelectorEventLoop` of `asyncio` on Windows
+
+Playwright runs the driver in a subprocess, so it requires `ProactorEventLoop` of `asyncio` on Windows because `SelectorEventLoop` does not supports async subprocesses.
+
+On Windows Python 3.7, Playwright sets the default event loop to `ProactorEventLoop` as it is default on Python 3.8+.
+
 ## System requirements
 
 Playwright requires Python 3.7 or above. The browser binaries for Chromium,
@@ -203,6 +211,6 @@ dependencies to run the browsers.
 Only Ubuntu 18.04 and Ubuntu 20.04 are officially supported.
 :::
 
-See also in the [Command Line Interface](./cli.md#install-system-dependencies)
+See also in the [Command line tools](./cli.md#install-system-dependencies)
 which has a command to install all necessary dependencies automatically for Ubuntu
 LTS releases.

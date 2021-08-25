@@ -33,6 +33,26 @@ it.describe('launch server', () => {
     await browserServer.close();
   });
 
+  it('should work with wsPath', async ({browserType, browserOptions}) => {
+    const wsPath = '/unguessable-token';
+    const browserServer = await browserType.launchServer({ ...browserOptions, wsPath });
+    expect(browserServer.wsEndpoint()).toMatch(/:\d+\/unguessable-token$/);
+    await browserServer.close();
+  });
+
+  it('should work when wsPath is missing leading slash', async ({browserType, browserOptions}) => {
+    const wsPath = 'unguessable-token';
+    const browserServer = await browserType.launchServer({ ...browserOptions, wsPath });
+    expect(browserServer.wsEndpoint()).toMatch(/:\d+\/unguessable-token$/);
+    await browserServer.close();
+  });
+
+  it('should default to random wsPath', async ({browserType, browserOptions}) => {
+    const browserServer = await browserType.launchServer({ ...browserOptions });
+    expect(browserServer.wsEndpoint()).toMatch(/:\d+\/[a-f\d]{32}$/);
+    await browserServer.close();
+  });
+
   it('should provide an error when ws endpoint is incorrect', async ({browserType, browserOptions}) => {
     const browserServer = await browserType.launchServer(browserOptions);
     const error = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() + '-foo' }).catch(e => e);

@@ -75,13 +75,11 @@ export type LaunchPersistentContextOptions = Omit<LaunchOptionsBase & BrowserCon
 export type ConnectOptions = {
   wsEndpoint: string,
   headers?: { [key: string]: string; };
-  _forwardPorts?: number[];
   slowMo?: number,
   timeout?: number,
   logger?: Logger,
 };
 export type LaunchServerOptions = {
-  _acceptForwardedPorts?: boolean,
   channel?: channels.BrowserTypeLaunchOptions['channel'],
   executablePath?: string,
   args?: string[],
@@ -102,6 +100,7 @@ export type LaunchServerOptions = {
   downloadsPath?: string,
   chromiumSandbox?: boolean,
   port?: number,
+  wsPath?: string,
   logger?: Logger,
 } & FirefoxUserPrefs;
 

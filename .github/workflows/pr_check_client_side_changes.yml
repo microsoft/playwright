@@ -1,0 +1,28 @@
+name: "Check client side changes"
+on:
+  pull_request:
+    types: [ closed ]
+    branches:
+      - master
+    paths:
+      - 'src/client/**/*'
+jobs:
+  check:
+    name: Check
+    runs-on: ubuntu-20.04
+    if: github.event.pull_request.merged == true
+    steps:
+      - name: Create GitHub issue
+        uses: actions/github-script@v4
+        with:
+          script: |
+            const body = `${{ github.event.number }} made changes to the client, this needs to get applied in:
+            - [ ] Python
+            - [ ] Java
+            - [ ] .NET`;
+            await github.issues.create({
+              owner: context.payload.pull_request.base.repo.owner.login,
+              repo: context.payload.pull_request.base.repo.name,
+              title: '[Internal] Backport client change to language ports',
+              body,
+            });

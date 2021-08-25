@@ -82,10 +82,10 @@ test('should print load/save storage_state', async ({ runCLI, browserName }, tes
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');
   const cli = runCLI([`--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, '--target=java', emptyHTML]);
   const expectedResult1 = `BrowserContext context = browser.newContext(new Browser.NewContextOptions()
-        .setStorageStatePath(Paths.get("${loadFileName}")));`;
+        .setStorageStatePath(Paths.get("${loadFileName.replace(/\\/g, '\\\\')}")));`;
   await cli.waitFor(expectedResult1);
 
   const expectedResult2 = `
-      context.storageState(new BrowserContext.StorageStateOptions().setPath("${saveFileName}"))`;
+      context.storageState(new BrowserContext.StorageStateOptions().setPath("${saveFileName.replace(/\\/g, '\\\\')}"))`;
   await cli.waitFor(expectedResult2);
 });

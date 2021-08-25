@@ -1,6 +1,6 @@
 ---
 id: intro
-title: "Getting Started"
+title: "Getting started"
 ---
 
 Playwright can either be used as a part of the Playwright Test (this guide), or as a [Playwright Library](./library.md).
@@ -41,7 +41,7 @@ const { test, expect } = require('@playwright/test');
 
 test('basic test', async ({ page }) => {
   await page.goto('https://playwright.dev/');
-  const title = page.locator('.navbar__title');
+  const title = page.locator('.navbar__inner .navbar__title');
   await expect(title).toHaveText('Playwright');
 });
 ```
@@ -51,7 +51,7 @@ import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ page }) => {
   await page.goto('https://playwright.dev/');
-  const title = page.locator('.navbar__title');
+  const title = page.locator('.navbar__inner .navbar__title');
   await expect(title).toHaveText('Playwright');
 });
 ```
@@ -100,17 +100,17 @@ test('my test', async ({ page }) => {
   await page.goto('https://playwright.dev/');
 
   // Expect a title "to contain" a substring.
-  await expect(page).toHaveTitle('Playwright');
+  await expect(page).toHaveTitle(/Playwright/);
 
   // Expect an attribute "to be strictly equal" to the value.
-  await expect(page.locator('text=Get Started').toHaveAttribute('href', '/docs/intro');
+  await expect(page.locator('text=Get Started').first()).toHaveAttribute('href', '/docs/intro');
 
   // Expect an element "to be visible".
-  await expect(page.locator('text=Learn more')).toBeVisible();
+  await expect(page.locator('text=Learn more').first()).toBeVisible();
 
   await page.click('text=Get Started');
   // Expect some text to be visible on the page.
-  await expect(page.locator('text=System requirements')).toBeVisible();
+  await expect(page.locator('text=System requirements').first()).toBeVisible();
 
   // Compare screenshot with a stored reference.
   expect(await page.screenshot()).toMatchSnapshot('get-started.png');
@@ -125,17 +125,17 @@ test('my test', async ({ page }) => {
   await page.goto('https://playwright.dev/');
 
   // Expect a title "to contain" a substring.
-  await expect(page).toHaveTitle('Playwright');
+  await expect(page).toHaveTitle(/Playwright/);
 
   // Expect an attribute "to be strictly equal" to the value.
-  await expect(page.locator('text=Get Started').toHaveAttribute('href', '/docs/intro');
+  await expect(page.locator('text=Get Started').first()).toHaveAttribute('href', '/docs/intro');
 
   // Expect an element "to be visible".
-  await expect(page.locator('text=Learn more')).toBeVisible();
+  await expect(page.locator('text=Learn more').first()).toBeVisible();
 
   await page.click('text=Get Started');
   // Expect some text to be visible on the page.
-  await expect(page.locator('text=System requirements')).toBeVisible();
+  await expect(page.locator('text=System requirements').first()).toBeVisible();
 
   // Compare screenshot with a stored reference.
   expect(await page.screenshot()).toMatchSnapshot('get-started.png');
@@ -229,23 +229,13 @@ test.describe('feature foo', () => {
 ```
 
 
-## Learning the command line
+## Command line
 
-Here are the most common options available in the [command line](./test-cli.md).
+Following are the usual command line patterns. Learn more about the [command line](./test-cli.md).
 
-- Run tests in headed browsers
+- Run all the tests
   ```bash
-  npx playwright test --headed
-  ```
-
-- Run tests in a particular browser
-  ```bash
-  npx playwright test --browser=webkit
-  ```
-
-- Run tests in all browsers
-  ```bash
-  npx playwright test --browser=all
+  npx playwright test
   ```
 
 - Run a single test file
@@ -258,14 +248,29 @@ Here are the most common options available in the [command line](./test-cli.md).
   npx playwright test tests/todo-page/ tests/landing-page/
   ```
 
-- Run a test with specific title
+- Run files that have `my-spec` or `my-spec-2` in the file name
+  ```bash
+  npx playwright test my-spec my-spec-2
+  ```
+
+- Run the test with the title
   ```bash
   npx playwright test -g "add a todo item"
   ```
 
-- Run tests [in parallel](./test-parallel.md) - that's the default
+- Run tests in headed browsers
   ```bash
-  npx playwright test
+  npx playwright test --headed
+  ```
+
+- Run tests in a particular browser (config-less mode)
+  ```bash
+  npx playwright test --browser=webkit
+  ```
+
+- Run tests in all browsers (config-less mode)
+  ```bash
+  npx playwright test --browser=all
   ```
 
 - Disable [parallelization](./test-parallel.md)
@@ -290,6 +295,11 @@ Here are the most common options available in the [command line](./test-cli.md).
   # Windows with PowerShell
   $env:PWDEBUG=1
   npx playwright test
+  ```
+
+- Ask for help
+  ```bash
+  npx playwright test --help
   ```
 
 ## Creating a configuration file

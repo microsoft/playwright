@@ -23,6 +23,7 @@ import { tOptional } from '../protocol/validatorPrimitives';
 import { kBrowserOrContextClosedError } from '../utils/errors';
 import { CallMetadata, SdkObject } from '../server/instrumentation';
 import { rewriteErrorMessage } from '../utils/stackTrace';
+import type { PlaywrightDispatcher } from './playwrightDispatcher';
 
 export const dispatcherSymbol = Symbol('dispatcher');
 
@@ -121,15 +122,25 @@ export class Dispatcher<Type extends { guid: string }, Initializer> extends Even
 }
 
 export type DispatcherScope = Dispatcher<any, any>;
-class Root extends Dispatcher<{ guid: '' }, {}> {
-  constructor(connection: DispatcherConnection) {
-    super(connection, { guid: '' }, '', {}, true);
+export class Root extends Dispatcher<{ guid: '' }, {}> {
+  private _initialized = false;
+
+  constructor(connection: DispatcherConnection, private readonly createPlaywright?: (scope: DispatcherScope, options: channels.RootInitializeParams) => Promise<PlaywrightDispatcher>) {
+    super(connection, { guid: '' }, 'Root', {}, true);
+  }
+
+  async initialize(params: channels.RootInitializeParams): Promise<channels.RootInitializeResult> {
+    assert(this.createPlaywright);
+    assert(!this._initialized);
+    this._initialized = true;
+    return {
+      playwright: await this.createPlaywright(this, params),
+    };
   }
 }
 
 export class DispatcherConnection {
   readonly _dispatchers = new Map<string, Dispatcher<any, any>>();
-  private _rootDispatcher: Root;
   onmessage = (message: object) => {};
   private _validateParams: (type: string, method: string, params: any) => any;
   private _validateMetadata: (metadata: any) => { stack?: channels.StackFrame[] };
@@ -157,8 +168,6 @@ export class DispatcherConnection {
   }
 
   constructor() {
-    this._rootDispatcher = new Root(this);
-
     const tChannel = (name: string): Validator => {
       return (arg: any, path: string) => {
         if (arg && typeof arg === 'object' && typeof arg.guid === 'string') {
@@ -185,10 +194,6 @@ export class DispatcherConnection {
     };
   }
 
-  rootDispatcher(): Dispatcher<any, any> {
-    return this._rootDispatcher;
-  }
-
   async dispatch(message: object) {
     const { id, guid, method, params, metadata } = message as any;
     const dispatcher = this._dispatchers.get(guid);
@@ -197,7 +202,8 @@ export class DispatcherConnection {
       return;
     }
     if (method === 'debugScopeState') {
-      this.onmessage({ id, result: this._rootDispatcher._debugScopeState() });
+      const rootDispatcher = this._dispatchers.get('')!;
+      this.onmessage({ id, result: rootDispatcher._debugScopeState() });
       return;
     }
 

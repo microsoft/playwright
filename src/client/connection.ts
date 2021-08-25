@@ -35,14 +35,19 @@ import { Stream } from './stream';
 import { debugLogger } from '../utils/debugLogger';
 import { SelectorsOwner } from './selectors';
 import { Android, AndroidSocket, AndroidDevice } from './android';
-import { SocksSocket } from './socksSocket';
 import { ParsedStackTrace } from '../utils/stackTrace';
 import { Artifact } from './artifact';
 import { EventEmitter } from 'events';
 
-class Root extends ChannelOwner<channels.Channel, {}> {
+class Root extends ChannelOwner<channels.RootChannel, {}> {
   constructor(connection: Connection) {
-    super(connection, '', '', {});
+    super(connection, 'Root', '', {});
+  }
+
+  async initialize(): Promise<Playwright> {
+    return Playwright.from((await this._channel.initialize({
+      sdkLanguage: 'javascript',
+    })).playwright);
   }
 }
 
@@ -52,7 +57,7 @@ export class Connection extends EventEmitter {
   onmessage = (message: object): void => {};
   private _lastId = 0;
   private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void, metadata: channels.Metadata }>();
-  private _rootObject: ChannelOwner;
+  private _rootObject: Root;
   private _disconnectedErrorMessage: string | undefined;
   private _onClose?: () => void;
 
@@ -62,10 +67,8 @@ export class Connection extends EventEmitter {
     this._onClose = onClose;
   }
 
-  async waitForObjectWithKnownName(guid: string): Promise<any> {
-    if (this._objects.has(guid))
-      return this._objects.get(guid)!;
-    return new Promise(f => this._waitingForObject.set(guid, f));
+  async initializePlaywright(): Promise<Playwright> {
+    return await this._rootObject.initialize();
   }
 
   pendingProtocolCalls(): channels.Metadata[] {
@@ -243,9 +246,6 @@ export class Connection extends EventEmitter {
         break;
       case 'Worker':
         result = new Worker(parent, type, guid, initializer);
-        break;
-      case 'SocksSocket':
-        result = new SocksSocket(parent, type, guid, initializer);
         break;
       default:
         throw new Error('Missing type ' + type);

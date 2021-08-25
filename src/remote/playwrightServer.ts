@@ -17,9 +17,9 @@
 import debug from 'debug';
 import * as http from 'http';
 import * as ws from 'ws';
-import { DispatcherConnection, DispatcherScope } from '../dispatchers/dispatcher';
+import { DispatcherConnection, Root } from '../dispatchers/dispatcher';
 import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
-import { createPlaywright } from '../server/playwright';
+import { createPlaywright, Playwright } from '../server/playwright';
 import { gracefullyCloseAll } from '../utils/processLauncher';
 
 const debugLog = debug('pw:server');
@@ -27,21 +27,16 @@ const debugLog = debug('pw:server');
 export interface PlaywrightServerDelegate {
   path: string;
   allowMultipleClients: boolean;
-  onConnect(rootScope: DispatcherScope, forceDisconnect: () => void): Promise<() => any>;
+  onConnect(connection: DispatcherConnection, forceDisconnect: () => void): Promise<() => any>;
   onClose: () => any;
 }
-
-export type PlaywrightServerOptions = {
-  acceptForwardedPorts?: boolean
-  onDisconnect?: () => void;
-};
 
 export class PlaywrightServer {
   private _wsServer: ws.Server | undefined;
   private _clientsCount = 0;
   private _delegate: PlaywrightServerDelegate;
 
-  static async startDefault({ acceptForwardedPorts, onDisconnect }: PlaywrightServerOptions = {}): Promise<PlaywrightServer> {
+  static async startDefault(): Promise<PlaywrightServer> {
     const cleanup = async () => {
       await gracefullyCloseAll().catch(e => {});
     };
@@ -49,16 +44,18 @@ export class PlaywrightServer {
       path: '/ws',
       allowMultipleClients: false,
       onClose: cleanup,
-      onConnect: async (rootScope: DispatcherScope) => {
-        const playwright = createPlaywright();
-        if (acceptForwardedPorts)
-          await playwright._enablePortForwarding();
-        new PlaywrightDispatcher(rootScope, playwright);
+      onConnect: async (connection: DispatcherConnection) => {
+        let playwright: Playwright | undefined;
+        new Root(connection, async (rootScope): Promise<PlaywrightDispatcher> => {
+          playwright = createPlaywright('javascript');
+          const dispatcher = new PlaywrightDispatcher(rootScope, playwright);
+          if (process.env.PW_SOCKS_PROXY_PORT)
+            await dispatcher.enableSocksProxy();
+          return dispatcher;
+        });
         return () => {
           cleanup();
-          playwright._disablePortForwarding();
-          playwright.selectors.unregisterAll();
-          onDisconnect?.();
+          playwright?.selectors.unregisterAll();
         };
       },
     };
@@ -105,7 +102,6 @@ export class PlaywrightServer {
       });
 
       const forceDisconnect = () => socket.close();
-      const scope = connection.rootDispatcher();
       let onDisconnect = () => {};
       const disconnected = () => {
         this._clientsCount--;
@@ -121,7 +117,7 @@ export class PlaywrightServer {
         debugLog('Client error ' + error);
         disconnected();
       });
-      onDisconnect = await this._delegate.onConnect(scope, forceDisconnect);
+      onDisconnect = await this._delegate.onConnect(connection, forceDisconnect);
     });
 
     return wsEndpoint;

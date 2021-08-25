@@ -107,9 +107,6 @@ elif [[ ("$1" == "firefox-beta") || ("$1" == "ff-beta") ]]; then
     CHECKOUT_PATH="${FF_CHECKOUT_PATH}"
     FRIENDLY_CHECKOUT_PATH="<FF_CHECKOUT_PATH>"
   fi
-elif [[ ("$1" == "deprecated-webkit-mac-10.14") ]]; then
-  echo "FYI: deprecated-webkit-mac-10.14 has no checkout anymore"
-  exit 0
 elif [[ ("$1" == "webkit") || ("$1" == "webkit/") || ("$1" == "wk") ]]; then
   FRIENDLY_CHECKOUT_PATH="//browser_patches/webkit/checkout";
   CHECKOUT_PATH="$PWD/webkit/checkout"

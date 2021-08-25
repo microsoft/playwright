@@ -507,8 +507,8 @@ export interface Page {
 
   /**
    * Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests, see
-   * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route) or
-   * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
+   * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route) or
+   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
    */
   on(event: 'request', listener: (request: Request) => void): this;
 
@@ -778,8 +778,8 @@ export interface Page {
 
   /**
    * Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests, see
-   * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route) or
-   * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
+   * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route) or
+   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
    */
   addListener(event: 'request', listener: (request: Request) => void): this;
 
@@ -1760,18 +1760,18 @@ export interface Page {
    * Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
    * last redirect.
    *
-   * `page.goto` will throw an error if:
+   * The method will throw an error if:
    * - there's an SSL error (e.g. in case of self-signed certificates).
    * - target URL is invalid.
    * - the `timeout` is exceeded during navigation.
    * - the remote server does not respond or is unreachable.
    * - the main resource failed to load.
    *
-   * `page.goto` will not throw an error when any valid HTTP status code is returned by the remote server, including 404 "Not
+   * The method will not throw an error when any valid HTTP status code is returned by the remote server, including 404 "Not
    * Found" and 500 "Internal Server Error".  The status code for such responses can be retrieved by calling
    * [response.status()](https://playwright.dev/docs/api/class-response#response-status).
    *
-   * > NOTE: `page.goto` either throws an error or returns a main resource response. The only exceptions are navigation to
+   * > NOTE: The method either throws an error or returns a main resource response. The only exceptions are navigation to
    * `about:blank` or navigation to the same URL with a different hash, which would succeed and return `null`.
    * > NOTE: Headless mode doesn't support navigation to a PDF document. See the
    * [upstream issue](https://bugs.chromium.org/p/chromium/issues/detail?id=761295).
@@ -2033,10 +2033,10 @@ export interface Page {
     strict?: boolean;
 
     /**
-     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
-     * using the
-     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
-     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     * **DEPRECATED** This option is ignored.
+     * [page.isHidden(selector[, options])](https://playwright.dev/docs/api/class-page#page-is-hidden) does not wait for the
+     * element to become hidden and returns immediately.
+     * @deprecated
      */
     timeout?: number;
   }): Promise<boolean>;
@@ -2055,10 +2055,10 @@ export interface Page {
     strict?: boolean;
 
     /**
-     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
-     * using the
-     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
-     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     * **DEPRECATED** This option is ignored.
+     * [page.isVisible(selector[, options])](https://playwright.dev/docs/api/class-page#page-is-visible) does not wait for the
+     * element to become visible and returns immediately.
+     * @deprecated
      */
     timeout?: number;
   }): Promise<boolean>;
@@ -2069,8 +2069,6 @@ export interface Page {
    * The method returns an element locator that can be used to perform actions on the page. Locator is resolved to the
    * element immediately before performing an action, so a series of actions on the same locator can in fact be performed on
    * different DOM elements. That would happen if the DOM structure between those actions has changed.
-   *
-   * Note that locator always implies visibility, so it will always be locating visible elements.
    *
    * Shortcut for main frame's [frame.locator(selector)](https://playwright.dev/docs/api/class-frame#frame-locator).
    * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
@@ -2341,6 +2339,10 @@ export interface Page {
    * Once routing is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.
    *
    * > NOTE: The handler will only be called for the first url if the response is a redirect.
+   * > NOTE: [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route) will not intercept
+   * requests intercepted by Service Worker. See [this](https://github.com/microsoft/playwright/issues/1090) issue. We
+   * recommend disabling Service Workers when using request interception. Via `await context.addInitScript(() => delete
+   * window.navigator.serviceWorker);`
    *
    * An example of a naive handler that aborts all image requests:
    *
@@ -2373,8 +2375,8 @@ export interface Page {
    * ```
    *
    * Page routes take precedence over browser context routes (set up with
-   * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)) when
-   * request matches both handlers.
+   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route))
+   * when request matches both handlers.
    *
    * To remove a route with its handler you can use
    * [page.unroute(url[, handler])](https://playwright.dev/docs/api/class-page#page-unroute).
@@ -2383,8 +2385,14 @@ export interface Page {
    * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while routing. When a `baseURL` via the context options was provided and the passed URL is a path, it gets merged via the
    * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
    * @param handler handler function to route the request.
+   * @param options
    */
-  route(url: string|RegExp|((url: URL) => boolean), handler: ((route: Route, request: Request) => void)): Promise<void>;
+  route(url: string|RegExp|((url: URL) => boolean), handler: ((route: Route, request: Request) => void), options?: {
+    /**
+     * How often a route should be used. By default it will be used every time.
+     */
+    times?: number;
+  }): Promise<void>;
 
   /**
    * Returns the buffer with the captured screenshot.
@@ -2851,8 +2859,9 @@ export interface Page {
   }): Promise<void>;
 
   /**
-   * Removes a route created with [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route). When
-   * `handler` is not specified, removes all routes for the `url`.
+   * Removes a route created with
+   * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route). When `handler` is not
+   * specified, removes all routes for the `url`.
    * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
    * @param handler Optional handler function to route the request.
    */
@@ -3017,8 +3026,8 @@ export interface Page {
 
   /**
    * Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests, see
-   * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route) or
-   * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
+   * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route) or
+   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
    */
   waitForEvent(event: 'request', optionsOrPredicate?: { predicate?: (request: Request) => boolean | Promise<boolean>, timeout?: number } | ((request: Request) => boolean | Promise<boolean>)): Promise<Request>;
 
@@ -4036,18 +4045,18 @@ export interface Frame {
    * Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
    * last redirect.
    *
-   * `frame.goto` will throw an error if:
+   * The method will throw an error if:
    * - there's an SSL error (e.g. in case of self-signed certificates).
    * - target URL is invalid.
    * - the `timeout` is exceeded during navigation.
    * - the remote server does not respond or is unreachable.
    * - the main resource failed to load.
    *
-   * `frame.goto` will not throw an error when any valid HTTP status code is returned by the remote server, including 404
-   * "Not Found" and 500 "Internal Server Error".  The status code for such responses can be retrieved by calling
+   * The method will not throw an error when any valid HTTP status code is returned by the remote server, including 404 "Not
+   * Found" and 500 "Internal Server Error".  The status code for such responses can be retrieved by calling
    * [response.status()](https://playwright.dev/docs/api/class-response#response-status).
    *
-   * > NOTE: `frame.goto` either throws an error or returns a main resource response. The only exceptions are navigation to
+   * > NOTE: The method either throws an error or returns a main resource response. The only exceptions are navigation to
    * `about:blank` or navigation to the same URL with a different hash, which would succeed and return `null`.
    * > NOTE: Headless mode doesn't support navigation to a PDF document. See the
    * [upstream issue](https://bugs.chromium.org/p/chromium/issues/detail?id=761295).
@@ -4304,10 +4313,10 @@ export interface Frame {
     strict?: boolean;
 
     /**
-     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
-     * using the
-     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
-     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     * **DEPRECATED** This option is ignored.
+     * [frame.isHidden(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-is-hidden) does not wait for the
+     * element to become hidden and returns immediately.
+     * @deprecated
      */
     timeout?: number;
   }): Promise<boolean>;
@@ -4326,10 +4335,10 @@ export interface Frame {
     strict?: boolean;
 
     /**
-     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
-     * using the
-     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
-     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     * **DEPRECATED** This option is ignored.
+     * [frame.isVisible(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-is-visible) does not wait for
+     * the element to become visible and returns immediately.
+     * @deprecated
      */
     timeout?: number;
   }): Promise<boolean>;
@@ -4338,8 +4347,6 @@ export interface Frame {
    * The method returns an element locator that can be used to perform actions in the frame. Locator is resolved to the
    * element immediately before performing an action, so a series of actions on the same locator can in fact be performed on
    * different DOM elements. That would happen if the DOM structure between those actions has changed.
-   *
-   * Note that locator always implies visibility, so it will always be locating visible elements.
    * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    */
   locator(selector: string): Locator;
@@ -5029,8 +5036,8 @@ export interface BrowserContext {
    * [page.on('request')](https://playwright.dev/docs/api/class-page#page-event-request).
    *
    * In order to intercept and mutate requests, see
-   * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browser-context-route) or
-   * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route).
+   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
+   * or [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route).
    */
   on(event: 'request', listener: (request: Request) => void): this;
 
@@ -5156,8 +5163,8 @@ export interface BrowserContext {
    * [page.on('request')](https://playwright.dev/docs/api/class-page#page-event-request).
    *
    * In order to intercept and mutate requests, see
-   * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browser-context-route) or
-   * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route).
+   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
+   * or [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route).
    */
   addListener(event: 'request', listener: (request: Request) => void): this;
 
@@ -5482,9 +5489,9 @@ export interface BrowserContext {
    * > NOTE: CDP sessions are only supported on Chromium-based browsers.
    *
    * Returns the newly created session.
-   * @param page Page to create new session for.
+   * @param page Target to create new session for. For backwards-compatibility, this parameter is named `page`, but it can be a `Page` or `Frame` type.
    */
-  newCDPSession(page: Page): Promise<CDPSession>;
+  newCDPSession(page: Page|Frame): Promise<CDPSession>;
 
   /**
    * Creates a new page in the browser context.
@@ -5499,6 +5506,11 @@ export interface BrowserContext {
   /**
    * Routing provides the capability to modify network requests that are made by any page in the browser context. Once route
    * is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.
+   *
+   * > NOTE: [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route) will not intercept
+   * requests intercepted by Service Worker. See [this](https://github.com/microsoft/playwright/issues/1090) issue. We
+   * recommend disabling Service Workers when using request interception. Via `await context.addInitScript(() => delete
+   * window.navigator.serviceWorker);`
    *
    * An example of a naive handler that aborts all image requests:
    *
@@ -5532,8 +5544,8 @@ export interface BrowserContext {
    * });
    * ```
    *
-   * Page routes (set up with [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route)) take
-   * precedence over browser context routes when request matches both handlers.
+   * Page routes (set up with [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route))
+   * take precedence over browser context routes when request matches both handlers.
    *
    * To remove a route with its handler you can use
    * [browserContext.unroute(url[, handler])](https://playwright.dev/docs/api/class-browsercontext#browser-context-unroute).
@@ -5542,8 +5554,14 @@ export interface BrowserContext {
    * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while routing. When a `baseURL` via the context options was provided and the passed URL is a path, it gets merged via the
    * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
    * @param handler handler function to route the request.
+   * @param options
    */
-  route(url: string|RegExp|((url: URL) => boolean), handler: ((route: Route, request: Request) => void)): Promise<void>;
+  route(url: string|RegExp|((url: URL) => boolean), handler: ((route: Route, request: Request) => void), options?: {
+    /**
+     * How often a route should be used. By default it will be used every time.
+     */
+    times?: number;
+  }): Promise<void>;
 
   /**
    * > NOTE: Service workers are only supported on Chromium-based browsers.
@@ -5688,10 +5706,10 @@ export interface BrowserContext {
 
   /**
    * Removes a route created with
-   * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browser-context-route). When
-   * `handler` is not specified, removes all routes for the `url`.
-   * @param url A glob pattern, regex pattern or predicate receiving [URL] used to register a routing with [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
-   * @param handler Optional handler function used to register a routing with [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
+   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
+   * When `handler` is not specified, removes all routes for the `url`.
+   * @param url A glob pattern, regex pattern or predicate receiving [URL] used to register a routing with [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
+   * @param handler Optional handler function used to register a routing with [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
    */
   unroute(url: string|RegExp|((url: URL) => boolean), handler?: ((route: Route, request: Request) => void)): Promise<void>;
 
@@ -5744,8 +5762,8 @@ export interface BrowserContext {
    * [page.on('request')](https://playwright.dev/docs/api/class-page#page-event-request).
    *
    * In order to intercept and mutate requests, see
-   * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browser-context-route) or
-   * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route).
+   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
+   * or [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route).
    */
   waitForEvent(event: 'request', optionsOrPredicate?: { predicate?: (request: Request) => boolean | Promise<boolean>, timeout?: number } | ((request: Request) => boolean | Promise<boolean>)): Promise<Request>;
 
@@ -7033,6 +7051,19 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
  * await locator.click();
  * ```
  *
+ * **Strictness**
+ *
+ * Locators are strict. This means that all operations on locators that imply some target DOM element will throw if more
+ * than one element matches given selector.
+ *
+ * ```js
+ * // Throws if there are several buttons in DOM:
+ * await page.locator('button').click();
+ *
+ * // Works because we explicitly tell locator to pick the first element:
+ * await page.locator('button').first().click();
+ * ```
+ *
  */
 export interface Locator {
   /**
@@ -7046,7 +7077,7 @@ export interface Locator {
    * Examples:
    *
    * ```js
-   * const tweets = await page.locator('.tweet .retweets');
+   * const tweets = page.locator('.tweet .retweets');
    * expect(await tweets.evaluate(node => node.innerText)).toBe('10 retweets');
    * ```
    *
@@ -7659,10 +7690,10 @@ export interface Locator {
    */
   isHidden(options?: {
     /**
-     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
-     * using the
-     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
-     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     * **DEPRECATED** This option is ignored.
+     * [locator.isHidden([options])](https://playwright.dev/docs/api/class-locator#locator-is-hidden) does not wait for the
+     * element to become hidden and returns immediately.
+     * @deprecated
      */
     timeout?: number;
   }): Promise<boolean>;
@@ -7673,10 +7704,10 @@ export interface Locator {
    */
   isVisible(options?: {
     /**
-     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
-     * using the
-     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
-     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     * **DEPRECATED** This option is ignored.
+     * [locator.isVisible([options])](https://playwright.dev/docs/api/class-locator#locator-is-visible) does not wait for the
+     * element to become visible and returns immediately.
+     * @deprecated
      */
     timeout?: number;
   }): Promise<boolean>;
@@ -8232,7 +8263,7 @@ export interface BrowserType<Unused = {}> {
 
     /**
      * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
-     * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route),
+     * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route),
      * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
      * [page.waitForRequest(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-request), or
      * [page.waitForResponse(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-response) it
@@ -8280,7 +8311,8 @@ export interface BrowserType<Unused = {}> {
 
     /**
      * If specified, accepted downloads are downloaded into this directory. Otherwise, temporary directory is created and is
-     * deleted when browser is closed.
+     * deleted when browser is closed. In either case, the downloads are deleted when the browser context they were created in
+     * is closed.
      */
     downloadsPath?: string;
 
@@ -8502,6 +8534,13 @@ export interface BrowserType<Unused = {}> {
     slowMo?: number;
 
     /**
+     * It specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
+     * that imply single target DOM element will throw when more than one element matches the selector. See [Locator] to learn
+     * more about the strict mode.
+     */
+    strictSelectors?: boolean;
+
+    /**
      * Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to
      * disable timeout.
      */
@@ -8610,7 +8649,8 @@ export interface BrowserType<Unused = {}> {
 
     /**
      * If specified, accepted downloads are downloaded into this directory. Otherwise, temporary directory is created and is
-     * deleted when browser is closed.
+     * deleted when browser is closed. In either case, the downloads are deleted when the browser context they were created in
+     * is closed.
      */
     downloadsPath?: string;
 
@@ -8707,6 +8747,14 @@ export interface BrowserType<Unused = {}> {
      * If specified, traces are saved into this directory.
      */
     tracesDir?: string;
+
+    /**
+     * Path at which to serve the Browser Server. For security, this defaults to an unguessable string.
+     *
+     * > NOTE: Any process or web page (including those running in Playwright) with knowledge of the `wsPath` can take control
+     * of the OS user. For this reason, you should use an unguessable token when using this option.
+     */
+    wsPath?: string;
   }): Promise<BrowserServer>;
 
   /**
@@ -8776,6 +8824,26 @@ export namespace errors {
  * TimeoutError is emitted whenever certain operations are terminated due to timeout, e.g.
  * [page.waitForSelector(selector[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-selector) or
  * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch).
+ *
+ * ```js
+ * const playwright = require('playwright');
+ *
+ * (async () => {
+ *   const browser = await playwright.chromium.launch();
+ *   const context = await browser.newContext();
+ *   const page = await context.newPage();
+ *   try {
+ *     await page.click("text=Foo", {
+ *       timeout: 100,
+ *     })
+ *   } catch (error) {
+ *     if (error instanceof playwright.errors.TimeoutError)
+ *       console.log("Timeout!")
+ *   }
+ *   await browser.close();
+ * })();
+ * ```
+ *
  */
 class TimeoutError extends Error {}
 
@@ -9375,7 +9443,7 @@ export interface AndroidDevice {
 
     /**
      * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
-     * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route),
+     * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route),
      * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
      * [page.waitForRequest(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-request), or
      * [page.waitForResponse(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-response) it
@@ -9552,6 +9620,13 @@ export interface AndroidDevice {
        */
       height: number;
     };
+
+    /**
+     * It specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
+     * that imply single target DOM element will throw when more than one element matches the selector. See [Locator] to learn
+     * more about the strict mode.
+     */
+    strictSelectors?: boolean;
 
     /**
      * Changes the timezone of the context. See
@@ -10140,7 +10215,7 @@ export interface Browser extends EventEmitter {
 
     /**
      * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
-     * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route),
+     * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route),
      * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
      * [page.waitForRequest(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-request), or
      * [page.waitForResponse(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-response) it
@@ -10407,6 +10482,13 @@ export interface Browser extends EventEmitter {
         }>;
       }>;
     };
+
+    /**
+     * It specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
+     * that imply single target DOM element will throw when more than one element matches the selector. See [Locator] to learn
+     * more about the strict mode.
+     */
+    strictSelectors?: boolean;
 
     /**
      * Changes the timezone of the context. See
@@ -11051,6 +11133,12 @@ export interface Electron {
         height: number;
       };
     };
+
+    /**
+     * Maximum time in milliseconds to wait for the application to start. Defaults to `30000` (30 seconds). Pass `0` to disable
+     * timeout.
+     */
+    timeout?: number;
 
     /**
      * Changes the timezone of the context. See
@@ -11763,9 +11851,9 @@ export interface Response {
 
 /**
  * Whenever a network route is set up with
- * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route) or
- * [browserContext.route(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browser-context-route), the
- * `Route` object allows to handle the route.
+ * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route) or
+ * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route),
+ * the `Route` object allows to handle the route.
  */
 export interface Route {
   /**
@@ -11852,6 +11940,11 @@ export interface Route {
    * @param options
    */
   fulfill(options?: {
+    /**
+     * Intercepted response. Will be used to populate all response fields not explicitely overridden.
+     */
+    _response?: Response;
+
     /**
      * Response body.
      */
@@ -12277,7 +12370,7 @@ export interface BrowserContextOptions {
 
   /**
    * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
-   * [page.route(url, handler)](https://playwright.dev/docs/api/class-page#page-route),
+   * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route),
    * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
    * [page.waitForRequest(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-request), or
    * [page.waitForResponse(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-response) it
@@ -12527,6 +12620,13 @@ export interface BrowserContextOptions {
   };
 
   /**
+   * It specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
+   * that imply single target DOM element will throw when more than one element matches the selector. See [Locator] to learn
+   * more about the strict mode.
+   */
+  strictSelectors?: boolean;
+
+  /**
    * Changes the timezone of the context. See
    * [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
    * for a list of supported timezone IDs.
@@ -12628,7 +12728,8 @@ export interface LaunchOptions {
 
   /**
    * If specified, accepted downloads are downloaded into this directory. Otherwise, temporary directory is created and is
-   * deleted when browser is closed.
+   * deleted when browser is closed. In either case, the downloads are deleted when the browser context they were created in
+   * is closed.
    */
   downloadsPath?: string;
 
@@ -12791,6 +12892,12 @@ interface ElementHandleWaitForSelectorOptions {
    *   This is opposite to the `'visible'` option.
    */
   state?: "attached"|"detached"|"visible"|"hidden";
+
+  /**
+   * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+   * element, the call throws an exception.
+   */
+  strict?: boolean;
 
   /**
    * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
@@ -13032,7 +13139,7 @@ type Devices = {
   "Desktop Firefox HiDPI": DeviceDescriptor;
   "Desktop Safari": DeviceDescriptor;
   "Desktop Chrome": DeviceDescriptor;
-  "Dekstop Edge": DeviceDescriptor;
+  "Desktop Edge": DeviceDescriptor;
   "Desktop Firefox": DeviceDescriptor;
   [key: string]: DeviceDescriptor;
 }

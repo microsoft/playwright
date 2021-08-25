@@ -28,7 +28,6 @@ import { envObjectToArray } from './clientHelper';
 import { assert, headersObjectToArray, makeWaitForNextTask, getUserAgent } from '../utils/utils';
 import { kBrowserClosedError } from '../utils/errors';
 import * as api from '../../types/types';
-import type { Playwright } from './playwright';
 
 export interface BrowserServerLauncher {
   launchServer(options?: LaunchServerOptions): Promise<api.BrowserServer>;
@@ -182,7 +181,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
             reject(new Error(`WebSocket server disconnected (${event.code}) ${event.reason}`));
           };
           ws.addEventListener('close', prematureCloseListener);
-          const playwright = await connection.waitForObjectWithKnownName('Playwright') as Playwright;
+          const playwright = await connection.initializePlaywright();
 
           if (!playwright._initializer.preLaunchedBrowser) {
             reject(new Error('Malformed endpoint. Did you use launchServer method?'));
@@ -211,14 +210,6 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
             ws.removeEventListener('close', closeListener);
             ws.close();
           });
-          if (params._forwardPorts) {
-            try {
-              await playwright._enablePortForwarding(params._forwardPorts);
-            } catch (err) {
-              reject(err);
-              return;
-            }
-          }
           fulfill(browser);
         });
         ws.addEventListener('error', event => {
@@ -254,7 +245,6 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
       const paramsHeaders = Object.assign({'User-Agent': getUserAgent()}, params.headers);
       const headers = paramsHeaders ? headersObjectToArray(paramsHeaders) : undefined;
       const result = await channel.connectOverCDP({
-        sdkLanguage: 'javascript',
         endpointURL,
         headers,
         slowMo: params.slowMo,

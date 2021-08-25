@@ -250,7 +250,7 @@ if (!process.env.PW_CLI_TARGET_LANG) {
 if (process.argv[2] === 'run-driver')
   runDriver();
 else if (process.argv[2] === 'run-server')
-  runServer(process.argv[3] ? +process.argv[3] : undefined, process.argv[4]).catch(logErrorAndExit);
+  runServer(process.argv[3] ? +process.argv[3] : undefined).catch(logErrorAndExit);
 else if (process.argv[2] === 'print-api-json')
   printApiJson();
 else if (process.argv[2] === 'launch-server')
@@ -270,6 +270,7 @@ type Options = {
   loadStorage?: string;
   proxyServer?: string;
   saveStorage?: string;
+  saveTrace?: string;
   timeout: string;
   timezone?: string;
   viewportSize?: string;
@@ -386,6 +387,8 @@ async function launchContext(options: Options, headless: boolean, executablePath
     if (closingBrowser)
       return;
     closingBrowser = true;
+    if (options.saveTrace)
+      await context.tracing.stop({ path: options.saveTrace });
     if (options.saveStorage)
       await context.storageState({ path: options.saveStorage }).catch(e => null);
     await browser.close();
@@ -405,6 +408,9 @@ async function launchContext(options: Options, headless: boolean, executablePath
     context.setDefaultTimeout(parseInt(options.timeout, 10));
     context.setDefaultNavigationTimeout(parseInt(options.timeout, 10));
   }
+
+  if (options.saveTrace)
+    await context.tracing.start({ screenshots: true, snapshots: true });
 
   // Omit options that we add automatically for presentation purpose.
   delete launchOptions.headless;
@@ -548,6 +554,7 @@ function commandWithOpenOptions(command: string, description: string, options: a
       .option('--lang <language>', 'specify language / locale, for example "en-GB"')
       .option('--proxy-server <proxy>', 'specify proxy server, for example "http://myproxy:3128" or "socks5://myproxy:8080"')
       .option('--save-storage <filename>', 'save context storage state at the end, for later use with --load-storage')
+      .option('--save-trace <filename>', 'record a trace for the session and save it to a file')
       .option('--timezone <time zone>', 'time zone to emulate, for example "Europe/Rome"')
       .option('--timeout <timeout>', 'timeout for Playwright actions in milliseconds', '10000')
       .option('--user-agent <ua string>', 'specify user agent string')

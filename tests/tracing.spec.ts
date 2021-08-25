@@ -18,6 +18,8 @@ import { expect, contextTest as test, browserTest } from './config/browserTest';
 import yauzl from 'yauzl';
 import jpeg from 'jpeg-js';
 
+test.skip(({ trace }) => !!trace);
+
 test('should collect trace with resources, but no js', async ({ context, page, server }, testInfo) => {
   await context.tracing.start({ screenshots: true, snapshots: true });
   await page.goto(server.PREFIX + '/frames/frame.html');
@@ -35,8 +37,8 @@ test('should collect trace with resources, but no js', async ({ context, page, s
   expect(events.find(e => e.metadata?.apiName === 'page.close')).toBeTruthy();
 
   expect(events.some(e => e.type === 'frame-snapshot')).toBeTruthy();
-  expect(events.some(e => e.type === 'resource-snapshot' && e.snapshot.url.endsWith('style.css'))).toBeTruthy();
-  expect(events.some(e => e.type === 'resource-snapshot' && e.snapshot.url.endsWith('script.js'))).toBeFalsy();
+  expect(events.some(e => e.type === 'resource-snapshot' && e.snapshot.request.url.endsWith('style.css'))).toBeTruthy();
+  expect(events.some(e => e.type === 'resource-snapshot' && e.snapshot.request.url.endsWith('script.js'))).toBeFalsy();
   expect(events.some(e => e.type === 'screencast-frame')).toBeTruthy();
 });
 
@@ -211,7 +213,7 @@ test('should reset to different options', async ({ context, page, server }, test
   expect(events.find(e => e.metadata?.apiName === 'page.click')).toBeTruthy();
 
   expect(events.some(e => e.type === 'frame-snapshot')).toBeFalsy();
-  expect(events.some(e => e.type === 'resource-snapshot')).toBeFalsy();
+  expect(events.some(e => e.type === 'resource-snapshot')).toBeTruthy();
 });
 
 test('should reset and export', async ({ context, page, server }, testInfo) => {
@@ -237,7 +239,7 @@ test('should reset and export', async ({ context, page, server }, testInfo) => {
   expect(trace1.events.find(e => e.metadata?.apiName === 'page.hover')).toBeFalsy();
   expect(trace1.events.find(e => e.metadata?.apiName === 'page.click' && e.metadata?.error?.error?.message === 'Action was interrupted')).toBeTruthy();
   expect(trace1.events.some(e => e.type === 'frame-snapshot')).toBeTruthy();
-  expect(trace1.events.some(e => e.type === 'resource-snapshot' && e.snapshot.url.endsWith('style.css'))).toBeTruthy();
+  expect(trace1.events.some(e => e.type === 'resource-snapshot' && e.snapshot.request.url.endsWith('style.css'))).toBeTruthy();
 
   const trace2 = await parseTrace(testInfo.outputPath('trace2.zip'));
   expect(trace2.events[0].type).toBe('context-options');
@@ -246,6 +248,32 @@ test('should reset and export', async ({ context, page, server }, testInfo) => {
   expect(trace2.events.find(e => e.metadata?.apiName === 'page.click')).toBeFalsy();
   expect(trace2.events.find(e => e.metadata?.apiName === 'page.hover')).toBeTruthy();
   expect(trace2.events.some(e => e.type === 'frame-snapshot')).toBeTruthy();
+});
+
+test('should export trace concurrently to second navigation', async ({ context, page, server }, testInfo) => {
+  for (let timeout = 0; timeout < 200; timeout += 20) {
+    await context.tracing.start({ screenshots: true, snapshots: true });
+    await page.goto(server.PREFIX + '/grid.html');
+
+    // Navigate to the same page to produce the same trace resources
+    // that might be concurrently exported.
+    const promise = page.goto(server.PREFIX + '/grid.html');
+    await page.waitForTimeout(timeout);
+    await Promise.all([
+      promise,
+      context.tracing.stop({ path: testInfo.outputPath('trace.zip') }),
+    ]);
+  }
+});
+
+test('should not hang for clicks that open dialogs', async ({ context, page }) => {
+  await context.tracing.start({ screenshots: true, snapshots: true });
+  const dialogPromise = page.waitForEvent('dialog');
+  await page.setContent(`<div onclick='window.alert(123)'>Click me</div>`);
+  await page.click('div', { timeout: 2000 }).catch(() => {});
+  const dialog = await dialogPromise;
+  await dialog.dismiss();
+  await context.tracing.stop();
 });
 
 async function parseTrace(file: string): Promise<{ events: any[], resources: Map<string, Buffer> }> {
@@ -272,7 +300,15 @@ async function parseTrace(file: string): Promise<{ events: any[], resources: Map
   const resources = new Map<string, Buffer>();
   for (const { name, buffer } of await Promise.all(entries))
     resources.set(name, buffer);
-  const events = resources.get('trace.trace').toString().split('\n').map(line => line ? JSON.parse(line) : false).filter(Boolean);
+  const events = [];
+  for (const line of resources.get('trace.trace').toString().split('\n')) {
+    if (line)
+      events.push(JSON.parse(line));
+  }
+  for (const line of resources.get('trace.network').toString().split('\n')) {
+    if (line)
+      events.push(JSON.parse(line));
+  }
   return {
     events,
     resources,

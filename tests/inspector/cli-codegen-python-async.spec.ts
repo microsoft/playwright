@@ -132,12 +132,12 @@ from playwright.async_api import Playwright, async_playwright
 
 async def run(playwright: Playwright) -> None:
     browser = await playwright.${browserName}.launch(${launchOptions(channel)})
-    context = await browser.new_context(storage_state="${loadFileName}")`;
+    context = await browser.new_context(storage_state="${loadFileName.replace(/\\/g, '\\\\')}")`;
   await cli.waitFor(expectedResult1);
 
   const expectedResult2 = `
     # ---------------------
-    await context.storage_state(path="${saveFileName}")
+    await context.storage_state(path="${saveFileName.replace(/\\/g, '\\\\')}")
     await context.close()
     await browser.close()
 

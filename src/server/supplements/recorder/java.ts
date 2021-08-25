@@ -18,7 +18,7 @@ import type { BrowserContextOptions } from '../../../..';
 import { LanguageGenerator, LanguageGeneratorOptions, toSignalMap } from './language';
 import { ActionInContext } from './codeGenerator';
 import { Action, actionTitle } from './recorderActions';
-import { MouseClickOptions, toModifiers } from './utils';
+import { escapeWithQuotes, MouseClickOptions, toModifiers } from './utils';
 import deviceDescriptors from '../../deviceDescriptors';
 import { JavaScriptFormatter } from './javascript';
 
@@ -36,7 +36,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
     if (action.name === 'openPage') {
       formatter.add(`Page ${pageAlias} = context.newPage();`);
       if (action.url && action.url !== 'about:blank' && action.url !== 'chrome://newtab/')
-        formatter.add(`${pageAlias}.navigate("${action.url}");`);
+        formatter.add(`${pageAlias}.navigate(${quote(action.url)});`);
       return formatter.format();
     }
 
@@ -174,7 +174,7 @@ function formatLaunchOptions(options: any): string {
   if (typeof options.headless === 'boolean')
     lines.push(`  .setHeadless(false)`);
   if (options.channel)
-    lines.push(`  .setChannel("${options.channel}")`);
+    lines.push(`  .setChannel(${quote(options.channel)})`);
   return lines.join('\n');
 }
 
@@ -200,15 +200,15 @@ function formatContextOptions(contextOptions: BrowserContextOptions, deviceName:
   if (options.isMobile)
     lines.push(`  .setIsMobile(${options.isMobile})`);
   if (options.locale)
-    lines.push(`  .setLocale("${options.locale}")`);
+    lines.push(`  .setLocale(${quote(options.locale)})`);
   if (options.proxy)
-    lines.push(`  .setProxy(new Proxy("${options.proxy.server}"))`);
+    lines.push(`  .setProxy(new Proxy(${quote(options.proxy.server)}))`);
   if (options.storageState)
     lines.push(`  .setStorageStatePath(Paths.get(${quote(options.storageState as string)}))`);
   if (options.timezoneId)
-    lines.push(`  .setTimezoneId("${options.timezoneId}")`);
+    lines.push(`  .setTimezoneId(${quote(options.timezoneId)})`);
   if (options.userAgent)
-    lines.push(`  .setUserAgent("${options.userAgent}")`);
+    lines.push(`  .setUserAgent(${quote(options.userAgent)})`);
   if (options.viewport)
     lines.push(`  .setViewportSize(${options.viewport.width}, ${options.viewport.height})`);
   return lines.join('\n');
@@ -228,12 +228,6 @@ function formatClickOptions(options: MouseClickOptions, isPage: boolean) {
   return lines.join('\n');
 }
 
-function quote(text: string, char: string = '\"') {
-  if (char === '\'')
-    return char + text.replace(/[']/g, '\\\'') + char;
-  if (char === '"')
-    return char + text.replace(/["]/g, '\\"') + char;
-  if (char === '`')
-    return char + text.replace(/[`]/g, '\\`') + char;
-  throw new Error('Invalid escape char');
+function quote(text: string) {
+  return escapeWithQuotes(text, '\"');
 }

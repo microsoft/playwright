@@ -21,9 +21,10 @@ import fs from 'fs';
 import http2 from 'http2';
 import type { BrowserContext, BrowserContextOptions } from '../index';
 import type { AddressInfo } from 'net';
+import type { Log } from '../src/server/supplements/har/har';
 
-async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any) {
-  const harPath = testInfo.outputPath('test.har');
+async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any, outputPath: string = 'test.har') {
+  const harPath = testInfo.outputPath(outputPath);
   const context = await contextFactory({ recordHar: { path: harPath }, ignoreHTTPSErrors: true });
   const page = await context.newPage();
   return {
@@ -31,7 +32,7 @@ async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => 
     context,
     getLog: async () => {
       await context.close();
-      return JSON.parse(fs.readFileSync(harPath).toString())['log'];
+      return JSON.parse(fs.readFileSync(harPath).toString())['log'] as Log;
     }
   };
 }
@@ -66,7 +67,7 @@ it('should have pages', async ({ contextFactory, server }, testInfo) => {
   const log = await getLog();
   expect(log.pages.length).toBe(1);
   const pageEntry = log.pages[0];
-  expect(pageEntry.id).toBe('page_0');
+  expect(pageEntry.id).toBeTruthy();
   expect(pageEntry.title).toBe('Hello');
   expect(new Date(pageEntry.startedDateTime).valueOf()).toBeGreaterThan(Date.now() - 3600 * 1000);
   expect(pageEntry.pageTimings.onContentLoad).toBeGreaterThan(0);
@@ -83,7 +84,7 @@ it('should have pages in persistent context', async ({ launchPersistent }, testI
   const log = JSON.parse(fs.readFileSync(harPath).toString())['log'];
   expect(log.pages.length).toBe(1);
   const pageEntry = log.pages[0];
-  expect(pageEntry.id).toBe('page_0');
+  expect(pageEntry.id).toBeTruthy();
   expect(pageEntry.title).toBe('Hello');
 });
 
@@ -93,7 +94,7 @@ it('should include request', async ({ contextFactory, server }, testInfo) => {
   const log = await getLog();
   expect(log.entries.length).toBe(1);
   const entry = log.entries[0];
-  expect(entry.pageref).toBe('page_0');
+  expect(entry.pageref).toBe(log.pages[0].id);
   expect(entry.request.url).toBe(server.EMPTY_PAGE);
   expect(entry.request.method).toBe('GET');
   expect(entry.request.httpVersion).toBe('HTTP/1.1');
@@ -339,10 +340,8 @@ it('should have popup requests', async ({ contextFactory, server }, testInfo) =>
   const log = await getLog();
 
   expect(log.pages.length).toBe(2);
-  expect(log.pages[0].id).toBe('page_0');
-  expect(log.pages[1].id).toBe('page_1');
 
-  const entries = log.entries.filter(entry => entry.pageref === 'page_1');
+  const entries = log.entries.filter(entry => entry.pageref === log.pages[1].id);
   expect(entries.length).toBe(2);
   expect(entries[0].request.url).toBe(server.PREFIX + '/one-style.html');
   expect(entries[0].response.status).toBe(200);
@@ -522,4 +521,34 @@ it('should filter favicon and favicon redirects', async ({server, browserName, c
   expect(log.entries.length).toBe(1);
   const entry = log.entries[0];
   expect(entry.request.url).toBe(server.PREFIX + '/page.html');
+});
+
+it('should have different hars for concurrent contexts', async ({ contextFactory }, testInfo) => {
+  const session0 = await pageWithHar(contextFactory, testInfo, 'test-0.har');
+  await session0.page.goto('data:text/html,<title>Zero</title>');
+  await session0.page.waitForLoadState('domcontentloaded');
+
+  const session1 = await pageWithHar(contextFactory, testInfo, 'test-1.har');
+  await session1.page.goto('data:text/html,<title>One</title>');
+  await session1.page.waitForLoadState('domcontentloaded');
+
+  // Trigger flushing on the server and ensure they are not racing to same
+  // location. NB: Run this test with --repeat-each 10.
+  const [log0, log1] = await Promise.all([
+    session0.getLog(),
+    session1.getLog()
+  ]);
+
+  {
+    expect(log0.pages.length).toBe(1);
+    const pageEntry = log0.pages[0];
+    expect(pageEntry.title).toBe('Zero');
+  }
+
+  {
+    expect(log1.pages.length).toBe(1);
+    const pageEntry = log1.pages[0];
+    expect(pageEntry.id).not.toBe(log0.pages[0].id);
+    expect(pageEntry.title).toBe('One');
+  }
 });

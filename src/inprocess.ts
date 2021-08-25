@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { DispatcherConnection } from './dispatchers/dispatcher';
+import { DispatcherConnection, Root } from './dispatchers/dispatcher';
 import { createPlaywright } from './server/playwright';
 import type { Playwright as PlaywrightAPI } from './client/playwright';
 import { PlaywrightDispatcher } from './dispatchers/playwrightDispatcher';
@@ -22,7 +22,7 @@ import { Connection } from './client/connection';
 import { BrowserServerLauncherImpl } from './browserServerImpl';
 
 function setupInProcess(): PlaywrightAPI {
-  const playwright = createPlaywright();
+  const playwright = createPlaywright('javascript');
 
   const clientConnection = new Connection();
   const dispatcherConnection = new DispatcherConnection();
@@ -31,8 +31,10 @@ function setupInProcess(): PlaywrightAPI {
   dispatcherConnection.onmessage = message => clientConnection.dispatch(message);
   clientConnection.onmessage = message => dispatcherConnection.dispatch(message);
 
+  const rootScope = new Root(dispatcherConnection);
+
   // Initialize Playwright channel.
-  new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), playwright);
+  new PlaywrightDispatcher(rootScope, playwright);
   const playwrightAPI = clientConnection.getObjectWithKnownName('Playwright') as PlaywrightAPI;
   playwrightAPI.chromium._serverLauncher = new BrowserServerLauncherImpl('chromium');
   playwrightAPI.firefox._serverLauncher = new BrowserServerLauncherImpl('firefox');

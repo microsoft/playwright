@@ -87,10 +87,10 @@ test('should fail on unexpected pass with retries', async ({ runInlineTest }) =>
   }, { retries: 1 });
   expect(exitCode).toBe(1);
   expect(failed).toBe(1);
-  expect(output).toContain('passed unexpectedly');
+  expect(output).toContain('Expected to fail, but passed.');
 });
 
-test('should not retry unexpected pass', async ({ runInlineTest }) => {
+test('should retry unexpected pass', async ({ runInlineTest }) => {
   const { exitCode, passed, failed, output } = await runInlineTest({
     'unexpected-pass.spec.js': `
       const { test } = pwt;
@@ -103,7 +103,7 @@ test('should not retry unexpected pass', async ({ runInlineTest }) => {
   expect(exitCode).toBe(1);
   expect(passed).toBe(0);
   expect(failed).toBe(1);
-  expect(stripAscii(output).split('\n')[0]).toBe('F');
+  expect(stripAscii(output).split('\n')[0]).toBe('××F');
 });
 
 test('should not retry expected failure', async ({ runInlineTest }) => {
@@ -154,12 +154,15 @@ test('should retry beforeAll failure', async ({ runInlineTest }) => {
       });
       test('passing test', async () => {
       });
+      test('another passing test', async () => {
+      });
     `
   }, { retries: 2 });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
-  expect(stripAscii(result.output).split('\n')[0]).toBe('××F');
+  expect(result.skipped).toBe(1);
+  expect(stripAscii(result.output).split('\n')[0]).toBe('×°×°F°');
   expect(result.output).toContain('BeforeAll is bugged!');
 });
 

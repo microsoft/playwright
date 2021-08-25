@@ -53,7 +53,7 @@ export abstract class BrowserType extends SdkObject {
   }
 
   async launch(metadata: CallMetadata, options: types.LaunchOptions, protocolLogger?: types.ProtocolLogger): Promise<Browser> {
-    options = validateLaunchOptions(options, this._playwrightOptions.loopbackProxyOverride?.());
+    options = this._validateLaunchOptions(options);
     const controller = new ProgressController(metadata, this);
     controller.setLogName('browser');
     const browser = await controller.run(progress => {
@@ -63,7 +63,7 @@ export abstract class BrowserType extends SdkObject {
   }
 
   async launchPersistentContext(metadata: CallMetadata, userDataDir: string, options: types.LaunchPersistentOptions): Promise<BrowserContext> {
-    options = validateLaunchOptions(options, this._playwrightOptions.loopbackProxyOverride?.());
+    options = this._validateLaunchOptions(options);
     const controller = new ProgressController(metadata, this);
     const persistent: types.BrowserContextOptions = options;
     controller.setLogName('browser');
@@ -165,7 +165,7 @@ export abstract class BrowserType extends SdkObject {
       const registryExecutable = registry.findExecutable(options.channel || this._name);
       if (!registryExecutable || registryExecutable.browserName !== this._name)
         throw new Error(`Unsupported ${this._name} channel "${options.channel}"`);
-      executable = registryExecutable.executablePathOrDie();
+      executable = registryExecutable.executablePathOrDie(this._playwrightOptions.sdkLanguage);
       await registryExecutable.validateHostRequirements();
     }
 
@@ -239,8 +239,20 @@ export abstract class BrowserType extends SdkObject {
     return { browserProcess, artifactsDir, transport };
   }
 
-  async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number, sdkLanguage: string }, timeout?: number): Promise<Browser> {
+  async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number }, timeout?: number): Promise<Browser> {
     throw new Error('CDP connections are only supported by Chromium');
+  }
+
+  private _validateLaunchOptions<Options extends types.LaunchOptions>(options: Options): Options {
+    const { devtools = false } = options;
+    let { headless = !devtools, downloadsPath, proxy } = options;
+    if (debugMode())
+      headless = false;
+    if (downloadsPath && !path.isAbsolute(downloadsPath))
+      downloadsPath = path.join(process.cwd(), downloadsPath);
+    if (this._playwrightOptions.socksProxyPort)
+      proxy = { server: `socks5://127.0.0.1:${this._playwrightOptions.socksProxyPort}` };
+    return { ...options, devtools, headless, downloadsPath, proxy };
   }
 
   abstract _defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[];
@@ -255,16 +267,4 @@ function copyTestHooks(from: object, to: object) {
     if (key.startsWith('__testHook'))
       (to as any)[key] = value;
   }
-}
-
-function validateLaunchOptions<Options extends types.LaunchOptions>(options: Options, proxyOverride?: string): Options {
-  const { devtools = false } = options;
-  let { headless = !devtools, downloadsPath, proxy } = options;
-  if (debugMode())
-    headless = false;
-  if (downloadsPath && !path.isAbsolute(downloadsPath))
-    downloadsPath = path.join(process.cwd(), downloadsPath);
-  if (proxyOverride)
-    proxy = { server: proxyOverride };
-  return { ...options, devtools, headless, downloadsPath, proxy };
 }

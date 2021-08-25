@@ -14,20 +14,9 @@
  * limitations under the License.
  */
 
-export type ResourceSnapshot = {
-  pageId: string,
-  frameId: string,
-  url: string,
-  type: string,
-  contentType: string,
-  responseHeaders: { name: string, value: string }[],
-  requestHeaders: { name: string, value: string }[],
-  method: string,
-  status: number,
-  requestSha1: string,
-  responseSha1: string,
-  timestamp: number,
-};
+import { Entry as HAREntry } from '../supplements/har/har';
+
+export type ResourceSnapshot = HAREntry;
 
 export type NodeSnapshot =
   // Text node.

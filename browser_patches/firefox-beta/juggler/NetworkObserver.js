@@ -78,7 +78,7 @@ class PageNetwork {
       const intercepted = this._interceptedRequests.get(requestId);
       if (!intercepted)
         throw new Error(`Cannot find request "${requestId}"`);
-      return { response: await new ResponseInterceptor(intercepted).interceptResponse(url, method, headers, postData) };
+      return await new ResponseInterceptor(intercepted).interceptResponse(url, method, headers, postData);
     }
     this._takeIntercepted(requestId).resume(url, method, headers, postData);
     return {};
@@ -152,37 +152,47 @@ class ResponseInterceptor {
     // channel gets redirected we report the redirect on the original(paused)
     // request.
     networkObserver._channelToRequest.set(newChannel, this._originalRequest);
-    const body = await new Promise((resolve, reject) => {
-      NetUtil.asyncFetch(newChannel, (stream, status) => {
-        networkObserver._responseInterceptionChannels.delete(newChannel);
-        networkObserver._channelToRequest.delete(newChannel);
-        if (!Components.isSuccessCode(status)) {
-          reject(status);
-          return;
-        }
-        try {
-          resolve(NetUtil.readInputStreamToString(stream, stream.available()));
-        } catch (e) {
-          if (e.result == Cr.NS_BASE_STREAM_CLOSED) {
-            // The stream was empty.
-            resolve('');
-          } else {
-            reject(e);
+    const pageNetwork = this._originalRequest._pageNetwork;
+    let body;
+    try {
+      body = await new Promise((resolve, reject) => {
+        NetUtil.asyncFetch(newChannel, (stream, status) => {
+          networkObserver._responseInterceptionChannels.delete(newChannel);
+          networkObserver._channelToRequest.delete(newChannel);
+          if (!Components.isSuccessCode(status)) {
+            reject(status);
+            return;
           }
-        } finally {
-          stream.close();
-        }
+          try {
+            resolve(NetUtil.readInputStreamToString(stream, stream.available()));
+          } catch (e) {
+            if (e.result == Cr.NS_BASE_STREAM_CLOSED) {
+              // The stream was empty.
+              resolve('');
+            } else {
+              reject(e.result);
+            }
+          } finally {
+            stream.close();
+          }
+        });
       });
-    });
+    } catch (error) {
+      if (typeof error !== 'number')
+        dump(`ERROR: enexpected error type: ${error}\n`);
+      if (pageNetwork)
+        pageNetwork._interceptedRequests.delete(this._originalRequest.requestId);
+      this._originalRequest._failWithErrorCode(error);
+      return { error: helper.getNetworkErrorStatusText(error) };
+    }
 
     const finalRequest = this._finalRequest;
     const responseChannel = finalRequest === this._originalRequest ? this._responseChannel : finalRequest.httpChannel;
-    const pageNetwork = this._originalRequest._pageNetwork;
     if (pageNetwork)
       pageNetwork._responseStorage.addResponseBody(finalRequest, responseChannel, body);
     const response = responseHead(responseChannel);
     this._interceptedResponse = Object.assign({ body }, response);
-    return response;
+    return { response };
   }
 
   isInterceptedRequest(request) {
@@ -332,6 +342,10 @@ class NetworkRequest {
   // Public interception API.
   abort(errorCode) {
     const error = errorMap[errorCode] || Cr.NS_ERROR_FAILURE;
+    this._failWithErrorCode(error);
+  }
+
+  _failWithErrorCode(error) {
     this._interceptedChannel.cancelInterception(error);
     this._interceptedChannel = undefined;
   }

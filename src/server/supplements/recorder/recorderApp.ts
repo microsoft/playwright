@@ -23,6 +23,7 @@ import { internalCallMetadata } from '../../instrumentation';
 import type { CallLog, EventData, Mode, Source } from './recorderTypes';
 import { BrowserContext } from '../../browserContext';
 import { isUnderTest } from '../../../utils/utils';
+import * as mime from 'mime';
 import { installAppIcon } from '../../chromium/crApp';
 
 declare global {
@@ -63,7 +64,7 @@ export class RecorderApp extends EventEmitter {
         await route.fulfill({
           status: 200,
           headers: [
-            { name: 'Content-Type', value: extensionToMime[path.extname(file)] }
+            { name: 'Content-Type', value: mime.getType(path.extname(file)) || 'application/octet-stream' }
           ],
           body: buffer.toString('base64'),
           isBase64: true
@@ -85,7 +86,7 @@ export class RecorderApp extends EventEmitter {
   }
 
   static async open(inspectedContext: BrowserContext): Promise<RecorderApp> {
-    const recorderPlaywright = require('../../playwright').createPlaywright(true) as import('../../playwright').Playwright;
+    const recorderPlaywright = (require('../../playwright').createPlaywright as typeof import('../../playwright').createPlaywright)('javascript', true) as import('../../playwright').Playwright;
     const args = [
       '--app=data:text/html,',
       '--window-size=600,600',
@@ -103,7 +104,6 @@ export class RecorderApp extends EventEmitter {
     const context = await recorderPlaywright.chromium.launchPersistentContext(internalCallMetadata(), '', {
       channel,
       executablePath,
-      sdkLanguage: inspectedContext._options.sdkLanguage,
       args,
       noDefaultViewport: true,
       headless: !!process.env.PWTEST_CLI_HEADLESS || (isUnderTest() && !inspectedContext._browser.options.headful),
@@ -169,16 +169,3 @@ export class RecorderApp extends EventEmitter {
     await this._page.bringToFront();
   }
 }
-
-const extensionToMime: { [key: string]: string } = {
-  '.css': 'text/css',
-  '.html': 'text/html',
-  '.jpeg': 'image/jpeg',
-  '.js': 'application/javascript',
-  '.png': 'image/png',
-  '.ttf': 'font/ttf',
-  '.svg': 'image/svg+xml',
-  '.webp': 'image/webp',
-  '.woff': 'font/woff',
-  '.woff2': 'font/woff2',
-};

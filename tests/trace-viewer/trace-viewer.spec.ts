@@ -46,6 +46,14 @@ class TraceViewerPage {
     await this.page.click(`.snapshot-tab .tab-label:has-text("${name}")`);
   }
 
+  async showConsoleTab() {
+    await this.page.click('text="Console"');
+  }
+
+  async showSourceTab() {
+    await this.page.click('text="Source"');
+  }
+
   async callLines() {
     await this.page.waitForSelector('.call-line:visible');
     return await this.page.$$eval('.call-line:visible', ee => ee.map(e => e.textContent));
@@ -78,6 +86,11 @@ class TraceViewerPage {
     return await this.page.$$eval('.console-stack:visible', ee => ee.map(e => e.textContent));
   }
 
+  async sourceStack() {
+    await this.page.waitForSelector('.stack-trace-frame:visible');
+    return await this.page.$$eval('.stack-trace-frame:visible', ee => ee.map(e => (e as HTMLElement).innerText.replace(/\s+/g, ' ')));
+  }
+
   async snapshotSize() {
     return this.page.$eval('.snapshot-container', e => {
       const style = window.getComputedStyle(e);
@@ -102,7 +115,7 @@ const test = playwrightTest.extend<{ showTraceViewer: (trace: string) => Promise
 
 let traceFile: string;
 
-test.beforeAll(async ({ browser, browserName }, workerInfo) => {
+test.beforeAll(async function recordTrace({ browser, browserName, browserType }, workerInfo) {
   const context = await browser.newContext();
   await context.tracing.start({ name: 'test', screenshots: true, snapshots: true });
   const page = await context.newPage();
@@ -115,15 +128,27 @@ test.beforeAll(async ({ browser, browserName }, workerInfo) => {
     setTimeout(() => { throw new Error('Unhandled exception'); }, 0);
     return 'return ' + a;
   }, { a: 'paramA', b: 4 });
-  await page.click('"Click"');
+
+  async function doClick() {
+    await page.click('"Click"');
+  }
+  await doClick();
+
   await Promise.all([
     page.waitForNavigation(),
     page.waitForTimeout(200).then(() => page.goto('data:text/html,<html>Hello world 2</html>'))
   ]);
   await page.setViewportSize({ width: 500, height: 600 });
-  await page.close();
-  traceFile = path.join(workerInfo.project.outputDir, browserName, 'trace.zip');
-  await context.tracing.stop({ path: traceFile });
+
+  // Go through instrumentation to exercise reentrant stack traces.
+  (browserType as any)._onWillCloseContext = async () => {
+    await page.hover('body');
+    await page.close();
+    traceFile = path.join(workerInfo.project.outputDir, browserName, 'trace.zip');
+    await context.tracing.stop({ path: traceFile });
+  };
+  await context.close();
+  (browserType as any)._onWillCloseContext = undefined;
 });
 
 test('should show empty trace viewer', async ({ showTraceViewer }, testInfo) => {
@@ -141,6 +166,7 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
     'page.waitForNavigation',
     'page.gotodata:text/html,<html>Hello world 2</html>',
     'page.setViewportSize',
+    'page.hoverbody',
   ]);
 });
 
@@ -163,7 +189,7 @@ test('should render console', async ({ showTraceViewer, browserName }) => {
   test.fixme(browserName === 'firefox', 'Firefox generates stray console message for page error');
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.selectAction('page.evaluate');
-  await traceViewer.page.click('"Console"');
+  await traceViewer.showConsoleTab();
 
   const events = await traceViewer.consoleLines();
   expect(events).toEqual(['Info', 'Warning', 'Error', 'Unhandled exception']);
@@ -202,4 +228,23 @@ test('should have correct snapshot size', async ({ showTraceViewer }) => {
   expect(await traceViewer.snapshotSize()).toEqual({ width: '1280px', height: '720px' });
   await traceViewer.selectSnapshot('After');
   expect(await traceViewer.snapshotSize()).toEqual({ width: '500px', height: '600px' });
+});
+
+test('should have correct stack trace', async ({ showTraceViewer }) => {
+  const traceViewer = await showTraceViewer(traceFile);
+
+  await traceViewer.selectAction('page.click');
+  await traceViewer.showSourceTab();
+  const stack1 = await traceViewer.sourceStack();
+  expect(stack1.slice(0, 2)).toEqual([
+    'doClick trace-viewer.spec.ts :133',
+    'recordTrace trace-viewer.spec.ts :135',
+  ]);
+
+  await traceViewer.selectAction('page.hover');
+  await traceViewer.showSourceTab();
+  const stack2 = await traceViewer.sourceStack();
+  expect(stack2.slice(0, 1)).toEqual([
+    'BrowserType.browserType._onWillCloseContext trace-viewer.spec.ts :145',
+  ]);
 });

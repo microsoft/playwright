@@ -228,10 +228,19 @@ export interface TestStep {
    */
   title: string;
   /**
+   * Returns a list of step titles from the root step down to this step.
+   */
+  titlePath(): string[];
+  /**
+   * Parent step, if any.
+   */
+  parent?: TestStep;
+  /**
    * Step category to differentiate steps with different origin and verbosity. Built-in categories are:
    * - `hook` for fixtures and hooks initialization and teardown
    * - `expect` for expect calls
    * - `pw:api` for Playwright API calls.
+   * - `test.step` for test.step API calls.
    */
   category: string,
   /**
@@ -246,6 +255,10 @@ export interface TestStep {
    * An error thrown during the step execution, if any.
    */
   error?: TestError;
+  /**
+   * List of steps inside this step.
+   */
+  steps: TestStep[];
 }
 
 /**
@@ -381,14 +394,14 @@ export interface Reporter {
    * Called when a test step started in the worker process.
    * @param test Test that has been started.
    * @param result Result of the test run, this object gets populated while the test runs.
-   * @param result Test step instance.
+   * @param step Test step instance.
    */
   onStepBegin?(test: TestCase, result: TestResult, step: TestStep): void;
   /**
    * Called when a test step finished in the worker process.
    * @param test Test that has been finished.
    * @param result Result of the test run.
-   * @param result Test step instance.
+   * @param step Test step instance.
    */
   onStepEnd?(test: TestCase, result: TestResult, step: TestStep): void;
   /**

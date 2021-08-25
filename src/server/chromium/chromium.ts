@@ -48,7 +48,7 @@ export class Chromium extends BrowserType {
       this._devtools = this._createDevTools();
   }
 
-  async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number, sdkLanguage: string, headers?: types.HeadersArray }, timeout?: number) {
+  override async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number, headers?: types.HeadersArray }, timeout?: number) {
     const controller = new ProgressController(metadata, this);
     controller.setLogName('browser');
     const browserLogsCollector = new RecentLogsCollector();
@@ -75,7 +75,7 @@ export class Chromium extends BrowserType {
         slowMo: options.slowMo,
         name: 'chromium',
         isChromium: true,
-        persistent: { sdkLanguage: options.sdkLanguage, noDefaultViewport: true },
+        persistent: { noDefaultViewport: true },
         browserProcess,
         protocolLogger: helper.debugProtocolLogger(),
         browserLogsCollector,
@@ -163,14 +163,14 @@ export class Chromium extends BrowserType {
       const proxyURL = new URL(proxy.server);
       const isSocks = proxyURL.protocol === 'socks5:';
       // https://www.chromium.org/developers/design-documents/network-settings
-      if (isSocks) {
+      if (isSocks && !this._playwrightOptions.socksProxyPort) {
         // https://www.chromium.org/developers/design-documents/network-stack/socks-proxy
         chromeArguments.push(`--host-resolver-rules="MAP * ~NOTFOUND , EXCLUDE ${proxyURL.hostname}"`);
       }
       chromeArguments.push(`--proxy-server=${proxy.server}`);
       const proxyBypassRules = [];
       // https://source.chromium.org/chromium/chromium/src/+/master:net/docs/proxy.md;l=548;drc=71698e610121078e0d1a811054dcf9fd89b49578
-      if (this._playwrightOptions.loopbackProxyOverride)
+      if (this._playwrightOptions.socksProxyPort)
         proxyBypassRules.push('<-loopback>');
       if (proxy.bypass)
         proxyBypassRules.push(...proxy.bypass.split(',').map(t => t.trim()).map(t => t.startsWith('.') ? '*' + t : t));

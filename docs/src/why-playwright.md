@@ -34,9 +34,3 @@ Playwright enables fast, reliable and capable testing and automation across all 
 * **Modern web features**. Playwright supports web components through [shadow-piercing selectors](./selectors.md), [geolocation, permissions](./emulation.md), web workers and other modern web APIs.
 
 * **Capabilities to cover all scenarios**. Support for [file downloads](./downloads.md) and [uploads](./input.md), out-of-process iframes, native [input events](./input.md), and even [dark mode](./emulation.md).
-
-## Limitations
-
-* **Legacy Edge and IE11 support**. Playwright does not support legacy Microsoft Edge or IE11 ([deprecation notice](https://techcommunity.microsoft.com/t5/microsoft-365-blog/microsoft-365-apps-say-farewell-to-internet-explorer-11-and/ba-p/1591666)). The new Microsoft Edge (on Chromium) is supported.
-
-* **Test on real mobile devices**: Playwright uses desktop browsers to emulate mobile devices. There is experimental [Android] support available. If you are interested in iOS, please [upvote this issue](https://github.com/microsoft/playwright/issues/1122).

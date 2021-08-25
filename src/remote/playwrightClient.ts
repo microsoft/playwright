@@ -20,7 +20,6 @@ import { Playwright } from '../client/playwright';
 
 export type PlaywrightClientConnectOptions = {
   wsEndpoint: string;
-  forwardPorts?: number[];
   timeout?: number
 };
 
@@ -30,18 +29,18 @@ export class PlaywrightClient {
   private _closePromise: Promise<void>;
 
   static async connect(options: PlaywrightClientConnectOptions): Promise<PlaywrightClient> {
-    const {wsEndpoint, forwardPorts, timeout = 30000} = options;
+    const { wsEndpoint, timeout = 30000 } = options;
     const connection = new Connection();
     const ws = new WebSocket(wsEndpoint);
     connection.onmessage = message => ws.send(JSON.stringify(message));
     ws.on('message', message => connection.dispatch(JSON.parse(message.toString())));
     const errorPromise = new Promise((_, reject) => ws.on('error', error => reject(error)));
     const closePromise = new Promise((_, reject) => ws.on('close', () => reject(new Error('Connection closed'))));
-    const playwrightClientPromise = new Promise<PlaywrightClient>(async (resolve, reject) => {
-      const playwright = await connection.waitForObjectWithKnownName('Playwright') as Playwright;
-      if (forwardPorts)
-        await playwright._enablePortForwarding(forwardPorts).catch(reject);
-      resolve(new PlaywrightClient(playwright, ws));
+    const playwrightClientPromise = new Promise<PlaywrightClient>((resolve, reject) => {
+      ws.on('open', async () => {
+        const playwright = await connection.initializePlaywright();
+        resolve(new PlaywrightClient(playwright, ws));
+      });
     });
     let timer: NodeJS.Timeout;
     try {

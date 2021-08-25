@@ -101,6 +101,28 @@ for (const [name, url] of Object.entries(vues)) {
     it('should support truthy querying', async ({page}) => {
       expect(await page.$$eval(`_vue=color-button[enabled]`, els => els.length)).toBe(5);
     });
+
+    it('should work with multiroot react', async ({page}) => {
+      await it.step('mount second root', async () => {
+        await expect(page.locator(`_vue=book-item`)).toHaveCount(3);
+        await page.evaluate(() => {
+          const anotherRoot = document.createElement('div');
+          anotherRoot.id = 'root2';
+          anotherRoot.append(document.createElement('div'));
+          document.body.append(anotherRoot);
+          // @ts-ignore
+          window.mountApp(anotherRoot.querySelector('div'));
+        });
+        await expect(page.locator(`_vue=book-item`)).toHaveCount(6);
+      });
+
+      await it.step('add a new book to second root', async () => {
+        await page.locator('#root2 input').fill('newbook');
+        await page.locator('#root2 >> text=new book').click();
+        await expect(page.locator('css=#root >> _vue=book-item')).toHaveCount(3);
+        await expect(page.locator('css=#root2 >> _vue=book-item')).toHaveCount(4);
+      });
+    });
   });
 }
 

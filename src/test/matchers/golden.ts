@@ -182,7 +182,7 @@ export function compare(
     message: output.join('\n'),
     expectedPath,
     actualPath,
-    diffPath,
+    diffPath: result.diff ? diffPath : undefined,
     mimeType
   };
 }

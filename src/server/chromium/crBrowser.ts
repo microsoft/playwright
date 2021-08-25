@@ -20,6 +20,7 @@ import { assertBrowserContextIsNotOwned, BrowserContext, validateBrowserContextO
 import { assert } from '../../utils/utils';
 import * as network from '../network';
 import { Page, PageBinding, PageDelegate, Worker } from '../page';
+import { Frame } from '../frames';
 import { ConnectionTransport } from '../transport';
 import * as types from '../types';
 import { ConnectionEvents, CRConnection, CRSession } from './crConnection';
@@ -307,7 +308,7 @@ export class CRBrowserContext extends BrowserContext {
     this._authenticateProxyViaCredentials();
   }
 
-  async _initialize() {
+  override async _initialize() {
     assert(!Array.from(this._browser._crPages.values()).some(page => page._browserContext === this));
     const promises: Promise<any>[] = [ super._initialize() ];
     if (this._browser.options.name !== 'electron' && this._browser.options.name !== 'clank') {
@@ -503,10 +504,18 @@ export class CRBrowserContext extends BrowserContext {
     return Array.from(this._browser._serviceWorkers.values()).filter(serviceWorker => serviceWorker._browserContext === this);
   }
 
-  async newCDPSession(page: Page): Promise<CRSession> {
-    if (!(page instanceof Page))
-      throw new Error('page: expected Page');
-    const targetId = (page._delegate as CRPage)._targetId;
+  async newCDPSession(page: Page | Frame): Promise<CRSession> {
+    let targetId: string | null = null;
+    if (page instanceof Page) {
+      targetId = (page._delegate as CRPage)._targetId;
+    } else if (page instanceof Frame) {
+      const session = (page._page._delegate as CRPage)._sessions.get(page._id);
+      if (!session) throw new Error(`This frame does not have a separate CDP session, it is a part of the parent frame's session`);
+      targetId = session._targetId;
+    } else {
+      throw new Error('page: expected Page or Frame');
+    }
+
     const rootSession = await this._browser._clientRootSession();
     const { sessionId } = await rootSession.send('Target.attachToTarget', { targetId, flatten: true });
     return this._browser._connection.session(sessionId)!;
