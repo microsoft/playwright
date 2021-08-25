@@ -707,6 +707,10 @@ BrowserContext:
       returns:
         artifact: Artifact
 
+    harExport:
+      returns:
+        artifact: Artifact
+
   events:
 
     bindingCall:

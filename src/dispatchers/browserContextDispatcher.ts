@@ -217,4 +217,11 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     const artifact = await this._context.tracing.export();
     return { artifact: new ArtifactDispatcher(this._scope, artifact) };
   }
+
+  async harExport(params: channels.BrowserContextHarExportParams): Promise<channels.BrowserContextHarExportResult> {
+    const artifact = await this._context._harRecorder?.export();
+    if (!artifact)
+      throw new Error('No HAR artifact. Ensure record.harPath is set.');
+    return { artifact: new ArtifactDispatcher(this._scope, artifact) };
+  }
 }

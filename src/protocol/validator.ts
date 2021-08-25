@@ -448,6 +448,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.BrowserContextTracingStopParams = tOptional(tObject({}));
   scheme.BrowserContextTracingExportParams = tOptional(tObject({}));
+  scheme.BrowserContextHarExportParams = tOptional(tObject({}));
   scheme.PageSetDefaultNavigationTimeoutNoReplyParams = tObject({
     timeout: tNumber,
   });

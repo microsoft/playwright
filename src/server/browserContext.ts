@@ -61,7 +61,7 @@ export abstract class BrowserContext extends SdkObject {
   readonly _browserContextId: string | undefined;
   private _selectors?: Selectors;
   private _origins = new Set<string>();
-  private _harRecorder: HarRecorder | undefined;
+  readonly _harRecorder: HarRecorder | undefined;
   readonly tracing: Tracing;
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
@@ -74,7 +74,8 @@ export abstract class BrowserContext extends SdkObject {
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
 
     if (this._options.recordHar)
-      this._harRecorder = new HarRecorder(this, this._options.recordHar);
+      this._harRecorder = new HarRecorder(this, {...this._options.recordHar, path: path.join(this._browser.options.artifactsDir, `${createGuid()}.har`)});
+
     this.tracing = new Tracing(this);
   }
 

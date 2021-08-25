@@ -15,6 +15,7 @@
  */
 
 import fs from 'fs';
+import { Artifact } from '../../artifact';
 import { BrowserContext } from '../../browserContext';
 import * as har from './har';
 import { HarTracer } from './harTracer';
@@ -25,11 +26,14 @@ type HarOptions = {
 };
 
 export class HarRecorder {
+  private _artifact: Artifact;
+  private _isFlushed: boolean = false;
   private _options: HarOptions;
   private _tracer: HarTracer;
   private _entries: har.Entry[] = [];
 
   constructor(context: BrowserContext, options: HarOptions) {
+    this._artifact = new Artifact(context, options.path);
     this._options = options;
     this._tracer = new HarTracer(context, this, {
       content: options.omitContent ? 'omit' : 'embedded',
@@ -50,8 +54,17 @@ export class HarRecorder {
   }
 
   async flush() {
+    if (this._isFlushed)
+      return;
+    this._isFlushed = true;
     const log = await this._tracer.stop();
     log.entries = this._entries;
     await fs.promises.writeFile(this._options.path, JSON.stringify({ log }, undefined, 2));
+  }
+
+  async export(): Promise<Artifact> {
+    await this.flush();
+    this._artifact.reportFinished();
+    return this._artifact;
   }
 }
