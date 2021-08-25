@@ -17,6 +17,8 @@
 import http from 'http';
 import { contextTest as it, expect } from './config/browserTest';
 
+it.skip(({ mode }) => mode !== 'default');
+
 let prevAgent: http.Agent;
 it.beforeAll(() => {
   prevAgent = http.globalAgent;
