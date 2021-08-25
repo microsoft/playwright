@@ -93,7 +93,7 @@ it('should not fail for window object', async ({ page, browserName }) => {
 });
 
 it('should trigger correct Log', async ({page, server, browserName, isWindows}) => {
-  it.fail(browserName === 'webkit' && isWindows, 'Regressed in https://trac.webkit.org/changeset/281158/webkit');
+  it.skip(browserName === 'webkit' && isWindows, 'Upstream issue https://bugs.webkit.org/show_bug.cgi?id=229515');
   await page.goto('about:blank');
   const [message] = await Promise.all([
     page.waitForEvent('console'),
