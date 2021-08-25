@@ -23,6 +23,7 @@ import { frameSnapshotStreamer, SnapshotData } from './snapshotterInjected';
 import { calculateSha1, createGuid, monotonicTime } from '../../utils/utils';
 import { FrameSnapshot } from './snapshotTypes';
 import { ElementHandle } from '../dom';
+import * as mime from 'mime';
 
 export type SnapshotterBlob = {
   buffer: Buffer,
@@ -128,7 +129,7 @@ export class Snapshotter {
       for (const { url, content, contentType } of data.resourceOverrides) {
         if (typeof content === 'string') {
           const buffer = Buffer.from(content);
-          const sha1 = calculateSha1(buffer) + mimeToExtension(contentType);
+          const sha1 = calculateSha1(buffer) + '.' + (mime.getExtension(contentType) || 'dat');
           this._delegate.onSnapshotterBlob({ sha1, buffer });
           snapshot.resourceOverrides.push({ url, sha1 });
         } else {
@@ -161,32 +162,4 @@ export class Snapshotter {
     } catch (e) {
     }
   }
-}
-
-const kMimeToExtension: { [key: string]: string } = {
-  'application/javascript': 'js',
-  'application/json': 'json',
-  'application/json5': 'json5',
-  'application/pdf': 'pdf',
-  'application/xhtml+xml': 'xhtml',
-  'application/zip': 'zip',
-  'font/otf': 'otf',
-  'font/woff': 'woff',
-  'font/woff2': 'woff2',
-  'image/bmp': 'bmp',
-  'image/gif': 'gif',
-  'image/jpeg': 'jpeg',
-  'image/png': 'png',
-  'image/tiff': 'tiff',
-  'image/svg+xml': 'svg',
-  'text/css': 'css',
-  'text/csv': 'csv',
-  'text/html': 'html',
-  'text/plain': 'text',
-  'video/mp4': 'mp4',
-  'video/mpeg': 'mpeg',
-};
-
-function mimeToExtension(contentType: string): string {
-  return '.' + (kMimeToExtension[contentType] || 'dat');
 }

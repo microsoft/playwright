@@ -23,6 +23,7 @@ import * as har from './har';
 import * as types from '../../types';
 import { calculateSha1, monotonicTime } from '../../../utils/utils';
 import { eventsHelper, RegisteredListener } from '../../../utils/eventsHelper';
+import * as mime from 'mime';
 
 const FALLBACK_HTTP_VERSION = 'HTTP/1.1';
 
@@ -223,7 +224,7 @@ export class HarTracer {
           content.text = buffer.toString('base64');
           content.encoding = 'base64';
         } else if (this._options.content === 'sha1') {
-          content._sha1 = calculateSha1(buffer) + mimeToExtension(content.mimeType);
+          content._sha1 = calculateSha1(buffer) + '.' + (mime.getExtension(content.mimeType) || 'dat');
           if (this._started)
             this._delegate.onContentBlob(content._sha1, buffer);
         }
@@ -231,7 +232,7 @@ export class HarTracer {
     }).catch(() => {}).then(() => {
       const postData = response.request().postDataBuffer();
       if (postData && harEntry.request.postData && this._options.content === 'sha1') {
-        harEntry.request.postData._sha1 = calculateSha1(postData) + mimeToExtension(harEntry.request.postData.mimeType);
+        harEntry.request.postData._sha1 = calculateSha1(postData) + '.' + (mime.getExtension(harEntry.request.postData.mimeType) || 'dat');
         if (this._started)
           this._delegate.onContentBlob(harEntry.request.postData._sha1, postData);
       }
@@ -425,32 +426,4 @@ function calculateRequestBodySize(request: network.Request): number|undefined {
   if (!postData)
     return;
   return new TextEncoder().encode(postData.toString('utf8')).length;
-}
-
-const kMimeToExtension: { [key: string]: string } = {
-  'application/javascript': 'js',
-  'application/json': 'json',
-  'application/json5': 'json5',
-  'application/pdf': 'pdf',
-  'application/xhtml+xml': 'xhtml',
-  'application/zip': 'zip',
-  'font/otf': 'otf',
-  'font/woff': 'woff',
-  'font/woff2': 'woff2',
-  'image/bmp': 'bmp',
-  'image/gif': 'gif',
-  'image/jpeg': 'jpeg',
-  'image/png': 'png',
-  'image/tiff': 'tiff',
-  'image/svg+xml': 'svg',
-  'text/css': 'css',
-  'text/csv': 'csv',
-  'text/html': 'html',
-  'text/plain': 'text',
-  'video/mp4': 'mp4',
-  'video/mpeg': 'mpeg',
-};
-
-function mimeToExtension(contentType: string): string {
-  return '.' + (kMimeToExtension[contentType] || 'dat');
 }
