@@ -130,6 +130,32 @@ export class TraceModel {
     }
     return event;
   }
+
+  _modernize_2_to_3(event: any): any {
+    if (event.type === 'resource-snapshot' && !event.snapshot.request) {
+      // Migrate from old ResourceSnapshot to new har entry format.
+      const resource = event.snapshot;
+      event.snapshot = {
+        _frameref: resource.frameId,
+        request: {
+          url: resource.url,
+          method: resource.method,
+          headers: resource.requestHeaders,
+          postData: resource.requestSha1 ? { _sha1: resource.requestSha1 } : undefined,
+        },
+        response: {
+          status: resource.status,
+          headers: resource.responseHeaders,
+          content: {
+            mimeType: resource.contentType,
+            _sha1: resource.responseSha1,
+          },
+        },
+        _monotonicTime: resource.timestamp,
+      };
+    }
+    return event;
+  }
 }
 
 export type ContextEntry = {

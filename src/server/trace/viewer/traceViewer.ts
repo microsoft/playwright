@@ -83,7 +83,8 @@ export class TraceViewer {
         const networkFile = path.join(tracesDir, (match ? match[1] : debugName) + '.network');
         const model = new TraceModel(snapshotStorage);
         await appendTraceEvents(model, traceFile);
-        await appendTraceEvents(model, networkFile);
+        if (fs.existsSync(networkFile))
+          await appendTraceEvents(model, networkFile);
         model.build();
         response.end(JSON.stringify(model.contextEntry));
       })().catch(e => console.error(e));
