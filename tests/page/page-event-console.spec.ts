@@ -92,7 +92,8 @@ it('should not fail for window object', async ({ page, browserName }) => {
     expect(message.text()).toEqual('JSHandle@object');
 });
 
-it('should trigger correct Log', async ({page, server}) => {
+it('should trigger correct Log', async ({page, server, browserName, isWindows}) => {
+  it.skip(browserName === 'webkit' && isWindows, 'Upstream issue https://bugs.webkit.org/show_bug.cgi?id=229515');
   await page.goto('about:blank');
   const [message] = await Promise.all([
     page.waitForEvent('console'),
