@@ -92,7 +92,8 @@ it('should not fail for window object', async ({ page, browserName }) => {
     expect(message.text()).toEqual('JSHandle@object');
 });
 
-it('should trigger correct Log', async ({page, server}) => {
+it('should trigger correct Log', async ({page, server, browserName, isWindows}) => {
+  it.fail(browserName === 'webkit' && isWindows, 'Regressed in https://trac.webkit.org/changeset/281158/webkit');
   await page.goto('about:blank');
   const [message] = await Promise.all([
     page.waitForEvent('console'),
