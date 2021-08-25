@@ -192,10 +192,9 @@ export class Dispatcher {
         }
       }
 
-      // Only retry expected failures, not passes and only if the test failed.
       for (const testId of retryCandidates) {
         const pair = this._testById.get(testId)!;
-        if (!this._isStopped && pair.test.expectedStatus === 'passed' && pair.test.results.length < pair.test.retries + 1) {
+        if (!this._isStopped && pair.test.results.length < pair.test.retries + 1) {
           pair.result = pair.test._appendTestResult();
           pair.steps = new Map();
           pair.stepStack = new Set();

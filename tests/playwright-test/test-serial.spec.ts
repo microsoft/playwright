@@ -129,3 +129,84 @@ test('test.describe.serial.only should work', async ({ runInlineTest }) => {
     '%%test3',
   ]);
 });
+
+test('test.describe.serial should work with test.fail', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      test.describe.serial('suite', () => {
+        test('zero', () => {
+          console.log('\\n%%zero');
+        });
+
+        test('one', ({}) => {
+          console.log('\\n%%one');
+          test.fail();
+          expect(1).toBe(2);
+        });
+
+        test('two', ({}, testInfo) => {
+          console.log('\\n%%two');
+          test.fail();
+          expect(testInfo.retry).toBe(0);
+        });
+
+        test('three', () => {
+          console.log('\\n%%three');
+        });
+      });
+    `,
+  }, { retries: 0 });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(2);
+  expect(result.failed).toBe(1);
+  expect(result.skipped).toBe(1);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%zero',
+    '%%one',
+    '%%two',
+  ]);
+});
+
+test('test.describe.serial should work with test.fail and retries', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      test.describe.serial('suite', () => {
+        test('zero', () => {
+          console.log('\\n%%zero');
+        });
+
+        test('one', ({}) => {
+          console.log('\\n%%one');
+          test.fail();
+          expect(1).toBe(2);
+        });
+
+        test('two', ({}, testInfo) => {
+          console.log('\\n%%two');
+          test.fail();
+          expect(testInfo.retry).toBe(0);
+        });
+
+        test('three', () => {
+          console.log('\\n%%three');
+        });
+      });
+    `,
+  }, { retries: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+  expect(result.flaky).toBe(1);
+  expect(result.failed).toBe(0);
+  expect(result.skipped).toBe(0);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%zero',
+    '%%one',
+    '%%two',
+    '%%zero',
+    '%%one',
+    '%%two',
+    '%%three',
+  ]);
+});

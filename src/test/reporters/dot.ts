@@ -44,7 +44,7 @@ class DotReporter extends BaseReporter {
       process.stdout.write(colors.yellow('°'));
       return;
     }
-    if (this.willRetry(test, result)) {
+    if (this.willRetry(test)) {
       process.stdout.write(colors.gray('×'));
       return;
     }

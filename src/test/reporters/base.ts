@@ -147,8 +147,8 @@ export class BaseReporter implements Reporter  {
     });
   }
 
-  willRetry(test: TestCase, result: TestResult): boolean {
-    return test.outcome() === 'unexpected' && result.status !== 'passed' && test.results.length <= test.retries;
+  willRetry(test: TestCase): boolean {
+    return test.outcome() === 'unexpected' && test.results.length <= test.retries;
   }
 }
 
@@ -159,10 +159,9 @@ export function formatFailure(config: FullConfig, test: TestCase, index?: number
     const resultTokens = formatResultFailure(test, result, '    ');
     if (!resultTokens.length)
       continue;
-    const statusSuffix = (result.status === 'passed' && test.expectedStatus === 'failed') ? ' -- passed unexpectedly' : '';
     if (result.retry) {
       tokens.push('');
-      tokens.push(colors.gray(pad(`    Retry #${result.retry}${statusSuffix}`, '-')));
+      tokens.push(colors.gray(pad(`    Retry #${result.retry}`, '-')));
     }
     tokens.push(...resultTokens);
     const output = ((result as any)[kOutputSymbol] || []) as TestResultOutput[];
@@ -186,6 +185,10 @@ export function formatResultFailure(test: TestCase, result: TestResult, initialI
   if (result.status === 'timedOut') {
     resultTokens.push('');
     resultTokens.push(indent(colors.red(`Timeout of ${test.timeout}ms exceeded.`), initialIndent));
+  }
+  if (result.status === 'passed' && test.expectedStatus === 'failed') {
+    resultTokens.push('');
+    resultTokens.push(indent(colors.red(`Expected to fail, but passed.`), initialIndent));
   }
   if (result.error !== undefined)
     resultTokens.push(indent(formatError(result.error, test.location.file), initialIndent));
@@ -211,8 +214,7 @@ export function formatTestTitle(config: FullConfig, test: TestCase, step?: TestS
 
 function formatTestHeader(config: FullConfig, test: TestCase, indent: string, index?: number): string {
   const title = formatTestTitle(config, test);
-  const passedUnexpectedlySuffix = (test.results[0].status === 'passed' && test.expectedStatus === 'failed') ? ' -- passed unexpectedly' : '';
-  const header = `${indent}${index ? index + ') ' : ''}${title}${passedUnexpectedlySuffix}`;
+  const header = `${indent}${index ? index + ') ' : ''}${title}`;
   return colors.red(pad(header, '='));
 }
 
