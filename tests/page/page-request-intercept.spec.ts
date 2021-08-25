@@ -80,7 +80,6 @@ it('should override with defaults when intercepted response not provided', async
 
 it('should fulfill with any response', async ({page, server, browserName, browserMajorVersion, isLinux}) => {
   it.skip(browserName === 'chromium' && browserMajorVersion <= 91, 'Fails in Electron that uses old Chromium');
-  it.fail(browserName === 'webkit' && isLinux, 'Network.responseReceived comes twice');
 
   server.setRoute('/sample', (req, res) => {
     res.setHeader('foo', 'bar');
@@ -95,6 +94,7 @@ it('should fulfill with any response', async ({page, server, browserName, browse
     await route.fulfill({
       _response: sampleResponse,
       status: 201,
+      contentType: 'text/plain'
     });
   });
   const response = await page.goto(server.EMPTY_PAGE);
