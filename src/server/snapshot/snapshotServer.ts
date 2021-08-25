@@ -62,6 +62,7 @@ export class SnapshotServer {
 
   private _serveServiceWorker(request: http.IncomingMessage, response: http.ServerResponse): boolean {
     function serviceWorkerMain(self: any /* ServiceWorkerGlobalScope */) {
+      const kBlobUrlPrefix = 'http://playwright.bloburl/#';
       const snapshotIds = new Map<string, { frameId: string, index: number }>();
 
       self.addEventListener('install', function(event: any) {
@@ -105,7 +106,7 @@ export class SnapshotServer {
         }
 
         const { frameId, index } = snapshotIds.get(snapshotUrl)!;
-        const url = removeHash(request.url);
+        const url = request.url.startsWith(kBlobUrlPrefix) ? request.url.substring(kBlobUrlPrefix.length) : removeHash(request.url);
         const complexUrl = btoa(JSON.stringify({ frameId, index, url }));
         const fetchUrl = `/resources/${complexUrl}`;
         const fetchedResponse = await fetch(fetchUrl);

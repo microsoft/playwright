@@ -300,6 +300,27 @@ it.describe('snapshots', () => {
     const padding = await frame.$eval('body', body => window.getComputedStyle(body).paddingLeft);
     expect(padding).toBe('42px');
   });
+
+  it('should handle src=blob', async ({ page, server, showSnapshot, toImpl, snapshotter, browserName }) => {
+    it.skip(browserName === 'firefox');
+
+    await page.goto(server.EMPTY_PAGE);
+    await page.evaluate(async () => {
+      const dataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAASCAQAAADIvofAAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAAmJLR0QA/4ePzL8AAAAHdElNRQfhBhAPKSstM+EuAAAAvUlEQVQY05WQIW4CYRgF599gEZgeoAKBWIfCNSmVvQMe3wv0ChhIViKwtTQEAYJwhgpISBA0JSxNIdlB7LIGTJ/8kpeZ7wW5TcT9o/QNBtvOrrWMrtg0sSGOFeELbHlCDsQ+ukeYiHNFJPHBDRKlQKVEbFkLUT3AiAxI6VGCXsWXAoQLBUl5E7HjUFwiyI4zf/wWoB3CFnxX5IeGdY8IGU/iwE9jcZrLy4pnEat+FL4hf/cbqREKo/Cf6W5zASVMeh234UtGAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDE3LTA2LTE2VDE1OjQxOjQzLTA3OjAwd1xNIQAAACV0RVh0ZGF0ZTptb2RpZnkAMjAxNy0wNi0xNlQxNTo0MTo0My0wNzowMAYB9Z0AAAAASUVORK5CYII=';
+      const blob = await fetch(dataUrl).then(res => res.blob());
+      const url = window.URL.createObjectURL(blob);
+      const img = document.createElement('img');
+      img.src = url;
+      const loaded = new Promise(f => img.onload = f);
+      document.body.appendChild(img);
+      await loaded;
+    });
+
+    const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot');
+    const frame = await showSnapshot(snapshot);
+    const img = await frame.waitForSelector('img');
+    expect(await img.screenshot()).toMatchSnapshot('blob-src.png');
+  });
 });
 
 function distillSnapshot(snapshot) {
