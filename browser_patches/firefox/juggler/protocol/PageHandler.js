@@ -354,6 +354,10 @@ class PageHandler {
     return await this._contentPage.send('dispatchMouseEvent', options);
   }
 
+  async ['Page.dispatchWheelEvent'](options) {
+    return await this._contentPage.send('dispatchWheelEvent', options);
+  }
+
   async ['Page.insertText'](options) {
     return await this._contentPage.send('insertText', options);
   }

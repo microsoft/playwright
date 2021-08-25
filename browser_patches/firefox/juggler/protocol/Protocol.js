@@ -911,6 +911,16 @@ const Page = {
         buttons: t.Number,
       }
     },
+    'dispatchWheelEvent': {
+      params: {
+        x: t.Number,
+        y: t.Number,
+        deltaX: t.Number,
+        deltaY: t.Number,
+        deltaZ: t.Number,
+        modifiers: t.Number,
+      }
+    },
     'insertText': {
       params: {
         text: t.String,
