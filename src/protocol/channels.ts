@@ -1828,10 +1828,9 @@ export type FrameQuerySelectorResult = {
 };
 export type FrameQuerySelectorAllParams = {
   selector: string,
-  strict?: boolean,
 };
 export type FrameQuerySelectorAllOptions = {
-  strict?: boolean,
+
 };
 export type FrameQuerySelectorAllResult = {
   elements: ElementHandleChannel[],

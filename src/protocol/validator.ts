@@ -754,7 +754,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.FrameQuerySelectorAllParams = tObject({
     selector: tString,
-    strict: tOptional(tBoolean),
   });
   scheme.FrameSelectOptionParams = tObject({
     selector: tString,

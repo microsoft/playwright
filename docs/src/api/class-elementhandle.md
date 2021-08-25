@@ -974,3 +974,5 @@ This method does not work across navigations, use [`method: Page.waitForSelector
 ### option: ElementHandle.waitForSelector.state = %%-wait-for-selector-state-%%
 
 ### option: ElementHandle.waitForSelector.timeout = %%-input-timeout-%%
+
+### option: ElementHandle.waitForSelector.strict = %%-input-strict-%%
