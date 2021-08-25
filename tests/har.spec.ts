@@ -23,8 +23,8 @@ import type { BrowserContext, BrowserContextOptions } from '../index';
 import type { AddressInfo } from 'net';
 import type { Log } from '../src/server/supplements/har/har';
 
-async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any) {
-  const harPath = testInfo.outputPath('test.har');
+async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any, outputPath: string = 'test.har') {
+  const harPath = testInfo.outputPath(outputPath);
   const context = await contextFactory({ recordHar: { path: harPath }, ignoreHTTPSErrors: true });
   const page = await context.newPage();
   return {
@@ -473,4 +473,34 @@ it('should contain http2 for http2 requests', async ({ contextFactory, browserNa
   expect(log.entries[0].request.httpVersion).toBe('h2');
   expect(log.entries[0].response.httpVersion).toBe('h2');
   server.close();
+});
+
+it('should have different hars for concurrent contexts', async ({ contextFactory }, testInfo) => {
+  const session0 = await pageWithHar(contextFactory, testInfo, 'test-0.har');
+  await session0.page.goto('data:text/html,<title>Zero</title>');
+  await session0.page.waitForLoadState('domcontentloaded');
+
+  const session1 = await pageWithHar(contextFactory, testInfo, 'test-1.har');
+  await session1.page.goto('data:text/html,<title>One</title>');
+  await session1.page.waitForLoadState('domcontentloaded');
+
+  // Trigger flushing on the server and ensure they are not racing to same
+  // location. NB: Run this test with --repeat-each 10.
+  const [log0, log1] = await Promise.all([
+    session0.getLog(),
+    session1.getLog()
+  ]);
+
+  {
+    expect(log0.pages.length).toBe(1);
+    const pageEntry = log0.pages[0];
+    expect(pageEntry.title).toBe('Zero');
+  }
+
+  {
+    expect(log1.pages.length).toBe(1);
+    const pageEntry = log1.pages[0];
+    expect(pageEntry.id).not.toBe(log0.pages[0].id);
+    expect(pageEntry.title).toBe('One');
+  }
 });

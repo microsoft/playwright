@@ -344,6 +344,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     try {
       await this._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
         await this._browserType?._onWillCloseContext?.(this);
+        if (this._options.recordHar)  {
+          const har = await this._channel.harExport();
+          await har.artifact.saveAs({ path: this._options.recordHar.path });
+        }
         await channel.close();
         await this._closedPromise;
       });

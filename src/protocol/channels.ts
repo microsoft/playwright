@@ -731,6 +731,7 @@ export interface BrowserContextChannel extends EventTargetChannel {
   tracingStart(params: BrowserContextTracingStartParams, metadata?: Metadata): Promise<BrowserContextTracingStartResult>;
   tracingStop(params?: BrowserContextTracingStopParams, metadata?: Metadata): Promise<BrowserContextTracingStopResult>;
   tracingExport(params?: BrowserContextTracingExportParams, metadata?: Metadata): Promise<BrowserContextTracingExportResult>;
+  harExport(params?: BrowserContextHarExportParams, metadata?: Metadata): Promise<BrowserContextHarExportResult>;
 }
 export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
@@ -960,6 +961,11 @@ export type BrowserContextTracingStopResult = void;
 export type BrowserContextTracingExportParams = {};
 export type BrowserContextTracingExportOptions = {};
 export type BrowserContextTracingExportResult = {
+  artifact: ArtifactChannel,
+};
+export type BrowserContextHarExportParams = {};
+export type BrowserContextHarExportOptions = {};
+export type BrowserContextHarExportResult = {
   artifact: ArtifactChannel,
 };
 
