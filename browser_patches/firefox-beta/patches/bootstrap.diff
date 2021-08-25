@@ -760,7 +760,7 @@ index 352b70d120305c3c643313020ed49652b2f14672..1a18f478363cab370a6f80c80a7fc71e
     * This attempts to save any applicable layout history state (like
     * scroll position) in the nsISHEntry. This is normally done
 diff --git a/dom/base/Document.cpp b/dom/base/Document.cpp
-index 4c037382d186940b04cef70a88cf40479df416e2..0c72c8435d29b8267029ce7c8f41a8a9e3e3c931 100644
+index ad8cdac6b5d0653882ba088b1d183a7c951e08da..498da998fca3a7e1a6a370bce7986ddd1b4e0a83 100644
 --- a/dom/base/Document.cpp
 +++ b/dom/base/Document.cpp
 @@ -3496,6 +3496,9 @@ void Document::SendToConsole(nsCOMArray<nsISecurityConsoleMessage>& aMessages) {
@@ -796,7 +796,7 @@ index 4c037382d186940b04cef70a88cf40479df416e2..0c72c8435d29b8267029ce7c8f41a8a9
    if (!fm->IsInActiveWindow(bc)) {
      return false;
    }
-@@ -17177,6 +17189,20 @@ void Document::RemoveToplevelLoadingDocument(Document* aDoc) {
+@@ -17198,6 +17210,20 @@ void Document::RemoveToplevelLoadingDocument(Document* aDoc) {
  
  StylePrefersColorScheme Document::PrefersColorScheme(
      IgnoreRFP aIgnoreRFP) const {
@@ -817,7 +817,7 @@ index 4c037382d186940b04cef70a88cf40479df416e2..0c72c8435d29b8267029ce7c8f41a8a9
    if (aIgnoreRFP == IgnoreRFP::No &&
        nsContentUtils::ShouldResistFingerprinting(this)) {
      return StylePrefersColorScheme::Light;
-@@ -17205,6 +17231,71 @@ StylePrefersColorScheme Document::PrefersColorScheme(
+@@ -17226,6 +17252,71 @@ StylePrefersColorScheme Document::PrefersColorScheme(
    return dark ? StylePrefersColorScheme::Dark : StylePrefersColorScheme::Light;
  }
  
@@ -890,10 +890,10 @@ index 4c037382d186940b04cef70a88cf40479df416e2..0c72c8435d29b8267029ce7c8f41a8a9
  bool Document::UseOverlayScrollbars(const Document* aDocument) {
    BrowsingContext* bc = aDocument ? aDocument->GetBrowsingContext() : nullptr;
 diff --git a/dom/base/Document.h b/dom/base/Document.h
-index 73a50572a504e371361678a9b8cf22d89653b5ce..88efbb03746e57f9fc96e8c16bdcfbc1504ad0bc 100644
+index 634d6757ec52e26281122b6d3b514a0067c7ed4c..c05f8127aba83f84e2159e427dad2af7152fc1ba 100644
 --- a/dom/base/Document.h
 +++ b/dom/base/Document.h
-@@ -3990,6 +3990,9 @@ class Document : public nsINode,
+@@ -3984,6 +3984,9 @@ class Document : public nsINode,
    enum class IgnoreRFP { No, Yes };
    StylePrefersColorScheme PrefersColorScheme(IgnoreRFP = IgnoreRFP::No) const;
  
@@ -1004,7 +1004,7 @@ index 3644ee4ac8fc0f99f4f9738ff7e34f3b7b35bc97..2a3cd36ef656e51f1dbda2d9fbcb4468
    static void FirePageShowEventForFrameLoaderSwap(
        nsIDocShellTreeItem* aItem,
 diff --git a/dom/base/nsDOMWindowUtils.cpp b/dom/base/nsDOMWindowUtils.cpp
-index 8220877b682b3c558c0cea7999962e5f2eea6579..b8ad098404aa8d81313ac5e19280731545625121 100644
+index c4e5a23965846871a2d5ec2b9e4963c7fbfa4c78..80442449cb829a21631d585ec56016b07a9e463f 100644
 --- a/dom/base/nsDOMWindowUtils.cpp
 +++ b/dom/base/nsDOMWindowUtils.cpp
 @@ -688,7 +688,7 @@ nsDOMWindowUtils::SendMouseEvent(
@@ -1692,7 +1692,7 @@ index 2f71b284ee5f7e11f117c447834b48355784448c..d996e0a3cbbb19c1dc320c305c6d7403
     * returned quads are further translated relative to the window
     * origin -- which is not the layout origin. Further translation
 diff --git a/dom/workers/RuntimeService.cpp b/dom/workers/RuntimeService.cpp
-index 3fda0a78fd2359f666877017b171b9214bff722d..710333ce69baa96dcc88f590f8b4314e9f20bbf1 100644
+index c3e3f56834d726ea8e172d764a6f769e3f11e984..980bd1c62d46d345fdcc53d0c890cd651982f6fb 100644
 --- a/dom/workers/RuntimeService.cpp
 +++ b/dom/workers/RuntimeService.cpp
 @@ -1022,7 +1022,7 @@ void PrefLanguagesChanged(const char* /* aPrefName */, void* /* aClosure */) {
@@ -1770,7 +1770,7 @@ index 8b1b46d69f2c90d851d292c285a1ba9bdbd4d9b7..dea5259b0a82e5e6d3c431fc78e60d5d
  
  bool IsWorkerGlobal(JSObject* global);
 diff --git a/dom/workers/WorkerPrivate.cpp b/dom/workers/WorkerPrivate.cpp
-index 496194cc67a58740a91c7194f3f8e4feb31e1b68..d1c2fb72862baafeca00a848c665cbc5bdeef3e4 100644
+index 6b1557e2ecafd184e5a029a2bf2f61ad1c8217d9..432a2384353c6d0b5693be700a542e1cb2cf5fcb 100644
 --- a/dom/workers/WorkerPrivate.cpp
 +++ b/dom/workers/WorkerPrivate.cpp
 @@ -672,6 +672,18 @@ class UpdateContextOptionsRunnable final : public WorkerControlRunnable {
