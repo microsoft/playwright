@@ -129,7 +129,7 @@
     "socksv5": "0.0.6",
     "style-loader": "^1.2.1",
     "typescript": "^4.3.5",
-    "webpack": "^4.44.2",
+    "webpack": "^5.51.1",
     "webpack-cli": "^3.3.12",
     "xml2js": "^0.4.23",
     "yaml": "^1.10.0"
