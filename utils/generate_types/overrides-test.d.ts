@@ -227,6 +227,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
       only: SuiteFunction;
     };
   };
+  skip(title: string, testFunction: (args: TestArgs, testInfo: TestInfo) => Promise<void> | void): void;
   skip(): void;
   skip(condition: boolean): void;
   skip(condition: boolean, description: string): void;
