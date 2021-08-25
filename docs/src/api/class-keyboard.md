@@ -326,7 +326,7 @@ page.keyboard.type("World", delay=100) # types slower, like a user
 
 ```csharp
 await page.Keyboard.TypeAsync("Hello"); // types instantly
-await page.Keyboard.TypeAsync("World"); // types slower, like a user
+await page.Keyboard.TypeAsync("World", new KeyboardTypeOptions { Delay = 100 }); // types slower, like a user
 ```
 
 :::note

@@ -394,14 +394,14 @@ export interface Reporter {
    * Called when a test step started in the worker process.
    * @param test Test that has been started.
    * @param result Result of the test run, this object gets populated while the test runs.
-   * @param result Test step instance.
+   * @param step Test step instance.
    */
   onStepBegin?(test: TestCase, result: TestResult, step: TestStep): void;
   /**
    * Called when a test step finished in the worker process.
    * @param test Test that has been finished.
    * @param result Result of the test run.
-   * @param result Test step instance.
+   * @param step Test step instance.
    */
   onStepEnd?(test: TestCase, result: TestResult, step: TestStep): void;
   /**
