@@ -327,6 +327,12 @@ const Browser = {
         userAgent: t.Nullable(t.String),
       }
     },
+    'setPlatformOverride': {
+      params: {
+        browserContextId: t.Optional(t.String),
+        platform: t.Nullable(t.String),
+      }
+    },
     'setBypassCSP': {
       params: {
         browserContextId: t.Optional(t.String),
