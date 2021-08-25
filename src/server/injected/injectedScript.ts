@@ -22,6 +22,7 @@ import { ParsedSelector, ParsedSelectorPart, parseSelector } from '../common/sel
 import { FatalDOMError } from '../common/domErrors';
 import { SelectorEvaluatorImpl, isVisible, parentElementOrShadowHost, elementMatchesText, TextMatcher, createRegexTextMatcher, createStrictTextMatcher, createLaxTextMatcher } from './selectorEvaluator';
 import { CSSComplexSelectorList } from '../common/cssParser';
+import { generateSelector } from './selectorGenerator';
 
 type Predicate<T> = (progress: InjectedScriptProgress, continuePolling: symbol) => T | symbol;
 
@@ -103,7 +104,7 @@ export class InjectedScript {
     try {
       const result = this._querySelectorRecursively([{ element: root as Element, capture: undefined }], selector, 0, new Map());
       if (strict && result.length > 1)
-        throw new Error(`strict mode violation: selector resolved to ${result.length} elements.`);
+        throw new Error(this.strictModeViolationErrorMessage(selector, result.map(r => r.element)));
       return result[0]?.capture || result[0]?.element;
     } finally {
       this._evaluator.end();
@@ -736,6 +737,17 @@ export class InjectedScript {
     if (text.length > 50)
       text = text.substring(0, 49) + '\u2026';
     return oneLine(`<${element.nodeName.toLowerCase()}${attrText}>${text}</${element.nodeName.toLowerCase()}>`);
+  }
+
+  strictModeViolationErrorMessage(selector: ParsedSelector, matches: Element[]): string {
+    const infos = matches.slice(0, 10).map(m => ({
+      preview: this.previewNode(m),
+      selector: generateSelector(this, m).selector
+    }));
+    const lines = infos.map((info, i) => `\n    ${i + 1}) ${info.preview} aka playwright.$("${info.selector}")`);
+    if (infos.length < matches.length)
+      lines.push('\n    ...');
+    return `strict mode violation: "${selector.selector}" resolved to ${matches.length} elements:${lines.join('')}\n`;
   }
 }
 

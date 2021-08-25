@@ -22,6 +22,7 @@ export type ParsedSelectorPart = {
 };
 
 export type ParsedSelector = {
+  selector: string,
   parts: ParsedSelectorPart[],
   capture?: number,
 };
@@ -48,6 +49,7 @@ export function parseSelector(selector: string): ParsedSelector {
     return part;
   });
   return {
+    selector,
     capture: result.capture,
     parts
   };

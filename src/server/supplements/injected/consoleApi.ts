@@ -15,7 +15,7 @@
  */
 
 import type InjectedScript from '../../injected/injectedScript';
-import { generateSelector } from './selectorGenerator';
+import { generateSelector } from '../../injected/selectorGenerator';
 
 type ConsoleAPIInterface = {
   $: (selector: string) => void;
