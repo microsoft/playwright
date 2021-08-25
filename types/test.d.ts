@@ -1626,6 +1626,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * skipped when the condition is `true`.
    * @param testFunctionOrDescription When used with `test.skip('test', () => {})` notation, second argument is a test function. Otherwise it is an optional description that will be reflected in a test report.
    */
+  skip(title: string, testFunction: (args: TestArgs, testInfo: TestInfo) => Promise<void> | void): void;
   skip(): void;
   skip(condition: boolean): void;
   skip(condition: boolean, description: string): void;
