@@ -23,6 +23,7 @@ import { internalCallMetadata } from '../../instrumentation';
 import type { CallLog, EventData, Mode, Source } from './recorderTypes';
 import { BrowserContext } from '../../browserContext';
 import { isUnderTest } from '../../../utils/utils';
+import * as mime from 'mime';
 import { installAppIcon } from '../../chromium/crApp';
 
 declare global {
@@ -63,7 +64,7 @@ export class RecorderApp extends EventEmitter {
         await route.fulfill({
           status: 200,
           headers: [
-            { name: 'Content-Type', value: extensionToMime[path.extname(file)] }
+            { name: 'Content-Type', value: mime.getType(path.extname(file)) || 'application/octet-stream' }
           ],
           body: buffer.toString('base64'),
           isBase64: true
@@ -168,16 +169,3 @@ export class RecorderApp extends EventEmitter {
     await this._page.bringToFront();
   }
 }
-
-const extensionToMime: { [key: string]: string } = {
-  '.css': 'text/css',
-  '.html': 'text/html',
-  '.jpeg': 'image/jpeg',
-  '.js': 'application/javascript',
-  '.png': 'image/png',
-  '.ttf': 'font/ttf',
-  '.svg': 'image/svg+xml',
-  '.webp': 'image/webp',
-  '.woff': 'font/woff',
-  '.woff2': 'font/woff2',
-};
