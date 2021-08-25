@@ -72,6 +72,7 @@ const DEPENDENCIES = [
   'https-proxy-agent',
   'jpeg-js',
   'mime',
+  'node-fetch',
   'pngjs',
   'progress',
   'proper-lockfile',
@@ -140,8 +141,11 @@ if (!args.some(arg => arg === '--no-cleanup')) {
   const pwInternalJSON = require(path.join(ROOT_PATH, 'package.json'));
   const depNames = packageName === 'playwright-test' ? Object.keys(pwInternalJSON.dependencies) : DEPENDENCIES;
   const dependencies = {};
-  for (const dep of depNames)
-    dependencies[dep] =  pwInternalJSON.dependencies[dep];
+  for (const dep of depNames) {
+    if (!pwInternalJSON.dependencies[dep])
+      throw new Error(`Dependecy ${dep} was removed from package.json, but not build_package.js`);
+    dependencies[dep] = pwInternalJSON.dependencies[dep];
+  }
   await writeToPackage('package.json', JSON.stringify({
     name: package.name || packageName,
     version: pwInternalJSON.version,
