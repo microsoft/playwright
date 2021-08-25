@@ -39,7 +39,7 @@ export class Selectors {
     this._builtinEngines = new Set([
       'css', 'css:light',
       'xpath', 'xpath:light',
-      '_react', '_vue',
+      '_react', '_vue', '_ember',
       'text', 'text:light',
       'id', 'id:light',
       'data-testid', 'data-testid:light',
@@ -48,7 +48,7 @@ export class Selectors {
       'nth', 'visible'
     ]);
     this._builtinEnginesInMainWorld = new Set([
-      '_react', '_vue',
+      '_react', '_vue', '_ember',
     ]);
     this._engines = new Map();
   }

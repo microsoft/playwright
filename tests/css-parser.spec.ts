@@ -18,7 +18,7 @@ import { playwrightTest as it, expect } from './config/browserTest';
 import { parseCSS, serializeSelector as serialize } from '../src/server/common/cssParser';
 
 const parse = (selector: string) => {
-  return parseCSS(selector, new Set(['text', 'not', 'has', 'react', 'scope', 'right-of', 'scope', 'is'])).selector;
+  return parseCSS(selector, new Set(['text', 'not', 'has', 'react', 'ember', 'scope', 'right-of', 'scope', 'is'])).selector;
 };
 
 it('should parse css', async () => {

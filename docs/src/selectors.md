@@ -213,7 +213,23 @@ methods accept [`param: selector`] as their first argument.
   await page.ClickAsync("_vue=list-item[text *= 'milk' i]");
   ```
   Learn more about [Vue selectors][vue].
-
+- Ember selector (experimental)
+  ```js
+  await page.click('_ember=LinkTo[text *= "milk" i]');
+  ```
+  ```java
+  page.click("_ember=LinkTo[text *= 'milk' i]");
+  ```
+  ```python async
+  await page.click("_ember=LinkTo[text *= "milk" i]")
+  ```
+  ```python sync
+  page.click("_ember=LinkTo[text *= 'milk' i]")
+  ```
+  ```csharp
+  await page.ClickAsync("_ember=LinkTo[text *= 'milk' i]");
+  ```
+  Learn more about [Ember selectors][ember].
 
 
 ## Text selector
@@ -781,6 +797,48 @@ Vue selectors, as well as [Vue DevTools](https://chrome.google.com/webstore/deta
 :::
 
 
+## Ember selectors
+
+:::note
+Ember selectors are experimental and prefixed with `_`. The functionality might change in future.
+:::
+
+Ember selectors allow selecting elements by its component name and property values. The syntax is very similar to [attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors) and supports all attribute selector operators.
+
+In ember selectors, component names are transcribed with **CamelCase**.
+
+Selector examples:
+
+- match by **component**: `_ember=LinkTo`
+- match by component and **exact property value**, case-sensetive: `_ember=LinkTo[author = "Steven King"]`
+- match by property value only, **case-insensetive**: `_ember=[author = "steven king" i]`
+- match by component and **truthy property value**: `_ember=MyButton[enabled]`
+- match by component and **boolean value**: `_ember=MyButton[enabled = false]`
+- match by property **value substring**: `_ember=[author *= "King"]`
+- match by component and **multiple properties**: `_ember=BookItem[author *= "king" i][year = 1990]`
+- match by **nested** property value: `_ember=[some.nested.value = 12]`
+- match by component and property value **prefix**: `_ember=BookItem[author ^= "Steven"]`
+- match by component and property value **suffix**: `_ember=BookItem[author $= "Steven"]`
+
+To find Ember element names in a tree use [Ember Inspector](https://chrome.google.com/webstore/detail/ember-inspector/bmdblncegkenkacieihfhpjfppoconhi?hl=en).
+
+:::note
+Ember selectors support [Ember 3.14](https://github.com/emberjs/ember.js/pull/18372) and above.
+:::
+
+:::note
+
+Ember selectors should work for development and test builds.
+
+To get Ember selectors work aganist production builds, set
+```js
+window.EmberENV = { _DEBUG_RENDER_TREE: true };
+```
+before the "vendor" `<script>` tag in `index.html`.
+
+[More info](https://github.com/emberjs/ember.js/blob/master/packages/@ember/-internals/environment/lib/env.ts#L129)
+:::
+
 ## id, data-testid, data-test-id, data-test selectors
 
 Playwright supports a shorthand for selecting elements using certain attributes. Currently, only
@@ -1124,4 +1182,5 @@ await page.ClickAsync("//*[@id='tsf']/div[2]/div[1]/div[1]/div/div[2]/input");
 [xpath]: #xpath-selectors
 [react]: #react-selectors
 [vue]: #vue-selectors
+[ember]: #ember-selectors
 [id]: #id-data-testid-data-test-id-data-test-selectors

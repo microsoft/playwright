@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>ReadingList</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="reading-list/config/environment"
+        content="%7B%22modulePrefix%22%3A%22reading-list%22%2C%22environment%22%3A%22development%22%2C%22rootURL%22%3A%22%2F%22%2C%22locationType%22%3A%22hash%22%2C%22EmberENV%22%3A%7B%22FEATURES%22%3A%7B%7D%2C%22EXTEND_PROTOTYPES%22%3A%7B%22Date%22%3Afalse%7D%2C%22_APPLICATION_TEMPLATE_WRAPPER%22%3Afalse%2C%22_DEFAULT_ASYNC_OBSERVERS%22%3Atrue%2C%22_JQUERY_INTEGRATION%22%3Afalse%2C%22_TEMPLATE_ONLY_GLIMMER_COMPONENTS%22%3Atrue%7D%2C%22APP%22%3A%7B%22name%22%3A%22reading-list%22%2C%22version%22%3A%220.0.0%2B33d058ab%22%7D%2C%22exportApplicationGlobal%22%3Atrue%7D" />
+
+    <link integrity="" rel="stylesheet" href="./style.css">
+
+</head>
+
+<body>
+
+    <script>
+
+        window.EmberAppSetup = function ({
+            GlimmerComponent,
+            templateOnlyComponent,
+            RegisterComponent,
+        }) {
+
+            AddComponent({
+                name: 'Main',
+                template: `
+                <AppHeader @booksCount={{this.data.books.length}}/>
+                <NewBook @onAdd={{this.onAdd}} />
+                <ReadingList @books={{this.data.books}} />
+                <ButtonGrid />
+            `,
+                setup(ctx) {
+                    const data = {
+                        books: [
+                            { name: 'Pride and Prejudice' },
+                            { name: 'To Kill a Mockingbird' },
+                            { name: 'The Great Gatsby' },
+                        ],
+                    }
+                    const onAdd = (name) => {
+                        ctx.data = { books: [{ name }, ...ctx.data.books] };
+                    }
+
+                    return {
+                        data, onAdd
+                    }
+                }
+            })
+
+            AddComponent({
+                name: 'AppHeader',
+                template: `
+                <div>
+                    <h1>Ember@3</h1>
+                    <h3>Reading List: {{@booksCount}}</h3>
+                </div>
+            `
+            });
+
+            AddComponent({
+                name: 'ReadingList',
+                template: `
+                <ol>
+                    {{#each @books as |book|}} 
+                        <ListItem @name={{book.name}} /> 
+                    {{/each}}
+                </ol>
+            `
+            });
+
+            AddComponent({
+                name: 'ListItem',
+                template: `<li>{{@name}}</li>`
+            });
+
+            AddComponent({
+                name: 'ColorButton',
+                template: `
+                <button 
+                    class={{@color}} 
+                    disabled={{@disabled}}
+                >
+                    button {{@nested.index}}
+                </button>
+            `
+            });
+
+            AddComponent({
+                name: 'ButtonGrid',
+                template: `
+                {{#each this.buttons as |config|}}
+                    <ColorButton 
+                        @color={{config.color}} 
+                        @disabled={{config.enabled}} 
+                        @nested={{config.nested}}
+                    />
+                {{/each}}
+            `,
+                setup() {
+                    const buttons = [];
+                    for (let i = 0; i < 9; ++i) {
+                        buttons.push({
+                            color: ['red', 'green', 'blue'][i % 3],
+                            enabled: i % 2 === 0,
+                            nested: {
+                                index: i,
+                                value: i + 0.1,
+                            }
+                        });
+                    };
+                    return { buttons };
+                }
+            })
+
+            AddComponent({
+                name: 'NewBook',
+                template: `
+                <div>
+                    <input type="text" {{on 'input' this.onInput}}>
+                    <button type="button" {{on 'click' this.onAdd}}>new book</button>
+                </div>
+            `,
+                setup(ctx) {
+                    return {
+                        onInput(e) {
+                            ctx.value = e.target.value;
+                        },
+                        onAdd() {
+                            ctx.args.onAdd(ctx.value);
+                        }
+                    }
+                }
+            });
+
+            function AddComponent({ name, template, setup }) {
+
+                let komponent;
+
+                if (typeof setup !== 'function') {
+                    komponent = templateOnlyComponent();
+                } else {
+                    komponent = class Component extends GlimmerComponent {
+                        constructor() {
+                            super(...arguments);
+                            Object.assign(this, setup(this));
+                        }
+                    }
+                }
+
+                RegisterComponent(normalizeToClassicComponent(name), komponent, template.trim());
+            }
+
+            // https://github.com/rwjblue/ember-angle-bracket-invocation-polyfill/blob/master/lib/ast-transform.js#L33
+            function normalizeToClassicComponent(rawName) {
+                const name = rawName.split('$').pop() || '';
+                const ALPHA = /[A-Za-z]/;
+
+                return name
+                    .replace(/[A-Z]/g, (char, index) => {
+                        if (index === 0 || !ALPHA.test(name[index - 1])) {
+                            return char.toLowerCase();
+                        }
+
+                        return `-${char.toLowerCase()}`;
+                    })
+                    .replace(/::/g, '/');
+            }
+
+
+        };
+
+
+
+    </script>
+
+    <script src="./ember-3-dist/assets/vendor.js"></script>
+    <script>runningTests = true</script>
+    <script src="./ember-3-dist/assets/reading-list.js"></script>
+    <script>runningTests = false</script>
+    <script>
+        window.createEmberApp = function createEmberApp(selector) {
+            class App extends require("reading-list/app")["default"] {
+                rootElement = selector
+            }
+            App.create({
+                "name": "reading-list",
+                "version": "0.0.0+33d058ab"
+            });
+        }
+        createEmberApp('#root1');
+    </script>
+
+    <div id="root1"></div>
+    <div id="root2"></div>
+
+</body>
+
+</html>
