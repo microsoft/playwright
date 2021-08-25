@@ -365,7 +365,7 @@ export class WorkerRunner extends EventEmitter {
     if (reportEvents)
       this.emit('testEnd', buildTestEndPayload(testId, testInfo));
 
-    const isFailure = testInfo.status === 'timedOut' || (testInfo.status === 'failed' && testInfo.expectedStatus !== 'failed');
+    const isFailure = testInfo.status !== 'skipped' && testInfo.status !== testInfo.expectedStatus;
     const preserveOutput = this._loader.fullConfig().preserveOutput === 'always' ||
       (this._loader.fullConfig().preserveOutput === 'failures-only' && isFailure);
     if (!preserveOutput)
@@ -374,7 +374,7 @@ export class WorkerRunner extends EventEmitter {
     this._currentTest = null;
     setCurrentTestInfo(null);
 
-    if (testInfo.status !== 'passed' && testInfo.status !== 'skipped') {
+    if (isFailure) {
       if (test._type === 'test')
         this._failedTestId = testId;
       else if (!this._fatalError)

@@ -116,7 +116,7 @@ test('should fail on unexpected pass', async ({ runInlineTest }) => {
   });
   expect(exitCode).toBe(1);
   expect(failed).toBe(1);
-  expect(output).toContain('passed unexpectedly');
+  expect(output).toContain('Expected to fail, but passed');
 });
 
 test('should respect global timeout', async ({ runInlineTest }) => {
