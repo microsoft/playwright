@@ -221,6 +221,10 @@ class BrowserHandler {
     await this._targetRegistry.browserContextForId(browserContextId).setDefaultUserAgent(userAgent);
   }
 
+  async ['Browser.setPlatformOverride']({browserContextId, platform}) {
+    await this._targetRegistry.browserContextForId(browserContextId).setDefaultPlatform(platform);
+  }
+
   async ['Browser.setBypassCSP']({browserContextId, bypassCSP}) {
     await this._targetRegistry.browserContextForId(browserContextId).applySetting('bypassCSP', nullToUndefined(bypassCSP));
   }

@@ -169,6 +169,7 @@ class TargetRegistry {
         throw new Error(`Internal error: cannot find context for userContextId=${userContextId}`);
       const target = new PageTarget(this, window, tab, browserContext, openerTarget);
       target.updateUserAgent();
+      target.updatePlatform();
       target.updateJavaScriptDisabled();
       target.updateTouchOverride();
       target.updateColorSchemeOverride();
@@ -404,6 +405,10 @@ class PageTarget {
 
   updateUserAgent() {
     this._linkedBrowser.browsingContext.customUserAgent = this._browserContext.defaultUserAgent;
+  }
+
+  updatePlatform() {
+    this._linkedBrowser.browsingContext.customPlatform = this._browserContext.defaultPlatform;
   }
 
   updateJavaScriptDisabled() {
@@ -695,6 +700,7 @@ class BrowserContext {
     this.defaultViewportSize = undefined;
     this.deviceScaleFactor = undefined;
     this.defaultUserAgent = null;
+    this.defaultPlatform = null;
     this.javaScriptDisabled = false;
     this.touchOverride = false;
     this.colorScheme = 'none';
@@ -771,6 +777,12 @@ class BrowserContext {
     this.defaultUserAgent = userAgent;
     for (const page of this.pages)
       page.updateUserAgent();
+  }
+
+  setDefaultPlatform(platform) {
+    this.defaultPlatform = platform;
+    for (const page of this.pages)
+      page.updatePlatform();
   }
 
   setJavaScriptDisabled(javaScriptDisabled) {
