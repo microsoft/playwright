@@ -200,7 +200,8 @@ function writeEvent(eventName, event, parent, sourceName) {
 
   var e = {
     name: sourceName,
-    cs: `internal event EventHandler? ${eventName};`
+    cs: `internal event EventHandler? ${eventName};`,
+    invoker: `protected void On${eventName}() => ${eventName}?.Invoke(this, new());`
   };
 
   if (!event.parameters)
@@ -221,6 +222,7 @@ function writeEvent(eventName, event, parent, sourceName) {
   writeFile(`${argsName}.cs`, eventArgs.join(`\n`), eventArgsDir);
 
   e.cs = `internal event EventHandler<${argsName}>? ${eventName};`;
+  e.invoker = `protected void On${eventName}(${argsName} args) => ${eventName}?.Invoke(this, args);`;
   return e;
 }
 
@@ -305,7 +307,6 @@ function buildParameterMap(parameters) {
     const ps = [];
     const populateParameter = (param, paramType) => {
       const isOptional = (typeof paramType == 'string' && paramType.endsWith('?'));
-      console.log(paramType);
       if (paramType.type && paramType.type.startsWith('enum')) {
         param.type = inlineType(paramType).ts;
       } else if (typeof paramType === 'string') {
@@ -469,10 +470,10 @@ internal class ${channelName} : Channel<${name}>
               if (param.children.length)
                 visitParameter(param.children, indent + '\t', `${param.name} = `);
               else {
-                if(param.type === 'Exception') 
+                if (param.type === 'Exception')
                   param.fullName += '.ToObject()'
-                
-                  pushIndented(`${param.name} = ${param.fullName},`, indent)
+
+                pushIndented(`${param.name} = ${param.fullName},`, indent)
               }
             }
             pushIndented(`}${prefix ? ',' : ''}`, indent);
@@ -490,10 +491,25 @@ internal class ${channelName} : Channel<${name}>
         } else if (returnDefinition.type.startsWith('JsonElement')) {
           pushIndented(`.ConfigureAwait(false)).GetProperty("${returnDefinition.name}");`);
         } else {
-            pushIndented(`.ConfigureAwait(false))${returnDefinition.optional ? '?' : ''}.GetObject<${returnDefinition.type}>("${returnDefinition.name}", Connection);`);
+          pushIndented(`.ConfigureAwait(false))${returnDefinition.optional ? '?' : ''}.GetObject<${returnDefinition.type}>("${returnDefinition.name}", Connection);`);
         }
       }
+
+      // add event invoke methods
+      for (const event of eventMap) {
+        channel.push(``);
+        channel.push(event.invoker);
+      }
+
       channel.push(`}`); // end of class
+
+      channel.push(`
+internal partial class ${name}Channel : ${channelName} {
+  public ${name}Channel(string guid, Connection connection, ${name} owner) : base(guid, connection, owner)
+  { 
+  }
+}`);
+
       channel.push(`}`); // end of namespace
       channel.push(`#nullable disable`);
       writeFile(`${channelName}.cs`, channel.join(`\n`), channelsDir);
