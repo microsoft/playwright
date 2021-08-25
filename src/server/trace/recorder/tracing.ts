@@ -38,7 +38,7 @@ export type TracerOptions = {
   screenshots?: boolean;
 };
 
-export const VERSION = 2;
+export const VERSION = 3;
 
 type RecordingState = {
   options: TracerOptions,
