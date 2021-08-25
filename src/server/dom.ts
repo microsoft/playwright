@@ -40,11 +40,11 @@ export class FrameExecutionContext extends js.ExecutionContext {
     this.world = world;
   }
 
-  async waitForSignalsCreatedBy<T>(action: () => Promise<T>): Promise<T> {
+  override async waitForSignalsCreatedBy<T>(action: () => Promise<T>): Promise<T> {
     return this.frame._page._frameManager.waitForSignalsCreatedBy(null, false, action);
   }
 
-  adoptIfNeeded(handle: js.JSHandle): Promise<js.JSHandle> | null {
+  override adoptIfNeeded(handle: js.JSHandle): Promise<js.JSHandle> | null {
     if (handle instanceof ElementHandle && handle._context !== this)
       return this.frame._page._delegate.adoptElementHandle(handle, this);
     return null;
@@ -80,7 +80,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
     });
   }
 
-  createHandle(remoteObject: js.RemoteObject): js.JSHandle {
+  override createHandle(remoteObject: js.RemoteObject): js.JSHandle {
     if (this.frame._page._delegate.isElementHandle(remoteObject))
       return new ElementHandle(this, remoteObject.objectId!);
     return super.createHandle(remoteObject);
@@ -106,7 +106,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
     return this._injectedScriptPromise;
   }
 
-  async doSlowMo() {
+  override async doSlowMo() {
     return this.frame._page._doSlowMo();
   }
 }
@@ -127,7 +127,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     this._setPreview(await utility.evaluate((injected, e) => 'JSHandle@' + injected.previewNode(e), this));
   }
 
-  asElement(): ElementHandle<T> | null {
+  override asElement(): ElementHandle<T> | null {
     return this;
   }
 

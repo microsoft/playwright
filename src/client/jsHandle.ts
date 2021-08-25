@@ -79,7 +79,7 @@ export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel, ch
     });
   }
 
-  toString(): string {
+  override toString(): string {
     return this._preview;
   }
 }

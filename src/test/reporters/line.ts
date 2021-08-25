@@ -24,18 +24,18 @@ class LineReporter extends BaseReporter {
   private _failures = 0;
   private _lastTest: TestCase | undefined;
 
-  onBegin(config: FullConfig, suite: Suite) {
+  override onBegin(config: FullConfig, suite: Suite) {
     super.onBegin(config, suite);
     this._total = suite.allTests().length;
     console.log();
   }
 
-  onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
+  override onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     super.onStdOut(chunk, test, result);
     this._dumpToStdio(test, chunk, process.stdout);
   }
 
-  onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
+  override onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     super.onStdErr(chunk, test, result);
     this._dumpToStdio(test, chunk, process.stderr);
   }
@@ -54,7 +54,7 @@ class LineReporter extends BaseReporter {
     console.log();
   }
 
-  onTestEnd(test: TestCase, result: TestResult) {
+  override onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
     const width = process.stdout.columns! - 1;
     const title = `[${++this._current}/${this._total}] ${formatTestTitle(this.config, test)}`.substring(0, width);
@@ -66,7 +66,7 @@ class LineReporter extends BaseReporter {
     }
   }
 
-  async onEnd(result: FullResult) {
+  override async onEnd(result: FullResult) {
     process.stdout.write(`\u001B[1A\u001B[2K`);
     await super.onEnd(result);
     this.epilogue(false);
