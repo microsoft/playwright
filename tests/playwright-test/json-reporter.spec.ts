@@ -107,6 +107,27 @@ test('should report projects', async ({ runInlineTest }, testInfo) => {
   expect(result.report.suites[0].specs[0].tests[0].projectName).toBe('p1');
   expect(result.report.suites[0].specs[0].tests[1].projectName).toBe('p2');
 });
+test('should show steps', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('math works!', async ({}) => {
+        expect(1 + 1).toBe(2);
+        await test.step('math works in a step', async () => {
+          expect(2 + 2).toBe(4);
+          await test.step('nested step', async () => {
+            expect(2 + 2).toBe(4);
+          })
+        })
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.report.suites.length).toBe(1);
+  expect(result.report.suites[0].specs.length).toBe(1);
+  expect(result.report.suites[0].specs[0].tests[0].results[0].steps[0].title).toBe('math works in a step');
+  expect(result.report.suites[0].specs[0].tests[0].results[0].steps[0].steps[0].title).toBe('nested step');
+});
 
 test('should have relative always-posix paths', async ({ runInlineTest }) => {
   const result = await runInlineTest({
