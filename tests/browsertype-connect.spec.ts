@@ -454,3 +454,24 @@ test('should be able to connect when the wsEndpont is passed as the first argume
   expect(await page.evaluate('1 + 2')).toBe(3);
   await browser.close();
 });
+
+test('should save har', async ({browserType, startRemoteServer, server}, testInfo) => {
+  const remoteServer = await startRemoteServer();
+  const browser = await browserType.connect(remoteServer.wsEndpoint());
+  const harPath = testInfo.outputPath('test.har');
+  const context = await browser.newContext({
+    recordHar: {
+      path: harPath,
+    }
+  });
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  await context.close();
+  await browser.close();
+
+  const log = JSON.parse(fs.readFileSync(harPath).toString())['log'];
+  expect(log.entries.length).toBe(1);
+  const entry = log.entries[0];
+  expect(entry.pageref).toBe(log.pages[0].id);
+  expect(entry.request.url).toBe(server.EMPTY_PAGE);
+});
