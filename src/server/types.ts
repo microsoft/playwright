@@ -379,9 +379,6 @@ export type FetchResponse = {
   url: string,
   status: number,
   statusText: string,
-  headers: {
-    name: string,
-    value: string,
-  }[],
+  headers: HeadersArray,
   body: Buffer,
 };
