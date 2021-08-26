@@ -72,7 +72,6 @@ export interface JSONReportTestResult {
 }
 export interface JSONReportTestStep {
   title: string;
-  category: string;
   duration: number;
   error: TestError | undefined;
   steps?: JSONReportTestStep[];
@@ -244,7 +243,6 @@ class JSONReporter implements Reporter {
     const steps = step.steps.filter(s => s.category === 'test.step');
     return {
       title: step.title,
-      category: step.category,
       duration: step.duration,
       error: step.error,
       steps: steps.length ? steps.map(s => this._serializeTestStep(s)) : undefined,

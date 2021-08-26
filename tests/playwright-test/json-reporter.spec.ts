@@ -137,8 +137,6 @@ test('should show steps', async ({ runInlineTest }) => {
   expect(result.report.suites[0].specs[0].tests[0].results[0].steps[0].steps[0].steps[0].title).toBe('deeply nested step');
   expect(result.report.suites[0].specs[0].tests[0].results[0].steps[0].steps[0].steps[0].steps).toBeUndefined();
   expect(result.report.suites[0].specs[0].tests[0].results[0].steps[1].error).not.toBeUndefined();
-
-  console.log(JSON.stringify(result.report,null, 2));
 });
 
 test('should have relative always-posix paths', async ({ runInlineTest }) => {
