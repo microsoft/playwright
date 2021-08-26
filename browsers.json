@@ -13,12 +13,12 @@
     },
     {
       "name": "firefox",
-      "revision": "1285",
+      "revision": "1288",
       "installByDefault": true
     },
     {
       "name": "firefox-beta",
-      "revision": "1284",
+      "revision": "1288",
       "installByDefault": false
     },
     {
