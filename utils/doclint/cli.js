@@ -37,18 +37,6 @@ run().catch(e => {
 });;
 
 async function run() {
-  const apiDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
-  apiDocumentation.filterForLanguage('js');
-  const testDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'test-api'), path.join(PROJECT_DIR, 'docs', 'src', 'api', 'params.md'));
-  testDocumentation.filterForLanguage('js');
-  const testRerpoterDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'test-reporter-api'));
-  testRerpoterDocumentation.filterForLanguage('js');
-  const documentation = apiDocumentation.mergeWith(testDocumentation).mergeWith(testRerpoterDocumentation);
-  documentation.mergeWith(testDocumentation);
-
-  // This validates member links.
-  documentation.setLinkRenderer(() => undefined);
-
   // Patch README.md
   const versions = await getBrowserVersions();
   {
@@ -108,16 +96,41 @@ async function run() {
 
   // Validate links
   {
-    for (const file of fs.readdirSync(path.join(PROJECT_DIR, 'docs', 'src'))) {
-      if (!file.endsWith('.md'))
-        continue;
-      const data = fs.readFileSync(path.join(PROJECT_DIR, 'docs', 'src', file)).toString();
-      documentation.renderLinksInText(md.parse(data));
+    const langs = ['js', 'java', 'python', 'csharp'];
+    for (const lang of langs) {
+      try {
+        let documentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
+        documentation.filterForLanguage(lang);
+        if (lang === 'js') {
+          const testDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'test-api'), path.join(PROJECT_DIR, 'docs', 'src', 'api', 'params.md'));
+          testDocumentation.filterForLanguage('js');
+          const testRerpoterDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'test-reporter-api'));
+          testRerpoterDocumentation.filterForLanguage('js');
+          documentation = documentation.mergeWith(testDocumentation).mergeWith(testRerpoterDocumentation);
+        }
+
+        // This validates member links.
+        documentation.setLinkRenderer(() => undefined);
+
+        for (const file of fs.readdirSync(path.join(PROJECT_DIR, 'docs', 'src'))) {
+          if (!file.endsWith('.md'))
+            continue;
+          if (langs.some(other => other !== lang && file.endsWith(`-${other}.md`)))
+            continue;
+          const data = fs.readFileSync(path.join(PROJECT_DIR, 'docs', 'src', file)).toString();
+          documentation.renderLinksInText(md.filterNodesForLanguage(md.parse(data), lang));
+        }
+      } catch (e) {
+        e.message = `While processing "${lang}"\n` + e.message;
+        throw e;
+      }
     }
   }
 
   // Check for missing docs
   {
+    const apiDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
+    apiDocumentation.filterForLanguage('js');
     const srcClient = path.join(PROJECT_DIR, 'src', 'client');
     const sources = fs.readdirSync(srcClient).map(n => path.join(srcClient, n));
     const errors = missingDocs(apiDocumentation, sources, path.join(srcClient, 'api.ts'));
