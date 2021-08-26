@@ -107,7 +107,10 @@ for (const [name, url] of Object.entries(reacts)) {
 
     it('should support nested react trees', async ({page}) => {
       await expect(page.locator(`_react=BookItem`)).toHaveCount(3);
-      await page.evaluate(() => mountNestedApp());
+      await page.evaluate(() => {
+        // @ts-ignore
+        mountNestedApp();
+      });
       await expect(page.locator(`_react=BookItem`)).toHaveCount(6);
     });
 

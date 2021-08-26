@@ -104,7 +104,10 @@ for (const [name, url] of Object.entries(vues)) {
 
     it('should support nested vue trees', async ({page}) => {
       await expect(page.locator(`_vue=book-item`)).toHaveCount(3);
-      await page.evaluate(() => mountNestedApp());
+      await page.evaluate(() => {
+        // @ts-ignore
+        mountNestedApp();
+      });
       await expect(page.locator(`_vue=book-item`)).toHaveCount(6);
     });
 
