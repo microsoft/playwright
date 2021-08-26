@@ -226,7 +226,7 @@ class TestServer {
       request.on('data', chunk => body = Buffer.concat([body, chunk]));
       request.on('end', () => resolve(body));
     });
-    const pathName = url.parse(request.url).path;
+    const pathName = url.parse(request.url, true).pathname;
     this.debugServer(`request ${request.method} ${pathName}`);
     if (this._auths.has(pathName)) {
       const auth = this._auths.get(pathName);

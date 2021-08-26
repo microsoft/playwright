@@ -33,6 +33,70 @@ it('should work for resource', async ({ contextFactory, server }) => {
   await context.close();
 });
 
+it('should account for blocked and queued time', async ({ contextFactory, server }) => {
+  const context = await contextFactory();
+  const page = await context.newPage();
+  const requests = [];
+  context.on('requestfinished', request => requests.push(request));
+
+  const toMilliseconds = (time: number) => (time === -1 || time < 0 ? -1 : time * 1000);
+  const firstPositive = (numbers: number[]) => {
+    for (const num of numbers) {
+      if (num > 0)
+        return num;
+    }
+    return -1;
+  };
+  const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+  server.setRoute('/chunked*', async (_, res) => {
+    res.writeHead(200, {
+      'connection': 'close',
+      'cache-control': 'no-cache, no-store, must-revalidate'
+    });
+    await delay(100);
+    res.write('j');
+    await delay(100);
+    res.end('s');
+  });
+  server.setRoute('/blocked', async (_, res) => {
+    res.setHeader('content-type', 'text/html');
+    // Only 6 concurrent req are done by chrome to same domain
+    res.write(`
+    <script src=${server.PREFIX}/chunked*?ab=1></script>
+    <script src=${server.PREFIX}/chunked*?ab=2></script>
+    <script src=${server.PREFIX}/chunked*?ab=3></script>
+    <script src=${server.PREFIX}/chunked*?ab=4></script>
+    <script src=${server.PREFIX}/chunked*?ab=5></script>
+    <script src=${server.PREFIX}/chunked*?ab=6></script>
+    <script src=${server.PREFIX}/chunked*?ab=7></script>
+    <script src=${server.PREFIX}/chunked*?ab=8></script>
+    <script src=${server.PREFIX}/chunked*?ab=9></script>
+    <script src=${server.PREFIX}/chunked*?ab=10></script>
+    <script src=${server.PREFIX}/chunked*?ab=11></script>
+    <script src=${server.PREFIX}/chunked*?ab=12></script>
+    `);
+    res.end(`<script src=${server.PREFIX}/chunked*?ab=13></script>`);
+  });
+  await page.goto(server.PREFIX + '/blocked', {
+    waitUntil: 'networkidle'
+  });
+
+  const blockedTime = requests.map(req => {
+    const timing = req.timing();
+    const blockingEnd =
+    firstPositive([timing.domainLookupStart, timing.connectStart, timing.requestStart]) || 0;
+    return toMilliseconds(blockingEnd - timing.startTime);
+  });
+  const queueTime = requests.map(req => {
+    const timing = req.timing();
+    return toMilliseconds(timing.startTime - req.issueTime());
+  });
+  console.log('BlockedTime', blockedTime);
+  console.log('queueTime', queueTime);
+  await context.close();
+});
+
 it('should work for subresource', async ({ contextFactory, server }) => {
   const context = await contextFactory();
   const page = await context.newPage();
