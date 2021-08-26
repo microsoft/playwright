@@ -91,6 +91,7 @@ window.mountApp = element => new Vue({
       <new-book @newbook='addNewBook'></new-book>
       <book-list :books='books'></book-list>
       <button-grid></button-grid>
+      <div ref="mountPoint"></div>
     </div>
   `,
 
@@ -111,6 +112,7 @@ window.mountApp = element => new Vue({
     }
   },
 });
-window.mountApp(document.querySelector('#root div'));
+window.app = window.mountApp(document.querySelector('#root div'));
+window.mountNestedApp = () => window.mountApp(window.app.$refs.mountPoint);
 
 </script>

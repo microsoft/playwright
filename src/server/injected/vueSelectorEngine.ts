@@ -207,22 +207,25 @@ function filterComponentsTree(treeNode: ComponentNode, searchFn: (node: Componen
 type VueRoot = {version: number, root: VueVNode};
 function findVueRoots(): VueRoot[] {
   const roots: VueRoot[] = [];
-  const walker = document.createTreeWalker(document, NodeFilter.SHOW_ELEMENT, {
-    acceptNode: function(node) {
-      // Vue3 root
-      if ((node as any)._vnode && (node as any)._vnode.component) {
-        roots.push({root: (node as any)._vnode.component, version: 3});
-        return NodeFilter.FILTER_REJECT;
-      }
-      // Vue2 root
-      if ((node as any).__vue__) {
-        roots.push({root: (node as any).__vue__, version: 2});
-        return NodeFilter.FILTER_REJECT;
-      }
-      return NodeFilter.FILTER_ACCEPT;
-    }
-  });
-  while (walker.nextNode());
+  // Vue3 roots are marked with [data-v-app] attribute
+  for (const node of document.querySelectorAll('[data-v-app]')) {
+    if ((node as any)._vnode && (node as any)._vnode.component)
+      roots.push({root: (node as any)._vnode.component, version: 3});
+  }
+  // Vue2 roots are referred to from elements.
+  const walker = document.createTreeWalker(document, NodeFilter.SHOW_ELEMENT);
+  const vue2Roots: Set<VueVNode>  = new Set();
+  while (walker.nextNode()) {
+    const element = walker.currentNode as any;
+    if (element && element.__vue__)
+      vue2Roots.add(element.__vue__.$root);
+  }
+  for (const vue2root of vue2Roots) {
+    roots.push({
+      version: 2,
+      root: vue2root,
+    });
+  }
   return roots;
 }
 
