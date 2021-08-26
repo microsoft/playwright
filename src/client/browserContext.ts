@@ -35,6 +35,7 @@ import * as structs from '../../types/structs';
 import { CDPSession } from './cdpSession';
 import { Tracing } from './tracing';
 import type { BrowserType } from './browserType';
+import { Artifact } from './artifact';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel, channels.BrowserContextInitializer> implements api.BrowserContext {
   _pages = new Set<Page>();
@@ -346,7 +347,11 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
         await this._browserType?._onWillCloseContext?.(this);
         if (this._options.recordHar)  {
           const har = await this._channel.harExport();
-          await har.artifact.saveAs({ path: this._options.recordHar.path });
+          const artifact = Artifact.from(har.artifact);
+          if (this.browser()?._remoteType)
+            artifact._isRemote = true;
+          await artifact.saveAs(this._options.recordHar.path);
+          await artifact.delete();
         }
         await channel.close();
         await this._closedPromise;
