@@ -38,7 +38,7 @@ for (const [name, url] of Object.entries(vues)) {
 
     it('should work with multi-root elements (fragments)', async ({page}) => {
       it.skip(name === 'vue2', 'vue2 does not support fragments');
-      expect(await page.$$eval(`_vue=Root`, els => els.length)).toBe(14);
+      expect(await page.$$eval(`_vue=Root`, els => els.length)).toBe(15);
       expect(await page.$$eval(`_vue=app-header`, els => els.length)).toBe(2);
       expect(await page.$$eval(`_vue=new-book`, els => els.length)).toBe(2);
     });
@@ -100,6 +100,15 @@ for (const [name, url] of Object.entries(vues)) {
 
     it('should support truthy querying', async ({page}) => {
       expect(await page.$$eval(`_vue=color-button[enabled]`, els => els.length)).toBe(5);
+    });
+
+    it('should support nested vue trees', async ({page}) => {
+      await expect(page.locator(`_vue=book-item`)).toHaveCount(3);
+      await page.evaluate(() => {
+        // @ts-ignore
+        mountNestedApp();
+      });
+      await expect(page.locator(`_vue=book-item`)).toHaveCount(6);
     });
 
     it('should work with multiroot react', async ({page}) => {
