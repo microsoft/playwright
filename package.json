@@ -67,7 +67,6 @@
     "mime": "^2.4.6",
     "minimatch": "^3.0.3",
     "ms": "^2.1.2",
-    "node-fetch": "^2.6.1",
     "pirates": "^4.0.1",
     "pixelmatch": "^5.2.1",
     "pngjs": "^5.0.0",
