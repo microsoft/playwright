@@ -221,6 +221,7 @@ class JSONReporter implements Reporter {
   }
 
   private _serializeTestResult(result: TestResult): JSONReportTestResult {
+    const steps = result.steps.filter(s => s.category === 'test.step');
     return {
       workerIndex: result.workerIndex,
       status: result.status,
@@ -229,7 +230,7 @@ class JSONReporter implements Reporter {
       stdout: result.stdout.map(s => stdioEntry(s)),
       stderr: result.stderr.map(s => stdioEntry(s)),
       retry: result.retry,
-      steps: result.steps.length ? result.steps.filter(s => s.category === 'test.step').map(s => this._serializeTestStep(s)) : undefined,
+      steps: steps.length ? steps.map(s => this._serializeTestStep(s)) : undefined,
       attachments: result.attachments.map(a => ({
         name: a.name,
         contentType: a.contentType,
@@ -240,12 +241,13 @@ class JSONReporter implements Reporter {
   }
 
   private _serializeTestStep(step: TestStep): JSONReportTestStep {
+    const steps = step.steps.filter(s => s.category === 'test.step');
     return {
       title: step.title,
       category: step.category,
       duration: step.duration,
       error: step.error,
-      steps: step.steps.length ? step.steps.filter(s => s.category === 'test.step').map(s => this._serializeTestStep(s)) : undefined,
+      steps: steps.length ? steps.map(s => this._serializeTestStep(s)) : undefined,
     };
   }
 }
