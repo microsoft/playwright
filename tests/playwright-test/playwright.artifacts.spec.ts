@@ -125,7 +125,7 @@ test('should work with screenshot: on', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { screenshot: 'on' } };
+      module.exports = { screenshot: 'on' };
     `,
   }, { workers: 1 });
 
@@ -163,7 +163,7 @@ test('should work with screenshot: only-on-failure', async ({ runInlineTest }, t
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { screenshot: 'only-on-failure' } };
+      module.exports = { screenshot: 'only-on-failure' };
     `,
   }, { workers: 1 });
 
@@ -190,7 +190,7 @@ test('should work with trace: on', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { trace: 'on' } };
+      module.exports = { trace: 'on' };
     `,
   }, { workers: 1 });
 
@@ -228,7 +228,7 @@ test('should work with trace: retain-on-failure', async ({ runInlineTest }, test
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { trace: 'retain-on-failure' } };
+      module.exports = { trace: 'retain-on-failure' };
     `,
   }, { workers: 1 });
 
@@ -255,7 +255,7 @@ test('should work with trace: on-first-retry', async ({ runInlineTest }, testInf
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { trace: 'on-first-retry' } };
+      module.exports = { trace: 'on-first-retry' };
     `,
   }, { workers: 1, retries: 1 });
 
@@ -281,7 +281,7 @@ test('should work with trace: on-first-retry', async ({ runInlineTest }, testInf
 test('should stop tracing with trace: on-first-retry, when not retrying', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { trace: 'on-first-retry' } };
+      module.exports = { trace: 'on-first-retry' };
     `,
     'a.spec.ts': `
       const { test } = pwt;

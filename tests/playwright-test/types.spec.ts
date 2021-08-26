@@ -153,14 +153,26 @@ test('should check types of fixtures', async ({runTSC}) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('config should allow void/empty options', async ({runTSC}) => {
+test('config should check types', async ({runTSC}) => {
   const result = await runTSC({
     'playwright.config.ts': `
-      const configs: pwt.Config[] = [];
+      const configs: pwt.Config<{ foo: string }>[] = [];
+
       configs.push({});
+
+      // @ts-expect-error
+      configs.push({ timeout: 'foo' });
       configs.push({ timeout: 100 });
-      configs.push();
-      configs.push({ use: { foo: 42 }});
+      // @ts-expect-error
+      configs.push({ use: { timeout: 100 } });
+
+      // @ts-expect-error
+      configs.push({ use: { foo: 42 } });
+      configs.push({ use: { foo: 'bar' } });
+
+      // @ts-expect-error
+      configs.push({ foo: 42 });
+      configs.push({ foo: 'bar' });
     `,
     'a.spec.ts': `
       const { test } = pwt;

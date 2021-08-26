@@ -16,32 +16,24 @@ const { devices } = require('@playwright/test');
 const config = {
   // Options shared for all projects.
   timeout: 30000,
-  use: {
-    ignoreHTTPSErrors: true,
-  },
+  ignoreHTTPSErrors: true,
 
   // Options specific to each project.
   projects: [
     {
       name: 'Desktop Chromium',
-      use: {
-        browserName: 'chromium',
-        viewport: { width: 1280, height: 720 },
-      },
+      browserName: 'chromium',
+      viewport: { width: 1280, height: 720 },
     },
     {
       name: 'Desktop Safari',
-      use: {
-        browserName: 'webkit',
-        viewport: { width: 1280, height: 720 },
-      }
+      browserName: 'webkit',
+      viewport: { width: 1280, height: 720 },
     },
     {
       name: 'Desktop Firefox',
-      use: {
-        browserName: 'firefox',
-        viewport: { width: 1280, height: 720 },
-      }
+      browserName: 'firefox',
+      viewport: { width: 1280, height: 720 },
     },
     {
       name: 'Mobile Chrome',
@@ -64,32 +56,24 @@ import { PlaywrightTestConfig, devices } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   // Options shared for all projects.
   timeout: 30000,
-  use: {
-    ignoreHTTPSErrors: true,
-  },
+  ignoreHTTPSErrors: true,
 
   // Options specific to each project.
   projects: [
     {
       name: 'Desktop Chromium',
-      use: {
-        browserName: 'chromium',
-        viewport: { width: 1280, height: 720 },
-      },
+      browserName: 'chromium',
+      viewport: { width: 1280, height: 720 },
     },
     {
       name: 'Desktop Safari',
-      use: {
-        browserName: 'webkit',
-        viewport: { width: 1280, height: 720 },
-      }
+      browserName: 'webkit',
+      viewport: { width: 1280, height: 720 },
     },
     {
       name: 'Desktop Firefox',
-      use: {
-        browserName: 'firefox',
-        viewport: { width: 1280, height: 720 },
-      }
+      browserName: 'firefox',
+      viewport: { width: 1280, height: 720 },
     },
     {
       name: 'Mobile Chrome',
@@ -178,30 +162,23 @@ const config = {
     {
       name: 'Smoke Chromium',
       testDir: './smoke-tests',
-      use: {
-        browserName: 'chromium',
-      }
+      browserName: 'chromium',
     },
     {
       name: 'Smoke WebKit',
       testDir: './smoke-tests',
-      use: {
-        browserName: 'webkit',
-      }
+      browserName: 'webkit',
     },
     {
       name: 'Smoke Firefox',
       testDir: './smoke-tests',
-      use: {
-        browserName: 'firefox',
-      }
+      browserName: 'firefox',
     },
     {
       name: 'Chrome Stable',
       testDir: './',
-      use: {
-        browserName: 'chromium',
-        channel: 'chrome',
+      browserName: 'chromium',
+      channel: 'chrome',
       }
     },
   ],
@@ -219,31 +196,23 @@ const config: PlaywrightTestConfig = {
     {
       name: 'Smoke Chromium',
       testDir: './smoke-tests',
-      use: {
-        browserName: 'chromium',
-      }
+      browserName: 'chromium',
     },
     {
       name: 'Smoke WebKit',
       testDir: './smoke-tests',
-      use: {
-        browserName: 'webkit',
-      }
+      browserName: 'webkit',
     },
     {
       name: 'Smoke Firefox',
       testDir: './smoke-tests',
-      use: {
-        browserName: 'firefox',
-      }
+      browserName: 'firefox',
     },
     {
       name: 'Chrome Stable',
       testDir: './',
-      use: {
-        browserName: 'chromium',
-        channel: 'chrome',
-      }
+      browserName: 'chromium',
+      channel: 'chrome',
     },
   ],
 };

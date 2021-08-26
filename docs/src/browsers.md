@@ -39,9 +39,7 @@ support Stable and Beta channels of these browsers. Here is how you can opt into
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  use: {
-    channel: 'chrome',
-  },
+  channel: 'chrome',
 };
 
 module.exports = config;
@@ -50,9 +48,7 @@ module.exports = config;
 ```js js-flavor=ts
 import { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
-  use: {
-    channel: 'chrome',
-  },
+  channel: 'chrome',
 };
 export default config;
 ```
@@ -269,7 +265,7 @@ mvn test
 
 ```bash csharp
 # Linux/macOS
-PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers 
+PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers
 playwright install
 
 # Windows with cmd.exe

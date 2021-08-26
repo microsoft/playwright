@@ -321,3 +321,29 @@ test('should work with undefined values and base', async ({ runInlineTest }) => 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should support use options in top-level config', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        foo: 'config',
+        shared: 'config',
+        projects: [{
+          shared: 'project',
+          bar: 'project',
+        }]
+      };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('pass', async ({ foo, bar, shared }, testInfo) => {
+        test.expect(foo).toBe('config');
+        test.expect(bar).toBe('project');
+        test.expect(shared).toBe('project');
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});

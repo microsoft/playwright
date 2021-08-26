@@ -318,18 +318,14 @@ const config = {
   projects: [
     {
       name: 'Desktop Chromium',
-      use: {
-        browserName: 'chromium',
-        // Test against Chrome Beta channel.
-        channel: 'chrome-beta',
-      },
+      browserName: 'chromium',
+      // Test against Chrome Beta channel.
+      channel: 'chrome-beta',
     },
     {
       name: 'Desktop Safari',
-      use: {
-        browserName: 'webkit',
-        viewport: { width: 1200, height: 750 },
-      }
+      browserName: 'webkit',
+      viewport: { width: 1200, height: 750 },
     },
     // Test against mobile viewports.
     {
@@ -342,10 +338,8 @@ const config = {
     },
     {
       name: 'Desktop Firefox',
-      use: {
-        browserName: 'firefox',
-        viewport: { width: 800, height: 600 },
-      }
+      browserName: 'firefox',
+      viewport: { width: 800, height: 600 },
     },
   ],
 };
@@ -361,18 +355,14 @@ const config: PlaywrightTestConfig = {
   projects: [
     {
       name: 'Chrome Stable',
-      use: {
-        browserName: 'chromium',
-        // Test against Chrome Stable channel.
-        channel: 'chrome',
-      },
+      browserName: 'chromium',
+      // Test against Chrome Stable channel.
+      channel: 'chrome',
     },
     {
       name: 'Desktop Safari',
-      use: {
-        browserName: 'webkit',
-        viewport: { width: 1200, height: 750 },
-      }
+      browserName: 'webkit',
+      viewport: { width: 1200, height: 750 },
     },
     // Test against mobile viewports.
     {
@@ -385,10 +375,8 @@ const config: PlaywrightTestConfig = {
     },
     {
       name: 'Desktop Firefox',
-      use: {
-        browserName: 'firefox',
-        viewport: { width: 800, height: 600 },
-      }
+      browserName: 'firefox',
+      viewport: { width: 800, height: 600 },
     },
   ],
 };

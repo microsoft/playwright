@@ -57,10 +57,12 @@ interface TestProject {
   timeout?: number;
 }
 
-export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
+interface ProjectImpl<TestArgs, WorkerArgs> extends TestProject {
   define?: FixtureDefine | FixtureDefine[];
   use?: Fixtures<{}, {}, TestArgs, WorkerArgs>;
 }
+
+export type Project<TestArgs = {}, WorkerArgs = {}> = ProjectImpl<TestArgs, WorkerArgs> & Partial<TestArgs & WorkerArgs>;
 
 export type FullProject<TestArgs = {}, WorkerArgs = {}> = Required<Project<TestArgs, WorkerArgs>>;
 
@@ -126,11 +128,13 @@ interface TestConfig {
   timeout?: number;
 }
 
-export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
+interface ConfigImpl<TestArgs, WorkerArgs> extends TestConfig {
   projects?: Project<TestArgs, WorkerArgs>[];
   define?: FixtureDefine | FixtureDefine[];
   use?: Fixtures<{}, {}, TestArgs, WorkerArgs>;
 }
+
+export type Config<TestArgs = {}, WorkerArgs = {}> = ConfigImpl<TestArgs, WorkerArgs> & Partial<TestArgs & WorkerArgs>;
 
 export interface FullConfig {
   forbidOnly: boolean;

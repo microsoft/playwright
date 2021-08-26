@@ -20,9 +20,7 @@ Set the `trace: 'on-first-retry'` option in the test configuration file. This wi
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
   retries: 1,
-  use: {
-    trace: 'on-first-retry',
-  },
+  trace: 'on-first-retry',
 };
 
 module.exports = config;
@@ -32,9 +30,7 @@ module.exports = config;
 import { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   retries: 1,
-  use: {
-    trace: 'on-first-retry',
-  },
+  trace: 'on-first-retry',
 };
 export default config;
 ```

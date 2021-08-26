@@ -13,19 +13,17 @@ You can specify any options globally in the configuration file, and most of them
 
 ## Global configuration
 
-Create `playwright.config.js` (or `playwright.config.ts`) and specify options in the `use` section.
+Create `playwright.config.js` (or `playwright.config.ts`) and specify options in the `config` object.
 
 ```js js-flavor=js
 // @ts-check
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  use: {
-    headless: false,
-    viewport: { width: 1280, height: 720 },
-    ignoreHTTPSErrors: true,
-    video: 'on-first-retry',
-  },
+  headless: false,
+  viewport: { width: 1280, height: 720 },
+  ignoreHTTPSErrors: true,
+  video: 'on-first-retry',
 };
 
 module.exports = config;
@@ -34,12 +32,10 @@ module.exports = config;
 ```js js-flavor=ts
 import { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
-  use: {
-    headless: false,
-    viewport: { width: 1280, height: 720 },
-    ignoreHTTPSErrors: true,
-    video: 'on-first-retry',
-  },
+  headless: false,
+  viewport: { width: 1280, height: 720 },
+  ignoreHTTPSErrors: true,
+  video: 'on-first-retry',
 };
 export default config;
 ```
@@ -131,11 +127,9 @@ These are commonly used options for various scenarios. You usually set them glob
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  use: {
-    baseURL: 'http://localhost:3000',
-    browserName: 'firefox',
-    headless: true,
-  },
+  baseURL: 'http://localhost:3000',
+  browserName: 'firefox',
+  headless: true,
 };
 
 module.exports = config;
@@ -144,11 +138,9 @@ module.exports = config;
 ```js js-flavor=ts
 import { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
-  use: {
-    baseURL: 'http://localhost:3000',
-    browserName: 'firefox',
-    headless: true,
-  },
+  baseURL: 'http://localhost:3000',
+  browserName: 'firefox',
+  headless: true,
 };
 export default config;
 ```
@@ -170,19 +162,13 @@ const config = {
     // "Pixel 4" tests use Chromium browser.
     {
       name: 'Pixel 4',
-      use: {
-        browserName: 'chromium',
-        ...devices['Pixel 4'],
-      },
+      use: devices['Pixel 4'],
     },
 
     // "iPhone 11" tests use WebKit browser.
     {
       name: 'iPhone 11',
-      use: {
-        browserName: 'webkit',
-        ...devices['iPhone 11'],
-      },
+      use: devices['iPhone 11'],
     },
   ],
 };
@@ -200,19 +186,13 @@ const config: PlaywrightTestConfig = {
     // "Pixel 4" tests use Chromium browser.
     {
       name: 'Pixel 4',
-      use: {
-        browserName: 'chromium',
-        ...devices['Pixel 4'],
-      },
+      use: devices['Pixel 4'],
     },
 
     // "iPhone 11" tests use WebKit browser.
     {
       name: 'iPhone 11',
-      use: {
-        browserName: 'webkit',
-        ...devices['iPhone 11'],
-      },
+      use: devices['iPhone 11'],
     },
   ],
 };
@@ -237,11 +217,9 @@ You can specify options separately instead of using predefined devices. There ar
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  use: {
-    locale: 'fr-FR',
-    geolocation: { longitude: 48.858455, latitude: 2.294474 },
-    permissions: ['geolocation'],
-  },
+  locale: 'fr-FR',
+  geolocation: { longitude: 48.858455, latitude: 2.294474 },
+  permissions: ['geolocation'],
 };
 
 module.exports = config;
@@ -250,11 +228,9 @@ module.exports = config;
 ```js js-flavor=ts
 import { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
-  use: {
-    locale: 'fr-FR',
-    geolocation: { longitude: 48.858455, latitude: 2.294474 },
-    permissions: ['geolocation'],
-  },
+  locale: 'fr-FR',
+  geolocation: { longitude: 48.858455, latitude: 2.294474 },
+  permissions: ['geolocation'],
 };
 export default config;
 ```
@@ -347,9 +323,7 @@ Screenshots will appear in the test output directory, typically `test-results`.
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  use: {
-    screenshot: 'only-on-failure',
-  },
+  screenshot: 'only-on-failure',
 };
 
 module.exports = config;
@@ -358,9 +332,7 @@ module.exports = config;
 ```js js-flavor=ts
 import { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
-  use: {
-    screenshot: 'only-on-failure',
-  },
+  screenshot: 'only-on-failure',
 };
 export default config;
 ```
@@ -381,9 +353,7 @@ Video files will appear in the test output directory, typically `test-results`.
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  use: {
-    video: 'on-first-retry',
-  },
+  video: 'on-first-retry',
 };
 
 module.exports = config;
@@ -392,9 +362,7 @@ module.exports = config;
 ```js js-flavor=ts
 import { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
-  use: {
-    video: 'on-first-retry',
-  },
+  video: 'on-first-retry',
 };
 export default config;
 ```
@@ -415,9 +383,7 @@ Trace files will appear in the test output directory, typically `test-results`.
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  use: {
-    trace: 'retain-on-failure',
-  },
+  trace: 'retain-on-failure',
 };
 
 module.exports = config;
@@ -426,26 +392,22 @@ module.exports = config;
 ```js js-flavor=ts
 import { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
-  use: {
-    trace: 'retain-on-failure',
-  },
+  trace: 'retain-on-failure',
 };
 export default config;
 ```
 
 ## More browser and context options
 
-Any options accepted by [`method: BrowserType.launch`] or [`method: Browser.newContext`] can be put into `launchOptions` or `contextOptions` respectively in the `use` section.
+Any options accepted by [`method: BrowserType.launch`] or [`method: Browser.newContext`] can be put into `launchOptions` or `contextOptions` respectively.
 
 ```js js-flavor=js
 // @ts-check
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  use: {
-    launchOptions: {
-      slowMo: 50,
-    },
+  launchOptions: {
+    slowMo: 50,
   },
 };
 
@@ -455,16 +417,14 @@ module.exports = config;
 ```js js-flavor=ts
 import { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
-  use: {
-    launchOptions: {
-      slowMo: 50,
-    },
+  launchOptions: {
+    slowMo: 50,
   },
 };
 export default config;
 ```
 
-However, most common ones like `headless` or `viewport` are available directly in the `use` section - see [basic options](#basic-options), [emulation](#emulation) or [network](#network).
+However, most common ones like `headless` or `viewport` are available directly in the config - see [basic options](#basic-options), [emulation](#emulation) or [network](#network).
 
 ## Testing options
 
@@ -481,7 +441,7 @@ In addition to configuring [Browser] or [BrowserContext], videos or screenshots,
 - `webServer: { command: string, port: number, timeout?: number, reuseExistingServer?: boolean, cwd?: string, env?: object }` - Launch a process and wait that it's ready before the tests will start. See [launch web server](./test-advanced.md#launching-a-development-web-server-during-the-tests) configuration for examples.
 - `workers`: The maximum number of concurrent worker processes to use for parallelizing tests.
 
-You can specify these options in the configuration file. Note that testing options are **top-level**, do not put them into the `use` section.
+You can specify these options in the configuration file.
 
 ```js js-flavor=js
 // playwright.config.js
@@ -503,10 +463,6 @@ const config = {
 
   // Limit the number of workers on CI, use default locally
   workers: process.env.CI ? 2 : undefined,
-
-  use: {
-    // Configure browser and context here
-  },
 };
 
 module.exports = config;
@@ -531,10 +487,6 @@ const config: PlaywrightTestConfig = {
 
   // Limit the number of workers on CI, use default locally
   workers: process.env.CI ? 2 : undefined,
-
-  use: {
-    // Configure browser and context here
-  },
 };
 export default config;
 ```
@@ -550,30 +502,25 @@ To specify different options per browser, for example command line arguments for
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
   // Put any shared options on the top level.
-  use: {
-    headless: true,
-  },
+  headless: true,
 
   projects: [
     {
       name: 'Chromium',
-      use: {
-        // Configure the browser to use.
-        browserName: 'chromium',
-
-        // Any Chromium-specific options.
-        viewport: { width: 600, height: 800 },
-      },
+      // Configure the browser to use.
+      browserName: 'chromium',
+      // Any Chromium-specific options.
+      viewport: { width: 600, height: 800 },
     },
 
     {
       name: 'Firefox',
-      use: { browserName: 'firefox' },
+      browserName: 'firefox',
     },
 
     {
       name: 'WebKit',
-      use: { browserName: 'webkit' },
+      browserName: 'webkit',
     },
   ],
 };
@@ -587,30 +534,25 @@ import { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   // Put any shared options on the top level.
-  use: {
-    headless: true,
-  },
+  headless: true,
 
   projects: [
     {
       name: 'Chromium',
-      use: {
-        // Configure the browser to use.
-        browserName: 'chromium',
-
-        // Any Chromium-specific options.
-        viewport: { width: 600, height: 800 },
-      },
+      // Configure the browser to use.
+      browserName: 'chromium',
+      // Any Chromium-specific options.
+      viewport: { width: 600, height: 800 },
     },
 
     {
       name: 'Firefox',
-      use: { browserName: 'firefox' },
+      browserName: 'firefox',
     },
 
     {
       name: 'WebKit',
-      use: { browserName: 'webkit' },
+      browserName: 'webkit',
     },
   ],
 };

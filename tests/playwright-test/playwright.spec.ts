@@ -39,7 +39,7 @@ export class VideoPlayer {
 test('should respect viewport option', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { viewport: { width: 800, height: 800 } } };
+      module.exports = { viewport: { width: 800, height: 800 } };
     `,
     'a.test.ts': `
       const { test } = pwt;
@@ -63,7 +63,7 @@ test('should respect viewport option', async ({ runInlineTest }) => {
 test('should run in three browsers with --browser', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { viewport: { width: 800, height: 800 } } };
+      module.exports = { viewport: { width: 800, height: 800 } };
     `,
     'a.test.ts': `
       const { test } = pwt;
@@ -86,7 +86,7 @@ test('should run in three browsers with --browser', async ({ runInlineTest }) =>
 test('should run in one browser with --browser', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { viewport: { width: 800, height: 800 } } };
+      module.exports = { viewport: { width: 800, height: 800 } };
     `,
     'a.test.ts': `
       const { test } = pwt;
@@ -164,7 +164,7 @@ test('should override use:browserName with --browser', async ({ runInlineTest })
 test('should respect context options in various contexts', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { viewport: { width: 500, height: 500 } } };
+      module.exports = { viewport: { width: 500, height: 500 } };
     `,
     'a.test.ts': `
       import fs from 'fs';
@@ -286,7 +286,7 @@ test('should report click error on sigint', async ({ runInlineTest }) => {
 test('should work with video: retain-on-failure', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { video: 'retain-on-failure' }, name: 'chromium' };
+      module.exports = { video: 'retain-on-failure', name: 'chromium' };
     `,
     'a.test.ts': `
       const { test } = pwt;
@@ -318,7 +318,7 @@ test('should work with video: retain-on-failure', async ({ runInlineTest }, test
 test('should work with video: on-first-retry', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { video: 'on-first-retry' }, retries: 1, name: 'chromium' };
+      module.exports = { video: 'on-first-retry', retries: 1, name: 'chromium' };
     `,
     'a.test.ts': `
       const { test } = pwt;
@@ -361,7 +361,7 @@ test('should work with video size', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.js': `
       module.exports = {
-        use: { video: { mode: 'on', size: { width: 220, height: 110 } } },
+        video: { mode: 'on', size: { width: 220, height: 110 } },
         name: 'chromium',
         preserveOutput: 'always',
       };

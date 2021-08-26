@@ -65,32 +65,24 @@ type ExpectSettings = {
  * const config = {
  *   // Options shared for all projects.
  *   timeout: 30000,
- *   use: {
- *     ignoreHTTPSErrors: true,
- *   },
+ *   ignoreHTTPSErrors: true,
  *
  *   // Options specific to each project.
  *   projects: [
  *     {
  *       name: 'Desktop Chromium',
- *       use: {
- *         browserName: 'chromium',
- *         viewport: { width: 1280, height: 720 },
- *       },
+ *       browserName: 'chromium',
+ *       viewport: { width: 1280, height: 720 },
  *     },
  *     {
  *       name: 'Desktop Safari',
- *       use: {
- *         browserName: 'webkit',
- *         viewport: { width: 1280, height: 720 },
- *       }
+ *       browserName: 'webkit',
+ *       viewport: { width: 1280, height: 720 },
  *     },
  *     {
  *       name: 'Desktop Firefox',
- *       use: {
- *         browserName: 'firefox',
- *         viewport: { width: 1280, height: 720 },
- *       }
+ *       browserName: 'firefox',
+ *       viewport: { width: 1280, height: 720 },
  *     },
  *     {
  *       name: 'Mobile Chrome',
@@ -113,32 +105,24 @@ type ExpectSettings = {
  * const config: PlaywrightTestConfig = {
  *   // Options shared for all projects.
  *   timeout: 30000,
- *   use: {
- *     ignoreHTTPSErrors: true,
- *   },
+ *   ignoreHTTPSErrors: true,
  *
  *   // Options specific to each project.
  *   projects: [
  *     {
  *       name: 'Desktop Chromium',
- *       use: {
- *         browserName: 'chromium',
- *         viewport: { width: 1280, height: 720 },
- *       },
+ *       browserName: 'chromium',
+ *       viewport: { width: 1280, height: 720 },
  *     },
  *     {
  *       name: 'Desktop Safari',
- *       use: {
- *         browserName: 'webkit',
- *         viewport: { width: 1280, height: 720 },
- *       }
+ *       browserName: 'webkit',
+ *       viewport: { width: 1280, height: 720 },
  *     },
  *     {
  *       name: 'Desktop Firefox',
- *       use: {
- *         browserName: 'firefox',
- *         viewport: { width: 1280, height: 720 },
- *       }
+ *       browserName: 'firefox',
+ *       viewport: { width: 1280, height: 720 },
  *     },
  *     {
  *       name: 'Mobile Chrome',
@@ -226,30 +210,23 @@ interface TestProject {
    *     {
    *       name: 'Smoke Chromium',
    *       testDir: './smoke-tests',
-   *       use: {
-   *         browserName: 'chromium',
-   *       }
+   *       browserName: 'chromium',
    *     },
    *     {
    *       name: 'Smoke WebKit',
    *       testDir: './smoke-tests',
-   *       use: {
-   *         browserName: 'webkit',
-   *       }
+   *       browserName: 'webkit',
    *     },
    *     {
    *       name: 'Smoke Firefox',
    *       testDir: './smoke-tests',
-   *       use: {
-   *         browserName: 'firefox',
-   *       }
+   *       browserName: 'firefox',
    *     },
    *     {
    *       name: 'Chrome Stable',
    *       testDir: './',
-   *       use: {
-   *         browserName: 'chromium',
-   *         channel: 'chrome',
+   *       browserName: 'chromium',
+   *       channel: 'chrome',
    *       }
    *     },
    *   ],
@@ -267,31 +244,23 @@ interface TestProject {
    *     {
    *       name: 'Smoke Chromium',
    *       testDir: './smoke-tests',
-   *       use: {
-   *         browserName: 'chromium',
-   *       }
+   *       browserName: 'chromium',
    *     },
    *     {
    *       name: 'Smoke WebKit',
    *       testDir: './smoke-tests',
-   *       use: {
-   *         browserName: 'webkit',
-   *       }
+   *       browserName: 'webkit',
    *     },
    *     {
    *       name: 'Smoke Firefox',
    *       testDir: './smoke-tests',
-   *       use: {
-   *         browserName: 'firefox',
-   *       }
+   *       browserName: 'firefox',
    *     },
    *     {
    *       name: 'Chrome Stable',
    *       testDir: './',
-   *       use: {
-   *         browserName: 'chromium',
-   *         channel: 'chrome',
-   *       }
+   *       browserName: 'chromium',
+   *       channel: 'chrome',
    *     },
    *   ],
    * };
@@ -323,161 +292,12 @@ interface TestProject {
   timeout?: number;
 }
 
-/**
- * Playwright Test supports running multiple test projects at the same time. This is useful for running tests in multiple
- * configurations. For example, consider running tests against multiple browsers.
- *
- * `TestProject` encapsulates configuration specific to a single project. Projects are configured in
- * [testConfig.projects](https://playwright.dev/docs/api/class-testconfig#test-config-projects) specified in the
- * [configuration file](https://playwright.dev/docs/test-configuration). Note that all properties of [TestProject] are available in the top-level
- * [TestConfig], in which case they are shared between all projects.
- *
- * Here is an example configuration that runs every test in Chromium, Firefox and WebKit, both Desktop and Mobile versions.
- *
- * ```js js-flavor=js
- * // playwright.config.js
- * // @ts-check
- * const { devices } = require('@playwright/test');
- *
- * /** @type {import('@playwright/test').PlaywrightTestConfig} *\/
- * const config = {
- *   // Options shared for all projects.
- *   timeout: 30000,
- *   use: {
- *     ignoreHTTPSErrors: true,
- *   },
- *
- *   // Options specific to each project.
- *   projects: [
- *     {
- *       name: 'Desktop Chromium',
- *       use: {
- *         browserName: 'chromium',
- *         viewport: { width: 1280, height: 720 },
- *       },
- *     },
- *     {
- *       name: 'Desktop Safari',
- *       use: {
- *         browserName: 'webkit',
- *         viewport: { width: 1280, height: 720 },
- *       }
- *     },
- *     {
- *       name: 'Desktop Firefox',
- *       use: {
- *         browserName: 'firefox',
- *         viewport: { width: 1280, height: 720 },
- *       }
- *     },
- *     {
- *       name: 'Mobile Chrome',
- *       use: devices['Pixel 5'],
- *     },
- *     {
- *       name: 'Mobile Safari',
- *       use: devices['iPhone 12'],
- *     },
- *   ],
- * };
- *
- * module.exports = config;
- * ```
- *
- * ```js js-flavor=ts
- * // playwright.config.ts
- * import { PlaywrightTestConfig, devices } from '@playwright/test';
- *
- * const config: PlaywrightTestConfig = {
- *   // Options shared for all projects.
- *   timeout: 30000,
- *   use: {
- *     ignoreHTTPSErrors: true,
- *   },
- *
- *   // Options specific to each project.
- *   projects: [
- *     {
- *       name: 'Desktop Chromium',
- *       use: {
- *         browserName: 'chromium',
- *         viewport: { width: 1280, height: 720 },
- *       },
- *     },
- *     {
- *       name: 'Desktop Safari',
- *       use: {
- *         browserName: 'webkit',
- *         viewport: { width: 1280, height: 720 },
- *       }
- *     },
- *     {
- *       name: 'Desktop Firefox',
- *       use: {
- *         browserName: 'firefox',
- *         viewport: { width: 1280, height: 720 },
- *       }
- *     },
- *     {
- *       name: 'Mobile Chrome',
- *       use: devices['Pixel 5'],
- *     },
- *     {
- *       name: 'Mobile Safari',
- *       use: devices['iPhone 12'],
- *     },
- *   ],
- * };
- * export default config;
- * ```
- *
- */
-export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
+interface ProjectImpl<TestArgs, WorkerArgs> extends TestProject {
   define?: FixtureDefine | FixtureDefine[];
-  /**
-   * Additional fixtures for this project. Most useful for specifying options, for example
-   * [fixtures.browserName](https://playwright.dev/docs/api/class-fixtures#fixtures-browser-name). Learn more about
-   * [Fixtures] and [configuration](https://playwright.dev/docs/test-configuration).
-   *
-   * ```js js-flavor=js
-   * // playwright.config.js
-   * // @ts-check
-   *
-   * /** @type {import('@playwright/test').PlaywrightTestConfig} *\/
-   * const config = {
-   *   projects: [
-   *     {
-   *       name: 'Chromium',
-   *       use: {
-   *         browserName: 'chromium',
-   *       },
-   *     },
-   *   ],
-   * };
-   *
-   * module.exports = config;
-   * ```
-   *
-   * ```js js-flavor=ts
-   * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
-   *
-   * const config: PlaywrightTestConfig = {
-   *   projects: [
-   *     {
-   *       name: 'Chromium',
-   *       use: {
-   *         browserName: 'chromium',
-   *       },
-   *     },
-   *   ],
-   * };
-   * export default config;
-   * ```
-   *
-   */
   use?: Fixtures<{}, {}, TestArgs, WorkerArgs>;
 }
+
+export type Project<TestArgs = {}, WorkerArgs = {}> = ProjectImpl<TestArgs, WorkerArgs> & Partial<TestArgs & WorkerArgs>;
 
 export type FullProject<TestArgs = {}, WorkerArgs = {}> = Required<Project<TestArgs, WorkerArgs>>;
 
@@ -785,83 +605,13 @@ interface TestConfig {
   timeout?: number;
 }
 
-/**
- * Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout` or
- * `testDir`. These options are described in the [TestConfig] object in the [configuration file](https://playwright.dev/docs/test-configuration).
- *
- * Playwright Test supports running multiple test projects at the same time. Project-specific options should be put to
- * [testConfig.projects](https://playwright.dev/docs/api/class-testconfig#test-config-projects), but top-level [TestConfig]
- * can also define base options shared between all projects.
- *
- * ```js js-flavor=js
- * // playwright.config.js
- * // @ts-check
- *
- * /** @type {import('@playwright/test').PlaywrightTestConfig} *\/
- * const config = {
- *   timeout: 30000,
- *   globalTimeout: 600000,
- *   reporter: 'list',
- *   testDir: './tests',
- * };
- *
- * module.exports = config;
- * ```
- *
- * ```js js-flavor=ts
- * // playwright.config.ts
- * import { PlaywrightTestConfig } from '@playwright/test';
- *
- * const config: PlaywrightTestConfig = {
- *   timeout: 30000,
- *   globalTimeout: 600000,
- *   reporter: 'list',
- *   testDir: './tests',
- * };
- * export default config;
- * ```
- *
- */
-export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
-  /**
-   * Playwright Test supports running multiple test projects at the same time. See [TestProject] for more information.
-   */
+interface ConfigImpl<TestArgs, WorkerArgs> extends TestConfig {
   projects?: Project<TestArgs, WorkerArgs>[];
   define?: FixtureDefine | FixtureDefine[];
-  /**
-   * Additional fixtures for this project. Most useful for specifying options, for example
-   * [fixtures.browserName](https://playwright.dev/docs/api/class-fixtures#fixtures-browser-name). Learn more about
-   * [Fixtures] and [configuration](https://playwright.dev/docs/test-configuration).
-   *
-   * ```js js-flavor=js
-   * // playwright.config.js
-   * // @ts-check
-   *
-   * /** @type {import('@playwright/test').PlaywrightTestConfig} *\/
-   * const config = {
-   *   use: {
-   *     browserName: 'chromium',
-   *   },
-   * };
-   *
-   * module.exports = config;
-   * ```
-   *
-   * ```js js-flavor=ts
-   * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
-   *
-   * const config: PlaywrightTestConfig = {
-   *   use: {
-   *     browserName: 'chromium',
-   *   },
-   * };
-   * export default config;
-   * ```
-   *
-   */
   use?: Fixtures<{}, {}, TestArgs, WorkerArgs>;
 }
+
+export type Config<TestArgs = {}, WorkerArgs = {}> = ConfigImpl<TestArgs, WorkerArgs> & Partial<TestArgs & WorkerArgs>;
 
 /**
  * Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout` or

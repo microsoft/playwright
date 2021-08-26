@@ -78,13 +78,14 @@ export class Loader {
     if (this._config.globalTeardown)
       this._config.globalTeardown = resolveScript(this._config.globalTeardown, rootDir);
 
-    const configUse = mergeObjects(this._defaultConfig.use, this._config.use);
+    const configUse = mergeObjects(this._defaultConfig.use, mergeObjects(extractExtraPropertiesForUse(this._config), this._config.use));
     this._config = mergeObjects(mergeObjects(this._defaultConfig, this._config), { use: configUse });
 
     if (this._config.testDir !== undefined)
       this._config.testDir = path.resolve(rootDir, this._config.testDir);
     const projects: Project[] = ('projects' in this._config) && this._config.projects !== undefined ? this._config.projects : [this._config];
 
+    // NOTE: make sure to update kKnownProperties when adding a newone.
     this._fullConfig.rootDir = this._config.testDir || rootDir;
     this._fullConfig.forbidOnly = takeFirst(this._configOverrides.forbidOnly, this._config.forbidOnly, baseFullConfig.forbidOnly);
     this._fullConfig.globalSetup = takeFirst(this._configOverrides.globalSetup, this._config.globalSetup, baseFullConfig.globalSetup);
@@ -168,6 +169,7 @@ export class Loader {
     let outputDir = takeFirst(this._configOverrides.outputDir, projectConfig.outputDir, this._config.outputDir, path.resolve(process.cwd(), 'test-results'));
     if (!path.isAbsolute(outputDir))
       outputDir = path.resolve(rootDir, outputDir);
+    // NOTE: make sure to update kKnownProperties when adding a newone.
     const fullProject: FullProject = {
       define: takeFirst(this._configOverrides.define, projectConfig.define, this._config.define, []),
       expect: takeFirst(this._configOverrides.expect, projectConfig.expect, this._config.expect, undefined),
@@ -180,11 +182,10 @@ export class Loader {
       testIgnore: takeFirst(this._configOverrides.testIgnore, projectConfig.testIgnore, this._config.testIgnore, []),
       testMatch: takeFirst(this._configOverrides.testMatch, projectConfig.testMatch, this._config.testMatch, '**/?(*.)@(spec|test).@(ts|js|mjs)'),
       timeout: takeFirst(this._configOverrides.timeout, projectConfig.timeout, this._config.timeout, 10000),
-      use: mergeObjects(mergeObjects(this._config.use, projectConfig.use), this._configOverrides.use),
+      use: mergeObjects(mergeObjects(this._config.use, mergeObjects(extractExtraPropertiesForUse(projectConfig), projectConfig.use)), this._configOverrides.use),
     };
     this._projects.push(new ProjectImpl(fullProject, this._projects.length));
   }
-
 
   private async _requireOrImport(file: string) {
     const revertBabelRequire = installTransform();
@@ -442,4 +443,39 @@ function resolveScript(id: string, rootDir: string) {
   if (fs.existsSync(localPath))
     return localPath;
   return require.resolve(id, { paths: [rootDir] });
+}
+
+const kKnownProperties = new Set([
+  'define',
+  'expect',
+  'forbidOnly',
+  'globalSetup',
+  'globalTeardown',
+  'globalTimeout',
+  'grep',
+  'grepInvert',
+  'maxFailures',
+  'metadata',
+  'name',
+  'outputDir',
+  'preserveOutput',
+  'projects',
+  'quiet',
+  'repeatEach',
+  'reporter',
+  'reportSlowTests',
+  'retries',
+  'rootDir',
+  'shard',
+  'testDir',
+  'testIgnore',
+  'testMatch',
+  'timeout',
+  'updateSnapshots',
+  'use',
+  'webServer',
+  'workers',
+]);
+function extractExtraPropertiesForUse(o: object): object {
+  return Object.fromEntries(Object.entries(o).filter(e => !kKnownProperties.has(e[0])));
 }
