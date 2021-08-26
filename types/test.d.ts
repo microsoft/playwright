@@ -1181,12 +1181,24 @@ export interface TestInfo {
 
   /**
    * Skips the currently running test. This is similar to
-   * [test.skip(titleOrCondition, testFunctionOrDescription)](https://playwright.dev/docs/api/class-test#test-skip).
+   * [test.skip()](https://playwright.dev/docs/api/class-test#test-skip-2).
    * @param condition Optional condition - the test is skipped when the condition is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
   skip(): void;
+  /**
+   * Skips the currently running test. This is similar to
+   * [test.skip()](https://playwright.dev/docs/api/class-test#test-skip-2).
+   * @param condition Optional condition - the test is skipped when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
   skip(condition: boolean): void;
+  /**
+   * Skips the currently running test. This is similar to
+   * [test.skip()](https://playwright.dev/docs/api/class-test#test-skip-2).
+   * @param condition Optional condition - the test is skipped when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
   skip(condition: boolean, description: string): void;
 
   /**
@@ -1196,7 +1208,19 @@ export interface TestInfo {
    * @param description Optional description that will be reflected in a test report.
    */
   fixme(): void;
+  /**
+   * Marks the currently running test as "fixme". The test will be skipped, but the intention is to fix it. This is similar
+   * to [test.fixme([condition, description])](https://playwright.dev/docs/api/class-test#test-fixme).
+   * @param condition Optional condition - the test is marked as "fixme" when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
   fixme(condition: boolean): void;
+  /**
+   * Marks the currently running test as "fixme". The test will be skipped, but the intention is to fix it. This is similar
+   * to [test.fixme([condition, description])](https://playwright.dev/docs/api/class-test#test-fixme).
+   * @param condition Optional condition - the test is marked as "fixme" when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
   fixme(condition: boolean, description: string): void;
 
   /**
@@ -1206,7 +1230,19 @@ export interface TestInfo {
    * @param description Optional description that will be reflected in a test report.
    */
   fail(): void;
+  /**
+   * Marks the currently running test as "should fail". Playwright Test ensures that this test is actually failing. This is
+   * similar to [test.fail([condition, description])](https://playwright.dev/docs/api/class-test#test-fail).
+   * @param condition Optional condition - the test is marked as "should fail" when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
   fail(condition: boolean): void;
+  /**
+   * Marks the currently running test as "should fail". Playwright Test ensures that this test is actually failing. This is
+   * similar to [test.fail([condition, description])](https://playwright.dev/docs/api/class-test#test-fail).
+   * @param condition Optional condition - the test is marked as "should fail" when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
   fail(condition: boolean, description: string): void;
 
   /**
@@ -1216,7 +1252,19 @@ export interface TestInfo {
    * @param description Optional description that will be reflected in a test report.
    */
   slow(): void;
+  /**
+   * Marks the currently running test as "slow", giving it triple the default timeout. This is similar to
+   * [test.slow([condition, description])](https://playwright.dev/docs/api/class-test#test-slow).
+   * @param condition Optional condition - the test is marked as "slow" when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
   slow(condition: boolean): void;
+  /**
+   * Marks the currently running test as "slow", giving it triple the default timeout. This is similar to
+   * [test.slow([condition, description])](https://playwright.dev/docs/api/class-test#test-slow).
+   * @param condition Optional condition - the test is marked as "slow" when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
   slow(condition: boolean, description: string): void;
 
   /**
@@ -1248,8 +1296,7 @@ export interface TestInfo {
   setTimeout(timeout: number): void;
   /**
    * Expected status for the currently running test. This is usually `'passed'`, except for a few cases:
-   * - `'skipped'` for skipped tests, e.g. with
-   *   [test.skip(titleOrCondition, testFunctionOrDescription)](https://playwright.dev/docs/api/class-test#test-skip);
+   * - `'skipped'` for skipped tests, e.g. with [test.skip()](https://playwright.dev/docs/api/class-test#test-skip-2);
    * - `'failed'` for tests marked as failed with
    *   [test.fail([condition, description])](https://playwright.dev/docs/api/class-test#test-fail).
    *
@@ -1532,10 +1579,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
     };
   };
   /**
-   * Skips a test or a group of tests.
-   *
-   * Unconditionally skip a test, this is similar syntax to
-   * [test.(call)(title, testFunction)](https://playwright.dev/docs/api/class-test#test-call):
+   * Declares a skipped test, similarly to
+   * [test.(call)(title, testFunction)](https://playwright.dev/docs/api/class-test#test-call). Skipped test is never run.
    *
    * ```js js-flavor=js
    * const { test, expect } = require('@playwright/test');
@@ -1553,13 +1598,19 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * Conditionally skip a test with an optional description. In this case, call `test.skip()` inside the test function:
+   * @param title Test title.
+   * @param testFunction Test function that takes one or two arguments: an object with fixtures and optional [TestInfo].
+   */
+  skip(title: string, testFunction: (args: TestArgs, testInfo: TestInfo) => Promise<void> | void): void;
+  /**
+   * Unconditionally skip a test. Test is immediately aborted when you call
+   * [test.skip()](https://playwright.dev/docs/api/class-test#test-skip-2).
    *
    * ```js js-flavor=js
    * const { test, expect } = require('@playwright/test');
    *
-   * test('skip in WebKit', async ({ page, browserName }) => {
-   *   test.skip(browserName === 'webkit', 'This feature is not implemented for Mac');
+   * test('skipped test', async ({ page }) => {
+   *   test.skip();
    *   // ...
    * });
    * ```
@@ -1567,24 +1618,24 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * ```js js-flavor=ts
    * import { test, expect } from '@playwright/test';
    *
-   * test('skip in WebKit', async ({ page, browserName }) => {
-   *   test.skip(browserName === 'webkit', 'This feature is not implemented for Mac');
+   * test('skipped test', async ({ page }) => {
+   *   test.skip();
    *   // ...
    * });
    * ```
    *
-   * Conditionally skip all tests in a file or
+   * Unconditionally skip all tests in a file or
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
    *
    * ```js js-flavor=js
    * const { test, expect } = require('@playwright/test');
    *
-   * test.skip(({ browserName }) => browserName === 'webkit');
+   * test.skip();
    *
-   * test('skip in WebKit 1', async ({ page }) => {
+   * test('skipped test 1', async ({ page }) => {
    *   // ...
    * });
-   * test('skip in WebKit 2', async ({ page }) => {
+   * test('skipped test 2', async ({ page }) => {
    *   // ...
    * });
    * ```
@@ -1592,17 +1643,40 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * ```js js-flavor=ts
    * import { test, expect } from '@playwright/test';
    *
-   * test.skip(({ browserName }) => browserName === 'webkit');
+   * test.skip();
    *
-   * test('skip in WebKit 1', async ({ page }) => {
+   * test('skipped test 1', async ({ page }) => {
    *   // ...
    * });
-   * test('skip in WebKit 2', async ({ page }) => {
+   * test('skipped test 2', async ({ page }) => {
    *   // ...
    * });
    * ```
    *
-   * Skip from a hook:
+   */
+  skip(): void;
+  /**
+   * Conditionally skip a test with an optional description.
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test('skip in WebKit', async ({ page, browserName }) => {
+   *   test.skip(browserName === 'webkit', 'This feature is not implemented for Mac');
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('skip in WebKit', async ({ page, browserName }) => {
+   *   test.skip(browserName === 'webkit', 'This feature is not implemented for Mac');
+   *   // ...
+   * });
+   * ```
+   *
+   * Skip from [test.beforeEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-before-each) hook:
    *
    * ```js js-flavor=js
    * const { test, expect } = require('@playwright/test');
@@ -1622,16 +1696,44 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * @param titleOrCondition When used with `test.skip('test', () => {})` notation, first argument is a test title. Otherwise it is an optional skip condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are
-   * skipped when the condition is `true`.
-   * @param testFunctionOrDescription When used with `test.skip('test', () => {})` notation, second argument is a test function. Otherwise it is an optional description that will be reflected in a test report.
+   * @param condition A skip condition. Test or tests are skipped when the condition is `true`.
+   * @param description An optional description that will be reflected in a test report.
    */
-  skip(title: string, testFunction: (args: TestArgs, testInfo: TestInfo) => Promise<void> | void): void;
-  skip(): void;
-  skip(condition: boolean): void;
-  skip(condition: boolean, description: string): void;
-  skip(callback: (args: TestArgs & WorkerArgs) => boolean): void;
-  skip(callback: (args: TestArgs & WorkerArgs) => boolean, description: string): void;
+  skip(condition: boolean, description?: string): void;
+  /**
+   * Conditionally skips all tests in a file or
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group.
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test.skip(({ browserName }) => browserName === 'webkit');
+   *
+   * test('skip in WebKit 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('skip in WebKit 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.skip(({ browserName }) => browserName === 'webkit');
+   *
+   * test('skip in WebKit 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('skip in WebKit 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * @param callback A function that returns whether to skip, based on test fixtures. Test or tests are skipped when the return value is `true`.
+   * @param description An optional description that will be reflected in a test report.
+   */
+  skip(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
   /**
    * Marks a test or a group of tests as "fixme". These tests will not be run, but the intention is to fix them.
    *
@@ -1728,9 +1830,389 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * @param description Optional description that will be reflected in a test report.
    */
   fixme(): void;
+  /**
+   * Marks a test or a group of tests as "fixme". These tests will not be run, but the intention is to fix them.
+   *
+   * Unconditional fixme:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test('not yet ready', async ({ page }) => {
+   *   test.fixme();
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('not yet ready', async ({ page }) => {
+   *   test.fixme();
+   *   // ...
+   * });
+   * ```
+   *
+   * Conditional fixme a test with an optional description:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test('fixme in WebKit', async ({ page, browserName }) => {
+   *   test.fixme(browserName === 'webkit', 'This feature is not implemented for Mac yet');
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('fixme in WebKit', async ({ page, browserName }) => {
+   *   test.fixme(browserName === 'webkit', 'This feature is not implemented for Mac yet');
+   *   // ...
+   * });
+   * ```
+   *
+   * Conditional fixme for all tests in a file or
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test.fixme(({ browserName }) => browserName === 'webkit');
+   *
+   * test('fixme in WebKit 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('fixme in WebKit 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.fixme(({ browserName }) => browserName === 'webkit');
+   *
+   * test('fixme in WebKit 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('fixme in WebKit 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * `fixme` from a hook:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test.beforeEach(async ({ page }) => {
+   *   test.fixme(process.env.APP_VERSION === 'v2', 'No settings in v2 yet');
+   *   await page.goto('/settings');
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.beforeEach(async ({ page }) => {
+   *   test.fixme(process.env.APP_VERSION === 'v2', 'No settings in v2 yet');
+   *   await page.goto('/settings');
+   * });
+   * ```
+   *
+   * @param condition Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "fixme" when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
   fixme(condition: boolean): void;
+  /**
+   * Marks a test or a group of tests as "fixme". These tests will not be run, but the intention is to fix them.
+   *
+   * Unconditional fixme:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test('not yet ready', async ({ page }) => {
+   *   test.fixme();
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('not yet ready', async ({ page }) => {
+   *   test.fixme();
+   *   // ...
+   * });
+   * ```
+   *
+   * Conditional fixme a test with an optional description:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test('fixme in WebKit', async ({ page, browserName }) => {
+   *   test.fixme(browserName === 'webkit', 'This feature is not implemented for Mac yet');
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('fixme in WebKit', async ({ page, browserName }) => {
+   *   test.fixme(browserName === 'webkit', 'This feature is not implemented for Mac yet');
+   *   // ...
+   * });
+   * ```
+   *
+   * Conditional fixme for all tests in a file or
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test.fixme(({ browserName }) => browserName === 'webkit');
+   *
+   * test('fixme in WebKit 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('fixme in WebKit 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.fixme(({ browserName }) => browserName === 'webkit');
+   *
+   * test('fixme in WebKit 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('fixme in WebKit 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * `fixme` from a hook:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test.beforeEach(async ({ page }) => {
+   *   test.fixme(process.env.APP_VERSION === 'v2', 'No settings in v2 yet');
+   *   await page.goto('/settings');
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.beforeEach(async ({ page }) => {
+   *   test.fixme(process.env.APP_VERSION === 'v2', 'No settings in v2 yet');
+   *   await page.goto('/settings');
+   * });
+   * ```
+   *
+   * @param condition Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "fixme" when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
   fixme(condition: boolean, description: string): void;
+  /**
+   * Marks a test or a group of tests as "fixme". These tests will not be run, but the intention is to fix them.
+   *
+   * Unconditional fixme:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test('not yet ready', async ({ page }) => {
+   *   test.fixme();
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('not yet ready', async ({ page }) => {
+   *   test.fixme();
+   *   // ...
+   * });
+   * ```
+   *
+   * Conditional fixme a test with an optional description:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test('fixme in WebKit', async ({ page, browserName }) => {
+   *   test.fixme(browserName === 'webkit', 'This feature is not implemented for Mac yet');
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('fixme in WebKit', async ({ page, browserName }) => {
+   *   test.fixme(browserName === 'webkit', 'This feature is not implemented for Mac yet');
+   *   // ...
+   * });
+   * ```
+   *
+   * Conditional fixme for all tests in a file or
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test.fixme(({ browserName }) => browserName === 'webkit');
+   *
+   * test('fixme in WebKit 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('fixme in WebKit 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.fixme(({ browserName }) => browserName === 'webkit');
+   *
+   * test('fixme in WebKit 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('fixme in WebKit 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * `fixme` from a hook:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test.beforeEach(async ({ page }) => {
+   *   test.fixme(process.env.APP_VERSION === 'v2', 'No settings in v2 yet');
+   *   await page.goto('/settings');
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.beforeEach(async ({ page }) => {
+   *   test.fixme(process.env.APP_VERSION === 'v2', 'No settings in v2 yet');
+   *   await page.goto('/settings');
+   * });
+   * ```
+   *
+   * @param condition Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "fixme" when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
   fixme(callback: (args: TestArgs & WorkerArgs) => boolean): void;
+  /**
+   * Marks a test or a group of tests as "fixme". These tests will not be run, but the intention is to fix them.
+   *
+   * Unconditional fixme:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test('not yet ready', async ({ page }) => {
+   *   test.fixme();
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('not yet ready', async ({ page }) => {
+   *   test.fixme();
+   *   // ...
+   * });
+   * ```
+   *
+   * Conditional fixme a test with an optional description:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test('fixme in WebKit', async ({ page, browserName }) => {
+   *   test.fixme(browserName === 'webkit', 'This feature is not implemented for Mac yet');
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('fixme in WebKit', async ({ page, browserName }) => {
+   *   test.fixme(browserName === 'webkit', 'This feature is not implemented for Mac yet');
+   *   // ...
+   * });
+   * ```
+   *
+   * Conditional fixme for all tests in a file or
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test.fixme(({ browserName }) => browserName === 'webkit');
+   *
+   * test('fixme in WebKit 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('fixme in WebKit 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.fixme(({ browserName }) => browserName === 'webkit');
+   *
+   * test('fixme in WebKit 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('fixme in WebKit 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * `fixme` from a hook:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test.beforeEach(async ({ page }) => {
+   *   test.fixme(process.env.APP_VERSION === 'v2', 'No settings in v2 yet');
+   *   await page.goto('/settings');
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.beforeEach(async ({ page }) => {
+   *   test.fixme(process.env.APP_VERSION === 'v2', 'No settings in v2 yet');
+   *   await page.goto('/settings');
+   * });
+   * ```
+   *
+   * @param condition Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "fixme" when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
   fixme(callback: (args: TestArgs & WorkerArgs) => boolean, description: string): void;
   /**
    * Marks a test or a group of tests as "should fail". Playwright Test runs these tests and ensures that they are actually
@@ -1809,9 +2291,313 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * @param description Optional description that will be reflected in a test report.
    */
   fail(): void;
+  /**
+   * Marks a test or a group of tests as "should fail". Playwright Test runs these tests and ensures that they are actually
+   * failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is fixed.
+   *
+   * Unconditional fail:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test('not yet ready', async ({ page }) => {
+   *   test.fail();
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('not yet ready', async ({ page }) => {
+   *   test.fail();
+   *   // ...
+   * });
+   * ```
+   *
+   * Conditional fail a test with an optional description:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test('fail in WebKit', async ({ page, browserName }) => {
+   *   test.fail(browserName === 'webkit', 'This feature is not implemented for Mac yet');
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('fail in WebKit', async ({ page, browserName }) => {
+   *   test.fail(browserName === 'webkit', 'This feature is not implemented for Mac yet');
+   *   // ...
+   * });
+   * ```
+   *
+   * Conditional fail for all tests in a file or
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test.fail(({ browserName }) => browserName === 'webkit');
+   *
+   * test('fail in WebKit 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('fail in WebKit 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.fail(({ browserName }) => browserName === 'webkit');
+   *
+   * test('fail in WebKit 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('fail in WebKit 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * @param condition Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "should fail" when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
   fail(condition: boolean): void;
+  /**
+   * Marks a test or a group of tests as "should fail". Playwright Test runs these tests and ensures that they are actually
+   * failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is fixed.
+   *
+   * Unconditional fail:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test('not yet ready', async ({ page }) => {
+   *   test.fail();
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('not yet ready', async ({ page }) => {
+   *   test.fail();
+   *   // ...
+   * });
+   * ```
+   *
+   * Conditional fail a test with an optional description:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test('fail in WebKit', async ({ page, browserName }) => {
+   *   test.fail(browserName === 'webkit', 'This feature is not implemented for Mac yet');
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('fail in WebKit', async ({ page, browserName }) => {
+   *   test.fail(browserName === 'webkit', 'This feature is not implemented for Mac yet');
+   *   // ...
+   * });
+   * ```
+   *
+   * Conditional fail for all tests in a file or
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test.fail(({ browserName }) => browserName === 'webkit');
+   *
+   * test('fail in WebKit 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('fail in WebKit 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.fail(({ browserName }) => browserName === 'webkit');
+   *
+   * test('fail in WebKit 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('fail in WebKit 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * @param condition Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "should fail" when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
   fail(condition: boolean, description: string): void;
+  /**
+   * Marks a test or a group of tests as "should fail". Playwright Test runs these tests and ensures that they are actually
+   * failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is fixed.
+   *
+   * Unconditional fail:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test('not yet ready', async ({ page }) => {
+   *   test.fail();
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('not yet ready', async ({ page }) => {
+   *   test.fail();
+   *   // ...
+   * });
+   * ```
+   *
+   * Conditional fail a test with an optional description:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test('fail in WebKit', async ({ page, browserName }) => {
+   *   test.fail(browserName === 'webkit', 'This feature is not implemented for Mac yet');
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('fail in WebKit', async ({ page, browserName }) => {
+   *   test.fail(browserName === 'webkit', 'This feature is not implemented for Mac yet');
+   *   // ...
+   * });
+   * ```
+   *
+   * Conditional fail for all tests in a file or
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test.fail(({ browserName }) => browserName === 'webkit');
+   *
+   * test('fail in WebKit 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('fail in WebKit 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.fail(({ browserName }) => browserName === 'webkit');
+   *
+   * test('fail in WebKit 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('fail in WebKit 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * @param condition Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "should fail" when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
   fail(callback: (args: TestArgs & WorkerArgs) => boolean): void;
+  /**
+   * Marks a test or a group of tests as "should fail". Playwright Test runs these tests and ensures that they are actually
+   * failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is fixed.
+   *
+   * Unconditional fail:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test('not yet ready', async ({ page }) => {
+   *   test.fail();
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('not yet ready', async ({ page }) => {
+   *   test.fail();
+   *   // ...
+   * });
+   * ```
+   *
+   * Conditional fail a test with an optional description:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test('fail in WebKit', async ({ page, browserName }) => {
+   *   test.fail(browserName === 'webkit', 'This feature is not implemented for Mac yet');
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('fail in WebKit', async ({ page, browserName }) => {
+   *   test.fail(browserName === 'webkit', 'This feature is not implemented for Mac yet');
+   *   // ...
+   * });
+   * ```
+   *
+   * Conditional fail for all tests in a file or
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test.fail(({ browserName }) => browserName === 'webkit');
+   *
+   * test('fail in WebKit 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('fail in WebKit 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.fail(({ browserName }) => browserName === 'webkit');
+   *
+   * test('fail in WebKit 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('fail in WebKit 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * @param condition Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "should fail" when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
   fail(callback: (args: TestArgs & WorkerArgs) => boolean, description: string): void;
   /**
    * Marks a test or a group of tests as "slow". Slow tests will be given triple the default timeout.
@@ -1889,9 +2675,309 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * @param description Optional description that will be reflected in a test report.
    */
   slow(): void;
+  /**
+   * Marks a test or a group of tests as "slow". Slow tests will be given triple the default timeout.
+   *
+   * Unconditional slow:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test('slow test', async ({ page }) => {
+   *   test.slow();
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('slow test', async ({ page }) => {
+   *   test.slow();
+   *   // ...
+   * });
+   * ```
+   *
+   * Conditional slow a test with an optional description:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test('slow in WebKit', async ({ page, browserName }) => {
+   *   test.slow(browserName === 'webkit', 'This feature is slow on Mac');
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('slow in WebKit', async ({ page, browserName }) => {
+   *   test.slow(browserName === 'webkit', 'This feature is slow on Mac');
+   *   // ...
+   * });
+   * ```
+   *
+   * Conditional slow for all tests in a file or
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test.slow(({ browserName }) => browserName === 'webkit');
+   *
+   * test('slow in WebKit 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('slow in WebKit 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.slow(({ browserName }) => browserName === 'webkit');
+   *
+   * test('slow in WebKit 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('fail in WebKit 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * @param condition Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "slow" when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
   slow(condition: boolean): void;
+  /**
+   * Marks a test or a group of tests as "slow". Slow tests will be given triple the default timeout.
+   *
+   * Unconditional slow:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test('slow test', async ({ page }) => {
+   *   test.slow();
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('slow test', async ({ page }) => {
+   *   test.slow();
+   *   // ...
+   * });
+   * ```
+   *
+   * Conditional slow a test with an optional description:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test('slow in WebKit', async ({ page, browserName }) => {
+   *   test.slow(browserName === 'webkit', 'This feature is slow on Mac');
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('slow in WebKit', async ({ page, browserName }) => {
+   *   test.slow(browserName === 'webkit', 'This feature is slow on Mac');
+   *   // ...
+   * });
+   * ```
+   *
+   * Conditional slow for all tests in a file or
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test.slow(({ browserName }) => browserName === 'webkit');
+   *
+   * test('slow in WebKit 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('slow in WebKit 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.slow(({ browserName }) => browserName === 'webkit');
+   *
+   * test('slow in WebKit 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('fail in WebKit 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * @param condition Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "slow" when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
   slow(condition: boolean, description: string): void;
+  /**
+   * Marks a test or a group of tests as "slow". Slow tests will be given triple the default timeout.
+   *
+   * Unconditional slow:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test('slow test', async ({ page }) => {
+   *   test.slow();
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('slow test', async ({ page }) => {
+   *   test.slow();
+   *   // ...
+   * });
+   * ```
+   *
+   * Conditional slow a test with an optional description:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test('slow in WebKit', async ({ page, browserName }) => {
+   *   test.slow(browserName === 'webkit', 'This feature is slow on Mac');
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('slow in WebKit', async ({ page, browserName }) => {
+   *   test.slow(browserName === 'webkit', 'This feature is slow on Mac');
+   *   // ...
+   * });
+   * ```
+   *
+   * Conditional slow for all tests in a file or
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test.slow(({ browserName }) => browserName === 'webkit');
+   *
+   * test('slow in WebKit 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('slow in WebKit 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.slow(({ browserName }) => browserName === 'webkit');
+   *
+   * test('slow in WebKit 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('fail in WebKit 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * @param condition Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "slow" when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
   slow(callback: (args: TestArgs & WorkerArgs) => boolean): void;
+  /**
+   * Marks a test or a group of tests as "slow". Slow tests will be given triple the default timeout.
+   *
+   * Unconditional slow:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test('slow test', async ({ page }) => {
+   *   test.slow();
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('slow test', async ({ page }) => {
+   *   test.slow();
+   *   // ...
+   * });
+   * ```
+   *
+   * Conditional slow a test with an optional description:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test('slow in WebKit', async ({ page, browserName }) => {
+   *   test.slow(browserName === 'webkit', 'This feature is slow on Mac');
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('slow in WebKit', async ({ page, browserName }) => {
+   *   test.slow(browserName === 'webkit', 'This feature is slow on Mac');
+   *   // ...
+   * });
+   * ```
+   *
+   * Conditional slow for all tests in a file or
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
+   *
+   * ```js js-flavor=js
+   * const { test, expect } = require('@playwright/test');
+   *
+   * test.slow(({ browserName }) => browserName === 'webkit');
+   *
+   * test('slow in WebKit 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('slow in WebKit 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.slow(({ browserName }) => browserName === 'webkit');
+   *
+   * test('slow in WebKit 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('fail in WebKit 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * @param condition Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "slow" when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
   slow(callback: (args: TestArgs & WorkerArgs) => boolean, description: string): void;
   /**
    * Changes the timeout for the test.

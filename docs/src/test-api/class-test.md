@@ -599,12 +599,9 @@ Timeout in milliseconds.
 
 
 
+## method: Test.skip#1
 
-## method: Test.skip
-
-Skips a test or a group of tests.
-
-Unconditionally skip a test, this is similar syntax to [`method: Test.(call)`]:
+Declares a skipped test, similarly to [`method: Test.(call)`]. Skipped test is never run.
 
 ```js js-flavor=js
 const { test, expect } = require('@playwright/test');
@@ -622,7 +619,72 @@ test.skip('broken test', async ({ page }) => {
 });
 ```
 
-Conditionally skip a test with an optional description. In this case, call `test.skip()` inside the test function:
+### param: Test.skip#1.title
+- `title` <[string]>
+
+Test title.
+
+### param: Test.skip#1.testFunction
+- `testFunction` <[function]\([Fixtures], [TestInfo]\)>
+
+Test function that takes one or two arguments: an object with fixtures and optional [TestInfo].
+
+
+
+## method: Test.skip#2
+
+Unconditionally skip a test. Test is immediately aborted when you call [`method: Test.skip#2`].
+
+```js js-flavor=js
+const { test, expect } = require('@playwright/test');
+
+test('skipped test', async ({ page }) => {
+  test.skip();
+  // ...
+});
+```
+
+```js js-flavor=ts
+import { test, expect } from '@playwright/test';
+
+test('skipped test', async ({ page }) => {
+  test.skip();
+  // ...
+});
+```
+
+Unconditionally skip all tests in a file or [`method: Test.describe`] group:
+
+```js js-flavor=js
+const { test, expect } = require('@playwright/test');
+
+test.skip();
+
+test('skipped test 1', async ({ page }) => {
+  // ...
+});
+test('skipped test 2', async ({ page }) => {
+  // ...
+});
+```
+
+```js js-flavor=ts
+import { test, expect } from '@playwright/test';
+
+test.skip();
+
+test('skipped test 1', async ({ page }) => {
+  // ...
+});
+test('skipped test 2', async ({ page }) => {
+  // ...
+});
+```
+
+
+## method: Test.skip#3
+
+Conditionally skip a test with an optional description.
 
 ```js js-flavor=js
 const { test, expect } = require('@playwright/test');
@@ -642,7 +704,42 @@ test('skip in WebKit', async ({ page, browserName }) => {
 });
 ```
 
-Conditionally skip all tests in a file or [`method: Test.describe`] group:
+Skip from [`method: Test.beforeEach`] hook:
+
+```js js-flavor=js
+const { test, expect } = require('@playwright/test');
+
+test.beforeEach(async ({ page }) => {
+  test.skip(process.env.APP_VERSION === 'v1', 'There are no settings in v1');
+  await page.goto('/settings');
+});
+```
+
+```js js-flavor=ts
+import { test, expect } from '@playwright/test';
+
+test.beforeEach(async ({ page }) => {
+  test.skip(process.env.APP_VERSION === 'v1', 'There are no settings in v1');
+  await page.goto('/settings');
+});
+```
+
+### param: Test.skip#3.condition
+- `condition` <[boolean]>
+
+A skip condition. Test or tests are skipped when the condition is `true`.
+
+### param: Test.skip#3.description
+- `description` <[void]|[string]>
+
+An optional description that will be reflected in a test report.
+
+
+
+
+## method: Test.skip#4
+
+Conditionally skips all tests in a file or [`method: Test.describe`] group.
 
 ```js js-flavor=js
 const { test, expect } = require('@playwright/test');
@@ -670,35 +767,16 @@ test('skip in WebKit 2', async ({ page }) => {
 });
 ```
 
-Skip from a hook:
 
-```js js-flavor=js
-const { test, expect } = require('@playwright/test');
+### param: Test.skip#4.condition
+- `callback` <[function]\([Fixtures]\):[boolean]>
 
-test.beforeEach(async ({ page }) => {
-  test.skip(process.env.APP_VERSION === 'v1', 'There are no settings in v1');
-  await page.goto('/settings');
-});
-```
+A function that returns whether to skip, based on test fixtures. Test or tests are skipped when the return value is `true`.
 
-```js js-flavor=ts
-import { test, expect } from '@playwright/test';
+### param: Test.skip#4.description
+- `description` <[void]|[string]>
 
-test.beforeEach(async ({ page }) => {
-  test.skip(process.env.APP_VERSION === 'v1', 'There are no settings in v1');
-  await page.goto('/settings');
-});
-```
-
-### param: Test.skip.condition
-- `titleOrCondition` <[string]|[void]|[boolean]|[function]\([Fixtures]\):[boolean]>
-
-When used with `test.skip('test', () => {})` notation, first argument is a test title. Otherwise it is an optional skip condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are skipped when the condition is `true`.
-
-### param: Test.skip.description
-- `testFunctionOrDescription` <[function]\([Fixtures], [TestInfo]\)|[void]|[string]>
-
-When used with `test.skip('test', () => {})` notation, second argument is a test function. Otherwise it is an optional description that will be reflected in a test report.
+An optional description that will be reflected in a test report.
 
 
 
