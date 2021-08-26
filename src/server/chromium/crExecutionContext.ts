@@ -21,6 +21,7 @@ import { Protocol } from './protocol';
 import * as js from '../javascript';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { parseEvaluationResultValue } from '../common/utilityScriptSerializers';
+import { isSessionClosedError } from '../common/protocolError';
 
 export class CRExecutionContext implements js.ExecutionContextDelegate {
   _client: CRSession;
@@ -38,7 +39,7 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
       returnByValue: true,
     }).catch(rewriteError);
     if (exceptionDetails)
-      throw new Error('Evaluation failed: ' + getExceptionMessage(exceptionDetails));
+      throw new js.JavaScriptErrorInEvaluate(getExceptionMessage(exceptionDetails));
     return remoteObject.value;
   }
 
@@ -48,7 +49,7 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
       contextId: this._contextId,
     }).catch(rewriteError);
     if (exceptionDetails)
-      throw new Error('Evaluation failed: ' + getExceptionMessage(exceptionDetails));
+      throw new js.JavaScriptErrorInEvaluate(getExceptionMessage(exceptionDetails));
     return remoteObject.objectId!;
   }
 
@@ -76,7 +77,7 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
       userGesture: true
     }).catch(rewriteError);
     if (exceptionDetails)
-      throw new Error('Evaluation failed: ' + getExceptionMessage(exceptionDetails));
+      throw new js.JavaScriptErrorInEvaluate(getExceptionMessage(exceptionDetails));
     return returnByValue ? parseEvaluationResultValue(remoteObject.value) : utilityScript._context.createHandle(remoteObject);
   }
 
@@ -109,10 +110,10 @@ function rewriteError(error: Error): Protocol.Runtime.evaluateReturnValue {
   if (error.message.includes('Object couldn\'t be returned by value'))
     return {result: {type: 'undefined'}};
 
-  if (js.isContextDestroyedError(error) || error.message.endsWith('Inspected target navigated or closed'))
-    throw new Error('Execution context was destroyed, most likely because of a navigation.');
   if (error instanceof TypeError && error.message.startsWith('Converting circular structure to JSON'))
     rewriteErrorMessage(error, error.message + ' Are you passing a nested JSHandle?');
+  if (!js.isJavaScriptErrorInEvaluate(error) && !isSessionClosedError(error))
+    throw new Error('Execution context was destroyed, most likely because of a navigation.');
   throw error;
 }
 

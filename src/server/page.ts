@@ -435,7 +435,7 @@ export class Page extends SdkObject {
     const runBeforeUnload = !!options && !!options.runBeforeUnload;
     if (this._closedState !== 'closing') {
       this._closedState = 'closing';
-      assert(!this._disconnected, 'Protocol error: Connection closed. Most likely the page has been closed.');
+      assert(!this._disconnected, 'Target closed');
       // This might throw if the browser context containing the page closes
       // while we are trying to close the page.
       await this._delegate.closePage(runBeforeUnload).catch(e => debugLogger.log('error', e));

@@ -45,7 +45,7 @@ it.describe('', () => {
     await page.waitForEvent('crash');
     const err = await page.evaluate(() => {}).then(() => null, e => e);
     expect(err).toBeTruthy();
-    expect(err.message).toContain('crash');
+    expect(err.message).toContain('Target crashed');
   });
 
   it('should cancel waitForEvent when page crashes', async ({ page, toImpl, browserName, platform, mode }) => {

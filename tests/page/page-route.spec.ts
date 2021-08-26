@@ -506,7 +506,7 @@ it('should not fulfill with redirect status', async ({page, server, browserName}
   }
 });
 
-it('should support cors with GET', async ({page, server}) => {
+it('should support cors with GET', async ({page, server, browserName}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/cars*', async (route, request) => {
     const headers = request.url().endsWith('allow') ? { 'access-control-allow-origin': '*' } : {};
@@ -531,7 +531,12 @@ it('should support cors with GET', async ({page, server}) => {
       const response = await fetch('https://example.com/cars?reject', { mode: 'cors' });
       return response.json();
     }).catch(e => e);
-    expect(error.message).toContain('failed');
+    if (browserName === 'chromium')
+      expect(error.message).toContain('Failed');
+    if (browserName === 'webkit')
+      expect(error.message).toContain('TypeError');
+    if (browserName === 'firefox')
+      expect(error.message).toContain('NetworkError');
   }
 });
 

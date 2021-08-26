@@ -30,6 +30,7 @@ import { assert, constructURLBasedOnBaseURL, makeWaitForNextTask } from '../util
 import { debugLogger } from '../utils/debugLogger';
 import { CallMetadata, internalCallMetadata, SdkObject } from './instrumentation';
 import { ElementStateWithoutStable } from './injected/injectedScript';
+import { isSessionClosedError } from './common/protocolError';
 
 type ContextData = {
   contextPromise: Promise<dom.FrameExecutionContext>;
@@ -728,7 +729,7 @@ export class Frame extends SdkObject {
           return adopted;
         } catch (e) {
           // Navigated while trying to adopt the node.
-          if (!js.isContextDestroyedError(e) && !e.message.includes(dom.kUnableToAdoptErrorMessage))
+          if (js.isJavaScriptErrorInEvaluate(e))
             throw e;
           result.dispose();
         }
@@ -1350,11 +1351,12 @@ class RerunnableTask {
       this._contextData.rerunnableTasks.delete(this);
       this._resolve(result);
     } catch (e) {
+      if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e)) {
+        this._contextData.rerunnableTasks.delete(this);
+        this._reject(e);
+      }
+
       // We will try again in the new execution context.
-      if (js.isContextDestroyedError(e))
-        return;
-      this._contextData.rerunnableTasks.delete(this);
-      this._reject(e);
     }
   }
 }

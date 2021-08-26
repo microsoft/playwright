@@ -21,13 +21,12 @@ import { isUnderTest } from './utils';
 
 const stackUtils = new StackUtils();
 
-export function rewriteErrorMessage(e: Error, newMessage: string): Error {
-  if (e.stack) {
-    const index = e.stack.indexOf(e.message);
-    if (index !== -1)
-      e.stack = e.stack.substring(0, index) + newMessage + e.stack.substring(index + e.message.length);
-  }
+export function rewriteErrorMessage<E extends Error>(e: E, newMessage: string): E {
+  const lines: string[] = (e.stack?.split('\n') || []).filter(l => l.startsWith('    at '));
   e.message = newMessage;
+  const errorTitle = `${e.name}: ${e.message}`;
+  if (lines.length)
+    e.stack = `${errorTitle}\n${lines.join('\n')}`;
   return e;
 }
 

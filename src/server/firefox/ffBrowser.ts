@@ -104,7 +104,7 @@ export class FFBrowser extends Browser {
     assert(type === 'page');
     const context = browserContextId ? this._contexts.get(browserContextId)! : this._defaultContext as FFBrowserContext;
     assert(context, `Unknown context id:${browserContextId}, _defaultContext: ${this._defaultContext}`);
-    const session = this._connection.createSession(payload.sessionId, type);
+    const session = this._connection.createSession(payload.sessionId);
     const opener = openerId ? this._ffPages.get(openerId)! : null;
     const ffPage = new FFPage(session, context, opener);
     this._ffPages.set(targetId, ffPage);

@@ -23,7 +23,7 @@ it('should reject all promises when page is closed', async ({page}) => {
     page.evaluate(() => new Promise(r => {})).catch(e => error = e),
     page.close(),
   ]);
-  expect(error.message).toContain('Protocol error');
+  expect(error.message).toContain('Target closed');
 });
 
 it('should set the page close state', async ({page}) => {
