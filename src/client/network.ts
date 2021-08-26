@@ -267,18 +267,18 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
     });
   }
 
-  async fulfill(options: { _response?: Response, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}) {
+  async fulfill(options: { response?: Response, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}) {
     return this._wrapApiCall(async (channel: channels.RouteChannel) => {
       let useInterceptedResponseBody;
       let { status: statusOption, headers: headersOption, body: bodyOption } = options;
-      if (options._response) {
-        statusOption ||= options._response.status();
-        headersOption ||= options._response.headers();
+      if (options.response) {
+        statusOption ||= options.response.status();
+        headersOption ||= options.response.headers();
         if (options.body === undefined && options.path === undefined) {
-          if (options._response === this._interceptedResponse)
+          if (options.response === this._interceptedResponse)
             useInterceptedResponseBody = true;
           else
-            bodyOption = await options._response.body();
+            bodyOption = await options.response.body();
         }
       }
 
