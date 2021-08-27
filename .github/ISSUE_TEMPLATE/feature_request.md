@@ -7,5 +7,5 @@ assignees: ''
 
 ---
 
-Let us know what functionality you'd like to see in Playwright and what is your use case.
+Let us know what functionality you'd like to see in Playwright and what your use case is.
 Do you think others might benefit from this as well?
