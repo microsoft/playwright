@@ -177,6 +177,13 @@ export class Locator implements api.Locator {
     return this._withElement((h, timeout) => h.selectText({ ...options, timeout }), options.timeout);
   }
 
+  async setChecked(checked: boolean, options?: channels.ElementHandleCheckOptions) {
+    if (checked)
+      await this.check(options);
+    else
+      await this.uncheck(options);
+  }
+
   async setInputFiles(files: string | FilePayload | string[] | FilePayload[], options: channels.ElementHandleSetInputFilesOptions = {}) {
     return this._frame.setInputFiles(this._selector, files, { strict: true, ...options });
   }

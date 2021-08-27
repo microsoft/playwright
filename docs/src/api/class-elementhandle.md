@@ -743,6 +743,29 @@ content.
 ### option: ElementHandle.selectText.force = %%-input-force-%%
 ### option: ElementHandle.selectText.timeout = %%-input-timeout-%%
 
+## async method: ElementHandle.setChecked
+
+This method checks or unchecks an element by performing the following steps:
+1. Ensure that element is a checkbox or a radio input. If not, this method throws.
+1. If the element already has the right checked state, this method returns immediately.
+1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is
+   set. If the element is detached during the checks, the whole action is retried.
+1. Scroll the element into view if needed.
+1. Use [`property: Page.mouse`] to click in the center of the element.
+1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
+1. Ensure that the element is now checked or unchecked. If not, this method throws.
+
+When all steps combined have not finished during the specified [`option: timeout`], this method throws a
+[TimeoutError]. Passing zero timeout disables this.
+
+### param: ElementHandle.setChecked.checked = %%-input-checked-%%
+### option: ElementHandle.setChecked.force = %%-input-force-%%
+### option: ElementHandle.setChecked.noWaitAfter = %%-input-no-wait-after-%%
+### option: ElementHandle.setChecked.position = %%-input-position-%%
+### option: ElementHandle.setChecked.strict = %%-input-strict-%%
+### option: ElementHandle.setChecked.timeout = %%-input-timeout-%%
+### option: ElementHandle.setChecked.trial = %%-input-trial-%%
+
 ## async method: ElementHandle.setInputFiles
 
 This method expects `elementHandle` to point to an

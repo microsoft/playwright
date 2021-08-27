@@ -2490,6 +2490,71 @@ export interface Page {
   }): Promise<Array<string>>;
 
   /**
+   * This method checks or unchecks an element matching `selector` by performing the following steps:
+   * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+   * 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws.
+   * 1. If the element already has the right checked state, this method returns immediately.
+   * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the matched element, unless `force` option is set. If the
+   *    element is detached during the checks, the whole action is retried.
+   * 1. Scroll the element into view if needed.
+   * 1. Use [page.mouse](https://playwright.dev/docs/api/class-page#page-mouse) to click in the center of the element.
+   * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
+   * 1. Ensure that the element is now checked or unchecked. If not, this method throws.
+   *
+   * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
+   * zero timeout disables this.
+   *
+   * Shortcut for main frame's
+   * [frame.setChecked(selector, checked[, options])](https://playwright.dev/docs/api/class-frame#frame-set-checked).
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param checked Whether to check or uncheck the checkbox.
+   * @param options
+   */
+  setChecked(selector: string, checked: boolean, options?: {
+    /**
+     * Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+     */
+    force?: boolean;
+
+    /**
+     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can
+     * opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to
+     * inaccessible pages. Defaults to `false`.
+     */
+    noWaitAfter?: boolean;
+
+    /**
+     * A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the
+     * element.
+     */
+    position?: {
+      x: number;
+
+      y: number;
+    };
+
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+
+    /**
+     * When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults to
+     * `false`. Useful to wait until the element is ready for the action without performing it.
+     */
+    trial?: boolean;
+  }): Promise<void>;
+
+  /**
    * @param html HTML markup to assign to the page.
    * @param options
    */
@@ -4504,6 +4569,68 @@ export interface Frame {
      */
     timeout?: number;
   }): Promise<Array<string>>;
+
+  /**
+   * This method checks or unchecks an element matching `selector` by performing the following steps:
+   * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+   * 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws.
+   * 1. If the element already has the right checked state, this method returns immediately.
+   * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the matched element, unless `force` option is set. If the
+   *    element is detached during the checks, the whole action is retried.
+   * 1. Scroll the element into view if needed.
+   * 1. Use [page.mouse](https://playwright.dev/docs/api/class-page#page-mouse) to click in the center of the element.
+   * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
+   * 1. Ensure that the element is now checked or unchecked. If not, this method throws.
+   *
+   * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
+   * zero timeout disables this.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param checked Whether to check or uncheck the checkbox.
+   * @param options
+   */
+  setChecked(selector: string, checked: boolean, options?: {
+    /**
+     * Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+     */
+    force?: boolean;
+
+    /**
+     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can
+     * opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to
+     * inaccessible pages. Defaults to `false`.
+     */
+    noWaitAfter?: boolean;
+
+    /**
+     * A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the
+     * element.
+     */
+    position?: {
+      x: number;
+
+      y: number;
+    };
+
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+
+    /**
+     * When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults to
+     * `false`. Useful to wait until the element is ready for the action without performing it.
+     */
+    trial?: boolean;
+  }): Promise<void>;
 
   /**
    * @param html HTML markup to assign to the page.
@@ -6771,6 +6898,66 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
   }): Promise<void>;
 
   /**
+   * This method checks or unchecks an element by performing the following steps:
+   * 1. Ensure that element is a checkbox or a radio input. If not, this method throws.
+   * 1. If the element already has the right checked state, this method returns immediately.
+   * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the matched element, unless `force` option is set. If the
+   *    element is detached during the checks, the whole action is retried.
+   * 1. Scroll the element into view if needed.
+   * 1. Use [page.mouse](https://playwright.dev/docs/api/class-page#page-mouse) to click in the center of the element.
+   * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
+   * 1. Ensure that the element is now checked or unchecked. If not, this method throws.
+   *
+   * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
+   * zero timeout disables this.
+   * @param checked Whether to check or uncheck the checkbox.
+   * @param options
+   */
+  setChecked(checked: boolean, options?: {
+    /**
+     * Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+     */
+    force?: boolean;
+
+    /**
+     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can
+     * opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to
+     * inaccessible pages. Defaults to `false`.
+     */
+    noWaitAfter?: boolean;
+
+    /**
+     * A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the
+     * element.
+     */
+    position?: {
+      x: number;
+
+      y: number;
+    };
+
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+
+    /**
+     * When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults to
+     * `false`. Useful to wait until the element is ready for the action without performing it.
+     */
+    trial?: boolean;
+  }): Promise<void>;
+
+  /**
    * This method expects `elementHandle` to point to an
    * [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
    *
@@ -7928,6 +8115,66 @@ export interface Locator {
      * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
      */
     timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * This method checks or unchecks an element by performing the following steps:
+   * 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws.
+   * 1. If the element already has the right checked state, this method returns immediately.
+   * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the matched element, unless `force` option is set. If the
+   *    element is detached during the checks, the whole action is retried.
+   * 1. Scroll the element into view if needed.
+   * 1. Use [page.mouse](https://playwright.dev/docs/api/class-page#page-mouse) to click in the center of the element.
+   * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
+   * 1. Ensure that the element is now checked or unchecked. If not, this method throws.
+   *
+   * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
+   * zero timeout disables this.
+   * @param checked Whether to check or uncheck the checkbox.
+   * @param options
+   */
+  setChecked(checked: boolean, options?: {
+    /**
+     * Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+     */
+    force?: boolean;
+
+    /**
+     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can
+     * opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to
+     * inaccessible pages. Defaults to `false`.
+     */
+    noWaitAfter?: boolean;
+
+    /**
+     * A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the
+     * element.
+     */
+    position?: {
+      x: number;
+
+      y: number;
+    };
+
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+
+    /**
+     * When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults to
+     * `false`. Useful to wait until the element is ready for the action without performing it.
+     */
+    trial?: boolean;
   }): Promise<void>;
 
   /**
