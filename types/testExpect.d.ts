@@ -155,7 +155,7 @@ declare global {
       toHaveTitle(expected: string | RegExp, options?: { timeout?: number }): Promise<R>;
 
       /**
-       * Asserts page's title.
+       * Asserts page's URL.
        */
       toHaveURL(expected: string | RegExp, options?: { timeout?: number }): Promise<R>;
 
