@@ -23,6 +23,7 @@ import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { debugLogger, RecentLogsCollector } from '../../utils/debugLogger';
 import { ProtocolLogger } from '../types';
 import { helper } from '../helper';
+import { ProtocolError } from '../common/protocolError';
 
 export const ConnectionEvents = {
   Disconnected: Symbol('Disconnected'),
@@ -34,7 +35,7 @@ export const kBrowserCloseMessageId = -9999;
 
 export class FFConnection extends EventEmitter {
   private _lastId: number;
-  private _callbacks: Map<number, {resolve: Function, reject: Function, error: Error, method: string}>;
+  private _callbacks: Map<number, {resolve: (o: any) => void, reject: (e: ProtocolError) => void, error: ProtocolError, method: string}>;
   private _transport: ConnectionTransport;
   private readonly _protocolLogger: ProtocolLogger;
   private readonly _browserLogsCollector: RecentLogsCollector;
@@ -76,7 +77,7 @@ export class FFConnection extends EventEmitter {
     const id = this.nextMessageId();
     this._rawSend({id, method, params});
     return new Promise((resolve, reject) => {
-      this._callbacks.set(id, {resolve, reject, error: new Error(), method});
+      this._callbacks.set(id, {resolve, reject, error: new ProtocolError(false), method});
     });
   }
 
@@ -86,7 +87,7 @@ export class FFConnection extends EventEmitter {
 
   _checkClosed(method: string) {
     if (this._closed)
-      throw new Error(`Protocol error (${method}): Browser closed.` + helper.formatBrowserLogs(this._browserLogsCollector.recentLogs()));
+      throw new ProtocolError(true, `${method}): Browser closed.` + helper.formatBrowserLogs(this._browserLogsCollector.recentLogs()));
   }
 
   _rawSend(message: ProtocolRequest) {
@@ -123,10 +124,13 @@ export class FFConnection extends EventEmitter {
     this._transport.onclose = undefined;
     const formattedBrowserLogs = helper.formatBrowserLogs(this._browserLogsCollector.recentLogs());
     for (const session of this._sessions.values())
-      session.dispose(formattedBrowserLogs);
+      session.dispose();
     this._sessions.clear();
-    for (const callback of this._callbacks.values())
-      callback.reject(rewriteErrorMessage(callback.error, `Protocol error (${callback.method}): Browser closed.` + formattedBrowserLogs));
+    for (const callback of this._callbacks.values()) {
+      const error = rewriteErrorMessage(callback.error, `Protocol error (${callback.method}): Browser closed.` + formattedBrowserLogs);
+      error.sessionClosed =  true;
+      callback.reject(error);
+    }
     this._callbacks.clear();
     Promise.resolve().then(() => this.emit(ConnectionEvents.Disconnected));
   }
@@ -136,8 +140,8 @@ export class FFConnection extends EventEmitter {
       this._transport.close();
   }
 
-  createSession(sessionId: string, type: string): FFSession {
-    const session = new FFSession(this, type, sessionId, message => this._rawSend({...message, sessionId}));
+  createSession(sessionId: string): FFSession {
+    const session = new FFSession(this, sessionId, message => this._rawSend({...message, sessionId}));
     this._sessions.set(sessionId, session);
     return session;
   }
@@ -150,8 +154,7 @@ export const FFSessionEvents = {
 export class FFSession extends EventEmitter {
   _connection: FFConnection;
   _disposed = false;
-  private _callbacks: Map<number, {resolve: Function, reject: Function, error: Error, method: string}>;
-  private _targetType: string;
+  private _callbacks: Map<number, {resolve: Function, reject: Function, error: ProtocolError, method: string}>;
   private _sessionId: string;
   private _rawSend: (message: any) => void;
   private _crashed: boolean = false;
@@ -161,12 +164,11 @@ export class FFSession extends EventEmitter {
   override removeListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   override once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
 
-  constructor(connection: FFConnection, targetType: string, sessionId: string, rawSend: (message: any) => void) {
+  constructor(connection: FFConnection, sessionId: string, rawSend: (message: any) => void) {
     super();
     this.setMaxListeners(0);
     this._callbacks = new Map();
     this._connection = connection;
-    this._targetType = targetType;
     this._sessionId = sessionId;
     this._rawSend = rawSend;
 
@@ -186,14 +188,14 @@ export class FFSession extends EventEmitter {
     params?: Protocol.CommandParameters[T]
   ): Promise<Protocol.CommandReturnValues[T]> {
     if (this._crashed)
-      throw new Error('Page crashed');
+      throw new ProtocolError(true, 'Target crashed');
     this._connection._checkClosed(method);
     if (this._disposed)
-      throw new Error(`Protocol error (${method}): Session closed. Most likely the ${this._targetType} has been closed.`);
+      throw new ProtocolError(true, 'Target closed');
     const id = this._connection.nextMessageId();
     this._rawSend({method, params, id});
     return new Promise((resolve, reject) => {
-      this._callbacks.set(id, {resolve, reject, error: new Error(), method});
+      this._callbacks.set(id, {resolve, reject, error: new ProtocolError(false), method});
     });
   }
 
@@ -215,9 +217,11 @@ export class FFSession extends EventEmitter {
     }
   }
 
-  dispose(formattedBrowserLogs?: string) {
-    for (const callback of this._callbacks.values())
-      callback.reject(rewriteErrorMessage(callback.error, `Protocol error (${callback.method}): Target closed.` + formattedBrowserLogs));
+  dispose() {
+    for (const callback of this._callbacks.values()) {
+      callback.error.sessionClosed = true;
+      callback.reject(rewriteErrorMessage(callback.error, 'Target closed'));
+    }
     this._callbacks.clear();
     this._disposed = true;
     this._connection._sessions.delete(this._sessionId);
@@ -225,7 +229,7 @@ export class FFSession extends EventEmitter {
   }
 }
 
-function createProtocolError(error: Error, method: string, protocolError: { message: string; data: any; }): Error {
+function createProtocolError(error: ProtocolError, method: string, protocolError: { message: string; data: any; }): ProtocolError {
   let message = `Protocol error (${method}): ${protocolError.message}`;
   if ('data' in protocolError)
     message += ` ${protocolError.data}`;
