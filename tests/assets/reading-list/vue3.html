@@ -12,6 +12,7 @@ window.mountApp = element => {
       <new-book @newbook='addNewBook'></new-book>
       <book-list :books='books'></book-list>
       <button-grid></button-grid>
+      <div ref="mountPoint"></div>
     `,
 
     data() {
@@ -26,7 +27,6 @@ window.mountApp = element => {
 
     methods: {
       addNewBook(name) {
-        console.log('here');
         this.books.push({name});
       }
     },
@@ -107,9 +107,10 @@ window.mountApp = element => {
       return buttons;
     }
   });
-  app.mount(element);
+  return app.mount(element);
 }
 
-window.mountApp(document.querySelector('#root div'));
+window.app = window.mountApp(document.querySelector('#root div'));
+window.mountNestedApp = () => window.mountApp(window.app.$refs.mountPoint);
 
 </script>

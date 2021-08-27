@@ -91,6 +91,7 @@ class App extends React.Component {
       e(NewBook, {onNewBook: bookName => this.onNewBook(bookName)}, null),
       e(BookList, {books: this.state.books}, null),
       e(ButtonGrid, null, null),
+      e('div', { ref: 'mountPoint', }, null),
     );
   }
 
@@ -102,6 +103,7 @@ class App extends React.Component {
 }
 
 window.mountApp = element => ReactDOM.render(e(App, null, null), element);
-window.mountApp(document.getElementById('root'));
+window.app = window.mountApp(document.getElementById('root'));
+window.mountNestedApp = () => window.mountApp(window.app.refs.mountPoint);
 
 </script>
