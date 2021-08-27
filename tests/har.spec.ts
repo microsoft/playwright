@@ -297,14 +297,14 @@ it('should calculate time', async ({ contextFactory, server }, testInfo) => {
   expect(log.entries[0].time).toBeGreaterThan(0);
 });
 
-it('should report the correct _transferSize with PNG files', async ({ contextFactory, server, browserName, platform }, testInfo) => {
+it('should report the correct _transferSize with PNG files', async ({ contextFactory, server, asset }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`
     <img src="${server.PREFIX}/pptr.png" />
   `);
   const log = await getLog();
-  expect(log.entries[1].response._transferSize).toBe(6323);
+  expect(log.entries[1].response._transferSize).toBeGreaterThan(fs.statSync(asset('pptr.png')).size);
 });
 
 it('should have -1 _transferSize when its a failed request', async ({ contextFactory, server }, testInfo) => {
@@ -326,9 +326,9 @@ it('should report the correct request body size', async ({ contextFactory, serve
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
   await Promise.all([
-    page.waitForResponse(server.PREFIX + '/api'),
+    page.waitForResponse(server.PREFIX + '/api1'),
     page.evaluate(() => {
-      fetch('/api', {
+      fetch('/api1', {
         method: 'POST',
         body: 'abc123'
       });
@@ -343,9 +343,9 @@ it('should report the correct request body size when the bodySize is 0', async (
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
   await Promise.all([
-    page.waitForResponse(server.PREFIX + '/api'),
+    page.waitForResponse(server.PREFIX + '/api2'),
     page.evaluate(() => {
-      fetch('/api', {
+      fetch('/api2', {
         method: 'POST',
         body: ''
       });
