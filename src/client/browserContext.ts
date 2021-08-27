@@ -86,7 +86,9 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     });
     this._channel.on('request', ({ request, page }) => this._onRequest(network.Request.from(request), Page.fromNullable(page)));
     this._channel.on('requestFailed', ({ request, failureText, responseEndTiming, page }) => this._onRequestFailed(network.Request.from(request), responseEndTiming, failureText, Page.fromNullable(page)));
-    this._channel.on('requestFinished', ({ request, responseEndTiming, page }) => this._onRequestFinished(network.Request.from(request), responseEndTiming, Page.fromNullable(page)));
+    this._channel.on('requestFinished', ({ request, responseEndTiming, page, requestSizes }) =>
+      this._onRequestFinished(network.Request.from(request), responseEndTiming, requestSizes, Page.fromNullable(page))
+    );
     this._channel.on('response', ({ response, page }) => this._onResponse(network.Response.from(response), Page.fromNullable(page)));
     this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
   }
@@ -124,9 +126,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
       page.emit(Events.Page.RequestFailed, request);
   }
 
-  private _onRequestFinished(request: network.Request, responseEndTiming: number, page: Page | null) {
+  private _onRequestFinished(request: network.Request, responseEndTiming: number, requestSizes: channels.RequestSizes, page: Page | null) {
     if (request._timing)
       request._timing.responseEnd = responseEndTiming;
+    request._sizes = requestSizes;
     this.emit(Events.BrowserContext.RequestFinished, request);
     if (page)
       page.emit(Events.Page.RequestFinished, request);

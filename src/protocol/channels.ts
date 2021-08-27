@@ -766,6 +766,7 @@ export type BrowserContextRequestFailedEvent = {
 export type BrowserContextRequestFinishedEvent = {
   request: RequestChannel,
   responseEndTiming: number,
+  requestSizes: RequestSizes,
   page?: PageChannel,
 };
 export type BrowserContextResponseEvent = {
@@ -2636,6 +2637,14 @@ export type SecurityDetails = {
   subjectName?: string,
   validFrom?: number,
   validTo?: number,
+};
+
+export type RequestSizes = {
+  requestBodySize: number,
+  requestHeadersSize: number,
+  responseBodySize: number,
+  responseHeadersSize: number,
+  responseTransferSize: number,
 };
 
 export type RemoteAddr = {

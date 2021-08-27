@@ -86,7 +86,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     context.on(BrowserContext.Events.RequestFinished, (request: Request) => this._dispatchEvent('requestFinished', {
       request: RequestDispatcher.from(scope, request),
       responseEndTiming: request._responseEndTiming,
-      page: PageDispatcher.fromNullable(this._scope, request.frame()._page.initializedOrUndefined())
+      requestSizes: request.sizes(),
+      page: PageDispatcher.fromNullable(this._scope, request.frame()._page.initializedOrUndefined()),
     }));
   }
 

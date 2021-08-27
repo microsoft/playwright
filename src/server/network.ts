@@ -215,6 +215,16 @@ export class Request extends SdkObject {
       headersSize += header.name.length + header.value.length + 4; // 4 = ': ' + '\r\n'
     return headersSize;
   }
+
+  sizes() {
+    return {
+      requestBodySize: this.bodySize(),
+      requestHeadersSize: this.headersSize(),
+      responseBodySize: this._sizes.responseBodySize,
+      responseHeadersSize: this._existingResponse()!.headersSize(),
+      responseTransferSize: this._sizes.transferSize,
+    };
+  }
 }
 
 export class Route extends SdkObject {

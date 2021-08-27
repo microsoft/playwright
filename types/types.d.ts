@@ -11669,6 +11669,37 @@ export interface Request {
   response(): Promise<null|Response>;
 
   /**
+   * Returns resource size information for given request. Requires the response to be finished via
+   * [response.finished()](https://playwright.dev/docs/api/class-response#response-finished) to ensure the info is available.
+   */
+  sizes(): {
+    /**
+     * Size of the request body (POST data payload) in bytes. Set to 0 if there was no body.
+     */
+    requestBodySize: number;
+
+    /**
+     * Total number of bytes from the start of the HTTP request message until (and including) the double CRLF before the body.
+     */
+    requestHeadersSize: number;
+
+    /**
+     * Size of the received response body in bytes.
+     */
+    responseBodySize: number;
+
+    /**
+     * Total number of bytes from the start of the HTTP response message until (and including) the double CRLF before the body.
+     */
+    responseHeadersSize: number;
+
+    /**
+     * Total number of bytes received for the request.
+     */
+    responseTransferSize: number;
+  };
+
+  /**
    * Returns resource timing information for given request. Most of the timing values become available upon the response,
    * `responseEnd` becomes available when request finishes. Find more information at
    * [Resource Timing API](https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming).

@@ -1055,6 +1055,13 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     validFrom: tOptional(tNumber),
     validTo: tOptional(tNumber),
   });
+  scheme.RequestSizes = tObject({
+    requestBodySize: tNumber,
+    requestHeadersSize: tNumber,
+    responseBodySize: tNumber,
+    responseHeadersSize: tNumber,
+    responseTransferSize: tNumber,
+  });
   scheme.RemoteAddr = tObject({
     ipAddress: tString,
     port: tNumber,
