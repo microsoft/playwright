@@ -32,6 +32,7 @@ export class FFBrowser extends Browser {
   readonly _ffPages: Map<string, FFPage>;
   readonly _contexts: Map<string, FFBrowserContext>;
   private _version = '';
+  private _userAgent: string = '';
 
   static async connect(transport: ConnectionTransport, options: BrowserOptions): Promise<FFBrowser> {
     const connection = new FFConnection(transport, options.protocolLogger, options.browserLogsCollector);
@@ -68,6 +69,7 @@ export class FFBrowser extends Browser {
   async _initVersion() {
     const result = await this._connection.send('Browser.getInfo');
     this._version = result.version.substring(result.version.indexOf('/') + 1);
+    this._userAgent = result.userAgent;
   }
 
   isConnected(): boolean {
@@ -91,6 +93,10 @@ export class FFBrowser extends Browser {
 
   version(): string {
     return this._version;
+  }
+
+  userAgent(): string {
+    return this._userAgent;
   }
 
   _onDetachedFromTarget(payload: Protocol.Browser.detachedFromTargetPayload) {

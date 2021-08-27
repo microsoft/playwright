@@ -371,7 +371,7 @@ export type SetStorageState = {
 export type FetchOptions = {
   url: string,
   method?: string,
-  headers?:  { [name: string]: string },
+  headers?: { [name: string]: string },
   postData?: Buffer,
 };
 
