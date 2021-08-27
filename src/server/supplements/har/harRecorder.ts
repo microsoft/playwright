@@ -57,7 +57,8 @@ export class HarRecorder {
     if (this._isFlushed)
       return;
     this._isFlushed = true;
-    const log = await this._tracer.stop();
+    await this._tracer.flush();
+    const log = this._tracer.stop();
     log.entries = this._entries;
     await fs.promises.writeFile(this._options.path, JSON.stringify({ log }, undefined, 2));
   }

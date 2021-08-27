@@ -706,11 +706,15 @@ BrowserContext:
         snapshots: boolean?
         screenshots: boolean?
 
-    tracingStop:
+    tracingStartChunk:
 
-    tracingExport:
+    tracingStopChunk:
+      parameters:
+        save: boolean
       returns:
-        artifact: Artifact
+        artifact: Artifact?
+
+    tracingStop:
 
     harExport:
       returns:

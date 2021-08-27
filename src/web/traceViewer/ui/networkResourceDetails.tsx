@@ -38,7 +38,7 @@ export const NetworkResourceDetails: React.FunctionComponent<{
     const readResources = async  () => {
       if (resource.request.postData) {
         if (resource.request.postData._sha1) {
-          const response = await fetch(`/sha1/${resource.request.postData}`);
+          const response = await fetch(`/sha1/${resource.request.postData._sha1}`);
           const requestResource = await response.text();
           setRequestBody(requestResource);
         } else {

@@ -301,8 +301,8 @@ test('should stop tracing with trace: on-first-retry, when not retrying', async 
         });
 
         test('no tracing', async ({}, testInfo) => {
-          const error = await page.context().tracing._export({ path: testInfo.outputPath('none.zip') }).catch(e => e);
-          expect(error.message).toContain('Must start tracing before exporting');
+          const e = await page.context().tracing.stop({ path: 'ignored' }).catch(e => e);
+          expect(e.message).toContain('Must start tracing before stopping');
         });
       });
     `,
@@ -314,7 +314,6 @@ test('should stop tracing with trace: on-first-retry, when not retrying', async 
   expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
     'a-shared-flaky-retry1',
     '  trace.zip',
-    'a-shared-no-tracing',  // Empty dir created because of testInfo.outputPath() call.
     'report.json',
   ]);
 });

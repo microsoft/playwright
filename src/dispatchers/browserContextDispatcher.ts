@@ -212,13 +212,17 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     await this._context.tracing.start(params);
   }
 
-  async tracingStop(params: channels.BrowserContextTracingStopParams): Promise<channels.BrowserContextTracingStopResult> {
-    await this._context.tracing.stop();
+  async tracingStartChunk(params: channels.BrowserContextTracingStartChunkParams): Promise<channels.BrowserContextTracingStartChunkResult> {
+    await this._context.tracing.startChunk();
   }
 
-  async tracingExport(params: channels.BrowserContextTracingExportParams): Promise<channels.BrowserContextTracingExportResult> {
-    const artifact = await this._context.tracing.export();
-    return { artifact: new ArtifactDispatcher(this._scope, artifact) };
+  async tracingStopChunk(params: channels.BrowserContextTracingStopChunkParams): Promise<channels.BrowserContextTracingStopChunkResult> {
+    const artifact = await this._context.tracing.stopChunk(params.save);
+    return { artifact: artifact ? new ArtifactDispatcher(this._scope, artifact) : undefined };
+  }
+
+  async tracingStop(params: channels.BrowserContextTracingStopParams): Promise<channels.BrowserContextTracingStopResult> {
+    await this._context.tracing.stop();
   }
 
   async harExport(params: channels.BrowserContextHarExportParams): Promise<channels.BrowserContextHarExportResult> {
