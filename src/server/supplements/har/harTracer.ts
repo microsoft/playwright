@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-import { URL } from 'url';
 import { BrowserContext } from '../../browserContext';
 import { helper } from '../../helper';
 import * as network from '../../network';
 import { Page } from '../../page';
 import * as har from './har';
-import * as types from '../../types';
 import { calculateSha1, monotonicTime } from '../../../utils/utils';
 import { eventsHelper, RegisteredListener } from '../../../utils/eventsHelper';
 import * as mime from 'mime';
@@ -158,7 +156,7 @@ export class HarTracer {
         queryString: [...url.searchParams].map(e => ({ name: e[0], value: e[1] })),
         postData: postDataForHar(request, this._options.content),
         headersSize: -1,
-        bodySize: calculateRequestBodySize(request) || 0,
+        bodySize: request.bodySize(),
       },
       response: {
         status: -1,
@@ -204,16 +202,15 @@ export class HarTracer {
     if (!response)
       return;
 
-    const httpVersion = normaliseHttpVersion(response._httpVersion);
-    const transferSize = response._transferSize || -1;
-    const headersSize = calculateResponseHeadersSize(httpVersion, response.status(), response.statusText(), response.headers());
-    const bodySize = transferSize !== -1 ? transferSize - headersSize : -1;
+    const httpVersion = response.httpVersion();
+    const transferSize = response.transferSize() || -1;
+    const responseHeadersSize = response.headersSize();
 
     harEntry.request.httpVersion = httpVersion;
-    harEntry.response.bodySize = bodySize;
-    harEntry.response.headersSize = headersSize;
+    harEntry.response.bodySize = response.bodySize();
+    harEntry.response.headersSize = responseHeadersSize;
     harEntry.response._transferSize = transferSize;
-    harEntry.request.headersSize = calculateRequestHeadersSize(request.method(), request.url(), httpVersion, request.headers());
+    harEntry.request.headersSize = request.headersSize();
 
     const promise = response.body().then(buffer => {
       const content = harEntry.response.content;
@@ -258,7 +255,7 @@ export class HarTracer {
     harEntry.response = {
       status: response.status(),
       statusText: response.statusText(),
-      httpVersion: normaliseHttpVersion(response._httpVersion),
+      httpVersion: response.httpVersion(),
       cookies: cookiesForHar(response.headerValue('set-cookie'), '\n'),
       headers: response.headers().map(header => ({ name: header.name, value: header.value })),
       content: {
@@ -396,34 +393,4 @@ function parseCookie(c: string): har.Cookie {
       cookie.secure = true;
   }
   return cookie;
-}
-
-function calculateResponseHeadersSize(protocol: string, status: number, statusText: string , headers: types.HeadersArray) {
-  let rawHeaders = `${protocol} ${status} ${statusText}\r\n`;
-  for (const header of headers)
-    rawHeaders += `${header.name}: ${header.value}\r\n`;
-  rawHeaders += '\r\n';
-  return rawHeaders.length;
-}
-
-function calculateRequestHeadersSize(method: string, url: string, httpVersion: string, headers: types.HeadersArray) {
-  let rawHeaders = `${method} ${(new URL(url)).pathname} ${httpVersion}\r\n`;
-  for (const header of headers)
-    rawHeaders += `${header.name}: ${header.value}\r\n`;
-  return rawHeaders.length;
-}
-
-function normaliseHttpVersion(httpVersion?: string) {
-  if (!httpVersion)
-    return FALLBACK_HTTP_VERSION;
-  if (httpVersion === 'http/1.1')
-    return 'HTTP/1.1';
-  return httpVersion;
-}
-
-function calculateRequestBodySize(request: network.Request): number|undefined {
-  const postData = request.postDataBuffer();
-  if (!postData)
-    return;
-  return new TextEncoder().encode(postData.toString('utf8')).length;
 }
