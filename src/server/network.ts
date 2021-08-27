@@ -78,6 +78,11 @@ export function stripFragmentFromUrl(url: string): string {
   return url.substring(0, url.indexOf('#'));
 }
 
+type RequestSizes = {
+  responseBodySize: number;
+  transferSize: number;
+};
+
 export class Request extends SdkObject {
   private _response: Response | null = null;
   private _redirectedFrom: Request | null;
@@ -95,6 +100,7 @@ export class Request extends SdkObject {
   private _waitForResponsePromise: Promise<Response | null>;
   private _waitForResponsePromiseCallback: (value: Response | null) => void = () => {};
   _responseEndTiming = -1;
+  _sizes: RequestSizes = { responseBodySize: 0, transferSize: 0 };
 
   constructor(frame: frames.Frame, redirectedFrom: Request | null, documentId: string | undefined,
     url: string, resourceType: string, method: string, postData: Buffer | null, headers: types.HeadersArray) {
@@ -192,6 +198,22 @@ export class Request extends SdkObject {
       this._headers.push({ name: 'host', value: host });
       this._headersMap.set('host', host);
     }
+  }
+
+  bodySize(): number {
+    return this.postDataBuffer()?.length || 0;
+  }
+
+  headersSize(): number {
+    if (!this._response)
+      return 0;
+    let headersSize = 4; // 4 = 2 spaces + 2 line breaks (GET /path \r\n)
+    headersSize += this.method().length;
+    headersSize += (new URL(this.url())).pathname.length;
+    headersSize += 8; // httpVersion
+    for (const header of this._headers)
+      headersSize += header.name.length + header.value.length + 4; // 4 = ': ' + '\r\n'
+    return headersSize;
   }
 }
 
@@ -302,8 +324,7 @@ export class Response extends SdkObject {
   private _serverAddrPromiseCallback: (arg?: RemoteAddr) => void = () => {};
   private _securityDetailsPromise: Promise<SecurityDetails|undefined>;
   private _securityDetailsPromiseCallback: (arg?: SecurityDetails) => void = () => {};
-  _httpVersion: string | undefined;
-  _transferSize: number | undefined;
+  private _httpVersion: string | undefined;
 
   constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback, httpVersion?: string) {
     super(request.frame(), 'response');
@@ -337,9 +358,8 @@ export class Response extends SdkObject {
     this._securityDetailsPromiseCallback(securityDetails);
   }
 
-  _requestFinished(responseEndTiming: number, error?: string, transferSize?: number) {
+  _requestFinished(responseEndTiming: number, error?: string) {
     this._request._responseEndTiming = Math.max(responseEndTiming, this._timing.responseStart);
-    this._transferSize = transferSize;
     this._finishedPromiseCallback({ error });
   }
 
@@ -400,6 +420,33 @@ export class Response extends SdkObject {
 
   frame(): frames.Frame {
     return this._request.frame();
+  }
+
+  transferSize(): number | undefined {
+    return this._request._sizes.transferSize;
+  }
+
+  bodySize(): number {
+    return this._request._sizes.responseBodySize;
+  }
+
+  httpVersion(): string {
+    if (!this._httpVersion)
+      return 'HTTP/1.1';
+    if (this._httpVersion === 'http/1.1')
+      return 'HTTP/1.1';
+    return this._httpVersion;
+  }
+
+  headersSize(): number {
+    let headersSize = 4; // 4 = 2 spaces + 2 line breaks (HTTP/1.1 200 Ok\r\n)
+    headersSize += 8; // httpVersion;
+    headersSize += 3; // statusCode;
+    headersSize += this.statusText().length;
+    for (const header of this.headers())
+      headersSize += header.name.length + header.value.length + 4; // 4 = ': ' + '\r\n'
+    headersSize += 2; // '\r\n'
+    return headersSize;
   }
 }
 

@@ -380,6 +380,7 @@ export class WKPage implements PageDelegate {
       eventsHelper.addEventListener(this._session, 'Network.responseReceived', e => this._onResponseReceived(e)),
       eventsHelper.addEventListener(this._session, 'Network.loadingFinished', e => this._onLoadingFinished(e)),
       eventsHelper.addEventListener(this._session, 'Network.loadingFailed', e => this._onLoadingFailed(e)),
+      eventsHelper.addEventListener(this._session, 'Network.dataReceived', e => this._onDataReceived(e)),
       eventsHelper.addEventListener(this._session, 'Network.webSocketCreated', e => this._page._frameManager.onWebSocketCreated(e.requestId, e.url)),
       eventsHelper.addEventListener(this._session, 'Network.webSocketWillSendHandshakeRequest', e => this._page._frameManager.onWebSocketRequest(e.requestId)),
       eventsHelper.addEventListener(this._session, 'Network.webSocketHandshakeResponseReceived', e => this._page._frameManager.onWebSocketResponse(e.requestId, e.response.status, e.response.statusText)),
@@ -1049,11 +1050,10 @@ export class WKPage implements PageDelegate {
         validFrom: responseReceivedPayload?.response.security?.certificate?.validFrom,
         validTo: responseReceivedPayload?.response.security?.certificate?.validUntil,
       });
-      const { responseBodyBytesReceived, responseHeaderBytesReceived } = event.metrics || {};
-      const transferSize = responseBodyBytesReceived ? responseBodyBytesReceived + (responseHeaderBytesReceived || 0) : undefined;
+      request.request._sizes.transferSize += response.headersSize();
       if (event.metrics?.protocol)
         response._setHttpVersion(event.metrics.protocol);
-      response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp), undefined, transferSize);
+      response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp), undefined);
     }
 
     this._requestIdToResponseReceivedPayloadEvent.delete(request._requestId);
@@ -1079,6 +1079,14 @@ export class WKPage implements PageDelegate {
     this._requestIdToRequest.delete(request._requestId);
     request.request._setFailureText(event.errorText);
     this._page._frameManager.requestFailed(request.request, event.errorText.includes('cancelled'));
+  }
+
+  _onDataReceived(event: Protocol.Network.dataReceivedPayload) {
+    const request = this._requestIdToRequest.get(event.requestId);
+    if (!request)
+      return;
+    request.request._sizes.responseBodySize += event.encodedDataLength === -1 ? event.dataLength : event.encodedDataLength;
+    request.request._sizes.transferSize += event.encodedDataLength === -1 ? event.dataLength : event.encodedDataLength;
   }
 
   async _grantPermissions(origin: string, permissions: string[]) {

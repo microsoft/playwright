@@ -361,8 +361,11 @@ export class CRNetworkManager {
     // Under certain conditions we never get the Network.responseReceived
     // event from protocol. @see https://crbug.com/883475
     const response = request.request._existingResponse();
-    if (response)
-      response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp), undefined, event.encodedDataLength);
+    if (response) {
+      request.request._sizes.transferSize = event.encodedDataLength;
+      request.request._sizes.responseBodySize = event.encodedDataLength - response?.headersSize();
+      response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp), undefined);
+    }
     this._requestIdToRequest.delete(request._requestId);
     if (request._interceptionId)
       this._attemptedAuthentications.delete(request._interceptionId);
