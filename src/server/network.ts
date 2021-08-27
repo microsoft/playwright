@@ -78,6 +78,11 @@ export function stripFragmentFromUrl(url: string): string {
   return url.substring(0, url.indexOf('#'));
 }
 
+type RequestSizes = {
+  responseBodySize: number;
+  transferSize: number;
+};
+
 export class Request extends SdkObject {
   private _response: Response | null = null;
   private _redirectedFrom: Request | null;
@@ -95,8 +100,7 @@ export class Request extends SdkObject {
   private _waitForResponsePromise: Promise<Response | null>;
   private _waitForResponsePromiseCallback: (value: Response | null) => void = () => {};
   _responseEndTiming = -1;
-  _responseBodySize: number = 0;
-  _transferSize: number = 0;
+  _sizes: RequestSizes = { responseBodySize: 0, transferSize: 0 };
 
   constructor(frame: frames.Frame, redirectedFrom: Request | null, documentId: string | undefined,
     url: string, resourceType: string, method: string, postData: Buffer | null, headers: types.HeadersArray) {
@@ -197,10 +201,7 @@ export class Request extends SdkObject {
   }
 
   bodySize(): number {
-    const postData = this.postDataBuffer();
-    if (!postData)
-      return 0;
-    return postData.length;
+    return this.postDataBuffer()?.length || 0;
   }
 
   headersSize(): number {
@@ -422,11 +423,11 @@ export class Response extends SdkObject {
   }
 
   transferSize(): number | undefined {
-    return this._request._transferSize;
+    return this._request._sizes.transferSize;
   }
 
   bodySize(): number {
-    return this._request._responseBodySize;
+    return this._request._sizes.responseBodySize;
   }
 
   httpVersion(): string {

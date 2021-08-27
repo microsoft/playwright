@@ -362,8 +362,8 @@ export class CRNetworkManager {
     // event from protocol. @see https://crbug.com/883475
     const response = request.request._existingResponse();
     if (response) {
-      request.request._transferSize = event.encodedDataLength;
-      request.request._responseBodySize = event.encodedDataLength - response?.headersSize();
+      request.request._sizes.transferSize = event.encodedDataLength;
+      request.request._sizes.responseBodySize = event.encodedDataLength - response?.headersSize();
       response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp), undefined);
     }
     this._requestIdToRequest.delete(request._requestId);

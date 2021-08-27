@@ -117,8 +117,8 @@ export class FFNetworkManager {
       return;
     const response = request.request._existingResponse()!;
 
-    request.request._transferSize = event.transferSize;
-    request.request._responseBodySize = event.transferSize - response.headersSize();
+    request.request._sizes.transferSize = event.transferSize;
+    request.request._sizes.responseBodySize = event.transferSize - response.headersSize();
 
     // Keep redirected requests in the map for future reference as redirectedFrom.
     const isRedirected = response.status() >= 300 && response.status() <= 399;
