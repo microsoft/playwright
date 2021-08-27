@@ -268,6 +268,19 @@ it('should add default headers', async ({context, server, page}) => {
   expect(request.headers['accept-encoding']).toBe('gzip,deflate');
 });
 
+it('should add default headers to redirects', async ({context, server, page}) => {
+  server.setRedirect('/redirect', '/empty.html');
+  const [request] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    // @ts-expect-error
+    context._fetch(`${server.PREFIX}/redirect`)
+  ]);
+  expect(request.headers['accept']).toBe('*/*');
+  const userAgent = await page.evaluate(() => navigator.userAgent);
+  expect(request.headers['user-agent']).toBe(userAgent);
+  expect(request.headers['accept-encoding']).toBe('gzip,deflate');
+});
+
 it('should allow to override default headers', async ({context, server, page}) => {
   const [request] = await Promise.all([
     server.waitForRequest('/empty.html'),
