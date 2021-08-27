@@ -68,6 +68,29 @@ it('should add session cookies to request', async ({context, server}) => {
   expect(req.headers.cookie).toEqual('username=John Doe');
 });
 
+it('should not add context cookie if cookie header passed as a parameter', async ({context, server}) => {
+  await context.addCookies([{
+    name: 'username',
+    value: 'John Doe',
+    domain: '.my.playwright.dev',
+    path: '/',
+    expires: -1,
+    httpOnly: false,
+    secure: false,
+    sameSite: 'Lax',
+  }]);
+  const [req] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    // @ts-expect-error
+    context._fetch(`http://www.my.playwright.dev:${server.PORT}/empty.html`, {
+      headers: {
+        'Cookie': 'foo=bar'
+      }
+    }),
+  ]);
+  expect(req.headers.cookie).toEqual('foo=bar');
+});
+
 it('should follow redirects', async ({context, server}) => {
   server.setRedirect('/redirect1', '/redirect2');
   server.setRedirect('/redirect2', '/simple.json');
@@ -171,4 +194,33 @@ it('should support post data', async ({context, server}) => {
   expect((await request.postBody).toString()).toBe('My request');
   expect(response.status()).toBe(200);
   expect(request.url).toBe('/simple.json');
+});
+
+it('should add default headers', async ({context, server, page}) => {
+  const [request] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    // @ts-expect-error
+    context._fetch(server.EMPTY_PAGE)
+  ]);
+  expect(request.headers['accept']).toBe('*/*');
+  const userAgent = await page.evaluate(() => navigator.userAgent);
+  expect(request.headers['user-agent']).toBe(userAgent);
+  expect(request.headers['accept-encoding']).toBe('gzip,deflate');
+});
+
+it('should allow to override default headers', async ({context, server, page}) => {
+  const [request] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    // @ts-expect-error
+    context._fetch(server.EMPTY_PAGE, {
+      headers: {
+        'User-Agent': 'Playwright',
+        'Accept': 'text/html',
+        'Accept-Encoding': 'br'
+      }
+    })
+  ]);
+  expect(request.headers['accept']).toBe('text/html');
+  expect(request.headers['user-agent']).toBe('Playwright');
+  expect(request.headers['accept-encoding']).toBe('br');
 });

@@ -101,6 +101,10 @@ export class WKBrowser extends Browser {
     return BROWSER_VERSION;
   }
 
+  userAgent(): string {
+    return DEFAULT_USER_AGENT;
+  }
+
   _onDownloadCreated(payload: Protocol.Playwright.downloadCreatedPayload) {
     const page = this._wkPages.get(payload.pageProxyId);
     if (!page)

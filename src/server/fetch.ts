@@ -23,16 +23,21 @@ import * as types from './types';
 
 export async function playwrightFetch(context: BrowserContext, params: types.FetchOptions): Promise<{fetchResponse?: types.FetchResponse, error?: string}> {
   try {
-    const cookies = await context.cookies(params.url);
-    const valueArray = cookies.map(c => `${c.name}=${c.value}`);
-    const clientCookie = params.headers?.['cookie'];
-    if (clientCookie)
-      valueArray.unshift(clientCookie);
-    const cookieHeader = valueArray.join('; ');
-    if (cookieHeader) {
-      if (!params.headers)
-        params.headers = {};
-      params.headers['cookie'] = cookieHeader;
+    const headers: { [name: string]: string } = {};
+    if (params.headers) {
+      for (const [name, value] of Object.entries(params.headers))
+        headers[name.toLowerCase()] = value;
+    }
+    headers['user-agent'] ??= context._options.userAgent || context._browser.userAgent();
+    headers['accept'] ??= '*/*';
+    headers['accept-encoding'] ??= 'gzip,deflate';
+
+    if (headers['cookie'] === undefined) {
+      const cookies = await context.cookies(params.url);
+      if (cookies.length) {
+        const valueArray = cookies.map(c => `${c.name}=${c.value}`);
+        headers['cookie'] = valueArray.join('; ');
+      }
     }
     if (!params.method)
       params.method = 'GET';
@@ -48,7 +53,7 @@ export async function playwrightFetch(context: BrowserContext, params: types.Fet
     // TODO(https://github.com/microsoft/playwright/issues/8381): set user agent
     const {fetchResponse, setCookie} = await sendRequest(new URL(params.url), {
       method: params.method,
-      headers: params.headers,
+      headers: headers,
       agent,
       maxRedirects: 20
     }, params.postData);
