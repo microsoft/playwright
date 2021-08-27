@@ -28,9 +28,12 @@ export async function playwrightFetch(context: BrowserContext, params: types.Fet
       for (const [name, value] of Object.entries(params.headers))
         headers[name.toLowerCase()] = value;
     }
-    headers['user-agent'] ??= context._options.userAgent || context._browser.userAgent();
-    headers['accept'] ??= '*/*';
-    headers['accept-encoding'] ??= 'gzip,deflate';
+    if (headers['user-agent'] === undefined)
+      headers['user-agent'] = context._options.userAgent || context._browser.userAgent();
+    if (headers['accept'] === undefined)
+      headers['accept'] = '*/*';
+    if (headers['accept-encoding'] === undefined)
+      headers['accept-encoding'] = 'gzip,deflate';
 
     if (headers['cookie'] === undefined) {
       const cookies = await context.cookies(params.url);
