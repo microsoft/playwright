@@ -356,9 +356,9 @@ it('should report the correct request body size when the bodySize is 0', async (
 });
 
 it('should report the correct response body size when the bodySize is 0', async ({ contextFactory, server }, testInfo) => {
-  server.setRoute('/empty.html', (req, res) => res.end(''));
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
-  await page.goto(server.EMPTY_PAGE);
+  const response = await page.goto(server.EMPTY_PAGE);
+  await response.finished();
   const log = await getLog();
   expect(log.entries[0].response.bodySize).toBe(0);
 });
