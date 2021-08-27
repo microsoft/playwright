@@ -92,19 +92,19 @@ export class InjectedScript {
     const result = parseSelector(selector);
     for (const part of result.parts) {
       if (!this._engines.has(part.name))
-        throw new Error(`Unknown engine "${part.name}" while parsing selector ${selector}`);
+        throw this.createStacklessError(`Unknown engine "${part.name}" while parsing selector ${selector}`);
     }
     return result;
   }
 
   querySelector(selector: ParsedSelector, root: Node, strict: boolean): Element | undefined {
     if (!(root as any)['querySelector'])
-      throw new Error('Node is not queryable.');
+      throw this.createStacklessError('Node is not queryable.');
     this._evaluator.begin();
     try {
       const result = this._querySelectorRecursively([{ element: root as Element, capture: undefined }], selector, 0, new Map());
       if (strict && result.length > 1)
-        throw new Error(this.strictModeViolationErrorMessage(selector, result.map(r => r.element)));
+        throw this.strictModeViolationError(selector, result.map(r => r.element));
       return result[0]?.capture || result[0]?.element;
     } finally {
       this._evaluator.end();
@@ -125,7 +125,7 @@ export class InjectedScript {
           filtered = roots.slice(roots.length - 1);
       } else {
         if (typeof selector.capture === 'number')
-          throw new Error(`Can't query n-th element in a request with the capture.`);
+          throw this.createStacklessError(`Can't query n-th element in a request with the capture.`);
         const nth = +part.body;
         const set = new Set<Element>();
         for (const root of roots) {
@@ -160,7 +160,7 @@ export class InjectedScript {
 
       for (const element of all) {
         if (!('nodeName' in element))
-          throw new Error(`Expected a Node but got ${Object.prototype.toString.call(element)}`);
+          throw this.createStacklessError(`Expected a Node but got ${Object.prototype.toString.call(element)}`);
         result.push({ element, capture });
       }
     }
@@ -169,7 +169,7 @@ export class InjectedScript {
 
   querySelectorAll(selector: ParsedSelector, root: Node): Element[] {
     if (!(root as any)['querySelectorAll'])
-      throw new Error('Node is not queryable.');
+      throw this.createStacklessError('Node is not queryable.');
     this._evaluator.begin();
     try {
       const result = this._querySelectorRecursively([{ element: root as Element, capture: undefined }], selector, 0, new Map());
@@ -482,7 +482,7 @@ export class InjectedScript {
         return 'error:notcheckbox';
       return (element as HTMLInputElement).checked;
     }
-    throw new Error(`Unexpected element state "${state}"`);
+    throw this.createStacklessError(`Unexpected element state "${state}"`);
   }
 
   selectOptions(optionsToSelect: (Node | { value?: string, label?: string, index?: number })[],
@@ -739,7 +739,7 @@ export class InjectedScript {
     return oneLine(`<${element.nodeName.toLowerCase()}${attrText}>${text}</${element.nodeName.toLowerCase()}>`);
   }
 
-  strictModeViolationErrorMessage(selector: ParsedSelector, matches: Element[]): string {
+  strictModeViolationError(selector: ParsedSelector, matches: Element[]): Error {
     const infos = matches.slice(0, 10).map(m => ({
       preview: this.previewNode(m),
       selector: generateSelector(this, m).selector
@@ -747,7 +747,13 @@ export class InjectedScript {
     const lines = infos.map((info, i) => `\n    ${i + 1}) ${info.preview} aka playwright.$("${info.selector}")`);
     if (infos.length < matches.length)
       lines.push('\n    ...');
-    return `strict mode violation: "${selector.selector}" resolved to ${matches.length} elements:${lines.join('')}\n`;
+    return this.createStacklessError(`strict mode violation: "${selector.selector}" resolved to ${matches.length} elements:${lines.join('')}\n`);
+  }
+
+  createStacklessError(message: string): Error {
+    const error = new Error(message);
+    delete error.stack;
+    return error;
   }
 }
 
