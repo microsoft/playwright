@@ -257,7 +257,7 @@ test('should throw when using page in beforeAll', async ({ runInlineTest }, test
 
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
-  expect(result.output).toContain(`Error: "context" and "page" fixtures are not suppoted in beforeAll. Use browser.newContext() instead.`);
+  expect(result.output).toContain(`Error: "context" and "page" fixtures are not supported in beforeAll. Use browser.newContext() instead.`);
 });
 
 test('should report click error on sigint', async ({ runInlineTest }) => {
