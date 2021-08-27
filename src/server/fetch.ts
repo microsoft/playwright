@@ -39,7 +39,7 @@ export async function playwrightFetch(context: BrowserContext, params: types.Fet
         headers['cookie'] = valueArray.join('; ');
       }
     }
-    const method = params.method ? params.method.toUpperCase() : 'GET';
+    const method = params.method?.toUpperCase() || 'GET';
     let agent;
     if (context._options.proxy) {
       // TODO: support bypass proxy
@@ -50,14 +50,12 @@ export async function playwrightFetch(context: BrowserContext, params: types.Fet
     }
 
     // TODO(https://github.com/microsoft/playwright/issues/8381): set user agent
-    const {fetchResponse, setCookie} = await sendRequest(context, new URL(params.url), {
+    const fetchResponse = await sendRequest(context, new URL(params.url), {
       method,
       headers,
       agent,
       maxRedirects: 20
     }, params.postData);
-    // if (setCookie)
-    //   await updateCookiesFromHeader(context, fetchResponse.url, setCookie);
     return { fetchResponse };
   } catch (e) {
     return { error: String(e) };
@@ -97,14 +95,9 @@ async function updateRequestCookieHeader(context: BrowserContext, url: URL, opti
   }
 }
 
-type Response = {
-  fetchResponse: types.FetchResponse,
-  setCookie?: string[]
-};
-
-async function sendRequest(context: BrowserContext, url: URL, options: http.RequestOptions & { maxRedirects: number }, postData?: Buffer): Promise<Response>{
+async function sendRequest(context: BrowserContext, url: URL, options: http.RequestOptions & { maxRedirects: number }, postData?: Buffer): Promise<types.FetchResponse>{
   await updateRequestCookieHeader(context, url, options);
-  return new Promise<Response>((fulfill, reject) => {
+  return new Promise<types.FetchResponse>((fulfill, reject) => {
     const requestConstructor: ((url: URL, options: http.RequestOptions, callback?: (res: http.IncomingMessage) => void) => http.ClientRequest)
       = (url.protocol === 'https:' ? https : http).request;
     const request = requestConstructor(url, options, async response => {
@@ -152,14 +145,11 @@ async function sendRequest(context: BrowserContext, url: URL, options: http.Requ
       response.on('end', () => {
         const body = Buffer.concat(chunks);
         fulfill({
-          fetchResponse: {
-            url: response.url || url.toString(),
-            status: response.statusCode || 0,
-            statusText: response.statusMessage || '',
-            headers: flattenHeaders(response.headers),
-            body
-          },
-          setCookie: response.headers['set-cookie']
+          url: response.url || url.toString(),
+          status: response.statusCode || 0,
+          statusText: response.statusMessage || '',
+          headers: flattenHeaders(response.headers),
+          body
         });
       });
       response.on('error',reject);
