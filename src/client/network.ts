@@ -59,6 +59,7 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
   _headers: Headers;
   private _postData: Buffer | null;
   _timing: ResourceTiming;
+  _sizes: RequestSizes = { requestBodySize: 0, requestHeadersSize: 0, responseBodySize: 0, responseHeadersSize: 0, responseTransferSize: 0 };
 
   static from(request: channels.RequestChannel): Request {
     return (request as any)._object;
@@ -165,6 +166,10 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
 
   timing(): ResourceTiming {
     return this._timing;
+  }
+
+  sizes(): RequestSizes {
+    return this._sizes;
   }
 
   _finalRequest(): Request {
@@ -366,6 +371,14 @@ export type ResourceTiming = {
   requestStart: number;
   responseStart: number;
   responseEnd: number;
+};
+
+export type RequestSizes = {
+  requestBodySize: number;
+  requestHeadersSize: number;
+  responseBodySize: number;
+  responseHeadersSize: number;
+  responseTransferSize: number;
 };
 
 export class Response extends ChannelOwner<channels.ResponseChannel, channels.ResponseInitializer> implements api.Response {

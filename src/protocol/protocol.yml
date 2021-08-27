@@ -756,6 +756,7 @@ BrowserContext:
       parameters:
         request: Request
         responseEndTiming: number
+        requestSizes: RequestSizes
         page: Page?
 
     response:
@@ -2231,6 +2232,15 @@ SecurityDetails:
     subjectName: string?
     validFrom: number?
     validTo: number?
+
+RequestSizes:
+  type: object
+  properties:
+    requestBodySize: number
+    requestHeadersSize: number
+    responseBodySize: number
+    responseHeadersSize: number
+    responseTransferSize: number
 
 
 RemoteAddr:
