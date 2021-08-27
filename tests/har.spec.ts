@@ -262,21 +262,32 @@ it('should include content', async ({ contextFactory, server }, testInfo) => {
   expect(log.entries[1].response.content.compression).toBe(0);
 });
 
-it('should include sizes', async ({ contextFactory, server, browserName, platform }, testInfo) => {
+it('should include sizes', async ({ contextFactory, server, asset }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.PREFIX + '/har.html');
   const log = await getLog();
   expect(log.entries.length).toBe(2);
   expect(log.entries[0].request.url.endsWith('har.html')).toBe(true);
   expect(log.entries[0].request.headersSize).toBeGreaterThanOrEqual(280);
-  expect(log.entries[0].response.bodySize).toBe(96);
+  expect(log.entries[0].response.bodySize).toBe(fs.statSync(asset('har.html')).size);
   expect(log.entries[0].response.headersSize).toBeGreaterThanOrEqual(198);
   expect(log.entries[0].response._transferSize).toBeGreaterThanOrEqual(294);
 
-  expect(log.entries[1].request.url.endsWith('style.css')).toBe(true);
-  expect(log.entries[1].response.bodySize).toBe(37);
+  expect(log.entries[1].request.url.endsWith('one-style.css')).toBe(true);
+  expect(log.entries[1].response.bodySize).toBe(fs.statSync(asset('one-style.css')).size);
   expect(log.entries[1].response.headersSize).toBeGreaterThanOrEqual(197);
   expect(log.entries[1].response._transferSize).toBeGreaterThanOrEqual(234);
+});
+
+it('should work with gzip compression', async ({ contextFactory, server, browserName }, testInfo) => {
+  it.fixme(browserName === 'webkit');
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  server.enableGzip('/simple.json');
+  const response = await page.goto(server.PREFIX + '/simple.json');
+  expect(response.headers()['content-encoding']).toBe('gzip');
+  const log = await getLog();
+  expect(log.entries.length).toBe(1);
+  expect(log.entries[0].response.content.compression).toBe(-20);
 });
 
 it('should calculate time', async ({ contextFactory, server }, testInfo) => {
