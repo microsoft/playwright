@@ -21,7 +21,7 @@ jobs:
             - [ ] .NET`;
             await github.issues.create({
               owner: 'microsoft',
-              repo: ‘playwright',
+              repo: 'playwright',
               title: '[Internal] Backport client change to language ports',
               body,
             });
