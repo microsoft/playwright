@@ -285,7 +285,7 @@ it('should should set bodySize to 0 if there was no body', async ({page, server,
   ]);
   await (await request.response()).finished();
   expect(request.sizes().requestBodySize).toBe(0);
-  expect(request.sizes().requestHeadersSize).toBeGreaterThanOrEqual(250);
+  expect(request.sizes().requestHeadersSize).toBeGreaterThanOrEqual(228);
 });
 
 it('should should set bodySize, headersSize, and transferSize', async ({page, server, browserName, platform}) => {
@@ -308,18 +308,7 @@ it('should should set bodySize, headersSize, and transferSize', async ({page, se
 });
 
 it('should should set bodySize to 0 when there was no response body', async ({page, server, browserName, platform}) => {
-  server.setRoute('/get', (req, res) => {
-    // In Firefox, |fetch| will be hanging until it receives |Content-Type| header
-    // from server.
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    res.end('');
-  });
-  await page.goto(server.EMPTY_PAGE);
-  const [response] = await Promise.all([
-    page.waitForEvent('response'),
-    page.evaluate(async () => fetch('./get').then(r => r.text())),
-    server.waitForRequest('/get'),
-  ]);
+  const response = await page.goto(server.EMPTY_PAGE);
   await response.finished();
   expect(response.request().sizes().responseBodySize).toBe(0);
   expect(response.request().sizes().responseHeadersSize).toBeGreaterThanOrEqual(150);
