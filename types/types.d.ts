@@ -7062,6 +7062,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
  *
  * // Works because we explicitly tell locator to pick the first element:
  * await page.locator('button').first().click();
+ *
+ * // Works because count knows what to do with multiple matches:
+ * await page.locator('button').count();
  * ```
  *
  */
