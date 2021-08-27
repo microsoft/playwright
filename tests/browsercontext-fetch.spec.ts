@@ -136,6 +136,66 @@ it('should add cookies from Set-Cookie header', async ({context, page, server}) 
   expect((await page.evaluate(() => document.cookie)).split(';').map(s => s.trim()).sort()).toEqual(['foo=bar', 'session=value']);
 });
 
+it('should handle cookies on redirects', async ({context, server}) => {
+  server.setRoute('/redirect1', (req, res) => {
+    res.setHeader('Set-Cookie', 'r1=v1;SameSite=Lax');
+    res.writeHead(301, { location: '/a/b/redirect2' });
+    res.end();
+  });
+  server.setRoute('/a/b/redirect2', (req, res) => {
+    res.setHeader('Set-Cookie', 'r2=v2;SameSite=Lax');
+    res.writeHead(302, { location: '/title.html' });
+    res.end();
+  });
+  {
+    const [req1, req2, req3] = await Promise.all([
+      server.waitForRequest('/redirect1'),
+      server.waitForRequest('/a/b/redirect2'),
+      server.waitForRequest('/title.html'),
+      // @ts-expect-error
+      context._fetch(`${server.PREFIX}/redirect1`),
+    ]);
+    expect(req1.headers.cookie).toBeFalsy();
+    expect(req2.headers.cookie).toBe('r1=v1');
+    expect(req3.headers.cookie).toBe('r1=v1');
+  }
+  {
+    const [req1, req2, req3] = await Promise.all([
+      server.waitForRequest('/redirect1'),
+      server.waitForRequest('/a/b/redirect2'),
+      server.waitForRequest('/title.html'),
+      // @ts-expect-error
+      context._fetch(`${server.PREFIX}/redirect1`),
+    ]);
+    expect(req1.headers.cookie).toBe('r1=v1');
+    expect(req2.headers.cookie.split(';').map(s => s.trim()).sort()).toEqual(['r1=v1', 'r2=v2']);
+    expect(req3.headers.cookie).toBe('r1=v1');
+  }
+  const cookies = await context.cookies();
+  expect(new Set(cookies)).toEqual(new Set([
+    {
+      'sameSite': 'Lax',
+      'name': 'r2',
+      'value': 'v2',
+      'domain': 'localhost',
+      'path': '/a/b',
+      'expires': -1,
+      'httpOnly': false,
+      'secure': false
+    },
+    {
+      'sameSite': 'Lax',
+      'name': 'r1',
+      'value': 'v1',
+      'domain': 'localhost',
+      'path': '/',
+      'expires': -1,
+      'httpOnly': false,
+      'secure': false
+    }
+  ]));
+});
+
 it('should work with context level proxy', async ({browserOptions, browserType, contextOptions, server, proxyServer}) => {
   server.setRoute('/target.html', async (req, res) => {
     res.end('<title>Served by the proxy</title>');
@@ -208,6 +268,19 @@ it('should add default headers', async ({context, server, page}) => {
   expect(request.headers['accept-encoding']).toBe('gzip,deflate');
 });
 
+it('should add default headers to redirects', async ({context, server, page}) => {
+  server.setRedirect('/redirect', '/empty.html');
+  const [request] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    // @ts-expect-error
+    context._fetch(`${server.PREFIX}/redirect`)
+  ]);
+  expect(request.headers['accept']).toBe('*/*');
+  const userAgent = await page.evaluate(() => navigator.userAgent);
+  expect(request.headers['user-agent']).toBe(userAgent);
+  expect(request.headers['accept-encoding']).toBe('gzip,deflate');
+});
+
 it('should allow to override default headers', async ({context, server, page}) => {
   const [request] = await Promise.all([
     server.waitForRequest('/empty.html'),
@@ -224,3 +297,19 @@ it('should allow to override default headers', async ({context, server, page}) =
   expect(request.headers['user-agent']).toBe('Playwright');
   expect(request.headers['accept-encoding']).toBe('br');
 });
+
+it('should propagate custom headers with redirects', async ({context, server}) => {
+  server.setRedirect('/a/redirect1', '/b/c/redirect2');
+  server.setRedirect('/b/c/redirect2', '/simple.json');
+  const [req1, req2, req3] = await Promise.all([
+    server.waitForRequest('/a/redirect1'),
+    server.waitForRequest('/b/c/redirect2'),
+    server.waitForRequest('/simple.json'),
+    // @ts-expect-error
+    context._fetch(`${server.PREFIX}/a/redirect1`, {headers: {'foo': 'bar'}}),
+  ]);
+  expect(req1.headers['foo']).toBe('bar');
+  expect(req2.headers['foo']).toBe('bar');
+  expect(req3.headers['foo']).toBe('bar');
+});
+
