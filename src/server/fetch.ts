@@ -28,12 +28,9 @@ export async function playwrightFetch(context: BrowserContext, params: types.Fet
       for (const [name, value] of Object.entries(params.headers))
         headers[name.toLowerCase()] = value;
     }
-    if (headers['user-agent'] === undefined)
-      headers['user-agent'] = context._options.userAgent || context._browser.userAgent();
-    if (headers['accept'] === undefined)
-      headers['accept'] = '*/*';
-    if (headers['accept-encoding'] === undefined)
-      headers['accept-encoding'] = 'gzip,deflate';
+    headers['user-agent'] ??= context._options.userAgent || context._browser.userAgent();
+    headers['accept'] ??= '*/*';
+    headers['accept-encoding'] ??= 'gzip,deflate';
 
     if (headers['cookie'] === undefined) {
       const cookies = await context.cookies(params.url);
@@ -42,8 +39,7 @@ export async function playwrightFetch(context: BrowserContext, params: types.Fet
         headers['cookie'] = valueArray.join('; ');
       }
     }
-    if (!params.method)
-      params.method = 'GET';
+    const method = params.method ? params.method.toUpperCase() : 'GET';
     let agent;
     if (context._options.proxy) {
       // TODO: support bypass proxy
@@ -54,14 +50,14 @@ export async function playwrightFetch(context: BrowserContext, params: types.Fet
     }
 
     // TODO(https://github.com/microsoft/playwright/issues/8381): set user agent
-    const {fetchResponse, setCookie} = await sendRequest(new URL(params.url), {
-      method: params.method,
-      headers: headers,
+    const {fetchResponse, setCookie} = await sendRequest(context, new URL(params.url), {
+      method,
+      headers,
       agent,
       maxRedirects: 20
     }, params.postData);
-    if (setCookie)
-      await updateCookiesFromHeader(context, fetchResponse.url, setCookie);
+    // if (setCookie)
+    //   await updateCookiesFromHeader(context, fetchResponse.url, setCookie);
     return { fetchResponse };
   } catch (e) {
     return { error: String(e) };
@@ -71,7 +67,7 @@ export async function playwrightFetch(context: BrowserContext, params: types.Fet
 async function updateCookiesFromHeader(context: BrowserContext, responseUrl: string, setCookie: string[]) {
   const url = new URL(responseUrl);
   // https://datatracker.ietf.org/doc/html/rfc6265#section-5.1.4
-  const defaultPath = '/' + url.pathname.split('/').slice(0, -1).join('/');
+  const defaultPath = '/' + url.pathname.substr(1).split('/').slice(0, -1).join('/');
   const cookies: types.SetNetworkCookieParam[] = [];
   for (const header of setCookie) {
     // Decode cookie value?
@@ -91,48 +87,62 @@ async function updateCookiesFromHeader(context: BrowserContext, responseUrl: str
     await context.addCookies(cookies);
 }
 
+async function updateRequestCookieHeader(context: BrowserContext, url: URL, options: http.RequestOptions) {
+  if (options.headers!['cookie'] !== undefined)
+    return;
+  const cookies = await context.cookies(url.toString());
+  if (cookies.length) {
+    const valueArray = cookies.map(c => `${c.name}=${c.value}`);
+    options.headers!['cookie'] = valueArray.join('; ');
+  }
+}
+
 type Response = {
   fetchResponse: types.FetchResponse,
   setCookie?: string[]
 };
 
-async function sendRequest(url: URL, options: http.RequestOptions & { maxRedirects: number }, postData?: Buffer): Promise<Response>{
+async function sendRequest(context: BrowserContext, url: URL, options: http.RequestOptions & { maxRedirects: number }, postData?: Buffer): Promise<Response>{
+  await updateRequestCookieHeader(context, url, options);
   return new Promise<Response>((fulfill, reject) => {
     const requestConstructor: ((url: URL, options: http.RequestOptions, callback?: (res: http.IncomingMessage) => void) => http.ClientRequest)
       = (url.protocol === 'https:' ? https : http).request;
-    const request = requestConstructor(url, options, response => {
+    const request = requestConstructor(url, options, async response => {
+      if (response.headers['set-cookie'])
+        await updateCookiesFromHeader(context, response.url || url.toString(), response.headers['set-cookie']);
       if (redirectStatus.includes(response.statusCode!)) {
         if (!options.maxRedirects) {
           reject(new Error('Max redirect count exceeded'));
           request.abort();
           return;
         }
+        const headers = { ...options.headers };
+        delete headers[`cookie`];
+
+        // HTTP-redirect fetch step 13 (https://fetch.spec.whatwg.org/#http-redirect-fetch)
+        const status = response.statusCode!;
+        let method = options.method!;
+        if ((status === 301 || status === 302) && method === 'POST' ||
+             status === 303 && !['GET', 'HEAD'].includes(method)) {
+          method = 'GET';
+          postData = undefined;
+          delete headers[`content-encoding`];
+          delete headers[`content-language`];
+          delete headers[`content-location`];
+          delete headers[`content-type`];
+        }
+
         const redirectOptions: http.RequestOptions & { maxRedirects: number } = {
-          method: options.method,
-          headers: { ...options.headers },
+          method,
+          headers,
           agent: options.agent,
           maxRedirects: options.maxRedirects - 1,
         };
 
-        // HTTP-redirect fetch step 13 (https://fetch.spec.whatwg.org/#http-redirect-fetch)
-        const status = response.statusCode!;
-        const method = redirectOptions.method!;
-        if ((status === 301 || status === 302) && method === 'POST' ||
-             status === 303 && !['GET', 'HEAD'].includes(method)) {
-          redirectOptions.method = 'GET';
-          postData = undefined;
-          delete redirectOptions.headers?.[`content-encoding`];
-          delete redirectOptions.headers?.[`content-language`];
-          delete redirectOptions.headers?.[`content-location`];
-          delete redirectOptions.headers?.[`content-type`];
-        }
-
-        // TODO: set-cookie from response, add cookie from the context.
-
         // HTTP-redirect fetch step 4: If locationURL is null, then return response.
         if (response.headers.location) {
           const locationURL = new URL(response.headers.location, url);
-          fulfill(sendRequest(locationURL, redirectOptions, postData));
+          fulfill(sendRequest(context, locationURL, redirectOptions, postData));
           request.abort();
           return;
         }
