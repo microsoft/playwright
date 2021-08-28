@@ -313,3 +313,19 @@ it('should propagate custom headers with redirects', async ({context, server}) =
   expect(req3.headers['foo']).toBe('bar');
 });
 
+it('should propagate extra http headers with redirects', async ({context, server}) => {
+  server.setRedirect('/a/redirect1', '/b/c/redirect2');
+  server.setRedirect('/b/c/redirect2', '/simple.json');
+  await context.setExtraHTTPHeaders({ 'My-Secret': 'Value' });
+  const [req1, req2, req3] = await Promise.all([
+    server.waitForRequest('/a/redirect1'),
+    server.waitForRequest('/b/c/redirect2'),
+    server.waitForRequest('/simple.json'),
+    // @ts-expect-error
+    context._fetch(`${server.PREFIX}/a/redirect1`),
+  ]);
+  expect(req1.headers['my-secret']).toBe('Value');
+  expect(req2.headers['my-secret']).toBe('Value');
+  expect(req3.headers['my-secret']).toBe('Value');
+});
+

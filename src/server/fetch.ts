@@ -32,6 +32,11 @@ export async function playwrightFetch(context: BrowserContext, params: types.Fet
     headers['accept'] ??= '*/*';
     headers['accept-encoding'] ??= 'gzip,deflate';
 
+    if (context._options.extraHTTPHeaders) {
+      for (const {name, value} of context._options.extraHTTPHeaders)
+        headers[name.toLowerCase()] = value;
+    }
+
     const method = params.method?.toUpperCase() || 'GET';
     let agent;
     if (context._options.proxy) {
