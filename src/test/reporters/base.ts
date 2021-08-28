@@ -239,6 +239,9 @@ function formatError(error: TestError, file?: string) {
     }
     tokens.push('');
     tokens.push(colors.dim(preamble.length > 0 ? stack.substring(preamble.length + 1) : stack));
+  } else if (error.message) {
+    tokens.push('');
+    tokens.push(error.message);
   } else {
     tokens.push('');
     tokens.push(error.value);

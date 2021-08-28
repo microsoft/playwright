@@ -18,6 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import rimraf from 'rimraf';
 import util from 'util';
+import colors from 'colors/safe';
 import { EventEmitter } from 'events';
 import { monotonicTime, DeadlineRunner, raceAgainstDeadline, serializeError, sanitizeForFilePath } from './util';
 import { TestBeginPayload, TestEndPayload, RunPayload, TestEntry, DonePayload, WorkerInitParams, StepBeginPayload, StepEndPayload } from './ipc';
@@ -375,10 +376,14 @@ export class WorkerRunner extends EventEmitter {
     setCurrentTestInfo(null);
 
     if (isFailure) {
-      if (test._type === 'test')
+      if (test._type === 'test') {
         this._failedTestId = testId;
-      else if (!this._fatalError)
-        this._fatalError = testInfo.error;
+      } else if (!this._fatalError) {
+        if (testInfo.status === 'timedOut')
+          this._fatalError = { message: colors.red(`Timeout of ${testInfo.timeout}ms exceeded in ${test._type} hook.`) };
+        else
+          this._fatalError = testInfo.error;
+      }
       this.stop();
     }
   }
