@@ -307,7 +307,7 @@ export interface FullResult {
  * ```
  *
  * ```js js-flavor=ts
- * // my-awesome-reporter.js
+ * // my-awesome-reporter.ts
  * import { Reporter } from '@playwright/test/reporter';
  *
  * class MyReporter implements Reporter {
