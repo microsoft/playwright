@@ -241,6 +241,26 @@ it('should work with http credentials', async ({context, server}) => {
   expect(request.url).toBe('/empty.html');
 });
 
+it('should work with setHTTPCredentials', async ({context, browser, server}) => {
+  server.setAuth('/empty.html', 'user', 'pass');
+  // @ts-expect-error
+  const response1 = await context._fetch(server.EMPTY_PAGE);
+  expect(response1.status()).toBe(401);
+
+  await context.setHTTPCredentials({ username: 'user', password: 'pass' });
+  // @ts-expect-error
+  const response2 = await context._fetch(server.EMPTY_PAGE);
+  expect(response2.status()).toBe(200);
+});
+
+it('should return error with wrong credentials', async ({context, browser, server}) => {
+  server.setAuth('/empty.html', 'user', 'pass');
+  await context.setHTTPCredentials({ username: 'user', password: 'wrong' });
+  // @ts-expect-error
+  const response2 = await context._fetch(server.EMPTY_PAGE);
+  expect(response2.status()).toBe(401);
+});
+
 it('should support post data', async ({context, server}) => {
   const [request, response] = await Promise.all([
     server.waitForRequest('/simple.json'),

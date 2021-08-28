@@ -133,6 +133,18 @@ async function sendRequest(context: BrowserContext, url: URL, options: http.Requ
           return;
         }
       }
+      if (response.statusCode === 401 && !options.headers!['authorization']) {
+        const auth = response.headers['www-authenticate'];
+        const credentials = context._options.httpCredentials;
+        if (auth?.trim().startsWith('Basic ') && credentials) {
+          const {username, password} = credentials;
+          const encoded = Buffer.from(`${username || ''}:${password || ''}`).toString('base64');
+          options.headers!['authorization'] = `Basic ${encoded}`;
+          fulfill(sendRequest(context, url, options, postData));
+          request.abort();
+          return;
+        }
+      }
       const chunks: Buffer[] = [];
       response.on('data', chunk => chunks.push(chunk));
       response.on('end', () => {
