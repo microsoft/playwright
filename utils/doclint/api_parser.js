@@ -136,7 +136,7 @@ class ApiParser {
     const clazz = this.classes.get(className);
     if (!clazz)
       throw new Error('Invalid class ' + className);
-    const method = clazz.membersArray.find(m => m.kind === 'method' && m.alias === methodName);
+    const method = clazz.membersArray.find(m => m.kind === 'method' && m.name === methodName);
     if (!method)
       throw new Error(`Invalid method ${className}.${methodName} when parsing: ${match[0]}`);
     if (!name)

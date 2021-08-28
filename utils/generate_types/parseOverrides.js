@@ -20,7 +20,7 @@ const ts = require('typescript');
 /**
  * @param {string} filePath
  * @param {(className: string) => string} commentForClass
- * @param {(className: string, methodName: string) => string} commentForMethod
+ * @param {(className: string, methodName: string, overloadIndex: number) => string} commentForMethod
  * @param {(className: string) => string} extraForClass
  */
 async function parseOverrides(filePath, commentForClass, commentForMethod, extraForClass) {
@@ -76,13 +76,16 @@ async function parseOverrides(filePath, commentForClass, commentForMethod, extra
     for (const [name, member] of symbol.members || []) {
       if (member.flags & ts.SymbolFlags.TypeParameter)
         continue;
-      if (!member.valueDeclaration)
+      if (!member.declarations)
         continue;
-      const pos = member.valueDeclaration.getStart(file, false);
-      replacers.push({
-        pos,
-        text: commentForMethod(className, name),
-      });
+      for (let index = 0; index < member.declarations.length; index++) {
+        const declaration = member.declarations[index];
+        const pos = declaration.getStart(file, false);
+        replacers.push({
+          pos,
+          text: commentForMethod(className, name, index),
+        });
+      }
     }
     replacers.push({
       pos: node.getEnd(file) - 1,

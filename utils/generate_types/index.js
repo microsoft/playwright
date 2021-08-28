@@ -87,9 +87,14 @@ class TypesGenerator {
         return '';
       handledClasses.add(className);
       return this.writeComment(docClass.comment) + '\n';
-    }, (className, methodName) => {
+    }, (className, methodName, overloadIndex) => {
       const docClass = this.docClassForName(className, docsOnlyClassMapping);
-      const method = docClass ? docClass.membersArray.find(m => m.alias === methodName) : undefined;
+      let method;
+      if (docClass) {
+        const methods = docClass.membersArray.filter(m => m.alias === methodName && m.kind !== 'event').sort((a, b) => a.overloadIndex - b.overloadIndex);
+        // Use the last overload when not enough overloads are defined in docs.
+        method = methods.find(m => m.overloadIndex === overloadIndex) || methods[methods.length - 1];
+      }
       if (docsOnlyClassMapping && !method)
         return '';
       this.handledMethods.add(`${className}.${methodName}`);
@@ -381,7 +386,7 @@ class TypesGenerator {
   argsFromMember(member, indent, ...namespace) {
     if (member.kind === 'property')
       return '';
-    return '(' + member.argsArray.map(arg => `${this.nameForProperty(arg)}: ${this.stringifyComplexType(arg.type, indent, ...namespace, member.name, arg.name)}`).join(', ') + ')';
+    return '(' + member.argsArray.map(arg => `${this.nameForProperty(arg)}: ${this.stringifyComplexType(arg.type, indent, ...namespace, member.alias, arg.alias)}`).join(', ') + ')';
   }
 
   /**
