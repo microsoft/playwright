@@ -225,3 +225,37 @@ test('should throw when a server is already running on the given port and strict
   expect(result.output).toContain(`Port ${port} is used, make sure that nothing is running on the port`);
   await new Promise(resolve => server.close(resolve));
 });
+
+for (const host of ['localhost', '127.0.0.1', '0.0.0.0']) {
+  test(`should detect the server if a web-server is already running on ${host}`, async ({ runInlineTest }, { workerIndex }) => {
+    const port = workerIndex + 10500;
+    const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
+      res.end('<html><body>hello</body></html>');
+    });
+    await new Promise(resolve => server.listen(port, host, resolve));
+    try {
+      const result = await runInlineTest({
+        'test.spec.ts': `
+      const { test } = pwt;
+      test('connect to the server via the baseURL', async ({baseURL, page}) => {
+        await page.goto('/hello');
+        expect(await page.textContent('body')).toBe('hello');
+      });
+    `,
+        'playwright.config.ts': `
+      module.exports = {
+        webServer: {
+          command: 'node -e "process.exit(1)"',
+          port: ${port},
+          reuseExistingServer: false,
+        }
+      };
+    `,
+      });
+      expect(result.exitCode).toBe(1);
+      expect(result.output).toContain(`Port ${port} is used, make sure that nothing is running on the port`);
+    } finally {
+      await new Promise(resolve => server.close(resolve));
+    }
+  });
+}

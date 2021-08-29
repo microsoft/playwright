@@ -53,7 +53,7 @@ export class WebServer {
     let processExitedReject = (error: Error) => { };
     this._processExitedPromise = new Promise((_, reject) => processExitedReject = reject);
 
-    const portIsUsed = !await canBindPort(this.config.port);
+    const portIsUsed = await isPortUsed(this.config.port);
     if (portIsUsed) {
       if (this.config.reuseExistingServer)
         return;
@@ -103,31 +103,23 @@ export class WebServer {
   }
 }
 
-async function canBindPort(port: number): Promise<boolean> {
+async function isPortUsed(port: number): Promise<boolean> {
   return new Promise<boolean>(resolve => {
-    const server = net.createServer();
-    server.on('error', () => resolve(false));
-    server.listen(port, () => {
-      server.close(() => {
-        resolve(true);
-      });
-    });
+    const conn = net
+        .connect(port)
+        .on('error', () => {
+          resolve(false);
+        })
+        .on('connect', () => {
+          conn.end();
+          resolve(true);
+        });
   });
 }
 
 async function waitForSocket(port: number, delay: number, cancellationToken: { canceled: boolean }) {
   while (!cancellationToken.canceled) {
-    const connected = await new Promise(resolve => {
-      const conn = net
-          .connect(port)
-          .on('error', () => {
-            resolve(false);
-          })
-          .on('connect', () => {
-            conn.end();
-            resolve(true);
-          });
-    });
+    const connected = await isPortUsed(port);
     if (connected)
       return;
     await new Promise(x => setTimeout(x, delay));
