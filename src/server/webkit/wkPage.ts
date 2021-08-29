@@ -19,7 +19,7 @@ import * as jpeg from 'jpeg-js';
 import path from 'path';
 import * as png from 'pngjs';
 import { splitErrorMessage } from '../../utils/stackTrace';
-import { assert, createGuid, debugAssert, headersArrayToObject, headersObjectToArray, hostPlatform } from '../../utils/utils';
+import { assert, createGuid, debugAssert, headersArrayToObject, headersObjectToArray, hostPlatform, ManualPromise } from '../../utils/utils';
 import * as accessibility from '../accessibility';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
@@ -52,8 +52,7 @@ export class WKPage implements PageDelegate {
   _session: WKSession;
   private _provisionalPage: WKProvisionalPage | null = null;
   readonly _page: Page;
-  private readonly _pagePromise: Promise<Page | Error>;
-  private _pagePromiseCallback: (page: Page | Error) => void = () => {};
+  private readonly _pagePromise = new ManualPromise<Page | Error>();
   private readonly _pageProxySession: WKSession;
   readonly _opener: WKPage | null;
   private readonly _requestIdToRequest = new Map<string, WKInterceptableRequest>();
@@ -96,7 +95,6 @@ export class WKPage implements PageDelegate {
       eventsHelper.addEventListener(this._pageProxySession, 'Target.didCommitProvisionalTarget', this._onDidCommitProvisionalTarget.bind(this)),
       eventsHelper.addEventListener(this._pageProxySession, 'Screencast.screencastFrame', this._onScreencastFrame.bind(this)),
     ];
-    this._pagePromise = new Promise(f => this._pagePromiseCallback = f);
     this._firstNonInitialNavigationCommittedPromise = new Promise((f, r) => {
       this._firstNonInitialNavigationCommittedFulfill = f;
       this._firstNonInitialNavigationCommittedReject = r;
@@ -335,7 +333,7 @@ export class WKPage implements PageDelegate {
       // so that anyone who awaits pageOrError got a ready and reported page.
       this._initializedPage = pageOrError instanceof Page ? pageOrError : null;
       this._page.reportAsNew(pageOrError instanceof Page ? undefined : pageOrError);
-      this._pagePromiseCallback(pageOrError);
+      this._pagePromise.resolve(pageOrError);
     } else {
       assert(targetInfo.isProvisional);
       assert(!this._provisionalPage);
@@ -997,18 +995,18 @@ export class WKPage implements PageDelegate {
       // Just continue.
       session.sendMayFail('Network.interceptWithRequest', { requestId: request._requestId });
     } else {
-      request._route._requestInterceptedCallback();
+      request._route._requestInterceptedPromise.resolve();
     }
   }
 
   _onResponseIntercepted(session: WKSession, event: Protocol.Network.responseInterceptedPayload) {
     const request = this._requestIdToRequest.get(event.requestId);
     const route = request?._routeForRedirectChain();
-    if (!route?._responseInterceptedCallback) {
+    if (!route?._responseInterceptedPromise) {
       session.sendMayFail('Network.interceptContinue', { requestId: event.requestId, stage: 'response' });
       return;
     }
-    route._responseInterceptedCallback({ response: event.response });
+    route._responseInterceptedPromise.resolve({ response: event.response });
   }
 
   _onResponseReceived(event: Protocol.Network.responseReceivedPayload) {
@@ -1068,8 +1066,8 @@ export class WKPage implements PageDelegate {
     if (!request)
       return;
     const route = request._routeForRedirectChain();
-    if (route?._responseInterceptedCallback)
-      route._responseInterceptedCallback({ error: event });
+    if (route?._responseInterceptedPromise)
+      route._responseInterceptedPromise.resolve({ error: event });
     const response = request.request._existingResponse();
     if (response) {
       response._serverAddrFinished();

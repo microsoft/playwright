@@ -16,7 +16,7 @@
 
 import * as frames from './frames';
 import * as types from './types';
-import { assert } from '../utils/utils';
+import { assert, ManualPromise } from '../utils/utils';
 import { SdkObject } from './instrumentation';
 
 export function filterCookies(cookies: types.NetworkCookie[], urls: string[]): types.NetworkCookie[] {
@@ -97,8 +97,7 @@ export class Request extends SdkObject {
   private _headers: types.HeadersArray;
   private _headersMap = new Map<string, string>();
   private _frame: frames.Frame;
-  private _waitForResponsePromise: Promise<Response | null>;
-  private _waitForResponsePromiseCallback: (value: Response | null) => void = () => {};
+  private _waitForResponsePromise = new ManualPromise<Response | null>();
   _responseEndTiming = -1;
   _sizes: RequestSizes = { responseBodySize: 0, transferSize: 0 };
 
@@ -118,13 +117,12 @@ export class Request extends SdkObject {
     this._headers = headers;
     for (const { name, value } of this._headers)
       this._headersMap.set(name.toLowerCase(), value);
-    this._waitForResponsePromise = new Promise(f => this._waitForResponsePromiseCallback = f);
     this._isFavicon = url.endsWith('/favicon.ico');
   }
 
   _setFailureText(failureText: string) {
     this._failureText = failureText;
-    this._waitForResponsePromiseCallback(null);
+    this._waitForResponsePromise.resolve(null);
   }
 
   url(): string {
@@ -151,7 +149,7 @@ export class Request extends SdkObject {
     return this._headersMap.get(name);
   }
 
-  response(): Promise<Response | null> {
+  response(): PromiseLike<Response | null> {
     return this._waitForResponsePromise;
   }
 
@@ -161,7 +159,7 @@ export class Request extends SdkObject {
 
   _setResponse(response: Response) {
     this._response = response;
-    this._waitForResponsePromiseCallback(response);
+    this._waitForResponsePromise.resolve(response);
   }
 
   _finalRequest(): Request {
@@ -321,8 +319,7 @@ export type SecurityDetails = {
 export class Response extends SdkObject {
   private _request: Request;
   private _contentPromise: Promise<Buffer> | null = null;
-  _finishedPromise: Promise<{ error?: string }>;
-  private _finishedPromiseCallback: (arg: { error?: string }) => void = () => {};
+  _finishedPromise = new ManualPromise<{ error?: string }>();
   private _status: number;
   private _statusText: string;
   private _url: string;
@@ -330,10 +327,8 @@ export class Response extends SdkObject {
   private _headersMap = new Map<string, string>();
   private _getResponseBodyCallback: GetResponseBodyCallback;
   private _timing: ResourceTiming;
-  private _serverAddrPromise: Promise<RemoteAddr|undefined>;
-  private _serverAddrPromiseCallback: (arg?: RemoteAddr) => void = () => {};
-  private _securityDetailsPromise: Promise<SecurityDetails|undefined>;
-  private _securityDetailsPromiseCallback: (arg?: SecurityDetails) => void = () => {};
+  private _serverAddrPromise = new ManualPromise<RemoteAddr | undefined>();
+  private _securityDetailsPromise = new ManualPromise<SecurityDetails | undefined>();
   private _httpVersion: string | undefined;
 
   constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback, httpVersion?: string) {
@@ -347,30 +342,21 @@ export class Response extends SdkObject {
     for (const { name, value } of this._headers)
       this._headersMap.set(name.toLowerCase(), value);
     this._getResponseBodyCallback = getResponseBodyCallback;
-    this._serverAddrPromise = new Promise(f => {
-      this._serverAddrPromiseCallback = f;
-    });
-    this._securityDetailsPromise = new Promise(f => {
-      this._securityDetailsPromiseCallback = f;
-    });
-    this._finishedPromise = new Promise(f => {
-      this._finishedPromiseCallback = f;
-    });
     this._request._setResponse(this);
     this._httpVersion = httpVersion;
   }
 
   _serverAddrFinished(addr?: RemoteAddr) {
-    this._serverAddrPromiseCallback(addr);
+    this._serverAddrPromise.resolve(addr);
   }
 
   _securityDetailsFinished(securityDetails?: SecurityDetails) {
-    this._securityDetailsPromiseCallback(securityDetails);
+    this._securityDetailsPromise.resolve(securityDetails);
   }
 
   _requestFinished(responseEndTiming: number, error?: string) {
     this._request._responseEndTiming = Math.max(responseEndTiming, this._timing.responseStart);
-    this._finishedPromiseCallback({ error });
+    this._finishedPromise.resolve({ error });
   }
 
   _setHttpVersion(httpVersion: string) {

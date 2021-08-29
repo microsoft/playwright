@@ -121,8 +121,8 @@ export class WorkerRunner extends EventEmitter {
   }
 
   async run(runPayload: RunPayload) {
-    let runFinishedCalback = () => {};
-    this._runFinished = new Promise(f => runFinishedCalback = f);
+    let runFinishedCallback = () => {};
+    this._runFinished = new Promise(f => runFinishedCallback = f);
     try {
       this._entries = new Map(runPayload.entries.map(e => [ e.testId, e ]));
       await this._loadIfNeeded();
@@ -145,7 +145,7 @@ export class WorkerRunner extends EventEmitter {
       this.unhandledError(e);
     } finally {
       this._reportDone();
-      runFinishedCalback();
+      runFinishedCallback();
     }
   }
 
