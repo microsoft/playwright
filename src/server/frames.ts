@@ -26,7 +26,7 @@ import { Page } from './page';
 import * as types from './types';
 import { BrowserContext } from './browserContext';
 import { Progress, ProgressController } from './progress';
-import { assert, constructURLBasedOnBaseURL, makeWaitForNextTask } from '../utils/utils';
+import { assert, constructURLBasedOnBaseURL, makeWaitForNextTask, ManualPromise } from '../utils/utils';
 import { debugLogger } from '../utils/debugLogger';
 import { CallMetadata, internalCallMetadata, SdkObject } from './instrumentation';
 import { ElementStateWithoutStable } from './injected/injectedScript';
@@ -1364,16 +1364,14 @@ class RerunnableTask {
 class SignalBarrier {
   private _progress: Progress | null;
   private _protectCount = 0;
-  private _promise: Promise<void>;
-  private _promiseCallback = () => {};
+  private _promise = new ManualPromise<void>();
 
   constructor(progress: Progress | null) {
     this._progress = progress;
-    this._promise = new Promise(f => this._promiseCallback = f);
     this.retain();
   }
 
-  waitFor(): Promise<void> {
+  waitFor(): PromiseLike<void> {
     this.release();
     return this._promise;
   }
@@ -1405,7 +1403,7 @@ class SignalBarrier {
   release() {
     --this._protectCount;
     if (!this._protectCount)
-      this._promiseCallback();
+      this._promise.resolve();
   }
 }
 

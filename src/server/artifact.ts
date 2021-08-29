@@ -15,7 +15,7 @@
  */
 
 import fs from 'fs';
-import { assert } from '../utils/utils';
+import { assert, ManualPromise } from '../utils/utils';
 import { SdkObject } from './instrumentation';
 
 type SaveCallback = (localPath: string, error?: string) => Promise<void>;
@@ -25,8 +25,7 @@ export class Artifact extends SdkObject {
   private _localPath: string;
   private _unaccessibleErrorMessage: string | undefined;
   private _cancelCallback: CancelCallback | undefined;
-  private _finishedCallback: () => void;
-  private _finishedPromise: Promise<void>;
+  private _finishedPromise = new ManualPromise<void>();
   private _saveCallbacks: SaveCallback[] = [];
   private _finished: boolean = false;
   private _deleted = false;
@@ -37,8 +36,6 @@ export class Artifact extends SdkObject {
     this._localPath = localPath;
     this._unaccessibleErrorMessage = unaccessibleErrorMessage;
     this._cancelCallback = cancelCallback;
-    this._finishedCallback = () => {};
-    this._finishedPromise = new Promise(f => this._finishedCallback = f);
   }
 
   finishedPromise() {
@@ -122,6 +119,6 @@ export class Artifact extends SdkObject {
     }
     this._saveCallbacks = [];
 
-    this._finishedCallback();
+    this._finishedPromise.resolve();
   }
 }
