@@ -97,6 +97,8 @@ class TestServer {
     this._auths = new Map();
     /** @type {!Map<string, string>} */
     this._csp = new Map();
+    /** @type {!Map<string, Object>} */
+    this._extraHeaders = new Map();
     /** @type {!Set<string>} */
     this._gzipRoutes = new Set();
     /** @type {!Map<string, !Promise>} */
@@ -153,6 +155,14 @@ class TestServer {
     this._csp.set(path, csp);
   }
 
+  /**
+   * @param {string} path
+   * @param {Object<string, string>} object
+   */
+  setExtraHeaders(path, object) {
+    this._extraHeaders.set(path, object);
+  }
+
   async stop() {
     this.reset();
     for (const socket of this._sockets)
@@ -175,7 +185,8 @@ class TestServer {
    */
   setRedirect(from, to) {
     this.setRoute(from, (req, res) => {
-      res.writeHead(302, { location: to });
+      let headers = this._extraHeaders.get(req.url) || {};
+      res.writeHead(302, { ...headers, location: to });
       res.end();
     });
   }
@@ -203,6 +214,7 @@ class TestServer {
     this._routes.clear();
     this._auths.clear();
     this._csp.clear();
+    this._extraHeaders.clear();
     this._gzipRoutes.clear();
     const error = new Error('Static Server has been reset');
     for (const subscriber of this._requestSubscribers.values())
@@ -279,6 +291,12 @@ class TestServer {
     }
     if (this._csp.has(pathName))
       response.setHeader('Content-Security-Policy', this._csp.get(pathName));
+
+    if (this._extraHeaders.has(pathName)) {
+      const object = this._extraHeaders.get(pathName);
+      for (const key in object)
+        response.setHeader(key, object[key]);
+    }
 
     const {err, data} = await fs.promises.readFile(filePath).then(data => ({data})).catch(err => ({err}));
     // The HTTP transaction might be already terminated after async hop here - do nothing in this case.

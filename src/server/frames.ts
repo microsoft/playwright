@@ -74,7 +74,6 @@ export class FrameManager {
   readonly _consoleMessageTags = new Map<string, ConsoleTagHandler>();
   readonly _signalBarriers = new Set<SignalBarrier>();
   private _webSockets = new Map<string, network.WebSocket>();
-  readonly _responses: network.Response[] = [];
   _dialogCounter = 0;
 
   constructor(page: Page) {
@@ -204,7 +203,6 @@ export class FrameManager {
     frame._onClearLifecycle();
     const navigationEvent: NavigationEvent = { url, name, newDocument: frame._currentDocument };
     frame.emit(Frame.Events.Navigation, navigationEvent);
-    this._responses.length = 0;
     if (!initial) {
       debugLogger.log('api', `  navigated to "${url}"`);
       this._page.frameNavigatedToNewDocument(frame);
@@ -274,15 +272,21 @@ export class FrameManager {
   requestReceivedResponse(response: network.Response) {
     if (response.request()._isFavicon)
       return;
-    this._responses.push(response);
     this._page._browserContext.emit(BrowserContext.Events.Response, response);
   }
 
-  requestFinished(request: network.Request) {
+  requestFinished(request: network.Request, response: network.Response | null) {
     this._inflightRequestFinished(request);
     if (request._isFavicon)
       return;
-    this._page._browserContext.emit(BrowserContext.Events.RequestFinished, request);
+    this._dispatchRequestFinished(request, response).catch(() => {});
+  }
+
+  private async _dispatchRequestFinished(request: network.Request, response: network.Response | null) {
+    // Avoid unnecessary microtask, we want to report finished early for regular redirects.
+    if (response?.willWaitForExtraHeaders())
+      await response?.waitForExtraHeadersIfNeeded();
+    this._page._browserContext.emit(BrowserContext.Events.RequestFinished,{ request, response });
   }
 
   requestFailed(request: network.Request, canceled: boolean) {

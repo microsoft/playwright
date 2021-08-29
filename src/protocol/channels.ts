@@ -146,10 +146,7 @@ export type InterceptedResponse = {
   request: RequestChannel,
   status: number,
   statusText: string,
-  headers: {
-    name: string,
-    value: string,
-  }[],
+  headers: NameValue[],
 };
 
 export type FetchResponse = {
@@ -765,7 +762,9 @@ export type BrowserContextRequestFailedEvent = {
 };
 export type BrowserContextRequestFinishedEvent = {
   request: RequestChannel,
+  response?: ResponseChannel,
   responseEndTiming: number,
+  responseHeaders?: NameValue[],
   requestSizes: RequestSizes,
   page?: PageChannel,
 };
@@ -2506,10 +2505,7 @@ export type RequestInitializer = {
   resourceType: string,
   method: string,
   postData?: Binary,
-  headers: {
-    name: string,
-    value: string,
-  }[],
+  headers: NameValue[],
   isNavigationRequest: boolean,
   redirectedFrom?: RequestChannel,
 };
@@ -2594,14 +2590,8 @@ export type ResponseInitializer = {
   url: string,
   status: number,
   statusText: string,
-  requestHeaders: {
-    name: string,
-    value: string,
-  }[],
-  headers: {
-    name: string,
-    value: string,
-  }[],
+  requestHeaders: NameValue[],
+  headers: NameValue[],
   timing: ResourceTiming,
 };
 export interface ResponseChannel extends Channel {

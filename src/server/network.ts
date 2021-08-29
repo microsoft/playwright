@@ -329,6 +329,7 @@ export class Response extends SdkObject {
   private _timing: ResourceTiming;
   private _serverAddrPromise = new ManualPromise<RemoteAddr | undefined>();
   private _securityDetailsPromise = new ManualPromise<SecurityDetails | undefined>();
+  private _extraHeadersPromise: ManualPromise<void> | undefined;
   private _httpVersion: string | undefined;
 
   constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback, httpVersion?: string) {
@@ -361,6 +362,25 @@ export class Response extends SdkObject {
 
   _setHttpVersion(httpVersion: string) {
     this._httpVersion = httpVersion;
+  }
+
+  setWillReceiveExtraHeaders() {
+    this._extraHeadersPromise = new ManualPromise();
+  }
+
+  willWaitForExtraHeaders(): boolean {
+    return !!this._extraHeadersPromise && !this._extraHeadersPromise.isDone();
+  }
+
+  async waitForExtraHeadersIfNeeded(): Promise<void> {
+    await this._extraHeadersPromise;
+  }
+
+  extraHeadersReceived(headers: types.HeadersArray) {
+    this._headers = headers;
+    for (const { name, value } of this._headers)
+      this._headersMap.set(name.toLowerCase(), value);
+    this._extraHeadersPromise?.resolve();
   }
 
   url(): string {

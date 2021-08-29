@@ -128,7 +128,7 @@ export class FFNetworkManager {
       this._requests.delete(request._id);
       response._requestFinished(this._relativeTiming(event.responseEndTime), undefined);
     }
-    this._page._frameManager.requestFinished(request.request);
+    this._page._frameManager.requestFinished(request.request, response);
   }
 
   _onRequestFailed(event: Protocol.Network.requestFailedPayload) {
