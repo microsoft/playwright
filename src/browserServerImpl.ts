@@ -100,7 +100,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
 }
 
 // This class implements multiplexing browser dispatchers over a single Browser instance.
-class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.BrowserInitializer> implements channels.BrowserChannel {
+class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.BrowserInitializer, channels.BrowserEvents> implements channels.BrowserChannel {
   private _contexts = new Set<BrowserContext>();
   private _selectors: Selectors;
 

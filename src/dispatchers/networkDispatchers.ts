@@ -19,7 +19,7 @@ import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 
-export class RequestDispatcher extends Dispatcher<Request, channels.RequestInitializer> implements channels.RequestChannel {
+export class RequestDispatcher extends Dispatcher<Request, channels.RequestInitializer, channels.RequestEvents> implements channels.RequestChannel {
 
   static from(scope: DispatcherScope, request: Request): RequestDispatcher {
     const result = existingDispatcher<RequestDispatcher>(request);
@@ -49,7 +49,7 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestIniti
   }
 }
 
-export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseInitializer> implements channels.ResponseChannel {
+export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseInitializer, channels.ResponseEvents> implements channels.ResponseChannel {
 
   static from(scope: DispatcherScope, response: Response): ResponseDispatcher {
     const result = existingDispatcher<ResponseDispatcher>(response);
@@ -90,7 +90,7 @@ export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseIn
   }
 }
 
-export class RouteDispatcher extends Dispatcher<Route, channels.RouteInitializer> implements channels.RouteChannel {
+export class RouteDispatcher extends Dispatcher<Route, channels.RouteInitializer, channels.RouteEvents> implements channels.RouteChannel {
 
   static from(scope: DispatcherScope, route: Route): RouteDispatcher {
     const result = existingDispatcher<RouteDispatcher>(route);
@@ -137,7 +137,7 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteInitializer
   }
 }
 
-export class WebSocketDispatcher extends Dispatcher<WebSocket, channels.WebSocketInitializer> implements channels.WebSocketChannel {
+export class WebSocketDispatcher extends Dispatcher<WebSocket, channels.WebSocketInitializer, channels.WebSocketEvents> implements channels.WebSocketChannel {
   constructor(scope: DispatcherScope, webSocket: WebSocket) {
     super(scope, webSocket, 'WebSocket', {
       url: webSocket.url(),

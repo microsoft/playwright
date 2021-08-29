@@ -19,7 +19,7 @@ import { Dispatcher, DispatcherScope } from './dispatcher';
 import * as stream from 'stream';
 import { createGuid } from '../utils/utils';
 
-export class StreamDispatcher extends Dispatcher<{ guid: string, stream: stream.Readable }, channels.StreamInitializer> implements channels.StreamChannel {
+export class StreamDispatcher extends Dispatcher<{ guid: string, stream: stream.Readable }, channels.StreamInitializer, channels.StreamEvents> implements channels.StreamChannel {
   private _ended: boolean = false;
   constructor(scope: DispatcherScope, stream: stream.Readable) {
     super(scope, { guid: createGuid(), stream }, 'Stream', {});

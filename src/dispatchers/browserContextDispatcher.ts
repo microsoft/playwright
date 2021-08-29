@@ -30,7 +30,7 @@ import { Artifact } from '../server/artifact';
 import { Request, Response } from '../server/network';
 import { headersArrayToObject } from '../utils/utils';
 
-export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextInitializer> implements channels.BrowserContextChannel {
+export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextInitializer, channels.BrowserContextEvents> implements channels.BrowserContextChannel {
   private _context: BrowserContext;
 
   constructor(scope: DispatcherScope, context: BrowserContext) {
@@ -79,7 +79,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     }));
     context.on(BrowserContext.Events.RequestFailed, (request: Request) => this._dispatchEvent('requestFailed', {
       request: RequestDispatcher.from(this._scope, request),
-      failureText: request._failureText,
+      failureText: request._failureText || undefined,
       responseEndTiming: request._responseEndTiming,
       page: PageDispatcher.fromNullable(this._scope, request.frame()._page.initializedOrUndefined())
     }));
