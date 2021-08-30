@@ -161,6 +161,7 @@ async function sendRequest(context: BrowserContext, url: URL, options: http.Requ
           body
         });
       });
+      response.on('aborted', () => reject(new Error('aborted')));
       response.on('error',reject);
     });
     request.on('error', reject);

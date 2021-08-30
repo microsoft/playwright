@@ -49,6 +49,60 @@ it('should work', async ({context, server}) => {
   expect(await response.text()).toBe('{"foo": "bar"}\n');
 });
 
+it('should throw on network error', async ({context, server}) => {
+  server.setRoute('/test', (req, res) => {
+    req.socket.destroy();
+  });
+  let error;
+  // @ts-expect-error
+  await context._fetch(server.PREFIX + '/test').catch(e => error = e);
+  expect(error.message).toContain('socket hang up');
+});
+
+it('should throw on network error after redirect', async ({context, server}) => {
+  server.setRedirect('/redirect', '/test');
+  server.setRoute('/test', (req, res) => {
+    req.socket.destroy();
+  });
+  let error;
+  // @ts-expect-error
+  await context._fetch(server.PREFIX + '/redirect').catch(e => error = e);
+  expect(error.message).toContain('socket hang up');
+});
+
+it('should throw on network error when sending body', async ({context, server}) => {
+  server.setRoute('/test', (req, res) => {
+    res.writeHead(200, {
+      'content-length': 4096,
+      'content-type': 'text/html',
+    });
+    res.write('<title>A');
+    res.uncork();
+    req.socket.destroy();
+  });
+  let error;
+  // @ts-expect-error
+  await context._fetch(server.PREFIX + '/test').catch(e => error = e);
+  expect(error.message).toContain('Error: aborted');
+});
+
+it('should throw on network error when sending body after redirect', async ({context, server}) => {
+  server.setRedirect('/redirect', '/test');
+  server.setRoute('/test', (req, res) => {
+    res.writeHead(200, {
+      'content-length': 4096,
+      'content-type': 'text/html',
+    });
+    res.write('<title>A');
+    res.uncork();
+    req.socket.destroy();
+  });
+  let error;
+  // @ts-expect-error
+  await context._fetch(server.PREFIX + '/redirect').catch(e => error = e);
+  expect(error.message).toContain('Error: aborted');
+});
+
 it('should add session cookies to request', async ({context, server}) => {
   await context.addCookies([{
     name: 'username',
