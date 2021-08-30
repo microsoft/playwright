@@ -309,6 +309,7 @@ export class Dispatcher {
         startTime: new Date(params.wallTime),
         duration: 0,
         steps: [],
+        data: params.data,
       };
       steps.set(params.stepId, step);
       (parentStep || result).steps.push(step);

@@ -218,7 +218,7 @@ function formatTestHeader(config: FullConfig, test: TestCase, indent: string, in
   return colors.red(pad(header, '='));
 }
 
-function formatError(error: TestError, file?: string) {
+export function formatError(error: TestError, file?: string) {
   const stack = error.stack;
   const tokens = [];
   if (stack) {

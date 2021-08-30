@@ -67,6 +67,7 @@ export interface TestStep {
   duration: number;
   error?: TestError;
   steps: TestStep[];
+  data: { [key: string]: any };
 }
 
 /**

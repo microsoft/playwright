@@ -219,6 +219,7 @@ export class WorkerRunner extends EventEmitter {
 
     let testFinishedCallback = () => {};
     let lastStepId = 0;
+    const stepStack = new Set<{ category: string }>();
     const testInfo: TestInfoImpl = {
       workerIndex: this._params.workerIndex,
       project: this._project.config,
@@ -267,17 +268,19 @@ export class WorkerRunner extends EventEmitter {
           deadlineRunner.updateDeadline(deadline());
       },
       _testFinished: new Promise(f => testFinishedCallback = f),
-      _addStep: (category: string, title: string) => {
+      _addStep: (category: string, title: string, data: { [key: string]: any } = {}) => {
         const stepId = `${category}@${title}@${++lastStepId}`;
-        const payload: StepBeginPayload = {
+        const step: StepBeginPayload = {
           testId,
           stepId,
           category,
           title,
-          wallTime: Date.now()
+          wallTime: Date.now(),
+          data,
         };
+        stepStack.add(step);
         if (reportEvents)
-          this.emit('stepBegin', payload);
+          this.emit('stepBegin', step);
         let callbackHandled = false;
         return (error?: Error | TestError) => {
           if (callbackHandled)
@@ -285,6 +288,7 @@ export class WorkerRunner extends EventEmitter {
           callbackHandled = true;
           if (error instanceof Error)
             error = serializeError(error);
+          stepStack.delete(step);
           const payload: StepEndPayload = {
             testId,
             stepId,
@@ -295,6 +299,7 @@ export class WorkerRunner extends EventEmitter {
             this.emit('stepEnd', payload);
         };
       },
+      _currentSteps: () => [...stepStack],
     };
 
     // Inherit test.setTimeout() from parent suites.

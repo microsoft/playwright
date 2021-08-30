@@ -102,7 +102,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
 
     try {
       logApiCall(logger, `=> ${apiName} started`);
-      csiCallback = ancestorWithCSI._csi?.onApiCall(apiName);
+      csiCallback = ancestorWithCSI._csi?.onApiCall(stackTrace);
       const result = await func(channel as any, stackTrace);
       csiCallback?.();
       logApiCall(logger, `<= ${apiName} succeeded`);

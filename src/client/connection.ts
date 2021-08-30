@@ -57,7 +57,7 @@ export class Connection extends EventEmitter {
   private _waitingForObject = new Map<string, any>();
   onmessage = (message: object): void => {};
   private _lastId = 0;
-  private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void, metadata: channels.Metadata }>();
+  private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void, stackTrace: ParsedStackTrace }>();
   private _rootObject: Root;
   private _disconnectedErrorMessage: string | undefined;
   private _onClose?: () => void;
@@ -72,17 +72,18 @@ export class Connection extends EventEmitter {
     return await this._rootObject.initialize();
   }
 
-  pendingProtocolCalls(): channels.Metadata[] {
-    return Array.from(this._callbacks.values()).map(callback => callback.metadata);
+  pendingProtocolCalls(): ParsedStackTrace[] {
+    return Array.from(this._callbacks.values()).map(callback => callback.stackTrace);
   }
 
   getObjectWithKnownName(guid: string): any {
     return this._objects.get(guid)!;
   }
 
-  async sendMessageToServer(object: ChannelOwner, method: string, params: any, stackTrace: ParsedStackTrace | null): Promise<any> {
+  async sendMessageToServer(object: ChannelOwner, method: string, params: any, maybeStackTrace: ParsedStackTrace | null): Promise<any> {
     const guid = object._guid;
-    const { frames, apiName }: ParsedStackTrace = stackTrace || { frameTexts: [], frames: [], apiName: '' };
+    const stackTrace = maybeStackTrace || { frameTexts: [], frames: [], apiName: '' };
+    const { frames, apiName } = stackTrace;
 
     const id = ++this._lastId;
     const converted = { id, guid, method, params };
@@ -93,7 +94,7 @@ export class Connection extends EventEmitter {
 
     if (this._disconnectedErrorMessage)
       throw new Error(this._disconnectedErrorMessage);
-    return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, metadata }));
+    return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, stackTrace }));
   }
 
   _debugScopeState(): any {

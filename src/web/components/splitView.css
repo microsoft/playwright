@@ -46,11 +46,11 @@
   flex: none;
 }
 
-.split-view.vertical > .split-view-sidebar {
+.split-view.vertical:not(.sidebar-first) > .split-view-sidebar {
   border-top: 1px solid #ddd;
 }
 
-.split-view.horizontal > .split-view-sidebar {
+.split-view.horizontal:not(.sidebar-first) > .split-view-sidebar {
   border-left: 1px solid #ddd;
 }
 
