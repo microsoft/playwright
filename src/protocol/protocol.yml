@@ -213,11 +213,7 @@ InterceptedResponse:
     statusText: string
     headers:
       type: array
-      items:
-        type: object
-        properties:
-          name: string
-          value: string
+      items: NameValue
 
 
 FetchResponse:
@@ -755,7 +751,11 @@ BrowserContext:
     requestFinished:
       parameters:
         request: Request
+        response: Response?
         responseEndTiming: number
+        responseHeaders:
+          type: array?
+          items: NameValue
         requestSizes: RequestSizes
         page: Page?
 
@@ -2112,11 +2112,7 @@ Request:
     postData: binary?
     headers:
       type: array
-      items:
-        type: object
-        properties:
-          name: string
-          value: string
+      items: NameValue
     isNavigationRequest: boolean
     redirectedFrom: Request?
 
@@ -2190,18 +2186,10 @@ Response:
     statusText: string
     requestHeaders:
       type: array
-      items:
-        type: object
-        properties:
-          name: string
-          value: string
+      items: NameValue
     headers:
       type: array
-      items:
-        type: object
-        properties:
-          name: string
-          value: string
+      items: NameValue
     timing: ResourceTiming
 
 

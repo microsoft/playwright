@@ -382,7 +382,7 @@ export type RequestSizes = {
 };
 
 export class Response extends ChannelOwner<channels.ResponseChannel, channels.ResponseInitializer> implements api.Response {
-  private _headers: Headers;
+  _headers: Headers;
   private _request: Request;
 
   static from(response: channels.ResponseChannel): Response {

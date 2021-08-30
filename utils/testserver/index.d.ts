@@ -24,6 +24,7 @@ export class TestServer {
   setAuth(path: string, username: string, password: string);
   enableGzip(path: string);
   setCSP(path: string, csp: string);
+  setExtraHeaders(path: string, headers: { [key: string]: string });
   stop(): Promise<void>;
   setRoute(path: string, handler: (message: IncomingMessage & { postBody: Promise<Buffer> }, response: ServerResponse) => void);
   setRedirect(from: string, to: string);

@@ -981,7 +981,7 @@ export class WKPage implements PageDelegate {
     response._requestFinished(responsePayload.timing ? helper.secondsToRoundishMillis(timestamp - request._timestamp) : -1, 'Response body is unavailable for redirect responses');
     this._requestIdToRequest.delete(request._requestId);
     this._page._frameManager.requestReceivedResponse(response);
-    this._page._frameManager.requestFinished(request.request);
+    this._page._frameManager.requestFinished(request.request, response);
   }
 
   _onRequestIntercepted(session: WKSession, event: Protocol.Network.requestInterceptedPayload) {
@@ -1056,7 +1056,7 @@ export class WKPage implements PageDelegate {
 
     this._requestIdToResponseReceivedPayloadEvent.delete(request._requestId);
     this._requestIdToRequest.delete(request._requestId);
-    this._page._frameManager.requestFinished(request.request);
+    this._page._frameManager.requestFinished(request.request, response);
   }
 
   _onLoadingFailed(event: Protocol.Network.loadingFailedPayload) {

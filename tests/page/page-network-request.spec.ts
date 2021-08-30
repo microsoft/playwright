@@ -314,3 +314,29 @@ it('should should set bodySize to 0 when there was no response body', async ({pa
   expect(response.request().sizes().responseHeadersSize).toBeGreaterThanOrEqual(150);
   expect(response.request().sizes().responseTransferSize).toBeGreaterThanOrEqual(160);
 });
+
+it('should report raw response headers in redirects', async ({ page, server, browserName }) => {
+  it.skip(browserName === 'webkit', `WebKit won't give us raw headers for redirects`);
+  server.setExtraHeaders('/redirect/1.html', { 'sec-test-header': '1.html' });
+  server.setExtraHeaders('/redirect/2.html', { 'sec-test-header': '2.html' });
+  server.setExtraHeaders('/empty.html', { 'sec-test-header': 'empty.html' });
+  server.setRedirect('/redirect/1.html', '/redirect/2.html');
+  server.setRedirect('/redirect/2.html', '/empty.html');
+
+  const expectedUrls = ['/redirect/1.html', '/redirect/2.html', '/empty.html'].map(s => server.PREFIX + s);
+  const expectedHeaders = ['1.html', '2.html', 'empty.html'];
+
+  const response = await page.goto(server.PREFIX + '/redirect/1.html');
+  await response.finished();
+
+  const redirectChain = [];
+  const headersChain = [];
+  for (let req = response.request(); req; req = req.redirectedFrom()) {
+    redirectChain.unshift(req.url());
+    const res = await req.response();
+    headersChain.unshift(res.headers()['sec-test-header']);
+  }
+
+  expect(redirectChain).toEqual(expectedUrls);
+  expect(headersChain).toEqual(expectedHeaders);
+});

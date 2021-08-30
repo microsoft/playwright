@@ -61,7 +61,7 @@ export class HarTracer {
     this._eventListeners = [
       eventsHelper.addEventListener(this._context, BrowserContext.Events.Page, (page: Page) => this._ensurePageEntry(page)),
       eventsHelper.addEventListener(this._context, BrowserContext.Events.Request, (request: network.Request) => this._onRequest(request)),
-      eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestFinished, (request: network.Request) => this._onRequestFinished(request).catch(() => {})),
+      eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestFinished, ({ request, response }) => this._onRequestFinished(request, response).catch(() => {})),
       eventsHelper.addEventListener(this._context, BrowserContext.Events.Response, (response: network.Response) => this._onResponse(response)),
     ];
   }
@@ -193,13 +193,12 @@ export class HarTracer {
       this._delegate.onEntryStarted(harEntry);
   }
 
-  private async _onRequestFinished(request: network.Request) {
+  private async _onRequestFinished(request: network.Request, response: network.Response | null) {
+    if (!response)
+      return;
     const page = request.frame()._page;
     const harEntry = this._entryForRequest(request);
     if (!harEntry)
-      return;
-    const response = await request.response();
-    if (!response)
       return;
 
     const httpVersion = response.httpVersion();

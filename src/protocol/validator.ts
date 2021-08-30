@@ -144,10 +144,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     request: tChannel('Request'),
     status: tNumber,
     statusText: tString,
-    headers: tArray(tObject({
-      name: tString,
-      value: tString,
-    })),
+    headers: tArray(tType('NameValue')),
   });
   scheme.FetchResponse = tObject({
     url: tString,
