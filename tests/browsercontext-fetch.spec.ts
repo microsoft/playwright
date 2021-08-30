@@ -136,7 +136,7 @@ it('should add cookies from Set-Cookie header', async ({context, page, server}) 
   expect((await page.evaluate(() => document.cookie)).split(';').map(s => s.trim()).sort()).toEqual(['foo=bar', 'session=value']);
 });
 
-it('should handle cookies on redirects', async ({context, server}) => {
+it('should handle cookies on redirects', async ({context, server, browserName, isWindows}) => {
   server.setRoute('/redirect1', (req, res) => {
     res.setHeader('Set-Cookie', 'r1=v1;SameSite=Lax');
     res.writeHead(301, { location: '/a/b/redirect2' });
@@ -174,7 +174,7 @@ it('should handle cookies on redirects', async ({context, server}) => {
   const cookies = await context.cookies();
   expect(new Set(cookies)).toEqual(new Set([
     {
-      'sameSite': 'Lax',
+      'sameSite': (browserName === 'webkit' && isWindows) ? 'None' : 'Lax',
       'name': 'r2',
       'value': 'v2',
       'domain': 'localhost',
@@ -184,7 +184,7 @@ it('should handle cookies on redirects', async ({context, server}) => {
       'secure': false
     },
     {
-      'sameSite': 'Lax',
+      'sameSite': (browserName === 'webkit' && isWindows) ? 'None' : 'Lax',
       'name': 'r1',
       'value': 'v1',
       'domain': 'localhost',
