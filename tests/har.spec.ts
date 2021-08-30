@@ -268,15 +268,15 @@ it('should include sizes', async ({ contextFactory, server, asset }, testInfo) =
   const log = await getLog();
   expect(log.entries.length).toBe(2);
   expect(log.entries[0].request.url.endsWith('har.html')).toBe(true);
-  expect(log.entries[0].request.headersSize).toBeGreaterThanOrEqual(280);
+  expect(log.entries[0].request.headersSize).toBeGreaterThanOrEqual(100);
   expect(log.entries[0].response.bodySize).toBe(fs.statSync(asset('har.html')).size);
-  expect(log.entries[0].response.headersSize).toBeGreaterThanOrEqual(198);
-  expect(log.entries[0].response._transferSize).toBeGreaterThanOrEqual(294);
+  expect(log.entries[0].response.headersSize).toBeGreaterThanOrEqual(100);
+  expect(log.entries[0].response._transferSize).toBeGreaterThanOrEqual(250);
 
   expect(log.entries[1].request.url.endsWith('one-style.css')).toBe(true);
   expect(log.entries[1].response.bodySize).toBe(fs.statSync(asset('one-style.css')).size);
-  expect(log.entries[1].response.headersSize).toBeGreaterThanOrEqual(197);
-  expect(log.entries[1].response._transferSize).toBeGreaterThanOrEqual(234);
+  expect(log.entries[1].response.headersSize).toBeGreaterThanOrEqual(100);
+  expect(log.entries[1].response._transferSize).toBeGreaterThanOrEqual(200);
 });
 
 it('should work with gzip compression', async ({ contextFactory, server, browserName }, testInfo) => {
