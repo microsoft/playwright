@@ -179,6 +179,10 @@ test('test modifiers should check types', async ({runTSC}) => {
         // @ts-expect-error
         test.skip(42);
       });
+      test.skip('skipped', async ({}) => {
+      });
+      // @ts-expect-error
+      test.skip('skipped', 'skipped');
     `,
   });
   expect(result.exitCode).toBe(0);
