@@ -19,6 +19,7 @@ jobs:
     - name: Roll to new revision
       run: |
         ./utils/roll_browser.js ${{ github.event.client_payload.browser }} ${{ github.event.client_payload.revision }}
+        npm run build
     - name: Prepare branch
       id: prepare-branch
       run: |
