@@ -27,28 +27,38 @@ it('should work', async ({playwright, browser}) => {
     }
   });
   // Register one engine before creating context.
+  console.log('Register one engine before creating context');
   await playwright.selectors.register('tag', `(${createTagSelector.toString()})()`);
 
+  console.log('Create new context');
   const context = await browser.newContext();
   // Register another engine after creating context.
+  console.log('Register another engine after creating context');
   await playwright.selectors.register('tag2', `(${createTagSelector.toString()})()`);
 
+  console.log('create new page');
   const page = await context.newPage();
+  console.log('set content');
   await page.setContent('<div><span></span></div><div></div>');
 
+  console.log('eval1');
   expect(await page.$eval('tag=DIV', e => e.nodeName)).toBe('DIV');
   expect(await page.$eval('tag=SPAN', e => e.nodeName)).toBe('SPAN');
   expect(await page.$$eval('tag=DIV', es => es.length)).toBe(2);
 
+  console.log('eval2');
   expect(await page.$eval('tag2=DIV', e => e.nodeName)).toBe('DIV');
   expect(await page.$eval('tag2=SPAN', e => e.nodeName)).toBe('SPAN');
   expect(await page.$$eval('tag2=DIV', es => es.length)).toBe(2);
 
   // Selector names are case-sensitive.
+  console.log('Selector names are case-sensitive');
   const error = await page.$('tAG=DIV').catch(e => e);
   expect(error.message).toContain('Unknown engine "tAG" while parsing selector tAG=DIV');
 
+  console.log('closing');
   await context.close();
+  console.log('closed');
 });
 
 it('should work with path', async ({playwright, browser, asset}) => {
