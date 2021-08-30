@@ -20,7 +20,7 @@ import * as channels from '../protocol/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { CallMetadata } from '../server/instrumentation';
 
-export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidInitializer> implements channels.AndroidChannel {
+export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidInitializer, channels.AndroidEvents> implements channels.AndroidChannel {
   constructor(scope: DispatcherScope, android: Android) {
     super(scope, android, 'Android', {}, true);
   }
@@ -37,7 +37,7 @@ export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidIniti
   }
 }
 
-export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.AndroidDeviceInitializer> implements channels.AndroidDeviceChannel {
+export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.AndroidDeviceInitializer, channels.AndroidDeviceEvents> implements channels.AndroidDeviceChannel {
 
   static from(scope: DispatcherScope, device: AndroidDevice): AndroidDeviceDispatcher {
     const result = existingDispatcher<AndroidDeviceDispatcher>(device);
@@ -169,7 +169,7 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
   }
 }
 
-export class AndroidSocketDispatcher extends Dispatcher<SocketBackend, channels.AndroidSocketInitializer> implements channels.AndroidSocketChannel {
+export class AndroidSocketDispatcher extends Dispatcher<SocketBackend, channels.AndroidSocketInitializer, channels.AndroidSocketEvents> implements channels.AndroidSocketChannel {
   constructor(scope: DispatcherScope, socket: SocketBackend) {
     super(scope, socket, 'AndroidSocket', {}, true);
     socket.on('data', (data: Buffer) => this._dispatchEvent('data', { data: data.toString('base64') }));

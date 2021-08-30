@@ -22,7 +22,7 @@ import { PageDispatcher } from './pageDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 
-export class ElectronDispatcher extends Dispatcher<Electron, channels.ElectronInitializer> implements channels.ElectronChannel {
+export class ElectronDispatcher extends Dispatcher<Electron, channels.ElectronInitializer, channels.ElectronEvents> implements channels.ElectronChannel {
   constructor(scope: DispatcherScope, electron: Electron) {
     super(scope, electron, 'Electron', {}, true);
   }
@@ -33,7 +33,7 @@ export class ElectronDispatcher extends Dispatcher<Electron, channels.ElectronIn
   }
 }
 
-export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplication, channels.ElectronApplicationInitializer> implements channels.ElectronApplicationChannel {
+export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplication, channels.ElectronApplicationInitializer, channels.ElectronApplicationEvents> implements channels.ElectronApplicationChannel {
   constructor(scope: DispatcherScope, electronApplication: ElectronApplication) {
     super(scope, electronApplication, 'ElectronApplication', {
       context: new BrowserContextDispatcher(scope, electronApplication.context())

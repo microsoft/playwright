@@ -175,6 +175,9 @@ export type RootInitializeResult = {
   playwright: PlaywrightChannel,
 };
 
+export interface RootEvents {
+}
+
 // ----------- Playwright -----------
 export type PlaywrightInitializer = {
   chromium: BrowserTypeChannel,
@@ -266,6 +269,12 @@ export type PlaywrightSocksEndOptions = {
 };
 export type PlaywrightSocksEndResult = void;
 
+export interface PlaywrightEvents {
+  'socksRequested': PlaywrightSocksRequestedEvent;
+  'socksData': PlaywrightSocksDataEvent;
+  'socksClosed': PlaywrightSocksClosedEvent;
+}
+
 // ----------- Selectors -----------
 export type SelectorsInitializer = {};
 export interface SelectorsChannel extends Channel {
@@ -280,6 +289,9 @@ export type SelectorsRegisterOptions = {
   contentScript?: boolean,
 };
 export type SelectorsRegisterResult = void;
+
+export interface SelectorsEvents {
+}
 
 // ----------- BrowserType -----------
 export type BrowserTypeInitializer = {
@@ -506,6 +518,9 @@ export type BrowserTypeConnectOverCDPResult = {
   defaultContext?: BrowserContextChannel,
 };
 
+export interface BrowserTypeEvents {
+}
+
 // ----------- Browser -----------
 export type BrowserInitializer = {
   version: string,
@@ -672,6 +687,10 @@ export type BrowserStopTracingResult = {
   binary: Binary,
 };
 
+export interface BrowserEvents {
+  'close': BrowserCloseEvent;
+}
+
 // ----------- EventTarget -----------
 export type EventTargetInitializer = {};
 export interface EventTargetChannel extends Channel {
@@ -690,6 +709,9 @@ export type EventTargetWaitForEventInfoOptions = {
 
 };
 export type EventTargetWaitForEventInfoResult = void;
+
+export interface EventTargetEvents {
+}
 
 // ----------- BrowserContext -----------
 export type BrowserContextInitializer = {
@@ -969,6 +991,20 @@ export type BrowserContextHarExportOptions = {};
 export type BrowserContextHarExportResult = {
   artifact: ArtifactChannel,
 };
+
+export interface BrowserContextEvents {
+  'bindingCall': BrowserContextBindingCallEvent;
+  'close': BrowserContextCloseEvent;
+  'page': BrowserContextPageEvent;
+  'route': BrowserContextRouteEvent;
+  'video': BrowserContextVideoEvent;
+  'backgroundPage': BrowserContextBackgroundPageEvent;
+  'serviceWorker': BrowserContextServiceWorkerEvent;
+  'request': BrowserContextRequestEvent;
+  'requestFailed': BrowserContextRequestFailedEvent;
+  'requestFinished': BrowserContextRequestFinishedEvent;
+  'response': BrowserContextResponseEvent;
+}
 
 // ----------- Page -----------
 export type PageInitializer = {
@@ -1389,6 +1425,25 @@ export type PageStopCSSCoverageResult = {
 export type PageBringToFrontParams = {};
 export type PageBringToFrontOptions = {};
 export type PageBringToFrontResult = void;
+
+export interface PageEvents {
+  'bindingCall': PageBindingCallEvent;
+  'close': PageCloseEvent;
+  'console': PageConsoleEvent;
+  'crash': PageCrashEvent;
+  'dialog': PageDialogEvent;
+  'download': PageDownloadEvent;
+  'domcontentloaded': PageDomcontentloadedEvent;
+  'fileChooser': PageFileChooserEvent;
+  'frameAttached': PageFrameAttachedEvent;
+  'frameDetached': PageFrameDetachedEvent;
+  'load': PageLoadEvent;
+  'pageError': PagePageErrorEvent;
+  'route': PageRouteEvent;
+  'video': PageVideoEvent;
+  'webSocket': PageWebSocketEvent;
+  'worker': PageWorkerEvent;
+}
 
 // ----------- Frame -----------
 export type FrameInitializer = {
@@ -1997,6 +2052,11 @@ export type FrameWaitForSelectorResult = {
   element?: ElementHandleChannel,
 };
 
+export interface FrameEvents {
+  'loadstate': FrameLoadstateEvent;
+  'navigated': FrameNavigatedEvent;
+}
+
 // ----------- Worker -----------
 export type WorkerInitializer = {
   url: string,
@@ -2029,6 +2089,10 @@ export type WorkerEvaluateExpressionHandleOptions = {
 export type WorkerEvaluateExpressionHandleResult = {
   handle: JSHandleChannel,
 };
+
+export interface WorkerEvents {
+  'close': WorkerCloseEvent;
+}
 
 // ----------- JSHandle -----------
 export type JSHandleInitializer = {
@@ -2093,6 +2157,10 @@ export type JSHandleJsonValueOptions = {};
 export type JSHandleJsonValueResult = {
   value: SerializedValue,
 };
+
+export interface JSHandleEvents {
+  'previewUpdated': JSHandlePreviewUpdatedEvent;
+}
 
 // ----------- ElementHandle -----------
 export type ElementHandleInitializer = {};
@@ -2499,6 +2567,9 @@ export type ElementHandleWaitForSelectorResult = {
   element?: ElementHandleChannel,
 };
 
+export interface ElementHandleEvents {
+}
+
 // ----------- Request -----------
 export type RequestInitializer = {
   frame: FrameChannel,
@@ -2521,6 +2592,9 @@ export type RequestResponseOptions = {};
 export type RequestResponseResult = {
   response?: ResponseChannel,
 };
+
+export interface RequestEvents {
+}
 
 // ----------- Route -----------
 export type RouteInitializer = {
@@ -2577,6 +2651,9 @@ export type RouteResponseBodyResult = {
   binary: Binary,
 };
 
+export interface RouteEvents {
+}
+
 export type ResourceTiming = {
   startTime: number,
   domainLookupStart: number,
@@ -2631,6 +2708,9 @@ export type ResponseServerAddrResult = {
   value?: RemoteAddr,
 };
 
+export interface ResponseEvents {
+}
+
 export type SecurityDetails = {
   issuer?: string,
   protocol?: string,
@@ -2677,6 +2757,14 @@ export type WebSocketSocketErrorEvent = {
 };
 export type WebSocketCloseEvent = {};
 
+export interface WebSocketEvents {
+  'open': WebSocketOpenEvent;
+  'frameSent': WebSocketFrameSentEvent;
+  'frameReceived': WebSocketFrameReceivedEvent;
+  'socketError': WebSocketSocketErrorEvent;
+  'close': WebSocketCloseEvent;
+}
+
 // ----------- ConsoleMessage -----------
 export type ConsoleMessageInitializer = {
   type: string,
@@ -2689,6 +2777,9 @@ export type ConsoleMessageInitializer = {
   },
 };
 export interface ConsoleMessageChannel extends Channel {
+}
+
+export interface ConsoleMessageEvents {
 }
 
 // ----------- BindingCall -----------
@@ -2717,6 +2808,9 @@ export type BindingCallResolveOptions = {
 };
 export type BindingCallResolveResult = void;
 
+export interface BindingCallEvents {
+}
+
 // ----------- Dialog -----------
 export type DialogInitializer = {
   type: string,
@@ -2737,6 +2831,9 @@ export type DialogAcceptResult = void;
 export type DialogDismissParams = {};
 export type DialogDismissOptions = {};
 export type DialogDismissResult = void;
+
+export interface DialogEvents {
+}
 
 // ----------- Artifact -----------
 export type ArtifactInitializer = {
@@ -2785,6 +2882,9 @@ export type ArtifactDeleteParams = {};
 export type ArtifactDeleteOptions = {};
 export type ArtifactDeleteResult = void;
 
+export interface ArtifactEvents {
+}
+
 // ----------- Stream -----------
 export type StreamInitializer = {};
 export interface StreamChannel extends Channel {
@@ -2803,6 +2903,9 @@ export type StreamReadResult = {
 export type StreamCloseParams = {};
 export type StreamCloseOptions = {};
 export type StreamCloseResult = void;
+
+export interface StreamEvents {
+}
 
 // ----------- CDPSession -----------
 export type CDPSessionInitializer = {};
@@ -2828,6 +2931,10 @@ export type CDPSessionSendResult = {
 export type CDPSessionDetachParams = {};
 export type CDPSessionDetachOptions = {};
 export type CDPSessionDetachResult = void;
+
+export interface CDPSessionEvents {
+  'event': CDPSessionEventEvent;
+}
 
 // ----------- Electron -----------
 export type ElectronInitializer = {};
@@ -2910,6 +3017,9 @@ export type ElectronLaunchResult = {
   electronApplication: ElectronApplicationChannel,
 };
 
+export interface ElectronEvents {
+}
+
 // ----------- ElectronApplication -----------
 export type ElectronApplicationInitializer = {
   context: BrowserContextChannel,
@@ -2957,6 +3067,10 @@ export type ElectronApplicationCloseParams = {};
 export type ElectronApplicationCloseOptions = {};
 export type ElectronApplicationCloseResult = void;
 
+export interface ElectronApplicationEvents {
+  'close': ElectronApplicationCloseEvent;
+}
+
 // ----------- Android -----------
 export type AndroidInitializer = {};
 export interface AndroidChannel extends Channel {
@@ -2975,6 +3089,9 @@ export type AndroidSetDefaultTimeoutNoReplyOptions = {
 
 };
 export type AndroidSetDefaultTimeoutNoReplyResult = void;
+
+export interface AndroidEvents {
+}
 
 // ----------- AndroidSocket -----------
 export type AndroidSocketInitializer = {};
@@ -2998,6 +3115,11 @@ export type AndroidSocketWriteResult = void;
 export type AndroidSocketCloseParams = {};
 export type AndroidSocketCloseOptions = {};
 export type AndroidSocketCloseResult = void;
+
+export interface AndroidSocketEvents {
+  'data': AndroidSocketDataEvent;
+  'close': AndroidSocketCloseEvent;
+}
 
 // ----------- AndroidDevice -----------
 export type AndroidDeviceInitializer = {
@@ -3345,6 +3467,11 @@ export type AndroidDeviceConnectToWebViewResult = {
 export type AndroidDeviceCloseParams = {};
 export type AndroidDeviceCloseOptions = {};
 export type AndroidDeviceCloseResult = void;
+
+export interface AndroidDeviceEvents {
+  'webViewAdded': AndroidDeviceWebViewAddedEvent;
+  'webViewRemoved': AndroidDeviceWebViewRemovedEvent;
+}
 
 export type AndroidWebView = {
   pid: number,

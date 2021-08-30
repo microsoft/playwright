@@ -27,7 +27,7 @@ import { SocksConnection, SocksConnectionClient } from '../utils/socksProxy';
 import { createGuid } from '../utils/utils';
 import { debugLogger } from '../utils/debugLogger';
 
-export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.PlaywrightInitializer> implements channels.PlaywrightChannel {
+export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.PlaywrightInitializer, channels.PlaywrightEvents> implements channels.PlaywrightChannel {
   private _socksProxy: SocksProxy | undefined;
 
   constructor(scope: DispatcherScope, playwright: Playwright, customSelectors?: channels.SelectorsChannel, preLaunchedBrowser?: channels.BrowserChannel) {

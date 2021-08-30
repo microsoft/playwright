@@ -19,7 +19,7 @@ import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 
-export class ConsoleMessageDispatcher extends Dispatcher<ConsoleMessage, channels.ConsoleMessageInitializer> implements channels.ConsoleMessageChannel {
+export class ConsoleMessageDispatcher extends Dispatcher<ConsoleMessage, channels.ConsoleMessageInitializer, channels.ConsoleMessageEvents> implements channels.ConsoleMessageChannel {
   constructor(scope: DispatcherScope, message: ConsoleMessage) {
     super(scope, message, 'ConsoleMessage', {
       type: message.type(),

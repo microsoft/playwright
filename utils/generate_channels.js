@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+// @ts-check
+
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -210,6 +212,8 @@ for (const [name, item] of Object.entries(protocol)) {
     channels_ts.push(`export interface ${channelName}Channel extends ${(item.extends || '') + 'Channel'} {`);
     const ts_types = new Map();
 
+    /** @type{{eventName: string, eventType: string}[]} */
+    const eventTypes = [];
     for (let [eventName, event] of Object.entries(item.events || {})) {
       if (event === null)
         event = {};
@@ -217,6 +221,7 @@ for (const [name, item] of Object.entries(protocol)) {
       const paramsName = `${channelName}${titleCase(eventName)}Event`;
       ts_types.set(paramsName, parameters.ts);
       channels_ts.push(`  on(event: '${eventName}', callback: (params: ${paramsName}) => void): this;`);
+      eventTypes.push({eventName, eventType: paramsName});
     }
 
     for (let [methodName, method] of Object.entries(item.commands || {})) {
@@ -249,6 +254,12 @@ for (const [name, item] of Object.entries(protocol)) {
     for (const [typeName, typeValue] of ts_types)
       channels_ts.push(`export type ${typeName} = ${typeValue};`);
     channels_ts.push(``);
+
+    channels_ts.push(`export interface ${channelName}Events {`);
+    for (const {eventName, eventType} of eventTypes)
+        channels_ts.push(`  '${eventName}': ${eventType};`);
+    channels_ts.push(`}\n`);
+
   } else if (item.type === 'object') {
     const inner = objectType(item.properties, '');
     channels_ts.push(`export type ${name} = ${inner.ts};`);

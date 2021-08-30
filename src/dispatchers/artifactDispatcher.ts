@@ -21,7 +21,7 @@ import fs from 'fs';
 import { mkdirIfNeeded } from '../utils/utils';
 import { Artifact } from '../server/artifact';
 
-export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactInitializer> implements channels.ArtifactChannel {
+export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactInitializer, channels.ArtifactEvents> implements channels.ArtifactChannel {
   constructor(scope: DispatcherScope, artifact: Artifact) {
     super(scope, artifact, 'Artifact', {
       absolutePath: artifact.localPath(),
