@@ -603,6 +603,10 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     return this._mainFrame.uncheck(selector, options);
   }
 
+  async setChecked(selector: string, checked: boolean, options?: channels.FrameCheckOptions) {
+    return this._mainFrame.setChecked(selector, checked, options);
+  }
+
   async waitForTimeout(timeout: number) {
     return this._mainFrame.waitForTimeout(timeout);
   }
