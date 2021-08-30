@@ -138,8 +138,6 @@ it('should work when file input is not attached to DOM', async ({page, asset}) =
 });
 
 it('should not throw when filechooser belongs to iframe', async ({page, server, browserName}) => {
-  it.skip(browserName === 'firefox', 'Firefox ignores filechooser from child frame');
-
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   const frame = page.mainFrame().childFrames()[0];
   await frame.setContent(`
