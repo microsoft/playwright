@@ -349,3 +349,44 @@ it('should propagate extra http headers with redirects', async ({context, server
   expect(req3.headers['my-secret']).toBe('Value');
 });
 
+it('should throw on invalid header value', async ({context, server}) => {
+  // @ts-expect-error
+  const error = await context._fetch(`${server.PREFIX}/a/redirect1`, {
+    headers: {
+      'foo': 'недопустимое значение',
+    }
+  }).catch(e => e);
+  expect(error.message).toContain('Invalid character in header content');
+});
+
+it('should throw on non-http(s) protocol', async ({context}) => {
+  // @ts-expect-error
+  const error1 = await context._fetch(`data:text/plain,test`).catch(e => e);
+  expect(error1.message).toContain('Protocol "data:" not supported');
+  // @ts-expect-error
+  const error2 = await context._fetch(`file:///tmp/foo`).catch(e => e);
+  expect(error2.message).toContain('Protocol "file:" not supported');
+});
+
+it('should support https', async ({context, httpsServer}) => {
+  const oldValue = process.env['NODE_TLS_REJECT_UNAUTHORIZED'];
+  // https://stackoverflow.com/a/21961005/552185
+  process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
+  try {
+    // @ts-expect-error
+    const response = await context._fetch(httpsServer.EMPTY_PAGE);
+    expect(response.status()).toBe(200);
+  } finally {
+    process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = oldValue;
+  }
+});
+
+it('should resolve url relative to baseURL', async function({browser, server, contextFactory, contextOptions}) {
+  const context = await contextFactory({
+    ...contextOptions,
+    baseURL: server.PREFIX,
+  });
+  // @ts-expect-error
+  const response = await context._fetch('/empty.html');
+  expect(response.url()).toBe(server.EMPTY_PAGE);
+});

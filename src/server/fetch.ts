@@ -47,8 +47,7 @@ export async function playwrightFetch(context: BrowserContext, params: types.Fet
       agent = new HttpsProxyAgent(proxyOpts);
     }
 
-    // TODO(https://github.com/microsoft/playwright/issues/8381): set user agent
-    const fetchResponse = await sendRequest(context, new URL(params.url), {
+    const fetchResponse = await sendRequest(context, new URL(params.url, context._options.baseURL), {
       method,
       headers,
       agent,
