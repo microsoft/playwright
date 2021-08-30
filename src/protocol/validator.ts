@@ -181,6 +181,12 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     source: tString,
     contentScript: tOptional(tBoolean),
   });
+  scheme.BrowserTypeConnectParams = tObject({
+    wsEndpoint: tString,
+    headers: tOptional(tAny),
+    slowMo: tOptional(tNumber),
+    timeout: tOptional(tNumber),
+  });
   scheme.BrowserTypeLaunchParams = tObject({
     channel: tOptional(tString),
     executablePath: tOptional(tString),
@@ -1341,6 +1347,10 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     scrollable: tBoolean,
     selected: tBoolean,
   });
+  scheme.JsonPipeSendParams = tObject({
+    message: tAny,
+  });
+  scheme.JsonPipeCloseParams = tOptional(tObject({}));
 
   return scheme;
 }

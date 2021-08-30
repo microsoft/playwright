@@ -38,6 +38,7 @@ import { Android, AndroidSocket, AndroidDevice } from './android';
 import { ParsedStackTrace } from '../utils/stackTrace';
 import { Artifact } from './artifact';
 import { EventEmitter } from 'events';
+import { JsonPipe } from './jsonPipe';
 
 class Root extends ChannelOwner<channels.RootChannel, {}> {
   constructor(connection: Connection) {
@@ -129,7 +130,7 @@ export class Connection extends EventEmitter {
     const object = this._objects.get(guid);
     if (!object)
       throw new Error(`Cannot find object to emit "${method}": ${guid}`);
-    object._channel.emit(method, this._replaceGuidsWithChannels(params));
+    object._channel.emit(method, object._type === 'JsonPipe' ? params : this._replaceGuidsWithChannels(params));
   }
 
   close() {
@@ -219,6 +220,9 @@ export class Connection extends EventEmitter {
         break;
       case 'JSHandle':
         result = new JSHandle(parent, type, guid, initializer);
+        break;
+      case 'JsonPipe':
+        result = new JsonPipe(parent, type, guid, initializer);
         break;
       case 'Page':
         result = new Page(parent, type, guid, initializer);

@@ -449,6 +449,15 @@ BrowserType:
 
   commands:
 
+    connect:
+      parameters:
+        wsEndpoint: string
+        headers: json?
+        slowMo: number?
+        timeout: number?
+      returns:
+        pipe: JsonPipe
+
     launch:
       parameters:
         $mixin: LaunchOptions
@@ -2829,3 +2838,25 @@ AndroidElementInfo:
     longClickable: boolean
     scrollable: boolean
     selected: boolean
+
+
+JsonPipe:
+  type: interface
+
+  commands:
+    send:
+      parameters:
+        message: json
+
+    close:
+
+  events:
+
+    opened:
+
+    message:
+      parameters:
+        message: json
+
+    closed:
+        error: SerializedError?
