@@ -211,7 +211,16 @@ children, if requested.
        * The maximum depth at which descendants of the root node should be retrieved.
 If omitted, the full tree is returned.
        */
+      depth?: number;
+      /**
+       * Deprecated. This parameter has been renamed to `depth`. If depth is not provided, max_depth will be used.
+       */
       max_depth?: number;
+      /**
+       * The frame for whose document the AX tree should be retrieved.
+If omited, the root frame is used.
+       */
+      frameId?: Page.FrameId;
     }
     export type getFullAXTreeReturnValue = {
       nodes: AXNode[];
@@ -222,6 +231,11 @@ Requires `enable()` to have been called previously.
      */
     export type getChildAXNodesParameters = {
       id: AXNodeId;
+      /**
+       * The frame in whose document the node resides.
+If omitted, the root frame is used.
+       */
+      frameId?: Page.FrameId;
     }
     export type getChildAXNodesReturnValue = {
       nodes: AXNode[];
@@ -701,7 +715,7 @@ associated with some application cache.
     export interface AffectedFrame {
       frameId: Page.FrameId;
     }
-    export type SameSiteCookieExclusionReason = "ExcludeSameSiteUnspecifiedTreatedAsLax"|"ExcludeSameSiteNoneInsecure"|"ExcludeSameSiteLax"|"ExcludeSameSiteStrict"|"ExcludeInvalidSameParty";
+    export type SameSiteCookieExclusionReason = "ExcludeSameSiteUnspecifiedTreatedAsLax"|"ExcludeSameSiteNoneInsecure"|"ExcludeSameSiteLax"|"ExcludeSameSiteStrict"|"ExcludeInvalidSameParty"|"ExcludeSamePartyCrossPartyContext";
     export type SameSiteCookieWarningReason = "WarnSameSiteUnspecifiedCrossSiteContext"|"WarnSameSiteNoneInsecure"|"WarnSameSiteUnspecifiedLaxAllowUnsafe"|"WarnSameSiteStrictLaxDowngradeStrict"|"WarnSameSiteStrictCrossDowngradeStrict"|"WarnSameSiteStrictCrossDowngradeLax"|"WarnSameSiteLaxCrossDowngradeStrict"|"WarnSameSiteLaxCrossDowngradeLax";
     export type SameSiteCookieOperation = "SetCookie"|"ReadCookie";
     /**
@@ -866,7 +880,7 @@ CORS RFC1918 enforcement.
       resourceIPAddressSpace?: Network.IPAddressSpace;
       clientSecurityState?: Network.ClientSecurityState;
     }
-    export type AttributionReportingIssueType = "PermissionPolicyDisabled"|"InvalidAttributionSourceEventId"|"InvalidAttributionData"|"AttributionSourceUntrustworthyOrigin"|"AttributionUntrustworthyOrigin";
+    export type AttributionReportingIssueType = "PermissionPolicyDisabled"|"InvalidAttributionSourceEventId"|"InvalidAttributionData"|"AttributionSourceUntrustworthyOrigin"|"AttributionUntrustworthyOrigin"|"AttributionTriggerDataTooLarge";
     /**
      * Details for issues around "Attribution Reporting API" usage.
 Explainer: https://github.com/WICG/conversion-measurement-api
@@ -4010,6 +4024,22 @@ otherwise it will find the nearest container regardless of its container name.
        */
       nodeId?: NodeId;
     }
+    /**
+     * Returns the descendants of a container query container that have
+container queries against this container.
+     */
+    export type getQueryingDescendantsForContainerParameters = {
+      /**
+       * Id of the container node to find querying descendants from.
+       */
+      nodeId: NodeId;
+    }
+    export type getQueryingDescendantsForContainerReturnValue = {
+      /**
+       * Descendant nodes with container queries against the given container.
+       */
+      nodeIds: NodeId[];
+    }
   }
   
   /**
@@ -6728,6 +6758,7 @@ transform/scrolling purposes only.
        * Logged text.
        */
       text: string;
+      category?: "cors";
       /**
        * Timestamp when this entry was added.
        */
@@ -7325,7 +7356,7 @@ records.
        */
       headers: Headers;
       /**
-       * HTTP response headers text.
+       * HTTP response headers text. This has been replaced by the headers in Network.responseReceivedExtraInfo.
        */
       headersText?: string;
       /**
@@ -7337,7 +7368,7 @@ records.
        */
       requestHeaders?: Headers;
       /**
-       * HTTP request headers text.
+       * HTTP request headers text. This has been replaced by the headers in Network.requestWillBeSentExtraInfo.
        */
       requestHeadersText?: string;
       /**
@@ -7855,6 +7886,14 @@ https://wicg.github.io/webpackage/draft-yasskin-httpbis-origin-signed-exchanges-
     export type ContentEncoding = "deflate"|"gzip"|"br";
     export type PrivateNetworkRequestPolicy = "Allow"|"BlockFromInsecureToMorePrivate"|"WarnFromInsecureToMorePrivate";
     export type IPAddressSpace = "Local"|"Private"|"Public"|"Unknown";
+    export interface ConnectTiming {
+      /**
+       * Timing's requestTime is a baseline in seconds, while the other numbers are ticks in
+milliseconds relatively to this requestTime. Matches ResourceTiming's requestTime for
+the same request (but not for redirected requests).
+       */
+      requestTime: number;
+    }
     export interface ClientSecurityState {
       initiatorIsSecureContext: boolean;
       initiatorIPAddressSpace: IPAddressSpace;
@@ -7877,6 +7916,36 @@ https://wicg.github.io/webpackage/draft-yasskin-httpbis-origin-signed-exchanges-
     export interface SecurityIsolationStatus {
       coop?: CrossOriginOpenerPolicyStatus;
       coep?: CrossOriginEmbedderPolicyStatus;
+    }
+    /**
+     * The status of a Reporting API report.
+     */
+    export type ReportStatus = "Queued"|"Pending";
+    /**
+     * An object representing a report generated by the Reporting API.
+     */
+    export interface ReportingApiReport {
+      /**
+       * The URL of the document that triggered the report.
+       */
+      initiatorUrl: string;
+      /**
+       * The name of the endpoint group that should be used to deliver the report.
+       */
+      destination: string;
+      /**
+       * The type of the report (specifies the set of data that is contained in the report body).
+       */
+      type: string;
+      /**
+       * When the report was generated.
+       */
+      timestamp: Network.TimeSinceEpoch;
+      /**
+       * How many uploads deep the related request was.
+       */
+      depth: number;
+      body: { [key: string]: string };
     }
     /**
      * An object providing the result of a network resource load.
@@ -8372,6 +8441,10 @@ the request and the ones not sent; the latter are distinguished by having blocke
        */
       headers: Headers;
       /**
+       * Connection timing information for the request.
+       */
+      connectTiming: ConnectTiming;
+      /**
        * The client security state set for the request.
        */
       clientSecurityState?: ClientSecurityState;
@@ -8403,7 +8476,8 @@ established the connection, so we can't send it in `requestWillBeSentExtraInfo`.
       resourceIPAddressSpace: IPAddressSpace;
       /**
        * The status code of the response. This is useful in cases the request failed and no responseReceived
-event is triggered, which is the case for, e.g., CORS errors.
+event is triggered, which is the case for, e.g., CORS errors. This is also the correct status code
+for cached requests, where the status in responseReceived is a 200 and this will be 304.
        */
       statusCode: number;
       /**
@@ -8510,6 +8584,13 @@ This made be absent in case when the instrumentation was enabled only
 after webbundle was parsed.
        */
       bundleRequestId?: RequestId;
+    }
+    /**
+     * Is sent whenever a new report is added.
+And after 'enableReportingApi' for all existing reports.
+     */
+    export type reportingApiReportAddedPayload = {
+      report: ReportingApiReport;
     }
     
     /**
@@ -9028,13 +9109,26 @@ continueInterceptedRequest call.
       status: SecurityIsolationStatus;
     }
     /**
+     * Enables tracking for the Reporting API, events generated by the Reporting API will now be delivered to the client.
+Enabling triggers 'reportingApiReportAdded' for all existing reports.
+     */
+    export type enableReportingApiParameters = {
+      /**
+       * Whether to enable or disable events for the Reporting API
+       */
+      enable: boolean;
+    }
+    export type enableReportingApiReturnValue = {
+    }
+    /**
      * Fetches the resource and returns the content.
      */
     export type loadNetworkResourceParameters = {
       /**
-       * Frame id to get the resource for.
+       * Frame id to get the resource for. Mandatory for frame targets, and
+should be omitted for worker targets.
        */
-      frameId: Page.FrameId;
+      frameId?: Page.FrameId;
       /**
        * URL of the resource to get content for.
        */
@@ -9394,9 +9488,13 @@ continueInterceptedRequest call.
     }
     export interface ContainerQueryContainerHighlightConfig {
       /**
-       * The style of the container border
+       * The style of the container border.
        */
       containerBorder?: LineStyle;
+      /**
+       * The style of the descendants' borders.
+       */
+      descendantBorder?: LineStyle;
     }
     export type InspectMode = "searchForNode"|"searchForUAShadowDOM"|"captureAreaScreenshot"|"showDistances"|"none";
     
@@ -9838,7 +9936,7 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
      * All Permissions Policy features. This enum should match the one defined
 in third_party/blink/renderer/core/permissions_policy/permissions_policy_features.json5.
      */
-    export type PermissionsPolicyFeature = "accelerometer"|"ambient-light-sensor"|"attribution-reporting"|"autoplay"|"camera"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-lang"|"ch-prefers-color-scheme"|"ch-rtt"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-full-version"|"ch-ua-platform-version"|"ch-ua-reduced"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"cross-origin-isolated"|"direct-sockets"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"idle-detection"|"interest-cohort"|"magnetometer"|"microphone"|"midi"|"otp-credentials"|"payment"|"picture-in-picture"|"publickey-credentials-get"|"screen-wake-lock"|"serial"|"shared-autofill"|"storage-access-api"|"sync-xhr"|"trust-token-redemption"|"usb"|"vertical-scroll"|"web-share"|"window-placement"|"xr-spatial-tracking";
+    export type PermissionsPolicyFeature = "accelerometer"|"ambient-light-sensor"|"attribution-reporting"|"autoplay"|"camera"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-lang"|"ch-prefers-color-scheme"|"ch-rtt"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-full-version"|"ch-ua-platform-version"|"ch-ua-reduced"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"cross-origin-isolated"|"direct-sockets"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"idle-detection"|"interest-cohort"|"magnetometer"|"microphone"|"midi"|"otp-credentials"|"payment"|"picture-in-picture"|"publickey-credentials-get"|"screen-wake-lock"|"serial"|"shared-autofill"|"storage-access-api"|"sync-xhr"|"trust-token-redemption"|"usb"|"vertical-scroll"|"web-share"|"window-placement"|"xr-spatial-tracking";
     /**
      * Reason for a permissions policy feature to be disabled.
      */
@@ -9895,7 +9993,7 @@ parsable.
       /**
        * Parent frame identifier.
        */
-      parentId?: string;
+      parentId?: FrameId;
       /**
        * Identifier of the loader associated with this frame.
        */
@@ -9947,10 +10045,6 @@ Example URLs: http://www.google.com/file.html -> "google.com"
        * Indicated which gated APIs / features are available.
        */
       gatedAPIFeatures: GatedAPIFeatures[];
-      /**
-       * Frame document's origin trials with at least one token present.
-       */
-      originTrials?: OriginTrial[];
     }
     /**
      * Information about the Resource on the page.
@@ -10294,7 +10388,7 @@ Example URLs: http://www.google.com/file.html -> "google.com"
     /**
      * List of not restored reasons for back-forward cache.
      */
-    export type BackForwardCacheNotRestoredReason = "NotMainFrame"|"BackForwardCacheDisabled"|"RelatedActiveContentsExist"|"HTTPStatusNotOK"|"SchemeNotHTTPOrHTTPS"|"Loading"|"WasGrantedMediaAccess"|"DisableForRenderFrameHostCalled"|"DomainNotAllowed"|"HTTPMethodNotGET"|"SubframeIsNavigating"|"Timeout"|"CacheLimit"|"JavaScriptExecution"|"RendererProcessKilled"|"RendererProcessCrashed"|"GrantedMediaStreamAccess"|"SchedulerTrackedFeatureUsed"|"ConflictingBrowsingInstance"|"CacheFlushed"|"ServiceWorkerVersionActivation"|"SessionRestored"|"ServiceWorkerPostMessage"|"EnteredBackForwardCacheBeforeServiceWorkerHostAdded"|"RenderFrameHostReused_SameSite"|"RenderFrameHostReused_CrossSite"|"ServiceWorkerClaim"|"IgnoreEventAndEvict"|"HaveInnerContents"|"TimeoutPuttingInCache"|"BackForwardCacheDisabledByLowMemory"|"BackForwardCacheDisabledByCommandLine"|"NetworkRequestDatapipeDrainedAsBytesConsumer"|"NetworkRequestRedirected"|"NetworkRequestTimeout"|"NetworkExceedsBufferLimit"|"NavigationCancelledWhileRestoring"|"NotMostRecentNavigationEntry"|"BackForwardCacheDisabledForPrerender"|"UserAgentOverrideDiffers"|"ForegroundCacheLimit"|"BrowsingInstanceNotSwapped"|"BackForwardCacheDisabledForDelegate"|"OptInUnloadHeaderNotPresent"|"UnloadHandlerExistsInSubFrame"|"ServiceWorkerUnregistration"|"CacheControlNoStore"|"CacheControlNoStoreCookieModified"|"CacheControlNoStoreHTTPOnlyCookieModified"|"NoResponseHead"|"WebSocket"|"WebRTC"|"MainResourceHasCacheControlNoStore"|"MainResourceHasCacheControlNoCache"|"SubresourceHasCacheControlNoStore"|"SubresourceHasCacheControlNoCache"|"ContainsPlugins"|"DocumentLoaded"|"DedicatedWorkerOrWorklet"|"OutstandingNetworkRequestOthers"|"OutstandingIndexedDBTransaction"|"RequestedNotificationsPermission"|"RequestedMIDIPermission"|"RequestedAudioCapturePermission"|"RequestedVideoCapturePermission"|"RequestedBackForwardCacheBlockedSensors"|"RequestedBackgroundWorkPermission"|"BroadcastChannel"|"IndexedDBConnection"|"WebXR"|"SharedWorker"|"WebLocks"|"WebHID"|"WebShare"|"RequestedStorageAccessGrant"|"WebNfc"|"WebFileSystem"|"OutstandingNetworkRequestFetch"|"OutstandingNetworkRequestXHR"|"AppBanner"|"Printing"|"WebDatabase"|"PictureInPicture"|"Portal"|"SpeechRecognizer"|"IdleManager"|"PaymentManager"|"SpeechSynthesis"|"KeyboardLock"|"WebOTPService"|"OutstandingNetworkRequestDirectSocket"|"IsolatedWorldScript"|"InjectedStyleSheet"|"MediaSessionImplOnServiceCreated"|"Unknown";
+    export type BackForwardCacheNotRestoredReason = "NotMainFrame"|"BackForwardCacheDisabled"|"RelatedActiveContentsExist"|"HTTPStatusNotOK"|"SchemeNotHTTPOrHTTPS"|"Loading"|"WasGrantedMediaAccess"|"DisableForRenderFrameHostCalled"|"DomainNotAllowed"|"HTTPMethodNotGET"|"SubframeIsNavigating"|"Timeout"|"CacheLimit"|"JavaScriptExecution"|"RendererProcessKilled"|"RendererProcessCrashed"|"GrantedMediaStreamAccess"|"SchedulerTrackedFeatureUsed"|"ConflictingBrowsingInstance"|"CacheFlushed"|"ServiceWorkerVersionActivation"|"SessionRestored"|"ServiceWorkerPostMessage"|"EnteredBackForwardCacheBeforeServiceWorkerHostAdded"|"RenderFrameHostReused_SameSite"|"RenderFrameHostReused_CrossSite"|"ServiceWorkerClaim"|"IgnoreEventAndEvict"|"HaveInnerContents"|"TimeoutPuttingInCache"|"BackForwardCacheDisabledByLowMemory"|"BackForwardCacheDisabledByCommandLine"|"NetworkRequestDatapipeDrainedAsBytesConsumer"|"NetworkRequestRedirected"|"NetworkRequestTimeout"|"NetworkExceedsBufferLimit"|"NavigationCancelledWhileRestoring"|"NotMostRecentNavigationEntry"|"BackForwardCacheDisabledForPrerender"|"UserAgentOverrideDiffers"|"ForegroundCacheLimit"|"BrowsingInstanceNotSwapped"|"BackForwardCacheDisabledForDelegate"|"OptInUnloadHeaderNotPresent"|"UnloadHandlerExistsInSubFrame"|"ServiceWorkerUnregistration"|"CacheControlNoStore"|"CacheControlNoStoreCookieModified"|"CacheControlNoStoreHTTPOnlyCookieModified"|"NoResponseHead"|"Unknown"|"ActivationNavigationsDisallowedForBug1234857"|"WebSocket"|"WebTransport"|"WebRTC"|"MainResourceHasCacheControlNoStore"|"MainResourceHasCacheControlNoCache"|"SubresourceHasCacheControlNoStore"|"SubresourceHasCacheControlNoCache"|"ContainsPlugins"|"DocumentLoaded"|"DedicatedWorkerOrWorklet"|"OutstandingNetworkRequestOthers"|"OutstandingIndexedDBTransaction"|"RequestedNotificationsPermission"|"RequestedMIDIPermission"|"RequestedAudioCapturePermission"|"RequestedVideoCapturePermission"|"RequestedBackForwardCacheBlockedSensors"|"RequestedBackgroundWorkPermission"|"BroadcastChannel"|"IndexedDBConnection"|"WebXR"|"SharedWorker"|"WebLocks"|"WebHID"|"WebShare"|"RequestedStorageAccessGrant"|"WebNfc"|"OutstandingNetworkRequestFetch"|"OutstandingNetworkRequestXHR"|"AppBanner"|"Printing"|"WebDatabase"|"PictureInPicture"|"Portal"|"SpeechRecognizer"|"IdleManager"|"PaymentManager"|"SpeechSynthesis"|"KeyboardLock"|"WebOTPService"|"OutstandingNetworkRequestDirectSocket"|"IsolatedWorldScript"|"InjectedStyleSheet"|"ContentSecurityHandler"|"ContentWebAuthenticationAPI"|"ContentFileChooser"|"ContentSerial"|"ContentFileSystemAccess"|"ContentMediaDevicesDispatcherHost"|"ContentWebBluetooth"|"ContentWebUSB"|"ContentMediaSession"|"EmbedderPopupBlockerTabHelper"|"EmbedderSafeBrowsingTriggeredPopupBlocker"|"EmbedderSafeBrowsingThreatDetails"|"EmbedderAppBannerManager"|"EmbedderDomDistillerViewerSource"|"EmbedderDomDistillerSelfDeletingRequestDelegate"|"EmbedderOomInterventionTabHelper"|"EmbedderOfflinePage"|"EmbedderChromePasswordManagerClientBindCredentialManager"|"EmbedderPermissionRequestManager"|"EmbedderModalDialog"|"EmbedderExtensions"|"EmbedderExtensionMessaging"|"EmbedderExtensionMessagingForOpenPort"|"EmbedderExtensionSentMessageToCachedFrame";
     /**
      * Types of not restored reasons for back-forward cache.
      */
@@ -10844,6 +10938,17 @@ option, use with caution.
       primaryIcon?: binary;
     }
     /**
+     * Returns the unique (PWA) app id.
+     */
+    export type getAppIdParameters = {
+    }
+    export type getAppIdReturnValue = {
+      /**
+       * Only returns a value if the feature flag 'WebAppEnableManifestId' is enabled
+       */
+      appId?: string;
+    }
+    /**
      * Returns all browser cookies. Depending on the backend support, will return detailed cookie
 information in the `cookies` field.
      */
@@ -11213,6 +11318,15 @@ Argument will be ignored if reloading dataURL origin.
     }
     export type getPermissionsPolicyStateReturnValue = {
       states: PermissionsPolicyFeatureState[];
+    }
+    /**
+     * Get Origin Trials on given frame.
+     */
+    export type getOriginTrialsParameters = {
+      frameId: FrameId;
+    }
+    export type getOriginTrialsReturnValue = {
+      originTrials: OriginTrial[];
     }
     /**
      * Overrides the values of device screen dimensions (window.screen.width, window.screen.height,
@@ -12921,6 +13035,8 @@ and crbug.com/991325.
      * Controls whether to automatically attach to new targets which are considered to be related to
 this one. When turned on, attaches to all existing related targets as well. When turned off,
 automatically detaches from all currently attached targets.
+This also clears all targets added by `autoAttachRelated` from the list of targets to watch
+for creation of related targets.
      */
     export type setAutoAttachParameters = {
       /**
@@ -12940,6 +13056,23 @@ and eventually retire it. See crbug.com/991325.
       flatten?: boolean;
     }
     export type setAutoAttachReturnValue = {
+    }
+    /**
+     * Adds the specified target to the list of targets that will be monitored for any related target
+creation (such as child frames, child workers and new versions of service worker) and reported
+through `attachedToTarget`. The specified target is also auto-attached.
+This cancels the effect of any previous `setAutoAttach` and is also cancelled by subsequent
+`setAutoAttach`. Only available at the Browser target.
+     */
+    export type autoAttachRelatedParameters = {
+      targetId: TargetID;
+      /**
+       * Whether to pause new targets when attaching to them. Use `Runtime.runIfWaitingForDebugger`
+to run paused targets.
+       */
+      waitForDebuggerOnStart: boolean;
+    }
+    export type autoAttachRelatedReturnValue = {
     }
     /**
      * Controls whether to discover available targets and notify via
@@ -13332,6 +13465,10 @@ of these fields is present and in the request stage otherwise.
        */
       responseStatusCode?: number;
       /**
+       * Response status text if intercepted at response stage.
+       */
+      responseStatusText?: string;
+      /**
        * Response headers if intercepted at the response stage.
        */
       responseHeaders?: HeaderEntry[];
@@ -13435,7 +13572,9 @@ over the protocol as text.
        */
       binaryResponseHeaders?: binary;
       /**
-       * A response body.
+       * A response body. If absent, original response body will be used if
+the request is intercepted at the response stage and empty body
+will be used if the request is intercepted at the request stage.
        */
       body?: binary;
       /**
@@ -13470,6 +13609,10 @@ If absent, a standard phrase matching responseCode is used.
        * If set, overrides the request headers.
        */
       headers?: HeaderEntry[];
+      /**
+       * If set, overrides response interception behavior for this request.
+       */
+      interceptResponse?: boolean;
     }
     export type continueRequestReturnValue = {
     }
@@ -13487,6 +13630,39 @@ If absent, a standard phrase matching responseCode is used.
       authChallengeResponse: AuthChallengeResponse;
     }
     export type continueWithAuthReturnValue = {
+    }
+    /**
+     * Continues loading of the paused response, optionally modifying the
+response headers. If either responseCode or headers are modified, all of them
+must be present.
+     */
+    export type continueResponseParameters = {
+      /**
+       * An id the client received in requestPaused event.
+       */
+      requestId: RequestId;
+      /**
+       * An HTTP response code. If absent, original response code will be used.
+       */
+      responseCode?: number;
+      /**
+       * A textual representation of responseCode.
+If absent, a standard phrase matching responseCode is used.
+       */
+      responsePhrase?: string;
+      /**
+       * Response headers. If absent, original response headers will be used.
+       */
+      responseHeaders?: HeaderEntry[];
+      /**
+       * Alternative way of specifying response headers as a \0-separated
+series of name: value pairs. Prefer the above method unless you
+need to represent some non-UTF8 values that can't be transmitted
+over the protocol as text.
+       */
+      binaryResponseHeaders?: binary;
+    }
+    export type continueResponseReturnValue = {
     }
     /**
      * Causes the body of the response to be received from the server and
@@ -15375,36 +15551,6 @@ profile startTime.
        */
       entries: TypeProfileEntry[];
     }
-    /**
-     * Collected counter information.
-     */
-    export interface CounterInfo {
-      /**
-       * Counter name.
-       */
-      name: string;
-      /**
-       * Counter value.
-       */
-      value: number;
-    }
-    /**
-     * Runtime call counter information.
-     */
-    export interface RuntimeCallCounterInfo {
-      /**
-       * Counter name.
-       */
-      name: string;
-      /**
-       * Counter value.
-       */
-      value: number;
-      /**
-       * Counter time in seconds.
-       */
-      time: number;
-    }
     
     export type consoleProfileFinishedPayload = {
       id: string;
@@ -15569,56 +15715,6 @@ coverage needs to have started.
        * Type profile for all scripts since startTypeProfile() was turned on.
        */
       result: ScriptTypeProfile[];
-    }
-    /**
-     * Enable counters collection.
-     */
-    export type enableCountersParameters = {
-    }
-    export type enableCountersReturnValue = {
-    }
-    /**
-     * Disable counters collection.
-     */
-    export type disableCountersParameters = {
-    }
-    export type disableCountersReturnValue = {
-    }
-    /**
-     * Retrieve counters.
-     */
-    export type getCountersParameters = {
-    }
-    export type getCountersReturnValue = {
-      /**
-       * Collected counters information.
-       */
-      result: CounterInfo[];
-    }
-    /**
-     * Enable run time call stats collection.
-     */
-    export type enableRuntimeCallStatsParameters = {
-    }
-    export type enableRuntimeCallStatsReturnValue = {
-    }
-    /**
-     * Disable run time call stats collection.
-     */
-    export type disableRuntimeCallStatsParameters = {
-    }
-    export type disableRuntimeCallStatsReturnValue = {
-    }
-    /**
-     * Retrieve run time call stats.
-     */
-    export type getRuntimeCallStatsParameters = {
-    }
-    export type getRuntimeCallStatsReturnValue = {
-      /**
-       * Collected runtime call counter information.
-       */
-      result: RuntimeCallCounterInfo[];
     }
   }
   
@@ -16401,6 +16497,10 @@ returned either.
        * Whether preview should be generated for the results.
        */
       generatePreview?: boolean;
+      /**
+       * If true, returns non-indexed properties only.
+       */
+      nonIndexedPropertiesOnly?: boolean;
     }
     export type getPropertiesReturnValue = {
       /**
@@ -16704,6 +16804,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Network.subresourceWebBundleMetadataError": Network.subresourceWebBundleMetadataErrorPayload;
     "Network.subresourceWebBundleInnerResponseParsed": Network.subresourceWebBundleInnerResponseParsedPayload;
     "Network.subresourceWebBundleInnerResponseError": Network.subresourceWebBundleInnerResponseErrorPayload;
+    "Network.reportingApiReportAdded": Network.reportingApiReportAddedPayload;
     "Overlay.inspectNodeRequested": Overlay.inspectNodeRequestedPayload;
     "Overlay.nodeHighlightRequested": Overlay.nodeHighlightRequestedPayload;
     "Overlay.screenshotRequested": Overlay.screenshotRequestedPayload;
@@ -16929,6 +17030,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "DOM.undo": DOM.undoParameters;
     "DOM.getFrameOwner": DOM.getFrameOwnerParameters;
     "DOM.getContainerForNode": DOM.getContainerForNodeParameters;
+    "DOM.getQueryingDescendantsForContainer": DOM.getQueryingDescendantsForContainerParameters;
     "DOMDebugger.getEventListeners": DOMDebugger.getEventListenersParameters;
     "DOMDebugger.removeDOMBreakpoint": DOMDebugger.removeDOMBreakpointParameters;
     "DOMDebugger.removeEventListenerBreakpoint": DOMDebugger.removeEventListenerBreakpointParameters;
@@ -17065,6 +17167,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Network.setRequestInterception": Network.setRequestInterceptionParameters;
     "Network.setUserAgentOverride": Network.setUserAgentOverrideParameters;
     "Network.getSecurityIsolationStatus": Network.getSecurityIsolationStatusParameters;
+    "Network.enableReportingApi": Network.enableReportingApiParameters;
     "Network.loadNetworkResource": Network.loadNetworkResourceParameters;
     "Overlay.disable": Overlay.disableParameters;
     "Overlay.enable": Overlay.enableParameters;
@@ -17108,6 +17211,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Page.getAppManifest": Page.getAppManifestParameters;
     "Page.getInstallabilityErrors": Page.getInstallabilityErrorsParameters;
     "Page.getManifestIcons": Page.getManifestIconsParameters;
+    "Page.getAppId": Page.getAppIdParameters;
     "Page.getCookies": Page.getCookiesParameters;
     "Page.getFrameTree": Page.getFrameTreeParameters;
     "Page.getLayoutMetrics": Page.getLayoutMetricsParameters;
@@ -17127,6 +17231,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Page.setAdBlockingEnabled": Page.setAdBlockingEnabledParameters;
     "Page.setBypassCSP": Page.setBypassCSPParameters;
     "Page.getPermissionsPolicyState": Page.getPermissionsPolicyStateParameters;
+    "Page.getOriginTrials": Page.getOriginTrialsParameters;
     "Page.setDeviceMetricsOverride": Page.setDeviceMetricsOverrideParameters;
     "Page.setDeviceOrientationOverride": Page.setDeviceOrientationOverrideParameters;
     "Page.setFontFamilies": Page.setFontFamiliesParameters;
@@ -17200,6 +17305,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Target.getTargets": Target.getTargetsParameters;
     "Target.sendMessageToTarget": Target.sendMessageToTargetParameters;
     "Target.setAutoAttach": Target.setAutoAttachParameters;
+    "Target.autoAttachRelated": Target.autoAttachRelatedParameters;
     "Target.setDiscoverTargets": Target.setDiscoverTargetsParameters;
     "Target.setRemoteLocations": Target.setRemoteLocationsParameters;
     "Tethering.bind": Tethering.bindParameters;
@@ -17215,6 +17321,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Fetch.fulfillRequest": Fetch.fulfillRequestParameters;
     "Fetch.continueRequest": Fetch.continueRequestParameters;
     "Fetch.continueWithAuth": Fetch.continueWithAuthParameters;
+    "Fetch.continueResponse": Fetch.continueResponseParameters;
     "Fetch.getResponseBody": Fetch.getResponseBodyParameters;
     "Fetch.takeResponseBodyAsStream": Fetch.takeResponseBodyAsStreamParameters;
     "WebAudio.enable": WebAudio.enableParameters;
@@ -17290,12 +17397,6 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Profiler.stopTypeProfile": Profiler.stopTypeProfileParameters;
     "Profiler.takePreciseCoverage": Profiler.takePreciseCoverageParameters;
     "Profiler.takeTypeProfile": Profiler.takeTypeProfileParameters;
-    "Profiler.enableCounters": Profiler.enableCountersParameters;
-    "Profiler.disableCounters": Profiler.disableCountersParameters;
-    "Profiler.getCounters": Profiler.getCountersParameters;
-    "Profiler.enableRuntimeCallStats": Profiler.enableRuntimeCallStatsParameters;
-    "Profiler.disableRuntimeCallStats": Profiler.disableRuntimeCallStatsParameters;
-    "Profiler.getRuntimeCallStats": Profiler.getRuntimeCallStatsParameters;
     "Runtime.awaitPromise": Runtime.awaitPromiseParameters;
     "Runtime.callFunctionOn": Runtime.callFunctionOnParameters;
     "Runtime.compileScript": Runtime.compileScriptParameters;
@@ -17449,6 +17550,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "DOM.undo": DOM.undoReturnValue;
     "DOM.getFrameOwner": DOM.getFrameOwnerReturnValue;
     "DOM.getContainerForNode": DOM.getContainerForNodeReturnValue;
+    "DOM.getQueryingDescendantsForContainer": DOM.getQueryingDescendantsForContainerReturnValue;
     "DOMDebugger.getEventListeners": DOMDebugger.getEventListenersReturnValue;
     "DOMDebugger.removeDOMBreakpoint": DOMDebugger.removeDOMBreakpointReturnValue;
     "DOMDebugger.removeEventListenerBreakpoint": DOMDebugger.removeEventListenerBreakpointReturnValue;
@@ -17585,6 +17687,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Network.setRequestInterception": Network.setRequestInterceptionReturnValue;
     "Network.setUserAgentOverride": Network.setUserAgentOverrideReturnValue;
     "Network.getSecurityIsolationStatus": Network.getSecurityIsolationStatusReturnValue;
+    "Network.enableReportingApi": Network.enableReportingApiReturnValue;
     "Network.loadNetworkResource": Network.loadNetworkResourceReturnValue;
     "Overlay.disable": Overlay.disableReturnValue;
     "Overlay.enable": Overlay.enableReturnValue;
@@ -17628,6 +17731,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Page.getAppManifest": Page.getAppManifestReturnValue;
     "Page.getInstallabilityErrors": Page.getInstallabilityErrorsReturnValue;
     "Page.getManifestIcons": Page.getManifestIconsReturnValue;
+    "Page.getAppId": Page.getAppIdReturnValue;
     "Page.getCookies": Page.getCookiesReturnValue;
     "Page.getFrameTree": Page.getFrameTreeReturnValue;
     "Page.getLayoutMetrics": Page.getLayoutMetricsReturnValue;
@@ -17647,6 +17751,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Page.setAdBlockingEnabled": Page.setAdBlockingEnabledReturnValue;
     "Page.setBypassCSP": Page.setBypassCSPReturnValue;
     "Page.getPermissionsPolicyState": Page.getPermissionsPolicyStateReturnValue;
+    "Page.getOriginTrials": Page.getOriginTrialsReturnValue;
     "Page.setDeviceMetricsOverride": Page.setDeviceMetricsOverrideReturnValue;
     "Page.setDeviceOrientationOverride": Page.setDeviceOrientationOverrideReturnValue;
     "Page.setFontFamilies": Page.setFontFamiliesReturnValue;
@@ -17720,6 +17825,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Target.getTargets": Target.getTargetsReturnValue;
     "Target.sendMessageToTarget": Target.sendMessageToTargetReturnValue;
     "Target.setAutoAttach": Target.setAutoAttachReturnValue;
+    "Target.autoAttachRelated": Target.autoAttachRelatedReturnValue;
     "Target.setDiscoverTargets": Target.setDiscoverTargetsReturnValue;
     "Target.setRemoteLocations": Target.setRemoteLocationsReturnValue;
     "Tethering.bind": Tethering.bindReturnValue;
@@ -17735,6 +17841,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Fetch.fulfillRequest": Fetch.fulfillRequestReturnValue;
     "Fetch.continueRequest": Fetch.continueRequestReturnValue;
     "Fetch.continueWithAuth": Fetch.continueWithAuthReturnValue;
+    "Fetch.continueResponse": Fetch.continueResponseReturnValue;
     "Fetch.getResponseBody": Fetch.getResponseBodyReturnValue;
     "Fetch.takeResponseBodyAsStream": Fetch.takeResponseBodyAsStreamReturnValue;
     "WebAudio.enable": WebAudio.enableReturnValue;
@@ -17810,12 +17917,6 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Profiler.stopTypeProfile": Profiler.stopTypeProfileReturnValue;
     "Profiler.takePreciseCoverage": Profiler.takePreciseCoverageReturnValue;
     "Profiler.takeTypeProfile": Profiler.takeTypeProfileReturnValue;
-    "Profiler.enableCounters": Profiler.enableCountersReturnValue;
-    "Profiler.disableCounters": Profiler.disableCountersReturnValue;
-    "Profiler.getCounters": Profiler.getCountersReturnValue;
-    "Profiler.enableRuntimeCallStats": Profiler.enableRuntimeCallStatsReturnValue;
-    "Profiler.disableRuntimeCallStats": Profiler.disableRuntimeCallStatsReturnValue;
-    "Profiler.getRuntimeCallStats": Profiler.getRuntimeCallStatsReturnValue;
     "Runtime.awaitPromise": Runtime.awaitPromiseReturnValue;
     "Runtime.callFunctionOn": Runtime.callFunctionOnReturnValue;
     "Runtime.compileScript": Runtime.compileScriptReturnValue;
