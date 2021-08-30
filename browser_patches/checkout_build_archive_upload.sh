@@ -382,12 +382,12 @@ function generate_and_upload_browser_build {
   fi
 
   echo "-- building"
-  if ! ./$BROWSER_NAME/build.sh "$EXTRA_BUILD_ARGS"; then
+  if ! ./$BROWSER_NAME/build.sh $EXTRA_BUILD_ARGS; then
     return 22
   fi
 
   echo "-- archiving to $ZIP_PATH"
-  if ! ./$BROWSER_NAME/archive.sh "$ZIP_PATH" "$EXTRA_ARCHIVE_ARGS"; then
+  if ! ./$BROWSER_NAME/archive.sh "$ZIP_PATH" $EXTRA_ARCHIVE_ARGS; then
     return 23
   fi
 

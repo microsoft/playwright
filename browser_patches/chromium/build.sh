@@ -81,6 +81,10 @@ compile_chromium() {
     echo "goma_dir = \"${PLAYWRIGHT_GOMA_PATH}\"" >> ./out/Default/args.gn
   fi
 
+  echo "===== args.gn ====="
+  cat ./out/Default/args.gn
+  echo "===== ======= ====="
+
   if [[ $1 == "--compile-win"* ]]; then
     if [[ -z "$USE_GOMA" ]]; then
       /c/Windows/System32/cmd.exe "/c $(cygpath -w "${SCRIPT_FOLDER}"/buildwin.bat)"
