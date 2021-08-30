@@ -186,10 +186,10 @@ Returns the matching [Response] object, or `null` if the response was not receiv
 ## method: Request.sizes
 - returns: <[Object]>
   - `requestBodySize` <[int]> Size of the request body (POST data payload) in bytes. Set to 0 if there was no body.
-  - `requestHeadersSize` <[float]> Total number of bytes from the start of the HTTP request message until (and including) the double CRLF before the body.
+  - `requestHeadersSize` <[int]> Total number of bytes from the start of the HTTP request message until (and including) the double CRLF before the body.
   - `responseBodySize` <[int]> Size of the received response body in bytes.
-  - `responseHeadersSize` <[float]> Total number of bytes from the start of the HTTP response message until (and including) the double CRLF before the body.
-  - `responseTransferSize` <[float]> Total number of bytes received for the request.
+  - `responseHeadersSize` <[int]> Total number of bytes from the start of the HTTP response message until (and including) the double CRLF before the body.
+  - `responseTransferSize` <[int]> Total number of bytes received for the request.
 
 Returns resource size information for given request. Requires the response to be finished via [`method: Response.finished`]
 to ensure the info is available.
