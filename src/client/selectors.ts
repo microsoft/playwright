@@ -25,11 +25,17 @@ export class Selectors implements api.Selectors {
   private _registrations: channels.SelectorsRegisterParams[] = [];
 
   async register(name: string, script: string | (() => SelectorEngine) | { path?: string, content?: string }, options: { contentScript?: boolean } = {}): Promise<void> {
+    console.log('registering selector', name);
     const source = await evaluationScript(script, undefined, false);
+    console.log('got evaluation script');
     const params = { ...options, name, source };
-    for (const channel of this._channels)
+    console.log('register in channels');
+    for (const channel of this._channels) {
+      console.log('register in channel 1');
       await channel._channel.register(params);
+    }
     this._registrations.push(params);
+    console.log('registered selector', name);
   }
 
   _addChannel(channel: SelectorsOwner) {

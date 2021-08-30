@@ -24,6 +24,8 @@ export class SelectorsDispatcher extends Dispatcher<Selectors, channels.Selector
   }
 
   async register(params: channels.SelectorsRegisterParams): Promise<void> {
+    console.log('register selecter dispatcher', params.name);
     await this._object.register(params.name, params.source, params.contentScript);
+    console.log('register selecter dispatcher done', params.name);
   }
 }
