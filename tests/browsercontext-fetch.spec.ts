@@ -349,7 +349,7 @@ it('should propagate extra http headers with redirects', async ({context, server
   expect(req3.headers['my-secret']).toBe('Value');
 });
 
-it('should throw on ivalid header value', async ({context, server}) => {
+it('should throw on invalid header value', async ({context, server}) => {
   // @ts-expect-error
   const error = await context._fetch(`${server.PREFIX}/a/redirect1`, {
     headers: {
