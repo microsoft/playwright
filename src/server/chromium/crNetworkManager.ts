@@ -566,7 +566,6 @@ const errorReasons: { [reason: string]: Protocol.Network.ErrorReason } = {
 
 type RequestInfo = {
   requestId: string,
-  responseReceived: (Protocol.Network.Response | undefined)[],
   responseReceivedExtraInfo: Protocol.Network.responseReceivedExtraInfoPayload[],
   responses: network.Response[],
   loadingFinished?: Protocol.Network.loadingFinishedPayload,
@@ -591,9 +590,6 @@ type RequestInfo = {
 class ResponseExtraInfoTracker {
   private _requests = new Map<string, RequestInfo>();
 
-  constructor() {
-  }
-
   requestWillBeSent(event: Protocol.Network.requestWillBeSentPayload) {
     const info = this._requests.get(event.requestId);
     if (info) {
@@ -602,7 +598,6 @@ class ResponseExtraInfoTracker {
     } else {
       this._requests.set(event.requestId, {
         requestId: event.requestId,
-        responseReceived: [],
         responseReceivedExtraInfo: [],
         responses: [],
         sawResponseWithoutConnectionId: false
@@ -618,7 +613,6 @@ class ResponseExtraInfoTracker {
   }
 
   private _innerResponseReceived(info: RequestInfo, response: Protocol.Network.Response | undefined) {
-    info.responseReceived.push(response);
     if (!response?.connectionId) {
       // Starting with this response we no longer can guarantee that response and extra info correspond to the same index.
       info.sawResponseWithoutConnectionId = true;
@@ -677,16 +671,9 @@ class ResponseExtraInfoTracker {
     if (!info.loadingFinished && !info.loadingFailed)
       return;
 
-    // Loading finished, check that we have all ExtraInfo events in place.
-    if (!info.responseReceived.length) {
-      // loading finished without responses, finish it immediately.
-      this._stopTracking(info.requestId);
-      return;
-    }
-
-    // We could have more extra infos because we stopped collecting responses at some point.
     if (info.responses.length <= info.responseReceivedExtraInfo.length) {
       // We have extra info for each response.
+      // We could have more extra infos because we stopped collecting responses at some point.
       this._stopTracking(info.requestId);
       return;
     }
