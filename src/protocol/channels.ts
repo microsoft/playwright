@@ -296,10 +296,25 @@ export type BrowserTypeInitializer = {
   name: string,
 };
 export interface BrowserTypeChannel extends Channel {
+  connect(params: BrowserTypeConnectParams, metadata?: Metadata): Promise<BrowserTypeConnectResult>;
   launch(params: BrowserTypeLaunchParams, metadata?: Metadata): Promise<BrowserTypeLaunchResult>;
   launchPersistentContext(params: BrowserTypeLaunchPersistentContextParams, metadata?: Metadata): Promise<BrowserTypeLaunchPersistentContextResult>;
   connectOverCDP(params: BrowserTypeConnectOverCDPParams, metadata?: Metadata): Promise<BrowserTypeConnectOverCDPResult>;
 }
+export type BrowserTypeConnectParams = {
+  wsEndpoint: string,
+  headers?: any,
+  slowMo?: number,
+  timeout?: number,
+};
+export type BrowserTypeConnectOptions = {
+  headers?: any,
+  slowMo?: number,
+  timeout?: number,
+};
+export type BrowserTypeConnectResult = {
+  pipe: JsonPipeChannel,
+};
 export type BrowserTypeLaunchParams = {
   channel?: string,
   executablePath?: string,
@@ -3505,6 +3520,37 @@ export type AndroidElementInfo = {
   scrollable: boolean,
   selected: boolean,
 };
+
+// ----------- JsonPipe -----------
+export type JsonPipeInitializer = {};
+export interface JsonPipeChannel extends Channel {
+  on(event: 'opened', callback: (params: JsonPipeOpenedEvent) => void): this;
+  on(event: 'message', callback: (params: JsonPipeMessageEvent) => void): this;
+  on(event: 'closed', callback: (params: JsonPipeClosedEvent) => void): this;
+  send(params: JsonPipeSendParams, metadata?: Metadata): Promise<JsonPipeSendResult>;
+  close(params?: JsonPipeCloseParams, metadata?: Metadata): Promise<JsonPipeCloseResult>;
+}
+export type JsonPipeOpenedEvent = {};
+export type JsonPipeMessageEvent = {
+  message: any,
+};
+export type JsonPipeClosedEvent = {};
+export type JsonPipeSendParams = {
+  message: any,
+};
+export type JsonPipeSendOptions = {
+
+};
+export type JsonPipeSendResult = void;
+export type JsonPipeCloseParams = {};
+export type JsonPipeCloseOptions = {};
+export type JsonPipeCloseResult = void;
+
+export interface JsonPipeEvents {
+  'opened': JsonPipeOpenedEvent;
+  'message': JsonPipeMessageEvent;
+  'closed': JsonPipeClosedEvent;
+}
 
 export const commandsWithTracingSnapshots = new Set([
   'EventTarget.waitForEventInfo',

@@ -20,6 +20,9 @@ import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { CallMetadata } from '../server/instrumentation';
+import WebSocket from 'ws';
+import { JsonPipeDispatcher } from '../dispatchers/jsonPipeDispatcher';
+import { getUserAgent, makeWaitForNextTask } from '../utils/utils';
 
 export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.BrowserTypeInitializer, channels.BrowserTypeEvents> implements channels.BrowserTypeChannel {
   constructor(scope: DispatcherScope, browserType: BrowserType) {
@@ -46,5 +49,34 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.Brow
       browser: browserDispatcher,
       defaultContext: browser._defaultContext ? new BrowserContextDispatcher(browserDispatcher._scope, browser._defaultContext) : undefined,
     };
+  }
+
+  async connect(params: channels.BrowserTypeConnectParams): Promise<channels.BrowserTypeConnectResult> {
+    const waitForNextTask = params.slowMo
+      ? (cb: () => any) => setTimeout(cb, params.slowMo)
+      : makeWaitForNextTask();
+    const paramsHeaders = Object.assign({'User-Agent': getUserAgent()}, params.headers || {});
+    const ws = new WebSocket(params.wsEndpoint, [], {
+      perMessageDeflate: false,
+      maxPayload: 256 * 1024 * 1024, // 256Mb,
+      handshakeTimeout: params.timeout || 30000,
+      headers: paramsHeaders,
+    });
+    const pipe = new JsonPipeDispatcher(this._scope);
+    ws.on('open', () => pipe.wasOpened());
+    ws.on('close', () => pipe.wasClosed());
+    ws.on('error', error => pipe.wasClosed(error));
+    pipe.on('close', () => ws.close());
+    pipe.on('message', message => ws.send(JSON.stringify(message)));
+    ws.addEventListener('message', event => {
+      waitForNextTask(() => {
+        try {
+          pipe.dispatch(JSON.parse(event.data));
+        } catch (e) {
+          ws.close();
+        }
+      });
+    });
+    return { pipe };
   }
 }

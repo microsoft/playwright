@@ -48,7 +48,7 @@ export class Dispatcher<Type extends { guid: string }, Initializer, Events> exte
   private _parent: Dispatcher<any, any, {}> | undefined;
   // Only "isScope" channel owners have registered dispatchers inside.
   private _dispatchers = new Map<string, Dispatcher<any, any, {}>>();
-  private _disposed = false;
+  protected _disposed = false;
 
   readonly _guid: string;
   readonly _type: string;
@@ -91,7 +91,7 @@ export class Dispatcher<Type extends { guid: string }, Initializer, Events> exte
     this._connection.sendMessageToClient(this._guid, this._type, method as string, params, sdkObject);
   }
 
-  _dispose() {
+  protected _dispose() {
     assert(!this._disposed);
     this._disposed = true;
 

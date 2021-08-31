@@ -22,7 +22,7 @@ import { createGuid } from '../utils/utils';
 export class StreamDispatcher extends Dispatcher<{ guid: string, stream: stream.Readable }, channels.StreamInitializer, channels.StreamEvents> implements channels.StreamChannel {
   private _ended: boolean = false;
   constructor(scope: DispatcherScope, stream: stream.Readable) {
-    super(scope, { guid: createGuid(), stream }, 'Stream', {});
+    super(scope, { guid: 'stream@' + createGuid(), stream }, 'Stream', {});
     // In Node v12.9.0+ we can use readableEnded.
     stream.once('end', () => this._ended =  true);
     stream.once('error', () => this._ended =  true);

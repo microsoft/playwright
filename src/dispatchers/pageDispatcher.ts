@@ -267,7 +267,7 @@ export class BindingCallDispatcher extends Dispatcher<{ guid: string }, channels
   private _promise: Promise<any>;
 
   constructor(scope: DispatcherScope, name: string, needsHandle: boolean, source: { context: BrowserContext, page: Page, frame: Frame }, args: any[]) {
-    super(scope, { guid: createGuid() }, 'BindingCall', {
+    super(scope, { guid: 'bindingCall@' + createGuid() }, 'BindingCall', {
       frame: lookupDispatcher<FrameDispatcher>(source.frame),
       name,
       args: needsHandle ? undefined : args.map(serializeResult),

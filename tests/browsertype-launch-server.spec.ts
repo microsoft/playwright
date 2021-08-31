@@ -57,7 +57,7 @@ it.describe('launch server', () => {
     const browserServer = await browserType.launchServer(browserOptions);
     const error = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() + '-foo' }).catch(e => e);
     await browserServer.close();
-    expect(error.message).toContain('Most likely ws endpoint is incorrect');
+    expect(error.message).toContain('WebSocket server disconnected');
   });
 
   it('should fire "close" event during kill', async ({browserType, browserOptions}) => {
