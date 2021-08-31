@@ -3524,13 +3524,11 @@ export type AndroidElementInfo = {
 // ----------- JsonPipe -----------
 export type JsonPipeInitializer = {};
 export interface JsonPipeChannel extends Channel {
-  on(event: 'opened', callback: (params: JsonPipeOpenedEvent) => void): this;
   on(event: 'message', callback: (params: JsonPipeMessageEvent) => void): this;
   on(event: 'closed', callback: (params: JsonPipeClosedEvent) => void): this;
   send(params: JsonPipeSendParams, metadata?: Metadata): Promise<JsonPipeSendResult>;
   close(params?: JsonPipeCloseParams, metadata?: Metadata): Promise<JsonPipeCloseResult>;
 }
-export type JsonPipeOpenedEvent = {};
 export type JsonPipeMessageEvent = {
   message: any,
 };
@@ -3547,7 +3545,6 @@ export type JsonPipeCloseOptions = {};
 export type JsonPipeCloseResult = void;
 
 export interface JsonPipeEvents {
-  'opened': JsonPipeOpenedEvent;
   'message': JsonPipeMessageEvent;
   'closed': JsonPipeClosedEvent;
 }

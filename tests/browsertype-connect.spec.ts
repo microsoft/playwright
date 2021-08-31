@@ -64,12 +64,20 @@ test('should be able to connect two browsers at the same time', async ({browserT
   await browser2.close();
 });
 
-test('should timeout while connecting', async ({browserType, startRemoteServer, server}) => {
+test('should timeout in socket while connecting', async ({browserType, startRemoteServer, server}) => {
+  const e = await browserType.connect({
+    wsEndpoint: `ws://localhost:${server.PORT}/ws`,
+    timeout: 1,
+  }).catch(e => e);
+  expect(e.message).toContain('browserType.connect: Opening handshake has timed out');
+});
+
+test('should timeout in connect while connecting', async ({browserType, startRemoteServer, server}) => {
   const e = await browserType.connect({
     wsEndpoint: `ws://localhost:${server.PORT}/ws`,
     timeout: 100,
   }).catch(e => e);
-  expect(e.message).toContain('browserType.connect: Timeout 100ms exceeded.');
+  expect(e.message).toContain('browserType.connect: Timeout 100ms exceeded');
 });
 
 test('should send extra headers with connect request', async ({browserType, startRemoteServer, server}) => {

@@ -36,11 +36,6 @@ export class JsonPipeDispatcher extends Dispatcher<{ guid: string }, channels.Js
     }
   }
 
-  wasOpened(): void {
-    if (!this._disposed)
-      this._dispatchEvent('opened');
-  }
-
   dispatch(message: Object) {
     if (!this._disposed)
       this._dispatchEvent('message', { message });
@@ -52,5 +47,9 @@ export class JsonPipeDispatcher extends Dispatcher<{ guid: string }, channels.Js
       this._dispatchEvent('closed', params);
       this._dispose();
     }
+  }
+
+  dispose() {
+    this._dispose();
   }
 }

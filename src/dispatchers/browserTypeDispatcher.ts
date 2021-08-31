@@ -23,6 +23,7 @@ import { CallMetadata } from '../server/instrumentation';
 import WebSocket from 'ws';
 import { JsonPipeDispatcher } from '../dispatchers/jsonPipeDispatcher';
 import { getUserAgent, makeWaitForNextTask } from '../utils/utils';
+import { ManualPromise } from '../utils/async';
 
 export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.BrowserTypeInitializer, channels.BrowserTypeEvents> implements channels.BrowserTypeChannel {
   constructor(scope: DispatcherScope, browserType: BrowserType) {
@@ -59,13 +60,21 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.Brow
     const ws = new WebSocket(params.wsEndpoint, [], {
       perMessageDeflate: false,
       maxPayload: 256 * 1024 * 1024, // 256Mb,
-      handshakeTimeout: params.timeout || 30000,
+      handshakeTimeout: params.timeout,
       headers: paramsHeaders,
     });
     const pipe = new JsonPipeDispatcher(this._scope);
-    ws.on('open', () => pipe.wasOpened());
+    const openPromise = new ManualPromise<{ pipe: JsonPipeDispatcher }>();
+    ws.on('open', () => openPromise.resolve({ pipe }));
     ws.on('close', () => pipe.wasClosed());
-    ws.on('error', error => pipe.wasClosed(error));
+    ws.on('error', error => {
+      if (openPromise.isDone()) {
+        pipe.wasClosed(error);
+      } else {
+        pipe.dispose();
+        openPromise.reject(error);
+      }
+    });
     pipe.on('close', () => ws.close());
     pipe.on('message', message => ws.send(JSON.stringify(message)));
     ws.addEventListener('message', event => {
@@ -77,6 +86,6 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.Brow
         }
       });
     });
-    return { pipe };
+    return openPromise;
   }
 }
