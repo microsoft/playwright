@@ -52,6 +52,7 @@ export type StepBeginPayload = {
   title: string;
   category: string;
   wallTime: number;  // milliseconds since unix epoch
+  data: { [key: string]: any };
 };
 
 export type StepEndPayload = {

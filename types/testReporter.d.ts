@@ -258,6 +258,7 @@ export interface TestStep {
    * List of steps inside this step.
    */
   steps: TestStep[];
+  data: { [key: string]: any };
 }
 
 /**

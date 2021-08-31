@@ -45,6 +45,7 @@ class Reporter {
       startTime: undefined,
       duration: undefined,
       parent: undefined,
+      data: undefined,
       steps: step.steps.length ? step.steps.map(s => this.distillStep(s)) : undefined,
     };
   }
@@ -228,9 +229,7 @@ test('should report expect steps', async ({ runInlineTest }) => {
     `%% end {\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"browserContext.newPage\",\"category\":\"pw:api\"}]}`,
     `%% begin {\"title\":\"expect.not.toHaveTitle\",\"category\":\"expect\"}`,
-    `%% begin {\"title\":\"page.title\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"page.title\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"expect.not.toHaveTitle\",\"category\":\"expect\",\"steps\":[{\"title\":\"page.title\",\"category\":\"pw:api\"}]}`,
+    `%% end {\"title\":\"expect.not.toHaveTitle\",\"category\":\"expect\"}`,
     `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
     `%% begin {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
@@ -408,6 +407,7 @@ test('should report api step hierarchy', async ({ runInlineTest }) => {
           startTime: undefined,
           duration: undefined,
           parent: undefined,
+          data: undefined,
           steps: step.steps.length ? step.steps.map(s => this.distillStep(s)) : undefined,
         };
       }
@@ -504,6 +504,51 @@ test('should report api step hierarchy', async ({ runInlineTest }) => {
       ],
     },
   ]);
+});
+
+test('should report expect and pw:api stacks', async ({ runInlineTest }, testInfo) => {
+  const expectReporterJS = `
+    class Reporter {
+      stepDetails(step) {
+        if (!step.data.stack || !step.data.stack[0])
+          return step.title + ' <no stack>';
+        const frame = step.data.stack[0]
+        return step.title + ' ' + frame.file + ':' + frame.line + ':' + frame.column;
+      }
+      onStepBegin(test, result, step) {
+        console.log('%%%% begin', this.stepDetails(step));
+      }
+      onStepEnd(test, result, step) {
+        console.log('%%%% end', this.stepDetails(step));
+      }
+    }
+    module.exports = Reporter;
+  `;
+
+  const result = await runInlineTest({
+    'reporter.ts': expectReporterJS,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('pass', async ({ page }) => {
+        await page.setContent('<title>hello</title>');
+        expect(1).toBe(1);
+        await expect(page).toHaveTitle('hello');
+      });
+    `
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toContain(`%% begin page.setContent ${testInfo.outputPath('a.test.ts:7:20')}`);
+  expect(result.output).toContain(`%% end page.setContent ${testInfo.outputPath('a.test.ts:7:20')}`);
+  expect(result.output).toContain(`%% begin expect.toBe ${testInfo.outputPath('a.test.ts:8:19')}`);
+  expect(result.output).toContain(`%% end expect.toBe ${testInfo.outputPath('a.test.ts:8:19')}`);
+  expect(result.output).toContain(`%% begin expect.toHaveTitle ${testInfo.outputPath('a.test.ts:9:28')}`);
+  expect(result.output).toContain(`%% end expect.toHaveTitle ${testInfo.outputPath('a.test.ts:9:28')}`);
 });
 
 function stripEscapedAscii(str: string) {

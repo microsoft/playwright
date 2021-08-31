@@ -20,6 +20,7 @@ import type { LaunchOptions, BrowserContextOptions, Page, BrowserContext, Browse
 import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions } from '../../types/test';
 import { rootTestType } from './testType';
 import { createGuid, removeFolders } from '../utils/utils';
+import { TestInfoImpl } from './types';
 export { expect } from './expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
@@ -197,8 +198,10 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
       else
         await context.tracing.stop();
       (context as any)._csi = {
-        onApiCall: (name: string) => {
-          return (testInfo as any)._addStep('pw:api', name);
+        onApiCall: (stackTrace: ParsedStackTrace) => {
+          if ((testInfo as TestInfoImpl)._currentSteps().some(step => step.category === 'pw:api' || step.category === 'expect'))
+            return () => {};
+          return (testInfo as TestInfoImpl)._addStep('pw:api', stackTrace.apiName, { stack: stackTrace.frames });
         },
       };
     };
@@ -223,7 +226,6 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
     };
 
     // 1. Setup instrumentation and process existing contexts.
-    const oldOnDidCreateContext = (_browserType as any)._onDidCreateContext;
     (_browserType as any)._onDidCreateContext = onDidCreateContext;
     (_browserType as any)._onWillCloseContext = onWillCloseContext;
     (_browserType as any)._defaultContextOptions = _combinedContextOptions;
@@ -257,7 +259,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
 
     // 4. Cleanup instrumentation.
     const leftoverContexts = Array.from((_browserType as any)._contexts) as BrowserContext[];
-    (_browserType as any)._onDidCreateContext = oldOnDidCreateContext;
+    (_browserType as any)._onDidCreateContext = undefined;
     (_browserType as any)._onWillCloseContext = undefined;
     (_browserType as any)._defaultContextOptions = undefined;
     leftoverContexts.forEach(context => (context as any)._csi = undefined);
@@ -346,11 +348,11 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
 });
 export default test;
 
-function formatPendingCalls(calls: ProtocolCall[]) {
+function formatPendingCalls(calls: ParsedStackTrace[]) {
   if (!calls.length)
     return '';
   return 'Pending operations:\n' + calls.map(call => {
-    const frame = call.stack && call.stack[0] ? formatStackFrame(call.stack[0]) : '<unknown>';
+    const frame = call.frames && call.frames[0] ? formatStackFrame(call.frames[0]) : '<unknown>';
     return `  - ${call.apiName} at ${frame}\n`;
   }).join('') + '\n';
 }
@@ -367,7 +369,8 @@ type StackFrame = {
   function?: string,
 };
 
-type ProtocolCall = {
-  stack?: StackFrame[],
-  apiName?: string,
+type ParsedStackTrace = {
+  frames: StackFrame[];
+  frameTexts: string[];
+  apiName: string;
 };
