@@ -484,7 +484,7 @@ it('should filter favicon and favicon redirects', async ({server, browserName, c
   // Browsers aggresively cache favicons, so force bust with the
   // `d` parameter to make iterating on this test more predictable and isolated.
   const favicon = `/favicon.ico`;
-  const hashedFaviconUrl = `/favicon-hashed.ico?d=${Date.now()}`;
+  const hashedFaviconUrl = `/favicon-hashed.ico`;
   server.setRedirect(favicon, hashedFaviconUrl);
   server.setRoute(hashedFaviconUrl, (req, res) => {
     server.serveFile(req, res, asset('media-query-prefers-color-scheme.svg'));

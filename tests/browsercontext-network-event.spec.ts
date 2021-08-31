@@ -114,7 +114,7 @@ it('should not fire events for favicon or favicon redirects', async ({browser, s
   const context = await browser.newContext();
   const page = await context.newPage();
   const favicon = `/favicon.ico`;
-  const hashedFaviconUrl = `/favicon-hashed.ico?d=${Date.now()}`;
+  const hashedFaviconUrl = `/favicon-hashed.ico`;
   const imagePath = `/fakeimage.png`;
   const pagePath = `/page.html`;
   server.setRedirect(favicon, hashedFaviconUrl);
