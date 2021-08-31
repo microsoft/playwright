@@ -16,7 +16,7 @@
 
 import http from 'http';
 import zlib from 'zlib';
-import { Transform, pipeline, PassThrough, Writable } from 'stream';
+import { pipeline } from 'stream';
 import { contextTest as it, expect } from './config/browserTest';
 
 it.skip(({ mode }) => mode !== 'default');
