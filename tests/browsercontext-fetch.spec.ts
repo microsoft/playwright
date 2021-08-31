@@ -15,6 +15,8 @@
  */
 
 import http from 'http';
+import zlib from 'zlib';
+import { Transform, pipeline, PassThrough, Writable } from 'stream';
 import { contextTest as it, expect } from './config/browserTest';
 
 it.skip(({ mode }) => mode !== 'default');
@@ -339,7 +341,7 @@ it('should add default headers', async ({context, server, page}) => {
   expect(request.headers['accept']).toBe('*/*');
   const userAgent = await page.evaluate(() => navigator.userAgent);
   expect(request.headers['user-agent']).toBe(userAgent);
-  expect(request.headers['accept-encoding']).toBe('gzip,deflate');
+  expect(request.headers['accept-encoding']).toBe('gzip,deflate,br');
 });
 
 it('should add default headers to redirects', async ({context, server, page}) => {
@@ -352,7 +354,7 @@ it('should add default headers to redirects', async ({context, server, page}) =>
   expect(request.headers['accept']).toBe('*/*');
   const userAgent = await page.evaluate(() => navigator.userAgent);
   expect(request.headers['user-agent']).toBe(userAgent);
-  expect(request.headers['accept-encoding']).toBe('gzip,deflate');
+  expect(request.headers['accept-encoding']).toBe('gzip,deflate,br');
 });
 
 it('should allow to override default headers', async ({context, server, page}) => {
@@ -444,3 +446,112 @@ it('should resolve url relative to baseURL', async function({browser, server, co
   const response = await context._fetch('/empty.html');
   expect(response.url()).toBe(server.EMPTY_PAGE);
 });
+
+it('should support gzip compression', async function({context, server}) {
+  server.setRoute('/compressed', (req, res) => {
+    res.writeHead(200, {
+      'Content-Encoding': 'gzip',
+      'Content-Type': 'text/plain',
+    });
+
+    const gzip = zlib.createGzip();
+    pipeline(gzip, res, err => {
+      if (err)
+        console.log(`Server error: ${err}`);
+    });
+    gzip.write('Hello, world!');
+    gzip.end();
+  });
+
+  // @ts-expect-error
+  const response = await context._fetch(server.PREFIX + '/compressed');
+  expect(await response.text()).toBe('Hello, world!');
+});
+
+it('should throw informatibe error on corrupted gzip body', async function({context, server}) {
+  server.setRoute('/corrupted', (req, res) => {
+    res.writeHead(200, {
+      'Content-Encoding': 'gzip',
+      'Content-Type': 'text/plain',
+    });
+    res.write('Hello, world!');
+    res.end();
+  });
+
+  // @ts-expect-error
+  const error = await context._fetch(server.PREFIX + '/corrupted').catch(e => e);
+  expect(error.message).toContain(`failed to decompress 'gzip' encoding`);
+});
+
+it('should support brotli compression', async function({context, server}) {
+  server.setRoute('/compressed', (req, res) => {
+    res.writeHead(200, {
+      'Content-Encoding': 'br',
+      'Content-Type': 'text/plain',
+    });
+
+    const brotli = zlib.createBrotliCompress();
+    pipeline(brotli, res, err => {
+      if (err)
+        console.log(`Server error: ${err}`);
+    });
+    brotli.write('Hello, world!');
+    brotli.end();
+  });
+
+  // @ts-expect-error
+  const response = await context._fetch(server.PREFIX + '/compressed');
+  expect(await response.text()).toBe('Hello, world!');
+});
+
+it('should throw informatibe error on corrupted brotli body', async function({context, server}) {
+  server.setRoute('/corrupted', (req, res) => {
+    res.writeHead(200, {
+      'Content-Encoding': 'br',
+      'Content-Type': 'text/plain',
+    });
+    res.write('Hello, world!');
+    res.end();
+  });
+
+  // @ts-expect-error
+  const error = await context._fetch(server.PREFIX + '/corrupted').catch(e => e);
+  expect(error.message).toContain(`failed to decompress 'br' encoding`);
+});
+
+it('should support deflate compression', async function({context, server}) {
+  server.setRoute('/compressed', (req, res) => {
+    res.writeHead(200, {
+      'Content-Encoding': 'deflate',
+      'Content-Type': 'text/plain',
+    });
+
+    const deflate = zlib.createDeflate();
+    pipeline(deflate, res, err => {
+      if (err)
+        console.log(`Server error: ${err}`);
+    });
+    deflate.write('Hello, world!');
+    deflate.end();
+  });
+
+  // @ts-expect-error
+  const response = await context._fetch(server.PREFIX + '/compressed');
+  expect(await response.text()).toBe('Hello, world!');
+});
+
+it('should throw informatibe error on corrupted deflate body', async function({context, server}) {
+  server.setRoute('/corrupted', (req, res) => {
+    res.writeHead(200, {
+      'Content-Encoding': 'deflate',
+      'Content-Type': 'text/plain',
+    });
+    res.write('Hello, world!');
+    res.end();
+  });
+
+  // @ts-expect-error
+  const error = await context._fetch(server.PREFIX + '/corrupted').catch(e => e);
+  expect(error.message).toContain(`failed to decompress 'deflate' encoding`);
+});
+
