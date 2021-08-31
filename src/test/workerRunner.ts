@@ -20,7 +20,7 @@ import rimraf from 'rimraf';
 import util from 'util';
 import colors from 'colors/safe';
 import { EventEmitter } from 'events';
-import { monotonicTime, DeadlineRunner, raceAgainstDeadline, serializeError, sanitizeForFilePath } from './util';
+import { monotonicTime, serializeError, sanitizeForFilePath } from './util';
 import { TestBeginPayload, TestEndPayload, RunPayload, TestEntry, DonePayload, WorkerInitParams, StepBeginPayload, StepEndPayload } from './ipc';
 import { setCurrentTestInfo } from './globals';
 import { Loader } from './loader';
@@ -28,6 +28,7 @@ import { Modifier, Suite, TestCase } from './test';
 import { Annotations, CompleteStepCallback, TestError, TestInfo, TestInfoImpl, WorkerInfo } from './types';
 import { ProjectImpl } from './project';
 import { FixturePool, FixtureRunner } from './fixtures';
+import { DeadlineRunner, raceAgainstDeadline } from '../utils/async';
 
 const removeFolderAsync = util.promisify(rimraf);
 
@@ -59,7 +60,7 @@ export class WorkerRunner extends EventEmitter {
       this._isStopped = true;
 
       // Interrupt current action.
-      this._currentDeadlineRunner?.setDeadline(0);
+      this._currentDeadlineRunner?.interrupt();
 
       // TODO: mark test as 'interrupted' instead.
       if (this._currentTest && this._currentTest.testInfo.status === 'passed')
@@ -97,7 +98,7 @@ export class WorkerRunner extends EventEmitter {
   }
 
   private _deadline() {
-    return this._project.config.timeout ? monotonicTime() + this._project.config.timeout : undefined;
+    return this._project.config.timeout ? monotonicTime() + this._project.config.timeout : 0;
   }
 
   private async _loadIfNeeded() {
@@ -263,7 +264,7 @@ export class WorkerRunner extends EventEmitter {
       setTimeout: (timeout: number) => {
         testInfo.timeout = timeout;
         if (deadlineRunner)
-          deadlineRunner.setDeadline(deadline());
+          deadlineRunner.updateDeadline(deadline());
       },
       _testFinished: new Promise(f => testFinishedCallback = f),
       _addStep: (category: string, title: string) => {
@@ -326,7 +327,7 @@ export class WorkerRunner extends EventEmitter {
     setCurrentTestInfo(testInfo);
 
     const deadline = () => {
-      return testInfo.timeout ? startTime + testInfo.timeout : undefined;
+      return testInfo.timeout ? startTime + testInfo.timeout : 0;
     };
 
     if (reportEvents)
@@ -351,7 +352,7 @@ export class WorkerRunner extends EventEmitter {
 
     if (!result.timedOut) {
       this._currentDeadlineRunner = deadlineRunner = new DeadlineRunner(this._runAfterHooks(test, testInfo), deadline());
-      deadlineRunner.setDeadline(deadline());
+      deadlineRunner.updateDeadline(deadline());
       const hooksResult = await deadlineRunner.result;
       // Do not overwrite test failure upon hook timeout.
       if (hooksResult.timedOut && testInfo.status === 'passed')

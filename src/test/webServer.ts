@@ -17,7 +17,8 @@
 import net from 'net';
 import os from 'os';
 import stream from 'stream';
-import { monotonicTime, raceAgainstDeadline } from './util';
+import { monotonicTime } from './util';
+import { raceAgainstDeadline } from '../utils/async';
 import { WebServerConfig } from '../../types/test';
 import { launchProcess } from '../utils/processLauncher';
 

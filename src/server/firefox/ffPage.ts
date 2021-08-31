@@ -19,7 +19,7 @@ import * as dialog from '../dialog';
 import * as dom from '../dom';
 import * as frames from '../frames';
 import { eventsHelper, RegisteredListener } from '../../utils/eventsHelper';
-import { assert, ManualPromise } from '../../utils/utils';
+import { assert } from '../../utils/utils';
 import { Page, PageBinding, PageDelegate, Worker } from '../page';
 import * as types from '../types';
 import { getAccessibilityTree } from './ffAccessibility';
@@ -32,6 +32,7 @@ import { Protocol } from './protocol';
 import { Progress } from '../progress';
 import { splitErrorMessage } from '../../utils/stackTrace';
 import { debugLogger } from '../../utils/debugLogger';
+import { ManualPromise } from '../../utils/async';
 
 export const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 

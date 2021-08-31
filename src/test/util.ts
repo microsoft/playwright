@@ -21,56 +21,6 @@ import type { TestError, Location } from './types';
 import { default as minimatch } from 'minimatch';
 import { errors } from '../..';
 
-export class DeadlineRunner<T> {
-  private _timer: NodeJS.Timer | undefined;
-  private _done = false;
-  private _fulfill!: (t: { result?: T, timedOut?: boolean }) => void;
-  private _reject!: (error: any) => void;
-
-  readonly result: Promise<{ result?: T, timedOut?: boolean }>;
-
-  constructor(promise: Promise<T>, deadline: number | undefined) {
-    this.result = new Promise((f, r) => {
-      this._fulfill = f;
-      this._reject = r;
-    });
-    promise.then(result => {
-      this._finish({ result });
-    }).catch(e => {
-      this._finish(undefined, e);
-    });
-    this.setDeadline(deadline);
-  }
-
-  private _finish(success?: { result?: T, timedOut?: boolean }, error?: any) {
-    if (this._done)
-      return;
-    this.setDeadline(undefined);
-    if (success)
-      this._fulfill(success);
-    else
-      this._reject(error);
-  }
-
-  setDeadline(deadline: number | undefined) {
-    if (this._timer) {
-      clearTimeout(this._timer);
-      this._timer = undefined;
-    }
-    if (deadline === undefined)
-      return;
-    const timeout = deadline - monotonicTime();
-    if (timeout <= 0)
-      this._finish({ timedOut: true });
-    else
-      this._timer = setTimeout(() => this._finish({ timedOut: true }), timeout);
-  }
-}
-
-export async function raceAgainstDeadline<T>(promise: Promise<T>, deadline: number | undefined): Promise<{ result?: T, timedOut?: boolean }> {
-  return (new DeadlineRunner(promise, deadline)).result;
-}
-
 export async function pollUntilDeadline(testInfo: TestInfoImpl, func: (remainingTime: number) => Promise<boolean>, pollTime: number | undefined, deadlinePromise: Promise<void>): Promise<void> {
   let defaultExpectTimeout = testInfo.project.expect?.timeout;
   if (typeof defaultExpectTimeout === 'undefined')
