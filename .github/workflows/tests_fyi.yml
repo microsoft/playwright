@@ -47,7 +47,7 @@ jobs:
       fail-fast: false
       matrix:
         shard: [1, 2]
-    runs-on: macos-10.15
+    runs-on: macos-11
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
