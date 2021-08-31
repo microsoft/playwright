@@ -38,10 +38,10 @@ export async function stopProfiling(workerIndex: number | undefined) {
   if (!profileDir)
     return;
 
-  await new Promise<void>(f => session.post('Profiler.stop', async (err, { profile }) => {
+  await new Promise<void>(f => session.post('Profiler.stop', (err, { profile }) => {
     if (!err) {
-      await fs.promises.mkdir(profileDir, { recursive: true });
-      await fs.promises.writeFile(path.join(profileDir, workerIndex === undefined ? 'runner.json' : 'worker' + workerIndex + '.json'), JSON.stringify(profile));
+      fs.mkdirSync(profileDir, { recursive: true });
+      fs.writeFileSync(path.join(profileDir, workerIndex === undefined ? 'runner.json' : 'worker' + workerIndex + '.json'), JSON.stringify(profile));
     }
     f();
   }));

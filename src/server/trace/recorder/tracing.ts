@@ -190,19 +190,18 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
       const state = this._recording!;
       const zipFile = new yazl.ZipFile();
       const failedPromise = new Promise<Artifact>((_, reject) => (zipFile as any as EventEmitter).on('error', reject));
-      const succeededPromise = new Promise<Artifact>(async fulfill => {
+      const succeededPromise = new Promise<Artifact>(fulfill => {
         zipFile.addFile(state.traceFile, 'trace.trace');
         zipFile.addFile(state.networkFile, 'trace.network');
         const zipFileName = state.traceFile + '.zip';
         for (const sha1 of state.sha1s)
           zipFile.addFile(path.join(this._resourcesDir, sha1), path.join('resources', sha1));
         zipFile.end();
-        await new Promise(f => {
-          zipFile.outputStream.pipe(fs.createWriteStream(zipFileName)).on('close', f);
+        zipFile.outputStream.pipe(fs.createWriteStream(zipFileName)).on('close', () => {
+          const artifact = new Artifact(this._context, zipFileName);
+          artifact.reportFinished();
+          fulfill(artifact);
         });
-        const artifact = new Artifact(this._context, zipFileName);
-        artifact.reportFinished();
-        fulfill(artifact);
       });
       return Promise.race([failedPromise, succeededPromise]);
     });
