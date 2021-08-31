@@ -24,7 +24,6 @@ import { getUbuntuVersion } from './ubuntuVersion';
 import { getFromENV, getAsBooleanFromENV, calculateSha1, removeFolders, existsAsync, hostPlatform, canAccessFile, spawnAsync, fetchData, wrapInASCIIBox } from './utils';
 import { DependencyGroup, installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
 import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
-import defaultBrowsers from '../../browsers.json';
 
 const PACKAGE_PATH = path.join(__dirname, '..', '..');
 const BIN_PATH = path.join(__dirname, '..', '..', 'bin');
@@ -693,4 +692,4 @@ export async function installDefaultBrowsersForNpmInstall() {
   await registry.install();
 }
 
-export const registry = new Registry(defaultBrowsers);
+export const registry = new Registry(require('../../browsers.json'));
