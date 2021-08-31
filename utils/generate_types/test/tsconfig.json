@@ -3,7 +3,6 @@
     "strict": true,
     "target": "ES2019",
     "noEmit": true,
-    "resolveJsonModule": true,
     "moduleResolution": "node"
   },
   "include": [
