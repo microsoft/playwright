@@ -83,14 +83,18 @@ function copyFile({from, to}) {
   });
 }
 
-if (process.argv.length !== 3) {
-  console.log('ERROR: expected a path to the directory with browser build');
-  process.exit(1);
-  return;
-}
+module.exports = { installFirefoxPreferences };
 
-installFirefoxPreferences(process.argv[2]).catch(error => {
-  console.error('ERROR: failed to put preferences!');
-  console.error(error);
-  process.exit(1);
-});
+if (require.main === module) {
+  if (process.argv.length !== 3) {
+    console.log('ERROR: expected a path to the directory with browser build');
+    process.exit(1);
+    return;
+  }
+
+  installFirefoxPreferences(process.argv[2]).catch(error => {
+    console.error('ERROR: failed to put preferences!');
+    console.error(error);
+    process.exit(1);
+  });
+}

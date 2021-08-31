@@ -14,8 +14,25 @@ const existsAsync = path => new Promise(resolve => fs.stat(path, err => resolve(
 const __filename = URL.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+if (process.argv[2] === '--help' || process.argv[2] === '-h') {
+  console.log(`usage: ${path.basename(process.argv[1])} [firefox|ff|firefox-beta|ff-beta] [build number] [build platform]`);
+  console.log(``);
+  console.log(`Repackages Firefox with tip-of-tree Juggler implementation`);
+  process.exit(1);
+}
+
+let browserName = '';
+if (process.argv[2] === 'firefox' || process.argv[2] === 'ff') {
+  browserName = 'firefox';
+} else if (process.argv[2] === 'firefox-beta' || process.argv[2] === 'ff-beta') {
+  browserName = 'firefox-beta';
+} else {
+  console.error('ERROR: unknown firefox to repackage - either "firefox", "ff", "firefox-beta" or "ff-beta" is allowed as first argument');
+  process.exit(1);
+}
+
 // Path to jar.mn in the juggler
-const JARMN_PATH = path.join(__dirname, 'juggler', 'jar.mn');
+const JARMN_PATH = path.join(__dirname, browserName, 'juggler', 'jar.mn');
 // Workdir for Firefox repackaging
 const BUILD_DIRECTORY = `/tmp/repackaged-firefox`;
 // Information about currently downloaded build
@@ -30,7 +47,6 @@ const OMNI_JUGGLER_DIR = path.join(OMNI_EXTRACT_DIR, 'chrome', 'juggler');
 const EXECUTABLE_PATHS = {
   'ubuntu18.04': ['firefox', 'firefox'],
   'ubuntu20.04': ['firefox', 'firefox'],
-  'mac10.13': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
   'mac10.14': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
   'mac10.15': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
   'mac11': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
@@ -40,59 +56,55 @@ const EXECUTABLE_PATHS = {
 };
 
 const DOWNLOAD_URLS = {
-  'ubuntu18.04': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-ubuntu-18.04.zip',
-  'ubuntu20.04': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-ubuntu-20.04.zip',
-  'mac10.13': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-mac-10.14.zip',
-  'mac10.14': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-mac-10.14.zip',
-  'mac10.15': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-mac-10.14.zip',
-  'mac11': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-mac-10.14.zip',
-  'mac11-arm64': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-mac-11.0-arm64.zip',
-  'win32': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-win32.zip',
-  'win64': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-win64.zip',
+  'firefox': {
+    'ubuntu18.04': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-ubuntu-18.04.zip',
+    'ubuntu20.04': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-ubuntu-20.04.zip',
+    'mac10.14': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-mac-10.14.zip',
+    'mac10.15': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-mac-10.14.zip',
+    'mac11': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-mac-10.14.zip',
+    'mac11-arm64': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-mac-11.0-arm64.zip',
+    'win32': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-win32.zip',
+    'win64': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-win64.zip',
+  },
+  'firefox-beta': {
+    'ubuntu18.04': 'https://playwright.azureedge.net/builds/firefox-beta/%s/firefox-beta-ubuntu-18.04.zip',
+    'ubuntu20.04': 'https://playwright.azureedge.net/builds/firefox-beta/%s/firefox-beta-ubuntu-20.04.zip',
+    'mac10.14': 'https://playwright.azureedge.net/builds/firefox-beta/%s/firefox-beta-mac-10.14.zip',
+    'mac10.15': 'https://playwright.azureedge.net/builds/firefox-beta/%s/firefox-beta-mac-10.14.zip',
+    'mac11': 'https://playwright.azureedge.net/builds/firefox-beta/%s/firefox-beta-mac-10.14.zip',
+    'mac11-arm64': 'https://playwright.azureedge.net/builds/firefox-beta/%s/firefox-beta-mac-11.0-arm64.zip',
+    'win32': 'https://playwright.azureedge.net/builds/firefox-beta/%s/firefox-beta-win32.zip',
+    'win64': 'https://playwright.azureedge.net/builds/firefox-beta/%s/firefox-beta-win64.zip',
+  },
 };
 
-if (process.argv[2] === '--help' || process.argv[2] === '-h') {
-  console.log(`usage: ${path.basename(process.argv[1])} [--prepare] [build number]`);
-  console.log(``);
-  console.log(`Repackages Firefox with tip-of-tree Juggler implementation`);
-  process.exit(1);
-}
-
-if (process.argv[2] === '--prepare')
-  await prepareFirefoxBuild(process.argv[3], process.argv[4]);
-else
-  await repackageJuggler();
-
-async function prepareFirefoxBuild(buildNumber, buildPlatform) {
+async function ensureFirefoxBuild(browserName, buildNumber, buildPlatform) {
   if (!buildNumber)
-    buildNumber = (await fs.promises.readFile(path.join(__dirname, 'BUILD_NUMBER'), 'utf8')).split('\n').shift();
+    buildNumber = (await fs.promises.readFile(path.join(__dirname, browserName, 'BUILD_NUMBER'), 'utf8')).split('\n').shift();
   if (!buildPlatform)
     buildPlatform = getHostPlatform();
-  const currentBuildInfo = await fs.promises.readFile(BUILD_INFO_PATH).then(text => JSON.parse(text)).catch(e => ({ buildPlatform: '', buildNumber: '' }));
+  const currentBuildInfo = await fs.promises.readFile(BUILD_INFO_PATH).then(text => JSON.parse(text)).catch(e => ({ buildPlatform: '', buildNumber: '', browserName: '' }));
 
-  if (currentBuildInfo.buildPlatform === buildPlatform && currentBuildInfo.buildNumber === buildNumber)
-    return;
-  await fs.promises.rm(BUILD_DIRECTORY, { recursive: true }).catch(e => {});
+  if (currentBuildInfo.buildPlatform === buildPlatform && currentBuildInfo.buildNumber === buildNumber && currentBuildInfo.browserName === browserName)
+    return currentBuildInfo;
+  await fs.promises.rmdir(BUILD_DIRECTORY, { recursive: true }).catch(e => {});
   await fs.promises.mkdir(BUILD_DIRECTORY);
   const buildZipPath = path.join(BUILD_DIRECTORY, 'firefox.zip');
 
-  const urlTemplate = DOWNLOAD_URLS[buildPlatform];
+  const urlTemplate = DOWNLOAD_URLS[browserName][buildPlatform];
   if (!urlTemplate)
     throw new Error(`ERROR: repack-juggler does not support ${buildPlatform}`);
   const url = util.format(urlTemplate, buildNumber);
-  console.log(`Downloading Firefox r${buildNumber} for ${buildPlatform} - it might take a few minutes`);
+  console.log(`Downloading ${browserName} r${buildNumber} for ${buildPlatform} - it might take a few minutes`);
   await downloadFile(url, buildZipPath);
   await spawnAsync('unzip', [ buildZipPath ], {cwd: BUILD_DIRECTORY});
-  await fs.promises.writeFile(BUILD_INFO_PATH, JSON.stringify({ buildNumber, buildPlatform }), 'utf8');
+  const buildInfo = { buildNumber, buildPlatform, browserName };
+  await fs.promises.writeFile(BUILD_INFO_PATH, JSON.stringify(buildInfo), 'utf8');
+  return buildInfo;
 }
 
-async function repackageJuggler() {
-  const currentBuildInfo = await fs.promises.readFile(BUILD_INFO_PATH).then(text => JSON.parse(text)).catch(e => null);
-  if (!currentBuildInfo) {
-    console.log('ERROR: build is not prepared!');
-    console.log(`run ${path.basename(process.argv[1])} --prepare`);
-  }
-  const {buildNumber, buildPlatform} = currentBuildInfo;
+async function repackageJuggler(browserName, buildInfo) {
+  const {buildNumber, buildPlatform} = buildInfo;
 
   // Find all omni.ja files in the Firefox build.
   const omniPaths = await spawnAsync('find', ['.', '-name', 'omni.ja'], {
@@ -118,28 +130,32 @@ async function repackageJuggler() {
   }
 
   // Let's repackage omni folder!
-  await fs.promises.rm(OMNI_EXTRACT_DIR, { recursive: true }).catch(e => {});
+  await fs.promises.rmdir(OMNI_EXTRACT_DIR, { recursive: true }).catch(e => {});
   await fs.promises.mkdir(OMNI_EXTRACT_DIR);
 
   await spawnAsync('unzip', [OMNI_BACKUP_PATH], {cwd: OMNI_EXTRACT_DIR });
   // Remove current juggler directory
-  await fs.promises.rm(OMNI_JUGGLER_DIR, { recursive: true });
+  await fs.promises.rmdir(OMNI_JUGGLER_DIR, { recursive: true });
   // Repopulate with tip-of-tree juggler files
   const jarmn = await fs.promises.readFile(JARMN_PATH, 'utf8');
   const jarLines = jarmn.split('\n').map(line => line.trim()).filter(line => line.startsWith('content/') && line.endsWith(')'));
   for (const line of jarLines) {
     const tokens = line.split(/\s+/);
     const toPath = path.join(OMNI_JUGGLER_DIR, tokens[0]);
-    const fromPath = path.join(__dirname, 'juggler', tokens[1].slice(1, -1));
+    const fromPath = path.join(__dirname, browserName, 'juggler', tokens[1].slice(1, -1));
     await fs.promises.mkdir(path.dirname(toPath), { recursive: true});
     await fs.promises.copyFile(fromPath, toPath);
   }
 
-  await fs.promises.rm(omniWithJugglerPath);
+  await fs.promises.unlink(omniWithJugglerPath);
   await spawnAsync('zip', ['-0', '-qr9XD', omniWithJugglerPath, '.'], {cwd: OMNI_EXTRACT_DIR, stdio: 'inherit'});
+
+  const module = await import(path.join(__dirname, browserName, 'install-preferences.js'));
+  await module.default.installFirefoxPreferences(path.join(BUILD_DIRECTORY, 'firefox'));
 
   // Output executable path to be used in test.
   console.log(`
+    browser: ${browserName}
     buildNumber: ${buildNumber}
     buildPlatform: ${buildPlatform}
     executablePath: ${path.join(BUILD_DIRECTORY, ...EXECUTABLE_PATHS[buildPlatform])}
@@ -286,3 +302,11 @@ function getHostPlatform() {
     return os.arch() === 'x64' ? 'win64' : 'win32';
   return platform;
 }
+
+async function main() {
+  const buildInfo = await ensureFirefoxBuild(browserName, process.argv[3], process.argv[4]);
+  await repackageJuggler(browserName, buildInfo);
+}
+
+await main();
+
