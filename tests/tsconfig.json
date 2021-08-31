@@ -3,7 +3,6 @@
         "allowJs": true,
         "checkJs": false,
         "noEmit": true,
-        "resolveJsonModule": true,
         "moduleResolution": "node",
         "target": "ESNext",
         "strictNullChecks": false,
