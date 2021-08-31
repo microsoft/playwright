@@ -1042,7 +1042,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     responseStart: tNumber,
   });
   scheme.ResponseBodyParams = tOptional(tObject({}));
-  scheme.ResponseFinishedParams = tOptional(tObject({}));
   scheme.ResponseSecurityDetailsParams = tOptional(tObject({}));
   scheme.ResponseServerAddrParams = tOptional(tObject({}));
   scheme.SecurityDetails = tObject({

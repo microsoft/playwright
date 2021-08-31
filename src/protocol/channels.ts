@@ -2673,7 +2673,6 @@ export type ResponseInitializer = {
 };
 export interface ResponseChannel extends Channel {
   body(params?: ResponseBodyParams, metadata?: Metadata): Promise<ResponseBodyResult>;
-  finished(params?: ResponseFinishedParams, metadata?: Metadata): Promise<ResponseFinishedResult>;
   securityDetails(params?: ResponseSecurityDetailsParams, metadata?: Metadata): Promise<ResponseSecurityDetailsResult>;
   serverAddr(params?: ResponseServerAddrParams, metadata?: Metadata): Promise<ResponseServerAddrResult>;
 }
@@ -2681,11 +2680,6 @@ export type ResponseBodyParams = {};
 export type ResponseBodyOptions = {};
 export type ResponseBodyResult = {
   binary: Binary,
-};
-export type ResponseFinishedParams = {};
-export type ResponseFinishedOptions = {};
-export type ResponseFinishedResult = {
-  error?: string,
 };
 export type ResponseSecurityDetailsParams = {};
 export type ResponseSecurityDetailsOptions = {};

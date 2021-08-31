@@ -86,9 +86,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     });
     this._channel.on('request', ({ request, page }) => this._onRequest(network.Request.from(request), Page.fromNullable(page)));
     this._channel.on('requestFailed', ({ request, failureText, responseEndTiming, page }) => this._onRequestFailed(network.Request.from(request), responseEndTiming, failureText, Page.fromNullable(page)));
-    this._channel.on('requestFinished', ({ request, response, responseEndTiming, responseHeaders, page, requestSizes }) =>
-      this._onRequestFinished(network.Request.from(request), network.Response.fromNullable(response), responseEndTiming, responseHeaders, requestSizes, Page.fromNullable(page))
-    );
+    this._channel.on('requestFinished', params => this._onRequestFinished(params));
     this._channel.on('response', ({ response, page }) => this._onResponse(network.Response.from(response), Page.fromNullable(page)));
     this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
   }
@@ -126,7 +124,11 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
       page.emit(Events.Page.RequestFailed, request);
   }
 
-  private _onRequestFinished(request: network.Request, response: network.Response | null, responseEndTiming: number, responseHeaders: channels.NameValue[] | undefined, requestSizes: channels.RequestSizes, page: Page | null) {
+  private _onRequestFinished(params: channels.BrowserContextRequestFinishedEvent) {
+    const { requestSizes, responseEndTiming, responseHeaders } = params;
+    const request = network.Request.from(params.request);
+    const response = network.Response.fromNullable(params.response);
+    const page = Page.fromNullable(params.page);
     if (request._timing)
       request._timing.responseEnd = responseEndTiming;
     request._sizes = requestSizes;
@@ -135,6 +137,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     this.emit(Events.BrowserContext.RequestFinished, request);
     if (page)
       page.emit(Events.Page.RequestFinished, request);
+    if (response)
+      response._finishedPromise.resolve();
   }
 
   _onRoute(route: network.Route, request: network.Request) {

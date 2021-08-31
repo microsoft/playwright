@@ -2199,10 +2199,6 @@ Response:
       returns:
         binary: binary
 
-    finished:
-      returns:
-        error: string?
-
     securityDetails:
       returns:
         value: SecurityDetails?

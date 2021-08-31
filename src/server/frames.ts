@@ -275,7 +275,7 @@ export class FrameManager {
     this._page._browserContext.emit(BrowserContext.Events.Response, response);
   }
 
-  requestFinished(request: network.Request, response: network.Response | null) {
+  reportRequestFinished(request: network.Request, response: network.Response | null) {
     this._inflightRequestFinished(request);
     if (request._isFavicon)
       return;
@@ -286,7 +286,7 @@ export class FrameManager {
     // Avoid unnecessary microtask, we want to report finished early for regular redirects.
     if (response?.willWaitForExtraHeaders())
       await response?.waitForExtraHeadersIfNeeded();
-    this._page._browserContext.emit(BrowserContext.Events.RequestFinished,{ request, response });
+    this._page._browserContext.emit(BrowserContext.Events.RequestFinished, { request, response });
   }
 
   requestFailed(request: network.Request, canceled: boolean) {
