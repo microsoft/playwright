@@ -118,6 +118,8 @@ Clicks on the source element at this point relative to the top-left corner of th
 Drops on the target element at this point relative to the top-left corner of the element's padding box. If not specified, some visible point of the element is used.
 
 ## input-checked
+* langs:
+  - alias-csharp: checkedState
 - `checked` <[boolean]>
 
 Whether to check or uncheck the checkbox.
