@@ -57,7 +57,7 @@ export function addTestCommand(program: commander.CommanderStatic) {
   command.option('--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporter}")`);
   command.option('--retries <retries>', `Maximum retry count for flaky tests, zero for no retries (default: no retries)`);
   command.option('--shard <shard>', `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"`);
-  command.option('--project <project-name>', `Only run tests from the specified project (default: run all projects)`);
+  command.option('--project <project-name...>', `Only run tests from the specified list of projects (default: run all projects)`);
   command.option('--timeout <timeout>', `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})`);
   command.option('-u, --update-snapshots', `Update snapshots with actual results (default: only create missing snapshots)`);
   command.option('-x', `Stop after the first failure`);
