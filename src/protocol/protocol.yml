@@ -2852,8 +2852,6 @@ JsonPipe:
 
   events:
 
-    opened:
-
     message:
       parameters:
         message: json
