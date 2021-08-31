@@ -20,6 +20,7 @@ Here is the complete list of actionability checks performed for each action:
 | check | Yes | Yes | Yes | Yes | Yes | - |
 | click | Yes | Yes | Yes | Yes | Yes | - |
 | dblclick | Yes | Yes | Yes | Yes | Yes | - |
+| setChecked | Yes | Yes | Yes | Yes | Yes | - |
 | tap | Yes | Yes | Yes | Yes | Yes | - |
 | uncheck | Yes | Yes | Yes | Yes | Yes | - |
 | hover | Yes | Yes | Yes | Yes | - | - |

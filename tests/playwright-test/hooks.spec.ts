@@ -420,3 +420,76 @@ test('afterAll error should not mask beforeAll', async ({ runInlineTest }) => {
   expect(result.failed).toBe(1);
   expect(result.output).toContain('from beforeAll');
 });
+
+test('beforeAll timeout should be reported', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test.beforeAll(async () => {
+        console.log('\\n%%beforeAll');
+        await new Promise(f => setTimeout(f, 5000));
+      });
+      test.afterAll(() => {
+        console.log('\\n%%afterAll');
+      });
+      test('skipped', () => {
+        console.log('\\n%%test');
+      });
+    `,
+  }, { timeout: 1000 });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%beforeAll',
+    '%%afterAll',
+  ]);
+  expect(result.output).toContain('Timeout of 1000ms exceeded in beforeAll hook.');
+});
+
+test('afterAll timeout should be reported', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test.afterAll(async () => {
+        console.log('\\n%%afterAll');
+        await new Promise(f => setTimeout(f, 5000));
+      });
+      test('runs', () => {
+        console.log('\\n%%test');
+      });
+    `,
+  }, { timeout: 1000 });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%test',
+    '%%afterAll',
+  ]);
+  expect(result.output).toContain('Timeout of 1000ms exceeded in afterAll hook.');
+});
+
+test('beforeAll and afterAll timeouts at the same time should be reported', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test.beforeAll(async () => {
+        console.log('\\n%%beforeAll');
+        await new Promise(f => setTimeout(f, 5000));
+      });
+      test.afterAll(async () => {
+        console.log('\\n%%afterAll');
+        await new Promise(f => setTimeout(f, 5000));
+      });
+      test('skipped', () => {
+        console.log('\\n%%test');
+      });
+    `,
+  }, { timeout: 1000 });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%beforeAll',
+    '%%afterAll',
+  ]);
+  expect(result.output).toContain('Timeout of 1000ms exceeded in beforeAll hook.');
+});

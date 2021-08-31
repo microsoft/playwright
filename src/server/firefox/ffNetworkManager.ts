@@ -116,15 +116,19 @@ export class FFNetworkManager {
     if (!request)
       return;
     const response = request.request._existingResponse()!;
+
+    request.request._sizes.transferSize = event.transferSize;
+    request.request._sizes.responseBodySize = event.transferSize - response.headersSize();
+
     // Keep redirected requests in the map for future reference as redirectedFrom.
     const isRedirected = response.status() >= 300 && response.status() <= 399;
     if (isRedirected) {
-      response._requestFinished(this._relativeTiming(event.responseEndTime), 'Response body is unavailable for redirect responses');
+      response._requestFinished(this._relativeTiming(event.responseEndTime));
     } else {
       this._requests.delete(request._id);
-      response._requestFinished(this._relativeTiming(event.responseEndTime), undefined, event.transferSize);
+      response._requestFinished(this._relativeTiming(event.responseEndTime));
     }
-    this._page._frameManager.requestFinished(request.request);
+    this._page._frameManager.reportRequestFinished(request.request, response);
   }
 
   _onRequestFailed(event: Protocol.Network.requestFailedPayload) {

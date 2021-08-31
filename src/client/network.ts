@@ -21,7 +21,7 @@ import { Frame } from './frame';
 import { Headers, RemoteAddr, SecurityDetails, WaitForEventOptions } from './types';
 import fs from 'fs';
 import * as mime from 'mime';
-import { isString, headersObjectToArray, headersArrayToObject } from '../utils/utils';
+import { isString, headersObjectToArray, headersArrayToObject, ManualPromise } from '../utils/utils';
 import { Events } from './events';
 import { Page } from './page';
 import { Waiter } from './waiter';
@@ -59,6 +59,7 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
   _headers: Headers;
   private _postData: Buffer | null;
   _timing: ResourceTiming;
+  _sizes: RequestSizes = { requestBodySize: 0, requestHeadersSize: 0, responseBodySize: 0, responseHeadersSize: 0, responseTransferSize: 0 };
 
   static from(request: channels.RequestChannel): Request {
     return (request as any)._object;
@@ -167,6 +168,10 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
     return this._timing;
   }
 
+  sizes(): RequestSizes {
+    return this._sizes;
+  }
+
   _finalRequest(): Request {
     return this._redirectedTo ? this._redirectedTo._finalRequest() : this;
   }
@@ -267,18 +272,18 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
     });
   }
 
-  async fulfill(options: { _response?: Response, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}) {
+  async fulfill(options: { response?: Response, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}) {
     return this._wrapApiCall(async (channel: channels.RouteChannel) => {
       let useInterceptedResponseBody;
       let { status: statusOption, headers: headersOption, body: bodyOption } = options;
-      if (options._response) {
-        statusOption ||= options._response.status();
-        headersOption ||= options._response.headers();
+      if (options.response) {
+        statusOption ||= options.response.status();
+        headersOption ||= options.response.headers();
         if (options.body === undefined && options.path === undefined) {
-          if (options._response === this._interceptedResponse)
+          if (options.response === this._interceptedResponse)
             useInterceptedResponseBody = true;
           else
-            bodyOption = await options._response.body();
+            bodyOption = await options.response.body();
         }
       }
 
@@ -368,9 +373,18 @@ export type ResourceTiming = {
   responseEnd: number;
 };
 
+export type RequestSizes = {
+  requestBodySize: number;
+  requestHeadersSize: number;
+  responseBodySize: number;
+  responseHeadersSize: number;
+  responseTransferSize: number;
+};
+
 export class Response extends ChannelOwner<channels.ResponseChannel, channels.ResponseInitializer> implements api.Response {
-  private _headers: Headers;
+  _headers: Headers;
   private _request: Request;
+  readonly _finishedPromise = new ManualPromise<void>();
 
   static from(response: channels.ResponseChannel): Response {
     return (response as any)._object;
@@ -408,13 +422,8 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
     return { ...this._headers };
   }
 
-  async finished(): Promise<Error | null> {
-    return this._wrapApiCall(async (channel: channels.ResponseChannel) => {
-      const result = await channel.finished();
-      if (result.error)
-        return new Error(result.error);
-      return null;
-    });
+  async finished(): Promise<null> {
+    return this._finishedPromise.then(() => null);
   }
 
   async body(): Promise<Buffer> {

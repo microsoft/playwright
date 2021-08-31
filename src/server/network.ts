@@ -16,7 +16,7 @@
 
 import * as frames from './frames';
 import * as types from './types';
-import { assert } from '../utils/utils';
+import { assert, ManualPromise } from '../utils/utils';
 import { SdkObject } from './instrumentation';
 
 export function filterCookies(cookies: types.NetworkCookie[], urls: string[]): types.NetworkCookie[] {
@@ -78,10 +78,15 @@ export function stripFragmentFromUrl(url: string): string {
   return url.substring(0, url.indexOf('#'));
 }
 
+type RequestSizes = {
+  responseBodySize: number;
+  transferSize: number;
+};
+
 export class Request extends SdkObject {
   private _response: Response | null = null;
   private _redirectedFrom: Request | null;
-  private _redirectedTo: Request | null = null;
+  _redirectedTo: Request | null = null;
   readonly _documentId?: string;
   readonly _isFavicon: boolean;
   _failureText: string | null = null;
@@ -92,9 +97,9 @@ export class Request extends SdkObject {
   private _headers: types.HeadersArray;
   private _headersMap = new Map<string, string>();
   private _frame: frames.Frame;
-  private _waitForResponsePromise: Promise<Response | null>;
-  private _waitForResponsePromiseCallback: (value: Response | null) => void = () => {};
+  private _waitForResponsePromise = new ManualPromise<Response | null>();
   _responseEndTiming = -1;
+  _sizes: RequestSizes = { responseBodySize: 0, transferSize: 0 };
 
   constructor(frame: frames.Frame, redirectedFrom: Request | null, documentId: string | undefined,
     url: string, resourceType: string, method: string, postData: Buffer | null, headers: types.HeadersArray) {
@@ -112,13 +117,12 @@ export class Request extends SdkObject {
     this._headers = headers;
     for (const { name, value } of this._headers)
       this._headersMap.set(name.toLowerCase(), value);
-    this._waitForResponsePromise = new Promise(f => this._waitForResponsePromiseCallback = f);
     this._isFavicon = url.endsWith('/favicon.ico') || !!redirectedFrom?._isFavicon;
   }
 
   _setFailureText(failureText: string) {
     this._failureText = failureText;
-    this._waitForResponsePromiseCallback(null);
+    this._waitForResponsePromise.resolve(null);
   }
 
   url(): string {
@@ -145,7 +149,7 @@ export class Request extends SdkObject {
     return this._headersMap.get(name);
   }
 
-  response(): Promise<Response | null> {
+  response(): PromiseLike<Response | null> {
     return this._waitForResponsePromise;
   }
 
@@ -155,7 +159,7 @@ export class Request extends SdkObject {
 
   _setResponse(response: Response) {
     this._response = response;
-    this._waitForResponsePromiseCallback(response);
+    this._waitForResponsePromise.resolve(response);
   }
 
   _finalRequest(): Request {
@@ -192,6 +196,32 @@ export class Request extends SdkObject {
       this._headers.push({ name: 'host', value: host });
       this._headersMap.set('host', host);
     }
+  }
+
+  bodySize(): number {
+    return this.postDataBuffer()?.length || 0;
+  }
+
+  headersSize(): number {
+    if (!this._response)
+      return 0;
+    let headersSize = 4; // 4 = 2 spaces + 2 line breaks (GET /path \r\n)
+    headersSize += this.method().length;
+    headersSize += (new URL(this.url())).pathname.length;
+    headersSize += 8; // httpVersion
+    for (const header of this._headers)
+      headersSize += header.name.length + header.value.length + 4; // 4 = ': ' + '\r\n'
+    return headersSize;
+  }
+
+  sizes() {
+    return {
+      requestBodySize: this.bodySize(),
+      requestHeadersSize: this.headersSize(),
+      responseBodySize: this._sizes.responseBodySize,
+      responseHeadersSize: this._existingResponse()!.headersSize(),
+      responseTransferSize: this._sizes.transferSize,
+    };
   }
 }
 
@@ -289,8 +319,7 @@ export type SecurityDetails = {
 export class Response extends SdkObject {
   private _request: Request;
   private _contentPromise: Promise<Buffer> | null = null;
-  _finishedPromise: Promise<{ error?: string }>;
-  private _finishedPromiseCallback: (arg: { error?: string }) => void = () => {};
+  _finishedPromise = new ManualPromise<void>();
   private _status: number;
   private _statusText: string;
   private _url: string;
@@ -298,12 +327,10 @@ export class Response extends SdkObject {
   private _headersMap = new Map<string, string>();
   private _getResponseBodyCallback: GetResponseBodyCallback;
   private _timing: ResourceTiming;
-  private _serverAddrPromise: Promise<RemoteAddr|undefined>;
-  private _serverAddrPromiseCallback: (arg?: RemoteAddr) => void = () => {};
-  private _securityDetailsPromise: Promise<SecurityDetails|undefined>;
-  private _securityDetailsPromiseCallback: (arg?: SecurityDetails) => void = () => {};
-  _httpVersion: string | undefined;
-  _transferSize: number | undefined;
+  private _serverAddrPromise = new ManualPromise<RemoteAddr | undefined>();
+  private _securityDetailsPromise = new ManualPromise<SecurityDetails | undefined>();
+  private _extraHeadersPromise: ManualPromise<void> | undefined;
+  private _httpVersion: string | undefined;
 
   constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback, httpVersion?: string) {
     super(request.frame(), 'response');
@@ -316,35 +343,44 @@ export class Response extends SdkObject {
     for (const { name, value } of this._headers)
       this._headersMap.set(name.toLowerCase(), value);
     this._getResponseBodyCallback = getResponseBodyCallback;
-    this._serverAddrPromise = new Promise(f => {
-      this._serverAddrPromiseCallback = f;
-    });
-    this._securityDetailsPromise = new Promise(f => {
-      this._securityDetailsPromiseCallback = f;
-    });
-    this._finishedPromise = new Promise(f => {
-      this._finishedPromiseCallback = f;
-    });
     this._request._setResponse(this);
     this._httpVersion = httpVersion;
   }
 
   _serverAddrFinished(addr?: RemoteAddr) {
-    this._serverAddrPromiseCallback(addr);
+    this._serverAddrPromise.resolve(addr);
   }
 
   _securityDetailsFinished(securityDetails?: SecurityDetails) {
-    this._securityDetailsPromiseCallback(securityDetails);
+    this._securityDetailsPromise.resolve(securityDetails);
   }
 
-  _requestFinished(responseEndTiming: number, error?: string, transferSize?: number) {
+  _requestFinished(responseEndTiming: number) {
     this._request._responseEndTiming = Math.max(responseEndTiming, this._timing.responseStart);
-    this._transferSize = transferSize;
-    this._finishedPromiseCallback({ error });
+    this._finishedPromise.resolve();
   }
 
   _setHttpVersion(httpVersion: string) {
     this._httpVersion = httpVersion;
+  }
+
+  setWillReceiveExtraHeaders() {
+    this._extraHeadersPromise = new ManualPromise();
+  }
+
+  willWaitForExtraHeaders(): boolean {
+    return !!this._extraHeadersPromise && !this._extraHeadersPromise.isDone();
+  }
+
+  async waitForExtraHeadersIfNeeded(): Promise<void> {
+    await this._extraHeadersPromise;
+  }
+
+  extraHeadersReceived(headers: types.HeadersArray) {
+    this._headers = headers;
+    for (const { name, value } of this._headers)
+      this._headersMap.set(name.toLowerCase(), value);
+    this._extraHeadersPromise?.resolve();
   }
 
   url(): string {
@@ -367,10 +403,6 @@ export class Response extends SdkObject {
     return this._headersMap.get(name);
   }
 
-  finished(): Promise<Error | null> {
-    return this._finishedPromise.then(({ error }) => error ? new Error(error) : null);
-  }
-
   timing(): ResourceTiming {
     return this._timing;
   }
@@ -385,9 +417,9 @@ export class Response extends SdkObject {
 
   body(): Promise<Buffer> {
     if (!this._contentPromise) {
-      this._contentPromise = this._finishedPromise.then(async ({ error }) => {
-        if (error)
-          throw new Error(error);
+      this._contentPromise = this._finishedPromise.then(async () => {
+        if (this._request._redirectedTo)
+          throw new Error('Response body is unavailable for redirect responses');
         return this._getResponseBodyCallback();
       });
     }
@@ -400,6 +432,33 @@ export class Response extends SdkObject {
 
   frame(): frames.Frame {
     return this._request.frame();
+  }
+
+  transferSize(): number | undefined {
+    return this._request._sizes.transferSize;
+  }
+
+  bodySize(): number {
+    return this._request._sizes.responseBodySize;
+  }
+
+  httpVersion(): string {
+    if (!this._httpVersion)
+      return 'HTTP/1.1';
+    if (this._httpVersion === 'http/1.1')
+      return 'HTTP/1.1';
+    return this._httpVersion;
+  }
+
+  headersSize(): number {
+    let headersSize = 4; // 4 = 2 spaces + 2 line breaks (HTTP/1.1 200 Ok\r\n)
+    headersSize += 8; // httpVersion;
+    headersSize += 3; // statusCode;
+    headersSize += this.statusText().length;
+    for (const header of this.headers())
+      headersSize += header.name.length + header.value.length + 4; // 4 = ': ' + '\r\n'
+    headersSize += 2; // '\r\n'
+    return headersSize;
   }
 }
 

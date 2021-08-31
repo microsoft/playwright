@@ -437,6 +437,13 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     });
   }
 
+  async setChecked(selector: string, checked: boolean, options?: channels.FrameCheckOptions) {
+    if (checked)
+      await this.check(selector, options);
+    else
+      await this.uncheck(selector, options);
+  }
+
   async waitForTimeout(timeout: number) {
     return this._wrapApiCall(async (channel: channels.FrameChannel) => {
       await new Promise(fulfill => setTimeout(fulfill, timeout));

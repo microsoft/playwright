@@ -246,9 +246,9 @@ class PageAgent {
   }
 
   _filePickerShown(inputElement) {
-    if (inputElement.ownerGlobal.docShell !== this._docShell)
-      return;
     const frame = this._findFrameForNode(inputElement);
+    if (!frame)
+      return;
     this._browserPage.emit('pageFileChooserOpened', {
       executionContextId: frame.mainExecutionContext().id(),
       element: frame.mainExecutionContext().rawValueToRemoteObject(inputElement)

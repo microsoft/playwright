@@ -210,3 +210,19 @@ test('should print flaky timeouts', async ({ runInlineTest }) => {
   expect(result.flaky).toBe(1);
   expect(stripAscii(result.output)).toContain('Timeout of 1000ms exceeded.');
 });
+
+test('should print stack-less errors', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const { test } = pwt;
+      test('foobar', async ({}) => {
+        const e = new Error('Hello');
+        delete e.stack;
+        throw e;
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Hello');
+});

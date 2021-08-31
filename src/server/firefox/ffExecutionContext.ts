@@ -20,6 +20,7 @@ import { FFSession } from './ffConnection';
 import { Protocol } from './protocol';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { parseEvaluationResultValue } from '../common/utilityScriptSerializers';
+import { isSessionClosedError } from '../common/protocolError';
 
 export class FFExecutionContext implements js.ExecutionContextDelegate {
   _session: FFSession;
@@ -103,18 +104,18 @@ function checkException(exceptionDetails?: Protocol.Runtime.ExceptionDetails) {
   if (!exceptionDetails)
     return;
   if (exceptionDetails.value)
-    throw new Error('Evaluation failed: ' + JSON.stringify(exceptionDetails.value));
+    throw new js.JavaScriptErrorInEvaluate(JSON.stringify(exceptionDetails.value));
   else
-    throw new Error('Evaluation failed: ' + exceptionDetails.text + '\n' + exceptionDetails.stack);
+    throw new js.JavaScriptErrorInEvaluate(exceptionDetails.text + '\n' + exceptionDetails.stack);
 }
 
 function rewriteError(error: Error): (Protocol.Runtime.evaluateReturnValue | Protocol.Runtime.callFunctionReturnValue) {
   if (error.message.includes('cyclic object value') || error.message.includes('Object is not serializable'))
     return {result: {type: 'undefined', value: undefined}};
-  if (js.isContextDestroyedError(error))
-    throw new Error('Execution context was destroyed, most likely because of a navigation.');
   if (error instanceof TypeError && error.message.startsWith('Converting circular structure to JSON'))
     rewriteErrorMessage(error, error.message + ' Are you passing a nested JSHandle?');
+  if (!js.isJavaScriptErrorInEvaluate(error) && !isSessionClosedError(error))
+    throw new Error('Execution context was destroyed, most likely because of a navigation.');
   throw error;
 }
 

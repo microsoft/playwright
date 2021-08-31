@@ -262,21 +262,32 @@ it('should include content', async ({ contextFactory, server }, testInfo) => {
   expect(log.entries[1].response.content.compression).toBe(0);
 });
 
-it('should include sizes', async ({ contextFactory, server, browserName, platform }, testInfo) => {
-  it.fixme(browserName === 'webkit' && platform === 'linux', 'blocked by libsoup3');
-
+it('should include sizes', async ({ contextFactory, server, asset }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.PREFIX + '/har.html');
   const log = await getLog();
+  expect(log.entries.length).toBe(2);
+  expect(log.entries[0].request.url.endsWith('har.html')).toBe(true);
+  expect(log.entries[0].request.headersSize).toBeGreaterThanOrEqual(100);
+  expect(log.entries[0].response.bodySize).toBe(fs.statSync(asset('har.html')).size);
+  expect(log.entries[0].response.headersSize).toBeGreaterThanOrEqual(100);
+  expect(log.entries[0].response._transferSize).toBeGreaterThanOrEqual(250);
 
-  expect(log.entries[0].request.headersSize).toBeGreaterThanOrEqual(280);
-  expect(log.entries[0].response.bodySize).toBeGreaterThanOrEqual(96);
-  expect(log.entries[0].response.headersSize).toBe(198);
-  expect(log.entries[0].response._transferSize).toBeGreaterThanOrEqual(294);
+  expect(log.entries[1].request.url.endsWith('one-style.css')).toBe(true);
+  expect(log.entries[1].response.bodySize).toBe(fs.statSync(asset('one-style.css')).size);
+  expect(log.entries[1].response.headersSize).toBeGreaterThanOrEqual(100);
+  expect(log.entries[1].response._transferSize).toBeGreaterThanOrEqual(200);
+});
 
-  expect(log.entries[1].response.bodySize).toBeGreaterThanOrEqual(37);
-  expect(log.entries[1].response.headersSize).toBe(197);
-  expect(log.entries[1].response._transferSize).toBeGreaterThanOrEqual(234);
+it('should work with gzip compression', async ({ contextFactory, server, browserName }, testInfo) => {
+  it.fixme(browserName === 'webkit');
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  server.enableGzip('/simple.json');
+  const response = await page.goto(server.PREFIX + '/simple.json');
+  expect(response.headers()['content-encoding']).toBe('gzip');
+  const log = await getLog();
+  expect(log.entries.length).toBe(1);
+  expect(log.entries[0].response.content.compression).toBe(-20);
 });
 
 it('should calculate time', async ({ contextFactory, server }, testInfo) => {
@@ -286,15 +297,14 @@ it('should calculate time', async ({ contextFactory, server }, testInfo) => {
   expect(log.entries[0].time).toBeGreaterThan(0);
 });
 
-it('should report the correct _transferSize with PNG files', async ({ contextFactory, server, browserName, platform }, testInfo) => {
-  it.fixme(browserName === 'webkit' && platform === 'linux', 'blocked by libsoup3');
+it('should report the correct _transferSize with PNG files', async ({ contextFactory, server, asset }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`
     <img src="${server.PREFIX}/pptr.png" />
   `);
   const log = await getLog();
-  expect(log.entries[1].response._transferSize).toBe(6323);
+  expect(log.entries[1].response._transferSize).toBeGreaterThan(fs.statSync(asset('pptr.png')).size);
 });
 
 it('should have -1 _transferSize when its a failed request', async ({ contextFactory, server }, testInfo) => {
@@ -311,14 +321,14 @@ it('should have -1 _transferSize when its a failed request', async ({ contextFac
   expect(log.entries[1].response._transferSize).toBe(-1);
 });
 
-it('should report the correct body size', async ({ contextFactory, server }, testInfo) => {
+it('should report the correct request body size', async ({ contextFactory, server }, testInfo) => {
   server.setRoute('/api', (req, res) => res.end());
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
   await Promise.all([
-    page.waitForResponse(server.PREFIX + '/api'),
+    page.waitForResponse(server.PREFIX + '/api1'),
     page.evaluate(() => {
-      fetch('/api', {
+      fetch('/api1', {
         method: 'POST',
         body: 'abc123'
       });
@@ -326,6 +336,31 @@ it('should report the correct body size', async ({ contextFactory, server }, tes
   ]);
   const log = await getLog();
   expect(log.entries[1].request.bodySize).toBe(6);
+});
+
+it('should report the correct request body size when the bodySize is 0', async ({ contextFactory, server }, testInfo) => {
+  server.setRoute('/api', (req, res) => res.end());
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  await page.goto(server.EMPTY_PAGE);
+  await Promise.all([
+    page.waitForResponse(server.PREFIX + '/api2'),
+    page.evaluate(() => {
+      fetch('/api2', {
+        method: 'POST',
+        body: ''
+      });
+    })
+  ]);
+  const log = await getLog();
+  expect(log.entries[1].request.bodySize).toBe(0);
+});
+
+it('should report the correct response body size when the bodySize is 0', async ({ contextFactory, server }, testInfo) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  const response = await page.goto(server.EMPTY_PAGE);
+  await response.finished();
+  const log = await getLog();
+  expect(log.entries[0].response.bodySize).toBe(0);
 });
 
 it('should have popup requests', async ({ contextFactory, server }, testInfo) => {

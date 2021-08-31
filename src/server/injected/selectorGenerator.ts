@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type InjectedScript from '../../injected/injectedScript';
-import { elementText } from '../../injected/selectorEvaluator';
+import type InjectedScript from './injectedScript';
+import { elementText } from './selectorEvaluator';
 
 type SelectorToken = {
   engine: string;

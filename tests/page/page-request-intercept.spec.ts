@@ -44,9 +44,10 @@ it('should fulfill response with empty body', async ({page, server, browserName,
   it.skip(browserName === 'chromium' && browserMajorVersion <= 91, 'Fails in Electron that uses old Chromium');
   await page.route('**/*', async route => {
     // @ts-expect-error
-    const _response = await route._continueToResponse({});
+    const response = await route._continueToResponse({});
     await route.fulfill({
-      _response,
+      // @ts-expect-error
+      response,
       status: 201,
       body: ''
     });
@@ -92,7 +93,8 @@ it('should fulfill with any response', async ({page, server, browserName, browse
     // @ts-expect-error
     await route._continueToResponse({});
     await route.fulfill({
-      _response: sampleResponse,
+      // @ts-expect-error
+      response: sampleResponse,
       status: 201,
       contentType: 'text/plain'
     });
@@ -124,8 +126,9 @@ it('should support fulfill after intercept', async ({page, server}) => {
   const requestPromise = server.waitForRequest('/title.html');
   await page.route('**', async route => {
     // @ts-expect-error
-    const _response = await route._continueToResponse();
-    await route.fulfill({ _response });
+    const response = await route._continueToResponse();
+    // @ts-expect-error
+    await route.fulfill({ response });
   });
   const response = await page.goto(server.PREFIX + '/title.html');
   const request = await requestPromise;
@@ -143,8 +146,9 @@ it('should intercept failures', async ({page, browserName, browserMajorVersion, 
   await page.route('**', async route => {
     try {
       // @ts-expect-error
-      const _response = await route._continueToResponse();
-      await route.fulfill({ _response });
+      const response = await route._continueToResponse();
+      // @ts-expect-error
+      await route.fulfill({ response });
     } catch (e) {
       error = e;
     }
@@ -163,13 +167,14 @@ it('should support request overrides', async ({page, server, browserName, browse
   const requestPromise = server.waitForRequest('/empty.html');
   await page.route('**/foo', async route => {
     // @ts-expect-error
-    const _response = await route._continueToResponse({
+    const response = await route._continueToResponse({
       url: server.EMPTY_PAGE,
       method: 'POST',
       headers: {'foo': 'bar'},
       postData: 'my data',
     });
-    await route.fulfill({ _response });
+    // @ts-expect-error
+    await route.fulfill({ response });
   });
   await page.goto(server.PREFIX + '/foo');
   const request = await requestPromise;
@@ -197,7 +202,8 @@ it('should give access to the intercepted response', async ({page, server}) => {
   expect(response.url()).toBe(server.PREFIX + '/title.html');
   expect(response.headers()['content-type']).toBe('text/html; charset=utf-8');
 
-  await Promise.all([route.fulfill({ _response: response }), evalPromise]);
+  // @ts-expect-error
+  await Promise.all([route.fulfill({ response }), evalPromise]);
 });
 
 it('should give access to the intercepted response status text', async ({page, server, browserName}) => {
@@ -220,7 +226,8 @@ it('should give access to the intercepted response status text', async ({page, s
   expect(response.statusText()).toBe('You are awesome');
   expect(response.url()).toBe(server.PREFIX + '/title.html');
 
-  await Promise.all([route.fulfill({ _response: response }), evalPromise]);
+  // @ts-expect-error
+  await Promise.all([route.fulfill({ response }), evalPromise]);
 });
 
 it('should give access to the intercepted response body', async ({page, server}) => {
@@ -238,7 +245,8 @@ it('should give access to the intercepted response body', async ({page, server})
 
   expect((await response.text())).toBe('{"foo": "bar"}\n');
 
-  await Promise.all([route.fulfill({ _response: response }), evalPromise]);
+  // @ts-expect-error
+  await Promise.all([route.fulfill({ response }), evalPromise]);
 });
 
 it('should be abortable after interception', async ({page, server, browserName}) => {
@@ -314,8 +322,9 @@ it('should fulfill original response after redirects', async ({page, browserName
   await page.route('**/*', async route => {
     ++routeCalls;
     // @ts-expect-error
-    const _response = await route._continueToResponse({});
-    await route.fulfill({ _response });
+    const response = await route._continueToResponse({});
+    // @ts-expect-error
+    await route.fulfill({ response });
   });
   const response = await page.goto(server.PREFIX + '/redirect/1.html');
   expect(requestUrls).toEqual(expectedUrls);

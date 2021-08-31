@@ -23,7 +23,7 @@ import { CRBrowser } from '../server/chromium/crBrowser';
 import { PageDispatcher } from './pageDispatcher';
 import { CallMetadata } from '../server/instrumentation';
 
-export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserInitializer> implements channels.BrowserChannel {
+export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserInitializer, channels.BrowserEvents> implements channels.BrowserChannel {
   constructor(scope: DispatcherScope, browser: Browser) {
     super(scope, browser, 'Browser', { version: browser.version(), name: browser.options.name }, true);
     browser.on(Browser.Events.Disconnected, () => this._didClose());

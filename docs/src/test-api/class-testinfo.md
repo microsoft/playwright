@@ -97,7 +97,7 @@ An error thrown during test execution, if any.
 - type: <[TestStatus]<"passed"|"failed"|"timedOut"|"skipped">>
 
 Expected status for the currently running test. This is usually `'passed'`, except for a few cases:
-* `'skipped'` for skipped tests, e.g. with [`method: Test.skip`];
+* `'skipped'` for skipped tests, e.g. with [`method: Test.skip#2`];
 * `'failed'` for tests marked as failed with [`method: Test.fail`].
 
 Expected status is usually compared with the actual [`property: TestInfo.status`]:
@@ -246,7 +246,7 @@ Timeout in milliseconds.
 
 ## method: TestInfo.skip
 
-Skips the currently running test. This is similar to [`method: Test.skip`].
+Skips the currently running test. This is similar to [`method: Test.skip#2`].
 
 ### param: TestInfo.skip.condition
 - `condition` <[void]|[boolean]>

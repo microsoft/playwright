@@ -24,6 +24,7 @@ import { debugLogger, RecentLogsCollector } from '../../utils/debugLogger';
 import { ProtocolLogger } from '../types';
 import { helper } from '../helper';
 import { kBrowserClosedError } from '../../utils/errors';
+import { ProtocolError } from '../common/protocolError';
 
 // WKPlaywright uses this special id to issue Browser.close command which we
 // should ignore.
@@ -101,7 +102,7 @@ export class WKSession extends EventEmitter {
 
   private _disposed = false;
   private readonly _rawSend: (message: any) => void;
-  private readonly _callbacks = new Map<number, {resolve: (o: any) => void, reject: (e: Error) => void, error: Error, method: string}>();
+  private readonly _callbacks = new Map<number, {resolve: (o: any) => void, reject: (e: ProtocolError) => void, error: ProtocolError, method: string}>();
   private _crashed: boolean = false;
 
   override on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
@@ -130,14 +131,14 @@ export class WKSession extends EventEmitter {
     params?: Protocol.CommandParameters[T]
   ): Promise<Protocol.CommandReturnValues[T]> {
     if (this._crashed)
-      throw new Error('Target crashed');
+      throw new ProtocolError(true, 'Target crashed');
     if (this._disposed)
-      throw new Error(`Protocol error (${method}): ${this.errorText}`);
+      throw new ProtocolError(true, `Target closed`);
     const id = this.connection.nextMessageId();
     const messageObj = { id, method, params };
     this._rawSend(messageObj);
     return new Promise<Protocol.CommandReturnValues[T]>((resolve, reject) => {
-      this._callbacks.set(id, {resolve, reject, error: new Error(), method});
+      this._callbacks.set(id, {resolve, reject, error: new ProtocolError(false), method});
     });
   }
 
@@ -156,8 +157,10 @@ export class WKSession extends EventEmitter {
   dispose(disconnected: boolean) {
     if (disconnected)
       this.errorText = 'Browser closed.' + helper.formatBrowserLogs(this.connection._browserLogsCollector.recentLogs());
-    for (const callback of this._callbacks.values())
-      callback.reject(rewriteErrorMessage(callback.error, `Protocol error (${callback.method}): ${this.errorText}`));
+    for (const callback of this._callbacks.values()) {
+      callback.error.sessionClosed = true;
+      callback.reject(rewriteErrorMessage(callback.error, this.errorText));
+    }
     this._callbacks.clear();
     this._disposed = true;
   }
@@ -179,7 +182,7 @@ export class WKSession extends EventEmitter {
   }
 }
 
-export function createProtocolError(error: Error, method: string, protocolError: { message: string; data: any; }): Error {
+export function createProtocolError(error: ProtocolError, method: string, protocolError: { message: string; data: any; }): ProtocolError {
   let message = `Protocol error (${method}): ${protocolError.message}`;
   if ('data' in protocolError)
     message += ` ${JSON.stringify(protocolError.data)}`;

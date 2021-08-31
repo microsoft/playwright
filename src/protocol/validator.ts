@@ -144,10 +144,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     request: tChannel('Request'),
     status: tNumber,
     statusText: tString,
-    headers: tArray(tObject({
-      name: tString,
-      value: tString,
-    })),
+    headers: tArray(tType('NameValue')),
   });
   scheme.FetchResponse = tObject({
     url: tString,
@@ -1045,7 +1042,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     responseStart: tNumber,
   });
   scheme.ResponseBodyParams = tOptional(tObject({}));
-  scheme.ResponseFinishedParams = tOptional(tObject({}));
   scheme.ResponseSecurityDetailsParams = tOptional(tObject({}));
   scheme.ResponseServerAddrParams = tOptional(tObject({}));
   scheme.SecurityDetails = tObject({
@@ -1054,6 +1050,13 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     subjectName: tOptional(tString),
     validFrom: tOptional(tNumber),
     validTo: tOptional(tNumber),
+  });
+  scheme.RequestSizes = tObject({
+    requestBodySize: tNumber,
+    requestHeadersSize: tNumber,
+    responseBodySize: tNumber,
+    responseHeadersSize: tNumber,
+    responseTransferSize: tNumber,
   });
   scheme.RemoteAddr = tObject({
     ipAddress: tString,

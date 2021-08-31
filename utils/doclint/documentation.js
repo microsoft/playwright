@@ -312,6 +312,12 @@ Documentation.Member = class {
     };
     this.async = false;
     this.alias = name;
+    this.overloadIndex = 0;
+    if (name.includes('#')) {
+      const match = name.match(/(.*)#(.*)/);
+      this.alias = match[1];
+      this.overloadIndex = (+match[2]) - 1;
+    }
     /**
      * Param is true and option false
      * @type {Boolean}

@@ -21,7 +21,7 @@ import { Dispatcher, DispatcherScope } from './dispatcher';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { CallMetadata } from '../server/instrumentation';
 
-export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.BrowserTypeInitializer> implements channels.BrowserTypeChannel {
+export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.BrowserTypeInitializer, channels.BrowserTypeEvents> implements channels.BrowserTypeChannel {
   constructor(scope: DispatcherScope, browserType: BrowserType) {
     super(scope, browserType, 'BrowserType', {
       executablePath: browserType.executablePath(),

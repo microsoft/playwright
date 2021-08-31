@@ -32,6 +32,7 @@ export class FFBrowser extends Browser {
   readonly _ffPages: Map<string, FFPage>;
   readonly _contexts: Map<string, FFBrowserContext>;
   private _version = '';
+  private _userAgent: string = '';
 
   static async connect(transport: ConnectionTransport, options: BrowserOptions): Promise<FFBrowser> {
     const connection = new FFConnection(transport, options.protocolLogger, options.browserLogsCollector);
@@ -68,6 +69,7 @@ export class FFBrowser extends Browser {
   async _initVersion() {
     const result = await this._connection.send('Browser.getInfo');
     this._version = result.version.substring(result.version.indexOf('/') + 1);
+    this._userAgent = result.userAgent;
   }
 
   isConnected(): boolean {
@@ -93,6 +95,10 @@ export class FFBrowser extends Browser {
     return this._version;
   }
 
+  userAgent(): string {
+    return this._userAgent;
+  }
+
   _onDetachedFromTarget(payload: Protocol.Browser.detachedFromTargetPayload) {
     const ffPage = this._ffPages.get(payload.targetId)!;
     this._ffPages.delete(payload.targetId);
@@ -104,7 +110,7 @@ export class FFBrowser extends Browser {
     assert(type === 'page');
     const context = browserContextId ? this._contexts.get(browserContextId)! : this._defaultContext as FFBrowserContext;
     assert(context, `Unknown context id:${browserContextId}, _defaultContext: ${this._defaultContext}`);
-    const session = this._connection.createSession(payload.sessionId, type);
+    const session = this._connection.createSession(payload.sessionId);
     const opener = openerId ? this._ffPages.get(openerId)! : null;
     const ffPage = new FFPage(session, context, opener);
     this._ffPages.set(targetId, ffPage);

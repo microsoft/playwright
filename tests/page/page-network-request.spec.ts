@@ -265,3 +265,78 @@ it('should return navigation bit when navigating to image', async ({page, server
   await page.goto(server.PREFIX + '/pptr.png');
   expect(requests[0].isNavigationRequest()).toBe(true);
 });
+
+it('should set bodySize and headersSize', async ({page, server,browserName, platform}) => {
+  await page.goto(server.EMPTY_PAGE);
+  const [request] = await Promise.all([
+    page.waitForEvent('request'),
+    page.evaluate(() => fetch('./get', { method: 'POST', body: '12345'}).then(r => r.text())),
+  ]);
+  await (await request.response()).finished();
+  expect(request.sizes().requestBodySize).toBe(5);
+  expect(request.sizes().requestHeadersSize).toBeGreaterThanOrEqual(300);
+});
+
+it('should should set bodySize to 0 if there was no body', async ({page, server,browserName, platform}) => {
+  await page.goto(server.EMPTY_PAGE);
+  const [request] = await Promise.all([
+    page.waitForEvent('request'),
+    page.evaluate(() => fetch('./get').then(r => r.text())),
+  ]);
+  await (await request.response()).finished();
+  expect(request.sizes().requestBodySize).toBe(0);
+  expect(request.sizes().requestHeadersSize).toBeGreaterThanOrEqual(228);
+});
+
+it('should should set bodySize, headersSize, and transferSize', async ({page, server, browserName, platform}) => {
+  server.setRoute('/get', (req, res) => {
+    // In Firefox, |fetch| will be hanging until it receives |Content-Type| header
+    // from server.
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.end('abc134');
+  });
+  await page.goto(server.EMPTY_PAGE);
+  const [response] = await Promise.all([
+    page.waitForEvent('response'),
+    page.evaluate(async () => fetch('./get').then(r => r.text())),
+    server.waitForRequest('/get'),
+  ]);
+  await response.finished();
+  expect(response.request().sizes().responseBodySize).toBe(6);
+  expect(response.request().sizes().responseHeadersSize).toBeGreaterThanOrEqual(150);
+  expect(response.request().sizes().responseTransferSize).toBeGreaterThanOrEqual(160);
+});
+
+it('should should set bodySize to 0 when there was no response body', async ({page, server, browserName, platform}) => {
+  const response = await page.goto(server.EMPTY_PAGE);
+  await response.finished();
+  expect(response.request().sizes().responseBodySize).toBe(0);
+  expect(response.request().sizes().responseHeadersSize).toBeGreaterThanOrEqual(150);
+  expect(response.request().sizes().responseTransferSize).toBeGreaterThanOrEqual(160);
+});
+
+it('should report raw response headers in redirects', async ({ page, server, browserName }) => {
+  it.skip(browserName === 'webkit', `WebKit won't give us raw headers for redirects`);
+  server.setExtraHeaders('/redirect/1.html', { 'sec-test-header': '1.html' });
+  server.setExtraHeaders('/redirect/2.html', { 'sec-test-header': '2.html' });
+  server.setExtraHeaders('/empty.html', { 'sec-test-header': 'empty.html' });
+  server.setRedirect('/redirect/1.html', '/redirect/2.html');
+  server.setRedirect('/redirect/2.html', '/empty.html');
+
+  const expectedUrls = ['/redirect/1.html', '/redirect/2.html', '/empty.html'].map(s => server.PREFIX + s);
+  const expectedHeaders = ['1.html', '2.html', 'empty.html'];
+
+  const response = await page.goto(server.PREFIX + '/redirect/1.html');
+  await response.finished();
+
+  const redirectChain = [];
+  const headersChain = [];
+  for (let req = response.request(); req; req = req.redirectedFrom()) {
+    redirectChain.unshift(req.url());
+    const res = await req.response();
+    headersChain.unshift(res.headers()['sec-test-header']);
+  }
+
+  expect(redirectChain).toEqual(expectedUrls);
+  expect(headersChain).toEqual(expectedHeaders);
+});

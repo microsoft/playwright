@@ -25,7 +25,8 @@ it('should reject all promises when browser is closed', async ({browserType, bro
   await page.evaluate(() => new Promise(f => setTimeout(f, 0)));
   await browser.close();
   await neverResolves;
-  expect(error.message).toContain('Protocol error');
+  // WebKit under task-set -c 1 is giving browser, rest are giving target.
+  expect(error.message).toContain(' closed');
 });
 
 it('should throw if userDataDir option is passed', async ({browserType, browserOptions}) => {

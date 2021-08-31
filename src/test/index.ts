@@ -288,7 +288,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
 
   context: async ({ browser, video, _artifactsDir }, use, testInfo) => {
     if (testInfo.title === 'beforeAll' || testInfo.title === 'afterAll')
-      throw new Error(`"context" and "page" fixtures are not suppoted in ${testInfo.title}. Use browser.newContext() instead.`);
+      throw new Error(`"context" and "page" fixtures are not supported in ${testInfo.title}. Use browser.newContext() instead.`);
 
     let videoMode = typeof video === 'string' ? video : video.mode;
     if (videoMode === 'retry-with-video')

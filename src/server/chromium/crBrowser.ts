@@ -45,6 +45,7 @@ export class CRBrowser extends Browser {
   private _tracingRecording = false;
   private _tracingPath: string | null = '';
   private _tracingClient: CRSession | undefined;
+  private _userAgent: string = '';
 
   static async connect(transport: ConnectionTransport, options: BrowserOptions, devtools?: CRDevTools): Promise<CRBrowser> {
     const connection = new CRConnection(transport, options.protocolLogger, options.browserLogsCollector);
@@ -57,6 +58,7 @@ export class CRBrowser extends Browser {
     const version = await session.send('Browser.getVersion');
     browser._isMac = version.userAgent.includes('Macintosh');
     browser._version = version.product.substring(version.product.indexOf('/') + 1);
+    browser._userAgent = version.userAgent;
     if (!options.persistent) {
       await session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
       return browser;
@@ -105,6 +107,10 @@ export class CRBrowser extends Browser {
 
   version(): string {
     return this._version;
+  }
+
+  userAgent(): string {
+    return this._userAgent;
   }
 
   isClank(): boolean {

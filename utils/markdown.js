@@ -386,4 +386,31 @@ function generateToc(nodes, h3) {
   return result.join('\n');
 }
 
-module.exports = { parse, render, clone, visitAll, visit, generateToc };
+/**
+ * @param {MarkdownNode[]} nodes
+ * @param {string} language
+ * @return {MarkdownNode[]}
+ */
+function filterNodesForLanguage(nodes, language) {
+  const result = nodes.filter(node => {
+    if (!node.children)
+      return true;
+    for (let i = 0; i < node.children.length; i++) {
+      const child = node.children[i];
+      if (child.type !== 'li' || child.liType !== 'bullet' || !child.text.startsWith('langs:'))
+        continue;
+      const only = child.text.substring('langs:'.length).split(',').map(l => l.trim());
+      node.children.splice(i, 1);
+      return only.includes(language);
+    }
+    return true;
+  });
+  result.forEach(n => {
+    if (!n.children)
+      return;
+    n.children = filterNodesForLanguage(n.children, language);
+  });
+  return result;
+}
+
+module.exports = { parse, render, clone, visitAll, visit, generateToc, filterNodesForLanguage };

@@ -949,7 +949,7 @@ export function waitForSelectorTask(selector: SelectorInfo, state: 'attached' | 
         } else {
           if (elements.length > 1) {
             if (strict)
-              throw new Error(`strict mode violation: selector resolved to ${elements.length} elements.`);
+              throw injected.strictModeViolationError(parsed, elements);
             progress.log(`  selector resolved to ${elements.length} elements. Proceeding with the first one.`);
           }
           progress.log(`  selector resolved to ${visible ? 'visible' : 'hidden'} ${injected.previewNode(element)}`);

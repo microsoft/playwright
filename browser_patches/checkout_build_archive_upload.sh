@@ -382,12 +382,12 @@ function generate_and_upload_browser_build {
   fi
 
   echo "-- building"
-  if ! ./$BROWSER_NAME/build.sh "$EXTRA_BUILD_ARGS"; then
+  if ! ./$BROWSER_NAME/build.sh $EXTRA_BUILD_ARGS; then
     return 22
   fi
 
   echo "-- archiving to $ZIP_PATH"
-  if ! ./$BROWSER_NAME/archive.sh "$ZIP_PATH" "$EXTRA_ARCHIVE_ARGS"; then
+  if ! ./$BROWSER_NAME/archive.sh "$ZIP_PATH" $EXTRA_ARCHIVE_ARGS; then
     return 23
   fi
 
@@ -453,7 +453,7 @@ else
   fi
   # Upload logs only in case of failure and report failure.
   ./upload.sh "${LOG_BLOB_PATH}" ${LOG_PATH} || true
-  send_telegram_message "$BUILD_ALIAS -- ${FAILED_STEP} failed! ❌ <a href='https://playwright.azureedge.net/builds/${LOG_BLOB_PATH}'>${LOG_BLOB_NAME}</a> <a href='$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID'>GitHub Action Logs</a>"
+  send_telegram_message "$BUILD_ALIAS -- ${FAILED_STEP} failed! ❌ <a href='https://playwright.azureedge.net/builds/${LOG_BLOB_PATH}'>${LOG_BLOB_NAME}</a> -- <a href='$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID'>GitHub Action Logs</a>"
   exit 1
 fi
 

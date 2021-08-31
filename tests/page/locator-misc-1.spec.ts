@@ -55,6 +55,15 @@ it('should check the box', async ({ page }) => {
   expect(await page.evaluate('checkbox.checked')).toBe(true);
 });
 
+it('should check the box using setChecked', async ({ page }) => {
+  await page.setContent(`<input id='checkbox' type='checkbox'></input>`);
+  const input = page.locator('input');
+  await input.setChecked(true);
+  expect(await page.evaluate('checkbox.checked')).toBe(true);
+  await input.setChecked(false);
+  expect(await page.evaluate('checkbox.checked')).toBe(false);
+});
+
 it('should uncheck the box', async ({ page }) => {
   await page.setContent(`<input id='checkbox' type='checkbox' checked></input>`);
   const input = page.locator('input');

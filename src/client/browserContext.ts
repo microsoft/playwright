@@ -28,13 +28,14 @@ import { Events } from './events';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { Waiter } from './waiter';
 import { URLMatch, Headers, WaitForEventOptions, BrowserContextOptions, StorageState, LaunchOptions } from './types';
-import { isUnderTest, headersObjectToArray, mkdirIfNeeded, isString } from '../utils/utils';
+import { isUnderTest, headersObjectToArray, mkdirIfNeeded, isString, headersArrayToObject } from '../utils/utils';
 import { isSafeCloseError } from '../utils/errors';
 import * as api from '../../types/types';
 import * as structs from '../../types/structs';
 import { CDPSession } from './cdpSession';
 import { Tracing } from './tracing';
 import type { BrowserType } from './browserType';
+import { Artifact } from './artifact';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel, channels.BrowserContextInitializer> implements api.BrowserContext {
   _pages = new Set<Page>();
@@ -85,7 +86,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     });
     this._channel.on('request', ({ request, page }) => this._onRequest(network.Request.from(request), Page.fromNullable(page)));
     this._channel.on('requestFailed', ({ request, failureText, responseEndTiming, page }) => this._onRequestFailed(network.Request.from(request), responseEndTiming, failureText, Page.fromNullable(page)));
-    this._channel.on('requestFinished', ({ request, responseEndTiming, page }) => this._onRequestFinished(network.Request.from(request), responseEndTiming, Page.fromNullable(page)));
+    this._channel.on('requestFinished', params => this._onRequestFinished(params));
     this._channel.on('response', ({ response, page }) => this._onResponse(network.Response.from(response), Page.fromNullable(page)));
     this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
   }
@@ -123,12 +124,21 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
       page.emit(Events.Page.RequestFailed, request);
   }
 
-  private _onRequestFinished(request: network.Request, responseEndTiming: number, page: Page | null) {
+  private _onRequestFinished(params: channels.BrowserContextRequestFinishedEvent) {
+    const { requestSizes, responseEndTiming, responseHeaders } = params;
+    const request = network.Request.from(params.request);
+    const response = network.Response.fromNullable(params.response);
+    const page = Page.fromNullable(params.page);
     if (request._timing)
       request._timing.responseEnd = responseEndTiming;
+    request._sizes = requestSizes;
+    if (response && responseHeaders)
+      response._headers = headersArrayToObject(responseHeaders, true /* lowerCase */);
     this.emit(Events.BrowserContext.RequestFinished, request);
     if (page)
       page.emit(Events.Page.RequestFinished, request);
+    if (response)
+      response._finishedPromise.resolve();
   }
 
   _onRoute(route: network.Route, request: network.Request) {
@@ -346,7 +356,11 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
         await this._browserType?._onWillCloseContext?.(this);
         if (this._options.recordHar)  {
           const har = await this._channel.harExport();
-          await har.artifact.saveAs({ path: this._options.recordHar.path });
+          const artifact = Artifact.from(har.artifact);
+          if (this.browser()?._remoteType)
+            artifact._isRemote = true;
+          await artifact.saveAs(this._options.recordHar.path);
+          await artifact.delete();
         }
         await channel.close();
         await this._closedPromise;

@@ -26,10 +26,11 @@ import { Page } from './page';
 import * as types from './types';
 import { BrowserContext } from './browserContext';
 import { Progress, ProgressController } from './progress';
-import { assert, constructURLBasedOnBaseURL, makeWaitForNextTask } from '../utils/utils';
+import { assert, constructURLBasedOnBaseURL, makeWaitForNextTask, ManualPromise } from '../utils/utils';
 import { debugLogger } from '../utils/debugLogger';
 import { CallMetadata, internalCallMetadata, SdkObject } from './instrumentation';
 import { ElementStateWithoutStable } from './injected/injectedScript';
+import { isSessionClosedError } from './common/protocolError';
 
 type ContextData = {
   contextPromise: Promise<dom.FrameExecutionContext>;
@@ -73,7 +74,6 @@ export class FrameManager {
   readonly _consoleMessageTags = new Map<string, ConsoleTagHandler>();
   readonly _signalBarriers = new Set<SignalBarrier>();
   private _webSockets = new Map<string, network.WebSocket>();
-  readonly _responses: network.Response[] = [];
   _dialogCounter = 0;
 
   constructor(page: Page) {
@@ -203,7 +203,6 @@ export class FrameManager {
     frame._onClearLifecycle();
     const navigationEvent: NavigationEvent = { url, name, newDocument: frame._currentDocument };
     frame.emit(Frame.Events.Navigation, navigationEvent);
-    this._responses.length = 0;
     if (!initial) {
       debugLogger.log('api', `  navigated to "${url}"`);
       this._page.frameNavigatedToNewDocument(frame);
@@ -273,15 +272,21 @@ export class FrameManager {
   requestReceivedResponse(response: network.Response) {
     if (response.request()._isFavicon)
       return;
-    this._responses.push(response);
     this._page._browserContext.emit(BrowserContext.Events.Response, response);
   }
 
-  requestFinished(request: network.Request) {
+  reportRequestFinished(request: network.Request, response: network.Response | null) {
     this._inflightRequestFinished(request);
     if (request._isFavicon)
       return;
-    this._page._browserContext.emit(BrowserContext.Events.RequestFinished, request);
+    this._dispatchRequestFinished(request, response).catch(() => {});
+  }
+
+  private async _dispatchRequestFinished(request: network.Request, response: network.Response | null) {
+    // Avoid unnecessary microtask, we want to report finished early for regular redirects.
+    if (response?.willWaitForExtraHeaders())
+      await response?.waitForExtraHeadersIfNeeded();
+    this._page._browserContext.emit(BrowserContext.Events.RequestFinished, { request, response });
   }
 
   requestFailed(request: network.Request, canceled: boolean) {
@@ -728,7 +733,7 @@ export class Frame extends SdkObject {
           return adopted;
         } catch (e) {
           // Navigated while trying to adopt the node.
-          if (!js.isContextDestroyedError(e) && !e.message.includes(dom.kUnableToAdoptErrorMessage))
+          if (js.isJavaScriptErrorInEvaluate(e))
             throw e;
           result.dispose();
         }
@@ -1350,11 +1355,12 @@ class RerunnableTask {
       this._contextData.rerunnableTasks.delete(this);
       this._resolve(result);
     } catch (e) {
+      if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e)) {
+        this._contextData.rerunnableTasks.delete(this);
+        this._reject(e);
+      }
+
       // We will try again in the new execution context.
-      if (js.isContextDestroyedError(e))
-        return;
-      this._contextData.rerunnableTasks.delete(this);
-      this._reject(e);
     }
   }
 }
@@ -1362,16 +1368,14 @@ class RerunnableTask {
 class SignalBarrier {
   private _progress: Progress | null;
   private _protectCount = 0;
-  private _promise: Promise<void>;
-  private _promiseCallback = () => {};
+  private _promise = new ManualPromise<void>();
 
   constructor(progress: Progress | null) {
     this._progress = progress;
-    this._promise = new Promise(f => this._promiseCallback = f);
     this.retain();
   }
 
-  waitFor(): Promise<void> {
+  waitFor(): PromiseLike<void> {
     this.release();
     return this._promise;
   }
@@ -1403,7 +1407,7 @@ class SignalBarrier {
   release() {
     --this._protectCount;
     if (!this._protectCount)
-      this._promiseCallback();
+      this._promise.resolve();
   }
 }
 

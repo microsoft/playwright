@@ -19,7 +19,7 @@ import * as dialog from '../dialog';
 import * as dom from '../dom';
 import * as frames from '../frames';
 import { eventsHelper, RegisteredListener } from '../../utils/eventsHelper';
-import { assert } from '../../utils/utils';
+import { assert, ManualPromise } from '../../utils/utils';
 import { Page, PageBinding, PageDelegate, Worker } from '../page';
 import * as types from '../types';
 import { getAccessibilityTree } from './ffAccessibility';
@@ -44,8 +44,7 @@ export class FFPage implements PageDelegate {
   readonly _page: Page;
   readonly _networkManager: FFNetworkManager;
   readonly _browserContext: FFBrowserContext;
-  private _pagePromise: Promise<Page | Error>;
-  private _pageCallback: (pageOrError: Page | Error) => void = () => {};
+  private _pagePromise = new ManualPromise<Page | Error>();
   _initializedPage: Page | null = null;
   private _initializationFailed = false;
   readonly _opener: FFPage | null;
@@ -95,7 +94,6 @@ export class FFPage implements PageDelegate {
       eventsHelper.addEventListener(this._session, 'Page.screencastFrame', this._onScreencastFrame.bind(this)),
 
     ];
-    this._pagePromise = new Promise(f => this._pageCallback = f);
     session.once(FFSessionEvents.Disconnected, () => {
       this._markAsError(new Error('Page closed'));
       this._page._didDisconnect();
@@ -108,7 +106,7 @@ export class FFPage implements PageDelegate {
       // so that anyone who awaits pageOrError got a ready and reported page.
       this._initializedPage = this._page;
       this._page.reportAsNew();
-      this._pageCallback(this._page);
+      this._pagePromise.resolve(this._page);
     });
     // Ideally, we somehow ensure that utility world is created before Page.ready arrives, but currently it is racy.
     // Therefore, we can end up with an initialized page without utility world, although very unlikely.
@@ -124,7 +122,7 @@ export class FFPage implements PageDelegate {
     if (!this._initializedPage) {
       await this._page.initOpener(this._opener);
       this._page.reportAsNew(error);
-      this._pageCallback(error);
+      this._pagePromise.resolve(error);
     }
   }
 
@@ -269,7 +267,7 @@ export class FFPage implements PageDelegate {
   async _onWorkerCreated(event: Protocol.Page.workerCreatedPayload) {
     const workerId = event.workerId;
     const worker = new Worker(this._page, event.url);
-    const workerSession = new FFSession(this._session._connection, 'worker', workerId, (message: any) => {
+    const workerSession = new FFSession(this._session._connection, workerId, (message: any) => {
       this._session.send('Page.sendMessageToWorker', {
         frameId: event.frameId,
         workerId: workerId,

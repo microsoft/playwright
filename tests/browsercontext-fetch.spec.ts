@@ -49,6 +49,60 @@ it('should work', async ({context, server}) => {
   expect(await response.text()).toBe('{"foo": "bar"}\n');
 });
 
+it('should throw on network error', async ({context, server}) => {
+  server.setRoute('/test', (req, res) => {
+    req.socket.destroy();
+  });
+  let error;
+  // @ts-expect-error
+  await context._fetch(server.PREFIX + '/test').catch(e => error = e);
+  expect(error.message).toContain('socket hang up');
+});
+
+it('should throw on network error after redirect', async ({context, server}) => {
+  server.setRedirect('/redirect', '/test');
+  server.setRoute('/test', (req, res) => {
+    req.socket.destroy();
+  });
+  let error;
+  // @ts-expect-error
+  await context._fetch(server.PREFIX + '/redirect').catch(e => error = e);
+  expect(error.message).toContain('socket hang up');
+});
+
+it('should throw on network error when sending body', async ({context, server}) => {
+  server.setRoute('/test', (req, res) => {
+    res.writeHead(200, {
+      'content-length': 4096,
+      'content-type': 'text/html',
+    });
+    res.write('<title>A');
+    res.uncork();
+    req.socket.destroy();
+  });
+  let error;
+  // @ts-expect-error
+  await context._fetch(server.PREFIX + '/test').catch(e => error = e);
+  expect(error.message).toContain('Error: aborted');
+});
+
+it('should throw on network error when sending body after redirect', async ({context, server}) => {
+  server.setRedirect('/redirect', '/test');
+  server.setRoute('/test', (req, res) => {
+    res.writeHead(200, {
+      'content-length': 4096,
+      'content-type': 'text/html',
+    });
+    res.write('<title>A');
+    res.uncork();
+    req.socket.destroy();
+  });
+  let error;
+  // @ts-expect-error
+  await context._fetch(server.PREFIX + '/redirect').catch(e => error = e);
+  expect(error.message).toContain('Error: aborted');
+});
+
 it('should add session cookies to request', async ({context, server}) => {
   await context.addCookies([{
     name: 'username',
@@ -66,6 +120,29 @@ it('should add session cookies to request', async ({context, server}) => {
     context._fetch(`http://www.my.playwright.dev:${server.PORT}/simple.json`),
   ]);
   expect(req.headers.cookie).toEqual('username=John Doe');
+});
+
+it('should not add context cookie if cookie header passed as a parameter', async ({context, server}) => {
+  await context.addCookies([{
+    name: 'username',
+    value: 'John Doe',
+    domain: '.my.playwright.dev',
+    path: '/',
+    expires: -1,
+    httpOnly: false,
+    secure: false,
+    sameSite: 'Lax',
+  }]);
+  const [req] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    // @ts-expect-error
+    context._fetch(`http://www.my.playwright.dev:${server.PORT}/empty.html`, {
+      headers: {
+        'Cookie': 'foo=bar'
+      }
+    }),
+  ]);
+  expect(req.headers.cookie).toEqual('foo=bar');
 });
 
 it('should follow redirects', async ({context, server}) => {
@@ -113,6 +190,66 @@ it('should add cookies from Set-Cookie header', async ({context, page, server}) 
   expect((await page.evaluate(() => document.cookie)).split(';').map(s => s.trim()).sort()).toEqual(['foo=bar', 'session=value']);
 });
 
+it('should handle cookies on redirects', async ({context, server, browserName, isWindows}) => {
+  server.setRoute('/redirect1', (req, res) => {
+    res.setHeader('Set-Cookie', 'r1=v1;SameSite=Lax');
+    res.writeHead(301, { location: '/a/b/redirect2' });
+    res.end();
+  });
+  server.setRoute('/a/b/redirect2', (req, res) => {
+    res.setHeader('Set-Cookie', 'r2=v2;SameSite=Lax');
+    res.writeHead(302, { location: '/title.html' });
+    res.end();
+  });
+  {
+    const [req1, req2, req3] = await Promise.all([
+      server.waitForRequest('/redirect1'),
+      server.waitForRequest('/a/b/redirect2'),
+      server.waitForRequest('/title.html'),
+      // @ts-expect-error
+      context._fetch(`${server.PREFIX}/redirect1`),
+    ]);
+    expect(req1.headers.cookie).toBeFalsy();
+    expect(req2.headers.cookie).toBe('r1=v1');
+    expect(req3.headers.cookie).toBe('r1=v1');
+  }
+  {
+    const [req1, req2, req3] = await Promise.all([
+      server.waitForRequest('/redirect1'),
+      server.waitForRequest('/a/b/redirect2'),
+      server.waitForRequest('/title.html'),
+      // @ts-expect-error
+      context._fetch(`${server.PREFIX}/redirect1`),
+    ]);
+    expect(req1.headers.cookie).toBe('r1=v1');
+    expect(req2.headers.cookie.split(';').map(s => s.trim()).sort()).toEqual(['r1=v1', 'r2=v2']);
+    expect(req3.headers.cookie).toBe('r1=v1');
+  }
+  const cookies = await context.cookies();
+  expect(new Set(cookies)).toEqual(new Set([
+    {
+      'sameSite': (browserName === 'webkit' && isWindows) ? 'None' : 'Lax',
+      'name': 'r2',
+      'value': 'v2',
+      'domain': 'localhost',
+      'path': '/a/b',
+      'expires': -1,
+      'httpOnly': false,
+      'secure': false
+    },
+    {
+      'sameSite': (browserName === 'webkit' && isWindows) ? 'None' : 'Lax',
+      'name': 'r1',
+      'value': 'v1',
+      'domain': 'localhost',
+      'path': '/',
+      'expires': -1,
+      'httpOnly': false,
+      'secure': false
+    }
+  ]));
+});
+
 it('should work with context level proxy', async ({browserOptions, browserType, contextOptions, server, proxyServer}) => {
   server.setRoute('/target.html', async (req, res) => {
     res.end('<title>Served by the proxy</title>');
@@ -158,6 +295,26 @@ it('should work with http credentials', async ({context, server}) => {
   expect(request.url).toBe('/empty.html');
 });
 
+it('should work with setHTTPCredentials', async ({context, browser, server}) => {
+  server.setAuth('/empty.html', 'user', 'pass');
+  // @ts-expect-error
+  const response1 = await context._fetch(server.EMPTY_PAGE);
+  expect(response1.status()).toBe(401);
+
+  await context.setHTTPCredentials({ username: 'user', password: 'pass' });
+  // @ts-expect-error
+  const response2 = await context._fetch(server.EMPTY_PAGE);
+  expect(response2.status()).toBe(200);
+});
+
+it('should return error with wrong credentials', async ({context, browser, server}) => {
+  server.setAuth('/empty.html', 'user', 'pass');
+  await context.setHTTPCredentials({ username: 'user', password: 'wrong' });
+  // @ts-expect-error
+  const response2 = await context._fetch(server.EMPTY_PAGE);
+  expect(response2.status()).toBe(401);
+});
+
 it('should support post data', async ({context, server}) => {
   const [request, response] = await Promise.all([
     server.waitForRequest('/simple.json'),
@@ -171,4 +328,119 @@ it('should support post data', async ({context, server}) => {
   expect((await request.postBody).toString()).toBe('My request');
   expect(response.status()).toBe(200);
   expect(request.url).toBe('/simple.json');
+});
+
+it('should add default headers', async ({context, server, page}) => {
+  const [request] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    // @ts-expect-error
+    context._fetch(server.EMPTY_PAGE)
+  ]);
+  expect(request.headers['accept']).toBe('*/*');
+  const userAgent = await page.evaluate(() => navigator.userAgent);
+  expect(request.headers['user-agent']).toBe(userAgent);
+  expect(request.headers['accept-encoding']).toBe('gzip,deflate');
+});
+
+it('should add default headers to redirects', async ({context, server, page}) => {
+  server.setRedirect('/redirect', '/empty.html');
+  const [request] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    // @ts-expect-error
+    context._fetch(`${server.PREFIX}/redirect`)
+  ]);
+  expect(request.headers['accept']).toBe('*/*');
+  const userAgent = await page.evaluate(() => navigator.userAgent);
+  expect(request.headers['user-agent']).toBe(userAgent);
+  expect(request.headers['accept-encoding']).toBe('gzip,deflate');
+});
+
+it('should allow to override default headers', async ({context, server, page}) => {
+  const [request] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    // @ts-expect-error
+    context._fetch(server.EMPTY_PAGE, {
+      headers: {
+        'User-Agent': 'Playwright',
+        'Accept': 'text/html',
+        'Accept-Encoding': 'br'
+      }
+    })
+  ]);
+  expect(request.headers['accept']).toBe('text/html');
+  expect(request.headers['user-agent']).toBe('Playwright');
+  expect(request.headers['accept-encoding']).toBe('br');
+});
+
+it('should propagate custom headers with redirects', async ({context, server}) => {
+  server.setRedirect('/a/redirect1', '/b/c/redirect2');
+  server.setRedirect('/b/c/redirect2', '/simple.json');
+  const [req1, req2, req3] = await Promise.all([
+    server.waitForRequest('/a/redirect1'),
+    server.waitForRequest('/b/c/redirect2'),
+    server.waitForRequest('/simple.json'),
+    // @ts-expect-error
+    context._fetch(`${server.PREFIX}/a/redirect1`, {headers: {'foo': 'bar'}}),
+  ]);
+  expect(req1.headers['foo']).toBe('bar');
+  expect(req2.headers['foo']).toBe('bar');
+  expect(req3.headers['foo']).toBe('bar');
+});
+
+it('should propagate extra http headers with redirects', async ({context, server}) => {
+  server.setRedirect('/a/redirect1', '/b/c/redirect2');
+  server.setRedirect('/b/c/redirect2', '/simple.json');
+  await context.setExtraHTTPHeaders({ 'My-Secret': 'Value' });
+  const [req1, req2, req3] = await Promise.all([
+    server.waitForRequest('/a/redirect1'),
+    server.waitForRequest('/b/c/redirect2'),
+    server.waitForRequest('/simple.json'),
+    // @ts-expect-error
+    context._fetch(`${server.PREFIX}/a/redirect1`),
+  ]);
+  expect(req1.headers['my-secret']).toBe('Value');
+  expect(req2.headers['my-secret']).toBe('Value');
+  expect(req3.headers['my-secret']).toBe('Value');
+});
+
+it('should throw on invalid header value', async ({context, server}) => {
+  // @ts-expect-error
+  const error = await context._fetch(`${server.PREFIX}/a/redirect1`, {
+    headers: {
+      'foo': 'недопустимое значение',
+    }
+  }).catch(e => e);
+  expect(error.message).toContain('Invalid character in header content');
+});
+
+it('should throw on non-http(s) protocol', async ({context}) => {
+  // @ts-expect-error
+  const error1 = await context._fetch(`data:text/plain,test`).catch(e => e);
+  expect(error1.message).toContain('Protocol "data:" not supported');
+  // @ts-expect-error
+  const error2 = await context._fetch(`file:///tmp/foo`).catch(e => e);
+  expect(error2.message).toContain('Protocol "file:" not supported');
+});
+
+it('should support https', async ({context, httpsServer}) => {
+  const oldValue = process.env['NODE_TLS_REJECT_UNAUTHORIZED'];
+  // https://stackoverflow.com/a/21961005/552185
+  process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
+  try {
+    // @ts-expect-error
+    const response = await context._fetch(httpsServer.EMPTY_PAGE);
+    expect(response.status()).toBe(200);
+  } finally {
+    process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = oldValue;
+  }
+});
+
+it('should resolve url relative to baseURL', async function({browser, server, contextFactory, contextOptions}) {
+  const context = await contextFactory({
+    ...contextOptions,
+    baseURL: server.PREFIX,
+  });
+  // @ts-expect-error
+  const response = await context._fetch('/empty.html');
+  expect(response.url()).toBe(server.EMPTY_PAGE);
 });

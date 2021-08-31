@@ -16,6 +16,7 @@
  */
 
 import { test as it, expect } from './pageTest';
+import { attachFrame } from '../config/utils';
 
 import path from 'path';
 import fs from 'fs';
@@ -65,6 +66,17 @@ it('should emit event once', async ({page, server}) => {
   const [chooser] = await Promise.all([
     new Promise(f => page.once('filechooser', f)),
     page.click('input'),
+  ]);
+  expect(chooser).toBeTruthy();
+});
+
+it('should emit event for iframe', async ({page, server, browserName}) => {
+  it.skip(browserName === 'firefox');
+  const frame = await attachFrame(page, 'frame1', server.EMPTY_PAGE);
+  await frame.setContent(`<input type=file>`);
+  const [chooser] = await Promise.all([
+    new Promise(f => page.once('filechooser', f)),
+    frame.click('input'),
   ]);
   expect(chooser).toBeTruthy();
 });
@@ -126,8 +138,6 @@ it('should work when file input is not attached to DOM', async ({page, asset}) =
 });
 
 it('should not throw when filechooser belongs to iframe', async ({page, server, browserName}) => {
-  it.skip(browserName === 'firefox', 'Firefox ignores filechooser from child frame');
-
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   const frame = page.mainFrame().childFrames()[0];
   await frame.setContent(`

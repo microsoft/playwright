@@ -101,6 +101,10 @@ export class WKBrowser extends Browser {
     return BROWSER_VERSION;
   }
 
+  userAgent(): string {
+    return DEFAULT_USER_AGENT;
+  }
+
   _onDownloadCreated(payload: Protocol.Playwright.downloadCreatedPayload) {
     const page = this._wkPages.get(payload.pageProxyId);
     if (!page)
@@ -153,7 +157,7 @@ export class WKBrowser extends Browser {
       context = this._defaultContext as WKBrowserContext;
     if (!context)
       return;
-    const pageProxySession = new WKSession(this._connection, pageProxyId, `The page has been closed.`, (message: any) => {
+    const pageProxySession = new WKSession(this._connection, pageProxyId, `Target closed`, (message: any) => {
       this._connection.rawSend({ ...message, pageProxyId });
     });
     const opener = event.openerId ? this._wkPages.get(event.openerId) : undefined;

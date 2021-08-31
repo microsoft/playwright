@@ -799,6 +799,29 @@ content.
 ### option: Locator.selectText.force = %%-input-force-%%
 ### option: Locator.selectText.timeout = %%-input-timeout-%%
 
+## async method: Locator.setChecked
+
+This method checks or unchecks an element by performing the following steps:
+1. Ensure that matched element is a checkbox or a radio input. If not, this method throws.
+1. If the element already has the right checked state, this method returns immediately.
+1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is
+   set. If the element is detached during the checks, the whole action is retried.
+1. Scroll the element into view if needed.
+1. Use [`property: Page.mouse`] to click in the center of the element.
+1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
+1. Ensure that the element is now checked or unchecked. If not, this method throws.
+
+When all steps combined have not finished during the specified [`option: timeout`], this method throws a
+[TimeoutError]. Passing zero timeout disables this.
+
+### param: Locator.setChecked.checked = %%-input-checked-%%
+### option: Locator.setChecked.force = %%-input-force-%%
+### option: Locator.setChecked.noWaitAfter = %%-input-no-wait-after-%%
+### option: Locator.setChecked.position = %%-input-position-%%
+### option: Locator.setChecked.strict = %%-input-strict-%%
+### option: Locator.setChecked.timeout = %%-input-timeout-%%
+### option: Locator.setChecked.trial = %%-input-trial-%%
+
 ## async method: Locator.setInputFiles
 
 This method expects `element` to point to an

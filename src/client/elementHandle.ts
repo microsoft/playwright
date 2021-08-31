@@ -217,6 +217,13 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
     });
   }
 
+  async setChecked(checked: boolean, options?: channels.ElementHandleCheckOptions) {
+    if (checked)
+      await this.check(options);
+    else
+      await this.uncheck(options);
+  }
+
   async boundingBox(): Promise<Rect | null> {
     return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
       const value = (await channel.boundingBox()).value;

@@ -41,7 +41,7 @@ it('should emit created and destroyed events', async function({page}) {
   await page.evaluate(workerObj => workerObj.terminate(), workerObj);
   expect(await workerDestroyedPromise).toBe(worker);
   const error = await workerThisObj.getProperty('self').catch(error => error);
-  expect(error.message).toContain('Most likely the worker has been closed.');
+  expect(error.message).toContain('Target closed');
 });
 
 it('should report console logs', async function({page}) {

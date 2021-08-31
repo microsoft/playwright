@@ -72,7 +72,6 @@ const DEPENDENCIES = [
   'https-proxy-agent',
   'jpeg-js',
   'mime',
-  'node-fetch',
   'pngjs',
   'progress',
   'proper-lockfile',

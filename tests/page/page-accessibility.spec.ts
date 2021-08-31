@@ -89,7 +89,7 @@ it('should work with regular text', async ({page, browserName}) => {
 });
 
 it('roledescription', async ({page}) => {
-  await page.setContent('<div tabIndex=-1 aria-roledescription="foo">Hi</div>');
+  await page.setContent('<p tabIndex=-1 aria-roledescription="foo">Hi</p>');
   const snapshot = await page.accessibility.snapshot();
   expect(snapshot.children[0].roledescription).toEqual('foo');
 });

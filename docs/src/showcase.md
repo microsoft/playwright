@@ -26,6 +26,7 @@ title: "Community Showcase"
 ## Tools
 
 * [Applitools](https://applitools.com): Add AI-powered visual assertions and run your Playwright tests on all browser, device, and viewport combinations in parallel, without requiring any setup.
+* [BrowserStack](https://www.browserstack.com/docs/automate/playwright): Run cross-browser Playwright tests in parallel on the BrowserStack cloud
 * [CodeceptJS](https://github.com/Codeception/CodeceptJS): Write scenario-driven Playwright tests with synchronous code
 * [dom-to-playwright](https://github.com/Xiphe/dom-to-playwright) to copy a JSDOM snapshot into a Playwright page.
 * [expected-condition-playwright](https://github.com/elaichenkov/expected-condition-playwright): Supplies a set of common expected conditions that can wait for certain states and conditions
@@ -63,6 +64,7 @@ title: "Community Showcase"
 * [playwright-jest-circus-allure](https://github.com/d-shch/playwright-jest-circus-allure): Example how to use allure-report and jest-circus with playwright
 * [Heroku Playwright Example](https://github.com/mxschmitt/heroku-playwright-example): Example using Playwright on Heroku
 * [Sauce Labs Playwright Example](https://github.com/saucelabs/saucectl-playwright-example): Example using Playwright on Sauce Labs
+* [BrowserStack Playwright Samples](https://github.com/browserstack/playwright-browserstack): Playwright sample tests to run on BrowserStack
 
 ## Guides
 
