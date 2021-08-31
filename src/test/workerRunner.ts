@@ -76,8 +76,10 @@ export class WorkerRunner extends EventEmitter {
       await this._fixtureRunner.teardownScope('test');
       await this._fixtureRunner.teardownScope('worker');
     })(), this._deadline());
-    if (result.timedOut)
-      throw new Error(`Timeout of ${this._project.config.timeout}ms exceeded while shutting down environment`);
+    if (result.timedOut && !this._fatalError)
+      this._fatalError = { message: colors.red(`Timeout of ${this._project.config.timeout}ms exceeded while shutting down environment`) };
+    if (this._fatalError)
+      this.emit('teardownError', { error: this._fatalError });
   }
 
   unhandledError(error: Error | any) {
@@ -502,6 +504,7 @@ export class WorkerRunner extends EventEmitter {
       fatalError: this._fatalError,
     };
     this.emit('done', donePayload);
+    this._fatalError = undefined;
   }
 }
 

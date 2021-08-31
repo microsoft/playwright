@@ -382,3 +382,18 @@ test('test.skip should define a skipped test', async ({ runInlineTest }) => {
   expect(result.skipped).toBe(1);
   expect(result.output).not.toContain('%%dontseethis');
 });
+
+test('should report unhandled rejection during worker shutdown', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      test('unhandled rejection', async () => {
+        new Promise((f, r) => r(new Error('Unhandled')));
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('Error: Unhandled');
+  expect(result.output).toContain('a.test.ts:7:33');
+});
