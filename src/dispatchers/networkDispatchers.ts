@@ -73,10 +73,6 @@ export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseIn
     });
   }
 
-  async finished(): Promise<channels.ResponseFinishedResult> {
-    return await this._object._finishedPromise;
-  }
-
   async body(): Promise<channels.ResponseBodyResult> {
     return { binary: (await this._object.body()).toString('base64') };
   }

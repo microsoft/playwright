@@ -978,10 +978,10 @@ export class WKPage implements PageDelegate {
     const response = request.createResponse(responsePayload);
     response._securityDetailsFinished();
     response._serverAddrFinished();
-    response._requestFinished(responsePayload.timing ? helper.secondsToRoundishMillis(timestamp - request._timestamp) : -1, 'Response body is unavailable for redirect responses');
+    response._requestFinished(responsePayload.timing ? helper.secondsToRoundishMillis(timestamp - request._timestamp) : -1);
     this._requestIdToRequest.delete(request._requestId);
     this._page._frameManager.requestReceivedResponse(response);
-    this._page._frameManager.requestFinished(request.request, response);
+    this._page._frameManager.reportRequestFinished(request.request, response);
   }
 
   _onRequestIntercepted(session: WKSession, event: Protocol.Network.requestInterceptedPayload) {
@@ -1051,12 +1051,12 @@ export class WKPage implements PageDelegate {
       request.request._sizes.transferSize += response.headersSize();
       if (event.metrics?.protocol)
         response._setHttpVersion(event.metrics.protocol);
-      response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp), undefined);
+      response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp));
     }
 
     this._requestIdToResponseReceivedPayloadEvent.delete(request._requestId);
     this._requestIdToRequest.delete(request._requestId);
-    this._page._frameManager.requestFinished(request.request, response);
+    this._page._frameManager.reportRequestFinished(request.request, response);
   }
 
   _onLoadingFailed(event: Protocol.Network.loadingFailedPayload) {

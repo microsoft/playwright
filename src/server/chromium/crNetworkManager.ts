@@ -337,12 +337,12 @@ export class CRNetworkManager {
 
   _handleRequestRedirect(request: InterceptableRequest, responsePayload: Protocol.Network.Response, timestamp: number) {
     const response = this._createResponse(request, responsePayload);
-    response._requestFinished((timestamp - request._timestamp) * 1000, 'Response body is unavailable for redirect responses');
+    response._requestFinished((timestamp - request._timestamp) * 1000);
     this._requestIdToRequest.delete(request._requestId);
     if (request._interceptionId)
       this._attemptedAuthentications.delete(request._interceptionId);
     this._page._frameManager.requestReceivedResponse(response);
-    this._page._frameManager.requestFinished(request.request, response);
+    this._page._frameManager.reportRequestFinished(request.request, response);
   }
 
   _onResponseReceivedExtraInfo(event: Protocol.Network.responseReceivedExtraInfoPayload) {
@@ -377,12 +377,12 @@ export class CRNetworkManager {
     if (response) {
       request.request._sizes.transferSize = event.encodedDataLength;
       request.request._sizes.responseBodySize = event.encodedDataLength - response?.headersSize();
-      response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp), undefined);
+      response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp));
     }
     this._requestIdToRequest.delete(request._requestId);
     if (request._interceptionId)
       this._attemptedAuthentications.delete(request._interceptionId);
-    this._page._frameManager.requestFinished(request.request, response);
+    this._page._frameManager.reportRequestFinished(request.request, response);
   }
 
   _onLoadingFailed(event: Protocol.Network.loadingFailedPayload) {
@@ -596,13 +596,22 @@ class ResponseExtraInfoTracker {
       // This is redirect.
       this._innerResponseReceived(info, event.redirectResponse);
     } else {
-      this._requests.set(event.requestId, {
-        requestId: event.requestId,
+      this._getOrCreateEntry(event.requestId);
+    }
+  }
+
+  _getOrCreateEntry(requestId: string): RequestInfo {
+    let info = this._requests.get(requestId);
+    if (!info) {
+      info = {
+        requestId: requestId,
         responseReceivedExtraInfo: [],
         responses: [],
         sawResponseWithoutConnectionId: false
-      });
+      };
+      this._requests.set(requestId, info);
     }
+    return info;
   }
 
   responseReceived(event: Protocol.Network.responseReceivedPayload) {
@@ -620,9 +629,7 @@ class ResponseExtraInfoTracker {
   }
 
   responseReceivedExtraInfo(event: Protocol.Network.responseReceivedExtraInfoPayload) {
-    const info = this._requests.get(event.requestId);
-    if (!info)
-      return;
+    const info = this._getOrCreateEntry(event.requestId);
     info.responseReceivedExtraInfo.push(event);
     this._patchResponseHeaders(info, info.responseReceivedExtraInfo.length - 1);
     this._checkFinished(info);

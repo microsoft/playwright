@@ -123,12 +123,12 @@ export class FFNetworkManager {
     // Keep redirected requests in the map for future reference as redirectedFrom.
     const isRedirected = response.status() >= 300 && response.status() <= 399;
     if (isRedirected) {
-      response._requestFinished(this._relativeTiming(event.responseEndTime), 'Response body is unavailable for redirect responses');
+      response._requestFinished(this._relativeTiming(event.responseEndTime));
     } else {
       this._requests.delete(request._id);
-      response._requestFinished(this._relativeTiming(event.responseEndTime), undefined);
+      response._requestFinished(this._relativeTiming(event.responseEndTime));
     }
-    this._page._frameManager.requestFinished(request.request, response);
+    this._page._frameManager.reportRequestFinished(request.request, response);
   }
 
   _onRequestFailed(event: Protocol.Network.requestFailedPayload) {

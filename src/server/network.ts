@@ -86,7 +86,7 @@ type RequestSizes = {
 export class Request extends SdkObject {
   private _response: Response | null = null;
   private _redirectedFrom: Request | null;
-  private _redirectedTo: Request | null = null;
+  _redirectedTo: Request | null = null;
   readonly _documentId?: string;
   readonly _isFavicon: boolean;
   _failureText: string | null = null;
@@ -319,7 +319,7 @@ export type SecurityDetails = {
 export class Response extends SdkObject {
   private _request: Request;
   private _contentPromise: Promise<Buffer> | null = null;
-  _finishedPromise = new ManualPromise<{ error?: string }>();
+  _finishedPromise = new ManualPromise<void>();
   private _status: number;
   private _statusText: string;
   private _url: string;
@@ -355,9 +355,9 @@ export class Response extends SdkObject {
     this._securityDetailsPromise.resolve(securityDetails);
   }
 
-  _requestFinished(responseEndTiming: number, error?: string) {
+  _requestFinished(responseEndTiming: number) {
     this._request._responseEndTiming = Math.max(responseEndTiming, this._timing.responseStart);
-    this._finishedPromise.resolve({ error });
+    this._finishedPromise.resolve();
   }
 
   _setHttpVersion(httpVersion: string) {
@@ -403,10 +403,6 @@ export class Response extends SdkObject {
     return this._headersMap.get(name);
   }
 
-  finished(): Promise<Error | null> {
-    return this._finishedPromise.then(({ error }) => error ? new Error(error) : null);
-  }
-
   timing(): ResourceTiming {
     return this._timing;
   }
@@ -421,9 +417,9 @@ export class Response extends SdkObject {
 
   body(): Promise<Buffer> {
     if (!this._contentPromise) {
-      this._contentPromise = this._finishedPromise.then(async ({ error }) => {
-        if (error)
-          throw new Error(error);
+      this._contentPromise = this._finishedPromise.then(async () => {
+        if (this._request._redirectedTo)
+          throw new Error('Response body is unavailable for redirect responses');
         return this._getResponseBodyCallback();
       });
     }

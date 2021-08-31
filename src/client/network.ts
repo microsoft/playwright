@@ -21,7 +21,7 @@ import { Frame } from './frame';
 import { Headers, RemoteAddr, SecurityDetails, WaitForEventOptions } from './types';
 import fs from 'fs';
 import * as mime from 'mime';
-import { isString, headersObjectToArray, headersArrayToObject } from '../utils/utils';
+import { isString, headersObjectToArray, headersArrayToObject, ManualPromise } from '../utils/utils';
 import { Events } from './events';
 import { Page } from './page';
 import { Waiter } from './waiter';
@@ -384,6 +384,7 @@ export type RequestSizes = {
 export class Response extends ChannelOwner<channels.ResponseChannel, channels.ResponseInitializer> implements api.Response {
   _headers: Headers;
   private _request: Request;
+  readonly _finishedPromise = new ManualPromise<void>();
 
   static from(response: channels.ResponseChannel): Response {
     return (response as any)._object;
@@ -421,13 +422,8 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
     return { ...this._headers };
   }
 
-  async finished(): Promise<Error | null> {
-    return this._wrapApiCall(async (channel: channels.ResponseChannel) => {
-      const result = await channel.finished();
-      if (result.error)
-        return new Error(result.error);
-      return null;
-    });
+  async finished(): Promise<null> {
+    return this._finishedPromise.then(() => null);
   }
 
   async body(): Promise<Buffer> {
