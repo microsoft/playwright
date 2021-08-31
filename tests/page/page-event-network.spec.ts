@@ -92,23 +92,23 @@ it('should fire events in proper order', async ({page, server}) => {
 });
 
 it('should support redirects', async ({page, server}) => {
-  const events = [];
-  page.on('request', request => events.push(`${request.method()} ${request.url()}`));
-  page.on('response', response => events.push(`${response.status()} ${response.url()}`));
-  page.on('requestfinished', request => events.push(`DONE ${request.url()}`));
-  page.on('requestfailed', request => events.push(`FAIL ${request.url()}`));
-  server.setRedirect('/foo.html', '/empty.html');
   const FOO_URL = server.PREFIX + '/foo.html';
+  const events = {};
+  events[server.EMPTY_PAGE] = [];
+  events[FOO_URL] = [];
+  page.on('request', request => events[request.url()].push(request.method()));
+  page.on('response', response => events[response.url()].push(response.status()));
+  page.on('requestfinished', request => events[request.url()].push('DONE'));
+  page.on('requestfailed', request => events[request.url()].push('FAIL'));
+
+  server.setRedirect('/foo.html', '/empty.html');
   const response = await page.goto(FOO_URL);
   await response.finished();
-  expect(events).toEqual([
-    `GET ${FOO_URL}`,
-    `302 ${FOO_URL}`,
-    `DONE ${FOO_URL}`,
-    `GET ${server.EMPTY_PAGE}`,
-    `200 ${server.EMPTY_PAGE}`,
-    `DONE ${server.EMPTY_PAGE}`
-  ]);
+
+  const expected = {};
+  expected[FOO_URL] = ['GET', 302, 'DONE'];
+  expected[server.EMPTY_PAGE] = ['GET', 200, 'DONE'];
+  expect(events).toEqual(expected);
   const redirectedFrom = response.request().redirectedFrom();
   expect(redirectedFrom.url()).toContain('/foo.html');
   expect(redirectedFrom.redirectedFrom()).toBe(null);
