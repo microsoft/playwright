@@ -16,10 +16,12 @@
 
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import url from 'url';
+import zlib from 'zlib';
 import * as http from 'http';
 import * as https from 'https';
 import { BrowserContext } from './browserContext';
 import * as types from './types';
+import { pipeline, Readable, Transform } from 'stream';
 
 export async function playwrightFetch(context: BrowserContext, params: types.FetchOptions): Promise<{fetchResponse?: types.FetchResponse, error?: string}> {
   try {
@@ -30,7 +32,7 @@ export async function playwrightFetch(context: BrowserContext, params: types.Fet
     }
     headers['user-agent'] ??= context._options.userAgent || context._browser.userAgent();
     headers['accept'] ??= '*/*';
-    headers['accept-encoding'] ??= 'gzip,deflate';
+    headers['accept-encoding'] ??= 'gzip,deflate,br';
 
     if (context._options.extraHTTPHeaders) {
       for (const {name, value} of context._options.extraHTTPHeaders)
@@ -149,9 +151,31 @@ async function sendRequest(context: BrowserContext, url: URL, options: http.Requ
           return;
         }
       }
+      response.on('aborted', () => reject(new Error('aborted')));
+
+      let body: Readable = response;
+      let transform: Transform | undefined;
+      const encoding = response.headers['content-encoding'];
+      if (encoding === 'gzip' || encoding === 'x-gzip') {
+        transform = zlib.createGunzip({
+          flush: zlib.constants.Z_SYNC_FLUSH,
+          finishFlush: zlib.constants.Z_SYNC_FLUSH
+        });
+      } else if (encoding === 'br') {
+        transform = zlib.createBrotliDecompress();
+      } else if (encoding === 'deflate') {
+        transform = zlib.createInflate();
+      }
+      if (transform) {
+        body = pipeline(response, transform, e => {
+          if (e)
+            reject(new Error(`failed to decompress '${encoding}' encoding: ${e}`));
+        });
+      }
+
       const chunks: Buffer[] = [];
-      response.on('data', chunk => chunks.push(chunk));
-      response.on('end', () => {
+      body.on('data', chunk => chunks.push(chunk));
+      body.on('end', () => {
         const body = Buffer.concat(chunks);
         fulfill({
           url: response.url || url.toString(),
@@ -161,8 +185,7 @@ async function sendRequest(context: BrowserContext, url: URL, options: http.Requ
           body
         });
       });
-      response.on('aborted', () => reject(new Error('aborted')));
-      response.on('error',reject);
+      body.on('error',reject);
     });
     request.on('error', reject);
     if (postData)
