@@ -15,6 +15,12 @@ jobs:
         uses: actions/github-script@v4
         with:
           script: |
+            const commit = await github.git.getCommit({
+              owner: 'microsoft',
+              repo: 'playwright',
+              commit_sha: '${{ github.sha }}',
+            });
+            const commitHeader = commit.message.split('\n')[0];
             const body = `${{ github.sha }} made changes to the client, this needs to get applied in:
             - [ ] Python
             - [ ] Java
@@ -22,6 +28,6 @@ jobs:
             await github.issues.create({
               owner: 'microsoft',
               repo: 'playwright',
-              title: '[Internal] Backport client change to language ports',
+              title: `[Ports] Apply: ${commitHeader}`,
               body,
             });
