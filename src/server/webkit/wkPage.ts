@@ -19,7 +19,7 @@ import * as jpeg from 'jpeg-js';
 import path from 'path';
 import * as png from 'pngjs';
 import { splitErrorMessage } from '../../utils/stackTrace';
-import { assert, createGuid, debugAssert, headersArrayToObject, headersObjectToArray, hostPlatform, ManualPromise } from '../../utils/utils';
+import { assert, createGuid, debugAssert, headersArrayToObject, headersObjectToArray, hostPlatform } from '../../utils/utils';
 import * as accessibility from '../accessibility';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
@@ -41,6 +41,7 @@ import { WKInterceptableRequest, WKRouteImpl } from './wkInterceptableRequest';
 import { WKProvisionalPage } from './wkProvisionalPage';
 import { WKWorkers } from './wkWorkers';
 import { debugLogger } from '../../utils/debugLogger';
+import { ManualPromise } from '../../utils/async';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 const BINDING_CALL_MESSAGE = '__playwright_binding_call__';

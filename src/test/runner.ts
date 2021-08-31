@@ -21,7 +21,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
 import { Dispatcher, TestGroup } from './dispatcher';
-import { createMatcher, FilePatternFilter, monotonicTime, raceAgainstDeadline } from './util';
+import { createMatcher, FilePatternFilter, monotonicTime } from './util';
 import { TestCase, Suite } from './test';
 import { Loader } from './loader';
 import { Reporter } from '../../types/testReporter';
@@ -36,6 +36,7 @@ import { ProjectImpl } from './project';
 import { Minimatch } from 'minimatch';
 import { Config, FullConfig } from './types';
 import { WebServer } from './webServer';
+import { raceAgainstDeadline } from '../utils/async';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -95,7 +96,7 @@ export class Runner {
   async run(list: boolean, filePatternFilters: FilePatternFilter[], projectName?: string): Promise<RunResultStatus> {
     this._reporter = await this._createReporter(list);
     const config = this._loader.fullConfig();
-    const globalDeadline = config.globalTimeout ? config.globalTimeout + monotonicTime() : undefined;
+    const globalDeadline = config.globalTimeout ? config.globalTimeout + monotonicTime() : 0;
     const { result, timedOut } = await raceAgainstDeadline(this._run(list, filePatternFilters, projectName), globalDeadline);
     if (timedOut) {
       if (!this._didBegin)

@@ -16,7 +16,8 @@
 
 import * as frames from './frames';
 import * as types from './types';
-import { assert, ManualPromise } from '../utils/utils';
+import { assert } from '../utils/utils';
+import { ManualPromise } from '../utils/async';
 import { SdkObject } from './instrumentation';
 
 export function filterCookies(cookies: types.NetworkCookie[], urls: string[]): types.NetworkCookie[] {
