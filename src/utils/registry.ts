@@ -24,6 +24,7 @@ import { getUbuntuVersion } from './ubuntuVersion';
 import { getFromENV, getAsBooleanFromENV, calculateSha1, removeFolders, existsAsync, hostPlatform, canAccessFile, spawnAsync, fetchData, wrapInASCIIBox } from './utils';
 import { DependencyGroup, installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
 import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
+import defaultBrowsers from '../../browsers.json';
 
 const PACKAGE_PATH = path.join(__dirname, '..', '..');
 const BIN_PATH = path.join(__dirname, '..', '..', 'bin');
@@ -185,6 +186,16 @@ function isBrowserDirectory(browserDirectory: string): boolean {
   return false;
 }
 
+type BrowsersJSON = {
+  comment: string
+  browsers: {
+    name: string,
+    revision: string,
+    installByDefault: boolean,
+    revisionOverrides?: {[os: string]: string},
+  }[]
+};
+
 type BrowsersJSONDescriptor = {
   name: string,
   revision: string,
@@ -192,9 +203,8 @@ type BrowsersJSONDescriptor = {
   dir: string,
 };
 
-function readDescriptors(packagePath: string) {
-  const browsersJSON = require(path.join(packagePath, 'browsers.json'));
-  return (browsersJSON['browsers'] as any[]).map(obj => {
+function readDescriptors(browsersJSON: BrowsersJSON) {
+  return (browsersJSON['browsers']).map(obj => {
     const name = obj.name;
     const revisionOverride = (obj.revisionOverrides || {})[hostPlatform];
     const revision = revisionOverride || obj.revision;
@@ -238,8 +248,8 @@ interface ExecutableImpl extends Executable {
 export class Registry {
   private _executables: ExecutableImpl[];
 
-  constructor(packagePath: string) {
-    const descriptors = readDescriptors(packagePath);
+  constructor(browsersJSON: BrowsersJSON) {
+    const descriptors = readDescriptors(browsersJSON);
     const findExecutablePath = (dir: string, name: keyof typeof EXECUTABLE_PATHS) => {
       const tokens = EXECUTABLE_PATHS[name][hostPlatform];
       return tokens ? path.join(dir, ...tokens) : undefined;
@@ -616,7 +626,8 @@ export class Registry {
       let linkTarget = '';
       try {
         linkTarget = (await fs.promises.readFile(linkPath)).toString();
-        const descriptors = readDescriptors(linkTarget);
+        const browsersJSON = require(path.join(linkTarget, 'browsers.json'));
+        const descriptors = readDescriptors(browsersJSON);
         for (const browserName of allDownloadable) {
           // We retain browsers if they are found in the descriptor.
           // Note, however, that there are older versions out in the wild that rely on
@@ -682,4 +693,4 @@ export async function installDefaultBrowsersForNpmInstall() {
   await registry.install();
 }
 
-export const registry = new Registry(PACKAGE_PATH);
+export const registry = new Registry(defaultBrowsers);
