@@ -22550,6 +22550,73 @@ index 02fa9bff0ab4bd094fd9498b042e06f35c25e7fc..f33f29a9a26d1219aa5780b186079235
      ruby
  
      # These are dependencies necessary for running tests.
+diff --git a/Tools/jhbuild/jhbuild-minimal.modules b/Tools/jhbuild/jhbuild-minimal.modules
+index dc7ee36b969f6490d96df4d5310e6b81124a4a94..3ba44482a67059f7a6bd64241ff6f6f27fe8f2d5 100644
+--- a/Tools/jhbuild/jhbuild-minimal.modules
++++ b/Tools/jhbuild/jhbuild-minimal.modules
+@@ -6,6 +6,7 @@
+   <metamodule id="webkitgtk-minimal-dependencies">
+     <dependencies>
+       <dep package="wpebackend-fdo"/>
++      <dep package="icu"/>
+       <dep package="libsoup"/>
+       <dep package="manette"/>
+       <dep package="libvpx"/>
+@@ -15,6 +16,7 @@
+   <metamodule id="webkitwpe-minimal-dependencies">
+     <dependencies>
+       <dep package="wpebackend-fdo"/>
++      <dep package="icu"/>
+       <dep package="libsoup"/>
+       <dep package="openxr"/>
+       <dep package="libvpx"/>
+@@ -83,6 +85,15 @@
+     </branch>
+   </cmake>
+ 
++  <autotools id="icu" autogen-sh="./source/configure" autogenargs="--disable-samples --enable-weak-threads">
++    <pkg-config>icu-i18n.pc</pkg-config>
++    <branch module="unicode-org/icu/releases/download/release-61-2/icu4c-61_2-src.tgz" version="61.2" checkoutdir="icu"
++            repo="github-tarball"
++            hash="sha256:cb6a8f8e29f03554f868f81ae70d3d5686136604304073be6bde8e75d8207855">
++      <patch file="icudata-stdlibs.patch" strip="1"/>
++    </branch>
++  </autotools>
++
+   <!-- libsoup >= 2.69 required for SameSite cookie support -->
+   <meson id="libsoup" mesonargs="-Dintrospection=disabled -Dgssapi=disabled -Dvapi=disabled -Dtests=false">
+     <pkg-config>libsoup-2.4.pc</pkg-config>
+@@ -98,6 +109,9 @@
+ 
+   <autotools id="libpsl" autogenargs="--enable-runtime=libicu --enable-builtin=libicu">
+     <pkg-config>libpsl.pc</pkg-config>
++    <dependencies>
++      <dep package="icu"/>
++    </dependencies>
+     <branch module="rockdaboot/libpsl/releases/download/libpsl-${version}/libpsl-${version}.tar.gz"
+             version="0.20.2"
+             repo="github-tarball"
+diff --git a/Tools/jhbuild/patches/icudata-stdlibs.patch b/Tools/jhbuild/patches/icudata-stdlibs.patch
+new file mode 100644
+index 0000000000000000000000000000000000000000..5e92bdec1b9555d4ab6327e55252fef52536a02f
+--- /dev/null
++++ b/Tools/jhbuild/patches/icudata-stdlibs.patch
+@@ -0,0 +1,15 @@
++Index: icu-52~m1/source/config/mh-linux
++===================================================================
++--- icu-52~m1.orig/source/config/mh-linux	2013-09-14 18:53:23.284040467 -0400
+++++ icu-52~m1/source/config/mh-linux	2013-09-14 18:53:23.284040467 -0400
++@@ -21,7 +21,9 @@
++ LD_RPATH_PRE = -Wl,-rpath,
++ 
++ ## These are the library specific LDFLAGS
++-LDFLAGSICUDT=-nodefaultlibs -nostdlib
+++#LDFLAGSICUDT=-nodefaultlibs -nostdlib
+++# Debian change: linking icudata as data only causes too many problems.
+++LDFLAGSICUDT=
++ 
++ ## Compiler switch to embed a library name
++ # The initial tab in the next line is to prevent icu-config from reading it.
 diff --git a/Tools/win/DLLLauncher/DLLLauncherMain.cpp b/Tools/win/DLLLauncher/DLLLauncherMain.cpp
 index 52605867b9302d1afcc56c5e9b0c54acf0827900..6edf24ab60249241ba2969531ef55f4b495dce9e 100644
 --- a/Tools/win/DLLLauncher/DLLLauncherMain.cpp
