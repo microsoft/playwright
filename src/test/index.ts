@@ -20,6 +20,7 @@ import type { LaunchOptions, BrowserContextOptions, Page, BrowserContext, Browse
 import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions } from '../../types/test';
 import { rootTestType } from './testType';
 import { createGuid, removeFolders } from '../utils/utils';
+import { browserShorthandToBrowserAndChannel, browserShorthandToBrowserAndChannelInternal } from '../utils/registry';
 import { TestInfoImpl } from './types';
 export { expect } from './expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
@@ -58,9 +59,10 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
   }, { scope: 'worker' }],
 
   _browserType: [async ({ playwright, browserName, headless, channel, launchOptions }, use) => {
-    if (!['chromium', 'firefox', 'webkit'].includes(browserName))
-      throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
-    const browserType = playwright[browserName];
+    const parsedBrowserName = browserShorthandToBrowserAndChannel[browserName] || browserShorthandToBrowserAndChannelInternal[browserName];
+    if (!parsedBrowserName)
+      throw new Error(`Unexpected browserName "${browserName}", must be one of ${[...Object.keys(browserShorthandToBrowserAndChannel)].map(v => JSON.stringify(v)).join(', ')}"`);
+    const browserType = playwright[parsedBrowserName.browserName as 'firefox'|'webkit'|'chromium'];
 
     const options: LaunchOptions = {
       handleSIGINT: false,
@@ -69,8 +71,12 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
     };
     if (headless !== undefined)
       options.headless = headless;
+    if (channel !== undefined && parsedBrowserName.channel !== undefined && channel !== parsedBrowserName.channel)
+      throw new Error(`channel value "${channel}" is conflicting with browserName value "${browserName}"`);
     if (channel !== undefined)
       options.channel = channel;
+    else if (parsedBrowserName.channel)
+      options.channel = parsedBrowserName.channel;
 
     (browserType as any)._defaultLaunchOptions = options;
     await use(browserType);

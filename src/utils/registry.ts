@@ -224,13 +224,44 @@ function readDescriptors(browsersJSON: BrowsersJSON) {
 }
 
 export type BrowserName = 'chromium' | 'firefox' | 'webkit';
-type InternalTool = 'ffmpeg' | 'firefox-beta' | 'chromium-with-symbols';
+// NOTE: make sure to update `browserShorthandToBrowserAndChannel` when adding new channels.
+type InternalChannel = 'firefox-beta' | 'chromium-with-symbols';
 type ChromiumChannel = 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary';
 const allDownloadable = ['chromium', 'firefox', 'webkit', 'ffmpeg', 'firefox-beta', 'chromium-with-symbols'];
 
+export const browserShorthandToBrowserAndChannelInternal: { [k in InternalChannel]: { browserName: BrowserName, channel?: InternalChannel | ChromiumChannel }} = {
+  'chromium-with-symbols': { browserName: 'chromium', channel: 'chromium-with-symbols' },
+  'firefox-beta': { browserName: 'firefox', channel: 'firefox-beta' },
+};
+export const browserShorthandToBrowserAndChannel: { [k in BrowserName | ChromiumChannel]: { browserName: BrowserName, channel?: InternalChannel | ChromiumChannel }} = {
+  // chromium variations
+  'chromium': { browserName: 'chromium', channel: undefined },
+  'chrome': { browserName: 'chromium', channel: 'chrome' },
+  'chrome-beta': { browserName: 'chromium', channel: 'chrome-beta' },
+  'chrome-dev': { browserName: 'chromium', channel: 'chrome-dev' },
+  'chrome-canary': { browserName: 'chromium', channel: 'chrome-canary' },
+  'msedge': { browserName: 'chromium', channel: 'msedge' },
+  'msedge-beta': { browserName: 'chromium', channel: 'msedge-beta' },
+  'msedge-dev': { browserName: 'chromium', channel: 'msedge-dev' },
+  'msedge-canary': { browserName: 'chromium', channel: 'msedge-canary' },
+
+  // Firefox variations
+  'firefox': { browserName: 'firefox', channel: undefined },
+
+  // WebKit variations
+  'webkit': { browserName: 'webkit', channel: undefined },
+};
+
+// These are used in test runner.
+export const allBrowsersAndChannels = new Set([
+  'chromium', 'firefox', 'webkit',
+  'firefox-beta', 'chromium-with-symbols',
+  'chrome', 'chrome-beta', 'chrome-dev', 'chrome-canary', 'msedge', 'msedge-beta', 'msedge-dev', 'msedge-canary',
+]);
+
 export interface Executable {
   type: 'browser' | 'tool' | 'channel';
-  name: BrowserName | InternalTool | ChromiumChannel;
+  name: BrowserName | InternalChannel | ChromiumChannel | 'ffmpeg';
   browserName: BrowserName | undefined;
   installType: 'download-by-default' | 'download-on-demand' | 'install-script' | 'none';
   directory: string | undefined;

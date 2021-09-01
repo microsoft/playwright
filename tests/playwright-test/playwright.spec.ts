@@ -141,6 +141,26 @@ test('should not override use:browserName without projects', async ({ runInlineT
   ]);
 });
 
+test('should support channel values in browserName', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { browserName: 'chrome' } };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('pass', async ({ page, browserName }) => {
+        console.log('\\n%%browser=' + browserName);
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%')).sort()).toEqual([
+    '%%browser=chrome',
+  ]);
+});
+
 test('should override use:browserName with --browser', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
