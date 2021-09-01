@@ -113,7 +113,9 @@ export class TestTypeImpl {
     if (!suite)
       throw errorWithLocation(location, `${name} hook can only be called in a test file`);
     if (name === 'beforeAll' || name === 'afterAll') {
-      const hook = new TestCase(name, name, fn, 0, this, location);
+      const sameTypeCount = suite._allHooks.filter(hook => hook._type === name).length;
+      const suffix = sameTypeCount ? String(sameTypeCount) : '';
+      const hook = new TestCase(name, name + suffix, fn, 0, this, location);
       hook._requireFile = suite._requireFile;
       suite._addAllHook(hook);
     } else {

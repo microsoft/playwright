@@ -83,6 +83,56 @@ test('should include repeat token', async ({runInlineTest}) => {
   expect(result.passed).toBe(3);
 });
 
+test('should be unique for beforeAll and afterAll hooks', async ({runInlineTest}, testInfo) => {
+  const result = await runInlineTest({
+    'a.spec.js': `
+      const { test } = pwt;
+      test.beforeAll(({}, testInfo) => {
+        console.log('\\n%%' + testInfo.outputDir);
+      });
+      test.beforeAll(({}, testInfo) => {
+        console.log('\\n%%' + testInfo.outputDir);
+      });
+      test.afterAll(({}, testInfo) => {
+        console.log('\\n%%' + testInfo.outputDir);
+      });
+      test.afterAll(({}, testInfo) => {
+        console.log('\\n%%' + testInfo.outputDir);
+      });
+      test.describe('suite', () => {
+        test.beforeAll(({}, testInfo) => {
+          console.log('\\n%%' + testInfo.outputDir);
+        });
+        test.afterAll(({}, testInfo) => {
+          console.log('\\n%%' + testInfo.outputDir);
+        });
+        test('fails', ({}, testInfo) => {
+          expect(1).toBe(2);
+        });
+        test('passes', ({}, testInfo) => {
+        });
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output.split('\n').filter(x => x.startsWith('%%'))).toEqual([
+    `%%${testInfo.outputPath('test-results', 'a-beforeAll-worker0')}`,
+    `%%${testInfo.outputPath('test-results', 'a-beforeAll1-worker0')}`,
+    `%%${testInfo.outputPath('test-results', 'a-suite-beforeAll-worker0')}`,
+    `%%${testInfo.outputPath('test-results', 'a-suite-afterAll-worker0')}`,
+    `%%${testInfo.outputPath('test-results', 'a-afterAll-worker0')}`,
+    `%%${testInfo.outputPath('test-results', 'a-afterAll1-worker0')}`,
+    `%%${testInfo.outputPath('test-results', 'a-beforeAll-worker1')}`,
+    `%%${testInfo.outputPath('test-results', 'a-beforeAll1-worker1')}`,
+    `%%${testInfo.outputPath('test-results', 'a-suite-beforeAll-worker1')}`,
+    `%%${testInfo.outputPath('test-results', 'a-suite-afterAll-worker1')}`,
+    `%%${testInfo.outputPath('test-results', 'a-afterAll-worker1')}`,
+    `%%${testInfo.outputPath('test-results', 'a-afterAll1-worker1')}`,
+  ]);
+});
+
 test('should include the project name', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `

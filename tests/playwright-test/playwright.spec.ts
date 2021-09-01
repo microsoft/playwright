@@ -248,6 +248,7 @@ test('should throw when using page in beforeAll', async ({ runInlineTest }, test
   const result = await runInlineTest({
     'a.test.ts': `
       const { test } = pwt;
+      test.beforeAll(() => {});
       test.beforeAll(async ({ page }) => {
       });
       test('ok', async ({ page }) => {
