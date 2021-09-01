@@ -558,8 +558,8 @@ interface TestConfig {
    */
   forbidOnly?: boolean;
   /**
-   * Path to the global setup file. This file will be required and run before all the tests. It must export a single
-   * function.
+   * Path to the global setup file. This file will be required and run before all the tests. It must export a single function
+   * that takes a [`TestConfig`] argument.
    *
    * Learn more about [global setup and teardown](https://playwright.dev/docs/test-advanced#global-setup-and-teardown).
    *
@@ -908,8 +908,8 @@ export interface FullConfig {
    */
   forbidOnly: boolean;
   /**
-   * Path to the global setup file. This file will be required and run before all the tests. It must export a single
-   * function.
+   * Path to the global setup file. This file will be required and run before all the tests. It must export a single function
+   * that takes a [`TestConfig`] argument.
    *
    * Learn more about [global setup and teardown](https://playwright.dev/docs/test-advanced#global-setup-and-teardown).
    *

@@ -166,65 +166,91 @@ When using [Playwright Test](./intro.md), you can log in once in the global setu
 and then reuse authentication state in tests. That way all your tests are completely
 isolated, yet you only waste time logging in once for the entire test suite run.
 
-First, introduce the global setup that would log in once.
+First, introduce the global setup that would sign in once. In this example we use the `baseURL` and `storageState` options from the configuration file.
 
 ```js js-flavor=js
 // global-setup.js
 const { chromium } = require('@playwright/test');
 
-module.exports = async () => {
+module.exports = async config => {
+  const { baseURL, storageState } = config.projects[0].use;
   const browser = await chromium.launch();
   const page = await browser.newPage();
-  await page.goto('http://localhost:5000/');
-  await page.click('text=login');
+  await page.goto(baseURL);
   await page.fill('input[name="user"]', 'user');
   await page.fill('input[name="password"]', 'password');
-  await page.click('input:has-text("login")');
-  await page.context().storageState({ path: 'state.json' });
+  await page.click('text=Sign in');
+  await page.context().storageState({ path: storageState });
   await browser.close();
 };
 ```
 
 ```js js-flavor=ts
 // global-setup.ts
-import { chromium } from '@playwright/test';
+import { chromium, FullConfig } from '@playwright/test';
 
-async function globalSetup() {
+async function globalSetup(config: FullConfig) {
+  const { baseURL, storageState } = config.projects[0].use;
   const browser = await chromium.launch();
   const page = await browser.newPage();
-  await page.goto('http://localhost:5000/');
-  await page.click('text=login');
+  await page.goto(baseURL);
   await page.fill('input[name="user"]', 'user');
   await page.fill('input[name="password"]', 'password');
-  await page.click('input:has-text("login")');
-  await page.context().storageState({ path: 'state.json' });
+  await page.click('text=Sign in');
+  await page.context().storageState({ path: storageState });
   await browser.close();
 }
 
 export default globalSetup;
 ```
 
-Then reuse saved authentication state in your tests.
+Next specify `globalSetup`, `baseURL` and `storageState` in the configuration file.
+
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  globalSetup: require.resolve('./global-setup'),
+  use: {
+    baseURL: 'http://localhost:3000/',
+    storageState: 'state.json',
+  },
+};
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  globalSetup: require.resolve('./global-setup'),
+  use: {
+    baseURL: 'http://localhost:3000/',
+    storageState: 'state.json',
+  },
+};
+export default config;
+```
+
+Tests start already authenticated because we specify `storageState` that was populated by global setup.
 
 ```js js-flavor=ts
 import { test } from '@playwright/test';
 
-test.use({ storageState: 'state.json' });
-
 test('test', async ({ page }) => {
-  await page.goto('http://localhost:5000/');
-  // You are logged in!
+  await page.goto('/');
+  // You are signed in!
 });
 ```
 
 ```js js-flavor=js
 const { test } = require('@playwright/test');
 
-test.use({ storageState: 'state.json' });
-
 test('test', async ({ page }) => {
-  await page.goto('http://localhost:5000/');
-  // You are logged in!
+  await page.goto('/');
+  // You are signed in!
 });
 ```
 

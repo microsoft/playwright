@@ -237,3 +237,46 @@ test('globalSetup should allow requiring a package from node_modules', async ({ 
   });
   expect(results[0].status).toBe('passed');
 });
+
+test('globalSetup should work for auth', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        globalSetup: require.resolve('./auth.js'),
+        use: {
+          baseURL: 'https://www.example.com',
+          storageState: 'state.json',
+        },
+      };
+    `,
+    'auth.js': `
+      module.exports = async config => {
+        const { baseURL, storageState } = config.projects[0].use;
+        const browser = await pwt.chromium.launch();
+        const page = await browser.newPage();
+        await page.route('**/*', route => {
+          route.fulfill({ body: '<html></html>' }).catch(() => {});
+        });
+        await page.goto(baseURL);
+        await page.evaluate(() => {
+          localStorage['name'] = 'value';
+        });
+        await page.context().storageState({ path: storageState });
+        await browser.close();
+      };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('should have storage state', async ({ page }) => {
+        await page.route('**/*', route => {
+          route.fulfill({ body: '<html></html>' }).catch(() => {});
+        });
+        await page.goto('/');
+        const value = await page.evaluate(() => localStorage['name']);
+        expect(value).toBe('value');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
