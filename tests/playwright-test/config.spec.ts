@@ -330,7 +330,7 @@ test('should not allow duplicate project names', async ({ runInlineTest }) => {
         projects: [
           {},
           { name: 'foo' },
-          { name: 'foo' },
+          { name: 'Foo' },
           { name: 'bar' },
         ]
       };
@@ -343,6 +343,6 @@ test('should not allow duplicate project names', async ({ runInlineTest }) => {
   });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`Duplicate project name: 'foo'`);
+  expect(result.output).toContain(`Duplicate project name: 'Foo'`);
 });
 

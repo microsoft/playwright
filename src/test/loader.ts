@@ -297,9 +297,9 @@ function validateConfig(file: string, config: Config) {
     for (const p of config.projects) {
       if (!p.name)
         continue;
-      if (names.has(p.name))
+      if (names.has(p.name.toLocaleLowerCase()))
         throw errorWithFile(file, `Duplicate project name: '${p.name}'`);
-      names.add(p.name);
+      names.add(p.name.toLocaleLowerCase());
     }
   }
 
