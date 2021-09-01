@@ -53,7 +53,7 @@ export const Report: React.FC = () => {
   return <div className='hbox'>
     <SplitView sidebarSize={300} orientation='horizontal' sidebarIsFirst={true}>
       <TestCaseView test={selectedTest}></TestCaseView>
-      <div className='suite-tree'>
+      <div className='suite-tree-column'>
         <div className='tab-strip'>{
           (['Failing', 'All'] as Filter[]).map(item => {
             const selected = item === filter;
@@ -145,54 +145,55 @@ const TestTreeItem: React.FC<{
 };
 
 const TestCaseView: React.FC<{
-  test?: JsonTestCase,
+  test: JsonTestCase | undefined,
 }> = ({ test }) => {
-  const [selectedTab, setSelectedTab] = React.useState<string>('0');
-  return <div className="test-case vbox">
-    { !test && <div className='tab-strip' />}
-    { test && <TabbedPane tabs={
-      test?.results.map((result, index) => ({
-        id: String(index),
-        title: <div style={{ display: 'flex', alignItems: 'center' }}>{statusIcon(result.status)} {retryLabel(index)}</div>,
-        render: () => <TestOverview test={test} result={result}></TestOverview>
-      })) || []} selectedTab={selectedTab} setSelectedTab={setSelectedTab} /> }
-  </div>;
-};
-
-const TestOverview: React.FC<{
-  test: JsonTestCase,
-  result: JsonTestResult,
-}> = ({ test, result }) => {
-  const [selectedStep, setSelectedStep] = React.useState<JsonTestStep | undefined>();
-  return <div className='test-result'>
-    <SplitView sidebarSize={500} orientation='horizontal' sidebarIsFirst={true}>
+  const [selectedResultIndex, setSelectedResultIndex] = React.useState(0);
+  const [selectedStep, setSelectedStep] = React.useState<JsonTestStep | undefined>(undefined);
+  const result = test?.results[selectedResultIndex];
+  return <SplitView sidebarSize={500} orientation='horizontal' sidebarIsFirst={true}>
+    <div className='test-details-column vbox'>
       {!selectedStep && <TestResultDetails test={test} result={result} />}
       {!!selectedStep && <TestStepDetails test={test} result={result} step={selectedStep}/>}
-      <div className='vbox steps-tree'>
-        <TreeItem
-          title={<div className='test-overview-title'>{renderLocation(test.location, true)} › {test?.title} ({msToString(result.duration)})</div>}
-          depth={0}
-          key='test'
-          onClick={() => setSelectedStep(undefined)}>
-        </TreeItem>
-        {result.steps.map((step, i) => <StepTreeItem key={i} step={step} depth={0} selectedStep={selectedStep} setSelectedStep={setSelectedStep}></StepTreeItem>)}
-      </div>
-    </SplitView>
+    </div>
+    <div className='test-case-column vbox'>
+      { test && <div className='test-case-title' onClick={() => setSelectedStep(undefined)}>{test?.title}</div> }
+      { test && <div className='test-case-location' onClick={() => setSelectedStep(undefined)}>{renderLocation(test.location, true)}</div> }
+      { test && <TabbedPane tabs={
+        test?.results.map((result, index) => ({
+          id: String(index),
+          title: <div style={{ display: 'flex', alignItems: 'center' }}>{statusIcon(result.status)} {retryLabel(index)}</div>,
+          render: () => <TestResultView test={test} result={result} selectedStep={selectedStep} setSelectedStep={setSelectedStep}></TestResultView>
+        })) || []} selectedTab={String(selectedResultIndex)} setSelectedTab={id => setSelectedResultIndex(+id)} />}
+    </div>
+  </SplitView>;
+};
+
+const TestResultView: React.FC<{
+  test: JsonTestCase,
+  result: JsonTestResult,
+  selectedStep: JsonTestStep | undefined,
+  setSelectedStep: (step: JsonTestStep | undefined) => void;
+}> = ({ test, result, selectedStep, setSelectedStep }) => {
+  return <div className='test-result'>
+    {result.steps.map((step, i) => <StepTreeItem key={i} step={step} depth={0} selectedStep={selectedStep} setSelectedStep={setSelectedStep}></StepTreeItem>)}
   </div>;
 };
 
 const TestResultDetails: React.FC<{
-  test: JsonTestCase,
-  result: JsonTestResult,
+  test: JsonTestCase | undefined,
+  result: JsonTestResult | undefined,
 }> = ({ test, result }) => {
   const { screenshots, video, attachmentsMap } = React.useMemo(() => {
     const attachmentsMap = new Map<string, JsonAttachment>();
-    const screenshots = result.attachments.filter(a => a.name === 'screenshot');
-    const video = result.attachments.filter(a => a.name === 'video');
-    for (const a of result.attachments)
+    const attachments = result?.attachments || [];
+    const screenshots = attachments.filter(a => a.name === 'screenshot');
+    const video = attachments.filter(a => a.name === 'video');
+    for (const a of attachments)
       attachmentsMap.set(a.name, a);
     return { attachmentsMap, screenshots, video };
   }, [ result ]);
+  if (!result)
+    return <div></div>;
   return <div>
     {result.failureSnippet && <div className='test-overview-title'>Test error</div>}
     {result.failureSnippet && <div className='error-message' dangerouslySetInnerHTML={{ __html: new ansi2html({ colors: ansiColors }).toHtml(escapeHTML(result.failureSnippet.trim())) }}></div>}
@@ -211,14 +212,14 @@ const TestResultDetails: React.FC<{
 };
 
 const TestStepDetails: React.FC<{
-  test: JsonTestCase,
-  result: JsonTestResult,
-  step: JsonTestStep,
+  test: JsonTestCase | undefined,
+  result: JsonTestResult | undefined,
+  step: JsonTestStep | undefined,
 }> = ({ test, result, step }) => {
   const [source, setSource] = React.useState<SourceProps>({ text: '', language: 'javascript' });
   React.useEffect(() => {
     (async () => {
-      const frame = step.stack?.[0];
+      const frame = step?.stack?.[0];
       if (!frame || !frame.sha1)
         return;
       try {
@@ -230,10 +231,25 @@ const TestStepDetails: React.FC<{
       }
     })();
   }, [step]);
+  const [selectedTab, setSelectedTab] = React.useState('log');
   return <div className='vbox'>
-    {step.failureSnippet && <div className='test-overview-title'>Step error</div>}
-    {step.failureSnippet && <div className='error-message' dangerouslySetInnerHTML={{ __html: new ansi2html({ colors: ansiColors }).toHtml(escapeHTML(step.failureSnippet.trim())) }}></div>}
-    <Source text={source.text} language={source.language} highlight={source.highlight} revealLine={source.revealLine}></Source>
+    <TabbedPane selectedTab={selectedTab} setSelectedTab={setSelectedTab} tabs={[
+      {
+        id: 'log',
+        title: 'Log',
+        render: () => <div></div>
+      },
+      {
+        id: 'errors',
+        title: 'Errors',
+        render: () => <div className='error-message' dangerouslySetInnerHTML={{ __html: new ansi2html({ colors: ansiColors }).toHtml(escapeHTML(step?.failureSnippet?.trim() || '')) }}></div>
+      },
+      {
+        id: 'source',
+        title: 'Source',
+        render: () => <Source text={source.text} language={source.language} highlight={source.highlight} revealLine={source.revealLine}></Source>
+      }
+    ]}></TabbedPane>
   </div>;
 };
 
@@ -243,7 +259,7 @@ const StepTreeItem: React.FC<{
   selectedStep?: JsonTestStep,
   setSelectedStep: (step: JsonTestStep | undefined) => void;
 }> = ({ step, depth, selectedStep, setSelectedStep }) => {
-  return <TreeItem title={<div style={{ display: 'flex', alignItems: 'center', flex: 'auto', maxWidth: 430 }}>
+  return <TreeItem title={<div style={{ display: 'flex', alignItems: 'center', flex: 'auto' }}>
     {testStepStatusIcon(step)}
     <span style={{ whiteSpace: 'pre' }}>{step.preview || step.title}</span>
     <div style={{ flex: 'auto' }}></div>
@@ -286,7 +302,7 @@ export const ImageDiff: React.FunctionComponent<{
 export const AttachmentLink: React.FunctionComponent<{
   attachment: JsonAttachment,
 }> = ({ attachment }) => {
-  return <TreeItem title={<div style={{ display: 'flex', alignItems: 'center', flex: 'auto', maxWidth: 430 }}>
+  return <TreeItem title={<div style={{ display: 'flex', alignItems: 'center', flex: 'auto' }}>
     <span className={'codicon codicon-cloud-download'}></span>
     {attachment.sha1 && <a href={'resources/' + attachment.sha1} target='_blank'>{attachment.name}</a>}
     {attachment.body && <span>{attachment.name}</span>}

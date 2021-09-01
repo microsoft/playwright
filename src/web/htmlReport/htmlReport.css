@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-.suite-tree {
+.suite-tree-column {
   line-height: 18px;
   flex: auto;
   overflow: auto;
@@ -31,26 +31,17 @@
   min-height: 18px;
 }
 
-.suite-tree .tree-item-title:not(.selected):hover {
+.suite-tree-column .tree-item-title:not(.selected):hover {
   background-color: #e8e8e8;
 }
 
-.suite-tree .tree-item-title.selected {
+.suite-tree-column .tree-item-title.selected {
   background-color: #0060c0;
   color: white;
 }
 
-.suite-tree .tree-item-title.selected * {
+.suite-tree-column .tree-item-title.selected * {
   color: white !important;
-}
-
-
-.test-case {
-  flex: auto;
-}
-
-.test-case .tab-content {
-  overflow: auto;
 }
 
 .error-message {
@@ -88,6 +79,8 @@
 .test-result {
   flex: auto;
   display: flex;
+  flex-direction: column;
+  padding-right: 8px;
 }
 
 .test-overview-title {
@@ -107,11 +100,6 @@
 .image-preview img {
   max-width: 500px;
   max-height: 500px;
-}
-
-.test-result .tabbed-pane {
-  margin-top: 50px;
-  width: 550px;
 }
 
 .image-preview {
@@ -137,15 +125,55 @@
   margin-left: 24px;
 }
 
-.steps-tree .tree-item-title:not(.selected):hover {
+.test-result .tree-item-title:not(.selected):hover {
   background-color: #e8e8e8;
 }
 
-.steps-tree .tree-item-title.selected {
+.test-result .tree-item-title.selected {
   background-color: #0060c0;
   color: white;
 }
 
-.steps-tree .tree-item-title.selected * {
+.test-result .tree-item-title.selected * {
   color: white !important;
+}
+
+.suite-tree-column .tab-strip,
+.test-case-column .tab-strip {
+  border: none;
+  box-shadow: none;
+  background-color: transparent;
+}
+
+.suite-tree-column .tab-element,
+.test-case-column .tab-element {
+  border: none;
+  text-transform: uppercase;
+  font-weight: bold;
+  font-size: 11px;
+  color: #aaa;
+}
+
+.suite-tree-column .tab-element.selected,
+.test-case-column .tab-element.selected {
+  color: #555;
+}
+
+.test-case-title {
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.test-case-location {
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding: 0 10px 10px;
+  color: var(--blue);
+  text-decoration: underline;
+  cursor: pointer;
 }
