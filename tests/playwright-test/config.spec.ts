@@ -321,3 +321,28 @@ test('should work with undefined values and base', async ({ runInlineTest }) => 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should not allow duplicate project names', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        use: { foo: 'config' },
+        projects: [
+          {},
+          { name: 'foo' },
+          { name: 'foo' },
+          { name: 'bar' },
+        ]
+      };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('pass', async ({ foo, bar  }, testInfo) => {
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`Duplicate project name: 'foo'`);
+});
+

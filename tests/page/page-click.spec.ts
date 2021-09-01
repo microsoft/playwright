@@ -23,7 +23,12 @@ async function giveItAChanceToClick(page) {
     await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
 }
 
-it('should click the button', async ({page, server}) => {
+it.only('should click the button', async ({page, server}) => {
+  await page.goto(server.PREFIX + '/a.html');
+  await page.screenshot({ path: '/tmp/s.png' });
+  console.log(server.PREFIX + '/a.html');
+  return;
+  await new Promise(f => setTimeout(f, 10000000));
   await page.goto(server.PREFIX + '/input/button.html');
   await page.click('button');
   expect(await page.evaluate('result')).toBe('Clicked');

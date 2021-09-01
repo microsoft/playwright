@@ -103,7 +103,7 @@ test('should include the project name', async ({ runInlineTest }) => {
       module.exports = { projects: [
         {},
         { name: 'foo' },
-        { name: 'foo' },
+        { name: 'bar' },
         { name: 'Bar space!' },
       ] };
     `,
@@ -131,19 +131,19 @@ test('should include the project name', async ({ runInlineTest }) => {
   expect(result.output).toContain('test-results/my-test-test-1-retry1/bar.txt');
   expect(result.output).toContain('my-test.spec.js-snapshots/bar.txt');
 
-  // test1, run with foo #1
-  expect(result.output).toContain('test-results/my-test-test-1-foo1/bar.txt');
+  // test1, run with foo
+  expect(result.output).toContain('test-results/my-test-test-1-foo/bar.txt');
   expect(result.output).toContain('my-test.spec.js-snapshots/bar-foo.txt');
-  expect(result.output).toContain('test-results/my-test-test-1-foo1-retry1/bar.txt');
-  expect(result.output).toContain('my-test.spec.js-snapshots/bar-foo.txt');
-
-  // test1, run with foo #2
-  expect(result.output).toContain('test-results/my-test-test-1-foo2/bar.txt');
-  expect(result.output).toContain('my-test.spec.js-snapshots/bar-foo.txt');
-  expect(result.output).toContain('test-results/my-test-test-1-foo2-retry1/bar.txt');
+  expect(result.output).toContain('test-results/my-test-test-1-foo-retry1/bar.txt');
   expect(result.output).toContain('my-test.spec.js-snapshots/bar-foo.txt');
 
   // test1, run with bar
+  expect(result.output).toContain('test-results/my-test-test-1-bar/bar.txt');
+  expect(result.output).toContain('my-test.spec.js-snapshots/bar-foo.txt');
+  expect(result.output).toContain('test-results/my-test-test-1-bar-retry1/bar.txt');
+  expect(result.output).toContain('my-test.spec.js-snapshots/bar-foo.txt');
+
+  // test1, run with Bar space
   expect(result.output).toContain('test-results/my-test-test-1-Bar-space-/bar.txt');
   expect(result.output).toContain('my-test.spec.js-snapshots/bar-Bar-space-.txt');
   expect(result.output).toContain('test-results/my-test-test-1-Bar-space--retry1/bar.txt');
@@ -153,15 +153,15 @@ test('should include the project name', async ({ runInlineTest }) => {
   expect(result.output).toContain('test-results/my-test-test-2/bar.txt');
   expect(result.output).toContain('my-test.spec.js-snapshots/bar-suffix.txt');
 
-  // test2, run with foo #1
-  expect(result.output).toContain('test-results/my-test-test-2-foo1/bar.txt');
-  expect(result.output).toContain('my-test.spec.js-snapshots/bar-foo-suffix.txt');
-
-  // test2, run with foo #2
-  expect(result.output).toContain('test-results/my-test-test-2-foo2/bar.txt');
+  // test2, run with foo
+  expect(result.output).toContain('test-results/my-test-test-2-foo/bar.txt');
   expect(result.output).toContain('my-test.spec.js-snapshots/bar-foo-suffix.txt');
 
   // test2, run with bar
+  expect(result.output).toContain('test-results/my-test-test-2-bar/bar.txt');
+  expect(result.output).toContain('my-test.spec.js-snapshots/bar-foo-suffix.txt');
+
+  // test2, run with Bar space
   expect(result.output).toContain('test-results/my-test-test-2-Bar-space-/bar.txt');
   expect(result.output).toContain('my-test.spec.js-snapshots/bar-Bar-space--suffix.txt');
 });

@@ -293,6 +293,14 @@ function validateConfig(file: string, config: Config) {
     config.projects.forEach((project, index) => {
       validateProject(file, project, `config.projects[${index}]`);
     });
+    const names = new Set();
+    for (const p of config.projects) {
+      if (!p.name)
+        continue;
+      if (names.has(p.name))
+        throw new Error(`Duplicate project name: '${p.name}'`);
+      names.add(p.name);
+    }
   }
 
   if ('quiet' in config && config.quiet !== undefined) {
