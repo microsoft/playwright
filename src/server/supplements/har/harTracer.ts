@@ -210,6 +210,9 @@ export class HarTracer {
     harEntry.response.headersSize = responseHeadersSize;
     harEntry.response._transferSize = transferSize;
     harEntry.request.headersSize = request.headersSize();
+    // Update headers on request finished.
+    harEntry.response.cookies = cookiesForHar(response.headerValue('set-cookie'), '\n');
+    harEntry.response.headers = response.headers().map(header => ({ name: header.name, value: header.value }));
 
     const promise = response.body().then(buffer => {
       const content = harEntry.response.content;
@@ -255,8 +258,8 @@ export class HarTracer {
       status: response.status(),
       statusText: response.statusText(),
       httpVersion: response.httpVersion(),
-      cookies: cookiesForHar(response.headerValue('set-cookie'), '\n'),
-      headers: response.headers().map(header => ({ name: header.name, value: header.value })),
+      cookies: [],
+      headers: [],
       content: {
         size: -1,
         mimeType: response.headerValue('content-type') || 'x-unknown',
@@ -293,6 +296,7 @@ export class HarTracer {
       if (details)
         harEntry._securityDetails = details;
     }));
+    this._addBarrier(page, response._finishedPromise);
   }
 
   async flush() {

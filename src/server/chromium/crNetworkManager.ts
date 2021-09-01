@@ -358,6 +358,15 @@ export class CRNetworkManager {
       return;
     const response = this._createResponse(request, event.response);
     this._page._frameManager.requestReceivedResponse(response);
+
+    // fetch to 404 won't emit loadingFinished, do it ourselves.
+    if (response.status() >= 400) {
+      this._onLoadingFinished({
+        requestId: event.requestId,
+        timestamp: event.timestamp,
+        encodedDataLength: 0,
+      });
+    }
   }
 
   _onLoadingFinished(event: Protocol.Network.loadingFinishedPayload) {
@@ -568,9 +577,9 @@ type RequestInfo = {
   requestId: string,
   responseReceivedExtraInfo: Protocol.Network.responseReceivedExtraInfoPayload[],
   responses: network.Response[],
-  loadingFinished?: Protocol.Network.loadingFinishedPayload,
-  loadingFailed?: Protocol.Network.loadingFailedPayload,
-  sawResponseWithoutConnectionId: boolean
+  loadingFinished?: boolean,
+  loadingFailed?: boolean,
+  sawResponseWithoutConnectionId: boolean,
 };
 
 // This class aligns responses with response headers from extra info:
@@ -607,7 +616,7 @@ class ResponseExtraInfoTracker {
         requestId: requestId,
         responseReceivedExtraInfo: [],
         responses: [],
-        sawResponseWithoutConnectionId: false
+        sawResponseWithoutConnectionId: false,
       };
       this._requests.set(requestId, info);
     }
@@ -655,7 +664,7 @@ class ResponseExtraInfoTracker {
     const info = this._requests.get(event.requestId);
     if (!info)
       return;
-    info.loadingFinished = event;
+    info.loadingFinished = true;
     this._checkFinished(info);
   }
 
@@ -663,7 +672,7 @@ class ResponseExtraInfoTracker {
     const info = this._requests.get(event.requestId);
     if (!info)
       return;
-    info.loadingFailed = event;
+    info.loadingFailed = true;
     this._checkFinished(info);
   }
 
