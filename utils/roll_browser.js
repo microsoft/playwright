@@ -73,7 +73,7 @@ Example:
   if (descriptor.installByDefault) {
     // 3. Download new browser.
     console.log('\nDownloading new browser...');
-    const registry = new Registry(ROOT_PATH);
+    const registry = new Registry(browsersJSON);
     await registry.install();
 
     // 4. Generate types.
@@ -89,4 +89,8 @@ Example:
     }
   }
   console.log(`\nRolled ${browserName} to ${revision}`);
-})();
+})().catch(err => {
+  console.error(err);
+  process.exit(1);
+});
+
