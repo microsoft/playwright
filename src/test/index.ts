@@ -17,7 +17,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import type { LaunchOptions, BrowserContextOptions, Page, BrowserContext, BrowserType } from '../../types/types';
-import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions } from '../../types/test';
+import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo } from '../../types/test';
 import { rootTestType } from './testType';
 import { createGuid, removeFolders } from '../utils/utils';
 import { TestInfoImpl } from './types';
@@ -242,7 +242,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
 
     // 3. Determine whether we need the artifacts.
     const testFailed = testInfo.status !== testInfo.expectedStatus;
-    const isHook = testInfo.title === 'beforeAll' || testInfo.title === 'afterAll';
+    const isHook = !!hookType(testInfo);
     const preserveTrace = captureTrace && !isHook && (trace === 'on' || (testFailed && trace === 'retain-on-failure') || (trace === 'on-first-retry' && testInfo.retry === 1));
     const captureScreenshots = !isHook && (screenshot === 'on' || (screenshot === 'only-on-failure' && testFailed));
 
@@ -294,8 +294,9 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
   }, { auto: true }],
 
   context: async ({ browser, video, _artifactsDir }, use, testInfo) => {
-    if (testInfo.title === 'beforeAll' || testInfo.title === 'afterAll')
-      throw new Error(`"context" and "page" fixtures are not supported in ${testInfo.title}. Use browser.newContext() instead.`);
+    const hook = hookType(testInfo);
+    if (hook)
+      throw new Error(`"context" and "page" fixtures are not supported in ${hook}. Use browser.newContext() instead.`);
 
     let videoMode = typeof video === 'string' ? video : video.mode;
     if (videoMode === 'retry-with-video')
@@ -365,6 +366,13 @@ function formatPendingCalls(calls: ParsedStackTrace[]) {
 function formatStackFrame(frame: StackFrame) {
   const file = path.relative(process.cwd(), frame.file) || path.basename(frame.file);
   return `${file}:${frame.line || 1}:${frame.column || 1}`;
+}
+
+function hookType(testInfo: TestInfo): 'beforeAll' | 'afterAll' | undefined {
+  if (testInfo.title.startsWith('beforeAll'))
+    return 'beforeAll';
+  if (testInfo.title.startsWith('afterAll'))
+    return 'afterAll';
 }
 
 type StackFrame = {
