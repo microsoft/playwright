@@ -18,6 +18,19 @@ import os from 'os';
 import url from 'url';
 import { contextTest as it, expect } from './config/browserTest';
 
+it('SharedArrayBuffer should work', async function({contextFactory, httpsServer, browserName}) {
+  it.fail(browserName === 'webkit', 'no shared array buffer on webkit');
+  const context = await contextFactory({ ignoreHTTPSErrors: true });
+  const page = await context.newPage();
+  httpsServer.setRoute('/sharedarraybuffer', (req, res) => {
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+    res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+    res.end();
+  });
+  await page.goto(httpsServer.PREFIX + '/sharedarraybuffer');
+  expect(await page.evaluate(() => typeof SharedArrayBuffer)).toBe('function');
+});
+
 it('Web Assembly should work', async function({page, server, browserName, platform}) {
   it.fail(browserName === 'webkit' && platform === 'win32');
 

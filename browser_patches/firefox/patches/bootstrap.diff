@@ -2015,6 +2015,21 @@ index f2723e654098ff27542e1eb16a536c11ad0af617..b0b480551ff7d895dfdeb5a980087485
  /* #undef MEM_SRCDST_SUPPORTED */
  
  /* Use accelerated SIMD routines. */
+diff --git a/modules/libpref/init/all.js b/modules/libpref/init/all.js
+index aba5106ecfc19ba03d4e4bddcecadf74a3c0efb1..df7f1d086976fc81d0a58202821e201dc3e744b6 100644
+--- a/modules/libpref/init/all.js
++++ b/modules/libpref/init/all.js
+@@ -4562,7 +4562,9 @@ pref("devtools.experiment.f12.shortcut_disabled", false);
+ // doesn't provide a way to lock the pref
+ pref("dom.postMessage.sharedArrayBuffer.bypassCOOP_COEP.insecure.enabled", false);
+ #else
+-pref("dom.postMessage.sharedArrayBuffer.bypassCOOP_COEP.insecure.enabled", false, locked);
++// Playwright: DO NOT make preference locked so that we can overwrite it
++// later in our playwright.cfg file.
++pref("dom.postMessage.sharedArrayBuffer.bypassCOOP_COEP.insecure.enabled", false);
+ #endif
+ 
+ // Whether to start the private browsing mode at application startup
 diff --git a/netwerk/base/nsINetworkInterceptController.idl b/netwerk/base/nsINetworkInterceptController.idl
 index c1ee73acde26b1a77a3e32b7132ce687d48e3347..0ce45a1d7b10eef91164e517522c4ea11487bf26 100644
 --- a/netwerk/base/nsINetworkInterceptController.idl
