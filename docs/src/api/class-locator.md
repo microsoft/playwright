@@ -107,6 +107,9 @@ await page.locator('button').click();
 
 // Works because we explicitly tell locator to pick the first element:
 await page.locator('button').first().click();
+
+// Works because count knows what to do with multiple matches:
+await page.locator('button').count();
 ```
 
 ```python async
@@ -115,6 +118,9 @@ await page.locator('button').click()
 
 # Works because we explicitly tell locator to pick the first element:
 await page.locator('button').first.click()
+
+# Works because count knows what to do with multiple matches:
+await page.locator('button').count()
 ```
 
 ```python sync
@@ -123,21 +129,31 @@ page.locator('button').click()
 
 # Works because we explicitly tell locator to pick the first element:
 page.locator('button').first.click()
+
+# Works because count knows what to do with multiple matches:
+page.locator('button').count()
 ```
 
 ```java
 // Throws if there are several buttons in DOM:
 page.locator("button").click();
 
-// Works because you explicitly tell locator to pick the first element:
+// Works because we explicitly tell locator to pick the first element:
 page.locator("button").first().click();
+
+// Works because count knows what to do with multiple matches:
+page.locator("button").count();
 ```
 
 ```csharp
 // Throws if there are several buttons in DOM:
 await page.Locator("button").ClickAsync();
-// Works because you explicitly tell locator to pick the first element:
+
+// Works because we explicitly tell locator to pick the first element:
 await page.Locator("button").First.ClickAsync();
+
+// Works because Count knows what to do with multiple matches:
+await page.Locator("button").CountAsync();
 ```
 
 ## async method: Locator.allInnerTexts
