@@ -48,7 +48,7 @@ Whether to exit with an error if any tests or groups are marked as [`method: Tes
 ## property: TestConfig.globalSetup
 - type: <[string]>
 
-Path to the global setup file. This file will be required and run before all the tests. It must export a single function.
+Path to the global setup file. This file will be required and run before all the tests. It must export a single function that takes a [`TestConfig`] argument.
 
 Learn more about [global setup and teardown](./test-advanced.md#global-setup-and-teardown).
 
