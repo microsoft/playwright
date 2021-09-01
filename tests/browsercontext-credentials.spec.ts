@@ -42,6 +42,21 @@ it('should work with setHTTPCredentials', async ({browser, server, browserName, 
   await context.close();
 });
 
+it.only('should work with setHTTPCredentials after redirects', async ({browser, server, browserName, headless}) => {
+  it.fail(browserName === 'chromium' && !headless);
+
+  server.setRedirect('/redirect', '/empty.html');
+  server.setAuth('/empty.html', 'user', 'pass');
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  let response = await page.goto(server.PREFIX + '/redirect');
+  expect(response.status()).toBe(401);
+  await context.setHTTPCredentials({ username: 'user', password: 'pass' });
+  response = await page.goto(server.PREFIX + '/redirect');
+  expect(response.status()).toBe(200);
+  await context.close();
+});
+
 it('should work with correct credentials', async ({browser, server}) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext({
