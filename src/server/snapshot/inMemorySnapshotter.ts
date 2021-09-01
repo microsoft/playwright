@@ -49,14 +49,16 @@ export class InMemorySnapshotter extends BaseSnapshotStorage implements Snapshot
 
   async reset() {
     await this._snapshotter.reset();
-    await this._harTracer.stop();
+    await this._harTracer.flush();
+    this._harTracer.stop();
     this._harTracer.start();
     this.clear();
   }
 
   async dispose() {
     this._snapshotter.dispose();
-    await this._harTracer.stop();
+    await this._harTracer.flush();
+    this._harTracer.stop();
     await this._server.stop();
   }
 

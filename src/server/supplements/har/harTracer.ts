@@ -295,11 +295,13 @@ export class HarTracer {
     }));
   }
 
-  async stop() {
+  async flush() {
+    await Promise.all(this._barrierPromises);
+  }
+
+  stop() {
     this._started = false;
     eventsHelper.removeEventListeners(this._eventListeners);
-
-    await Promise.all(this._barrierPromises);
     this._barrierPromises.clear();
 
     const log: har.Log = {

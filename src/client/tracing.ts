@@ -28,30 +28,38 @@ export class Tracing implements api.Tracing {
 
   async start(options: { name?: string, snapshots?: boolean, screenshots?: boolean } = {}) {
     await this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
-      return await channel.tracingStart(options);
+      await channel.tracingStart(options);
+      await channel.tracingStartChunk();
     });
   }
 
-  async _export(options: { path: string }) {
+  async startChunk() {
     await this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
-      await this._doExport(channel, options.path);
+      await channel.tracingStartChunk();
+    });
+  }
+
+  async stopChunk(options: { path: string }) {
+    await this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
+      await this._doStopChunk(channel, options.path);
     });
   }
 
   async stop(options: { path?: string } = {}) {
     await this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
-      if (options.path)
-        await this._doExport(channel, options.path);
+      await this._doStopChunk(channel, options.path);
       await channel.tracingStop();
     });
   }
 
-  private async _doExport(channel: channels.BrowserContextChannel, path: string) {
-    const result = await channel.tracingExport();
+  private async _doStopChunk(channel: channels.BrowserContextChannel, path: string | undefined) {
+    const result = await channel.tracingStopChunk({ save: !!path });
+    if (!result.artifact)
+      return;
     const artifact = Artifact.from(result.artifact);
-    if (this._context.browser()?._remoteType)
+    if (this._context._browser?._remoteType)
       artifact._isRemote = true;
-    await artifact.saveAs(path);
+    await artifact.saveAs(path!);
     await artifact.delete();
   }
 }

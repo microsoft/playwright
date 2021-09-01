@@ -763,8 +763,9 @@ export interface BrowserContextChannel extends EventTargetChannel {
   recorderSupplementEnable(params: BrowserContextRecorderSupplementEnableParams, metadata?: Metadata): Promise<BrowserContextRecorderSupplementEnableResult>;
   newCDPSession(params: BrowserContextNewCDPSessionParams, metadata?: Metadata): Promise<BrowserContextNewCDPSessionResult>;
   tracingStart(params: BrowserContextTracingStartParams, metadata?: Metadata): Promise<BrowserContextTracingStartResult>;
+  tracingStartChunk(params?: BrowserContextTracingStartChunkParams, metadata?: Metadata): Promise<BrowserContextTracingStartChunkResult>;
+  tracingStopChunk(params: BrowserContextTracingStopChunkParams, metadata?: Metadata): Promise<BrowserContextTracingStopChunkResult>;
   tracingStop(params?: BrowserContextTracingStopParams, metadata?: Metadata): Promise<BrowserContextTracingStopResult>;
-  tracingExport(params?: BrowserContextTracingExportParams, metadata?: Metadata): Promise<BrowserContextTracingExportResult>;
   harExport(params?: BrowserContextHarExportParams, metadata?: Metadata): Promise<BrowserContextHarExportResult>;
 }
 export type BrowserContextBindingCallEvent = {
@@ -992,14 +993,21 @@ export type BrowserContextTracingStartOptions = {
   screenshots?: boolean,
 };
 export type BrowserContextTracingStartResult = void;
+export type BrowserContextTracingStartChunkParams = {};
+export type BrowserContextTracingStartChunkOptions = {};
+export type BrowserContextTracingStartChunkResult = void;
+export type BrowserContextTracingStopChunkParams = {
+  save: boolean,
+};
+export type BrowserContextTracingStopChunkOptions = {
+
+};
+export type BrowserContextTracingStopChunkResult = {
+  artifact?: ArtifactChannel,
+};
 export type BrowserContextTracingStopParams = {};
 export type BrowserContextTracingStopOptions = {};
 export type BrowserContextTracingStopResult = void;
-export type BrowserContextTracingExportParams = {};
-export type BrowserContextTracingExportOptions = {};
-export type BrowserContextTracingExportResult = {
-  artifact: ArtifactChannel,
-};
 export type BrowserContextHarExportParams = {};
 export type BrowserContextHarExportOptions = {};
 export type BrowserContextHarExportResult = {

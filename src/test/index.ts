@@ -193,10 +193,15 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
     const onDidCreateContext = async (context: BrowserContext) => {
       context.setDefaultTimeout(actionTimeout || 0);
       context.setDefaultNavigationTimeout(navigationTimeout || actionTimeout || 0);
-      if (captureTrace)
-        await context.tracing.start({ screenshots: true, snapshots: true });
-      else
+      if (captureTrace) {
+        if (!(context.tracing as any)[kTracingStarted]) {
+          await context.tracing.start({ screenshots: true, snapshots: true });
+          (context.tracing as any)[kTracingStarted] = true;
+        }
+        await context.tracing.startChunk();
+      } else {
         await context.tracing.stop();
+      }
       (context as any)._csi = {
         onApiCall: (stackTrace: ParsedStackTrace) => {
           if ((testInfo as TestInfoImpl)._currentSteps().some(step => step.category === 'pw:api' || step.category === 'expect'))
@@ -212,7 +217,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
         // after the test finishes.
         const tracePath = path.join(_artifactsDir(), createGuid() + '.zip');
         temporaryTraceFiles.push(tracePath);
-        await (context.tracing as any)._export({ path: tracePath });
+        await context.tracing.stopChunk({ path: tracePath });
       }
       if (screenshot === 'on' || screenshot === 'only-on-failure') {
         // Capture screenshot for now. We'll know whether we have to preserve them
@@ -267,7 +272,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
     // 5. Collect artifacts from any non-closed contexts.
     await Promise.all(leftoverContexts.map(async context => {
       if (preserveTrace)
-        await (context.tracing as any)._export({ path: addTraceAttachment() });
+        await context.tracing.stopChunk({ path: addTraceAttachment() });
       if (captureScreenshots)
         await Promise.all(context.pages().map(page => page.screenshot({ timeout: 5000, path: addScreenshotAttachment() }).catch(() => {})));
     }));
@@ -374,3 +379,5 @@ type ParsedStackTrace = {
   frameTexts: string[];
   apiName: string;
 };
+
+const kTracingStarted = Symbol('kTracingStarted');

@@ -13518,10 +13518,10 @@ export interface Touchscreen {
 }
 
 /**
- * API for collecting and saving Playwright traces. Playwright traces can be opened using the Playwright CLI after
- * Playwright script runs.
+ * API for collecting and saving Playwright traces. Playwright traces can be opened in [Trace Viewer](https://playwright.dev/docs/trace-viewer)
+ * after Playwright script runs.
  *
- * Start with specifying the folder traces will be stored in:
+ * Start recording a trace before performing actions. At the end, stop tracing and save it to a file.
  *
  * ```js
  * const browser = await chromium.launch();
@@ -13565,12 +13565,51 @@ export interface Tracing {
   }): Promise<void>;
 
   /**
+   * Start a new trace chunk. If you'd like to record multiple traces on the same [BrowserContext], use
+   * [tracing.start([options])](https://playwright.dev/docs/api/class-tracing#tracing-start) once, and then create multiple
+   * trace chunks with [tracing.startChunk()](https://playwright.dev/docs/api/class-tracing#tracing-start-chunk) and
+   * [tracing.stopChunk([options])](https://playwright.dev/docs/api/class-tracing#tracing-stop-chunk).
+   *
+   * ```js
+   * await context.tracing.start({ screenshots: true, snapshots: true });
+   * const page = await context.newPage();
+   * await page.goto('https://playwright.dev');
+   *
+   * await context.tracing.startChunk();
+   * await page.click('text=Get Started');
+   * // Everything between startChunk and stopChunk will be recorded in the trace.
+   * await context.tracing.stopChunk({ path: 'trace1.zip' });
+   *
+   * await context.tracing.startChunk();
+   * await page.goto('http://example.com');
+   * // Save a second trace file with different actions.
+   * await context.tracing.stopChunk({ path: 'trace2.zip' });
+   * ```
+   *
+   */
+  startChunk(): Promise<void>;
+
+  /**
    * Stop tracing.
    * @param options
    */
   stop(options?: {
     /**
-     * Export trace into the file with the given name.
+     * Export trace into the file with the given path.
+     */
+    path?: string;
+  }): Promise<void>;
+
+  /**
+   * Stop the trace chunk. See [tracing.startChunk()](https://playwright.dev/docs/api/class-tracing#tracing-start-chunk) for
+   * more details about multiple trace chunks.
+   * @param options
+   */
+  stopChunk(options?: {
+    /**
+     * Export trace collected since the last
+     * [tracing.startChunk()](https://playwright.dev/docs/api/class-tracing#tracing-start-chunk) call into the file with the
+     * given path.
      */
     path?: string;
   }): Promise<void>;
