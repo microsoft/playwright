@@ -63,6 +63,7 @@
     "expect": "^26.4.2",
     "extract-zip": "^2.0.1",
     "https-proxy-agent": "^5.0.0",
+    "jest-matcher-utils": "^26.4.2",
     "jpeg-js": "^0.4.2",
     "mime": "^2.4.6",
     "minimatch": "^3.0.3",
