@@ -54,6 +54,10 @@
   overflow: hidden;
 }
 
+.call-duration {
+  color: var(--gray);
+}
+
 .call-line .string {
   color: var(--orange);
 }

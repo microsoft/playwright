@@ -19,6 +19,7 @@ import './callTab.css';
 import type { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
 import { CallMetadata } from '../../../protocol/callMetadata';
 import { parseSerializedValue } from '../../../protocol/serializers';
+import { msToString } from '../../uiUtils';
 
 export const CallTab: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,
@@ -36,7 +37,7 @@ export const CallTab: React.FunctionComponent<{
       <div className='codicon codicon-issues'/>
       {error}
     </div>
-    <div className='call-line'>{action.metadata.apiName}</div>
+    <div className='call-line'>{action.metadata.apiName} <span className='call-duration'>— {msToString(action.metadata.endTime - action.metadata.startTime)}</span></div>
     { !!paramKeys.length && <div className='call-section'>Parameters</div> }
     {
       !!paramKeys.length && paramKeys.map((name, index) => renderLine(action.metadata, name, params[name], 'param-' + index))

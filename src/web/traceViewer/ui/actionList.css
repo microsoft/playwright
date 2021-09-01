@@ -64,6 +64,11 @@
   text-overflow: ellipsis;
 }
 
+.action-duration {
+  margin-left: 4px;
+  color: var(--gray);
+}
+
 .action-icon {
   flex: none;
   display: flex;
