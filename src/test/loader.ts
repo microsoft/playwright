@@ -298,7 +298,7 @@ function validateConfig(file: string, config: Config) {
       if (!p.name)
         continue;
       if (names.has(p.name))
-        throw new Error(`Duplicate project name: '${p.name}'`);
+        throw errorWithFile(file, `Duplicate project name: '${p.name}'`);
       names.add(p.name);
     }
   }
