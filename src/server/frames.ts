@@ -280,13 +280,6 @@ export class FrameManager {
     this._inflightRequestFinished(request);
     if (request._isFavicon)
       return;
-    this._dispatchRequestFinished(request, response).catch(() => {});
-  }
-
-  private async _dispatchRequestFinished(request: network.Request, response: network.Response | null) {
-    // Avoid unnecessary microtask, we want to report finished early for regular redirects.
-    if (response?.willWaitForExtraHeaders())
-      await response?.waitForExtraHeadersIfNeeded();
     this._page._browserContext.emit(BrowserContext.Events.RequestFinished, { request, response });
   }
 

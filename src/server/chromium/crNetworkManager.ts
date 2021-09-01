@@ -38,7 +38,6 @@ export class CRNetworkManager {
   private _protocolRequestInterceptionEnabled = false;
   private _requestIdToRequestPausedEvent = new Map<string, Protocol.Fetch.requestPausedPayload>();
   private _eventListeners: RegisteredListener[];
-  private _requestIdToExtraInfo = new Map<string, Protocol.Network.requestWillBeSentExtraInfoPayload>();
   private _responseExtraInfoTracker = new ResponseExtraInfoTracker();
 
   constructor(client: CRSession, page: Page, parentManager: CRNetworkManager | null) {
@@ -133,19 +132,10 @@ export class CRNetworkManager {
     } else {
       this._onRequest(workerFrame, event, null);
     }
-    const extraInfo = this._requestIdToExtraInfo.get(event.requestId);
-    if (extraInfo)
-      this._onRequestWillBeSentExtraInfo(extraInfo);
   }
 
   _onRequestWillBeSentExtraInfo(event: Protocol.Network.requestWillBeSentExtraInfoPayload) {
-    const request = this._requestIdToRequest.get(event.requestId);
-    if (request) {
-      request.request.updateWithRawHeaders(headersObjectToArray(event.headers));
-      this._requestIdToExtraInfo.delete(event.requestId);
-    } else {
-      this._requestIdToExtraInfo.set(event.requestId, event);
-    }
+    this._responseExtraInfoTracker.requestWillBeSentExtraInfo(event);
   }
 
   _onAuthRequired(event: Protocol.Fetch.authRequiredPayload) {
@@ -566,6 +556,7 @@ const errorReasons: { [reason: string]: Protocol.Network.ErrorReason } = {
 
 type RequestInfo = {
   requestId: string,
+  requestWillBeSentExtraInfo: Protocol.Network.requestWillBeSentExtraInfoPayload[],
   responseReceivedExtraInfo: Protocol.Network.responseReceivedExtraInfoPayload[],
   responses: network.Response[],
   loadingFinished?: Protocol.Network.loadingFinishedPayload,
@@ -592,26 +583,18 @@ class ResponseExtraInfoTracker {
 
   requestWillBeSent(event: Protocol.Network.requestWillBeSentPayload) {
     const info = this._requests.get(event.requestId);
-    if (info) {
-      // This is redirect.
+    if (info && event.redirectResponse)
       this._innerResponseReceived(info, event.redirectResponse);
-    } else {
+    else
       this._getOrCreateEntry(event.requestId);
-    }
   }
 
-  _getOrCreateEntry(requestId: string): RequestInfo {
-    let info = this._requests.get(requestId);
-    if (!info) {
-      info = {
-        requestId: requestId,
-        responseReceivedExtraInfo: [],
-        responses: [],
-        sawResponseWithoutConnectionId: false
-      };
-      this._requests.set(requestId, info);
-    }
-    return info;
+  requestWillBeSentExtraInfo(event: Protocol.Network.requestWillBeSentExtraInfoPayload) {
+    const info = this._getOrCreateEntry(event.requestId);
+    if (!info)
+      return;
+    info.requestWillBeSentExtraInfo.push(event);
+    this._patchHeaders(info, info.requestWillBeSentExtraInfo.length - 1);
   }
 
   responseReceived(event: Protocol.Network.responseReceivedPayload) {
@@ -621,8 +604,8 @@ class ResponseExtraInfoTracker {
     this._innerResponseReceived(info, event.response);
   }
 
-  private _innerResponseReceived(info: RequestInfo, response: Protocol.Network.Response | undefined) {
-    if (!response?.connectionId) {
+  private _innerResponseReceived(info: RequestInfo, response: Protocol.Network.Response) {
+    if (!response.connectionId) {
       // Starting with this response we no longer can guarantee that response and extra info correspond to the same index.
       info.sawResponseWithoutConnectionId = true;
     }
@@ -631,7 +614,7 @@ class ResponseExtraInfoTracker {
   responseReceivedExtraInfo(event: Protocol.Network.responseReceivedExtraInfoPayload) {
     const info = this._getOrCreateEntry(event.requestId);
     info.responseReceivedExtraInfo.push(event);
-    this._patchResponseHeaders(info, info.responseReceivedExtraInfo.length - 1);
+    this._patchHeaders(info, info.responseReceivedExtraInfo.length - 1);
     this._checkFinished(info);
   }
 
@@ -648,7 +631,7 @@ class ResponseExtraInfoTracker {
       return;
     response.setWillReceiveExtraHeaders();
     info.responses.push(response);
-    this._patchResponseHeaders(info, info.responses.length - 1);
+    this._patchHeaders(info, info.responses.length - 1);
   }
 
   loadingFinished(event: Protocol.Network.loadingFinishedPayload) {
@@ -667,11 +650,29 @@ class ResponseExtraInfoTracker {
     this._checkFinished(info);
   }
 
-  private _patchResponseHeaders(info: RequestInfo, index: number) {
+  _getOrCreateEntry(requestId: string): RequestInfo {
+    let info = this._requests.get(requestId);
+    if (!info) {
+      info = {
+        requestId: requestId,
+        requestWillBeSentExtraInfo: [],
+        responseReceivedExtraInfo: [],
+        responses: [],
+        sawResponseWithoutConnectionId: false
+      };
+      this._requests.set(requestId, info);
+    }
+    return info;
+  }
+
+  private _patchHeaders(info: RequestInfo, index: number) {
     const response = info.responses[index];
-    const extraInfo = info.responseReceivedExtraInfo[index];
-    if (response && extraInfo)
-      response.extraHeadersReceived(headersObjectToArray(extraInfo.headers));
+    const requestExtraInfo = info.requestWillBeSentExtraInfo[index];
+    if (response && requestExtraInfo)
+      response.setRawRequestHeaders(headersObjectToArray(requestExtraInfo.headers));
+    const responseExtraInfo = info.responseReceivedExtraInfo[index];
+    if (response && responseExtraInfo)
+      response.setRawResponseHeaders(headersObjectToArray(responseExtraInfo.headers));
   }
 
   private _checkFinished(info: RequestInfo) {

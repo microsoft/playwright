@@ -12668,6 +12668,32 @@ export interface FileChooser {
 }
 
 /**
+ * HTTP request and response raw headers collection.
+ */
+export interface Headers {
+  /**
+   * @param name
+   */
+  get(name: string): string|null;
+
+  /**
+   * Returns all header values for the given header name.
+   * @param name
+   */
+  getAll(name: string): Array<string>;
+
+  /**
+   * Returns all header names in this headers collection.
+   */
+  headerNames(): Array<string>;
+
+  /**
+   * Returns all raw headers.
+   */
+  headers(): Array<{ name: string, value: string }>;
+}
+
+/**
  * Keyboard provides an api for managing a virtual keyboard. The high level api is
  * [keyboard.type(text[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-type), which takes raw
  * characters and generates proper keydown, keypress/input, and keyup events on your page.
@@ -13022,7 +13048,8 @@ export interface Request {
   frame(): Frame;
 
   /**
-   * An object with HTTP headers associated with the request. All header names are lower-case.
+   * **DEPRECATED**  Use [request.rawHeaders()](https://playwright.dev/docs/api/class-request#request-raw-headers) instead.
+   * @deprecated
    */
   headers(): { [key: string]: string; };
 
@@ -13053,6 +13080,11 @@ export interface Request {
    * Otherwise it will be parsed as JSON.
    */
   postDataJSON(): null|any;
+
+  /**
+   * An object with the raw request HTTP headers associated with the request. All headers are as seen in the network stack.
+   */
+  rawHeaders(): Promise<Headers>;
 
   /**
    * Request that was redirected by the server to this one, if any.
@@ -13229,7 +13261,9 @@ export interface Response {
   frame(): Frame;
 
   /**
-   * Returns the object with HTTP headers associated with the response. All header names are lower-case.
+   * **DEPRECATED**  Use [response.rawHeaders()](https://playwright.dev/docs/api/class-response#response-raw-headers)
+   * instead.
+   * @deprecated
    */
   headers(): { [key: string]: string; };
 
@@ -13244,6 +13278,11 @@ export interface Response {
    * Contains a boolean stating whether the response was successful (status in the range 200-299) or not.
    */
   ok(): boolean;
+
+  /**
+   * An object with the raw response HTTP headers associated with the request. All headers are as seen in the network stack.
+   */
+  rawHeaders(): Promise<Headers>;
 
   /**
    * Returns the matching [Request] object.

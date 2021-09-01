@@ -766,9 +766,6 @@ BrowserContext:
         request: Request
         response: Response?
         responseEndTiming: number
-        responseHeaders:
-          type: array?
-          items: NameValue
         requestSizes: RequestSizes
         page: Page?
 
@@ -2197,9 +2194,6 @@ Response:
     url: string
     status: number
     statusText: string
-    requestHeaders:
-      type: array
-      items: NameValue
     headers:
       type: array
       items: NameValue
@@ -2219,6 +2213,18 @@ Response:
     serverAddr:
       returns:
         value: RemoteAddr?
+
+    rawRequestHeaders:
+      returns:
+        headers:
+          type: array
+          items: NameValue
+
+    rawResponseHeaders:
+      returns:
+        headers:
+          type: array
+          items: NameValue
 
 
 SecurityDetails:

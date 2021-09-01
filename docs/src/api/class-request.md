@@ -54,7 +54,7 @@ Returns the [Frame] that initiated this request.
 ## method: Request.headers
 - returns: <[Object]<[string], [string]>>
 
-An object with HTTP headers associated with the request. All header names are lower-case.
+**DEPRECATED**  Use [`method: Request.rawHeaders`] instead.
 
 ## method: Request.isNavigationRequest
 - returns: <[boolean]>
@@ -84,6 +84,11 @@ Returns parsed request's body for `form-urlencoded` and JSON as a fallback if an
 
 When the response is `application/x-www-form-urlencoded` then a key/value object of the values will be returned.
 Otherwise it will be parsed as JSON.
+
+## async method: Request.rawHeaders
+- returns: <[Headers]>
+
+An object with the raw request HTTP headers associated with the request. All headers are as seen in the network stack.
 
 ## method: Request.redirectedFrom
 - returns: <[null]|[Request]>

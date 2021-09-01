@@ -41,3 +41,4 @@ export { Video } from './video';
 export { Worker } from './worker';
 export { CDPSession } from './cdpSession';
 export { Playwright } from './playwright';
+export { RawHeaders as Headers } from './network';

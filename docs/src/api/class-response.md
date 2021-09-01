@@ -20,7 +20,7 @@ Returns the [Frame] that initiated this response.
 ## method: Response.headers
 - returns: <[Object]<[string], [string]>>
 
-Returns the object with HTTP headers associated with the response. All header names are lower-case.
+**DEPRECATED**  Use [`method: Response.rawHeaders`] instead.
 
 ## async method: Response.json
 * langs: js, python
@@ -42,6 +42,11 @@ This method will throw if the response body is not parsable via `JSON.parse`.
 - returns: <[boolean]>
 
 Contains a boolean stating whether the response was successful (status in the range 200-299) or not.
+
+## async method: Response.rawHeaders
+- returns: <[Headers]>
+
+An object with the raw response HTTP headers associated with the request. All headers are as seen in the network stack.
 
 ## method: Response.request
 - returns: <[Request]>

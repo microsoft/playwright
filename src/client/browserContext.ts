@@ -28,7 +28,7 @@ import { Events } from './events';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { Waiter } from './waiter';
 import { URLMatch, Headers, WaitForEventOptions, BrowserContextOptions, StorageState, LaunchOptions } from './types';
-import { isUnderTest, headersObjectToArray, mkdirIfNeeded, isString, headersArrayToObject } from '../utils/utils';
+import { isUnderTest, headersObjectToArray, mkdirIfNeeded, isString } from '../utils/utils';
 import { isSafeCloseError } from '../utils/errors';
 import * as api from '../../types/types';
 import * as structs from '../../types/structs';
@@ -125,15 +125,13 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   }
 
   private _onRequestFinished(params: channels.BrowserContextRequestFinishedEvent) {
-    const { requestSizes, responseEndTiming, responseHeaders } = params;
+    const { requestSizes, responseEndTiming } = params;
     const request = network.Request.from(params.request);
     const response = network.Response.fromNullable(params.response);
     const page = Page.fromNullable(params.page);
     if (request._timing)
       request._timing.responseEnd = responseEndTiming;
     request._sizes = requestSizes;
-    if (response && responseHeaders)
-      response._headers = headersArrayToObject(responseHeaders, true /* lowerCase */);
     this.emit(Events.BrowserContext.RequestFinished, request);
     if (page)
       page.emit(Events.Page.RequestFinished, request);

@@ -18,7 +18,7 @@ import { URLSearchParams } from 'url';
 import * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { Frame } from './frame';
-import { Headers, RemoteAddr, SecurityDetails, WaitForEventOptions } from './types';
+import { Headers, HeadersArray, RemoteAddr, SecurityDetails, WaitForEventOptions } from './types';
 import fs from 'fs';
 import * as mime from 'mime';
 import { isString, headersObjectToArray, headersArrayToObject } from '../utils/utils';
@@ -29,6 +29,7 @@ import { Waiter } from './waiter';
 import * as api from '../../types/types';
 import { URLMatch } from '../common/types';
 import { urlMatches } from './clientHelper';
+import { MultiMap } from '../utils/multimap';
 
 export type NetworkCookie = {
   name: string,
@@ -58,6 +59,7 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
   private _redirectedTo: Request | null = null;
   _failureText: string | null = null;
   _headers: Headers;
+  private _rawHeadersPromise: Promise<RawHeaders> | undefined;
   private _postData: Buffer | null;
   _timing: ResourceTiming;
   _sizes: RequestSizes = { requestBodySize: 0, requestHeadersSize: 0, responseBodySize: 0, responseHeadersSize: 0, responseTransferSize: 0 };
@@ -131,8 +133,24 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
     }
   }
 
+  /**
+   * @deprecated
+   */
   headers(): Headers {
     return { ...this._headers };
+  }
+
+  async rawHeaders(): Promise<RawHeaders> {
+    if (this._rawHeadersPromise)
+      return this._rawHeadersPromise;
+    this._rawHeadersPromise = this.response().then(response => {
+      if (!response)
+        return new RawHeaders([]);
+      return response._wrapApiCall(async (channel: channels.ResponseChannel) => {
+        return new RawHeaders((await channel.rawRequestHeaders()).headers);
+      });
+    });
+    return this._rawHeadersPromise;
   }
 
   async response(): Promise<Response | null> {
@@ -183,11 +201,13 @@ export class InterceptedResponse implements api.Response {
   private readonly _initializer: channels.InterceptedResponse;
   private readonly _request: Request;
   private readonly _headers: Headers;
+  private readonly _rawHeaders: RawHeaders;
 
   constructor(route: Route, initializer: channels.InterceptedResponse) {
     this._route = route;
     this._initializer = initializer;
     this._headers = headersArrayToObject(initializer.headers, true /* lowerCase */);
+    this._rawHeaders = new RawHeaders(initializer.headers);
     this._request = Request.from(initializer.request);
   }
 
@@ -228,6 +248,10 @@ export class InterceptedResponse implements api.Response {
 
   headers(): Headers {
     return { ...this._headers };
+  }
+
+  async rawHeaders(): Promise<RawHeaders> {
+    return this._rawHeaders;
   }
 
   async body(): Promise<Buffer> {
@@ -386,6 +410,7 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
   _headers: Headers;
   private _request: Request;
   readonly _finishedPromise = new ManualPromise<void>();
+  private _rawHeadersPromise: Promise<RawHeaders> | undefined;
 
   static from(response: channels.ResponseChannel): Response {
     return (response as any)._object;
@@ -399,7 +424,6 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
     super(parent, type, guid, initializer);
     this._headers = headersArrayToObject(initializer.headers, true /* lowerCase */);
     this._request = Request.from(this._initializer.request);
-    this._request._headers = headersArrayToObject(initializer.requestHeaders, true /* lowerCase */);
     Object.assign(this._request._timing, this._initializer.timing);
   }
 
@@ -419,8 +443,20 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
     return this._initializer.statusText;
   }
 
+  /**
+   * @deprecated
+   */
   headers(): Headers {
     return { ...this._headers };
+  }
+
+  async rawHeaders(): Promise<RawHeaders> {
+    if (this._rawHeadersPromise)
+      return this._rawHeadersPromise;
+    this._rawHeadersPromise = this._wrapApiCall(async (channel: channels.ResponseChannel) => {
+      return new RawHeaders((await channel.rawResponseHeaders()).headers);
+    });
+    return this._rawHeadersPromise;
   }
 
   async finished(): Promise<null> {
@@ -598,5 +634,32 @@ export class RouteHandler {
   public handle(route: Route, request: Request) {
     this.handler(route, request);
     this.handledCount++;
+  }
+}
+
+export class RawHeaders implements api.Headers {
+  private _headersArray: HeadersArray;
+  private _headersMap = new MultiMap<string, string>();
+
+  constructor(headers: HeadersArray) {
+    this._headersArray = headers;
+    for (const header of headers)
+      this._headersMap.set(header.name.toLowerCase(), header.value);
+  }
+
+  get(name: string): string | null {
+    return this.getAll(name)[0] || null;
+  }
+
+  getAll(name: string): string[] {
+    return [...this._headersMap.get(name.toLowerCase())];
+  }
+
+  headerNames(): string[] {
+    return [...new Set(this._headersArray.map(h => h.name))];
+  }
+
+  headers(): HeadersArray {
+    return this._headersArray;
   }
 }

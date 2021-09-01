@@ -67,7 +67,6 @@ export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseIn
       url: response.url(),
       status: response.status(),
       statusText: response.statusText(),
-      requestHeaders: response.request().headers(),
       headers: response.headers(),
       timing: response.timing()
     });
@@ -83,6 +82,14 @@ export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseIn
 
   async serverAddr(): Promise<channels.ResponseServerAddrResult> {
     return { value: await this._object.serverAddr() || undefined };
+  }
+
+  async rawRequestHeaders(params?: channels.ResponseRawRequestHeadersParams, metadata?: channels.Metadata): Promise<channels.ResponseRawRequestHeadersResult> {
+    return { headers: await this._object.rawRequestHeaders() };
+  }
+
+  async rawResponseHeaders(params?: channels.ResponseRawResponseHeadersParams, metadata?: channels.Metadata): Promise<channels.ResponseRawResponseHeadersResult> {
+    return { headers: await this._object.rawResponseHeaders() };
   }
 }
 
