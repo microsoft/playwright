@@ -229,22 +229,28 @@ class HtmlReporter {
     for (const attachment of result.attachments) {
       if (attachment.path) {
         const sha1 = calculateSha1(attachment.path) + path.extname(attachment.path);
-        fs.copyFileSync(attachment.path, path.join(this._resourcesFolder, sha1));
-        attachments.push({
-          ...attachment,
-          body: undefined,
-          sha1
-        });
+        try {
+          fs.copyFileSync(attachment.path, path.join(this._resourcesFolder, sha1));
+          attachments.push({
+            ...attachment,
+            body: undefined,
+            sha1
+          });
+        } catch (e) {
+        }
       } else if (attachment.body && isTextAttachment(attachment.contentType)) {
         attachments.push({ ...attachment, body: attachment.body.toString() });
       } else {
         const sha1 = calculateSha1(attachment.body!) + '.dat';
-        fs.writeFileSync(path.join(this._resourcesFolder, sha1), attachment.body);
-        attachments.push({
-          ...attachment,
-          body: undefined,
-          sha1
-        });
+        try {
+          fs.writeFileSync(path.join(this._resourcesFolder, sha1), attachment.body);
+          attachments.push({
+            ...attachment,
+            body: undefined,
+            sha1
+          });
+        } catch (e) {
+        }
       }
     }
 
