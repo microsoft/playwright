@@ -242,7 +242,7 @@ Now you can use a relative path when navigating the page, or use `baseURL` fixtu
 
 ```js js-flavor=ts
 // test.spec.ts
-import { test } = from '@playwright/test';
+import { test } from '@playwright/test';
 test('test', async ({ page, baseURL }) => {
   // baseURL is taken directly from your web server,
   // e.g. http://localhost:3000
