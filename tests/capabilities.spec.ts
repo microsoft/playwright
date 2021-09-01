@@ -28,8 +28,6 @@ it('SharedArrayBuffer should work', async function({contextFactory, httpsServer,
     res.end();
   });
   await page.goto(httpsServer.PREFIX + '/sharedarraybuffer');
-  // await page.goto(httpsServer.PREFIX + '/empty.html');
-  // await page.goto(server.PREFIX + '/empty.html');
   expect(await page.evaluate(() => typeof SharedArrayBuffer)).toBe('function');
 });
 
