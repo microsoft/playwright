@@ -3239,7 +3239,7 @@ export type Fixtures<T extends KeyValue = {}, W extends KeyValue = {}, PT extend
 };
 
 type BrowserChannel = Exclude<LaunchOptions['channel'], undefined>;
-type BrowserName = 'chromium' | 'firefox' | 'webkit' | BrowserChannel;
+type BrowserName = 'chromium' | 'firefox' | 'webkit' | 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary';
 type ColorScheme = Exclude<BrowserContextOptions['colorScheme'], undefined>;
 type ExtraHTTPHeaders = Exclude<BrowserContextOptions['extraHTTPHeaders'], undefined>;
 type Proxy = Exclude<BrowserContextOptions['proxy'], undefined>;

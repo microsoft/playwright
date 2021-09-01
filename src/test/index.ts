@@ -59,7 +59,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
   }, { scope: 'worker' }],
 
   _browserType: [async ({ playwright, browserName, headless, channel, launchOptions }, use) => {
-    const parsedBrowserName = browserShorthandToBrowserAndChannel[browserName] || browserShorthandToBrowserAndChannelInternal[browserName];
+    const parsedBrowserName = browserShorthandToBrowserAndChannel[browserName] || browserShorthandToBrowserAndChannelInternal[browserName as 'firefox-beta' | 'chromium-with-symbols'];
     if (!parsedBrowserName)
       throw new Error(`Unexpected browserName "${browserName}", must be one of ${[...Object.keys(browserShorthandToBrowserAndChannel)].map(v => JSON.stringify(v)).join(', ')}"`);
     const browserType = playwright[parsedBrowserName.browserName as 'firefox'|'webkit'|'chromium'];
