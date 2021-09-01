@@ -153,7 +153,7 @@ await page.Locator("button").ClickAsync();
 await page.Locator("button").First.ClickAsync();
 
 // Works because Count knows what to do with multiple matches:
-await page.Locator("button").Count();
+await page.Locator("button").CountAsync();
 ```
 
 ## async method: Locator.allInnerTexts
