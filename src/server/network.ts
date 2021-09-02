@@ -119,7 +119,7 @@ export class Request extends SdkObject {
     this._headers = headers;
     for (const { name, value } of this._headers)
       this._headersMap.set(name.toLowerCase(), value);
-    this._isFavicon = url.endsWith('/favicon.ico');
+    this._isFavicon = url.endsWith('/favicon.ico') || !!redirectedFrom?._isFavicon;
   }
 
   _setFailureText(failureText: string) {

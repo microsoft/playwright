@@ -107,3 +107,46 @@ it('should fire events in proper order', async ({browser, server}) => {
     'requestfinished',
   ]);
 });
+
+it('should not fire events for favicon or favicon redirects', async ({browser, server, browserName, channel, headless}) => {
+  it.skip(headless && browserName !== 'firefox', 'headless browsers, except firefox, do not request favicons');
+  it.skip(!headless && browserName === 'webkit' && !channel, 'headed webkit does not have a favicon feature');
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const favicon = `/favicon.ico`;
+  const hashedFaviconUrl = `/favicon-hashed.ico`;
+  const imagePath = `/fakeimage.png`;
+  const pagePath = `/page.html`;
+  server.setRedirect(favicon, hashedFaviconUrl);
+  server.setRoute(pagePath, (_, res) => {
+    res.end(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <link rel="icon" type="image/svg+xml" href="${favicon}">
+          <title>SVG Favicon Test</title>
+        </head>
+        <body>
+          <img src="${imagePath}" alt="my fake image">
+        </body>
+      </html>
+`);
+  });
+
+  const events = [];
+  context.on('request', req => events.push(req.url()));
+  context.on('response', res => events.push(res.url()));
+  context.on('requestfinished', req => events.push(req.url()));
+
+  await Promise.all([
+    server.waitForRequest(favicon),
+    server.waitForRequest(hashedFaviconUrl),
+    page.goto(server.PREFIX + '/page.html'),
+  ]);
+
+  expect(events).toEqual(expect.arrayContaining([expect.stringContaining(pagePath)]));
+  expect(events).toEqual(expect.arrayContaining([expect.stringContaining(imagePath)]));
+  expect(events).not.toEqual(expect.arrayContaining([expect.stringContaining(favicon)]));
+  expect(events).not.toEqual(expect.arrayContaining([expect.stringContaining(hashedFaviconUrl)]));
+});
