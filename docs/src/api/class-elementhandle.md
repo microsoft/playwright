@@ -762,7 +762,6 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: ElementHandle.setChecked.force = %%-input-force-%%
 ### option: ElementHandle.setChecked.noWaitAfter = %%-input-no-wait-after-%%
 ### option: ElementHandle.setChecked.position = %%-input-position-%%
-### option: ElementHandle.setChecked.strict = %%-input-strict-%%
 ### option: ElementHandle.setChecked.timeout = %%-input-timeout-%%
 ### option: ElementHandle.setChecked.trial = %%-input-trial-%%
 
