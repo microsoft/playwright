@@ -145,7 +145,7 @@ await expect(locator).toHaveAttribute('type', 'text');
 ```
 
 ## expect(locator).toHaveClass(expected)
-- `expected`: <[string] | [RegExp] | [Array]<[string]>>
+- `expected`: <[string] | [RegExp] | [Array]<[string]|[RegExp]>>
 - `options`
   - `timeout`: <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
 
@@ -159,7 +159,7 @@ await expect(locator).toHaveClass(/selected/);
 Note that if array is passed as an expected value, entire lists can be asserted:
 
 ```js
-const locator = page.locator('list > #component');
+const locator = page.locator('list > .component');
 await expect(locator).toHaveClass(['component', 'component selected', 'component']);
 ```
 
@@ -215,7 +215,7 @@ await expect(locator).toHaveJSProperty('loaded', true);
 ```
 
 ## expect(locator).toHaveText(expected, options)
-- `expected`: <[string] | [RegExp] | [Array]<[string]>>
+- `expected`: <[string] | [RegExp] | [Array]<[string]|[RegExp]>>
 - `options`
   - `timeout`: <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
   - `useInnerText`: <[boolean]> Whether to use `element.innerText` instead of `element.textContent` when retrieving DOM node text.

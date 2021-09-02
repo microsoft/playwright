@@ -36,6 +36,13 @@ const RECEIVED_LABEL = 'Received';
 // The optional property of matcher context is true if undefined.
 const isExpand = (expand?: boolean): boolean => expand !== false;
 
+function regExpTester(a: any, b: any): boolean | undefined {
+  if (typeof a === 'string' && b instanceof RegExp) {
+    b.lastIndex = 0;
+    return b.test(a);
+  }
+}
+
 export async function toEqual<T>(
   this: ReturnType<Expect['getState']>,
   matcherName: string,
@@ -59,10 +66,9 @@ export async function toEqual<T>(
   let received: T | undefined = undefined;
   let pass = false;
 
-  // TODO: interrupt on timeout for nice message.
   await pollUntilDeadline(testInfo, async remainingTime => {
     received = await query(remainingTime);
-    pass = equals(received, expected, [iterableEquality]);
+    pass = equals(received, expected, [iterableEquality, regExpTester]);
     return pass === !matcherOptions.isNot;
   }, options.timeout, testInfo._testFinished);
 

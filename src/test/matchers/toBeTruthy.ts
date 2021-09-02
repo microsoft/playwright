@@ -43,7 +43,6 @@ export async function toBeTruthy<T>(
   let received: T;
   let pass = false;
 
-  // TODO: interrupt on timeout for nice message.
   await pollUntilDeadline(testInfo, async remainingTime => {
     received = await query(remainingTime);
     pass = !!received;

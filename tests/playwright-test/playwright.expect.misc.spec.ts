@@ -93,19 +93,19 @@ test('should support toHaveClass w/ array', async ({ runInlineTest }) => {
       test('pass', async ({ page }) => {
         await page.setContent('<div class="foo"></div><div class="bar"></div><div class="baz"></div>');
         const locator = page.locator('div');
-        await expect(locator).toHaveClass(['foo', 'bar', 'baz']);
+        await expect(locator).toHaveClass(['foo', 'bar', /[a-z]az/]);
       });
 
       test('fail', async ({ page }) => {
         await page.setContent('<div class="foo"></div><div class="bar"></div><div class="bar"></div>');
         const locator = page.locator('div');
-        await expect(locator).toHaveClass(['foo', 'bar', 'baz'], { timeout: 1000 });
+        await expect(locator).toHaveClass(['foo', 'bar', /[a-z]az/], { timeout: 1000 });
       });
       `,
   }, { workers: 1 });
   const output = stripAscii(result.output);
   expect(output).toContain('expect(received).toHaveClass(expected)');
-  expect(output).toContain('-   \"baz\",');
+  expect(output).toContain('-   /[a-z]az/,');
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
