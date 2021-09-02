@@ -266,7 +266,7 @@ context.Page += async  (_, page) => {
 
 ## Handling popups
 
-If the page opens a pop-up, you can get a reference to it by listening to the `popup` event on the page.
+If the page opens a pop-up (e.g. pages opened by `target="_blank"` links), you can get a reference to it by listening to the `popup` event on the page.
 
 This event is emitted in addition to the `browserContext.on('page')` event, but only for popups relevant to this page.
 
