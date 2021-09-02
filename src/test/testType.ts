@@ -40,6 +40,8 @@ export class TestTypeImpl {
     test.only = wrapFunctionWithLocation(this._createTest.bind(this, 'only'));
     test.describe = wrapFunctionWithLocation(this._describe.bind(this, 'default'));
     test.describe.only = wrapFunctionWithLocation(this._describe.bind(this, 'only'));
+    test.describe.parallel = wrapFunctionWithLocation(this._describe.bind(this, 'parallel'));
+    test.describe.parallel.only = wrapFunctionWithLocation(this._describe.bind(this, 'parallel.only'));
     test.describe.serial = wrapFunctionWithLocation(this._describe.bind(this, 'serial'));
     test.describe.serial.only = wrapFunctionWithLocation(this._describe.bind(this, 'serial.only'));
     test.beforeEach = wrapFunctionWithLocation(this._hook.bind(this, 'beforeEach'));
@@ -77,7 +79,7 @@ export class TestTypeImpl {
       test.expectedStatus = 'skipped';
   }
 
-  private _describe(type: 'default' | 'only' | 'serial' | 'serial.only', location: Location, title: string, fn: Function) {
+  private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only', location: Location, title: string, fn: Function) {
     throwIfRunningInsideJest();
     const suite = currentlyLoadingFileSuite();
     if (!suite)
@@ -98,10 +100,19 @@ export class TestTypeImpl {
     child.location = location;
     suite._addSuite(child);
 
-    if (type === 'only' || type === 'serial.only')
+    if (type === 'only' || type === 'serial.only' || type === 'parallel.only')
       child._only = true;
     if (type === 'serial' || type === 'serial.only')
-      child._serial =  true;
+      child._parallelMode = 'serial';
+    if (type === 'parallel' || type === 'parallel.only')
+      child._parallelMode = 'parallel';
+
+    for (let parent: Suite | undefined = suite; parent; parent = parent.parent) {
+      if (parent._parallelMode === 'serial' && child._parallelMode === 'parallel')
+        throw errorWithLocation(location, 'describe.parallel cannot be nested inside describe.serial');
+      if (parent._parallelMode === 'parallel' && child._parallelMode === 'serial')
+        throw errorWithLocation(location, 'describe.serial cannot be nested inside describe.parallel');
+    }
 
     setCurrentlyLoadingFileSuite(child);
     fn();
