@@ -23,6 +23,7 @@ import * as frames from '../frames';
 import * as types from '../types';
 import { Protocol } from './protocol';
 import { InterceptedResponse } from '../network';
+import { HeadersArray } from '../../server/types';
 
 export class FFNetworkManager {
   private _session: FFSession;
@@ -96,7 +97,7 @@ export class FFNetworkManager {
       requestStart: relativeToStart(event.timing.requestStart),
       responseStart: relativeToStart(event.timing.responseStart),
     };
-    const response = new network.Response(request.request, event.status, event.statusText, event.headers, timing, getResponseBody);
+    const response = new network.Response(request.request, event.status, event.statusText, parseMultivalueHeaders(event.headers), timing, getResponseBody);
     if (event?.remoteIPAddress && typeof event?.remotePort === 'number') {
       response._serverAddrFinished({
         ipAddress: event.remoteIPAddress,
@@ -251,4 +252,15 @@ class FFRouteImpl implements network.RouteDelegate {
       errorCode,
     });
   }
+}
+
+function parseMultivalueHeaders(headers: HeadersArray) {
+  const result: HeadersArray = [];
+  for (const header of headers) {
+    const separator = header.name.toLowerCase() === 'set-cookie' ? '\n' : ',';
+    const tokens = header.value.split(separator).map(s => s.trim());
+    for (const token of tokens)
+      result.push({ name: header.name, value: token });
+  }
+  return result;
 }

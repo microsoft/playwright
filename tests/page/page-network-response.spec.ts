@@ -117,3 +117,52 @@ it('should return status text', async ({page, server}) => {
   const response = await page.goto(server.PREFIX + '/cool');
   expect(response.statusText()).toBe('cool!');
 });
+
+it('should report all headers', async ({ page, server }) => {
+  const expectedHeaders = {
+    'header-a': ['value-a', 'value-a-1', 'value-a-2'],
+    'header-b': ['value-b'],
+  };
+  server.setRoute('/headers', (req, res) => {
+    res.writeHead(200, expectedHeaders);
+    res.end();
+  });
+
+  await page.goto(server.EMPTY_PAGE);
+  const [response] = await Promise.all([
+    page.waitForResponse('**/*'),
+    page.evaluate(() => fetch('/headers'))
+  ]);
+  const headers = await response.allHeaders();
+  const actualHeaders = {};
+  for (const name of headers.headerNames())
+    actualHeaders[name] = headers.getAll(name);
+  delete actualHeaders['Keep-Alive'];
+  delete actualHeaders['keep-alive'];
+  delete actualHeaders['Connection'];
+  delete actualHeaders['connection'];
+  delete actualHeaders['Date'];
+  delete actualHeaders['date'];
+  delete actualHeaders['Transfer-Encoding'];
+  delete actualHeaders['transfer-encoding'];
+  expect(actualHeaders).toEqual(expectedHeaders);
+});
+
+it('should report multiple set-cookie headers', async ({ page, server }) => {
+  server.setRoute('/headers', (req, res) => {
+    res.writeHead(200, {
+      'Set-Cookie': ['a=b', 'c=d']
+    });
+    res.write('\r\n');
+    res.end();
+  });
+
+  await page.goto(server.EMPTY_PAGE);
+  const [response] = await Promise.all([
+    page.waitForResponse('**/*'),
+    page.evaluate(() => fetch('/headers'))
+  ]);
+  const headers = await response.allHeaders();
+  const cookies = headers.getAll('set-cookie');
+  expect(cookies).toEqual(['a=b', 'c=d']);
+});

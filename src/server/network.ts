@@ -446,11 +446,15 @@ export class Response extends SdkObject {
     headersSize += 8; // httpVersion;
     headersSize += 3; // statusCode;
     headersSize += this.statusText().length;
-    const headers = this._rawResponseHeadersPromise ? await this._rawResponseHeadersPromise : this._headers;
+    const headers = await this._bestEffortResponseHeaders();
     for (const header of headers)
       headersSize += header.name.length + header.value.length + 4; // 4 = ': ' + '\r\n'
     headersSize += 2; // '\r\n'
     return headersSize;
+  }
+
+  private async _bestEffortResponseHeaders(): Promise<types.HeadersArray> {
+    return this._rawResponseHeadersPromise ? await this._rawResponseHeadersPromise : this._headers;
   }
 
   async sizes(): Promise<ResourceSizes> {
@@ -458,9 +462,15 @@ export class Response extends SdkObject {
     const requestHeadersSize = await this._requestHeadersSize();
     const responseHeadersSize = await this._responseHeadersSize();
     let { bodySize, encodedBodySize, transferSize } = this._request.responseSize;
+    if (!bodySize) {
+      const headers = await this._bestEffortResponseHeaders();
+      const contentLength = headers.find(h => h.name.toLowerCase() === 'content-length')?.value;
+      bodySize = contentLength ? +contentLength : 0;
+    }
     if (!encodedBodySize && transferSize) {
       // Chromium only populates transferSize
-      encodedBodySize = transferSize - responseHeadersSize;
+      // Firefox can return 0 transferSize
+      encodedBodySize = Math.max(0, transferSize - responseHeadersSize);
       // Firefox only populate transferSize.
       if (!bodySize)
         bodySize = encodedBodySize;

@@ -252,8 +252,9 @@ export class HarTracer {
       status: response.status(),
       statusText: response.statusText(),
       httpVersion: response.httpVersion(),
-      cookies: cookiesForHar(response.headerValue('set-cookie'), '\n'),
-      headers: response.headers().map(header => ({ name: header.name, value: header.value })),
+      // These are bad values that will be overwritten bellow.
+      cookies: [],
+      headers: [],
       content: {
         size: -1,
         mimeType: 'x-unknown',
@@ -292,12 +293,12 @@ export class HarTracer {
     }));
     this._addBarrier(page, response.rawRequestHeaders().then(headers => {
       for (const header of headers.filter(header => header.name.toLowerCase() === 'cookie'))
-        harEntry.request.cookies.push(...cookiesForHar(header.value, ';'));
+        harEntry.request.cookies.push(...header.value.split(';').map(parseCookie));
       harEntry.request.headers = headers;
     }));
     this._addBarrier(page, response.rawResponseHeaders().then(headers => {
       for (const header of headers.filter(header => header.name.toLowerCase() === 'set-cookie'))
-        harEntry.response.cookies.push(...cookiesForHar(header.value, '\n'));
+        harEntry.response.cookies.push(parseCookie(header.value));
       harEntry.response.headers = headers;
       const contentType = headers.find(header => header.name.toLowerCase() === 'content-type');
       if (contentType)
@@ -363,12 +364,6 @@ function postDataForHar(request: network.Request, content: 'omit' | 'sha1' | 'em
       result.params.push({ name, value });
   }
   return result;
-}
-
-function cookiesForHar(header: string | undefined, separator: string): har.Cookie[] {
-  if (!header)
-    return [];
-  return header.split(separator).map(c => parseCookie(c));
 }
 
 function parseCookie(c: string): har.Cookie {

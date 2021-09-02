@@ -246,11 +246,19 @@ export async function mkdirIfNeeded(filePath: string) {
 type HeadersArray = { name: string, value: string }[];
 type HeadersObject = { [key: string]: string };
 
-export function headersObjectToArray(headers: HeadersObject): HeadersArray {
+export function headersObjectToArray(headers: HeadersObject, separator?: string, setCookieSeparator?: string): HeadersArray {
+  if (!setCookieSeparator)
+    setCookieSeparator = separator;
   const result: HeadersArray = [];
   for (const name in headers) {
-    if (!Object.is(headers[name], undefined))
-      result.push({ name, value: headers[name] });
+    const values = headers[name];
+    if (separator) {
+      const sep = name.toLowerCase() === 'set-cookie' ? setCookieSeparator : separator;
+      for (const value of values.split(sep!))
+        result.push({ name, value: value.trim() });
+    } else {
+      result.push({ name, value: values });
+    }
   }
   return result;
 }

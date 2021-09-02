@@ -20,7 +20,6 @@ import { test as it, expect } from './pageTest';
 it('should work', async ({page, server}) => {
   await page.setExtraHTTPHeaders({
     foo: 'bar',
-    baz: undefined,
   });
   const [request] = await Promise.all([
     server.waitForRequest('/empty.html'),

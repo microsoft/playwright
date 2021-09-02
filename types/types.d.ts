@@ -12682,9 +12682,10 @@ export interface Headers {
   headerNames(): Array<string>;
 
   /**
-   * Returns all raw headers.
+   * Returns all headers as a dictionary. Header names are normalized to lower case, multi-value headers are concatenated
+   * using comma.
    */
-  headers(): Array<{ name: string, value: string }>;
+  headers(): { [key: string]: string; };
 }
 
 /**
