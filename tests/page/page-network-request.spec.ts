@@ -83,18 +83,20 @@ it('should return headers', async ({page, server, browserName}) => {
 
 it('should get the same headers as the server', async ({ page, server, browserName, platform }) => {
   it.fail(browserName === 'webkit' && platform === 'win32', 'Curl does not show accept-encoding and accept-language');
-  it.fixme(browserName === 'chromium', 'Flaky, see https://github.com/microsoft/playwright/issues/6690');
-
   let serverRequest;
   server.setRoute('/empty.html', (request, response) => {
     serverRequest = request;
     response.end('done');
   });
   const response = await page.goto(server.PREFIX + '/empty.html');
-  expect(response.request().headers()).toEqual(serverRequest.headers);
+  const headers = await response.request().rawHeaders();
+  const result = {};
+  for (const header of headers.headers())
+    result[header.name.toLowerCase()] = header.value;
+  expect(result).toEqual(serverRequest.headers);
 });
 
-it('should get the same headers as the server CORP', async ({page, server, browserName, platform}) => {
+it('should get the same headers as the server CORS', async ({page, server, browserName, platform}) => {
   it.fail(browserName === 'webkit' && platform === 'win32', 'Curl does not show accept-encoding and accept-language');
 
   await page.goto(server.PREFIX + '/empty.html');
@@ -109,9 +111,14 @@ it('should get the same headers as the server CORP', async ({page, server, brows
     const data = await fetch(url);
     return data.text();
   }, server.CROSS_PROCESS_PREFIX + '/something');
-  const response = await responsePromise;
   expect(text).toBe('done');
-  expect(response.request().headers()).toEqual(serverRequest.headers);
+  const response = await responsePromise;
+  const headers = await response.request().rawHeaders();
+  const result = {};
+  for (const header of headers.headers())
+    result[header.name.toLowerCase()] = header.value;
+
+  expect(result).toEqual(serverRequest.headers);
 });
 
 it('should return postData', async ({page, server, isAndroid}) => {
@@ -274,7 +281,7 @@ it('should set bodySize and headersSize', async ({page, server,browserName, plat
   ]);
   await (await request.response()).finished();
   expect(request.sizes().requestBodySize).toBe(5);
-  expect(request.sizes().requestHeadersSize).toBeGreaterThanOrEqual(300);
+  expect(request.sizes().requestHeadersSize).toBeGreaterThanOrEqual(250);
 });
 
 it('should should set bodySize to 0 if there was no body', async ({page, server,browserName, platform}) => {
@@ -285,7 +292,7 @@ it('should should set bodySize to 0 if there was no body', async ({page, server,
   ]);
   await (await request.response()).finished();
   expect(request.sizes().requestBodySize).toBe(0);
-  expect(request.sizes().requestHeadersSize).toBeGreaterThanOrEqual(228);
+  expect(request.sizes().requestHeadersSize).toBeGreaterThanOrEqual(200);
 });
 
 it('should should set bodySize, headersSize, and transferSize', async ({page, server, browserName, platform}) => {
@@ -315,6 +322,19 @@ it('should should set bodySize to 0 when there was no response body', async ({pa
   expect(response.request().sizes().responseTransferSize).toBeGreaterThanOrEqual(160);
 });
 
+it('should report raw headers', async ({ page, server, browserName }) => {
+  const response = await page.goto(server.EMPTY_PAGE);
+  const requestHeaders = await response.request().rawHeaders();
+  expect(requestHeaders.headerNames().map(h => h.toLowerCase())).toContain('accept');
+  expect(requestHeaders.getAll('host')).toHaveLength(1);
+  expect(requestHeaders.get('host')).toBe(`localhost:${server.PORT}`);
+
+  const responseHeaders = await response.rawHeaders();
+  expect(responseHeaders.headerNames().map(h => h.toLowerCase())).toContain('content-type');
+  expect(responseHeaders.getAll('content-type')).toHaveLength(1);
+  expect(responseHeaders.get('content-type')).toBe('text/html; charset=utf-8');
+});
+
 it('should report raw response headers in redirects', async ({ page, server, browserName }) => {
   it.skip(browserName === 'webkit', `WebKit won't give us raw headers for redirects`);
   server.setExtraHeaders('/redirect/1.html', { 'sec-test-header': '1.html' });
@@ -327,14 +347,13 @@ it('should report raw response headers in redirects', async ({ page, server, bro
   const expectedHeaders = ['1.html', '2.html', 'empty.html'];
 
   const response = await page.goto(server.PREFIX + '/redirect/1.html');
-  await response.finished();
-
   const redirectChain = [];
   const headersChain = [];
   for (let req = response.request(); req; req = req.redirectedFrom()) {
     redirectChain.unshift(req.url());
     const res = await req.response();
-    headersChain.unshift(res.headers()['sec-test-header']);
+    const headers = await res.rawHeaders();
+    headersChain.unshift(headers.get('sec-test-header'));
   }
 
   expect(redirectChain).toEqual(expectedUrls);

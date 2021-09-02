@@ -802,7 +802,6 @@ export type BrowserContextRequestFinishedEvent = {
   request: RequestChannel,
   response?: ResponseChannel,
   responseEndTiming: number,
-  responseHeaders?: NameValue[],
   requestSizes: RequestSizes,
   page?: PageChannel,
 };
@@ -2690,7 +2689,6 @@ export type ResponseInitializer = {
   url: string,
   status: number,
   statusText: string,
-  requestHeaders: NameValue[],
   headers: NameValue[],
   timing: ResourceTiming,
 };
@@ -2698,6 +2696,8 @@ export interface ResponseChannel extends Channel {
   body(params?: ResponseBodyParams, metadata?: Metadata): Promise<ResponseBodyResult>;
   securityDetails(params?: ResponseSecurityDetailsParams, metadata?: Metadata): Promise<ResponseSecurityDetailsResult>;
   serverAddr(params?: ResponseServerAddrParams, metadata?: Metadata): Promise<ResponseServerAddrResult>;
+  rawRequestHeaders(params?: ResponseRawRequestHeadersParams, metadata?: Metadata): Promise<ResponseRawRequestHeadersResult>;
+  rawResponseHeaders(params?: ResponseRawResponseHeadersParams, metadata?: Metadata): Promise<ResponseRawResponseHeadersResult>;
 }
 export type ResponseBodyParams = {};
 export type ResponseBodyOptions = {};
@@ -2713,6 +2713,16 @@ export type ResponseServerAddrParams = {};
 export type ResponseServerAddrOptions = {};
 export type ResponseServerAddrResult = {
   value?: RemoteAddr,
+};
+export type ResponseRawRequestHeadersParams = {};
+export type ResponseRawRequestHeadersOptions = {};
+export type ResponseRawRequestHeadersResult = {
+  headers: NameValue[],
+};
+export type ResponseRawResponseHeadersParams = {};
+export type ResponseRawResponseHeadersOptions = {};
+export type ResponseRawResponseHeadersResult = {
+  headers: NameValue[],
 };
 
 export interface ResponseEvents {

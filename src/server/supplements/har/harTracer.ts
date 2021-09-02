@@ -246,9 +246,6 @@ export class HarTracer {
       return;
     const request = response.request();
 
-    // Rewrite provisional headers with actual
-    harEntry.request.headers = request.headers().map(header => ({ name: header.name, value: header.value }));
-    harEntry.request.cookies = cookiesForHar(request.headerValue('cookie'), ';');
     harEntry.request.postData = postDataForHar(request, this._options.content);
 
     harEntry.response = {
@@ -259,7 +256,7 @@ export class HarTracer {
       headers: response.headers().map(header => ({ name: header.name, value: header.value })),
       content: {
         size: -1,
-        mimeType: response.headerValue('content-type') || 'x-unknown',
+        mimeType: 'x-unknown',
       },
       headersSize: -1,
       bodySize: -1,
@@ -292,6 +289,19 @@ export class HarTracer {
     this._addBarrier(page, response.securityDetails().then(details => {
       if (details)
         harEntry._securityDetails = details;
+    }));
+    this._addBarrier(page, response.rawRequestHeaders().then(headers => {
+      for (const header of headers.filter(header => header.name.toLowerCase() === 'cookie'))
+        harEntry.request.cookies.push(...cookiesForHar(header.value, ';'));
+      harEntry.request.headers = headers;
+    }));
+    this._addBarrier(page, response.rawResponseHeaders().then(headers => {
+      for (const header of headers.filter(header => header.name.toLowerCase() === 'set-cookie'))
+        harEntry.response.cookies.push(...cookiesForHar(header.value, '\n'));
+      harEntry.response.headers = headers;
+      const contentType = headers.find(header => header.name.toLowerCase() === 'content-type');
+      if (contentType)
+        harEntry.response.content.mimeType = contentType.value;
     }));
   }
 

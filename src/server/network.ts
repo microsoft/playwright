@@ -19,6 +19,7 @@ import * as types from './types';
 import { assert } from '../utils/utils';
 import { ManualPromise } from '../utils/async';
 import { SdkObject } from './instrumentation';
+import { NameValue } from '../common/types';
 
 export function filterCookies(cookies: types.NetworkCookie[], urls: string[]): types.NetworkCookie[] {
   const parsedURLs = urls.map(s => new URL(s));
@@ -95,7 +96,7 @@ export class Request extends SdkObject {
   private _resourceType: string;
   private _method: string;
   private _postData: Buffer | null;
-  private _headers: types.HeadersArray;
+  readonly _headers: types.HeadersArray;
   private _headersMap = new Map<string, string>();
   private _frame: frames.Frame;
   private _waitForResponsePromise = new ManualPromise<Response | null>();
@@ -150,6 +151,10 @@ export class Request extends SdkObject {
     return this._headersMap.get(name);
   }
 
+  async rawHeaders(): Promise<NameValue[]> {
+    return this._headers;
+  }
+
   response(): PromiseLike<Response | null> {
     return this._waitForResponsePromise;
   }
@@ -185,18 +190,6 @@ export class Request extends SdkObject {
     return {
       errorText: this._failureText
     };
-  }
-
-  updateWithRawHeaders(headers: types.HeadersArray) {
-    this._headers = headers;
-    this._headersMap.clear();
-    for (const { name, value } of this._headers)
-      this._headersMap.set(name.toLowerCase(), value);
-    if (!this._headersMap.has('host')) {
-      const host = new URL(this._url).host;
-      this._headers.push({ name: 'host', value: host });
-      this._headersMap.set('host', host);
-    }
   }
 
   bodySize(): number {
@@ -330,7 +323,8 @@ export class Response extends SdkObject {
   private _timing: ResourceTiming;
   private _serverAddrPromise = new ManualPromise<RemoteAddr | undefined>();
   private _securityDetailsPromise = new ManualPromise<SecurityDetails | undefined>();
-  private _extraHeadersPromise: ManualPromise<void> | undefined;
+  private _rawRequestHeadersPromise: ManualPromise<types.HeadersArray> | undefined;
+  private _rawResponseHeadersPromise: ManualPromise<types.HeadersArray> | undefined;
   private _httpVersion: string | undefined;
 
   constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback, httpVersion?: string) {
@@ -365,25 +359,6 @@ export class Response extends SdkObject {
     this._httpVersion = httpVersion;
   }
 
-  setWillReceiveExtraHeaders() {
-    this._extraHeadersPromise = new ManualPromise();
-  }
-
-  willWaitForExtraHeaders(): boolean {
-    return !!this._extraHeadersPromise && !this._extraHeadersPromise.isDone();
-  }
-
-  async waitForExtraHeadersIfNeeded(): Promise<void> {
-    await this._extraHeadersPromise;
-  }
-
-  extraHeadersReceived(headers: types.HeadersArray) {
-    this._headers = headers;
-    for (const { name, value } of this._headers)
-      this._headersMap.set(name.toLowerCase(), value);
-    this._extraHeadersPromise?.resolve();
-  }
-
   url(): string {
     return this._url;
   }
@@ -402,6 +377,31 @@ export class Response extends SdkObject {
 
   headerValue(name: string): string | undefined {
     return this._headersMap.get(name);
+  }
+
+  async rawRequestHeaders(): Promise<NameValue[]> {
+    return this._rawRequestHeadersPromise || Promise.resolve(this._request._headers);
+  }
+
+  async rawResponseHeaders(): Promise<NameValue[]> {
+    return this._rawResponseHeadersPromise || Promise.resolve(this._headers);
+  }
+
+  setWillReceiveExtraHeaders() {
+    this._rawRequestHeadersPromise = new ManualPromise();
+    this._rawResponseHeadersPromise = new ManualPromise();
+  }
+
+  setRawRequestHeaders(headers: types.HeadersArray) {
+    if (!this._rawRequestHeadersPromise)
+      this._rawRequestHeadersPromise = new ManualPromise();
+    this._rawRequestHeadersPromise!.resolve(headers);
+  }
+
+  setRawResponseHeaders(headers: types.HeadersArray) {
+    if (!this._rawResponseHeadersPromise)
+      this._rawResponseHeadersPromise = new ManualPromise();
+    this._rawResponseHeadersPromise!.resolve(headers);
   }
 
   timing(): ResourceTiming {
