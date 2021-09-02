@@ -52,7 +52,7 @@
   padding: 5px;
   overflow: auto;
   margin: 20px 0;
-  flex: none;
+  flex: auto;
 }
 
 .status-icon {
@@ -176,4 +176,8 @@
   color: var(--blue);
   text-decoration: underline;
   cursor: pointer;
+}
+
+.test-details-column {
+  overflow-y: auto;
 }

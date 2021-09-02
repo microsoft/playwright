@@ -22,7 +22,7 @@ import { formatError, formatResultFailure } from './base';
 import { serializePatterns, toPosixPath } from './json';
 
 export type JsonStats = { expected: number, unexpected: number, flaky: number, skipped: number };
-export type JsonLocation = Location;
+export type JsonLocation = Location & { sha1?: string };
 export type JsonStackFrame = { file: string, line: number, column: number, sha1?: string };
 
 export type JsonConfig = Omit<FullConfig, 'projects'> & {
@@ -158,13 +158,14 @@ class HtmlReporter {
     fs.writeFileSync(path.join(this._reportFolder, 'report.json'), JSON.stringify(output));
   }
 
-  private _relativeLocation(location: Location | undefined): Location {
+  private _relativeLocation(location: Location | undefined): JsonLocation {
     if (!location)
       return { file: '', line: 0, column: 0 };
     return {
       file: toPosixPath(path.relative(this.config.rootDir, location.file)),
       line: location.line,
       column: location.column,
+      sha1: this._sourceProcessor.copySourceFile(location.file),
     };
   }
 
@@ -312,7 +313,7 @@ class SourceProcessor {
     return { stack: frames, preview };
   }
 
-  private copySourceFile(file: string): string | undefined {
+  copySourceFile(file: string): string | undefined {
     let sha1: string | undefined;
     if (this.sha1Cache.has(file)) {
       sha1 = this.sha1Cache.get(file);
