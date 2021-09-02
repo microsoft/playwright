@@ -134,7 +134,7 @@ export function toHaveAttribute(
 export function toHaveClass(
   this: ReturnType<Expect['getState']>,
   locator: Locator,
-  expected: string | RegExp | string[],
+  expected: string | RegExp | (string | RegExp)[],
   options?: { timeout?: number },
 ) {
   if (Array.isArray(expected)) {
@@ -199,7 +199,7 @@ export function toHaveJSProperty(
 export function toHaveText(
   this: ReturnType<Expect['getState']>,
   locator: Locator,
-  expected: string | RegExp | string[],
+  expected: string | RegExp | (string | RegExp)[],
   options?: { timeout?: number, useInnerText?: boolean },
 ) {
   if (Array.isArray(expected)) {

@@ -84,22 +84,22 @@ test('should support toHaveText w/ array', async ({ runInlineTest }) => {
       const { test } = pwt;
 
       test('pass', async ({ page }) => {
-        await page.setContent('<div>Text 1</div><div>Text 2</div>');
+        await page.setContent('<div>Text 1</div><div>Text 2a</div>');
         const locator = page.locator('div');
-        await expect(locator).toHaveText(['Text 1', 'Text 2']);
+        await expect(locator).toHaveText(['Text 1', /Text \\d+a/]);
       });
 
       test('fail', async ({ page }) => {
         await page.setContent('<div>Text 1</div><div>Text 3</div>');
         const locator = page.locator('div');
-        await expect(locator).toHaveText(['Text 1', 'Text 2'], { timeout: 1000 });
+        await expect(locator).toHaveText(['Text 1', /Text \\d+a/], { timeout: 1000 });
       });
       `,
   }, { workers: 1 });
   const output = stripAscii(result.output);
   expect(output).toContain('Error: expect(received).toHaveText(expected) // deep equality');
   expect(output).toContain('await expect(locator).toHaveText');
-  expect(output).toContain('-   \"Text 2\"');
+  expect(output).toContain('-   /Text \\d+a/');
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);

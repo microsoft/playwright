@@ -68,7 +68,6 @@ export async function toMatchText(
   let received: string;
   let pass = false;
 
-  // TODO: interrupt on timeout for nice message.
   await pollUntilDeadline(testInfo, async remainingTime => {
     received = await query(remainingTime);
     if (options.matchSubstring)
