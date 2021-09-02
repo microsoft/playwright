@@ -93,11 +93,11 @@ export class Runner {
     this._loader.loadEmptyConfig(rootDir);
   }
 
-  async run(list: boolean, filePatternFilters: FilePatternFilter[], projectName?: string): Promise<RunResultStatus> {
+  async run(list: boolean, filePatternFilters: FilePatternFilter[], projectNames?: string[]): Promise<RunResultStatus> {
     this._reporter = await this._createReporter(list);
     const config = this._loader.fullConfig();
     const globalDeadline = config.globalTimeout ? config.globalTimeout + monotonicTime() : 0;
-    const { result, timedOut } = await raceAgainstDeadline(this._run(list, filePatternFilters, projectName), globalDeadline);
+    const { result, timedOut } = await raceAgainstDeadline(this._run(list, filePatternFilters, projectNames), globalDeadline);
     if (timedOut) {
       if (!this._didBegin)
         this._reporter.onBegin?.(config, new Suite(''));
@@ -137,18 +137,34 @@ export class Runner {
     await new Promise<void>(resolve => process.stderr.write('', () => resolve()));
   }
 
-  async _run(list: boolean, testFileReFilters: FilePatternFilter[], projectName?: string): Promise<RunResult> {
+  async _run(list: boolean, testFileReFilters: FilePatternFilter[], projectNames?: string[]): Promise<RunResult> {
     const testFileFilter = testFileReFilters.length ? createMatcher(testFileReFilters.map(e => e.re)) : () => true;
     const config = this._loader.fullConfig();
 
+    let projectsToFind: Set<string> | undefined;
+    let unknownProjects: Map<string, string> | undefined;
+    if (projectNames) {
+      projectsToFind = new Set();
+      unknownProjects = new Map();
+      projectNames.forEach(n => {
+        const name = n.toLocaleLowerCase();
+        projectsToFind!.add(name);
+        unknownProjects!.set(name, n);
+      });
+    }
     const projects = this._loader.projects().filter(project => {
-      return !projectName || project.config.name.toLocaleLowerCase() === projectName.toLocaleLowerCase();
+      if (!projectsToFind)
+        return true;
+      const name = project.config.name.toLocaleLowerCase();
+      unknownProjects!.delete(name);
+      return projectsToFind.has(name);
     });
-    if (projectName && !projects.length) {
+    if (unknownProjects && unknownProjects.size) {
       const names = this._loader.projects().map(p => p.config.name).filter(name => !!name);
       if (!names.length)
         throw new Error(`No named projects are specified in the configuration file`);
-      throw new Error(`Project "${projectName}" not found. Available named projects: ${names.map(name => `"${name}"`).join(', ')}`);
+      const unknownProjectNames = Array.from(unknownProjects.values()).map(n => `"${n}"`).join(', ');
+      throw new Error(`Project(s) ${unknownProjectNames} not found. Available named projects: ${names.map(name => `"${name}"`).join(', ')}`);
     }
 
     const files = new Map<ProjectImpl, string[]>();
