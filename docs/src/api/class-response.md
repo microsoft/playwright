@@ -2,6 +2,11 @@
 
 [Response] class represents responses which are received by page.
 
+## async method: Response.allHeaders
+- returns: <[Headers]>
+
+An object with all the response HTTP headers associated with this response.
+
 ## async method: Response.body
 - returns: <[Buffer]>
 
@@ -20,7 +25,7 @@ Returns the [Frame] that initiated this response.
 ## method: Response.headers
 - returns: <[Object]<[string], [string]>>
 
-**DEPRECATED**  Use [`method: Response.rawHeaders`] instead.
+**DEPRECATED** Incomplete list of headers as seen by the rendering engine. Use [`method: Response.allHeaders`] instead.
 
 ## async method: Response.json
 * langs: js, python
@@ -42,11 +47,6 @@ This method will throw if the response body is not parsable via `JSON.parse`.
 - returns: <[boolean]>
 
 Contains a boolean stating whether the response was successful (status in the range 200-299) or not.
-
-## async method: Response.rawHeaders
-- returns: <[Headers]>
-
-An object with the raw response HTTP headers associated with the request. All headers are as seen in the network stack.
 
 ## method: Response.request
 - returns: <[Request]>

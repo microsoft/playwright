@@ -12662,7 +12662,7 @@ export interface FileChooser {
 }
 
 /**
- * HTTP request and response raw headers collection.
+ * HTTP request and response all headers collection.
  */
 export interface Headers {
   /**
@@ -13018,6 +13018,11 @@ export interface Mouse {
  */
 export interface Request {
   /**
+   * An object with all the request HTTP headers associated with this request.
+   */
+  allHeaders(): Promise<Headers>;
+
+  /**
    * The method returns `null` unless this request has failed, as reported by `requestfailed` event.
    *
    * Example of logging of all the failed requests:
@@ -13042,7 +13047,8 @@ export interface Request {
   frame(): Frame;
 
   /**
-   * **DEPRECATED**  Use [request.rawHeaders()](https://playwright.dev/docs/api/class-request#request-raw-headers) instead.
+   * **DEPRECATED** Incomplete list of headers as seen by the rendering engine. Use
+   * [request.allHeaders()](https://playwright.dev/docs/api/class-request#request-all-headers) instead.
    * @deprecated
    */
   headers(): { [key: string]: string; };
@@ -13074,11 +13080,6 @@ export interface Request {
    * Otherwise it will be parsed as JSON.
    */
   postDataJSON(): null|any;
-
-  /**
-   * An object with the raw request HTTP headers associated with the request. All headers are as seen in the network stack.
-   */
-  rawHeaders(): Promise<Headers>;
 
   /**
    * Request that was redirected by the server to this one, if any.
@@ -13240,6 +13241,11 @@ export interface Request {
  */
 export interface Response {
   /**
+   * An object with all the response HTTP headers associated with this response.
+   */
+  allHeaders(): Promise<Headers>;
+
+  /**
    * Returns the buffer with response body.
    */
   body(): Promise<Buffer>;
@@ -13255,8 +13261,8 @@ export interface Response {
   frame(): Frame;
 
   /**
-   * **DEPRECATED**  Use [response.rawHeaders()](https://playwright.dev/docs/api/class-response#response-raw-headers)
-   * instead.
+   * **DEPRECATED** Incomplete list of headers as seen by the rendering engine. Use
+   * [response.allHeaders()](https://playwright.dev/docs/api/class-response#response-all-headers) instead.
    * @deprecated
    */
   headers(): { [key: string]: string; };
@@ -13272,11 +13278,6 @@ export interface Response {
    * Contains a boolean stating whether the response was successful (status in the range 200-299) or not.
    */
   ok(): boolean;
-
-  /**
-   * An object with the raw response HTTP headers associated with the request. All headers are as seen in the network stack.
-   */
-  rawHeaders(): Promise<Headers>;
 
   /**
    * Returns the matching [Request] object.

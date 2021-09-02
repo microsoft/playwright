@@ -1,6 +1,6 @@
 # class: Headers
 
-HTTP request and response raw headers collection.
+HTTP request and response all headers collection.
 
 ## method: Headers.get
 - returns: <[string|null]>

@@ -139,7 +139,7 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
     return { ...this._headers };
   }
 
-  async rawHeaders(): Promise<RawHeaders> {
+  async allHeaders(): Promise<RawHeaders> {
     if (this._rawHeadersPromise)
       return this._rawHeadersPromise;
     this._rawHeadersPromise = this.response().then(response => {
@@ -254,7 +254,7 @@ export class InterceptedResponse implements api.Response {
     return { ...this._headers };
   }
 
-  async rawHeaders(): Promise<RawHeaders> {
+  async allHeaders(): Promise<RawHeaders> {
     return this._rawHeaders;
   }
 
@@ -454,7 +454,7 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
     return { ...this._headers };
   }
 
-  async rawHeaders(): Promise<RawHeaders> {
+  async allHeaders(): Promise<RawHeaders> {
     if (this._rawHeadersPromise)
       return this._rawHeadersPromise;
     this._rawHeadersPromise = this._wrapApiCall(async (channel: channels.ResponseChannel) => {
