@@ -457,10 +457,9 @@ page.
 
 Adds a script which would be evaluated in one of the following scenarios:
 * Whenever the page is navigated.
-* Whenever the child frame is attached or navigated. In this case, the script is evaluated in the context of the newly
-  attached frame.
+* Whenever a child frame is attached or navigated. In this case, the script is evaluated (repeatedly) in the context of every individual child frame.
 
-The script is evaluated after the document was created but before any of its scripts were run. This is useful to amend
+The script is evaluated immediately after the `document` object is created, but before any nodes are added to it - including the root `<html>` element. This is useful to amend
 the JavaScript environment, e.g. to seed `Math.random`.
 
 An example of overriding `Math.random` before the page loads:
@@ -492,6 +491,15 @@ page.add_init_script(path="./preload.js")
 
 ```csharp
 await page.AddInitScriptAsync(new PageAddInitScriptOption { ScriptPath = "./preload.js" });
+```
+
+Note that, if a page uses frames or iframes, the script is added to every frame in the document - to run your script only once, you can test of `window` is equal to `window.top`, for example:
+
+```js browser
+// preload.js
+if (window === window.top) {
+  Math.random = () => 42;
+}
 ```
 
 :::note
