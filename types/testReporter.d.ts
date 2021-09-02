@@ -281,33 +281,7 @@ export interface FullResult {
  * You can create a custom reporter by implementing a class with some of the reporter methods. Make sure to export this
  * class as default.
  *
- * ```js js-flavor=js
- * // my-awesome-reporter.js
- * // @ts-check
- *
- * /** @implements {import('@playwright/test/reporter').Reporter} *\/
- * class MyReporter {
- *   onBegin(config, suite) {
- *     console.log(`Starting the run with ${suite.allTests().length} tests`);
- *   }
- *
- *   onTestBegin(test) {
- *     console.log(`Starting test ${test.title}`);
- *   }
- *
- *   onTestEnd(test, result) {
- *     console.log(`Finished test ${test.title}: ${result.status}`);
- *   }
- *
- *   onEnd(result) {
- *     console.log(`Finished the run: ${result.status}`);
- *   }
- * }
- *
- * module.exports = MyReporter;
- * ```
- *
- * ```js js-flavor=ts
+ * ```ts
  * // my-awesome-reporter.ts
  * import { Reporter } from '@playwright/test/reporter';
  *
@@ -333,19 +307,7 @@ export interface FullResult {
  *
  * Now use this reporter with [testConfig.reporter](https://playwright.dev/docs/api/class-testconfig#test-config-reporter).
  *
- * ```js js-flavor=js
- * // playwright.config.js
- * // @ts-check
- *
- * /** @type {import('@playwright/test').PlaywrightTestConfig} *\/
- * const config = {
- *   reporter: './my-awesome-reporter.js',
- * };
- *
- * module.exports = config;
- * ```
- *
- * ```js js-flavor=ts
+ * ```ts
  * // playwright.config.ts
  * import { PlaywrightTestConfig } from '@playwright/test';
  *

@@ -293,10 +293,15 @@ class TypesGenerator {
     };
     let skipExample = false;
     for (let line of comment.split('\n')) {
-      const match = line.match(/```(\w+)/);
+      const match = line.match(/```(\w+)(\s+js-flavor=(\w+))?/);
       if (match) {
         const lang = match[1];
-        skipExample = !["html", "yml", "bash", "js"].includes(lang);
+        let flavor = 'ts';
+        if (match[3]) {
+          flavor = match[3];
+          line = line.replace(/js-flavor=\w+/, '').replace(/```\w+/, '```ts');
+        }
+        skipExample = !["html", "yml", "bash", "js"].includes(lang) || flavor !== 'ts';
       } else if (skipExample && line.trim().startsWith('```')) {
         skipExample = false;
         continue;
