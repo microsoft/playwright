@@ -125,13 +125,12 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   }
 
   private _onRequestFinished(params: channels.BrowserContextRequestFinishedEvent) {
-    const { requestSizes, responseEndTiming } = params;
+    const { responseEndTiming } = params;
     const request = network.Request.from(params.request);
     const response = network.Response.fromNullable(params.response);
     const page = Page.fromNullable(params.page);
     if (request._timing)
       request._timing.responseEnd = responseEndTiming;
-    request._sizes = requestSizes;
     this.emit(Events.BrowserContext.RequestFinished, request);
     if (page)
       page.emit(Events.Page.RequestFinished, request);

@@ -87,7 +87,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       request: RequestDispatcher.from(scope, request),
       response: ResponseDispatcher.fromNullable(scope, response),
       responseEndTiming: request._responseEndTiming,
-      requestSizes: request.sizes(),
       page: PageDispatcher.fromNullable(this._scope, request.frame()._page.initializedOrUndefined()),
     }));
   }

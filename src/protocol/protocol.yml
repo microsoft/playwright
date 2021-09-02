@@ -766,7 +766,6 @@ BrowserContext:
         request: Request
         response: Response?
         responseEndTiming: number
-        requestSizes: RequestSizes
         page: Page?
 
     response:
@@ -2225,6 +2224,10 @@ Response:
         headers:
           type: array
           items: NameValue
+
+    sizes:
+      returns:
+        sizes: RequestSizes
 
 
 SecurityDetails:

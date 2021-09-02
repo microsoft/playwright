@@ -188,7 +188,7 @@ following: `document`, `stylesheet`, `image`, `media`, `font`, `script`, `texttr
 
 Returns the matching [Response] object, or `null` if the response was not received due to error.
 
-## method: Request.sizes
+## async method: Request.sizes
 - returns: <[Object]>
   - `requestBodySize` <[int]> Size of the request body (POST data payload) in bytes. Set to 0 if there was no body.
   - `requestHeadersSize` <[int]> Total number of bytes from the start of the HTTP request message until (and including) the double CRLF before the body.

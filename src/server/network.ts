@@ -80,8 +80,9 @@ export function stripFragmentFromUrl(url: string): string {
   return url.substring(0, url.indexOf('#'));
 }
 
-type RequestSizes = {
-  responseBodySize: number;
+type ResponseSize = {
+  bodySize: number;
+  encodedBodySize: number;
   transferSize: number;
 };
 
@@ -101,7 +102,7 @@ export class Request extends SdkObject {
   private _frame: frames.Frame;
   private _waitForResponsePromise = new ManualPromise<Response | null>();
   _responseEndTiming = -1;
-  _sizes: RequestSizes = { responseBodySize: 0, transferSize: 0 };
+  readonly responseSize: ResponseSize = { bodySize: 0, encodedBodySize: 0, transferSize: 0 };
 
   constructor(frame: frames.Frame, redirectedFrom: Request | null, documentId: string | undefined,
     url: string, resourceType: string, method: string, postData: Buffer | null, headers: types.HeadersArray) {
@@ -195,28 +196,6 @@ export class Request extends SdkObject {
   bodySize(): number {
     return this.postDataBuffer()?.length || 0;
   }
-
-  headersSize(): number {
-    if (!this._response)
-      return 0;
-    let headersSize = 4; // 4 = 2 spaces + 2 line breaks (GET /path \r\n)
-    headersSize += this.method().length;
-    headersSize += (new URL(this.url())).pathname.length;
-    headersSize += 8; // httpVersion
-    for (const header of this._headers)
-      headersSize += header.name.length + header.value.length + 4; // 4 = ': ' + '\r\n'
-    return headersSize;
-  }
-
-  sizes() {
-    return {
-      requestBodySize: this.bodySize(),
-      requestHeadersSize: this.headersSize(),
-      responseBodySize: this._sizes.responseBodySize,
-      responseHeadersSize: this._existingResponse()!.headersSize(),
-      responseTransferSize: this._sizes.transferSize,
-    };
-  }
 }
 
 export class Route extends SdkObject {
@@ -295,6 +274,14 @@ export type ResourceTiming = {
   connectEnd: number;
   requestStart: number;
   responseStart: number;
+};
+
+export type ResourceSizes = {
+  requestBodySize: number,
+  requestHeadersSize: number,
+  responseBodySize: number,
+  responseHeadersSize: number,
+  responseTransferSize: number,
 };
 
 export type RemoteAddr = {
@@ -435,14 +422,6 @@ export class Response extends SdkObject {
     return this._request.frame();
   }
 
-  transferSize(): number | undefined {
-    return this._request._sizes.transferSize;
-  }
-
-  bodySize(): number {
-    return this._request._sizes.responseBodySize;
-  }
-
   httpVersion(): string {
     if (!this._httpVersion)
       return 'HTTP/1.1';
@@ -451,15 +430,51 @@ export class Response extends SdkObject {
     return this._httpVersion;
   }
 
-  headersSize(): number {
+  private async _requestHeadersSize(): Promise<number> {
+    let headersSize = 4; // 4 = 2 spaces + 2 line breaks (GET /path \r\n)
+    headersSize += this._request.method().length;
+    headersSize += (new URL(this.url())).pathname.length;
+    headersSize += 8; // httpVersion
+    const headers = this._rawRequestHeadersPromise ? await this._rawRequestHeadersPromise : this._request._headers;
+    for (const header of headers)
+      headersSize += header.name.length + header.value.length + 4; // 4 = ': ' + '\r\n'
+    return headersSize;
+  }
+
+  private async _responseHeadersSize(): Promise<number> {
     let headersSize = 4; // 4 = 2 spaces + 2 line breaks (HTTP/1.1 200 Ok\r\n)
     headersSize += 8; // httpVersion;
     headersSize += 3; // statusCode;
     headersSize += this.statusText().length;
-    for (const header of this.headers())
+    const headers = this._rawResponseHeadersPromise ? await this._rawResponseHeadersPromise : this._headers;
+    for (const header of headers)
       headersSize += header.name.length + header.value.length + 4; // 4 = ': ' + '\r\n'
     headersSize += 2; // '\r\n'
     return headersSize;
+  }
+
+  async sizes(): Promise<ResourceSizes> {
+    await this._finishedPromise;
+    const requestHeadersSize = await this._requestHeadersSize();
+    const responseHeadersSize = await this._responseHeadersSize();
+    let { bodySize, encodedBodySize, transferSize } = this._request.responseSize;
+    if (!encodedBodySize && transferSize) {
+      // Chromium only populates transferSize
+      encodedBodySize = transferSize - responseHeadersSize;
+      // Firefox only populate transferSize.
+      if (!bodySize)
+        bodySize = encodedBodySize;
+    } else if (!transferSize) {
+      // WebKit does not provide transfer size.
+      transferSize = encodedBodySize + responseHeadersSize;
+    }
+    return {
+      requestBodySize: this._request.bodySize(),
+      requestHeadersSize,
+      responseBodySize: bodySize,
+      responseHeadersSize,
+      responseTransferSize: transferSize,
+    };
   }
 }
 

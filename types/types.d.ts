@@ -13139,7 +13139,7 @@ export interface Request {
    * Returns resource size information for given request. Requires the response to be finished via
    * [response.finished()](https://playwright.dev/docs/api/class-response#response-finished) to ensure the info is available.
    */
-  sizes(): {
+  sizes(): Promise<{
     /**
      * Size of the request body (POST data payload) in bytes. Set to 0 if there was no body.
      */
@@ -13164,7 +13164,7 @@ export interface Request {
      * Total number of bytes received for the request.
      */
     responseTransferSize: number;
-  };
+  }>;
 
   /**
    * Returns resource timing information for given request. Most of the timing values become available upon the response,

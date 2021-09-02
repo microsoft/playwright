@@ -51,6 +51,7 @@ export class CRNetworkManager {
     return [
       eventsHelper.addEventListener(session, 'Fetch.requestPaused', this._onRequestPaused.bind(this, workerFrame)),
       eventsHelper.addEventListener(session, 'Fetch.authRequired', this._onAuthRequired.bind(this)),
+      eventsHelper.addEventListener(session, 'Network.dataReceived', this._onDataReceived.bind(this)),
       eventsHelper.addEventListener(session, 'Network.requestWillBeSent', this._onRequestWillBeSent.bind(this, workerFrame)),
       eventsHelper.addEventListener(session, 'Network.requestWillBeSentExtraInfo', this._onRequestWillBeSentExtraInfo.bind(this)),
       eventsHelper.addEventListener(session, 'Network.responseReceived', this._onResponseReceived.bind(this)),
@@ -350,6 +351,12 @@ export class CRNetworkManager {
     this._page._frameManager.requestReceivedResponse(response);
   }
 
+  _onDataReceived(event: Protocol.Network.dataReceivedPayload) {
+    const request = this._requestIdToRequest.get(event.requestId);
+    if (request)
+      request.request.responseSize.bodySize += event.dataLength;
+  }
+
   _onLoadingFinished(event: Protocol.Network.loadingFinishedPayload) {
     this._responseExtraInfoTracker.loadingFinished(event);
 
@@ -365,8 +372,7 @@ export class CRNetworkManager {
     // event from protocol. @see https://crbug.com/883475
     const response = request.request._existingResponse();
     if (response) {
-      request.request._sizes.transferSize = event.encodedDataLength;
-      request.request._sizes.responseBodySize = event.encodedDataLength - response?.headersSize();
+      request.request.responseSize.transferSize = event.encodedDataLength;
       response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp));
     }
     this._requestIdToRequest.delete(request._requestId);

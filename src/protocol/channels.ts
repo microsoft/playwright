@@ -802,7 +802,6 @@ export type BrowserContextRequestFinishedEvent = {
   request: RequestChannel,
   response?: ResponseChannel,
   responseEndTiming: number,
-  requestSizes: RequestSizes,
   page?: PageChannel,
 };
 export type BrowserContextResponseEvent = {
@@ -2698,6 +2697,7 @@ export interface ResponseChannel extends Channel {
   serverAddr(params?: ResponseServerAddrParams, metadata?: Metadata): Promise<ResponseServerAddrResult>;
   rawRequestHeaders(params?: ResponseRawRequestHeadersParams, metadata?: Metadata): Promise<ResponseRawRequestHeadersResult>;
   rawResponseHeaders(params?: ResponseRawResponseHeadersParams, metadata?: Metadata): Promise<ResponseRawResponseHeadersResult>;
+  sizes(params?: ResponseSizesParams, metadata?: Metadata): Promise<ResponseSizesResult>;
 }
 export type ResponseBodyParams = {};
 export type ResponseBodyOptions = {};
@@ -2723,6 +2723,11 @@ export type ResponseRawResponseHeadersParams = {};
 export type ResponseRawResponseHeadersOptions = {};
 export type ResponseRawResponseHeadersResult = {
   headers: NameValue[],
+};
+export type ResponseSizesParams = {};
+export type ResponseSizesOptions = {};
+export type ResponseSizesResult = {
+  sizes: RequestSizes,
 };
 
 export interface ResponseEvents {
