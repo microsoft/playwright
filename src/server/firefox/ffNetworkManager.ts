@@ -29,7 +29,6 @@ export class FFNetworkManager {
   private _requests: Map<string, InterceptableRequest>;
   private _page: Page;
   private _eventListeners: RegisteredListener[];
-  private _startTime = 0;
 
   constructor(session: FFSession, page: Page) {
     this._session = session;
@@ -81,16 +80,21 @@ export class FFNetworkManager {
       return Buffer.from(response.base64body, 'base64');
     };
 
-    this._startTime = event.timing.startTime;
+    const startTime = event.timing.startTime;
+    function relativeToStart(time: number): number {
+      if (!time)
+        return -1;
+      return (time - startTime) / 1000;
+    }
     const timing = {
-      startTime: this._startTime / 1000,
-      domainLookupStart: this._relativeTiming(event.timing.domainLookupStart),
-      domainLookupEnd: this._relativeTiming(event.timing.domainLookupEnd),
-      connectStart: this._relativeTiming(event.timing.connectStart),
-      secureConnectionStart: this._relativeTiming(event.timing.secureConnectionStart),
-      connectEnd: this._relativeTiming(event.timing.connectEnd),
-      requestStart: this._relativeTiming(event.timing.requestStart),
-      responseStart: this._relativeTiming(event.timing.responseStart),
+      startTime: startTime / 1000,
+      domainLookupStart: relativeToStart(event.timing.domainLookupStart),
+      domainLookupEnd: relativeToStart(event.timing.domainLookupEnd),
+      connectStart: relativeToStart(event.timing.connectStart),
+      secureConnectionStart: relativeToStart(event.timing.secureConnectionStart),
+      connectEnd: relativeToStart(event.timing.connectEnd),
+      requestStart: relativeToStart(event.timing.requestStart),
+      responseStart: relativeToStart(event.timing.responseStart),
     };
     const response = new network.Response(request.request, event.status, event.statusText, event.headers, timing, getResponseBody);
     if (event?.remoteIPAddress && typeof event?.remotePort === 'number') {
@@ -120,11 +124,12 @@ export class FFNetworkManager {
 
     // Keep redirected requests in the map for future reference as redirectedFrom.
     const isRedirected = response.status() >= 300 && response.status() <= 399;
+    const responseEndTime = event.responseEndTime ? event.responseEndTime / 1000 - response.timing().startTime : -1;
     if (isRedirected) {
-      response._requestFinished(this._relativeTiming(event.responseEndTime));
+      response._requestFinished(responseEndTime);
     } else {
       this._requests.delete(request._id);
-      response._requestFinished(this._relativeTiming(event.responseEndTime));
+      response._requestFinished(responseEndTime);
     }
     this._page._frameManager.reportRequestFinished(request.request, response);
   }
@@ -139,12 +144,6 @@ export class FFNetworkManager {
       response._requestFinished(-1);
     request.request._setFailureText(event.errorCode);
     this._page._frameManager.requestFailed(request.request, event.errorCode === 'NS_BINDING_ABORTED');
-  }
-
-  _relativeTiming(time: number): number {
-    if (!time)
-      return -1;
-    return (time - this._startTime) / 1000;
   }
 }
 
