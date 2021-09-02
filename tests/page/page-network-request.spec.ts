@@ -89,7 +89,7 @@ it('should get the same headers as the server', async ({ page, server, browserNa
     response.end('done');
   });
   const response = await page.goto(server.PREFIX + '/empty.html');
-  const headers = await response.request().rawHeaders();
+  const headers = await response.request().allHeaders();
   const result = {};
   for (const header of headers.headers())
     result[header.name.toLowerCase()] = header.value;
@@ -113,7 +113,7 @@ it('should get the same headers as the server CORS', async ({page, server, brows
   }, server.CROSS_PROCESS_PREFIX + '/something');
   expect(text).toBe('done');
   const response = await responsePromise;
-  const headers = await response.request().rawHeaders();
+  const headers = await response.request().allHeaders();
   const result = {};
   for (const header of headers.headers())
     result[header.name.toLowerCase()] = header.value;
@@ -275,12 +275,12 @@ it('should return navigation bit when navigating to image', async ({page, server
 
 it('should report raw headers', async ({ page, server, browserName }) => {
   const response = await page.goto(server.EMPTY_PAGE);
-  const requestHeaders = await response.request().rawHeaders();
+  const requestHeaders = await response.request().allHeaders();
   expect(requestHeaders.headerNames().map(h => h.toLowerCase())).toContain('accept');
   expect(requestHeaders.getAll('host')).toHaveLength(1);
   expect(requestHeaders.get('host')).toBe(`localhost:${server.PORT}`);
 
-  const responseHeaders = await response.rawHeaders();
+  const responseHeaders = await response.allHeaders();
   expect(responseHeaders.headerNames().map(h => h.toLowerCase())).toContain('content-type');
   expect(responseHeaders.getAll('content-type')).toHaveLength(1);
   expect(responseHeaders.get('content-type')).toBe('text/html; charset=utf-8');
@@ -303,7 +303,7 @@ it('should report raw response headers in redirects', async ({ page, server, bro
   for (let req = response.request(); req; req = req.redirectedFrom()) {
     redirectChain.unshift(req.url());
     const res = await req.response();
-    const headers = await res.rawHeaders();
+    const headers = await res.allHeaders();
     headersChain.unshift(headers.get('sec-test-header'));
   }
 

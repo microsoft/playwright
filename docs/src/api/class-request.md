@@ -16,6 +16,11 @@ with `'requestfinished'` event.
 If request gets a 'redirect' response, the request is successfully finished with the 'requestfinished' event, and a new
 request is  issued to a redirected url.
 
+## async method: Request.allHeaders
+- returns: <[Headers]>
+
+An object with all the request HTTP headers associated with this request.
+
 ## method: Request.failure
 - returns: <[null]|[string]>
 
@@ -54,7 +59,7 @@ Returns the [Frame] that initiated this request.
 ## method: Request.headers
 - returns: <[Object]<[string], [string]>>
 
-**DEPRECATED**  Use [`method: Request.rawHeaders`] instead.
+**DEPRECATED** Incomplete list of headers as seen by the rendering engine. Use [`method: Request.allHeaders`] instead.
 
 ## method: Request.isNavigationRequest
 - returns: <[boolean]>
@@ -84,11 +89,6 @@ Returns parsed request's body for `form-urlencoded` and JSON as a fallback if an
 
 When the response is `application/x-www-form-urlencoded` then a key/value object of the values will be returned.
 Otherwise it will be parsed as JSON.
-
-## async method: Request.rawHeaders
-- returns: <[Headers]>
-
-An object with the raw request HTTP headers associated with the request. All headers are as seen in the network stack.
 
 ## method: Request.redirectedFrom
 - returns: <[null]|[Request]>
