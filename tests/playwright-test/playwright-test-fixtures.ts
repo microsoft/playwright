@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { TestInfo, test as base } from '../config/test-runner';
+import { TestInfo, test as base } from './stable-test-runner';
 import { spawn } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -273,7 +273,7 @@ const TSCONFIG = {
   ]
 };
 
-export { expect } from '../config/test-runner';
+export { expect } from './stable-test-runner';
 
 const asciiRegex = new RegExp('[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))', 'g');
 export function stripAscii(str: string): string {

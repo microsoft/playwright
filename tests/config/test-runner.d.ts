@@ -14,17 +14,4 @@
  * limitations under the License.
  */
 
-import { Config } from './stable-test-runner';
-
-const config: Config = {
-  testDir: __dirname,
-  testIgnore: ['assets/**', 'stable-test-runner/**'],
-  timeout: 30000,
-  forbidOnly: !!process.env.CI,
-  preserveOutput: process.env.CI ? 'failures-only' : 'always',
-  projects: [
-    { name: 'playwright-test' },
-  ]
-};
-
-export default config;
+export * from '../../types/test';

@@ -9,13 +9,13 @@
     "node": ">=12"
   },
   "scripts": {
-    "basetest": "node ./tests/config/test-runner/node_modules/@playwright/test/lib/cli/cli.js test",
+    "basetest": "cross-env PWTEST_CLI_ALLOW_TEST_COMMAND=1 node ./lib/cli/cli test",
     "ctest": "npm run basetest -- --config=tests/config/default.config.ts --project=chromium",
     "ftest": "npm run basetest -- --config=tests/config/default.config.ts --project=firefox",
     "wtest": "npm run basetest -- --config=tests/config/default.config.ts --project=webkit",
     "atest": "npm run basetest -- --config=tests/config/android.config.ts",
     "etest": "npm run basetest -- --config=tests/config/electron.config.ts",
-    "ttest": "npm run basetest -- --config=tests/playwright-test/playwright-test.config.ts",
+    "ttest": "node ./tests/playwright-test/stable-test-runner/node_modules/@playwright/test/lib/cli/cli test --config=tests/playwright-test/playwright-test.config.ts",
     "test": "npm run basetest -- --config=tests/config/default.config.ts",
     "eslint": "[ \"$CI\" = true ] && eslint --quiet -f codeframe --ext ts,tsx . || eslint --ext ts,tsx .",
     "tsc": "tsc -p .",

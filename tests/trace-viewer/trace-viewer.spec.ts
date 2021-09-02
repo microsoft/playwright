@@ -17,8 +17,7 @@
 import path from 'path';
 import type { Browser, Locator, Page } from '../../index';
 import { showTraceViewer } from '../../lib/server/trace/viewer/traceViewer';
-import { playwrightTest } from '../config/browserTest';
-import { expect } from '../config/test-runner';
+import { playwrightTest, expect } from '../config/browserTest';
 
 class TraceViewerPage {
   actionTitles: Locator;
