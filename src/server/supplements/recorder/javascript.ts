@@ -95,7 +95,7 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
       formatter.add(`]);`);
     } else if (signals.assertNavigation) {
       if (this._isTest)
-        formatter.add(`  expect(${pageAlias}.url()).toBe(${quote(signals.assertNavigation.url)});`);
+        formatter.add(`  await expect(${pageAlias}).toHaveURL(${quote(signals.assertNavigation.url)});`);
       else
         formatter.add(`  // assert.equal(${pageAlias}.url(), ${quote(signals.assertNavigation.url)});`);
     }
