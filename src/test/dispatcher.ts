@@ -161,7 +161,7 @@ export class Dispatcher {
 
         let outermostSerialSuite: Suite | undefined;
         for (let parent = this._testById.get(params.failedTestId)!.test.parent; parent; parent = parent.parent) {
-          if (parent._serial)
+          if (parent._parallelMode ===  'serial')
             outermostSerialSuite = parent;
         }
 

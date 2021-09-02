@@ -472,47 +472,61 @@ function createTestGroups(rootSuite: Suite): TestGroup[] {
   // - They have a different repeatEachIndex - requires different workers.
   // - They have a different set of worker fixtures in the pool - requires different workers.
   // - They have a different requireFile - reuses the worker, but runs each requireFile separately.
+  // - They belong to a parallel suite.
 
-  // We try to preserve the order of tests when they require different workers
-  // by ordering different worker hashes sequentially.
-  const workerHashToOrdinal = new Map<string, number>();
-  const requireFileToOrdinal = new Map<string, number>();
+  // Using the map "workerHash -> requireFile -> group" makes us preserve the natural order
+  // of worker hashes and require files for the simple cases.
+  const groups = new Map<string, Map<string, { general: TestGroup, parallel: TestGroup[] }>>();
 
-  const groupById = new Map<number, TestGroup>();
+  const createGroup = (test: TestCase): TestGroup => {
+    return {
+      workerHash: test._workerHash,
+      requireFile: test._requireFile,
+      repeatEachIndex: test._repeatEachIndex,
+      projectIndex: test._projectIndex,
+      tests: [],
+    };
+  };
+
   for (const projectSuite of rootSuite.suites) {
     for (const test of projectSuite.allTests()) {
-      let workerHashOrdinal = workerHashToOrdinal.get(test._workerHash);
-      if (!workerHashOrdinal) {
-        workerHashOrdinal = workerHashToOrdinal.size + 1;
-        workerHashToOrdinal.set(test._workerHash, workerHashOrdinal);
+      let withWorkerHash = groups.get(test._workerHash);
+      if (!withWorkerHash) {
+        withWorkerHash = new Map();
+        groups.set(test._workerHash, withWorkerHash);
       }
-
-      let requireFileOrdinal = requireFileToOrdinal.get(test._requireFile);
-      if (!requireFileOrdinal) {
-        requireFileOrdinal = requireFileToOrdinal.size + 1;
-        requireFileToOrdinal.set(test._requireFile, requireFileOrdinal);
-      }
-
-      const id = workerHashOrdinal * 10000 + requireFileOrdinal;
-      let group = groupById.get(id);
-      if (!group) {
-        group = {
-          workerHash: test._workerHash,
-          requireFile: test._requireFile,
-          repeatEachIndex: test._repeatEachIndex,
-          projectIndex: test._projectIndex,
-          tests: [],
+      let withRequireFile = withWorkerHash.get(test._requireFile);
+      if (!withRequireFile) {
+        withRequireFile = {
+          general: createGroup(test),
+          parallel: [],
         };
-        groupById.set(id, group);
+        withWorkerHash.set(test._requireFile, withRequireFile);
       }
-      group.tests.push(test);
+
+      let insideParallel = false;
+      for (let parent = test.parent; parent; parent = parent.parent)
+        insideParallel = insideParallel || parent._parallelMode === 'parallel';
+
+      if (insideParallel) {
+        const group = createGroup(test);
+        group.tests.push(test);
+        withRequireFile.parallel.push(group);
+      } else {
+        withRequireFile.general.tests.push(test);
+      }
     }
   }
 
-  // Sorting ids will preserve the natural order, because we
-  // replaced hashes with ordinals according to the natural ordering.
-  const ids = Array.from(groupById.keys()).sort();
-  return ids.map(id => groupById.get(id)!);
+  const result: TestGroup[] = [];
+  for (const withWorkerHash of groups.values()) {
+    for (const withRequireFile of withWorkerHash.values()) {
+      if (withRequireFile.general.tests.length)
+        result.push(withRequireFile.general);
+      result.push(...withRequireFile.parallel);
+    }
+  }
+  return result;
 }
 
 class ListModeReporter implements Reporter {

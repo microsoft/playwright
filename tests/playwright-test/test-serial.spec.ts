@@ -210,3 +210,17 @@ test('test.describe.serial should work with test.fail and retries', async ({ run
     '%%three',
   ]);
 });
+
+test('test.describe.serial should throw inside test.describe.parallel', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      test.describe.parallel('parallel suite', () => {
+        test.describe.serial('serial suite', () => {
+        });
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('a.test.ts:7:23: describe.serial cannot be nested inside describe.parallel');
+});

@@ -56,7 +56,7 @@ export class Suite extends Base implements reporterTypes.Suite {
   _timeout: number | undefined;
   _annotations: Annotations = [];
   _modifiers: Modifier[] = [];
-  _serial = false;
+  _parallelMode: 'default' | 'serial' | 'parallel' = 'default';
 
   _addTest(test: TestCase) {
     test.parent = this;
@@ -110,7 +110,7 @@ export class Suite extends Base implements reporterTypes.Suite {
     suite._annotations = this._annotations.slice();
     suite._modifiers = this._modifiers.slice();
     suite._isDescribe = this._isDescribe;
-    suite._serial = this._serial;
+    suite._parallelMode = this._parallelMode;
     return suite;
   }
 }
