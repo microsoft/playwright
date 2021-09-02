@@ -96,6 +96,34 @@ it('should work for redirect', async ({ contextFactory, browserName, server }) =
   await context.close();
 });
 
+it('should produce consistent RT', async ({ contextFactory, server}) => {
+  const context = await contextFactory();
+  const page = await context.newPage();
+  const timings = { wait: 0, receive: 0, total: 0};
+  context.on('requestfinished', req => {
+    const timing  = req.timing();
+    timings.wait = timing.responseStart - timing.requestStart;
+    timings.receive = timing.responseEnd - timing.responseStart;
+    timings.total = timing.responseEnd - timing.domainLookupStart;
+  });
+  const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+  const waitDelay = 10;
+  const receiveDelay = 20;
+  server.setRoute('/consitentrt', async (_, res) => {
+    await delay(10);
+    res.write('<head>');
+    await delay(20);
+    res.end(`</head>`);
+  });
+  await page.goto(server.PREFIX + '/consitentrt', {waitUntil: 'networkidle'});
+
+  expect(timings.wait).toBeGreaterThan(waitDelay);
+  expect(timings.receive).toBeGreaterThan(receiveDelay);
+  expect(timings.total).toBeGreaterThan(timings.wait + timings.receive);
+
+  await context.close();
+});
+
 function verifyTimingValue(value: number, previous: number) {
   expect(value === -1 || value > 0 && value >= previous);
 }
