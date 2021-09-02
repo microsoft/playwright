@@ -23,6 +23,7 @@ const path = require('path');
 async function checkDeps() {
   const root = path.normalize(path.join(__dirname, '..'));
   const src = path.normalize(path.join(__dirname, '..', 'src'));
+  const packageJSON = require(path.join(root, 'package.json'));
   const program = ts.createProgram({
     options: {
       allowJs: true,
@@ -44,7 +45,7 @@ async function checkDeps() {
   if (errors.length) {
     console.log(`--------------------------------------------------------`);
     console.log(`Changing the project structure or adding new components?`);
-    console.log(`Update DEPS in //${path.relative(root, __filename)}.`);
+    console.log(`Update DEPS in ./${path.relative(root, __filename)}`);
     console.log(`--------------------------------------------------------`);
   }
   process.exit(errors.length ? 1 : 0);
@@ -55,6 +56,8 @@ async function checkDeps() {
       const importPath = path.resolve(path.dirname(fileName), importName) + '.ts';
       if (!allowImport(fileName, importPath))
         errors.push(`Disallowed import from ${path.relative(root, fileName)} to ${path.relative(root, importPath)}`);
+      if (!alllowExternalImport(fileName, importPath, importName))
+        errors.push(`Disallowed external dependency ${importName} from ${path.relative(root, fileName)}`);
     }
     ts.forEachChild(node, x => visit(x, fileName));
   }
@@ -91,11 +94,38 @@ async function checkDeps() {
     }
     return false;
   }
+
+
+  function alllowExternalImport(from, importPath, importName) {
+    const EXTERNAL_IMPORT_ALLOWLIST = ['electron'];
+    // Only external imports are relevant. Files in src/web are bundled via webpack.
+    if (importName.startsWith('.') || importPath.startsWith(path.join(src, 'web')))
+      return true;
+    if (EXTERNAL_IMPORT_ALLOWLIST.includes(importName))
+      return true;
+    try {
+      const resolvedImport = require.resolve(importName)
+      const resolvedImportRelativeToNodeModules = path.relative(path.join(root, 'node_modules'), resolvedImport);
+      // Filter out internal Node.js modules
+      if (!resolvedImportRelativeToNodeModules.startsWith(importName))
+        return true;
+      const resolvedImportRelativeToNodeModulesParts = resolvedImportRelativeToNodeModules.split(path.sep);
+      if (packageJSON.dependencies[resolvedImportRelativeToNodeModulesParts[0]])
+        return true;
+      // handle e.g. @babel/code-frame
+      if (resolvedImportRelativeToNodeModulesParts.length >= 2 && packageJSON.dependencies[resolvedImportRelativeToNodeModulesParts.splice(0, 2).join(path.sep)])
+        return true;
+      return false;
+    } catch (error) {
+      if (error.code !== 'MODULE_NOT_FOUND')
+        throw error
+    }
+  }
 }
 
 function listAllFiles(dir) {
   const dirs = fs.readdirSync(dir, { withFileTypes: true });
-  const  result = [];
+  const result = [];
   dirs.map(d => {
     const res = path.resolve(dir, d.name);
     if (d.isDirectory())
