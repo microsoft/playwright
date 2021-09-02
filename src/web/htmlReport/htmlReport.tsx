@@ -183,6 +183,21 @@ const TestResultDetails: React.FC<{
   test: JsonTestCase | undefined,
   result: JsonTestResult | undefined,
 }> = ({ test, result }) => {
+  const [selectedTab, setSelectedTab] = React.useState('errors');
+  const [source, setSource] = React.useState<SourceProps>({ text: '', language: 'javascript' });
+  React.useEffect(() => {
+    (async () => {
+      if (!test || !test.location.sha1)
+        return;
+      try {
+        const response = await fetch('resources/' + test.location.sha1);
+        const text = await response.text();
+        setSource({ text, language: 'javascript', highlight: [{ line: test.location.line, type: 'paused' }], revealLine: test.location.line });
+      } catch (e) {
+        setSource({ text: '', language: 'javascript' });
+      }
+    })();
+  }, [test]);
   const { screenshots, video, attachmentsMap } = React.useMemo(() => {
     const attachmentsMap = new Map<string, JsonAttachment>();
     const attachments = result?.attachments || [];
@@ -194,20 +209,40 @@ const TestResultDetails: React.FC<{
   }, [ result ]);
   if (!result)
     return <div></div>;
-  return <div>
-    {result.failureSnippet && <div className='test-overview-title'>Test error</div>}
-    {result.failureSnippet && <div className='error-message' dangerouslySetInnerHTML={{ __html: new ansi2html({ colors: ansiColors }).toHtml(escapeHTML(result.failureSnippet.trim())) }}></div>}
-    {attachmentsMap.has('expected') && attachmentsMap.has('actual') && <ImageDiff actual={attachmentsMap.get('actual')!} expected={attachmentsMap.get('expected')!} diff={attachmentsMap.get('diff')}></ImageDiff>}
-    {!!screenshots.length && <div className='test-overview-title'>Screenshots</div>}
-    {screenshots.map(a => <div className='image-preview'><img src={'resources/' + a.sha1} /></div>)}
-    {!!video.length && <div className='test-overview-title'>Video</div>}
-    {video.map(a => <div className='image-preview'>
-      <video controls>
-        <source src={'resources/' + a.sha1} type={a.contentType}/>
-      </video>
-    </div>)}
-    {!!result.attachments && <div className='test-overview-title'>Attachments</div>}
-    {result.attachments.map(a => <AttachmentLink attachment={a}></AttachmentLink>)}
+  return <div className='vbox'>
+    <TabbedPane selectedTab={selectedTab} setSelectedTab={setSelectedTab} tabs={[
+      {
+        id: 'errors',
+        title: 'Errors',
+        render: () => {
+          return <div style={{ overflow: 'auto' }}>
+            <div className='error-message' dangerouslySetInnerHTML={{ __html: new ansi2html({ colors: ansiColors }).toHtml(escapeHTML(result.failureSnippet?.trim() || '')) }}></div>
+            {attachmentsMap.has('expected') && attachmentsMap.has('actual') && <ImageDiff actual={attachmentsMap.get('actual')!} expected={attachmentsMap.get('expected')!} diff={attachmentsMap.get('diff')}></ImageDiff>}
+          </div>;
+        }
+      },
+      {
+        id: 'results',
+        title: 'Results',
+        render: () => {
+          return <div style={{ overflow: 'auto' }}>
+            {screenshots.map(a => <div className='image-preview'><img src={'resources/' + a.sha1} /></div>)}
+            {video.map(a => <div className='image-preview'>
+              <video controls>
+                <source src={'resources/' + a.sha1} type={a.contentType}/>
+              </video>
+            </div>)}
+            {!!result.attachments && <div className='test-overview-title'>Attachments</div>}
+            {result.attachments.map(a => <AttachmentLink attachment={a}></AttachmentLink>)}
+          </div>;
+        }
+      },
+      {
+        id: 'source',
+        title: 'Source',
+        render: () => <Source text={source.text} language={source.language} highlight={source.highlight} revealLine={source.revealLine}></Source>
+      }
+    ]}></TabbedPane>
   </div>;
 };
 
