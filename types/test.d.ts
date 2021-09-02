@@ -56,57 +56,7 @@ type ExpectSettings = {
  *
  * Here is an example configuration that runs every test in Chromium, Firefox and WebKit, both Desktop and Mobile versions.
  *
- * ```js js-flavor=js
- * // playwright.config.js
- * // @ts-check
- * const { devices } = require('@playwright/test');
- *
- * /** @type {import('@playwright/test').PlaywrightTestConfig} *\/
- * const config = {
- *   // Options shared for all projects.
- *   timeout: 30000,
- *   use: {
- *     ignoreHTTPSErrors: true,
- *   },
- *
- *   // Options specific to each project.
- *   projects: [
- *     {
- *       name: 'Desktop Chromium',
- *       use: {
- *         browserName: 'chromium',
- *         viewport: { width: 1280, height: 720 },
- *       },
- *     },
- *     {
- *       name: 'Desktop Safari',
- *       use: {
- *         browserName: 'webkit',
- *         viewport: { width: 1280, height: 720 },
- *       }
- *     },
- *     {
- *       name: 'Desktop Firefox',
- *       use: {
- *         browserName: 'firefox',
- *         viewport: { width: 1280, height: 720 },
- *       }
- *     },
- *     {
- *       name: 'Mobile Chrome',
- *       use: devices['Pixel 5'],
- *     },
- *     {
- *       name: 'Mobile Safari',
- *       use: devices['iPhone 12'],
- *     },
- *   ],
- * };
- *
- * module.exports = config;
- * ```
- *
- * ```js js-flavor=ts
+ * ```ts
  * // playwright.config.ts
  * import { PlaywrightTestConfig, devices } from '@playwright/test';
  *
@@ -180,17 +130,7 @@ interface TestProject {
    * [testInfo.outputPath(pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-output-path) to create a
    * temporary file.
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   * const fs = require('fs');
-   *
-   * test('example test', async ({}, testInfo) => {
-   *   const file = testInfo.outputPath('temporary-file.txt');
-   *   await fs.promises.writeFile(file, 'Put some data to the file', 'utf8');
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    * import fs from 'fs';
    *
@@ -216,49 +156,7 @@ interface TestProject {
    * Each project can use a different directory. Here is an example that runs smoke tests in three browsers and all other
    * tests in stable Chrome browser.
    *
-   * ```js js-flavor=js
-   * // playwright.config.js
-   * // @ts-check
-   *
-   * /** @type {import('@playwright/test').PlaywrightTestConfig} *\/
-   * const config = {
-   *   projects: [
-   *     {
-   *       name: 'Smoke Chromium',
-   *       testDir: './smoke-tests',
-   *       use: {
-   *         browserName: 'chromium',
-   *       }
-   *     },
-   *     {
-   *       name: 'Smoke WebKit',
-   *       testDir: './smoke-tests',
-   *       use: {
-   *         browserName: 'webkit',
-   *       }
-   *     },
-   *     {
-   *       name: 'Smoke Firefox',
-   *       testDir: './smoke-tests',
-   *       use: {
-   *         browserName: 'firefox',
-   *       }
-   *     },
-   *     {
-   *       name: 'Chrome Stable',
-   *       testDir: './',
-   *       use: {
-   *         browserName: 'chromium',
-   *         channel: 'chrome',
-   *       }
-   *     },
-   *   ],
-   * };
-   *
-   * module.exports = config;
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * // playwright.config.ts
    * import { PlaywrightTestConfig } from '@playwright/test';
    *
@@ -334,57 +232,7 @@ interface TestProject {
  *
  * Here is an example configuration that runs every test in Chromium, Firefox and WebKit, both Desktop and Mobile versions.
  *
- * ```js js-flavor=js
- * // playwright.config.js
- * // @ts-check
- * const { devices } = require('@playwright/test');
- *
- * /** @type {import('@playwright/test').PlaywrightTestConfig} *\/
- * const config = {
- *   // Options shared for all projects.
- *   timeout: 30000,
- *   use: {
- *     ignoreHTTPSErrors: true,
- *   },
- *
- *   // Options specific to each project.
- *   projects: [
- *     {
- *       name: 'Desktop Chromium',
- *       use: {
- *         browserName: 'chromium',
- *         viewport: { width: 1280, height: 720 },
- *       },
- *     },
- *     {
- *       name: 'Desktop Safari',
- *       use: {
- *         browserName: 'webkit',
- *         viewport: { width: 1280, height: 720 },
- *       }
- *     },
- *     {
- *       name: 'Desktop Firefox',
- *       use: {
- *         browserName: 'firefox',
- *         viewport: { width: 1280, height: 720 },
- *       }
- *     },
- *     {
- *       name: 'Mobile Chrome',
- *       use: devices['Pixel 5'],
- *     },
- *     {
- *       name: 'Mobile Safari',
- *       use: devices['iPhone 12'],
- *     },
- *   ],
- * };
- *
- * module.exports = config;
- * ```
- *
- * ```js js-flavor=ts
+ * ```ts
  * // playwright.config.ts
  * import { PlaywrightTestConfig, devices } from '@playwright/test';
  *
@@ -439,26 +287,7 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
    * [fixtures.browserName](https://playwright.dev/docs/api/class-fixtures#fixtures-browser-name). Learn more about
    * [Fixtures] and [configuration](https://playwright.dev/docs/test-configuration).
    *
-   * ```js js-flavor=js
-   * // playwright.config.js
-   * // @ts-check
-   *
-   * /** @type {import('@playwright/test').PlaywrightTestConfig} *\/
-   * const config = {
-   *   projects: [
-   *     {
-   *       name: 'Chromium',
-   *       use: {
-   *         browserName: 'chromium',
-   *       },
-   *     },
-   *   ],
-   * };
-   *
-   * module.exports = config;
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * // playwright.config.ts
    * import { PlaywrightTestConfig } from '@playwright/test';
    *
@@ -521,22 +350,7 @@ type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
  * [testConfig.projects](https://playwright.dev/docs/api/class-testconfig#test-config-projects), but top-level [TestConfig]
  * can also define base options shared between all projects.
  *
- * ```js js-flavor=js
- * // playwright.config.js
- * // @ts-check
- *
- * /** @type {import('@playwright/test').PlaywrightTestConfig} *\/
- * const config = {
- *   timeout: 30000,
- *   globalTimeout: 600000,
- *   reporter: 'list',
- *   testDir: './tests',
- * };
- *
- * module.exports = config;
- * ```
- *
- * ```js js-flavor=ts
+ * ```ts
  * // playwright.config.ts
  * import { PlaywrightTestConfig } from '@playwright/test';
  *
@@ -563,19 +377,7 @@ interface TestConfig {
    *
    * Learn more about [global setup and teardown](https://playwright.dev/docs/test-advanced#global-setup-and-teardown).
    *
-   * ```js js-flavor=js
-   * // playwright.config.js
-   * // @ts-check
-   *
-   * /** @type {import('@playwright/test').PlaywrightTestConfig} *\/
-   * const config = {
-   *   globalSetup: './global-setup',
-   * };
-   *
-   * module.exports = config;
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * // playwright.config.ts
    * import { PlaywrightTestConfig, devices } from '@playwright/test';
    *
@@ -647,19 +449,7 @@ interface TestConfig {
    *
    * Learn more in the [reporters guide](https://playwright.dev/docs/test-reporters).
    *
-   * ```js js-flavor=js
-   * // playwright.config.js
-   * // @ts-check
-   *
-   * /** @type {import('@playwright/test').PlaywrightTestConfig} *\/
-   * const config = {
-   *   reporter: 'line',
-   * };
-   *
-   * module.exports = config;
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * // playwright.config.ts
    * import { PlaywrightTestConfig } from '@playwright/test';
    *
@@ -728,17 +518,7 @@ interface TestConfig {
    * [testInfo.outputPath(pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-output-path) to create a
    * temporary file.
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   * const fs = require('fs');
-   *
-   * test('example test', async ({}, testInfo) => {
-   *   const file = testInfo.outputPath('temporary-file.txt');
-   *   await fs.promises.writeFile(file, 'Put some data to the file', 'utf8');
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    * import fs from 'fs';
    *
@@ -793,22 +573,7 @@ interface TestConfig {
  * [testConfig.projects](https://playwright.dev/docs/api/class-testconfig#test-config-projects), but top-level [TestConfig]
  * can also define base options shared between all projects.
  *
- * ```js js-flavor=js
- * // playwright.config.js
- * // @ts-check
- *
- * /** @type {import('@playwright/test').PlaywrightTestConfig} *\/
- * const config = {
- *   timeout: 30000,
- *   globalTimeout: 600000,
- *   reporter: 'list',
- *   testDir: './tests',
- * };
- *
- * module.exports = config;
- * ```
- *
- * ```js js-flavor=ts
+ * ```ts
  * // playwright.config.ts
  * import { PlaywrightTestConfig } from '@playwright/test';
  *
@@ -833,21 +598,7 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
    * [fixtures.browserName](https://playwright.dev/docs/api/class-fixtures#fixtures-browser-name). Learn more about
    * [Fixtures] and [configuration](https://playwright.dev/docs/test-configuration).
    *
-   * ```js js-flavor=js
-   * // playwright.config.js
-   * // @ts-check
-   *
-   * /** @type {import('@playwright/test').PlaywrightTestConfig} *\/
-   * const config = {
-   *   use: {
-   *     browserName: 'chromium',
-   *   },
-   * };
-   *
-   * module.exports = config;
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * // playwright.config.ts
    * import { PlaywrightTestConfig } from '@playwright/test';
    *
@@ -871,22 +622,7 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
  * [testConfig.projects](https://playwright.dev/docs/api/class-testconfig#test-config-projects), but top-level [TestConfig]
  * can also define base options shared between all projects.
  *
- * ```js js-flavor=js
- * // playwright.config.js
- * // @ts-check
- *
- * /** @type {import('@playwright/test').PlaywrightTestConfig} *\/
- * const config = {
- *   timeout: 30000,
- *   globalTimeout: 600000,
- *   reporter: 'list',
- *   testDir: './tests',
- * };
- *
- * module.exports = config;
- * ```
- *
- * ```js js-flavor=ts
+ * ```ts
  * // playwright.config.ts
  * import { PlaywrightTestConfig } from '@playwright/test';
  *
@@ -913,19 +649,7 @@ export interface FullConfig {
    *
    * Learn more about [global setup and teardown](https://playwright.dev/docs/test-advanced#global-setup-and-teardown).
    *
-   * ```js js-flavor=js
-   * // playwright.config.js
-   * // @ts-check
-   *
-   * /** @type {import('@playwright/test').PlaywrightTestConfig} *\/
-   * const config = {
-   *   globalSetup: './global-setup',
-   * };
-   *
-   * module.exports = config;
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * // playwright.config.ts
    * import { PlaywrightTestConfig, devices } from '@playwright/test';
    *
@@ -993,19 +717,7 @@ export interface FullConfig {
    *
    * Learn more in the [reporters guide](https://playwright.dev/docs/test-reporters).
    *
-   * ```js js-flavor=js
-   * // playwright.config.js
-   * // @ts-check
-   *
-   * /** @type {import('@playwright/test').PlaywrightTestConfig} *\/
-   * const config = {
-   *   reporter: 'line',
-   * };
-   *
-   * module.exports = config;
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * // playwright.config.ts
    * import { PlaywrightTestConfig } from '@playwright/test';
    *
@@ -1084,15 +796,7 @@ export interface TestError {
  * [test.afterAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-all) hooks and worker-scoped
  * fixtures.
  *
- * ```js js-flavor=js
- * const { test, expect } = require('@playwright/test');
- *
- * test.beforeAll(async ({ browserName }, workerInfo) => {
- *   console.log(`Running ${browserName} in worker #${workerInfo.workerIndex}`);
- * });
- * ```
- *
- * ```js js-flavor=ts
+ * ```ts
  * import { test, expect } from '@playwright/test';
  *
  * test.beforeAll(async ({ browserName }, workerInfo) => {
@@ -1124,16 +828,7 @@ export interface WorkerInfo {
  * fixtures. `TestInfo` provides utilities to control test execution: attach files, update test timeout, determine which
  * test is currently running and whether it was retried, etc.
  *
- * ```js js-flavor=js
- * const { test, expect } = require('@playwright/test');
- *
- * test('basic test', async ({ page }, testInfo) => {
- *   expect(testInfo.title).toBe('basic test');
- *   await page.screenshot(testInfo.outputPath('screenshot.png'));
- * });
- * ```
- *
- * ```js js-flavor=ts
+ * ```ts
  * import { test, expect } from '@playwright/test';
  *
  * test('basic test', async ({ page }, testInfo) => {
@@ -1273,16 +968,7 @@ export interface TestInfo {
    * Timeout is usually specified in the [configuration file](https://playwright.dev/docs/test-configuration), but it could be useful to change the
    * timeout in certain scenarios:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.beforeEach(async ({ page }, testInfo) => {
-   *   // Extend timeout for all tests running this hook by 30 seconds.
-   *   testInfo.setTimeout(testInfo.timeout + 30000);
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.beforeEach(async ({ page }, testInfo) => {
@@ -1303,16 +989,7 @@ export interface TestInfo {
    * Expected status is usually compared with the actual
    * [testInfo.status](https://playwright.dev/docs/api/class-testinfo#test-info-status):
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.afterEach(async ({}, testInfo) => {
-   *   if (testInfo.status !== testInfo.expectedStatus)
-   *     console.log(`${testInfo.title} did not run as expected!`);
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.afterEach(async ({}, testInfo) => {
@@ -1327,16 +1004,7 @@ export interface TestInfo {
    * Timeout in milliseconds for the currently running test. Zero means no timeout. Timeout is usually specified in the
    * [configuration file](https://playwright.dev/docs/test-configuration)
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.beforeEach(async ({ page }, testInfo) => {
-   *   // Extend timeout for all tests running this hook by 30 seconds.
-   *   testInfo.setTimeout(testInfo.timeout + 30000);
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.beforeEach(async ({ page }, testInfo) => {
@@ -1359,20 +1027,7 @@ export interface TestInfo {
    * The list of files or buffers attached to the current test. Some reporters show test attachments. For example, you can
    * attach a screenshot to the test.
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('basic test', async ({ page }, testInfo) => {
-   *   await page.goto('https://playwright.dev');
-   *
-   *   // Capture a screenshot and attach it.
-   *   const path = testInfo.outputPath('screenshot.png');
-   *   await page.screenshot({ path });
-   *   testInfo.attachments.push({ name: 'screenshot', path, contentType: 'image/png' });
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('basic test', async ({ page }, testInfo) => {
@@ -1409,16 +1064,7 @@ export interface TestInfo {
    * Status is usually compared with the
    * [testInfo.expectedStatus](https://playwright.dev/docs/api/class-testinfo#test-info-expected-status):
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.afterEach(async ({}, testInfo) => {
-   *   if (testInfo.status !== testInfo.expectedStatus)
-   *     console.log(`${testInfo.title} did not run as expected!`);
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.afterEach(async ({}, testInfo) => {
@@ -1463,17 +1109,7 @@ export interface TestInfo {
    * where the test can safely put a temporary file. Guarantees that tests running in parallel will not interfere with each
    * other.
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   * const fs = require('fs');
-   *
-   * test('example test', async ({}, testInfo) => {
-   *   const file = testInfo.outputPath('dir', 'temporary-file.txt');
-   *   await fs.promises.writeFile(file, 'Put some data to the dir/temporary-file.txt', 'utf8');
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    * import fs from 'fs';
    *
@@ -1500,17 +1136,7 @@ interface TestFunction<TestArgs> {
  * Playwright Test provides a `test` function to declare tests and [`expect` function](https://jestjs.io/docs/expect) to
  * write assertions.
  *
- * ```js js-flavor=js
- * const { test, expect } = require('@playwright/test');
- *
- * test('basic test', async ({ page }) => {
- *   await page.goto('https://playwright.dev/');
- *   const name = await page.innerText('.navbar__title');
- *   expect(name).toBe('Playwright');
- * });
- * ```
- *
- * ```js js-flavor=ts
+ * ```ts
  * import { test, expect } from '@playwright/test';
  *
  * test('basic test', async ({ page }) => {
@@ -1525,13 +1151,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Declares a focused test. If there are some focused tests or suites, all of them will be run but nothing else.
    *
-   * ```js js-flavor=js
-   * test.only('focus this test', async ({ page }) => {
-   *   // Run only focused tests in the entire project.
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * test.only('focus this test', async ({ page }) => {
    *   // Run only focused tests in the entire project.
    * });
@@ -1544,19 +1164,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Declares a group of tests.
    *
-   * ```js js-flavor=js
-   * test.describe('two tests', () => {
-   *   test('one', async ({ page }) => {
-   *     // ...
-   *   });
-   *
-   *   test('two', async ({ page }) => {
-   *     // ...
-   *   });
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * test.describe('two tests', () => {
    *   test('one', async ({ page }) => {
    *     // ...
@@ -1576,18 +1184,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
     /**
    * Declares a focused group of tests. If there are some focused tests or suites, all of them will be run but nothing else.
    *
-   * ```js js-flavor=js
-   * test.describe.only('focused group', () => {
-   *   test('in the focused group', async ({ page }) => {
-   *     // This test will run
-   *   });
-   * });
-   * test('not in the focused group', async ({ page }) => {
-   *   // This test will not run
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * test.describe.only('focused group', () => {
    *   test('in the focused group', async ({ page }) => {
    *     // This test will run
@@ -1610,16 +1207,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * > NOTE: Using serial is not recommended. It is usually better to make your tests isolated, so they can be run
    * independently.
    *
-   * ```js js-flavor=js
-   * test.describe.serial('group', () => {
-   *   test('runs first', async ({ page }) => {
-   *   });
-   *   test('runs second', async ({ page }) => {
-   *   });
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * test.describe.serial('group', () => {
    *   test('runs first', async ({ page }) => {
    *   });
@@ -1641,16 +1229,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * > NOTE: Using serial is not recommended. It is usually better to make your tests isolated, so they can be run
    * independently.
    *
-   * ```js js-flavor=js
-   * test.describe.serial.only('group', () => {
-   *   test('runs first', async ({ page }) => {
-   *   });
-   *   test('runs second', async ({ page }) => {
-   *   });
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * test.describe.serial.only('group', () => {
    *   test('runs first', async ({ page }) => {
    *   });
@@ -1670,16 +1249,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * but using [test.describe.parallel(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-parallel)
    * allows them to run in parallel.
    *
-   * ```js js-flavor=js
-   * test.describe.parallel('group', () => {
-   *   test('runs in parallel 1', async ({ page }) => {
-   *   });
-   *   test('runs in parallel 2', async ({ page }) => {
-   *   });
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * test.describe.parallel('group', () => {
    *   test('runs in parallel 1', async ({ page }) => {
    *   });
@@ -1701,16 +1271,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * [test.describe.parallel(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-parallel) allows them
    * to run in parallel. If there are some focused tests or suites, all of them will be run but nothing else.
    *
-   * ```js js-flavor=js
-   * test.describe.parallel.only('group', () => {
-   *   test('runs in parallel 1', async ({ page }) => {
-   *   });
-   *   test('runs in parallel 2', async ({ page }) => {
-   *   });
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * test.describe.parallel.only('group', () => {
    *   test('runs in parallel 1', async ({ page }) => {
    *   });
@@ -1732,15 +1293,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Declares a skipped test, similarly to
    * [test.(call)(title, testFunction)](https://playwright.dev/docs/api/class-test#test-call). Skipped test is never run.
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.skip('broken test', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.skip('broken test', async ({ page }) => {
@@ -1756,16 +1309,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Unconditionally skip a test. Test is immediately aborted when you call
    * [test.skip()](https://playwright.dev/docs/api/class-test#test-skip-2).
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('skipped test', async ({ page }) => {
-   *   test.skip();
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('skipped test', async ({ page }) => {
@@ -1777,20 +1321,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Unconditionally skip all tests in a file or
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.skip();
-   *
-   * test('skipped test 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('skipped test 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.skip();
@@ -1808,16 +1339,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Conditionally skip a test with an optional description.
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('skip in WebKit', async ({ page, browserName }) => {
-   *   test.skip(browserName === 'webkit', 'This feature is not implemented for Mac');
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('skip in WebKit', async ({ page, browserName }) => {
@@ -1828,16 +1350,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Skip from [test.beforeEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-before-each) hook:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.beforeEach(async ({ page }) => {
-   *   test.skip(process.env.APP_VERSION === 'v1', 'There are no settings in v1');
-   *   await page.goto('/settings');
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.beforeEach(async ({ page }) => {
@@ -1854,20 +1367,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Conditionally skips all tests in a file or
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group.
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.skip(({ browserName }) => browserName === 'webkit');
-   *
-   * test('skip in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('skip in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.skip(({ browserName }) => browserName === 'webkit');
@@ -1889,16 +1389,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Unconditional fixme:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('not yet ready', async ({ page }) => {
-   *   test.fixme();
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('not yet ready', async ({ page }) => {
@@ -1909,16 +1400,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Conditional fixme a test with an optional description:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('fixme in WebKit', async ({ page, browserName }) => {
-   *   test.fixme(browserName === 'webkit', 'This feature is not implemented for Mac yet');
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('fixme in WebKit', async ({ page, browserName }) => {
@@ -1930,20 +1412,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Conditional fixme for all tests in a file or
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.fixme(({ browserName }) => browserName === 'webkit');
-   *
-   * test('fixme in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('fixme in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.fixme(({ browserName }) => browserName === 'webkit');
@@ -1958,16 +1427,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * `fixme` from a hook:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.beforeEach(async ({ page }) => {
-   *   test.fixme(process.env.APP_VERSION === 'v2', 'No settings in v2 yet');
-   *   await page.goto('/settings');
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.beforeEach(async ({ page }) => {
@@ -1985,16 +1445,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Unconditional fixme:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('not yet ready', async ({ page }) => {
-   *   test.fixme();
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('not yet ready', async ({ page }) => {
@@ -2005,16 +1456,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Conditional fixme a test with an optional description:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('fixme in WebKit', async ({ page, browserName }) => {
-   *   test.fixme(browserName === 'webkit', 'This feature is not implemented for Mac yet');
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('fixme in WebKit', async ({ page, browserName }) => {
@@ -2026,20 +1468,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Conditional fixme for all tests in a file or
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.fixme(({ browserName }) => browserName === 'webkit');
-   *
-   * test('fixme in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('fixme in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.fixme(({ browserName }) => browserName === 'webkit');
@@ -2054,16 +1483,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * `fixme` from a hook:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.beforeEach(async ({ page }) => {
-   *   test.fixme(process.env.APP_VERSION === 'v2', 'No settings in v2 yet');
-   *   await page.goto('/settings');
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.beforeEach(async ({ page }) => {
@@ -2081,16 +1501,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Unconditional fixme:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('not yet ready', async ({ page }) => {
-   *   test.fixme();
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('not yet ready', async ({ page }) => {
@@ -2101,16 +1512,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Conditional fixme a test with an optional description:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('fixme in WebKit', async ({ page, browserName }) => {
-   *   test.fixme(browserName === 'webkit', 'This feature is not implemented for Mac yet');
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('fixme in WebKit', async ({ page, browserName }) => {
@@ -2122,20 +1524,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Conditional fixme for all tests in a file or
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.fixme(({ browserName }) => browserName === 'webkit');
-   *
-   * test('fixme in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('fixme in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.fixme(({ browserName }) => browserName === 'webkit');
@@ -2150,16 +1539,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * `fixme` from a hook:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.beforeEach(async ({ page }) => {
-   *   test.fixme(process.env.APP_VERSION === 'v2', 'No settings in v2 yet');
-   *   await page.goto('/settings');
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.beforeEach(async ({ page }) => {
@@ -2177,16 +1557,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Unconditional fixme:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('not yet ready', async ({ page }) => {
-   *   test.fixme();
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('not yet ready', async ({ page }) => {
@@ -2197,16 +1568,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Conditional fixme a test with an optional description:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('fixme in WebKit', async ({ page, browserName }) => {
-   *   test.fixme(browserName === 'webkit', 'This feature is not implemented for Mac yet');
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('fixme in WebKit', async ({ page, browserName }) => {
@@ -2218,20 +1580,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Conditional fixme for all tests in a file or
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.fixme(({ browserName }) => browserName === 'webkit');
-   *
-   * test('fixme in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('fixme in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.fixme(({ browserName }) => browserName === 'webkit');
@@ -2246,16 +1595,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * `fixme` from a hook:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.beforeEach(async ({ page }) => {
-   *   test.fixme(process.env.APP_VERSION === 'v2', 'No settings in v2 yet');
-   *   await page.goto('/settings');
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.beforeEach(async ({ page }) => {
@@ -2273,16 +1613,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Unconditional fixme:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('not yet ready', async ({ page }) => {
-   *   test.fixme();
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('not yet ready', async ({ page }) => {
@@ -2293,16 +1624,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Conditional fixme a test with an optional description:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('fixme in WebKit', async ({ page, browserName }) => {
-   *   test.fixme(browserName === 'webkit', 'This feature is not implemented for Mac yet');
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('fixme in WebKit', async ({ page, browserName }) => {
@@ -2314,20 +1636,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Conditional fixme for all tests in a file or
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.fixme(({ browserName }) => browserName === 'webkit');
-   *
-   * test('fixme in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('fixme in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.fixme(({ browserName }) => browserName === 'webkit');
@@ -2342,16 +1651,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * `fixme` from a hook:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.beforeEach(async ({ page }) => {
-   *   test.fixme(process.env.APP_VERSION === 'v2', 'No settings in v2 yet');
-   *   await page.goto('/settings');
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.beforeEach(async ({ page }) => {
@@ -2370,16 +1670,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Unconditional fail:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('not yet ready', async ({ page }) => {
-   *   test.fail();
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('not yet ready', async ({ page }) => {
@@ -2390,16 +1681,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Conditional fail a test with an optional description:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('fail in WebKit', async ({ page, browserName }) => {
-   *   test.fail(browserName === 'webkit', 'This feature is not implemented for Mac yet');
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('fail in WebKit', async ({ page, browserName }) => {
@@ -2411,20 +1693,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Conditional fail for all tests in a file or
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.fail(({ browserName }) => browserName === 'webkit');
-   *
-   * test('fail in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('fail in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.fail(({ browserName }) => browserName === 'webkit');
@@ -2447,16 +1716,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Unconditional fail:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('not yet ready', async ({ page }) => {
-   *   test.fail();
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('not yet ready', async ({ page }) => {
@@ -2467,16 +1727,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Conditional fail a test with an optional description:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('fail in WebKit', async ({ page, browserName }) => {
-   *   test.fail(browserName === 'webkit', 'This feature is not implemented for Mac yet');
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('fail in WebKit', async ({ page, browserName }) => {
@@ -2488,20 +1739,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Conditional fail for all tests in a file or
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.fail(({ browserName }) => browserName === 'webkit');
-   *
-   * test('fail in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('fail in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.fail(({ browserName }) => browserName === 'webkit');
@@ -2524,16 +1762,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Unconditional fail:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('not yet ready', async ({ page }) => {
-   *   test.fail();
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('not yet ready', async ({ page }) => {
@@ -2544,16 +1773,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Conditional fail a test with an optional description:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('fail in WebKit', async ({ page, browserName }) => {
-   *   test.fail(browserName === 'webkit', 'This feature is not implemented for Mac yet');
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('fail in WebKit', async ({ page, browserName }) => {
@@ -2565,20 +1785,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Conditional fail for all tests in a file or
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.fail(({ browserName }) => browserName === 'webkit');
-   *
-   * test('fail in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('fail in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.fail(({ browserName }) => browserName === 'webkit');
@@ -2601,16 +1808,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Unconditional fail:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('not yet ready', async ({ page }) => {
-   *   test.fail();
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('not yet ready', async ({ page }) => {
@@ -2621,16 +1819,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Conditional fail a test with an optional description:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('fail in WebKit', async ({ page, browserName }) => {
-   *   test.fail(browserName === 'webkit', 'This feature is not implemented for Mac yet');
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('fail in WebKit', async ({ page, browserName }) => {
@@ -2642,20 +1831,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Conditional fail for all tests in a file or
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.fail(({ browserName }) => browserName === 'webkit');
-   *
-   * test('fail in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('fail in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.fail(({ browserName }) => browserName === 'webkit');
@@ -2678,16 +1854,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Unconditional fail:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('not yet ready', async ({ page }) => {
-   *   test.fail();
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('not yet ready', async ({ page }) => {
@@ -2698,16 +1865,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Conditional fail a test with an optional description:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('fail in WebKit', async ({ page, browserName }) => {
-   *   test.fail(browserName === 'webkit', 'This feature is not implemented for Mac yet');
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('fail in WebKit', async ({ page, browserName }) => {
@@ -2719,20 +1877,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Conditional fail for all tests in a file or
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.fail(({ browserName }) => browserName === 'webkit');
-   *
-   * test('fail in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('fail in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.fail(({ browserName }) => browserName === 'webkit');
@@ -2754,16 +1899,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Unconditional slow:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('slow test', async ({ page }) => {
-   *   test.slow();
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('slow test', async ({ page }) => {
@@ -2774,16 +1910,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Conditional slow a test with an optional description:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('slow in WebKit', async ({ page, browserName }) => {
-   *   test.slow(browserName === 'webkit', 'This feature is slow on Mac');
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('slow in WebKit', async ({ page, browserName }) => {
@@ -2795,20 +1922,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Conditional slow for all tests in a file or
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.slow(({ browserName }) => browserName === 'webkit');
-   *
-   * test('slow in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('slow in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.slow(({ browserName }) => browserName === 'webkit');
@@ -2830,16 +1944,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Unconditional slow:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('slow test', async ({ page }) => {
-   *   test.slow();
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('slow test', async ({ page }) => {
@@ -2850,16 +1955,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Conditional slow a test with an optional description:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('slow in WebKit', async ({ page, browserName }) => {
-   *   test.slow(browserName === 'webkit', 'This feature is slow on Mac');
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('slow in WebKit', async ({ page, browserName }) => {
@@ -2871,20 +1967,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Conditional slow for all tests in a file or
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.slow(({ browserName }) => browserName === 'webkit');
-   *
-   * test('slow in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('slow in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.slow(({ browserName }) => browserName === 'webkit');
@@ -2906,16 +1989,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Unconditional slow:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('slow test', async ({ page }) => {
-   *   test.slow();
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('slow test', async ({ page }) => {
@@ -2926,16 +2000,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Conditional slow a test with an optional description:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('slow in WebKit', async ({ page, browserName }) => {
-   *   test.slow(browserName === 'webkit', 'This feature is slow on Mac');
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('slow in WebKit', async ({ page, browserName }) => {
@@ -2947,20 +2012,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Conditional slow for all tests in a file or
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.slow(({ browserName }) => browserName === 'webkit');
-   *
-   * test('slow in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('slow in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.slow(({ browserName }) => browserName === 'webkit');
@@ -2982,16 +2034,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Unconditional slow:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('slow test', async ({ page }) => {
-   *   test.slow();
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('slow test', async ({ page }) => {
@@ -3002,16 +2045,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Conditional slow a test with an optional description:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('slow in WebKit', async ({ page, browserName }) => {
-   *   test.slow(browserName === 'webkit', 'This feature is slow on Mac');
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('slow in WebKit', async ({ page, browserName }) => {
@@ -3023,20 +2057,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Conditional slow for all tests in a file or
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.slow(({ browserName }) => browserName === 'webkit');
-   *
-   * test('slow in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('slow in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.slow(({ browserName }) => browserName === 'webkit');
@@ -3058,16 +2079,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Unconditional slow:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('slow test', async ({ page }) => {
-   *   test.slow();
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('slow test', async ({ page }) => {
@@ -3078,16 +2090,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Conditional slow a test with an optional description:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('slow in WebKit', async ({ page, browserName }) => {
-   *   test.slow(browserName === 'webkit', 'This feature is slow on Mac');
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('slow in WebKit', async ({ page, browserName }) => {
@@ -3099,20 +2102,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Conditional slow for all tests in a file or
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.slow(({ browserName }) => browserName === 'webkit');
-   *
-   * test('slow in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('slow in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.slow(({ browserName }) => browserName === 'webkit');
@@ -3132,16 +2122,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Changes the timeout for the test.
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('very slow test', async ({ page }) => {
-   *   test.setTimeout(120000);
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('very slow test', async ({ page }) => {
@@ -3152,16 +2133,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Changing timeout from a slow hook:
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.beforeEach(async ({ page }, testInfo) => {
-   *   // Extend timeout for all tests running this hook by 30 seconds.
-   *   test.setTimeout(testInfo.timeout + 30000);
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.beforeEach(async ({ page }, testInfo) => {
@@ -3181,21 +2153,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group, runs before each test
    * in the group.
    *
-   * ```js js-flavor=js
-   * // example.spec.js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.beforeEach(async ({ page }) => {
-   *   // Go to the starting url before each test.
-   *   await page.goto('https://my.start.url/');
-   * });
-   *
-   * test('my test', async ({ page }) => {
-   *   expect(page.url()).toBe('https://my.start.url/');
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * // example.spec.ts
    * import { test, expect } from '@playwright/test';
    *
@@ -3228,24 +2186,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group, runs before all tests
    * in the group.
    *
-   * ```js js-flavor=js
-   * // example.spec.js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.beforeAll(async () => {
-   *   console.log('Before tests');
-   * });
-   *
-   * test.afterAll(async () => {
-   *   console.log('After tests');
-   * });
-   *
-   * test('my test', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * // example.spec.ts
    * import { test, expect } from '@playwright/test';
    *
@@ -3280,17 +2221,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group. Most useful to
    * configure a fixture, for example set `locale` to configure `context` fixture.
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.use({ locale: 'en-US' });
-   *
-   * test('test with locale', async ({ page }) => {
-   *   // Default context and page have locale as specified
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.use({ locale: 'en-US' });
@@ -3302,23 +2233,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * It is possible not only to provide a fixture value, but also to override a fixture by providing a fixture function.
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test.use({
-   *   locale: async ({}, use) => {
-   *     // Read locale from some configuration file.
-   *     const locale = await fs.promises.readFile('test-locale', 'utf-8');
-   *     await use(locale);
-   *   },
-   * });
-   *
-   * test('test with locale', async ({ page }) => {
-   *   // Default context and page have locale as specified
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.use({
@@ -3340,17 +2255,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Declares a test step.
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('test', async ({ page }) => {
-   *   await test.step('Log in', async () => {
-   *     // ...
-   *   });
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('test', async ({ page }) => {
@@ -3403,15 +2308,7 @@ type StorageState = Exclude<BrowserContextOptions['storageState'], undefined>;
  * specifically for the test. Values prepared by the fixtures are merged into a single object that is available to the
  * `test`, hooks, annotations and other fixtures as a first parameter.
  *
- * ```js js-flavor=js
- * const { test, expect } = require('@playwright/test');
- *
- * test('basic test', async ({ page }) => {
- *   // ...
- * });
- * ```
- *
- * ```js js-flavor=ts
+ * ```ts
  * import { test, expect } from '@playwright/test';
  *
  * test('basic test', async ({ page }) => {
@@ -3426,23 +2323,7 @@ type StorageState = Exclude<BrowserContextOptions['storageState'], undefined>;
  * designed as "options" that you can set in your
  * [testConfig.use](https://playwright.dev/docs/api/class-testconfig#test-config-use) section.
  *
- * ```js js-flavor=js
- * // @ts-check
- *
- * /** @type {import('@playwright/test').PlaywrightTestConfig} *\/
- * const config = {
- *   use: {
- *     headless: false,
- *     viewport: { width: 1280, height: 720 },
- *     ignoreHTTPSErrors: true,
- *     video: 'on-first-retry',
- *   },
- * };
- *
- * module.exports = config;
- * ```
- *
- * ```js js-flavor=ts
+ * ```ts
  * import { PlaywrightTestConfig } from '@playwright/test';
  * const config: PlaywrightTestConfig = {
  *   use: {
@@ -3458,19 +2339,7 @@ type StorageState = Exclude<BrowserContextOptions['storageState'], undefined>;
  * Alternatively, with [test.use(fixtures)](https://playwright.dev/docs/api/class-test#test-use) you can override some
  * options for a file.
  *
- * ```js js-flavor=js
- * // example.spec.js
- * const { test, expect } = require('@playwright/test');
- *
- * // Run tests in this file with portrait-like viewport.
- * test.use({ viewport: { width: 600, height: 900 } });
- *
- * test('my portrait test', async ({ page }) => {
- *   // ...
- * });
- * ```
- *
- * ```js js-flavor=ts
+ * ```ts
  * // example.spec.ts
  * import { test, expect } from '@playwright/test';
  *
@@ -3488,21 +2357,7 @@ export interface PlaywrightWorkerOptions {
    * Name of the browser that runs tests. Defaults to `'chromium'`. Most of the time you should set `browserName` in your
    * [TestConfig]:
    *
-   * ```js js-flavor=js
-   * // playwright.config.js
-   * // @ts-check
-   *
-   * /** @type {import('@playwright/test').PlaywrightTestConfig} *\/
-   * const config = {
-   *   use: {
-   *     browserName: 'firefox',
-   *   },
-   * };
-   *
-   * module.exports = config;
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * // playwright.config.ts
    * import { PlaywrightTestConfig, devices } from '@playwright/test';
    *
@@ -3578,15 +2433,7 @@ export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 
  * specifically for the test. Values prepared by the fixtures are merged into a single object that is available to the
  * `test`, hooks, annotations and other fixtures as a first parameter.
  *
- * ```js js-flavor=js
- * const { test, expect } = require('@playwright/test');
- *
- * test('basic test', async ({ page }) => {
- *   // ...
- * });
- * ```
- *
- * ```js js-flavor=ts
+ * ```ts
  * import { test, expect } from '@playwright/test';
  *
  * test('basic test', async ({ page }) => {
@@ -3601,23 +2448,7 @@ export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 
  * designed as "options" that you can set in your
  * [testConfig.use](https://playwright.dev/docs/api/class-testconfig#test-config-use) section.
  *
- * ```js js-flavor=js
- * // @ts-check
- *
- * /** @type {import('@playwright/test').PlaywrightTestConfig} *\/
- * const config = {
- *   use: {
- *     headless: false,
- *     viewport: { width: 1280, height: 720 },
- *     ignoreHTTPSErrors: true,
- *     video: 'on-first-retry',
- *   },
- * };
- *
- * module.exports = config;
- * ```
- *
- * ```js js-flavor=ts
+ * ```ts
  * import { PlaywrightTestConfig } from '@playwright/test';
  * const config: PlaywrightTestConfig = {
  *   use: {
@@ -3633,19 +2464,7 @@ export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 
  * Alternatively, with [test.use(fixtures)](https://playwright.dev/docs/api/class-test#test-use) you can override some
  * options for a file.
  *
- * ```js js-flavor=js
- * // example.spec.js
- * const { test, expect } = require('@playwright/test');
- *
- * // Run tests in this file with portrait-like viewport.
- * test.use({ viewport: { width: 600, height: 900 } });
- *
- * test('my portrait test', async ({ page }) => {
- *   // ...
- * });
- * ```
- *
- * ```js js-flavor=ts
+ * ```ts
  * // example.spec.ts
  * import { test, expect } from '@playwright/test';
  *
@@ -3786,15 +2605,7 @@ export interface PlaywrightTestOptions {
  * specifically for the test. Values prepared by the fixtures are merged into a single object that is available to the
  * `test`, hooks, annotations and other fixtures as a first parameter.
  *
- * ```js js-flavor=js
- * const { test, expect } = require('@playwright/test');
- *
- * test('basic test', async ({ page }) => {
- *   // ...
- * });
- * ```
- *
- * ```js js-flavor=ts
+ * ```ts
  * import { test, expect } from '@playwright/test';
  *
  * test('basic test', async ({ page }) => {
@@ -3809,23 +2620,7 @@ export interface PlaywrightTestOptions {
  * designed as "options" that you can set in your
  * [testConfig.use](https://playwright.dev/docs/api/class-testconfig#test-config-use) section.
  *
- * ```js js-flavor=js
- * // @ts-check
- *
- * /** @type {import('@playwright/test').PlaywrightTestConfig} *\/
- * const config = {
- *   use: {
- *     headless: false,
- *     viewport: { width: 1280, height: 720 },
- *     ignoreHTTPSErrors: true,
- *     video: 'on-first-retry',
- *   },
- * };
- *
- * module.exports = config;
- * ```
- *
- * ```js js-flavor=ts
+ * ```ts
  * import { PlaywrightTestConfig } from '@playwright/test';
  * const config: PlaywrightTestConfig = {
  *   use: {
@@ -3841,19 +2636,7 @@ export interface PlaywrightTestOptions {
  * Alternatively, with [test.use(fixtures)](https://playwright.dev/docs/api/class-test#test-use) you can override some
  * options for a file.
  *
- * ```js js-flavor=js
- * // example.spec.js
- * const { test, expect } = require('@playwright/test');
- *
- * // Run tests in this file with portrait-like viewport.
- * test.use({ viewport: { width: 600, height: 900 } });
- *
- * test('my portrait test', async ({ page }) => {
- *   // ...
- * });
- * ```
- *
- * ```js js-flavor=ts
+ * ```ts
  * // example.spec.ts
  * import { test, expect } from '@playwright/test';
  *
@@ -3879,15 +2662,7 @@ export interface PlaywrightWorkerArgs {
  * specifically for the test. Values prepared by the fixtures are merged into a single object that is available to the
  * `test`, hooks, annotations and other fixtures as a first parameter.
  *
- * ```js js-flavor=js
- * const { test, expect } = require('@playwright/test');
- *
- * test('basic test', async ({ page }) => {
- *   // ...
- * });
- * ```
- *
- * ```js js-flavor=ts
+ * ```ts
  * import { test, expect } from '@playwright/test';
  *
  * test('basic test', async ({ page }) => {
@@ -3902,23 +2677,7 @@ export interface PlaywrightWorkerArgs {
  * designed as "options" that you can set in your
  * [testConfig.use](https://playwright.dev/docs/api/class-testconfig#test-config-use) section.
  *
- * ```js js-flavor=js
- * // @ts-check
- *
- * /** @type {import('@playwright/test').PlaywrightTestConfig} *\/
- * const config = {
- *   use: {
- *     headless: false,
- *     viewport: { width: 1280, height: 720 },
- *     ignoreHTTPSErrors: true,
- *     video: 'on-first-retry',
- *   },
- * };
- *
- * module.exports = config;
- * ```
- *
- * ```js js-flavor=ts
+ * ```ts
  * import { PlaywrightTestConfig } from '@playwright/test';
  * const config: PlaywrightTestConfig = {
  *   use: {
@@ -3934,19 +2693,7 @@ export interface PlaywrightWorkerArgs {
  * Alternatively, with [test.use(fixtures)](https://playwright.dev/docs/api/class-test#test-use) you can override some
  * options for a file.
  *
- * ```js js-flavor=js
- * // example.spec.js
- * const { test, expect } = require('@playwright/test');
- *
- * // Run tests in this file with portrait-like viewport.
- * test.use({ viewport: { width: 600, height: 900 } });
- *
- * test('my portrait test', async ({ page }) => {
- *   // ...
- * });
- * ```
- *
- * ```js js-flavor=ts
+ * ```ts
  * // example.spec.ts
  * import { test, expect } from '@playwright/test';
  *
@@ -3976,19 +2723,7 @@ export interface PlaywrightTestArgs {
    *
    * This is the most common fixture used in a test.
    *
-   * ```js js-flavor=js
-   * const { test, expect } = require('@playwright/test');
-   *
-   * test('basic test', async ({ page }) => {
-   *   await page.goto('/signin');
-   *   await page.fill('#username', 'User');
-   *   await page.fill('#password', 'pwd');
-   *   await page.click('text=Sign in');
-   *   // ...
-   * });
-   * ```
-   *
-   * ```js js-flavor=ts
+   * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test('basic test', async ({ page }) => {
