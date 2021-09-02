@@ -69,12 +69,22 @@ export class FrameExecutionContext extends js.ExecutionContext {
   }
 
   async evaluateExpressionAndWaitForSignals(expression: string, isFunction: boolean | undefined, arg?: any): Promise<any> {
+    // Make sure utility script is initialized before we start tracking signals to reduce the number of
+    // protocol commands we send to the browser, otherwise we may be mistakingly tracking asynchronous
+    // navigation started between utility script initialization and actual eval.
+    // See https://github.com/microsoft/playwright/issues/8570
+    await this.utilityScript();
     return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
       return this.evaluateExpression(expression, isFunction, arg);
     });
   }
 
   async evaluateExpressionHandleAndWaitForSignals(expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
+    // Make sure utility script is initialized before we start tracking signals to reduce the number of
+    // protocol commands we send to the browser, otherwise we may be mistakingly tracking asynchronous
+    // navigation started between utility script initialization and actual eval.
+    // See https://github.com/microsoft/playwright/issues/8570
+    await this.utilityScript();
     return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
       return js.evaluateExpression(this, false /* returnByValue */, expression, isFunction, arg);
     });
