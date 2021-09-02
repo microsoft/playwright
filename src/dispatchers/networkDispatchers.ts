@@ -91,6 +91,10 @@ export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseIn
   async rawResponseHeaders(params?: channels.ResponseRawResponseHeadersParams, metadata?: channels.Metadata): Promise<channels.ResponseRawResponseHeadersResult> {
     return { headers: await this._object.rawResponseHeaders() };
   }
+
+  async sizes(params?: channels.ResponseSizesParams, metadata?: channels.Metadata): Promise<channels.ResponseSizesResult> {
+    return { sizes: await this._object.sizes() };
+  }
 }
 
 export class RouteDispatcher extends Dispatcher<Route, channels.RouteInitializer, channels.RouteEvents> implements channels.RouteChannel {

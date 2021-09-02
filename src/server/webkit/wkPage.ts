@@ -1053,7 +1053,6 @@ export class WKPage implements PageDelegate {
         validFrom: responseReceivedPayload?.response.security?.certificate?.validFrom,
         validTo: responseReceivedPayload?.response.security?.certificate?.validUntil,
       });
-      request.request._sizes.transferSize += response.headersSize();
       if (event.metrics?.protocol)
         response._setHttpVersion(event.metrics.protocol);
       response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp));
@@ -1088,8 +1087,8 @@ export class WKPage implements PageDelegate {
     const request = this._requestIdToRequest.get(event.requestId);
     if (!request)
       return;
-    request.request._sizes.responseBodySize += event.encodedDataLength === -1 ? event.dataLength : event.encodedDataLength;
-    request.request._sizes.transferSize += event.encodedDataLength === -1 ? event.dataLength : event.encodedDataLength;
+    request.request.responseSize.bodySize += event.dataLength || (event.encodedDataLength === -1 ? 0 : event.encodedDataLength);
+    request.request.responseSize.encodedBodySize += event.encodedDataLength !== -1 ? event.encodedDataLength : event.dataLength;
   }
 
   async _grantPermissions(origin: string, permissions: string[]) {

@@ -1055,6 +1055,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.ResponseServerAddrParams = tOptional(tObject({}));
   scheme.ResponseRawRequestHeadersParams = tOptional(tObject({}));
   scheme.ResponseRawResponseHeadersParams = tOptional(tObject({}));
+  scheme.ResponseSizesParams = tOptional(tObject({}));
   scheme.SecurityDetails = tObject({
     issuer: tOptional(tString),
     protocol: tOptional(tString),

@@ -276,18 +276,18 @@ it('should include sizes', async ({ contextFactory, server, asset }, testInfo) =
   expect(log.entries[1].request.url.endsWith('one-style.css')).toBe(true);
   expect(log.entries[1].response.bodySize).toBe(fs.statSync(asset('one-style.css')).size);
   expect(log.entries[1].response.headersSize).toBeGreaterThanOrEqual(100);
-  expect(log.entries[1].response._transferSize).toBeGreaterThanOrEqual(200);
+  expect(log.entries[1].response._transferSize).toBeGreaterThanOrEqual(150);
 });
 
 it('should work with gzip compression', async ({ contextFactory, server, browserName }, testInfo) => {
-  it.fixme(browserName === 'webkit');
+  it.fixme(browserName !== 'chromium');
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
-  server.enableGzip('/simple.json');
-  const response = await page.goto(server.PREFIX + '/simple.json');
+  server.enableGzip('/simplezip.json');
+  const response = await page.goto(server.PREFIX + '/simplezip.json');
   expect(response.headers()['content-encoding']).toBe('gzip');
   const log = await getLog();
   expect(log.entries.length).toBe(1);
-  expect(log.entries[0].response.content.compression).toBe(-20);
+  expect(log.entries[0].response.content.compression).toBeGreaterThan(4000);
 });
 
 it('should calculate time', async ({ contextFactory, server }, testInfo) => {

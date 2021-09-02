@@ -202,19 +202,11 @@ export class HarTracer {
       return;
 
     const httpVersion = response.httpVersion();
-    const transferSize = response.transferSize() || -1;
-    const responseHeadersSize = response.headersSize();
-
     harEntry.request.httpVersion = httpVersion;
-    harEntry.response.bodySize = response.bodySize();
-    harEntry.response.headersSize = responseHeadersSize;
-    harEntry.response._transferSize = transferSize;
-    harEntry.request.headersSize = request.headersSize();
 
     const promise = response.body().then(buffer => {
       const content = harEntry.response.content;
       content.size = buffer.length;
-      content.compression = harEntry.response.bodySize !== -1 ? buffer.length - harEntry.response.bodySize : 0;
       if (buffer && buffer.length > 0) {
         if (this._options.content === 'embedded') {
           content.text = buffer.toString('base64');
@@ -236,6 +228,14 @@ export class HarTracer {
         this._delegate.onEntryFinished(harEntry);
     });
     this._addBarrier(page, promise);
+    this._addBarrier(page, response.sizes().then(async sizes => {
+      harEntry.response.bodySize = sizes.responseBodySize;
+      harEntry.response.headersSize = sizes.responseHeadersSize;
+      harEntry.response._transferSize = sizes.responseTransferSize;
+      harEntry.request.headersSize = sizes.requestHeadersSize;
+      const content = harEntry.response.content;
+      content.compression = Math.max(0, sizes.responseBodySize - sizes.responseTransferSize - sizes.responseHeadersSize);
+    }));
   }
 
   private _onResponse(response: network.Response) {

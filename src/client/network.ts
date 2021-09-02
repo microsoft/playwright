@@ -62,7 +62,6 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
   private _rawHeadersPromise: Promise<RawHeaders> | undefined;
   private _postData: Buffer | null;
   _timing: ResourceTiming;
-  _sizes: RequestSizes = { requestBodySize: 0, requestHeadersSize: 0, responseBodySize: 0, responseHeadersSize: 0, responseTransferSize: 0 };
 
   static from(request: channels.RequestChannel): Request {
     return (request as any)._object;
@@ -187,8 +186,13 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
     return this._timing;
   }
 
-  sizes(): RequestSizes {
-    return this._sizes;
+  async sizes(): Promise<RequestSizes> {
+    const response = await this.response();
+    if (!response)
+      throw new Error('Unable to fetch sizes for failed request');
+    return response._wrapApiCall(async (channel: channels.ResponseChannel) => {
+      return (await channel.sizes()).sizes;
+    });
   }
 
   _finalRequest(): Request {
