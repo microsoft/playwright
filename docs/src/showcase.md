@@ -27,6 +27,7 @@ title: "Community Showcase"
 
 * [Applitools](https://applitools.com): Add AI-powered visual assertions and run your Playwright tests on all browser, device, and viewport combinations in parallel, without requiring any setup.
 * [BrowserStack](https://www.browserstack.com/docs/automate/playwright): Run cross-browser Playwright tests in parallel on the BrowserStack cloud
+* [Checkly](https://checklyhq.com): Run Playwright checks on a schedule or on demand to monitor and test your web application.
 * [CodeceptJS](https://github.com/Codeception/CodeceptJS): Write scenario-driven Playwright tests with synchronous code
 * [dom-to-playwright](https://github.com/Xiphe/dom-to-playwright) to copy a JSDOM snapshot into a Playwright page.
 * [expected-condition-playwright](https://github.com/elaichenkov/expected-condition-playwright): Supplies a set of common expected conditions that can wait for certain states and conditions
