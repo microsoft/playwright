@@ -1573,9 +1573,97 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * callback will belong to the group.
    */
   describe: SuiteFunction & {
-    only: SuiteFunction;
-    serial: SuiteFunction & {
-      only: SuiteFunction;
+    /**
+   * Declares a focused group of tests. If there are some focused tests or suites, all of them will be run but nothing else.
+   *
+   * ```js js-flavor=js
+   * test.describe.only('focused group', () => {
+   *   test('in the focused group', async ({ page }) => {
+   *     // This test will run
+   *   });
+   * });
+   * test('not in the focused group', async ({ page }) => {
+   *   // This test will not run
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * test.describe.only('focused group', () => {
+   *   test('in the focused group', async ({ page }) => {
+   *     // This test will run
+   *   });
+   * });
+   * test('not in the focused group', async ({ page }) => {
+   *   // This test will not run
+   * });
+   * ```
+   *
+   * @param title Group title.
+   * @param callback A callback that is run immediately when calling [test.describe.only(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-only). Any tests added in
+   * this callback will belong to the group.
+   */
+  only: SuiteFunction;
+    /**
+   * Declares a group of tests that should always be run serially. If one of the tests fails, all subsequent tests are
+   * skipped. All tests in a group are retried together.
+   *
+   * > NOTE: Using serial is not recommended. It is usually better to make your tests isolated, so they can be run
+   * independently.
+   *
+   * ```js js-flavor=js
+   * test.describe.serial('group', () => {
+   *   test('runs first', async ({ page }) => {
+   *   });
+   *   test('runs second', async ({ page }) => {
+   *   });
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * test.describe.serial('group', () => {
+   *   test('runs first', async ({ page }) => {
+   *   });
+   *   test('runs second', async ({ page }) => {
+   *   });
+   * });
+   * ```
+   *
+   * @param title Group title.
+   * @param callback A callback that is run immediately when calling [test.describe.serial(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-serial). Any tests
+   * added in this callback will belong to the group.
+   */
+  serial: SuiteFunction & {
+      /**
+   * Declares a focused group of tests that should always be run serially. If one of the tests fails, all subsequent tests
+   * are skipped. All tests in a group are retried together. If there are some focused tests or suites, all of them will be
+   * run but nothing else.
+   *
+   * > NOTE: Using serial is not recommended. It is usually better to make your tests isolated, so they can be run
+   * independently.
+   *
+   * ```js js-flavor=js
+   * test.describe.serial.only('group', () => {
+   *   test('runs first', async ({ page }) => {
+   *   });
+   *   test('runs second', async ({ page }) => {
+   *   });
+   * });
+   * ```
+   *
+   * ```js js-flavor=ts
+   * test.describe.serial.only('group', () => {
+   *   test('runs first', async ({ page }) => {
+   *   });
+   *   test('runs second', async ({ page }) => {
+   *   });
+   * });
+   * ```
+   *
+   * @param title Group title.
+   * @param callback A callback that is run immediately when calling [test.describe.serial.only(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-serial-only). Any
+   * tests added in this callback will belong to the group.
+   */
+  only: SuiteFunction;
     };
   };
   /**
