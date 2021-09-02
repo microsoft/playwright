@@ -81,15 +81,20 @@ export class FFNetworkManager {
     };
 
     const startTime = event.timing.startTime;
+    function relativeToStart(time: number): number {
+      if (!time)
+        return -1;
+      return (time - startTime) / 1000;
+    }
     const timing = {
       startTime: startTime / 1000,
-      domainLookupStart: relativeTiming(startTime, event.timing.domainLookupStart),
-      domainLookupEnd: relativeTiming(startTime, event.timing.domainLookupEnd),
-      connectStart: relativeTiming(startTime, event.timing.connectStart),
-      secureConnectionStart: relativeTiming(startTime, event.timing.secureConnectionStart),
-      connectEnd: relativeTiming(startTime, event.timing.connectEnd),
-      requestStart: relativeTiming(startTime, event.timing.requestStart),
-      responseStart: relativeTiming(startTime, event.timing.responseStart),
+      domainLookupStart: relativeToStart(event.timing.domainLookupStart),
+      domainLookupEnd: relativeToStart(event.timing.domainLookupEnd),
+      connectStart: relativeToStart(event.timing.connectStart),
+      secureConnectionStart: relativeToStart(event.timing.secureConnectionStart),
+      connectEnd: relativeToStart(event.timing.connectEnd),
+      requestStart: relativeToStart(event.timing.requestStart),
+      responseStart: relativeToStart(event.timing.responseStart),
     };
     const response = new network.Response(request.request, event.status, event.statusText, event.headers, timing, getResponseBody);
     if (event?.remoteIPAddress && typeof event?.remotePort === 'number') {
@@ -121,11 +126,12 @@ export class FFNetworkManager {
 
     // Keep redirected requests in the map for future reference as redirectedFrom.
     const isRedirected = response.status() >= 300 && response.status() <= 399;
+    const responseEndTime = event.responseEndTime ? event.responseEndTime / 1000 - response.timing().startTime : -1;
     if (isRedirected) {
-      response._requestFinished(relativeTiming(response.timing().startTime * 1000, event.responseEndTime));
+      response._requestFinished(responseEndTime);
     } else {
       this._requests.delete(request._id);
-      response._requestFinished(relativeTiming(response.timing().startTime * 1000, event.responseEndTime));
+      response._requestFinished(responseEndTime);
     }
     this._page._frameManager.reportRequestFinished(request.request, response);
   }
@@ -141,12 +147,6 @@ export class FFNetworkManager {
     request.request._setFailureText(event.errorCode);
     this._page._frameManager.requestFailed(request.request, event.errorCode === 'NS_BINDING_ABORTED');
   }
-}
-
-function relativeTiming(startTime: number, time: number): number {
-  if (!time)
-    return -1;
-  return (time - startTime) / 1000;
 }
 
 const causeToResourceType: {[key: string]: string} = {
