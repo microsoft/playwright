@@ -286,6 +286,39 @@ playwrightTest('should report all pages in an existing browser', async ({ browse
   }
 });
 
+playwrightTest('should connect via https', async ({ browserType, browserOptions, httpsServer }, testInfo) => {
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    ...browserOptions,
+    args: ['--remote-debugging-port=' + port]
+  });
+  const json = await new Promise<string>((resolve, reject) => {
+    http.get(`http://localhost:${port}/json/version/`, resp => {
+      let data = '';
+      resp.on('data', chunk => data += chunk);
+      resp.on('end', () => resolve(data));
+    }).on('error', reject);
+  });
+  httpsServer.setRoute('/json/version/', (req, res) => {
+    res.writeHead(200);
+    res.end(json);
+  });
+  const oldValue = process.env['NODE_TLS_REJECT_UNAUTHORIZED'];
+  // https://stackoverflow.com/a/21961005/552185
+  process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
+  try {
+    const cdpBrowser = await browserType.connectOverCDP(`https://localhost:${httpsServer.PORT}/`);
+    const contexts = cdpBrowser.contexts();
+    expect(contexts.length).toBe(1);
+    for (let i = 0; i < 3; i++)
+      await contexts[0].newPage();
+    await cdpBrowser.close();
+  } finally {
+    process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = oldValue;
+    await browserServer.close();
+  }
+});
+
 playwrightTest('should return valid browser from context.browser()', async ({ browserType, browserOptions }, testInfo) => {
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({

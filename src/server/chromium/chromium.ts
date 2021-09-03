@@ -34,6 +34,7 @@ import { TimeoutSettings } from '../../utils/timeoutSettings';
 import { helper } from '../helper';
 import { CallMetadata } from '../instrumentation';
 import http from 'http';
+import https from 'https';
 import { registry } from '../../utils/registry';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
@@ -219,8 +220,9 @@ async function urlToWSEndpoint(endpointURL: string) {
   if (endpointURL.startsWith('ws'))
     return endpointURL;
   const httpURL = endpointURL.endsWith('/') ? `${endpointURL}json/version/` : `${endpointURL}/json/version/`;
+  const request = endpointURL.startsWith('https') ? https : http;
   const json = await new Promise<string>((resolve, reject) => {
-    http.get(httpURL, resp => {
+    request.get(httpURL, resp => {
       if (resp.statusCode! < 200 || resp.statusCode! >= 400) {
         reject(new Error(`Unexpected status ${resp.statusCode} when connecting to ${httpURL}.\n` +
         `This does not look like a DevTools server, try connecting via ws://.`));
