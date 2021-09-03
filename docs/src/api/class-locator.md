@@ -834,7 +834,6 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.setChecked.force = %%-input-force-%%
 ### option: Locator.setChecked.noWaitAfter = %%-input-no-wait-after-%%
 ### option: Locator.setChecked.position = %%-input-position-%%
-### option: Locator.setChecked.strict = %%-input-strict-%%
 ### option: Locator.setChecked.timeout = %%-input-timeout-%%
 ### option: Locator.setChecked.trial = %%-input-trial-%%
 

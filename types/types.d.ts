@@ -9287,12 +9287,6 @@ export interface Locator {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
-     * element, the call throws an exception.
-     */
-    strict?: boolean;
-
-    /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
