@@ -194,9 +194,7 @@ it('should include cookies', async ({ contextFactory, server }, testInfo) => {
   ]);
 });
 
-it('should include set-cookies', async ({ contextFactory, server, browserName, platform }, testInfo) => {
-  it.fail(browserName === 'webkit' && platform === 'darwin', 'Does not work yet');
-
+it('should include set-cookies', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', [
@@ -214,18 +212,20 @@ it('should include set-cookies', async ({ contextFactory, server, browserName, p
   expect(new Date(cookies[2].expires).valueOf()).toBeGreaterThan(Date.now());
 });
 
-it('should include set-cookies with comma', async ({ contextFactory, server }, testInfo) => {
+it('should include set-cookies with comma', async ({ contextFactory, server, browserName }, testInfo) => {
+  it.fixme(browserName === 'webkit', 'We get "name1=val, ue1, name2=val, ue2" as a header value');
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', [
-      'name1=val,ue1',
+      'name1=val, ue1', 'name2=val, ue2',
     ]);
     res.end();
   });
   await page.goto(server.EMPTY_PAGE);
   const log = await getLog();
   const cookies = log.entries[0].response.cookies;
-  expect(cookies[0]).toEqual({ name: 'name1', value: 'val,ue1' });
+  expect(cookies[0]).toEqual({ name: 'name1', value: 'val, ue1' });
+  expect(cookies[1]).toEqual({ name: 'name2', value: 'val, ue2' });
 });
 
 it('should include secure set-cookies', async ({ contextFactory, httpsServer }, testInfo) => {

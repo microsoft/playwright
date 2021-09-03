@@ -25,6 +25,7 @@ Header name, case-insensitive.
 Returns all header names in this headers collection.
 
 ## method: Headers.headers
-- returns: <[Array]<{ name: string, value: string }>>
+- returns: <[Object]<[string], [string]>>
 
-Returns all raw headers.
+Returns all headers as a dictionary. Header names are normalized to lower case, multi-value headers are concatenated
+using comma.

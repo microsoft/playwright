@@ -652,7 +652,10 @@ export class RawHeaders implements api.Headers {
   }
 
   get(name: string): string | null {
-    return this.getAll(name)[0] || null;
+    const values = this.getAll(name);
+    if (!values)
+      return null;
+    return values.join(', ');
   }
 
   getAll(name: string): string[] {
@@ -660,10 +663,13 @@ export class RawHeaders implements api.Headers {
   }
 
   headerNames(): string[] {
-    return [...new Set(this._headersArray.map(h => h.name))];
+    return [...this._headersMap.keys()];
   }
 
-  headers(): HeadersArray {
-    return this._headersArray;
+  headers(): Headers {
+    const result: Headers = {};
+    for (const name of this._headersMap.keys())
+      result[name] = this.get(name)!;
+    return result;
   }
 }

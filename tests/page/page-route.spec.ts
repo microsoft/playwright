@@ -98,10 +98,9 @@ it('should work when header manipulation headers with redirect', async ({page, s
 // @see https://github.com/GoogleChrome/puppeteer/issues/4743
 it('should be able to remove headers', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
-  await page.route('**/*', route => {
-    const headers = Object.assign({}, route.request().headers(), {
-      foo: undefined, // remove "foo" header
-    });
+  await page.route('**/*', async route => {
+    const headers = { ...route.request().headers() };
+    delete headers['foo'];
     route.continue({ headers });
   });
 

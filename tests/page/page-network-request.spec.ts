@@ -90,10 +90,7 @@ it('should get the same headers as the server', async ({ page, server, browserNa
   });
   const response = await page.goto(server.PREFIX + '/empty.html');
   const headers = await response.request().allHeaders();
-  const result = {};
-  for (const header of headers.headers())
-    result[header.name.toLowerCase()] = header.value;
-  expect(result).toEqual(serverRequest.headers);
+  expect(headers.headers()).toEqual(serverRequest.headers);
 });
 
 it('should get the same headers as the server CORS', async ({page, server, browserName, platform}) => {
@@ -114,11 +111,7 @@ it('should get the same headers as the server CORS', async ({page, server, brows
   expect(text).toBe('done');
   const response = await responsePromise;
   const headers = await response.request().allHeaders();
-  const result = {};
-  for (const header of headers.headers())
-    result[header.name.toLowerCase()] = header.value;
-
-  expect(result).toEqual(serverRequest.headers);
+  expect(headers.headers()).toEqual(serverRequest.headers);
 });
 
 it('should return postData', async ({page, server, isAndroid}) => {
@@ -273,17 +266,28 @@ it('should return navigation bit when navigating to image', async ({page, server
   expect(requests[0].isNavigationRequest()).toBe(true);
 });
 
-it('should report raw headers', async ({ page, server, browserName }) => {
-  const response = await page.goto(server.EMPTY_PAGE);
-  const requestHeaders = await response.request().allHeaders();
-  expect(requestHeaders.headerNames().map(h => h.toLowerCase())).toContain('accept');
-  expect(requestHeaders.getAll('host')).toHaveLength(1);
-  expect(requestHeaders.get('host')).toBe(`localhost:${server.PORT}`);
+it('should report all headers', async ({ page, server, browserName, platform }) => {
+  const expectedHeaders = {};
+  server.setRoute('/headers', (req, res) => {
+    for (let i = 0; i < req.rawHeaders.length; i += 2)
+      expectedHeaders[req.rawHeaders[i].toLowerCase()] = req.rawHeaders[i + 1];
+    res.end();
+  });
 
-  const responseHeaders = await response.allHeaders();
-  expect(responseHeaders.headerNames().map(h => h.toLowerCase())).toContain('content-type');
-  expect(responseHeaders.getAll('content-type')).toHaveLength(1);
-  expect(responseHeaders.get('content-type')).toBe('text/html; charset=utf-8');
+  await page.goto(server.EMPTY_PAGE);
+  const [request] = await Promise.all([
+    page.waitForRequest('**/*'),
+    page.evaluate(() => fetch('/headers', {
+      headers: [
+        ['header-a', 'value-a'],
+        ['header-b', 'value-b'],
+        ['header-a', 'value-a-1'],
+        ['header-a', 'value-a-2'],
+      ]
+    }))
+  ]);
+  const headers = await request.allHeaders();
+  expect(headers.headers()).toEqual(expectedHeaders);
 });
 
 it('should report raw response headers in redirects', async ({ page, server, browserName }) => {
@@ -309,4 +313,23 @@ it('should report raw response headers in redirects', async ({ page, server, bro
 
   expect(redirectChain).toEqual(expectedUrls);
   expect(headersChain).toEqual(expectedHeaders);
+});
+
+it('should report all cookies in one header', async ({ page, server }) => {
+  const expectedHeaders = {};
+  server.setRoute('/headers', (req, res) => {
+    for (let i = 0; i < req.rawHeaders.length; i += 2)
+      expectedHeaders[req.rawHeaders[i]] = req.rawHeaders[i + 1];
+    res.end();
+  });
+
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => {
+    document.cookie = 'myCookie=myValue';
+    document.cookie = 'myOtherCookie=myOtherValue';
+  });
+  const response = await page.goto(server.EMPTY_PAGE);
+  const headers = await response.request().allHeaders();
+  const cookie = headers.get('cookie');
+  expect(cookie).toBe('myCookie=myValue; myOtherCookie=myOtherValue');
 });

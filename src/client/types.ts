@@ -16,9 +16,9 @@
  */
 
 import * as channels from '../protocol/channels';
-import type { NameValue, Size } from '../common/types';
+import type { Size } from '../common/types';
 import type { ParsedStackTrace } from '../utils/stackTrace';
-export { Size, Point, Rect, Quad, URLMatch, TimeoutOptions } from '../common/types';
+export { Size, Point, Rect, Quad, URLMatch, TimeoutOptions, HeadersArray } from '../common/types';
 
 type LoggerSeverity = 'verbose' | 'info' | 'warning' | 'error';
 export interface Logger {
@@ -32,7 +32,6 @@ export interface ClientSideInstrumentation {
 
 export type StrictOptions = { strict?: boolean };
 export type Headers = { [key: string]: string };
-export type HeadersArray = NameValue[];
 export type Env = { [key: string]: string | number | boolean | undefined };
 
 export type WaitForEventOptions = Function | { predicate?: Function, timeout?: number };

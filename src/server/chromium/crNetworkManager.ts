@@ -675,10 +675,10 @@ class ResponseExtraInfoTracker {
     const response = info.responses[index];
     const requestExtraInfo = info.requestWillBeSentExtraInfo[index];
     if (response && requestExtraInfo)
-      response.setRawRequestHeaders(headersObjectToArray(requestExtraInfo.headers));
+      response.setRawRequestHeaders(headersObjectToArray(requestExtraInfo.headers, '\n'));
     const responseExtraInfo = info.responseReceivedExtraInfo[index];
     if (response && responseExtraInfo)
-      response.setRawResponseHeaders(headersObjectToArray(responseExtraInfo.headers));
+      response.setRawResponseHeaders(headersObjectToArray(responseExtraInfo.headers, '\n'));
   }
 
   private _checkFinished(info: RequestInfo) {
