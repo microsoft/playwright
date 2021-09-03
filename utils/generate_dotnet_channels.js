@@ -60,7 +60,7 @@ function mapType(type) {
     case 'boolean':
       return 'bool';
     case 'number':
-      return 'int';
+      return 'float';
     case 'ResourceTiming':
       return 'RequestTimingResult';
     case 'SerializedError':
@@ -75,7 +75,7 @@ function mapType(type) {
 }
 
 function nullableSuffix(inner) {
-  if (['int', 'boolean'].includes(inner.ts))
+  if (['int', 'boolean', 'float'].includes(inner.ts))
     return inner.optional ? '?' : '';
   return '';
 }
@@ -254,16 +254,9 @@ function processCustomType(type, optional, parentName) {
     && inlineType(type.properties.value).ts === 'string')
     return { ts: 'HeaderEntry', scheme: 'tObject()', optional };
 
-  if (type.properties.width
-    && type.properties.height
-    && inlineType(type.properties.width).ts === 'int'
-    && inlineType(type.properties.height).ts === 'int')
-    return { ts: 'ViewportSize', scheme: 'tObject()', optional };
-
   if (type.properties.url
     && type.properties.lineNumber
-    && inlineType(type.properties.url).ts === 'string'
-    && inlineType(type.properties.lineNumber).ts === 'int')
+    && type.properties.columnNumber)
     return { ts: 'ConsoleMessageLocation', scheme: 'tObject()', optional };
 
   if (type.properties.name
@@ -281,8 +274,14 @@ function processCustomType(type, optional, parentName) {
   if (['startJSCoverage', 'stopJSCoverage', 'startCSSCoverage', 'stopCSSCoverage'].includes(parentName))
     return { ts: `JsonElement`, scheme: `tObject()`, optional };
 
-  if ('setInputFiles')
+  if (type.properties
+    && type.properties.name
+    && type.properties.mimeType
+    && type.properties.buffer)
     return { ts: `FilePayload`, scheme: `tObject()`, optional };
+
+  if (parentName === 'viewportSize')
+    return { ts: `ViewportSize`, scheme: `tObject()`, optional };
 
   if (type.properties
     && type.properties.value
@@ -304,16 +303,13 @@ function cleanUpName(name) {
 function buildParameterMap(parameters) {
   const visitParameters = (params, parents = []) => {
     if (!params) return [];
-    const ps = [];
+    const visitedParameters = [];
     const populateParameter = (param, paramType) => {
       const isOptional = (typeof paramType == 'string' && paramType.endsWith('?'));
-      if (paramType.type && paramType.type.startsWith('enum')) {
-        param.type = inlineType(paramType).ts;
-      } else if (typeof paramType === 'string') {
+      if (typeof paramType === 'string') {
         param.type = mapType(paramType.replace('?', ''));
       } else {
-        var px = inlineType(paramType);
-        param.type = px.ts;
+        param.type = inlineType(paramType).ts;
       }
       param.optional = isOptional;
       param.fullName = [...parents, param].map(x => x.name).join("_");
@@ -331,7 +327,7 @@ function buildParameterMap(parameters) {
 
       if (paramName.startsWith('$mixin')) {
         var mx = mixins.get(paramType);
-        ps.push(...visitParameters(mx.properties));
+        visitedParameters.push(...visitParameters(mx.properties));
         continue;
       } else if (typeof paramType == 'object') {
         if (paramType.type.startsWith("array") && paramType.items) {
@@ -344,15 +340,13 @@ function buildParameterMap(parameters) {
         }
         else
           param.children.push(...visitParameters(paramType.properties, [...parents, param]));
-      } else if (typeof paramType == 'string' && paramType.startsWith('array')) {
-        console.log("Array found.");
       } else {
         populateParameter(param, paramType);
       }
 
-      ps.push(param);
+      visitedParameters.push(param);
     }
-    return ps;
+    return visitedParameters;
   }
 
   return visitParameters(parameters);
@@ -443,7 +437,7 @@ internal class ${channelName} : Channel<${name}>
           const p = [];
           for (const px of params) {
             if (px.children.length) {
-              p.push(...flattenParams(px.children,));
+              p.push(...flattenParams(px.children));
               continue;
             }
             p.push(px);
@@ -470,10 +464,10 @@ internal class ${channelName} : Channel<${name}>
               if (param.children.length)
                 visitParameter(param.children, indent + '\t', `${param.name} = `);
               else {
-                if (param.type === 'Exception')
-                  param.fullName += '.ToObject()'
-
-                pushIndented(`${param.name} = ${param.fullName},`, indent)
+                if (param.type === 'Exception') {
+                  param.fullName += '.ToObject()';
+                }
+                pushIndented(`${param.name} = ${param.fullName},`, indent);
               }
             }
             pushIndented(`}${prefix ? ',' : ''}`, indent);
