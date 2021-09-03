@@ -729,6 +729,7 @@ class NetworkRequest {
         requestId: this.requestId,
         responseEndTime: httpChannel.responseEndTime,
         transferSize: httpChannel.transferSize,
+        protocolVersion: httpChannel.protocolVersion,
       }, this._frameId);
     }
     this._networkObserver._channelToRequest.delete(httpChannel);
