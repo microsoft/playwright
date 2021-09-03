@@ -62,6 +62,19 @@ index c82cf261baa0339cec2d493e4edda27c0507c040..cfbcb0219acaa2817049201a5648944d
      $(JavaScriptCore)/inspector/protocol/Security.json \
      $(JavaScriptCore)/inspector/protocol/ServiceWorker.json \
      $(JavaScriptCore)/inspector/protocol/Target.json \
+diff --git a/Source/JavaScriptCore/assembler/ProbeContext.h b/Source/JavaScriptCore/assembler/ProbeContext.h
+index 54db1ce832efc0bd382092100a4727e389fa322a..36f430bcb50949f780395bbaf5782ca93de5f559 100644
+--- a/Source/JavaScriptCore/assembler/ProbeContext.h
++++ b/Source/JavaScriptCore/assembler/ProbeContext.h
+@@ -249,7 +249,7 @@ private:
+     friend JS_EXPORT_PRIVATE void* probeStateForContext(Context&); // Not for general use. This should only be for writing tests.
+ };
+ 
+-extern "C" void executeJSCJITProbe(State*);
++extern "C" void executeJSCJITProbe(State*) REFERENCED_FROM_ASM WTF_INTERNAL;
+ 
+ } // namespace Probe
+ } // namespace JSC
 diff --git a/Source/JavaScriptCore/bindings/ScriptValue.cpp b/Source/JavaScriptCore/bindings/ScriptValue.cpp
 index 52d955b1e4929f6d0dede53097d275559b29b91d..71c538e57acf3912f9a777f7bc7eba6efb8877eb 100644
 --- a/Source/JavaScriptCore/bindings/ScriptValue.cpp
