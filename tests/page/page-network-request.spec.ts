@@ -271,9 +271,12 @@ it('should report all headers', async ({ page, server, browserName, platform }) 
   server.setRoute('/headers', (req, res) => {
     for (let i = 0; i < req.rawHeaders.length; i += 2)
       expectedHeaders[req.rawHeaders[i].toLowerCase()] = req.rawHeaders[i + 1];
+    if (browserName === 'webkit' && platform === 'win32') {
+      delete expectedHeaders['accept-encoding'];
+      delete expectedHeaders['accept-language'];
+    }
     res.end();
   });
-
   await page.goto(server.EMPTY_PAGE);
   const [request] = await Promise.all([
     page.waitForRequest('**/*'),
