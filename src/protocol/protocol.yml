@@ -312,6 +312,11 @@ ContextOptions:
       literals:
       - reduce
       - no-preference
+    forcedColors:
+      type: enum?
+      literals:
+      - active
+      - none
     acceptDownloads: boolean?
     baseURL: string?
     _debugName: string?
@@ -832,6 +837,13 @@ Page:
           literals:
           - reduce
           - no-preference
+          # Reset emulated value to the system default.
+          - null
+        forcedColors:
+          type: enum?
+          literals:
+          - active
+          - none
           # Reset emulated value to the system default.
           - null
 
@@ -2719,6 +2731,11 @@ AndroidDevice:
           literals:
           - reduce
           - no-preference
+        forcedColors:
+          type: enum?
+          literals:
+          - active
+          - none
         acceptDownloads: boolean?
         _debugName: string?
         recordVideo:

@@ -122,6 +122,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer, c
       media: params.media === 'null' ? null : params.media,
       colorScheme: params.colorScheme === 'null' ? null : params.colorScheme,
       reducedMotion: params.reducedMotion === 'null' ? null : params.reducedMotion,
+      forcedColors: params.forcedColors === 'null' ? null : params.forcedColors,
     });
   }
 

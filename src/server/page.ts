@@ -90,6 +90,7 @@ type PageState = {
   mediaType: types.MediaType | null;
   colorScheme: types.ColorScheme | null;
   reducedMotion: types.ReducedMotion | null;
+  forcedColors: types.ForcedColors | null;
   extraHTTPHeaders: types.HeadersArray | null;
 };
 
@@ -154,6 +155,7 @@ export class Page extends SdkObject {
       mediaType: null,
       colorScheme: browserContext._options.colorScheme !== undefined  ? browserContext._options.colorScheme : 'light',
       reducedMotion: browserContext._options.reducedMotion !== undefined  ? browserContext._options.reducedMotion : 'no-preference',
+      forcedColors: browserContext._options.forcedColors !== undefined  ? browserContext._options.forcedColors : 'none',
       extraHTTPHeaders: null,
     };
     this.accessibility = new accessibility.Accessibility(delegate.getAccessibilityTree.bind(delegate));
@@ -353,13 +355,15 @@ export class Page extends SdkObject {
     }), this._timeoutSettings.navigationTimeout(options));
   }
 
-  async emulateMedia(options: { media?: types.MediaType | null, colorScheme?: types.ColorScheme | null, reducedMotion?: types.ReducedMotion | null }) {
+  async emulateMedia(options: { media?: types.MediaType | null, colorScheme?: types.ColorScheme | null, reducedMotion?: types.ReducedMotion | null, forcedColors?: types.ForcedColors | null }) {
     if (options.media !== undefined)
       this._state.mediaType = options.media;
     if (options.colorScheme !== undefined)
       this._state.colorScheme = options.colorScheme;
     if (options.reducedMotion !== undefined)
       this._state.reducedMotion = options.reducedMotion;
+    if (options.forcedColors !== undefined)
+      this._state.forcedColors = options.forcedColors;
     await this._delegate.updateEmulateMedia();
     await this._doSlowMo();
   }

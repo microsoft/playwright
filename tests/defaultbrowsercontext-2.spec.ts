@@ -44,6 +44,13 @@ it('should support reducedMotion option', async ({launchPersistent}) => {
   expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: no-preference)').matches)).toBe(false);
 });
 
+it('should support forcedColors option', async ({launchPersistent, browserName}) => {
+  it.skip(browserName === 'webkit', 'https://bugs.webkit.org/show_bug.cgi?id=225281');
+  const {page} = await launchPersistent({forcedColors: 'active'});
+  expect(await page.evaluate(() => matchMedia('(forced-colors: active)').matches)).toBe(true);
+  expect(await page.evaluate(() => matchMedia('(forced-colors: none)').matches)).toBe(false);
+});
+
 it('should support timezoneId option', async ({launchPersistent, browserName}) => {
   const {page} = await launchPersistent({locale: 'en-US', timezoneId: 'America/Jamaica'});
   expect(await page.evaluate(() => new Date(1479579154987).toString())).toBe('Sat Nov 19 2016 13:12:34 GMT-0500 (Eastern Standard Time)');
