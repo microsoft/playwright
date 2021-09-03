@@ -253,6 +253,8 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
           return;
         if (this._removeNoScript && nodeName === 'NOSCRIPT')
           return;
+        if (nodeName === 'META' && (node as HTMLMetaElement).httpEquiv.toLowerCase() === 'content-security-policy')
+          return;
 
         const data = ensureCachedData(node);
         const values: any[] = [];

@@ -283,6 +283,33 @@ it.describe('snapshots', () => {
     expect(await div.evaluate(div => div.scrollTop)).toBe(136);
   });
 
+  it('should work with meta CSP', async ({ page, showSnapshot, toImpl, snapshotter, browserName }) => {
+    it.skip(browserName === 'firefox');
+
+    await page.setContent(`
+      <head>
+        <meta http-equiv="Content-Security-Policy" content="script-src 'none'">
+      </head>
+      <body>
+        <div>Hello</div>
+      </body>
+    `);
+    await page.$eval('div', div => {
+      const shadow = div.attachShadow({ mode: 'open' });
+      const span = document.createElement('span');
+      span.textContent = 'World';
+      shadow.appendChild(span);
+    });
+
+    const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'meta');
+
+    // Render snapshot, check expectations.
+    const frame = await showSnapshot(snapshot);
+    await frame.waitForSelector('div');
+    // Should render shadow dom with post-processing script.
+    expect(await frame.textContent('span')).toBe('World');
+  });
+
   it('should handle multiple headers', async ({ page, server, showSnapshot, toImpl, snapshotter, browserName }) => {
     it.skip(browserName === 'firefox');
 
