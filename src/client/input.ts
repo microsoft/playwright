@@ -91,6 +91,10 @@ export class Mouse implements api.Mouse {
   async dblclick(x: number, y: number, options: Omit<channels.PageMouseClickOptions, 'clickCount'> = {}) {
     await this.click(x, y, { ...options, clickCount: 2 });
   }
+
+  async wheel(deltaX: number, deltaY: number) {
+    await this._channel.mouseWheel({ deltaX, deltaY });
+  }
 }
 
 export class Touchscreen implements api.Touchscreen {

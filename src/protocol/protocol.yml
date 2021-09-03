@@ -1024,6 +1024,13 @@ Page:
       tracing:
         snapshot: true
 
+    mouseWheel:
+      parameters:
+        deltaX: number
+        deltaY: number
+      tracing:
+        snapshot: true
+
     touchscreenTap:
       parameters:
         x: number

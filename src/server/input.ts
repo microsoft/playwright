@@ -160,6 +160,7 @@ export interface RawMouse {
   move(x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>): Promise<void>;
   down(x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void>;
   up(x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void>;
+  wheel(x: number, y: number, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, deltaX: number, deltaY: number): Promise<void>;
 }
 
 export class Mouse {
@@ -231,6 +232,11 @@ export class Mouse {
 
   async dblclick(x: number, y: number, options: { delay?: number, button?: types.MouseButton } = {}) {
     await this.click(x, y, { ...options, clickCount: 2 });
+  }
+
+  async wheel(deltaX: number, deltaY: number) {
+    await this._raw.wheel(this._x, this._y, this._buttons, this._keyboard._modifiers(), deltaX, deltaY);
+    await this._page._doSlowMo();
   }
 }
 

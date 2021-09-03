@@ -120,3 +120,22 @@ Dispatches a `mouseup` event.
 ### option: Mouse.up.button = %%-input-button-%%
 
 ### option: Mouse.up.clickCount = %%-input-click-count-%%
+
+## async method: Mouse.wheel
+
+Dispatches a `wheel` event.
+
+:::note
+Wheel events may cause scrolling if they are not handled, and this method does not
+wait for the scrolling to finish before returning.
+:::
+
+### param: Mouse.wheel.deltaX
+- `deltaX` <[float]>
+
+Pixels to scroll horizontally.
+
+### param: Mouse.wheel.deltaY
+- `deltaY` <[float]>
+
+Pixels to scroll vertically.

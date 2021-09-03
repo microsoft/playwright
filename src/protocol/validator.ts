@@ -561,6 +561,10 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     button: tOptional(tEnum(['left', 'right', 'middle'])),
     clickCount: tOptional(tNumber),
   });
+  scheme.PageMouseWheelParams = tObject({
+    deltaX: tNumber,
+    deltaY: tNumber,
+  });
   scheme.PageTouchscreenTapParams = tObject({
     x: tNumber,
     y: tNumber,
