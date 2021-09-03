@@ -105,6 +105,7 @@ export type JsonTestStep = {
   steps: JsonTestStep[];
   preview?: string;
   stack?: JsonStackFrame[];
+  log?: string[];
 };
 
 class HtmlReporter {
@@ -221,6 +222,7 @@ class HtmlReporter {
         steps: this._serializeSteps(test, step.steps),
         failureSnippet: step.error ? formatError(step.error, test.location.file) : undefined,
         ...this._sourceProcessor.processStackTrace(step.data.stack),
+        log: step.data.log || undefined,
       };
     });
   }

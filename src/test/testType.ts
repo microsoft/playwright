@@ -186,12 +186,12 @@ export class TestTypeImpl {
     const testInfo = currentTestInfo();
     if (!testInfo)
       throw errorWithLocation(location, `test.step() can only be called from a test`);
-    const complete = testInfo._addStep('test.step', title);
+    const step = testInfo._addStep('test.step', title);
     try {
       await body();
-      complete();
+      step.complete();
     } catch (e) {
-      complete(serializeError(e));
+      step.complete(serializeError(e));
       throw e;
     }
   }

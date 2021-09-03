@@ -309,7 +309,7 @@ export class Dispatcher {
         startTime: new Date(params.wallTime),
         duration: 0,
         steps: [],
-        data: params.data,
+        data: {},
       };
       steps.set(params.stepId, step);
       (parentStep || result).steps.push(step);
@@ -331,6 +331,7 @@ export class Dispatcher {
       step.duration = params.wallTime - step.startTime.getTime();
       if (params.error)
         step.error = params.error;
+      step.data = params.data;
       stepStack.delete(step);
       steps.delete(params.stepId);
       this._reporter.onStepEnd?.(test, result, step);

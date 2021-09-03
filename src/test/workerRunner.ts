@@ -25,7 +25,7 @@ import { TestBeginPayload, TestEndPayload, RunPayload, TestEntry, DonePayload, W
 import { setCurrentTestInfo } from './globals';
 import { Loader } from './loader';
 import { Modifier, Suite, TestCase } from './test';
-import { Annotations, CompleteStepCallback, TestError, TestInfo, TestInfoImpl, WorkerInfo } from './types';
+import { Annotations, TestError, TestInfo, TestInfoImpl, TestStepInternal, WorkerInfo } from './types';
 import { ProjectImpl } from './project';
 import { FixturePool, FixtureRunner } from './fixtures';
 import { DeadlineRunner, raceAgainstDeadline } from '../utils/async';
@@ -219,7 +219,7 @@ export class WorkerRunner extends EventEmitter {
 
     let testFinishedCallback = () => {};
     let lastStepId = 0;
-    const stepStack = new Set<{ category: string }>();
+    const stepStack = new Set<TestStepInternal>();
     const testInfo: TestInfoImpl = {
       workerIndex: this._params.workerIndex,
       project: this._project.config,
@@ -270,34 +270,39 @@ export class WorkerRunner extends EventEmitter {
       _testFinished: new Promise(f => testFinishedCallback = f),
       _addStep: (category: string, title: string, data: { [key: string]: any } = {}) => {
         const stepId = `${category}@${title}@${++lastStepId}`;
-        const step: StepBeginPayload = {
+        let callbackHandled = false;
+        const step: TestStepInternal = {
+          data,
+          category,
+          complete: (error?: Error | TestError) => {
+            if (callbackHandled)
+              return;
+            callbackHandled = true;
+            if (error instanceof Error)
+              error = serializeError(error);
+            stepStack.delete(step);
+            const payload: StepEndPayload = {
+              testId,
+              stepId,
+              wallTime: Date.now(),
+              error,
+              data,
+            };
+            if (reportEvents)
+              this.emit('stepEnd', payload);
+          }
+        };
+        stepStack.add(step);
+        const payload: StepBeginPayload = {
           testId,
           stepId,
           category,
           title,
           wallTime: Date.now(),
-          data,
         };
-        stepStack.add(step);
         if (reportEvents)
-          this.emit('stepBegin', step);
-        let callbackHandled = false;
-        return (error?: Error | TestError) => {
-          if (callbackHandled)
-            return;
-          callbackHandled = true;
-          if (error instanceof Error)
-            error = serializeError(error);
-          stepStack.delete(step);
-          const payload: StepEndPayload = {
-            testId,
-            stepId,
-            wallTime: Date.now(),
-            error
-          };
-          if (reportEvents)
-            this.emit('stepEnd', payload);
-        };
+          this.emit('stepBegin', payload);
+        return step;
       },
       _currentSteps: () => [...stepStack],
     };
@@ -422,18 +427,18 @@ export class WorkerRunner extends EventEmitter {
   }
 
   private async _runTestWithBeforeHooks(test: TestCase, testInfo: TestInfoImpl) {
-    const completeStep = testInfo._addStep('hook', 'Before Hooks');
+    const step = testInfo._addStep('hook', 'Before Hooks');
     if (test._type === 'test')
       await this._runBeforeHooks(test, testInfo);
 
     // Do not run the test when beforeEach hook fails.
     if (testInfo.status === 'failed' || testInfo.status === 'skipped') {
-      completeStep?.(testInfo.error);
+      step.complete(testInfo.error);
       return;
     }
 
     try {
-      await this._fixtureRunner.resolveParametersAndRunHookOrTest(test.fn, this._workerInfo, testInfo, completeStep);
+      await this._fixtureRunner.resolveParametersAndRunHookOrTest(test.fn, this._workerInfo, testInfo, step);
     } catch (error) {
       if (error instanceof SkipError) {
         if (testInfo.status === 'passed')
@@ -448,15 +453,15 @@ export class WorkerRunner extends EventEmitter {
           testInfo.error = serializeError(error);
       }
     } finally {
-      completeStep?.(testInfo.error);
+      step.complete(testInfo.error);
     }
   }
 
   private async _runAfterHooks(test: TestCase, testInfo: TestInfoImpl) {
-    let completeStep: CompleteStepCallback | undefined;
+    let step: TestStepInternal | undefined;
     let teardownError: TestError | undefined;
     try {
-      completeStep = testInfo._addStep('hook', 'After Hooks');
+      step = testInfo._addStep('hook', 'After Hooks');
       if (test._type === 'test')
         await this._runHooks(test.parent!, 'afterEach', testInfo);
     } catch (error) {
@@ -480,7 +485,7 @@ export class WorkerRunner extends EventEmitter {
         teardownError = testInfo.error;
       }
     }
-    completeStep?.(teardownError);
+    step?.complete(teardownError);
   }
 
   private async _runHooks(suite: Suite, type: 'beforeEach' | 'afterEach', testInfo: TestInfo) {
