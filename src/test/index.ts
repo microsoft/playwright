@@ -204,9 +204,13 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
       }
       (context as any)._csi = {
         onApiCall: (stackTrace: ParsedStackTrace) => {
-          if ((testInfo as TestInfoImpl)._currentSteps().some(step => step.category === 'pw:api' || step.category === 'expect'))
-            return () => {};
-          return (testInfo as TestInfoImpl)._addStep('pw:api', stackTrace.apiName, { stack: stackTrace.frames });
+          const testInfoImpl = testInfo as TestInfoImpl;
+          const existingStep = testInfoImpl._currentSteps().find(step => step.category === 'pw:api' || step.category === 'expect');
+          const newStep = existingStep ? undefined : testInfoImpl._addStep('pw:api', stackTrace.apiName, { stack: stackTrace.frames, log: [] });
+          return (log: string[], error?: Error) => {
+            (existingStep || newStep)?.data.log?.push(...log);
+            newStep?.complete(error);
+          };
         },
       };
     };

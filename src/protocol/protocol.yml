@@ -29,6 +29,7 @@ Metadata:
       type: array?
       items: StackFrame
     apiName: string?
+    collectLogs: boolean?
 
 
 Point:

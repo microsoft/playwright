@@ -139,8 +139,9 @@ export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTest
       if (trace)
         await context.tracing.start({ screenshots: true, snapshots: true });
       (context as any)._csi = {
-        onApiCall: (name: string) => {
-          return (testInfo as any)._addStep('pw:api', name);
+        onApiCall: (stackTrace: any) => {
+          const step = (testInfo as any)._addStep('pw:api', stackTrace.apiName);
+          return (log, error) => step.complete(error);
         },
       };
       contexts.push(context);

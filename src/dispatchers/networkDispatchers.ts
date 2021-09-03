@@ -18,6 +18,7 @@ import { Request, Response, Route, WebSocket } from '../server/network';
 import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
+import { CallMetadata } from '../server/instrumentation';
 
 export class RequestDispatcher extends Dispatcher<Request, channels.RequestInitializer, channels.RequestEvents> implements channels.RequestChannel {
 
@@ -84,15 +85,15 @@ export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseIn
     return { value: await this._object.serverAddr() || undefined };
   }
 
-  async rawRequestHeaders(params?: channels.ResponseRawRequestHeadersParams, metadata?: channels.Metadata): Promise<channels.ResponseRawRequestHeadersResult> {
+  async rawRequestHeaders(params?: channels.ResponseRawRequestHeadersParams): Promise<channels.ResponseRawRequestHeadersResult> {
     return { headers: await this._object.rawRequestHeaders() };
   }
 
-  async rawResponseHeaders(params?: channels.ResponseRawResponseHeadersParams, metadata?: channels.Metadata): Promise<channels.ResponseRawResponseHeadersResult> {
+  async rawResponseHeaders(params?: channels.ResponseRawResponseHeadersParams): Promise<channels.ResponseRawResponseHeadersResult> {
     return { headers: await this._object.rawResponseHeaders() };
   }
 
-  async sizes(params?: channels.ResponseSizesParams, metadata?: channels.Metadata): Promise<channels.ResponseSizesResult> {
+  async sizes(params?: channels.ResponseSizesParams): Promise<channels.ResponseSizesResult> {
     return { sizes: await this._object.sizes() };
   }
 }
@@ -111,11 +112,11 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteInitializer
     });
   }
 
-  async responseBody(params?: channels.RouteResponseBodyParams, metadata?: channels.Metadata): Promise<channels.RouteResponseBodyResult> {
+  async responseBody(params?: channels.RouteResponseBodyParams): Promise<channels.RouteResponseBodyResult> {
     return { binary: (await this._object.responseBody()).toString('base64') };
   }
 
-  async continue(params: channels.RouteContinueParams, metadata?: channels.Metadata): Promise<channels.RouteContinueResult> {
+  async continue(params: channels.RouteContinueParams, metadata: CallMetadata): Promise<channels.RouteContinueResult> {
     const response = await this._object.continue({
       url: params.url,
       method: params.method,

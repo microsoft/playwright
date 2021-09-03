@@ -181,3 +181,9 @@
 .test-details-column {
   overflow-y: auto;
 }
+
+.step-log {
+  line-height: 20px;
+  white-space: pre;
+  padding: 8px;
+}

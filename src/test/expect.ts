@@ -77,7 +77,7 @@ function wrap(matcherName: string, matcher: any) {
 
     const INTERNAL_STACK_LENGTH = 3;
     const stackLines = new Error().stack!.split('\n').slice(INTERNAL_STACK_LENGTH + 1);
-    const completeStep = testInfo._addStep('expect', `expect${this.isNot ? '.not' : ''}.${matcherName}`, prepareExpectStepData(stackLines));
+    const step = testInfo._addStep('expect', `expect${this.isNot ? '.not' : ''}.${matcherName}`, prepareExpectStepData(stackLines));
 
     const reportStepEnd = (result: any) => {
       const success = result.pass !== this.isNot;
@@ -86,12 +86,12 @@ function wrap(matcherName: string, matcher: any) {
         const message = result.message();
         error = { message, stack: message + '\n' + stackLines.join('\n') };
       }
-      completeStep?.(error);
+      step.complete(error);
       return result;
     };
 
     const reportStepError = (error: Error) => {
-      completeStep?.(serializeError(error));
+      step.complete(serializeError(error));
       throw error;
     };
 
@@ -119,7 +119,7 @@ function prepareExpectStepData(lines: string[]) {
       column: parsed.column
     };
   }).filter(frame => !!frame);
-  return { stack: frames };
+  return { stack: frames, log: [] };
 }
 
 const wrappedMatchers: any = {};

@@ -222,7 +222,8 @@ export class DispatcherConnection {
     const sdkObject = dispatcher._object instanceof SdkObject ? dispatcher._object : undefined;
     const callMetadata: CallMetadata = {
       id: `call@${id}`,
-      ...validMetadata,
+      stack: validMetadata.stack,
+      apiName: validMetadata.apiName,
       objectId: sdkObject?.guid,
       pageId: sdkObject?.attribution?.page?.guid,
       frameId: sdkObject?.attribution?.frame?.guid,
@@ -277,10 +278,11 @@ export class DispatcherConnection {
       await sdkObject?.instrumentation.onAfterCall(sdkObject, callMetadata);
     }
 
+    const log = validMetadata.collectLogs ? callMetadata.log : undefined;
     if (callMetadata.error)
-      this.onmessage({ id, error: error });
+      this.onmessage({ id, error: error, log });
     else
-      this.onmessage({ id, result: callMetadata.result });
+      this.onmessage({ id, result: callMetadata.result, log });
   }
 
   private _replaceDispatchersWithGuids(payload: any): any {

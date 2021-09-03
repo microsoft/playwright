@@ -16,7 +16,7 @@
 
 import { formatLocation, wrapInPromise } from './util';
 import * as crypto from 'crypto';
-import { FixturesWithLocation, Location, WorkerInfo, TestInfo, CompleteStepCallback } from './types';
+import { FixturesWithLocation, Location, WorkerInfo, TestInfo, TestStepInternal } from './types';
 
 type FixtureScope = 'test' | 'worker';
 type FixtureRegistration = {
@@ -242,7 +242,7 @@ export class FixtureRunner {
       throw error;
   }
 
-  async resolveParametersAndRunHookOrTest(fn: Function, workerInfo: WorkerInfo, testInfo: TestInfo | undefined, paramsStepCallback?: CompleteStepCallback) {
+  async resolveParametersAndRunHookOrTest(fn: Function, workerInfo: WorkerInfo, testInfo: TestInfo | undefined, paramsStepCallback?: TestStepInternal) {
     // Install all automatic fixtures.
     for (const registration of this.pool!.registrations.values()) {
       const shouldSkip = !testInfo && registration.scope === 'test';
@@ -260,7 +260,7 @@ export class FixtureRunner {
     }
 
     // Report fixture hooks step as completed.
-    paramsStepCallback?.();
+    paramsStepCallback?.complete();
 
     return fn(params, testInfo || workerInfo);
   }

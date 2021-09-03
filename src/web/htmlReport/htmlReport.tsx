@@ -272,7 +272,7 @@ const TestStepDetails: React.FC<{
       {
         id: 'log',
         title: 'Log',
-        render: () => <div></div>
+        render: () => <div className='step-log'>{step?.log ? step.log.join('\n') : ''}</div>
       },
       {
         id: 'errors',

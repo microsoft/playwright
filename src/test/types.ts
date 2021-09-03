@@ -25,10 +25,14 @@ export type FixturesWithLocation = {
 };
 export type Annotations = { type: string, description?: string }[];
 
-export type CompleteStepCallback = (error?: Error | TestError) => void;
+export interface TestStepInternal {
+  complete(error?: Error | TestError): void;
+  category: string;
+  data: { [key: string]: any };
+}
 
 export interface TestInfoImpl extends TestInfo {
   _testFinished: Promise<void>;
-  _addStep: (category: string, title: string, data?: { [key: string]: any }) => CompleteStepCallback;
-  _currentSteps(): { category: string }[];
+  _addStep: (category: string, title: string, data?: { [key: string]: any }) => TestStepInternal;
+  _currentSteps(): TestStepInternal[];
 }

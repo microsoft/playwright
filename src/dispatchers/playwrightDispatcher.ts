@@ -52,23 +52,23 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
     debugLogger.log('proxy', `Starting socks proxy server on port ${this._object.options.socksProxyPort}`);
   }
 
-  async socksConnected(params: channels.PlaywrightSocksConnectedParams, metadata?: channels.Metadata): Promise<void> {
+  async socksConnected(params: channels.PlaywrightSocksConnectedParams): Promise<void> {
     this._socksProxy?.socketConnected(params);
   }
 
-  async socksFailed(params: channels.PlaywrightSocksFailedParams, metadata?: channels.Metadata): Promise<void> {
+  async socksFailed(params: channels.PlaywrightSocksFailedParams): Promise<void> {
     this._socksProxy?.socketFailed(params);
   }
 
-  async socksData(params: channels.PlaywrightSocksDataParams, metadata?: channels.Metadata): Promise<void> {
+  async socksData(params: channels.PlaywrightSocksDataParams): Promise<void> {
     this._socksProxy?.sendSocketData(params);
   }
 
-  async socksError(params: channels.PlaywrightSocksErrorParams, metadata?: channels.Metadata): Promise<void> {
+  async socksError(params: channels.PlaywrightSocksErrorParams): Promise<void> {
     this._socksProxy?.sendSocketError(params);
   }
 
-  async socksEnd(params: channels.PlaywrightSocksEndParams, metadata?: channels.Metadata): Promise<void> {
+  async socksEnd(params: channels.PlaywrightSocksEndParams): Promise<void> {
     this._socksProxy?.sendSocketEnd(params);
   }
 }
