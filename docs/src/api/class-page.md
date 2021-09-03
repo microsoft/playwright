@@ -1004,6 +1004,10 @@ Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce
 
 Emulates `'forced-colors'` media feature, supported values are `'active'` and `'none'`. Passing `null` disables forced colors emulation.
 
+:::note
+It's not supported in WebKit, see [here](https://bugs.webkit.org/show_bug.cgi?id=225281) in their issue tracker.
+:::
+
 ## async method: Page.evalOnSelector
 * langs:
   - alias-python: eval_on_selector

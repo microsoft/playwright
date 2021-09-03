@@ -427,6 +427,10 @@ to `'no-preference'`.
 Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See [`method: Page.emulateMedia`] for more details. Defaults
 to `'none'`.
 
+:::note
+It's not supported in WebKit, see [here](https://bugs.webkit.org/show_bug.cgi?id=225281) in their issue tracker.
+:::
+
 ## context-option-logger
 * langs: js
 - `logger` <[Logger]>
