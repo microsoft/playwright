@@ -13176,7 +13176,7 @@ export interface Request {
     requestHeadersSize: number;
 
     /**
-     * Size of the received response body in bytes.
+     * Size of the received response body (encoded) in bytes.
      */
     responseBodySize: number;
 
@@ -13184,11 +13184,6 @@ export interface Request {
      * Total number of bytes from the start of the HTTP response message until (and including) the double CRLF before the body.
      */
     responseHeadersSize: number;
-
-    /**
-     * Total number of bytes received for the request.
-     */
-    responseTransferSize: number;
   }>;
 
   /**

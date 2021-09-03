@@ -379,7 +379,6 @@ export class WKPage implements PageDelegate {
       eventsHelper.addEventListener(this._session, 'Network.responseReceived', e => this._onResponseReceived(e)),
       eventsHelper.addEventListener(this._session, 'Network.loadingFinished', e => this._onLoadingFinished(e)),
       eventsHelper.addEventListener(this._session, 'Network.loadingFailed', e => this._onLoadingFailed(e)),
-      eventsHelper.addEventListener(this._session, 'Network.dataReceived', e => this._onDataReceived(e)),
       eventsHelper.addEventListener(this._session, 'Network.webSocketCreated', e => this._page._frameManager.onWebSocketCreated(e.requestId, e.url)),
       eventsHelper.addEventListener(this._session, 'Network.webSocketWillSendHandshakeRequest', e => this._page._frameManager.onWebSocketRequest(e.requestId)),
       eventsHelper.addEventListener(this._session, 'Network.webSocketHandshakeResponseReceived', e => this._page._frameManager.onWebSocketResponse(e.requestId, e.response.status, e.response.statusText)),
@@ -1081,14 +1080,6 @@ export class WKPage implements PageDelegate {
     this._requestIdToRequest.delete(request._requestId);
     request.request._setFailureText(event.errorText);
     this._page._frameManager.requestFailed(request.request, event.errorText.includes('cancelled'));
-  }
-
-  _onDataReceived(event: Protocol.Network.dataReceivedPayload) {
-    const request = this._requestIdToRequest.get(event.requestId);
-    if (!request)
-      return;
-    request.request.responseSize.bodySize += event.dataLength || (event.encodedDataLength === -1 ? 0 : event.encodedDataLength);
-    request.request.responseSize.encodedBodySize += event.encodedDataLength !== -1 ? event.encodedDataLength : event.dataLength;
   }
 
   async _grantPermissions(origin: string, permissions: string[]) {

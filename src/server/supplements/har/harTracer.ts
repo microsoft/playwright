@@ -204,9 +204,12 @@ export class HarTracer {
     const httpVersion = response.httpVersion();
     harEntry.request.httpVersion = httpVersion;
 
+    let encodedBodySize = -1;
     const promise = response.body().then(buffer => {
       const content = harEntry.response.content;
       content.size = buffer.length;
+      if (encodedBodySize !== -1)
+        content.compression = Math.max(0, content.size - encodedBodySize);
       if (buffer && buffer.length > 0) {
         if (this._options.content === 'embedded') {
           content.text = buffer.toString('base64');
@@ -231,10 +234,10 @@ export class HarTracer {
     this._addBarrier(page, response.sizes().then(async sizes => {
       harEntry.response.bodySize = sizes.responseBodySize;
       harEntry.response.headersSize = sizes.responseHeadersSize;
-      harEntry.response._transferSize = sizes.responseTransferSize;
+      // Fallback for WebKit by calculating it manually
+      harEntry.response._transferSize = response.request().responseSize.transferSize || (sizes.responseHeadersSize + sizes.responseBodySize);
       harEntry.request.headersSize = sizes.requestHeadersSize;
-      const content = harEntry.response.content;
-      content.compression = Math.max(0, sizes.responseBodySize - sizes.responseTransferSize - sizes.responseHeadersSize);
+      encodedBodySize = sizes.responseBodySize;
     }));
   }
 

@@ -354,7 +354,7 @@ export class CRNetworkManager {
   _onDataReceived(event: Protocol.Network.dataReceivedPayload) {
     const request = this._requestIdToRequest.get(event.requestId);
     if (request)
-      request.request.responseSize.bodySize += event.dataLength;
+      request.request.responseSize.encodedBodySize += event.encodedDataLength;
   }
 
   _onLoadingFinished(event: Protocol.Network.loadingFinishedPayload) {

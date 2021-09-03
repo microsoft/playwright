@@ -2259,7 +2259,6 @@ RequestSizes:
     requestHeadersSize: number
     responseBodySize: number
     responseHeadersSize: number
-    responseTransferSize: number
 
 
 RemoteAddr:

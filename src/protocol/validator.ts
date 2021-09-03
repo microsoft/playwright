@@ -1072,7 +1072,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     requestHeadersSize: tNumber,
     responseBodySize: tNumber,
     responseHeadersSize: tNumber,
-    responseTransferSize: tNumber,
   });
   scheme.RemoteAddr = tObject({
     ipAddress: tString,
