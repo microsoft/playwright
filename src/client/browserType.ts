@@ -69,7 +69,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
   }
 
   async launch(options: LaunchOptions = {}): Promise<Browser> {
-    const logger = options.logger;
+    const logger = options.logger || this._defaultLaunchOptions.logger;
     return this._wrapApiCall(async (channel: channels.BrowserTypeChannel) => {
       assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
       assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
@@ -94,6 +94,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
   }
 
   async launchPersistentContext(userDataDir: string, options: LaunchPersistentContextOptions = {}): Promise<BrowserContext> {
+    const logger = options.logger || this._defaultLaunchOptions.logger;
     return this._wrapApiCall(async (channel: channels.BrowserTypeChannel) => {
       assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
       options = { ...this._defaultLaunchOptions, ...this._defaultContextOptions, ...options };
@@ -109,11 +110,11 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
       const result = await channel.launchPersistentContext(persistentParams);
       const context = BrowserContext.from(result.context);
       context._options = contextParams;
-      context._logger = options.logger;
+      context._logger = logger;
       context._setBrowserType(this);
       await this._onDidCreateContext?.(context);
       return context;
-    }, options.logger);
+    }, logger);
   }
 
   connect(options: api.ConnectOptions & { wsEndpoint?: string }): Promise<api.Browser>;
