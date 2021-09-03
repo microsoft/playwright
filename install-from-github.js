@@ -24,7 +24,7 @@ console.log(`Updating test runner...`);
 try {
   execSync('npm ci --save=false --fund=false --audit=false', {
     stdio: ['inherit', 'inherit', 'inherit'],
-    cwd: path.join(__dirname, 'tests', 'config', 'test-runner'),
+    cwd: path.join(__dirname, 'tests', 'playwright-test', 'stable-test-runner'),
   });
 } catch (e) {
   process.exit(1);
