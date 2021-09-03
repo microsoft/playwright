@@ -118,7 +118,8 @@ it('should return status text', async ({page, server}) => {
   expect(response.statusText()).toBe('cool!');
 });
 
-it('should report all headers', async ({ page, server }) => {
+it('should report all headers', async ({ page, server, browserName, platform }) => {
+  it.fixme(browserName === 'webkit' && platform === 'win32', 'libcurl does not support non-set-cookie multivalue headers');
   const expectedHeaders = {
     'header-a': ['value-a', 'value-a-1', 'value-a-2'],
     'header-b': ['value-b'],
