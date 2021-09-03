@@ -147,16 +147,15 @@ test('should show empty trace viewer', async ({ showTraceViewer }, testInfo) => 
 
 test('should open simple trace viewer', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
-  const actionTitles = await traceViewer.actionTitles.allTextContents();
-  expect(sanitize(actionTitles)).toEqual([
-    'page.gotodata:text/html,<html>Hello world</html>— Xms',
-    'page.setContent— Xms',
-    'page.evaluate— Xms',
-    'page.click\"Click\"— Xms',
-    'page.waitForNavigation— Xms',
-    'page.gotodata:text/html,<html>Hello world 2</html>— Xms',
-    'page.setViewportSize— Xms',
-    'page.hoverbody— Xms',
+  await expect(traceViewer.actionTitles).toHaveText([
+    /page.gotodata:text\/html,<html>Hello world<\/html>— \d+ms/,
+    /page.setContent— \d+ms/,
+    /page.evaluate— \d+ms/,
+    /page.click"Click"— \d+ms/,
+    /page.waitForNavigation— \d+ms/,
+    /page.gotodata:text\/html,<html>Hello world 2<\/html>— \d+ms/,
+    /page.setViewportSize— \d+ms/,
+    /page.hoverbody— \d+ms/,
   ]);
 });
 
@@ -198,10 +197,9 @@ test('should open console errors on click', async ({ showTraceViewer, browserNam
 test('should show params and return value', async ({ showTraceViewer, browserName }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.selectAction('page.evaluate');
-  const callLines = await traceViewer.callLines.allTextContents();
-  expect(sanitize(callLines)).toEqual([
-    'page.evaluate — Xms',
-    'expression: "({↵ a↵ }) => {↵ console.log(\'Info\');↵ console.warn(\'Warning\');↵ con…"',
+  await expect(traceViewer.callLines).toHaveText([
+    /page.evaluate — \d+ms/,
+    'expression: "({↵    a↵  }) => {↵    console.log(\'Info\');↵    console.warn(\'Warning\');↵    con…"',
     'isFunction: true',
     'arg: {"a":"paramA","b":4}',
     'value: "return paramA"'
@@ -222,20 +220,16 @@ test('should have correct stack trace', async ({ showTraceViewer }) => {
 
   await traceViewer.selectAction('page.click');
   await traceViewer.showSourceTab();
-  const stack1 = await traceViewer.stackFrames.allInnerTexts();
-  expect(sanitize(stack1).slice(0, 2)).toEqual([
-    'doClick trace-viewer.spec.ts :X',
-    'recordTrace trace-viewer.spec.ts :X',
+  const stack1 = (await traceViewer.stackFrames.allInnerTexts()).map(s => s.replace(/\s+/g, ' ').replace(/:[0-9]+/g, ':XXX'));
+  expect(stack1.slice(0, 2)).toEqual([
+    'doClick trace-viewer.spec.ts :XXX',
+    'recordTrace trace-viewer.spec.ts :XXX',
   ]);
 
   await traceViewer.selectAction('page.hover');
   await traceViewer.showSourceTab();
-  const stack2 = await traceViewer.stackFrames.allInnerTexts();
-  expect(sanitize(stack2).slice(0, 1)).toEqual([
-    'BrowserType.browserType._onWillCloseContext trace-viewer.spec.ts :X',
+  const stack2 = (await traceViewer.stackFrames.allInnerTexts()).map(s => s.replace(/\s+/g, ' ').replace(/:[0-9]+/g, ':XXX'));
+  expect(stack2.slice(0, 1)).toEqual([
+    'BrowserType.browserType._onWillCloseContext trace-viewer.spec.ts :XXX',
   ]);
 });
-
-function sanitize(texts: string[]): string[] {
-  return texts.map(s => s.replace(/\s+/g, ' ').replace(/\.ts :[0-9]+/g, '.ts :X').replace(/[0-9]+ms/g, 'Xms'));
-}

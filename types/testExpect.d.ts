@@ -29,7 +29,7 @@ export declare type Expect = {
   stringMatching(expected: string | RegExp): AsymmetricMatcher;
 };
 
-type OverriddenExpectProperties = 
+type OverriddenExpectProperties =
 'not' |
 'resolves' |
 'rejects' |
@@ -122,7 +122,7 @@ declare global {
       /**
        * Asserts that DOM node has a given CSS class.
        */
-      toHaveClass(className: string | RegExp | string[], options?: { timeout?: number }): Promise<R>;
+      toHaveClass(className: string | RegExp | (string|RegExp)[], options?: { timeout?: number }): Promise<R>;
 
       /**
        * Asserts number of DOM nodes matching given locator.
@@ -147,7 +147,7 @@ declare global {
       /**
        * Asserts element's text content.
        */
-      toHaveText(expected: string | RegExp | string[], options?: { timeout?: number, useInnerText?: boolean }): Promise<R>;
+      toHaveText(expected: string | RegExp | (string|RegExp)[], options?: { timeout?: number, useInnerText?: boolean }): Promise<R>;
 
       /**
        * Asserts page's title.
