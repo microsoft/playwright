@@ -18,7 +18,7 @@
   line-height: 18px;
   flex: auto;
   overflow: auto;
-  color: #616161;
+  color: #333;
   background-color: #f3f3f3;
 }
 
@@ -80,6 +80,9 @@
   flex: auto;
   display: flex;
   flex-direction: column;
+}
+
+.test-result .tree-item-title {
   padding-right: 8px;
 }
 
@@ -186,4 +189,15 @@
   line-height: 20px;
   white-space: pre;
   padding: 8px;
+}
+
+.failed-count {
+  flex: none;
+  color: white;
+  background: var(--red);
+  margin: 0px 4px;
+  padding: 0px 4px;
+  border-radius: 6px;
+  min-width: 20px;
+  text-align: center;
 }

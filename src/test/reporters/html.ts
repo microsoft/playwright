@@ -50,6 +50,8 @@ export type JsonSuite = {
   location?: JsonLocation;
   suites: JsonSuite[];
   tests: JsonTestCase[];
+  totalTests: number;
+  failedTests: number;
 };
 
 export type JsonTestCase = {
@@ -171,11 +173,14 @@ class HtmlReporter {
   }
 
   private _serializeSuite(suite: Suite): JsonSuite {
+    const suites = suite.suites.map(s => this._serializeSuite(s));
     return {
       title: suite.title,
       location: this._relativeLocation(suite.location),
-      suites: suite.suites.map(s => this._serializeSuite(s)),
+      suites,
       tests: suite.tests.map(t => this._serializeTest(t)),
+      failedTests: suites.reduce((a, s) => a + s.failedTests, 0) + suite.tests.reduce((a, t) => t.ok() ? a : a + 1, 0),
+      totalTests: suites.reduce((a, s) => a + s.totalTests, 0) + suite.tests.length
     };
   }
 
@@ -223,6 +228,7 @@ class HtmlReporter {
         failureSnippet: step.error ? formatError(step.error, test.location.file) : undefined,
         ...this._sourceProcessor.processStackTrace(step.data.stack),
         log: step.data.log || undefined,
+        ...this._sourceProcessor.processStackTrace(step.data?.stack),
       };
     });
   }
