@@ -487,8 +487,9 @@ it('should return security details directly from response', async ({ contextFact
     expect(securityDetails).toEqual({issuer: 'puppeteer-tests', protocol: 'TLS 1.3', subjectName: 'puppeteer-tests', validFrom: 1550084863, validTo: 33086084863});
 });
 
-it('should contain http2 for http2 requests', async ({ contextFactory, browserName }, testInfo) => {
-  it.fixme(browserName === 'firefox' || browserName === 'webkit');
+it('should contain http2 for http2 requests', async ({ contextFactory, browserName, platform }, testInfo) => {
+  it.fixme(browserName === 'webkit' && platform === 'linux');
+  it.fixme(browserName === 'webkit' && platform === 'win32');
 
   const server = http2.createSecureServer({
     key: await fs.promises.readFile(path.join(__dirname, '..', 'utils', 'testserver', 'key.pem')),
@@ -508,6 +509,7 @@ it('should contain http2 for http2 requests', async ({ contextFactory, browserNa
   const log = await getLog();
   expect(log.entries[0].request.httpVersion).toBe('h2');
   expect(log.entries[0].response.httpVersion).toBe('h2');
+  expect(Buffer.from(log.entries[0].response.content.text, 'base64').toString()).toBe('<h1>Hello World</h1>');
   server.close();
 });
 
