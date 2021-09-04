@@ -49,7 +49,8 @@ class ListReporter extends BaseReporter {
         process.stdout.write('\n');
         this._lastRow++;
       }
-      process.stdout.write('     ' + colors.gray(formatTestTitle(this.config, test)) + '\n');
+      const line = '     ' + colors.gray(formatTestTitle(this.config, test));
+      process.stdout.write(this._fitToScreen(line) + '\n');
     }
     this._testRows.set(test, this._lastRow++);
   }
@@ -134,10 +135,19 @@ class ListReporter extends BaseReporter {
       process.stdout.write(`\u001B[${this._lastRow - testRow}A`);
     // Erase line
     process.stdout.write('\u001B[2K');
-    process.stdout.write(line);
+    process.stdout.write(this._fitToScreen(line));
     // Go down if needed.
     if (testRow !== this._lastRow)
       process.stdout.write(`\u001B[${this._lastRow - testRow}E`);
+  }
+
+  private _fitToScreen(line: string): string {
+    if (!process.stdout.columns || line.length <= process.stdout.columns)
+      return line;
+    const visibleLen = colors.stripColors(line).length;
+    if (visibleLen <= process.stdout.columns)
+      return line;
+    return line.substr(0, process.stdout.columns);
   }
 
   private _updateTestLineForTest(test: TestCase, line: string) {
