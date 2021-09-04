@@ -144,10 +144,17 @@ class ListReporter extends BaseReporter {
   private _fitToScreen(line: string): string {
     if (!process.stdout.columns || line.length <= process.stdout.columns)
       return line;
-    const visibleLen = colors.stripColors(line).length;
-    if (visibleLen <= process.stdout.columns)
-      return line;
-    return line.substr(0, process.stdout.columns);
+    // Matches '\u001b[2K\u001b[0G' and all color codes.
+    const re = /\u001b\[2K\u001b\[0G|\x1B\[\d+m/g;
+    let m;
+    let colorLen = 0;
+    while ((m = re.exec(line)) !== null) {
+      const visibleLen = m.index - colorLen;
+      if (visibleLen >= process.stdout.columns)
+        break;
+      colorLen += m[0].length;
+    }
+    return line.substr(0, process.stdout.columns + colorLen);
   }
 
   private _updateTestLineForTest(test: TestCase, line: string) {
