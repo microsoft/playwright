@@ -16,6 +16,7 @@
 
 type ServerResponse = import('http').ServerResponse;
 type IncomingMessage = import('http').IncomingMessage;
+import WebSocket from 'ws';
 
 export class TestServer {
   static create(dirPath: string, port: number, loopback?: string): Promise<TestServer>;
@@ -30,6 +31,7 @@ export class TestServer {
   setRedirect(from: string, to: string);
   waitForRequest(path: string): Promise<IncomingMessage & { postBody: Promise<Buffer> }>;
   waitForWebSocketConnectionRequest(): Promise<IncomingMessage>;
+  onceWebSocketConnection(handler: (ws: WebSocket, request: IncomingMessage) => void);
   sendOnWebSocketConnection(data: string);
   reset();
   serveFile(request: IncomingMessage, response: ServerResponse);

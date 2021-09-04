@@ -323,6 +323,10 @@ class TestServer {
     }
   }
 
+  onceWebSocketConnection(handler) {
+    this._wsServer.once('connection', handler);
+  }
+
   waitForWebSocketConnectionRequest() {
     return new Promise(fullfil => {
       this._wsServer.once('connection', (ws, req) => fullfil(req));

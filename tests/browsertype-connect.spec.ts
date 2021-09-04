@@ -19,8 +19,43 @@ import { playwrightTest as test, expect } from './config/browserTest';
 import fs from 'fs';
 import * as path from 'path';
 import { getUserAgent } from '../lib/utils/utils';
+import WebSocket from 'ws';
 
 test.slow(true, 'All connect tests are slow');
+
+test('should connect over wss', async ({browserType , startRemoteServer, httpsServer}) => {
+  const remoteServer = await startRemoteServer();
+
+  const oldValue = process.env['NODE_TLS_REJECT_UNAUTHORIZED'];
+  // https://stackoverflow.com/a/21961005/552185
+  process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
+  try {
+    httpsServer.onceWebSocketConnection((ws, request) => {
+      const remote = new WebSocket(remoteServer.wsEndpoint(), [], {
+        perMessageDeflate: false,
+        maxPayload: 256 * 1024 * 1024, // 256Mb,
+      });
+      const remoteReadyPromise = new Promise<void>((f, r) => {
+        remote.once('open', f);
+        remote.once('error', r);
+      });
+      remote.on('close', () => ws.close());
+      remote.on('error', error => ws.close());
+      remote.on('message', message => ws.send(message));
+      ws.on('message', async message => {
+        await remoteReadyPromise;
+        remote.send(message);
+      });
+      ws.on('close', () => remote.close());
+      ws.on('error', () => remote.close());
+    });
+    const browser = await browserType.connect(`wss://localhost:${httpsServer.PORT}/ws`);
+    expect(browser.version()).toBeTruthy();
+    await browser.close();
+  } finally {
+    process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = oldValue;
+  }
+});
 
 test('should be able to reconnect to a browser', async ({browserType, startRemoteServer, server}) => {
   const remoteServer = await startRemoteServer();
