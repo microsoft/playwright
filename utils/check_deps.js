@@ -97,14 +97,20 @@ async function checkDeps() {
 
 
   function allowExternalImport(from, importPath, importName) {
-    const EXTERNAL_IMPORT_ALLOWLIST = ['electron'];
+    const EXTERNAL_IMPORT_ALLOWLIST = [
+      'electron',
+      'expect/build/types',
+      'expect/build/jasmineUtils',
+      'expect/build/print',
+      'expect/build/matchers'
+    ];
     // Only external imports are relevant. Files in src/web are bundled via webpack.
     if (importName.startsWith('.') || importPath.startsWith(path.join(src, 'web')))
       return true;
     if (EXTERNAL_IMPORT_ALLOWLIST.includes(importName))
       return true;
     try {
-      const resolvedImport = require.resolve(importName)
+      const resolvedImport = require.resolve(importName);
       const resolvedImportRelativeToNodeModules = path.relative(path.join(root, 'node_modules'), resolvedImport);
       // Filter out internal Node.js modules
       if (!resolvedImportRelativeToNodeModules.startsWith(importName))
@@ -118,7 +124,7 @@ async function checkDeps() {
       return false;
     } catch (error) {
       if (error.code !== 'MODULE_NOT_FOUND')
-        throw error
+        throw error;
     }
   }
 }
