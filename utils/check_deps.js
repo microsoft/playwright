@@ -56,7 +56,7 @@ async function checkDeps() {
       const importPath = path.resolve(path.dirname(fileName), importName) + '.ts';
       if (!allowImport(fileName, importPath))
         errors.push(`Disallowed import from ${path.relative(root, fileName)} to ${path.relative(root, importPath)}`);
-      if (!alllowExternalImport(fileName, importPath, importName))
+      if (!allowExternalImport(fileName, importPath, importName))
         errors.push(`Disallowed external dependency ${importName} from ${path.relative(root, fileName)}`);
     }
     ts.forEachChild(node, x => visit(x, fileName));
@@ -96,7 +96,7 @@ async function checkDeps() {
   }
 
 
-  function alllowExternalImport(from, importPath, importName) {
+  function allowExternalImport(from, importPath, importName) {
     const EXTERNAL_IMPORT_ALLOWLIST = ['electron'];
     // Only external imports are relevant. Files in src/web are bundled via webpack.
     if (importName.startsWith('.') || importPath.startsWith(path.join(src, 'web')))
