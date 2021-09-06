@@ -203,6 +203,7 @@ export class HarTracer {
 
     const httpVersion = response.httpVersion();
     harEntry.request.httpVersion = httpVersion;
+    harEntry.response.httpVersion = httpVersion;
 
     const promise = response.body().then(buffer => {
       const content = harEntry.response.content;
