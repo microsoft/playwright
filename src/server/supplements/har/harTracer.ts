@@ -22,6 +22,7 @@ import * as har from './har';
 import { calculateSha1, monotonicTime } from '../../../utils/utils';
 import { eventsHelper, RegisteredListener } from '../../../utils/eventsHelper';
 import * as mime from 'mime';
+import { ManualPromise } from '../../../utils/async';
 
 const FALLBACK_HTTP_VERSION = 'HTTP/1.1';
 
@@ -204,12 +205,31 @@ export class HarTracer {
     const httpVersion = response.httpVersion();
     harEntry.request.httpVersion = httpVersion;
 
-    let encodedBodySize = -1;
+    const compressionCalculationBarrier = {
+      _encodedBodySize: -1,
+      _decodedBodySize: -1,
+      barrier: new ManualPromise<void>(),
+      _check: function() {
+        if (this._encodedBodySize !== -1 && this._decodedBodySize !== -1) {
+          harEntry.response.content.compression = Math.max(0, this._decodedBodySize - this._encodedBodySize);
+          this.barrier.resolve();
+        }
+      },
+      setEncodedBodySize: function(encodedBodySize: number){
+        this._encodedBodySize = encodedBodySize;
+        this._check();
+      },
+      setDecodedBodySize: function(decodedBodySize: number) {
+        this._decodedBodySize = decodedBodySize;
+        this._check();
+      }
+    };
+    this._addBarrier(page, compressionCalculationBarrier.barrier);
+
     const promise = response.body().then(buffer => {
       const content = harEntry.response.content;
       content.size = buffer.length;
-      if (encodedBodySize !== -1)
-        content.compression = Math.max(0, content.size - encodedBodySize);
+      compressionCalculationBarrier.setDecodedBodySize(buffer.length);
       if (buffer && buffer.length > 0) {
         if (this._options.content === 'embedded') {
           content.text = buffer.toString('base64');
@@ -220,7 +240,9 @@ export class HarTracer {
             this._delegate.onContentBlob(content._sha1, buffer);
         }
       }
-    }).catch(() => {}).then(() => {
+    }).catch(() => {
+      compressionCalculationBarrier.setDecodedBodySize(0);
+    }).then(() => {
       const postData = response.request().postDataBuffer();
       if (postData && harEntry.request.postData && this._options.content === 'sha1') {
         harEntry.request.postData._sha1 = calculateSha1(postData) + '.' + (mime.getExtension(harEntry.request.postData.mimeType) || 'dat');
@@ -231,13 +253,13 @@ export class HarTracer {
         this._delegate.onEntryFinished(harEntry);
     });
     this._addBarrier(page, promise);
-    this._addBarrier(page, response.sizes().then(async sizes => {
+    this._addBarrier(page, response.sizes().then(sizes => {
       harEntry.response.bodySize = sizes.responseBodySize;
       harEntry.response.headersSize = sizes.responseHeadersSize;
       // Fallback for WebKit by calculating it manually
       harEntry.response._transferSize = response.request().responseSize.transferSize || (sizes.responseHeadersSize + sizes.responseBodySize);
       harEntry.request.headersSize = sizes.requestHeadersSize;
-      encodedBodySize = sizes.responseBodySize;
+      compressionCalculationBarrier.setEncodedBodySize(sizes.responseBodySize);
     }));
   }
 

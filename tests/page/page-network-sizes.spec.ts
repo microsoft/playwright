@@ -68,14 +68,13 @@ it('should set bodySize to 0 when there was no response body', async ({ page, se
   expect(sizes.responseHeadersSize).toBeGreaterThanOrEqual(150);
 });
 
-it('should handle PNG files', async ({ page, server, asset, browserName }) => {
-  it.fixme(browserName === 'firefox');
-  const response = await page.goto(server.PREFIX + '/pptr.png');
+it('should have the correct responseBodySize', async ({ page, server, asset, browserName }) => {
+  const response = await page.goto(server.PREFIX + '/simplezip.json');
   const sizes = await response.request().sizes();
-  expect(sizes.responseBodySize).toBe(fs.statSync(asset('pptr.png')).size);
+  expect(sizes.responseBodySize).toBe(fs.statSync(asset('simplezip.json')).size);
 });
 
-it('should handle PNG files with gzip compression', async ({ page, server, asset }, testInfo) => {
+it('should have the correct responseBodySize with gzip compression', async ({ page, server, asset }, testInfo) => {
   server.enableGzip('/simplezip.json');
   await page.goto(server.EMPTY_PAGE);
   const [response] = await Promise.all([
@@ -84,9 +83,8 @@ it('should handle PNG files with gzip compression', async ({ page, server, asset
   ]);
   const sizes = await response.request().sizes();
 
-  const inp1 = fs.createReadStream(asset('simplezip.json'));
   const chunks: Buffer[] = [];
-  const gzip = inp1.pipe(zlib.createGzip());
+  const gzip = fs.createReadStream(asset('simplezip.json')).pipe(zlib.createGzip());
   const done = new Promise(resolve => gzip.on('end', resolve));
   gzip.on('data', o => chunks.push(o));
   await done;
