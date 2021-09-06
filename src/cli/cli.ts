@@ -69,6 +69,7 @@ commandWithOpenOptions('codegen [url]', 'open page and generate code for user ac
 program
     .command('debug <app> [args...]')
     .description('run command in debug mode: disable timeout, open inspector')
+    .allowUnknownOption(true)
     .action(function(app, args) {
       spawn(app, args, {
         env: { ...process.env, PWDEBUG: '1' },
