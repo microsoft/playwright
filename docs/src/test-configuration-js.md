@@ -162,7 +162,7 @@ Here is an example configuration that runs tests in "Pixel 4" and "iPhone 11" em
 ```js js-flavor=js
 // playwright.config.js
 // @ts-check
-const { devices } = require('playwright');
+const { devices } = require('@playwright/test');
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
@@ -193,7 +193,7 @@ module.exports = config;
 ```js js-flavor=ts
 // playwright.config.ts
 import { PlaywrightTestConfig } from '@playwright/test';
-import { devices } from 'playwright';
+import { devices } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   projects: [
