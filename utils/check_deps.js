@@ -97,13 +97,7 @@ async function checkDeps() {
 
 
   function allowExternalImport(from, importPath, importName) {
-    const EXTERNAL_IMPORT_ALLOWLIST = [
-      'electron',
-      'expect/build/types',
-      'expect/build/jasmineUtils',
-      'expect/build/print',
-      'expect/build/matchers'
-    ];
+    const EXTERNAL_IMPORT_ALLOWLIST = ['electron'];
     // Only external imports are relevant. Files in src/web are bundled via webpack.
     if (importName.startsWith('.') || importPath.startsWith(path.join(src, 'web')))
       return true;
