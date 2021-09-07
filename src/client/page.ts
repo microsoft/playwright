@@ -98,9 +98,9 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this._timeoutSettings = new TimeoutSettings(this._browserContext._timeoutSettings);
 
     this.accessibility = new Accessibility(this._channel);
-    this.keyboard = new Keyboard(this._channel);
-    this.mouse = new Mouse(this._channel);
-    this.touchscreen = new Touchscreen(this._channel);
+    this.keyboard = new Keyboard(this);
+    this.mouse = new Mouse(this);
+    this.touchscreen = new Touchscreen(this);
 
     this._mainFrame = Frame.from(initializer.mainFrame);
     this._mainFrame._page = this;
