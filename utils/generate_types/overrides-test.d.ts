@@ -287,7 +287,6 @@ export interface PlaywrightWorkerOptions {
   browserName: BrowserName;
   defaultBrowserType: BrowserName;
   headless: boolean | undefined;
-  docker: boolean | undefined;
   channel: BrowserChannel | undefined;
   launchOptions: LaunchOptions;
   screenshot: 'off' | 'on' | 'only-on-failure';

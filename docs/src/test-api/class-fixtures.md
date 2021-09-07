@@ -144,12 +144,6 @@ Options used to create the context, as passed to [`method: Browser.newContext`].
 
 ## property: Fixtures.deviceScaleFactor = %%-context-option-devicescalefactor-%%
 
-## property: Fixtures.docker
-- type: <[boolean|undefined]>
-
-Wheather to run browsers inside docker container.
-
-
 ## property: Fixtures.extraHTTPHeaders = %%-context-option-extrahttpheaders-%%
 
 ## property: Fixtures.geolocation = %%-context-option-geolocation-%%

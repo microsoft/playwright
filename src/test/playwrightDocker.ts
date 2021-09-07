@@ -19,13 +19,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { removeFolders, existsAsync } from '../utils/utils';
-import { setStackTranslator } from '../utils/stackTrace';
 import { PlaywrightClient } from '../remote/playwrightClient';
-
-type DockerMount = {
-  hostPath: string,
-  dockerPath: string,
-};
 
 function defaultDockerImageName() {
   const packageJson = require('./../../package.json');
@@ -36,40 +30,16 @@ export class PlaywrightDocker {
   private _client: any;
   private _containerId: any;
   private _dockerTmpDir: string = '';
-  private _mounts: DockerMount[] = [];
   private _imageName: string;
 
   constructor(imageName: string = defaultDockerImageName()) {
     this._imageName = imageName;
   }
 
-  toDockerPath(hostPath: string): string {
-    const mount = this._mounts.find(mount => hostPath.startsWith(mount.hostPath));
-    if (!mount)
-      return hostPath;
-    return mount.dockerPath + hostPath.substring(mount.hostPath.length);
-  }
-
-  fromDockerPath(dockerPath: string): string {
-    const mount = this._mounts.find(mount => dockerPath.startsWith(mount.dockerPath));
-    if (!mount)
-      return dockerPath;
-    return mount.hostPath + dockerPath.substring(mount.dockerPath.length);
-  }
-
   async setup(workerIndex: number) {
     this._dockerTmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-docker-tmpdir'));
 
-    this._mounts = [];
-
     const isDebugMode = !!process.env.PWDEBUG;
-    const projectRoot = isDebugMode ? await findProjectRoot() : '';
-    if (projectRoot) {
-      this._mounts.push({
-        hostPath: projectRoot,
-        dockerPath: '/docker',
-      });
-    }
 
     const port = 10507 + workerIndex;
     const images = await getJSON('/images/json');
@@ -105,7 +75,6 @@ export class PlaywrightDocker {
       ExposedPorts: containerExposedPorts,
       Image: pwImage.Id,
       HostConfig: {
-        Binds: this._mounts.map(mount => mount.hostPath + ':' + mount.dockerPath),
         Init: true,
         PortBindings: containerPortBindings,
         AutoRemove: true,
@@ -130,9 +99,6 @@ export class PlaywrightDocker {
     }
     this._client = await PlaywrightClient.connect({ wsEndpoint: `ws://localhost:${port}/ws` });
     this._client.playwright()._enablePortForwarding();
-
-    if (projectRoot)
-      setStackTranslator(aPath => this.toDockerPath(aPath));
 
     return this._client.playwright();
   }
@@ -199,21 +165,3 @@ function fetch(method: 'post'|'get', url: string, body: Buffer|string|undefined 
   });
 }
 
-async function findProjectRoot() {
-  let dir = __dirname;
-  while (dir !== path.resolve(dir, '..') && dir.includes('node_modules'))
-    dir = path.resolve(dir, '..');
-  const rootProjectMarkers = [
-    '.git',
-    'node_modules',
-    'package.json',
-  ];
-  while (dir !== path.resolve(dir, '..')) {
-    for (const marker of rootProjectMarkers) {
-      if (await existsAsync(path.join(dir, marker)))
-        return dir;
-    }
-    dir = path.resolve(dir, '..');
-  }
-  return '';
-}

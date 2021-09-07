@@ -2380,10 +2380,6 @@ export interface PlaywrightWorkerOptions {
    */
   headless: boolean | undefined;
   /**
-   * Wheather to run browsers inside docker container.
-   */
-  docker: boolean | undefined;
-  /**
    * Browser distribution channel.  Supported values are "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge",
    * "msedge-beta", "msedge-dev", "msedge-canary". Read more about using
    * [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
