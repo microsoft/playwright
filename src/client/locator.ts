@@ -41,7 +41,7 @@ export class Locator implements api.Locator {
     try {
       return await task(handle, deadline ? deadline - monotonicTime() : 0);
     } finally {
-      handle.dispose();
+      await handle.dispose();
     }
   }
 
