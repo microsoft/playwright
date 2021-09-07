@@ -465,6 +465,7 @@ it.describe('download event', () => {
     ]);
     expect(downloadPath).toBe(null);
     expect(saveError.message).toContain('File deleted upon browser context closure.');
+    await browser.close();
   });
 
   it('should download large binary.zip', async ({browser, server, browserName}, testInfo) => {
