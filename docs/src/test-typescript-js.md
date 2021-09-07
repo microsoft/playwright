@@ -39,3 +39,25 @@ In my `package.json`, I have two scripts:
 The `pretest` script runs typescript on the tests. `test` will run the tests that have been generated to the `tests-out` directory. The `-c` argument configures the test runner to look for tests inside the `tests-out` directory.
 
 Then `npm run test` will build the tests and run them.
+
+## Type checking
+
+Although Playwright Test is supporting TypeScript out of the box, it's not running any type checks before executing tests *by design*.  
+This allows faster development loops since you don't need to wait for type checking everytime you make some changes to your tests.
+
+It certainly makes sense to add type checks on demand, for example in CI environments:
+
+```bash
+tsc --noEmit
+```
+
+Which requires at least following `tsconfig.json` to be present:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "moduleResolution": "Node"
+  }
+}
+```
