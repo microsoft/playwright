@@ -112,9 +112,7 @@ export function createMatcher(patterns: string | RegExp | (string | RegExp)[]): 
         return true;
     }
     for (const pattern of filePatterns) {
-      if (minimatch(value, pattern, {
-        nocase: true,
-      }))
+      if (minimatch(value, pattern, { nocase: true, dot: true }))
         return true;
     }
     return false;
