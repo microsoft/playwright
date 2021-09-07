@@ -25,9 +25,9 @@ it('should work', async ({page, server}) => {
     res.end();
   });
   const response = await page.goto(server.EMPTY_PAGE);
-  expect(response.headers()['foo']).toBe('bar');
-  expect(response.headers()['baz']).toBe('bAz');
-  expect(response.headers()['BaZ']).toBe(undefined);
+  expect((await response.allHeaders())['foo']).toBe('bar');
+  expect((await response.allHeaders())['baz']).toBe('bAz');
+  expect((await response.allHeaders())['BaZ']).toBe(undefined);
 });
 
 
