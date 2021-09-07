@@ -18,7 +18,7 @@ import http from 'http';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { removeFolders, existsAsync } from '../utils/utils';
+import { removeFolders } from '../utils/utils';
 import { PlaywrightClient } from '../remote/playwrightClient';
 
 function defaultDockerImageName() {
