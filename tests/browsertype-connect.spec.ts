@@ -23,7 +23,8 @@ import WebSocket from 'ws';
 
 test.slow(true, 'All connect tests are slow');
 
-test('should connect over wss', async ({browserType , startRemoteServer, httpsServer}) => {
+test('should connect over wss', async ({browserType , startRemoteServer, httpsServer, mode}) => {
+  test.skip(mode !== 'default'); // Out of process transport does not allow us to set env vars dynamically.
   const remoteServer = await startRemoteServer();
 
   const oldValue = process.env['NODE_TLS_REJECT_UNAUTHORIZED'];
