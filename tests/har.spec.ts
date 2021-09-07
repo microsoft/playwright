@@ -280,7 +280,6 @@ it('should include sizes', async ({ contextFactory, server, asset }, testInfo) =
 });
 
 it('should work with gzip compression', async ({ contextFactory, server, browserName }, testInfo) => {
-  it.fixme(browserName !== 'chromium');
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   server.enableGzip('/simplezip.json');
   const response = await page.goto(server.PREFIX + '/simplezip.json');

@@ -2753,7 +2753,6 @@ export type RequestSizes = {
   requestHeadersSize: number,
   responseBodySize: number,
   responseHeadersSize: number,
-  responseTransferSize: number,
 };
 
 export type RemoteAddr = {
