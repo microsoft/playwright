@@ -17,9 +17,9 @@ If request gets a 'redirect' response, the request is successfully finished with
 request is  issued to a redirected url.
 
 ## async method: Request.allHeaders
-- returns: <[Headers]>
+- returns: <[Object]<[string], [string]>>
 
-An object with all the request HTTP headers associated with this request.
+An object with all the request HTTP headers associated with this request. The header names are lower-cased.
 
 ## method: Request.failure
 - returns: <[null]|[string]>
@@ -60,6 +60,12 @@ Returns the [Frame] that initiated this request.
 - returns: <[Object]<[string], [string]>>
 
 **DEPRECATED** Incomplete list of headers as seen by the rendering engine. Use [`method: Request.allHeaders`] instead.
+
+## async method: Request.headersArray
+- returns: <[Array]<[Array]<[string]>>>
+
+An array with all the request HTTP headers associated with this request. Unlike [`method: Request.allHeaders`], header names are not lower-cased.
+Headers with multiple entries, such as `Set-Cookie`, appear in the array multiple times.
 
 ## method: Request.isNavigationRequest
 - returns: <[boolean]>

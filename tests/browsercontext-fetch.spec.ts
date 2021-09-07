@@ -18,6 +18,7 @@ import http from 'http';
 import zlib from 'zlib';
 import { pipeline } from 'stream';
 import { contextTest as it, expect } from './config/browserTest';
+import type { Response } from '..';
 
 it.skip(({ mode }) => mode !== 'default');
 
@@ -41,7 +42,7 @@ it.afterAll(() => {
 
 it('should work', async ({context, server}) => {
   // @ts-expect-error
-  const response = await context._fetch(server.PREFIX + '/simple.json');
+  const response: Response = await context._fetch(server.PREFIX + '/simple.json');
   expect(response.url()).toBe(server.PREFIX + '/simple.json');
   expect(response.status()).toBe(200);
   expect(response.statusText()).toBe('OK');

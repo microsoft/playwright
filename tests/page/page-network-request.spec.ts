@@ -90,7 +90,7 @@ it('should get the same headers as the server', async ({ page, server, browserNa
   });
   const response = await page.goto(server.PREFIX + '/empty.html');
   const headers = await response.request().allHeaders();
-  expect(headers.headers()).toEqual(serverRequest.headers);
+  expect(headers).toEqual(serverRequest.headers);
 });
 
 it('should get the same headers as the server CORS', async ({page, server, browserName, platform}) => {
@@ -111,7 +111,7 @@ it('should get the same headers as the server CORS', async ({page, server, brows
   expect(text).toBe('done');
   const response = await responsePromise;
   const headers = await response.request().allHeaders();
-  expect(headers.headers()).toEqual(serverRequest.headers);
+  expect(headers).toEqual(serverRequest.headers);
 });
 
 it('should return postData', async ({page, server, isAndroid}) => {
@@ -266,15 +266,14 @@ it('should return navigation bit when navigating to image', async ({page, server
   expect(requests[0].isNavigationRequest()).toBe(true);
 });
 
-it('should report all headers', async ({ page, server, browserName, platform }) => {
-  const expectedHeaders = {};
+it('should report raw headers', async ({ page, server, browserName, platform }) => {
+  let expectedHeaders: string[][];
   server.setRoute('/headers', (req, res) => {
+    expectedHeaders = [];
     for (let i = 0; i < req.rawHeaders.length; i += 2)
-      expectedHeaders[req.rawHeaders[i].toLowerCase()] = req.rawHeaders[i + 1];
-    if (browserName === 'webkit' && platform === 'win32') {
-      delete expectedHeaders['accept-encoding'];
-      delete expectedHeaders['accept-language'];
-    }
+      expectedHeaders.push([req.rawHeaders[i], req.rawHeaders[i + 1]]);
+    if (browserName === 'webkit' && platform === 'win32')
+      expectedHeaders = expectedHeaders.filter(([name, value]) => name.toLowerCase() !== 'accept-encoding' && name.toLowerCase() !== 'accept-language');
     res.end();
   });
   await page.goto(server.EMPTY_PAGE);
@@ -289,8 +288,8 @@ it('should report all headers', async ({ page, server, browserName, platform }) 
       ]
     }))
   ]);
-  const headers = await request.allHeaders();
-  expect(headers.headers()).toEqual(expectedHeaders);
+  const headers = await request.headersArray();
+  expect(headers.sort()).toEqual(expectedHeaders.sort());
 });
 
 it('should report raw response headers in redirects', async ({ page, server, browserName }) => {
@@ -311,7 +310,7 @@ it('should report raw response headers in redirects', async ({ page, server, bro
     redirectChain.unshift(req.url());
     const res = await req.response();
     const headers = await res.allHeaders();
-    headersChain.unshift(headers.get('sec-test-header'));
+    headersChain.unshift(headers['sec-test-header']);
   }
 
   expect(redirectChain).toEqual(expectedUrls);
@@ -332,7 +331,6 @@ it('should report all cookies in one header', async ({ page, server }) => {
     document.cookie = 'myOtherCookie=myOtherValue';
   });
   const response = await page.goto(server.EMPTY_PAGE);
-  const headers = await response.request().allHeaders();
-  const cookie = headers.get('cookie');
+  const cookie = (await response.request().allHeaders())['cookie'];
   expect(cookie).toBe('myCookie=myValue; myOtherCookie=myOtherValue');
 });

@@ -3,7 +3,7 @@
 [Response] class represents responses which are received by page.
 
 ## async method: Response.allHeaders
-- returns: <[Headers]>
+- returns: <[Object]<[string], [string]>>
 
 An object with all the response HTTP headers associated with this response.
 
@@ -26,6 +26,12 @@ Returns the [Frame] that initiated this response.
 - returns: <[Object]<[string], [string]>>
 
 **DEPRECATED** Incomplete list of headers as seen by the rendering engine. Use [`method: Response.allHeaders`] instead.
+
+## async method: Response.headersArray
+- returns: <[Array]<[Array]<[string]>>>
+
+An array with all the request HTTP headers associated with this response. Unlike [`method: Response.allHeaders`], header names are not lower-cased.
+Headers with multiple entries, such as `Set-Cookie`, appear in the array multiple times.
 
 ## async method: Response.json
 * langs: js, python

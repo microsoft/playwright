@@ -12656,33 +12656,6 @@ export interface FileChooser {
 }
 
 /**
- * HTTP request and response all headers collection.
- */
-export interface Headers {
-  /**
-   * @param name
-   */
-  get(name: string): string|null;
-
-  /**
-   * Returns all header values for the given header name.
-   * @param name
-   */
-  getAll(name: string): Array<string>;
-
-  /**
-   * Returns all header names in this headers collection.
-   */
-  headerNames(): Array<string>;
-
-  /**
-   * Returns all headers as a dictionary. Header names are normalized to lower case, multi-value headers are concatenated
-   * using comma.
-   */
-  headers(): { [key: string]: string; };
-}
-
-/**
  * Keyboard provides an api for managing a virtual keyboard. The high level api is
  * [keyboard.type(text[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-type), which takes raw
  * characters and generates proper keydown, keypress/input, and keyup events on your page.
@@ -13013,9 +12986,9 @@ export interface Mouse {
  */
 export interface Request {
   /**
-   * An object with all the request HTTP headers associated with this request.
+   * An object with all the request HTTP headers associated with this request. The header names are lower-cased.
    */
-  allHeaders(): Promise<Headers>;
+  allHeaders(): Promise<{ [key: string]: string; }>;
 
   /**
    * The method returns `null` unless this request has failed, as reported by `requestfailed` event.
@@ -13047,6 +13020,13 @@ export interface Request {
    * @deprecated
    */
   headers(): { [key: string]: string; };
+
+  /**
+   * An array with all the request HTTP headers associated with this request. Unlike
+   * [request.allHeaders()](https://playwright.dev/docs/api/class-request#request-all-headers), header names are not
+   * lower-cased. Headers with multiple entries, such as `Set-Cookie`, appear in the array multiple times.
+   */
+  headersArray(): Promise<Array<Array<string>>>;
 
   /**
    * Whether this request is driving frame's navigation.
@@ -13238,7 +13218,7 @@ export interface Response {
   /**
    * An object with all the response HTTP headers associated with this response.
    */
-  allHeaders(): Promise<Headers>;
+  allHeaders(): Promise<{ [key: string]: string; }>;
 
   /**
    * Returns the buffer with response body.
@@ -13261,6 +13241,13 @@ export interface Response {
    * @deprecated
    */
   headers(): { [key: string]: string; };
+
+  /**
+   * An array with all the request HTTP headers associated with this response. Unlike
+   * [response.allHeaders()](https://playwright.dev/docs/api/class-response#response-all-headers), header names are not
+   * lower-cased. Headers with multiple entries, such as `Set-Cookie`, appear in the array multiple times.
+   */
+  headersArray(): Promise<Array<Array<string>>>;
 
   /**
    * Returns the JSON representation of response body.
