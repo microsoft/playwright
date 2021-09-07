@@ -19,7 +19,7 @@ All tests run in worker processes. These processes are OS processes, running ind
 
 You can't communicate between the workers. Playwright Test reuses a single worker as much as it can to make testing faster, so multiple test files are usually run in a single worker one after another.
 
-Workers are always shutdown after a [test failure](./test-failures.md) to guarantee pristine environment for following tests.
+Workers are always shutdown after a [test failure](./test-retries.md#failures) to guarantee pristine environment for following tests.
 
 ## Limit workers
 

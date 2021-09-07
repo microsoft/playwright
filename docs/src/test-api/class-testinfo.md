@@ -213,7 +213,7 @@ Specifies a unique repeat index when running in "repeat each" mode. This mode is
 ## property: TestInfo.retry
 - type: <[int]>
 
-Specifies the retry number when the test is retried after a failure. The first test run has [`property: TestInfo.retry`] equal to zero, the first retry has it equal to one, and so on. Learn more about [retries](./test-retries.md).
+Specifies the retry number when the test is retried after a failure. The first test run has [`property: TestInfo.retry`] equal to zero, the first retry has it equal to one, and so on. Learn more about [retries](./test-retries.md#retries).
 
 ## method: TestInfo.setTimeout
 

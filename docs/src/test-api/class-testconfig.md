@@ -219,7 +219,7 @@ Tests that took more than `threshold` milliseconds are considered slow, and the 
 ## property: TestConfig.retries
 - type: <[int]>
 
-The maximum number of retry attempts given to failed tests. Learn more about [test retries](./test-retries.md).
+The maximum number of retry attempts given to failed tests. Learn more about [test retries](./test-retries.md#retries).
 
 ## property: TestConfig.shard
 - type: <[Object]>
