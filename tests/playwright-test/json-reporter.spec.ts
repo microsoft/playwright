@@ -108,6 +108,37 @@ test('should report projects', async ({ runInlineTest }, testInfo) => {
   expect(result.report.suites[0].specs[0].tests[1].projectName).toBe('p2');
 });
 
+test('should show steps', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('math works!', async ({}) => {
+        expect(1 + 1).toBe(2);
+        await test.step('math works in a step', async () => {
+          expect(2 + 2).toBe(4);
+          await test.step('nested step', async () => {
+            expect(2 + 2).toBe(4);
+            await test.step('deeply nested step', async () => {
+              expect(2 + 2).toBe(4);
+            });
+          })
+        })
+        await test.step('failing step', async () => {
+          expect(2 + 2).toBe(5);
+        });
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.report.suites.length).toBe(1);
+  expect(result.report.suites[0].specs.length).toBe(1);
+  expect(result.report.suites[0].specs[0].tests[0].results[0].steps[0].title).toBe('math works in a step');
+  expect(result.report.suites[0].specs[0].tests[0].results[0].steps[0].steps[0].title).toBe('nested step');
+  expect(result.report.suites[0].specs[0].tests[0].results[0].steps[0].steps[0].steps[0].title).toBe('deeply nested step');
+  expect(result.report.suites[0].specs[0].tests[0].results[0].steps[0].steps[0].steps[0].steps).toBeUndefined();
+  expect(result.report.suites[0].specs[0].tests[0].results[0].steps[1].error).not.toBeUndefined();
+});
+
 test('should have relative always-posix paths', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `

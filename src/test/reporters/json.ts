@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { FullConfig, TestCase, Suite, TestResult, TestError, FullResult, TestStatus, Location, Reporter } from '../../../types/testReporter';
+import { FullConfig, TestCase, Suite, TestResult, TestError, TestStep, FullResult, TestStatus, Location, Reporter } from '../../../types/testReporter';
 
 export interface JSONReport {
   config: Omit<FullConfig, 'projects'> & {
@@ -67,7 +67,14 @@ export interface JSONReportTestResult {
   stdout: JSONReportSTDIOEntry[],
   stderr: JSONReportSTDIOEntry[],
   retry: number;
+  steps?: JSONReportTestStep[];
   attachments: { name: string, path?: string, body?: string, contentType: string }[];
+}
+export interface JSONReportTestStep {
+  title: string;
+  duration: number;
+  error: TestError | undefined;
+  steps?: JSONReportTestStep[];
 }
 export type JSONReportSTDIOEntry = { text: string } | { buffer: string };
 
@@ -213,6 +220,7 @@ class JSONReporter implements Reporter {
   }
 
   private _serializeTestResult(result: TestResult): JSONReportTestResult {
+    const steps = result.steps.filter(s => s.category === 'test.step');
     return {
       workerIndex: result.workerIndex,
       status: result.status,
@@ -221,12 +229,23 @@ class JSONReporter implements Reporter {
       stdout: result.stdout.map(s => stdioEntry(s)),
       stderr: result.stderr.map(s => stdioEntry(s)),
       retry: result.retry,
+      steps: steps.length ? steps.map(s => this._serializeTestStep(s)) : undefined,
       attachments: result.attachments.map(a => ({
         name: a.name,
         contentType: a.contentType,
         path: a.path,
         body: a.body?.toString('base64')
       })),
+    };
+  }
+
+  private _serializeTestStep(step: TestStep): JSONReportTestStep {
+    const steps = step.steps.filter(s => s.category === 'test.step');
+    return {
+      title: step.title,
+      duration: step.duration,
+      error: step.error,
+      steps: steps.length ? steps.map(s => this._serializeTestStep(s)) : undefined,
     };
   }
 }
