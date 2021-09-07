@@ -17,7 +17,7 @@
 
 import { fail } from 'assert';
 import os from 'os';
-import type { Route } from '../../index';
+import type { Route, Response } from '../../index';
 import { expect, test as it } from './pageTest';
 
 it('should fulfill intercepted response', async ({page, server, browserName}) => {
@@ -195,12 +195,14 @@ it('should give access to the intercepted response', async ({page, server}) => {
 
   const route = await routePromise;
   // @ts-expect-error
-  const response = await route._continueToResponse();
+  const response: Response = await route._continueToResponse();
 
   expect(response.status()).toBe(200);
   expect(response.ok()).toBeTruthy();
   expect(response.url()).toBe(server.PREFIX + '/title.html');
   expect(response.headers()['content-type']).toBe('text/html; charset=utf-8');
+  expect((await response.allHeaders())['content-type']).toBe('text/html; charset=utf-8');
+  expect(await (await response.headersArray()).filter(([name, value]) => name.toLowerCase() === 'content-type')).toEqual([['Content-Type', 'text/html; charset=utf-8']]);
 
   // @ts-expect-error
   await Promise.all([route.fulfill({ response }), evalPromise]);

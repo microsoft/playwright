@@ -25,9 +25,9 @@ it('should work', async ({page, server}) => {
     res.end();
   });
   const response = await page.goto(server.EMPTY_PAGE);
-  expect(response.headers()['foo']).toBe('bar');
-  expect(response.headers()['baz']).toBe('bAz');
-  expect(response.headers()['BaZ']).toBe(undefined);
+  expect((await response.allHeaders())['foo']).toBe('bar');
+  expect((await response.allHeaders())['baz']).toBe('bAz');
+  expect((await response.allHeaders())['BaZ']).toBe(undefined);
 });
 
 
@@ -134,10 +134,13 @@ it('should report all headers', async ({ page, server, browserName, platform }) 
     page.waitForResponse('**/*'),
     page.evaluate(() => fetch('/headers'))
   ]);
-  const headers = await response.allHeaders();
+  const headers = await response.headersArray();
   const actualHeaders = {};
-  for (const name of headers.headerNames())
-    actualHeaders[name] = headers.getAll(name);
+  for (const [name, value] of headers) {
+    if (!actualHeaders[name])
+      actualHeaders[name] = [];
+    actualHeaders[name].push(value);
+  }
   delete actualHeaders['Keep-Alive'];
   delete actualHeaders['keep-alive'];
   delete actualHeaders['Connection'];
@@ -163,7 +166,7 @@ it('should report multiple set-cookie headers', async ({ page, server }) => {
     page.waitForResponse('**/*'),
     page.evaluate(() => fetch('/headers'))
   ]);
-  const headers = await response.allHeaders();
-  const cookies = headers.getAll('set-cookie');
+  const headers = await response.headersArray();
+  const cookies = headers.filter(([name, value]) => name.toLowerCase() === 'set-cookie').map(([, value]) => value);
   expect(cookies).toEqual(['a=b', 'c=d']);
 });
