@@ -19,6 +19,7 @@ import os from 'os';
 import path from 'path';
 import { CRBrowser, CRBrowserContext } from '../chromium/crBrowser';
 import { CRConnection, CRSession } from '../chromium/crConnection';
+import { CRPage } from '../chromium/crPage';
 import { CRExecutionContext } from '../chromium/crExecutionContext';
 import * as js from '../javascript';
 import { Page } from '../page';
@@ -49,7 +50,6 @@ export class ElectronApplication extends SdkObject {
   private _nodeSession: CRSession;
   private _nodeExecutionContext: js.ExecutionContext | undefined;
   _nodeElectronHandlePromise: Promise<js.JSHandle<any>>;
-  private _lastWindowId = 0;
   readonly _timeoutSettings = new TimeoutSettings();
 
   constructor(parent: SdkObject, browser: CRBrowser, nodeConnection: CRConnection) {
@@ -59,9 +59,6 @@ export class ElectronApplication extends SdkObject {
       // Emit application closed after context closed.
       Promise.resolve().then(() => this.emit(ElectronApplication.Events.Close));
     });
-    for (const page of this._browserContext.pages())
-      this._onPage(page);
-    this._browserContext.on(BrowserContext.Events.Page, event => this._onPage(event));
     this._nodeConnection = nodeConnection;
     this._nodeSession = nodeConnection.rootSession;
     this._nodeElectronHandlePromise = new Promise(f => {
@@ -73,12 +70,6 @@ export class ElectronApplication extends SdkObject {
       });
     });
     this._nodeSession.send('Runtime.enable', {}).catch(e => {});
-  }
-
-  private _onPage(page: Page) {
-    // Needs to be sync.
-    const windowId = ++this._lastWindowId;
-    (page as any)._browserWindowId = windowId;
   }
 
   context(): BrowserContext {
@@ -95,8 +86,13 @@ export class ElectronApplication extends SdkObject {
   }
 
   async browserWindow(page: Page): Promise<js.JSHandle<BrowserWindow>> {
+    // Assume CRPage as Electron is always Chromium.
+    const targetId = (page._delegate as CRPage)._targetId;
     const electronHandle = await this._nodeElectronHandlePromise;
-    return await electronHandle.evaluateHandle(({ BrowserWindow }, windowId) => BrowserWindow.fromId(windowId), (page as any)._browserWindowId);
+    return await electronHandle.evaluateHandle(({ BrowserWindow, webContents }, targetId) => {
+      const wc = webContents.fromDevToolsTargetId(targetId);
+      return BrowserWindow.fromWebContents(wc);
+    }, targetId);
   }
 }
 
