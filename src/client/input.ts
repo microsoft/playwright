@@ -17,56 +17,75 @@
 
 import * as channels from '../protocol/channels';
 import * as api from '../../types/types';
+import type { Page } from './page';
 
 export class Keyboard implements api.Keyboard {
-  private _channel: channels.PageChannel;
+  private _page: Page;
 
-  constructor(channel: channels.PageChannel) {
-    this._channel = channel;
+  constructor(page: Page) {
+    this._page = page;
   }
 
   async down(key: string) {
-    await this._channel.keyboardDown({ key });
+    await this._page._wrapApiCall(async channel => {
+      await channel.keyboardDown({ key });
+    });
   }
 
   async up(key: string) {
-    await this._channel.keyboardUp({ key });
+    await this._page._wrapApiCall(async channel => {
+      await channel.keyboardUp({ key });
+    });
   }
 
   async insertText(text: string) {
-    await this._channel.keyboardInsertText({ text });
+    await this._page._wrapApiCall(async channel => {
+      await channel.keyboardInsertText({ text });
+    });
   }
 
   async type(text: string, options: channels.PageKeyboardTypeOptions = {}) {
-    await this._channel.keyboardType({ text, ...options });
+    await this._page._wrapApiCall(async channel => {
+      await channel.keyboardType({ text, ...options });
+    });
   }
 
   async press(key: string, options: channels.PageKeyboardPressOptions = {}) {
-    await this._channel.keyboardPress({ key, ...options });
+    await this._page._wrapApiCall(async channel => {
+      await channel.keyboardPress({ key, ...options });
+    });
   }
 }
 
 export class Mouse implements api.Mouse {
-  private _channel: channels.PageChannel;
+  private _page: Page;
 
-  constructor(channel: channels.PageChannel) {
-    this._channel = channel;
+  constructor(page: Page) {
+    this._page = page;
   }
 
   async move(x: number, y: number, options: { steps?: number } = {}) {
-    await this._channel.mouseMove({ x, y, ...options });
+    await this._page._wrapApiCall(async channel => {
+      await channel.mouseMove({ x, y, ...options });
+    });
   }
 
   async down(options: channels.PageMouseDownOptions = {}) {
-    await this._channel.mouseDown({ ...options });
+    await this._page._wrapApiCall(async channel => {
+      await channel.mouseDown({ ...options });
+    });
   }
 
   async up(options: channels.PageMouseUpOptions = {}) {
-    await this._channel.mouseUp(options);
+    await this._page._wrapApiCall(async channel => {
+      await channel.mouseUp(options);
+    });
   }
 
   async click(x: number, y: number, options: channels.PageMouseClickOptions = {}) {
-    await this._channel.mouseClick({ x, y, ...options });
+    await this._page._wrapApiCall(async channel => {
+      await channel.mouseClick({ x, y, ...options });
+    });
   }
 
   async dblclick(x: number, y: number, options: Omit<channels.PageMouseClickOptions, 'clickCount'> = {}) {
@@ -75,13 +94,15 @@ export class Mouse implements api.Mouse {
 }
 
 export class Touchscreen implements api.Touchscreen {
-  private _channel: channels.PageChannel;
+  private _page: Page;
 
-  constructor(channel: channels.PageChannel) {
-    this._channel = channel;
+  constructor(page: Page) {
+    this._page = page;
   }
 
   async tap(x: number, y: number) {
-    await this._channel.touchscreenTap({x, y});
+    await this._page._wrapApiCall(async channel => {
+      await channel.touchscreenTap({x, y});
+    });
   }
 }
