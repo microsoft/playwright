@@ -133,9 +133,6 @@ export class HarTracer {
   }
 
   private _onRequest(request: network.Request) {
-    if (this._options.skipScripts && request.resourceType() === 'script')
-      return;
-
     const page = request.frame()._page;
     const url = network.parsedURL(request.url());
     if (!url)
@@ -228,6 +225,11 @@ export class HarTracer {
     this._addBarrier(page, compressionCalculationBarrier.barrier);
 
     const promise = response.body().then(buffer => {
+      if (this._options.skipScripts && request.resourceType() === 'script') {
+        compressionCalculationBarrier.setDecodedBodySize(0);
+        return;
+      }
+
       const content = harEntry.response.content;
       content.size = buffer.length;
       compressionCalculationBarrier.setDecodedBodySize(buffer.length);
