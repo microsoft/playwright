@@ -286,7 +286,8 @@ playwrightTest('should report all pages in an existing browser', async ({ browse
   }
 });
 
-playwrightTest('should connect via https', async ({ browserType, browserOptions, httpsServer }, testInfo) => {
+playwrightTest('should connect via https', async ({ browserType, browserOptions, httpsServer, mode }, testInfo) => {
+  test.skip(mode !== 'default'); // Out of process transport does not allow us to set env vars dynamically.
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({
     ...browserOptions,
