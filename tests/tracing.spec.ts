@@ -43,9 +43,13 @@ test('should collect trace with resources, but no js', async ({ context, page, s
   expect(events.find(e => e.metadata?.apiName === 'page.close')).toBeTruthy();
 
   expect(events.some(e => e.type === 'frame-snapshot')).toBeTruthy();
-  expect(events.some(e => e.type === 'resource-snapshot' && e.snapshot.request.url.endsWith('style.css'))).toBeTruthy();
-  expect(events.some(e => e.type === 'resource-snapshot' && e.snapshot.request.url.endsWith('script.js'))).toBeFalsy();
   expect(events.some(e => e.type === 'screencast-frame')).toBeTruthy();
+  const style = events.find(e => e.type === 'resource-snapshot' && e.snapshot.request.url.endsWith('style.css'));
+  expect(style).toBeTruthy();
+  expect(style.snapshot.response.content._sha1).toBeTruthy();
+  const script = events.find(e => e.type === 'resource-snapshot' && e.snapshot.request.url.endsWith('script.js'));
+  expect(script).toBeTruthy();
+  expect(script.snapshot.response.content._sha1).toBe(undefined);
 });
 
 test('should not collect snapshots by default', async ({ context, page, server }, testInfo) => {
