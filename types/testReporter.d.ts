@@ -146,7 +146,7 @@ export interface TestCase {
   /**
    * The maximum number of retries given to this test in the configuration.
    *
-   * Learn more about [test retries](https://playwright.dev/docs/test-retries).
+   * Learn more about [test retries](https://playwright.dev/docs/test-retries#retries).
    */
   retries: number;
   /**
@@ -173,7 +173,7 @@ export interface TestResult {
   /**
    * When test is retries multiple times, each retry attempt is given a sequential number.
    *
-   * Learn more about [test retries](https://playwright.dev/docs/test-retries).
+   * Learn more about [test retries](https://playwright.dev/docs/test-retries#retries).
    */
   retry: number;
   /**

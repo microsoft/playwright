@@ -112,7 +112,7 @@ Complete set of Playwright Test options is available in the [configuration file]
 
 - `--reporter <reporter>`: Choose a reporter: minimalist `dot`, concise `line` or detailed `list`. See [reporters](./test-reporters.md) for more information.
 
-- `--retries <number>`: The maximum number of [retries](./test-retries.md) for flaky tests, defaults to zero (no retries).
+- `--retries <number>`: The maximum number of [retries](./test-retries.md#retries) for flaky tests, defaults to zero (no retries).
 
 - `--shard <shard>`: [Shard](./test-parallel.md#shard-tests-between-multiple-machines) tests and execute only selected shard, specified in the form `current/all`, 1-based, for example `3/5`.
 

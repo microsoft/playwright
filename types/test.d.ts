@@ -147,7 +147,7 @@ interface TestProject {
    */
   repeatEach?: number;
   /**
-   * The maximum number of retry attempts given to failed tests. Learn more about [test retries](https://playwright.dev/docs/test-retries).
+   * The maximum number of retry attempts given to failed tests. Learn more about [test retries](https://playwright.dev/docs/test-retries#retries).
    */
   retries?: number;
   /**
@@ -535,7 +535,7 @@ interface TestConfig {
    */
   repeatEach?: number;
   /**
-   * The maximum number of retry attempts given to failed tests. Learn more about [test retries](https://playwright.dev/docs/test-retries).
+   * The maximum number of retry attempts given to failed tests. Learn more about [test retries](https://playwright.dev/docs/test-retries#retries).
    */
   retries?: number;
   /**
@@ -1050,7 +1050,7 @@ export interface TestInfo {
   /**
    * Specifies the retry number when the test is retried after a failure. The first test run has
    * [testInfo.retry](https://playwright.dev/docs/api/class-testinfo#test-info-retry) equal to zero, the first retry has it
-   * equal to one, and so on. Learn more about [retries](https://playwright.dev/docs/test-retries).
+   * equal to one, and so on. Learn more about [retries](https://playwright.dev/docs/test-retries#retries).
    */
   retry: number;
   /**
