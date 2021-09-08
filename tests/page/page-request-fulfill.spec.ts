@@ -221,6 +221,6 @@ it('should fulfill with fetch result and overrides', async ({page, server}) => {
   });
   const response = await page.goto(server.EMPTY_PAGE);
   expect(response.status()).toBe(201);
-  expect(response.headers()['foo']).toEqual('bar');
+  expect((await response.allHeaders()).foo).toEqual('bar');
   expect(await response.json()).toEqual({'foo': 'bar'});
 });
