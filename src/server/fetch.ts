@@ -22,7 +22,7 @@ import * as https from 'https';
 import { BrowserContext } from './browserContext';
 import * as types from './types';
 import { pipeline, Readable, Transform } from 'stream';
-import { monotonicTime } from '../utils/utils';
+import { allowSelfSignedCertificatesInNode, monotonicTime } from '../utils/utils';
 
 export async function playwrightFetch(context: BrowserContext, params: types.FetchOptions): Promise<{fetchResponse?: Omit<types.FetchResponse, 'body'> & { fetchUid: string }, error?: string}> {
   try {
@@ -107,6 +107,8 @@ async function sendRequest(context: BrowserContext, url: URL, options: http.Requ
   return new Promise<types.FetchResponse>((fulfill, reject) => {
     const requestConstructor: ((url: URL, options: http.RequestOptions, callback?: (res: http.IncomingMessage) => void) => http.ClientRequest)
       = (url.protocol === 'https:' ? https : http).request;
+    if (url.protocol === 'https:' && context._options.ignoreHTTPSErrors)
+      allowSelfSignedCertificatesInNode();
     const request = requestConstructor(url, options, async response => {
       if (response.headers['set-cookie'])
         await updateCookiesFromHeader(context, response.url || url.toString(), response.headers['set-cookie']);
