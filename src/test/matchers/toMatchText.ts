@@ -19,14 +19,6 @@ import {
   printReceivedStringContainExpectedSubstring
 } from 'expect/build/print';
 
-import {
-  EXPECTED_COLOR,
-  matcherErrorMessage,
-  matcherHint, MatcherHintOptions,
-  printExpected,
-  printWithType,
-  printDiffOrStringify,
-} from 'jest-matcher-utils';
 import { currentTestInfo } from '../globals';
 import type { Expect } from '../types';
 import { expectType, pollUntilDeadline } from '../util';
@@ -45,7 +37,7 @@ export async function toMatchText(
     throw new Error(`${matcherName} must be called during the test`);
   expectType(receiver, receiverType, matcherName);
 
-  const matcherOptions: MatcherHintOptions = {
+  const matcherOptions = {
     isNot: this.isNot,
     promise: this.promise,
   };
@@ -55,12 +47,12 @@ export async function toMatchText(
     !(expected && typeof expected.test === 'function')
   ) {
     throw new Error(
-        matcherErrorMessage(
-            matcherHint(matcherName, undefined, undefined, matcherOptions),
-            `${EXPECTED_COLOR(
+        this.utils.matcherErrorMessage(
+            this.utils.matcherHint(matcherName, undefined, undefined, matcherOptions),
+            `${this.utils.EXPECTED_COLOR(
                 'expected',
             )} value must be a string or regular expression`,
-            printWithType('Expected', expected, printExpected),
+            this.utils.printWithType('Expected', expected, this.utils.printExpected),
         ),
     );
   }
@@ -84,17 +76,17 @@ export async function toMatchText(
   const message = pass
     ? () =>
       typeof expected === 'string'
-        ? matcherHint(matcherName, undefined, undefined, matcherOptions) +
+        ? this.utils.matcherHint(matcherName, undefined, undefined, matcherOptions) +
         '\n\n' +
-        `Expected ${stringSubstring}: not ${printExpected(expected)}\n` +
+        `Expected ${stringSubstring}: not ${this.utils.printExpected(expected)}\n` +
         `Received string:        ${printReceivedStringContainExpectedSubstring(
             received,
             received.indexOf(expected),
             expected.length,
         )}`
-        : matcherHint(matcherName, undefined, undefined, matcherOptions) +
+        : this.utils.matcherHint(matcherName, undefined, undefined, matcherOptions) +
         '\n\n' +
-        `Expected pattern: not ${printExpected(expected)}\n` +
+        `Expected pattern: not ${this.utils.printExpected(expected)}\n` +
         `Received string:      ${printReceivedStringContainExpectedResult(
             received,
             typeof expected.exec === 'function'
@@ -107,9 +99,9 @@ export async function toMatchText(
       const labelReceived = 'Received string';
 
       return (
-        matcherHint(matcherName, undefined, undefined, matcherOptions) +
+        this.utils.matcherHint(matcherName, undefined, undefined, matcherOptions) +
         '\n\n' +
-        printDiffOrStringify(
+        this.utils.printDiffOrStringify(
             expected,
             received,
             labelExpected,
