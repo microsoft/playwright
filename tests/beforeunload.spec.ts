@@ -35,6 +35,14 @@ it('should close browsercontext with beforeunload page', async ({server, page, c
   await context.close();
 });
 
+it('should be able to navigate away from page with beforeunload', async ({server, page, context }) => {
+  await page.goto(server.PREFIX + '/beforeunload.html');
+  // We have to interact with a page so that 'beforeunload' handlers
+  // fire.
+  await page.click('body');
+  await page.goto(server.EMPTY_PAGE);
+});
+
 it('should close page with beforeunload listener', async ({context, server}) => {
   const newPage = await context.newPage();
   await newPage.goto(server.PREFIX + '/beforeunload.html');

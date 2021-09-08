@@ -114,8 +114,13 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this._channel.on('console', ({ message }) => this.emit(Events.Page.Console, ConsoleMessage.from(message)));
     this._channel.on('crash', () => this._onCrash());
     this._channel.on('dialog', ({ dialog }) => {
-      if (!this.emit(Events.Page.Dialog, Dialog.from(dialog)))
-        dialog.dismiss().catch(() => {});
+      const dialogObj = Dialog.from(dialog);
+      if (!this.emit(Events.Page.Dialog, dialogObj)) {
+        if (dialogObj.type() === 'beforeunload')
+          dialog.accept({}).catch(() => {});
+        else
+          dialog.dismiss().catch(() => {});
+      }
     });
     this._channel.on('domcontentloaded', () => this.emit(Events.Page.DOMContentLoaded, this));
     this._channel.on('download', ({ url, suggestedFilename, artifact }) => {
