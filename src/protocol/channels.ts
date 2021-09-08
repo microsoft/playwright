@@ -858,11 +858,13 @@ export type BrowserContextFetchParams = {
   method?: string,
   headers?: NameValue[],
   postData?: Binary,
+  timeout?: number,
 };
 export type BrowserContextFetchOptions = {
   method?: string,
   headers?: NameValue[],
   postData?: Binary,
+  timeout?: number,
 };
 export type BrowserContextFetchResult = {
   response?: FetchResponse,

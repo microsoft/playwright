@@ -22,6 +22,7 @@ import * as https from 'https';
 import { BrowserContext } from './browserContext';
 import * as types from './types';
 import { pipeline, Readable, Transform } from 'stream';
+import { monotonicTime } from '../utils/utils';
 
 export async function playwrightFetch(context: BrowserContext, params: types.FetchOptions): Promise<{fetchResponse?: types.FetchResponse, error?: string}> {
   try {
@@ -50,11 +51,16 @@ export async function playwrightFetch(context: BrowserContext, params: types.Fet
       agent = new HttpsProxyAgent(proxyOpts);
     }
 
+    const timeout = context._timeoutSettings.timeout(params);
+    const deadline = monotonicTime() + timeout;
+
     const fetchResponse = await sendRequest(context, new URL(params.url, context._options.baseURL), {
       method,
       headers,
       agent,
-      maxRedirects: 20
+      maxRedirects: 20,
+      timeout,
+      deadline
     }, params.postData);
     return { fetchResponse };
   } catch (e) {
@@ -95,7 +101,7 @@ async function updateRequestCookieHeader(context: BrowserContext, url: URL, opti
   }
 }
 
-async function sendRequest(context: BrowserContext, url: URL, options: http.RequestOptions & { maxRedirects: number }, postData?: Buffer): Promise<types.FetchResponse>{
+async function sendRequest(context: BrowserContext, url: URL, options: http.RequestOptions & { maxRedirects: number, deadline: number }, postData?: Buffer): Promise<types.FetchResponse>{
   await updateRequestCookieHeader(context, url, options);
   return new Promise<types.FetchResponse>((fulfill, reject) => {
     const requestConstructor: ((url: URL, options: http.RequestOptions, callback?: (res: http.IncomingMessage) => void) => http.ClientRequest)
@@ -125,11 +131,13 @@ async function sendRequest(context: BrowserContext, url: URL, options: http.Requ
           delete headers[`content-type`];
         }
 
-        const redirectOptions: http.RequestOptions & { maxRedirects: number } = {
+        const redirectOptions: http.RequestOptions & { maxRedirects: number, deadline: number } = {
           method,
           headers,
           agent: options.agent,
           maxRedirects: options.maxRedirects - 1,
+          timeout: options.timeout,
+          deadline: options.deadline
         };
 
         // HTTP-redirect fetch step 4: If locationURL is null, then return response.
@@ -189,6 +197,16 @@ async function sendRequest(context: BrowserContext, url: URL, options: http.Requ
       body.on('error',reject);
     });
     request.on('error', reject);
+    const rejectOnTimeout = () =>  {
+      reject(new Error(`Request timed out after ${options.timeout}ms`));
+      request.abort();
+    };
+    const remaining = options.deadline - monotonicTime();
+    if (remaining <= 0) {
+      rejectOnTimeout();
+      return;
+    }
+    request.setTimeout(remaining, rejectOnTimeout);
     if (postData)
       request.write(postData);
     request.end();
