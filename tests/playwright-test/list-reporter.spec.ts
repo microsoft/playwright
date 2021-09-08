@@ -82,3 +82,36 @@ test('render steps', async ({ runInlineTest }) => {
     '0 :      a.test.ts:6:7 › passes',
   ]);
 });
+
+test('should truncate long test names', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { projects: [
+        { name: 'foo' },
+      ] };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('fails long name', async ({}) => {
+        expect(1).toBe(0);
+      });
+      test('passes', async ({}) => {
+      });
+      test('passes 2 long name', async () => {
+      });
+      test.skip('skipped long name', async () => {
+      });
+    `,
+  }, { reporter: 'list', retries: 0 }, { PWTEST_TTY_WIDTH: 40, PWTEST_SKIP_TEST_OUTPUT: undefined });
+  const text = stripAscii(result.output);
+  const positiveStatusMarkPrefix = process.platform === 'win32' ? 'ok' : '✓ ';
+  const negativateStatusMarkPrefix = process.platform === 'win32' ? 'x ' : '✘ ';
+  expect(text).toContain(`${negativateStatusMarkPrefix} [foo] › a.test.ts:6:7 › fails long`);
+  expect(text).not.toContain(`${negativateStatusMarkPrefix} [foo] › a.test.ts:6:7 › fails long n`);
+  expect(text).toContain(`${positiveStatusMarkPrefix} [foo] › a.test.ts:9:7 › passes (`);
+  expect(text).toContain(`${positiveStatusMarkPrefix} [foo] › a.test.ts:11:7 › passes 2 l`);
+  expect(text).not.toContain(`${positiveStatusMarkPrefix} [foo] › a.test.ts:11:7 › passes 2 lo`);
+  expect(text).toContain(`-  [foo] › a.test.ts:13:12 › skipped l`);
+  expect(text).not.toContain(`-  [foo] › a.test.ts:13:12 › skipped lo`);
+  expect(result.exitCode).toBe(1);
+});
