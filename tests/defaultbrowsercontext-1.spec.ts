@@ -19,6 +19,8 @@ import { playwrightTest as it, expect } from './config/browserTest';
 import { verifyViewport } from './config/utils';
 import fs from 'fs';
 
+it.skip(({isDocker}) => isDocker);
+
 it('context.cookies() should work', async ({server, launchPersistent, browserName}) => {
   const {page} = await launchPersistent();
   await page.goto(server.EMPTY_PAGE);

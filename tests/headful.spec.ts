@@ -16,14 +16,16 @@
 
 import { playwrightTest as it, expect } from './config/browserTest';
 
-it('should have default url when launching browser', async ({browserType, browserOptions, createUserDataDir}) => {
+it('should have default url when launching browser', async ({browserType, browserOptions, createUserDataDir, isDocker}) => {
+  it.skip(isDocker);
   const browserContext = await browserType.launchPersistentContext(await createUserDataDir(), {...browserOptions, headless: false });
   const urls = browserContext.pages().map(page => page.url());
   expect(urls).toEqual(['about:blank']);
   await browserContext.close();
 });
 
-it('should close browser with beforeunload page', async ({browserType, browserOptions, server, createUserDataDir}) => {
+it('should close browser with beforeunload page', async ({browserType, browserOptions, server, createUserDataDir, isDocker}) => {
+  it.skip(isDocker);
   it.slow();
 
   const browserContext = await browserType.launchPersistentContext(await createUserDataDir(), {...browserOptions, headless: false});

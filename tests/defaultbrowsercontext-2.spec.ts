@@ -18,6 +18,8 @@
 import { playwrightTest as it, expect } from './config/browserTest';
 import fs from 'fs';
 
+it.skip(({isDocker}) => isDocker);
+
 it('should support hasTouch option', async ({server, launchPersistent}) => {
   const {page} = await launchPersistent({hasTouch: true});
   await page.goto(server.PREFIX + '/mobile.html');

@@ -89,7 +89,8 @@ it.describe('downloads path', () => {
     await downloadsBrowser.close();
   });
 
-  it('should accept downloads in persistent context', async ({launchPersistent, server}, testInfo)  => {
+  it('should accept downloads in persistent context', async ({launchPersistent, server, isDocker}, testInfo)  => {
+    it.skip(isDocker);
     const { context, page } = await launchPersistent({ acceptDownloads: true, downloadsPath: testInfo.outputPath('') });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [ download ] = await Promise.all([
