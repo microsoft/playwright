@@ -63,6 +63,7 @@ export abstract class BrowserContext extends SdkObject {
   private _origins = new Set<string>();
   readonly _harRecorder: HarRecorder | undefined;
   readonly tracing: Tracing;
+  readonly fetchResponses: Map<string, Buffer> = new Map();
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super(browser, 'browser-context');
@@ -380,6 +381,12 @@ export abstract class BrowserContext extends SdkObject {
     };
     this.on(BrowserContext.Events.Page, installInPage);
     return Promise.all(this.pages().map(installInPage));
+  }
+
+  storeFetchResponseBody(body: Buffer): string {
+    const uid = createGuid();
+    this.fetchResponses.set(uid, body);
+    return uid;
   }
 }
 

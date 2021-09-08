@@ -24,7 +24,7 @@ import * as types from './types';
 import { pipeline, Readable, Transform } from 'stream';
 import { monotonicTime } from '../utils/utils';
 
-export async function playwrightFetch(context: BrowserContext, params: types.FetchOptions): Promise<{fetchResponse?: types.FetchResponse, error?: string}> {
+export async function playwrightFetch(context: BrowserContext, params: types.FetchOptions): Promise<{fetchResponse?: Omit<types.FetchResponse, 'body'> & { fetchUid: string }, error?: string}> {
   try {
     const headers: { [name: string]: string } = {};
     if (params.headers) {
@@ -62,7 +62,8 @@ export async function playwrightFetch(context: BrowserContext, params: types.Fet
       timeout,
       deadline
     }, params.postData);
-    return { fetchResponse };
+    const fetchUid = context.storeFetchResponseBody(fetchResponse.body);
+    return { fetchResponse: { ...fetchResponse, fetchUid } };
   } catch (e) {
     return { error: String(e) };
   }

@@ -613,3 +613,22 @@ it('should respect timeout after redirects', async function({context, server}) {
   const error = await context._fetch(server.PREFIX + '/redirect').catch(e => e);
   expect(error.message).toContain(`Request timed out after 100ms`);
 });
+
+it('should dispose', async function({context, server}) {
+  // @ts-expect-error
+  const response = await context._fetch(server.PREFIX + '/simple.json');
+  expect(await response.json()).toEqual({ foo: 'bar' });
+  await response.dispose();
+  const error = await response.body().catch(e => e);
+  expect(error.message).toContain('Response has been disposed');
+});
+
+it('should dispose when context closes', async function({context, server}) {
+  // @ts-expect-error
+  const response = await context._fetch(server.PREFIX + '/simple.json');
+  expect(await response.json()).toEqual({ foo: 'bar' });
+  await context.close();
+  const error = await response.body().catch(e => e);
+  expect(error.message).toContain('Target page, context or browser has been closed');
+});
+
