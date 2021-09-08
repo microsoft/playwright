@@ -201,8 +201,7 @@ Returns the matching [Response] object, or `null` if the response was not receiv
   - `responseBodySize` <[int]> Size of the received response body (encoded) in bytes.
   - `responseHeadersSize` <[int]> Total number of bytes from the start of the HTTP response message until (and including) the double CRLF before the body.
 
-Returns resource size information for given request. Requires the response to be finished via [`method: Response.finished`]
-to ensure the info is available.
+Returns resource size information for given request.
 
 ## method: Request.timing
 - returns: <[Object]>

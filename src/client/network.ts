@@ -145,7 +145,7 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
         if (!response)
           return this._headers;
         return response._wrapApiCall(async (channel: channels.ResponseChannel) => {
-          return await (await channel.rawRequestHeaders()).headers;
+          return (await channel.rawRequestHeaders()).headers;
         });
       });
     }
