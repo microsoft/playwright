@@ -2191,6 +2191,7 @@ Route:
         body: string?
         isBase64: boolean?
         useInterceptedResponseBody: boolean?
+        fetchResponseUid: string?
 
     responseBody:
       returns:

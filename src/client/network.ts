@@ -310,15 +310,18 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
     });
   }
 
-  async fulfill(options: { response?: Response, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}) {
+  async fulfill(options: { response?: Response|FetchResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}) {
     return this._wrapApiCall(async (channel: channels.RouteChannel) => {
       let useInterceptedResponseBody;
+      let fetchResponseUid;
       let { status: statusOption, headers: headersOption, body: bodyOption } = options;
       if (options.response) {
         statusOption ||= options.response.status();
         headersOption ||= options.response.headers();
         if (options.body === undefined && options.path === undefined) {
-          if (options.response === this._interceptedResponse)
+          if (options.response instanceof FetchResponse)
+            fetchResponseUid = (options.response as FetchResponse)._fetchUid();
+          else if (options.response === this._interceptedResponse)
             useInterceptedResponseBody = true;
           else
             bodyOption = await options.response.body();
@@ -358,7 +361,8 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
         headers: headersObjectToArray(headers),
         body,
         isBase64,
-        useInterceptedResponseBody
+        useInterceptedResponseBody,
+        fetchResponseUid
       });
     });
   }
@@ -553,7 +557,7 @@ export class FetchResponse {
 
   async body(): Promise<Buffer> {
     return this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
-      const result = await channel.fetchResponseBody({ fetchUid: this._initializer.fetchUid });
+      const result = await channel.fetchResponseBody({ fetchUid: this._fetchUid() });
       if (!result.binary)
         throw new Error('Response has been disposed');
       return Buffer.from(result.binary!, 'base64');
@@ -572,8 +576,12 @@ export class FetchResponse {
 
   async dispose(): Promise<void> {
     return this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
-      await channel.disposeFetchResponse({ fetchUid: this._initializer.fetchUid });
+      await channel.disposeFetchResponse({ fetchUid: this._fetchUid() });
     });
+  }
+
+  _fetchUid(): string {
+    return this._initializer.fetchUid;
   }
 }
 

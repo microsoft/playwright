@@ -193,3 +193,34 @@ it('should include the origin header', async ({page, server, isAndroid}) => {
   expect(text).toBe('done');
   expect(interceptedRequest.headers()['origin']).toEqual(server.PREFIX);
 });
+
+it('should fulfill with fetch result', async ({page, server}) => {
+  await page.route('**/*', async route => {
+    // @ts-expect-error
+    const response = await page._fetch(server.PREFIX + '/simple.json');
+    // @ts-expect-error
+    route.fulfill({ response });
+  });
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(response.status()).toBe(200);
+  expect(await response.json()).toEqual({'foo': 'bar'});
+});
+
+it('should fulfill with fetch result and overrides', async ({page, server}) => {
+  await page.route('**/*', async route => {
+    // @ts-expect-error
+    const response = await page._fetch(server.PREFIX + '/simple.json');
+    route.fulfill({
+      // @ts-expect-error
+      response,
+      status: 201,
+      headers: {
+        'foo': 'bar'
+      }
+    });
+  });
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(response.status()).toBe(201);
+  expect(response.headers()['foo']).toEqual('bar');
+  expect(await response.json()).toEqual({'foo': 'bar'});
+});

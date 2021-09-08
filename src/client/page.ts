@@ -19,6 +19,7 @@ import { Events } from './events';
 import { assert } from '../utils/utils';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import * as channels from '../protocol/channels';
+import * as network from './network';
 import { parseError, serializeError } from '../protocol/serializers';
 import { Accessibility } from './accessibility';
 import { BrowserContext } from './browserContext';
@@ -435,6 +436,10 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   async evaluate<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 2);
     return this._mainFrame.evaluate(pageFunction, arg);
+  }
+
+  async _fetch(url: string, options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer, timeout?: number } = {}): Promise<network.FetchResponse> {
+    return await this._browserContext._fetch(url, options);
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
