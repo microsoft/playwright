@@ -438,8 +438,10 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     return this._mainFrame.evaluate(pageFunction, arg);
   }
 
-  async _fetch(url: string, options: FetchOptions = {}): Promise<network.FetchResponse> {
-    return await this._browserContext._fetch(url, options);
+  async _fetch(request: network.Request, options?: { timeout?: number }): Promise<network.FetchResponse>;
+  async _fetch(url: string, options?: FetchOptions): Promise<network.FetchResponse>;
+  async _fetch(urlOrRequest: string|network.Request, options: FetchOptions = {}): Promise<network.FetchResponse> {
+    return await this._browserContext._fetch(urlOrRequest as any, options);
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {

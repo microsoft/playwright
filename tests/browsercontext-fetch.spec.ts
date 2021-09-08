@@ -632,3 +632,9 @@ it('should dispose when context closes', async function({context, server}) {
   expect(error.message).toContain('Target page, context or browser has been closed');
 });
 
+it('should throw on invalid first argument', async function({context, server}) {
+  // @ts-expect-error
+  const error = await context._fetch({}).catch(e => e);
+  expect(error.message).toContain('First argument must be either URL string or Request');
+});
+
