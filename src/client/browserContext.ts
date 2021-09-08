@@ -228,7 +228,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
       });
       if (result.error)
         throw new Error(`Request failed: ${result.error}`);
-      return new network.FetchResponse(result.response!);
+      return new network.FetchResponse(this, result.response!);
     });
   }
 

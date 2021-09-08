@@ -29,6 +29,7 @@ import { Waiter } from './waiter';
 import * as api from '../../types/types';
 import { URLMatch } from '../common/types';
 import { urlMatches } from './clientHelper';
+import { BrowserContext } from './browserContext';
 
 export type NetworkCookie = {
   name: string,
@@ -522,12 +523,12 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
 export class FetchResponse {
   private readonly _initializer: channels.FetchResponse;
   private readonly _headers: Headers;
-  private readonly _body: Buffer;
+  private readonly _context: BrowserContext;
 
-  constructor(initializer: channels.FetchResponse) {
+  constructor(context: BrowserContext, initializer: channels.FetchResponse) {
+    this._context = context;
     this._initializer = initializer;
     this._headers = headersArrayToObject(this._initializer.headers, true /* lowerCase */);
-    this._body = Buffer.from(initializer.body, 'base64');
   }
 
   ok(): boolean {
@@ -551,7 +552,12 @@ export class FetchResponse {
   }
 
   async body(): Promise<Buffer> {
-    return this._body;
+    return this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
+      const result = await channel.fetchResponseBody({ fetchUid: this._initializer.fetchUid });
+      if (!result.binary)
+        throw new Error('Response has been disposed');
+      return Buffer.from(result.binary!, 'base64');
+    });
   }
 
   async text(): Promise<string> {
@@ -562,6 +568,12 @@ export class FetchResponse {
   async json(): Promise<object> {
     const content = await this.text();
     return JSON.parse(content);
+  }
+
+  async dispose(): Promise<void> {
+    return this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
+      await channel.disposeFetchResponse({ fetchUid: this._initializer.fetchUid });
+    });
   }
 }
 
