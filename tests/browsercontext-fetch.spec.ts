@@ -282,6 +282,26 @@ it('should work with context level proxy', async ({browserOptions, browserType, 
   }
 });
 
+it('should pass proxy credentials', async ({browserType, browserOptions, server, proxyServer}) => {
+  proxyServer.forwardTo(server.PORT);
+  let auth;
+  proxyServer.setAuthHandler(req => {
+    auth = req.headers['proxy-authorization'];
+    return !!auth;
+  });
+  const browser = await browserType.launch({
+    ...browserOptions,
+    proxy: { server: `localhost:${proxyServer.PORT}`, username: 'user', password: 'secret' }
+  });
+  const context = await browser.newContext();
+  // @ts-expect-error
+  const response = await context._fetch('http://non-existent.com/simple.json');
+  expect(proxyServer.connectHosts).toContain('non-existent.com:80');
+  expect(auth).toBe('Basic ' + Buffer.from('user:secret').toString('base64'));
+  expect(await response.json()).toEqual({foo: 'bar'});
+  await browser.close();
+});
+
 it('should work with http credentials', async ({context, server}) => {
   server.setAuth('/empty.html', 'user', 'pass');
 

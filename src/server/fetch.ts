@@ -40,12 +40,13 @@ export async function playwrightFetch(context: BrowserContext, params: types.Fet
     }
 
     const method = params.method?.toUpperCase() || 'GET';
+    const proxy = context._options.proxy || context._browser.options.proxy;
     let agent;
-    if (context._options.proxy) {
+    if (proxy) {
       // TODO: support bypass proxy
-      const proxyOpts = url.parse(context._options.proxy.server);
-      if (context._options.proxy.username)
-        proxyOpts.auth = `${context._options.proxy.username}:${context._options.proxy.password || ''}`;
+      const proxyOpts = url.parse(proxy.server);
+      if (proxy.username)
+        proxyOpts.auth = `${proxy.username}:${proxy.password || ''}`;
       agent = new HttpsProxyAgent(proxyOpts);
     }
 
