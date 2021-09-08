@@ -16,7 +16,7 @@
 
 import { playwrightTest as it, expect } from '../config/browserTest';
 
-it.only('should pass firefox user preferences', async ({browserType, browserOptions, browserName, isDocker}) => {
+it('should pass firefox user preferences', async ({browserType, browserOptions, browserName, isDocker}) => {
   it.skip(isDocker);
   const browser = await browserType.launch({
     ...browserOptions,
