@@ -196,13 +196,16 @@ async function sendRequest(context: BrowserContext, url: URL, options: http.Requ
       body.on('error',reject);
     });
     request.on('error', reject);
-    let remaining = options.deadline - monotonicTime();
-    if (remaining < 0)
-      remaining = 0;
-    request.setTimeout(remaining, () =>  {
+    const rejectOnTimeout = () =>  {
       reject(new Error(`Request timed out after ${options.timeout}ms`));
       request.abort();
-    });
+    };
+    const remaining = options.deadline - monotonicTime();
+    if (remaining <= 0) {
+      rejectOnTimeout();
+      return;
+    }
+    request.setTimeout(remaining, rejectOnTimeout);
     if (postData)
       request.write(postData);
     request.end();
