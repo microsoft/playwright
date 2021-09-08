@@ -1632,10 +1632,10 @@ index 274b01596d490fb81b48cf89bf668e0634e8b423..d08a9ddd745c748767ba8055907daa7b
              "name": "getPreview",
 diff --git a/Source/JavaScriptCore/inspector/protocol/Screencast.json b/Source/JavaScriptCore/inspector/protocol/Screencast.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..f6c541d63c0b8251874eaf8818aabe0e0449401d
+index 0000000000000000000000000000000000000000..73a4e53ced3acc41316bb8d4c787306d3f28a27e
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Screencast.json
-@@ -0,0 +1,65 @@
+@@ -0,0 +1,64 @@
 +{
 +    "domain": "Screencast",
 +    "availability": ["web"],
@@ -1654,8 +1654,7 @@ index 0000000000000000000000000000000000000000..f6c541d63c0b8251874eaf8818aabe0e
 +                { "name": "file", "type": "string", "description": "Output file location." },
 +                { "name": "width", "type": "integer" },
 +                { "name": "height", "type": "integer" },
-+                { "name": "toolbarHeight", "type": "integer" },
-+                { "name": "scale", "type": "number", "optional": true }
++                { "name": "toolbarHeight", "type": "integer" }
 +            ],
 +            "returns": [
 +                { "name": "screencastId", "$ref": "ScreencastId", "description": "Unique identifier of the screencast." }
@@ -13291,10 +13290,10 @@ index 0000000000000000000000000000000000000000..4ec8b96bbbddf8a7b042f53a8068754a
 +cairo_status_t cairo_image_surface_write_to_jpeg_mem(cairo_surface_t *sfc, unsigned char **data, size_t *len, int quality);
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..20122bd89c3ba0ec4ff878ac895bddd497cc9789
+index 0000000000000000000000000000000000000000..d21fcb26de43987507c90de9a3a68ea84979aacb
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
-@@ -0,0 +1,269 @@
+@@ -0,0 +1,272 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -13384,8 +13383,14 @@ index 0000000000000000000000000000000000000000..20122bd89c3ba0ec4ff878ac895bddd4
 +#if USE(CAIRO)
 +void InspectorScreencastAgent::didPaint(cairo_surface_t* surface)
 +{
-+    if (m_encoder)
-+        m_encoder->encodeFrame(surface, m_page.drawingArea()->size());
++    if (m_encoder) {
++        auto drawingAreaSize = m_page.drawingArea()->size();
++#if PLATFORM(WPE)
++        double dsf = m_page.deviceScaleFactor();
++        drawingAreaSize.scale(dsf);
++#endif
++        m_encoder->encodeFrame(surface, drawingAreaSize);
++    }
 +    if (m_screencast) {
 +        if (m_screencastFramesInFlight > kMaxFramesInFlight)
 +            return;
@@ -13415,7 +13420,7 @@ index 0000000000000000000000000000000000000000..20122bd89c3ba0ec4ff878ac895bddd4
 +}
 +#endif
 +
-+Inspector::Protocol::ErrorStringOr<String /* screencastID */> InspectorScreencastAgent::startVideo(const String& file, int width, int height, int toolbarHeight, std::optional<double>&& scale)
++Inspector::Protocol::ErrorStringOr<String /* screencastID */> InspectorScreencastAgent::startVideo(const String& file, int width, int height, int toolbarHeight)
 +{
 +    if (m_encoder)
 +        return makeUnexpected("Already recording"_s);
@@ -13423,11 +13428,8 @@ index 0000000000000000000000000000000000000000..20122bd89c3ba0ec4ff878ac895bddd4
 +    if (width < 10 || width > 10000 || height < 10 || height > 10000)
 +        return makeUnexpected("Invalid size"_s);
 +
-+    if (scale && (*scale <= 0 || *scale > 1))
-+        return makeUnexpected("Unsupported scale"_s);
-+
 +    String errorString;
-+    m_encoder = ScreencastEncoder::create(errorString, file, WebCore::IntSize(width, height), WTFMove(scale));
++    m_encoder = ScreencastEncoder::create(errorString, file, WebCore::IntSize(width, height));
 +    if (!m_encoder)
 +        return makeUnexpected(errorString);
 +
@@ -13566,7 +13568,7 @@ index 0000000000000000000000000000000000000000..20122bd89c3ba0ec4ff878ac895bddd4
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..8f2795dbf1323dd8d5f986f18e6fe16431dd7f70
+index 0000000000000000000000000000000000000000..06e0a3098669ab015c979f4fe8ca37a59c3e3ba6
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
 @@ -0,0 +1,96 @@
@@ -13635,7 +13637,7 @@ index 0000000000000000000000000000000000000000..8f2795dbf1323dd8d5f986f18e6fe164
 +    void didPaint(cairo_surface_t*);
 +#endif
 +
-+    Inspector::Protocol::ErrorStringOr<String /* screencastID */> startVideo(const String& file, int width, int height, int toolbarHeight, std::optional<double>&& scale) override;
++    Inspector::Protocol::ErrorStringOr<String /* screencastID */> startVideo(const String& file, int width, int height, int toolbarHeight) override;
 +    void stopVideo(Ref<StopVideoCallback>&&) override;
 +
 +    Inspector::Protocol::ErrorStringOr<int /* generation */> startScreencast(int width, int height, int toolbarHeight, int quality) override;
@@ -13668,10 +13670,10 @@ index 0000000000000000000000000000000000000000..8f2795dbf1323dd8d5f986f18e6fe164
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..62f20814b72e90275eb4fa0e8302fc15abdaaab2
+index 0000000000000000000000000000000000000000..738f7774e05bdccb50d1c332cc42b5c4085c56af
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
-@@ -0,0 +1,393 @@
+@@ -0,0 +1,387 @@
 +/*
 + * Copyright (c) 2010, The WebM Project authors. All rights reserved.
 + * Copyright (c) 2013 The Chromium Authors. All rights reserved.
@@ -13794,9 +13796,8 @@ index 0000000000000000000000000000000000000000..62f20814b72e90275eb4fa0e8302fc15
 +        : m_surface(WTFMove(surface))
 +    { }
 +#elif PLATFORM(MAC)
-+    VPXFrame(RetainPtr<CGImageRef> windowImage, std::optional<double> scale, int offsetTop)
++    VPXFrame(RetainPtr<CGImageRef> windowImage, int offsetTop)
 +        : m_windowImage(WTFMove(windowImage))
-+        , m_scale(scale)
 +        , m_offsetTop(offsetTop)
 +    { }
 +#endif
@@ -13814,7 +13815,7 @@ index 0000000000000000000000000000000000000000..62f20814b72e90275eb4fa0e8302fc15
 +        int argb_stride = image->w * 4;
 +        UniqueArray<uint8_t> buffer = makeUniqueArray<uint8_t>(argb_stride * image->h);
 +        uint8_t* argb_data = buffer.get();
-+        ScreencastEncoder::imageToARGB(m_windowImage.get(), argb_data, image->w, image->h, m_scale, m_offsetTop);
++        ScreencastEncoder::imageToARGB(m_windowImage.get(), argb_data, image->w, image->h, m_offsetTop);
 +#endif
 +        const int y_stride = image->stride[0];
 +        ASSERT(image->stride[1] == image->stride[2]);
@@ -13836,7 +13837,6 @@ index 0000000000000000000000000000000000000000..62f20814b72e90275eb4fa0e8302fc15
 +    RefPtr<cairo_surface_t> m_surface;
 +#elif PLATFORM(MAC)
 +    RetainPtr<CGImageRef> m_windowImage;
-+    std::optional<double> m_scale;
 +    int m_offsetTop { 0 };
 +#endif
 +    Seconds m_duration;
@@ -13929,10 +13929,9 @@ index 0000000000000000000000000000000000000000..62f20814b72e90275eb4fa0e8302fc15
 +    std::unique_ptr<vpx_image_t> m_image;
 +};
 +
-+ScreencastEncoder::ScreencastEncoder(std::unique_ptr<VPXCodec>&& vpxCodec, IntSize size, std::optional<double> scale)
++ScreencastEncoder::ScreencastEncoder(std::unique_ptr<VPXCodec>&& vpxCodec, IntSize size)
 +    : m_vpxCodec(WTFMove(vpxCodec))
 +    , m_size(size)
-+    , m_scale(scale)
 +{
 +    ASSERT(!size.isZero());
 +}
@@ -13941,7 +13940,7 @@ index 0000000000000000000000000000000000000000..62f20814b72e90275eb4fa0e8302fc15
 +{
 +}
 +
-+RefPtr<ScreencastEncoder> ScreencastEncoder::create(String& errorString, const String& filePath, IntSize size, std::optional<double> scale)
++RefPtr<ScreencastEncoder> ScreencastEncoder::create(String& errorString, const String& filePath, IntSize size)
 +{
 +    vpx_codec_iface_t* codec_interface = vpx_codec_vp8_cx();
 +    if (!codec_interface) {
@@ -13982,7 +13981,7 @@ index 0000000000000000000000000000000000000000..62f20814b72e90275eb4fa0e8302fc15
 +
 +    std::unique_ptr<VPXCodec> vpxCodec(new VPXCodec(codec, cfg, file));
 +    // fprintf(stderr, "ScreencastEncoder initialized with: %s\n", vpx_codec_iface_name(codec_interface));
-+    return adoptRef(new ScreencastEncoder(WTFMove(vpxCodec), size, scale));
++    return adoptRef(new ScreencastEncoder(WTFMove(vpxCodec), size));
 +}
 +
 +void ScreencastEncoder::flushLastFrame()
@@ -14019,10 +14018,7 @@ index 0000000000000000000000000000000000000000..62f20814b72e90275eb4fa0e8302fc15
 +
 +        // TODO: compare to libyuv scale functions?
 +        cairo_matrix_t transform;
-+        if (m_scale) {
-+            cairo_matrix_init_scale(&transform, *m_scale, *m_scale);
-+            cairo_transform(cr.get(), &transform);
-+        } else if (size.width() > m_size.width() || size.height() > m_size.height()) {
++        if (size.width() > m_size.width() || size.height() > m_size.height()) {
 +            // If no scale is specified shrink to fit the frame.
 +            double scale = std::min(static_cast<double>(m_size.width()) / size.width(),
 +                                    static_cast<double>(m_size.height()) / size.height());
@@ -14044,7 +14040,7 @@ index 0000000000000000000000000000000000000000..62f20814b72e90275eb4fa0e8302fc15
 +    // fprintf(stderr, "ScreencastEncoder::encodeFrame\n");
 +    flushLastFrame();
 +
-+    m_lastFrame = makeUnique<VPXFrame>(WTFMove(windowImage), m_scale, m_offsetTop);
++    m_lastFrame = makeUnique<VPXFrame>(WTFMove(windowImage), m_offsetTop);
 +}
 +#endif
 +
@@ -14067,10 +14063,10 @@ index 0000000000000000000000000000000000000000..62f20814b72e90275eb4fa0e8302fc15
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..1683da93db6b9088c3a472472c1b71477b47a7fd
+index 0000000000000000000000000000000000000000..36df6131950ca95f74dc191628376fc589dbcb33
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h
-@@ -0,0 +1,81 @@
+@@ -0,0 +1,80 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -14119,10 +14115,10 @@ index 0000000000000000000000000000000000000000..1683da93db6b9088c3a472472c1b7147
 +public:
 +    static constexpr int fps = 25;
 +
-+    static RefPtr<ScreencastEncoder> create(String& errorString, const String& filePath, WebCore::IntSize, std::optional<double> scale);
++    static RefPtr<ScreencastEncoder> create(String& errorString, const String& filePath, WebCore::IntSize);
 +
 +    class VPXCodec;
-+    ScreencastEncoder(std::unique_ptr<VPXCodec>&&, WebCore::IntSize, std::optional<double> scale);
++    ScreencastEncoder(std::unique_ptr<VPXCodec>&&, WebCore::IntSize);
 +    ~ScreencastEncoder();
 +
 +#if USE(CAIRO)
@@ -14137,12 +14133,11 @@ index 0000000000000000000000000000000000000000..1683da93db6b9088c3a472472c1b7147
 +private:
 +    void flushLastFrame();
 +#if PLATFORM(MAC)
-+    static void imageToARGB(CGImageRef, uint8_t* rgba_data, int width, int height, std::optional<double> scale, int offsetTop);
++    static void imageToARGB(CGImageRef, uint8_t* rgba_data, int width, int height, int offsetTop);
 +#endif
 +
 +    std::unique_ptr<VPXCodec> m_vpxCodec;
 +    const WebCore::IntSize m_size;
-+    std::optional<double> m_scale;
 +    MonotonicTime m_lastFrameTimestamp;
 +    class VPXFrame;
 +    std::unique_ptr<VPXFrame> m_lastFrame;
@@ -14859,10 +14854,10 @@ index 8c1339345d451874502b271f6aa2eca3fa0d3faf..1f8f5e74c86b61c1c5a16ac33d48afdd
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/mac/ScreencastEncoderMac.mm b/Source/WebKit/UIProcess/Inspector/mac/ScreencastEncoderMac.mm
 new file mode 100644
-index 0000000000000000000000000000000000000000..66d1c743de1cb35e29d6fc9b69379d265a59961f
+index 0000000000000000000000000000000000000000..09685defdfaf5abea8404fc3feb22ac3008073df
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/mac/ScreencastEncoderMac.mm
-@@ -0,0 +1,58 @@
+@@ -0,0 +1,56 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -14897,7 +14892,7 @@ index 0000000000000000000000000000000000000000..66d1c743de1cb35e29d6fc9b69379d26
 +
 +namespace WebKit {
 +
-+void ScreencastEncoder::imageToARGB(CGImageRef image, uint8_t* argb_data, int width, int height, std::optional<double> scale, int offsetTop)
++void ScreencastEncoder::imageToARGB(CGImageRef image, uint8_t* argb_data, int width, int height, int offsetTop)
 +{
 +    size_t bitsPerComponent = 8;
 +    size_t bytesPerPixel = 4;
@@ -14909,9 +14904,7 @@ index 0000000000000000000000000000000000000000..66d1c743de1cb35e29d6fc9b69379d26
 +    // TODO: exclude controls from original screenshot
 +    double pageHeight = imageHeight - offsetTop;
 +    double ratio = 1;
-+    if (scale) {
-+        ratio = *scale;
-+    } else if (imageWidth > width || pageHeight > height) {
++    if (imageWidth > width || pageHeight > height) {
 +        ratio = std::min(width / imageWidth, height / pageHeight);
 +    }
 +    imageWidth *= ratio;
