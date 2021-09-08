@@ -145,14 +145,6 @@ Defaults to `'visible'`. Can be either:
 * `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or `visibility:hidden`.
   This is opposite to the `'visible'` option.
 
-## wait-for-selector-state-hidden
-- `state` <[WaitForSelectorStateHidden]<"detached"|"hidden">>
-
-Defaults to `'hidden'`. Can be either:
-* `'detached'` - wait for element to not be present in DOM.
-* `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or `visibility:hidden`.
-  This is opposite to the `'visible'` option.
-
 ## js-python-wait-for-function-polling
 * langs: js, python
 - `polling` <[float]|"raf">
