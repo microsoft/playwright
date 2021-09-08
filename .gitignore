@@ -1,4 +1,4 @@
-/node_modules/
+node_modules/
 /test-results/
 /tests/coverage-report
 .local-browsers/
@@ -17,3 +17,4 @@ drivers/
 nohup.out
 .trace
 .tmp
+allure*
