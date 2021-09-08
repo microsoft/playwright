@@ -216,7 +216,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     });
   }
 
-  async _fetch(url: string, options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer, timeout?: number } = {}): Promise<network.FetchResponse> {
+  async _fetch(url: string, options: FetchOptions = {}): Promise<network.FetchResponse> {
     return this._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
       const postDataBuffer = isString(options.postData) ? Buffer.from(options.postData, 'utf8') : options.postData;
       const result = await channel.fetch({
@@ -382,6 +382,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     await this._channel.recorderSupplementEnable(params);
   }
 }
+
+export type FetchOptions = { url?: string, method?: string, headers?: Headers, postData?: string | Buffer, timeout?: number };
 
 export async function prepareBrowserContextParams(options: BrowserContextOptions): Promise<channels.BrowserNewContextParams> {
   if (options.videoSize && !options.videosPath)
