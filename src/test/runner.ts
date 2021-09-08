@@ -32,9 +32,10 @@ import ListReporter from './reporters/list';
 import JSONReporter from './reporters/json';
 import JUnitReporter from './reporters/junit';
 import EmptyReporter from './reporters/empty';
+import RawReporter from './reporters/raw';
 import { ProjectImpl } from './project';
 import { Minimatch } from 'minimatch';
-import { Config, FullConfig } from './types';
+import { FullConfig } from './types';
 import { WebServer } from './webServer';
 import { raceAgainstDeadline } from '../utils/async';
 
@@ -59,12 +60,11 @@ export class Runner {
   private _reporter!: Reporter;
   private _didBegin = false;
 
-  constructor(defaultConfig: Config, configOverrides: Config) {
-    this._loader = new Loader(defaultConfig, configOverrides);
+  constructor(loader: Loader) {
+    this._loader = loader;
   }
 
   private async _createReporter(list: boolean) {
-    const reporters: Reporter[] = [];
     const defaultReporters: {[key in BuiltInReporter]: new(arg: any) => Reporter} = {
       dot: list ? ListModeReporter : DotReporter,
       line: list ? ListModeReporter : LineReporter,
@@ -73,6 +73,7 @@ export class Runner {
       junit: JUnitReporter,
       null: EmptyReporter,
     };
+    const reporters: Reporter[] = [ new RawReporter() ];
     for (const r of this._loader.fullConfig().reporter) {
       const [name, arg] = r;
       if (name in defaultReporters) {
@@ -83,14 +84,6 @@ export class Runner {
       }
     }
     return new Multiplexer(reporters);
-  }
-
-  loadConfigFile(file: string): Promise<Config> {
-    return this._loader.loadConfigFile(file);
-  }
-
-  loadEmptyConfig(rootDir: string) {
-    this._loader.loadEmptyConfig(rootDir);
   }
 
   async run(list: boolean, filePatternFilters: FilePatternFilter[], projectNames?: string[]): Promise<RunResultStatus> {
@@ -222,6 +215,7 @@ export class Runner {
       const rootSuite = new Suite('');
       for (const project of projects) {
         const projectSuite = new Suite(project.config.name);
+        projectSuite._projectConfig = project.config;
         rootSuite._addSuite(projectSuite);
         for (const file of files.get(project)!) {
           const fileSuite = fileSuites.get(file);
