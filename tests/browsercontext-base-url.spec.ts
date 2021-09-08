@@ -34,7 +34,7 @@ it('should construct a new URL when a baseURL in browser.newPage is passed to pa
   await page.close();
 });
 
-it.only('should construct a new URL when a baseURL in browserType.launchPersistentContext is passed to page.goto', async function({browserType, server, createUserDataDir, browserOptions, isDocker}) {
+it('should construct a new URL when a baseURL in browserType.launchPersistentContext is passed to page.goto', async function({browserType, server, createUserDataDir, browserOptions, isDocker}) {
   it.skip(isDocker);
   const userDataDir = await createUserDataDir();
   const context = await browserType.launchPersistentContext(userDataDir, {
