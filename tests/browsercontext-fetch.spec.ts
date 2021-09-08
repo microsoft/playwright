@@ -193,6 +193,16 @@ it('should add cookies from Set-Cookie header', async ({context, page, server}) 
   expect((await page.evaluate(() => document.cookie)).split(';').map(s => s.trim()).sort()).toEqual(['foo=bar', 'session=value']);
 });
 
+it('should not lose body while handling Set-Cookie header', async ({context, page, server}) => {
+  server.setRoute('/setcookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', ['session=value', 'foo=bar; max-age=3600']);
+    res.end('text content');
+  });
+  // @ts-expect-error
+  const response = await context._fetch(server.PREFIX + '/setcookie.html');
+  expect(await response.text()).toBe('text content');
+});
+
 it('should handle cookies on redirects', async ({context, server, browserName, isWindows}) => {
   server.setRoute('/redirect1', (req, res) => {
     res.setHeader('Set-Cookie', 'r1=v1;SameSite=Lax');
@@ -556,3 +566,30 @@ it('should throw informatibe error on corrupted deflate body', async function({c
   expect(error.message).toContain(`failed to decompress 'deflate' encoding`);
 });
 
+it('should support timeout option', async function({context, server}) {
+  server.setRoute('/slow', (req, res) => {
+    res.writeHead(200, {
+      'content-length': 4096,
+      'content-type': 'text/html',
+    });
+  });
+
+  // @ts-expect-error
+  const error = await context._fetch(server.PREFIX + '/slow', { timeout: 10 }).catch(e => e);
+  expect(error.message).toContain(`Request timed out after 10ms`);
+});
+
+it('should respect timeout after redirects', async function({context, server}) {
+  server.setRedirect('/redirect', '/slow');
+  server.setRoute('/slow', (req, res) => {
+    res.writeHead(200, {
+      'content-length': 4096,
+      'content-type': 'text/html',
+    });
+  });
+
+  context.setDefaultTimeout(100);
+  // @ts-expect-error
+  const error = await context._fetch(server.PREFIX + '/redirect').catch(e => e);
+  expect(error.message).toContain(`Request timed out after 100ms`);
+});

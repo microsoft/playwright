@@ -621,6 +621,7 @@ BrowserContext:
           type: array?
           items: NameValue
         postData: binary?
+        timeout: number?
       returns:
         response: FetchResponse?
         error: string?
