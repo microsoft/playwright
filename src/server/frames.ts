@@ -1299,8 +1299,8 @@ export class Frame extends SdkObject {
     this._networkIdleTimer = undefined;
   }
 
-  async extendInjectedScript(world: types.World, source: string, arg?: any): Promise<js.JSHandle> {
-    const context = await this._context(world);
+  async extendInjectedScript(source: string, arg?: any): Promise<js.JSHandle> {
+    const context = await this._context('main');
     const injectedScriptHandle = await context.injectedScript();
     return injectedScriptHandle.evaluateHandle((injectedScript, {source, arg}) => {
       return injectedScript.extend(source, arg);

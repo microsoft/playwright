@@ -268,14 +268,13 @@ export class Page extends SdkObject {
     this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
-  async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource, world: types.World = 'main') {
-    const identifier = PageBinding.identifier(name, world);
-    if (this._pageBindings.has(identifier))
+  async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource) {
+    if (this._pageBindings.has(name))
       throw new Error(`Function "${name}" has been already registered`);
-    if (this._browserContext._pageBindings.has(identifier))
+    if (this._browserContext._pageBindings.has(name))
       throw new Error(`Function "${name}" has been already registered in the browser context`);
-    const binding = new PageBinding(name, playwrightBinding, needsHandle, world);
-    this._pageBindings.set(identifier, binding);
+    const binding = new PageBinding(name, playwrightBinding, needsHandle);
+    this._pageBindings.set(name, binding);
     await this._delegate.exposeBinding(binding);
   }
 
@@ -490,9 +489,8 @@ export class Page extends SdkObject {
     return [...this._browserContext._pageBindings.values(), ...this._pageBindings.values()];
   }
 
-  getBinding(name: string, world: types.World) {
-    const identifier = PageBinding.identifier(name, world);
-    return this._pageBindings.get(identifier) || this._browserContext._pageBindings.get(identifier);
+  getBinding(name: string) {
+    return this._pageBindings.get(name) || this._browserContext._pageBindings.get(name);
   }
 
   setScreencastOptions(options: { width: number, height: number, quality: number } | null) {
@@ -549,25 +547,19 @@ export class PageBinding {
   readonly playwrightFunction: frames.FunctionWithSource;
   readonly source: string;
   readonly needsHandle: boolean;
-  readonly world: types.World;
 
-  constructor(name: string, playwrightFunction: frames.FunctionWithSource, needsHandle: boolean, world: types.World) {
+  constructor(name: string, playwrightFunction: frames.FunctionWithSource, needsHandle: boolean) {
     this.name = name;
     this.playwrightFunction = playwrightFunction;
     this.source = `(${addPageBinding.toString()})(${JSON.stringify(name)}, ${needsHandle})`;
     this.needsHandle = needsHandle;
-    this.world = world;
-  }
-
-  static identifier(name: string, world: types.World) {
-    return world + ':' + name;
   }
 
   static async dispatch(page: Page, payload: string, context: dom.FrameExecutionContext) {
     const {name, seq, args} = JSON.parse(payload);
     try {
       assert(context.world);
-      const binding = page.getBinding(name, context.world)!;
+      const binding = page.getBinding(name)!;
       let result: any;
       if (binding.needsHandle) {
         const handle = await context.evaluateHandle(takeHandle, { name, seq }).catch(e => null);
