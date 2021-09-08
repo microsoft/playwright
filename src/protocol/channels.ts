@@ -2680,6 +2680,7 @@ export type RouteFulfillParams = {
   body?: string,
   isBase64?: boolean,
   useInterceptedResponseBody?: boolean,
+  fetchResponseUid?: string,
 };
 export type RouteFulfillOptions = {
   status?: number,
@@ -2687,6 +2688,7 @@ export type RouteFulfillOptions = {
   body?: string,
   isBase64?: boolean,
   useInterceptedResponseBody?: boolean,
+  fetchResponseUid?: string,
 };
 export type RouteFulfillResult = void;
 export type RouteResponseBodyParams = {};
