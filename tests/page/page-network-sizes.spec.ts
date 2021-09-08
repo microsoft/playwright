@@ -26,7 +26,6 @@ it('should set bodySize and headersSize', async ({ page, server }) => {
     page.waitForEvent('request'),
     page.evaluate(() => fetch('./get', { method: 'POST', body: '12345' }).then(r => r.text())),
   ]);
-  await (await request.response()).finished();
   const sizes = await request.sizes();
   expect(sizes.requestBodySize).toBe(5);
   expect(sizes.requestHeadersSize).toBeGreaterThanOrEqual(250);

@@ -13141,8 +13141,7 @@ export interface Request {
   response(): Promise<null|Response>;
 
   /**
-   * Returns resource size information for given request. Requires the response to be finished via
-   * [response.finished()](https://playwright.dev/docs/api/class-response#response-finished) to ensure the info is available.
+   * Returns resource size information for given request.
    */
   sizes(): Promise<{
     /**
