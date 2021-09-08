@@ -16,7 +16,6 @@
  */
 
 import { test as it, expect } from './pageTest';
-import { attachFrame } from '../config/utils';
 import type { ElementHandle } from '../../index';
 
 it('exposeBinding should work', async ({page}) => {
@@ -236,37 +235,6 @@ it('should not result in unhandled rejection', async ({page, isAndroid}) => {
   await closedPromise;
   // Make a round-trip to be sure we did not throw immediately after closing.
   expect(await page.evaluate('1 + 1').catch(e => e)).toBeInstanceOf(Error);
-});
-
-it('should work with internal bindings', async ({page, toImpl, server, mode, browserName, isElectron, isAndroid}) => {
-  it.skip(mode !== 'default');
-  it.skip(browserName !== 'chromium');
-  it.skip(isAndroid);
-  it.skip(isElectron);
-
-  const implPage: import('../../src/server/page').Page = toImpl(page);
-  let foo;
-  await implPage.exposeBinding('foo', false, ({}, arg) => {
-    foo = arg;
-  }, 'utility');
-  expect(await page.evaluate('!!window.foo')).toBe(false);
-  expect(await implPage.mainFrame().evaluateExpression('!!window.foo', false, {}, 'utility')).toBe(true);
-  expect(foo).toBe(undefined);
-  await implPage.mainFrame().evaluateExpression('window.foo(123)', false, {}, 'utility');
-  expect(foo).toBe(123);
-
-  // should work after reload
-  await page.goto(server.EMPTY_PAGE);
-  expect(await page.evaluate('!!window.foo')).toBe(false);
-  await implPage.mainFrame().evaluateExpression('window.foo(456)', false, {}, 'utility');
-  expect(foo).toBe(456);
-
-  // should work inside frames
-  const frame = await attachFrame(page, 'myframe', server.CROSS_PROCESS_PREFIX + '/empty.html');
-  expect(await frame.evaluate('!!window.foo')).toBe(false);
-  const implFrame: import('../../src/server/frames').Frame = toImpl(frame);
-  await implFrame.evaluateExpression('window.foo(789)', false, {}, 'utility');
-  expect(foo).toBe(789);
 });
 
 it('exposeBinding(handle) should work with element handles', async ({ page}) => {

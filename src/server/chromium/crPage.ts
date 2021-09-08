@@ -172,7 +172,7 @@ export class CRPage implements PageDelegate {
 
   async exposeBinding(binding: PageBinding) {
     await this._forAllFrameSessions(frame => frame._initBinding(binding));
-    await Promise.all(this._page.frames().map(frame => frame.evaluateExpression(binding.source, false, {}, binding.world).catch(e => {})));
+    await Promise.all(this._page.frames().map(frame => frame.evaluateExpression(binding.source, false, {}).catch(e => {})));
   }
 
   async updateExtraHTTPHeaders(): Promise<void> {
@@ -474,7 +474,7 @@ class FrameSession {
             worldName: UTILITY_WORLD_NAME,
           });
           for (const binding of this._crPage._browserContext._pageBindings.values())
-            frame.evaluateExpression(binding.source, false, undefined, binding.world).catch(e => {});
+            frame.evaluateExpression(binding.source, false, undefined).catch(e => {});
           for (const source of this._crPage._browserContext._evaluateOnNewDocumentSources)
             frame.evaluateExpression(source, false, undefined, 'main').catch(e => {});
         }
@@ -758,10 +758,9 @@ class FrameSession {
   }
 
   async _initBinding(binding: PageBinding) {
-    const worldName = binding.world === 'utility' ? UTILITY_WORLD_NAME : undefined;
     await Promise.all([
-      this._client.send('Runtime.addBinding', { name: binding.name, executionContextName: worldName }),
-      this._client.send('Page.addScriptToEvaluateOnNewDocument', { source: binding.source, worldName })
+      this._client.send('Runtime.addBinding', { name: binding.name }),
+      this._client.send('Page.addScriptToEvaluateOnNewDocument', { source: binding.source })
     ]);
   }
 

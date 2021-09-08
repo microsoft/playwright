@@ -104,7 +104,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       const binding = new BindingCallDispatcher(this._scope, params.name, !!params.needsHandle, source, args);
       this._dispatchEvent('bindingCall', { binding });
       return binding.promise();
-    }, 'main');
+    });
   }
 
   async fetch(params: channels.BrowserContextFetchParams): Promise<channels.BrowserContextFetchResult> {
