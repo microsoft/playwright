@@ -63,31 +63,41 @@ export class VideoRecorder {
     //   $ ./third_party/ffmpeg/ffmpeg-mac -h encoder=vp8
     // 3. A bit more about passing vp8 options to ffmpeg.
     //   https://trac.ffmpeg.org/wiki/Encode/VP8
+    // 4. Tuning for VP9:
+    //   https://developers.google.com/media/vp9/live-encoding
+    //
+    // How to stress-test video recording (runs 10 recorders in parallel to book all cpus available):
+    //   $ node ./utils/video_stress.js
     //
     // We use the following vp8 options:
     //   "-qmin 0 -qmax 50" - quality variation from 0 to 50.
     //     Suggested here: https://trac.ffmpeg.org/wiki/Encode/VP8
     //   "-crf 8" - constant quality mode, 4-63, lower means better quality.
-    //   "-deadline realtime" - do not use too much cpu to keep up with incoming frames.
+    //   "-deadline realtime -speed 8" - do not use too much cpu to keep up with incoming frames.
     //   "-b:v 1M" - video bitrate. Default value is too low for vp8
     //     Suggested here: https://trac.ffmpeg.org/wiki/Encode/VP8
+    //   Note that we can switch to "-qmin 20 -qmax 50 -crf 30" for smaller video size but worse quality.
     //
     // We use "pad" and "crop" video filters (-vf option) to resize incoming frames
     // that might be of the different size to the desired video size.
     //   https://ffmpeg.org/ffmpeg-filters.html#pad-1
     //   https://ffmpeg.org/ffmpeg-filters.html#crop
     //
-    // We use "image2pipe" mode to pipe frames and get a single video.
-    // "-f image2pipe -c:v mjpeg -i -" forces input to be read from standard input, and forces
-    // mjpeg input image format.
-    //   https://trac.ffmpeg.org/wiki/Slideshow
+    // We use "image2pipe" mode to pipe frames and get a single video - https://trac.ffmpeg.org/wiki/Slideshow
+    //   "-f image2pipe -c:v mjpeg -i -" forces input to be read from standard input, and forces
+    //     mjpeg input image format.
+    //   "-avioflags direct" reduces general buffering.
+    //   "-fpsprobesize 0 -probesize 32 -analyzeduration 0" reduces initial buffering
+    //     while analyzing input fps and other stats.
     //
     // "-y" means overwrite output.
     // "-an" means no audio.
+    // "-threads 1" means using one thread. This drastically reduces stalling when
+    //   cpu is overbooked. By default vp8 tries to use all available threads?
 
     const w = options.width;
     const h = options.height;
-    const args = `-loglevel error -f image2pipe -c:v mjpeg -i - -y -an -r ${fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -deadline realtime -b:v 1M -vf pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`.split(' ');
+    const args = `-loglevel error -f image2pipe -avioflags direct -fpsprobesize 0 -probesize 32 -analyzeduration 0 -c:v mjpeg -i - -y -an -r ${fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -deadline realtime -speed 8 -b:v 1M -threads 1 -vf pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`.split(' ');
     args.push(options.outputFile);
     const progress = this._progress;
 
