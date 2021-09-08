@@ -139,3 +139,14 @@ const { webkit } = require('playwright');
 * [Community showcase](https://playwright.dev/docs/showcase/)
 * [Contribution guide](CONTRIBUTING.md)
 * [Changelog](https://github.com/microsoft/playwright/releases)
+
+## Pre-release versions
+
+To use the latest unreleased version and associated binaries, use:
+
+```
+npm i -D playwright@next
+```
+
+For a complete list of versions, see the [npm releases page](https://www.npmjs.com/package/playwright)
+
