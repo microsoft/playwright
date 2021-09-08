@@ -224,3 +224,17 @@ it('should fulfill with fetch result and overrides', async ({page, server}) => {
   expect((await response.allHeaders()).foo).toEqual('bar');
   expect(await response.json()).toEqual({'foo': 'bar'});
 });
+
+it('should fetch original request and fulfill', async ({page, server}) => {
+  await page.route('**/*', async route => {
+    // @ts-expect-error
+    const response = await page._fetch(route.request());
+    route.fulfill({
+      // @ts-expect-error
+      response,
+    });
+  });
+  const response = await page.goto(server.PREFIX + '/title.html');
+  expect(response.status()).toBe(200);
+  expect(await page.title()).toEqual('Woof-Woof');
+});

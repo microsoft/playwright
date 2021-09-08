@@ -216,14 +216,23 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     });
   }
 
-  async _fetch(url: string, options: FetchOptions = {}): Promise<network.FetchResponse> {
+  async _fetch(request: network.Request, options?: FetchOptions & { timeout?: number }): Promise<network.FetchResponse>;
+  async _fetch(url: string, options?: FetchOptions): Promise<network.FetchResponse>;
+  async _fetch(urlOrRequest: string|network.Request, options: FetchOptions = {}): Promise<network.FetchResponse> {
     return this._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
-      const postDataBuffer = isString(options.postData) ? Buffer.from(options.postData, 'utf8') : options.postData;
+      const request: network.Request | undefined = (typeof urlOrRequest === 'object') ? urlOrRequest as network.Request : undefined;
+      const url = request ? request.url() : urlOrRequest as string;
+      const method = request?.method() || options.method;
+      // Cannot call allHeaders() here as the request may be paused inside route handler.
+      const headersObj = request?.headers() || options.headers;
+      const headers = headersObj ? headersObjectToArray(headersObj) : undefined;
+      const postDataBuffer = request?.postDataBuffer() || (isString(options.postData) ? Buffer.from(options.postData, 'utf8') : options.postData);
+      const postData = (postDataBuffer ? postDataBuffer.toString('base64') : undefined);
       const result = await channel.fetch({
         url,
-        method: options.method,
-        headers: options.headers ? headersObjectToArray(options.headers) : undefined,
-        postData: postDataBuffer ? postDataBuffer.toString('base64') : undefined,
+        method,
+        headers,
+        postData,
         timeout: options.timeout,
       });
       if (result.error)
