@@ -81,6 +81,12 @@ fi
 OBJ_FOLDER="obj-build-playwright"
 echo "mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/${OBJ_FOLDER}" >> .mozconfig
 echo "ac_add_options --disable-crashreporter" >> .mozconfig
+echo "ac_add_options --disable-backgroundtasks" >> .mozconfig
+
+if [[ "$(uname)" == MINGW* || "$(uname)" == "Darwin" ]]; then
+  # This options is only available on win and mac.
+  echo "ac_add_options --disable-update-agent" >> .mozconfig
+fi
 
 if [[ $1 != "--juggler" ]]; then
   # TODO: rustup is not in the PATH on Windows
