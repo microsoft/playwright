@@ -155,6 +155,8 @@ test('should work with screenshot: on', async ({ runInlineTest }, testInfo) => {
     'artifacts-two-contexts-failing',
     '  test-failed-1.png',
     '  test-failed-2.png',
+    'report',
+    '  project.report',
     'report.json',
   ]);
 });
@@ -182,6 +184,8 @@ test('should work with screenshot: only-on-failure', async ({ runInlineTest }, t
     'artifacts-two-contexts-failing',
     '  test-failed-1.png',
     '  test-failed-2.png',
+    'report',
+    '  project.report',
     'report.json',
   ]);
 });
@@ -220,6 +224,8 @@ test('should work with trace: on', async ({ runInlineTest }, testInfo) => {
     'artifacts-two-contexts-failing',
     '  trace-1.zip',
     '  trace.zip',
+    'report',
+    '  project.report',
     'report.json',
   ]);
 });
@@ -247,6 +253,8 @@ test('should work with trace: retain-on-failure', async ({ runInlineTest }, test
     'artifacts-two-contexts-failing',
     '  trace-1.zip',
     '  trace.zip',
+    'report',
+    '  project.report',
     'report.json',
   ]);
 });
@@ -274,6 +282,8 @@ test('should work with trace: on-first-retry', async ({ runInlineTest }, testInf
     'artifacts-two-contexts-failing-retry1',
     '  trace-1.zip',
     '  trace.zip',
+    'report',
+    '  project.report',
     'report.json',
   ]);
 });
@@ -314,6 +324,8 @@ test('should stop tracing with trace: on-first-retry, when not retrying', async 
   expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
     'a-shared-flaky-retry1',
     '  trace.zip',
+    'report',
+    '  project.report',
     'report.json',
   ]);
 });

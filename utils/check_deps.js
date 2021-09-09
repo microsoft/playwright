@@ -195,6 +195,7 @@ DEPS['src/test/'] = ['src/test/**', 'src/utils/utils.ts', 'src/utils/**'];
 
 // HTML report
 DEPS['src/web/htmlReport/'] = ['src/test/**', 'src/web/'];
+DEPS['src/web/htmlReport2/'] = ['src/test/**', 'src/web/'];
 
 
 checkDeps().catch(e => {

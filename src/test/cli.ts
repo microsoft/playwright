@@ -23,6 +23,8 @@ import type { Config } from './types';
 import { Runner, builtInReporters, BuiltInReporter } from './runner';
 import { stopProfiling, startProfiling } from './profiler';
 import { FilePatternFilter } from './util';
+import { Loader } from './loader';
+import { HtmlBuilder } from './html/htmlBuilder';
 
 const defaultTimeout = 30000;
 const defaultReporter: BuiltInReporter = process.env.CI ? 'dot' : 'list';
@@ -81,9 +83,31 @@ export function addTestCommand(program: commander.CommanderStatic) {
   });
 }
 
-async function runTests(args: string[], opts: { [key: string]: any }) {
-  await startProfiling();
+export function addGenerateHtmlCommand(program: commander.CommanderStatic) {
+  const command = program.command('generate-html');
+  command.description('Generate HTML report');
+  command.option('-c, --config <file>', `Configuration file, or a test directory with optional "${tsConfig}"/"${jsConfig}"`);
+  command.option('--output <dir>', `Folder for output artifacts (default: "playwright-report")`, 'playwright-report');
+  command.action(async opts => {
+    const loader = await createLoader(opts);
+    const outputFolders = new Set(loader.projects().map(p => p.config.outputDir));
+    const reportFiles = new Set<string>();
+    for (const outputFolder of outputFolders) {
+      const reportFolder = path.join(outputFolder, 'report');
+      const files = fs.readdirSync(reportFolder).filter(f => f.endsWith('.report'));
+      for (const file of files)
+        reportFiles.add(path.join(reportFolder, file));
+    }
+    new HtmlBuilder([...reportFiles], opts.output);
+  }).on('--help', () => {
+    console.log('');
+    console.log('Examples:');
+    console.log('');
+    console.log('  $ generate-report');
+  });
+}
 
+async function createLoader(opts: { [key: string]: any }): Promise<Loader> {
   if (opts.browser) {
     const browserOpt = opts.browser.toLowerCase();
     if (!['all', 'chromium', 'firefox', 'webkit'].includes(browserOpt))
@@ -100,13 +124,13 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   const overrides = overridesFromOptions(opts);
   if (opts.headed)
     overrides.use = { headless: false };
-  const runner = new Runner(defaultConfig, overrides);
+  const loader = new Loader(defaultConfig, overrides);
 
   async function loadConfig(configFile: string) {
     if (fs.existsSync(configFile)) {
       if (process.stdout.isTTY)
         console.log(`Using config at ` + configFile);
-      const loadedConfig = await runner.loadConfigFile(configFile);
+      const loadedConfig = await loader.loadConfigFile(configFile);
       if (('projects' in loadedConfig) && opts.browser)
         throw new Error(`Cannot use --browser option when configuration file defines projects. Specify browserName in the projects instead.`);
       return true;
@@ -131,7 +155,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
       // When passed a directory, look for a config file inside.
       if (!await loadConfigFromDirectory(configFile)) {
         // If there is no config, assume this as a root testing directory.
-        runner.loadEmptyConfig(configFile);
+        loader.loadEmptyConfig(configFile);
       }
     } else {
       // When passed a file, it must be a config file.
@@ -140,9 +164,15 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   } else if (!await loadConfigFromDirectory(process.cwd())) {
     // No --config option, let's look for the config file in the current directory.
     // If not, scan the world.
-    runner.loadEmptyConfig(process.cwd());
+    loader.loadEmptyConfig(process.cwd());
   }
+  return loader;
+}
 
+async function runTests(args: string[], opts: { [key: string]: any }) {
+  await startProfiling();
+
+  const loader = await createLoader(opts);
   const filePatternFilters: FilePatternFilter[] = args.map(arg => {
     const match = /^(.*):(\d+)$/.exec(arg);
     return {
@@ -150,6 +180,8 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
       line: match ? parseInt(match[2], 10) : null,
     };
   });
+
+  const runner = new Runner(loader);
   const result = await runner.run(!!opts.list, filePatternFilters, opts.project || undefined);
   await stopProfiling(undefined);
 
