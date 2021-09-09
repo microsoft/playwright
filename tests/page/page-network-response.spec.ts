@@ -111,7 +111,7 @@ it('should reject response.finished if page closes', async ({page, server}) => {
 });
 
 it('should reject response.finished if context closes', async ({page, server}) => {
-  // it.fixme();
+  it.fixme();
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/get', (req, res) => {
     // In Firefox, |fetch| will be hanging until it receives |Content-Type| header
