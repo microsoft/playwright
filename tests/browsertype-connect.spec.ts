@@ -20,6 +20,7 @@ import fs from 'fs';
 import * as path from 'path';
 import { getUserAgent } from '../lib/utils/utils';
 import WebSocket from 'ws';
+import { suppressCertificateWarning } from './config/utils';
 
 test.slow(true, 'All connect tests are slow');
 
@@ -30,6 +31,7 @@ test('should connect over wss', async ({browserType , startRemoteServer, httpsSe
   const oldValue = process.env['NODE_TLS_REJECT_UNAUTHORIZED'];
   // https://stackoverflow.com/a/21961005/552185
   process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
+  suppressCertificateWarning();
   try {
     httpsServer.onceWebSocketConnection((ws, request) => {
       const remote = new WebSocket(remoteServer.wsEndpoint(), [], {

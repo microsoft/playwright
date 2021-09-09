@@ -19,6 +19,7 @@ import zlib from 'zlib';
 import { pipeline } from 'stream';
 import { contextTest as it, expect } from './config/browserTest';
 import type { Response } from '..';
+import { suppressCertificateWarning } from './config/utils';
 
 it.skip(({ mode }) => mode !== 'default');
 
@@ -459,6 +460,7 @@ it('should support https', async ({context, httpsServer}) => {
   const oldValue = process.env['NODE_TLS_REJECT_UNAUTHORIZED'];
   // https://stackoverflow.com/a/21961005/552185
   process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
+  suppressCertificateWarning();
   try {
     // @ts-expect-error
     const response = await context._fetch(httpsServer.EMPTY_PAGE);
@@ -468,7 +470,14 @@ it('should support https', async ({context, httpsServer}) => {
   }
 });
 
-it('should resolve url relative to baseURL', async function({browser, server, contextFactory, contextOptions}) {
+it('should support ignoreHTTPSErrors', async ({contextFactory, contextOptions, httpsServer}) => {
+  const context = await contextFactory({ ...contextOptions, ignoreHTTPSErrors: true });
+  // @ts-expect-error
+  const response = await context._fetch(httpsServer.EMPTY_PAGE);
+  expect(response.status()).toBe(200);
+});
+
+it('should resolve url relative to baseURL', async function({server, contextFactory, contextOptions}) {
   const context = await contextFactory({
     ...contextOptions,
     baseURL: server.PREFIX,

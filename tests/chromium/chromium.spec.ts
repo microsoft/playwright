@@ -19,6 +19,7 @@ import { contextTest as test, expect } from '../config/browserTest';
 import { playwrightTest } from '../config/browserTest';
 import http from 'http';
 import { getUserAgent } from '../../lib/utils/utils';
+import { suppressCertificateWarning } from '../config/utils';
 
 test('should create a worker from a service worker', async ({page, server}) => {
   const [worker] = await Promise.all([
@@ -307,6 +308,7 @@ playwrightTest('should connect via https', async ({ browserType, browserOptions,
   const oldValue = process.env['NODE_TLS_REJECT_UNAUTHORIZED'];
   // https://stackoverflow.com/a/21961005/552185
   process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
+  suppressCertificateWarning();
   try {
     const cdpBrowser = await browserType.connectOverCDP(`https://localhost:${httpsServer.PORT}/`);
     const contexts = cdpBrowser.contexts();
