@@ -309,6 +309,8 @@ function innerFixtureParameterNames(fn: Function, location: Location): string[] 
   if (!trimmedParams)
     return [];
   const [firstParam] = splitByComma(trimmedParams);
+  if (firstParam === '_')
+    return [];
   if (firstParam[0] !== '{' || firstParam[firstParam.length - 1] !== '}')
     throw errorWithLocations('First argument must use the object destructuring pattern: '  + firstParam, { location });
   const props = splitByComma(firstParam.substring(1, firstParam.length - 1)).map(prop => {

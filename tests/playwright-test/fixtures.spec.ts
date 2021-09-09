@@ -171,6 +171,18 @@ test('should fail if parameters are not destructured', async ({ runInlineTest })
   expect(result.results.length).toBe(0);
 });
 
+test('should not fail if parameters is an underscore', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      pwt.test('should pass', function (_) {
+        expect(_).toStrictEqual({});
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.results.length).toBe(1);
+});
+
 test('should fail with an unknown fixture', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
