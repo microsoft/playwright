@@ -43,6 +43,26 @@ Headers with multiple entries, such as `Set-Cookie`, appear in the array multipl
 An array with all the request HTTP headers associated with this response. Unlike [`method: Response.allHeaders`], header names are not lower-cased.
 Headers with multiple entries, such as `Set-Cookie`, appear in the array multiple times.
 
+## async method: Response.getHeaderValue
+- returns: <[null]|[string]>
+
+Returns the first value of the header matching the name. The name is case insensitive. If multiple headers have the same name, for example `set-cookie`, the first is returned. If no header is found, `null` is returned.
+
+### param: Response.getHeaderValue.name
+- `name` <[string]>
+
+Name of the header.
+
+## async method: Response.getHeaderValues
+- returns: <[Array]<[string]>>
+
+Returns all values of the headers matching the name, for example `set-cookie`. The name is case insensitive.
+
+### param: Response.getHeaderValues.name
+- `name` <[string]>
+
+Name of the header.
+
 ## async method: Response.json
 * langs: js, python
 - returns: <[Serializable]>

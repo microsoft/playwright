@@ -161,6 +161,16 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
     return (await this._getHeadersIfNeeded()).map(header => [header.name, header.value]);
   }
 
+  async getHeaderValue(headerName: string): Promise<string | null> {
+    const headers = await this._getHeadersIfNeeded();
+    const lowerCaseName = headerName.toLowerCase();
+    for (const {name, value} of headers) {
+      if (name.toLowerCase() === lowerCaseName)
+        return value;
+    }
+    return null;
+  }
+
   async response(): Promise<Response | null> {
     return this._wrapApiCall(async (channel: channels.RequestChannel) => {
       return Response.fromNullable((await channel.response()).response);
@@ -265,6 +275,20 @@ export class InterceptedResponse implements api.Response {
 
   async headersArray(): Promise<string[][]> {
     return this._initializer.headers.map(header => [header.name, header.value]);
+  }
+
+  async getHeaderValue(headerName: string): Promise<string | null> {
+    const lowerCaseName = headerName.toLowerCase();
+    for (const {name, value} of this._initializer.headers) {
+      if (name.toLowerCase() === lowerCaseName)
+        return value;
+    }
+    return null;
+  }
+
+  async getHeaderValues(headerName: string): Promise<string[]> {
+    const lowerCaseName = headerName.toLowerCase();
+    return this._initializer.headers.filter(({name}) => name.toLowerCase() === lowerCaseName).map(({value}) => value);
   }
 
   async body(): Promise<Buffer> {
@@ -426,7 +450,7 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
   _headers: Headers;
   private _request: Request;
   readonly _finishedPromise = new ManualPromise<void>();
-  private _rawHeadersPromise: Promise<channels.ResponseRawResponseHeadersResult> | undefined;
+  private _rawHeadersPromise: Promise<channels.NameValue[]> | undefined;
 
   static from(response: channels.ResponseChannel): Response {
     return (response as any)._object;
@@ -469,18 +493,40 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
   async _getHeadersIfNeeded() {
     if (!this._rawHeadersPromise) {
       this._rawHeadersPromise = this._wrapApiCall(async (channel: channels.ResponseChannel) => {
-        return await channel.rawResponseHeaders();
+        return (await channel.rawResponseHeaders()).headers;
       });
     }
     return this._rawHeadersPromise;
   }
 
   async allHeaders(): Promise<Headers> {
-    return headersArrayToObject((await this._getHeadersIfNeeded()).headers, true /* lowerCase */);
+    return headersArrayToObject(await this._getHeadersIfNeeded(), true /* lowerCase */);
   }
 
   async headersArray(): Promise<string[][]> {
-    return (await this._getHeadersIfNeeded()).headers.map(header => [header.name, header.value]);
+    return (await this._getHeadersIfNeeded()).map(header => [header.name, header.value]);
+  }
+
+  async getHeaderValue(headerName: string): Promise<string | null> {
+    const headers = await this._getHeadersIfNeeded();
+    const lowerCaseName = headerName.toLowerCase();
+    for (const {name, value} of headers) {
+      if (name.toLowerCase() === lowerCaseName)
+        return value;
+    }
+    return null;
+  }
+
+  async getHeaderValues(headerName: string): Promise<string[]> {
+    const headers = await this._getHeadersIfNeeded();
+    const lowerCaseName = headerName.toLowerCase();
+    return headers.filter(({name}) => name.toLowerCase() === lowerCaseName).map(({value}) => value);
+  }
+
+  async response(): Promise<Response | null> {
+    return this._wrapApiCall(async (channel: channels.RequestChannel) => {
+      return Response.fromNullable((await channel.response()).response);
+    });
   }
 
   async finished(): Promise<null> {

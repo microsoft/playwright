@@ -211,4 +211,7 @@ it('should report multiple set-cookie headers', async ({ page, server }) => {
   const headers = await response.headersArray();
   const cookies = headers.filter(([name, value]) => name.toLowerCase() === 'set-cookie').map(([, value]) => value);
   expect(cookies).toEqual(['a=b', 'c=d']);
+  expect(await response.getHeaderValue('not-there')).toEqual(null);
+  expect(await response.getHeaderValue('set-cookie')).toEqual('a=b');
+  expect(await response.getHeaderValues('set-cookie')).toEqual(['a=b', 'c=d']);
 });

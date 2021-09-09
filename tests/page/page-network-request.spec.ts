@@ -290,6 +290,8 @@ it('should report raw headers', async ({ page, server, browserName, platform }) 
   ]);
   const headers = await request.headersArray();
   expect(headers.sort()).toEqual(expectedHeaders.sort());
+  expect(await request.getHeaderValue('header-a')).toEqual('value-a, value-a-1, value-a-2');
+  expect(await request.getHeaderValue('not-there')).toEqual(null);
 });
 
 it('should report raw response headers in redirects', async ({ page, server, browserName }) => {

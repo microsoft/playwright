@@ -13064,6 +13064,12 @@ export interface Request {
   headersArray(): Promise<Array<Array<string>>>;
 
   /**
+   * Returns the value of the header matching the name. The name is case insensitive.
+   * @param name Name of the header.
+   */
+  getHeaderValue(name: string): Promise<null|string>;
+
+  /**
    * Whether this request is driving frame's navigation.
    */
   isNavigationRequest(): boolean;
@@ -13277,6 +13283,19 @@ export interface Response {
    * lower-cased. Headers with multiple entries, such as `Set-Cookie`, appear in the array multiple times.
    */
   headersArray(): Promise<Array<Array<string>>>;
+
+  /**
+   * Returns the first value of the header matching the name. The name is case insensitive. If multiple headers have the same
+   * name, for example `set-cookie`, the first is returned. If no header is found, `null` is returned.
+   * @param name Name of the header.
+   */
+  getHeaderValue(name: string): Promise<null|string>;
+
+  /**
+   * Returns all values of the headers matching the name, for example `set-cookie`. The name is case insensitive.
+   * @param name Name of the header.
+   */
+  getHeaderValues(name: string): Promise<Array<string>>;
 
   /**
    * Returns the JSON representation of response body.
