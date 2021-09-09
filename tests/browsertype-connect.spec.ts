@@ -18,9 +18,8 @@
 import { playwrightTest as test, expect } from './config/browserTest';
 import fs from 'fs';
 import * as path from 'path';
-import { getUserAgent, allowSelfSignedCertificatesInNode } from '../lib/utils/utils';
+import { getUserAgent, suppressCertificateWarning } from '../lib/utils/utils';
 import WebSocket from 'ws';
-import {  } from '../src/utils/utils';
 
 test.slow(true, 'All connect tests are slow');
 
@@ -28,30 +27,36 @@ test('should connect over wss', async ({browserType , startRemoteServer, httpsSe
   test.skip(mode !== 'default'); // Out of process transport does not allow us to set env vars dynamically.
   const remoteServer = await startRemoteServer();
 
-  allowSelfSignedCertificatesInNode();
-
-  httpsServer.onceWebSocketConnection((ws, request) => {
-    const remote = new WebSocket(remoteServer.wsEndpoint(), [], {
-      perMessageDeflate: false,
-      maxPayload: 256 * 1024 * 1024, // 256Mb,
+  const oldValue = process.env['NODE_TLS_REJECT_UNAUTHORIZED'];
+  // https://stackoverflow.com/a/21961005/552185
+  process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
+  suppressCertificateWarning();
+  try {
+    httpsServer.onceWebSocketConnection((ws, request) => {
+      const remote = new WebSocket(remoteServer.wsEndpoint(), [], {
+        perMessageDeflate: false,
+        maxPayload: 256 * 1024 * 1024, // 256Mb,
+      });
+      const remoteReadyPromise = new Promise<void>((f, r) => {
+        remote.once('open', f);
+        remote.once('error', r);
+      });
+      remote.on('close', () => ws.close());
+      remote.on('error', error => ws.close());
+      remote.on('message', message => ws.send(message));
+      ws.on('message', async message => {
+        await remoteReadyPromise;
+        remote.send(message);
+      });
+      ws.on('close', () => remote.close());
+      ws.on('error', () => remote.close());
     });
-    const remoteReadyPromise = new Promise<void>((f, r) => {
-      remote.once('open', f);
-      remote.once('error', r);
-    });
-    remote.on('close', () => ws.close());
-    remote.on('error', error => ws.close());
-    remote.on('message', message => ws.send(message));
-    ws.on('message', async message => {
-      await remoteReadyPromise;
-      remote.send(message);
-    });
-    ws.on('close', () => remote.close());
-    ws.on('error', () => remote.close());
-  });
-  const browser = await browserType.connect(`wss://localhost:${httpsServer.PORT}/ws`);
-  expect(browser.version()).toBeTruthy();
-  await browser.close();
+    const browser = await browserType.connect(`wss://localhost:${httpsServer.PORT}/ws`);
+    expect(browser.version()).toBeTruthy();
+    await browser.close();
+  } finally {
+    process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = oldValue;
+  }
 });
 
 test('should be able to reconnect to a browser', async ({browserType, startRemoteServer, server}) => {

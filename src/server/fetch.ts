@@ -22,7 +22,7 @@ import * as https from 'https';
 import { BrowserContext } from './browserContext';
 import * as types from './types';
 import { pipeline, Readable, Transform } from 'stream';
-import { allowSelfSignedCertificatesInNode, monotonicTime } from '../utils/utils';
+import { monotonicTime } from '../utils/utils';
 
 export async function playwrightFetch(context: BrowserContext, params: types.FetchOptions): Promise<{fetchResponse?: Omit<types.FetchResponse, 'body'> & { fetchUid: string }, error?: string}> {
   try {
@@ -51,6 +51,8 @@ export async function playwrightFetch(context: BrowserContext, params: types.Fet
       agent = new HttpsProxyAgent(proxyOpts);
     }
 
+    const rejectUnauthorized = context._options.ignoreHTTPSErrors ? false : undefined;
+
     const timeout = context._timeoutSettings.timeout(params);
     const deadline = monotonicTime() + timeout;
 
@@ -59,6 +61,7 @@ export async function playwrightFetch(context: BrowserContext, params: types.Fet
       headers,
       agent,
       maxRedirects: 20,
+      rejectUnauthorized,
       timeout,
       deadline
     }, params.postData);
@@ -102,13 +105,11 @@ async function updateRequestCookieHeader(context: BrowserContext, url: URL, opti
   }
 }
 
-async function sendRequest(context: BrowserContext, url: URL, options: http.RequestOptions & { maxRedirects: number, deadline: number }, postData?: Buffer): Promise<types.FetchResponse>{
+async function sendRequest(context: BrowserContext, url: URL, options: https.RequestOptions & { maxRedirects: number, deadline: number }, postData?: Buffer): Promise<types.FetchResponse>{
   await updateRequestCookieHeader(context, url, options);
   return new Promise<types.FetchResponse>((fulfill, reject) => {
     const requestConstructor: ((url: URL, options: http.RequestOptions, callback?: (res: http.IncomingMessage) => void) => http.ClientRequest)
       = (url.protocol === 'https:' ? https : http).request;
-    if (url.protocol === 'https:' && context._options.ignoreHTTPSErrors)
-      allowSelfSignedCertificatesInNode();
     const request = requestConstructor(url, options, async response => {
       if (response.headers['set-cookie'])
         await updateCookiesFromHeader(context, response.url || url.toString(), response.headers['set-cookie']);
