@@ -397,10 +397,10 @@ export default config;
 
   ```bash
   # Install
-  npm i -D experimental-allure-playwright
+  npm i -D allure-playwright
 
   # Run tests
-  npx playwright test --reporter=line,experimental-allure-playwright
+  npx playwright test --reporter=line,allure-playwright
 
   # Generate report
   allure generate ./allure-result --clean && allure open ./allure-report
