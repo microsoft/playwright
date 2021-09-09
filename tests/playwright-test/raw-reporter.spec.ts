@@ -56,18 +56,28 @@ test('should save stdio', async ({ runInlineTest }, testInfo) => {
       const { test } = pwt;
       test('passes', async ({ page }, testInfo) => {
         console.log('STDOUT');
+        process.stdout.write(Buffer.from([1, 2, 3]));
         console.error('STDERR');
+        process.stderr.write(Buffer.from([4, 5, 6]));
       });
     `,
   }, { usesCustomOutputDir: true });
   const json = JSON.parse(fs.readFileSync(testInfo.outputPath('test-results', 'report', 'project.report'), 'utf-8'));
   const result = json.suites[0].tests[0].results[0];
-  expect(result.attachments[0].name).toBe('stdout');
-  expect(result.attachments[1].name).toBe('stderr');
-  const path1 = result.attachments[0].path;
-  expect(fs.readFileSync(path1, 'utf-8')).toContain('STDOUT');
-  const path2 = result.attachments[1].path;
-  expect(fs.readFileSync(path2, 'utf-8')).toContain('STDERR');
+  expect(result.attachments).toEqual([
+    { name: 'stdout', contentType: 'text/plain', body: 'STDOUT\n' },
+    {
+      name: 'stdout',
+      contentType: 'application/octet-stream',
+      body: 'AQID'
+    },
+    { name: 'stderr', contentType: 'text/plain', body: 'STDERR\n' },
+    {
+      name: 'stderr',
+      contentType: 'application/octet-stream',
+      body: 'BAUG'
+    }
+  ]);
 });
 
 test('should save attachments', async ({ runInlineTest }, testInfo) => {
@@ -91,9 +101,8 @@ test('should save attachments', async ({ runInlineTest }, testInfo) => {
   const json = JSON.parse(fs.readFileSync(testInfo.outputPath('test-results', 'report', 'project.report'), 'utf-8'));
   const result = json.suites[0].tests[0].results[0];
   expect(result.attachments[0].name).toBe('binary');
+  expect(Buffer.from(result.attachments[0].body, 'base64')).toEqual(Buffer.from([1,2,3]));
   expect(result.attachments[1].name).toBe('text');
-  const path1 = result.attachments[0].path;
-  expect(fs.readFileSync(path1)).toEqual(Buffer.from([1,2,3]));
   const path2 = result.attachments[1].path;
   expect(path2).toBe('dummy-path');
 });

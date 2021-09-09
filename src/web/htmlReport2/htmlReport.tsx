@@ -20,14 +20,19 @@ import { SplitView } from '../components/splitView';
 import { TreeItem } from '../components/treeItem';
 import { TabbedPane } from '../traceViewer/ui/tabbedPane';
 import { msToString } from '../uiUtils';
-import type { ProjectTreeItem, SuiteTreeItem, TestCase, TestResult, TestStep, TestTreeItem, Location } from '../../test/html/types';
+import type { ProjectTreeItem, SuiteTreeItem, TestCase, TestResult, TestStep, TestTreeItem, Location, TestFile } from '../../test/html/types';
 
 type Filter = 'Failing' | 'All';
+
+type TestId = {
+  fileId: string;
+  testId: string;
+};
 
 export const Report: React.FC = () => {
   const [report, setReport] = React.useState<ProjectTreeItem[]>([]);
   const [fetchError, setFetchError] = React.useState<string | undefined>();
-  const [testId, setTestId] = React.useState<string | undefined>();
+  const [testId, setTestId] = React.useState<TestId | undefined>();
 
   React.useEffect(() => {
     (async () => {
@@ -63,22 +68,22 @@ export const Report: React.FC = () => {
 
 const ProjectTreeItemView: React.FC<{
   project: ProjectTreeItem;
-  testId?: string,
-  setTestId: (id: string) => void;
+  testId?: TestId,
+  setTestId: (id: TestId) => void;
   failingOnly?: boolean;
 }> = ({ project, testId, setTestId, failingOnly }) => {
   return <TreeItem title={<div className='hbox'>
     {statusIconForFailedTests(project.failedTests)}<div className='tree-text'>{project.name || 'Project'}</div>
   </div>
   } loadChildren={() => {
-    return project.suits.map((s, i) => <SuiteTreeItemView key={i} suite={s} setTestId={setTestId} testId={testId} depth={1} showFileName={true}></SuiteTreeItemView>) || [];
+    return project.suites.map((s, i) => <SuiteTreeItemView key={i} suite={s} setTestId={setTestId} testId={testId} depth={1} showFileName={true}></SuiteTreeItemView>) || [];
   }} depth={0} expandByDefault={true}></TreeItem>;
 };
 
 const SuiteTreeItemView: React.FC<{
   suite: SuiteTreeItem,
-  testId?: string,
-  setTestId: (id: string) => void;
+  testId?: TestId,
+  setTestId: (id: TestId) => void;
   depth: number,
   showFileName: boolean,
 }> = ({ suite, testId, setTestId, showFileName, depth }) => {
@@ -98,8 +103,8 @@ const SuiteTreeItemView: React.FC<{
 const TestTreeItemView: React.FC<{
   test: TestTreeItem,
   showFileName: boolean,
-  testId?: string,
-  setTestId: (id: string) => void;
+  testId?: TestId,
+  setTestId: (id: TestId) => void;
   depth: number,
 }> = ({ test, testId, setTestId, showFileName, depth }) => {
   const fileName = test.location.file;
@@ -109,26 +114,35 @@ const TestTreeItemView: React.FC<{
     {showFileName && <div style={{ flex: 'none', padding: '0 4px', color: '#666' }}>{name}:{test.location.line}</div>}
     {!showFileName && <div style={{ flex: 'none', padding: '0 4px', color: '#666' }}>{msToString(test.duration)}</div>}
   </div>
-  } selected={test.testId === testId} depth={depth} onClick={() => setTestId(test.testId)}></TreeItem>;
+  } selected={test.testId === testId?.testId} depth={depth} onClick={() => setTestId({ testId: test.testId, fileId: test.fileId })}></TreeItem>;
 };
 
 const TestCaseView: React.FC<{
-  testId: string | undefined,
+  testId: TestId | undefined,
 }> = ({ testId }) => {
-  const [test, setTest] = React.useState<TestCase | undefined>();
+  const [file, setFile] = React.useState<TestFile | undefined>();
 
   React.useEffect(() => {
     (async () => {
-      if (!testId)
+      if (!testId || file?.fileId === testId.fileId)
         return;
       try {
-        const result = await fetch(`data/${testId}.json`, { cache: 'no-cache' });
-        const json = (await result.json()) as TestCase;
-        setTest(json);
+        const result = await fetch(`data/${testId.fileId}.json`, { cache: 'no-cache' });
+        setFile((await result.json()) as TestFile);
       } catch (e) {
       }
     })();
   });
+
+  let test: TestCase | undefined;
+  if (file && testId) {
+    for (const t of file.tests) {
+      if (t.testId === testId.testId) {
+        test = t;
+        break;
+      }
+    }
+  }
 
   const [selectedResultIndex, setSelectedResultIndex] = React.useState(0);
   return <SplitView sidebarSize={500} orientation='horizontal' sidebarIsFirst={true}>
@@ -138,10 +152,10 @@ const TestCaseView: React.FC<{
       { test && <div className='test-case-title'>{test?.title}</div> }
       { test && <div className='test-case-location'>{renderLocation(test.location, true)}</div> }
       { test && <TabbedPane tabs={
-        test?.results.map((result, index) => ({
+        test.results.map((result, index) => ({
           id: String(index),
           title: <div style={{ display: 'flex', alignItems: 'center' }}>{statusIcon(result.status)} {retryLabel(index)}</div>,
-          render: () => <TestResultView test={test} result={result}></TestResultView>
+          render: () => <TestResultView test={test!} result={result}></TestResultView>
         })) || []} selectedTab={String(selectedResultIndex)} setSelectedTab={id => setSelectedResultIndex(+id)} />}
     </div>
   </SplitView>;
@@ -165,9 +179,18 @@ const StepTreeItem: React.FC<{
     <span style={{ whiteSpace: 'pre' }}>{step.title}</span>
     <div style={{ flex: 'auto' }}></div>
     <div>{msToString(step.duration)}</div>
-  </div>} loadChildren={step.steps.length ? () => {
-    return step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1}></StepTreeItem>);
+  </div>} loadChildren={step.steps.length + (step.log || []).length ? () => {
+    const stepChildren = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1}></StepTreeItem>);
+    const logChildren = (step.log || []).map((l, i) => <LogTreeItem key={step.steps.length + i} log={l} depth={depth + 1}></LogTreeItem>);
+    return [...stepChildren, ...logChildren];
   } : undefined} depth={depth}></TreeItem>;
+};
+
+const LogTreeItem: React.FC<{
+  log: string;
+  depth: number,
+}> = ({ log, depth }) => {
+  return <TreeItem title={<div style={{ display: 'flex', alignItems: 'center', flex: 'auto' }}>{ log }</div>} depth={depth}></TreeItem>;
 };
 
 function statusIconForFailedTests(failedTests: number) {
