@@ -998,3 +998,18 @@ This method does not work across navigations, use [`method: Page.waitForSelector
 ### option: ElementHandle.waitForSelector.timeout = %%-input-timeout-%%
 
 ### option: ElementHandle.waitForSelector.strict = %%-input-strict-%%
+
+## async method: ElementHandle.waitForSelector
+* langs: python
+- returns: <[ElementHandle]>
+
+## async method: ElementHandle.waitForSelectorHidden
+* langs: python, csharp
+
+Returns when element specified by selector satisfies [`option: state`] option. See [`method: ElementHandle.waitForSelector`] for more information.
+
+### param: ElementHandle.waitForSelectorHidden.selector = %%-query-selector-%%
+### option: ElementHandle.waitForSelectorHidden.state = %%-wait-for-selector-state-hidden-%%
+### option: ElementHandle.waitForSelectorHidden.timeout = %%-input-timeout-%%
+### option: ElementHandle.waitForSelectorHidden.strict = %%-input-strict-%%
+
