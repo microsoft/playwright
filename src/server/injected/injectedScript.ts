@@ -474,7 +474,7 @@ export class InjectedScript {
       return !disabled && editable;
 
     if (state === 'checked') {
-      if (element.getAttribute('role') === 'checkbox')
+      if (['checkbox', 'radio'].includes(element.getAttribute('role') || ''))
         return element.getAttribute('aria-checked') === 'true';
       if (element.nodeName !== 'INPUT')
         return 'error:notcheckbox';
