@@ -5730,7 +5730,7 @@ index a7313926acda59218b0215110b973a53fa4bb2f9..48812e8193eae29bed0c8c3aedcc4820
      DocumentWriter& writer() const { return m_writer; }
  
 diff --git a/Source/WebCore/loader/FrameLoader.cpp b/Source/WebCore/loader/FrameLoader.cpp
-index 2a6e166eb227e564b881ed3189b8c1125114d1a7..f9b6ccd14966366b9156577739b6befc47f1fa8c 100644
+index 2a6e166eb227e564b881ed3189b8c1125114d1a7..a06a51292fe1f8afbfa8f26071061e9225d9b97e 100644
 --- a/Source/WebCore/loader/FrameLoader.cpp
 +++ b/Source/WebCore/loader/FrameLoader.cpp
 @@ -1168,6 +1168,7 @@ void FrameLoader::loadInSameDocument(const URL& url, SerializedScriptValue* stat
@@ -5758,7 +5758,17 @@ index 2a6e166eb227e564b881ed3189b8c1125114d1a7..f9b6ccd14966366b9156577739b6befc
          RefPtr<DocumentLoader> oldDocumentLoader = m_documentLoader;
          NavigationAction action { *m_frame.document(), loader->request(), InitiatedByMainFrame::Unknown, policyChecker().loadType(), isFormSubmission };
  
-@@ -3200,6 +3204,8 @@ void FrameLoader::receivedMainResourceError(const ResourceError& error)
+@@ -2560,6 +2564,9 @@ void FrameLoader::checkLoadCompleteForThisFrame()
+         if (m_documentLoader->isLoadingInAPISense() && !m_documentLoader->isStopping() && !m_checkingLoadCompleteForDetachment)
+             return;
+ 
++        if (m_frame.document()->parsing())
++            return;
++
+         setState(FrameState::Complete);
+ 
+         // FIXME: Is this subsequent work important if we already navigated away?
+@@ -3200,6 +3207,8 @@ void FrameLoader::receivedMainResourceError(const ResourceError& error)
      checkCompleted();
      if (m_frame.page())
          checkLoadComplete();
@@ -5767,7 +5777,7 @@ index 2a6e166eb227e564b881ed3189b8c1125114d1a7..f9b6ccd14966366b9156577739b6befc
  }
  
  void FrameLoader::continueFragmentScrollAfterNavigationPolicy(const ResourceRequest& request, bool shouldContinue)
-@@ -3965,9 +3971,6 @@ String FrameLoader::referrer() const
+@@ -3965,9 +3974,6 @@ String FrameLoader::referrer() const
  
  void FrameLoader::dispatchDidClearWindowObjectsInAllWorlds()
  {
@@ -5777,18 +5787,18 @@ index 2a6e166eb227e564b881ed3189b8c1125114d1a7..f9b6ccd14966366b9156577739b6befc
      Vector<Ref<DOMWrapperWorld>> worlds;
      ScriptController::getAllWorlds(worlds);
      for (auto& world : worlds)
-@@ -3976,13 +3979,13 @@ void FrameLoader::dispatchDidClearWindowObjectsInAllWorlds()
+@@ -3976,13 +3982,13 @@ void FrameLoader::dispatchDidClearWindowObjectsInAllWorlds()
  
  void FrameLoader::dispatchDidClearWindowObjectInWorld(DOMWrapperWorld& world)
  {
 -    if (!m_frame.script().canExecuteScripts(NotAboutToExecuteScript) || !m_frame.windowProxy().existingJSWindowProxy(world))
 -        return;
--
--    m_client->dispatchDidClearWindowObjectInWorld(world);
 +    if (m_frame.windowProxy().existingJSWindowProxy(world)) {
 +        if (m_frame.script().canExecuteScripts(NotAboutToExecuteScript))
 +            m_client->dispatchDidClearWindowObjectInWorld(world);
  
+-    m_client->dispatchDidClearWindowObjectInWorld(world);
+-
 -    if (Page* page = m_frame.page())
 -        page->inspectorController().didClearWindowObjectInWorld(m_frame, world);
 +        if (Page* page = m_frame.page())
