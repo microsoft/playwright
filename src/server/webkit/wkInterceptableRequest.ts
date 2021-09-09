@@ -79,7 +79,6 @@ export class WKInterceptableRequest {
       return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
     };
     const timingPayload = responsePayload.timing;
-    console.log('timingPayload', timingPayload);
     const timing: network.ResourceTiming = {
       startTime: this._wallTime,
       domainLookupStart: timingPayload ? wkMillisToRoundishMillis(timingPayload.domainLookupStart) : -1,
