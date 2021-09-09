@@ -143,7 +143,7 @@ if node:
 
 ## async method: Accessibility.snapshot
 * langs: csharp
-- returns: <[JsonElement?]>
+- returns: <[null]|[JsonElement]>
 
 ### option: Accessibility.snapshot.interestingOnly
 - `interestingOnly` <[boolean]>

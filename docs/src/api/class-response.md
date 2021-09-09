@@ -43,7 +43,7 @@ This method will throw if the response body is not parsable via `JSON.parse`.
 
 ## async method: Response.json
 * langs: csharp
-- returns: <[JsonElement?]>
+- returns: <[null]|[JsonElement]>
 
 Returns the JSON representation of response body.
 
