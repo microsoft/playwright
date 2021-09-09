@@ -8,7 +8,7 @@ title: "Migrating from Protractor"
 ## Migration Principes
 
 - No need for "webdriver-manager" / Selenium.
-- Protractor’s [ElementFinder] ⇄ Playwright Test [`class: Locator`]
+- Protractor’s [ElementFinder] ⇄ [Playwright Test Locator](./api/class-locator)
 - Protractor’s [`waitForAngular`] ⇄ Playwright Test [auto-waiting](./actionability.md)
 - Don’t forget to await in Playwright Test
 
