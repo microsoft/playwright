@@ -375,6 +375,46 @@ test.describe('cli codegen', () => {
     expect(message.text()).toBe('true');
   });
 
+  test('should check radio', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
+    await recorder.setContentAndWait(`
+      <input id="checkbox2" type="radio" name="decline" onchange="console.log('wrong one')"></input>
+      <input id="checkbox" type="radio" name="accept" onchange="console.log(checkbox.checked)"></input>
+    `);
+
+    const selector = await recorder.focusElement('input[name=accept]');
+    expect(selector).toBe('input[name="accept"]');
+
+    const [message, sources] = await Promise.all([
+      page.waitForEvent('console', msg => msg.type() !== 'error'),
+      recorder.waitForOutput('JavaScript', 'check'),
+      page.click('input[name=accept]')
+    ]);
+
+    expect(sources.get('JavaScript').text).toContain(`
+  // Check input[name="accept"]
+  await page.check('input[name="accept"]');`);
+
+    expect(sources.get('Java').text).toContain(`
+      // Check input[name="accept"]
+      page.check("input[name=\\\"accept\\\"]");`);
+
+    expect(sources.get('Python').text).toContain(`
+    # Check input[name="accept"]
+    page.check(\"input[name=\\\"accept\\\"]\")`);
+
+    expect(sources.get('Python Async').text).toContain(`
+    # Check input[name="accept"]
+    await page.check(\"input[name=\\\"accept\\\"]\")`);
+
+    expect(sources.get('C#').text).toContain(`
+        // Check input[name="accept"]
+        await page.CheckAsync(\"input[name=\\\"accept\\\"]\");`);
+
+    expect(message.text()).toBe('true');
+  });
+
   test('should check with keyboard', async ({ page, openRecorder }) => {
     const recorder = await openRecorder();
 
@@ -430,6 +470,53 @@ test.describe('cli codegen', () => {
         await page.UncheckAsync(\"input[name=\\\"accept\\\"]\");`);
 
     expect(message.text()).toBe('false');
+  });
+
+  test('should uncheck [role=checkbox]', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
+    await recorder.setContentAndWait(`
+      <div id="checkbox" role="checkbox" aria-checked="true"></div>
+      <script>
+        const cb = document.querySelector('#checkbox');
+        const shadow = cb.attachShadow({ mode: 'open' });
+        const text = document.createElement('span');
+        text.textContent = 'CHECKBOX';
+        shadow.appendChild(text);
+        cb.addEventListener('click', () => {
+          cb.setAttribute('aria-checked', cb.getAttribute('aria-checked') === 'true' ? 'false' : 'true');
+          console.log('unchecked');
+        });
+      </script>
+    `);
+
+    const [message, sources] = await Promise.all([
+      page.waitForEvent('console', msg => msg.type() !== 'error'),
+      recorder.waitForOutput('JavaScript', 'uncheck'),
+      page.click('text=CHECKBOX')
+    ]);
+
+    expect(sources.get('JavaScript').text).toContain(`
+  // Uncheck div[role="checkbox"]:has-text("CHECKBOX")
+  await page.uncheck('div[role="checkbox"]:has-text("CHECKBOX")');`);
+
+    expect(sources.get('Java').text).toContain(`
+      // Uncheck div[role="checkbox"]:has-text("CHECKBOX")
+      page.uncheck("div[role=\\"checkbox\\"]:has-text(\\"CHECKBOX\\")");`);
+
+    expect(sources.get('Python').text).toContain(`
+    # Uncheck div[role="checkbox"]:has-text("CHECKBOX")
+    page.uncheck("div[role=\\"checkbox\\"]:has-text(\\"CHECKBOX\\")")`);
+
+    expect(sources.get('Python Async').text).toContain(`
+    # Uncheck div[role="checkbox"]:has-text("CHECKBOX")
+    await page.uncheck("div[role=\\"checkbox\\"]:has-text(\\"CHECKBOX\\")")`);
+
+    expect(sources.get('C#').text).toContain(`
+        // Uncheck div[role="checkbox"]:has-text("CHECKBOX")
+        await page.UncheckAsync("div[role=\\"checkbox\\"]:has-text(\\"CHECKBOX\\")");`);
+
+    expect(message.text()).toBe('unchecked');
   });
 
   test('should select', async ({ page, openRecorder }) => {

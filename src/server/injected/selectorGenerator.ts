@@ -44,7 +44,7 @@ export function querySelector(injectedScript: InjectedScript, selector: string, 
 export function generateSelector(injectedScript: InjectedScript, targetElement: Element): { selector: string, elements: Element[] } {
   injectedScript._evaluator.begin();
   try {
-    targetElement = targetElement.closest('button,select,input,[role=button],[role=checkbox],[role=radio]') || targetElement;
+    targetElement = closestControl(targetElement) || targetElement;
     const targetTokens = generateSelectorFor(injectedScript, targetElement);
     const bestTokens = targetTokens || [cssFallback(injectedScript, targetElement)];
     const selector = joinTokens(bestTokens);
@@ -208,6 +208,19 @@ function parentElementOrShadowHost(element: Element): Element | null {
   if (element.parentNode.nodeType === Node.DOCUMENT_FRAGMENT_NODE && (element.parentNode as ShadowRoot).host)
     return (element.parentNode as ShadowRoot).host;
   return null;
+}
+
+function closestControl(element: Element | null): Element | null {
+  // This is a heurstic to re-target child element to the enclosing button, select, radio or checkbox.
+  // The control may be either a native one or a custom-element with specific [role].
+  let shadowBoundaries = 0;
+  while (element && !element.matches('button,select,input,[role=button],[role=checkbox],[role=radio]')) {
+    const parent = parentElementOrShadowHost(element);
+    shadowBoundaries += (parent === element.parentElement ? 0 : 1);
+    // Do not go more than one shadow boundaries up to avoid surprises.
+    element = shadowBoundaries > 1 ? null : parent;
+  }
+  return element;
 }
 
 function makeSelectorForId(id: string) {

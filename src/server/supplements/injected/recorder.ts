@@ -234,11 +234,11 @@ export class Recorder {
     if (this._consumedDueToNoModel(event, this._hoveredModel))
       return;
 
-    const checkbox = asCheckbox(this._deepEventTarget(event));
+    // Interestingly, inputElement.checked is reversed inside this event handler.
+    const checkbox = asCheckbox(this._hoveredModel!.elements[0], true /* reverseNativeChecked */);
     if (checkbox) {
-      // Interestingly, inputElement.checked is reversed inside this event handler.
       this._performAction({
-        name: checkbox.checked ? 'check' : 'uncheck',
+        name: checkbox.checked ? 'uncheck' : 'check',
         selector: this._hoveredModel!.selector,
         signals: [],
       });
@@ -404,38 +404,10 @@ export class Recorder {
   private _onInput(event: Event) {
     if (this._mode !== 'recording')
       return true;
-    const target = this._deepEventTarget(event);
-    if (['INPUT', 'TEXTAREA'].includes(target.nodeName)) {
-      const inputElement = target as HTMLInputElement;
-      const elementType = (inputElement.type || '').toLowerCase();
-      if (elementType === 'checkbox') {
-        // Checkbox is handled in click, we can't let input trigger on checkbox - that would mean we dispatched click events while recording.
-        return;
-      }
 
-      if (elementType === 'file') {
-        globalThis._playwrightRecorderRecordAction({
-          name: 'setInputFiles',
-          selector: this._activeModel!.selector,
-          signals: [],
-          files: [...(inputElement.files || [])].map(file => file.name),
-        });
-        return;
-      }
-
-      // Non-navigating actions are simply recorded by Playwright.
-      if (this._consumedDueWrongTarget(event))
-        return;
-      globalThis._playwrightRecorderRecordAction({
-        name: 'fill',
-        selector: this._activeModel!.selector,
-        signals: [],
-        text: inputElement.value,
-      });
-    }
-
-    if (target.nodeName === 'SELECT') {
-      const selectElement = target as HTMLSelectElement;
+    const eventTarget = this._deepEventTarget(event);
+    if (eventTarget.nodeName === 'SELECT') {
+      const selectElement = eventTarget as HTMLSelectElement;
       if (this._actionInProgress(event))
         return;
       this._performAction({
@@ -444,7 +416,38 @@ export class Recorder {
         options: [...selectElement.selectedOptions].map(option => option.value),
         signals: []
       });
+      return;
     }
+
+    if (this._consumedDueWrongTarget(event))
+      return;
+    const target = this._activeModel!.elements[0];
+
+    if (asCheckbox(target)) {
+      // Checkbox is handled in click, we can't let input trigger on checkbox - that would mean we dispatched click events while recording.
+      return;
+    }
+
+    if (!['INPUT', 'TEXTAREA'].includes(target.nodeName))
+      return;
+    const inputElement = target as HTMLInputElement;
+    if ((inputElement.type || '').toLowerCase() === 'file') {
+      globalThis._playwrightRecorderRecordAction({
+        name: 'setInputFiles',
+        selector: this._activeModel!.selector,
+        signals: [],
+        files: [...(inputElement.files || [])].map(file => file.name),
+      });
+      return;
+    }
+
+    // Non-navigating actions are simply recorded by Playwright.
+    globalThis._playwrightRecorderRecordAction({
+      name: 'fill',
+      selector: this._activeModel!.selector,
+      signals: [],
+      text: inputElement.value,
+    });
   }
 
   private _shouldGenerateKeyPressFor(event: KeyboardEvent): boolean {
@@ -468,7 +471,7 @@ export class Recorder {
       return false;
     const hasModifier = event.ctrlKey || event.altKey || event.metaKey;
     if (event.key.length === 1 && !hasModifier)
-      return !!asCheckbox(this._deepEventTarget(event));
+      return !!asCheckbox(this._activeModel ? this._activeModel.elements[0] : null);
     return true;
   }
 
@@ -489,7 +492,7 @@ export class Recorder {
       return;
     // Similarly to click, trigger checkbox on key event, not input.
     if (event.key === ' ') {
-      const checkbox = asCheckbox(this._deepEventTarget(event));
+      const checkbox = asCheckbox(this._activeModel!.elements[0]);
       if (checkbox) {
         this._performAction({
           name: checkbox.checked ? 'uncheck' : 'check',
@@ -577,11 +580,18 @@ type HighlightModel = {
   elements: Element[];
 };
 
-function asCheckbox(node: Node | null): HTMLInputElement | null {
-  if (!node || node.nodeName !== 'INPUT')
+function asCheckbox(node: Node | null, reverseNativeChecked?: boolean): { checked: boolean } | null {
+  if (!node || node.nodeType !== Node.ELEMENT_NODE)
+    return null;
+  const element = node as Element;
+  if (['radio', 'checkbox'].includes(element.getAttribute('role') || ''))
+    return { checked: element.getAttribute('aria-checked') === 'true' };
+  if (node.nodeName !== 'INPUT')
     return null;
   const inputElement = node as HTMLInputElement;
-  return inputElement.type === 'checkbox' ? inputElement : null;
+  if (!['radio', 'checkbox'].includes(inputElement.type.toLowerCase()))
+    return null;
+  return { checked: reverseNativeChecked ? !inputElement.checked : inputElement.checked };
 }
 
 function addEventListener(target: EventTarget, eventName: string, listener: EventListener, useCapture?: boolean): () => void {
