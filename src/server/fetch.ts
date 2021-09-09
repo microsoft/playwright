@@ -51,20 +51,22 @@ export async function playwrightFetch(context: BrowserContext, params: types.Fet
       agent = new HttpsProxyAgent(proxyOpts);
     }
 
-    const rejectUnauthorized = context._options.ignoreHTTPSErrors ? false : undefined;
-
     const timeout = context._timeoutSettings.timeout(params);
     const deadline = monotonicTime() + timeout;
 
-    const fetchResponse = await sendRequest(context, new URL(params.url, context._options.baseURL), {
+    const options: https.RequestOptions & { maxRedirects: number, deadline: number } = {
       method,
       headers,
       agent,
       maxRedirects: 20,
-      rejectUnauthorized,
       timeout,
       deadline
-    }, params.postData);
+    };
+    // rejectUnauthorized = undefined is treated as true in node 12.
+    if (context._options.ignoreHTTPSErrors)
+      options.rejectUnauthorized = false;
+
+    const fetchResponse = await sendRequest(context, new URL(params.url, context._options.baseURL), options, params.postData);
     const fetchUid = context.storeFetchResponseBody(fetchResponse.body);
     return { fetchResponse: { ...fetchResponse, fetchUid } };
   } catch (e) {
