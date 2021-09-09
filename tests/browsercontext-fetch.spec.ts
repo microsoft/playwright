@@ -19,7 +19,7 @@ import zlib from 'zlib';
 import { pipeline } from 'stream';
 import { contextTest as it, expect } from './config/browserTest';
 import type { Response } from '..';
-import { suppressCertificateWarning } from '../lib/utils/utils';
+import { suppressCertificateWarning } from './config/utils';
 
 it.skip(({ mode }) => mode !== 'default');
 

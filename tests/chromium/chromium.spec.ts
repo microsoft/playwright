@@ -18,7 +18,8 @@
 import { contextTest as test, expect } from '../config/browserTest';
 import { playwrightTest } from '../config/browserTest';
 import http from 'http';
-import { getUserAgent, suppressCertificateWarning } from '../../lib/utils/utils';
+import { getUserAgent } from '../../lib/utils/utils';
+import { suppressCertificateWarning } from '../config/utils';
 
 test('should create a worker from a service worker', async ({page, server}) => {
   const [worker] = await Promise.all([

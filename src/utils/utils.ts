@@ -388,21 +388,3 @@ export function wrapInASCIIBox(text: string, padding = 0): string {
     '╚' + '═'.repeat(maxLength + padding * 2) + '╝',
   ].join('\n');
 }
-
-let didSuppressUnverifiedCertificateWarning = false;
-let originalEmitWarning: (warning: string | Error, ...args: any[]) => void;
-export function suppressCertificateWarning() {
-  if (didSuppressUnverifiedCertificateWarning)
-    return;
-  didSuppressUnverifiedCertificateWarning = true;
-  // Supress one-time warning:
-  // https://github.com/nodejs/node/blob/1bbe66f432591aea83555d27dd76c55fea040a0d/lib/internal/options.js#L37-L49
-  originalEmitWarning = process.emitWarning;
-  process.emitWarning = (warning, ...args) => {
-    if (typeof warning === 'string' && warning.includes('NODE_TLS_REJECT_UNAUTHORIZED')) {
-      process.emitWarning = originalEmitWarning;
-      return;
-    }
-    return originalEmitWarning.call(process, warning, ...args);
-  };
-}

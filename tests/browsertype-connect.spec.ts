@@ -18,8 +18,9 @@
 import { playwrightTest as test, expect } from './config/browserTest';
 import fs from 'fs';
 import * as path from 'path';
-import { getUserAgent, suppressCertificateWarning } from '../lib/utils/utils';
+import { getUserAgent } from '../lib/utils/utils';
 import WebSocket from 'ws';
+import { suppressCertificateWarning } from './config/utils';
 
 test.slow(true, 'All connect tests are slow');
 
