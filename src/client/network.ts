@@ -29,6 +29,7 @@ import { Waiter } from './waiter';
 import * as api from '../../types/types';
 import { URLMatch } from '../common/types';
 import { urlMatches } from './clientHelper';
+import { BrowserContext } from './browserContext';
 
 export type NetworkCookie = {
   name: string,
@@ -309,15 +310,18 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
     });
   }
 
-  async fulfill(options: { response?: Response, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}) {
+  async fulfill(options: { response?: Response|FetchResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}) {
     return this._wrapApiCall(async (channel: channels.RouteChannel) => {
       let useInterceptedResponseBody;
+      let fetchResponseUid;
       let { status: statusOption, headers: headersOption, body: bodyOption } = options;
       if (options.response) {
         statusOption ||= options.response.status();
         headersOption ||= options.response.headers();
         if (options.body === undefined && options.path === undefined) {
-          if (options.response === this._interceptedResponse)
+          if (options.response instanceof FetchResponse)
+            fetchResponseUid = (options.response as FetchResponse)._fetchUid();
+          else if (options.response === this._interceptedResponse)
             useInterceptedResponseBody = true;
           else
             bodyOption = await options.response.body();
@@ -357,7 +361,8 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
         headers: headersObjectToArray(headers),
         body,
         isBase64,
-        useInterceptedResponseBody
+        useInterceptedResponseBody,
+        fetchResponseUid
       });
     });
   }
@@ -522,12 +527,12 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
 export class FetchResponse {
   private readonly _initializer: channels.FetchResponse;
   private readonly _headers: Headers;
-  private readonly _body: Buffer;
+  private readonly _context: BrowserContext;
 
-  constructor(initializer: channels.FetchResponse) {
+  constructor(context: BrowserContext, initializer: channels.FetchResponse) {
+    this._context = context;
     this._initializer = initializer;
     this._headers = headersArrayToObject(this._initializer.headers, true /* lowerCase */);
-    this._body = Buffer.from(initializer.body, 'base64');
   }
 
   ok(): boolean {
@@ -551,7 +556,12 @@ export class FetchResponse {
   }
 
   async body(): Promise<Buffer> {
-    return this._body;
+    return this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
+      const result = await channel.fetchResponseBody({ fetchUid: this._fetchUid() });
+      if (!result.binary)
+        throw new Error('Response has been disposed');
+      return Buffer.from(result.binary!, 'base64');
+    });
   }
 
   async text(): Promise<string> {
@@ -562,6 +572,16 @@ export class FetchResponse {
   async json(): Promise<object> {
     const content = await this.text();
     return JSON.parse(content);
+  }
+
+  async dispose(): Promise<void> {
+    return this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
+      await channel.disposeFetchResponse({ fetchUid: this._fetchUid() });
+    });
+  }
+
+  _fetchUid(): string {
+    return this._initializer.fetchUid;
   }
 }
 

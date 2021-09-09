@@ -63,6 +63,7 @@ export abstract class BrowserContext extends SdkObject {
   private _origins = new Set<string>();
   readonly _harRecorder: HarRecorder | undefined;
   readonly tracing: Tracing;
+  readonly fetchResponses: Map<string, Buffer> = new Map();
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super(browser, 'browser-context');
@@ -109,7 +110,7 @@ export abstract class BrowserContext extends SdkObject {
     });
 
     if (debugMode() === 'console')
-      await this.extendInjectedScript('main', consoleApiSource.source);
+      await this.extendInjectedScript(consoleApiSource.source);
   }
 
   async _ensureVideosPath() {
@@ -167,16 +168,15 @@ export abstract class BrowserContext extends SdkObject {
     return this._doSetHTTPCredentials(httpCredentials);
   }
 
-  async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource, world: types.World): Promise<void> {
-    const identifier = PageBinding.identifier(name, world);
-    if (this._pageBindings.has(identifier))
+  async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource): Promise<void> {
+    if (this._pageBindings.has(name))
       throw new Error(`Function "${name}" has been already registered`);
     for (const page of this.pages()) {
-      if (page.getBinding(name, world))
+      if (page.getBinding(name))
         throw new Error(`Function "${name}" has been already registered in one of the pages`);
     }
-    const binding = new PageBinding(name, playwrightBinding, needsHandle, world);
-    this._pageBindings.set(identifier, binding);
+    const binding = new PageBinding(name, playwrightBinding, needsHandle);
+    this._pageBindings.set(name, binding);
     await this._doExposeBinding(binding);
   }
 
@@ -372,14 +372,20 @@ export abstract class BrowserContext extends SdkObject {
     }
   }
 
-  async extendInjectedScript(world: types.World, source: string, arg?: any) {
-    const installInFrame = (frame: frames.Frame) => frame.extendInjectedScript(world, source, arg).catch(() => {});
+  async extendInjectedScript(source: string, arg?: any) {
+    const installInFrame = (frame: frames.Frame) => frame.extendInjectedScript(source, arg).catch(() => {});
     const installInPage = (page: Page) => {
       page.on(Page.Events.InternalFrameNavigatedToNewDocument, installInFrame);
       return Promise.all(page.frames().map(installInFrame));
     };
     this.on(BrowserContext.Events.Page, installInPage);
     return Promise.all(this.pages().map(installInPage));
+  }
+
+  storeFetchResponseBody(body: Buffer): string {
+    const uid = createGuid();
+    this.fetchResponses.set(uid, body);
+    return uid;
   }
 }
 

@@ -18,3 +18,4 @@ nohup.out
 .trace
 .tmp
 allure*
+playwright-report

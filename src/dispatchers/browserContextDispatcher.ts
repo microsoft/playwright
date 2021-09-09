@@ -104,7 +104,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       const binding = new BindingCallDispatcher(this._scope, params.name, !!params.needsHandle, source, args);
       this._dispatchEvent('bindingCall', { binding });
       return binding.promise();
-    }, 'main');
+    });
   }
 
   async fetch(params: channels.BrowserContextFetchParams): Promise<channels.BrowserContextFetchResult> {
@@ -122,10 +122,19 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
         status: fetchResponse.status,
         statusText: fetchResponse.statusText,
         headers: fetchResponse.headers,
-        body: fetchResponse.body.toString('base64')
+        fetchUid: fetchResponse.fetchUid
       };
     }
     return { response, error };
+  }
+
+  async fetchResponseBody(params: channels.BrowserContextFetchResponseBodyParams): Promise<channels.BrowserContextFetchResponseBodyResult> {
+    const buffer = this._context.fetchResponses.get(params.fetchUid);
+    return { binary: buffer ? buffer.toString('base64') : undefined };
+  }
+
+  async disposeFetchResponse(params: channels.BrowserContextDisposeFetchResponseParams): Promise<channels.BrowserContextDisposeFetchResponseResult> {
+    this._context.fetchResponses.delete(params.fetchUid);
   }
 
   async newPage(params: channels.BrowserContextNewPageParams, metadata: CallMetadata): Promise<channels.BrowserContextNewPageResult> {

@@ -148,11 +148,11 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     headers: tArray(tType('NameValue')),
   });
   scheme.FetchResponse = tObject({
+    fetchUid: tString,
     url: tString,
     status: tNumber,
     statusText: tString,
     headers: tArray(tType('NameValue')),
-    body: tBinary,
   });
   scheme.RootInitializeParams = tObject({
     sdkLanguage: tString,
@@ -398,6 +398,12 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     headers: tOptional(tArray(tType('NameValue'))),
     postData: tOptional(tBinary),
     timeout: tOptional(tNumber),
+  });
+  scheme.BrowserContextFetchResponseBodyParams = tObject({
+    fetchUid: tString,
+  });
+  scheme.BrowserContextDisposeFetchResponseParams = tObject({
+    fetchUid: tString,
   });
   scheme.BrowserContextGrantPermissionsParams = tObject({
     permissions: tArray(tString),
@@ -1043,6 +1049,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     body: tOptional(tString),
     isBase64: tOptional(tBoolean),
     useInterceptedResponseBody: tOptional(tBoolean),
+    fetchResponseUid: tOptional(tString),
   });
   scheme.RouteResponseBodyParams = tOptional(tObject({}));
   scheme.ResourceTiming = tObject({

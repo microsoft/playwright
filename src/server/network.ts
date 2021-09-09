@@ -52,7 +52,7 @@ export function rewriteCookies(cookies: types.SetNetworkCookieParam[]): types.Se
     assert(c.value, 'Cookie should have a value');
     assert(c.url || (c.domain && c.path), 'Cookie should have a url or a domain/path pair');
     assert(!(c.url && c.domain), 'Cookie should have either url or domain');
-    assert(!(c.url && c.path), 'Cookie should have either url or domain');
+    assert(!(c.url && c.path), 'Cookie should have either url or path');
     const copy = {...c};
     if (copy.url) {
       assert(copy.url !== 'about:blank', `Blank page can not have cookie "${c.name}"`);
@@ -219,13 +219,19 @@ export class Route extends SdkObject {
     await this._delegate.abort(errorCode);
   }
 
-  async fulfill(overrides: { status?: number, headers?: types.HeadersArray, body?: string, isBase64?: boolean, useInterceptedResponseBody?: boolean }) {
+  async fulfill(overrides: { status?: number, headers?: types.HeadersArray, body?: string, isBase64?: boolean, useInterceptedResponseBody?: boolean, fetchResponseUid?: string }) {
     assert(!this._handled, 'Route is already handled!');
     this._handled = true;
     let body = overrides.body;
     let isBase64 = overrides.isBase64 || false;
     if (body === undefined) {
-      if (this._response && overrides.useInterceptedResponseBody) {
+      if (overrides.fetchResponseUid) {
+        const context = this._request.frame()._page._browserContext;
+        const buffer = context.fetchResponses.get(overrides.fetchResponseUid);
+        assert(buffer, 'Fetch response has been disposed');
+        body = buffer.toString('utf8');
+        isBase64 = false;
+      } else if (this._response && overrides.useInterceptedResponseBody) {
         body = (await this._delegate.responseBody()).toString('utf8');
         isBase64 = false;
       } else {

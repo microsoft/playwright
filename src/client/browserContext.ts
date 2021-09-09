@@ -28,7 +28,7 @@ import { Events } from './events';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { Waiter } from './waiter';
 import { URLMatch, Headers, WaitForEventOptions, BrowserContextOptions, StorageState, LaunchOptions } from './types';
-import { isUnderTest, headersObjectToArray, mkdirIfNeeded, isString } from '../utils/utils';
+import { isUnderTest, headersObjectToArray, mkdirIfNeeded, isString, assert } from '../utils/utils';
 import { isSafeCloseError } from '../utils/errors';
 import * as api from '../../types/types';
 import * as structs from '../../types/structs';
@@ -216,19 +216,31 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     });
   }
 
-  async _fetch(url: string, options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer, timeout?: number } = {}): Promise<network.FetchResponse> {
+  async _fetch(request: network.Request, options?: { timeout?: number }): Promise<network.FetchResponse>;
+  async _fetch(url: string, options?: FetchOptions): Promise<network.FetchResponse>;
+  async _fetch(urlOrRequest: string|network.Request, options: FetchOptions = {}): Promise<network.FetchResponse> {
     return this._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
-      const postDataBuffer = isString(options.postData) ? Buffer.from(options.postData, 'utf8') : options.postData;
+      const request: network.Request | undefined = (urlOrRequest instanceof network.Request) ? urlOrRequest as network.Request : undefined;
+      assert(request || typeof urlOrRequest === 'string', 'First argument must be either URL string or Request');
+      const url = request ? request.url() : urlOrRequest as string;
+      const method = request?.method() || options.method;
+      // Cannot call allHeaders() here as the request may be paused inside route handler.
+      const headersObj = request?.headers() || options.headers;
+      const headers = headersObj ? headersObjectToArray(headersObj) : undefined;
+      let postDataBuffer = request?.postDataBuffer();
+      if (postDataBuffer === undefined)
+        postDataBuffer = (isString(options.postData) ? Buffer.from(options.postData, 'utf8') : options.postData);
+      const postData = (postDataBuffer ? postDataBuffer.toString('base64') : undefined);
       const result = await channel.fetch({
         url,
-        method: options.method,
-        headers: options.headers ? headersObjectToArray(options.headers) : undefined,
-        postData: postDataBuffer ? postDataBuffer.toString('base64') : undefined,
+        method,
+        headers,
+        postData,
         timeout: options.timeout,
       });
       if (result.error)
         throw new Error(`Request failed: ${result.error}`);
-      return new network.FetchResponse(result.response!);
+      return new network.FetchResponse(this, result.response!);
     });
   }
 
@@ -382,6 +394,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     await this._channel.recorderSupplementEnable(params);
   }
 }
+
+export type FetchOptions = { url?: string, method?: string, headers?: Headers, postData?: string | Buffer, timeout?: number };
 
 export async function prepareBrowserContextParams(options: BrowserContextOptions): Promise<channels.BrowserNewContextParams> {
   if (options.videoSize && !options.videosPath)

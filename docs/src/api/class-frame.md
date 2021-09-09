@@ -1611,22 +1611,6 @@ class FrameExamples
 ### option: Frame.waitForSelector.strict = %%-input-strict-%%
 ### option: Frame.waitForSelector.timeout = %%-input-timeout-%%
 
-
-## async method: Frame.waitForSelector
-* langs: python
-- returns: <[ElementHandle]>
-
-## async method: Frame.waitForSelectorHidden
-* langs: python, csharp
-
-Returns when element specified by selector satisfies [`option: state`] option. See [`method: Frame.waitForSelector`] for more information.
-
-### param: Frame.waitForSelectorHidden.selector = %%-query-selector-%%
-### option: Frame.waitForSelectorHidden.state = %%-wait-for-selector-state-hidden-%%
-### option: Frame.waitForSelectorHidden.strict = %%-input-strict-%%
-### option: Frame.waitForSelectorHidden.timeout = %%-input-timeout-%%
-
-
 ## async method: Frame.waitForTimeout
 
 Waits for the given [`param: timeout`] in milliseconds.

@@ -94,7 +94,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
+  height: calc(100% - 40px);
+  flex-direction: column;
+  line-height: 40px;
+}
+
+.awesome.small {
+  font-size: 20px;
 }
 
 .image-preview img {

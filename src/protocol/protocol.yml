@@ -220,13 +220,13 @@ InterceptedResponse:
 FetchResponse:
   type: object
   properties:
+    fetchUid: string
     url: string
     status: number
     statusText: string
     headers:
       type: array
       items: NameValue
-    body: binary
 
 LaunchOptions:
   type: mixin
@@ -625,6 +625,16 @@ BrowserContext:
       returns:
         response: FetchResponse?
         error: string?
+
+    fetchResponseBody:
+      parameters:
+        fetchUid: string
+      returns:
+        binary?: binary
+
+    disposeFetchResponse:
+      parameters:
+        fetchUid: string
 
     grantPermissions:
       parameters:
@@ -2181,6 +2191,7 @@ Route:
         body: string?
         isBase64: boolean?
         useInterceptedResponseBody: boolean?
+        fetchResponseUid: string?
 
     responseBody:
       returns:

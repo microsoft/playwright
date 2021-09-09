@@ -169,7 +169,7 @@ Please run 'npx playwright install' to install Playwright browsers
     await controller.run(async progress => {
       await context._browser._defaultContext!._loadDefaultContextAsIs(progress);
     });
-    await context.extendInjectedScript('main', consoleApiSource.source);
+    await context.extendInjectedScript(consoleApiSource.source);
     const [page] = context.pages();
 
     if (traceViewerBrowser === 'chromium')

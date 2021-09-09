@@ -29,8 +29,6 @@ declare module globalThis {
   let _playwrightRefreshOverlay: () => void;
 }
 
-const scriptSymbol = Symbol('scriptSymbol');
-
 export class Recorder {
   private _injectedScript: InjectedScript;
   private _performingAction = false;
@@ -132,9 +130,8 @@ export class Recorder {
   }
 
   private _refreshListenersIfNeeded() {
-    if ((document.documentElement as any)[scriptSymbol])
+    if (this._outerGlassPaneElement.parentElement)
       return;
-    (document.documentElement as any)[scriptSymbol] = true;
     removeEventListeners(this._listeners);
     this._listeners = [
       addEventListener(document, 'click', event => this._onClick(event as MouseEvent), true),

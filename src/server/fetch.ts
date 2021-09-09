@@ -24,7 +24,7 @@ import * as types from './types';
 import { pipeline, Readable, Transform } from 'stream';
 import { monotonicTime } from '../utils/utils';
 
-export async function playwrightFetch(context: BrowserContext, params: types.FetchOptions): Promise<{fetchResponse?: types.FetchResponse, error?: string}> {
+export async function playwrightFetch(context: BrowserContext, params: types.FetchOptions): Promise<{fetchResponse?: Omit<types.FetchResponse, 'body'> & { fetchUid: string }, error?: string}> {
   try {
     const headers: { [name: string]: string } = {};
     if (params.headers) {
@@ -54,15 +54,21 @@ export async function playwrightFetch(context: BrowserContext, params: types.Fet
     const timeout = context._timeoutSettings.timeout(params);
     const deadline = monotonicTime() + timeout;
 
-    const fetchResponse = await sendRequest(context, new URL(params.url, context._options.baseURL), {
+    const options: https.RequestOptions & { maxRedirects: number, deadline: number } = {
       method,
       headers,
       agent,
       maxRedirects: 20,
       timeout,
       deadline
-    }, params.postData);
-    return { fetchResponse };
+    };
+    // rejectUnauthorized = undefined is treated as true in node 12.
+    if (context._options.ignoreHTTPSErrors)
+      options.rejectUnauthorized = false;
+
+    const fetchResponse = await sendRequest(context, new URL(params.url, context._options.baseURL), options, params.postData);
+    const fetchUid = context.storeFetchResponseBody(fetchResponse.body);
+    return { fetchResponse: { ...fetchResponse, fetchUid } };
   } catch (e) {
     return { error: String(e) };
   }
@@ -101,7 +107,7 @@ async function updateRequestCookieHeader(context: BrowserContext, url: URL, opti
   }
 }
 
-async function sendRequest(context: BrowserContext, url: URL, options: http.RequestOptions & { maxRedirects: number, deadline: number }, postData?: Buffer): Promise<types.FetchResponse>{
+async function sendRequest(context: BrowserContext, url: URL, options: https.RequestOptions & { maxRedirects: number, deadline: number }, postData?: Buffer): Promise<types.FetchResponse>{
   await updateRequestCookieHeader(context, url, options);
   return new Promise<types.FetchResponse>((fulfill, reject) => {
     const requestConstructor: ((url: URL, options: http.RequestOptions, callback?: (res: http.IncomingMessage) => void) => http.ClientRequest)

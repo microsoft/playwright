@@ -28,13 +28,18 @@ type Filter = 'Failing' | 'All';
 
 export const Report: React.FC = () => {
   const [report, setReport] = React.useState<JsonReport | undefined>();
+  const [fetchError, setFetchError] = React.useState<string | undefined>();
   const [selectedTest, setSelectedTest] = React.useState<JsonTestCase | undefined>();
 
   React.useEffect(() => {
     (async () => {
-      const result = await fetch('report.json');
-      const json = (await result.json()) as JsonReport;
-      setReport(json);
+      try {
+        const result = await fetch('report.json', { cache: 'no-cache' });
+        const json = (await result.json()) as JsonReport;
+        setReport(json);
+      } catch (e) {
+        setFetchError(e.message);
+      }
     })();
   }, []);
   const [filter, setFilter] = React.useState<Filter>('Failing');
@@ -62,12 +67,13 @@ export const Report: React.FC = () => {
             }}>{item}</div>;
           })
         }</div>
-        {filter === 'All' && report?.suites.map((s, i) => <ProjectTreeItem key={i} suite={s} setSelectedTest={setSelectedTest} selectedTest={selectedTest}></ProjectTreeItem>)}
-        {filter === 'Failing' && !!unexpectedTestCount && report?.suites.map((s, i) => {
+        {!fetchError && filter === 'All' && report?.suites.map((s, i) => <ProjectTreeItem key={i} suite={s} setSelectedTest={setSelectedTest} selectedTest={selectedTest}></ProjectTreeItem>)}
+        {!fetchError && filter === 'Failing' && !!unexpectedTestCount && report?.suites.map((s, i) => {
           const hasUnexpectedOutcomes = !!unexpectedTests.get(s)?.length;
           return hasUnexpectedOutcomes && <ProjectFlatTreeItem key={i} suite={s} setSelectedTest={setSelectedTest} selectedTest={selectedTest} unexpectedTests={unexpectedTests.get(s)!}></ProjectFlatTreeItem>;
         })}
-        {filter === 'Failing' && !unexpectedTestCount && <div className='awesome'>You are awesome!</div>}
+        {!fetchError && filter === 'Failing' && !unexpectedTestCount && <div className='awesome'>You are awesome!</div>}
+        {fetchError && <div className='awesome small'><div>Failed to load report</div><div>Are you using npx playwright?</div></div>}
       </div>
     </SplitView>
   </div>;

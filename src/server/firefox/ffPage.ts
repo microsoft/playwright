@@ -317,8 +317,7 @@ export class FFPage implements PageDelegate {
   }
 
   async exposeBinding(binding: PageBinding) {
-    const worldName = binding.world === 'utility' ? UTILITY_WORLD_NAME : '';
-    await this._session.send('Page.addBinding', { name: binding.name, script: binding.source, worldName });
+    await this._session.send('Page.addBinding', { name: binding.name, script: binding.source });
   }
 
   didClose() {

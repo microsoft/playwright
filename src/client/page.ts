@@ -19,9 +19,10 @@ import { Events } from './events';
 import { assert } from '../utils/utils';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import * as channels from '../protocol/channels';
+import * as network from './network';
 import { parseError, serializeError } from '../protocol/serializers';
 import { Accessibility } from './accessibility';
-import { BrowserContext } from './browserContext';
+import { BrowserContext, FetchOptions } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { ConsoleMessage } from './consoleMessage';
 import { Dialog } from './dialog';
@@ -435,6 +436,12 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   async evaluate<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 2);
     return this._mainFrame.evaluate(pageFunction, arg);
+  }
+
+  async _fetch(request: network.Request, options?: { timeout?: number }): Promise<network.FetchResponse>;
+  async _fetch(url: string, options?: FetchOptions): Promise<network.FetchResponse>;
+  async _fetch(urlOrRequest: string|network.Request, options: FetchOptions = {}): Promise<network.FetchResponse> {
+    return await this._browserContext._fetch(urlOrRequest as any, options);
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
