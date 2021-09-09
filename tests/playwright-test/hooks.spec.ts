@@ -493,3 +493,29 @@ test('beforeAll and afterAll timeouts at the same time should be reported', asyn
   ]);
   expect(result.output).toContain('Timeout of 1000ms exceeded in beforeAll hook.');
 });
+
+test('beforeEach failure should prevent a subsequent beforeEach', async ({ runInlineTest }) => {
+  test.fixme();
+  const report = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test.describe('suite', () => {
+        test.beforeEach(async ({}) => {
+          console.log('beforeEach1');
+          throw new Error('beforeEach1');
+        });
+        test.beforeEach(async ({}) => {
+          console.log('beforeEach2');
+        });
+        test.afterEach(async ({}) => {
+          console.log('afterEach');
+        });
+        test('one', async ({}) => {
+          console.log('test');
+        });
+      });
+    `,
+  });
+  expect(report.output).toContain('beforeEach1\nafterEach');
+  expect(report.results[0].error.message).toContain('beforeEach1');
+});
