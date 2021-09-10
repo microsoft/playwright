@@ -196,7 +196,7 @@ async function sendRequest(context: BrowserContext, url: URL, options: https.Req
           url: response.url || url.toString(),
           status: response.statusCode || 0,
           statusText: response.statusMessage || '',
-          headers: flattenHeaders(response.headers),
+          headers: toHeadersArray(response.rawHeaders),
           body
         });
       });
@@ -219,18 +219,10 @@ async function sendRequest(context: BrowserContext, url: URL, options: https.Req
   });
 }
 
-function flattenHeaders(headers: http.IncomingHttpHeaders): types.HeadersArray {
+function toHeadersArray(rawHeaders: string[]): types.HeadersArray {
   const result: types.HeadersArray = [];
-  for (const [name, values] of Object.entries(headers)) {
-    if (values === undefined)
-      continue;
-    if (typeof values === 'string') {
-      result.push({name, value: values as string});
-    } else {
-      for (const value of values)
-        result.push({name, value});
-    }
-  }
+  for (let i = 0; i < rawHeaders.length; i += 2)
+    result.push({ name: rawHeaders[i], value: rawHeaders[i + 1] });
   return result;
 }
 
