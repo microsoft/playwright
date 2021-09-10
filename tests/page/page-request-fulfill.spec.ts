@@ -194,7 +194,8 @@ it('should include the origin header', async ({page, server, isAndroid}) => {
   expect(interceptedRequest.headers()['origin']).toEqual(server.PREFIX);
 });
 
-it('should fulfill with fetch result', async ({page, server}) => {
+it('should fulfill with fetch result', async ({page, server, isElectron}) => {
+  it.fixme(isElectron, 'error: Browser context management is not supported.');
   await page.route('**/*', async route => {
     // @ts-expect-error
     const response = await page._fetch(server.PREFIX + '/simple.json');
@@ -206,7 +207,8 @@ it('should fulfill with fetch result', async ({page, server}) => {
   expect(await response.json()).toEqual({'foo': 'bar'});
 });
 
-it('should fulfill with fetch result and overrides', async ({page, server}) => {
+it('should fulfill with fetch result and overrides', async ({page, server, isElectron}) => {
+  it.fixme(isElectron, 'error: Browser context management is not supported.');
   await page.route('**/*', async route => {
     // @ts-expect-error
     const response = await page._fetch(server.PREFIX + '/simple.json');
@@ -225,7 +227,8 @@ it('should fulfill with fetch result and overrides', async ({page, server}) => {
   expect(await response.json()).toEqual({'foo': 'bar'});
 });
 
-it('should fetch original request and fulfill', async ({page, server}) => {
+it('should fetch original request and fulfill', async ({page, server, isElectron}) => {
+  it.fixme(isElectron, 'error: Browser context management is not supported.');
   await page.route('**/*', async route => {
     // @ts-expect-error
     const response = await page._fetch(route.request());
