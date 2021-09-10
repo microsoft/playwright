@@ -51,7 +51,6 @@ export class CRNetworkManager {
     return [
       eventsHelper.addEventListener(session, 'Fetch.requestPaused', this._onRequestPaused.bind(this, workerFrame)),
       eventsHelper.addEventListener(session, 'Fetch.authRequired', this._onAuthRequired.bind(this)),
-      eventsHelper.addEventListener(session, 'Network.dataReceived', this._onDataReceived.bind(this)),
       eventsHelper.addEventListener(session, 'Network.requestWillBeSent', this._onRequestWillBeSent.bind(this, workerFrame)),
       eventsHelper.addEventListener(session, 'Network.requestWillBeSentExtraInfo', this._onRequestWillBeSentExtraInfo.bind(this)),
       eventsHelper.addEventListener(session, 'Network.responseReceived', this._onResponseReceived.bind(this)),
@@ -351,12 +350,6 @@ export class CRNetworkManager {
     this._page._frameManager.requestReceivedResponse(response);
   }
 
-  _onDataReceived(event: Protocol.Network.dataReceivedPayload) {
-    const request = this._requestIdToRequest.get(event.requestId);
-    if (request)
-      request.request.responseSize.encodedBodySize += event.encodedDataLength;
-  }
-
   _onLoadingFinished(event: Protocol.Network.loadingFinishedPayload) {
     this._responseExtraInfoTracker.loadingFinished(event);
 
@@ -373,6 +366,7 @@ export class CRNetworkManager {
     const response = request.request._existingResponse();
     if (response) {
       request.request.responseSize.transferSize = event.encodedDataLength;
+      request.request.responseSize.encodedBodySize = event.encodedDataLength - request.request.responseSize.responseHeadersSize;
       response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp));
     }
     this._requestIdToRequest.delete(request._requestId);
@@ -677,8 +671,10 @@ class ResponseExtraInfoTracker {
     if (response && requestExtraInfo)
       response.setRawRequestHeaders(headersObjectToArray(requestExtraInfo.headers, '\n'));
     const responseExtraInfo = info.responseReceivedExtraInfo[index];
-    if (response && responseExtraInfo)
+    if (response && responseExtraInfo) {
       response.setRawResponseHeaders(headersObjectToArray(responseExtraInfo.headers, '\n'));
+      response.request().responseSize.responseHeadersSize = responseExtraInfo.headersText?.length || 0;
+    }
   }
 
   private _checkFinished(info: RequestInfo) {
