@@ -181,7 +181,7 @@ DEPS['src/web/traceViewer/ui/'] = ['src/common/', 'src/protocol/', 'src/web/trac
 DEPS['src/remote/'] = ['src/client/', 'src/debug/', 'src/dispatchers/', 'src/server/', 'src/server/supplements/', 'src/server/electron/', 'src/server/trace/', 'src/utils/**'];
 
 // CLI should only use client-side features.
-DEPS['src/cli/'] = ['src/cli/**', 'src/client/**', 'src/generated/', 'src/server/injected/', 'src/debug/injected/', 'src/server/trace/**', 'src/utils/**'];
+DEPS['src/cli/'] = ['src/cli/**', 'src/client/**', 'src/generated/', 'src/server/injected/', 'src/debug/injected/', 'src/server/trace/**', 'src/utils/**', 'src/grid/**'];
 
 DEPS['src/server/supplements/recorder/recorderApp.ts'] = ['src/common/', 'src/utils/', 'src/server/', 'src/server/chromium/'];
 DEPS['src/server/supplements/recorderSupplement.ts'] = ['src/server/snapshot/', ...DEPS['src/server/']];
@@ -191,12 +191,16 @@ DEPS['src/utils/'] = ['src/common/', 'src/protocol/'];
 DEPS['src/server/trace/common/'] = ['src/server/snapshot/', ...DEPS['src/server/']];
 DEPS['src/server/trace/recorder/'] = ['src/server/trace/common/', ...DEPS['src/server/trace/common/']];
 DEPS['src/server/trace/viewer/'] = ['src/server/trace/common/', 'src/server/trace/recorder/', 'src/server/chromium/', ...DEPS['src/server/trace/common/']];
-DEPS['src/test/'] = ['src/test/**', 'src/utils/utils.ts', 'src/utils/**'];
+
+// Playwright Test
+DEPS['src/test/'] = ['src/test/**', 'src/utils/utils.ts', 'src/utils/**', 'src/grid/**'];
 
 // HTML report
 DEPS['src/web/htmlReport/'] = ['src/test/**', 'src/web/'];
 DEPS['src/web/htmlReport2/'] = ['src/test/**', 'src/web/'];
 
+// Grid
+DEPS['src/grid/'] = ['src/utils/**', 'src/dispatchers/**', 'src/server/', 'src/client/'];
 
 checkDeps().catch(e => {
   console.error(e && e.stack ? e.stack : e);

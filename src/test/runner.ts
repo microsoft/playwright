@@ -38,6 +38,7 @@ import { Minimatch } from 'minimatch';
 import { FullConfig } from './types';
 import { WebServer } from './webServer';
 import { raceAgainstDeadline } from '../utils/async';
+import { GridServer } from '../grid/gridServer';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -181,6 +182,14 @@ export class Runner {
     let globalSetupResult: any;
     if (config.globalSetup)
       globalSetupResult = await (await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup'))(this._loader.fullConfig());
+    let gridServer: GridServer | undefined;
+    if (process.env.PW_GRID === 'docker') {
+      gridServer = new GridServer();
+      await gridServer.start(0);
+      process.env.PW_GRID_PORT = gridServer.port() + '';
+    } else if (process.env.PW_GRID) {
+      throw new Error('ERROR: unknown value for PW_GRID env variale. Only "docker" is supported');
+    }
     try {
       for (const file of allTestFiles)
         await this._loader.loadTestFile(file);
@@ -325,6 +334,8 @@ export class Runner {
     } finally {
       if (globalSetupResult && typeof globalSetupResult === 'function')
         await globalSetupResult(this._loader.fullConfig());
+      if (gridServer)
+        await gridServer.stop();
       if (config.globalTeardown)
         await (await this._loader.loadGlobalHook(config.globalTeardown, 'globalTeardown'))(this._loader.fullConfig());
       await webServer?.kill();

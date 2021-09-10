@@ -21,6 +21,7 @@ import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWor
 import { rootTestType } from './testType';
 import { createGuid, removeFolders } from '../utils/utils';
 import { TestInfoImpl } from './types';
+import { GridServerClient } from '../grid/gridServer';
 export { expect } from './expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
@@ -36,7 +37,15 @@ type WorkerAndFileFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
 export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
   defaultBrowserType: [ 'chromium', { scope: 'worker' } ],
   browserName: [ ({ defaultBrowserType }, use) => use(defaultBrowserType), { scope: 'worker' } ],
-  playwright: [ require('../inprocess'), { scope: 'worker' } ],
+  playwright: [async ({}, use, workerInfo) => {
+    if (!process.env.PW_GRID_PORT) {
+      await use(require('../inprocess'));
+    } else {
+      const gridServerClient = await GridServerClient.create(`http://127.0.0.1:${process.env.PW_GRID_PORT}`);
+      await use(await gridServerClient.playwright() as any);
+      gridServerClient.close();
+    }
+  }, { scope: 'worker' } ],
   headless: [ undefined, { scope: 'worker' } ],
   channel: [ undefined, { scope: 'worker' } ],
   launchOptions: [ {}, { scope: 'worker' } ],
@@ -180,7 +189,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
   },
 
   _setupContextOptionsAndArtifacts: [async ({ _browserType, _combinedContextOptions, _artifactsDir, trace, screenshot, actionTimeout, navigationTimeout }, use, testInfo) => {
-    testInfo.snapshotSuffix = process.platform;
+    testInfo.snapshotSuffix = process.env.PW_GRID || process.platform;
     if (process.env.PWDEBUG)
       testInfo.setTimeout(0);
 
