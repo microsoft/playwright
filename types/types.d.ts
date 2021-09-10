@@ -13285,9 +13285,8 @@ export interface Response {
   headersArray(): Promise<Array<Array<string>>>;
 
   /**
-   * Returns the first value of the header matching the name. The name is case insensitive. If multiple headers have the same
-   * name, for example `set-cookie`, the they are returned as a list separated by `, `. If no header is found, `null` is
-   * returned.
+   * Returns the value of the header matching the name. The name is case insensitive. If multiple headers have the same name,
+   * for example `set-cookie`, the they are returned as a list separated by `, `. If no header is found, `null` is returned.
    * @param name Name of the header.
    */
   headerValue(name: string): Promise<null|string>;
