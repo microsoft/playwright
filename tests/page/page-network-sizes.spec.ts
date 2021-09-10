@@ -73,14 +73,14 @@ it('should have the correct responseBodySize', async ({ page, server, asset, bro
   expect(sizes.responseBodySize).toBe(fs.statSync(asset('simplezip.json')).size);
 });
 
-it('should have the correct responseBodySize for chunked request', async ({ page, server, asset, browserName }) => {
+it('should have the correct responseBodySize for chunked request', async ({ page, server, asset }) => {
+  it.fixme();
   const content = fs.readFileSync(asset('simplezip.json'));
+  const AMOUNT_OF_CHUNKS = 10;
+  const CHUNK_SIZE = Math.ceil(content.length / AMOUNT_OF_CHUNKS);
   server.setRoute('/chunked-simplezip.json', (req, resp) => {
     resp.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Transfer-Encoding': 'chunked' });
-    const AMOUNT_OF_CHUNKS = 10;
-    const CHUNK_SIZE = Math.ceil(content.length / AMOUNT_OF_CHUNKS);
-    for (let i = 0; i < AMOUNT_OF_CHUNKS; i++) {
-      const start = i * CHUNK_SIZE;
+    for (let start = 0; start < content.length; start += CHUNK_SIZE) {
       const end = Math.min(start + CHUNK_SIZE, content.length);
       resp.write(content.slice(start, end));
     }
