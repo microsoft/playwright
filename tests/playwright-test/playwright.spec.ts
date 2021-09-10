@@ -272,6 +272,26 @@ test('should report error and pending operations on timeout', async ({ runInline
   expect(stripAscii(result.output)).toContain(`10 |           page.textContent('text=More missing'),`);
 });
 
+test('should not report waitForEventInfo as pending', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      test('timedout', async ({ page }) => {
+        await page.setContent('<div>Click me</div>');
+        await page.waitForLoadState('networkidle');
+        await page.click('text=Missing');
+      });
+    `,
+  }, { workers: 1, timeout: 2000 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Pending operations:');
+  expect(result.output).toContain('- page.click at a.test.ts:9:20');
+  expect(result.output).not.toContain('- page.waitForLoadState');
+});
+
 test('should throw when using page in beforeAll', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'a.test.ts': `
