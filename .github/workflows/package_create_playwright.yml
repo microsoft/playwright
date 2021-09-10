@@ -1,0 +1,28 @@
+name: create-playwright CI
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - 'packages/create-playwright/**/*'
+  pull_request:
+    branches: [ master ]
+    paths:
+      - 'packages/create-playwright/**/*'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/create-playwright/
+    strategy:
+      matrix:
+        node-version: [12.x, 14.x, 16.x]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    - run: npm ci
+    - run: npm run build

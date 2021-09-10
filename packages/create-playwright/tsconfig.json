@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "Node",
+    "downlevelIteration": true,
+    "esModuleInterop": true,
+  },
+  "files": [
+    "src/index.ts"
+  ]
+}
