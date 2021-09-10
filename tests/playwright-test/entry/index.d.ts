@@ -15,3 +15,5 @@
  */
 
 export * from '../../../types/test';
+export * from '../../../types/types';
+export { default } from '../../../types/test';
