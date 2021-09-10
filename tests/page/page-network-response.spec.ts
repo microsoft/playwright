@@ -30,8 +30,7 @@ it('should work', async ({page, server}) => {
   expect((await response.allHeaders())['BaZ']).toBe(undefined);
 });
 
-it('should return last header value for duplicates', async ({page, server}) => {
-  it.fixme();
+it('should return multiple header value', async ({page, server}) => {
   server.setRoute('/headers', (req, res) => {
     // Headers array is only supported since Node v14.14.0 so we write directly to the socket.
     // res.writeHead(200, ['name-a', 'v1','name-b', 'v4','Name-a', 'v2', 'name-A', 'v3']);
@@ -196,7 +195,7 @@ it('should report all headers', async ({ page, server, browserName, platform }) 
   ]);
   const headers = await response.headersArray();
   const actualHeaders = {};
-  for (const [name, value] of headers) {
+  for (const { name, value } of headers) {
     if (!actualHeaders[name])
       actualHeaders[name] = [];
     actualHeaders[name].push(value);
@@ -227,6 +226,42 @@ it('should report multiple set-cookie headers', async ({ page, server }) => {
     page.evaluate(() => fetch('/headers'))
   ]);
   const headers = await response.headersArray();
-  const cookies = headers.filter(([name, value]) => name.toLowerCase() === 'set-cookie').map(([, value]) => value);
+  const cookies = headers.filter(({ name }) => name.toLowerCase() === 'set-cookie').map(({ value }) => value);
   expect(cookies).toEqual(['a=b', 'c=d']);
+  expect(await response.headerValue('not-there')).toEqual(null);
+  expect(await response.headerValue('set-cookie')).toEqual('a=b\nc=d');
+  expect(await response.headerValues('set-cookie')).toEqual(['a=b', 'c=d']);
 });
+
+it('should behave the same way for headers and allHeaders', async ({ page, server, browserName, channel }) => {
+  it.skip(!!channel, 'Stable chrome uses \n as a header separator in non-raw headers');
+  server.setRoute('/headers', (req, res) => {
+    const headers = {
+      'Set-Cookie': ['a=b', 'c=d'],
+      'header-a': ['a=b', 'c=d'],
+      'Name-A': 'v1',
+      'name-b': 'v4',
+      'Name-a': 'v2',
+      'name-A': 'v3',
+    };
+    // Chromium does not report set-cookie headers immediately, so they are missing from .headers()
+    if (browserName === 'chromium')
+      delete headers['Set-Cookie'];
+
+    res.writeHead(200, headers);
+    res.write('\r\n');
+    res.end();
+  });
+
+  await page.goto(server.EMPTY_PAGE);
+  const [response] = await Promise.all([
+    page.waitForResponse('**/*'),
+    page.evaluate(() => fetch('/headers'))
+  ]);
+  const allHeaders = await response.allHeaders();
+  expect(response.headers()).toEqual(allHeaders);
+  expect(allHeaders['header-a']).toEqual('a=b, c=d');
+  expect(allHeaders['name-a']).toEqual('v1, v2, v3');
+  expect(allHeaders['name-b']).toEqual('v4');
+});
+

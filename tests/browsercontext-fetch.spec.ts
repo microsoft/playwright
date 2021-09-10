@@ -48,7 +48,7 @@ it('should work', async ({context, server}) => {
   expect(response.ok()).toBeTruthy();
   expect(response.url()).toBe(server.PREFIX + '/simple.json');
   expect(response.headers()['content-type']).toBe('application/json; charset=utf-8');
-  expect(response.headersArray()).toContainEqual(['Content-Type', 'application/json; charset=utf-8']);
+  expect(response.headersArray()).toContainEqual({ name: 'Content-Type', value: 'application/json; charset=utf-8' });
   expect(await response.text()).toBe('{"foo": "bar"}\n');
 });
 
@@ -268,10 +268,10 @@ it('should return raw headers', async ({context, page, server}) => {
   });
   const response = await context.fetch(`${server.PREFIX}/headers`);
   expect(response.status()).toBe(200);
-  const headers = response.headersArray().filter(([name, value]) => name.toLowerCase().includes('name-'));
-  expect(headers).toEqual([['Name-A', 'v1'], ['name-b', 'v4'], ['Name-a', 'v2'], ['name-A', 'v3']]);
-  // Last value wins, this matches Response.headers()
-  expect(response.headers()['name-a']).toBe('v3');
+  const headers = response.headersArray().filter(({ name }) => name.toLowerCase().includes('name-'));
+  expect(headers).toEqual([{ name: 'Name-A', value: 'v1' }, { name: 'name-b', value: 'v4' }, { name: 'Name-a', value: 'v2' }, { name: 'name-A', value: 'v3' }]);
+  // Comma separated values, this matches Response.headers()
+  expect(response.headers()['name-a']).toBe('v1, v2, v3');
   expect(response.headers()['name-b']).toBe('v4');
 });
 

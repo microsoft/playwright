@@ -267,13 +267,13 @@ it('should return navigation bit when navigating to image', async ({page, server
 });
 
 it('should report raw headers', async ({ page, server, browserName, platform }) => {
-  let expectedHeaders: string[][];
+  let expectedHeaders: { name: string, value: string }[];
   server.setRoute('/headers', (req, res) => {
     expectedHeaders = [];
     for (let i = 0; i < req.rawHeaders.length; i += 2)
-      expectedHeaders.push([req.rawHeaders[i], req.rawHeaders[i + 1]]);
+      expectedHeaders.push({ name: req.rawHeaders[i], value: req.rawHeaders[i + 1] });
     if (browserName === 'webkit' && platform === 'win32')
-      expectedHeaders = expectedHeaders.filter(([name, value]) => name.toLowerCase() !== 'accept-encoding' && name.toLowerCase() !== 'accept-language');
+      expectedHeaders = expectedHeaders.filter(({ name }) => name.toLowerCase() !== 'accept-encoding' && name.toLowerCase() !== 'accept-language');
     res.end();
   });
   await page.goto(server.EMPTY_PAGE);
@@ -289,7 +289,9 @@ it('should report raw headers', async ({ page, server, browserName, platform }) 
     }))
   ]);
   const headers = await request.headersArray();
-  expect(headers.sort()).toEqual(expectedHeaders.sort());
+  expect(headers.sort((a, b) => a.name.localeCompare(b.name))).toEqual(expectedHeaders.sort((a, b) => a.name.localeCompare(b.name)));
+  expect(await request.headerValue('header-a')).toEqual('value-a, value-a-1, value-a-2');
+  expect(await request.headerValue('not-there')).toEqual(null);
 });
 
 it('should report raw response headers in redirects', async ({ page, server, browserName }) => {

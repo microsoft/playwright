@@ -17,14 +17,6 @@ Disposes the body of this response. If not called then the body will stay in mem
 An object with all the response HTTP headers associated with this response.
 
 ## method: FetchResponse.headersArray
-* langs: js, csharp, python
-- returns: <[Array]<[Array]<[string]>>>
-
-An array with all the request HTTP headers associated with this response. Header names are not lower-cased.
-Headers with multiple entries, such as `Set-Cookie`, appear in the array multiple times.
-
-## method: FetchResponse.headersArray
-* langs: java
 - returns: <[Array]<[Object]>>
   - `name` <[string]> Name of the header.
   - `value` <[string]> Value of the header.
