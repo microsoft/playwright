@@ -138,7 +138,7 @@ test('should be able to specify the baseURL without the server', async ({ runInl
   const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
     res.end('<html><body>hello</body></html>');
   });
-  await new Promise(resolve => server.listen(port, resolve));
+  await new Promise<void>(resolve => server.listen(port, resolve));
   const result = await runInlineTest({
     'test.spec.ts': `
       const { test } = pwt;
@@ -167,7 +167,7 @@ test('should be able to use an existing server when reuseExistingServer:true ', 
   const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
     res.end('<html><body>hello</body></html>');
   });
-  await new Promise(resolve => server.listen(port, resolve));
+  await new Promise<void>(resolve => server.listen(port, resolve));
   const result = await runInlineTest({
     'test.spec.ts': `
       const { test } = pwt;
@@ -200,7 +200,7 @@ test('should throw when a server is already running on the given port and strict
   const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
     res.end('<html><body>hello</body></html>');
   });
-  await new Promise(resolve => server.listen(port, resolve));
+  await new Promise<void>(resolve => server.listen(port, resolve));
   const result = await runInlineTest({
     'test.spec.ts': `
       const { test } = pwt;
@@ -232,7 +232,7 @@ for (const host of ['localhost', '127.0.0.1', '0.0.0.0']) {
     const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
       res.end('<html><body>hello</body></html>');
     });
-    await new Promise(resolve => server.listen(port, host, resolve));
+    await new Promise<void>(resolve => server.listen(port, host, resolve));
     try {
       const result = await runInlineTest({
         'test.spec.ts': `

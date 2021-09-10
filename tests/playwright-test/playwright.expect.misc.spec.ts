@@ -165,7 +165,7 @@ test('should support toHaveURL with baseURL', async ({ runInlineTest }, testInfo
   const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
     res.end('<html><body>hello</body></html>');
   });
-  await new Promise(resolve => server.listen(port, resolve));
+  await new Promise<void>(resolve => server.listen(port, resolve));
   const result = await runInlineTest({
     'a.test.ts': `
       const { test } = pwt;

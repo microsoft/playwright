@@ -186,7 +186,7 @@ it('should use proxy with emulated user agent', async ({ browserType, browserOpt
       socket.end();
     });
   });
-  await new Promise(f => server.listen(0, f));
+  await new Promise<void>(f => server.listen(0, f));
 
   const browser = await browserType.launch({
     ...browserOptions,
@@ -221,7 +221,7 @@ async function setupSocksForwardingServer(port: number, forwardPort: number){
       dstSock.connect(forwardPort, '127.0.0.1');
     }
   });
-  await new Promise(resolve => socksServer.listen(port, 'localhost', resolve));
+  await new Promise<void>(resolve => socksServer.listen(port, 'localhost', resolve));
   socksServer.useAuth(socks.auth.None());
   return {
     closeProxyServer: () => socksServer.close(),
