@@ -100,7 +100,7 @@ export function addGenerateHtmlCommand(program: commander.CommanderStatic) {
       for (const file of files)
         reportFiles.add(path.join(reportFolder, file));
     }
-    new HtmlBuilder([...reportFiles], output);
+    new HtmlBuilder([...reportFiles], output, loader.fullConfig().rootDir);
   }).on('--help', () => {
     console.log('');
     console.log('Examples:');

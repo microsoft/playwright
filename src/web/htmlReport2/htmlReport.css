@@ -52,7 +52,7 @@
   padding: 5px;
   overflow: auto;
   margin: 20px 0;
-  flex: auto;
+  flex: none;
 }
 
 .status-icon {

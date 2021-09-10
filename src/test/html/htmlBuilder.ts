@@ -16,15 +16,18 @@
 
 import fs from 'fs';
 import path from 'path';
-import { ProjectTreeItem, SuiteTreeItem, TestTreeItem, TestCase, TestResult, TestStep, TestFile } from './types';
+import { ProjectTreeItem, SuiteTreeItem, TestTreeItem, TestCase, TestResult, TestStep, TestFile, Location } from './types';
 import { JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep } from '../reporters/raw';
 import { calculateSha1 } from '../../utils/utils';
+import { toPosixPath } from '../reporters/json';
 
 export class HtmlBuilder {
   private _reportFolder: string;
   private _tests = new Map<string, JsonTestCase>();
+  private _rootDir: string;
 
-  constructor(rawReports: string[], outputDir: string) {
+  constructor(rawReports: string[], outputDir: string, rootDir: string) {
+    this._rootDir = rootDir;
     this._reportFolder = path.resolve(process.cwd(), outputDir);
     const dataFolder = path.join(this._reportFolder, 'data');
     fs.mkdirSync(dataFolder, { recursive: true });
@@ -37,12 +40,13 @@ export class HtmlBuilder {
       const projectJson = JSON.parse(fs.readFileSync(projectFile, 'utf-8')) as JsonReport;
       const suites: SuiteTreeItem[] = [];
       for (const file of projectJson.suites) {
-        const fileId = calculateSha1(projectFile + ':' + file.location!.file);
+        const relativeFileName = this._relativeLocation(file.location).file;
+        const fileId = calculateSha1(projectFile + ':' + relativeFileName);
         const tests: JsonTestCase[] = [];
         suites.push(this._createSuiteTreeItem(file, fileId, tests));
         const testFile: TestFile = {
           fileId,
-          path: file.location!.file,
+          path: relativeFileName,
           tests: tests.map(t => this._createTestCase(t))
         };
         fs.writeFileSync(path.join(dataFolder, fileId + '.json'), JSON.stringify(testFile, undefined, 2));
@@ -60,7 +64,7 @@ export class HtmlBuilder {
     return {
       testId: test.testId,
       title: test.title,
-      location: test.location,
+      location: this._relativeLocation(test.location),
       results: test.results.map(r => this._createTestResult(r))
     };
   }
@@ -71,7 +75,7 @@ export class HtmlBuilder {
     testCollector.push(...suite.tests);
     return {
       title: suite.title,
-      location: suite.location,
+      location: this._relativeLocation(suite.location),
       duration: suites.reduce((a, s) => a + s.duration, 0) + tests.reduce((a, t) => a + t.duration, 0),
       failedTests: suites.reduce((a, s) => a + s.failedTests, 0) + tests.reduce((a, t) => t.outcome === 'unexpected' || t.outcome === 'flaky' ? a + 1 : a, 0),
       suites,
@@ -85,7 +89,7 @@ export class HtmlBuilder {
     return {
       testId: test.testId,
       fileId: fileId,
-      location: test.location,
+      location: this._relativeLocation(test.location),
       title: test.title,
       duration,
       outcome: test.outcome
@@ -98,7 +102,7 @@ export class HtmlBuilder {
       startTime: result.startTime,
       retry: result.retry,
       steps: result.steps.map(s => this._createTestStep(s)),
-      error: result.error,
+      error: result.error?.message,
       status: result.status,
     };
   }
@@ -110,7 +114,17 @@ export class HtmlBuilder {
       duration: step.duration,
       steps: step.steps.map(s => this._createTestStep(s)),
       log: step.log,
-      error: step.error
+      error: step.error?.message
+    };
+  }
+
+  private _relativeLocation(location: Location | undefined): Location {
+    if (!location)
+      return { file: '', line: 0, column: 0 };
+    return {
+      file: toPosixPath(path.relative(this._rootDir, location.file)),
+      line: location.line,
+      column: location.column,
     };
   }
 }

@@ -16,6 +16,7 @@
 
 import './htmlReport.css';
 import * as React from 'react';
+import ansi2html from 'ansi-to-html';
 import { SplitView } from '../components/splitView';
 import { TreeItem } from '../components/treeItem';
 import { TabbedPane } from '../traceViewer/ui/tabbedPane';
@@ -166,6 +167,7 @@ const TestResultView: React.FC<{
   result: TestResult,
 }> = ({ test, result }) => {
   return <div className='test-result'>
+    {result.error && <ErrorMessage error={result.error}></ErrorMessage>}
     {result.steps.map((step, i) => <StepTreeItem key={i} step={step} depth={0}></StepTreeItem>)}
   </div>;
 };
@@ -179,10 +181,13 @@ const StepTreeItem: React.FC<{
     <span style={{ whiteSpace: 'pre' }}>{step.title}</span>
     <div style={{ flex: 'auto' }}></div>
     <div>{msToString(step.duration)}</div>
-  </div>} loadChildren={step.steps.length + (step.log || []).length ? () => {
+  </div>} loadChildren={step.steps.length + (step.log || []).length + (step.error ? 1 : 0) ? () => {
     const stepChildren = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1}></StepTreeItem>);
     const logChildren = (step.log || []).map((l, i) => <LogTreeItem key={step.steps.length + i} log={l} depth={depth + 1}></LogTreeItem>);
-    return [...stepChildren, ...logChildren];
+    const children = [...stepChildren, ...logChildren];
+    if (step.error)
+      children.unshift(<ErrorMessage error={step.error}></ErrorMessage>);
+    return children;
   } : undefined} depth={depth}></TreeItem>;
 };
 
@@ -224,4 +229,36 @@ function retryLabel(index: number) {
   if (!index)
     return 'Run';
   return `Retry #${index}`;
+}
+
+const ErrorMessage: React.FC<{
+  error: string;
+}> = ({ error }) => {
+  const html = React.useMemo(() => {
+    return new ansi2html({ colors: ansiColors }).toHtml(escapeHTML(error));
+  }, [error]);
+  return <div className='error-message' dangerouslySetInnerHTML={{ __html: html || '' }}></div>;
+};
+
+const ansiColors = {
+  0: '#000',
+  1: '#C00',
+  2: '#0C0',
+  3: '#C50',
+  4: '#00C',
+  5: '#C0C',
+  6: '#0CC',
+  7: '#CCC',
+  8: '#555',
+  9: '#F55',
+  10: '#5F5',
+  11: '#FF5',
+  12: '#55F',
+  13: '#F5F',
+  14: '#5FF',
+  15: '#FFF'
+};
+
+function escapeHTML(text: string): string {
+  return text.replace(/[&"<>]/g, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]!));
 }
