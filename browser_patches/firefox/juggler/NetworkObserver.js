@@ -729,6 +729,7 @@ class NetworkRequest {
         requestId: this.requestId,
         responseEndTime: httpChannel.responseEndTime,
         transferSize: httpChannel.transferSize,
+        encodedBodySize: httpChannel.encodedBodySize,
         protocolVersion: httpChannel.protocolVersion,
       }, this._frameId);
     }
