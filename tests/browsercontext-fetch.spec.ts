@@ -283,8 +283,8 @@ it('should return raw headers', async ({context, page, server}) => {
   expect(response.status()).toBe(200);
   const headers = response.headersArray().filter(([name, value]) => name.toLowerCase().includes('name-'));
   expect(headers).toEqual([['Name-A', 'v1'], ['name-b', 'v4'], ['Name-a', 'v2'], ['name-A', 'v3']]);
-  // Last value wins, this matches Response.headers()
-  expect(response.headers()['name-a']).toBe('v3');
+  // Comma separated values, this matches Response.headers()
+  expect(response.headers()['name-a']).toBe('v1, v2, v3');
   expect(response.headers()['name-b']).toBe('v4');
 });
 

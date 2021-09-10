@@ -215,3 +215,35 @@ it('should report multiple set-cookie headers', async ({ page, server }) => {
   expect(await response.headerValue('set-cookie')).toEqual('a=b, c=d');
   expect(await response.headerValues('set-cookie')).toEqual(['a=b', 'c=d']);
 });
+
+it('should behave the same way for headers and allHeaders', async ({ page, server, browserName }) => {
+  server.setRoute('/headers', (req, res) => {
+    const headers = {
+      'Set-Cookie': ['a=b', 'c=d'],
+      'header-a': ['a=b', 'c=d'],
+      'Name-A': 'v1',
+      'name-b': 'v4',
+      'Name-a': 'v2',
+      'name-A': 'v3',
+    };
+    // Chromium does not report set-cookie headers immediately, so they are missing from .headers()
+    if (browserName === 'chromium')
+      delete headers['Set-Cookie'];
+
+    res.writeHead(200, headers);
+    res.write('\r\n');
+    res.end();
+  });
+
+  await page.goto(server.EMPTY_PAGE);
+  const [response] = await Promise.all([
+    page.waitForResponse('**/*'),
+    page.evaluate(() => fetch('/headers'))
+  ]);
+  const allHeaders = await response.allHeaders();
+  expect(response.headers()).toEqual(await allHeaders);
+  expect(allHeaders['header-a']).toEqual('a=b, c=d');
+  expect(allHeaders['name-a']).toEqual('v1, v2, v3');
+  expect(allHeaders['name-b']).toEqual('v4');
+});
+

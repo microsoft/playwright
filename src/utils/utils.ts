@@ -265,8 +265,13 @@ export function headersObjectToArray(headers: HeadersObject, separator?: string,
 
 export function headersArrayToObject(headers: HeadersArray, lowerCase: boolean): HeadersObject {
   const result: HeadersObject = {};
-  for (const { name, value } of headers)
-    result[lowerCase ? name.toLowerCase() : name] = value;
+  for (const { name, value } of headers) {
+    const lowerCaseName = name.toLowerCase();
+    if (!(lowerCaseName in result))
+      result[lowerCaseName] = value;
+    else
+      result[lowerCaseName] += `, ${value}`;
+  }
   return result;
 }
 
