@@ -30,6 +30,24 @@ it('should work', async ({page, server}) => {
   expect((await response.allHeaders())['BaZ']).toBe(undefined);
 });
 
+it('should return last header value for duplicates', async ({page, server}) => {
+  it.fixme();
+  server.setRoute('/headers', (req, res) => {
+    // Headers array is only supported since Node v14.14.0 so we write directly to the socket.
+    // res.writeHead(200, ['name-a', 'v1','name-b', 'v4','Name-a', 'v2', 'name-A', 'v3']);
+    const conn = res.connection;
+    conn.write('HTTP/1.1 200 OK\r\n');
+    conn.write('Name-A: v1\r\n');
+    conn.write('Name-a: v2\r\n');
+    conn.write('name-A: v3\r\n');
+    conn.write('\r\n');
+    conn.uncork();
+    conn.end();
+  });
+  const response = await page.goto(`${server.PREFIX}/headers`);
+  expect(response.status()).toBe(200);
+  expect(response.headers()['name-a']).toBe('v1, v2, v3');
+});
 
 it('should return text', async ({page, server}) => {
   const response = await page.goto(server.PREFIX + '/simple.json');
