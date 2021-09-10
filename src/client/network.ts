@@ -161,9 +161,9 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
     return (await this._getHeadersIfNeeded()).map(header => [header.name, header.value]);
   }
 
-  async headerValue(headerName: string): Promise<string | null> {
+  async headerValue(name: string): Promise<string | null> {
     const headers = await this._getHeadersIfNeeded();
-    const lowerCaseName = headerName.toLowerCase();
+    const lowerCaseName = name.toLowerCase();
     for (const {name, value} of headers) {
       if (name.toLowerCase() === lowerCaseName)
         return value;
@@ -277,8 +277,8 @@ export class InterceptedResponse implements api.Response {
     return this._initializer.headers.map(header => [header.name, header.value]);
   }
 
-  async headerValue(headerName: string): Promise<string | null> {
-    const lowerCaseName = headerName.toLowerCase();
+  async headerValue(name: string): Promise<string | null> {
+    const lowerCaseName = name.toLowerCase();
     for (const {name, value} of this._initializer.headers) {
       if (name.toLowerCase() === lowerCaseName)
         return value;
@@ -286,8 +286,8 @@ export class InterceptedResponse implements api.Response {
     return null;
   }
 
-  async headerValues(headerName: string): Promise<string[]> {
-    const lowerCaseName = headerName.toLowerCase();
+  async headerValues(name: string): Promise<string[]> {
+    const lowerCaseName = name.toLowerCase();
     return this._initializer.headers.filter(({name}) => name.toLowerCase() === lowerCaseName).map(({value}) => value);
   }
 
@@ -507,9 +507,9 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
     return (await this._getHeadersIfNeeded()).map(header => [header.name, header.value]);
   }
 
-  async headerValue(headerName: string): Promise<string | null> {
+  async headerValue(name: string): Promise<string | null> {
     const headers = await this._getHeadersIfNeeded();
-    const lowerCaseName = headerName.toLowerCase();
+    const lowerCaseName = name.toLowerCase();
     for (const {name, value} of headers) {
       if (name.toLowerCase() === lowerCaseName)
         return value;
@@ -517,16 +517,10 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
     return null;
   }
 
-  async headerValues(headerName: string): Promise<string[]> {
+  async headerValues(name: string): Promise<string[]> {
     const headers = await this._getHeadersIfNeeded();
-    const lowerCaseName = headerName.toLowerCase();
+    const lowerCaseName = name.toLowerCase();
     return headers.filter(({name}) => name.toLowerCase() === lowerCaseName).map(({value}) => value);
-  }
-
-  async response(): Promise<Response | null> {
-    return this._wrapApiCall(async (channel: channels.RequestChannel) => {
-      return Response.fromNullable((await channel.response()).response);
-    });
   }
 
   async finished(): Promise<null> {
