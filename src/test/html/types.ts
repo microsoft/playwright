@@ -57,18 +57,12 @@ export type TestCase = {
   results: TestResult[];
 };
 
-export interface TestError {
-  message?: string;
-  stack?: string;
-  value?: string;
-}
-
 export type TestResult = {
   retry: number;
   startTime: string;
   duration: number;
   steps: TestStep[];
-  error?: TestError;
+  error?: string;
   status: 'passed' | 'failed' | 'timedOut' | 'skipped';
 };
 
@@ -77,6 +71,6 @@ export type TestStep = {
   startTime: string;
   duration: number;
   log?: string[];
-  error?: TestError;
+  error?: string;
   steps: TestStep[];
 };

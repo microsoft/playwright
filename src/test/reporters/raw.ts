@@ -22,8 +22,8 @@ import { assert, calculateSha1 } from '../../utils/utils';
 import { sanitizeForFilePath } from '../util';
 import { serializePatterns } from './json';
 
-export type JsonStats = { expected: number, unexpected: number, flaky: number, skipped: number };
 export type JsonLocation = Location;
+export type JsonError = TestError;
 export type JsonStackFrame = { file: string, line: number, column: number };
 
 export type JsonReport = {
@@ -86,7 +86,7 @@ export type JsonTestResult = {
   startTime: string;
   duration: number;
   status: TestStatus;
-  error?: TestError;
+  error?: JsonError;
   attachments: JsonAttachment[];
   steps: JsonTestStep[];
 };
@@ -96,7 +96,7 @@ export type JsonTestStep = {
   category: string,
   startTime: string;
   duration: number;
-  error?: TestError;
+  error?: JsonError;
   steps: JsonTestStep[];
   log?: string[];
 };
