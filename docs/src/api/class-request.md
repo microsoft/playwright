@@ -77,12 +77,12 @@ Headers with multiple entries, such as `Set-Cookie`, appear in the array multipl
 An array with all the request HTTP headers associated with this request. Unlike [`method: Request.allHeaders`], header names are not lower-cased.
 Headers with multiple entries, such as `Set-Cookie`, appear in the array multiple times.
 
-## async method: Request.getHeaderValue
+## async method: Request.headerValue
 - returns: <[null]|[string]>
 
 Returns the value of the header matching the name. The name is case insensitive.
 
-### param: Request.getHeaderValue.name
+### param: Request.headerValue.name
 - `name` <[string]>
 
 Name of the header.

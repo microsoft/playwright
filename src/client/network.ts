@@ -161,7 +161,7 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
     return (await this._getHeadersIfNeeded()).map(header => [header.name, header.value]);
   }
 
-  async getHeaderValue(headerName: string): Promise<string | null> {
+  async headerValue(headerName: string): Promise<string | null> {
     const headers = await this._getHeadersIfNeeded();
     const lowerCaseName = headerName.toLowerCase();
     for (const {name, value} of headers) {
@@ -277,7 +277,7 @@ export class InterceptedResponse implements api.Response {
     return this._initializer.headers.map(header => [header.name, header.value]);
   }
 
-  async getHeaderValue(headerName: string): Promise<string | null> {
+  async headerValue(headerName: string): Promise<string | null> {
     const lowerCaseName = headerName.toLowerCase();
     for (const {name, value} of this._initializer.headers) {
       if (name.toLowerCase() === lowerCaseName)
@@ -286,7 +286,7 @@ export class InterceptedResponse implements api.Response {
     return null;
   }
 
-  async getHeaderValues(headerName: string): Promise<string[]> {
+  async headerValues(headerName: string): Promise<string[]> {
     const lowerCaseName = headerName.toLowerCase();
     return this._initializer.headers.filter(({name}) => name.toLowerCase() === lowerCaseName).map(({value}) => value);
   }
@@ -507,7 +507,7 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
     return (await this._getHeadersIfNeeded()).map(header => [header.name, header.value]);
   }
 
-  async getHeaderValue(headerName: string): Promise<string | null> {
+  async headerValue(headerName: string): Promise<string | null> {
     const headers = await this._getHeadersIfNeeded();
     const lowerCaseName = headerName.toLowerCase();
     for (const {name, value} of headers) {
@@ -517,7 +517,7 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
     return null;
   }
 
-  async getHeaderValues(headerName: string): Promise<string[]> {
+  async headerValues(headerName: string): Promise<string[]> {
     const headers = await this._getHeadersIfNeeded();
     const lowerCaseName = headerName.toLowerCase();
     return headers.filter(({name}) => name.toLowerCase() === lowerCaseName).map(({value}) => value);

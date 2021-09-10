@@ -13067,7 +13067,7 @@ export interface Request {
    * Returns the value of the header matching the name. The name is case insensitive.
    * @param name Name of the header.
    */
-  getHeaderValue(name: string): Promise<null|string>;
+  headerValue(name: string): Promise<null|string>;
 
   /**
    * Whether this request is driving frame's navigation.
@@ -13289,13 +13289,13 @@ export interface Response {
    * name, for example `set-cookie`, the first is returned. If no header is found, `null` is returned.
    * @param name Name of the header.
    */
-  getHeaderValue(name: string): Promise<null|string>;
+  headerValue(name: string): Promise<null|string>;
 
   /**
    * Returns all values of the headers matching the name, for example `set-cookie`. The name is case insensitive.
    * @param name Name of the header.
    */
-  getHeaderValues(name: string): Promise<Array<string>>;
+  headerValues(name: string): Promise<Array<string>>;
 
   /**
    * Returns the JSON representation of response body.
