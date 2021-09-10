@@ -15,6 +15,7 @@ jobs:
       run:
         working-directory: packages/create-playwright/
     strategy:
+      fail-fast: false
       matrix:
         node-version: [12.x, 14.x, 16.x]
     steps:

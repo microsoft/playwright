@@ -17,7 +17,7 @@
     "prepublish": "npm run build",
     "watch": "cd src && ncc build index.ts --watch --out ../lib && cd ..",
     "build": "cd src && ncc build index.ts --minify --out ../lib && cd ..",
-    "test": "npx playwright test tests/"
+    "test": "npx playwright test"
   },
   "devDependencies": {
     "@playwright/test": "^1.15.0-next-alpha-sep-10-2021",
