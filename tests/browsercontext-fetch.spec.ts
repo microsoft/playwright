@@ -27,7 +27,6 @@ let prevAgent: http.Agent;
 it.beforeAll(() => {
   prevAgent = http.globalAgent;
   http.globalAgent = new http.Agent({
-    // @ts-expect-error
     lookup: (hostname, options, callback) => {
       if (hostname === 'localhost' || hostname.endsWith('playwright.dev'))
         callback(null, '127.0.0.1', 4);
@@ -43,13 +42,14 @@ it.afterAll(() => {
 
 it('should work', async ({context, server}) => {
   // @ts-expect-error
-  const response: Response = await context._fetch(server.PREFIX + '/simple.json');
+  const response = await context._fetch(server.PREFIX + '/simple.json');
   expect(response.url()).toBe(server.PREFIX + '/simple.json');
   expect(response.status()).toBe(200);
   expect(response.statusText()).toBe('OK');
   expect(response.ok()).toBeTruthy();
   expect(response.url()).toBe(server.PREFIX + '/simple.json');
   expect(response.headers()['content-type']).toBe('application/json; charset=utf-8');
+  expect(response.headersArray()).toContainEqual(['Content-Type', 'application/json; charset=utf-8']);
   expect(await response.text()).toBe('{"foo": "bar"}\n');
 });
 
@@ -262,6 +262,26 @@ it('should handle cookies on redirects', async ({context, server, browserName, i
       'secure': false
     }
   ]));
+});
+
+it('should return raw headers', async ({context, server}) => {
+  server.setRoute('/headers', (req, res) => {
+    // Headers array is only supported since Node v14.14.0 so we write directly to the socket.
+    // res.writeHead(200, ['name-a', 'v1','name-b', 'v4','Name-a', 'v2', 'name-A', 'v3']);
+    res.socket.write('HTTP/1.1 200 OK\r\n');
+    res.socket.write('Name-A: v1\r\n');
+    res.socket.write('name-b: v4\r\n');
+    res.socket.write('Name-a: v2\r\n');
+    res.socket.write('name-A: v3\r\n');
+    res.socket.write('\r\n');
+    res.socket.uncork();
+    res.socket.end();
+  });
+  // @ts-expect-error
+  const response = await context._fetch(`${server.PREFIX}/headers`);
+  expect(response.status()).toBe(200);
+  const headers = response.headersArray().filter(([name, value]) => name.toLowerCase().includes('name-'));
+  expect(headers).toEqual([['Name-A', 'v1'], ['name-b', 'v4'], ['Name-a', 'v2'], ['name-A', 'v3']]);
 });
 
 it('should work with context level proxy', async ({browserOptions, browserType, contextOptions, server, proxyServer}) => {

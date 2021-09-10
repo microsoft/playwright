@@ -555,6 +555,10 @@ export class FetchResponse {
     return { ...this._headers };
   }
 
+  headersArray(): string[][] {
+    return this._initializer.headers.map(({name, value}) => [name, value]);
+  }
+
   async body(): Promise<Buffer> {
     return this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
       const result = await channel.fetchResponseBody({ fetchUid: this._fetchUid() });
