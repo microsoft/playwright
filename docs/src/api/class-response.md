@@ -46,7 +46,7 @@ Headers with multiple entries, such as `Set-Cookie`, appear in the array multipl
 ## async method: Response.headerValue
 - returns: <[null]|[string]>
 
-Returns the first value of the header matching the name. The name is case insensitive. If multiple headers have the same name, for example `set-cookie`, the first is returned. If no header is found, `null` is returned.
+Returns the first value of the header matching the name. The name is case insensitive. If multiple headers have the same name, for example `set-cookie`, the they are returned as a list separated by `, `. If no header is found, `null` is returned.
 
 ### param: Response.headerValue.name
 - `name` <[string]>

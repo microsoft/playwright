@@ -279,11 +279,8 @@ export class InterceptedResponse implements api.Response {
 
   async headerValue(name: string): Promise<string | null> {
     const lowerCaseName = name.toLowerCase();
-    for (const {name, value} of this._initializer.headers) {
-      if (name.toLowerCase() === lowerCaseName)
-        return value;
-    }
-    return null;
+    const headerValues = this._initializer.headers.filter(header => header.name.toLowerCase() === lowerCaseName).map(header => header.value);
+    return headerValues.length ? headerValues.join(', ') : null;
   }
 
   async headerValues(name: string): Promise<string[]> {
@@ -510,11 +507,8 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
   async headerValue(name: string): Promise<string | null> {
     const headers = await this._getHeadersIfNeeded();
     const lowerCaseName = name.toLowerCase();
-    for (const {name, value} of headers) {
-      if (name.toLowerCase() === lowerCaseName)
-        return value;
-    }
-    return null;
+    const headerValues = headers.filter(header => header.name.toLowerCase() === lowerCaseName).map(header => header.value);
+    return headerValues.length ? headerValues.join(', ') : null;
   }
 
   async headerValues(name: string): Promise<string[]> {
