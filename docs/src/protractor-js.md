@@ -1,5 +1,5 @@
 ---
-id: protractor-js
+id: protractor
 title: "Migrating from Protractor"
 ---
 
