@@ -237,17 +237,19 @@ export class DispatcherConnection {
     };
 
     if (sdkObject && params?.info?.waitId) {
-      // Process logs for waitForNavigation/waitForLoadState
+      // Process logs for waitForNavigation/waitForLoadState/etc.
       const info = params.info;
       switch (info.phase) {
         case 'before': {
           this._waitOperations.set(info.waitId, callMetadata);
           await sdkObject.instrumentation.onBeforeCall(sdkObject, callMetadata);
+          this.onmessage({ id });
           return;
         } case 'log': {
           const originalMetadata = this._waitOperations.get(info.waitId)!;
           originalMetadata.log.push(info.message);
           sdkObject.instrumentation.onCallLog('api', info.message, sdkObject, originalMetadata);
+          this.onmessage({ id });
           return;
         } case 'after': {
           const originalMetadata = this._waitOperations.get(info.waitId)!;
@@ -255,6 +257,7 @@ export class DispatcherConnection {
           originalMetadata.error = info.error ? { error: { name: 'Error', message: info.error } } : undefined;
           this._waitOperations.delete(info.waitId);
           await sdkObject.instrumentation.onAfterCall(sdkObject, originalMetadata);
+          this.onmessage({ id });
           return;
         }
       }
