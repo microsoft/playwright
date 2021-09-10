@@ -310,7 +310,7 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
     });
   }
 
-  async fulfill(options: { response?: Response|FetchResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}) {
+  async fulfill(options: { response?: api.Response|api.FetchResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}) {
     return this._wrapApiCall(async (channel: channels.RouteChannel) => {
       let useInterceptedResponseBody;
       let fetchResponseUid;
@@ -524,7 +524,7 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
   }
 }
 
-export class FetchResponse {
+export class FetchResponse implements api.FetchResponse {
   private readonly _initializer: channels.FetchResponse;
   private readonly _headers: Headers;
   private readonly _context: BrowserContext;

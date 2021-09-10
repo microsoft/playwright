@@ -1736,6 +1736,37 @@ Name of the function on the window object
 
 Callback function which will be called in Playwright's context.
 
+## async method: Page.fetch
+- returns: <[FetchResponse]>
+
+Sends HTTP(S) request and returns its response. The method will populate request cookies from the context and update
+context cookies from the response. The method will automatically follow redirects.
+
+### param: Page.fetch.urlOrRequest
+- `urlOrRequest` <[string]|[Request]>
+
+Target URL or Request to get all fetch parameters from.
+
+### option: Page.fetch.method
+- `method` <[string]>
+
+If set changes the request method (e.g. PUT or POST). If not specified, GET method is used.
+
+### option: Page.fetch.headers
+- `headers` <[Object]<[string], [string]>>
+
+If set changes the request HTTP headers.
+
+### option: Page.fetch.postData
+- `postData` <[string]|[Buffer]>
+
+If set changes the post data of request.
+
+### option: Page.fetch.timeout
+- `timeout` <[float]>
+
+Request timeout in milliseconds.
+
 ## async method: Page.fill
 
 This method waits for an element matching [`param: selector`], waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input field.

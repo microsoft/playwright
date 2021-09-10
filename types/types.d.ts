@@ -1996,6 +1996,34 @@ export interface Page {
   exposeFunction(name: string, callback: Function): Promise<void>;
 
   /**
+   * Sends HTTP(S) request and returns its response. The method will populate request cookies from the context and update
+   * context cookies from the response. The method will automatically follow redirects.
+   * @param urlOrRequest Target URL or Request to get all fetch parameters from.
+   * @param options
+   */
+  fetch(urlOrRequest: string|Request, options?: {
+    /**
+     * If set changes the request HTTP headers.
+     */
+    headers?: { [key: string]: string; };
+
+    /**
+     * If set changes the request method (e.g. PUT or POST). If not specified, GET method is used.
+     */
+    method?: string;
+
+    /**
+     * If set changes the post data of request.
+     */
+    postData?: string|Buffer;
+
+    /**
+     * Request timeout in milliseconds.
+     */
+    timeout?: number;
+  }): Promise<FetchResponse>;
+
+  /**
    * This method waits for an element matching `selector`, waits for [actionability](https://playwright.dev/docs/actionability) checks, focuses the
    * element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input
    * field.
@@ -6393,6 +6421,34 @@ export interface BrowserContext {
    * @param callback Callback function that will be called in the Playwright's context.
    */
   exposeFunction(name: string, callback: Function): Promise<void>;
+
+  /**
+   * Sends HTTP(S) request and returns its response. The method will populate request cookies from the context and update
+   * context cookies from the response. The method will automatically follow redirects.
+   * @param urlOrRequest Target URL or Request to get all fetch parameters from.
+   * @param options
+   */
+  fetch(urlOrRequest: string|Request, options?: {
+    /**
+     * If set changes the request HTTP headers.
+     */
+    headers?: { [key: string]: string; };
+
+    /**
+     * If set changes the request method (e.g. PUT or POST). If not specified, GET method is used.
+     */
+    method?: string;
+
+    /**
+     * If set changes the post data of request.
+     */
+    postData?: string|Buffer;
+
+    /**
+     * Request timeout in milliseconds.
+     */
+    timeout?: number;
+  }): Promise<FetchResponse>;
 
   /**
    * Grants specified permissions to the browser context. Only grants corresponding permissions to the given origin if
@@ -12608,6 +12664,66 @@ export interface Electron {
 }
 
 /**
+ * [FetchResponse] class represents responses received from
+ * [browserContext.fetch(urlOrRequest[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-fetch)
+ * and [page.fetch(urlOrRequest[, options])](https://playwright.dev/docs/api/class-page#page-fetch) methods.
+ */
+export interface FetchResponse {
+  /**
+   * Returns the buffer with response body.
+   */
+  body(): Promise<Buffer>;
+
+  /**
+   * Disposes the body of this response. If not called then the body will stay in memory until the context closes.
+   */
+  dispose(): Promise<void>;
+
+  /**
+   * An object with all the response HTTP headers associated with this response.
+   */
+  headers(): { [key: string]: string; };
+
+  /**
+   * An array with all the request HTTP headers associated with this response. Header names are not lower-cased. Headers with
+   * multiple entries, such as `Set-Cookie`, appear in the array multiple times.
+   */
+  headersArray(): Array<Array<string>>;
+
+  /**
+   * Returns the JSON representation of response body.
+   *
+   * This method will throw if the response body is not parsable via `JSON.parse`.
+   */
+  json(): Promise<Serializable>;
+
+  /**
+   * Contains a boolean stating whether the response was successful (status in the range 200-299) or not.
+   */
+  ok(): boolean;
+
+  /**
+   * Contains the status code of the response (e.g., 200 for a success).
+   */
+  status(): number;
+
+  /**
+   * Contains the status text of the response (e.g. usually an "OK" for a success).
+   */
+  statusText(): string;
+
+  /**
+   * Returns the text representation of response body.
+   */
+  text(): Promise<string>;
+
+  /**
+   * Contains the URL of the response.
+   */
+  url(): string;
+}
+
+/**
  * [FileChooser] objects are dispatched by the page in the
  * [page.on('filechooser')](https://playwright.dev/docs/api/class-page#page-event-file-chooser) event.
  *
@@ -13471,6 +13587,12 @@ export interface Route {
      * is resolved relative to the current working directory.
      */
     path?: string;
+
+    /**
+     * [FetchResponse] to fulfill route's request with. Individual fields of the response (such as headers) can be overridden
+     * using fulfill options.
+     */
+    response?: FetchResponse;
 
     /**
      * Response status code, defaults to `200`.

@@ -216,9 +216,9 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     });
   }
 
-  async _fetch(request: network.Request, options?: { timeout?: number }): Promise<network.FetchResponse>;
-  async _fetch(url: string, options?: FetchOptions): Promise<network.FetchResponse>;
-  async _fetch(urlOrRequest: string|network.Request, options: FetchOptions = {}): Promise<network.FetchResponse> {
+  async fetch(request: api.Request, options?: { timeout?: number }): Promise<network.FetchResponse>;
+  async fetch(url: string, options?: FetchOptions): Promise<network.FetchResponse>;
+  async fetch(urlOrRequest: string|api.Request, options: FetchOptions = {}): Promise<network.FetchResponse> {
     return this._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
       const request: network.Request | undefined = (urlOrRequest instanceof network.Request) ? urlOrRequest as network.Request : undefined;
       assert(request || typeof urlOrRequest === 'string', 'First argument must be either URL string or Request');
@@ -395,7 +395,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   }
 }
 
-export type FetchOptions = { url?: string, method?: string, headers?: Headers, postData?: string | Buffer, timeout?: number };
+export type FetchOptions = { method?: string, headers?: Headers, postData?: string | Buffer, timeout?: number };
 
 export async function prepareBrowserContextParams(options: BrowserContextOptions): Promise<channels.BrowserNewContextParams> {
   if (options.videoSize && !options.videosPath)
