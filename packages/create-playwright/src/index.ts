@@ -15,170 +15,138 @@
  */
 import path from 'path';
 import fs from 'fs';
-import { execSync } from 'child_process';
+
 import { prompt } from 'enquirer';
 import colors from 'ansi-colors';
-import JSON5 from 'json5';
 
-const assetsDir = path.join(__dirname, '..', 'assets');
+import { executeCommands, createFiles, determinePackageManager, buildPlaywrightConfig, executeTemplate, determineRootDir } from './utils';
 
-type BrowserType = 'chromium' | 'firefox' | 'webkit';
-
-type PrompOptions = {
+export type BrowserType = 'chromium' | 'firefox' | 'webkit';
+export type PromptOptions = {
   testDir: string,
-  installGitHubActions: string,
+  installGitHubActions: boolean,
   browsers: BrowserType[]
 };
 
-async function main() {
-  const rootDir = determineRootDir();
-  console.log(colors.yellow(`Getting started with writing ${colors.bold('end-to-end')} tests with ${colors.bold('Playwright')}:`));
-  console.log(`Initializing project in '${path.relative(process.cwd(), rootDir) || '.'}'`);
-  const options = await prompt<PrompOptions>([
-    {
-      type: 'text',
-      name: 'testDir',
-      message: 'Where to put your end-to-end tests?',
-      initial: 'e2e'
-    },
-    {
-      type: 'confirm',
-      name: 'installGitHubActions',
-      message: 'Add GitHub Actions workflow?',
-      initial: true,
-    },
-    {
-      type: 'multiselect',
-      name: 'browsers',
-      message: 'Select which browsers you want to test against',
-      choices: [
-        { name: 'chromium', hint: 'Chromium' },
-        { name: 'firefox', hint: 'Firefox' },
-        { name: 'webkit', hint: 'Safari' },
-      ],
-      // @ts-ignore
-      initial: ['chromium', 'firefox', 'webkit']
-    },
-  ]);
-
-  const commands: string[] = [];
-  const files = new Map<string, string>();
-
-  if (!fs.existsSync(rootDir))
-    fs.mkdirSync(rootDir);
-
-  const configPath = path.join(rootDir, 'playwright.config.ts');
-  files.set(configPath, buildPlaywrightConfig(options.browsers));
-
-  const packageManager = determinePackageManager(rootDir);
-
-  if (options.installGitHubActions) {
-    let githubActionsScript = fs.readFileSync(path.join(assetsDir, 'github-actions.yml'), 'utf-8');
-    if (packageManager === 'yarn') {
-      githubActionsScript = githubActionsScript.replace(/npm ci/g, 'yarn');
-      githubActionsScript = githubActionsScript.replace(/npm run/g, 'yarn');
-    }
-    githubActionsScript = githubActionsScript.replace(/<RUN_TESTS>/g, commandToRunTests());
-    files.set(path.join(rootDir, '.github/workflows/playwright.yml'), githubActionsScript);
+class Generator {
+  packageManager: 'npm' | 'yarn';
+  constructor(private readonly rootDir: string) {
+    if (!fs.existsSync(rootDir))
+      fs.mkdirSync(rootDir);
+    this.packageManager = determinePackageManager(this.rootDir);
   }
 
-  const exampleTest = fs.readFileSync(path.join(assetsDir, 'example.spec.ts'), 'utf-8');
-  files.set(path.join(rootDir, options.testDir, 'example.spec.ts'), exampleTest);
-
-  if (!fs.existsSync(path.join(rootDir, 'package.json')))
-    commands.push(packageManager === 'yarn' ? 'yarn init -y' : 'npm init -y');
-
-  if (packageManager === 'yarn')
-    commands.push('yarn add --dev @playwright/test');
-  else
-    commands.push('npm install --save-dev @playwright/test');
-
-  commands.push('npx playwright install --with-deps');
-
-  for (const command of commands) {
-    console.log('Running:', command);
-    execSync(command, {
-      stdio: 'inherit',
-      cwd: rootDir,
-    });
+  async run() {
+    this._printIntro();
+    const questions = await this._askQuestions();
+    const { files, commands } = await this._identifyChanges(questions);
+    executeCommands(this.rootDir, commands);
+    createFiles(this.rootDir, files);
+    this._patchPackageJSON();
+    this._printOutro();
   }
-  for (const [filePath, value] of files) {
-    if (fs.existsSync(filePath)) {
-      const { override } = await prompt<{ override: boolean }>({
+
+  private _printIntro() {
+    console.log(colors.yellow(`Getting started with writing ${colors.bold('end-to-end')} tests with ${colors.bold('Playwright')}:`));
+    console.log(`Initializing project in '${path.relative(process.cwd(), this.rootDir) || '.'}'`);
+  }
+
+  private async _askQuestions() {
+    if (process.env.TEST_OPTIONS)
+      return JSON.parse(process.env.TEST_OPTIONS);
+    return await prompt<PromptOptions>([
+      {
+        type: 'text',
+        name: 'testDir',
+        message: 'Where to put your end-to-end tests?',
+        initial: 'e2e'
+      },
+      {
         type: 'confirm',
-        name: 'override',
-        message: `${filePath} as it already exists. Should it override?`,
-        initial: false
+        name: 'installGitHubActions',
+        message: 'Add GitHub Actions workflow?',
+        initial: true,
+      },
+      {
+        type: 'multiselect',
+        name: 'browsers',
+        message: 'Select which browsers you want to test against',
+        choices: [
+          { name: 'chromium', hint: 'Chromium' },
+          { name: 'firefox', hint: 'Firefox' },
+          { name: 'webkit', hint: 'Safari' },
+        ],
+        // @ts-ignore
+        initial: ['chromium', 'firefox', 'webkit']
+      },
+    ]);
+  }
+
+  private async _identifyChanges(options: PromptOptions) {
+    const commands: string[] = [];
+    const files = new Map<string, string>();
+
+    files.set('playwright.config.ts', buildPlaywrightConfig(options.browsers));
+
+    if (options.installGitHubActions) {
+      const githubActionsScript = executeTemplate(this._readAsset('github-actions.yml'), {
+        installDepsCommand: this.packageManager === 'npm' ? 'npm ci' : 'yarn',
+        runTestsCommand: commandToRunTests(this.packageManager),
       });
-      if (!override)
-        continue;
+      files.set('.github/workflows/playwright.yml', githubActionsScript);
     }
-    console.log(colors.gray(`Writing ${path.relative(process.cwd(), filePath)}.`));
-    fs.mkdirSync(path.dirname(filePath), { recursive: true });
-    fs.writeFileSync(filePath, value, 'utf-8');
+
+    files.set(path.join(options.testDir, 'example.spec.ts'), this._readAsset('example.spec.ts'));
+
+    if (!fs.existsSync(path.join(this.rootDir, 'package.json')))
+      commands.push(this.packageManager === 'yarn' ? 'yarn init -y' : 'npm init -y');
+
+    if (this.packageManager === 'yarn')
+      commands.push('yarn add --dev @playwright/test');
+    else
+      commands.push('npm install --save-dev @playwright/test');
+
+    commands.push('npx playwright install --with-deps');
+
+    return { files, commands };
   }
 
-  const packageJSONPath = path.join(rootDir, 'package.json');
-  const packageJSON = JSON.parse(fs.readFileSync(packageJSONPath, 'utf-8'));
-  if (!packageJSON.scripts)
-    packageJSON.scripts = {};
-  packageJSON.scripts['playwright-tests'] = `npx playwright test`;
-  fs.writeFileSync(packageJSONPath, JSON.stringify(packageJSON, null, 2), 'utf-8');
+  private _readAsset(asset: string): string {
+    const assetsDir = path.join(__dirname, '..', 'assets');
+    return fs.readFileSync(path.join(assetsDir, asset), 'utf-8');
+  }
 
-  console.log(colors.green('✔'), colors.bold('Successfully initialized your Playwright Test project!'));
-  const pathToNavigate = path.relative(process.cwd(), rootDir);
-  const prefix = pathToNavigate !== '' ? `- cd ${pathToNavigate}\n` : '';
-  console.log(colors.bold('🎭 Try it out with:\n') + colors.greenBright(prefix + '- ' + commandToRunTests()));
-  console.log('For more information see on: https://playwright.dev/docs/intro');
+  private _patchPackageJSON() {
+    const packageJSON = JSON.parse(fs.readFileSync(path.join(this.rootDir, 'package.json'), 'utf-8'));
+    if (!packageJSON.scripts)
+      packageJSON.scripts = {};
+    packageJSON.scripts['playwright-tests'] = `npx playwright test`;
 
-  function commandToRunTests() {
-    if (packageManager === 'yarn')
-      return 'yarn playwright-tests';
-    return 'npm run playwright-tests';
+    const files = new Map<string, string>();
+    files.set('package.json', JSON.stringify(packageJSON, null, 2));
+    createFiles(this.rootDir, files, true);
+  }
+
+  private _printOutro() {
+    console.log(colors.green('✔'), colors.bold('Successfully initialized your Playwright Test project!'));
+    const pathToNavigate = path.relative(process.cwd(), this.rootDir);
+    const prefix = pathToNavigate !== '' ? `- cd ${pathToNavigate}\n` : '';
+    console.log(colors.bold('🎭 Try it out with:\n') + colors.greenBright(prefix + '- ' + commandToRunTests(this.packageManager)));
+    console.log('Visit https://playwright.dev/docs/intro for more information');
   }
 }
 
-function determineRootDir() {
-  const givenPath = process.argv[2];
-  if (givenPath)
-    return path.isAbsolute(givenPath) ? process.argv[2] : path.join(process.cwd(), process.argv[2]);
-
-  return process.cwd();
+export function commandToRunTests(packageManager: 'npm' | 'yarn') {
+  if (packageManager === 'yarn')
+    return 'yarn playwright-tests';
+  return 'npm run playwright-tests';
 }
 
-function buildPlaywrightConfig(browsers: BrowserType[]) {
-  const browser2DisplayName: Record<BrowserType, string> = {
-    'chromium': 'Chromium',
-    'firefox': 'Firefox',
-    'webkit': 'Safari'
-  };
-  const projects = browsers.map(browserName => ({
-    name: browser2DisplayName[browserName],
-    use: {
-      browserName
-    }
-  }));
-  return `import { PlaywrightTestConfig } from '@playwright/test';
-
-// More information: https://playwright.dev/docs/test-configuration
-
-const config: PlaywrightTestConfig = {
-  projects: ${JSON5.stringify(projects, null, 2).split('\n').map((line, index) => (index >= 1 ? '  ' : '') + line).join('\n')},
-};
-
-export default config;
-  `;
-}
-
-function determinePackageManager(rootDir: string): 'yarn' | 'npm' {
-  if (fs.existsSync(path.join(rootDir, 'yarn.lock')))
-    return 'yarn';
-  if (process.env.npm_config_user_agent)
-    return process.env.npm_config_user_agent.includes('yarn') ? 'yarn' : 'npm';
-  return 'npm';
-}
-
-main().catch(error => {
+(async () => {
+  const rootDir = determineRootDir();
+  const generator = new Generator(rootDir);
+  await generator.run();
+})().catch(error => {
   console.error(error);
   process.exit(1);
 });
