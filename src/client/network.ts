@@ -164,11 +164,8 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
   async headerValue(name: string): Promise<string | null> {
     const headers = await this._getHeadersIfNeeded();
     const lowerCaseName = name.toLowerCase();
-    for (const {name, value} of headers) {
-      if (name.toLowerCase() === lowerCaseName)
-        return value;
-    }
-    return null;
+    const headerValues = headers.filter(header => header.name.toLowerCase() === lowerCaseName).map(header => header.value);
+    return headerValues.length ? headerValues.join(', ') : null;
   }
 
   async response(): Promise<Response | null> {
