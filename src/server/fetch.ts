@@ -222,7 +222,7 @@ async function sendRequest(context: BrowserContext, url: URL, options: https.Req
 function toHeadersArray(rawHeaders: string[]): types.HeadersArray {
   const result: types.HeadersArray = [];
   for (let i = 0; i < rawHeaders.length; i += 2)
-    result.push({ name: rawHeaders[i], value: rawHeaders[i+1] });
+    result.push({ name: rawHeaders[i], value: rawHeaders[i + 1] });
   return result;
 }
 
