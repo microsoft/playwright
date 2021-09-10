@@ -89,7 +89,9 @@ it('should have the correct responseBodySize for chunked request', async ({ page
   });
   const response = await page.goto(server.PREFIX + '/chunked-simplezip.json');
   const sizes = await response.request().sizes();
+  // The actual file size is 5100 bytes. The extra 75 bytes are coming from the chunked encoding headers and end bytes.
   if (browserName === 'webkit')
+    // It should be 5175 there. On the actual network response, the body has a size of 5175.
     expect(sizes.responseBodySize).toBe(5173);
   else
     expect(sizes.responseBodySize).toBe(5175);

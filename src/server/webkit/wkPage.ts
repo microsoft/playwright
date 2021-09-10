@@ -1050,6 +1050,8 @@ export class WKPage implements PageDelegate {
         response._setHttpVersion(event.metrics.protocol);
       if (event.metrics?.responseBodyBytesReceived)
         request.request.responseSize.encodedBodySize = event.metrics.responseBodyBytesReceived;
+      if (event.metrics?.responseHeaderBytesReceived)
+        request.request.responseSize.responseHeadersSize = event.metrics.responseHeaderBytesReceived;
 
       response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp));
     }
