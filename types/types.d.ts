@@ -13255,7 +13255,7 @@ export interface Response {
   body(): Promise<Buffer>;
 
   /**
-   * Waits for this response to finish, returns failure error if request failed.
+   * Waits for this response to finish, returns always `null`.
    */
   finished(): Promise<null|Error>;
 

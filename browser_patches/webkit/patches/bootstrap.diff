@@ -2272,18 +2272,20 @@ index 4a12b5a4393fe2bbe39673e3fa547c9d6976abd7..678b777736019debbd25fcd72fd34f3d
  
  if (Systemd_FOUND)
 diff --git a/Source/WTF/wtf/PlatformHave.h b/Source/WTF/wtf/PlatformHave.h
-index 9f63a301411b88654ee2f55d7fa43fd03cd9098d..24de4d7161509c5543077975d4f21bd49bf6e45b 100644
+index 9f63a301411b88654ee2f55d7fa43fd03cd9098d..1bb75d037050eeae914a31e73aa8b15688489b91 100644
 --- a/Source/WTF/wtf/PlatformHave.h
 +++ b/Source/WTF/wtf/PlatformHave.h
-@@ -387,7 +387,7 @@
+@@ -387,8 +387,8 @@
  #define HAVE_NSHTTPCOOKIESTORAGE__INITWITHIDENTIFIER_WITH_INACCURATE_NULLABILITY 1
  #endif
  
 -#if PLATFORM(MAC) || PLATFORM(IOS) || PLATFORM(MACCATALYST) || PLATFORM(GTK) || PLATFORM(WPE)
+-#define HAVE_OS_DARK_MODE_SUPPORT 1
 +#if PLATFORM(MAC) || PLATFORM(IOS) || PLATFORM(MACCATALYST) || PLATFORM(GTK) || PLATFORM(WPE) || PLATFORM(WIN)
- #define HAVE_OS_DARK_MODE_SUPPORT 1
++#define HAVE_OS_DARK_MODE_SUPPORT 0
  #endif
  
+ #if PLATFORM(MAC) && __MAC_OS_X_VERSION_MIN_REQUIRED < 110000
 diff --git a/Source/WTF/wtf/PlatformWPE.cmake b/Source/WTF/wtf/PlatformWPE.cmake
 index 643ef0fcdf4f3ce4a1f27bc0cc6e179b7143bbd4..f6ee05b80ebc200d0db74fc7e975d96ce0dcd75f 100644
 --- a/Source/WTF/wtf/PlatformWPE.cmake
@@ -6613,28 +6615,6 @@ index 1b77026f51092001cda86e32480890395b145b2e..6026bc23508016454f331b06c9f071a8
  };
  
  struct SnapshotOptions {
-diff --git a/Source/WebCore/page/FrameView.cpp b/Source/WebCore/page/FrameView.cpp
-index 89a62d382d34545f530cc74f7067b84b5ca6a01e..c8d8e3803f1ec418de4d115c2e33b7b17aed852e 100644
---- a/Source/WebCore/page/FrameView.cpp
-+++ b/Source/WebCore/page/FrameView.cpp
-@@ -3028,7 +3028,7 @@ void FrameView::setBaseBackgroundColor(const Color& backgroundColor)
- 
- void FrameView::updateBackgroundRecursively(const std::optional<Color>& backgroundColor)
- {
--#if HAVE(OS_DARK_MODE_SUPPORT)
-+#if HAVE(OS_DARK_MODE_SUPPORT) && (defined(WTF_PLATFORM_MAC) && WTF_PLATFORM_MAC) || (defined(WTF_PLATFORM_IOS_FAMILY) && WTF_PLATFORM_IOS_FAMILY)
- #if PLATFORM(COCOA)
-     static const auto cssValueControlBackground = CSSValueAppleSystemControlBackground;
- #else
-@@ -3038,7 +3038,7 @@ void FrameView::updateBackgroundRecursively(const std::optional<Color>& backgrou
- 
-     for (auto* frame = m_frame.ptr(); frame; frame = frame->tree().traverseNext(m_frame.ptr())) {
-         if (auto* view = frame->view()) {
--#if HAVE(OS_DARK_MODE_SUPPORT)
-+#if HAVE(OS_DARK_MODE_SUPPORT) && (defined(WTF_PLATFORM_MAC) && WTF_PLATFORM_MAC) || (defined(WTF_PLATFORM_IOS_FAMILY) && WTF_PLATFORM_IOS_FAMILY)
-             auto baseBackgroundColor = backgroundColor.value_or(RenderTheme::singleton().systemColor(cssValueControlBackground, view->styleColorOptions()));
- #else
-             auto baseBackgroundColor = backgroundColor.value_or(Color::white);
 diff --git a/Source/WebCore/page/History.cpp b/Source/WebCore/page/History.cpp
 index 28d1fc3242174a680711027877d4153923790220..058b5309eed081fcc1e4158f66e806421dcc9d56 100644
 --- a/Source/WebCore/page/History.cpp
@@ -6656,7 +6636,7 @@ index 28d1fc3242174a680711027877d4153923790220..058b5309eed081fcc1e4158f66e80642
      if (stateObjectType == StateObjectType::Push) {
          frame->loader().history().pushState(WTFMove(data), title, fullURL.string());
 diff --git a/Source/WebCore/page/Page.cpp b/Source/WebCore/page/Page.cpp
-index 2d5c7b7ca08df9406567d95980d0d68e6f9e23b1..b0329e8c06238d32bd76b2696592414c11b6e0ba 100644
+index 2d5c7b7ca08df9406567d95980d0d68e6f9e23b1..2166c0c096c764e3bcceb3c65bdf86dda866a651 100644
 --- a/Source/WebCore/page/Page.cpp
 +++ b/Source/WebCore/page/Page.cpp
 @@ -460,6 +460,37 @@ void Page::setOverrideViewportArguments(const std::optional<ViewportArguments>&
@@ -6697,19 +6677,7 @@ index 2d5c7b7ca08df9406567d95980d0d68e6f9e23b1..b0329e8c06238d32bd76b2696592414c
  ScrollingCoordinator* Page::scrollingCoordinator()
  {
      if (!m_scrollingCoordinator && m_settings->scrollingCoordinatorEnabled()) {
-@@ -1286,11 +1317,6 @@ void Page::didCommitLoad()
- #if ENABLE(EDITABLE_REGION)
-     m_isEditableRegionEnabled = false;
- #endif
--
--#if HAVE(OS_DARK_MODE_SUPPORT)
--    setUseDarkAppearanceOverride(std::nullopt);
--#endif
--
-     resetSeenPlugins();
-     resetSeenMediaEngines();
- 
-@@ -3268,6 +3294,16 @@ void Page::setUseDarkAppearanceOverride(std::optional<bool> valueOverride)
+@@ -3268,6 +3299,16 @@ void Page::setUseDarkAppearanceOverride(std::optional<bool> valueOverride)
  #endif
  }
  
@@ -21723,7 +21691,7 @@ index 0000000000000000000000000000000000000000..dd6a53e2d57318489b7e49dd7373706d
 +    LIBVPX_LIBRARIES
 +)
 diff --git a/Source/cmake/OptionsGTK.cmake b/Source/cmake/OptionsGTK.cmake
-index 8539b9d239ed389b92707b06406d054e0f2f9fc5..f4610e7659baa1c335e56be90dc78649e2b3e6fa 100644
+index 8539b9d239ed389b92707b06406d054e0f2f9fc5..e4a1e5b9340aba3429d40a7c711f3c3eb326788b 100644
 --- a/Source/cmake/OptionsGTK.cmake
 +++ b/Source/cmake/OptionsGTK.cmake
 @@ -5,6 +5,7 @@ WEBKIT_OPTION_BEGIN()
@@ -21798,8 +21766,17 @@ index 8539b9d239ed389b92707b06406d054e0f2f9fc5..f4610e7659baa1c335e56be90dc78649
  include(GStreamerDependencies)
  
  # Finalize the value for all options. Do not attempt to use an option before
+@@ -266,7 +281,7 @@ if (NOT EXISTS "${TOOLS_DIR}/glib/apply-build-revision-to-files.py")
+ endif ()
+ 
+ SET_AND_EXPOSE_TO_BUILD(HAVE_GTK_UNIX_PRINTING ${GTK_UNIX_PRINT_FOUND})
+-SET_AND_EXPOSE_TO_BUILD(HAVE_OS_DARK_MODE_SUPPORT 1)
++SET_AND_EXPOSE_TO_BUILD(HAVE_OS_DARK_MODE_SUPPORT 0)
+ 
+ # GUri is available in GLib since version 2.66, but we only want to use it if version is >= 2.67.1.
+ if (PC_GLIB_VERSION VERSION_GREATER "2.67.1" OR PC_GLIB_VERSION STREQUAL "2.67.1")
 diff --git a/Source/cmake/OptionsWPE.cmake b/Source/cmake/OptionsWPE.cmake
-index 5986998dc9e24f280a67b5dabff35b9126ade9c0..c048a22508c243be5080f8e85a90007e35c17778 100644
+index 5986998dc9e24f280a67b5dabff35b9126ade9c0..3b798085269db895fbe193b753a4091ea4670e72 100644
 --- a/Source/cmake/OptionsWPE.cmake
 +++ b/Source/cmake/OptionsWPE.cmake
 @@ -3,6 +3,7 @@ include(VersioningUtils)
@@ -21857,6 +21834,15 @@ index 5986998dc9e24f280a67b5dabff35b9126ade9c0..c048a22508c243be5080f8e85a90007e
  WEBKIT_OPTION_DEFINE(USE_SYSTEMD "Whether to enable journald logging" PUBLIC ON)
  WEBKIT_OPTION_DEFINE(USE_WOFF2 "Whether to enable support for WOFF2 Web Fonts." PUBLIC ON)
  
+@@ -282,7 +302,7 @@ SET_AND_EXPOSE_TO_BUILD(USE_TEXTURE_MAPPER_GL TRUE)
+ SET_AND_EXPOSE_TO_BUILD(USE_TILED_BACKING_STORE TRUE)
+ SET_AND_EXPOSE_TO_BUILD(USE_COORDINATED_GRAPHICS TRUE)
+ SET_AND_EXPOSE_TO_BUILD(USE_NICOSIA TRUE)
+-SET_AND_EXPOSE_TO_BUILD(HAVE_OS_DARK_MODE_SUPPORT 1)
++SET_AND_EXPOSE_TO_BUILD(HAVE_OS_DARK_MODE_SUPPORT 0)
+ 
+ # GUri is available in GLib since version 2.66, but we only want to use it if version is >= 2.67.1.
+ if (PC_GLIB_VERSION VERSION_GREATER "2.67.1" OR PC_GLIB_VERSION STREQUAL "2.67.1")
 diff --git a/Source/cmake/OptionsWin.cmake b/Source/cmake/OptionsWin.cmake
 index 67b426e58c7409f66889ed1d835af6636ad27642..9104fcb4a9a1869a2ffb2d09695e5e2d95de71df 100644
 --- a/Source/cmake/OptionsWin.cmake

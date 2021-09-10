@@ -15,7 +15,7 @@ Returns the buffer with response body.
 ## async method: Response.finished
 - returns: <[null]|[string]>
 
-Waits for this response to finish, returns failure error if request failed.
+Waits for this response to finish, returns always `null`.
 
 ## method: Response.frame
 - returns: <[Frame]>
@@ -28,7 +28,17 @@ Returns the [Frame] that initiated this response.
 **DEPRECATED** Incomplete list of headers as seen by the rendering engine. Use [`method: Response.allHeaders`] instead.
 
 ## async method: Response.headersArray
+* langs: js, csharp, python
 - returns: <[Array]<[Array]<[string]>>>
+
+An array with all the request HTTP headers associated with this response. Unlike [`method: Response.allHeaders`], header names are not lower-cased.
+Headers with multiple entries, such as `Set-Cookie`, appear in the array multiple times.
+
+## async method: Response.headersArray
+* langs: java
+- returns: <[Array]<[Object]>>
+  - `name` <[string]> Name of the header.
+  - `value` <[string]> Value of the header.
 
 An array with all the request HTTP headers associated with this response. Unlike [`method: Response.allHeaders`], header names are not lower-cased.
 Headers with multiple entries, such as `Set-Cookie`, appear in the array multiple times.
@@ -43,7 +53,7 @@ This method will throw if the response body is not parsable via `JSON.parse`.
 
 ## async method: Response.json
 * langs: csharp
-- returns: <[JsonElement?]>
+- returns: <[null]|[JsonElement]>
 
 Returns the JSON representation of response body.
 

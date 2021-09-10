@@ -1,0 +1,185 @@
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+.suite-tree-column {
+  line-height: 18px;
+  flex: auto;
+  overflow: auto;
+  color: #616161;
+  background-color: #f3f3f3;
+}
+
+.tree-item-title {
+  padding: 8px 8px 8px 0;
+  cursor: pointer;
+}
+
+.tree-item-body {
+  min-height: 18px;
+}
+
+.suite-tree-column .tree-item-title:not(.selected):hover {
+  background-color: #e8e8e8;
+}
+
+.suite-tree-column .tree-item-title.selected {
+  background-color: #0060c0;
+  color: white;
+}
+
+.suite-tree-column .tree-item-title.selected * {
+  color: white !important;
+}
+
+.error-message {
+  white-space: pre;
+  font-family: monospace;
+  background: #000;
+  color: white;
+  padding: 5px;
+  overflow: auto;
+  margin: 20px 0;
+  flex: none;
+}
+
+.status-icon {
+  padding-right: 3px;
+}
+
+.codicon {
+  padding-right: 3px;
+}
+
+.codicon-clock.status-icon,
+.codicon-error.status-icon {
+  color: red;
+}
+
+.codicon-alert.status-icon {
+  color: orange;
+}
+
+.codicon-circle-filled.status-icon {
+  color: green;
+}
+
+.test-result {
+  flex: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.test-overview-title {
+  padding: 10px 0;
+  font-size: 18px;
+  flex: none;
+}
+
+.image-preview img {
+  max-width: 500px;
+  max-height: 500px;
+}
+
+.image-preview {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 550px;
+  height: 550px;
+}
+
+.test-result .tabbed-pane .tab-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.attachment-body {
+  white-space: pre-wrap;
+  font-family: monospace;
+  background-color: #dadada;
+  border: 1px solid #ccc;
+  margin-left: 24px;
+}
+
+.test-result .tree-item-title:not(.selected):hover {
+  background-color: #e8e8e8;
+}
+
+.test-result .tree-item-title.selected {
+  background-color: #0060c0;
+  color: white;
+}
+
+.test-result .tree-item-title.selected * {
+  color: white !important;
+}
+
+.suite-tree-column .tab-strip,
+.test-case-column .tab-strip {
+  border: none;
+  box-shadow: none;
+  background-color: transparent;
+}
+
+.suite-tree-column .tab-element,
+.test-case-column .tab-element {
+  border: none;
+  text-transform: uppercase;
+  font-weight: bold;
+  font-size: 11px;
+  color: #aaa;
+}
+
+.suite-tree-column .tab-element.selected,
+.test-case-column .tab-element.selected {
+  color: #555;
+}
+
+.test-case-title {
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.test-case-location {
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding: 0 10px 10px;
+  color: var(--blue);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.test-details-column {
+  overflow-y: auto;
+}
+
+.step-log {
+  line-height: 20px;
+  white-space: pre;
+  padding: 8px;
+}
+
+.tree-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
