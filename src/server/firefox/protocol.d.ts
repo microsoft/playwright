@@ -908,6 +908,7 @@ export module Protocol {
       requestId: string;
       responseEndTime: number;
       transferSize: number;
+      encodedBodySize: number;
       protocolVersion: string;
     }
     export type requestFailedPayload = {
