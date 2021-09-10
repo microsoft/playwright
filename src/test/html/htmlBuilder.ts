@@ -16,8 +16,9 @@
 
 import fs from 'fs';
 import path from 'path';
-import { ProjectTreeItem, SuiteTreeItem, TestTreeItem, TestCase, TestResult, TestStep } from './types';
+import { ProjectTreeItem, SuiteTreeItem, TestTreeItem, TestCase, TestResult, TestStep, TestFile } from './types';
 import { JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep } from '../reporters/raw';
+import { calculateSha1 } from '../../utils/utils';
 
 export class HtmlBuilder {
   private _reportFolder: string;
@@ -30,31 +31,44 @@ export class HtmlBuilder {
     const appFolder = path.join(__dirname, '..', '..', 'web', 'htmlReport2');
     for (const file of fs.readdirSync(appFolder))
       fs.copyFileSync(path.join(appFolder, file), path.join(this._reportFolder, file));
-    const projects: ProjectTreeItem[] = rawReports.map(rawReport => {
-      const json = JSON.parse(fs.readFileSync(rawReport, 'utf-8')) as JsonReport;
-      const suits = json.suites.map(s => this._createSuiteTreeItem(s));
-      return {
-        name: json.project.name,
-        suits,
-        failedTests: suits.reduce((a, s) => a + s.failedTests, 0)
-      };
-    });
-    fs.writeFileSync(path.join(dataFolder, 'projects.json'), JSON.stringify(projects, undefined, 2));
 
-    for (const [testId, test] of this._tests) {
-      const testCase: TestCase = {
-        testId: test.testId,
-        title: test.title,
-        location: test.location,
-        results: test.results.map(r => this._createTestResult(r))
-      };
-      fs.writeFileSync(path.join(dataFolder, testId + '.json'), JSON.stringify(testCase, undefined, 2));
+    const projects: ProjectTreeItem[] = [];
+    for (const projectFile of rawReports) {
+      const projectJson = JSON.parse(fs.readFileSync(projectFile, 'utf-8')) as JsonReport;
+      const suites: SuiteTreeItem[] = [];
+      for (const file of projectJson.suites) {
+        const fileId = calculateSha1(projectFile + ':' + file.location!.file);
+        const tests: JsonTestCase[] = [];
+        suites.push(this._createSuiteTreeItem(file, fileId, tests));
+        const testFile: TestFile = {
+          fileId,
+          path: file.location!.file,
+          tests: tests.map(t => this._createTestCase(t))
+        };
+        fs.writeFileSync(path.join(dataFolder, fileId + '.json'), JSON.stringify(testFile, undefined, 2));
+      }
+      projects.push({
+        name: projectJson.project.name,
+        suites,
+        failedTests: suites.reduce((a, s) => a + s.failedTests, 0)
+      });
     }
+    fs.writeFileSync(path.join(dataFolder, 'projects.json'), JSON.stringify(projects, undefined, 2));
   }
 
-  private _createSuiteTreeItem(suite: JsonSuite): SuiteTreeItem {
-    const suites = suite.suites.map(s => this._createSuiteTreeItem(s));
-    const tests = suite.tests.map(t => this._createTestTreeItem(t));
+  private _createTestCase(test: JsonTestCase): TestCase {
+    return {
+      testId: test.testId,
+      title: test.title,
+      location: test.location,
+      results: test.results.map(r => this._createTestResult(r))
+    };
+  }
+
+  private _createSuiteTreeItem(suite: JsonSuite, fileId: string, testCollector: JsonTestCase[]): SuiteTreeItem {
+    const suites = suite.suites.map(s => this._createSuiteTreeItem(s, fileId, testCollector));
+    const tests = suite.tests.map(t => this._createTestTreeItem(t, fileId));
+    testCollector.push(...suite.tests);
     return {
       title: suite.title,
       location: suite.location,
@@ -65,11 +79,12 @@ export class HtmlBuilder {
     };
   }
 
-  private _createTestTreeItem(test: JsonTestCase): TestTreeItem {
+  private _createTestTreeItem(test: JsonTestCase, fileId: string): TestTreeItem {
     const duration = test.results.reduce((a, r) => a + r.duration, 0);
     this._tests.set(test.testId, test);
     return {
       testId: test.testId,
+      fileId: fileId,
       location: test.location,
       title: test.title,
       duration,

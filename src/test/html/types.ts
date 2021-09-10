@@ -22,7 +22,7 @@ export type Location = {
 
 export type ProjectTreeItem = {
   name: string;
-  suits: SuiteTreeItem[];
+  suites: SuiteTreeItem[];
   failedTests: number;
 };
 
@@ -37,10 +37,17 @@ export type SuiteTreeItem = {
 
 export type TestTreeItem = {
   testId: string,
+  fileId: string,
   title: string;
   location: Location;
   duration: number;
   outcome: 'skipped' | 'expected' | 'unexpected' | 'flaky';
+};
+
+export type TestFile = {
+  fileId: string;
+  path: string;
+  tests: TestCase[];
 };
 
 export type TestCase = {

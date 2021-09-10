@@ -20,7 +20,7 @@ import { FullProject } from '../../../types/test';
 import { FullConfig, Location, Suite, TestCase, TestError, TestResult, TestStatus, TestStep } from '../../../types/testReporter';
 import { assert, calculateSha1 } from '../../utils/utils';
 import { sanitizeForFilePath } from '../util';
-import { serializePatterns, toPosixPath } from './json';
+import { serializePatterns } from './json';
 
 export type JsonStats = { expected: number, unexpected: number, flaky: number, skipped: number };
 export type JsonLocation = Location;
@@ -75,7 +75,8 @@ export type TestAttachment = {
 
 export type JsonAttachment = {
   name: string;
-  path: string;
+  body?: string;
+  path?: string;
   contentType: string;
 };
 
@@ -133,30 +134,30 @@ class RawReporter {
         project: {
           metadata: project.metadata,
           name: project.name,
-          outputDir: toPosixPath(project.outputDir),
+          outputDir: project.outputDir,
           repeatEach: project.repeatEach,
           retries: project.retries,
-          testDir: toPosixPath(project.testDir),
+          testDir: project.testDir,
           testIgnore: serializePatterns(project.testIgnore),
           testMatch: serializePatterns(project.testMatch),
           timeout: project.timeout,
         },
-        suites: suite.suites.map(s => this._serializeSuite(s, reportFolder))
+        suites: suite.suites.map(s => this._serializeSuite(s))
       };
       fs.writeFileSync(reportFile, JSON.stringify(report, undefined, 2));
     }
   }
 
-  private _serializeSuite(suite: Suite, reportFolder: string): JsonSuite {
+  private _serializeSuite(suite: Suite): JsonSuite {
     return {
       title: suite.title,
       location: suite.location,
-      suites: suite.suites.map(s => this._serializeSuite(s, reportFolder)),
-      tests: suite.tests.map(t => this._serializeTest(t, reportFolder)),
+      suites: suite.suites.map(s => this._serializeSuite(s)),
+      tests: suite.tests.map(t => this._serializeTest(t)),
     };
   }
 
-  private _serializeTest(test: TestCase, reportFolder: string): JsonTestCase {
+  private _serializeTest(test: TestCase): JsonTestCase {
     const testId = calculateSha1(test.titlePath().join('|'));
     return {
       testId,
@@ -168,11 +169,11 @@ class RawReporter {
       retries: test.retries,
       ok: test.ok(),
       outcome: test.outcome(),
-      results: test.results.map(r => this._serializeResult(testId, test, r, reportFolder)),
+      results: test.results.map(r => this._serializeResult(testId, test, r)),
     };
   }
 
-  private _serializeResult(testId: string, test: TestCase, result: TestResult, reportFolder: string): JsonTestResult {
+  private _serializeResult(testId: string, test: TestCase, result: TestResult): JsonTestResult {
     return {
       retry: result.retry,
       workerIndex: result.workerIndex,
@@ -180,7 +181,7 @@ class RawReporter {
       duration: result.duration,
       status: result.status,
       error: result.error,
-      attachments: this._createAttachments(reportFolder, testId, result),
+      attachments: this._createAttachments(result),
       steps: this._serializeSteps(test, result.steps)
     };
   }
@@ -199,44 +200,43 @@ class RawReporter {
     });
   }
 
-  private _createAttachments(reportFolder: string, testId: string, result: TestResult): JsonAttachment[] {
+  private _createAttachments(result: TestResult): JsonAttachment[] {
     const attachments: JsonAttachment[] = [];
-    for (const attachment of result.attachments.filter(a => !a.path)) {
-      const sha1 = calculateSha1(attachment.body!);
-      const file = path.join(reportFolder, sha1);
-      try {
-        fs.writeFileSync(path.join(reportFolder, sha1), attachment.body);
+    for (const attachment of result.attachments) {
+      if (attachment.body) {
         attachments.push({
           name: attachment.name,
           contentType: attachment.contentType,
-          path: toPosixPath(file)
+          body: attachment.body.toString('base64')
         });
-      } catch (e) {
+      } else if (attachment.path) {
+        attachments.push({
+          name: attachment.name,
+          contentType: attachment.contentType,
+          path: attachment.path
+        });
       }
     }
-    for (const attachment of result.attachments.filter(a => a.path))
-      attachments.push(attachment as JsonAttachment);
 
-    if (result.stdout.length)
-      attachments.push(this._stdioAttachment(reportFolder, testId, result, 'stdout'));
-    if (result.stderr.length)
-      attachments.push(this._stdioAttachment(reportFolder, testId, result, 'stderr'));
+    for (const chunk of result.stdout)
+      attachments.push(this._stdioAttachment(chunk, 'stdout'));
+    for (const chunk of result.stderr)
+      attachments.push(this._stdioAttachment(chunk, 'stderr'));
     return attachments;
   }
 
-  private _stdioAttachment(reportFolder: string, testId: string, result: TestResult, type: 'stdout' | 'stderr'): JsonAttachment {
-    const file = `${testId}.${result.retry}.${type}`;
-    const fileName = path.join(reportFolder, file);
-    for (const chunk of type === 'stdout' ? result.stdout : result.stderr) {
-      if (typeof chunk === 'string')
-        fs.appendFileSync(fileName, chunk + '\n');
-      else
-        fs.appendFileSync(fileName, chunk);
+  private _stdioAttachment(chunk: Buffer | string, type: 'stdout' | 'stderr'): JsonAttachment {
+    if (typeof chunk === 'string') {
+      return {
+        name: type,
+        contentType: 'text/plain',
+        body: chunk
+      };
     }
     return {
       name: type,
       contentType: 'application/octet-stream',
-      path: toPosixPath(fileName)
+      body: chunk.toString('base64')
     };
   }
 }

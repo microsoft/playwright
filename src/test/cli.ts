@@ -89,6 +89,8 @@ export function addGenerateHtmlCommand(program: commander.CommanderStatic) {
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "${tsConfig}"/"${jsConfig}"`);
   command.option('--output <dir>', `Folder for output artifacts (default: "playwright-report")`, 'playwright-report');
   command.action(async opts => {
+    const output = opts.output;
+    delete opts.output;
     const loader = await createLoader(opts);
     const outputFolders = new Set(loader.projects().map(p => p.config.outputDir));
     const reportFiles = new Set<string>();
@@ -98,7 +100,7 @@ export function addGenerateHtmlCommand(program: commander.CommanderStatic) {
       for (const file of files)
         reportFiles.add(path.join(reportFolder, file));
     }
-    new HtmlBuilder([...reportFiles], opts.output);
+    new HtmlBuilder([...reportFiles], output);
   }).on('--help', () => {
     console.log('');
     console.log('Examples:');

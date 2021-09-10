@@ -23,7 +23,7 @@
 }
 
 .tree-item-title {
-  padding: 8px 0;
+  padding: 8px 8px 8px 0;
   cursor: pointer;
 }
 
@@ -80,7 +80,6 @@
   flex: auto;
   display: flex;
   flex-direction: column;
-  padding-right: 8px;
 }
 
 .test-overview-title {
