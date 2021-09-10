@@ -79,7 +79,7 @@ Migration highlights (see inline comments in the Playwright Test code snippet):
 
 1. Each Playwright Test file has explicit import of the `test` and `expect` functions
 2. Test function is marked with `async`
-3. Playwright Test is given a `page` as one of its parameters. This is one of the many [useful fixtures](./test-api/class-fixtures) in Playwright Test.
+3. Playwright Test is given a `page` as one of its parameters. This is one of the many [useful fixtures](./api/class-fixtures) in Playwright Test.
 4. Almost all Playwright calls are prefixed with `await`
 5. Locator creation with [`method: Page.locator`] is one of the few methods that is sync.
 
