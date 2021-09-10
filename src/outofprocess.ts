@@ -47,7 +47,7 @@ class PlaywrightClient {
     this._driverProcess.on('exit', this._onExit);
 
     const connection = new Connection();
-    const transport = new Transport(this._driverProcess.stdin, this._driverProcess.stdout);
+    const transport = new Transport(this._driverProcess.stdin!, this._driverProcess.stdout!);
     connection.onmessage = message => transport.send(JSON.stringify(message));
     transport.onmessage = message => connection.dispatch(JSON.parse(message));
     this._closePromise = new Promise(f => transport.onclose = f);
@@ -57,9 +57,9 @@ class PlaywrightClient {
 
   async stop() {
     this._driverProcess.removeListener('exit', this._onExit);
-    this._driverProcess.stdin.destroy();
-    this._driverProcess.stdout.destroy();
-    this._driverProcess.stderr.destroy();
+    this._driverProcess.stdin!.destroy();
+    this._driverProcess.stdout!.destroy();
+    this._driverProcess.stderr!.destroy();
     await this._closePromise;
   }
 }

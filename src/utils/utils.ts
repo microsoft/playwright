@@ -130,7 +130,7 @@ export function downloadFile(url: string, destinationPath: string, options: {pro
   }
 }
 
-export function spawnAsync(cmd: string, args: string[], options: any): Promise<{stdout: string, stderr: string, code: number, error?: Error}> {
+export function spawnAsync(cmd: string, args: string[], options: any): Promise<{stdout: string, stderr: string, code: number|null, error?: Error}> {
   const process = spawn(cmd, args, options);
 
   return new Promise(resolve => {

@@ -75,7 +75,7 @@ export class PlaywrightServer {
     const path = this._delegate.path;
     const wsEndpoint = await new Promise<string>((resolve, reject) => {
       server.listen(port, () => {
-        const address = server.address();
+        const address = server.address()!;
         const wsEndpoint = typeof address === 'string' ? `${address}${path}` : `ws://127.0.0.1:${address.port}${path}`;
         resolve(wsEndpoint);
       }).on('error', reject);

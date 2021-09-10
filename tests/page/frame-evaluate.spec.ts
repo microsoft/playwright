@@ -36,10 +36,13 @@ it('should have correct execution contexts', async ({ page, server }) => {
 });
 
 function expectContexts(pageImpl, count, browserName) {
-  if (browserName === 'chromium')
-    expect(pageImpl._delegate._mainFrameSession._contextIdToContext.size).toBe(count);
-  else
+  if (browserName === 'chromium') {
+    const contexts: Map<number, any> = pageImpl._delegate._mainFrameSession._contextIdToContext;
+    const notElectron = [...contexts.values()].filter(context => context._delegate._contextNameForTest !== 'Electron Isolated Context');
+    expect(notElectron.length).toBe(count);
+  } else {
     expect(pageImpl._delegate._contextIdToContext.size).toBe(count);
+  }
 }
 
 it('should dispose context on navigation', async ({ page, server, toImpl, browserName, mode }) => {

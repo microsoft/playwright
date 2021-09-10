@@ -246,7 +246,7 @@ class HtmlReporter {
       } else {
         const sha1 = calculateSha1(attachment.body!) + '.dat';
         try {
-          fs.writeFileSync(path.join(this._resourcesFolder, sha1), attachment.body);
+          fs.writeFileSync(path.join(this._resourcesFolder, sha1), attachment.body!);
           attachments.push({
             ...attachment,
             body: undefined,
