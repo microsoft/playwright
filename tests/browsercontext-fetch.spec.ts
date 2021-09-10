@@ -115,7 +115,7 @@ it('should add session cookies to request', async ({context, server}) => {
   }]);
   const [req] = await Promise.all([
     server.waitForRequest('/simple.json'),
-      context.fetch(`http://www.my.playwright.dev:${server.PORT}/simple.json`),
+    context.fetch(`http://www.my.playwright.dev:${server.PORT}/simple.json`),
   ]);
   expect(req.headers.cookie).toEqual('username=John Doe');
 });
@@ -133,7 +133,7 @@ it('should not add context cookie if cookie header passed as a parameter', async
   }]);
   const [req] = await Promise.all([
     server.waitForRequest('/empty.html'),
-      context.fetch(`http://www.my.playwright.dev:${server.PORT}/empty.html`, {
+    context.fetch(`http://www.my.playwright.dev:${server.PORT}/empty.html`, {
       headers: {
         'Cookie': 'foo=bar'
       }
@@ -157,7 +157,7 @@ it('should follow redirects', async ({context, server}) => {
   }]);
   const [req, response] = await Promise.all([
     server.waitForRequest('/simple.json'),
-      context.fetch(`http://www.my.playwright.dev:${server.PORT}/redirect1`),
+    context.fetch(`http://www.my.playwright.dev:${server.PORT}/redirect1`),
   ]);
   expect(req.headers.cookie).toEqual('username=John Doe');
   expect(response.url()).toBe(`http://www.my.playwright.dev:${server.PORT}/simple.json`);
@@ -210,7 +210,7 @@ it('should handle cookies on redirects', async ({context, server, browserName, i
       server.waitForRequest('/redirect1'),
       server.waitForRequest('/a/b/redirect2'),
       server.waitForRequest('/title.html'),
-          context.fetch(`${server.PREFIX}/redirect1`),
+      context.fetch(`${server.PREFIX}/redirect1`),
     ]);
     expect(req1.headers.cookie).toBeFalsy();
     expect(req2.headers.cookie).toBe('r1=v1');
@@ -221,7 +221,7 @@ it('should handle cookies on redirects', async ({context, server, browserName, i
       server.waitForRequest('/redirect1'),
       server.waitForRequest('/a/b/redirect2'),
       server.waitForRequest('/title.html'),
-          context.fetch(`${server.PREFIX}/redirect1`),
+      context.fetch(`${server.PREFIX}/redirect1`),
     ]);
     expect(req1.headers.cookie).toBe('r1=v1');
     expect(req2.headers.cookie.split(';').map(s => s.trim()).sort()).toEqual(['r1=v1', 'r2=v2']);
@@ -294,7 +294,7 @@ it('should work with context level proxy', async ({browserOptions, browserType, 
 
     const [request, response] = await Promise.all([
       server.waitForRequest('/target.html'),
-          context.fetch(`http://non-existent.com/target.html`)
+      context.fetch(`http://non-existent.com/target.html`)
     ]);
     expect(response.status()).toBe(200);
     expect(request.url).toBe('/target.html');
@@ -327,7 +327,7 @@ it('should work with http credentials', async ({context, server}) => {
 
   const [request, response] = await Promise.all([
     server.waitForRequest('/empty.html'),
-      context.fetch(server.EMPTY_PAGE, {
+    context.fetch(server.EMPTY_PAGE, {
       headers: {
         'authorization': 'Basic ' + Buffer.from('user:pass').toString('base64')
       }
@@ -357,7 +357,7 @@ it('should return error with wrong credentials', async ({context, browser, serve
 it('should support post data', async ({context, server}) => {
   const [request, response] = await Promise.all([
     server.waitForRequest('/simple.json'),
-      context.fetch(`${server.PREFIX}/simple.json`, {
+    context.fetch(`${server.PREFIX}/simple.json`, {
       method: 'POST',
       postData: 'My request'
     })
@@ -371,7 +371,7 @@ it('should support post data', async ({context, server}) => {
 it('should add default headers', async ({context, server, page}) => {
   const [request] = await Promise.all([
     server.waitForRequest('/empty.html'),
-      context.fetch(server.EMPTY_PAGE)
+    context.fetch(server.EMPTY_PAGE)
   ]);
   expect(request.headers['accept']).toBe('*/*');
   const userAgent = await page.evaluate(() => navigator.userAgent);
@@ -383,7 +383,7 @@ it('should add default headers to redirects', async ({context, server, page}) =>
   server.setRedirect('/redirect', '/empty.html');
   const [request] = await Promise.all([
     server.waitForRequest('/empty.html'),
-      context.fetch(`${server.PREFIX}/redirect`)
+    context.fetch(`${server.PREFIX}/redirect`)
   ]);
   expect(request.headers['accept']).toBe('*/*');
   const userAgent = await page.evaluate(() => navigator.userAgent);
@@ -394,7 +394,7 @@ it('should add default headers to redirects', async ({context, server, page}) =>
 it('should allow to override default headers', async ({context, server, page}) => {
   const [request] = await Promise.all([
     server.waitForRequest('/empty.html'),
-      context.fetch(server.EMPTY_PAGE, {
+    context.fetch(server.EMPTY_PAGE, {
       headers: {
         'User-Agent': 'Playwright',
         'Accept': 'text/html',
@@ -414,7 +414,7 @@ it('should propagate custom headers with redirects', async ({context, server}) =
     server.waitForRequest('/a/redirect1'),
     server.waitForRequest('/b/c/redirect2'),
     server.waitForRequest('/simple.json'),
-      context.fetch(`${server.PREFIX}/a/redirect1`, {headers: {'foo': 'bar'}}),
+    context.fetch(`${server.PREFIX}/a/redirect1`, {headers: {'foo': 'bar'}}),
   ]);
   expect(req1.headers['foo']).toBe('bar');
   expect(req2.headers['foo']).toBe('bar');
@@ -429,7 +429,7 @@ it('should propagate extra http headers with redirects', async ({context, server
     server.waitForRequest('/a/redirect1'),
     server.waitForRequest('/b/c/redirect2'),
     server.waitForRequest('/simple.json'),
-      context.fetch(`${server.PREFIX}/a/redirect1`),
+    context.fetch(`${server.PREFIX}/a/redirect1`),
   ]);
   expect(req1.headers['my-secret']).toBe('Value');
   expect(req2.headers['my-secret']).toBe('Value');
@@ -458,7 +458,7 @@ it('should support https', async ({context, httpsServer}) => {
   process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
   suppressCertificateWarning();
   try {
-      const response = await context.fetch(httpsServer.EMPTY_PAGE);
+    const response = await context.fetch(httpsServer.EMPTY_PAGE);
     expect(response.status()).toBe(200);
   } finally {
     process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = oldValue;
@@ -624,8 +624,27 @@ it('should dispose when context closes', async function({context, server}) {
   expect(error.message).toContain('Target page, context or browser has been closed');
 });
 
-it('should throw on invalid first argument', async function({context, server}) {
+it('should throw on invalid first argument', async function({context}) {
   const error = await context.fetch({} as any).catch(e => e);
   expect(error.message).toContain('First argument must be either URL string or Request');
 });
 
+it('should override request parameters', async function({context, page, server}) {
+  const [pageReq] = await Promise.all([
+    page.waitForRequest('**/*'),
+    page.goto(server.EMPTY_PAGE)
+  ]);
+  const [req] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    context.fetch(pageReq, {
+      method: 'POST',
+      headers: {
+        'foo': 'bar'
+      },
+      postData: 'data'
+    })
+  ]);
+  expect(req.method).toBe('POST');
+  expect(req.headers.foo).toBe('bar');
+  expect((await req.postBody).toString('utf8')).toBe('data');
+});

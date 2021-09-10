@@ -443,8 +443,6 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     return this._mainFrame.evaluate(pageFunction, arg);
   }
 
-  async fetch(request: network.Request, options?: { timeout?: number }): Promise<network.FetchResponse>;
-  async fetch(url: string, options?: FetchOptions): Promise<network.FetchResponse>;
   async fetch(urlOrRequest: string|network.Request, options: FetchOptions = {}): Promise<network.FetchResponse> {
     return await this._browserContext.fetch(urlOrRequest as any, options);
   }
