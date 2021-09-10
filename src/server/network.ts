@@ -83,6 +83,7 @@ export function stripFragmentFromUrl(url: string): string {
 type ResponseSize = {
   encodedBodySize: number;
   transferSize: number;
+  responseHeadersSize: number;
 };
 
 export class Request extends SdkObject {
@@ -101,7 +102,7 @@ export class Request extends SdkObject {
   private _frame: frames.Frame;
   private _waitForResponsePromise = new ManualPromise<Response | null>();
   _responseEndTiming = -1;
-  readonly responseSize: ResponseSize = { encodedBodySize: 0, transferSize: 0 };
+  readonly responseSize: ResponseSize = { encodedBodySize: 0, transferSize: 0, responseHeadersSize: 0 };
 
   constructor(frame: frames.Frame, redirectedFrom: Request | null, documentId: string | undefined,
     url: string, resourceType: string, method: string, postData: Buffer | null, headers: types.HeadersArray) {
@@ -446,6 +447,8 @@ export class Response extends SdkObject {
   }
 
   private async _responseHeadersSize(): Promise<number> {
+    if (this._request.responseSize.responseHeadersSize)
+      return this._request.responseSize.responseHeadersSize;
     let headersSize = 4; // 4 = 2 spaces + 2 line breaks (HTTP/1.1 200 Ok\r\n)
     headersSize += 8; // httpVersion;
     headersSize += 3; // statusCode;
