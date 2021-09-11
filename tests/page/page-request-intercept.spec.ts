@@ -46,7 +46,6 @@ it('should fulfill response with empty body', async ({page, server, browserName,
     // @ts-expect-error
     const response = await route._continueToResponse({});
     await route.fulfill({
-      // @ts-expect-error
       response,
       status: 201,
       body: ''
@@ -127,7 +126,6 @@ it('should support fulfill after intercept', async ({page, server}) => {
   await page.route('**', async route => {
     // @ts-expect-error
     const response = await route._continueToResponse();
-    // @ts-expect-error
     await route.fulfill({ response });
   });
   const response = await page.goto(server.PREFIX + '/title.html');
@@ -147,7 +145,6 @@ it('should intercept failures', async ({page, browserName, browserMajorVersion, 
     try {
       // @ts-expect-error
       const response = await route._continueToResponse();
-      // @ts-expect-error
       await route.fulfill({ response });
     } catch (e) {
       error = e;
@@ -173,7 +170,6 @@ it('should support request overrides', async ({page, server, browserName, browse
       headers: {'foo': 'bar'},
       postData: 'my data',
     });
-    // @ts-expect-error
     await route.fulfill({ response });
   });
   await page.goto(server.PREFIX + '/foo');
@@ -228,7 +224,6 @@ it('should give access to the intercepted response status text', async ({page, s
   expect(response.statusText()).toBe('You are awesome');
   expect(response.url()).toBe(server.PREFIX + '/title.html');
 
-  // @ts-expect-error
   await Promise.all([route.fulfill({ response }), evalPromise]);
 });
 
@@ -247,7 +242,6 @@ it('should give access to the intercepted response body', async ({page, server})
 
   expect((await response.text())).toBe('{"foo": "bar"}\n');
 
-  // @ts-expect-error
   await Promise.all([route.fulfill({ response }), evalPromise]);
 });
 
@@ -325,7 +319,6 @@ it('should fulfill original response after redirects', async ({page, browserName
     ++routeCalls;
     // @ts-expect-error
     const response = await route._continueToResponse({});
-    // @ts-expect-error
     await route.fulfill({ response });
   });
   const response = await page.goto(server.PREFIX + '/redirect/1.html');
