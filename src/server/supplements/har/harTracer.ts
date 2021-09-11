@@ -141,6 +141,7 @@ export class HarTracer {
     const pageEntry = this._ensurePageEntry(page);
     const harEntry: har.Entry = {
       pageref: pageEntry.id,
+      _requestref: request.guid,
       _frameref: request.frame().guid,
       _monotonicTime: monotonicTime(),
       startedDateTime: new Date(),
