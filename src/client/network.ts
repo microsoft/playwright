@@ -21,7 +21,7 @@ import { Frame } from './frame';
 import { Headers, RemoteAddr, SecurityDetails, WaitForEventOptions } from './types';
 import fs from 'fs';
 import * as mime from 'mime';
-import { isString, headersObjectToArray, headersArrayToObject } from '../utils/utils';
+import { isString, headersObjectToArray } from '../utils/utils';
 import { ManualPromise } from '../utils/async';
 import { Events } from './events';
 import { Page } from './page';
