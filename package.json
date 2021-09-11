@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.15.0-next",
   "description": "A high-level API to automate web browsers",
-  "repository": "github:Microsoft/playwright",
+  "repository": "https://github.com/Microsoft/playwright",
   "homepage": "https://playwright.dev",
   "engines": {
     "node": ">=12"
