@@ -2003,7 +2003,7 @@ export interface Page {
    */
   fetch(urlOrRequest: string|Request, options?: {
     /**
-     * If set changes the request HTTP headers.
+     * Allows to set HTTP headers.
      */
     headers?: { [key: string]: string; };
 
@@ -2013,7 +2013,7 @@ export interface Page {
     method?: string;
 
     /**
-     * If set changes the post data of request.
+     * Allows to set post data of the request.
      */
     postData?: string|Buffer;
 
@@ -6430,7 +6430,7 @@ export interface BrowserContext {
    */
   fetch(urlOrRequest: string|Request, options?: {
     /**
-     * If set changes the request HTTP headers.
+     * Allows to set HTTP headers.
      */
     headers?: { [key: string]: string; };
 
@@ -6440,7 +6440,7 @@ export interface BrowserContext {
     method?: string;
 
     /**
-     * If set changes the post data of request.
+     * Allows to set post data of the request.
      */
     postData?: string|Buffer;
 

@@ -1755,12 +1755,12 @@ If set changes the request method (e.g. PUT or POST). If not specified, GET meth
 ### option: Page.fetch.headers
 - `headers` <[Object]<[string], [string]>>
 
-If set changes the request HTTP headers.
+Allows to set HTTP headers.
 
 ### option: Page.fetch.postData
 - `postData` <[string]|[Buffer]>
 
-If set changes the post data of request.
+Allows to set post data of the request.
 
 ### option: Page.fetch.timeout
 - `timeout` <[float]>

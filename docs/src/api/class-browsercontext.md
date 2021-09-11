@@ -811,12 +811,12 @@ If set changes the request method (e.g. PUT or POST). If not specified, GET meth
 ### option: BrowserContext.fetch.headers
 - `headers` <[Object]<[string], [string]>>
 
-If set changes the request HTTP headers.
+Allows to set HTTP headers.
 
 ### option: BrowserContext.fetch.postData
 - `postData` <[string]|[Buffer]>
 
-If set changes the post data of request.
+Allows to set post data of the request.
 
 ### option: BrowserContext.fetch.timeout
 - `timeout` <[float]>
