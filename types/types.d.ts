@@ -12688,7 +12688,17 @@ export interface FetchResponse {
    * An array with all the request HTTP headers associated with this response. Header names are not lower-cased. Headers with
    * multiple entries, such as `Set-Cookie`, appear in the array multiple times.
    */
-  headersArray(): Array<Array<string>>;
+  headersArray(): Array<{
+    /**
+     * Name of the header.
+     */
+    name: string;
+
+    /**
+     * Value of the header.
+     */
+    value: string;
+  }>;
 
   /**
    * Returns the JSON representation of response body.
@@ -13174,10 +13184,26 @@ export interface Request {
 
   /**
    * An array with all the request HTTP headers associated with this request. Unlike
-   * [request.allHeaders()](https://playwright.dev/docs/api/class-request#request-all-headers), header names are not
+   * [request.allHeaders()](https://playwright.dev/docs/api/class-request#request-all-headers), header names are NOT
    * lower-cased. Headers with multiple entries, such as `Set-Cookie`, appear in the array multiple times.
    */
-  headersArray(): Promise<Array<Array<string>>>;
+  headersArray(): Promise<Array<{
+    /**
+     * Name of the header.
+     */
+    name: string;
+
+    /**
+     * Value of the header.
+     */
+    value: string;
+  }>>;
+
+  /**
+   * Returns the value of the header matching the name. The name is case insensitive.
+   * @param name Name of the header.
+   */
+  headerValue(name: string): Promise<null|string>;
 
   /**
    * Whether this request is driving frame's navigation.
@@ -13389,10 +13415,34 @@ export interface Response {
 
   /**
    * An array with all the request HTTP headers associated with this response. Unlike
-   * [response.allHeaders()](https://playwright.dev/docs/api/class-response#response-all-headers), header names are not
+   * [response.allHeaders()](https://playwright.dev/docs/api/class-response#response-all-headers), header names are NOT
    * lower-cased. Headers with multiple entries, such as `Set-Cookie`, appear in the array multiple times.
    */
-  headersArray(): Promise<Array<Array<string>>>;
+  headersArray(): Promise<Array<{
+    /**
+     * Name of the header.
+     */
+    name: string;
+
+    /**
+     * Value of the header.
+     */
+    value: string;
+  }>>;
+
+  /**
+   * Returns the value of the header matching the name. The name is case insensitive. If multiple headers have the same name
+   * (except `set-cookie`), they are returned as a list separated by `, `. For `set-cookie`, the `\n` separator is used. If
+   * no headers are found, `null` is returned.
+   * @param name Name of the header.
+   */
+  headerValue(name: string): Promise<null|string>;
+
+  /**
+   * Returns all values of the headers matching the name, for example `set-cookie`. The name is case insensitive.
+   * @param name Name of the header.
+   */
+  headerValues(name: string): Promise<Array<string>>;
 
   /**
    * Returns the JSON representation of response body.

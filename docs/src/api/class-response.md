@@ -28,20 +28,33 @@ Returns the [Frame] that initiated this response.
 **DEPRECATED** Incomplete list of headers as seen by the rendering engine. Use [`method: Response.allHeaders`] instead.
 
 ## async method: Response.headersArray
-* langs: js, csharp, python
-- returns: <[Array]<[Array]<[string]>>>
-
-An array with all the request HTTP headers associated with this response. Unlike [`method: Response.allHeaders`], header names are not lower-cased.
-Headers with multiple entries, such as `Set-Cookie`, appear in the array multiple times.
-
-## async method: Response.headersArray
-* langs: java
 - returns: <[Array]<[Object]>>
   - `name` <[string]> Name of the header.
   - `value` <[string]> Value of the header.
 
-An array with all the request HTTP headers associated with this response. Unlike [`method: Response.allHeaders`], header names are not lower-cased.
+An array with all the request HTTP headers associated with this response. Unlike [`method: Response.allHeaders`], header names are NOT lower-cased.
 Headers with multiple entries, such as `Set-Cookie`, appear in the array multiple times.
+
+## async method: Response.headerValue
+- returns: <[null]|[string]>
+
+Returns the value of the header matching the name. The name is case insensitive. If multiple headers have
+the same name (except `set-cookie`), they are returned as a list separated by `, `. For `set-cookie`, the `\n` separator is used. If no headers are found, `null` is returned.
+
+### param: Response.headerValue.name
+- `name` <[string]>
+
+Name of the header.
+
+## async method: Response.headerValues
+- returns: <[Array]<[string]>>
+
+Returns all values of the headers matching the name, for example `set-cookie`. The name is case insensitive.
+
+### param: Response.headerValues.name
+- `name` <[string]>
+
+Name of the header.
 
 ## async method: Response.json
 * langs: js, python

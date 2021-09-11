@@ -198,7 +198,7 @@ it('should give access to the intercepted response', async ({page, server}) => {
   expect(response.url()).toBe(server.PREFIX + '/title.html');
   expect(response.headers()['content-type']).toBe('text/html; charset=utf-8');
   expect((await response.allHeaders())['content-type']).toBe('text/html; charset=utf-8');
-  expect(await (await response.headersArray()).filter(([name, value]) => name.toLowerCase() === 'content-type')).toEqual([['Content-Type', 'text/html; charset=utf-8']]);
+  expect(await (await response.headersArray()).filter(({ name }) => name.toLowerCase() === 'content-type')).toEqual([{ name: 'Content-Type', value: 'text/html; charset=utf-8' }]);
 
   // @ts-expect-error
   await Promise.all([route.fulfill({ response }), evalPromise]);
