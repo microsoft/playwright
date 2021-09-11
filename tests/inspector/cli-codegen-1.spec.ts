@@ -559,7 +559,7 @@ test.describe('cli codegen', () => {
     expect(sources.get('C#').text).toContain(`
         // Click text=link
         await page.ClickAsync(\"text=link\");
-        // Assert.Equal(\"about:blank#foo\", page.Url);`);
+        // Assert.AreEqual(\"about:blank#foo\", page.Url);`);
 
     expect(page.url()).toContain('about:blank#foo');
   });
