@@ -189,7 +189,7 @@ System.out.println(newPage.title());
 
 ```python async
 # Get page after a specific action (e.g. clicking a link)
-async with context.expect_page() as new_page_info:
+async with page.context.expect_page() as new_page_info:
     await page.click('a[target="_blank"]') # Opens a new tab
 new_page = await new_page_info.value
 
@@ -199,7 +199,7 @@ print(await new_page.title())
 
 ```python sync
 # Get page after a specific action (e.g. clicking a link)
-with context.expect_page() as new_page_info:
+with page.context.expect_page() as new_page_info:
     page.click('a[target="_blank"]') # Opens a new tab
 new_page = new_page_info.value
 
