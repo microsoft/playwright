@@ -28,7 +28,7 @@ import { Events } from './events';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { Waiter } from './waiter';
 import { URLMatch, Headers, WaitForEventOptions, BrowserContextOptions, StorageState, LaunchOptions } from './types';
-import { isUnderTest, headersObjectToArray, mkdirIfNeeded, isString, assert } from '../utils/utils';
+import { isUnderTest, headersObjectToArray, mkdirIfNeeded } from '../utils/utils';
 import { isSafeCloseError } from '../utils/errors';
 import * as api from '../../types/types';
 import * as structs from '../../types/structs';
@@ -36,6 +36,7 @@ import { CDPSession } from './cdpSession';
 import { Tracing } from './tracing';
 import type { BrowserType } from './browserType';
 import { Artifact } from './artifact';
+import { FetchRequest } from './fetch';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel, channels.BrowserContextInitializer> implements api.BrowserContext {
   _pages = new Set<Page>();
@@ -48,8 +49,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   private _closedPromise: Promise<void>;
   _options: channels.BrowserNewContextParams = { };
 
+  readonly request: FetchRequest;
   readonly tracing: Tracing;
-  private _closed = false;
   readonly _backgroundPages = new Set<Page>();
   readonly _serviceWorkers = new Set<Worker>();
   readonly _isChromium: boolean;
@@ -68,6 +69,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
       this._browser = parent;
     this._isChromium = this._browser?._name === 'chromium';
     this.tracing = new Tracing(this);
+    this.request = new FetchRequest(this);
 
     this._channel.on('bindingCall', ({binding}) => this._onBinding(BindingCall.from(binding)));
     this._channel.on('close', () => this._onClose());
@@ -216,32 +218,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     });
   }
 
-  async fetch(urlOrRequest: string|api.Request, options: FetchOptions = {}): Promise<network.FetchResponse> {
-    return this._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
-      const request: network.Request | undefined = (urlOrRequest instanceof network.Request) ? urlOrRequest as network.Request : undefined;
-      assert(request || typeof urlOrRequest === 'string', 'First argument must be either URL string or Request');
-      const url = request ? request.url() : urlOrRequest as string;
-      const method = options.method || request?.method();
-      // Cannot call allHeaders() here as the request may be paused inside route handler.
-      const headersObj = options.headers || request?.headers() ;
-      const headers = headersObj ? headersObjectToArray(headersObj) : undefined;
-      let postDataBuffer = isString(options.postData) ? Buffer.from(options.postData, 'utf8') : options.postData;
-      if (postDataBuffer === undefined)
-        postDataBuffer = request?.postDataBuffer() || undefined;
-      const postData = (postDataBuffer ? postDataBuffer.toString('base64') : undefined);
-      const result = await channel.fetch({
-        url,
-        method,
-        headers,
-        postData,
-        timeout: options.timeout,
-      });
-      if (result.error)
-        throw new Error(`Request failed: ${result.error}`);
-      return new network.FetchResponse(this, result.response!);
-    });
-  }
-
   async setGeolocation(geolocation: { longitude: number, latitude: number, accuracy?: number } | null): Promise<void> {
     return this._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
       await channel.setGeolocation({ geolocation: geolocation || undefined });
@@ -351,7 +327,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   }
 
   _onClose() {
-    this._closed = true;
     if (this._browser)
       this._browser._contexts.delete(this);
     this._browserType?._contexts?.delete(this);
@@ -392,8 +367,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     await this._channel.recorderSupplementEnable(params);
   }
 }
-
-export type FetchOptions = { method?: string, headers?: Headers, postData?: string | Buffer, timeout?: number };
 
 export async function prepareBrowserContextParams(options: BrowserContextOptions): Promise<channels.BrowserNewContextParams> {
   if (options.videoSize && !options.videosPath)

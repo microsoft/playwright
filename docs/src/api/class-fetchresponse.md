@@ -1,6 +1,6 @@
 # class: FetchResponse
 
-[FetchResponse] class represents responses received from [`method: BrowserContext.fetch`] and [`method: Page.fetch`] methods.
+[FetchResponse] class represents responses received from [`method: FetchRequest.fetch`].
 
 ## async method: FetchResponse.body
 - returns: <[Buffer]>
