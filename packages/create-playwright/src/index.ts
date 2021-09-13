@@ -19,7 +19,7 @@ import fs from 'fs';
 import { prompt } from 'enquirer';
 import colors from 'ansi-colors';
 
-import { executeCommands, createFiles, determinePackageManager, executeTemplate, determineRootDir } from './utils';
+import { executeCommands, createFiles, determinePackageManager, executeTemplate, determineRootDir, Command } from './utils';
 
 export type PromptOptions = {
   testDir: string,
@@ -66,20 +66,20 @@ class Generator {
       {
         type: 'text',
         name: 'testDir',
-        message: 'Where to put your integration tests?',
+        message: 'Where to put your end-to-end tests?',
         initial: 'e2e'
       },
       {
         type: 'confirm',
         name: 'installGitHubActions',
-        message: 'Add GitHub Actions workflow?',
+        message: 'Add a GitHub Actions workflow?',
         initial: true,
       },
     ]);
   }
 
   private async _identifyChanges(options: PromptOptions) {
-    const commands: string[] = [];
+    const commands: Command[] = [];
     const files = new Map<string, string>();
     const fileExtension = options.language === 'JavaScript' ? 'js' : 'ts';
 
@@ -97,15 +97,28 @@ class Generator {
 
     files.set(path.join(options.testDir, `example.spec.${fileExtension}`), this._readAsset(`example.spec.${fileExtension}`));
 
-    if (!fs.existsSync(path.join(this.rootDir, 'package.json')))
-      commands.push(this.packageManager === 'yarn' ? 'yarn init -y' : 'npm init -y');
+    if (!fs.existsSync(path.join(this.rootDir, 'package.json'))) {
+      commands.push({
+        name: 'Initializing NPM project',
+        command: this.packageManager === 'yarn' ? 'yarn init -y' : 'npm init -y',
+      });
+    }
 
-    if (this.packageManager === 'yarn')
-      commands.push('yarn add --dev @playwright/test');
-    else
-      commands.push('npm install --save-dev @playwright/test');
+    commands.push({
+      name: 'Installing Playwright Test',
+      command: this.packageManager === 'yarn' ? 'yarn add --dev @playwright/test' : 'npm install --save-dev @playwright/test',
+    });
 
-    commands.push('npx playwright install --with-deps');
+    commands.push({
+      name: 'Downloading browsers',
+      command: 'npx playwright install --with-deps',
+    });
+
+    let gitIgnore = '';
+    if (fs.existsSync(path.join(this.rootDir, '.gitignore')))
+      gitIgnore = fs.readFileSync(path.join(this.rootDir, '.gitignore'), 'utf-8').trimEnd() + '\n';
+    gitIgnore += 'test-results/';
+    files.set('.gitignore', gitIgnore);
 
     return { files, commands };
   }

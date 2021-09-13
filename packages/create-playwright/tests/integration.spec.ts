@@ -84,6 +84,7 @@ for (const packageManager of ['npm', 'yarn'] as ('npm'|'yarn')[]) {
       const playwrightConfigContent = fs.readFileSync(path.join(dir, 'playwright.config.ts'), 'utf8');
       expect(playwrightConfigContent).toContain('e2e');
       expect(fs.existsSync(path.join(dir, '.github/workflows/playwright.yml'))).toBeTruthy();
+      expect(fs.existsSync(path.join(dir, '.gitignore'))).toBeTruthy();
       if (packageManager === 'npm') {
         expect(stdout).toContain('Running: npm init -y');
         expect(stdout).toContain('Running: npm install --save-dev @playwright/test');
