@@ -418,3 +418,28 @@ test('should match in dot-directories', async ({ runInlineTest }) => {
   expect(result.report.suites.map(s => s.file).sort()).toEqual(['.dir/a.test.ts', '.dir/b.test.js']);
   expect(result.exitCode).toBe(0);
 });
+
+test('should always work with unix separators', async ({ runInlineTest }) => {
+  // Cygwin or Git Bash might send us a path with unix separators.
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      import * as path from 'path';
+      module.exports = { testDir: path.join(__dirname, 'dir') };
+    `,
+    'dir/a.test.ts': `
+      const { test } = pwt;
+      test('pass', ({}) => {});
+    `,
+    'dir/b.test.ts': `
+      const { test } = pwt;
+      test('pass', ({}) => {});
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('pass', ({}) => {});
+    `
+  }, { args: [`dir/a`] });
+  expect(result.passed).toBe(1);
+  expect(result.report.suites.map(s => s.file).sort()).toEqual(['a.test.ts']);
+  expect(result.exitCode).toBe(0);
+});
