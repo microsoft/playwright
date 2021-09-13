@@ -41,6 +41,12 @@ Allows to set post data of the fetch.
 
 Request timeout in milliseconds.
 
+### option: FetchRequest.fetch.failOnStatusCode
+- `failOnStatusCode` <[boolean]>
+
+Whether to throw on response codes other than 2xx and 3xx. By default response object is returned
+for all status codes.
+
 ## async method: FetchRequest.get
 - returns: <[FetchResponse]>
 
@@ -66,6 +72,12 @@ Allows to set HTTP headers.
 - `timeout` <[float]>
 
 Request timeout in milliseconds.
+
+### option: FetchRequest.get.failOnStatusCode
+- `failOnStatusCode` <[boolean]>
+
+Whether to throw on response codes other than 2xx and 3xx. By default response object is returned
+for all status codes.
 
 ## async method: FetchRequest.post
 - returns: <[FetchResponse]>
@@ -97,3 +109,9 @@ Allows to set post data of the fetch.
 - `timeout` <[float]>
 
 Request timeout in milliseconds.
+
+### option: FetchRequest.post.failOnStatusCode
+- `failOnStatusCode` <[boolean]>
+
+Whether to throw on response codes other than 2xx and 3xx. By default response object is returned
+for all status codes.

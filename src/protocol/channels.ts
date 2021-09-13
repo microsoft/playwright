@@ -862,6 +862,7 @@ export type BrowserContextFetchParams = {
   headers?: NameValue[],
   postData?: Binary,
   timeout?: number,
+  failOnStatusCode?: boolean,
 };
 export type BrowserContextFetchOptions = {
   params?: NameValue[],
@@ -869,6 +870,7 @@ export type BrowserContextFetchOptions = {
   headers?: NameValue[],
   postData?: Binary,
   timeout?: number,
+  failOnStatusCode?: boolean,
 };
 export type BrowserContextFetchResult = {
   response?: FetchResponse,

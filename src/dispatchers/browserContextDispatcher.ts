@@ -115,6 +115,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       headers: params.headers ? headersArrayToObject(params.headers, false) : undefined,
       postData: params.postData ? Buffer.from(params.postData, 'base64') : undefined,
       timeout: params.timeout,
+      failOnStatusCode: params.failOnStatusCode,
     });
     let response;
     if (fetchResponse) {

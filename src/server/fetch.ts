@@ -74,6 +74,8 @@ export async function playwrightFetch(context: BrowserContext, params: types.Fet
 
     const fetchResponse = await sendRequest(context, requestUrl, options, params.postData);
     const fetchUid = context.storeFetchResponseBody(fetchResponse.body);
+    if (params.failOnStatusCode && (fetchResponse.status < 200 || fetchResponse.status >= 400))
+      return { error: `${fetchResponse.status} ${fetchResponse.statusText}` };
     return { fetchResponse: { ...fetchResponse, fetchUid } };
   } catch (e) {
     return { error: String(e) };

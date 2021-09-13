@@ -12637,6 +12637,11 @@ export interface FetchRequest {
     data?: string|Buffer;
 
     /**
+     * Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status codes.
+     */
+    failOnStatusCode?: boolean;
+
+    /**
      * Allows to set HTTP headers.
      */
     headers?: { [key: string]: string; };
@@ -12665,6 +12670,11 @@ export interface FetchRequest {
    */
   get(urlOrRequest: string|Request, options?: {
     /**
+     * Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status codes.
+     */
+    failOnStatusCode?: boolean;
+
+    /**
      * Allows to set HTTP headers.
      */
     headers?: { [key: string]: string; };
@@ -12691,6 +12701,11 @@ export interface FetchRequest {
      * Allows to set post data of the fetch.
      */
     data?: string|Buffer;
+
+    /**
+     * Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status codes.
+     */
+    failOnStatusCode?: boolean;
 
     /**
      * Allows to set HTTP headers.

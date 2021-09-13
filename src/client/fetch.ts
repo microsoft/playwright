@@ -28,7 +28,8 @@ export type FetchOptions = {
   method?: string,
   headers?: Headers,
   data?: string | Buffer,
-  timeout?: number
+  timeout?: number,
+  failOnStatusCode?: boolean,
 };
 
 export class FetchRequest implements api.FetchRequest {
@@ -44,6 +45,7 @@ export class FetchRequest implements api.FetchRequest {
       params?: { [key: string]: string; };
       headers?: { [key: string]: string; };
       timeout?: number;
+      failOnStatusCode?: boolean;
     }): Promise<FetchResponse> {
     return this.fetch(urlOrRequest, {
       ...options,
@@ -58,6 +60,7 @@ export class FetchRequest implements api.FetchRequest {
       headers?: { [key: string]: string; };
       data?: string | Buffer;
       timeout?: number;
+      failOnStatusCode?: boolean;
     }): Promise<FetchResponse> {
     return this.fetch(urlOrRequest, {
       ...options,
@@ -86,6 +89,7 @@ export class FetchRequest implements api.FetchRequest {
         headers,
         postData,
         timeout: options.timeout,
+        failOnStatusCode: options.failOnStatusCode,
       });
       if (result.error)
         throw new Error(`Request failed: ${result.error}`);
