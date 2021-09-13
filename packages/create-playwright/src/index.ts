@@ -40,8 +40,8 @@ class Generator {
     const questions = await this._askQuestions();
     const { files, commands } = await this._identifyChanges(questions);
     executeCommands(this.rootDir, commands);
-    createFiles(this.rootDir, files);
-    this._patchPackageJSON();
+    await createFiles(this.rootDir, files);
+    await this._patchPackageJSON();
     this._printOutro();
   }
 
@@ -55,16 +55,13 @@ class Generator {
       return JSON.parse(process.env.TEST_OPTIONS);
     return await prompt<PromptOptions>([
       {
-        // @ts-ignore
         type: 'select',
         name: 'language',
-        message: 'In which language do you want to write your tests in?',
+        message: 'Do you want to use TypeScript or JavaScript?',
         choices: [
-          { name: 'JavaScript' },
           { name: 'TypeScript' },
+          { name: 'JavaScript' },
         ],
-        // @ts-ignore
-        initial: 'typescript',
       },
       {
         type: 'text',
@@ -118,7 +115,7 @@ class Generator {
     return fs.readFileSync(path.join(assetsDir, asset), 'utf-8');
   }
 
-  private _patchPackageJSON() {
+  private async _patchPackageJSON() {
     const packageJSON = JSON.parse(fs.readFileSync(path.join(this.rootDir, 'package.json'), 'utf-8'));
     if (!packageJSON.scripts)
       packageJSON.scripts = {};
@@ -126,7 +123,7 @@ class Generator {
 
     const files = new Map<string, string>();
     files.set('package.json', JSON.stringify(packageJSON, null, 2));
-    createFiles(this.rootDir, files, true);
+    await createFiles(this.rootDir, files, true);
   }
 
   private _printOutro() {

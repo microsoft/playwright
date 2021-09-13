@@ -39,7 +39,7 @@ export async function createFiles(rootDir: string, files: Map<string, string>, f
       const { override } = await prompt<{ override: boolean }>({
         type: 'confirm',
         name: 'override',
-        message: `${absoluteFilePath} as it already exists. Should it override?`,
+        message: `${absoluteFilePath} already exists. Should it override?`,
         initial: false
       });
       if (!override)

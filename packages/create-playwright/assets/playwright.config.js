@@ -9,32 +9,47 @@ const path = require('path')
 const config = {
   timeout: 30 * 1000,
   testDir: path.join(__dirname, '{{testDir}}'),
+
   // Run your local dev server before starting the tests:
   // https://playwright.dev/docs/test-advanced#launching-a-development-web-server-during-the-tests
   // webServer: {
   //   command: 'npm run start',
   //   port: 3000,
   // },
+
   projects: [
     {
-      name: 'Desktop Chrome',
+      name: 'Desktop Chromium',
       use: {
-        ...devices['Desktop Chrome'],
-        channel: 'chrome',
+        browserName: 'chromium',
+        // Test against Chrome Beta channel.
+        channel: 'chrome-beta',
       },
     },
     {
-      name: 'iPhone 12',
+      name: 'Desktop Safari',
       use: {
-        ...devices['iPhone 12'],
-      },
-    }, {
+        browserName: 'webkit',
+        viewport: { width: 1200, height: 750 },
+      }
+    },
+    // Test against mobile viewports.
+    {
+      name: 'Mobile Chrome',
+      use: devices['Pixel 5'],
+    },
+    {
+      name: 'Mobile Safari',
+      use: devices['iPhone 12'],
+    },
+    {
       name: 'Desktop Firefox',
       use: {
-        ...devices['Desktop Firefox'],
-      },
+        browserName: 'firefox',
+        viewport: { width: 800, height: 600 },
+      }
     },
   ],
 };
 
-export default config;
+module.exports = config;
