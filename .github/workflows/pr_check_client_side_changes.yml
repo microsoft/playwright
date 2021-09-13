@@ -14,7 +14,7 @@ jobs:
       - name: Create GitHub issue
         uses: actions/github-script@v4
         with:
-          github-token: ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}
+          github-token: ${{ secrets.GH_SERVICE_ACCOUNT_TOKEN }}
           script: |
             const { data } = await github.git.getCommit({
               owner: context.repo.owner,
