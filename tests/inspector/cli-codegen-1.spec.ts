@@ -18,6 +18,7 @@ import { test, expect } from './inspectorTest';
 
 test.describe('cli codegen', () => {
   test.skip(({ mode }) => mode !== 'default');
+  test.skip(({ trace }) => trace);
   test.fixme(({ browserName, headless }) => browserName === 'firefox' && !headless, 'Focus is off');
 
   test('should click', async ({ page, openRecorder }) => {

@@ -20,6 +20,7 @@ import fs from 'fs';
 
 test.describe('cli codegen', () => {
   test.skip(({ mode }) => mode !== 'default');
+  test.skip(({ trace }) => trace);
 
   test('should contain open page', async ({ openRecorder }) => {
     const recorder = await openRecorder();
