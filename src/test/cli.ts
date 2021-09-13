@@ -16,15 +16,17 @@
 
 /* eslint-disable no-console */
 
-import * as commander from 'commander';
-import * as fs from 'fs';
-import * as path from 'path';
+import commander from 'commander';
+import fs from 'fs';
+import open from 'open';
+import path from 'path';
 import type { Config } from './types';
 import { Runner, builtInReporters, BuiltInReporter } from './runner';
 import { stopProfiling, startProfiling } from './profiler';
 import { FilePatternFilter } from './util';
 import { Loader } from './loader';
 import { HtmlBuilder } from './html/htmlBuilder';
+import { HttpServer } from '../utils/httpServer';
 
 const defaultTimeout = 30000;
 const defaultReporter: BuiltInReporter = process.env.CI ? 'dot' : 'list';
@@ -84,29 +86,58 @@ export function addTestCommand(program: commander.CommanderStatic) {
 }
 
 export function addGenerateHtmlCommand(program: commander.CommanderStatic) {
-  const command = program.command('generate-html');
+  const command = program.command('generate-report');
   command.description('Generate HTML report');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "${tsConfig}"/"${jsConfig}"`);
   command.option('--output <dir>', `Folder for output artifacts (default: "playwright-report")`, 'playwright-report');
   command.action(async opts => {
-    const output = opts.output;
-    delete opts.output;
-    const loader = await createLoader(opts);
-    const outputFolders = new Set(loader.projects().map(p => p.config.outputDir));
-    const reportFiles = new Set<string>();
-    for (const outputFolder of outputFolders) {
-      const reportFolder = path.join(outputFolder, 'report');
-      const files = fs.readdirSync(reportFolder).filter(f => f.endsWith('.report'));
-      for (const file of files)
-        reportFiles.add(path.join(reportFolder, file));
-    }
-    new HtmlBuilder([...reportFiles], output, loader.fullConfig().rootDir);
+    await generateHTMLReport(opts);
   }).on('--help', () => {
     console.log('');
     console.log('Examples:');
     console.log('');
     console.log('  $ generate-report');
   });
+}
+
+export function addShowHtmlCommand(program: commander.CommanderStatic) {
+  const command = program.command('show-report');
+  command.description('Show HTML report for last run');
+  command.option('-c, --config <file>', `Configuration file, or a test directory with optional "${tsConfig}"/"${jsConfig}"`);
+  command.option('--output <dir>', `Folder for output artifacts (default: "playwright-report")`, 'playwright-report');
+  command.action(async opts => {
+    const output = await generateHTMLReport(opts);
+    const server = new HttpServer();
+    server.routePrefix('/', (request, response) => {
+      let relativePath = request.url!;
+      if (relativePath === '/')
+        relativePath = '/index.html';
+      const absolutePath = path.join(output, ...relativePath.split('/'));
+      return server.serveFile(response, absolutePath);
+    });
+    open(await server.start());
+  }).on('--help', () => {
+    console.log('');
+    console.log('Examples:');
+    console.log('');
+    console.log('  $ show-report');
+  });
+}
+
+async function generateHTMLReport(opts: any): Promise<string> {
+  const output = opts.output;
+  delete opts.output;
+  const loader = await createLoader(opts);
+  const outputFolders = new Set(loader.projects().map(p => p.config.outputDir));
+  const reportFiles = new Set<string>();
+  for (const outputFolder of outputFolders) {
+    const reportFolder = path.join(outputFolder, 'report');
+    const files = fs.readdirSync(reportFolder).filter(f => f.endsWith('.report'));
+    for (const file of files)
+      reportFiles.add(path.join(reportFolder, file));
+  }
+  new HtmlBuilder([...reportFiles], output, loader.fullConfig().rootDir);
+  return output;
 }
 
 async function createLoader(opts: { [key: string]: any }): Promise<Loader> {
