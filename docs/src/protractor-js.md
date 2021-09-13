@@ -78,10 +78,10 @@ test.describe('angularjs homepage todo list', function() {
 Migration highlights (see inline comments in the Playwright Test code snippet):
 
 1. Each Playwright Test file has explicit import of the `test` and `expect` functions
-2. Test function is marked with `async`
-3. Playwright Test is given a `page` as one of its parameters. This is one of the many [useful fixtures](./api/class-fixtures) in Playwright Test.
-4. Almost all Playwright calls are prefixed with `await`
-5. Locator creation with [`method: Page.locator`] is one of the few methods that is sync.
+1. Test function is marked with `async`
+1. Playwright Test is given a `page` as one of its parameters. This is one of the many [useful fixtures](./api/class-fixtures) in Playwright Test.
+1. Almost all Playwright calls are prefixed with `await`
+1. Locator creation with [`method: Page.locator`] is one of the few methods that is sync.
 
 ## Polyfilling `waitForAngular`
 
@@ -91,7 +91,7 @@ However, it might come handy in some edge cases.
 Here's how to polyfill `waitForAngular` function in Playwright Test:
 
 1. Make sure you have protractor installed in your package.json
-2. Polyfill function
+1. Polyfill function
 
     ```js
     async function waitForAngular(page) {
@@ -115,7 +115,7 @@ Here's how to polyfill `waitForAngular` function in Playwright Test:
     }
     ```
 
-3. Polyfill usage
+1. Polyfill usage
 
     ```js
     const page = await context.newPage();
