@@ -130,7 +130,8 @@ export class Recorder {
   }
 
   private _refreshListenersIfNeeded() {
-    if (this._outerGlassPaneElement.parentElement)
+    // Ensure we are attached to the current document, and we are on top (last element);
+    if (this._outerGlassPaneElement.parentElement === document.documentElement && !this._outerGlassPaneElement.nextElementSibling)
       return;
     removeEventListeners(this._listeners);
     this._listeners = [
