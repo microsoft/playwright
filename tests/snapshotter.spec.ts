@@ -226,15 +226,17 @@ it.describe('snapshots', () => {
       sheet.addRule('button', 'color: red');
       (document as any).adoptedStyleSheets = [sheet];
 
-      const div = document.createElement('div');
-      const root = div.attachShadow({
-        mode: 'open'
-      });
-      root.append('foo');
       const sheet2 = new CSSStyleSheet();
       sheet2.addRule(':host', 'color: blue');
-      (root as any).adoptedStyleSheets = [sheet2];
-      document.body.appendChild(div);
+
+      for (const element of [document.createElement('div'), document.createElement('span')]) {
+        const root = element.attachShadow({
+          mode: 'open'
+        });
+        root.append('foo');
+        (root as any).adoptedStyleSheets = [sheet2];
+        document.body.appendChild(element);
+      }
     });
     const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
 
@@ -248,6 +250,10 @@ it.describe('snapshots', () => {
       return window.getComputedStyle(div).color;
     });
     expect(divColor).toBe('rgb(0, 0, 255)');
+    const spanColor = await frame.$eval('span', span => {
+      return window.getComputedStyle(span).color;
+    });
+    expect(spanColor).toBe('rgb(0, 0, 255)');
   });
 
   it('should restore scroll positions', async ({ page, showSnapshot, toImpl, snapshotter, browserName }) => {
