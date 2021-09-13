@@ -24,6 +24,7 @@ import { spawn } from 'child_process';
 import { getProxyForUrl } from 'proxy-from-env';
 import * as URL from 'url';
 import { getUbuntuVersionSync } from './ubuntuVersion';
+import { NameValue } from '../protocol/channels';
 
 // `https-proxy-agent` v5 is written in TypeScript and exposes generated types.
 // However, as of June 2020, its types are generated with tsconfig that enables
@@ -286,6 +287,24 @@ class HashStream extends stream.Writable {
   digest(): string {
     return this._hash.digest('hex');
   }
+}
+
+export function objectToArray(map?:  { [key: string]: string }): NameValue[] | undefined {
+  if (!map)
+    return undefined;
+  const result = [];
+  for (const [name, value] of Object.entries(map))
+    result.push({ name, value });
+  return result;
+}
+
+export function arrayToObject(array?: NameValue[]): { [key: string]: string } | undefined {
+  if (!array)
+    return undefined;
+  const result: { [key: string]: string } = {};
+  for (const {name, value} of array)
+    result[name] = value;
+  return result;
 }
 
 export async function calculateFileSha1(filename: string): Promise<string> {

@@ -66,7 +66,13 @@ export async function playwrightFetch(context: BrowserContext, params: types.Fet
     if (context._options.ignoreHTTPSErrors)
       options.rejectUnauthorized = false;
 
-    const fetchResponse = await sendRequest(context, new URL(params.url, context._options.baseURL), options, params.postData);
+    const requestUrl = new URL(params.url, context._options.baseURL);
+    if (params.params) {
+      for (const [name, value] of Object.entries(params.params))
+        requestUrl.searchParams.set(name, value);
+    }
+
+    const fetchResponse = await sendRequest(context, requestUrl, options, params.postData);
     const fetchUid = context.storeFetchResponseBody(fetchResponse.body);
     return { fetchResponse: { ...fetchResponse, fetchUid } };
   } catch (e) {

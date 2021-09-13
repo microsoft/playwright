@@ -616,6 +616,9 @@ BrowserContext:
     fetch:
       parameters:
         url: string
+        params:
+          type: array?
+          items: NameValue
         method: string?
         headers:
           type: array?

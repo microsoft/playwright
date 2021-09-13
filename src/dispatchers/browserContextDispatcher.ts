@@ -28,7 +28,7 @@ import { CallMetadata } from '../server/instrumentation';
 import { ArtifactDispatcher } from './artifactDispatcher';
 import { Artifact } from '../server/artifact';
 import { Request, Response } from '../server/network';
-import { headersArrayToObject } from '../utils/utils';
+import { arrayToObject, headersArrayToObject } from '../utils/utils';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextInitializer, channels.BrowserContextEvents> implements channels.BrowserContextChannel {
   private _context: BrowserContext;
@@ -110,6 +110,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   async fetch(params: channels.BrowserContextFetchParams): Promise<channels.BrowserContextFetchResult> {
     const { fetchResponse, error } = await playwrightFetch(this._context, {
       url: params.url,
+      params: arrayToObject(params.params),
       method: params.method,
       headers: params.headers ? headersArrayToObject(params.headers, false) : undefined,
       postData: params.postData ? Buffer.from(params.postData, 'base64') : undefined,

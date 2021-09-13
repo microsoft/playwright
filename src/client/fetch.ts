@@ -17,13 +17,19 @@
 import * as api from '../../types/types';
 import { HeadersArray } from '../common/types';
 import * as channels from '../protocol/channels';
-import { assert, headersObjectToArray, isString } from '../utils/utils';
+import { assert, headersObjectToArray, isString, objectToArray } from '../utils/utils';
 import { BrowserContext } from './browserContext';
 import * as network from './network';
 import { RawHeaders } from './network';
 import { Headers } from './types';
 
-export type FetchOptions = { method?: string, headers?: Headers, data?: string | Buffer, timeout?: number };
+export type FetchOptions = {
+  params?: { [key: string]: string; },
+  method?: string,
+  headers?: Headers,
+  data?: string | Buffer,
+  timeout?: number
+};
 
 export class FetchRequest implements api.FetchRequest {
   private _context: BrowserContext;
@@ -35,6 +41,7 @@ export class FetchRequest implements api.FetchRequest {
   async get(
     urlOrRequest: string | api.Request,
     options?: {
+      params?: { [key: string]: string; };
       headers?: { [key: string]: string; };
       timeout?: number;
     }): Promise<FetchResponse> {
@@ -47,6 +54,7 @@ export class FetchRequest implements api.FetchRequest {
   async post(
     urlOrRequest: string | api.Request,
     options?: {
+      params?: { [key: string]: string; };
       headers?: { [key: string]: string; };
       data?: string | Buffer;
       timeout?: number;
@@ -62,6 +70,7 @@ export class FetchRequest implements api.FetchRequest {
       const request: network.Request | undefined = (urlOrRequest instanceof network.Request) ? urlOrRequest as network.Request : undefined;
       assert(request || typeof urlOrRequest === 'string', 'First argument must be either URL string or Request');
       const url = request ? request.url() : urlOrRequest as string;
+      const params = objectToArray(options.params);
       const method = options.method || request?.method();
       // Cannot call allHeaders() here as the request may be paused inside route handler.
       const headersObj = options.headers || request?.headers() ;
@@ -72,6 +81,7 @@ export class FetchRequest implements api.FetchRequest {
       const postData = (postDataBuffer ? postDataBuffer.toString('base64') : undefined);
       const result = await channel.fetch({
         url,
+        params,
         method,
         headers,
         postData,
