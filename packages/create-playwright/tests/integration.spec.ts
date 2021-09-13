@@ -72,7 +72,7 @@ for (const packageManager of ['npm', 'yarn'] as ('npm'|'yarn')[]) {
     test.use({packageManager});
 
     test('should generate a project in the current directory', async ({ run }) => {
-      const { exitCode, dir, stdout } = await run([], { browsers: ['chromium'], installGitHubActions: true, testDir: 'e2e' });
+      const { exitCode, dir, stdout } = await run([], { installGitHubActions: true, testDir: 'e2e', language: 'TypeScript' });
       expect(exitCode).toBe(0);
       expect(fs.existsSync(path.join(dir, 'e2e/example.spec.ts'))).toBeTruthy();
       expect(fs.existsSync(path.join(dir, 'package.json'))).toBeTruthy();
@@ -82,9 +82,7 @@ for (const packageManager of ['npm', 'yarn'] as ('npm'|'yarn')[]) {
         expect(fs.existsSync(path.join(dir, 'yarn.lock'))).toBeTruthy();
       expect(fs.existsSync(path.join(dir, 'playwright.config.ts'))).toBeTruthy();
       const playwrightConfigContent = fs.readFileSync(path.join(dir, 'playwright.config.ts'), 'utf8');
-      expect(playwrightConfigContent).not.toContain('Firefox');
-      expect(playwrightConfigContent).not.toContain('Safari');
-      expect(playwrightConfigContent).toContain('Chromium');
+      expect(playwrightConfigContent).toContain('e2e');
       expect(fs.existsSync(path.join(dir, '.github/workflows/playwright.yml'))).toBeTruthy();
       if (packageManager === 'npm') {
         expect(stdout).toContain('Running: npm init -y');
@@ -97,7 +95,7 @@ for (const packageManager of ['npm', 'yarn'] as ('npm'|'yarn')[]) {
     });
 
     test('should generate a project in a given directory', async ({ run }) => {
-      const { exitCode, dir } = await run(['foobar'], { browsers: ['chromium'], installGitHubActions: true, testDir: 'e2e' });
+      const { exitCode, dir } = await run(['foobar'], { installGitHubActions: true, testDir: 'e2e', language: 'TypeScript' });
       expect(exitCode).toBe(0);
       expect(fs.existsSync(path.join(dir, 'foobar/e2e/example.spec.ts'))).toBeTruthy();
       expect(fs.existsSync(path.join(dir, 'foobar/package.json'))).toBeTruthy();
@@ -109,20 +107,16 @@ for (const packageManager of ['npm', 'yarn'] as ('npm'|'yarn')[]) {
       expect(fs.existsSync(path.join(dir, 'foobar/.github/workflows/playwright.yml'))).toBeTruthy();
     });
 
-    test('should generate a project with all the browsers and without GHA', async ({ run }) => {
-      const { exitCode, dir } = await run([], { browsers: ['chromium', 'webkit', 'firefox'], installGitHubActions: false, testDir: 'tests' });
+    test('should generate a project with JavaScript and without GHA', async ({ run }) => {
+      const { exitCode, dir } = await run([], { installGitHubActions: false, testDir: 'tests', language: 'JavaScript' });
       expect(exitCode).toBe(0);
-      expect(fs.existsSync(path.join(dir, 'tests/example.spec.ts'))).toBeTruthy();
+      expect(fs.existsSync(path.join(dir, 'tests/example.spec.js'))).toBeTruthy();
       expect(fs.existsSync(path.join(dir, 'package.json'))).toBeTruthy();
       if (packageManager === 'npm')
         expect(fs.existsSync(path.join(dir, 'package-lock.json'))).toBeTruthy();
       else
         expect(fs.existsSync(path.join(dir, 'yarn.lock'))).toBeTruthy();
-      expect(fs.existsSync(path.join(dir, 'playwright.config.ts'))).toBeTruthy();
-      const playwrightConfigContent = fs.readFileSync(path.join(dir, 'playwright.config.ts'), 'utf8');
-      expect(playwrightConfigContent).toContain('Firefox');
-      expect(playwrightConfigContent).toContain('Safari');
-      expect(playwrightConfigContent).toContain('Chromium');
+      expect(fs.existsSync(path.join(dir, 'playwright.config.js'))).toBeTruthy();
       expect(fs.existsSync(path.join(dir, '.github/workflows/playwright.yml'))).toBeFalsy();
     });
   });

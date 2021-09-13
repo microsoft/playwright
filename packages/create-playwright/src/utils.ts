@@ -20,9 +20,6 @@ import path from 'path';
 
 import { prompt } from 'enquirer';
 import colors from 'ansi-colors';
-import JSON5 from 'json5';
-
-import type { BrowserType } from '.';
 
 
 export function executeCommands(cwd: string, commands: string[]) {
@@ -60,30 +57,6 @@ export function determineRootDir() {
     return path.isAbsolute(givenPath) ? process.argv[2] : path.join(process.cwd(), process.argv[2]);
 
   return process.cwd();
-}
-
-export function buildPlaywrightConfig(browsers: BrowserType[]) {
-  const browserToDisplayName: Record<BrowserType, string> = {
-    'chromium': 'Chromium',
-    'firefox': 'Firefox',
-    'webkit': 'Safari'
-  };
-  const projects = browsers.map(browserName => ({
-    name: browserToDisplayName[browserName],
-    use: {
-      browserName
-    }
-  }));
-  return `import { PlaywrightTestConfig } from '@playwright/test';
-
-// More information: https://playwright.dev/docs/test-configuration
-
-const config: PlaywrightTestConfig = {
-  projects: ${JSON5.stringify(projects, null, 2).split('\n').map((line, index) => (index >= 1 ? '  ' : '') + line).join('\n')},
-};
-
-export default config;
-`;
 }
 
 export function determinePackageManager(rootDir: string): 'yarn' | 'npm' {

@@ -19,13 +19,12 @@ import fs from 'fs';
 import { prompt } from 'enquirer';
 import colors from 'ansi-colors';
 
-import { executeCommands, createFiles, determinePackageManager, buildPlaywrightConfig, executeTemplate, determineRootDir } from './utils';
+import { executeCommands, createFiles, determinePackageManager, executeTemplate, determineRootDir } from './utils';
 
-export type BrowserType = 'chromium' | 'firefox' | 'webkit';
 export type PromptOptions = {
   testDir: string,
   installGitHubActions: boolean,
-  browsers: BrowserType[]
+  language: 'JavaScript' | 'TypeScript'
 };
 
 class Generator {
@@ -56,9 +55,21 @@ class Generator {
       return JSON.parse(process.env.TEST_OPTIONS);
     return await prompt<PromptOptions>([
       {
+        // @ts-ignore
+        type: 'select',
+        name: 'language',
+        message: 'In which language do you want to write your tests in?',
+        choices: [
+          { name: 'JavaScript' },
+          { name: 'TypeScript' },
+        ],
+        // @ts-ignore
+        initial: 'typescript',
+      },
+      {
         type: 'text',
         name: 'testDir',
-        message: 'Where to put your end-to-end tests?',
+        message: 'Where to put your integration tests?',
         initial: 'e2e'
       },
       {
@@ -67,26 +78,17 @@ class Generator {
         message: 'Add GitHub Actions workflow?',
         initial: true,
       },
-      {
-        type: 'multiselect',
-        name: 'browsers',
-        message: 'Select which browsers you want to test against',
-        choices: [
-          { name: 'chromium', hint: 'Chromium' },
-          { name: 'firefox', hint: 'Firefox' },
-          { name: 'webkit', hint: 'Safari' },
-        ],
-        // @ts-ignore
-        initial: ['chromium', 'firefox', 'webkit']
-      },
     ]);
   }
 
   private async _identifyChanges(options: PromptOptions) {
     const commands: string[] = [];
     const files = new Map<string, string>();
+    const fileExtension = options.language === 'JavaScript' ? 'js' : 'ts';
 
-    files.set('playwright.config.ts', buildPlaywrightConfig(options.browsers));
+    files.set(`playwright.config.${fileExtension}`, executeTemplate(this._readAsset(`playwright.config.${fileExtension}`), {
+      testDir: options.testDir,
+    }));
 
     if (options.installGitHubActions) {
       const githubActionsScript = executeTemplate(this._readAsset('github-actions.yml'), {
@@ -96,7 +98,7 @@ class Generator {
       files.set('.github/workflows/playwright.yml', githubActionsScript);
     }
 
-    files.set(path.join(options.testDir, 'example.spec.ts'), this._readAsset('example.spec.ts'));
+    files.set(path.join(options.testDir, `example.spec.${fileExtension}`), this._readAsset(`example.spec.${fileExtension}`));
 
     if (!fs.existsSync(path.join(this.rootDir, 'package.json')))
       commands.push(this.packageManager === 'yarn' ? 'yarn init -y' : 'npm init -y');
@@ -120,7 +122,7 @@ class Generator {
     const packageJSON = JSON.parse(fs.readFileSync(path.join(this.rootDir, 'package.json'), 'utf-8'));
     if (!packageJSON.scripts)
       packageJSON.scripts = {};
-    packageJSON.scripts['playwright-tests'] = `npx playwright test`;
+    packageJSON.scripts['playwright-tests'] = `playwright test`;
 
     const files = new Map<string, string>();
     files.set('package.json', JSON.stringify(packageJSON, null, 2));
