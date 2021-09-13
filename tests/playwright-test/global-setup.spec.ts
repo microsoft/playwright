@@ -280,3 +280,30 @@ test('globalSetup should work for auth', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('globalSetup and globalTeardown overrides should work', async ({ runInlineTest }, testInfo) => {
+  const { results, output } = await runInlineTest({
+    'globalSetup.ts': `
+      async function globalSetup() {
+        await new Promise(f => setTimeout(f, 100));
+        global.value = 42;
+        process.env.FOO = String(global.value);
+      }
+      module.exports = globalSetup;
+    `,
+    'globalTeardown.ts': `
+      async function globalTeardown() {
+        console.log('teardown=' + global.value);
+      }
+      module.exports = globalTeardown;
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('should work', async ({}, testInfo) => {
+        expect(process.env.FOO).toBe('42');
+      });
+    `,
+  }, { 'global-setup': `${testInfo.outputPath()}/globalSetup.ts`, 'global-teardown': `${testInfo.outputPath()}/globalTeardown.ts` });
+  expect(results[0].status).toBe('passed');
+  expect(output).toContain('teardown=42');
+});

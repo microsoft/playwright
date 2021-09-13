@@ -96,6 +96,10 @@ Complete set of Playwright Test options is available in the [configuration file]
 
 - `--grep-invert <grep>`: Only run tests **not** matching this regular expression. The opposite of `--grep`.
 
+- `--global-setup <file>`: Global setup file to execute before running tests.
+
+- `--global-teardown <file>`: Global teardown file to execute before running tests.
+
 - `--global-timeout <number>`: Total timeout for the whole test run in milliseconds. By default, there is no global timeout.
 
 - `--list`: List all the tests, but do not run them.

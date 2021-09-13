@@ -49,6 +49,8 @@ export function addTestCommand(program: commander.CommanderStatic) {
   command.option('--forbid-only', `Fail if test.only is called (default: false)`);
   command.option('-g, --grep <grep>', `Only run tests matching this regular expression (default: ".*")`);
   command.option('-gv, --grep-invert <grep>', `Only run tests that do not match this regular expression`);
+  command.option('--global-setup, <file>', `Global setup file to execute before running tests`);
+  command.option('--global-teardown, <file>', `Global teardown file to execute before running tests`);
   command.option('--global-timeout <timeout>', `Maximum time this test suite can run in milliseconds (default: unlimited)`);
   command.option('-j, --workers <workers>', `Number of concurrent workers, use 1 to run in a single worker (default: number of CPU cores / 2)`);
   command.option('--list', `Collect all the tests and report them, but do not run`);
@@ -204,6 +206,8 @@ function overridesFromOptions(options: { [key: string]: any }): Config {
   const shardPair = options.shard ? options.shard.split('/').map((t: string) => parseInt(t, 10)) : undefined;
   return {
     forbidOnly: options.forbidOnly ? true : undefined,
+    globalSetup: options.globalSetup ? require.resolve(options.globalSetup) : undefined,
+    globalTeardown: options.globalTeardown ? require.resolve(options.globalTeardown) : undefined,
     globalTimeout: isDebuggerAttached ? 0 : (options.globalTimeout ? parseInt(options.globalTimeout, 10) : undefined),
     grep: options.grep ? forceRegExp(options.grep) : undefined,
     grepInvert: options.grepInvert ? forceRegExp(options.grepInvert) : undefined,
