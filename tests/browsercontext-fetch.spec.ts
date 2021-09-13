@@ -131,7 +131,10 @@ it('should add session cookies to request', async ({context, server}) => {
 for (const method of ['get', 'post', 'fetch']) {
   it(`${method} should support queryParams`, async ({context, server}) => {
     let request;
-    server.setRoute('/empty.html', (req, res) => {
+    const url = new URL(server.EMPTY_PAGE);
+    url.searchParams.set('p1', 'v1');
+    url.searchParams.set('парам2', 'знач2');
+    server.setRoute(url.pathname + url.search, (req, res) => {
       request = req;
       server.serveFile(req, res);
     });
