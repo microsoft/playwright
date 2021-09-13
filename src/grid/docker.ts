@@ -26,7 +26,7 @@ export async function launchAgent(agentId: string, gridPort: number) {
   }
   const pwImage = images.find((image: any) => image.RepoTags.includes(imageName));
   if (!pwImage) {
-    //TODO: instructions how to pull given image.
+    // TODO: instructions how to pull given image.
     throw new Error(`Failed to find ${imageName} docker image.`);
   }
   const container = await postJSON('/containers/create', {
