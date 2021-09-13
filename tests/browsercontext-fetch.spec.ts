@@ -132,10 +132,10 @@ it('should support queryParams', async ({context, server}) => {
   let request;
   server.setRoute('/empty.html', (req, res) => {
     request = req;
-    server.serveFile(req, res)
+    server.serveFile(req, res);
   });
   for (const method of ['get', 'post', 'fetch']) {
-    await context.request[method](server.EMPTY_PAGE+'?p1=v1', {
+    await context.request[method](server.EMPTY_PAGE + '?p1=foo', {
       params: {
         'p1': 'v1',
         'парам2': 'знач2',
