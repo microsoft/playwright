@@ -29,8 +29,8 @@ import { Waiter } from './waiter';
 import * as api from '../../types/types';
 import { HeadersArray, URLMatch } from '../common/types';
 import { urlMatches } from './clientHelper';
-import { BrowserContext } from './browserContext';
 import { MultiMap } from '../utils/multimap';
+import { FetchResponse } from './fetch';
 
 export type NetworkCookie = {
   name: string,
@@ -325,7 +325,7 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
     });
   }
 
-  async fulfill(options: { response?: api.Response|api.FetchResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}) {
+  async fulfill(options: { response?: api.Response | api.FetchResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}) {
     return this._wrapApiCall(async (channel: channels.RouteChannel) => {
       let useInterceptedResponseBody;
       let fetchResponseUid;
@@ -544,71 +544,6 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
     return this._wrapApiCall(async (channel: channels.ResponseChannel) => {
       return (await channel.securityDetails()).value || null;
     });
-  }
-}
-
-export class FetchResponse implements api.FetchResponse {
-  private readonly _initializer: channels.FetchResponse;
-  private readonly _headers: RawHeaders;
-  private readonly _context: BrowserContext;
-
-  constructor(context: BrowserContext, initializer: channels.FetchResponse) {
-    this._context = context;
-    this._initializer = initializer;
-    this._headers = new RawHeaders(this._initializer.headers);
-  }
-
-  ok(): boolean {
-    return this._initializer.status === 0 || (this._initializer.status >= 200 && this._initializer.status <= 299);
-  }
-
-  url(): string {
-    return this._initializer.url;
-  }
-
-  status(): number {
-    return this._initializer.status;
-  }
-
-  statusText(): string {
-    return this._initializer.statusText;
-  }
-
-  headers(): Headers {
-    return this._headers.headers();
-  }
-
-  headersArray(): HeadersArray {
-    return this._headers.headersArray();
-  }
-
-  async body(): Promise<Buffer> {
-    return this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
-      const result = await channel.fetchResponseBody({ fetchUid: this._fetchUid() });
-      if (!result.binary)
-        throw new Error('Response has been disposed');
-      return Buffer.from(result.binary!, 'base64');
-    });
-  }
-
-  async text(): Promise<string> {
-    const content = await this.body();
-    return content.toString('utf8');
-  }
-
-  async json(): Promise<object> {
-    const content = await this.text();
-    return JSON.parse(content);
-  }
-
-  async dispose(): Promise<void> {
-    return this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
-      await channel.disposeFetchResponse({ fetchUid: this._fetchUid() });
-    });
-  }
-
-  _fetchUid(): string {
-    return this._initializer.fetchUid;
   }
 }
 

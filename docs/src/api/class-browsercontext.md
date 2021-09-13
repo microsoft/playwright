@@ -792,37 +792,6 @@ Name of the function on the window object.
 
 Callback function that will be called in the Playwright's context.
 
-## async method: BrowserContext.fetch
-- returns: <[FetchResponse]>
-
-Sends HTTP(S) request and returns its response. The method will populate request cookies from the context and update
-context cookies from the response. The method will automatically follow redirects.
-
-### param: BrowserContext.fetch.urlOrRequest
-- `urlOrRequest` <[string]|[Request]>
-
-Target URL or Request to get all fetch parameters from.
-
-### option: BrowserContext.fetch.method
-- `method` <[string]>
-
-If set changes the request method (e.g. PUT or POST). If not specified, GET method is used.
-
-### option: BrowserContext.fetch.headers
-- `headers` <[Object]<[string], [string]>>
-
-Allows to set HTTP headers.
-
-### option: BrowserContext.fetch.postData
-- `postData` <[string]|[Buffer]>
-
-Allows to set post data of the request.
-
-### option: BrowserContext.fetch.timeout
-- `timeout` <[float]>
-
-Request timeout in milliseconds.
-
 ## async method: BrowserContext.grantPermissions
 
 Grants specified permissions to the browser context. Only grants corresponding permissions to the given origin if
@@ -879,6 +848,11 @@ Creates a new page in the browser context.
 - returns: <[Array]<[Page]>>
 
 Returns all open pages in the context.
+
+## property: BrowserContext.request
+- type: <[FetchRequest]>
+
+API testing helper associated with this context. Requests made with this API will use context cookies.
 
 ## async method: BrowserContext.route
 

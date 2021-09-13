@@ -1996,34 +1996,6 @@ export interface Page {
   exposeFunction(name: string, callback: Function): Promise<void>;
 
   /**
-   * Sends HTTP(S) request and returns its response. The method will populate request cookies from the context and update
-   * context cookies from the response. The method will automatically follow redirects.
-   * @param urlOrRequest Target URL or Request to get all fetch parameters from.
-   * @param options
-   */
-  fetch(urlOrRequest: string|Request, options?: {
-    /**
-     * Allows to set HTTP headers.
-     */
-    headers?: { [key: string]: string; };
-
-    /**
-     * If set changes the request method (e.g. PUT or POST). If not specified, GET method is used.
-     */
-    method?: string;
-
-    /**
-     * Allows to set post data of the request.
-     */
-    postData?: string|Buffer;
-
-    /**
-     * Request timeout in milliseconds.
-     */
-    timeout?: number;
-  }): Promise<FetchResponse>;
-
-  /**
    * This method waits for an element matching `selector`, waits for [actionability](https://playwright.dev/docs/actionability) checks, focuses the
    * element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input
    * field.
@@ -2776,6 +2748,11 @@ export interface Page {
      */
     waitUntil?: "load"|"domcontentloaded"|"networkidle";
   }): Promise<null|Response>;
+
+  /**
+   * API testing helper associated with this page. Requests made with this API will use page cookies.
+   */
+  request: FetchRequest;
 
   /**
    * Routing provides the capability to modify network requests that are made by a page.
@@ -6423,34 +6400,6 @@ export interface BrowserContext {
   exposeFunction(name: string, callback: Function): Promise<void>;
 
   /**
-   * Sends HTTP(S) request and returns its response. The method will populate request cookies from the context and update
-   * context cookies from the response. The method will automatically follow redirects.
-   * @param urlOrRequest Target URL or Request to get all fetch parameters from.
-   * @param options
-   */
-  fetch(urlOrRequest: string|Request, options?: {
-    /**
-     * Allows to set HTTP headers.
-     */
-    headers?: { [key: string]: string; };
-
-    /**
-     * If set changes the request method (e.g. PUT or POST). If not specified, GET method is used.
-     */
-    method?: string;
-
-    /**
-     * Allows to set post data of the request.
-     */
-    postData?: string|Buffer;
-
-    /**
-     * Request timeout in milliseconds.
-     */
-    timeout?: number;
-  }): Promise<FetchResponse>;
-
-  /**
    * Grants specified permissions to the browser context. Only grants corresponding permissions to the given origin if
    * specified.
    * @param permissions A permission or an array of permissions to grant. Permissions can be one of the following values: - `'geolocation'`
@@ -6495,6 +6444,11 @@ export interface BrowserContext {
    * Returns all open pages in the context.
    */
   pages(): Array<Page>;
+
+  /**
+   * API testing helper associated with this context. Requests made with this API will use context cookies.
+   */
+  request: FetchRequest;
 
   /**
    * Routing provides the capability to modify network requests that are made by any page in the browser context. Once route
@@ -12664,9 +12618,85 @@ export interface Electron {
 }
 
 /**
+ * This API is used for Web API testing. You can use it to trigger API endpoints, configure micro-services, prepare
+ * environment or the service to your e2e test. When used on [Page] or a [BrowserContext], this API will automatically use
+ * the cookies from the corresponding [BrowserContext]. This means that if you log in using this API, your e2e test will be
+ * logged in and vice versa.
+ */
+export interface FetchRequest {
+  /**
+   * Sends HTTP(S) fetch and returns its response. The method will populate fetch cookies from the context and update context
+   * cookies from the response. The method will automatically follow redirects.
+   * @param urlOrRequest Target URL or Request to get all fetch parameters from.
+   * @param options
+   */
+  fetch(urlOrRequest: string|Request, options?: {
+    /**
+     * Allows to set post data of the fetch.
+     */
+    data?: string|Buffer;
+
+    /**
+     * Allows to set HTTP headers.
+     */
+    headers?: { [key: string]: string; };
+
+    /**
+     * If set changes the fetch method (e.g. PUT or POST). If not specified, GET method is used.
+     */
+    method?: string;
+
+    /**
+     * Request timeout in milliseconds.
+     */
+    timeout?: number;
+  }): Promise<FetchResponse>;
+
+  /**
+   * Sends HTTP(S) GET request and returns its response. The method will populate fetch cookies from the context and update
+   * context cookies from the response. The method will automatically follow redirects.
+   * @param urlOrRequest Target URL or Request to get all fetch parameters from.
+   * @param options
+   */
+  get(urlOrRequest: string|Request, options?: {
+    /**
+     * Allows to set HTTP headers.
+     */
+    headers?: { [key: string]: string; };
+
+    /**
+     * Request timeout in milliseconds.
+     */
+    timeout?: number;
+  }): Promise<FetchResponse>;
+
+  /**
+   * Sends HTTP(S) fetch and returns its response. The method will populate fetch cookies from the context and update context
+   * cookies from the response. The method will automatically follow redirects.
+   * @param urlOrRequest Target URL or Request to get all fetch parameters from.
+   * @param options
+   */
+  post(urlOrRequest: string|Request, options?: {
+    /**
+     * Allows to set post data of the fetch.
+     */
+    data?: string|Buffer;
+
+    /**
+     * Allows to set HTTP headers.
+     */
+    headers?: { [key: string]: string; };
+
+    /**
+     * Request timeout in milliseconds.
+     */
+    timeout?: number;
+  }): Promise<FetchResponse>;
+}
+
+/**
  * [FetchResponse] class represents responses received from
- * [browserContext.fetch(urlOrRequest[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-fetch)
- * and [page.fetch(urlOrRequest[, options])](https://playwright.dev/docs/api/class-page#page-fetch) methods.
+ * [fetchRequest.fetch(urlOrRequest[, options])](https://playwright.dev/docs/api/class-fetchrequest#fetch-request-fetch).
  */
 export interface FetchResponse {
   /**

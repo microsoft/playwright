@@ -19,10 +19,9 @@ import { Events } from './events';
 import { assert } from '../utils/utils';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import * as channels from '../protocol/channels';
-import * as network from './network';
 import { parseError, serializeError } from '../protocol/serializers';
 import { Accessibility } from './accessibility';
-import { BrowserContext, FetchOptions } from './browserContext';
+import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { ConsoleMessage } from './consoleMessage';
 import { Dialog } from './dialog';
@@ -48,6 +47,7 @@ import { isString, isRegExp, isObject, mkdirIfNeeded, headersObjectToArray } fro
 import { isSafeCloseError } from '../utils/errors';
 import { Video } from './video';
 import { Artifact } from './artifact';
+import { FetchRequest } from './fetch';
 
 type PDFOptions = Omit<channels.PagePdfParams, 'width' | 'height' | 'margin'> & {
   width?: string | number,
@@ -78,6 +78,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   readonly coverage: Coverage;
   readonly keyboard: Keyboard;
   readonly mouse: Mouse;
+  readonly request: FetchRequest;
   readonly touchscreen: Touchscreen;
 
   readonly _bindings = new Map<string, (source: structs.BindingSource, ...args: any[]) => any>();
@@ -101,6 +102,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this.accessibility = new Accessibility(this._channel);
     this.keyboard = new Keyboard(this);
     this.mouse = new Mouse(this);
+    this.request = new FetchRequest(this._browserContext);
     this.touchscreen = new Touchscreen(this);
 
     this._mainFrame = Frame.from(initializer.mainFrame);
@@ -441,10 +443,6 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   async evaluate<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 2);
     return this._mainFrame.evaluate(pageFunction, arg);
-  }
-
-  async fetch(urlOrRequest: string|network.Request, options: FetchOptions = {}): Promise<network.FetchResponse> {
-    return await this._browserContext.fetch(urlOrRequest as any, options);
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
