@@ -128,13 +128,16 @@ it('should add session cookies to request', async ({context, server}) => {
   expect(req.headers.cookie).toEqual('username=John Doe');
 });
 
-it('should support queryParams', async ({context, server}) => {
-  let request;
-  server.setRoute('/empty.html', (req, res) => {
-    request = req;
-    server.serveFile(req, res);
-  });
-  for (const method of ['get', 'post', 'fetch']) {
+for (const method of ['get', 'post', 'fetch']) {
+  it(`${method} should support queryParams`, async ({context, server}) => {
+    let request;
+    const url = new URL(server.EMPTY_PAGE);
+    url.searchParams.set('p1', 'v1');
+    url.searchParams.set('парам2', 'знач2');
+    server.setRoute(url.pathname + url.search, (req, res) => {
+      request = req;
+      server.serveFile(req, res);
+    });
     await context.request[method](server.EMPTY_PAGE + '?p1=foo', {
       params: {
         'p1': 'v1',
@@ -144,8 +147,15 @@ it('should support queryParams', async ({context, server}) => {
     const params = new URLSearchParams(request.url.substr(request.url.indexOf('?')));
     expect(params.get('p1')).toEqual('v1');
     expect(params.get('парам2')).toEqual('знач2');
-  }
-});
+  });
+
+  it(`${method} should support failOnStatusCode`, async ({context, server}) => {
+    const error = await context.request[method](server.PREFIX + '/does-not-exist.html', {
+      failOnStatusCode: true
+    }).catch(e => e);
+    expect(error.message).toContain('Request failed: 404 Not Found');
+  });
+}
 
 it('should not add context cookie if cookie header passed as a parameter', async ({context, server}) => {
   await context.addCookies([{

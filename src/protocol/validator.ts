@@ -399,6 +399,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     headers: tOptional(tArray(tType('NameValue'))),
     postData: tOptional(tBinary),
     timeout: tOptional(tNumber),
+    failOnStatusCode: tOptional(tBoolean),
   });
   scheme.BrowserContextFetchResponseBodyParams = tObject({
     fetchUid: tString,

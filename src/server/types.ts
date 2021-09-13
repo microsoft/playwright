@@ -379,6 +379,7 @@ export type FetchOptions = {
   headers?: { [name: string]: string },
   postData?: Buffer,
   timeout?: number,
+  failOnStatusCode?: boolean,
 };
 
 export type FetchResponse = {

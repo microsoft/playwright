@@ -625,6 +625,7 @@ BrowserContext:
           items: NameValue
         postData: binary?
         timeout: number?
+        failOnStatusCode: boolean?
       returns:
         response: FetchResponse?
         error: string?
