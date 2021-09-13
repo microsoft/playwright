@@ -50,7 +50,7 @@ export const Report: React.FC = () => {
 
   return <div className='hbox'>
     <SplitView sidebarSize={300} orientation='horizontal' sidebarIsFirst={true}>
-      <TestCaseView testId={testId}></TestCaseView>
+      <TestCaseView key={testId?.testId} testId={testId}></TestCaseView>
       <div className='suite-tree-column'>
         <div className='tab-strip'>{
           (['Failing', 'All'] as Filter[]).map(item => {
