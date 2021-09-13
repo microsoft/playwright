@@ -16,6 +16,11 @@ context cookies from the response. The method will automatically follow redirect
 
 Target URL or Request to get all fetch parameters from.
 
+### option: FetchRequest.fetch.queryParams
+- `queryParams` <[Object]<[string], [string]>>
+
+Query parameters to be send with the URL.
+
 ### option: FetchRequest.fetch.method
 - `method` <[string]>
 
@@ -47,6 +52,11 @@ context cookies from the response. The method will automatically follow redirect
 
 Target URL or Request to get all fetch parameters from.
 
+### option: FetchRequest.get.queryParams
+- `queryParams` <[Object]<[string], [string]>>
+
+Query parameters to be send with the URL.
+
 ### option: FetchRequest.get.headers
 - `headers` <[Object]<[string], [string]>>
 
@@ -67,6 +77,11 @@ context cookies from the response. The method will automatically follow redirect
 - `urlOrRequest` <[string]|[Request]>
 
 Target URL or Request to get all fetch parameters from.
+
+### option: FetchRequest.post.queryParams
+- `queryParams` <[Object]<[string], [string]>>
+
+Query parameters to be send with the URL.
 
 ### option: FetchRequest.post.headers
 - `headers` <[Object]<[string], [string]>>

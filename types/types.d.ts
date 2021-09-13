@@ -12647,6 +12647,11 @@ export interface FetchRequest {
     method?: string;
 
     /**
+     * Query parameters to be send with the URL.
+     */
+    queryParams?: { [key: string]: string; };
+
+    /**
      * Request timeout in milliseconds.
      */
     timeout?: number;
@@ -12663,6 +12668,11 @@ export interface FetchRequest {
      * Allows to set HTTP headers.
      */
     headers?: { [key: string]: string; };
+
+    /**
+     * Query parameters to be send with the URL.
+     */
+    queryParams?: { [key: string]: string; };
 
     /**
      * Request timeout in milliseconds.
@@ -12686,6 +12696,11 @@ export interface FetchRequest {
      * Allows to set HTTP headers.
      */
     headers?: { [key: string]: string; };
+
+    /**
+     * Query parameters to be send with the URL.
+     */
+    queryParams?: { [key: string]: string; };
 
     /**
      * Request timeout in milliseconds.

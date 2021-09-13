@@ -40,7 +40,7 @@ it.afterAll(() => {
   http.globalAgent = prevAgent;
 });
 
-it('should work', async ({context, server}) => {
+it('get should work', async ({context, server}) => {
   const response = await context.request.get(server.PREFIX + '/simple.json');
   expect(response.url()).toBe(server.PREFIX + '/simple.json');
   expect(response.status()).toBe(200);
@@ -126,6 +126,25 @@ it('should add session cookies to request', async ({context, server}) => {
     context.request.get(`http://www.my.playwright.dev:${server.PORT}/simple.json`),
   ]);
   expect(req.headers.cookie).toEqual('username=John Doe');
+});
+
+it('should support queryParams', async ({context, server}) => {
+  let request;
+  server.setRoute('/empty.html', (req, res) => {
+    request = req;
+    server.serveFile(req, res)
+  });
+  for (const method of ['get', 'post', 'fetch']) {
+    await context.request[method](server.EMPTY_PAGE+'?p1=v1', {
+      queryParams: {
+        'p1': 'v1',
+        'парам2': 'знач2',
+      }
+    });
+    const params = new URLSearchParams(request.url.substr(request.url.indexOf('?')));
+    expect(params.get('p1')).toEqual('v1');
+    expect(params.get('парам2')).toEqual('знач2');
+  }
 });
 
 it('should not add context cookie if cookie header passed as a parameter', async ({context, server}) => {

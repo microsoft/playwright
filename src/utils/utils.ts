@@ -288,6 +288,24 @@ class HashStream extends stream.Writable {
   }
 }
 
+export function objectToArray(map?: { [key: string]: string }): { name: string, value: string }[] | undefined {
+  if (!map)
+    return undefined;
+  const result = [];
+  for (const [name, value] of Object.entries(map))
+    result.push({ name, value });
+  return result;
+}
+
+export function arrayToObject(array?: { name: string, value: string }[]): { [key: string]: string } | undefined {
+  if (!array)
+    return undefined;
+  const result: { [key: string]: string } = {};
+  for (const {name, value} of array)
+    result[name] = value;
+  return result;
+}
+
 export async function calculateFileSha1(filename: string): Promise<string> {
   const hashStream = new HashStream();
   const stream = fs.createReadStream(filename);

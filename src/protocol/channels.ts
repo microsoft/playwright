@@ -857,12 +857,14 @@ export type BrowserContextExposeBindingOptions = {
 export type BrowserContextExposeBindingResult = void;
 export type BrowserContextFetchParams = {
   url: string,
+  queryParams?: NameValue[],
   method?: string,
   headers?: NameValue[],
   postData?: Binary,
   timeout?: number,
 };
 export type BrowserContextFetchOptions = {
+  queryParams?: NameValue[],
   method?: string,
   headers?: NameValue[],
   postData?: Binary,

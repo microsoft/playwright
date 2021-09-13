@@ -374,6 +374,7 @@ export type SetStorageState = {
 
 export type FetchOptions = {
   url: string,
+  queryParams?: { [name: string]: string },
   method?: string,
   headers?: { [name: string]: string },
   postData?: Buffer,
