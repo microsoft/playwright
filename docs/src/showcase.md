@@ -66,6 +66,7 @@ title: "Community Showcase"
 * [Heroku Playwright Example](https://github.com/mxschmitt/heroku-playwright-example): Example using Playwright on Heroku
 * [Sauce Labs Playwright Example](https://github.com/saucelabs/saucectl-playwright-example): Example using Playwright on Sauce Labs
 * [BrowserStack Playwright Samples](https://github.com/browserstack/playwright-browserstack): Playwright sample tests to run on BrowserStack
+* [Playwright - Parallel execution on AWS Lambda](https://github.com/PauloGoncalvesBH/running-playwright-on-aws-lambda): Running hundreds of Playwright tests in a few seconds with AWS Lambda
 
 ## Guides
 
