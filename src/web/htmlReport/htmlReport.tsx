@@ -272,14 +272,9 @@ const TestStepDetails: React.FC<{
       }
     })();
   }, [step]);
-  const [selectedTab, setSelectedTab] = React.useState('log');
+  const [selectedTab, setSelectedTab] = React.useState('errors');
   return <div className='vbox'>
     <TabbedPane selectedTab={selectedTab} setSelectedTab={setSelectedTab} tabs={[
-      {
-        id: 'log',
-        title: 'Log',
-        render: () => <div className='step-log'>{step?.log ? step.log.join('\n') : ''}</div>
-      },
       {
         id: 'errors',
         title: 'Errors',

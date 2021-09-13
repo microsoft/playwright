@@ -21,7 +21,7 @@ import { debugLogger } from '../utils/debugLogger';
 import { captureStackTrace, ParsedStackTrace } from '../utils/stackTrace';
 import { isUnderTest } from '../utils/utils';
 import type { Connection } from './connection';
-import type { ClientSideInstrumentation, LogContainer, Logger } from './types';
+import type { ClientSideInstrumentation, Logger } from './types';
 
 export abstract class ChannelOwner<T extends channels.Channel = channels.Channel, Initializer = {}> extends EventEmitter {
   protected _connection: Connection;
@@ -72,15 +72,15 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     };
   }
 
-  private _createChannel(base: Object, stackTrace: ParsedStackTrace | null, logContainer?: LogContainer): T {
+  private _createChannel(base: Object, stackTrace: ParsedStackTrace | null): T {
     const channel = new Proxy(base, {
       get: (obj: any, prop) => {
         if (prop === 'debugScopeState')
-          return (params: any) => this._connection.sendMessageToServer(this, prop, params, stackTrace, logContainer);
+          return (params: any) => this._connection.sendMessageToServer(this, prop, params, stackTrace);
         if (typeof prop === 'string') {
           const validator = scheme[paramsName(this._type, prop)];
           if (validator)
-            return (params: any) => this._connection.sendMessageToServer(this, prop, validator(params, ''), stackTrace, logContainer);
+            return (params: any) => this._connection.sendMessageToServer(this, prop, validator(params, ''), stackTrace);
         }
         return obj[prop];
       },
@@ -97,22 +97,21 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     let ancestorWithCSI: ChannelOwner<any> = this;
     while (!ancestorWithCSI._csi && ancestorWithCSI._parent)
       ancestorWithCSI = ancestorWithCSI._parent;
-    let csiCallback: ((log: string[], e?: Error) => void) | undefined;
-    const logContainer = { log: [] };
+    let csiCallback: ((e?: Error) => void) | undefined;
 
     try {
       logApiCall(logger, `=> ${apiName} started`);
       csiCallback = ancestorWithCSI._csi?.onApiCall(stackTrace);
-      const channel = this._createChannel({}, stackTrace, csiCallback ? logContainer : undefined);
+      const channel = this._createChannel({}, stackTrace);
       const result = await func(channel as any, stackTrace);
-      csiCallback?.(logContainer.log);
+      csiCallback?.();
       logApiCall(logger, `<= ${apiName} succeeded`);
       return result;
     } catch (e) {
       const innerError = ((process.env.PWDEBUGIMPL || isUnderTest()) && e.stack) ? '\n<inner error>\n' + e.stack : '';
       e.message = apiName + ': ' + e.message;
       e.stack = e.message + '\n' + frameTexts.join('\n') + innerError;
-      csiCallback?.(logContainer.log, e);
+      csiCallback?.(e);
       logApiCall(logger, `<= ${apiName} failed`);
       throw e;
     }

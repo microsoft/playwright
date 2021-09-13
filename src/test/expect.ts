@@ -41,8 +41,6 @@ import type { Expect, TestError } from './types';
 import matchers from 'expect/build/matchers';
 import { currentTestInfo } from './globals';
 import { serializeError } from './util';
-import StackUtils from 'stack-utils';
-import path from 'path';
 
 export const expect: Expect = expectLibrary as any;
 expectLibrary.setState({ expand: false });
@@ -77,7 +75,7 @@ function wrap(matcherName: string, matcher: any) {
 
     const INTERNAL_STACK_LENGTH = 3;
     const stackLines = new Error().stack!.split('\n').slice(INTERNAL_STACK_LENGTH + 1);
-    const step = testInfo._addStep('expect', `expect${this.isNot ? '.not' : ''}.${matcherName}`, prepareExpectStepData(stackLines));
+    const step = testInfo._addStep('expect', `expect${this.isNot ? '.not' : ''}.${matcherName}`);
 
     const reportStepEnd = (result: any) => {
       const success = result.pass !== this.isNot;
@@ -104,22 +102,6 @@ function wrap(matcherName: string, matcher: any) {
       reportStepError(e);
     }
   };
-}
-
-const stackUtils = new StackUtils();
-
-function prepareExpectStepData(lines: string[]) {
-  const frames = lines.map(line => {
-    const parsed = stackUtils.parseLine(line);
-    if (!parsed)
-      return;
-    return {
-      file: parsed.file ? path.resolve(process.cwd(), parsed.file) : undefined,
-      line: parsed.line,
-      column: parsed.column
-    };
-  }).filter(frame => !!frame);
-  return { stack: frames, log: [] };
 }
 
 const wrappedMatchers: any = {};

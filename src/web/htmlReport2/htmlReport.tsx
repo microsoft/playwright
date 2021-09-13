@@ -181,21 +181,12 @@ const StepTreeItem: React.FC<{
     <span style={{ whiteSpace: 'pre' }}>{step.title}</span>
     <div style={{ flex: 'auto' }}></div>
     <div>{msToString(step.duration)}</div>
-  </div>} loadChildren={step.steps.length + (step.log || []).length + (step.error ? 1 : 0) ? () => {
-    const stepChildren = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1}></StepTreeItem>);
-    const logChildren = (step.log || []).map((l, i) => <LogTreeItem key={step.steps.length + i} log={l} depth={depth + 1}></LogTreeItem>);
-    const children = [...stepChildren, ...logChildren];
+  </div>} loadChildren={step.steps.length + (step.error ? 1 : 0) ? () => {
+    const children = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1}></StepTreeItem>);
     if (step.error)
       children.unshift(<ErrorMessage error={step.error}></ErrorMessage>);
     return children;
   } : undefined} depth={depth}></TreeItem>;
-};
-
-const LogTreeItem: React.FC<{
-  log: string;
-  depth: number,
-}> = ({ log, depth }) => {
-  return <TreeItem title={<div style={{ display: 'flex', alignItems: 'center', flex: 'auto' }}>{ log }</div>} depth={depth}></TreeItem>;
 };
 
 function statusIconForFailedTests(failedTests: number) {

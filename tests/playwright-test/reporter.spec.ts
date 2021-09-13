@@ -359,51 +359,6 @@ test('should not have internal error when steps are finished after timeout', asy
   expect(result.output).not.toContain('Internal error');
 });
 
-test('should report expect and pw:api stacks and logs', async ({ runInlineTest }, testInfo) => {
-  const expectReporterJS = `
-    class Reporter {
-      stepStack(step) {
-        if (!step.data.stack || !step.data.stack[0])
-          return step.title + ' <no stack>';
-        const frame = step.data.stack[0]
-        return step.title + ' stack: ' + frame.file + ':' + frame.line + ':' + frame.column;
-      }
-      onStepEnd(test, result, step) {
-        console.log('%%%% ' + this.stepStack(step));
-        console.log('%%%% ' + step.title + ' log: ' + (step.data.log || []).join(''));
-      }
-    }
-    module.exports = Reporter;
-  `;
-
-  const result = await runInlineTest({
-    'reporter.ts': expectReporterJS,
-    'playwright.config.ts': `
-      module.exports = {
-        reporter: './reporter',
-      };
-    `,
-    'a.test.ts': `
-      const { test } = pwt;
-      test('pass', async ({ page }) => {
-        await page.setContent('<title>hello</title><body><div>Click me</div></body>');
-        await page.click('text=Click me');
-        expect(1).toBe(1);
-        await expect(page.locator('div')).toHaveText('Click me');
-      });
-    `
-  }, { reporter: '', workers: 1 });
-
-  expect(result.exitCode).toBe(0);
-  expect(result.output).toContain(`%% page.setContent stack: ${testInfo.outputPath('a.test.ts:7:20')}`);
-  expect(result.output).toContain(`%% page.setContent log: setting frame content, waiting until "load"`);
-  expect(result.output).toContain(`%% page.click stack: ${testInfo.outputPath('a.test.ts:8:20')}`);
-  expect(result.output).toContain(`%% page.click log: waiting for selector "text=Click me"`);
-  expect(result.output).toContain(`%% expect.toBe stack: ${testInfo.outputPath('a.test.ts:9:19')}`);
-  expect(result.output).toContain(`%% expect.toHaveText stack: ${testInfo.outputPath('a.test.ts:10:43')}`);
-  expect(result.output).toContain(`%% expect.toHaveText log:   retrieving textContent from "div"`);
-});
-
 function stripEscapedAscii(str: string) {
   return str.replace(/\\u00[a-z0-9][a-z0-9]\[[^m]+m/g, '');
 }

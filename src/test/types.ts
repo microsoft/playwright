@@ -28,11 +28,10 @@ export type Annotations = { type: string, description?: string }[];
 export interface TestStepInternal {
   complete(error?: Error | TestError): void;
   category: string;
-  data: { [key: string]: any };
 }
 
 export interface TestInfoImpl extends TestInfo {
   _testFinished: Promise<void>;
-  _addStep: (category: string, title: string, data?: { [key: string]: any }) => TestStepInternal;
+  _addStep: (category: string, title: string) => TestStepInternal;
   _currentSteps(): TestStepInternal[];
 }

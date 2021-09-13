@@ -268,11 +268,10 @@ export class WorkerRunner extends EventEmitter {
           deadlineRunner.updateDeadline(deadline());
       },
       _testFinished: new Promise(f => testFinishedCallback = f),
-      _addStep: (category: string, title: string, data: { [key: string]: any } = {}) => {
+      _addStep: (category: string, title: string) => {
         const stepId = `${category}@${title}@${++lastStepId}`;
         let callbackHandled = false;
         const step: TestStepInternal = {
-          data,
           category,
           complete: (error?: Error | TestError) => {
             if (callbackHandled)
@@ -286,7 +285,6 @@ export class WorkerRunner extends EventEmitter {
               stepId,
               wallTime: Date.now(),
               error,
-              data,
             };
             if (reportEvents)
               this.emit('stepEnd', payload);

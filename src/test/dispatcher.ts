@@ -331,7 +331,6 @@ export class Dispatcher {
       step.duration = params.wallTime - step.startTime.getTime();
       if (params.error)
         step.error = params.error;
-      step.data = params.data;
       stepStack.delete(step);
       steps.delete(params.stepId);
       this._reporter.onStepEnd?.(test, result, step);
