@@ -110,7 +110,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   async fetch(params: channels.BrowserContextFetchParams): Promise<channels.BrowserContextFetchResult> {
     const { fetchResponse, error } = await playwrightFetch(this._context, {
       url: params.url,
-      queryParams: arrayToObject(params.queryParams),
+      params: arrayToObject(params.params),
       method: params.method,
       headers: params.headers ? headersArrayToObject(params.headers, false) : undefined,
       postData: params.postData ? Buffer.from(params.postData, 'base64') : undefined,

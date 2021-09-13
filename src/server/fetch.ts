@@ -67,8 +67,8 @@ export async function playwrightFetch(context: BrowserContext, params: types.Fet
       options.rejectUnauthorized = false;
 
     const requestUrl = new URL(params.url, context._options.baseURL);
-    if (params.queryParams) {
-      for (const [name, value] of Object.entries(params.queryParams))
+    if (params.params) {
+      for (const [name, value] of Object.entries(params.params))
         requestUrl.searchParams.set(name, value);
     }
 

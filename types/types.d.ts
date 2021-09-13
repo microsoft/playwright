@@ -12649,7 +12649,7 @@ export interface FetchRequest {
     /**
      * Query parameters to be send with the URL.
      */
-    queryParams?: { [key: string]: string; };
+    params?: { [key: string]: string; };
 
     /**
      * Request timeout in milliseconds.
@@ -12672,7 +12672,7 @@ export interface FetchRequest {
     /**
      * Query parameters to be send with the URL.
      */
-    queryParams?: { [key: string]: string; };
+    params?: { [key: string]: string; };
 
     /**
      * Request timeout in milliseconds.
@@ -12700,7 +12700,7 @@ export interface FetchRequest {
     /**
      * Query parameters to be send with the URL.
      */
-    queryParams?: { [key: string]: string; };
+    params?: { [key: string]: string; };
 
     /**
      * Request timeout in milliseconds.

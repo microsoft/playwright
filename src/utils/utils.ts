@@ -24,6 +24,7 @@ import { spawn } from 'child_process';
 import { getProxyForUrl } from 'proxy-from-env';
 import * as URL from 'url';
 import { getUbuntuVersionSync } from './ubuntuVersion';
+import { NameValue } from '../protocol/channels';
 
 // `https-proxy-agent` v5 is written in TypeScript and exposes generated types.
 // However, as of June 2020, its types are generated with tsconfig that enables
@@ -288,7 +289,7 @@ class HashStream extends stream.Writable {
   }
 }
 
-export function objectToArray(map?: { [key: string]: string }): { name: string, value: string }[] | undefined {
+export function objectToArray(map?:  { [key: string]: string }): NameValue[] | undefined {
   if (!map)
     return undefined;
   const result = [];
@@ -297,7 +298,7 @@ export function objectToArray(map?: { [key: string]: string }): { name: string, 
   return result;
 }
 
-export function arrayToObject(array?: { name: string, value: string }[]): { [key: string]: string } | undefined {
+export function arrayToObject(array?: NameValue[]): { [key: string]: string } | undefined {
   if (!array)
     return undefined;
   const result: { [key: string]: string } = {};

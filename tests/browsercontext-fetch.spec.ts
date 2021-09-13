@@ -136,7 +136,7 @@ it('should support queryParams', async ({context, server}) => {
   });
   for (const method of ['get', 'post', 'fetch']) {
     await context.request[method](server.EMPTY_PAGE+'?p1=v1', {
-      queryParams: {
+      params: {
         'p1': 'v1',
         'парам2': 'знач2',
       }

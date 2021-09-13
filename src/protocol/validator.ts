@@ -394,7 +394,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.BrowserContextFetchParams = tObject({
     url: tString,
-    queryParams: tOptional(tArray(tType('NameValue'))),
+    params: tOptional(tArray(tType('NameValue'))),
     method: tOptional(tString),
     headers: tOptional(tArray(tType('NameValue'))),
     postData: tOptional(tBinary),
