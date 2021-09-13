@@ -21,7 +21,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
 import { Dispatcher, TestGroup } from './dispatcher';
-import { createMatcher, FilePatternFilter, monotonicTime } from './util';
+import { createFileMatcher, createTitleMatcher, FilePatternFilter, monotonicTime } from './util';
 import { TestCase, Suite } from './test';
 import { Loader } from './loader';
 import { Reporter } from '../../types/testReporter';
@@ -131,7 +131,7 @@ export class Runner {
   }
 
   async _run(list: boolean, testFileReFilters: FilePatternFilter[], projectNames?: string[]): Promise<RunResult> {
-    const testFileFilter = testFileReFilters.length ? createMatcher(testFileReFilters.map(e => e.re)) : () => true;
+    const testFileFilter = testFileReFilters.length ? createFileMatcher(testFileReFilters.map(e => e.re)) : () => true;
     const config = this._loader.fullConfig();
 
     let projectsToFind: Set<string> | undefined;
@@ -169,8 +169,8 @@ export class Runner {
       if (!fs.statSync(testDir).isDirectory())
         throw new Error(`${testDir} is not a directory`);
       const allFiles = await collectFiles(project.config.testDir);
-      const testMatch = createMatcher(project.config.testMatch);
-      const testIgnore = createMatcher(project.config.testIgnore);
+      const testMatch = createFileMatcher(project.config.testMatch);
+      const testIgnore = createFileMatcher(project.config.testIgnore);
       const testFileExtension = (file: string) => ['.js', '.ts', '.mjs'].includes(path.extname(file));
       const testFiles = allFiles.filter(file => !testIgnore(file) && testMatch(file) && testFileFilter(file) && testFileExtension(file));
       files.set(project, testFiles);
@@ -210,8 +210,8 @@ export class Runner {
         fileSuites.set(fileSuite._requireFile, fileSuite);
 
       const outputDirs = new Set<string>();
-      const grepMatcher = createMatcher(config.grep);
-      const grepInvertMatcher = config.grepInvert ? createMatcher(config.grepInvert) : null;
+      const grepMatcher = createTitleMatcher(config.grep);
+      const grepInvertMatcher = config.grepInvert ? createTitleMatcher(config.grepInvert) : null;
       const rootSuite = new Suite('');
       for (const project of projects) {
         const projectSuite = new Suite(project.config.name);
