@@ -102,7 +102,6 @@ if [[ $1 != "--juggler" ]]; then
     echo "-- Using cbindgen v${CBINDGEN_VERSION}"
     cargo install cbindgen --version "${CBINDGEN_VERSION}"
   fi
-  ./mach build
 fi
 
 if [[ $1 == "--full" || $2 == "--full" ]]; then
@@ -121,6 +120,8 @@ fi
 
 if [[ $1 == "--juggler" ]]; then
   ./mach build faster
+else
+  ./mach build
 fi
 
 if [[ "$(uname)" == "Darwin" ]]; then
