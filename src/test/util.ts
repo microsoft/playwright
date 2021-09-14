@@ -20,6 +20,7 @@ import path from 'path';
 import type { TestError, Location } from './types';
 import { default as minimatch } from 'minimatch';
 import { errors } from '../..';
+import debug from 'debug';
 
 export async function pollUntilDeadline(testInfo: TestInfoImpl, func: (remainingTime: number) => Promise<boolean>, pollTime: number | undefined, deadlinePromise: Promise<void>): Promise<void> {
   let defaultExpectTimeout = testInfo.project.expect?.timeout;
@@ -167,3 +168,5 @@ export function expectType(receiver: any, type: string, matcherName: string) {
 export function sanitizeForFilePath(s: string) {
   return s.replace(/[\x00-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F]+/g, '-');
 }
+
+export const debugTest = debug('pw:test');
