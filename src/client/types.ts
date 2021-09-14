@@ -27,11 +27,8 @@ export interface Logger {
 }
 
 export interface ClientSideInstrumentation {
-  onApiCall(stackTrace: ParsedStackTrace): ((log: string[], error?: Error) => void) | undefined;
+  onApiCall(stackTrace: ParsedStackTrace): ((error?: Error) => void) | undefined;
 }
-export type LogContainer = {
-  log: string[];
-};
 
 export type StrictOptions = { strict?: boolean };
 export type Headers = { [key: string]: string };
