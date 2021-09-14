@@ -93,7 +93,9 @@ export class Mouse implements api.Mouse {
   }
 
   async wheel(deltaX: number, deltaY: number) {
-    await this._channel.mouseWheel({ deltaX, deltaY });
+    await this._page._wrapApiCall(async channel => {
+      await channel.mouseWheel({ deltaX, deltaY });
+    });
   }
 }
 
