@@ -124,8 +124,8 @@ test('should support toHaveTitle', async ({ runInlineTest }) => {
       const { test } = pwt;
 
       test('pass', async ({ page }) => {
-        await page.setContent('<title>Hello</title>');
-        await expect(page).toHaveTitle('Hello');
+        await page.setContent('<title>  Hello     world</title>');
+        await expect(page).toHaveTitle('Hello  world');
       });
 
       test('fail', async ({ page }) => {

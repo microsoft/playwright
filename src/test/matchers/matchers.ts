@@ -15,12 +15,12 @@
  */
 
 import { Locator, Page } from '../../..';
-import { constructURLBasedOnBaseURL } from '../../utils/utils';
+import { constructURLBasedOnBaseURL, isString } from '../../utils/utils';
 import { currentTestInfo } from '../globals';
 import type { Expect } from '../types';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
-import { toMatchText } from './toMatchText';
+import { normalizeWhiteSpace, toMatchText } from './toMatchText';
 
 export function toBeChecked(
   this: ReturnType<Expect['getState']>,
@@ -118,7 +118,7 @@ export function toContainText(
     if (options?.useInnerText)
       return await locator.innerText({ timeout });
     return await locator.textContent() || '';
-  }, expected, { ...options, matchSubstring: true });
+  }, expected, { ...options, matchSubstring: true, normalizeWhiteSpace: true });
 }
 
 export function toHaveAttribute(
@@ -202,20 +202,23 @@ export function toHaveText(
   this: ReturnType<Expect['getState']>,
   locator: Locator,
   expected: string | RegExp | (string | RegExp)[],
-  options?: { timeout?: number, useInnerText?: boolean },
+  options: { timeout?: number, useInnerText?: boolean } = {},
 ) {
   if (Array.isArray(expected)) {
+    const expectedArray = expected.map(e => isString(e) ? normalizeWhiteSpace(e) : e);
     return toEqual.call(this, 'toHaveText', locator, 'Locator', async () => {
-      return locator.evaluateAll((ee, useInnerText) => {
+      const texts = await locator.evaluateAll((ee, useInnerText) => {
         return ee.map(e => useInnerText ? (e as HTMLElement).innerText : e.textContent || '');
       }, options?.useInnerText);
-    }, expected, options);
+      // Normalize those values that have string expectations.
+      return texts.map((s, index) => isString(expectedArray[index]) ? normalizeWhiteSpace(s) : s);
+    }, expectedArray, options);
   } else {
     return toMatchText.call(this, 'toHaveText', locator, 'Locator', async timeout => {
       if (options?.useInnerText)
         return await locator.innerText({ timeout });
       return await locator.textContent() || '';
-    }, expected, options);
+    }, expected, { ...options, normalizeWhiteSpace: true });
   }
 }
 
@@ -223,11 +226,11 @@ export function toHaveTitle(
   this: ReturnType<Expect['getState']>,
   page: Page,
   expected: string | RegExp,
-  options?: { timeout?: number },
+  options: { timeout?: number } = {},
 ) {
   return toMatchText.call(this, 'toHaveTitle', page, 'Page', async () => {
     return await page.title();
-  }, expected, options);
+  }, expected, { ...options, normalizeWhiteSpace: true });
 }
 
 export function toHaveURL(
