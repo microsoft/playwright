@@ -147,7 +147,7 @@ class JUnitReporter implements Reporter {
     }
     for (const result of test.results) {
       for (const stdout of result.stdout) {
-        entries.push({
+        entry.children.push({
           name: 'system-out',
           text: stdout.toString()
         });
@@ -155,7 +155,7 @@ class JUnitReporter implements Reporter {
 
       for (const attachment of result.attachments) {
         if (attachment.path) {
-          entries.push({
+          entry.children.push({
             name: 'system-out',
             text: `[[ATTACHMENT|${path.relative(this.config.rootDir, attachment.path)}]]`
           });
@@ -163,7 +163,7 @@ class JUnitReporter implements Reporter {
       }
 
       for (const stderr of result.stderr) {
-        entries.push({
+        entry.children.push({
           name: 'system-err',
           text: stderr.toString()
         });
