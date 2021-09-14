@@ -135,7 +135,7 @@ class Generator {
     packageJSON.scripts['playwright-tests'] = `playwright test`;
 
     const files = new Map<string, string>();
-    files.set('package.json', JSON.stringify(packageJSON, null, 2));
+    files.set('package.json', JSON.stringify(packageJSON, null, 2) + '\n'); // NPM keeps a trailing new-line
     await createFiles(this.rootDir, files, true);
   }
 
