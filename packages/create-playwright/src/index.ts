@@ -99,7 +99,7 @@ class Generator {
 
     if (!fs.existsSync(path.join(this.rootDir, 'package.json'))) {
       commands.push({
-        name: 'Initializing NPM project',
+        name: `Initializing ${this.packageManager === 'yarn' ? 'Yarn' : 'NPM'} project`,
         command: this.packageManager === 'yarn' ? 'yarn init -y' : 'npm init -y',
       });
     }

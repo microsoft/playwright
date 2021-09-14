@@ -86,13 +86,13 @@ for (const packageManager of ['npm', 'yarn'] as ('npm'|'yarn')[]) {
       expect(fs.existsSync(path.join(dir, '.github/workflows/playwright.yml'))).toBeTruthy();
       expect(fs.existsSync(path.join(dir, '.gitignore'))).toBeTruthy();
       if (packageManager === 'npm') {
-        expect(stdout).toContain('Running: npm init -y');
-        expect(stdout).toContain('Running: npm install --save-dev @playwright/test');
+        expect(stdout).toContain('Initializing NPM project (npm init -y)…');
+        expect(stdout).toContain('Installing Playwright Test (npm install --save-dev @playwright/test)…');
       } else {
-        expect(stdout).toContain('Running: yarn init -y');
-        expect(stdout).toContain('Running: yarn add --dev @playwright/test');
+        expect(stdout).toContain('Initializing Yarn project (yarn init -y)…');
+        expect(stdout).toContain('Installing Playwright Test (yarn add --dev @playwright/test)…');
       }
-      expect(stdout).toContain('Running: npx playwright install --with-deps');
+      expect(stdout).toContain('npx playwright install --with-deps');
     });
 
     test('should generate a project in a given directory', async ({ run }) => {
