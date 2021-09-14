@@ -131,7 +131,7 @@ declare global {
       /**
        * Asserts element's computed CSS property `name` matches expected value.
        */
-      toHaveCSS(expected: string | RegExp, name: string, options?: { timeout?: number }): Promise<R>;
+      toHaveCSS(name: string, expected: string | RegExp, options?: { timeout?: number }): Promise<R>;
 
       /**
        * Asserts element's `id` attribute matches expected value.
