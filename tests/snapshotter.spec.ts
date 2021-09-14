@@ -256,6 +256,39 @@ it.describe('snapshots', () => {
     expect(spanColor).toBe('rgb(0, 0, 255)');
   });
 
+  it('should work with adopted style sheets and replaceSync', async ({ page, toImpl, showSnapshot, snapshotter, browserName }) => {
+    it.skip(browserName !== 'chromium', 'Constructed stylesheets are only in Chromium.');
+    await page.setContent('<button>Hello</button>');
+    await page.evaluate(() => {
+      const sheet = new CSSStyleSheet();
+      sheet.addRule('button', 'color: red');
+      (document as any).adoptedStyleSheets = [sheet];
+    });
+    const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
+    await page.evaluate(() => {
+      const [sheet] = (document as any).adoptedStyleSheets;
+      sheet.replaceSync(`button { color: blue }`);
+    });
+    const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot2');
+
+    {
+      const frame = await showSnapshot(snapshot1);
+      await frame.waitForSelector('button');
+      const buttonColor = await frame.$eval('button', button => {
+        return window.getComputedStyle(button).color;
+      });
+      expect(buttonColor).toBe('rgb(255, 0, 0)');
+    }
+    {
+      const frame = await showSnapshot(snapshot2);
+      await frame.waitForSelector('button');
+      const buttonColor = await frame.$eval('button', button => {
+        return window.getComputedStyle(button).color;
+      });
+      expect(buttonColor).toBe('rgb(0, 0, 255)');
+    }
+  });
+
   it('should restore scroll positions', async ({ page, showSnapshot, toImpl, snapshotter, browserName }) => {
     it.skip(browserName === 'firefox');
 
