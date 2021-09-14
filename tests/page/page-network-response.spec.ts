@@ -30,7 +30,8 @@ it('should work', async ({page, server}) => {
   expect((await response.allHeaders())['BaZ']).toBe(undefined);
 });
 
-it('should return multiple header value', async ({page, server}) => {
+it('should return multiple header value', async ({page, server, browserName, platform}) => {
+  it.fixme(browserName === 'webkit' && platform === 'win32', 'libcurl does not support non-set-cookie multivalue headers');
   server.setRoute('/headers', (req, res) => {
     // Headers array is only supported since Node v14.14.0 so we write directly to the socket.
     // res.writeHead(200, ['name-a', 'v1','name-b', 'v4','Name-a', 'v2', 'name-A', 'v3']);
@@ -233,7 +234,8 @@ it('should report multiple set-cookie headers', async ({ page, server }) => {
   expect(await response.headerValues('set-cookie')).toEqual(['a=b', 'c=d']);
 });
 
-it('should behave the same way for headers and allHeaders', async ({ page, server, browserName, channel }) => {
+it('should behave the same way for headers and allHeaders', async ({ page, server, browserName, channel, platform }) => {
+  it.fixme(browserName === 'webkit' && platform === 'win32', 'libcurl does not support non-set-cookie multivalue headers');
   it.skip(!!channel, 'Stable chrome uses \n as a header separator in non-raw headers');
   server.setRoute('/headers', (req, res) => {
     const headers = {
