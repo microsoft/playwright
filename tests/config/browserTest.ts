@@ -154,8 +154,11 @@ export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTest
     });
     await Promise.all(contexts.map(async context => {
       const videos = context.pages().map(p => p.video()).filter(Boolean);
-      if (!(context as any)._closed && trace)
-        await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
+      if (!(context as any)._closed && trace) {
+        const tracePath = testInfo.outputPath('trace.zip');
+        await context.tracing.stop({ path: tracePath });
+        testInfo.attachments.push({ name: 'trace', path: tracePath, contentType: 'application/zip' });
+      }
       await context.close();
       for (const v of videos) {
         const videoPath = await v.path().catch(() => null);

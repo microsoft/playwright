@@ -153,17 +153,41 @@ export class BaseReporter implements Reporter  {
 }
 
 export function formatFailure(config: FullConfig, test: TestCase, index?: number, stdio?: boolean): string {
-  const tokens: string[] = [];
-  tokens.push(formatTestHeader(config, test, '  ', index));
+  const lines: string[] = [];
+  lines.push(formatTestHeader(config, test, '  ', index));
   for (const result of test.results) {
     const resultTokens = formatResultFailure(test, result, '    ');
     if (!resultTokens.length)
       continue;
     if (result.retry) {
-      tokens.push('');
-      tokens.push(colors.gray(pad(`    Retry #${result.retry}`, '-')));
+      lines.push('');
+      lines.push(colors.gray(pad(`    Retry #${result.retry}`, '-')));
     }
-    tokens.push(...resultTokens);
+    lines.push(...resultTokens);
+    for (let i = 0; i < result.attachments.length; ++i) {
+      const attachment = result.attachments[i];
+      lines.push('');
+      lines.push(colors.cyan(pad(`    attachment #${i + 1}: ${attachment.name} (${attachment.contentType})`, '-')));
+      if (attachment.path) {
+        const relativePath = path.relative(process.cwd(), attachment.path);
+        lines.push(colors.cyan(`    ${relativePath}`));
+        // Make this extensible
+        if (attachment.name === 'trace') {
+          lines.push(colors.cyan(`    Usage:`));
+          lines.push('');
+          lines.push(colors.cyan(`        npx playwright show-trace ${relativePath}`));
+          lines.push('');
+        }
+      } else {
+        if (attachment.contentType.startsWith('text/')) {
+          let text = attachment.body!.toString();
+          if (text.length > 300)
+            text = text.slice(0, 300) + '...';
+          lines.push(colors.cyan(`    ${text}`));
+        }
+      }
+      lines.push(colors.cyan(pad('   ', '-')));
+    }
     const output = ((result as any)[kOutputSymbol] || []) as TestResultOutput[];
     if (stdio && output.length) {
       const outputText = output.map(({ chunk, type }) => {
@@ -172,12 +196,12 @@ export function formatFailure(config: FullConfig, test: TestCase, index?: number
           return colors.red(stripAnsiEscapes(text));
         return text;
       }).join('');
-      tokens.push('');
-      tokens.push(colors.gray(pad('--- Test output', '-')) + '\n\n' + outputText + '\n' + pad('', '-'));
+      lines.push('');
+      lines.push(colors.gray(pad('--- Test output', '-')) + '\n\n' + outputText + '\n' + pad('', '-'));
     }
   }
-  tokens.push('');
-  return tokens.join('\n');
+  lines.push('');
+  return lines.join('\n');
 }
 
 export function formatResultFailure(test: TestCase, result: TestResult, initialIndent: string): string[] {
