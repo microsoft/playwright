@@ -67,13 +67,6 @@ export type JsonTestCase = {
   outcome: 'skipped' | 'expected' | 'unexpected' | 'flaky';
 };
 
-export type TestAttachment = {
-  name: string;
-  path?: string;
-  body?: Buffer;
-  contentType: string;
-};
-
 export type JsonAttachment = {
   name: string;
   body?: string;

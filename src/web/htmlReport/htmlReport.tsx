@@ -21,7 +21,7 @@ import { SplitView } from '../components/splitView';
 import { TreeItem } from '../components/treeItem';
 import { TabbedPane } from '../traceViewer/ui/tabbedPane';
 import { msToString } from '../uiUtils';
-import type { ProjectTreeItem, SuiteTreeItem, TestCase, TestResult, TestStep, TestTreeItem, Location, TestFile, Stats } from '../../test/reporters/html';
+import type { ProjectTreeItem, SuiteTreeItem, TestCase, TestResult, TestStep, TestTreeItem, Location, TestFile, Stats, TestAttachment } from '../../test/reporters/html';
 
 type Filter = 'Failing' | 'All';
 
@@ -149,29 +149,45 @@ const TestCaseView: React.FC<{
   }
 
   const [selectedResultIndex, setSelectedResultIndex] = React.useState(0);
-  return <SplitView sidebarSize={500} orientation='horizontal' sidebarIsFirst={true}>
-    <div className='test-details-column vbox'>
-    </div>
-    <div className='test-case-column vbox'>
-      { test && <div className='test-case-title'>{test?.title}</div> }
-      { test && <div className='test-case-location'>{renderLocation(test.location, true)}</div> }
-      { test && <TabbedPane tabs={
-        test.results.map((result, index) => ({
-          id: String(index),
-          title: <div style={{ display: 'flex', alignItems: 'center' }}>{statusIcon(result.status)} {retryLabel(index)}</div>,
-          render: () => <TestResultView test={test!} result={result}></TestResultView>
-        })) || []} selectedTab={String(selectedResultIndex)} setSelectedTab={id => setSelectedResultIndex(+id)} />}
-    </div>
-  </SplitView>;
+  return <div className='test-case-column vbox'>
+    { test && <div className='test-case-title'>{test?.title}</div> }
+    { test && <div className='test-case-location'>{renderLocation(test.location, true)}</div> }
+    { test && <TabbedPane tabs={
+      test.results.map((result, index) => ({
+        id: String(index),
+        title: <div style={{ display: 'flex', alignItems: 'center' }}>{statusIcon(result.status)} {retryLabel(index)}</div>,
+        render: () => <TestResultView test={test!} result={result}></TestResultView>
+      })) || []} selectedTab={String(selectedResultIndex)} setSelectedTab={id => setSelectedResultIndex(+id)} />}
+  </div>;
 };
 
 const TestResultView: React.FC<{
   test: TestCase,
   result: TestResult,
-}> = ({ test, result }) => {
+}> = ({ result }) => {
+
+  const { screenshots, videos, attachmentsMap } = React.useMemo(() => {
+    const attachmentsMap = new Map<string, TestAttachment>();
+    const attachments = result?.attachments || [];
+    const screenshots = attachments.filter(a => a.name === 'screenshot');
+    const videos = attachments.filter(a => a.name === 'video');
+    for (const a of attachments)
+      attachmentsMap.set(a.name, a);
+    return { attachmentsMap, screenshots, videos };
+  }, [ result ]);
+
   return <div className='test-result'>
     {result.error && <ErrorMessage key={-1} error={result.error}></ErrorMessage>}
     {result.steps.map((step, i) => <StepTreeItem key={i} step={step} depth={0}></StepTreeItem>)}
+    {attachmentsMap.has('expected') && attachmentsMap.has('actual') && <ImageDiff actual={attachmentsMap.get('actual')!} expected={attachmentsMap.get('expected')!} diff={attachmentsMap.get('diff')}></ImageDiff>}
+    {!!screenshots && <div className='test-overview-title'>Screenshots</div>}
+    {screenshots.map((a, i) => <img key={`screenshot-${i}`} src={a.path} />)}
+    {!!videos.length && <div className='test-overview-title'>Videos</div>}
+    {videos.map((a, i) => <video key={`video-${i}`} controls>
+      <source src={a.path} type={a.contentType}/>
+    </video>)}
+    {!!result.attachments && <div className='test-overview-title'>Attachments</div>}
+    {result.attachments.map((a, i) => <AttachmentLink key={`attachment-${i}`} attachment={a}></AttachmentLink>)}
   </div>;
 };
 
@@ -200,6 +216,48 @@ const StatsView: React.FC<{
     {!!stats.unexpected && <div className='stats unexpected' title='Failed'>{stats.unexpected}</div>}
     {!!stats.flaky && <div className='stats flaky' title='Flaky'>{stats.flaky}</div>}
     {!!stats.skipped && <div className='stats skipped' title='Skipped'>{stats.skipped}</div>}
+  </div>;
+};
+
+export const AttachmentLink: React.FunctionComponent<{
+  attachment: TestAttachment,
+}> = ({ attachment }) => {
+  return <TreeItem title={<div style={{ display: 'flex', alignItems: 'center', flex: 'auto' }}>
+    <span className={'codicon codicon-cloud-download'}></span>
+    {attachment.path && <a href={attachment.path} target='_blank'>{attachment.name}</a>}
+    {attachment.body && <span>{attachment.name}</span>}
+  </div>} loadChildren={attachment.body ? () => {
+    return [<div className='attachment-body'>${attachment.body}</div>];
+  } : undefined} depth={0}></TreeItem>;
+};
+
+export const ImageDiff: React.FunctionComponent<{
+ actual: TestAttachment,
+ expected: TestAttachment,
+ diff?: TestAttachment,
+}> = ({ actual, expected, diff }) => {
+  const [selectedTab, setSelectedTab] = React.useState<string>('actual');
+  const tabs = [];
+  tabs.push({
+    id: 'actual',
+    title: 'Actual',
+    render: () => <div className='image-preview'><img src={actual.path}/></div>
+  });
+  tabs.push({
+    id: 'expected',
+    title: 'Expected',
+    render: () => <div className='image-preview'><img src={expected.path}/></div>
+  });
+  if (diff) {
+    tabs.push({
+      id: 'diff',
+      title: 'Diff',
+      render: () => <div className='image-preview'><img src={diff.path}/></div>,
+    });
+  }
+  return <div className='vbox test-image-mismatch'>
+    <div className='test-overview-title'>Image mismatch</div>
+    <TabbedPane tabs={tabs} selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
   </div>;
 };
 
