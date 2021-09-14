@@ -144,7 +144,7 @@ methods accept [`param: selector`] as their first argument.
   ```csharp
   await page.ClickAsync(".login-button:visible");
   ```
-  Learn more about [`:visible` pseudo-class](#selecting-visible-elements).
+  Learn more about [selecting visible elements](#selecting-visible-elements).
 - Pick n-th match
   ```js
   await page.click(':nth-match(:text("Buy"), 3)');

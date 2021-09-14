@@ -33,7 +33,8 @@ function flattenWrappedLines(content) {
   let outLineTokens = [];
   for (const line of inLines) {
     const trimmedLine = line.trim();
-    let singleLineExpression = line.startsWith('#');
+    const singleLineExpression = line.startsWith('#');
+    const codeBlockBoundary = trimmedLine.startsWith('```') || trimmedLine.startsWith('---') || trimmedLine.startsWith(':::');
     let flushLastParagraph = !trimmedLine
       || trimmedLine.startsWith('1.')
       || trimmedLine.startsWith('<')
@@ -43,7 +44,7 @@ function flattenWrappedLines(content) {
       || trimmedLine.startsWith('*')
       || line.match(/\[[^\]]+\]:.*/)
       || singleLineExpression;
-    if (trimmedLine.startsWith('```') || trimmedLine.startsWith('---') || trimmedLine.startsWith(':::')) {
+    if (codeBlockBoundary) {
       inCodeBlock = !inCodeBlock;
       flushLastParagraph = true;
     }
@@ -51,7 +52,7 @@ function flattenWrappedLines(content) {
       outLines.push(outLineTokens.join(' '));
       outLineTokens = [];
     }
-    if (inCodeBlock || singleLineExpression)
+    if (inCodeBlock || singleLineExpression || codeBlockBoundary)
       outLines.push(line);
     else if (trimmedLine)
       outLineTokens.push(outLineTokens.length ? line.trim() : line);
