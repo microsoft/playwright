@@ -51,8 +51,9 @@
   color: white;
   padding: 5px;
   overflow: auto;
-  margin: 20px 0;
+  margin: 20px;
   flex: none;
+  box-shadow: var(--box-shadow);
 }
 
 .status-icon {
@@ -164,9 +165,6 @@
   display: flex;
   align-items: center;
   padding: 0 10px 10px;
-  color: var(--blue);
-  text-decoration: underline;
-  cursor: pointer;
 }
 
 .test-details-column {
@@ -182,4 +180,25 @@
 .tree-text {
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.stats {
+  background-color: gray;
+  border-radius: 2px;
+  min-width: 10px;
+  color: white;
+  margin: 0 2px;
+  padding: 0 2px;
+}
+
+.stats.expected {
+  background-color: var(--green);
+}
+
+.stats.unexpected {
+  background-color: var(--red);
+}
+
+.stats.flaky {
+  background-color: var(--yellow);
 }

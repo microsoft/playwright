@@ -17,13 +17,14 @@
 import fs from 'fs';
 import path from 'path';
 import { FullProject } from '../../../types/test';
-import { FullConfig, Location, Suite, TestCase, TestError, TestResult, TestStatus, TestStep } from '../../../types/testReporter';
+import { FullConfig, Location, Suite, TestCase, TestResult, TestStatus, TestStep } from '../../../types/testReporter';
 import { assert, calculateSha1 } from '../../utils/utils';
 import { sanitizeForFilePath } from '../util';
+import { formatResultFailure } from './base';
 import { serializePatterns } from './json';
 
 export type JsonLocation = Location;
-export type JsonError = TestError;
+export type JsonError = string;
 export type JsonStackFrame = { file: string, line: number, column: number };
 
 export type JsonReport = {
@@ -187,7 +188,7 @@ class RawReporter {
       startTime: result.startTime.toISOString(),
       duration: result.duration,
       status: result.status,
-      error: result.error,
+      error: formatResultFailure(test, result, '').join('').trim(),
       attachments: this._createAttachments(result),
       steps: this._serializeSteps(test, result.steps)
     };
@@ -200,7 +201,7 @@ class RawReporter {
         category: step.category,
         startTime: step.startTime.toISOString(),
         duration: step.duration,
-        error: step.error,
+        error: step.error?.message,
         steps: this._serializeSteps(test, step.steps),
         log: step.data.log || undefined,
       };
