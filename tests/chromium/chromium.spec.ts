@@ -147,6 +147,28 @@ playwrightTest('should connect to an existing cdp session twice', async ({ brows
   }
 });
 
+playwrightTest('should connect to existing page with iframe and navigate', async ({ browserType, browserOptions, server }, testInfo) => {
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    ...browserOptions,
+    args: ['--remote-debugging-port=' + port]
+  });
+  try {
+    {
+      const context1 = await browserServer.newContext();
+      const page = await context1.newPage();
+      await page.goto(server.PREFIX + '/frames/one-frame.html');
+    }
+    const cdpBrowser = await browserType.connectOverCDP(`http://localhost:${port}/`);
+    const contexts = cdpBrowser.contexts();
+    expect(contexts.length).toBe(1);
+    await contexts[0].pages()[0].goto(server.EMPTY_PAGE);
+    await cdpBrowser.close();
+  } finally {
+    await browserServer.close();
+  }
+});
+
 playwrightTest('should connect to existing service workers', async ({browserType, browserOptions, server}, testInfo) => {
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({
