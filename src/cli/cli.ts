@@ -237,10 +237,6 @@ if (!process.env.PW_CLI_TARGET_LANG) {
 
   if (playwrightTestPackagePath) {
     require(playwrightTestPackagePath).addTestCommand(program);
-    if (process.env.PW_EXPERIMENTAL) {
-      require(playwrightTestPackagePath).addGenerateHtmlCommand(program);
-      require(playwrightTestPackagePath).addShowHtmlCommand(program);
-    }
   } else {
     const command = program.command('test').allowUnknownOption(true);
     command.description('Run tests with Playwright Test. Available in @playwright/test package.');

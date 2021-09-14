@@ -32,7 +32,6 @@ import ListReporter from './reporters/list';
 import JSONReporter from './reporters/json';
 import JUnitReporter from './reporters/junit';
 import EmptyReporter from './reporters/empty';
-import RawReporter from './reporters/raw';
 import { ProjectImpl } from './project';
 import { Minimatch } from 'minimatch';
 import { FullConfig } from './types';
@@ -73,7 +72,7 @@ export class Runner {
       junit: JUnitReporter,
       null: EmptyReporter,
     };
-    const reporters: Reporter[] = [ new RawReporter() ];
+    const reporters: Reporter[] = [];
     for (const r of this._loader.fullConfig().reporter) {
       const [name, arg] = r;
       if (name in defaultReporters) {

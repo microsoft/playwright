@@ -15,7 +15,10 @@
  */
 
 import fs from 'fs';
+import path from 'path';
 import { test, expect } from './playwright-test-fixtures';
+
+const kRawReporterPath = path.join(__dirname, '..', '..', 'lib', 'test', 'reporters', 'raw.js');
 
 test('should generate raw report', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
@@ -23,7 +26,10 @@ test('should generate raw report', async ({ runInlineTest }, testInfo) => {
       const { test } = pwt;
       test('passes', async ({ page }, testInfo) => {});
     `,
-  }, { usesCustomOutputDir: true });
+  }, {
+    usesCustomOutputDir: true,
+    reporter: 'dot,' + kRawReporterPath
+  });
   const json = JSON.parse(fs.readFileSync(testInfo.outputPath('test-results', 'report', 'project.report'), 'utf-8'));
   expect(json.config).toBeTruthy();
   expect(json.project).toBeTruthy();
@@ -44,7 +50,10 @@ test('should use project name', async ({ runInlineTest }, testInfo) => {
       const { test } = pwt;
       test('passes', async ({ page }, testInfo) => {});
     `,
-  }, { usesCustomOutputDir: true });
+  }, {
+    usesCustomOutputDir: true,
+    reporter: 'dot,' + kRawReporterPath
+  });
   const json = JSON.parse(fs.readFileSync(testInfo.outputPath('output', 'report', 'project-name.report'), 'utf-8'));
   expect(json.project.name).toBe('project-name');
   expect(result.exitCode).toBe(0);
@@ -61,7 +70,10 @@ test('should save stdio', async ({ runInlineTest }, testInfo) => {
         process.stderr.write(Buffer.from([4, 5, 6]));
       });
     `,
-  }, { usesCustomOutputDir: true });
+  }, {
+    usesCustomOutputDir: true,
+    reporter: 'dot,' + kRawReporterPath
+  });
   const json = JSON.parse(fs.readFileSync(testInfo.outputPath('test-results', 'report', 'project.report'), 'utf-8'));
   const result = json.suites[0].tests[0].results[0];
   expect(result.attachments).toEqual([
@@ -97,7 +109,10 @@ test('should save attachments', async ({ runInlineTest }, testInfo) => {
         });
       });
     `,
-  }, { usesCustomOutputDir: true });
+  }, {
+    usesCustomOutputDir: true,
+    reporter: 'dot,' + kRawReporterPath
+  });
   const json = JSON.parse(fs.readFileSync(testInfo.outputPath('test-results', 'report', 'project.report'), 'utf-8'));
   const result = json.suites[0].tests[0].results[0];
   expect(result.attachments[0].name).toBe('binary');
@@ -122,7 +137,10 @@ test('dupe project names', async ({ runInlineTest }, testInfo) => {
       const { test } = pwt;
       test('passes', async ({ page }, testInfo) => {});
     `,
-  }, { usesCustomOutputDir: true });
+  }, {
+    usesCustomOutputDir: true,
+    reporter: 'dot,' + kRawReporterPath
+  });
   const files = fs.readdirSync(testInfo.outputPath('test-results', 'report'));
   expect(new Set(files)).toEqual(new Set(['project-name.report', 'project-name-1.report', 'project-name-2.report']));
 });

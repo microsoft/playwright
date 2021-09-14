@@ -129,23 +129,30 @@ class RawReporter {
       }
       if (!reportFile)
         throw new Error('Internal error, could not create report file');
-      const report: JsonReport = {
-        config: this.config,
-        project: {
-          metadata: project.metadata,
-          name: project.name,
-          outputDir: project.outputDir,
-          repeatEach: project.repeatEach,
-          retries: project.retries,
-          testDir: project.testDir,
-          testIgnore: serializePatterns(project.testIgnore),
-          testMatch: serializePatterns(project.testMatch),
-          timeout: project.timeout,
-        },
-        suites: suite.suites.map(s => this._serializeSuite(s))
-      };
+      const report = this.generateProjectReport(this.config, suite);
       fs.writeFileSync(reportFile, JSON.stringify(report, undefined, 2));
     }
+  }
+
+  generateProjectReport(config: FullConfig, suite: Suite): JsonReport {
+    const project = (suite as any)._projectConfig as FullProject;
+    assert(project, 'Internal Error: Invalid project structure');
+    const report: JsonReport = {
+      config,
+      project: {
+        metadata: project.metadata,
+        name: project.name,
+        outputDir: project.outputDir,
+        repeatEach: project.repeatEach,
+        retries: project.retries,
+        testDir: project.testDir,
+        testIgnore: serializePatterns(project.testIgnore),
+        testMatch: serializePatterns(project.testMatch),
+        timeout: project.timeout,
+      },
+      suites: suite.suites.map(s => this._serializeSuite(s))
+    };
+    return report;
   }
 
   private _serializeSuite(suite: Suite): JsonSuite {
@@ -169,11 +176,11 @@ class RawReporter {
       retries: test.retries,
       ok: test.ok(),
       outcome: test.outcome(),
-      results: test.results.map(r => this._serializeResult(testId, test, r)),
+      results: test.results.map(r => this._serializeResult(test, r)),
     };
   }
 
-  private _serializeResult(testId: string, test: TestCase, result: TestResult): JsonTestResult {
+  private _serializeResult(test: TestCase, result: TestResult): JsonTestResult {
     return {
       retry: result.retry,
       workerIndex: result.workerIndex,
