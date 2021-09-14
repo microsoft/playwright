@@ -202,7 +202,7 @@ class JSONReporter implements Reporter {
 
   private _serializeTestSpec(test: TestCase): JSONReportSpec {
 
-    let fixedTags: string[] = []
+    const fixedTags: string[] = [];
     const tagMatches: RegExpMatchArray| null = test.title.match(/@[\S]+/g);
 
     if (tagMatches) {
