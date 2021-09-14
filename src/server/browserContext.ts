@@ -34,7 +34,7 @@ import { Tracing } from './trace/recorder/tracing';
 import { HarRecorder } from './supplements/har/harRecorder';
 import { RecorderSupplement } from './supplements/recorderSupplement';
 import * as consoleApiSource from '../generated/consoleApiSource';
-import { BrowserContextFetchRequest, FetchRequest } from './fetch';
+import { BrowserContextFetchRequest } from './fetch';
 
 export abstract class BrowserContext extends SdkObject {
   static Events = {

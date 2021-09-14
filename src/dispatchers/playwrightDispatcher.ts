@@ -26,7 +26,7 @@ import * as types from '../server/types';
 import { SocksConnection, SocksConnectionClient } from '../utils/socksProxy';
 import { createGuid } from '../utils/utils';
 import { debugLogger } from '../utils/debugLogger';
-import { FetchRequest, GlobalFetchRequest } from '../server/fetch';
+import { GlobalFetchRequest } from '../server/fetch';
 import { FetchRequestDispatcher } from './networkDispatchers';
 
 export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.PlaywrightInitializer, channels.PlaywrightEvents> implements channels.PlaywrightChannel {
