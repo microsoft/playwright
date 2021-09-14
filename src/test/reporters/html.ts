@@ -14,12 +14,24 @@
  * limitations under the License.
  */
 
+import colors from 'colors/safe';
 import fs from 'fs';
+import open from 'open';
 import path from 'path';
 import { FullConfig, Suite } from '../../../types/testReporter';
-import { calculateSha1 } from '../../utils/utils';
+import { HttpServer } from '../../utils/httpServer';
+import { calculateSha1, removeFolders } from '../../utils/utils';
 import { toPosixPath } from '../reporters/json';
 import RawReporter, { JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep } from './raw';
+
+export type Stats = {
+  total: number;
+  expected: number;
+  unexpected: number;
+  flaky: number;
+  skipped: number;
+  ok: boolean;
+};
 
 export type Location = {
   file: string;
@@ -30,7 +42,7 @@ export type Location = {
 export type ProjectTreeItem = {
   name: string;
   suites: SuiteTreeItem[];
-  failedTests: number;
+  stats: Stats;
 };
 
 export type SuiteTreeItem = {
@@ -39,7 +51,7 @@ export type SuiteTreeItem = {
   duration: number;
   suites: SuiteTreeItem[];
   tests: TestTreeItem[];
-  failedTests: number;
+  stats: Stats;
 };
 
 export type TestTreeItem = {
@@ -49,6 +61,7 @@ export type TestTreeItem = {
   location: Location;
   duration: number;
   outcome: 'skipped' | 'expected' | 'unexpected' | 'flaky';
+  ok: boolean;
 };
 
 export type TestFile = {
@@ -99,7 +112,26 @@ class HtmlReporter {
       return report;
     });
     const reportFolder = path.resolve(process.cwd(), process.env[`PLAYWRIGHT_HTML_REPORT`] || 'playwright-report');
+    await removeFolders([reportFolder]);
     new HtmlBuilder(reports, reportFolder, this.config.rootDir);
+
+    if (!process.env.CI) {
+      const server = new HttpServer();
+      server.routePrefix('/', (request, response) => {
+        let relativePath = request.url!;
+        if (relativePath === '/')
+          relativePath = '/index.html';
+        const absolutePath = path.join(reportFolder, ...relativePath.split('/'));
+        return server.serveFile(response, absolutePath);
+      });
+      const url = await server.start();
+      console.log('');
+      console.log(colors.cyan(`  Serving HTML report at ${url}. Press Ctrl+C to quit.`));
+      console.log('');
+      open(url);
+      process.on('SIGINT', () => process.exit(0));
+      await new Promise(() => {});
+    }
   }
 }
 
@@ -135,7 +167,7 @@ class HtmlBuilder {
       projects.push({
         name: projectJson.project.name,
         suites,
-        failedTests: suites.reduce((a, s) => a + s.failedTests, 0)
+        stats: suites.reduce((a, s) => addStats(a, s.stats), emptyStats()),
       });
     }
     fs.writeFileSync(path.join(dataFolder, 'projects.json'), JSON.stringify(projects, undefined, 2));
@@ -154,11 +186,22 @@ class HtmlBuilder {
     const suites = suite.suites.map(s => this._createSuiteTreeItem(s, fileId, testCollector));
     const tests = suite.tests.map(t => this._createTestTreeItem(t, fileId));
     testCollector.push(...suite.tests);
+    const stats = suites.reduce<Stats>((a, s) => addStats(a, s.stats), emptyStats());
+    for (const test of tests) {
+      if (test.outcome === 'expected')
+        ++stats.expected;
+      if (test.outcome === 'unexpected')
+        ++stats.unexpected;
+      if (test.outcome === 'flaky')
+        ++stats.flaky;
+      ++stats.total;
+    }
+    stats.ok = stats.unexpected + stats.flaky === 0;
     return {
       title: suite.title,
       location: this._relativeLocation(suite.location),
       duration: suites.reduce((a, s) => a + s.duration, 0) + tests.reduce((a, t) => a + t.duration, 0),
-      failedTests: suites.reduce((a, s) => a + s.failedTests, 0) + tests.reduce((a, t) => t.outcome === 'unexpected' || t.outcome === 'flaky' ? a + 1 : a, 0),
+      stats,
       suites,
       tests
     };
@@ -173,7 +216,8 @@ class HtmlBuilder {
       location: this._relativeLocation(test.location),
       title: test.title,
       duration,
-      outcome: test.outcome
+      outcome: test.outcome,
+      ok: test.ok
     };
   }
 
@@ -183,7 +227,7 @@ class HtmlBuilder {
       startTime: result.startTime,
       retry: result.retry,
       steps: result.steps.map(s => this._createTestStep(s)),
-      error: result.error?.message,
+      error: result.error,
       status: result.status,
     };
   }
@@ -195,7 +239,7 @@ class HtmlBuilder {
       duration: step.duration,
       steps: step.steps.map(s => this._createTestStep(s)),
       log: step.log,
-      error: step.error?.message
+      error: step.error
     };
   }
 
@@ -209,5 +253,26 @@ class HtmlBuilder {
     };
   }
 }
+
+const emptyStats = (): Stats => {
+  return {
+    total: 0,
+    expected: 0,
+    unexpected: 0,
+    flaky: 0,
+    skipped: 0,
+    ok: true
+  };
+};
+
+const addStats = (stats: Stats, delta: Stats): Stats => {
+  stats.total += delta.total;
+  stats.skipped += delta.skipped;
+  stats.expected += delta.expected;
+  stats.unexpected += delta.unexpected;
+  stats.flaky += delta.flaky;
+  stats.ok = stats.ok && delta.ok;
+  return stats;
+};
 
 export default HtmlReporter;

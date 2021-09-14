@@ -21,7 +21,7 @@ import { SplitView } from '../components/splitView';
 import { TreeItem } from '../components/treeItem';
 import { TabbedPane } from '../traceViewer/ui/tabbedPane';
 import { msToString } from '../uiUtils';
-import type { ProjectTreeItem, SuiteTreeItem, TestCase, TestResult, TestStep, TestTreeItem, Location, TestFile } from '../../test/reporters/html';
+import type { ProjectTreeItem, SuiteTreeItem, TestCase, TestResult, TestStep, TestTreeItem, Location, TestFile, Stats } from '../../test/reporters/html';
 
 type Filter = 'Failing' | 'All';
 
@@ -60,7 +60,7 @@ export const Report: React.FC = () => {
             }}>{item}</div>;
           })
         }</div>
-        {!fetchError && filter === 'All' && report?.map((project, i) => <ProjectTreeItemView key={i} project={project} setTestId={setTestId} testId={testId}></ProjectTreeItemView>)}
+        {!fetchError && filter === 'All' && report?.map((project, i) => <ProjectTreeItemView key={i} project={project} setTestId={setTestId} testId={testId} failingOnly={false}></ProjectTreeItemView>)}
         {!fetchError && filter === 'Failing' && report?.map((project, i) => <ProjectTreeItemView key={i} project={project} setTestId={setTestId} testId={testId} failingOnly={true}></ProjectTreeItemView>)}
       </div>
     </SplitView>
@@ -71,49 +71,52 @@ const ProjectTreeItemView: React.FC<{
   project: ProjectTreeItem;
   testId?: TestId,
   setTestId: (id: TestId) => void;
-  failingOnly?: boolean;
+  failingOnly: boolean;
 }> = ({ project, testId, setTestId, failingOnly }) => {
+  const hasChildren = !(failingOnly && project.stats.ok);
   return <TreeItem title={<div className='hbox'>
-    {statusIconForFailedTests(project.failedTests)}<div className='tree-text'>{project.name || 'Project'}</div>
+    <div className='tree-text'>{project.name || 'Project'}</div>
+    <div style={{ flex: 'auto' }}></div>
+    <StatsView stats={project.stats}></StatsView>
   </div>
-  } loadChildren={() => {
-    return project.suites.map((s, i) => <SuiteTreeItemView key={i} suite={s} setTestId={setTestId} testId={testId} depth={1} showFileName={true}></SuiteTreeItemView>) || [];
-  }} depth={0} expandByDefault={true}></TreeItem>;
+  } loadChildren={hasChildren ? () => {
+    return project.suites.filter(s => !(failingOnly && s.stats.ok)).map((s, i) => <SuiteTreeItemView key={i} suite={s} setTestId={setTestId} testId={testId} depth={1} showFileName={true} failingOnly={failingOnly}></SuiteTreeItemView>) || [];
+  } : undefined} depth={0} expandByDefault={true}></TreeItem>;
 };
 
 const SuiteTreeItemView: React.FC<{
   suite: SuiteTreeItem,
   testId?: TestId,
   setTestId: (id: TestId) => void;
+  failingOnly: boolean;
   depth: number,
   showFileName: boolean,
-}> = ({ suite, testId, setTestId, showFileName, depth }) => {
+}> = ({ suite, testId, setTestId, showFileName, failingOnly, depth }) => {
   const location = renderLocation(suite.location, showFileName);
   return <TreeItem title={<div className='hbox'>
-    {statusIconForFailedTests(suite.failedTests)}<div className='tree-text'>{suite.title}</div>
+    <div className='tree-text' title={suite.title}>{suite.title}</div>
+    <div style={{ flex: 'auto' }}></div>
+    <StatsView stats={suite.stats}></StatsView>
     {!!suite.location?.line && location && <div style={{ flex: 'none', padding: '0 4px', color: '#666' }}>{location}</div>}
   </div>
   } loadChildren={() => {
-    const suiteChildren = suite.suites.map((s, i) => <SuiteTreeItemView key={i} suite={s} setTestId={setTestId} testId={testId} depth={depth + 1} showFileName={false}></SuiteTreeItemView>) || [];
+    const suiteChildren = suite.suites.filter(s => !(failingOnly && s.stats.ok)).map((s, i) => <SuiteTreeItemView key={i} suite={s} setTestId={setTestId} testId={testId} depth={depth + 1} showFileName={false} failingOnly={failingOnly}></SuiteTreeItemView>) || [];
     const suiteCount = suite.suites.length;
-    const testChildren = suite.tests.map((t, i) => <TestTreeItemView key={i + suiteCount} test={t} setTestId={setTestId} testId={testId} showFileName={false} depth={depth + 1}></TestTreeItemView>) || [];
+    const testChildren = suite.tests.filter(t => !(failingOnly && t.ok)).map((t, i) => <TestTreeItemView key={i + suiteCount} test={t} setTestId={setTestId} testId={testId} depth={depth + 1}></TestTreeItemView>) || [];
     return [...suiteChildren, ...testChildren];
   }} depth={depth}></TreeItem>;
 };
 
 const TestTreeItemView: React.FC<{
   test: TestTreeItem,
-  showFileName: boolean,
   testId?: TestId,
   setTestId: (id: TestId) => void;
   depth: number,
-}> = ({ test, testId, setTestId, showFileName, depth }) => {
-  const fileName = test.location.file;
-  const name = fileName.substring(fileName.lastIndexOf('/') + 1);
+}> = ({ test, testId, setTestId, depth }) => {
   return <TreeItem title={<div className='hbox'>
-    {statusIcon(test.outcome)}<div className='tree-text'>{test.title}</div>
-    {showFileName && <div style={{ flex: 'none', padding: '0 4px', color: '#666' }}>{name}:{test.location.line}</div>}
-    {!showFileName && <div style={{ flex: 'none', padding: '0 4px', color: '#666' }}>{msToString(test.duration)}</div>}
+    {statusIcon(test.outcome)}<div className='tree-text' title={test.title}>{test.title}</div>
+    <div style={{ flex: 'auto' }}></div>
+    {<div style={{ flex: 'none', padding: '0 4px', color: '#666' }}>{msToString(test.duration)}</div>}
   </div>
   } selected={test.testId === testId?.testId} depth={depth} onClick={() => setTestId({ testId: test.testId, fileId: test.fileId })}></TreeItem>;
 };
@@ -189,9 +192,16 @@ const StepTreeItem: React.FC<{
   } : undefined} depth={depth}></TreeItem>;
 };
 
-function statusIconForFailedTests(failedTests: number) {
-  return failedTests ? statusIcon('failed') : statusIcon('passed');
-}
+const StatsView: React.FC<{
+  stats: Stats
+}> = ({ stats }) => {
+  return <div className='hbox' style={{flex: 'none'}}>
+    {!!stats.expected && <div className='stats expected' title='Passed'>{stats.expected}</div>}
+    {!!stats.unexpected && <div className='stats unexpected' title='Failed'>{stats.unexpected}</div>}
+    {!!stats.flaky && <div className='stats flaky' title='Flaky'>{stats.flaky}</div>}
+    {!!stats.skipped && <div className='stats skipped' title='Skipped'>{stats.skipped}</div>}
+  </div>;
+};
 
 function statusIcon(status: 'failed' | 'timedOut' | 'skipped' | 'passed' | 'expected' | 'unexpected' | 'flaky'): JSX.Element {
   switch (status) {
