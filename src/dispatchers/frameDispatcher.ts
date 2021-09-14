@@ -44,9 +44,6 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameInitializer
       loadStates: Array.from(frame._subtreeLifecycleEvents),
     });
     this._frame = frame;
-    // Ensure client knows about all frames, otherwise it will not get events for those (such as FrameDetached)
-    for (const child of frame.childFrames())
-      FrameDispatcher.from(scope, child);
     frame.on(Frame.Events.AddLifecycle, lifecycleEvent => {
       this._dispatchEvent('loadstate', { add: lifecycleEvent });
     });
