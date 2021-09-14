@@ -157,13 +157,12 @@ test('should display tags separately from title', async ({ runInlineTest }) => {
       });
     `
   });
-  
+
   expect(result.exitCode).toBe(0);
   expect(result.report.suites.length).toBe(1);
   expect(result.report.suites[0].specs.length).toBe(1);
   // Ensure the length is as expected
   expect(result.report.suites[0].specs[0].tags.length).toBe(2);
-  console.log(result.report.suites[0].specs[0].tags)
   // Ensure that the '@' value is stripped
   expect(result.report.suites[0].specs[0].tags[0]).toBe('USR-MATH-001');
   expect(result.report.suites[0].specs[0].tags[1]).toBe('USR-MATH-002');

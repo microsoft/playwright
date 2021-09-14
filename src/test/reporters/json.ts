@@ -207,7 +207,7 @@ class JSONReporter implements Reporter {
 
     if (tagMatches) {
       tagMatches.forEach(function(tag){
-        fixedTags.push(tag.replace(/^@/,''));
+        fixedTags.push(tag.substring(1));
       });
     }
 
