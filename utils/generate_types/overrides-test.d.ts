@@ -34,6 +34,7 @@ export type PreserveOutput = 'always' | 'never' | 'failures-only';
 export type UpdateSnapshots = 'all' | 'none' | 'missing';
 
 type FixtureDefine<TestArgs extends KeyValue = {}, WorkerArgs extends KeyValue = {}> = { test: TestType<TestArgs, WorkerArgs>, fixtures: Fixtures<{}, {}, TestArgs, WorkerArgs> };
+type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K] } & { [K in keyof TestArgs]?: TestArgs[K] };
 
 type ExpectSettings = {
   // Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
@@ -59,10 +60,10 @@ interface TestProject {
 
 export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
   define?: FixtureDefine | FixtureDefine[];
-  use?: Fixtures<{}, {}, TestArgs, WorkerArgs>;
+  use?: UseOptions<TestArgs, WorkerArgs>;
 }
 
-export type FullProject<TestArgs = {}, WorkerArgs = {}> = Required<Project<TestArgs, WorkerArgs>>;
+export type FullProject<TestArgs = {}, WorkerArgs = {}> = Required<Project<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>>;
 
 export type WebServerConfig = {
   /**
@@ -129,10 +130,10 @@ interface TestConfig {
 export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
   projects?: Project<TestArgs, WorkerArgs>[];
   define?: FixtureDefine | FixtureDefine[];
-  use?: Fixtures<{}, {}, TestArgs, WorkerArgs>;
+  use?: UseOptions<TestArgs, WorkerArgs>;
 }
 
-export interface FullConfig {
+export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   forbidOnly: boolean;
   globalSetup: string | null;
   globalTeardown: string | null;
@@ -141,7 +142,7 @@ export interface FullConfig {
   grepInvert: RegExp | RegExp[] | null;
   maxFailures: number;
   preserveOutput: PreserveOutput;
-  projects: FullProject[];
+  projects: FullProject<TestArgs, WorkerArgs>[];
   reporter: ReporterDescription[];
   reportSlowTests: ReportSlowTests;
   rootDir: string;

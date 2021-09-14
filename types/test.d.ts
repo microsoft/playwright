@@ -35,6 +35,7 @@ export type PreserveOutput = 'always' | 'never' | 'failures-only';
 export type UpdateSnapshots = 'all' | 'none' | 'missing';
 
 type FixtureDefine<TestArgs extends KeyValue = {}, WorkerArgs extends KeyValue = {}> = { test: TestType<TestArgs, WorkerArgs>, fixtures: Fixtures<{}, {}, TestArgs, WorkerArgs> };
+type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K] } & { [K in keyof TestArgs]?: TestArgs[K] };
 
 type ExpectSettings = {
   // Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
@@ -305,10 +306,10 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
    * ```
    *
    */
-  use?: Fixtures<{}, {}, TestArgs, WorkerArgs>;
+  use?: UseOptions<TestArgs, WorkerArgs>;
 }
 
-export type FullProject<TestArgs = {}, WorkerArgs = {}> = Required<Project<TestArgs, WorkerArgs>>;
+export type FullProject<TestArgs = {}, WorkerArgs = {}> = Required<Project<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>>;
 
 export type WebServerConfig = {
   /**
@@ -611,7 +612,7 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
    * ```
    *
    */
-  use?: Fixtures<{}, {}, TestArgs, WorkerArgs>;
+  use?: UseOptions<TestArgs, WorkerArgs>;
 }
 
 /**
@@ -636,7 +637,7 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
  * ```
  *
  */
-export interface FullConfig {
+export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   /**
    * Whether to exit with an error if any tests or groups are marked as
    * [test.only(title, testFunction)](https://playwright.dev/docs/api/class-test#test-only) or
@@ -706,7 +707,7 @@ export interface FullConfig {
   /**
    * Playwright Test supports running multiple test projects at the same time. See [TestProject] for more information.
    */
-  projects: FullProject[];
+  projects: FullProject<TestArgs, WorkerArgs>[];
   /**
    * The list of reporters to use. Each reporter can be:
    * - A builtin reporter name like `'list'` or `'json'`.

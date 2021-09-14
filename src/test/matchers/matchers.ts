@@ -15,7 +15,6 @@
  */
 
 import { Locator, Page } from '../../..';
-import { PlaywrightTestOptions} from '../../../types/test';
 import { constructURLBasedOnBaseURL } from '../../utils/utils';
 import { currentTestInfo } from '../globals';
 import type { Expect } from '../types';
@@ -240,7 +239,7 @@ export function toHaveURL(
   const testInfo = currentTestInfo();
   if (!testInfo)
     throw new Error(`toHaveURL must be called during the test`);
-  const baseURL = (testInfo.project.use as PlaywrightTestOptions)?.baseURL;
+  const baseURL = testInfo.project.use.baseURL;
 
   return toMatchText.call(this, 'toHaveURL', page, 'Page', async () => {
     return page.url();
