@@ -1,4 +1,5 @@
 # class: FetchResponse
+* langs: js
 
 [FetchResponse] class represents responses received from [`method: FetchRequest.fetch`].
 

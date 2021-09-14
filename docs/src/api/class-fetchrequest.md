@@ -1,4 +1,5 @@
 # class: FetchRequest
+* langs: js
 
 This API is used for Web API testing. You can use it to trigger API endpoints, configure micro-services, prepare
 environment or the service to your e2e test. When used on [Page] or a [BrowserContext], this API will automatically use

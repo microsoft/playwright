@@ -1415,6 +1415,11 @@ export interface Page {
    */
   off(event: 'worker', listener: (worker: Worker) => void): this;
 
+  /**
+   * API testing helper associated with this page. Requests made with this API will use page cookies.
+   */
+  _request: FetchRequest;
+
   accessibility: Accessibility;
 
   /**
@@ -2748,11 +2753,6 @@ export interface Page {
      */
     waitUntil?: "load"|"domcontentloaded"|"networkidle";
   }): Promise<null|Response>;
-
-  /**
-   * API testing helper associated with this page. Requests made with this API will use page cookies.
-   */
-  request: FetchRequest;
 
   /**
    * Routing provides the capability to modify network requests that are made by a page.
@@ -6224,6 +6224,11 @@ export interface BrowserContext {
   off(event: 'serviceworker', listener: (worker: Worker) => void): this;
 
   /**
+   * API testing helper associated with this context. Requests made with this API will use context cookies.
+   */
+  _request: FetchRequest;
+
+  /**
    * Adds cookies into this browser context. All pages within this context will have these cookies installed. Cookies can be
    * obtained via
    * [browserContext.cookies([urls])](https://playwright.dev/docs/api/class-browsercontext#browser-context-cookies).
@@ -6444,11 +6449,6 @@ export interface BrowserContext {
    * Returns all open pages in the context.
    */
   pages(): Array<Page>;
-
-  /**
-   * API testing helper associated with this context. Requests made with this API will use context cookies.
-   */
-  request: FetchRequest;
 
   /**
    * Routing provides the capability to modify network requests that are made by any page in the browser context. Once route

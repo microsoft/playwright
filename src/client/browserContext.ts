@@ -49,7 +49,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   private _closedPromise: Promise<void>;
   _options: channels.BrowserNewContextParams = { };
 
-  readonly request: FetchRequest;
+  readonly _request: FetchRequest;
   readonly tracing: Tracing;
   readonly _backgroundPages = new Set<Page>();
   readonly _serviceWorkers = new Set<Worker>();
@@ -69,7 +69,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
       this._browser = parent;
     this._isChromium = this._browser?._name === 'chromium';
     this.tracing = new Tracing(this);
-    this.request = new FetchRequest(this);
+    this._request = new FetchRequest(this);
 
     this._channel.on('bindingCall', ({binding}) => this._onBinding(BindingCall.from(binding)));
     this._channel.on('close', () => this._onClose());

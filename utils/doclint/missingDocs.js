@@ -114,6 +114,8 @@ function listMethods(rootNames, apiFileName) {
    * @param {string} methodName
    */
   function shouldSkipMethodByName(className, methodName) {
+    if (methodName === '_request' && (className === 'BrowserContext' || className === 'Page'))
+      return false;
     if (methodName.startsWith('_') || methodName === 'T' || methodName === 'toString')
       return true;
     if (/** @type {any} */(EventEmitter).prototype.hasOwnProperty(methodName))
