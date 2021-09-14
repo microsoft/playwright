@@ -117,7 +117,7 @@ class Generator {
     let gitIgnore = '';
     if (fs.existsSync(path.join(this.rootDir, '.gitignore')))
       gitIgnore = fs.readFileSync(path.join(this.rootDir, '.gitignore'), 'utf-8').trimEnd() + '\n';
-    gitIgnore += 'test-results/';
+    gitIgnore += 'test-results/\n';
     files.set('.gitignore', gitIgnore);
 
     return { files, commands };
