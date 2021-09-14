@@ -27,6 +27,8 @@ export type PromptOptions = {
   language: 'JavaScript' | 'TypeScript'
 };
 
+const PACKAGE_JSON_TEST_SCRIPT_CMD = 'test:e2e';
+
 class Generator {
   packageManager: 'npm' | 'yarn';
   constructor(private readonly rootDir: string) {
@@ -114,13 +116,19 @@ class Generator {
       command: 'npx playwright install --with-deps',
     });
 
+    files.set('.gitignore', this._buildGitIgnore());
+
+    return { files, commands };
+  }
+
+  private _buildGitIgnore(): string {
     let gitIgnore = '';
     if (fs.existsSync(path.join(this.rootDir, '.gitignore')))
       gitIgnore = fs.readFileSync(path.join(this.rootDir, '.gitignore'), 'utf-8').trimEnd() + '\n';
+    if (!gitIgnore.includes('node_modules'))
+      gitIgnore += 'node_modules/\n';
     gitIgnore += 'test-results/\n';
-    files.set('.gitignore', gitIgnore);
-
-    return { files, commands };
+    return gitIgnore;
   }
 
   private _readAsset(asset: string): string {
@@ -132,7 +140,9 @@ class Generator {
     const packageJSON = JSON.parse(fs.readFileSync(path.join(this.rootDir, 'package.json'), 'utf-8'));
     if (!packageJSON.scripts)
       packageJSON.scripts = {};
-    packageJSON.scripts['playwright-tests'] = `playwright test`;
+    if (packageJSON.scripts['test'].includes('no test specified'))
+      delete packageJSON.scripts['test'];
+    packageJSON.scripts[PACKAGE_JSON_TEST_SCRIPT_CMD] = `playwright test`;
 
     const files = new Map<string, string>();
     files.set('package.json', JSON.stringify(packageJSON, null, 2) + '\n'); // NPM keeps a trailing new-line
@@ -150,8 +160,8 @@ class Generator {
 
 export function commandToRunTests(packageManager: 'npm' | 'yarn') {
   if (packageManager === 'yarn')
-    return 'yarn playwright-tests';
-  return 'npm run playwright-tests';
+    return `yarn ${PACKAGE_JSON_TEST_SCRIPT_CMD}`;
+  return `npm run ${PACKAGE_JSON_TEST_SCRIPT_CMD}`;
 }
 
 (async () => {
