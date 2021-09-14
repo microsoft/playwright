@@ -23,9 +23,15 @@ test('should support toHaveCount', async ({ runInlineTest }) => {
       const { test } = pwt;
 
       test('pass', async ({ page }) => {
-        await page.setContent('<select><option>One</option><option>Two</option></select>');
+        await page.setContent('<select><option>One</option></select>');
         const locator = page.locator('option');
-        await expect(locator).toHaveCount(2);
+        let done = false;
+        const promise = expect(locator).toHaveCount(2).then(() => { done = true; });
+        await page.waitForTimeout(1000);
+        expect(done).toBe(false);
+        await page.setContent('<select><option>One</option><option>Two</option></select>');
+        await promise;
+        expect(done).toBe(true);
       });
       `,
   }, { workers: 1 });
