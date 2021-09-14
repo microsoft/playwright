@@ -44,6 +44,7 @@ export interface JSONReportSuite {
   suites?: JSONReportSuite[];
 }
 export interface JSONReportSpec {
+  tags: string[],
   title: string;
   ok: boolean;
   tests: JSONReportTest[];
@@ -200,9 +201,20 @@ class JSONReporter implements Reporter {
   }
 
   private _serializeTestSpec(test: TestCase): JSONReportSpec {
+
+    let fixedTags: string[] = []
+    const tagMatches: RegExpMatchArray| null = test.title.match(/@[\S]+/g);
+
+    if (tagMatches) {
+      tagMatches.forEach(function(tag){
+        fixedTags.push(tag.replace(/^@/,''));
+      });
+    }
+
     return {
       title: test.title,
       ok: test.ok(),
+      tags: fixedTags,
       tests: [ this._serializeTest(test) ],
       ...this._relativeLocation(test.location),
     };
