@@ -19,6 +19,8 @@ import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 import { CallMetadata } from '../server/instrumentation';
+import { FetchRequest } from '../server/fetch';
+import { arrayToObject, headersArrayToObject } from '../utils/utils';
 
 export class RequestDispatcher extends Dispatcher<Request, channels.RequestInitializer, channels.RequestEvents> implements channels.RequestChannel {
 
@@ -156,3 +158,51 @@ export class WebSocketDispatcher extends Dispatcher<WebSocket, channels.WebSocke
     webSocket.on(WebSocket.Events.Close, () => this._dispatchEvent('close', {}));
   }
 }
+
+export class FetchRequestDispatcher extends Dispatcher<FetchRequest, channels.FetchRequestInitializer, channels.FetchRequestEvents> implements channels.FetchRequestChannel {
+  static from(scope: DispatcherScope, request: FetchRequest): FetchRequestDispatcher {
+    const result = existingDispatcher<FetchRequestDispatcher>(request);
+    return result || new FetchRequestDispatcher(scope, request);
+  }
+
+  static fromNullable(scope: DispatcherScope, request: FetchRequest | null): FetchRequestDispatcher | undefined {
+    return request ? FetchRequestDispatcher.from(scope, request) : undefined;
+  }
+
+  private constructor(scope: DispatcherScope, request: FetchRequest) {
+    super(scope, request, 'FetchRequest', {});
+  }
+
+  async fetch(params: channels.FetchRequestFetchParams, metadata?: channels.Metadata): Promise<channels.FetchRequestFetchResult> {
+    const { fetchResponse, error } = await this._object.fetch({
+      url: params.url,
+      params: arrayToObject(params.params),
+      method: params.method,
+      headers: params.headers ? headersArrayToObject(params.headers, false) : undefined,
+      postData: params.postData ? Buffer.from(params.postData, 'base64') : undefined,
+      timeout: params.timeout,
+      failOnStatusCode: params.failOnStatusCode,
+    });
+    let response;
+    if (fetchResponse) {
+      response = {
+        url: fetchResponse.url,
+        status: fetchResponse.status,
+        statusText: fetchResponse.statusText,
+        headers: fetchResponse.headers,
+        fetchUid: fetchResponse.fetchUid
+      };
+    }
+    return { response, error };
+  }
+
+  async fetchResponseBody(params: channels.FetchRequestFetchResponseBodyParams, metadata?: channels.Metadata): Promise<channels.FetchRequestFetchResponseBodyResult> {
+    const buffer = this._object.fetchResponses.get(params.fetchUid);
+    return { binary: buffer ? buffer.toString('base64') : undefined };
+  }
+
+  async disposeFetchResponse(params: channels.FetchRequestDisposeFetchResponseParams, metadata?: channels.Metadata): Promise<void> {
+    this._object.fetchResponses.delete(params.fetchUid);
+  }
+}
+

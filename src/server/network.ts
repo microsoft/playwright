@@ -228,7 +228,7 @@ export class Route extends SdkObject {
     if (body === undefined) {
       if (overrides.fetchResponseUid) {
         const context = this._request.frame()._page._browserContext;
-        const buffer = context.fetchResponses.get(overrides.fetchResponseUid);
+        const buffer = context.fetchRequest.fetchResponses.get(overrides.fetchResponseUid);
         assert(buffer, 'Fetch response has been disposed');
         body = buffer.toString('utf8');
         isBase64 = false;

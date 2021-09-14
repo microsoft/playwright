@@ -18,7 +18,7 @@ import * as api from '../../types/types';
 import { HeadersArray } from '../common/types';
 import * as channels from '../protocol/channels';
 import { assert, headersObjectToArray, isString, objectToArray } from '../utils/utils';
-import { BrowserContext } from './browserContext';
+import { ChannelOwner } from './channelOwner';
 import * as network from './network';
 import { RawHeaders } from './network';
 import { Headers } from './types';
@@ -32,11 +32,13 @@ export type FetchOptions = {
   failOnStatusCode?: boolean,
 };
 
-export class FetchRequest implements api.FetchRequest {
-  private _context: BrowserContext;
+export class FetchRequest extends ChannelOwner<channels.FetchRequestChannel, channels.FetchRequestInitializer> implements api.FetchRequest {
+  static from(channel: channels.FetchRequestChannel): FetchRequest {
+    return (channel as any)._object;
+  }
 
-  constructor(context: BrowserContext) {
-    this._context = context;
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.FetchRequestInitializer) {
+    super(parent, type, guid, initializer);
   }
 
   async get(
@@ -69,7 +71,7 @@ export class FetchRequest implements api.FetchRequest {
   }
 
   async fetch(urlOrRequest: string | api.Request, options: FetchOptions = {}): Promise<FetchResponse> {
-    return this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
+    return this._wrapApiCall(async (channel: channels.FetchRequestChannel) => {
       const request: network.Request | undefined = (urlOrRequest instanceof network.Request) ? urlOrRequest as network.Request : undefined;
       assert(request || typeof urlOrRequest === 'string', 'First argument must be either URL string or Request');
       const url = request ? request.url() : urlOrRequest as string;
@@ -93,7 +95,7 @@ export class FetchRequest implements api.FetchRequest {
       });
       if (result.error)
         throw new Error(`Request failed: ${result.error}`);
-      return new FetchResponse(this._context, result.response!);
+      return new FetchResponse(this, result.response!);
     });
   }
 }
@@ -101,10 +103,10 @@ export class FetchRequest implements api.FetchRequest {
 export class FetchResponse implements api.FetchResponse {
   private readonly _initializer: channels.FetchResponse;
   private readonly _headers: RawHeaders;
-  private readonly _context: BrowserContext;
+  private readonly _request: FetchRequest;
 
-  constructor(context: BrowserContext, initializer: channels.FetchResponse) {
-    this._context = context;
+  constructor(context: FetchRequest, initializer: channels.FetchResponse) {
+    this._request = context;
     this._initializer = initializer;
     this._headers = new RawHeaders(this._initializer.headers);
   }
@@ -134,7 +136,7 @@ export class FetchResponse implements api.FetchResponse {
   }
 
   async body(): Promise<Buffer> {
-    return this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
+    return this._request._wrapApiCall(async (channel: channels.FetchRequestChannel) => {
       const result = await channel.fetchResponseBody({ fetchUid: this._fetchUid() });
       if (!result.binary)
         throw new Error('Response has been disposed');
@@ -153,7 +155,7 @@ export class FetchResponse implements api.FetchResponse {
   }
 
   async dispose(): Promise<void> {
-    return this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
+    return this._request._wrapApiCall(async (channel: channels.FetchRequestChannel) => {
       await channel.disposeFetchResponse({ fetchUid: this._fetchUid() });
     });
   }

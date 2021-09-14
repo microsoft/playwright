@@ -102,7 +102,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this.accessibility = new Accessibility(this._channel);
     this.keyboard = new Keyboard(this);
     this.mouse = new Mouse(this);
-    this._request = new FetchRequest(this._browserContext);
+    this._request = this._browserContext._request;
     this.touchscreen = new Touchscreen(this);
 
     this._mainFrame = Frame.from(initializer.mainFrame);

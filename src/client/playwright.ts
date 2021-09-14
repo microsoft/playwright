@@ -24,6 +24,7 @@ import { Android } from './android';
 import { BrowserType } from './browserType';
 import { ChannelOwner } from './channelOwner';
 import { Electron } from './electron';
+import { FetchRequest } from './fetch';
 import { Selectors, SelectorsOwner, sharedSelectors } from './selectors';
 import { Size } from './types';
 const dnsLookupAsync = util.promisify(dns.lookup);
@@ -66,6 +67,12 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel, channel
 
     this._selectorsOwner = SelectorsOwner.from(initializer.selectors);
     this.selectors._addChannel(this._selectorsOwner);
+  }
+
+  async _newRequest(options?: {}): Promise<FetchRequest> {
+    return await this._wrapApiCall(async (channel: channels.PlaywrightChannel) => {
+      return FetchRequest.from((await channel.newRequest({})).request);
+    });
   }
 
   _enablePortForwarding(redirectPortForTest?: number) {
