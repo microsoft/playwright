@@ -201,20 +201,10 @@ class JSONReporter implements Reporter {
   }
 
   private _serializeTestSpec(test: TestCase): JSONReportSpec {
-
-    const fixedTags: string[] = [];
-    const tagMatches: RegExpMatchArray| null = test.title.match(/@[\S]+/g);
-
-    if (tagMatches) {
-      tagMatches.forEach(function(tag){
-        fixedTags.push(tag.substring(1));
-      });
-    }
-
     return {
       title: test.title,
       ok: test.ok(),
-      tags: fixedTags,
+      tags: (test.title.match(/@[\S]+/g) || []).map(t => t.substring(1)),
       tests: [ this._serializeTest(test) ],
       ...this._relativeLocation(test.location),
     };
