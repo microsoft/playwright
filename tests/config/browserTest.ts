@@ -133,9 +133,11 @@ export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTest
   },
 
   contextFactory: async ({ browser, contextOptions, trace }, run, testInfo) => {
-    const contexts: BrowserContext[] = [];
+    const contexts = new Map<BrowserContext, { closed: boolean }>();
     await run(async options => {
       const context = await browser.newContext({ ...contextOptions, ...options });
+      contexts.set(context, { closed: false });
+      context.on('close', () => contexts.get(context).closed = true);
       if (trace)
         await context.tracing.start({ screenshots: true, snapshots: true });
       (context as any)._csi = {
@@ -146,12 +148,11 @@ export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTest
           return (error?: Error) => newStep?.complete(error);
         },
       };
-      contexts.push(context);
       return context;
     });
-    await Promise.all(contexts.map(async context => {
+    await Promise.all([...contexts.keys()].map(async context => {
       const videos = context.pages().map(p => p.video()).filter(Boolean);
-      if (!(context as any)._closed && trace) {
+      if (trace && !contexts.get(context)!.closed) {
         const tracePath = testInfo.outputPath('trace.zip');
         await context.tracing.stop({ path: tracePath });
         testInfo.attachments.push({ name: 'trace', path: tracePath, contentType: 'application/zip' });
