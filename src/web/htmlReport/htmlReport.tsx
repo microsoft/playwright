@@ -16,26 +16,30 @@
 
 import './htmlReport.css';
 import * as React from 'react';
+import ansi2html from 'ansi-to-html';
 import { SplitView } from '../components/splitView';
 import { TreeItem } from '../components/treeItem';
 import { TabbedPane } from '../traceViewer/ui/tabbedPane';
-import ansi2html from 'ansi-to-html';
-import type { JsonAttachment, JsonLocation, JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep } from '../../test/reporters/html';
 import { msToString } from '../uiUtils';
-import { Source, SourceProps } from '../components/source';
+import type { ProjectTreeItem, SuiteTreeItem, TestCase, TestResult, TestStep, TestTreeItem, Location, TestFile } from '../../test/reporters/html';
 
 type Filter = 'Failing' | 'All';
 
+type TestId = {
+  fileId: string;
+  testId: string;
+};
+
 export const Report: React.FC = () => {
-  const [report, setReport] = React.useState<JsonReport | undefined>();
+  const [report, setReport] = React.useState<ProjectTreeItem[]>([]);
   const [fetchError, setFetchError] = React.useState<string | undefined>();
-  const [selectedTest, setSelectedTest] = React.useState<JsonTestCase | undefined>();
+  const [testId, setTestId] = React.useState<TestId | undefined>();
 
   React.useEffect(() => {
     (async () => {
       try {
-        const result = await fetch('report.json', { cache: 'no-cache' });
-        const json = (await result.json()) as JsonReport;
+        const result = await fetch('data/projects.json', { cache: 'no-cache' });
+        const json = (await result.json()) as ProjectTreeItem[];
         setReport(json);
       } catch (e) {
         setFetchError(e.message);
@@ -44,20 +48,9 @@ export const Report: React.FC = () => {
   }, []);
   const [filter, setFilter] = React.useState<Filter>('Failing');
 
-  const { unexpectedTests, unexpectedTestCount } = React.useMemo(() => {
-    const unexpectedTests = new Map<JsonSuite, JsonTestCase[]>();
-    let unexpectedTestCount = 0;
-    for (const project of report?.suites || []) {
-      const unexpected = computeUnexpectedTests(project);
-      unexpectedTestCount += unexpected.length;
-      unexpectedTests.set(project, unexpected);
-    }
-    return { unexpectedTests, unexpectedTestCount };
-  }, [report]);
-
   return <div className='hbox'>
     <SplitView sidebarSize={300} orientation='horizontal' sidebarIsFirst={true}>
-      <TestCaseView test={selectedTest}></TestCaseView>
+      <TestCaseView key={testId?.testId} testId={testId}></TestCaseView>
       <div className='suite-tree-column'>
         <div className='tab-strip'>{
           (['Failing', 'All'] as Filter[]).map(item => {
@@ -67,310 +60,137 @@ export const Report: React.FC = () => {
             }}>{item}</div>;
           })
         }</div>
-        {!fetchError && filter === 'All' && report?.suites.map((s, i) => <ProjectTreeItem key={i} suite={s} setSelectedTest={setSelectedTest} selectedTest={selectedTest}></ProjectTreeItem>)}
-        {!fetchError && filter === 'Failing' && !!unexpectedTestCount && report?.suites.map((s, i) => {
-          const hasUnexpectedOutcomes = !!unexpectedTests.get(s)?.length;
-          return hasUnexpectedOutcomes && <ProjectFlatTreeItem key={i} suite={s} setSelectedTest={setSelectedTest} selectedTest={selectedTest} unexpectedTests={unexpectedTests.get(s)!}></ProjectFlatTreeItem>;
-        })}
-        {!fetchError && filter === 'Failing' && !unexpectedTestCount && <div className='awesome'>You are awesome!</div>}
-        {fetchError && <div className='awesome small'><div>Failed to load report</div><div>Are you using npx playwright?</div></div>}
+        {!fetchError && filter === 'All' && report?.map((project, i) => <ProjectTreeItemView key={i} project={project} setTestId={setTestId} testId={testId}></ProjectTreeItemView>)}
+        {!fetchError && filter === 'Failing' && report?.map((project, i) => <ProjectTreeItemView key={i} project={project} setTestId={setTestId} testId={testId} failingOnly={true}></ProjectTreeItemView>)}
       </div>
     </SplitView>
   </div>;
 };
 
-const ProjectTreeItem: React.FC<{
-  suite?: JsonSuite;
-  selectedTest?: JsonTestCase,
-  setSelectedTest: (test: JsonTestCase) => void;
-}> = ({ suite, setSelectedTest, selectedTest }) => {
-  const location = renderLocation(suite?.location, true);
-
+const ProjectTreeItemView: React.FC<{
+  project: ProjectTreeItem;
+  testId?: TestId,
+  setTestId: (id: TestId) => void;
+  failingOnly?: boolean;
+}> = ({ project, testId, setTestId, failingOnly }) => {
   return <TreeItem title={<div className='hbox'>
-    <div style={{ flex: 'auto', alignItems: 'center', display: 'flex' }}>{testSuiteErrorStatusIcon(suite) || statusIcon('passed')}<div style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{suite?.title || 'Project'}</div></div>
-    {!!suite?.location?.line && location && <div style={{ flex: 'none', padding: '0 4px', color: '#666' }}>{location}</div>}
+    {statusIconForFailedTests(project.failedTests)}<div className='tree-text'>{project.name || 'Project'}</div>
   </div>
   } loadChildren={() => {
-    return suite?.suites.map((s, i) => <SuiteTreeItem key={i} suite={s} setSelectedTest={setSelectedTest} selectedTest={selectedTest} depth={1} showFileName={true}></SuiteTreeItem>) || [];
+    return project.suites.map((s, i) => <SuiteTreeItemView key={i} suite={s} setTestId={setTestId} testId={testId} depth={1} showFileName={true}></SuiteTreeItemView>) || [];
   }} depth={0} expandByDefault={true}></TreeItem>;
 };
 
-const ProjectFlatTreeItem: React.FC<{
-  suite?: JsonSuite;
-  unexpectedTests: JsonTestCase[],
-  selectedTest?: JsonTestCase,
-  setSelectedTest: (test: JsonTestCase) => void;
-}> = ({ suite, setSelectedTest, selectedTest, unexpectedTests }) => {
-  const location = renderLocation(suite?.location, true);
-
-  return <TreeItem title={<div className='hbox'>
-    <div style={{ flex: 'auto', alignItems: 'center', display: 'flex' }}>{testSuiteErrorStatusIcon(suite) || statusIcon('passed')}<div style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{suite?.title || 'Project'}</div></div>
-    {!!suite?.location?.line && location && <div style={{ flex: 'none', padding: '0 4px', color: '#666' }}>{location}</div>}
-  </div>
-  } loadChildren={() => {
-    return unexpectedTests.map((t, i) => <TestTreeItem key={i} test={t} setSelectedTest={setSelectedTest} selectedTest={selectedTest} showFileName={false} depth={1}></TestTreeItem>) || [];
-  }} depth={0} expandByDefault={true}></TreeItem>;
-};
-
-const SuiteTreeItem: React.FC<{
-  suite?: JsonSuite;
-  selectedTest?: JsonTestCase,
-  setSelectedTest: (test: JsonTestCase) => void;
+const SuiteTreeItemView: React.FC<{
+  suite: SuiteTreeItem,
+  testId?: TestId,
+  setTestId: (id: TestId) => void;
   depth: number,
   showFileName: boolean,
-}> = ({ suite, setSelectedTest, selectedTest, showFileName, depth }) => {
-  const location = renderLocation(suite?.location, showFileName);
+}> = ({ suite, testId, setTestId, showFileName, depth }) => {
+  const location = renderLocation(suite.location, showFileName);
   return <TreeItem title={<div className='hbox'>
-    <div style={{ flex: 'auto', alignItems: 'center', display: 'flex' }}>{testSuiteErrorStatusIcon(suite) || statusIcon('passed')}<div style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{suite?.title}</div></div>
-    {!!suite?.location?.line && location && <div style={{ flex: 'none', padding: '0 4px', color: '#666' }}>{location}</div>}
+    {statusIconForFailedTests(suite.failedTests)}<div className='tree-text'>{suite.title}</div>
+    {!!suite.location?.line && location && <div style={{ flex: 'none', padding: '0 4px', color: '#666' }}>{location}</div>}
   </div>
   } loadChildren={() => {
-    const suiteChildren = suite?.suites.map((s, i) => <SuiteTreeItem key={i} suite={s} setSelectedTest={setSelectedTest} selectedTest={selectedTest} depth={depth + 1} showFileName={false}></SuiteTreeItem>) || [];
-    const suiteCount = suite ? suite.suites.length : 0;
-    const testChildren = suite?.tests.map((t, i) => <TestTreeItem key={i + suiteCount} test={t} setSelectedTest={setSelectedTest} selectedTest={selectedTest} showFileName={false} depth={depth + 1}></TestTreeItem>) || [];
+    const suiteChildren = suite.suites.map((s, i) => <SuiteTreeItemView key={i} suite={s} setTestId={setTestId} testId={testId} depth={depth + 1} showFileName={false}></SuiteTreeItemView>) || [];
+    const suiteCount = suite.suites.length;
+    const testChildren = suite.tests.map((t, i) => <TestTreeItemView key={i + suiteCount} test={t} setTestId={setTestId} testId={testId} showFileName={false} depth={depth + 1}></TestTreeItemView>) || [];
     return [...suiteChildren, ...testChildren];
   }} depth={depth}></TreeItem>;
 };
 
-const TestTreeItem: React.FC<{
-  expandByDefault?: boolean,
-  test: JsonTestCase;
+const TestTreeItemView: React.FC<{
+  test: TestTreeItem,
   showFileName: boolean,
-  selectedTest?: JsonTestCase,
-  setSelectedTest: (test: JsonTestCase) => void;
+  testId?: TestId,
+  setTestId: (id: TestId) => void;
   depth: number,
-}> = ({ test, setSelectedTest, selectedTest, showFileName, expandByDefault, depth }) => {
+}> = ({ test, testId, setTestId, showFileName, depth }) => {
   const fileName = test.location.file;
   const name = fileName.substring(fileName.lastIndexOf('/') + 1);
   return <TreeItem title={<div className='hbox'>
-    <div style={{ flex: 'auto', alignItems: 'center', display: 'flex' }}>{testCaseStatusIcon(test)}<div style={{overflow: 'hidden', textOverflow: 'ellipsis'}}>{test.title}</div></div>
+    {statusIcon(test.outcome)}<div className='tree-text'>{test.title}</div>
     {showFileName && <div style={{ flex: 'none', padding: '0 4px', color: '#666' }}>{name}:{test.location.line}</div>}
-    {!showFileName && <div style={{ flex: 'none', padding: '0 4px', color: '#666' }}>{msToString(test.results.reduce((v, a) => v + a.duration, 0))}</div>}
+    {!showFileName && <div style={{ flex: 'none', padding: '0 4px', color: '#666' }}>{msToString(test.duration)}</div>}
   </div>
-  } selected={test === selectedTest} depth={depth} expandByDefault={expandByDefault} onClick={() => setSelectedTest(test)}></TreeItem>;
+  } selected={test.testId === testId?.testId} depth={depth} onClick={() => setTestId({ testId: test.testId, fileId: test.fileId })}></TreeItem>;
 };
 
 const TestCaseView: React.FC<{
-  test: JsonTestCase | undefined,
-}> = ({ test }) => {
+  testId: TestId | undefined,
+}> = ({ testId }) => {
+  const [file, setFile] = React.useState<TestFile | undefined>();
+
+  React.useEffect(() => {
+    (async () => {
+      if (!testId || file?.fileId === testId.fileId)
+        return;
+      try {
+        const result = await fetch(`data/${testId.fileId}.json`, { cache: 'no-cache' });
+        setFile((await result.json()) as TestFile);
+      } catch (e) {
+      }
+    })();
+  });
+
+  let test: TestCase | undefined;
+  if (file && testId) {
+    for (const t of file.tests) {
+      if (t.testId === testId.testId) {
+        test = t;
+        break;
+      }
+    }
+  }
+
   const [selectedResultIndex, setSelectedResultIndex] = React.useState(0);
-  const [selectedStep, setSelectedStep] = React.useState<JsonTestStep | undefined>(undefined);
-  const result = test?.results[selectedResultIndex];
   return <SplitView sidebarSize={500} orientation='horizontal' sidebarIsFirst={true}>
     <div className='test-details-column vbox'>
-      {!selectedStep && <TestResultDetails test={test} result={result} />}
-      {!!selectedStep && <TestStepDetails test={test} result={result} step={selectedStep}/>}
     </div>
     <div className='test-case-column vbox'>
-      { test && <div className='test-case-title' onClick={() => setSelectedStep(undefined)}>{test?.title}</div> }
-      { test && <div className='test-case-location' onClick={() => setSelectedStep(undefined)}>{renderLocation(test.location, true)}</div> }
+      { test && <div className='test-case-title'>{test?.title}</div> }
+      { test && <div className='test-case-location'>{renderLocation(test.location, true)}</div> }
       { test && <TabbedPane tabs={
-        test?.results.map((result, index) => ({
+        test.results.map((result, index) => ({
           id: String(index),
           title: <div style={{ display: 'flex', alignItems: 'center' }}>{statusIcon(result.status)} {retryLabel(index)}</div>,
-          render: () => <TestResultView test={test} result={result} selectedStep={selectedStep} setSelectedStep={setSelectedStep}></TestResultView>
+          render: () => <TestResultView test={test!} result={result}></TestResultView>
         })) || []} selectedTab={String(selectedResultIndex)} setSelectedTab={id => setSelectedResultIndex(+id)} />}
     </div>
   </SplitView>;
 };
 
 const TestResultView: React.FC<{
-  test: JsonTestCase,
-  result: JsonTestResult,
-  selectedStep: JsonTestStep | undefined,
-  setSelectedStep: (step: JsonTestStep | undefined) => void;
-}> = ({ test, result, selectedStep, setSelectedStep }) => {
-  return <div className='test-result'>
-    {result.steps.map((step, i) => <StepTreeItem key={i} step={step} depth={0} selectedStep={selectedStep} setSelectedStep={setSelectedStep}></StepTreeItem>)}
-  </div>;
-};
-
-const TestResultDetails: React.FC<{
-  test: JsonTestCase | undefined,
-  result: JsonTestResult | undefined,
+  test: TestCase,
+  result: TestResult,
 }> = ({ test, result }) => {
-  const [selectedTab, setSelectedTab] = React.useState('errors');
-  const [source, setSource] = React.useState<SourceProps>({ text: '', language: 'javascript' });
-  React.useEffect(() => {
-    (async () => {
-      if (!test || !test.location.sha1)
-        return;
-      try {
-        const response = await fetch('resources/' + test.location.sha1);
-        const text = await response.text();
-        setSource({ text, language: 'javascript', highlight: [{ line: test.location.line, type: 'paused' }], revealLine: test.location.line });
-      } catch (e) {
-        setSource({ text: '', language: 'javascript' });
-      }
-    })();
-  }, [test]);
-  const { screenshots, video, attachmentsMap } = React.useMemo(() => {
-    const attachmentsMap = new Map<string, JsonAttachment>();
-    const attachments = result?.attachments || [];
-    const screenshots = attachments.filter(a => a.name === 'screenshot');
-    const video = attachments.filter(a => a.name === 'video');
-    for (const a of attachments)
-      attachmentsMap.set(a.name, a);
-    return { attachmentsMap, screenshots, video };
-  }, [ result ]);
-  if (!result)
-    return <div></div>;
-  return <div className='vbox'>
-    <TabbedPane selectedTab={selectedTab} setSelectedTab={setSelectedTab} tabs={[
-      {
-        id: 'errors',
-        title: 'Errors',
-        render: () => {
-          return <div style={{ overflow: 'auto' }}>
-            <div className='error-message' dangerouslySetInnerHTML={{ __html: new ansi2html({ colors: ansiColors }).toHtml(escapeHTML(result.failureSnippet?.trim() || '')) }}></div>
-            {attachmentsMap.has('expected') && attachmentsMap.has('actual') && <ImageDiff actual={attachmentsMap.get('actual')!} expected={attachmentsMap.get('expected')!} diff={attachmentsMap.get('diff')}></ImageDiff>}
-          </div>;
-        }
-      },
-      {
-        id: 'results',
-        title: 'Results',
-        render: () => {
-          return <div style={{ overflow: 'auto' }}>
-            {screenshots.map(a => <div className='image-preview'><img src={'resources/' + a.sha1} /></div>)}
-            {video.map(a => <div className='image-preview'>
-              <video controls>
-                <source src={'resources/' + a.sha1} type={a.contentType}/>
-              </video>
-            </div>)}
-            {!!result.attachments && <div className='test-overview-title'>Attachments</div>}
-            {result.attachments.map(a => <AttachmentLink attachment={a}></AttachmentLink>)}
-          </div>;
-        }
-      },
-      {
-        id: 'source',
-        title: 'Source',
-        render: () => <Source text={source.text} language={source.language} highlight={source.highlight} revealLine={source.revealLine}></Source>
-      }
-    ]}></TabbedPane>
-  </div>;
-};
-
-const TestStepDetails: React.FC<{
-  test: JsonTestCase | undefined,
-  result: JsonTestResult | undefined,
-  step: JsonTestStep | undefined,
-}> = ({ test, result, step }) => {
-  const [source, setSource] = React.useState<SourceProps>({ text: '', language: 'javascript' });
-  React.useEffect(() => {
-    (async () => {
-      const frame = step?.stack?.[0];
-      if (!frame || !frame.sha1)
-        return;
-      try {
-        const response = await fetch('resources/' + frame.sha1);
-        const text = await response.text();
-        setSource({ text, language: 'javascript', highlight: [{ line: frame.line, type: 'paused' }], revealLine: frame.line });
-      } catch (e) {
-        setSource({ text: '', language: 'javascript' });
-      }
-    })();
-  }, [step]);
-  const [selectedTab, setSelectedTab] = React.useState('errors');
-  return <div className='vbox'>
-    <TabbedPane selectedTab={selectedTab} setSelectedTab={setSelectedTab} tabs={[
-      {
-        id: 'errors',
-        title: 'Errors',
-        render: () => <div className='error-message' dangerouslySetInnerHTML={{ __html: new ansi2html({ colors: ansiColors }).toHtml(escapeHTML(step?.failureSnippet?.trim() || '')) }}></div>
-      },
-      {
-        id: 'source',
-        title: 'Source',
-        render: () => <Source text={source.text} language={source.language} highlight={source.highlight} revealLine={source.revealLine}></Source>
-      }
-    ]}></TabbedPane>
+  return <div className='test-result'>
+    {result.error && <ErrorMessage key={-1} error={result.error}></ErrorMessage>}
+    {result.steps.map((step, i) => <StepTreeItem key={i} step={step} depth={0}></StepTreeItem>)}
   </div>;
 };
 
 const StepTreeItem: React.FC<{
-  step: JsonTestStep;
+  step: TestStep;
   depth: number,
-  selectedStep?: JsonTestStep,
-  setSelectedStep: (step: JsonTestStep | undefined) => void;
-}> = ({ step, depth, selectedStep, setSelectedStep }) => {
+}> = ({ step, depth }) => {
   return <TreeItem title={<div style={{ display: 'flex', alignItems: 'center', flex: 'auto' }}>
-    {testStepStatusIcon(step)}
-    <span style={{ whiteSpace: 'pre' }}>{step.preview || step.title}</span>
+    {statusIcon(step.error ? 'failed' : 'passed')}
+    <span style={{ whiteSpace: 'pre' }}>{step.title}</span>
     <div style={{ flex: 'auto' }}></div>
     <div>{msToString(step.duration)}</div>
-  </div>} loadChildren={step.steps.length ? () => {
-    return step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1} selectedStep={selectedStep} setSelectedStep={setSelectedStep}></StepTreeItem>);
-  } : undefined} depth={depth} selected={step === selectedStep} onClick={() => setSelectedStep(step)}></TreeItem>;
+  </div>} loadChildren={step.steps.length + (step.error ? 1 : 0) ? () => {
+    const children = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1}></StepTreeItem>);
+    if (step.error)
+      children.unshift(<ErrorMessage key={-1} error={step.error}></ErrorMessage>);
+    return children;
+  } : undefined} depth={depth}></TreeItem>;
 };
 
-export const ImageDiff: React.FunctionComponent<{
-  actual: JsonAttachment,
-  expected: JsonAttachment,
-  diff?: JsonAttachment,
-}> = ({ actual, expected, diff }) => {
-  const [selectedTab, setSelectedTab] = React.useState<string>('actual');
-  const tabs = [];
-  tabs.push({
-    id: 'actual',
-    title: 'Actual',
-    render: () => <div className='image-preview'><img src={'resources/' + actual.sha1}/></div>
-  });
-  tabs.push({
-    id: 'expected',
-    title: 'Expected',
-    render: () => <div className='image-preview'><img src={'resources/' + expected.sha1}/></div>
-  });
-  if (diff) {
-    tabs.push({
-      id: 'diff',
-      title: 'Diff',
-      render: () => <div className='image-preview'><img src={'resources/' + diff.sha1}/></div>,
-    });
-  }
-  return <div className='vbox test-image-mismatch'>
-    <div className='test-overview-title'>Image mismatch</div>
-    <TabbedPane tabs={tabs} selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
-  </div>;
-};
-
-export const AttachmentLink: React.FunctionComponent<{
-  attachment: JsonAttachment,
-}> = ({ attachment }) => {
-  return <TreeItem title={<div style={{ display: 'flex', alignItems: 'center', flex: 'auto' }}>
-    <span className={'codicon codicon-cloud-download'}></span>
-    {attachment.sha1 && <a href={'resources/' + attachment.sha1} target='_blank'>{attachment.name}</a>}
-    {attachment.body && <span>{attachment.name}</span>}
-  </div>} loadChildren={attachment.body ? () => {
-    return [<div className='attachment-body'>${attachment.body}</div>];
-  } : undefined} depth={0}></TreeItem>;
-};
-
-function testSuiteErrorStatusIcon(suite?: JsonSuite): JSX.Element | undefined {
-  if (!suite)
-    return;
-  for (const child of suite.suites) {
-    const icon = testSuiteErrorStatusIcon(child);
-    if (icon)
-      return icon;
-  }
-  for (const test of suite.tests) {
-    if (test.outcome !== 'expected' && test.outcome !== 'skipped')
-      return testCaseStatusIcon(test);
-  }
-}
-
-function testCaseStatusIcon(test?: JsonTestCase): JSX.Element {
-  if (!test)
-    return statusIcon('passed');
-  return statusIcon(test.outcome);
-}
-
-function testStepStatusIcon(step: JsonTestStep): JSX.Element {
-  if (step.category === 'internal')
-    return <span></span>;
-  return statusIcon(step.error ? 'failed' : 'passed');
+function statusIconForFailedTests(failedTests: number) {
+  return failedTests ? statusIcon('failed') : statusIcon('passed');
 }
 
 function statusIcon(status: 'failed' | 'timedOut' | 'skipped' | 'passed' | 'expected' | 'unexpected' | 'flaky'): JSX.Element {
@@ -390,21 +210,7 @@ function statusIcon(status: 'failed' | 'timedOut' | 'skipped' | 'passed' | 'expe
   }
 }
 
-function computeUnexpectedTests(suite: JsonSuite): JsonTestCase[] {
-  const failedTests: JsonTestCase[] = [];
-  const visit = (suite: JsonSuite) => {
-    for (const child of suite.suites)
-      visit(child);
-    for (const test of suite.tests) {
-      if (test.outcome !== 'expected' && test.outcome !== 'skipped')
-        failedTests.push(test);
-    }
-  };
-  visit(suite);
-  return failedTests;
-}
-
-function renderLocation(location: JsonLocation | undefined, showFileName: boolean) {
+function renderLocation(location: Location | undefined, showFileName: boolean) {
   if (!location)
     return '';
   return (showFileName ? location.file : '') + ':' + location.line;
@@ -415,6 +221,15 @@ function retryLabel(index: number) {
     return 'Run';
   return `Retry #${index}`;
 }
+
+const ErrorMessage: React.FC<{
+  error: string;
+}> = ({ error }) => {
+  const html = React.useMemo(() => {
+    return new ansi2html({ colors: ansiColors }).toHtml(escapeHTML(error));
+  }, [error]);
+  return <div className='error-message' dangerouslySetInnerHTML={{ __html: html || '' }}></div>;
+};
 
 const ansiColors = {
   0: '#000',

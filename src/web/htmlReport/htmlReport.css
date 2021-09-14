@@ -23,7 +23,7 @@
 }
 
 .tree-item-title {
-  padding: 8px 0;
+  padding: 8px 8px 8px 0;
   cursor: pointer;
 }
 
@@ -52,7 +52,7 @@
   padding: 5px;
   overflow: auto;
   margin: 20px 0;
-  flex: auto;
+  flex: none;
 }
 
 .status-icon {
@@ -80,27 +80,12 @@
   flex: auto;
   display: flex;
   flex-direction: column;
-  padding-right: 8px;
 }
 
 .test-overview-title {
   padding: 10px 0;
   font-size: 18px;
   flex: none;
-}
-
-.awesome {
-  font-size: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: calc(100% - 40px);
-  flex-direction: column;
-  line-height: 40px;
-}
-
-.awesome.small {
-  font-size: 20px;
 }
 
 .image-preview img {
@@ -192,4 +177,9 @@
   line-height: 20px;
   white-space: pre;
   padding: 8px;
+}
+
+.tree-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
