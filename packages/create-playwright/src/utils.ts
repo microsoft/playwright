@@ -76,3 +76,7 @@ export function executeTemplate(input: string, args: Record<string, string>): st
     input = input.replace(`{{${key}}}`, args[key]);
   return input;
 }
+
+export function languagetoFileExtension(language: 'JavaScript' | 'TypeScript'): 'js' | 'ts' {
+  return language === 'JavaScript' ? 'js' : 'ts';
+}

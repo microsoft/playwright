@@ -19,7 +19,7 @@ import fs from 'fs';
 import { prompt } from 'enquirer';
 import colors from 'ansi-colors';
 
-import { executeCommands, createFiles, determinePackageManager, executeTemplate, determineRootDir, Command } from './utils';
+import { executeCommands, createFiles, determinePackageManager, executeTemplate, determineRootDir, Command, languagetoFileExtension } from './utils';
 
 export type PromptOptions = {
   testDir: string,
@@ -39,12 +39,12 @@ class Generator {
 
   async run() {
     this._printIntro();
-    const questions = await this._askQuestions();
-    const { files, commands } = await this._identifyChanges(questions);
+    const answers = await this._askQuestions();
+    const { files, commands } = await this._identifyChanges(answers);
     executeCommands(this.rootDir, commands);
     await createFiles(this.rootDir, files);
     await this._patchPackageJSON();
-    this._printOutro();
+    this._printOutro(answers);
   }
 
   private _printIntro() {
@@ -80,16 +80,16 @@ class Generator {
     ]);
   }
 
-  private async _identifyChanges(options: PromptOptions) {
+  private async _identifyChanges(answers: PromptOptions) {
     const commands: Command[] = [];
     const files = new Map<string, string>();
-    const fileExtension = options.language === 'JavaScript' ? 'js' : 'ts';
+    const fileExtension = languagetoFileExtension(answers.language);
 
     files.set(`playwright.config.${fileExtension}`, executeTemplate(this._readAsset(`playwright.config.${fileExtension}`), {
-      testDir: options.testDir,
+      testDir: answers.testDir,
     }));
 
-    if (options.installGitHubActions) {
+    if (answers.installGitHubActions) {
       const githubActionsScript = executeTemplate(this._readAsset('github-actions.yml'), {
         installDepsCommand: this.packageManager === 'npm' ? 'npm ci' : 'yarn',
         runTestsCommand: commandToRunTests(this.packageManager),
@@ -97,7 +97,7 @@ class Generator {
       files.set('.github/workflows/playwright.yml', githubActionsScript);
     }
 
-    files.set(path.join(options.testDir, `example.spec.${fileExtension}`), this._readAsset(`example.spec.${fileExtension}`));
+    files.set(path.join(answers.testDir, `example.spec.${fileExtension}`), this._readAsset(`example.spec.${fileExtension}`));
 
     if (!fs.existsSync(path.join(this.rootDir, 'package.json'))) {
       commands.push({
@@ -140,7 +140,7 @@ class Generator {
     const packageJSON = JSON.parse(fs.readFileSync(path.join(this.rootDir, 'package.json'), 'utf-8'));
     if (!packageJSON.scripts)
       packageJSON.scripts = {};
-    if (packageJSON.scripts['test'].includes('no test specified'))
+    if (packageJSON.scripts['test']?.includes('no test specified'))
       delete packageJSON.scripts['test'];
     packageJSON.scripts[PACKAGE_JSON_TEST_SCRIPT_CMD] = `playwright test`;
 
@@ -149,12 +149,31 @@ class Generator {
     await createFiles(this.rootDir, files, true);
   }
 
-  private _printOutro() {
-    console.log(colors.green('✔'), colors.bold('Successfully initialized your Playwright Test project!'));
+  private _printOutro(answers: PromptOptions) {
+    console.log(colors.green('✔ Success!') + ' ' + colors.bold(`Created a Playwright Test project at ${this.rootDir}`));
     const pathToNavigate = path.relative(process.cwd(), this.rootDir);
-    const prefix = pathToNavigate !== '' ? `- cd ${pathToNavigate}\n` : '';
-    console.log(colors.bold('🎭 Try it out with:\n') + colors.greenBright(prefix + '- ' + commandToRunTests(this.packageManager)));
-    console.log('Visit https://playwright.dev/docs/intro for more information');
+    const prefix = pathToNavigate !== '' ? `  cd ${pathToNavigate}\n` : '';
+    console.log(`Inside that directory, you can run several commands:
+
+  ${colors.cyan(commandToRunTests(this.packageManager))}
+    Runs the end-to-end tests.
+
+  ${colors.cyan(commandToRunTests(this.packageManager) + ' -- --project=Desktop Chrome')}
+    Runs the tests only on Desktop Chrome.
+
+  ${colors.cyan(commandToRunTests(this.packageManager) + ` -- ${answers.testDir}${path.sep}example.spec.${languagetoFileExtension(answers.language)}`)}
+    Runs the tests of a specific file.
+  
+  ${colors.cyan((this.packageManager === 'npm' ? 'npx' : 'yarn') + ' playwright debug ' + commandToRunTests(this.packageManager))}
+    Runs the tests in debug mode.
+
+We suggest that you begin by typing:
+
+${colors.cyan(prefix + '  ' + commandToRunTests(this.packageManager))}
+
+Visit https://playwright.dev/docs/intro for more information. ✨
+
+Happy hacking! 🎭`);
   }
 }
 
