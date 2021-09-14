@@ -203,10 +203,11 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
         await context.tracing.stop();
       }
       (context as any)._csi = {
-        onApiCall: (stackTrace: ParsedStackTrace) => {
+        onApiCall: (stackTrace: ParsedStackTrace, params: any) => {
           const testInfoImpl = testInfo as TestInfoImpl;
           const existingStep = testInfoImpl._currentSteps().find(step => step.category === 'pw:api' || step.category === 'expect');
-          const newStep = existingStep ? undefined : testInfoImpl._addStep('pw:api', stackTrace.apiName);
+          const paramsText = params?.['selector'] || params?.['url'] || '';
+          const newStep = existingStep ? undefined : testInfoImpl._addStep('pw:api', stackTrace.apiName + (paramsText ? `(${paramsText})` : ''));
           return (error?: Error) => {
             newStep?.complete(error);
           };

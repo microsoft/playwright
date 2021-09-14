@@ -27,7 +27,7 @@ export interface Logger {
 }
 
 export interface ClientSideInstrumentation {
-  onApiCall(stackTrace: ParsedStackTrace): ((error?: Error) => void) | undefined;
+  onApiCall(stackTrace: ParsedStackTrace, params: any): ((error?: Error) => void) | undefined;
 }
 
 export type StrictOptions = { strict?: boolean };
