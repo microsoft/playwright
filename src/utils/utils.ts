@@ -20,7 +20,7 @@ import stream from 'stream';
 import removeFolder from 'rimraf';
 import * as crypto from 'crypto';
 import os from 'os';
-import { spawn } from 'child_process';
+import { spawn, SpawnOptions } from 'child_process';
 import { getProxyForUrl } from 'proxy-from-env';
 import * as URL from 'url';
 import { getUbuntuVersionSync } from './ubuntuVersion';
@@ -131,7 +131,7 @@ export function downloadFile(url: string, destinationPath: string, options: {pro
   }
 }
 
-export function spawnAsync(cmd: string, args: string[], options: any): Promise<{stdout: string, stderr: string, code: number, error?: Error}> {
+export function spawnAsync(cmd: string, args: string[], options?: SpawnOptions): Promise<{stdout: string, stderr: string, code: number, error?: Error}> {
   const process = spawn(cmd, args, options);
 
   return new Promise(resolve => {
