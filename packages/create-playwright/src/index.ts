@@ -19,13 +19,15 @@ import fs from 'fs';
 import { prompt } from 'enquirer';
 import colors from 'ansi-colors';
 
-import { executeCommands, createFiles, determinePackageManager, executeTemplate, determineRootDir } from './utils';
+import { executeCommands, createFiles, determinePackageManager, executeTemplate, determineRootDir, Command, languagetoFileExtension } from './utils';
 
 export type PromptOptions = {
   testDir: string,
   installGitHubActions: boolean,
   language: 'JavaScript' | 'TypeScript'
 };
+
+const PACKAGE_JSON_TEST_SCRIPT_CMD = 'test:e2e';
 
 class Generator {
   packageManager: 'npm' | 'yarn';
@@ -37,12 +39,12 @@ class Generator {
 
   async run() {
     this._printIntro();
-    const questions = await this._askQuestions();
-    const { files, commands } = await this._identifyChanges(questions);
+    const answers = await this._askQuestions();
+    const { files, commands } = await this._identifyChanges(answers);
     executeCommands(this.rootDir, commands);
     await createFiles(this.rootDir, files);
     await this._patchPackageJSON();
-    this._printOutro();
+    this._printOutro(answers);
   }
 
   private _printIntro() {
@@ -66,28 +68,28 @@ class Generator {
       {
         type: 'text',
         name: 'testDir',
-        message: 'Where to put your integration tests?',
+        message: 'Where to put your end-to-end tests?',
         initial: 'e2e'
       },
       {
         type: 'confirm',
         name: 'installGitHubActions',
-        message: 'Add GitHub Actions workflow?',
+        message: 'Add a GitHub Actions workflow?',
         initial: true,
       },
     ]);
   }
 
-  private async _identifyChanges(options: PromptOptions) {
-    const commands: string[] = [];
+  private async _identifyChanges(answers: PromptOptions) {
+    const commands: Command[] = [];
     const files = new Map<string, string>();
-    const fileExtension = options.language === 'JavaScript' ? 'js' : 'ts';
+    const fileExtension = languagetoFileExtension(answers.language);
 
     files.set(`playwright.config.${fileExtension}`, executeTemplate(this._readAsset(`playwright.config.${fileExtension}`), {
-      testDir: options.testDir,
+      testDir: answers.testDir,
     }));
 
-    if (options.installGitHubActions) {
+    if (answers.installGitHubActions) {
       const githubActionsScript = executeTemplate(this._readAsset('github-actions.yml'), {
         installDepsCommand: this.packageManager === 'npm' ? 'npm ci' : 'yarn',
         runTestsCommand: commandToRunTests(this.packageManager),
@@ -95,19 +97,38 @@ class Generator {
       files.set('.github/workflows/playwright.yml', githubActionsScript);
     }
 
-    files.set(path.join(options.testDir, `example.spec.${fileExtension}`), this._readAsset(`example.spec.${fileExtension}`));
+    files.set(path.join(answers.testDir, `example.spec.${fileExtension}`), this._readAsset(`example.spec.${fileExtension}`));
 
-    if (!fs.existsSync(path.join(this.rootDir, 'package.json')))
-      commands.push(this.packageManager === 'yarn' ? 'yarn init -y' : 'npm init -y');
+    if (!fs.existsSync(path.join(this.rootDir, 'package.json'))) {
+      commands.push({
+        name: `Initializing ${this.packageManager === 'yarn' ? 'Yarn' : 'NPM'} project`,
+        command: this.packageManager === 'yarn' ? 'yarn init -y' : 'npm init -y',
+      });
+    }
 
-    if (this.packageManager === 'yarn')
-      commands.push('yarn add --dev @playwright/test');
-    else
-      commands.push('npm install --save-dev @playwright/test');
+    commands.push({
+      name: 'Installing Playwright Test',
+      command: this.packageManager === 'yarn' ? 'yarn add --dev @playwright/test' : 'npm install --save-dev @playwright/test',
+    });
 
-    commands.push('npx playwright install --with-deps');
+    commands.push({
+      name: 'Downloading browsers',
+      command: 'npx playwright install --with-deps',
+    });
+
+    files.set('.gitignore', this._buildGitIgnore());
 
     return { files, commands };
+  }
+
+  private _buildGitIgnore(): string {
+    let gitIgnore = '';
+    if (fs.existsSync(path.join(this.rootDir, '.gitignore')))
+      gitIgnore = fs.readFileSync(path.join(this.rootDir, '.gitignore'), 'utf-8').trimEnd() + '\n';
+    if (!gitIgnore.includes('node_modules'))
+      gitIgnore += 'node_modules/\n';
+    gitIgnore += 'test-results/\n';
+    return gitIgnore;
   }
 
   private _readAsset(asset: string): string {
@@ -119,26 +140,47 @@ class Generator {
     const packageJSON = JSON.parse(fs.readFileSync(path.join(this.rootDir, 'package.json'), 'utf-8'));
     if (!packageJSON.scripts)
       packageJSON.scripts = {};
-    packageJSON.scripts['playwright-tests'] = `playwright test`;
+    if (packageJSON.scripts['test']?.includes('no test specified'))
+      delete packageJSON.scripts['test'];
+    packageJSON.scripts[PACKAGE_JSON_TEST_SCRIPT_CMD] = `playwright test`;
 
     const files = new Map<string, string>();
-    files.set('package.json', JSON.stringify(packageJSON, null, 2));
+    files.set('package.json', JSON.stringify(packageJSON, null, 2) + '\n'); // NPM keeps a trailing new-line
     await createFiles(this.rootDir, files, true);
   }
 
-  private _printOutro() {
-    console.log(colors.green('✔'), colors.bold('Successfully initialized your Playwright Test project!'));
+  private _printOutro(answers: PromptOptions) {
+    console.log(colors.green('✔ Success!') + ' ' + colors.bold(`Created a Playwright Test project at ${this.rootDir}`));
     const pathToNavigate = path.relative(process.cwd(), this.rootDir);
-    const prefix = pathToNavigate !== '' ? `- cd ${pathToNavigate}\n` : '';
-    console.log(colors.bold('🎭 Try it out with:\n') + colors.greenBright(prefix + '- ' + commandToRunTests(this.packageManager)));
-    console.log('Visit https://playwright.dev/docs/intro for more information');
+    const prefix = pathToNavigate !== '' ? `  cd ${pathToNavigate}\n` : '';
+    console.log(`Inside that directory, you can run several commands:
+
+  ${colors.cyan(commandToRunTests(this.packageManager))}
+    Runs the end-to-end tests.
+
+  ${colors.cyan(commandToRunTests(this.packageManager) + ' -- --project=Desktop Chrome')}
+    Runs the tests only on Desktop Chrome.
+
+  ${colors.cyan(commandToRunTests(this.packageManager) + ` -- ${answers.testDir}${path.sep}example.spec.${languagetoFileExtension(answers.language)}`)}
+    Runs the tests of a specific file.
+  
+  ${colors.cyan((this.packageManager === 'npm' ? 'npx' : 'yarn') + ' playwright debug ' + commandToRunTests(this.packageManager))}
+    Runs the tests in debug mode.
+
+We suggest that you begin by typing:
+
+${colors.cyan(prefix + '  ' + commandToRunTests(this.packageManager))}
+
+Visit https://playwright.dev/docs/intro for more information. ✨
+
+Happy hacking! 🎭`);
   }
 }
 
 export function commandToRunTests(packageManager: 'npm' | 'yarn') {
   if (packageManager === 'yarn')
-    return 'yarn playwright-tests';
-  return 'npm run playwright-tests';
+    return `yarn ${PACKAGE_JSON_TEST_SCRIPT_CMD}`;
+  return `npm run ${PACKAGE_JSON_TEST_SCRIPT_CMD}`;
 }
 
 (async () => {

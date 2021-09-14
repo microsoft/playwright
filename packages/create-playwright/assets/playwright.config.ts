@@ -15,11 +15,9 @@ const config: PlaywrightTestConfig = {
 
   projects: [
     {
-      name: 'Chrome Stable',
+      name: 'Desktop Chrome',
       use: {
-        browserName: 'chromium',
-        // Test against Chrome Stable channel.
-        channel: 'chrome',
+        ...devices['Desktop Chrome'],
       },
     },
     {

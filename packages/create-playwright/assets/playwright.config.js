@@ -19,11 +19,9 @@ const config = {
 
   projects: [
     {
-      name: 'Desktop Chromium',
+      name: 'Desktop Chrome',
       use: {
-        browserName: 'chromium',
-        // Test against Chrome Beta channel.
-        channel: 'chrome-beta',
+        ...devices['Desktop Chrome'],
       },
     },
     {

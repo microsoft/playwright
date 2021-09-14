@@ -21,10 +21,14 @@ import path from 'path';
 import { prompt } from 'enquirer';
 import colors from 'ansi-colors';
 
+export type Command = {
+  command: string;
+  name: string;
+};
 
-export function executeCommands(cwd: string, commands: string[]) {
-  for (const command of commands) {
-    console.log('Running:', command);
+export function executeCommands(cwd: string, commands: Command[]) {
+  for (const { command, name } of commands) {
+    console.log(`${name} (${command})…`);
     execSync(command, {
       stdio: 'inherit',
       cwd,
@@ -71,4 +75,8 @@ export function executeTemplate(input: string, args: Record<string, string>): st
   for (const key in args)
     input = input.replace(`{{${key}}}`, args[key]);
   return input;
+}
+
+export function languagetoFileExtension(language: 'JavaScript' | 'TypeScript'): 'js' | 'ts' {
+  return language === 'JavaScript' ? 'js' : 'ts';
 }
