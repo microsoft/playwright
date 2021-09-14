@@ -192,6 +192,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer, c
     await this._page.mouse.click(params.x, params.y, params);
   }
 
+  async mouseWheel(params: channels.PageMouseWheelParams, metadata: CallMetadata): Promise<void> {
+    await this._page.mouse.wheel(params.deltaX, params.deltaY);
+  }
+
   async touchscreenTap(params: channels.PageTouchscreenTapParams, metadata: CallMetadata): Promise<void> {
     await this._page.touchscreen.tap(params.x, params.y);
   }

@@ -1105,6 +1105,7 @@ export interface PageChannel extends EventTargetChannel {
   mouseDown(params: PageMouseDownParams, metadata?: Metadata): Promise<PageMouseDownResult>;
   mouseUp(params: PageMouseUpParams, metadata?: Metadata): Promise<PageMouseUpResult>;
   mouseClick(params: PageMouseClickParams, metadata?: Metadata): Promise<PageMouseClickResult>;
+  mouseWheel(params: PageMouseWheelParams, metadata?: Metadata): Promise<PageMouseWheelResult>;
   touchscreenTap(params: PageTouchscreenTapParams, metadata?: Metadata): Promise<PageTouchscreenTapResult>;
   accessibilitySnapshot(params: PageAccessibilitySnapshotParams, metadata?: Metadata): Promise<PageAccessibilitySnapshotResult>;
   pdf(params: PagePdfParams, metadata?: Metadata): Promise<PagePdfResult>;
@@ -1367,6 +1368,14 @@ export type PageMouseClickOptions = {
   clickCount?: number,
 };
 export type PageMouseClickResult = void;
+export type PageMouseWheelParams = {
+  deltaX: number,
+  deltaY: number,
+};
+export type PageMouseWheelOptions = {
+
+};
+export type PageMouseWheelResult = void;
 export type PageTouchscreenTapParams = {
   x: number,
   y: number,
@@ -3626,6 +3635,7 @@ export const commandsWithTracingSnapshots = new Set([
   'Page.mouseDown',
   'Page.mouseUp',
   'Page.mouseClick',
+  'Page.mouseWheel',
   'Page.touchscreenTap',
   'Frame.evalOnSelector',
   'Frame.evalOnSelectorAll',

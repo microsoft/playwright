@@ -16,6 +16,7 @@
  */
 
 import * as input from '../input';
+import { Page } from '../page';
 import * as types from '../types';
 import { FFSession } from './ffConnection';
 
@@ -101,6 +102,7 @@ export class RawKeyboardImpl implements input.RawKeyboard {
 
 export class RawMouseImpl implements input.RawMouse {
   private _client: FFSession;
+  private _page?: Page;
 
   constructor(client: FFSession) {
     this._client = client;
@@ -139,6 +141,23 @@ export class RawMouseImpl implements input.RawMouse {
       modifiers: toModifiersMask(modifiers),
       clickCount
     });
+  }
+
+  async wheel(x: number, y: number, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, deltaX: number, deltaY: number): Promise<void> {
+    // Wheel events hit the compositor first, so wait one frame for it to be synced.
+    await this._page!.mainFrame().evaluateExpression(`new Promise(requestAnimationFrame)`, false, false, 'utility');
+    await this._client.send('Page.dispatchWheelEvent', {
+      deltaX,
+      deltaY,
+      x,
+      y,
+      deltaZ: 0,
+      modifiers: toModifiersMask(modifiers)
+    });
+  }
+
+  setPage(page: Page) {
+    this._page = page;
   }
 }
 

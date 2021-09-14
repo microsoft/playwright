@@ -13185,6 +13185,16 @@ export interface Mouse {
      */
     clickCount?: number;
   }): Promise<void>;
+
+  /**
+   * Dispatches a `wheel` event.
+   *
+   * > NOTE: Wheel events may cause scrolling if they are not handled, and this method does not wait for the scrolling to
+   * finish before returning.
+   * @param deltaX Pixels to scroll horizontally.
+   * @param deltaY Pixels to scroll vertically.
+   */
+  wheel(deltaX: number, deltaY: number): Promise<void>;
 }
 
 /**
