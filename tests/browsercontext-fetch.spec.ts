@@ -683,14 +683,3 @@ it('should override request parameters', async function({context, page, server})
   expect(req.headers.foo).toBe('bar');
   expect((await req.postBody).toString('utf8')).toBe('data');
 });
-
-it('should encode form parameters', async function({context, page, server}) {
-  console.log(server.PREFIX + '/form.html');
-  while (true) {
-    const req = await server.waitForRequest('/empty.html');
-    const data = await req.postBody;
-    console.log('headers: ' + JSON.stringify(req.headers, null, 2));
-    console.log('data = ' + data.toString('utf8'));
-    console.log('ends with double rn: ' + data.toString('utf8').endsWith('--\r\n'));
-  }
-});
