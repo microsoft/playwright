@@ -22,7 +22,7 @@ import { FullConfig, Suite } from '../../../types/testReporter';
 import { HttpServer } from '../../utils/httpServer';
 import { calculateSha1, removeFolders } from '../../utils/utils';
 import { toPosixPath } from '../reporters/json';
-import RawReporter, { JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep } from './raw';
+import RawReporter, { JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep, JsonAttachment } from './raw';
 
 export type Stats = {
   total: number;
@@ -64,6 +64,8 @@ export type TestTreeItem = {
   ok: boolean;
 };
 
+export type TestAttachment = JsonAttachment;
+
 export type TestFile = {
   fileId: string;
   path: string;
@@ -83,6 +85,7 @@ export type TestResult = {
   duration: number;
   steps: TestStep[];
   error?: string;
+  attachments: TestAttachment[];
   status: 'passed' | 'failed' | 'timedOut' | 'skipped';
 };
 
@@ -115,7 +118,7 @@ class HtmlReporter {
     await removeFolders([reportFolder]);
     new HtmlBuilder(reports, reportFolder, this.config.rootDir);
 
-    if (!process.env.CI) {
+    if (!process.env.CI && !process.env.PWTEST_SKIP_TEST_OUTPUT) {
       const server = new HttpServer();
       server.routePrefix('/', (request, response) => {
         let relativePath = request.url!;
@@ -139,12 +142,13 @@ class HtmlBuilder {
   private _reportFolder: string;
   private _tests = new Map<string, JsonTestCase>();
   private _rootDir: string;
+  private _dataFolder: string;
 
   constructor(rawReports: JsonReport[], outputDir: string, rootDir: string) {
     this._rootDir = rootDir;
     this._reportFolder = path.resolve(process.cwd(), outputDir);
-    const dataFolder = path.join(this._reportFolder, 'data');
-    fs.mkdirSync(dataFolder, { recursive: true });
+    this._dataFolder = path.join(this._reportFolder, 'data');
+    fs.mkdirSync(this._dataFolder, { recursive: true });
     const appFolder = path.join(__dirname, '..', '..', 'web', 'htmlReport');
     for (const file of fs.readdirSync(appFolder))
       fs.copyFileSync(path.join(appFolder, file), path.join(this._reportFolder, file));
@@ -162,7 +166,7 @@ class HtmlBuilder {
           path: relativeFileName,
           tests: tests.map(t => this._createTestCase(t))
         };
-        fs.writeFileSync(path.join(dataFolder, fileId + '.json'), JSON.stringify(testFile, undefined, 2));
+        fs.writeFileSync(path.join(this._dataFolder, fileId + '.json'), JSON.stringify(testFile, undefined, 2));
       }
       projects.push({
         name: projectJson.project.name,
@@ -170,7 +174,7 @@ class HtmlBuilder {
         stats: suites.reduce((a, s) => addStats(a, s.stats), emptyStats()),
       });
     }
-    fs.writeFileSync(path.join(dataFolder, 'projects.json'), JSON.stringify(projects, undefined, 2));
+    fs.writeFileSync(path.join(this._dataFolder, 'projects.json'), JSON.stringify(projects, undefined, 2));
   }
 
   private _createTestCase(test: JsonTestCase): TestCase {
@@ -178,7 +182,7 @@ class HtmlBuilder {
       testId: test.testId,
       title: test.title,
       location: this._relativeLocation(test.location),
-      results: test.results.map(r => this._createTestResult(r))
+      results: test.results.map(r => this._createTestResult(test, r))
     };
   }
 
@@ -190,6 +194,8 @@ class HtmlBuilder {
     for (const test of tests) {
       if (test.outcome === 'expected')
         ++stats.expected;
+      if (test.outcome === 'skipped')
+        ++stats.skipped;
       if (test.outcome === 'unexpected')
         ++stats.unexpected;
       if (test.outcome === 'flaky')
@@ -221,7 +227,7 @@ class HtmlBuilder {
     };
   }
 
-  private _createTestResult(result: JsonTestResult): TestResult {
+  private _createTestResult(test: JsonTestCase, result: JsonTestResult): TestResult {
     return {
       duration: result.duration,
       startTime: result.startTime,
@@ -229,6 +235,22 @@ class HtmlBuilder {
       steps: result.steps.map(s => this._createTestStep(s)),
       error: result.error,
       status: result.status,
+      attachments: result.attachments.map(a => {
+        if (a.path) {
+          const fileName = 'data/' + test.testId + path.extname(a.path);
+          try {
+            fs.copyFileSync(a.path, path.join(this._reportFolder, fileName));
+          } catch (e) {
+          }
+          return {
+            name: a.name,
+            contentType: a.contentType,
+            path: fileName,
+            body: a.body,
+          };
+        }
+        return a;
+      })
     };
   }
 
