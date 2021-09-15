@@ -136,7 +136,7 @@ export class CRPage implements PageDelegate {
     }));
   }
 
-  private _sessionForFrame(frame: frames.Frame): FrameSession {
+  _sessionForFrame(frame: frames.Frame): FrameSession {
     // Frame id equals target id.
     while (!this._sessions.has(frame._id)) {
       const parent = frame.parentFrame();
@@ -553,6 +553,8 @@ class FrameSession {
   }
 
   _onLifecycleEvent(event: Protocol.Page.lifecycleEventPayload) {
+    if (this._eventBelongsToStaleFrame(event.frameId))
+      return;
     if (event.name === 'load')
       this._page._frameManager.frameLifecycleEvent(event.frameId, 'load');
     else if (event.name === 'DOMContentLoaded')
@@ -560,6 +562,8 @@ class FrameSession {
   }
 
   _onFrameStoppedLoading(frameId: string) {
+    if (this._eventBelongsToStaleFrame(frameId))
+      return;
     this._page._frameManager.frameStoppedLoading(frameId);
   }
 
@@ -571,6 +575,19 @@ class FrameSession {
 
     for (const child of frameTree.childFrames)
       this._handleFrameTree(child);
+  }
+
+  private _eventBelongsToStaleFrame(frameId: string)  {
+    const frame = this._page._frameManager.frame(frameId);
+    // Subtree may be already gone because some ancestor navigation destroyed the oopif.
+    if (!frame)
+      return true;
+    // When frame goes remote, parent process may still send some events
+    // related to the local frame before it sends frameDetached.
+    // In this case, we already have a new session for this frame, so events
+    // in the old session should be ignored.
+    const session = this._crPage._sessionForFrame(frame);
+    return session && session !== this && !session._swappedIn;
   }
 
   _onFrameAttached(frameId: string, parentFrameId: string | null) {
@@ -595,19 +612,23 @@ class FrameSession {
   }
 
   _onFrameNavigated(framePayload: Protocol.Page.Frame, initial: boolean) {
-    if (!this._page._frameManager.frame(framePayload.id))
-      return; // Subtree may be already gone because some ancestor navigation destroyed the oopif.
+    if (this._eventBelongsToStaleFrame(framePayload.id))
+      return;
     this._page._frameManager.frameCommittedNewDocumentNavigation(framePayload.id, framePayload.url + (framePayload.urlFragment || ''), framePayload.name || '', framePayload.loaderId, initial);
     if (!initial)
       this._firstNonInitialNavigationCommittedFulfill();
   }
 
   _onFrameRequestedNavigation(payload: Protocol.Page.frameRequestedNavigationPayload) {
+    if (this._eventBelongsToStaleFrame(payload.frameId))
+      return;
     if (payload.disposition === 'currentTab')
       this._page._frameManager.frameRequestedNavigation(payload.frameId);
   }
 
   _onFrameNavigatedWithinDocument(frameId: string, url: string) {
+    if (this._eventBelongsToStaleFrame(frameId))
+      return;
     this._page._frameManager.frameCommittedSameDocumentNavigation(frameId, url);
   }
 
@@ -633,7 +654,7 @@ class FrameSession {
 
   _onExecutionContextCreated(contextPayload: Protocol.Runtime.ExecutionContextDescription) {
     const frame = contextPayload.auxData ? this._page._frameManager.frame(contextPayload.auxData.frameId) : null;
-    if (!frame)
+    if (!frame || this._eventBelongsToStaleFrame(frame._id))
       return;
     const delegate = new CRExecutionContext(this._client, contextPayload);
     let worldName: types.World|null = null;
