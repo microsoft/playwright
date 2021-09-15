@@ -80,7 +80,7 @@ const ProjectTreeItemView: React.FC<{
     <StatsView stats={project.stats}></StatsView>
   </div>
   } loadChildren={hasChildren ? () => {
-    return project.suites.filter(s => !(failingOnly && s.stats.ok)).map((s, i) => <SuiteTreeItemView key={i} suite={s} setTestId={setTestId} testId={testId} depth={1} showFileName={true} failingOnly={failingOnly}></SuiteTreeItemView>) || [];
+    return project.suites.filter(s => !(failingOnly && s.stats.ok)).map((s, i) => <SuiteTreeItemView key={i} suite={s} setTestId={setTestId} testId={testId} depth={1} failingOnly={failingOnly}></SuiteTreeItemView>) || [];
   } : undefined} depth={0} expandByDefault={true}></TreeItem>;
 };
 
@@ -90,17 +90,14 @@ const SuiteTreeItemView: React.FC<{
   setTestId: (id: TestId) => void;
   failingOnly: boolean;
   depth: number,
-  showFileName: boolean,
-}> = ({ suite, testId, setTestId, showFileName, failingOnly, depth }) => {
-  const location = renderLocation(suite.location, showFileName);
+}> = ({ suite, testId, setTestId, failingOnly, depth }) => {
   return <TreeItem title={<div className='hbox'>
     <div className='tree-text' title={suite.title}>{suite.title}</div>
     <div style={{ flex: 'auto' }}></div>
     <StatsView stats={suite.stats}></StatsView>
-    {!!suite.location?.line && location && <div style={{ flex: 'none', padding: '0 4px', color: '#666' }}>{location}</div>}
   </div>
   } loadChildren={() => {
-    const suiteChildren = suite.suites.filter(s => !(failingOnly && s.stats.ok)).map((s, i) => <SuiteTreeItemView key={i} suite={s} setTestId={setTestId} testId={testId} depth={depth + 1} showFileName={false} failingOnly={failingOnly}></SuiteTreeItemView>) || [];
+    const suiteChildren = suite.suites.filter(s => !(failingOnly && s.stats.ok)).map((s, i) => <SuiteTreeItemView key={i} suite={s} setTestId={setTestId} testId={testId} depth={depth + 1} failingOnly={failingOnly}></SuiteTreeItemView>) || [];
     const suiteCount = suite.suites.length;
     const testChildren = suite.tests.filter(t => !(failingOnly && t.ok)).map((t, i) => <TestTreeItemView key={i + suiteCount} test={t} setTestId={setTestId} testId={testId} depth={depth + 1}></TestTreeItemView>) || [];
     return [...suiteChildren, ...testChildren];

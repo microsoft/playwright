@@ -35,6 +35,7 @@ const CLIENT_LIB = path.join(ROOT_DIR, 'lib', 'client');
 const CLIENT_SRC = path.join(ROOT_DIR, 'src', 'client');
 
 export type ParsedStackTrace = {
+  allFrames: StackFrame[];
   frames: StackFrame[];
   frameTexts: string[];
   apiName: string;
@@ -78,6 +79,7 @@ export function captureStackTrace(): ParsedStackTrace {
   let apiName = '';
   // Deepest transition between non-client code calling into client code
   // is the api entry.
+  const allFrames = parsedFrames;
   for (let i = 0; i < parsedFrames.length - 1; i++) {
     if (parsedFrames[i].inClient && !parsedFrames[i + 1].inClient) {
       const frame = parsedFrames[i].frame;
@@ -88,6 +90,7 @@ export function captureStackTrace(): ParsedStackTrace {
   }
 
   return {
+    allFrames: allFrames.map(p => p.frame),
     frames: parsedFrames.map(p => p.frame),
     frameTexts: parsedFrames.map(p => p.frameText),
     apiName

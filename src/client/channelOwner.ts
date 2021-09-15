@@ -72,15 +72,22 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     };
   }
 
-  private _createChannel(base: Object, stackTrace: ParsedStackTrace | null): T {
+  private _createChannel(base: Object, stackTrace: ParsedStackTrace | null, csi?: ClientSideInstrumentation, callCookie?: { userObject: any }): T {
     const channel = new Proxy(base, {
       get: (obj: any, prop) => {
         if (prop === 'debugScopeState')
           return (params: any) => this._connection.sendMessageToServer(this, prop, params, stackTrace);
         if (typeof prop === 'string') {
           const validator = scheme[paramsName(this._type, prop)];
-          if (validator)
-            return (params: any) => this._connection.sendMessageToServer(this, prop, validator(params, ''), stackTrace);
+          if (validator) {
+            return (params: any) => {
+              if (callCookie && csi) {
+                callCookie.userObject = csi.onApiCallBegin(renderCallWithParams(stackTrace!.apiName, params)).userObject;
+                csi = undefined;
+              }
+              return this._connection.sendMessageToServer(this, prop, validator(params, ''), stackTrace);
+            };
+          }
         }
         return obj[prop];
       },
@@ -97,22 +104,25 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     let ancestorWithCSI: ChannelOwner<any> = this;
     while (!ancestorWithCSI._csi && ancestorWithCSI._parent)
       ancestorWithCSI = ancestorWithCSI._parent;
-    let csiCallback: ((e?: Error) => void) | undefined;
+
+    // Do not report nested async calls to _wrapApiCall.
+    const isNested = stackTrace.allFrames.filter(f => f.function?.includes('_wrapApiCall')).length > 1;
+    const csi = isNested ? undefined : ancestorWithCSI._csi;
+    const callCookie: { userObject: any } = { userObject: null };
 
     try {
-      logApiCall(logger, `=> ${apiName} started`);
-      csiCallback = ancestorWithCSI._csi?.onApiCall(stackTrace);
-      const channel = this._createChannel({}, stackTrace);
+      logApiCall(logger, `=> ${apiName} started`, isNested);
+      const channel = this._createChannel({}, stackTrace, csi, callCookie);
       const result = await func(channel as any, stackTrace);
-      csiCallback?.();
-      logApiCall(logger, `<= ${apiName} succeeded`);
+      csi?.onApiCallEnd(callCookie);
+      logApiCall(logger, `<= ${apiName} succeeded`, isNested);
       return result;
     } catch (e) {
       const innerError = ((process.env.PWDEBUGIMPL || isUnderTest()) && e.stack) ? '\n<inner error>\n' + e.stack : '';
       e.message = apiName + ': ' + e.message;
       e.stack = e.message + '\n' + frameTexts.join('\n') + innerError;
-      csiCallback?.(e);
-      logApiCall(logger, `<= ${apiName} failed`);
+      csi?.onApiCallEnd(callCookie, e);
+      logApiCall(logger, `<= ${apiName} failed`, isNested);
       throw e;
     }
   }
@@ -129,7 +139,9 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
   }
 }
 
-function logApiCall(logger: Logger | undefined, message: string) {
+function logApiCall(logger: Logger | undefined, message: string, isNested: boolean) {
+  if (isNested)
+    return;
   if (logger && logger.isEnabled('api', 'info'))
     logger.log('api', 'info', message, [], { color: 'cyan' });
   debugLogger.log('api', message);
@@ -137,6 +149,19 @@ function logApiCall(logger: Logger | undefined, message: string) {
 
 function paramsName(type: string, method: string) {
   return type + method[0].toUpperCase() + method.substring(1) + 'Params';
+}
+
+const paramsToRender = ['url', 'selector', 'text', 'key'];
+export function renderCallWithParams(apiName: string, params: any) {
+  const paramsArray = [];
+  if (params) {
+    for (const name of paramsToRender) {
+      if (params[name])
+        paramsArray.push(params[name]);
+    }
+  }
+  const paramsText = paramsArray.length ? '(' + paramsArray.join(', ') + ')' : '';
+  return apiName + paramsText;
 }
 
 const tChannel = (name: string): Validator => {

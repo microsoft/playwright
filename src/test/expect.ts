@@ -75,7 +75,7 @@ function wrap(matcherName: string, matcher: any) {
 
     const INTERNAL_STACK_LENGTH = 3;
     const stackLines = new Error().stack!.split('\n').slice(INTERNAL_STACK_LENGTH + 1);
-    const step = testInfo._addStep('expect', `expect${this.isNot ? '.not' : ''}.${matcherName}`);
+    const step = testInfo._addStep('expect', `expect${this.isNot ? '.not' : ''}.${matcherName}`, true);
 
     const reportStepEnd = (result: any) => {
       const success = result.pass !== this.isNot;

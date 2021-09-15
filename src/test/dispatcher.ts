@@ -313,7 +313,8 @@ export class Dispatcher {
       };
       steps.set(params.stepId, step);
       (parentStep || result).steps.push(step);
-      stepStack.add(step);
+      if (params.canHaveChildren)
+        stepStack.add(step);
       this._reporter.onStepBegin?.(test, result, step);
     });
     worker.on('stepEnd', (params: StepEndPayload) => {
