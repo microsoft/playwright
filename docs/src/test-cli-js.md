@@ -61,16 +61,7 @@ Here are the most common options available in the command line.
 
 - Run in debug mode with [Playwright Inspector](./inspector.md)
   ```bash
-  # Linux/macOS
-  PWDEBUG=1 npx playwright test
-
-  # Windows with cmd.exe
-  set PWDEBUG=1
-  npx playwright test
-
-  # Windows with PowerShell
-  $env:PWDEBUG=1
-  npx playwright test
+  npx playwright test --debug
   ```
 
 - Ask for help
@@ -86,7 +77,7 @@ Complete set of Playwright Test options is available in the [configuration file]
 
 - `--browser`: Run test in a specific browser. Available options are  `"chromium"`, `"firefox"`, `"webkit"` or `"all"` to run tests in all three browsers at the same time.
 
-- `--debug`: Run tests in debug mode. Shortcut for timeout=0, maxFailures=1, PWDEBUG=1, headed=true, workers=1
+- `--debug`: Run tests with Playwright Inspector. Shortcut for `PWDEBUG=1` environment variable and `--timeout=0 --maxFailures=1 --headed --workers=1` options
 
 - `-c <file>` or `--config <file>`: Configuration file. If not passed, defaults to `playwright.config.ts` or `playwright.config.js` in the current directory.
 
