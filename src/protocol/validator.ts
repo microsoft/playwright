@@ -162,6 +162,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.FetchRequestDisposeFetchResponseParams = tObject({
     fetchUid: tString,
   });
+  scheme.FetchRequestDisposeParams = tOptional(tObject({}));
   scheme.FetchResponse = tObject({
     fetchUid: tString,
     url: tString,

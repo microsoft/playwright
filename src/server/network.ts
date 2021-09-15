@@ -20,6 +20,7 @@ import { assert } from '../utils/utils';
 import { ManualPromise } from '../utils/async';
 import { SdkObject } from './instrumentation';
 import { NameValue } from '../common/types';
+import { FetchRequest } from './fetch';
 
 export function filterCookies(cookies: types.NetworkCookie[], urls: string[]): types.NetworkCookie[] {
   const parsedURLs = urls.map(s => new URL(s));
@@ -228,7 +229,7 @@ export class Route extends SdkObject {
     if (body === undefined) {
       if (overrides.fetchResponseUid) {
         const context = this._request.frame()._page._browserContext;
-        const buffer = context.fetchRequest.fetchResponses.get(overrides.fetchResponseUid);
+        const buffer = context.fetchRequest.fetchResponses.get(overrides.fetchResponseUid) || FetchRequest.findResponseBody(overrides.fetchResponseUid);
         assert(buffer, 'Fetch response has been disposed');
         body = buffer.toString('utf8');
         isBase64 = false;

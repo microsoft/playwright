@@ -194,6 +194,18 @@ it('should include the origin header', async ({page, server, isAndroid}) => {
   expect(interceptedRequest.headers()['origin']).toEqual(server.PREFIX);
 });
 
+it('should fulfill with global fetch result', async ({playwright, page, server, isElectron}) => {
+  it.fixme(isElectron, 'error: Browser context management is not supported.');
+  await page.route('**/*', async route => {
+    const request = await playwright._newRequest();
+    const response = await request.get(server.PREFIX + '/simple.json');
+    route.fulfill({ response });
+  });
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(response.status()).toBe(200);
+  expect(await response.json()).toEqual({'foo': 'bar'});
+});
+
 it('should fulfill with fetch result', async ({page, server, isElectron}) => {
   it.fixme(isElectron, 'error: Browser context management is not supported.');
   await page.route('**/*', async route => {

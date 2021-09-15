@@ -42,14 +42,23 @@ type FetchRequestOptions = {
 
 export abstract class FetchRequest extends SdkObject {
   readonly fetchResponses: Map<string, Buffer> = new Map();
+  protected static allInstances: Set<FetchRequest> = new Set();
+
+  static findResponseBody(guid: string): Buffer | undefined {
+    for (const request of FetchRequest.allInstances) {
+      const body = request.fetchResponses.get(guid);
+      if (body)
+        return body;
+    }
+    return undefined;
+  }
 
   constructor(parent: SdkObject) {
     super(parent, 'fetchRequest');
+    FetchRequest.allInstances.add(this);
   }
 
-  dispose() {
-    this.fetchResponses.clear();
-  }
+  abstract dispose();
 
   abstract _defaultOptions(): FetchRequestOptions;
   abstract _addCookies(cookies: types.SetNetworkCookieParam[]): Promise<void>;
@@ -275,6 +284,15 @@ export class BrowserContextFetchRequest extends FetchRequest {
     this._context = context;
   }
 
+  override dispose() {
+    this.fetchResponses.clear();
+  }
+
+  didCloseContext() {
+    FetchRequest.allInstances.delete(this);
+    this.dispose();
+  }
+
   _defaultOptions(): FetchRequestOptions {
     return {
       userAgent: this._context._options.userAgent || this._context._browser.userAgent(),
@@ -300,6 +318,10 @@ export class BrowserContextFetchRequest extends FetchRequest {
 export class GlobalFetchRequest extends FetchRequest {
   constructor(playwright: Playwright) {
     super(playwright);
+  }
+
+  override dispose() {
+    FetchRequest.allInstances.delete(this);
   }
 
   _defaultOptions(): FetchRequestOptions {

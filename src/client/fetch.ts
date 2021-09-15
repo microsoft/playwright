@@ -41,6 +41,12 @@ export class FetchRequest extends ChannelOwner<channels.FetchRequestChannel, cha
     super(parent, type, guid, initializer);
   }
 
+  dispose(): Promise<void> {
+    return this._wrapApiCall(async (channel: channels.FetchRequestChannel) => {
+      await channel.dispose();
+    });
+  }
+
   async get(
     urlOrRequest: string | api.Request,
     options?: {

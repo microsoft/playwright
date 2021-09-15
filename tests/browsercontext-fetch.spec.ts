@@ -673,6 +673,15 @@ it('should dispose when context closes', async function({context, server}) {
   expect(error.message).toContain('Target page, context or browser has been closed');
 });
 
+it('should dispose global request', async function({playwright, context, server}) {
+  const request = await playwright._newRequest();
+  const response = await request.get(server.PREFIX + '/simple.json');
+  expect(await response.json()).toEqual({ foo: 'bar' });
+  await request.dispose();
+  const error = await response.body().catch(e => e);
+  expect(error.message).toContain('Target page, context or browser has been closed');
+});
+
 it('should throw on invalid first argument', async function({context}) {
   const error = await context._request.get({} as any).catch(e => e);
   expect(error.message).toContain('First argument must be either URL string or Request');

@@ -12626,6 +12626,14 @@ export interface Electron {
  */
 export interface FetchRequest {
   /**
+   * Disposes this request, it will release all responses received for this request. Call this method when you are done with
+   * the requests. If not called then all responses received for this object and not disposed via
+   * [fetchResponse.dispose()](https://playwright.dev/docs/api/class-fetchresponse#fetch-response-dispose) will stay in
+   * memory.
+   */
+  dispose(): Promise<void>;
+
+  /**
    * Sends HTTP(S) fetch and returns its response. The method will populate fetch cookies from the context and update context
    * cookies from the response. The method will automatically follow redirects.
    * @param urlOrRequest Target URL or Request to get all fetch parameters from.

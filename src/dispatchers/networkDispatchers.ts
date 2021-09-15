@@ -173,6 +173,11 @@ export class FetchRequestDispatcher extends Dispatcher<FetchRequest, channels.Fe
     super(scope, request, 'FetchRequest', {}, true);
   }
 
+  async dispose(params?: channels.FetchRequestDisposeParams): Promise<void> {
+    this._object.dispose();
+    this._disposeDispatcher();
+  }
+
   async fetch(params: channels.FetchRequestFetchParams, metadata?: channels.Metadata): Promise<channels.FetchRequestFetchResult> {
     const { fetchResponse, error } = await this._object.fetch({
       url: params.url,

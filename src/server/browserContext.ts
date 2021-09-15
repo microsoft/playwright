@@ -64,7 +64,7 @@ export abstract class BrowserContext extends SdkObject {
   private _origins = new Set<string>();
   readonly _harRecorder: HarRecorder | undefined;
   readonly tracing: Tracing;
-  readonly fetchRequest = new BrowserContextFetchRequest(this);
+  readonly fetchRequest: BrowserContextFetchRequest;
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super(browser, 'browser-context');
@@ -79,6 +79,7 @@ export abstract class BrowserContext extends SdkObject {
       this._harRecorder = new HarRecorder(this, {...this._options.recordHar, path: path.join(this._browser.options.artifactsDir, `${createGuid()}.har`)});
 
     this.tracing = new Tracing(this);
+    this.fetchRequest = new BrowserContextFetchRequest(this);
   }
 
   _setSelectors(selectors: Selectors) {
@@ -134,7 +135,7 @@ export abstract class BrowserContext extends SdkObject {
     this._closedStatus = 'closed';
     this._deleteAllDownloads();
     this._downloads.clear();
-    this.fetchRequest.dispose();
+    this.fetchRequest.didCloseContext();
     if (this._isPersistentContext)
       this._onClosePersistent();
     this._closePromiseFulfill!(new Error('Context closed'));

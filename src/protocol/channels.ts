@@ -156,6 +156,7 @@ export interface FetchRequestChannel extends Channel {
   fetch(params: FetchRequestFetchParams, metadata?: Metadata): Promise<FetchRequestFetchResult>;
   fetchResponseBody(params: FetchRequestFetchResponseBodyParams, metadata?: Metadata): Promise<FetchRequestFetchResponseBodyResult>;
   disposeFetchResponse(params: FetchRequestDisposeFetchResponseParams, metadata?: Metadata): Promise<FetchRequestDisposeFetchResponseResult>;
+  dispose(params?: FetchRequestDisposeParams, metadata?: Metadata): Promise<FetchRequestDisposeResult>;
 }
 export type FetchRequestFetchParams = {
   url: string,
@@ -194,6 +195,9 @@ export type FetchRequestDisposeFetchResponseOptions = {
 
 };
 export type FetchRequestDisposeFetchResponseResult = void;
+export type FetchRequestDisposeParams = {};
+export type FetchRequestDisposeOptions = {};
+export type FetchRequestDisposeResult = void;
 
 export interface FetchRequestEvents {
 }
