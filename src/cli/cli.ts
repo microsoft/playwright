@@ -32,6 +32,8 @@ import { BrowserType } from '../client/browserType';
 import { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
 import { registry, Executable } from '../utils/registry';
+import { launchGridAgent } from '../grid/gridAgent';
+import { launchGridServer } from '../grid/gridServer';
 
 const packageJSON = require('../../package.json');
 
@@ -202,6 +204,23 @@ commandWithOpenOptions('pdf <url> <filename>', 'save page as pdf',
   console.log('');
   console.log('  $ pdf https://example.com example.pdf');
 });
+
+program
+    .command('experimental-grid-server', { hidden: true })
+    .option('--port <port>', 'grid port; defaults to 3333')
+    .option('--agent-factory <factory>', 'path to grid agent factory or npm package')
+    .option('--auth-token <authToken>', 'optional authentication token')
+    .action(function(options) {
+      launchGridServer(options.agentFactory, options.port || 3333, options.authToken);
+    });
+
+program
+    .command('experimental-grid-agent', { hidden: true })
+    .requiredOption('--agent-id <agentId>', 'agent ID')
+    .requiredOption('--grid-url <gridURL>', 'grid URL')
+    .action(function(options) {
+      launchGridAgent(options.agentId, options.gridUrl);
+    });
 
 program
     .command('show-trace [trace]')
