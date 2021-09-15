@@ -5,7 +5,7 @@ on:
   pull_request:
     branches: [ main, master ]
 jobs:
-  build:
+  test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
@@ -19,3 +19,8 @@ jobs:
       run: npx playwright install --with-deps
     - name: Run Playwright tests
       run: {{runTestsCommand}}
+    - uses: actions/upload-artifact@v2
+      if: failure()
+      with:
+        name: playwright-test-results
+        path: test-results/
