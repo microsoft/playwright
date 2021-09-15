@@ -224,3 +224,23 @@ test('should print expected/received before timeout', async ({ runInlineTest }) 
   expect(stripAscii(result.output)).toContain('Expected string: "Text 2"');
   expect(stripAscii(result.output)).toContain('Received string: "Text content"');
 });
+
+test('should print nice error for toHaveText', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('fail', async ({ page }) => {
+        await page.setContent('<div id=node>Text content</div>');
+        await expect(page.locator('no-such-thing')).toHaveText('Text');
+      });
+      `,
+  }, { workers: 1, timeout: 2000 });
+  expect(result.failed).toBe(1);
+  expect(result.exitCode).toBe(1);
+  const output = stripAscii(result.output);
+  expect(output).toContain('Pending operations:');
+  expect(output).toContain('Error: expect(received).toHaveText(expected)');
+  expect(output).toContain('Expected string: "Text"');
+  expect(output).toContain('Received string: undefined');
+});
