@@ -67,7 +67,7 @@ commandWithOpenOptions('codegen [url]', 'open page and generate code for user ac
 });
 
 program
-    .command('debug <app> [args...]')
+    .command('debug <app> [args...]', { hidden: true })
     .description('run command in debug mode: disable timeout, open inspector')
     .allowUnknownOption(true)
     .action(function(app, args) {
