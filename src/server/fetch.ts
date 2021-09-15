@@ -58,7 +58,7 @@ export abstract class FetchRequest extends SdkObject {
     FetchRequest.allInstances.add(this);
   }
 
-  abstract dispose();
+  abstract dispose(): void;
 
   abstract _defaultOptions(): FetchRequestOptions;
   abstract _addCookies(cookies: types.SetNetworkCookieParam[]): Promise<void>;
