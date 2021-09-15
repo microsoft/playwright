@@ -25,7 +25,7 @@ export class HttpServer {
   private _server: http.Server | undefined;
   private _urlPrefix: string;
   private _routes: { prefix?: string, exact?: string, handler: ServerRouteHandler }[] = [];
-
+  private _activeSockets = new Set<import('net').Socket>();
   constructor() {
     this._urlPrefix = '';
   }
@@ -39,7 +39,12 @@ export class HttpServer {
   }
 
   async start(port?: number): Promise<string> {
+    console.assert(!this._server, 'server already started');
     this._server = http.createServer(this._onRequest.bind(this));
+    this._server.on('connection', socket => {
+      this._activeSockets.add(socket);
+      socket.once('close', () => this._activeSockets.delete(socket));
+    });
     this._server.listen(port);
     await new Promise(cb => this._server!.once('listening', cb));
     const address = this._server.address();
@@ -48,6 +53,8 @@ export class HttpServer {
   }
 
   async stop() {
+    for (const socket of this._activeSockets)
+      socket.destroy();
     await new Promise(cb => this._server!.close(cb));
   }
 
