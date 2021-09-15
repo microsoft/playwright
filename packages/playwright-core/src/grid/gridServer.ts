@@ -15,7 +15,6 @@
  */
 
 import debug from 'debug';
-import path from 'path';
 import assert from 'assert';
 import { EventEmitter } from 'events';
 import { URL } from 'url';
@@ -32,7 +31,8 @@ export type GridAgentLaunchOptions = {
 export type GridFactory = {
   name?: string,
   capacity?: number,
-  timeout?: number,
+  launchTimeout?: number,
+  retireTimeout?: number,
   launch: (launchOptions: GridAgentLaunchOptions) => Promise<void>,
 };
 
@@ -44,10 +44,10 @@ type ErrorCode = {
 const WSErrors = {
   NO_ERROR: { code: 1000, reason: '' },
   AUTH_FAILED: { code: 1008, reason: 'Grid authentication failed' },
-  AGENT_CREATION_FAILED: { code: 1013, reason: 'Grid agent creationg failed' },
+  AGENT_CREATION_FAILED: { code: 1013, reason: 'Grid agent creation failed' },
   AGENT_NOT_FOUND: { code: 1013, reason: 'Grid agent registration failed - agent with given ID not found' },
   AGENT_NOT_CONNECTED: { code: 1013, reason: 'Grid worker registration failed - agent has unsupported status' },
-  AGENT_CREATION_TIMED_OUT: { code: 1013, reason: 'Grid agent creationg timed out' },
+  AGENT_CREATION_TIMED_OUT: { code: 1013, reason: 'Grid agent creation timed out' },
   AGENT_RETIRED: { code: 1000, reason: 'Grid agent was retired' },
   CLIENT_SOCKET_ERROR: { code: 1011, reason: 'Grid client socket error' },
   WORKER_SOCKET_ERROR: { code: 1011, reason: 'Grid worker socket error' },
@@ -102,16 +102,18 @@ class GridAgent extends EventEmitter {
   readonly _workers = new Map<string, GridWorker>();
   private _status: AgentStatus = 'none';
   private _workersWaitingForAgentConnected: GridWorker[] = [];
-  private _retireTimeout: NodeJS.Timeout | undefined;
+  private _retireTimeout = 30000;
+  private _retireTimeoutId: NodeJS.Timeout | undefined;
   private _log: debug.Debugger;
-  private _agentCreationTimeout: NodeJS.Timeout;
+  private _agentCreationTimeoutId: NodeJS.Timeout;
 
-  constructor(capacity = Infinity, creationTimeout = 5 * 60000) {
+  constructor(capacity = Infinity, creationTimeout = 5 * 60000, retireTimeout = 30000) {
     super();
     this._capacity = capacity;
     this._log = debug(`[agent ${this.agentId}]`);
     this.setStatus('created');
-    this._agentCreationTimeout = setTimeout(() => {
+    this._retireTimeout = retireTimeout;
+    this._agentCreationTimeoutId = setTimeout(() => {
       this.closeAgent(WSErrors.AGENT_CREATION_TIMED_OUT);
     }, creationTimeout);
   }
@@ -126,7 +128,7 @@ class GridAgent extends EventEmitter {
   }
 
   agentConnected(ws: WebSocket) {
-    clearTimeout(this._agentCreationTimeout);
+    clearTimeout(this._agentCreationTimeoutId);
     this.setStatus('connected');
     this._ws = ws;
     for (const worker of this._workersWaitingForAgentConnected) {
@@ -141,8 +143,8 @@ class GridAgent extends EventEmitter {
   }
 
   async createWorker(clientSocket: WebSocket) {
-    if (this._retireTimeout)
-      clearTimeout(this._retireTimeout);
+    if (this._retireTimeoutId)
+      clearTimeout(this._retireTimeoutId);
     if (this._ws)
       this.setStatus('connected');
     const worker = new GridWorker(clientSocket);
@@ -152,9 +154,10 @@ class GridAgent extends EventEmitter {
       this._workers.delete(worker.workerId);
       if (!this._workers.size) {
         this.setStatus('retiring');
-        if (this._retireTimeout)
-          clearTimeout(this._retireTimeout);
-        this._retireTimeout = setTimeout(() => this.closeAgent(WSErrors.AGENT_RETIRED), 30000);
+        if (this._retireTimeoutId)
+          clearTimeout(this._retireTimeoutId);
+        if (this._retireTimeout && isFinite(this._retireTimeout))
+          this._retireTimeoutId = setTimeout(() => this.closeAgent(WSErrors.AGENT_RETIRED), this._retireTimeout);
       }
     });
     if (this._ws) {
@@ -182,7 +185,7 @@ class GridAgent extends EventEmitter {
   }
 }
 
-class GridServer {
+export class GridServer {
   private _server: HttpServer;
   private _wsServer: WebSocketServer;
   private _agents = new Map<string, GridAgent>();
@@ -239,7 +242,7 @@ class GridServer {
           ws.close(WSErrors.CLIENT_PLAYWRIGHT_VERSION_MISMATCH.code, WSErrors.CLIENT_PLAYWRIGHT_VERSION_MISMATCH.reason);
           return;
         }
-        const agent = [...this._agents.values()].find(w => w.canCreateWorker()) || this._createAgent();
+        const agent = [...this._agents.values()].find(w => w.canCreateWorker()) || this._createAgent()?.agent;
         if (!agent) {
           ws.close(WSErrors.AGENT_CREATION_FAILED.code, WSErrors.AGENT_CREATION_FAILED.reason);
           return;
@@ -282,25 +285,32 @@ class GridServer {
     });
   }
 
-  private _createAgent(): GridAgent {
-    const agent = new GridAgent(this._factory.capacity, this._factory.timeout);
+  public async createAgent() {
+    const { initPromise } = this._createAgent();
+    await initPromise;
+  }
+
+  private _createAgent(): {agent: GridAgent, initPromise: Promise<{success: boolean, error: any}>} {
+    const agent = new GridAgent(this._factory.capacity, this._factory.launchTimeout, this._factory.retireTimeout);
     this._agents.set(agent.agentId, agent);
     agent.on('close', () => {
       this._agents.delete(agent.agentId);
     });
-    Promise.resolve()
+    const initPromise = Promise.resolve()
         .then(() => this._factory.launch({
           agentId: agent.agentId,
           gridURL: this._server.urlPrefix(),
           playwrightVersion: getPlaywrightVersion(),
         })).then(() => {
           this._log('created');
-        }).catch(e => {
+          return { success: true, error: undefined };
+        }).catch(error => {
           this._log('failed to launch agent ' + agent.agentId);
-          console.error(e);
+          console.error(error);
           agent.closeAgent(WSErrors.AGENT_CREATION_FAILED);
+          return { success: false, error };
         });
-    return agent;
+    return { agent, initPromise };
   }
 
   _securePath(suffix: string): string {
@@ -338,7 +348,7 @@ class GridServer {
     `;
   }
 
-  async start(port: number) {
+  async start(port?: number) {
     await this._server.start(port);
   }
 
@@ -356,22 +366,4 @@ class GridServer {
 
 function mangle(sessionId: string) {
   return sessionId.replace(/\w{28}/, 'x'.repeat(28));
-}
-
-export async function launchGridServer(factoryPathOrPackageName: string, port: number, authToken: string|undefined): Promise<void> {
-  if (!factoryPathOrPackageName)
-    factoryPathOrPackageName = './simpleGridFactory';
-  let factory;
-  try {
-    factory = require(path.resolve(factoryPathOrPackageName));
-  } catch (e) {
-    factory = require(factoryPathOrPackageName);
-  }
-  if (!factory || !factory.launch || typeof factory.launch !== 'function')
-    throw new Error('factory does not export `launch` method');
-  factory.name = factory.name || factoryPathOrPackageName;
-  const gridServer = new GridServer(factory as GridFactory, authToken);
-  await gridServer.start(port);
-  /* eslint-disable no-console */
-  console.log('Grid server is running at ' + gridServer.urlPrefix());
 }

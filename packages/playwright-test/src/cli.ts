@@ -25,6 +25,9 @@ import { stopProfiling, startProfiling } from './profiler';
 import { FilePatternFilter } from './util';
 import { Loader } from './loader';
 import { showHTMLReport } from './reporters/html';
+import { GridServer } from 'playwright-core/src/grid/gridServer';
+import dockerFactory from 'playwright-core/src/grid/dockerGridFactory';
+import { createGuid } from 'playwright-core/src/utils/utils';
 
 const defaultTimeout = 30000;
 const defaultReporter: BuiltInReporter = process.env.CI ? 'dot' : 'list';
@@ -181,6 +184,8 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   });
 
   const runner = new Runner(loader);
+  if (process.env.PLAYWRIGHT_DOCKER)
+    runner.addInternalGlobalSetup(launchDockerContainer);
   const result = await runner.run(!!opts.list, filePatternFilters, opts.project || undefined);
   await stopProfiling(undefined);
 
@@ -224,4 +229,12 @@ function resolveReporter(id: string) {
   if (fs.existsSync(localPath))
     return localPath;
   return require.resolve(id, { paths: [ process.cwd() ] });
+}
+
+async function launchDockerContainer(): Promise<() => Promise<void>> {
+  const gridServer = new GridServer(dockerFactory, createGuid());
+  await gridServer.start();
+  await gridServer.createAgent();
+  process.env.PW_GRID = gridServer.urlPrefix().substring(0, gridServer.urlPrefix().length - 1);
+  return async () => await gridServer.stop();
 }
