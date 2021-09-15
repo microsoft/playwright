@@ -22,9 +22,12 @@ test('should support toHaveText w/ regex', async ({ runInlineTest }) => {
       const { test } = pwt;
 
       test('pass', async ({ page }) => {
-        await page.setContent('<div id=node>Text content</div>');
+        await page.setContent('<div id=node>Text   content</div>');
         const locator = page.locator('#node');
         await expect(locator).toHaveText(/Text/);
+
+        // Should not normalize whitespace.
+        await expect(locator).toHaveText(/Text   content/);
       });
 
       test('fail', async ({ page }) => {
@@ -50,15 +53,18 @@ test('should support toHaveText w/ text', async ({ runInlineTest }) => {
       const { test } = pwt;
 
       test('pass', async ({ page }) => {
-        await page.setContent('<div id=node>Text content</div>');
+        await page.setContent('<div id=node><span></span>Text \\ncontent&nbsp;    </div>');
         const locator = page.locator('#node');
-        await expect(locator).toHaveText('Text content');
+        // Should normalize whitespace.
+        await expect(locator).toHaveText('Text                        content');
       });
 
       test('pass contain', async ({ page }) => {
         await page.setContent('<div id=node>Text content</div>');
         const locator = page.locator('#node');
         await expect(locator).toContainText('Text');
+        // Should normalize whitespace.
+        await expect(locator).toContainText('   Text        content\\n  ');
       });
 
       test('fail', async ({ page }) => {
@@ -84,9 +90,10 @@ test('should support toHaveText w/ array', async ({ runInlineTest }) => {
       const { test } = pwt;
 
       test('pass', async ({ page }) => {
-        await page.setContent('<div>Text 1</div><div>Text 2a</div>');
+        await page.setContent('<div>Text    \\n1</div><div>Text   2a</div>');
         const locator = page.locator('div');
-        await expect(locator).toHaveText(['Text 1', /Text \\d+a/]);
+        // Should only normalize whitespace in the first item.
+        await expect(locator).toHaveText(['Text  1', /Text   \\d+a/]);
       });
 
       test('fail', async ({ page }) => {

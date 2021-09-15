@@ -18,7 +18,7 @@ import {
   printReceivedStringContainExpectedResult,
   printReceivedStringContainExpectedSubstring
 } from 'expect/build/print';
-
+import { isString } from '../../utils/utils';
 import { currentTestInfo } from '../globals';
 import type { Expect } from '../types';
 import { expectType, pollUntilDeadline } from '../util';
@@ -30,7 +30,7 @@ export async function toMatchText(
   receiverType: string,
   query: (timeout: number) => Promise<string>,
   expected: string | RegExp,
-  options: { timeout?: number, matchSubstring?: boolean } = {},
+  options: { timeout?: number, matchSubstring?: boolean, normalizeWhiteSpace?: boolean } = {},
 ) {
   const testInfo = currentTestInfo();
   if (!testInfo)
@@ -59,9 +59,13 @@ export async function toMatchText(
 
   let received: string;
   let pass = false;
+  if (options.normalizeWhiteSpace && isString(expected))
+    expected = normalizeWhiteSpace(expected);
 
   await pollUntilDeadline(testInfo, async remainingTime => {
     received = await query(remainingTime);
+    if (options.normalizeWhiteSpace && isString(expected))
+      received = normalizeWhiteSpace(received);
     if (options.matchSubstring)
       pass = received.includes(expected as string);
     else if (typeof expected === 'string')
@@ -111,4 +115,8 @@ export async function toMatchText(
     };
 
   return { message, pass };
+}
+
+export function normalizeWhiteSpace(s: string) {
+  return s.trim().replace(/\s+/g, ' ');
 }
