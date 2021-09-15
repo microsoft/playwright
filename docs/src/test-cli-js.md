@@ -86,6 +86,8 @@ Complete set of Playwright Test options is available in the [configuration file]
 
 - `--browser`: Run test in a specific browser. Available options are  `"chromium"`, `"firefox"`, `"webkit"` or `"all"` to run tests in all three browsers at the same time.
 
+- `--debug`: Run tests in debug mode. Shortcut for timeout=0, maxFailures=1, PWDEBUG=1, headed=true, workers=1
+
 - `-c <file>` or `--config <file>`: Configuration file. If not passed, defaults to `playwright.config.ts` or `playwright.config.js` in the current directory.
 
 - `-c <dir>` or `--config <dir>`: Directory with the tests to run without configuration file.
