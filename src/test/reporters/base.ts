@@ -121,11 +121,13 @@ export class BaseReporter implements Reporter  {
     console.log('');
     if (unexpected.length) {
       console.log(colors.red(`  ${unexpected.length} failed`));
-      this._printTestHeaders(unexpected);
+      for (const test of unexpected)
+        console.log(colors.red(formatTestHeader(this.config, test, '    ')));
     }
     if (flaky.length) {
-      console.log(colors.red(`  ${flaky.length} flaky`));
-      this._printTestHeaders(flaky);
+      console.log(colors.yellow(`  ${flaky.length} flaky`));
+      for (const test of flaky)
+        console.log(colors.yellow(formatTestHeader(this.config, test, '    ')));
     }
     if (skipped)
       console.log(colors.yellow(`  ${skipped} skipped`));
@@ -133,12 +135,6 @@ export class BaseReporter implements Reporter  {
       console.log(colors.green(`  ${expected} passed`) + colors.dim(` (${milliseconds(this.duration)})`));
     if (this.result.status === 'timedout')
       console.log(colors.red(`  Timed out waiting ${this.config.globalTimeout / 1000}s for the entire test run`));
-  }
-
-  private _printTestHeaders(tests: TestCase[]) {
-    tests.forEach(test => {
-      console.log(formatTestHeader(this.config, test, '    '));
-    });
   }
 
   private _printFailures(failures: TestCase[]) {
@@ -154,7 +150,7 @@ export class BaseReporter implements Reporter  {
 
 export function formatFailure(config: FullConfig, test: TestCase, index?: number, stdio?: boolean): string {
   const lines: string[] = [];
-  lines.push(formatTestHeader(config, test, '  ', index));
+  lines.push(colors.red(formatTestHeader(config, test, '  ', index)));
   for (const result of test.results) {
     const resultTokens = formatResultFailure(test, result, '    ');
     if (!resultTokens.length)
@@ -239,7 +235,7 @@ export function formatTestTitle(config: FullConfig, test: TestCase, step?: TestS
 function formatTestHeader(config: FullConfig, test: TestCase, indent: string, index?: number): string {
   const title = formatTestTitle(config, test);
   const header = `${indent}${index ? index + ') ' : ''}${title}`;
-  return colors.red(pad(header, '='));
+  return pad(header, '=');
 }
 
 export function formatError(error: TestError, file?: string) {
