@@ -670,7 +670,7 @@ it('should dispose when context closes', async function({context, server}) {
   expect(await response.json()).toEqual({ foo: 'bar' });
   await context.close();
   const error = await response.body().catch(e => e);
-  expect(error.message).toContain('Response has been disposed');
+  expect(error.message).toContain('Target page, context or browser has been closed');
 });
 
 it('should throw on invalid first argument', async function({context}) {
