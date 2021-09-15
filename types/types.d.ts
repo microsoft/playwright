@@ -3627,7 +3627,9 @@ export interface Page {
     timeout?: number;
 
     /**
-     * A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation.
+     * A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if the
+     * parameter is a string without wilcard characters, the method will wait for navigation to URL that is exactly equal to
+     * the string.
      */
     url?: string|RegExp|((url: URL) => boolean);
 
@@ -3738,7 +3740,8 @@ export interface Page {
    *
    * Shortcut for main frame's
    * [frame.waitForURL(url[, options])](https://playwright.dev/docs/api/class-frame#frame-wait-for-url).
-   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation.
+   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if the parameter is a string without wilcard characters, the method will wait for navigation to URL that is exactly equal to
+   * the string.
    * @param options
    */
   waitForURL(url: string|RegExp|((url: URL) => boolean), options?: {
@@ -5745,7 +5748,9 @@ export interface Frame {
     timeout?: number;
 
     /**
-     * A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation.
+     * A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if the
+     * parameter is a string without wilcard characters, the method will wait for navigation to URL that is exactly equal to
+     * the string.
      */
     url?: string|RegExp|((url: URL) => boolean);
 
@@ -5775,7 +5780,8 @@ export interface Frame {
    * await frame.waitForURL('**\/target.html');
    * ```
    *
-   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation.
+   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if the parameter is a string without wilcard characters, the method will wait for navigation to URL that is exactly equal to
+   * the string.
    * @param options
    */
   waitForURL(url: string|RegExp|((url: URL) => boolean), options?: {
