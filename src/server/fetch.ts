@@ -41,15 +41,34 @@ type FetchRequestOptions = {
 };
 
 export abstract class FetchRequest extends SdkObject {
+  static Events = {
+    Dispose: 'dispose',
+  };
+
   readonly fetchResponses: Map<string, Buffer> = new Map();
+  protected static allInstances: Set<FetchRequest> = new Set();
+
+  static findResponseBody(guid: string): Buffer | undefined {
+    for (const request of FetchRequest.allInstances) {
+      const body = request.fetchResponses.get(guid);
+      if (body)
+        return body;
+    }
+    return undefined;
+  }
 
   constructor(parent: SdkObject) {
     super(parent, 'fetchRequest');
+    FetchRequest.allInstances.add(this);
   }
 
-  dispose() {
+  protected _disposeImpl() {
+    FetchRequest.allInstances.delete(this);
     this.fetchResponses.clear();
+    this.emit(FetchRequest.Events.Dispose);
   }
+
+  abstract dispose(): void;
 
   abstract _defaultOptions(): FetchRequestOptions;
   abstract _addCookies(cookies: types.SetNetworkCookieParam[]): Promise<void>;
@@ -273,6 +292,11 @@ export class BrowserContextFetchRequest extends FetchRequest {
   constructor(context: BrowserContext) {
     super(context);
     this._context = context;
+    context.once(BrowserContext.Events.Close, () => this._disposeImpl());
+  }
+
+  override dispose() {
+    this.fetchResponses.clear();
   }
 
   _defaultOptions(): FetchRequestOptions {
@@ -300,6 +324,10 @@ export class BrowserContextFetchRequest extends FetchRequest {
 export class GlobalFetchRequest extends FetchRequest {
   constructor(playwright: Playwright) {
     super(playwright);
+  }
+
+  override dispose() {
+    this._disposeImpl();
   }
 
   _defaultOptions(): FetchRequestOptions {

@@ -249,6 +249,8 @@ FetchRequest:
       parameters:
         fetchUid: string
 
+    dispose:
+
 
 FetchResponse:
   type: object

@@ -6,6 +6,12 @@ environment or the service to your e2e test. When used on [Page] or a [BrowserCo
 the cookies from the corresponding [BrowserContext]. This means that if you log in using this API, your e2e test
 will be logged in and vice versa.
 
+## async method: FetchRequest.dispose
+
+All responses received through [`method: FetchRequest.fetch`], [`method: FetchRequest.get`], [`method: FetchRequest.post`]
+and other methods are stored in the memory, so that you can later call [`method: FetchResponse.body`]. This method
+discards all stored responses, and makes [`method: FetchResponse.body`] throw "Response disposed" error.
+
 ## async method: FetchRequest.fetch
 - returns: <[FetchResponse]>
 
