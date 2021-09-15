@@ -165,7 +165,7 @@ class Generator {
   ${colors.cyan(commandToRunTests(this.packageManager) + ` -- ${exampleSpecPath}`)}
     Runs the tests of a specific file.
   
-  ${colors.cyan((this.packageManager === 'npm' ? 'npx' : 'yarn') + ' playwright debug ' + commandToRunTests(this.packageManager))}
+  ${colors.cyan(`${commandToRunTests(this.packageManager)} --debug`)}
     Runs the tests in debug mode.
 
 We suggest that you begin by typing:
@@ -173,7 +173,7 @@ We suggest that you begin by typing:
 ${colors.cyan(prefix + '  ' + commandToRunTests(this.packageManager))}
 
 And check out the following files:
-  - ./${pathToNavigate ? pathToNavigate + '/' : ''}${exampleSpecPath} - Example end-to-end test of a TODO application
+  - ./${pathToNavigate ? pathToNavigate + '/' : ''}${exampleSpecPath} - Example end-to-end test
   - ./${pathToNavigate ? pathToNavigate + '/' : ''}playwright.config.${languagetoFileExtension(answers.language)} - Playwright Test configuration
 
 Visit https://playwright.dev/docs/intro for more information. ✨
