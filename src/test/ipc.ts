@@ -51,6 +51,7 @@ export type StepBeginPayload = {
   stepId: string;
   title: string;
   category: string;
+  canHaveChildren: boolean;
   wallTime: number;  // milliseconds since unix epoch
 };
 

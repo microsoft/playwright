@@ -20,7 +20,6 @@ import type { LaunchOptions, BrowserContextOptions, Page, BrowserContext, Browse
 import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo } from '../../types/test';
 import { rootTestType } from './testType';
 import { createGuid, removeFolders } from '../utils/utils';
-import { TestInfoImpl } from './types';
 export { expect } from './expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
@@ -203,13 +202,14 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
         await context.tracing.stop();
       }
       (context as any)._csi = {
-        onApiCall: (stackTrace: ParsedStackTrace) => {
-          const testInfoImpl = testInfo as TestInfoImpl;
-          const existingStep = testInfoImpl._currentSteps().find(step => step.category === 'pw:api' || step.category === 'expect');
-          const newStep = existingStep ? undefined : testInfoImpl._addStep('pw:api', stackTrace.apiName);
-          return (error?: Error) => {
-            newStep?.complete(error);
-          };
+        onApiCallBegin: (apiCall: string) => {
+          const testInfoImpl = testInfo as any;
+          const step = testInfoImpl._addStep('pw:api', apiCall, false);
+          return { userObject: step };
+        },
+        onApiCallEnd: (data: { userObject: any }, error?: Error) => {
+          const step = data.userObject;
+          step?.complete(error);
         },
       };
     };

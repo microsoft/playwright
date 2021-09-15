@@ -83,7 +83,7 @@ export class Connection extends EventEmitter {
 
   async sendMessageToServer(object: ChannelOwner, method: string, params: any, maybeStackTrace: ParsedStackTrace | null): Promise<any> {
     const guid = object._guid;
-    const stackTrace = maybeStackTrace || { frameTexts: [], frames: [], apiName: '' };
+    const stackTrace: ParsedStackTrace = maybeStackTrace || { frameTexts: [], frames: [], apiName: '', allFrames: [] };
     const { frames, apiName } = stackTrace;
 
     const id = ++this._lastId;

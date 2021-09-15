@@ -141,11 +141,14 @@ export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTest
       if (trace)
         await context.tracing.start({ screenshots: true, snapshots: true });
       (context as any)._csi = {
-        onApiCall: (stackTrace: any) => {
+        onApiCallBegin: (apiCall: string) => {
           const testInfoImpl = testInfo as any;
-          const existingStep = testInfoImpl._currentSteps().find(step => step.category === 'pw:api' || step.category === 'expect');
-          const newStep = existingStep ? undefined : testInfoImpl._addStep('pw:api', stackTrace.apiName);
-          return (error?: Error) => newStep?.complete(error);
+          const step = testInfoImpl._addStep('pw:api', apiCall, false);
+          return { userObject: step };
+        },
+        onApiCallEnd: (data: { userObject: any }, error?: Error) => {
+          const step = data.userObject;
+          step?.complete(error);
         },
       };
       return context;
