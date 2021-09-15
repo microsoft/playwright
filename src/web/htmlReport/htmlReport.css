@@ -209,4 +209,6 @@ video, img {
   box-shadow: var(--box-shadow-thick);
   width: 80%;
   margin: 20px auto;
+  min-width: 80%;
+  min-height: 300px;
 }
