@@ -13,4 +13,3 @@ browser_patches/chromium/output/
 **/*.d.ts
 output/
 /test-results/
-packages/create-playwright/assets/**

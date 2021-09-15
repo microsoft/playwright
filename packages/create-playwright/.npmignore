@@ -5,3 +5,4 @@
 /tests/**/*
 /playwright.config.ts
 /tsconfig.json
+/assets/.eslintrc.js

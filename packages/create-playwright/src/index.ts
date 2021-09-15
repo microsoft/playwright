@@ -43,6 +43,7 @@ class Generator {
     const { files, commands } = await this._identifyChanges(answers);
     executeCommands(this.rootDir, commands);
     await createFiles(this.rootDir, files);
+    this._patchGitIgnore();
     await this._patchPackageJSON();
     this._printOutro(answers);
   }
@@ -116,19 +117,18 @@ class Generator {
       command: 'npx playwright install --with-deps',
     });
 
-    files.set('.gitignore', this._buildGitIgnore());
-
     return { files, commands };
   }
 
-  private _buildGitIgnore(): string {
+  private _patchGitIgnore() {
+    const gitIgnorePath = path.join(this.rootDir, '.gitignore');
     let gitIgnore = '';
-    if (fs.existsSync(path.join(this.rootDir, '.gitignore')))
-      gitIgnore = fs.readFileSync(path.join(this.rootDir, '.gitignore'), 'utf-8').trimEnd() + '\n';
+    if (fs.existsSync(gitIgnorePath))
+      gitIgnore = fs.readFileSync(gitIgnorePath, 'utf-8').trimEnd() + '\n';
     if (!gitIgnore.includes('node_modules'))
       gitIgnore += 'node_modules/\n';
     gitIgnore += 'test-results/\n';
-    return gitIgnore;
+    fs.writeFileSync(gitIgnorePath, gitIgnore);
   }
 
   private _readAsset(asset: string): string {
@@ -153,23 +153,28 @@ class Generator {
     console.log(colors.green('✔ Success!') + ' ' + colors.bold(`Created a Playwright Test project at ${this.rootDir}`));
     const pathToNavigate = path.relative(process.cwd(), this.rootDir);
     const prefix = pathToNavigate !== '' ? `  cd ${pathToNavigate}\n` : '';
+    const exampleSpecPath = `${answers.testDir}${path.sep}example.spec.${languagetoFileExtension(answers.language)}`;
     console.log(`Inside that directory, you can run several commands:
 
   ${colors.cyan(commandToRunTests(this.packageManager))}
     Runs the end-to-end tests.
 
-  ${colors.cyan(commandToRunTests(this.packageManager) + ' -- --project=Desktop Chrome')}
+  ${colors.cyan(commandToRunTests(this.packageManager) + ' -- --project="Desktop Chrome"')}
     Runs the tests only on Desktop Chrome.
 
-  ${colors.cyan(commandToRunTests(this.packageManager) + ` -- ${answers.testDir}${path.sep}example.spec.${languagetoFileExtension(answers.language)}`)}
+  ${colors.cyan(commandToRunTests(this.packageManager) + ` -- ${exampleSpecPath}`)}
     Runs the tests of a specific file.
   
-  ${colors.cyan((this.packageManager === 'npm' ? 'npx' : 'yarn') + ' playwright debug ' + commandToRunTests(this.packageManager))}
+  ${colors.cyan(`${commandToRunTests(this.packageManager)} --debug`)}
     Runs the tests in debug mode.
 
 We suggest that you begin by typing:
 
 ${colors.cyan(prefix + '  ' + commandToRunTests(this.packageManager))}
+
+And check out the following files:
+  - ./${pathToNavigate ? pathToNavigate + '/' : ''}${exampleSpecPath} - Example end-to-end test
+  - ./${pathToNavigate ? pathToNavigate + '/' : ''}playwright.config.${languagetoFileExtension(answers.language)} - Playwright Test configuration
 
 Visit https://playwright.dev/docs/intro for more information. ✨
 
