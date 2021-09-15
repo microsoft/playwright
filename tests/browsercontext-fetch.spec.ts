@@ -40,6 +40,19 @@ it.afterAll(() => {
   http.globalAgent = prevAgent;
 });
 
+it('global get should work', async ({playwright, context, server}) => {
+  const request = await playwright._newRequest();
+  const response = await request.get(server.PREFIX + '/simple.json');
+  expect(response.url()).toBe(server.PREFIX + '/simple.json');
+  expect(response.status()).toBe(200);
+  expect(response.statusText()).toBe('OK');
+  expect(response.ok()).toBeTruthy();
+  expect(response.url()).toBe(server.PREFIX + '/simple.json');
+  expect(response.headers()['content-type']).toBe('application/json; charset=utf-8');
+  expect(response.headersArray()).toContainEqual({ name: 'Content-Type', value: 'application/json; charset=utf-8' });
+  expect(await response.text()).toBe('{"foo": "bar"}\n');
+});
+
 it('get should work', async ({context, server}) => {
   const response = await context._request.get(server.PREFIX + '/simple.json');
   expect(response.url()).toBe(server.PREFIX + '/simple.json');

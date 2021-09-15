@@ -150,6 +150,54 @@ export type InterceptedResponse = {
   headers: NameValue[],
 };
 
+// ----------- FetchRequest -----------
+export type FetchRequestInitializer = {};
+export interface FetchRequestChannel extends Channel {
+  fetch(params: FetchRequestFetchParams, metadata?: Metadata): Promise<FetchRequestFetchResult>;
+  fetchResponseBody(params: FetchRequestFetchResponseBodyParams, metadata?: Metadata): Promise<FetchRequestFetchResponseBodyResult>;
+  disposeFetchResponse(params: FetchRequestDisposeFetchResponseParams, metadata?: Metadata): Promise<FetchRequestDisposeFetchResponseResult>;
+}
+export type FetchRequestFetchParams = {
+  url: string,
+  params?: NameValue[],
+  method?: string,
+  headers?: NameValue[],
+  postData?: Binary,
+  timeout?: number,
+  failOnStatusCode?: boolean,
+};
+export type FetchRequestFetchOptions = {
+  params?: NameValue[],
+  method?: string,
+  headers?: NameValue[],
+  postData?: Binary,
+  timeout?: number,
+  failOnStatusCode?: boolean,
+};
+export type FetchRequestFetchResult = {
+  response?: FetchResponse,
+  error?: string,
+};
+export type FetchRequestFetchResponseBodyParams = {
+  fetchUid: string,
+};
+export type FetchRequestFetchResponseBodyOptions = {
+
+};
+export type FetchRequestFetchResponseBodyResult = {
+  binary?: Binary,
+};
+export type FetchRequestDisposeFetchResponseParams = {
+  fetchUid: string,
+};
+export type FetchRequestDisposeFetchResponseOptions = {
+
+};
+export type FetchRequestDisposeFetchResponseResult = void;
+
+export interface FetchRequestEvents {
+}
+
 export type FetchResponse = {
   fetchUid: string,
   url: string,
@@ -213,6 +261,7 @@ export interface PlaywrightChannel extends Channel {
   socksData(params: PlaywrightSocksDataParams, metadata?: Metadata): Promise<PlaywrightSocksDataResult>;
   socksError(params: PlaywrightSocksErrorParams, metadata?: Metadata): Promise<PlaywrightSocksErrorResult>;
   socksEnd(params: PlaywrightSocksEndParams, metadata?: Metadata): Promise<PlaywrightSocksEndResult>;
+  newRequest(params: PlaywrightNewRequestParams, metadata?: Metadata): Promise<PlaywrightNewRequestResult>;
 }
 export type PlaywrightSocksRequestedEvent = {
   uid: string,
@@ -266,6 +315,15 @@ export type PlaywrightSocksEndOptions = {
 
 };
 export type PlaywrightSocksEndResult = void;
+export type PlaywrightNewRequestParams = {
+  ignoreHTTPSErrors?: boolean,
+};
+export type PlaywrightNewRequestOptions = {
+  ignoreHTTPSErrors?: boolean,
+};
+export type PlaywrightNewRequestResult = {
+  request: FetchRequestChannel,
+};
 
 export interface PlaywrightEvents {
   'socksRequested': PlaywrightSocksRequestedEvent;
@@ -733,6 +791,7 @@ export interface EventTargetEvents {
 // ----------- BrowserContext -----------
 export type BrowserContextInitializer = {
   isChromium: boolean,
+  fetchRequest: FetchRequestChannel,
 };
 export interface BrowserContextChannel extends EventTargetChannel {
   on(event: 'bindingCall', callback: (params: BrowserContextBindingCallEvent) => void): this;
@@ -753,9 +812,6 @@ export interface BrowserContextChannel extends EventTargetChannel {
   close(params?: BrowserContextCloseParams, metadata?: Metadata): Promise<BrowserContextCloseResult>;
   cookies(params: BrowserContextCookiesParams, metadata?: Metadata): Promise<BrowserContextCookiesResult>;
   exposeBinding(params: BrowserContextExposeBindingParams, metadata?: Metadata): Promise<BrowserContextExposeBindingResult>;
-  fetch(params: BrowserContextFetchParams, metadata?: Metadata): Promise<BrowserContextFetchResult>;
-  fetchResponseBody(params: BrowserContextFetchResponseBodyParams, metadata?: Metadata): Promise<BrowserContextFetchResponseBodyResult>;
-  disposeFetchResponse(params: BrowserContextDisposeFetchResponseParams, metadata?: Metadata): Promise<BrowserContextDisposeFetchResponseResult>;
   grantPermissions(params: BrowserContextGrantPermissionsParams, metadata?: Metadata): Promise<BrowserContextGrantPermissionsResult>;
   newPage(params?: BrowserContextNewPageParams, metadata?: Metadata): Promise<BrowserContextNewPageResult>;
   setDefaultNavigationTimeoutNoReply(params: BrowserContextSetDefaultNavigationTimeoutNoReplyParams, metadata?: Metadata): Promise<BrowserContextSetDefaultNavigationTimeoutNoReplyResult>;
@@ -855,43 +911,6 @@ export type BrowserContextExposeBindingOptions = {
   needsHandle?: boolean,
 };
 export type BrowserContextExposeBindingResult = void;
-export type BrowserContextFetchParams = {
-  url: string,
-  params?: NameValue[],
-  method?: string,
-  headers?: NameValue[],
-  postData?: Binary,
-  timeout?: number,
-  failOnStatusCode?: boolean,
-};
-export type BrowserContextFetchOptions = {
-  params?: NameValue[],
-  method?: string,
-  headers?: NameValue[],
-  postData?: Binary,
-  timeout?: number,
-  failOnStatusCode?: boolean,
-};
-export type BrowserContextFetchResult = {
-  response?: FetchResponse,
-  error?: string,
-};
-export type BrowserContextFetchResponseBodyParams = {
-  fetchUid: string,
-};
-export type BrowserContextFetchResponseBodyOptions = {
-
-};
-export type BrowserContextFetchResponseBodyResult = {
-  binary?: Binary,
-};
-export type BrowserContextDisposeFetchResponseParams = {
-  fetchUid: string,
-};
-export type BrowserContextDisposeFetchResponseOptions = {
-
-};
-export type BrowserContextDisposeFetchResponseResult = void;
 export type BrowserContextGrantPermissionsParams = {
   permissions: string[],
   origin?: string,

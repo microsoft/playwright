@@ -34,6 +34,7 @@ import { Tracing } from './trace/recorder/tracing';
 import { HarRecorder } from './supplements/har/harRecorder';
 import { RecorderSupplement } from './supplements/recorderSupplement';
 import * as consoleApiSource from '../generated/consoleApiSource';
+import { BrowserContextFetchRequest } from './fetch';
 
 export abstract class BrowserContext extends SdkObject {
   static Events = {
@@ -63,7 +64,7 @@ export abstract class BrowserContext extends SdkObject {
   private _origins = new Set<string>();
   readonly _harRecorder: HarRecorder | undefined;
   readonly tracing: Tracing;
-  readonly fetchResponses: Map<string, Buffer> = new Map();
+  readonly fetchRequest = new BrowserContextFetchRequest(this);
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super(browser, 'browser-context');
@@ -133,7 +134,7 @@ export abstract class BrowserContext extends SdkObject {
     this._closedStatus = 'closed';
     this._deleteAllDownloads();
     this._downloads.clear();
-    this.fetchResponses.clear();
+    this.fetchRequest.dispose();
     if (this._isPersistentContext)
       this._onClosePersistent();
     this._closePromiseFulfill!(new Error('Context closed'));
@@ -381,12 +382,6 @@ export abstract class BrowserContext extends SdkObject {
     };
     this.on(BrowserContext.Events.Page, installInPage);
     return Promise.all(this.pages().map(installInPage));
-  }
-
-  storeFetchResponseBody(body: Buffer): string {
-    const uid = createGuid();
-    this.fetchResponses.set(uid, body);
-    return uid;
   }
 }
 

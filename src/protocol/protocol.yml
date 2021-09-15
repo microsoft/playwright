@@ -217,6 +217,39 @@ InterceptedResponse:
       items: NameValue
 
 
+FetchRequest:
+  type: interface
+
+  commands:
+
+    fetch:
+      parameters:
+        url: string
+        params:
+          type: array?
+          items: NameValue
+        method: string?
+        headers:
+          type: array?
+          items: NameValue
+        postData: binary?
+        timeout: number?
+        failOnStatusCode: boolean?
+      returns:
+        response: FetchResponse?
+        error: string?
+
+    fetchResponseBody:
+      parameters:
+        fetchUid: string
+      returns:
+        binary?: binary
+
+    disposeFetchResponse:
+      parameters:
+        fetchUid: string
+
+
 FetchResponse:
   type: object
   properties:
@@ -417,6 +450,12 @@ Playwright:
       parameters:
         uid: string
 
+    newRequest:
+      parameters:
+        ignoreHTTPSErrors: boolean?
+      returns:
+        request: FetchRequest
+
   events:
     socksRequested:
       parameters:
@@ -579,6 +618,7 @@ BrowserContext:
 
   initializer:
     isChromium: boolean
+    fetchRequest: FetchRequest
 
   commands:
 
@@ -612,33 +652,6 @@ BrowserContext:
       parameters:
         name: string
         needsHandle: boolean?
-
-    fetch:
-      parameters:
-        url: string
-        params:
-          type: array?
-          items: NameValue
-        method: string?
-        headers:
-          type: array?
-          items: NameValue
-        postData: binary?
-        timeout: number?
-        failOnStatusCode: boolean?
-      returns:
-        response: FetchResponse?
-        error: string?
-
-    fetchResponseBody:
-      parameters:
-        fetchUid: string
-      returns:
-        binary?: binary
-
-    disposeFetchResponse:
-      parameters:
-        fetchUid: string
 
     grantPermissions:
       parameters:

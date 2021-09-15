@@ -15,12 +15,11 @@
  */
 
 import { BrowserContext } from '../server/browserContext';
-import { Dispatcher, DispatcherScope, lookupDispatcher } from './dispatcher';
+import { Dispatcher, DispatcherScope, existingDispatcher, lookupDispatcher } from './dispatcher';
 import { PageDispatcher, BindingCallDispatcher, WorkerDispatcher } from './pageDispatcher';
-import { playwrightFetch } from '../server/fetch';
 import { FrameDispatcher } from './frameDispatcher';
 import * as channels from '../protocol/channels';
-import { RouteDispatcher, RequestDispatcher, ResponseDispatcher } from './networkDispatchers';
+import { RouteDispatcher, RequestDispatcher, ResponseDispatcher, FetchRequestDispatcher } from './networkDispatchers';
 import { CRBrowserContext } from '../server/chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { RecorderSupplement } from '../server/supplements/recorderSupplement';
@@ -28,13 +27,15 @@ import { CallMetadata } from '../server/instrumentation';
 import { ArtifactDispatcher } from './artifactDispatcher';
 import { Artifact } from '../server/artifact';
 import { Request, Response } from '../server/network';
-import { arrayToObject, headersArrayToObject } from '../utils/utils';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextInitializer, channels.BrowserContextEvents> implements channels.BrowserContextChannel {
   private _context: BrowserContext;
 
   constructor(scope: DispatcherScope, context: BrowserContext) {
-    super(scope, context, 'BrowserContext', { isChromium: context._browser.options.isChromium }, true);
+    super(scope, context, 'BrowserContext', {
+      isChromium: context._browser.options.isChromium,
+      fetchRequest: FetchRequestDispatcher.from(scope, context.fetchRequest),
+    }, true);
     this._context = context;
     // Note: when launching persistent context, dispatcher is created very late,
     // so we can already have pages, videos and everything else.
@@ -57,6 +58,10 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     context.on(BrowserContext.Events.Close, () => {
       this._dispatchEvent('close');
       this._dispose();
+      const fetch = existingDispatcher<FetchRequestDispatcher>(this._context.fetchRequest);
+      // FetchRequestDispatcher is created in the browser rather then context scope but its
+      // lifetime is bound to the context dispatcher, so we manually dispose it here.
+      fetch._disposeDispatcher();
     });
 
     if (context._browser.options.name === 'chromium') {
@@ -105,38 +110,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       this._dispatchEvent('bindingCall', { binding });
       return binding.promise();
     });
-  }
-
-  async fetch(params: channels.BrowserContextFetchParams): Promise<channels.BrowserContextFetchResult> {
-    const { fetchResponse, error } = await playwrightFetch(this._context, {
-      url: params.url,
-      params: arrayToObject(params.params),
-      method: params.method,
-      headers: params.headers ? headersArrayToObject(params.headers, false) : undefined,
-      postData: params.postData ? Buffer.from(params.postData, 'base64') : undefined,
-      timeout: params.timeout,
-      failOnStatusCode: params.failOnStatusCode,
-    });
-    let response;
-    if (fetchResponse) {
-      response = {
-        url: fetchResponse.url,
-        status: fetchResponse.status,
-        statusText: fetchResponse.statusText,
-        headers: fetchResponse.headers,
-        fetchUid: fetchResponse.fetchUid
-      };
-    }
-    return { response, error };
-  }
-
-  async fetchResponseBody(params: channels.BrowserContextFetchResponseBodyParams): Promise<channels.BrowserContextFetchResponseBodyResult> {
-    const buffer = this._context.fetchResponses.get(params.fetchUid);
-    return { binary: buffer ? buffer.toString('base64') : undefined };
-  }
-
-  async disposeFetchResponse(params: channels.BrowserContextDisposeFetchResponseParams): Promise<channels.BrowserContextDisposeFetchResponseResult> {
-    this._context.fetchResponses.delete(params.fetchUid);
   }
 
   async newPage(params: channels.BrowserContextNewPageParams, metadata: CallMetadata): Promise<channels.BrowserContextNewPageResult> {
