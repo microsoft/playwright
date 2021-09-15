@@ -403,5 +403,5 @@ export default config;
   npx playwright test --reporter=line,allure-playwright
 
   # Generate report
-  allure generate ./allure-result --clean && allure open ./allure-report
+  allure generate ./allure-results --clean && allure open ./allure-report
   ```
