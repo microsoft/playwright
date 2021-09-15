@@ -35,7 +35,7 @@ type FetchRequestOptions = {
   extraHTTPHeaders?: HeadersArray;
   httpCredentials?: HTTPCredentials;
   proxy?: ProxySettings;
-  timeout: (options: {timeout?: number}) => number;
+  timeoutSettings: TimeoutSettings;
   ignoreHTTPSErrors?: boolean;
   baseURL?: string;
 };
@@ -90,7 +90,7 @@ export abstract class FetchRequest extends SdkObject {
         agent = new HttpsProxyAgent(proxyOpts);
       }
 
-      const timeout = defaults.timeout(params);
+      const timeout = defaults.timeoutSettings.timeout(params);
       const deadline = monotonicTime() + timeout;
 
       const options: https.RequestOptions & { maxRedirects: number, deadline: number } = {
@@ -281,7 +281,7 @@ export class BrowserContextFetchRequest extends FetchRequest {
       extraHTTPHeaders: this._context._options.extraHTTPHeaders,
       httpCredentials: this._context._options.httpCredentials,
       proxy: this._context._options.proxy || this._context._browser.options.proxy,
-      timeout: params => this._context._timeoutSettings.timeout(params),
+      timeoutSettings: this._context._timeoutSettings,
       ignoreHTTPSErrors: this._context._options.ignoreHTTPSErrors,
       baseURL: this._context._options.baseURL,
     };
@@ -307,7 +307,7 @@ export class GlobalFetchRequest extends FetchRequest {
       userAgent: '',
       extraHTTPHeaders: undefined,
       proxy: undefined,
-      timeout: params => TimeoutSettings.timeout(params),
+      timeoutSettings: new TimeoutSettings(),
       ignoreHTTPSErrors: false,
       baseURL: undefined,
     };

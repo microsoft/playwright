@@ -58,6 +58,10 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     context.on(BrowserContext.Events.Close, () => {
       this._dispatchEvent('close');
       this._dispose();
+      const fetch = existingDispatcher<FetchRequestDispatcher>(this._context.fetchRequest);
+      // FetchRequestDispatcher is created in the browser rather then context scope but its
+      // lifetime is bound to the context dispatcher, so we manually dispose it here.
+      fetch._disposeDispatcher();
     });
 
     if (context._browser.options.name === 'chromium') {
@@ -90,14 +94,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       responseEndTiming: request._responseEndTiming,
       page: PageDispatcher.fromNullable(this._scope, request.frame()._page.initializedOrUndefined()),
     }));
-  }
-
-  protected override _dispose() {
-    const fetch = existingDispatcher<FetchRequestDispatcher>(this._context.fetchRequest);
-    // FetchRequestDispatcher is created in the browser rather then context scope but its
-    // lifetime is bound to the context dispatcher, so we manually dispose it here.
-    fetch._disposeDispatcher();
-    super._dispose();
   }
 
   async setDefaultNavigationTimeoutNoReply(params: channels.BrowserContextSetDefaultNavigationTimeoutNoReplyParams) {
