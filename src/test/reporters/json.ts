@@ -44,6 +44,7 @@ export interface JSONReportSuite {
   suites?: JSONReportSuite[];
 }
 export interface JSONReportSpec {
+  tags: string[],
   title: string;
   ok: boolean;
   tests: JSONReportTest[];
@@ -203,6 +204,7 @@ class JSONReporter implements Reporter {
     return {
       title: test.title,
       ok: test.ok(),
+      tags: (test.title.match(/@[\S]+/g) || []).map(t => t.substring(1)),
       tests: [ this._serializeTest(test) ],
       ...this._relativeLocation(test.location),
     };
