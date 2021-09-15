@@ -256,7 +256,7 @@ it.describe('snapshots', () => {
     expect(spanColor).toBe('rgb(0, 0, 255)');
   });
 
-  it('should work with adopted style sheets and replaceSync', async ({ page, toImpl, showSnapshot, snapshotter, browserName }) => {
+  it('should work with adopted style sheets and replace/replaceSync', async ({ page, toImpl, showSnapshot, snapshotter, browserName }) => {
     it.skip(browserName !== 'chromium', 'Constructed stylesheets are only in Chromium.');
     await page.setContent('<button>Hello</button>');
     await page.evaluate(() => {
@@ -270,6 +270,11 @@ it.describe('snapshots', () => {
       sheet.replaceSync(`button { color: blue }`);
     });
     const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot2');
+    await page.evaluate(() => {
+      const [sheet] = (document as any).adoptedStyleSheets;
+      sheet.replace(`button { color: #0F0 }`);
+    });
+    const snapshot3 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot3');
 
     {
       const frame = await showSnapshot(snapshot1);
@@ -286,6 +291,14 @@ it.describe('snapshots', () => {
         return window.getComputedStyle(button).color;
       });
       expect(buttonColor).toBe('rgb(0, 0, 255)');
+    }
+    {
+      const frame = await showSnapshot(snapshot3);
+      await frame.waitForSelector('button');
+      const buttonColor = await frame.$eval('button', button => {
+        return window.getComputedStyle(button).color;
+      });
+      expect(buttonColor).toBe('rgb(0, 255, 0)');
     }
   });
 
