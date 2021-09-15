@@ -41,6 +41,10 @@ type FetchRequestOptions = {
 };
 
 export abstract class FetchRequest extends SdkObject {
+  static Events = {
+    Dispose: 'dispose',
+  };
+
   readonly fetchResponses: Map<string, Buffer> = new Map();
   protected static allInstances: Set<FetchRequest> = new Set();
 
@@ -56,6 +60,12 @@ export abstract class FetchRequest extends SdkObject {
   constructor(parent: SdkObject) {
     super(parent, 'fetchRequest');
     FetchRequest.allInstances.add(this);
+  }
+
+  protected _disposeImpl() {
+    FetchRequest.allInstances.delete(this);
+    this.fetchResponses.clear();
+    this.emit(FetchRequest.Events.Dispose);
   }
 
   abstract dispose(): void;
@@ -282,15 +292,11 @@ export class BrowserContextFetchRequest extends FetchRequest {
   constructor(context: BrowserContext) {
     super(context);
     this._context = context;
+    context.once(BrowserContext.Events.Close, () => this._disposeImpl());
   }
 
   override dispose() {
     this.fetchResponses.clear();
-  }
-
-  didCloseContext() {
-    FetchRequest.allInstances.delete(this);
-    this.dispose();
   }
 
   _defaultOptions(): FetchRequestOptions {
@@ -321,7 +327,7 @@ export class GlobalFetchRequest extends FetchRequest {
   }
 
   override dispose() {
-    FetchRequest.allInstances.delete(this);
+    this._disposeImpl();
   }
 
   _defaultOptions(): FetchRequestOptions {

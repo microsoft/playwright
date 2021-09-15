@@ -171,11 +171,14 @@ export class FetchRequestDispatcher extends Dispatcher<FetchRequest, channels.Fe
 
   private constructor(scope: DispatcherScope, request: FetchRequest) {
     super(scope, request, 'FetchRequest', {}, true);
+    request.once(FetchRequest.Events.Dispose, () => {
+      if (!this._disposed)
+        super._dispose();
+    });
   }
 
   async dispose(params?: channels.FetchRequestDisposeParams): Promise<void> {
     this._object.dispose();
-    this._disposeDispatcher();
   }
 
   async fetch(params: channels.FetchRequestFetchParams, metadata?: channels.Metadata): Promise<channels.FetchRequestFetchResult> {
@@ -208,11 +211,6 @@ export class FetchRequestDispatcher extends Dispatcher<FetchRequest, channels.Fe
 
   async disposeFetchResponse(params: channels.FetchRequestDisposeFetchResponseParams, metadata?: channels.Metadata): Promise<void> {
     this._object.fetchResponses.delete(params.fetchUid);
-  }
-
-  _disposeDispatcher() {
-    if (!this._disposed)
-      super._dispose();
   }
 }
 
