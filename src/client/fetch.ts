@@ -17,6 +17,7 @@
 import * as api from '../../types/types';
 import { HeadersArray } from '../common/types';
 import * as channels from '../protocol/channels';
+import { kBrowserOrContextClosedError } from '../utils/errors';
 import { assert, headersObjectToArray, isString, objectToArray } from '../utils/utils';
 import { ChannelOwner } from './channelOwner';
 import * as network from './network';
@@ -143,10 +144,16 @@ export class FetchResponse implements api.FetchResponse {
 
   async body(): Promise<Buffer> {
     return this._request._wrapApiCall(async (channel: channels.FetchRequestChannel) => {
-      const result = await channel.fetchResponseBody({ fetchUid: this._fetchUid() });
-      if (!result.binary)
-        throw new Error('Response has been disposed');
-      return Buffer.from(result.binary!, 'base64');
+      try {
+        const result = await channel.fetchResponseBody({ fetchUid: this._fetchUid() });
+        if (!result.binary)
+          throw new Error('Response has been disposed');
+        return Buffer.from(result.binary!, 'base64');
+      } catch (e) {
+        if (e.message === kBrowserOrContextClosedError)
+          throw new Error('Response has been disposed');
+        throw e;
+      }
     });
   }
 

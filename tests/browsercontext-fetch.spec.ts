@@ -670,7 +670,7 @@ it('should dispose when context closes', async function({context, server}) {
   expect(await response.json()).toEqual({ foo: 'bar' });
   await context.close();
   const error = await response.body().catch(e => e);
-  expect(error.message).toContain('Target page, context or browser has been closed');
+  expect(error.message).toContain('Response has been disposed');
 });
 
 it('should dispose global request', async function({playwright, context, server}) {
@@ -679,7 +679,7 @@ it('should dispose global request', async function({playwright, context, server}
   expect(await response.json()).toEqual({ foo: 'bar' });
   await request.dispose();
   const error = await response.body().catch(e => e);
-  expect(error.message).toContain('Target page, context or browser has been closed');
+  expect(error.message).toContain('Response has been disposed');
 });
 
 it('should throw on invalid first argument', async function({context}) {
