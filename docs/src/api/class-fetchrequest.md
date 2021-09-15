@@ -8,9 +8,9 @@ will be logged in and vice versa.
 
 ## async method: FetchRequest.dispose
 
-Disposes this request, it will release all responses received for this request. Call this method when you are done
-with the requests. If not called then all responses received for this object and not disposed via
-[`method: FetchResponse.dispose`] will stay in memory.
+All responses received through [`method: FetchRequest.fetch`], [`method: FetchRequest.get`], [`method: FetchRequest.post`]
+and other methods are stored in the memory, so that you can later call [`method: FetchResponse.body`]. This method
+discards all stored responses, and makes [`method: FetchResponse.body`] throw "Response disposed" error.
 
 ## async method: FetchRequest.fetch
 - returns: <[FetchResponse]>

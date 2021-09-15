@@ -12626,10 +12626,15 @@ export interface Electron {
  */
 export interface FetchRequest {
   /**
-   * Disposes this request, it will release all responses received for this request. Call this method when you are done with
-   * the requests. If not called then all responses received for this object and not disposed via
-   * [fetchResponse.dispose()](https://playwright.dev/docs/api/class-fetchresponse#fetch-response-dispose) will stay in
-   * memory.
+   * All responses received through
+   * [fetchRequest.fetch(urlOrRequest[, options])](https://playwright.dev/docs/api/class-fetchrequest#fetch-request-fetch),
+   * [fetchRequest.get(urlOrRequest[, options])](https://playwright.dev/docs/api/class-fetchrequest#fetch-request-get),
+   * [fetchRequest.post(urlOrRequest[, options])](https://playwright.dev/docs/api/class-fetchrequest#fetch-request-post) and
+   * other methods are stored in the memory, so that you can later call
+   * [fetchResponse.body()](https://playwright.dev/docs/api/class-fetchresponse#fetch-response-body). This method discards
+   * all stored responses, and makes
+   * [fetchResponse.body()](https://playwright.dev/docs/api/class-fetchresponse#fetch-response-body) throw "Response
+   * disposed" error.
    */
   dispose(): Promise<void>;
 
