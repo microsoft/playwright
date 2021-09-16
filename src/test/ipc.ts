@@ -52,6 +52,7 @@ export type StepBeginPayload = {
   title: string;
   category: string;
   canHaveChildren: boolean;
+  forceNoParent: boolean;
   wallTime: number;  // milliseconds since unix epoch
 };
 

@@ -297,7 +297,7 @@ export class Dispatcher {
         return;
       }
       const { test, result, steps, stepStack } = this._testById.get(params.testId)!;
-      const parentStep = [...stepStack].pop();
+      const parentStep = params.forceNoParent ? undefined : [...stepStack].pop();
       const step: TestStep = {
         title: params.title,
         titlePath: () => {

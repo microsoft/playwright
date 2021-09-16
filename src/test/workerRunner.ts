@@ -267,12 +267,11 @@ export class WorkerRunner extends EventEmitter {
           deadlineRunner.updateDeadline(deadline());
       },
       _testFinished: new Promise(f => testFinishedCallback = f),
-      _addStep: (category: string, title: string, canHaveChildren: boolean) => {
-        const stepId = `${category}@${title}@${++lastStepId}`;
+      _addStep: data => {
+        const stepId = `${data.category}@${data.title}@${++lastStepId}`;
         let callbackHandled = false;
         const step: TestStepInternal = {
-          category,
-          canHaveChildren,
+          ...data,
           complete: (error?: Error | TestError) => {
             if (callbackHandled)
               return;
@@ -292,9 +291,7 @@ export class WorkerRunner extends EventEmitter {
         const payload: StepBeginPayload = {
           testId,
           stepId,
-          category,
-          canHaveChildren,
-          title,
+          ...data,
           wallTime: Date.now(),
         };
         if (reportEvents)
@@ -423,7 +420,12 @@ export class WorkerRunner extends EventEmitter {
   }
 
   private async _runTestWithBeforeHooks(test: TestCase, testInfo: TestInfoImpl) {
-    const step = testInfo._addStep('hook', 'Before Hooks', true);
+    const step = testInfo._addStep({
+      category: 'hook',
+      title: 'Before Hooks',
+      canHaveChildren: true,
+      forceNoParent: true
+    });
     if (test._type === 'test')
       await this._runBeforeHooks(test, testInfo);
 
@@ -457,7 +459,12 @@ export class WorkerRunner extends EventEmitter {
     let step: TestStepInternal | undefined;
     let teardownError: TestError | undefined;
     try {
-      step = testInfo._addStep('hook', 'After Hooks', true);
+      step = testInfo._addStep({
+        category: 'hook',
+        title: 'After Hooks',
+        canHaveChildren: true,
+        forceNoParent: true
+      });
       if (test._type === 'test')
         await this._runHooks(test.parent!, 'afterEach', testInfo);
     } catch (error) {
