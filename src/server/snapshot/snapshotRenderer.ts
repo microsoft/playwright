@@ -49,7 +49,7 @@ export class SnapshotRenderer {
         if (Array.isArray(n[0])) {
           // Node reference.
           const referenceIndex = snapshotIndex - n[0][0];
-          if (referenceIndex >= 0 && referenceIndex < snapshotIndex) {
+          if (referenceIndex >= 0 && referenceIndex <= snapshotIndex) {
             const nodes = snapshotNodes(this._snapshots[referenceIndex]);
             const nodeIndex = n[0][1];
             if (nodeIndex >= 0 && nodeIndex < nodes.length)
