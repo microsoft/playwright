@@ -176,7 +176,7 @@ export type FetchRequestFetchParams = {
   method?: string,
   headers?: NameValue[],
   postData?: Binary,
-  formData?: FormField[],
+  formData?: any,
   timeout?: number,
   failOnStatusCode?: boolean,
 };
@@ -185,7 +185,7 @@ export type FetchRequestFetchOptions = {
   method?: string,
   headers?: NameValue[],
   postData?: Binary,
-  formData?: FormField[],
+  formData?: any,
   timeout?: number,
   failOnStatusCode?: boolean,
 };

@@ -35,12 +35,12 @@ export class MultipartFormData {
     this._finishMultiPartField();
   }
 
-  addFileField(name: string, value: types.FileInfo) {
+  addFileField(name: string, value: types.FilePayload) {
     this._beginMultiPartHeader(name);
     this._chunks.push(Buffer.from(`; filename="${value.name}"`));
-    this._chunks.push(Buffer.from(`\r\nContent-Type: ${value.mimeType || 'application/octet-stream'}`));
+    this._chunks.push(Buffer.from(`\r\ncontent-type: ${value.mimeType || 'application/octet-stream'}`));
     this._finishMultiPartHeader();
-    this._chunks.push(value.buffer);
+    this._chunks.push(Buffer.from(value.buffer, 'base64'));
     this._finishMultiPartField();
   }
 
@@ -51,7 +51,7 @@ export class MultipartFormData {
 
   private _beginMultiPartHeader(name: string) {
     this._addBoundary();
-    this._chunks.push(Buffer.from(`Content-Disposition: form-data; name="${name}"`));
+    this._chunks.push(Buffer.from(`content-disposition: form-data; name="${name}"`));
   }
 
   private _finishMultiPartHeader() {

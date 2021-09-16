@@ -189,7 +189,7 @@ export class FetchRequestDispatcher extends Dispatcher<FetchRequest, channels.Fe
       method: params.method,
       headers: params.headers ? headersArrayToObject(params.headers, false) : undefined,
       postData: params.postData ? Buffer.from(params.postData, 'base64') : undefined,
-      formData: deserializeFormData(params.formData),
+      formData: params.formData,
       timeout: params.timeout,
       failOnStatusCode: params.failOnStatusCode,
     });
@@ -214,14 +214,4 @@ export class FetchRequestDispatcher extends Dispatcher<FetchRequest, channels.Fe
   async disposeFetchResponse(params: channels.FetchRequestDisposeFetchResponseParams, metadata?: channels.Metadata): Promise<void> {
     this._object.fetchResponses.delete(params.fetchUid);
   }
-}
-
-function deserializeFormData(formData?: channels.FormField[]): FormField[] | undefined {
-  if (!formData)
-    return undefined;
-  for (const field of formData) {
-    if (field.file)
-      (field.file.buffer as any) = Buffer.from(field.file.buffer, 'base64');
-  }
-  return formData as FormField[];
 }

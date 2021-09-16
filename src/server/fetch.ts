@@ -22,7 +22,7 @@ import * as https from 'https';
 import { BrowserContext } from './browserContext';
 import * as types from './types';
 import { pipeline, Readable, Transform } from 'stream';
-import { createGuid, monotonicTime } from '../utils/utils';
+import { createGuid, isFilePayload, monotonicTime } from '../utils/utils';
 import { SdkObject } from './instrumentation';
 import { Playwright } from './playwright';
 import { HeadersArray, ProxySettings } from './types';
@@ -132,27 +132,8 @@ export abstract class FetchRequest extends SdkObject {
       }
 
       let postData;
-      if (['POST', 'PUSH', 'PATCH'].includes(method)) {
-        postData = params.postData;
-        if (params.formData) {
-          if (headers['content-type'] === 'application/x-www-form-urlencoded') {
-            const searchParams = new URLSearchParams();
-            for (const {name, value, file} of params.formData)
-              searchParams.append(name, value || file?.name || '');
-            postData = Buffer.from(searchParams.toString(), 'utf8');
-          } else if (headers['content-type'] === 'multipart/form-data') {
-            const formData = new MultipartFormData();
-            for (const {name, value, file} of params.formData) {
-              if (file)
-                formData.addFileField(name, file);
-              else if (value !== undefined)
-                formData.addField(name, value);
-            }
-            headers['content-type'] = formData.contentTypeHeader();
-            postData = formData.finish();
-          }
-        }
-      }
+      if (['POST', 'PUSH', 'PATCH'].includes(method))
+        postData = params.formData ? serilizeFormData(params.formData, headers) : params.postData;
 
       const fetchResponse = await this._sendRequest(requestUrl, options, postData);
       const fetchUid = this._storeResponseBody(fetchResponse.body);
@@ -433,4 +414,32 @@ function parseCookie(header: string) {
     }
   }
   return cookie;
+}
+
+function serilizeFormData(data: any, headers: { [name: string]: string }): Buffer {
+  const contentType = headers['content-type'] || 'application/json';
+  if (contentType === 'application/json') {
+    const json = JSON.stringify(data);
+    headers['content-type'] ??= contentType;
+    return Buffer.from(json, 'utf8');
+  } else if (contentType === 'application/x-www-form-urlencoded') {
+    const searchParams = new URLSearchParams();
+    for (const [name, value] of Object.entries(data))
+      searchParams.append(name, String(value));
+    return Buffer.from(searchParams.toString(), 'utf8');
+  } else if (contentType === 'multipart/form-data') {
+    const formData = new MultipartFormData();
+    for (const [name, value] of Object.entries(data)) {
+      if (isFilePayload(value)) {
+        const payload = value as types.FilePayload;
+        formData.addFileField(name, payload);
+      } else if (value !== undefined) {
+        formData.addField(name, String(value));
+      }
+    }
+    headers['content-type'] = formData.contentTypeHeader();
+    return formData.finish();
+  } else {
+    throw new Error(`Cannot serialize data using content type: ${contentType}`);
+  }
 }

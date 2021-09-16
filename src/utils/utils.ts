@@ -407,3 +407,7 @@ export function wrapInASCIIBox(text: string, padding = 0): string {
     '╚' + '═'.repeat(maxLength + padding * 2) + '╝',
   ].join('\n');
 }
+
+export function isFilePayload(value: any): boolean {
+  return typeof value === 'object' && value['name'] && value['mimeType'] && value['buffer'];
+}

@@ -22,7 +22,7 @@ import * as api from '../../types/types';
 import { HeadersArray } from '../common/types';
 import * as channels from '../protocol/channels';
 import { kBrowserOrContextClosedError } from '../utils/errors';
-import { assert, headersObjectToArray, isString, objectToArray } from '../utils/utils';
+import { assert, headersObjectToArray, isFilePayload, isObject, isString, objectToArray } from '../utils/utils';
 import { ChannelOwner } from './channelOwner';
 import * as network from './network';
 import { RawHeaders } from './network';
@@ -89,81 +89,35 @@ export class FetchRequest extends ChannelOwner<channels.FetchRequestChannel, cha
       const params = objectToArray(options.params);
       const method = options.method || request?.method();
       // Cannot call allHeaders() here as the request may be paused inside route handler.
-      let headersObj = options.headers || request?.headers() ;
-      let formData: channels.FormField[] | undefined;
+      const headersObj = options.headers || request?.headers() ;
+      const headers = headersObj ? headersObjectToArray(headersObj) : undefined;
+      let formData: any;
       let postDataBuffer: Buffer | undefined;
       if (options.data) {
         if (isString(options.data)) {
           postDataBuffer = Buffer.from(options.data, 'utf8');
         } else if (Buffer.isBuffer(options.data)) {
           postDataBuffer = options.data;
+        } else if (typeof options.data === 'object') {
+          formData = {};
+          for (const [name, value] of Object.entries(options.data)) {
+            if (isFilePayload(value)) {
+              const payload = value as FilePayload;
+              if (!Buffer.isBuffer(payload.buffer))
+                throw new Error(`Unexpected buffer type of 'data.${name}'`);
+              formData[name] = filePayloadToJson(payload);
+            } else if (value instanceof ReadStream) {
+              formData[name] = await readStreamToJson(value as ReadStream);
+            } else {
+              formData[name] = value;
+            }
+          }
         } else {
-          let contentTypeHeaderName = 'content-type';
-          let contentType = 'application/json';
-          if (headersObj) {
-            for (const [name, value] of Object.entries(headersObj)) {
-              if (name.toLocaleLowerCase() === 'content-type') {
-                contentTypeHeaderName = name;
-                contentType = value;
-                break;
-              }
-            }
-          }
-          if (contentType === 'application/json') {
-            const json = JSON.stringify(options.data);
-            postDataBuffer = Buffer.from(json, 'utf8');
-            if (!headersObj?.[contentTypeHeaderName]) {
-              headersObj ??= {};
-              headersObj[contentTypeHeaderName] = contentType;
-            }
-          } else if (contentType === 'application/x-www-form-urlencoded') {
-            formData = [];
-            for (const [name, value] of Object.entries(options.data))
-              formData.push({name, value: String(value)});
-          } else if (contentType === 'multipart/form-data') {
-            formData = [];
-            for (const [name, value] of Object.entries(options.data)) {
-              if (typeof value === 'object' && (value as any)?.['name'] && (value as any)?.['mimeType'] && (value as any)?.['buffer']) {
-                const payload = value as FilePayload;
-                if (!Buffer.isBuffer(payload.buffer))
-                  throw new Error(`Unexpected buffer type of 'data.${name}'`);
-                formData.push({
-                  name,
-                  file: {
-                    name: payload.name,
-                    mimeType: payload.mimeType,
-                    buffer: payload.buffer.toString('base64'),
-                  }
-                });
-              } else if (value instanceof ReadStream) {
-                const stream = value as ReadStream;
-                const buffer = await new Promise<Buffer>((resolve, reject) => {
-                  const chunks: Buffer[] = [];
-                  stream.on('data', chunk => chunks.push(chunk));
-                  stream.on('end', () => resolve(Buffer.concat(chunks)));
-                  stream.on('error', err => reject(err));
-                });
-                const streamPath: string = Buffer.isBuffer(stream.path) ? stream.path.toString('utf8') : stream.path;
-                formData.push({
-                  name,
-                  file: {
-                    name: path.basename(streamPath),
-                    mimeType: mime.getType(streamPath) || 'application/octet-stream',
-                    buffer: buffer.toString('base64'),
-                  }
-                });
-              } else {
-                formData.push({name, value: String(value)});
-              }
-            }
-          } else {
-            throw new Error(`Cannot serialize data using content type: ${contentType}`);
-          }
+          throw new Error(`Unexpected 'data' type`);
         }
         if (postDataBuffer === undefined && formData === undefined)
           postDataBuffer = request?.postDataBuffer() || undefined;
       }
-      const headers = headersObj ? headersObjectToArray(headersObj) : undefined;
       const postData = (postDataBuffer ? postDataBuffer.toString('base64') : undefined);
       const result = await channel.fetch({
         url,
@@ -251,4 +205,27 @@ export class FetchResponse implements api.FetchResponse {
   _fetchUid(): string {
     return this._initializer.fetchUid;
   }
+}
+
+function filePayloadToJson(payload: FilePayload): {} {
+  return {
+    name: payload.name,
+    mimeType: payload.mimeType,
+    buffer: payload.buffer.toString('base64'),
+  };
+}
+
+async function readStreamToJson(stream: ReadStream): Promise<{}> {
+  const buffer = await new Promise<Buffer>((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    stream.on('data', chunk => chunks.push(chunk));
+    stream.on('end', () => resolve(Buffer.concat(chunks)));
+    stream.on('error', err => reject(err));
+  });
+  const streamPath: string = Buffer.isBuffer(stream.path) ? stream.path.toString('utf8') : stream.path;
+  return {
+    name: path.basename(streamPath),
+    mimeType: mime.getType(streamPath) || 'application/octet-stream',
+    buffer: buffer.toString('base64'),
+  };
 }
