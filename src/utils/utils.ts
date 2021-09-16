@@ -351,8 +351,12 @@ export function canAccessFile(file: string) {
 }
 
 export function getUserAgent() {
+  return `Playwright/${getPlaywrightVersion()} (${os.arch()}/${os.platform()}/${os.release()})`;
+}
+
+export function getPlaywrightVersion(majorMinorOnly = false) {
   const packageJson = require('./../../package.json');
-  return `Playwright/${packageJson.version} (${os.arch()}/${os.platform()}/${os.release()})`;
+  return majorMinorOnly ? packageJson.version.split('.').slice(0, 2).join('.') : packageJson.version;
 }
 
 export function constructURLBasedOnBaseURL(baseURL: string | undefined, givenURL: string): string {
