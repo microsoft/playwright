@@ -100,6 +100,7 @@ export class FetchRequest extends ChannelOwner<channels.FetchRequestChannel, cha
           postDataBuffer = options.data;
         } else if (typeof options.data === 'object') {
           formData = {};
+          // Convert file-like values to ServerFilePayload structs.
           for (const [name, value] of Object.entries(options.data)) {
             if (isFilePayload(value)) {
               const payload = value as FilePayload;
@@ -207,7 +208,13 @@ export class FetchResponse implements api.FetchResponse {
   }
 }
 
-function filePayloadToJson(payload: FilePayload): {} {
+type ServerFilePayload = {
+  name: string,
+  mimeType: string,
+  buffer: string,
+};
+
+function filePayloadToJson(payload: FilePayload): ServerFilePayload {
   return {
     name: payload.name,
     mimeType: payload.mimeType,
@@ -215,7 +222,7 @@ function filePayloadToJson(payload: FilePayload): {} {
   };
 }
 
-async function readStreamToJson(stream: ReadStream): Promise<{}> {
+async function readStreamToJson(stream: ReadStream): Promise<ServerFilePayload> {
   const buffer = await new Promise<Buffer>((resolve, reject) => {
     const chunks: Buffer[] = [];
     stream.on('data', chunk => chunks.push(chunk));
