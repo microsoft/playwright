@@ -226,3 +226,24 @@ test('should print stack-less errors', async ({ runInlineTest }) => {
   expect(result.failed).toBe(1);
   expect(result.output).toContain('Hello');
 });
+
+test('should print errors with inconsistent message/stack', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const { test } = pwt;
+      test('foobar', async function myTest({}) {
+        const e = new Error('Hello');
+        // Force stack to contain "Hello".
+        // Otherwise it is computed lazy and will get 'foo bar' instead.
+        e.stack;
+        e.message = 'foo bar';
+        e.stack = 'hi!' + e.stack;
+        throw e;
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('hi!Error: Hello');
+  expect(result.output).toContain('at myTest');
+});
