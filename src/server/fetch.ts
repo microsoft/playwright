@@ -28,6 +28,7 @@ import { Playwright } from './playwright';
 import { HeadersArray, ProxySettings } from './types';
 import { HTTPCredentials } from '../../types/types';
 import { TimeoutSettings } from '../utils/timeoutSettings';
+import { MultipartFormData } from './formData';
 
 
 type FetchRequestOptions = {
@@ -130,7 +131,30 @@ export abstract class FetchRequest extends SdkObject {
           requestUrl.searchParams.set(name, value);
       }
 
-      const fetchResponse = await this._sendRequest(requestUrl, options, params.postData);
+      let postData;
+      if (['POST', 'PUSH', 'PATCH'].includes(method)) {
+        postData = params.postData;
+        if (params.formData) {
+          if (headers['content-type'] === 'application/x-www-form-urlencoded') {
+            const searchParams = new URLSearchParams();
+            for (const {name, value, file} of params.formData)
+              searchParams.append(name, value || file?.name || '');
+            postData = Buffer.from(searchParams.toString(), 'utf8');
+          } else if (headers['content-type'] === 'multipart/form-data') {
+            const formData = new MultipartFormData();
+            for (const {name, value, file} of params.formData) {
+              if (file)
+                formData.addFileField(name, file);
+              else if (value !== undefined)
+                formData.addField(name, value);
+            }
+            headers['content-type'] = formData.contentTypeHeader();
+            postData = formData.finish();
+          }
+        }
+      }
+
+      const fetchResponse = await this._sendRequest(requestUrl, options, postData);
       const fetchUid = this._storeResponseBody(fetchResponse.body);
       if (params.failOnStatusCode && (fetchResponse.status < 200 || fetchResponse.status >= 400))
         return { error: `${fetchResponse.status} ${fetchResponse.statusText}` };

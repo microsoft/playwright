@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
+import formidable from 'formidable';
 import http from 'http';
 import zlib from 'zlib';
+import fs from 'fs';
 import { pipeline } from 'stream';
 import { contextTest as it, expect } from './config/browserTest';
 import { suppressCertificateWarning } from './config/utils';
@@ -704,4 +706,86 @@ it('should override request parameters', async function({context, page, server})
   expect(req.method).toBe('POST');
   expect(req.headers.foo).toBe('bar');
   expect((await req.postBody).toString('utf8')).toBe('data');
+});
+
+it('should support application/x-www-form-urlencoded', async function({context, page, server}) {
+  const [req] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    context._request.post(server.EMPTY_PAGE, {
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded'
+      },
+      data: {
+        firstName: 'John',
+        lastName: 'Doe',
+        file: 'f.js',
+      }
+    })
+  ]);
+  expect(req.method).toBe('POST');
+  expect(req.headers['content-type']).toBe('application/x-www-form-urlencoded');
+  const body = (await req.postBody).toString('utf8');
+  const params = new URLSearchParams(body);
+  expect(params.get('firstName')).toBe('John');
+  expect(params.get('lastName')).toBe('Doe');
+  expect(params.get('file')).toBe('f.js');
+});
+
+it('should encode to application/json by default', async function({context, page, server}) {
+  const data = {
+    firstName: 'John',
+    lastName: 'Doe',
+    file: {
+      name: 'f.js'
+    },
+  };
+  const [req] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    context._request.post(server.EMPTY_PAGE, { data })
+  ]);
+  expect(req.method).toBe('POST');
+  expect(req.headers['content-type']).toBe('application/json');
+  const body = (await req.postBody).toString('utf8');
+  const json = JSON.parse(body);
+  expect(json).toEqual(data);
+});
+
+it('should support multipart/form-data', async function({context, page, server}) {
+  const formReceived = new Promise<any>(resolve => {
+    server.setRoute('/empty.html', async (serverRequest, res) => {
+      const form = new formidable.IncomingForm();
+      form.parse(serverRequest, (error, fields, files) => {
+        server.serveFile(serverRequest, res);
+        resolve({error, fields, files, serverRequest });
+      });
+    });
+  });
+
+  const file = {
+    name: 'f.js',
+    mimeType: 'text/javascript',
+    buffer: Buffer.from('var x = 10;\r\n;console.log(x);')
+  };
+  const [{error, fields, files, serverRequest}, response] = await Promise.all([
+    formReceived,
+    context._request.post(server.EMPTY_PAGE, {
+      headers: {
+        'content-type': 'multipart/form-data'
+      },
+      data: {
+        firstName: 'John',
+        lastName: 'Doe',
+        file
+      }
+    })
+  ]);
+  expect(error).toBeFalsy();
+  expect(serverRequest.method).toBe('POST');
+  expect(serverRequest.headers['content-type']).toContain('multipart/form-data');
+  expect(fields['firstName']).toBe('John');
+  expect(fields['lastName']).toBe('Doe');
+  expect(files['file'].name).toBe(file.name);
+  expect(files['file'].type).toBe(file.mimeType);
+  expect(fs.readFileSync(files['file'].path).toString()).toBe(file.buffer.toString('utf8'));
+  expect(response.status()).toBe(200);
 });

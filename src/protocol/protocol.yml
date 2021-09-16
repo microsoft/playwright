@@ -217,6 +217,22 @@ InterceptedResponse:
       items: NameValue
 
 
+FileInfo:
+  type: object
+  properties:
+    name: string
+    mimeType: string?
+    buffer: binary
+
+
+FormField:
+  type: object
+  properties:
+    name: string
+    value: string?
+    file: FileInfo?
+
+
 FetchRequest:
   type: interface
 
@@ -233,6 +249,9 @@ FetchRequest:
           type: array?
           items: NameValue
         postData: binary?
+        formData:
+          type: array?
+          items: FormField
         timeout: number?
         failOnStatusCode: boolean?
       returns:
