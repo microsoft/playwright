@@ -27,11 +27,13 @@ export type Annotations = { type: string, description?: string }[];
 
 export interface TestStepInternal {
   complete(error?: Error | TestError): void;
+  title: string;
   category: string;
   canHaveChildren: boolean;
+  forceNoParent: boolean;
 }
 
 export interface TestInfoImpl extends TestInfo {
   _testFinished: Promise<void>;
-  _addStep: (category: string, title: string, canHaveChildren: boolean) => TestStepInternal;
+  _addStep: (data: Omit<TestStepInternal, 'complete'>) => TestStepInternal;
 }

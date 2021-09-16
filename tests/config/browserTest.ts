@@ -143,7 +143,12 @@ export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTest
       (context as any)._csi = {
         onApiCallBegin: (apiCall: string) => {
           const testInfoImpl = testInfo as any;
-          const step = testInfoImpl._addStep('pw:api', apiCall, false);
+          const step = testInfoImpl._addStep({
+            category: 'pw:api',
+            title: apiCall,
+            canHaveChildren: false,
+            forceNoParent: false
+          });
           return { userObject: step };
         },
         onApiCallEnd: (data: { userObject: any }, error?: Error) => {

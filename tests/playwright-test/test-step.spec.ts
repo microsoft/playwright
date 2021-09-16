@@ -16,44 +16,44 @@
 
 import { test, expect } from './playwright-test-fixtures';
 
-test('should report api step hierarchy', async ({ runInlineTest }) => {
-  const expectReporterJS = `
-    class Reporter {
-      onBegin(config: FullConfig, suite: Suite) {
-        this.suite = suite;
-      }
+const stepHierarchyReporter = `
+class Reporter {
+  onBegin(config: FullConfig, suite: Suite) {
+    this.suite = suite;
+  }
 
-      distillStep(step) {
-        return {
-          ...step,
-          startTime: undefined,
-          duration: undefined,
-          parent: undefined,
-          data: undefined,
-          steps: step.steps.length ? step.steps.map(s => this.distillStep(s)) : undefined,
-        };
-      }
+  distillStep(step) {
+    return {
+      ...step,
+      startTime: undefined,
+      duration: undefined,
+      parent: undefined,
+      data: undefined,
+      steps: step.steps.length ? step.steps.map(s => this.distillStep(s)) : undefined,
+    };
+  }
 
-      async onEnd() {
-        const processSuite = (suite: Suite) => {
-          for (const child of suite.suites)
-            processSuite(child);
-          for (const test of suite.tests) {
-            for (const result of test.results) {
-              for (const step of result.steps) {
-                console.log('%% ' + JSON.stringify(this.distillStep(step)));
-              }
-            }
+  async onEnd() {
+    const processSuite = (suite: Suite) => {
+      for (const child of suite.suites)
+        processSuite(child);
+      for (const test of suite.tests) {
+        for (const result of test.results) {
+          for (const step of result.steps) {
+            console.log('%% ' + JSON.stringify(this.distillStep(step)));
           }
-        };
-        processSuite(this.suite);
+        }
       }
-    }
-    module.exports = Reporter;
-  `;
+    };
+    processSuite(this.suite);
+  }
+}
+module.exports = Reporter;
+`;
 
+test('should report api step hierarchy', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'reporter.ts': expectReporterJS,
+    'reporter.ts': stepHierarchyReporter,
     'playwright.config.ts': `
       module.exports = {
         reporter: './reporter',
@@ -114,6 +114,54 @@ test('should report api step hierarchy', async ({ runInlineTest }) => {
           title: 'inner step 2.2',
         },
       ],
+    },
+    {
+      category: 'hook',
+      title: 'After Hooks',
+      steps: [
+        {
+          category: 'pw:api',
+          title: 'browserContext.close',
+        },
+      ],
+    },
+  ]);
+});
+
+test('should not report nested after hooks', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepHierarchyReporter,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('timeout', async ({ page }) => {
+        await test.step('my step', async () => {
+          await new Promise(() => {});
+        });
+      });
+    `
+  }, { reporter: '', workers: 1, timeout: 2000 });
+
+  expect(result.exitCode).toBe(1);
+  const objects = result.output.split('\n').filter(line => line.startsWith('%% ')).map(line => line.substring(3).trim()).filter(Boolean).map(line => JSON.parse(line));
+  expect(objects).toEqual([
+    {
+      category: 'hook',
+      title: 'Before Hooks',
+      steps: [
+        {
+          category: 'pw:api',
+          title: 'browserContext.newPage',
+        },
+      ],
+    },
+    {
+      category: 'test.step',
+      title: 'my step',
     },
     {
       category: 'hook',
