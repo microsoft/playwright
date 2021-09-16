@@ -147,16 +147,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     statusText: tString,
     headers: tArray(tType('NameValue')),
   });
-  scheme.FileInfo = tObject({
-    name: tString,
-    mimeType: tOptional(tString),
-    buffer: tBinary,
-  });
-  scheme.FormField = tObject({
-    name: tString,
-    value: tOptional(tString),
-    file: tOptional(tType('FileInfo')),
-  });
   scheme.FetchRequestFetchParams = tObject({
     url: tString,
     params: tOptional(tArray(tType('NameValue'))),

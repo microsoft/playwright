@@ -150,18 +150,6 @@ export type InterceptedResponse = {
   headers: NameValue[],
 };
 
-export type FileInfo = {
-  name: string,
-  mimeType?: string,
-  buffer: Binary,
-};
-
-export type FormField = {
-  name: string,
-  value?: string,
-  file?: FileInfo,
-};
-
 // ----------- FetchRequest -----------
 export type FetchRequestInitializer = {};
 export interface FetchRequestChannel extends Channel {

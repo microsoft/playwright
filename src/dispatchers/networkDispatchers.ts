@@ -21,7 +21,6 @@ import { FrameDispatcher } from './frameDispatcher';
 import { CallMetadata } from '../server/instrumentation';
 import { FetchRequest } from '../server/fetch';
 import { arrayToObject, headersArrayToObject } from '../utils/utils';
-import { FormField } from '../server/types';
 
 export class RequestDispatcher extends Dispatcher<Request, channels.RequestInitializer, channels.RequestEvents> implements channels.RequestChannel {
 
