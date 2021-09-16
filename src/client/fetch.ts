@@ -131,7 +131,7 @@ export class FetchRequest extends ChannelOwner<channels.FetchRequestChannel, cha
         failOnStatusCode: options.failOnStatusCode,
       });
       if (result.error)
-        throw new Error(`Request failed: ${result.error}`);
+        throw new Error(result.error);
       return new FetchResponse(this, result.response!);
     });
   }

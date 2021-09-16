@@ -168,7 +168,7 @@ for (const method of ['get', 'post', 'fetch']) {
     const error = await context._request[method](server.PREFIX + '/does-not-exist.html', {
       failOnStatusCode: true
     }).catch(e => e);
-    expect(error.message).toContain('Request failed: 404 Not Found');
+    expect(error.message).toContain('404 Not Found');
   });
 }
 
@@ -823,4 +823,40 @@ it('should support multipart/form-data with ReadSream values', async function({c
   expect(files['readStream'].type).toBe('application/json');
   expect(fs.readFileSync(files['readStream'].path).toString()).toBe(fs.readFileSync(asset('simplezip.json')).toString());
   expect(response.status()).toBe(200);
+});
+
+it('should throw nice error on unsupported encoding', async function({context, server}) {
+  const error = await context._request.post(server.EMPTY_PAGE, {
+    headers: {
+      'content-type': 'unknown'
+    },
+    data: {
+      firstName: 'John',
+      lastName: 'Doe',
+    }
+  }).catch(e => e);
+  expect(error.message).toContain('Cannot serialize data using content type: unknown');
+});
+
+it('should throw nice error on unsupported data type', async function({context, server}) {
+  const error = await context._request.post(server.EMPTY_PAGE, {
+    headers: {
+      'content-type': 'application/json'
+    },
+    data: () => true
+  }).catch(e => e);
+  expect(error.message).toContain(`Unexpected 'data' type`);
+});
+
+it('should throw when data passed for unsupported request', async function({context, server}) {
+  const error = await context._request.fetch(server.EMPTY_PAGE, {
+    method: 'GET',
+    headers: {
+      'content-type': 'application/json'
+    },
+    data: {
+      foo: 'bar'
+    }
+  }).catch(e => e);
+  expect(error.message).toContain(`Method GET does not accept post data`);
 });

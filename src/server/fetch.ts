@@ -134,6 +134,8 @@ export abstract class FetchRequest extends SdkObject {
       let postData;
       if (['POST', 'PUSH', 'PATCH'].includes(method))
         postData = params.formData ? serilizeFormData(params.formData, headers) : params.postData;
+      else if (params.postData || params.formData)
+        throw new Error(`Method ${method} does not accept post data`);
 
       const fetchResponse = await this._sendRequest(requestUrl, options, postData);
       const fetchUid = this._storeResponseBody(fetchResponse.body);
