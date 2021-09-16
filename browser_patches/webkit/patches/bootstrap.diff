@@ -9734,7 +9734,7 @@ index 1c427ddb78d6953fe8960c5692afde4f4f0eee85..cf33ff6076dd95ffe564f1dde89c177a
  
      WebCore::ShouldRelaxThirdPartyCookieBlocking m_shouldRelaxThirdPartyCookieBlocking { WebCore::ShouldRelaxThirdPartyCookieBlocking::No };
 diff --git a/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp b/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp
-index 175283132c0ca93eb4e6c4f7a9c466e7b6b22764..9cf8319b3bb71ba1503243b71569d9e3c567a166 100644
+index 175283132c0ca93eb4e6c4f7a9c466e7b6b22764..86fa6bef3c6ca8bc79c2bc02781dd93f9d82041a 100644
 --- a/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp
 +++ b/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp
 @@ -493,6 +493,7 @@ void NetworkDataTaskSoup::didSendRequest(GRefPtr<GInputStream>&& inputStream)
@@ -9754,6 +9754,40 @@ index 175283132c0ca93eb4e6c4f7a9c466e7b6b22764..9cf8319b3bb71ba1503243b71569d9e3
      auto error = static_cast<NetworkSessionSoup&>(*m_session).soupNetworkSession().checkTLSErrors(url, certificate, tlsErrors);
      if (!error)
          return true;
+@@ -1210,6 +1213,12 @@ static String tlsProtocolVersionToString(GTlsProtocolVersion version)
+ }
+ #endif
+ 
++static void headers_size(const char *name, const char *value, gpointer pointer)
++{
++    int* size = static_cast<int*>(pointer);
++    *size += strlen(name) + strlen(value) + 4;
++}
++
+ void NetworkDataTaskSoup::didGetHeaders()
+ {
+     // We are a bit more conservative with the persistent credential storage than the session store,
+@@ -1253,6 +1262,20 @@ void NetworkDataTaskSoup::didGetHeaders()
+         m_networkLoadMetrics.tlsProtocol = tlsProtocolVersionToString(soup_message_get_tls_protocol_version(m_soupMessage.get()));
+         m_networkLoadMetrics.tlsCipher = String::fromUTF8(soup_message_get_tls_ciphersuite_name(m_soupMessage.get()));
+         m_networkLoadMetrics.responseHeaderBytesReceived = soup_message_metrics_get_response_header_bytes_received(metrics);
++#else
++        {
++            auto* requestHeaders = soup_message_get_request_headers(m_soupMessage.get());
++            int requestHeadersSize = 0;
++            soup_message_headers_foreach(requestHeaders, headers_size, &requestHeadersSize);
++            m_networkLoadMetrics.requestHeaderBytesSent = requestHeadersSize;
++        }
++
++        {
++            auto* responseHeaders = soup_message_get_response_headers(m_soupMessage.get());
++            int responseHeadersSize = 0;
++            soup_message_headers_foreach(responseHeaders, headers_size, &responseHeadersSize);
++            m_networkLoadMetrics.responseHeaderBytesReceived = responseHeadersSize;
++        }
+ #endif
+     }
+ 
 diff --git a/Source/WebKit/NetworkProcess/soup/NetworkSessionSoup.cpp b/Source/WebKit/NetworkProcess/soup/NetworkSessionSoup.cpp
 index 9873026a091fdf2974be1a1e734e6f5b30a7d7c5..17f2905841f190ab2e18862c5df477c4994bde5f 100644
 --- a/Source/WebKit/NetworkProcess/soup/NetworkSessionSoup.cpp
