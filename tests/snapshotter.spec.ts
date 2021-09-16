@@ -226,15 +226,17 @@ it.describe('snapshots', () => {
       sheet.addRule('button', 'color: red');
       (document as any).adoptedStyleSheets = [sheet];
 
-      const div = document.createElement('div');
-      const root = div.attachShadow({
-        mode: 'open'
-      });
-      root.append('foo');
       const sheet2 = new CSSStyleSheet();
       sheet2.addRule(':host', 'color: blue');
-      (root as any).adoptedStyleSheets = [sheet2];
-      document.body.appendChild(div);
+
+      for (const element of [document.createElement('div'), document.createElement('span')]) {
+        const root = element.attachShadow({
+          mode: 'open'
+        });
+        root.append('foo');
+        (root as any).adoptedStyleSheets = [sheet2];
+        document.body.appendChild(element);
+      }
     });
     const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
 
@@ -248,6 +250,56 @@ it.describe('snapshots', () => {
       return window.getComputedStyle(div).color;
     });
     expect(divColor).toBe('rgb(0, 0, 255)');
+    const spanColor = await frame.$eval('span', span => {
+      return window.getComputedStyle(span).color;
+    });
+    expect(spanColor).toBe('rgb(0, 0, 255)');
+  });
+
+  it('should work with adopted style sheets and replace/replaceSync', async ({ page, toImpl, showSnapshot, snapshotter, browserName }) => {
+    it.skip(browserName !== 'chromium', 'Constructed stylesheets are only in Chromium.');
+    await page.setContent('<button>Hello</button>');
+    await page.evaluate(() => {
+      const sheet = new CSSStyleSheet();
+      sheet.addRule('button', 'color: red');
+      (document as any).adoptedStyleSheets = [sheet];
+    });
+    const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
+    await page.evaluate(() => {
+      const [sheet] = (document as any).adoptedStyleSheets;
+      sheet.replaceSync(`button { color: blue }`);
+    });
+    const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot2');
+    await page.evaluate(() => {
+      const [sheet] = (document as any).adoptedStyleSheets;
+      sheet.replace(`button { color: #0F0 }`);
+    });
+    const snapshot3 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot3');
+
+    {
+      const frame = await showSnapshot(snapshot1);
+      await frame.waitForSelector('button');
+      const buttonColor = await frame.$eval('button', button => {
+        return window.getComputedStyle(button).color;
+      });
+      expect(buttonColor).toBe('rgb(255, 0, 0)');
+    }
+    {
+      const frame = await showSnapshot(snapshot2);
+      await frame.waitForSelector('button');
+      const buttonColor = await frame.$eval('button', button => {
+        return window.getComputedStyle(button).color;
+      });
+      expect(buttonColor).toBe('rgb(0, 0, 255)');
+    }
+    {
+      const frame = await showSnapshot(snapshot3);
+      await frame.waitForSelector('button');
+      const buttonColor = await frame.$eval('button', button => {
+        return window.getComputedStyle(button).color;
+      });
+      expect(buttonColor).toBe('rgb(0, 255, 0)');
+    }
   });
 
   it('should restore scroll positions', async ({ page, showSnapshot, toImpl, snapshotter, browserName }) => {

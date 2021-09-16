@@ -90,6 +90,8 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
       this._interceptNativeMethod(window.CSSStyleSheet.prototype, 'removeRule', (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet));
       this._interceptNativeGetter(window.CSSStyleSheet.prototype, 'rules', (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet));
       this._interceptNativeGetter(window.CSSStyleSheet.prototype, 'cssRules', (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet));
+      this._interceptNativeMethod(window.CSSStyleSheet.prototype, 'replaceSync', (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet));
+      this._interceptNativeAsyncMethod(window.CSSStyleSheet.prototype, 'replace', (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet));
 
       this._fakeBase = document.createElement('base');
 
@@ -104,6 +106,17 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
         return;
       obj[method] = function(...args: any[]) {
         const result = native.call(this, ...args);
+        cb(this, result);
+        return result;
+      };
+    }
+
+    private _interceptNativeAsyncMethod(obj: any, method: string, cb: (thisObj: any, result: any) => void) {
+      const native = obj[method] as Function;
+      if (!native)
+        return;
+      obj[method] = async function(...args: any[]) {
+        const result = await native.call(this, ...args);
         cb(this, result);
         return result;
       };
