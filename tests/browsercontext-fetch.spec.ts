@@ -789,3 +789,38 @@ it('should support multipart/form-data', async function({context, page, server})
   expect(fs.readFileSync(files['file'].path).toString()).toBe(file.buffer.toString('utf8'));
   expect(response.status()).toBe(200);
 });
+
+it('should support multipart/form-data with ReadSream values', async function({context, page, asset, server}) {
+  const formReceived = new Promise<any>(resolve => {
+    server.setRoute('/empty.html', async (serverRequest, res) => {
+      const form = new formidable.IncomingForm();
+      form.parse(serverRequest, (error, fields, files) => {
+        server.serveFile(serverRequest, res);
+        resolve({error, fields, files, serverRequest });
+      });
+    });
+  });
+  const readStream = fs.createReadStream(asset('simplezip.json'));
+  const [{error, fields, files, serverRequest}, response] = await Promise.all([
+    formReceived,
+    context._request.post(server.EMPTY_PAGE, {
+      headers: {
+        'content-type': 'multipart/form-data'
+      },
+      data: {
+        firstName: 'John',
+        lastName: 'Doe',
+        readStream
+      }
+    })
+  ]);
+  expect(error).toBeFalsy();
+  expect(serverRequest.method).toBe('POST');
+  expect(serverRequest.headers['content-type']).toContain('multipart/form-data');
+  expect(fields['firstName']).toBe('John');
+  expect(fields['lastName']).toBe('Doe');
+  expect(files['readStream'].name).toBe('simplezip.json');
+  expect(files['readStream'].type).toBe('application/json');
+  expect(fs.readFileSync(files['readStream'].path).toString()).toBe(fs.readFileSync(asset('simplezip.json')).toString());
+  expect(response.status()).toBe(200);
+});
