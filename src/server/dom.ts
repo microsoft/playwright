@@ -26,6 +26,7 @@ import * as types from './types';
 import { Progress, ProgressController } from './progress';
 import { FatalDOMError, RetargetableDOMError } from './common/domErrors';
 import { CallMetadata } from './instrumentation';
+import { isSessionClosedError } from './common/protocolError';
 
 type SetInputFilesFiles = channels.ElementHandleSetInputFilesParams['files'];
 
@@ -136,14 +137,26 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return main.evaluateAndWaitForSignals(pageFunction, [await main.injectedScript(), this, arg]);
   }
 
-  async evaluateInUtility<R, Arg>(pageFunction: js.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], R>, arg: Arg): Promise<R> {
-    const utility = await this._context.frame._utilityContext();
-    return utility.evaluate(pageFunction, [await utility.injectedScript(), this, arg]);
+  async evaluateInUtility<R, Arg>(pageFunction: js.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], R>, arg: Arg): Promise<R | 'error:notconnected'> {
+    try {
+      const utility = await this._context.frame._utilityContext();
+      return await utility.evaluate(pageFunction, [await utility.injectedScript(), this, arg]);
+    } catch (e) {
+      if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e))
+        throw e;
+      return 'error:notconnected';
+    }
   }
 
-  async evaluateHandleInUtility<R, Arg>(pageFunction: js.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], R>, arg: Arg): Promise<js.JSHandle<R>> {
-    const utility = await this._context.frame._utilityContext();
-    return utility.evaluateHandle(pageFunction, [await utility.injectedScript(), this, arg]);
+  async evaluateHandleInUtility<R, Arg>(pageFunction: js.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], R>, arg: Arg): Promise<js.JSHandle<R> | 'error:notconnected'> {
+    try {
+      const utility = await this._context.frame._utilityContext();
+      return await utility.evaluateHandle(pageFunction, [await utility.injectedScript(), this, arg]);
+    } catch (e) {
+      if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e))
+        throw e;
+      return 'error:notconnected';
+    }
   }
 
   async ownerFrame(): Promise<frames.Frame | null> {
@@ -162,52 +175,54 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async contentFrame(): Promise<frames.Frame | null> {
-    const isFrameElement = await this.evaluateInUtility(([injected, node]) => node && (node.nodeName === 'IFRAME' || node.nodeName === 'FRAME'), {});
+    const isFrameElement = throwRetargetableDOMError(await this.evaluateInUtility(([injected, node]) => node && (node.nodeName === 'IFRAME' || node.nodeName === 'FRAME'), {}));
     if (!isFrameElement)
       return null;
     return this._page._delegate.getContentFrame(this);
   }
 
   async getAttribute(name: string): Promise<string | null> {
-    return throwFatalDOMError(await this.evaluateInUtility(([injeced, node, name]) => {
+    return throwFatalDOMError(throwRetargetableDOMError(await this.evaluateInUtility(([injeced, node, name]) => {
       if (node.nodeType !== Node.ELEMENT_NODE)
         return 'error:notelement';
       const element = node as unknown as Element;
       return { value: element.getAttribute(name) };
-    }, name)).value;
+    }, name))).value;
   }
 
   async inputValue(): Promise<string> {
-    return throwFatalDOMError(await this.evaluateInUtility(([injeced, node]) => {
+    return throwFatalDOMError(throwRetargetableDOMError(await this.evaluateInUtility(([injeced, node]) => {
       if (node.nodeType !== Node.ELEMENT_NODE || (node.nodeName !== 'INPUT' && node.nodeName !== 'TEXTAREA' && node.nodeName !== 'SELECT'))
         return 'error:hasnovalue';
       const element = node as unknown as (HTMLInputElement | HTMLTextAreaElement);
       return { value: element.value };
-    }, undefined)).value;
+    }, undefined))).value;
   }
 
   async textContent(): Promise<string | null> {
-    return this.evaluateInUtility(([injected, node]) => node.textContent, {});
+    return throwRetargetableDOMError(await this.evaluateInUtility(([injected, node]) => {
+      return { value: node.textContent };
+    }, undefined)).value;
   }
 
   async innerText(): Promise<string> {
-    return throwFatalDOMError(await this.evaluateInUtility(([injected, node]) => {
+    return throwFatalDOMError(throwRetargetableDOMError(await this.evaluateInUtility(([injected, node]) => {
       if (node.nodeType !== Node.ELEMENT_NODE)
         return 'error:notelement';
       if (node.namespaceURI !== 'http://www.w3.org/1999/xhtml')
         return 'error:nothtmlelement';
       const element = node as unknown as HTMLElement;
       return { value: element.innerText };
-    }, {})).value;
+    }, undefined))).value;
   }
 
   async innerHTML(): Promise<string> {
-    return throwFatalDOMError(await this.evaluateInUtility(([injected, node]) => {
+    return throwFatalDOMError(throwRetargetableDOMError(await this.evaluateInUtility(([injected, node]) => {
       if (node.nodeType !== Node.ELEMENT_NODE)
         return 'error:notelement';
       const element = node as unknown as Element;
       return { value: element.innerHTML };
-    }, {})).value;
+    }, undefined))).value;
   }
 
   async dispatchEvent(type: string, eventInit: Object = {}) {
@@ -281,13 +296,15 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return result;
   }
 
-  private async _offsetPoint(offset: types.Point): Promise<types.Point | 'error:notvisible'> {
+  private async _offsetPoint(offset: types.Point): Promise<types.Point | 'error:notvisible' | 'error:notconnected'> {
     const [box, border] = await Promise.all([
       this.boundingBox(),
       this.evaluateInUtility(([injected, node]) => injected.getElementBorderWidth(node), {}).catch(e => {}),
     ]);
     if (!box || !border)
       return 'error:notvisible';
+    if (border === 'error:notconnected')
+      return border;
     // Make point relative to the padding box to align with offsetX/offsetY.
     return {
       x: box.x + border.left + offset.x,
@@ -318,7 +335,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         const timeout = waitTime[Math.min(retry - 1, waitTime.length - 1)];
         if (timeout) {
           progress.log(`  waiting ${timeout}ms`);
-          await this.evaluateInUtility(([injected, node, timeout]) => new Promise(f => setTimeout(f, timeout)), timeout);
+          const result = await this.evaluateInUtility(([injected, node, timeout]) => new Promise<void>(f => setTimeout(f, timeout)), timeout);
+          if (result === 'error:notconnected')
+            return result;
         }
       } else {
         progress.log(`attempting ${actionName} action${options.trial ? ' (trial run)' : ''}`);
@@ -362,10 +381,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     progress.log('  scrolling into view if needed');
     progress.throwIfAborted();  // Avoid action that has side-effects.
     if (forceScrollOptions) {
-      await this.evaluateInUtility(([injected, node, options]) => {
+      const scrolled = await this.evaluateInUtility(([injected, node, options]) => {
         if (node.nodeType === 1 /* Node.ELEMENT_NODE */)
           (node as Node as Element).scrollIntoView(options);
       }, forceScrollOptions);
+      if (scrolled === 'error:notconnected')
+        return scrolled;
     } else {
       const scrolled = await this._scrollRectIntoViewIfNeeded(position ? { x: position.x, y: position.y, width: 0, height: 0 } : undefined);
       if (scrolled !== 'done')
@@ -481,6 +502,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       const poll = await this.evaluateHandleInUtility(([injected, node, { optionsToSelect, force }]) => {
         return injected.waitForElementStatesAndPerformAction(node, ['visible', 'enabled'], force, injected.selectOptions.bind(injected, optionsToSelect));
       }, { optionsToSelect, force: options.force });
+      if (poll === 'error:notconnected')
+        return poll;
       const pollHandler = new InjectedScriptPollHandler(progress, poll);
       const result = throwFatalDOMError(await pollHandler.finish());
       await this._page._doSlowMo();
@@ -504,6 +527,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       const poll = await this.evaluateHandleInUtility(([injected, node, { value, force }]) => {
         return injected.waitForElementStatesAndPerformAction(node, ['visible', 'enabled', 'editable'], force, injected.fill.bind(injected, value));
       }, { value, force: options.force });
+      if (poll === 'error:notconnected')
+        return poll;
       const pollHandler = new InjectedScriptPollHandler(progress, poll);
       const filled = throwFatalDOMError(await pollHandler.finish());
       progress.throwIfAborted();  // Avoid action that has side-effects.
@@ -530,7 +555,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       const poll = await this.evaluateHandleInUtility(([injected, node, force]) => {
         return injected.waitForElementStatesAndPerformAction(node, ['visible'], force, injected.selectText.bind(injected));
       }, options.force);
-      const pollHandler = new InjectedScriptPollHandler(progress, poll);
+      const pollHandler = new InjectedScriptPollHandler(progress, throwRetargetableDOMError(poll));
       const result = throwFatalDOMError(await pollHandler.finish());
       assertDone(throwRetargetableDOMError(result));
     }, this._page._timeoutSettings.timeout(options));
@@ -559,6 +584,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         return 'error:notmultiplefileinput';
       return element;
     }, files.length > 1);
+    if (retargeted === 'error:notconnected')
+      return retargeted;
     if (!retargeted._objectId)
       return throwFatalDOMError(retargeted.rawValue() as FatalDOMError | 'error:notconnected');
     await progress.beforeInputAction(this);
@@ -734,7 +761,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       const poll = await this.evaluateHandleInUtility(([injected, node, state]) => {
         return injected.waitForElementStatesAndPerformAction(node, [state], false, () => 'done' as const);
       }, state);
-      const pollHandler = new InjectedScriptPollHandler(progress, poll);
+      const pollHandler = new InjectedScriptPollHandler(progress, throwRetargetableDOMError(poll));
       assertDone(throwRetargetableDOMError(throwFatalDOMError(await pollHandler.finish())));
     }, this._page._timeoutSettings.timeout(options));
   }
@@ -775,11 +802,13 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       progress.log(`  waiting for element to be visible, enabled and stable`);
     else
       progress.log(`  waiting for element to be visible and stable`);
-    const poll = this.evaluateHandleInUtility(([injected, node, { waitForEnabled, force }]) => {
+    const poll = await this.evaluateHandleInUtility(([injected, node, { waitForEnabled, force }]) => {
       return injected.waitForElementStatesAndPerformAction(node,
           waitForEnabled ? ['visible', 'stable', 'enabled'] : ['visible', 'stable'], force, () => 'done' as const);
     }, { waitForEnabled, force });
-    const pollHandler = new InjectedScriptPollHandler(progress, await poll);
+    if (poll === 'error:notconnected')
+      return poll;
+    const pollHandler = new InjectedScriptPollHandler(progress, poll);
     const result = await pollHandler.finish();
     if (waitForEnabled)
       progress.log('  element is visible, enabled and stable');
@@ -839,11 +868,15 @@ export class InjectedScriptPollHandler<T> {
     }
   }
 
-  async finish(): Promise<T> {
+  async finish(): Promise<T | 'error:notconnected'> {
     try {
       const result = await this._poll!.evaluate(poll => poll.run());
       await this._finishInternal();
       return result;
+    } catch (e) {
+      if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e))
+        throw e;
+      return 'error:notconnected';
     } finally {
       await this.cancel();
     }
