@@ -165,7 +165,7 @@ export class ImbaLanguageGenerator implements LanguageGenerator {
     formatter.add(`
       const { test, expect${options.deviceName ? ', devices' : ''} } = require('@playwright/test');
 ${useText ? '\ntest.use(' + useText + ');\n' : ''}
-      test('test', do({ page })`);
+      test 'test', do({ page })`);
     return formatter.format();
   }
 
@@ -277,7 +277,8 @@ export class ImbaFormatter {
         spaces = spaces.substring(this._baseIndent.length);
         return '';
       }
-      return this._baseOffset + line;
+      const lineWithSpaces = this._baseOffset + line;
+      return lineWithSpaces.replace(/\s\s\s\s/g, '\t');
     }).join('\n');
   }
 }
