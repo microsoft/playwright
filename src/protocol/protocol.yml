@@ -233,6 +233,7 @@ FetchRequest:
           type: array?
           items: NameValue
         postData: binary?
+        formData: json?
         timeout: number?
         failOnStatusCode: boolean?
       returns:

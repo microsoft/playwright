@@ -153,6 +153,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     method: tOptional(tString),
     headers: tOptional(tArray(tType('NameValue'))),
     postData: tOptional(tBinary),
+    formData: tOptional(tAny),
     timeout: tOptional(tNumber),
     failOnStatusCode: tOptional(tBoolean),
   });
