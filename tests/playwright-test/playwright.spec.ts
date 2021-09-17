@@ -268,7 +268,7 @@ test('should report error and pending operations on timeout', async ({ runInline
   expect(result.output).toContain('Pending operations:');
   expect(result.output).toContain('- page.click at a.test.ts:9:16');
   expect(result.output).toContain('- page.textContent at a.test.ts:10:16');
-  expect(result.output).toContain('retrieving textContent from "text=More missing"');
+  expect(result.output).toContain('waiting for selector');
   expect(stripAscii(result.output)).toContain(`10 |           page.textContent('text=More missing'),`);
 });
 
