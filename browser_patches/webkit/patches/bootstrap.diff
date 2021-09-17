@@ -5823,7 +5823,7 @@ index a7313926acda59218b0215110b973a53fa4bb2f9..48812e8193eae29bed0c8c3aedcc4820
      DocumentWriter& writer() const { return m_writer; }
  
 diff --git a/Source/WebCore/loader/FrameLoader.cpp b/Source/WebCore/loader/FrameLoader.cpp
-index 2a6e166eb227e564b881ed3189b8c1125114d1a7..e437da57e6491cbbb584318e03673a47cca30fad 100644
+index 2a6e166eb227e564b881ed3189b8c1125114d1a7..afc6f97c4f172e453510f8bce434235db932909b 100644
 --- a/Source/WebCore/loader/FrameLoader.cpp
 +++ b/Source/WebCore/loader/FrameLoader.cpp
 @@ -1168,6 +1168,7 @@ void FrameLoader::loadInSameDocument(const URL& url, SerializedScriptValue* stat
@@ -5864,8 +5864,8 @@ index 2a6e166eb227e564b881ed3189b8c1125114d1a7..e437da57e6491cbbb584318e03673a47
 +            platform = customNavigatorPlatform;
      }
 -    return String();
-+    
-+    InspectorInstrumentation::applyUserAgentOverride(m_frame, platform);
++
++    InspectorInstrumentation::applyPlatformOverride(m_frame, platform);
 +
 +    return platform;
  }
