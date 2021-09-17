@@ -285,16 +285,7 @@ Following are the usual command line patterns. Learn more about the [command lin
 
 - Run in debug mode with [Playwright Inspector](./inspector.md)
   ```bash
-  # Linux/macOS
-  PWDEBUG=1 npx playwright test
-
-  # Windows with cmd.exe
-  set PWDEBUG=1
-  npx playwright test
-
-  # Windows with PowerShell
-  $env:PWDEBUG=1
-  npx playwright test
+  npx playwright test --debug
   ```
 
 - Ask for help

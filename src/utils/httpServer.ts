@@ -17,17 +17,24 @@
 import * as http from 'http';
 import fs from 'fs';
 import path from 'path';
+import { Server as WebSocketServer } from 'ws';
 import * as mime from 'mime';
 
 export type ServerRouteHandler = (request: http.IncomingMessage, response: http.ServerResponse) => boolean;
 
 export class HttpServer {
-  private _server: http.Server | undefined;
+  private _server: http.Server;
   private _urlPrefix: string;
+  private _port: number = 0;
   private _routes: { prefix?: string, exact?: string, handler: ServerRouteHandler }[] = [];
   private _activeSockets = new Set<import('net').Socket>();
   constructor() {
     this._urlPrefix = '';
+    this._server = http.createServer(this._onRequest.bind(this));
+  }
+
+  createWebSocketServer(): WebSocketServer {
+    return new WebSocketServer({ server: this._server });
   }
 
   routePrefix(prefix: string, handler: ServerRouteHandler) {
@@ -38,9 +45,12 @@ export class HttpServer {
     this._routes.push({ exact: path, handler });
   }
 
+  port(): number {
+    return this._port;
+  }
+
   async start(port?: number): Promise<string> {
-    console.assert(!this._server, 'server already started');
-    this._server = http.createServer(this._onRequest.bind(this));
+    console.assert(!this._urlPrefix, 'server already started');
     this._server.on('connection', socket => {
       this._activeSockets.add(socket);
       socket.once('close', () => this._activeSockets.delete(socket));
@@ -48,7 +58,12 @@ export class HttpServer {
     this._server.listen(port);
     await new Promise(cb => this._server!.once('listening', cb));
     const address = this._server.address();
-    this._urlPrefix = typeof address === 'string' ? address : `http://127.0.0.1:${address.port}`;
+    if (typeof address === 'string') {
+      this._urlPrefix = address;
+    } else {
+      this._port = address.port;
+      this._urlPrefix = `http://127.0.0.1:${address.port}`;
+    }
     return this._urlPrefix;
   }
 
@@ -58,7 +73,7 @@ export class HttpServer {
     await new Promise(cb => this._server!.close(cb));
   }
 
-  urlPrefix() {
+  urlPrefix(): string {
     return this._urlPrefix;
   }
 

@@ -153,6 +153,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     method: tOptional(tString),
     headers: tOptional(tArray(tType('NameValue'))),
     postData: tOptional(tBinary),
+    formData: tOptional(tAny),
     timeout: tOptional(tNumber),
     failOnStatusCode: tOptional(tBoolean),
   });
@@ -162,6 +163,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.FetchRequestDisposeFetchResponseParams = tObject({
     fetchUid: tString,
   });
+  scheme.FetchRequestDisposeParams = tOptional(tObject({}));
   scheme.FetchResponse = tObject({
     fetchUid: tString,
     url: tString,

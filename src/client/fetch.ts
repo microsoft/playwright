@@ -14,20 +14,25 @@
  * limitations under the License.
  */
 
+import { ReadStream } from 'fs';
+import path from 'path';
+import * as mime from 'mime';
+import { Serializable } from '../../types/structs';
 import * as api from '../../types/types';
 import { HeadersArray } from '../common/types';
 import * as channels from '../protocol/channels';
-import { assert, headersObjectToArray, isString, objectToArray } from '../utils/utils';
+import { kBrowserOrContextClosedError } from '../utils/errors';
+import { assert, headersObjectToArray, isFilePayload, isString, objectToArray } from '../utils/utils';
 import { ChannelOwner } from './channelOwner';
 import * as network from './network';
 import { RawHeaders } from './network';
-import { Headers } from './types';
+import { FilePayload, Headers } from './types';
 
 export type FetchOptions = {
   params?: { [key: string]: string; },
   method?: string,
   headers?: Headers,
-  data?: string | Buffer,
+  data?: string | Buffer | Serializable,
   timeout?: number,
   failOnStatusCode?: boolean,
 };
@@ -39,6 +44,12 @@ export class FetchRequest extends ChannelOwner<channels.FetchRequestChannel, cha
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.FetchRequestInitializer) {
     super(parent, type, guid, initializer);
+  }
+
+  dispose(): Promise<void> {
+    return this._wrapApiCall(async (channel: channels.FetchRequestChannel) => {
+      await channel.dispose();
+    });
   }
 
   async get(
@@ -60,7 +71,7 @@ export class FetchRequest extends ChannelOwner<channels.FetchRequestChannel, cha
     options?: {
       params?: { [key: string]: string; };
       headers?: { [key: string]: string; };
-      data?: string | Buffer;
+      data?: string | Buffer | Serializable;
       timeout?: number;
       failOnStatusCode?: boolean;
     }): Promise<FetchResponse> {
@@ -80,9 +91,34 @@ export class FetchRequest extends ChannelOwner<channels.FetchRequestChannel, cha
       // Cannot call allHeaders() here as the request may be paused inside route handler.
       const headersObj = options.headers || request?.headers() ;
       const headers = headersObj ? headersObjectToArray(headersObj) : undefined;
-      let postDataBuffer = isString(options.data) ? Buffer.from(options.data, 'utf8') : options.data;
-      if (postDataBuffer === undefined)
-        postDataBuffer = request?.postDataBuffer() || undefined;
+      let formData: any;
+      let postDataBuffer: Buffer | undefined;
+      if (options.data) {
+        if (isString(options.data)) {
+          postDataBuffer = Buffer.from(options.data, 'utf8');
+        } else if (Buffer.isBuffer(options.data)) {
+          postDataBuffer = options.data;
+        } else if (typeof options.data === 'object') {
+          formData = {};
+          // Convert file-like values to ServerFilePayload structs.
+          for (const [name, value] of Object.entries(options.data)) {
+            if (isFilePayload(value)) {
+              const payload = value as FilePayload;
+              if (!Buffer.isBuffer(payload.buffer))
+                throw new Error(`Unexpected buffer type of 'data.${name}'`);
+              formData[name] = filePayloadToJson(payload);
+            } else if (value instanceof ReadStream) {
+              formData[name] = await readStreamToJson(value as ReadStream);
+            } else {
+              formData[name] = value;
+            }
+          }
+        } else {
+          throw new Error(`Unexpected 'data' type`);
+        }
+        if (postDataBuffer === undefined && formData === undefined)
+          postDataBuffer = request?.postDataBuffer() || undefined;
+      }
       const postData = (postDataBuffer ? postDataBuffer.toString('base64') : undefined);
       const result = await channel.fetch({
         url,
@@ -90,11 +126,12 @@ export class FetchRequest extends ChannelOwner<channels.FetchRequestChannel, cha
         method,
         headers,
         postData,
+        formData,
         timeout: options.timeout,
         failOnStatusCode: options.failOnStatusCode,
       });
       if (result.error)
-        throw new Error(`Request failed: ${result.error}`);
+        throw new Error(result.error);
       return new FetchResponse(this, result.response!);
     });
   }
@@ -137,10 +174,16 @@ export class FetchResponse implements api.FetchResponse {
 
   async body(): Promise<Buffer> {
     return this._request._wrapApiCall(async (channel: channels.FetchRequestChannel) => {
-      const result = await channel.fetchResponseBody({ fetchUid: this._fetchUid() });
-      if (!result.binary)
-        throw new Error('Response has been disposed');
-      return Buffer.from(result.binary!, 'base64');
+      try {
+        const result = await channel.fetchResponseBody({ fetchUid: this._fetchUid() });
+        if (!result.binary)
+          throw new Error('Response has been disposed');
+        return Buffer.from(result.binary!, 'base64');
+      } catch (e) {
+        if (e.message === kBrowserOrContextClosedError)
+          throw new Error('Response has been disposed');
+        throw e;
+      }
     });
   }
 
@@ -163,4 +206,33 @@ export class FetchResponse implements api.FetchResponse {
   _fetchUid(): string {
     return this._initializer.fetchUid;
   }
+}
+
+type ServerFilePayload = {
+  name: string,
+  mimeType: string,
+  buffer: string,
+};
+
+function filePayloadToJson(payload: FilePayload): ServerFilePayload {
+  return {
+    name: payload.name,
+    mimeType: payload.mimeType,
+    buffer: payload.buffer.toString('base64'),
+  };
+}
+
+async function readStreamToJson(stream: ReadStream): Promise<ServerFilePayload> {
+  const buffer = await new Promise<Buffer>((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    stream.on('data', chunk => chunks.push(chunk));
+    stream.on('end', () => resolve(Buffer.concat(chunks)));
+    stream.on('error', err => reject(err));
+  });
+  const streamPath: string = Buffer.isBuffer(stream.path) ? stream.path.toString('utf8') : stream.path;
+  return {
+    name: path.basename(streamPath),
+    mimeType: mime.getType(streamPath) || 'application/octet-stream',
+    buffer: buffer.toString('base64'),
+  };
 }

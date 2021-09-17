@@ -20,7 +20,7 @@ import type { LaunchOptions, BrowserContextOptions, Page, BrowserContext, Browse
 import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo } from '../../types/test';
 import { rootTestType } from './testType';
 import { createGuid, removeFolders } from '../utils/utils';
-import { TestInfoImpl } from './types';
+import { GridClient } from '../grid/gridClient';
 export { expect } from './expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
@@ -36,7 +36,15 @@ type WorkerAndFileFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
 export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
   defaultBrowserType: [ 'chromium', { scope: 'worker' } ],
   browserName: [ ({ defaultBrowserType }, use) => use(defaultBrowserType), { scope: 'worker' } ],
-  playwright: [ require('../inprocess'), { scope: 'worker' } ],
+  playwright: [async ({}, use, workerInfo) => {
+    if (process.env.PW_GRID) {
+      const gridClient = await GridClient.connect(process.env.PW_GRID);
+      await use(gridClient.playwright() as any);
+      await gridClient.close();
+    } else {
+      await use(require('../inprocess'));
+    }
+  }, { scope: 'worker' } ],
   headless: [ undefined, { scope: 'worker' } ],
   channel: [ undefined, { scope: 'worker' } ],
   launchOptions: [ {}, { scope: 'worker' } ],
@@ -203,13 +211,18 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
         await context.tracing.stop();
       }
       (context as any)._csi = {
-        onApiCall: (stackTrace: ParsedStackTrace) => {
-          const testInfoImpl = testInfo as TestInfoImpl;
-          const existingStep = testInfoImpl._currentSteps().find(step => step.category === 'pw:api' || step.category === 'expect');
-          const newStep = existingStep ? undefined : testInfoImpl._addStep('pw:api', stackTrace.apiName);
-          return (error?: Error) => {
-            newStep?.complete(error);
-          };
+        onApiCallBegin: (apiCall: string) => {
+          const step = (testInfo as any)._addStep({
+            category: 'pw:api',
+            title: apiCall,
+            canHaveChildren: false,
+            forceNoParent: false,
+          });
+          return { userObject: step };
+        },
+        onApiCallEnd: (data: { userObject: any }, error?: Error) => {
+          const step = data.userObject;
+          step?.complete(error);
         },
       };
     };

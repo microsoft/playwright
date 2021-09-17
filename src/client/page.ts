@@ -383,9 +383,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   }
 
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
-    return this._wrapApiCall(async (channel: channels.PageChannel) => {
-      return this._waitForEvent(event, optionsOrPredicate, `waiting for event "${event}"`);
-    });
+    return this._waitForEvent(event, optionsOrPredicate, `waiting for event "${event}"`);
   }
 
   private async _waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions, logLine?: string): Promise<any> {

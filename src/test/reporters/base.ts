@@ -121,11 +121,13 @@ export class BaseReporter implements Reporter  {
     console.log('');
     if (unexpected.length) {
       console.log(colors.red(`  ${unexpected.length} failed`));
-      this._printTestHeaders(unexpected);
+      for (const test of unexpected)
+        console.log(colors.red(formatTestHeader(this.config, test, '    ')));
     }
     if (flaky.length) {
-      console.log(colors.red(`  ${flaky.length} flaky`));
-      this._printTestHeaders(flaky);
+      console.log(colors.yellow(`  ${flaky.length} flaky`));
+      for (const test of flaky)
+        console.log(colors.yellow(formatTestHeader(this.config, test, '    ')));
     }
     if (skipped)
       console.log(colors.yellow(`  ${skipped} skipped`));
@@ -133,12 +135,6 @@ export class BaseReporter implements Reporter  {
       console.log(colors.green(`  ${expected} passed`) + colors.dim(` (${milliseconds(this.duration)})`));
     if (this.result.status === 'timedout')
       console.log(colors.red(`  Timed out waiting ${this.config.globalTimeout / 1000}s for the entire test run`));
-  }
-
-  private _printTestHeaders(tests: TestCase[]) {
-    tests.forEach(test => {
-      console.log(formatTestHeader(this.config, test, '    '));
-    });
   }
 
   private _printFailures(failures: TestCase[]) {
@@ -154,7 +150,7 @@ export class BaseReporter implements Reporter  {
 
 export function formatFailure(config: FullConfig, test: TestCase, index?: number, stdio?: boolean): string {
   const lines: string[] = [];
-  lines.push(formatTestHeader(config, test, '  ', index));
+  lines.push(colors.red(formatTestHeader(config, test, '  ', index)));
   for (const result of test.results) {
     const resultTokens = formatResultFailure(test, result, '    ');
     if (!resultTokens.length)
@@ -239,7 +235,7 @@ export function formatTestTitle(config: FullConfig, test: TestCase, step?: TestS
 function formatTestHeader(config: FullConfig, test: TestCase, indent: string, index?: number): string {
   const title = formatTestTitle(config, test);
   const header = `${indent}${index ? index + ') ' : ''}${title}`;
-  return colors.red(pad(header, '='));
+  return pad(header, '=');
 }
 
 export function formatError(error: TestError, file?: string) {
@@ -247,22 +243,20 @@ export function formatError(error: TestError, file?: string) {
   const tokens = [];
   if (stack) {
     tokens.push('');
-    const message = error.message || '';
-    const messageLocation = stack.indexOf(message);
-    const preamble = stack.substring(0, messageLocation + message.length);
-    tokens.push(preamble);
-    const position = file ? positionInFile(stack, file) : null;
+    const lines = stack.split('\n');
+    let firstStackLine = lines.findIndex(line => line.startsWith('    at '));
+    if (firstStackLine === -1)
+      firstStackLine = lines.length;
+    tokens.push(lines.slice(0, firstStackLine).join('\n'));
+    const stackLines = lines.slice(firstStackLine);
+    const position = file ? positionInFile(stackLines, file) : null;
     if (position) {
       const source = fs.readFileSync(file!, 'utf8');
       tokens.push('');
-      tokens.push(codeFrameColumns(source, {
-        start: position,
-      },
-      { highlightCode: colors.enabled }
-      ));
+      tokens.push(codeFrameColumns(source, { start: position }, { highlightCode: colors.enabled }));
     }
     tokens.push('');
-    tokens.push(colors.dim(preamble.length > 0 ? stack.substring(preamble.length + 1) : stack));
+    tokens.push(colors.dim(stackLines.join('\n')));
   } else if (error.message) {
     tokens.push('');
     tokens.push(error.message);
@@ -283,10 +277,10 @@ function indent(lines: string, tab: string) {
   return lines.replace(/^(?=.+$)/gm, tab);
 }
 
-function positionInFile(stack: string, file: string): { column: number; line: number; } | undefined {
+function positionInFile(stackLines: string[], file: string): { column: number; line: number; } | undefined {
   // Stack will have /private/var/folders instead of /var/folders on Mac.
   file = fs.realpathSync(file);
-  for (const line of stack.split('\n')) {
+  for (const line of stackLines) {
     const parsed = stackUtils.parseLine(line);
     if (!parsed || !parsed.file)
       continue;

@@ -22,12 +22,13 @@ import * as https from 'https';
 import { BrowserContext } from './browserContext';
 import * as types from './types';
 import { pipeline, Readable, Transform } from 'stream';
-import { createGuid, monotonicTime } from '../utils/utils';
+import { createGuid, isFilePayload, monotonicTime } from '../utils/utils';
 import { SdkObject } from './instrumentation';
 import { Playwright } from './playwright';
 import { HeadersArray, ProxySettings } from './types';
 import { HTTPCredentials } from '../../types/types';
 import { TimeoutSettings } from '../utils/timeoutSettings';
+import { MultipartFormData } from './formData';
 
 
 type FetchRequestOptions = {
@@ -41,15 +42,34 @@ type FetchRequestOptions = {
 };
 
 export abstract class FetchRequest extends SdkObject {
+  static Events = {
+    Dispose: 'dispose',
+  };
+
   readonly fetchResponses: Map<string, Buffer> = new Map();
+  protected static allInstances: Set<FetchRequest> = new Set();
+
+  static findResponseBody(guid: string): Buffer | undefined {
+    for (const request of FetchRequest.allInstances) {
+      const body = request.fetchResponses.get(guid);
+      if (body)
+        return body;
+    }
+    return undefined;
+  }
 
   constructor(parent: SdkObject) {
     super(parent, 'fetchRequest');
+    FetchRequest.allInstances.add(this);
   }
 
-  dispose() {
+  protected _disposeImpl() {
+    FetchRequest.allInstances.delete(this);
     this.fetchResponses.clear();
+    this.emit(FetchRequest.Events.Dispose);
   }
+
+  abstract dispose(): void;
 
   abstract _defaultOptions(): FetchRequestOptions;
   abstract _addCookies(cookies: types.SetNetworkCookieParam[]): Promise<void>;
@@ -111,7 +131,13 @@ export abstract class FetchRequest extends SdkObject {
           requestUrl.searchParams.set(name, value);
       }
 
-      const fetchResponse = await this._sendRequest(requestUrl, options, params.postData);
+      let postData;
+      if (['POST', 'PUSH', 'PATCH'].includes(method))
+        postData = params.formData ? serilizeFormData(params.formData, headers) : params.postData;
+      else if (params.postData || params.formData)
+        throw new Error(`Method ${method} does not accept post data`);
+
+      const fetchResponse = await this._sendRequest(requestUrl, options, postData);
       const fetchUid = this._storeResponseBody(fetchResponse.body);
       if (params.failOnStatusCode && (fetchResponse.status < 200 || fetchResponse.status >= 400))
         return { error: `${fetchResponse.status} ${fetchResponse.statusText}` };
@@ -273,6 +299,11 @@ export class BrowserContextFetchRequest extends FetchRequest {
   constructor(context: BrowserContext) {
     super(context);
     this._context = context;
+    context.once(BrowserContext.Events.Close, () => this._disposeImpl());
+  }
+
+  override dispose() {
+    this.fetchResponses.clear();
   }
 
   _defaultOptions(): FetchRequestOptions {
@@ -300,6 +331,10 @@ export class BrowserContextFetchRequest extends FetchRequest {
 export class GlobalFetchRequest extends FetchRequest {
   constructor(playwright: Playwright) {
     super(playwright);
+  }
+
+  override dispose() {
+    this._disposeImpl();
   }
 
   _defaultOptions(): FetchRequestOptions {
@@ -381,4 +416,32 @@ function parseCookie(header: string) {
     }
   }
   return cookie;
+}
+
+function serilizeFormData(data: any, headers: { [name: string]: string }): Buffer {
+  const contentType = headers['content-type'] || 'application/json';
+  if (contentType === 'application/json') {
+    const json = JSON.stringify(data);
+    headers['content-type'] ??= contentType;
+    return Buffer.from(json, 'utf8');
+  } else if (contentType === 'application/x-www-form-urlencoded') {
+    const searchParams = new URLSearchParams();
+    for (const [name, value] of Object.entries(data))
+      searchParams.append(name, String(value));
+    return Buffer.from(searchParams.toString(), 'utf8');
+  } else if (contentType === 'multipart/form-data') {
+    const formData = new MultipartFormData();
+    for (const [name, value] of Object.entries(data)) {
+      if (isFilePayload(value)) {
+        const payload = value as types.FilePayload;
+        formData.addFileField(name, payload);
+      } else if (value !== undefined) {
+        formData.addField(name, String(value));
+      }
+    }
+    headers['content-type'] = formData.contentTypeHeader();
+    return formData.finish();
+  } else {
+    throw new Error(`Cannot serialize data using content type: ${contentType}`);
+  }
 }

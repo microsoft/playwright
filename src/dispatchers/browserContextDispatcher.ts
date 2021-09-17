@@ -15,7 +15,7 @@
  */
 
 import { BrowserContext } from '../server/browserContext';
-import { Dispatcher, DispatcherScope, existingDispatcher, lookupDispatcher } from './dispatcher';
+import { Dispatcher, DispatcherScope, lookupDispatcher } from './dispatcher';
 import { PageDispatcher, BindingCallDispatcher, WorkerDispatcher } from './pageDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 import * as channels from '../protocol/channels';
@@ -58,10 +58,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     context.on(BrowserContext.Events.Close, () => {
       this._dispatchEvent('close');
       this._dispose();
-      const fetch = existingDispatcher<FetchRequestDispatcher>(this._context.fetchRequest);
-      // FetchRequestDispatcher is created in the browser rather then context scope but its
-      // lifetime is bound to the context dispatcher, so we manually dispose it here.
-      fetch._disposeDispatcher();
     });
 
     if (context._browser.options.name === 'chromium') {

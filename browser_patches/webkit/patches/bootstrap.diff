@@ -2287,20 +2287,18 @@ index 4a12b5a4393fe2bbe39673e3fa547c9d6976abd7..678b777736019debbd25fcd72fd34f3d
  
  if (Systemd_FOUND)
 diff --git a/Source/WTF/wtf/PlatformHave.h b/Source/WTF/wtf/PlatformHave.h
-index b066e5fc131fc4e8b7fb956795379989f6a85bcc..2f45ae9c423aeba3c93eb24081ec4091beec57e7 100644
+index b066e5fc131fc4e8b7fb956795379989f6a85bcc..9008dfb7a119ecb2a391a76507afe3e041b41c70 100644
 --- a/Source/WTF/wtf/PlatformHave.h
 +++ b/Source/WTF/wtf/PlatformHave.h
-@@ -387,8 +387,8 @@
+@@ -387,7 +387,7 @@
  #define HAVE_NSHTTPCOOKIESTORAGE__INITWITHIDENTIFIER_WITH_INACCURATE_NULLABILITY 1
  #endif
  
 -#if PLATFORM(MAC) || PLATFORM(IOS) || PLATFORM(MACCATALYST) || PLATFORM(GTK) || PLATFORM(WPE)
--#define HAVE_OS_DARK_MODE_SUPPORT 1
 +#if PLATFORM(MAC) || PLATFORM(IOS) || PLATFORM(MACCATALYST) || PLATFORM(GTK) || PLATFORM(WPE) || PLATFORM(WIN)
-+#define HAVE_OS_DARK_MODE_SUPPORT 0
+ #define HAVE_OS_DARK_MODE_SUPPORT 1
  #endif
  
- #if PLATFORM(MAC) && __MAC_OS_X_VERSION_MIN_REQUIRED < 110000
 diff --git a/Source/WTF/wtf/PlatformWPE.cmake b/Source/WTF/wtf/PlatformWPE.cmake
 index 643ef0fcdf4f3ce4a1f27bc0cc6e179b7143bbd4..f6ee05b80ebc200d0db74fc7e975d96ce0dcd75f 100644
 --- a/Source/WTF/wtf/PlatformWPE.cmake
@@ -9847,7 +9845,7 @@ index 1c427ddb78d6953fe8960c5692afde4f4f0eee85..cf33ff6076dd95ffe564f1dde89c177a
  
      WebCore::ShouldRelaxThirdPartyCookieBlocking m_shouldRelaxThirdPartyCookieBlocking { WebCore::ShouldRelaxThirdPartyCookieBlocking::No };
 diff --git a/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp b/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp
-index 175283132c0ca93eb4e6c4f7a9c466e7b6b22764..9cf8319b3bb71ba1503243b71569d9e3c567a166 100644
+index 175283132c0ca93eb4e6c4f7a9c466e7b6b22764..86fa6bef3c6ca8bc79c2bc02781dd93f9d82041a 100644
 --- a/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp
 +++ b/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp
 @@ -493,6 +493,7 @@ void NetworkDataTaskSoup::didSendRequest(GRefPtr<GInputStream>&& inputStream)
@@ -9867,6 +9865,40 @@ index 175283132c0ca93eb4e6c4f7a9c466e7b6b22764..9cf8319b3bb71ba1503243b71569d9e3
      auto error = static_cast<NetworkSessionSoup&>(*m_session).soupNetworkSession().checkTLSErrors(url, certificate, tlsErrors);
      if (!error)
          return true;
+@@ -1210,6 +1213,12 @@ static String tlsProtocolVersionToString(GTlsProtocolVersion version)
+ }
+ #endif
+ 
++static void headers_size(const char *name, const char *value, gpointer pointer)
++{
++    int* size = static_cast<int*>(pointer);
++    *size += strlen(name) + strlen(value) + 4;
++}
++
+ void NetworkDataTaskSoup::didGetHeaders()
+ {
+     // We are a bit more conservative with the persistent credential storage than the session store,
+@@ -1253,6 +1262,20 @@ void NetworkDataTaskSoup::didGetHeaders()
+         m_networkLoadMetrics.tlsProtocol = tlsProtocolVersionToString(soup_message_get_tls_protocol_version(m_soupMessage.get()));
+         m_networkLoadMetrics.tlsCipher = String::fromUTF8(soup_message_get_tls_ciphersuite_name(m_soupMessage.get()));
+         m_networkLoadMetrics.responseHeaderBytesReceived = soup_message_metrics_get_response_header_bytes_received(metrics);
++#else
++        {
++            auto* requestHeaders = soup_message_get_request_headers(m_soupMessage.get());
++            int requestHeadersSize = 0;
++            soup_message_headers_foreach(requestHeaders, headers_size, &requestHeadersSize);
++            m_networkLoadMetrics.requestHeaderBytesSent = requestHeadersSize;
++        }
++
++        {
++            auto* responseHeaders = soup_message_get_response_headers(m_soupMessage.get());
++            int responseHeadersSize = 0;
++            soup_message_headers_foreach(responseHeaders, headers_size, &responseHeadersSize);
++            m_networkLoadMetrics.responseHeaderBytesReceived = responseHeadersSize;
++        }
+ #endif
+     }
+ 
 diff --git a/Source/WebKit/NetworkProcess/soup/NetworkSessionSoup.cpp b/Source/WebKit/NetworkProcess/soup/NetworkSessionSoup.cpp
 index 9873026a091fdf2974be1a1e734e6f5b30a7d7c5..17f2905841f190ab2e18862c5df477c4994bde5f 100644
 --- a/Source/WebKit/NetworkProcess/soup/NetworkSessionSoup.cpp
@@ -21804,7 +21836,7 @@ index 0000000000000000000000000000000000000000..dd6a53e2d57318489b7e49dd7373706d
 +    LIBVPX_LIBRARIES
 +)
 diff --git a/Source/cmake/OptionsGTK.cmake b/Source/cmake/OptionsGTK.cmake
-index 5e8501a6000a30a192bbd603e7dab8a2d7714024..2ba5734d33d482c938cbbe206c52c5f243e5caee 100644
+index 5e8501a6000a30a192bbd603e7dab8a2d7714024..50b284f48a747829ff6a28a6416aecde323d4c28 100644
 --- a/Source/cmake/OptionsGTK.cmake
 +++ b/Source/cmake/OptionsGTK.cmake
 @@ -5,6 +5,7 @@ WEBKIT_OPTION_BEGIN()
@@ -21879,17 +21911,8 @@ index 5e8501a6000a30a192bbd603e7dab8a2d7714024..2ba5734d33d482c938cbbe206c52c5f2
  include(GStreamerDependencies)
  
  # Finalize the value for all options. Do not attempt to use an option before
-@@ -268,7 +283,7 @@ if (NOT EXISTS "${TOOLS_DIR}/glib/apply-build-revision-to-files.py")
- endif ()
- 
- SET_AND_EXPOSE_TO_BUILD(HAVE_GTK_UNIX_PRINTING ${GTK_UNIX_PRINT_FOUND})
--SET_AND_EXPOSE_TO_BUILD(HAVE_OS_DARK_MODE_SUPPORT 1)
-+SET_AND_EXPOSE_TO_BUILD(HAVE_OS_DARK_MODE_SUPPORT 0)
- 
- # GUri is available in GLib since version 2.66, but we only want to use it if version is >= 2.67.1.
- if (PC_GLIB_VERSION VERSION_GREATER "2.67.1" OR PC_GLIB_VERSION STREQUAL "2.67.1")
 diff --git a/Source/cmake/OptionsWPE.cmake b/Source/cmake/OptionsWPE.cmake
-index 0e23732209de52a342e8dc19eea5efbb7b85b97a..398b92a14e8273a929fc359ad821eccd9b48a06b 100644
+index 0e23732209de52a342e8dc19eea5efbb7b85b97a..2a7712cc155635d29a3bbfcedb8289bf597630a1 100644
 --- a/Source/cmake/OptionsWPE.cmake
 +++ b/Source/cmake/OptionsWPE.cmake
 @@ -3,6 +3,7 @@ include(VersioningUtils)
@@ -21947,15 +21970,6 @@ index 0e23732209de52a342e8dc19eea5efbb7b85b97a..398b92a14e8273a929fc359ad821eccd
  WEBKIT_OPTION_DEFINE(USE_SYSTEMD "Whether to enable journald logging" PUBLIC ON)
  WEBKIT_OPTION_DEFINE(USE_WOFF2 "Whether to enable support for WOFF2 Web Fonts." PUBLIC ON)
  
-@@ -284,7 +304,7 @@ SET_AND_EXPOSE_TO_BUILD(USE_TEXTURE_MAPPER_GL TRUE)
- SET_AND_EXPOSE_TO_BUILD(USE_TILED_BACKING_STORE TRUE)
- SET_AND_EXPOSE_TO_BUILD(USE_COORDINATED_GRAPHICS TRUE)
- SET_AND_EXPOSE_TO_BUILD(USE_NICOSIA TRUE)
--SET_AND_EXPOSE_TO_BUILD(HAVE_OS_DARK_MODE_SUPPORT 1)
-+SET_AND_EXPOSE_TO_BUILD(HAVE_OS_DARK_MODE_SUPPORT 0)
- 
- # GUri is available in GLib since version 2.66, but we only want to use it if version is >= 2.67.1.
- if (PC_GLIB_VERSION VERSION_GREATER "2.67.1" OR PC_GLIB_VERSION STREQUAL "2.67.1")
 diff --git a/Source/cmake/OptionsWin.cmake b/Source/cmake/OptionsWin.cmake
 index fb99a1e511986a6a0ea6a593d0c5a225bcc26fe3..5c31cd3f0529c81d932b3adc092ea8c1bab877e0 100644
 --- a/Source/cmake/OptionsWin.cmake

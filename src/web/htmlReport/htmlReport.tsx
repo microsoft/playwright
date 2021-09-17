@@ -80,7 +80,7 @@ const ProjectTreeItemView: React.FC<{
     <StatsView stats={project.stats}></StatsView>
   </div>
   } loadChildren={hasChildren ? () => {
-    return project.suites.filter(s => !(failingOnly && s.stats.ok)).map((s, i) => <SuiteTreeItemView key={i} suite={s} setTestId={setTestId} testId={testId} depth={1} showFileName={true} failingOnly={failingOnly}></SuiteTreeItemView>) || [];
+    return project.suites.filter(s => !(failingOnly && s.stats.ok)).map((s, i) => <SuiteTreeItemView key={i} suite={s} setTestId={setTestId} testId={testId} depth={1} failingOnly={failingOnly}></SuiteTreeItemView>) || [];
   } : undefined} depth={0} expandByDefault={true}></TreeItem>;
 };
 
@@ -90,17 +90,14 @@ const SuiteTreeItemView: React.FC<{
   setTestId: (id: TestId) => void;
   failingOnly: boolean;
   depth: number,
-  showFileName: boolean,
-}> = ({ suite, testId, setTestId, showFileName, failingOnly, depth }) => {
-  const location = renderLocation(suite.location, showFileName);
+}> = ({ suite, testId, setTestId, failingOnly, depth }) => {
   return <TreeItem title={<div className='hbox'>
     <div className='tree-text' title={suite.title}>{suite.title}</div>
     <div style={{ flex: 'auto' }}></div>
     <StatsView stats={suite.stats}></StatsView>
-    {!!suite.location?.line && location && <div style={{ flex: 'none', padding: '0 4px', color: '#666' }}>{location}</div>}
   </div>
   } loadChildren={() => {
-    const suiteChildren = suite.suites.filter(s => !(failingOnly && s.stats.ok)).map((s, i) => <SuiteTreeItemView key={i} suite={s} setTestId={setTestId} testId={testId} depth={depth + 1} showFileName={false} failingOnly={failingOnly}></SuiteTreeItemView>) || [];
+    const suiteChildren = suite.suites.filter(s => !(failingOnly && s.stats.ok)).map((s, i) => <SuiteTreeItemView key={i} suite={s} setTestId={setTestId} testId={testId} depth={depth + 1} failingOnly={failingOnly}></SuiteTreeItemView>) || [];
     const suiteCount = suite.suites.length;
     const testChildren = suite.tests.filter(t => !(failingOnly && t.ok)).map((t, i) => <TestTreeItemView key={i + suiteCount} test={t} setTestId={setTestId} testId={testId} depth={depth + 1}></TestTreeItemView>) || [];
     return [...suiteChildren, ...testChildren];
@@ -166,28 +163,53 @@ const TestResultView: React.FC<{
   result: TestResult,
 }> = ({ result }) => {
 
-  const { screenshots, videos, attachmentsMap } = React.useMemo(() => {
+  const { screenshots, videos, otherAttachments, attachmentsMap } = React.useMemo(() => {
     const attachmentsMap = new Map<string, TestAttachment>();
     const attachments = result?.attachments || [];
+    const otherAttachments: TestAttachment[] = [];
     const screenshots = attachments.filter(a => a.name === 'screenshot');
     const videos = attachments.filter(a => a.name === 'video');
-    for (const a of attachments)
+    const knownNames = new Set(['screenshot', 'image', 'expected', 'actual', 'diff', 'video']);
+    for (const a of attachments) {
       attachmentsMap.set(a.name, a);
-    return { attachmentsMap, screenshots, videos };
+      if (!knownNames.has(a.name))
+        otherAttachments.push(a);
+    }
+    return { attachmentsMap, screenshots, videos, otherAttachments };
   }, [ result ]);
 
+  const expected = attachmentsMap.get('expected');
+  const actual = attachmentsMap.get('actual');
+  const diff = attachmentsMap.get('diff');
   return <div className='test-result'>
     {result.error && <ErrorMessage key={-1} error={result.error}></ErrorMessage>}
     {result.steps.map((step, i) => <StepTreeItem key={i} step={step} depth={0}></StepTreeItem>)}
-    {attachmentsMap.has('expected') && attachmentsMap.has('actual') && <ImageDiff actual={attachmentsMap.get('actual')!} expected={attachmentsMap.get('expected')!} diff={attachmentsMap.get('diff')}></ImageDiff>}
-    {!!screenshots && <div className='test-overview-title'>Screenshots</div>}
-    {screenshots.map((a, i) => <img key={`screenshot-${i}`} src={a.path} />)}
+
+    {expected && actual && <div className='vbox'>
+      <ImageDiff actual={actual} expected={expected} diff={diff}></ImageDiff>
+      <AttachmentLink key={`expected`} attachment={expected}></AttachmentLink>
+      <AttachmentLink key={`actual`} attachment={actual}></AttachmentLink>
+      {diff && <AttachmentLink key={`diff`} attachment={diff}></AttachmentLink>}
+    </div>}
+
+    {!!screenshots.length && <div className='test-overview-title'>Screenshots</div>}
+    {screenshots.map((a, i) => {
+      return <div className='vbox'>
+        <img key={`screenshot-${i}`} src={a.path} />
+        <AttachmentLink key={`screenshot-link-${i}`} attachment={a}></AttachmentLink>
+      </div>;
+    })}
+
     {!!videos.length && <div className='test-overview-title'>Videos</div>}
-    {videos.map((a, i) => <video key={`video-${i}`} controls>
-      <source src={a.path} type={a.contentType}/>
-    </video>)}
-    {!!result.attachments && <div className='test-overview-title'>Attachments</div>}
-    {result.attachments.map((a, i) => <AttachmentLink key={`attachment-${i}`} attachment={a}></AttachmentLink>)}
+    {videos.map((a, i) => <div className='vbox'>
+      <video key={`video-${i}`} controls>
+        <source src={a.path} type={a.contentType}/>
+      </video>
+      <AttachmentLink key={`video-link-${i}`} attachment={a}></AttachmentLink>
+    </div>)}
+
+    {!!otherAttachments && <div className='test-overview-title'>Attachments</div>}
+    {otherAttachments.map((a, i) => <AttachmentLink key={`attachment-${i}`} attachment={a}></AttachmentLink>)}
   </div>;
 };
 
@@ -241,18 +263,18 @@ export const ImageDiff: React.FunctionComponent<{
   tabs.push({
     id: 'actual',
     title: 'Actual',
-    render: () => <div className='image-preview'><img src={actual.path}/></div>
+    render: () => <img src={actual.path}/>
   });
   tabs.push({
     id: 'expected',
     title: 'Expected',
-    render: () => <div className='image-preview'><img src={expected.path}/></div>
+    render: () => <img src={expected.path}/>
   });
   if (diff) {
     tabs.push({
       id: 'diff',
       title: 'Diff',
-      render: () => <div className='image-preview'><img src={diff.path}/></div>,
+      render: () => <img src={diff.path}/>
     });
   }
   return <div className='vbox test-image-mismatch'>

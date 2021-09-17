@@ -351,8 +351,12 @@ export function canAccessFile(file: string) {
 }
 
 export function getUserAgent() {
+  return `Playwright/${getPlaywrightVersion()} (${os.arch()}/${os.platform()}/${os.release()})`;
+}
+
+export function getPlaywrightVersion(majorMinorOnly = false) {
   const packageJson = require('./../../package.json');
-  return `Playwright/${packageJson.version} (${os.arch()}/${os.platform()}/${os.release()})`;
+  return majorMinorOnly ? packageJson.version.split('.').slice(0, 2).join('.') : packageJson.version;
 }
 
 export function constructURLBasedOnBaseURL(baseURL: string | undefined, givenURL: string): string {
@@ -406,4 +410,8 @@ export function wrapInASCIIBox(text: string, padding = 0): string {
     ...lines.map(line => '║' + ' '.repeat(padding) + line + ' '.repeat(maxLength - line.length + padding) + '║'),
     '╚' + '═'.repeat(maxLength + padding * 2) + '╝',
   ].join('\n');
+}
+
+export function isFilePayload(value: any): boolean {
+  return typeof value === 'object' && value['name'] && value['mimeType'] && value['buffer'];
 }
