@@ -82,14 +82,14 @@ export class RecorderSupplement implements InstrumentationListener {
     const language = params.language || context._browser.options.sdkLanguage;
 
     const languages = new Set([
-      new ImbaLanguageGenerator(true),
-      new ImbaLanguageGenerator(false),
       new JavaLanguageGenerator(),
       new JavaScriptLanguageGenerator(false),
       new JavaScriptLanguageGenerator(true),
       new PythonLanguageGenerator(false),
       new PythonLanguageGenerator(true),
       new CSharpLanguageGenerator(),
+      new ImbaLanguageGenerator(true),
+      new ImbaLanguageGenerator(false),
     ]);
     const primaryLanguage = [...languages].find(l => l.id === language)!;
     if (!primaryLanguage)

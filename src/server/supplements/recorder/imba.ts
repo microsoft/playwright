@@ -31,7 +31,7 @@ export class ImbaLanguageGenerator implements LanguageGenerator {
 
   constructor(isTest: boolean) {
     this.id = isTest ? 'test' : 'imba';
-    this.fileName = isTest ? 'Playwright Test' : 'Imba';
+    this.fileName = isTest ? 'Imba: Playwright Test' : 'Imba';
     this._isTest = isTest;
   }
 
