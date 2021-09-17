@@ -68,7 +68,7 @@ const customMatchers = {
 };
 
 function wrap(matcherName: string, matcher: any) {
-  return function(this: any, ...args: any[]) {
+  const result = function(this: any, ...args: any[]) {
     const testInfo = currentTestInfo();
     if (!testInfo)
       return matcher.call(this, ...args);
@@ -107,6 +107,8 @@ function wrap(matcherName: string, matcher: any) {
       reportStepError(e);
     }
   };
+  result.displayName = 'expect.' + matcherName;
+  return result;
 }
 
 const wrappedMatchers: any = {};

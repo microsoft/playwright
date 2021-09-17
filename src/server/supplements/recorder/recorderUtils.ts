@@ -21,6 +21,7 @@ export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus)
   let title = metadata.apiName || metadata.method;
   if (metadata.method === 'waitForEventInfo')
     title += `(${metadata.params.info.event})`;
+  title = title.replace('object.expect', 'expect');
   if (metadata.error)
     status = 'error';
   const params = {
