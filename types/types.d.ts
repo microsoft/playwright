@@ -12646,9 +12646,14 @@ export interface FetchRequest {
    */
   fetch(urlOrRequest: string|Request, options?: {
     /**
-     * Allows to set post data of the fetch.
+     * Allows to set post data of the fetch. If the data parameter is an object, it will be serialized the following way:
+     * - If `content-type` header is set to `application/x-www-form-urlencoded` the object will be serialized as html form
+     *   using `application/x-www-form-urlencoded` encoding.
+     * - If `content-type` header is set to `multipart/form-data` the object will be serialized as html form using
+     *   `multipart/form-data` encoding.
+     * - Otherwise the object will be serialized to json string and `content-type` header will be set to `application/json`.
      */
-    data?: string|Buffer;
+    data?: string|Buffer|Serializable;
 
     /**
      * Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status codes.
@@ -12712,9 +12717,14 @@ export interface FetchRequest {
    */
   post(urlOrRequest: string|Request, options?: {
     /**
-     * Allows to set post data of the fetch.
+     * Allows to set post data of the fetch. If the data parameter is an object, it will be serialized the following way:
+     * - If `content-type` header is set to `application/x-www-form-urlencoded` the object will be serialized as html form
+     *   using `application/x-www-form-urlencoded` encoding.
+     * - If `content-type` header is set to `multipart/form-data` the object will be serialized as html form using
+     *   `multipart/form-data` encoding.
+     * - Otherwise the object will be serialized to json string and `content-type` header will be set to `application/json`.
      */
-    data?: string|Buffer;
+    data?: string|Buffer|Serializable;
 
     /**
      * Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status codes.

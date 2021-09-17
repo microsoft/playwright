@@ -39,9 +39,12 @@ If set changes the fetch method (e.g. PUT or POST). If not specified, GET method
 Allows to set HTTP headers.
 
 ### option: FetchRequest.fetch.data
-- `data` <[string]|[Buffer]>
+- `data` <[string]|[Buffer]|[Serializable]>
 
-Allows to set post data of the fetch.
+Allows to set post data of the fetch. If the data parameter is an object, it will be serialized the following way:
+* If `content-type` header is set to `application/x-www-form-urlencoded` the object will be serialized as html form using `application/x-www-form-urlencoded` encoding.
+* If `content-type` header is set to `multipart/form-data` the object will be serialized as html form using `multipart/form-data` encoding.
+* Otherwise the object will be serialized to json string and `content-type` header will be set to `application/json`.
 
 ### option: FetchRequest.fetch.timeout
 - `timeout` <[float]>
@@ -108,9 +111,12 @@ Query parameters to be send with the URL.
 Allows to set HTTP headers.
 
 ### option: FetchRequest.post.data
-- `data` <[string]|[Buffer]>
+- `data` <[string]|[Buffer]|[Serializable]>
 
-Allows to set post data of the fetch.
+Allows to set post data of the fetch. If the data parameter is an object, it will be serialized the following way:
+* If `content-type` header is set to `application/x-www-form-urlencoded` the object will be serialized as html form using `application/x-www-form-urlencoded` encoding.
+* If `content-type` header is set to `multipart/form-data` the object will be serialized as html form using `multipart/form-data` encoding.
+* Otherwise the object will be serialized to json string and `content-type` header will be set to `application/json`.
 
 ### option: FetchRequest.post.timeout
 - `timeout` <[float]>
