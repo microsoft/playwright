@@ -133,7 +133,7 @@ export abstract class FetchRequest extends SdkObject {
 
       let postData;
       if (['POST', 'PUSH', 'PATCH'].includes(method))
-        postData = params.formData ? serilizeFormData(params.formData, headers) : params.postData;
+        postData = params.formData ? serializeFormData(params.formData, headers) : params.postData;
       else if (params.postData || params.formData)
         throw new Error(`Method ${method} does not accept post data`);
       if (postData) {
@@ -421,7 +421,7 @@ function parseCookie(header: string) {
   return cookie;
 }
 
-function serilizeFormData(data: any, headers: { [name: string]: string }): Buffer {
+function serializeFormData(data: any, headers: { [name: string]: string }): Buffer {
   const contentType = headers['content-type'] || 'application/json';
   if (contentType === 'application/json') {
     const json = JSON.stringify(data);
