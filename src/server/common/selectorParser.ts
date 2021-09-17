@@ -25,6 +25,7 @@ export type ParsedSelector = {
   selector: string,
   parts: ParsedSelectorPart[],
   capture?: number,
+  snapshotName?: string,
 };
 
 type ParsedSelectorStrings = {

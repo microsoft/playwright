@@ -105,7 +105,10 @@ export class InjectedScript {
       const result = this._querySelectorRecursively([{ element: root as Element, capture: undefined }], selector, 0, new Map());
       if (strict && result.length > 1)
         throw this.strictModeViolationError(selector, result.map(r => r.element));
-      return result[0]?.capture || result[0]?.element;
+      const element = result[0]?.capture || result[0]?.element;
+      if (element && selector.snapshotName)
+        element.setAttribute('__playwright_target__', selector.snapshotName);
+      return element;
     } finally {
       this._evaluator.end();
     }

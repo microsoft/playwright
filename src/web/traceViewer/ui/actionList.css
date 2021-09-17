@@ -79,6 +79,7 @@
 .action-icons {
   display: flex;
   flex-direction: row;
+  flex: none;
   cursor: pointer;
   height: 20px;
   position: relative;

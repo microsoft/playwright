@@ -20,6 +20,7 @@ import * as js from './javascript';
 import * as types from './types';
 import { ParsedSelector, parseSelector } from './common/selectorParser';
 import { createGuid } from '../utils/utils';
+import { CallMetadata } from './instrumentation';
 
 export type SelectorInfo = {
   parsed: ParsedSelector,
@@ -68,8 +69,8 @@ export class Selectors {
     this._engines.clear();
   }
 
-  async query(frame: frames.Frame, selector: string, options: { strict?: boolean }, scope?: dom.ElementHandle): Promise<dom.ElementHandle<Element> | null> {
-    const info = frame._page.parseSelector(selector, options);
+  async query(metadata: CallMetadata, frame: frames.Frame, selector: string, options: { strict?: boolean }, scope?: dom.ElementHandle): Promise<dom.ElementHandle<Element> | null> {
+    const info = frame._page.parseSelector(metadata, selector, options);
     const context = await frame._context(info.world);
     const injectedScript = await context.injectedScript();
     const handle = await injectedScript.evaluateHandle((injected, { parsed, scope, strict }) => {

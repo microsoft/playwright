@@ -501,9 +501,11 @@ export class Page extends SdkObject {
     this.emit(Page.Events.PageError, error);
   }
 
-  parseSelector(selector: string, options?: types.StrictOptions): SelectorInfo {
+  parseSelector(metadata: CallMetadata, selector: string, options?: types.StrictOptions): SelectorInfo {
     const strict = typeof options?.strict === 'boolean' ? options.strict : !!this.context()._options.strictSelectors;
-    return this.selectors.parseSelector(selector, strict);
+    const result = this.selectors.parseSelector(selector, strict);
+    result.parsed.snapshotName = metadata.afterSnapshot;
+    return result;
   }
 }
 

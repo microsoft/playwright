@@ -239,6 +239,9 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
+    // Set afterSnapshot name for all the actions that operate selectors.
+    // Elements resolved from selectors will be marked on the snapshot.
+    metadata.afterSnapshot = `after@${metadata.id}`;
     const beforeSnapshot = this._captureSnapshot('before', sdkObject, metadata);
     this._pendingCalls.set(metadata.id, { sdkObject, metadata, beforeSnapshot });
     await beforeSnapshot;

@@ -28,6 +28,7 @@ export type CallMetadata = {
   apiName?: string;
   stack?: StackFrame[];
   log: string[];
+  afterSnapshot?: string;
   snapshots: { title: string, snapshotName: string }[];
   error?: SerializedError;
   result?: any;
