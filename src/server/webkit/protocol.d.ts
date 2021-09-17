@@ -6516,6 +6516,17 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     export type overrideUserAgentReturnValue = {
     }
     /**
+     * Override's the navigator.platform of the inspected page
+     */
+    export type overridePlatformParameters = {
+      /**
+       * Value to override the platform with. If this value is not provided, the override is removed. Overrides are removed when Web Inspector closes/disconnects.
+       */
+      value?: string;
+    }
+    export type overridePlatformReturnValue = {
+    }
+    /**
      * Allows the frontend to override the inspected page's settings.
      */
     export type overrideSettingParameters = {
@@ -9026,6 +9037,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.goForward": Page.goForwardParameters;
     "Page.navigate": Page.navigateParameters;
     "Page.overrideUserAgent": Page.overrideUserAgentParameters;
+    "Page.overridePlatform": Page.overridePlatformParameters;
     "Page.overrideSetting": Page.overrideSettingParameters;
     "Page.getCookies": Page.getCookiesParameters;
     "Page.setCookie": Page.setCookieParameters;
@@ -9326,6 +9338,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.goForward": Page.goForwardReturnValue;
     "Page.navigate": Page.navigateReturnValue;
     "Page.overrideUserAgent": Page.overrideUserAgentReturnValue;
+    "Page.overridePlatform": Page.overridePlatformReturnValue;
     "Page.overrideSetting": Page.overrideSettingReturnValue;
     "Page.getCookies": Page.getCookiesReturnValue;
     "Page.setCookie": Page.setCookieReturnValue;
