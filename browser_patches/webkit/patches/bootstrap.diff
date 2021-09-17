@@ -6747,7 +6747,7 @@ index 28d1fc3242174a680711027877d4153923790220..058b5309eed081fcc1e4158f66e80642
      if (stateObjectType == StateObjectType::Push) {
          frame->loader().history().pushState(WTFMove(data), title, fullURL.string());
 diff --git a/Source/WebCore/page/Page.cpp b/Source/WebCore/page/Page.cpp
-index e7f6f99a2a230b6cca7f03d846bbba92c6e80be1..3eb94eb1b1df5f7eb92a8cfd39749b0030829b40 100644
+index e7f6f99a2a230b6cca7f03d846bbba92c6e80be1..52a86145b85bc44588e6f8d5db8cebedbf87d387 100644
 --- a/Source/WebCore/page/Page.cpp
 +++ b/Source/WebCore/page/Page.cpp
 @@ -462,6 +462,37 @@ void Page::setOverrideViewportArguments(const std::optional<ViewportArguments>&
@@ -6788,7 +6788,18 @@ index e7f6f99a2a230b6cca7f03d846bbba92c6e80be1..3eb94eb1b1df5f7eb92a8cfd39749b00
  ScrollingCoordinator* Page::scrollingCoordinator()
  {
      if (!m_scrollingCoordinator && m_settings->scrollingCoordinatorEnabled()) {
-@@ -3271,6 +3302,16 @@ void Page::setUseDarkAppearanceOverride(std::optional<bool> valueOverride)
+@@ -1290,10 +1321,6 @@ void Page::didCommitLoad()
+     m_isEditableRegionEnabled = false;
+ #endif
+ 
+-#if HAVE(OS_DARK_MODE_SUPPORT)
+-    setUseDarkAppearanceOverride(std::nullopt);
+-#endif
+-
+     resetSeenPlugins();
+     resetSeenMediaEngines();
+ 
+@@ -3271,6 +3298,16 @@ void Page::setUseDarkAppearanceOverride(std::optional<bool> valueOverride)
  #endif
  }
  
