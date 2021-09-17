@@ -28,7 +28,6 @@ export class MultiMap<K, V> {
       this._map.set(key, values);
     }
     values.push(value);
-    // console.log('set ' + key + ' => ' + values);
   }
 
   get(key: K): V[] {
