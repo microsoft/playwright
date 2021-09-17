@@ -277,7 +277,7 @@ This is a base timeout for all tests. In addition, each test can configure its o
 ## property: TestProject.use
 - type: <[Fixtures]>
 
-Additional fixtures for this project. Most useful for specifying options, for example [`property: Fixtures.browserName`]. Learn more about [Fixtures] and [configuration](./test-configuration.md).
+Options for all tests in this project, for example [`property: TestOptions.browserName`]. Learn more about [configuration](./test-configuration.md) and see [available options][TestOptions].
 
 ```js js-flavor=js
 // playwright.config.js

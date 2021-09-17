@@ -330,7 +330,6 @@ export interface PlaywrightWorkerArgs {
 }
 
 export interface PlaywrightTestArgs {
-  createContext: (options?: BrowserContextOptions) => Promise<BrowserContext>;
   context: BrowserContext;
   page: Page;
 }

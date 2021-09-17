@@ -494,8 +494,8 @@ class TypesGenerator {
     ['Config', 'TestConfig'],
     ['FullConfig', 'TestConfig'],
     ['Project', 'TestProject'],
-    ['PlaywrightWorkerOptions', 'Fixtures'],
-    ['PlaywrightTestOptions', 'Fixtures'],
+    ['PlaywrightWorkerOptions', 'TestOptions'],
+    ['PlaywrightTestOptions', 'TestOptions'],
     ['PlaywrightWorkerArgs', 'Fixtures'],
     ['PlaywrightTestArgs', 'Fixtures'],
   ]);
