@@ -63,8 +63,8 @@ function traceAPICoverage(apiCoverage, api, events) {
  * @param {string} browserName
  */
 function apiForBrowser(browserName) {
-  const events = require('../../lib/client/events').Events;
-  const api = require('../../lib/client/api');
+  const events = require('playwright-core/lib/client/events').Events;
+  const api = require('playwright-core/lib/client/api');
   const otherBrowsers = ['chromium', 'webkit', 'firefox'].filter(name => name.toLowerCase() !== browserName.toLowerCase());
   const filteredKeys = Object.keys(api).filter(apiName => {
     if (apiName.toLowerCase().startsWith('android'))

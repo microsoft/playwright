@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-module.exports = require('./lib/inprocess');
+module.exports = require('playwright-core');

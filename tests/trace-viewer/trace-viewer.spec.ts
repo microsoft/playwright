@@ -16,7 +16,7 @@
 
 import path from 'path';
 import type { Browser, Locator, Page } from '../../index';
-import { showTraceViewer } from '../../lib/server/trace/viewer/traceViewer';
+import { showTraceViewer } from 'playwright-core/lib/server/trace/viewer/traceViewer';
 import { playwrightTest, expect } from '../config/browserTest';
 
 class TraceViewerPage {

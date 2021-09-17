@@ -21,8 +21,8 @@ import * as fs from 'fs';
 import socks from 'socksv5';
 import { installCoverageHooks } from './coverage';
 import * as childProcess from 'child_process';
-import { start } from '../../lib/outofprocess';
-import { PlaywrightClient } from '../../lib/remote/playwrightClient';
+import { start } from 'playwright-core/lib/outofprocess';
+import { PlaywrightClient } from 'playwright-core/lib/remote/playwrightClient';
 import type { LaunchOptions } from '../../index';
 import { TestProxy } from './proxy';
 import { commonFixtures, CommonFixtures } from './commonFixtures';
@@ -116,7 +116,7 @@ const baseFixtures: Fixtures<{}, BaseOptions & BaseFixtures> = {
       service: new ServiceMode(),
       driver: new DriverMode(),
     }[mode];
-    require('../../lib/utils/utils').setUnderTest();
+    require('playwright-core/lib/utils/utils').setUnderTest();
     const playwright = await modeImpl.setup(workerInfo.workerIndex);
     await run(playwright);
     await modeImpl.teardown();

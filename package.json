@@ -9,7 +9,7 @@
     "node": ">=12"
   },
   "scripts": {
-    "basetest": "cross-env PWTEST_CLI_ALLOW_TEST_COMMAND=1 node ./lib/cli/cli test",
+    "basetest": "cross-env PWTEST_CLI_ALLOW_TEST_COMMAND=1 playwright test",
     "ctest": "npm run basetest -- --config=tests/config/default.config.ts --project=chromium",
     "ftest": "npm run basetest -- --config=tests/config/default.config.ts --project=firefox",
     "wtest": "npm run basetest -- --config=tests/config/default.config.ts --project=webkit",
@@ -19,7 +19,7 @@
     "test": "npm run basetest -- --config=tests/config/default.config.ts",
     "eslint": "[ \"$CI\" = true ] && eslint --quiet -f codeframe --ext ts,tsx . || eslint --ext ts,tsx .",
     "tsc": "tsc -p .",
-    "build-installer": "babel -s --extensions \".ts\" --out-dir lib/utils/ src/utils",
+    "build-installer": "babel -s --extensions \".ts\" --out-dir packages/playwright-core/lib/utils/ packages/playwright-core/src/utils",
     "doc": "node utils/doclint/cli.js",
     "lint": "npm run eslint && npm run tsc && npm run doc && npm run check-deps && node utils/generate_channels.js && node utils/generate_types/ --check-clean && npm run test-types",
     "flint": "concurrently -s all \"npm run eslint\" \"npm run tsc\" \"npm run doc\" \"npm run check-deps\" \"node utils/generate_channels.js\" \"node utils/generate_types/ --check-clean\" \"npm run test-types\"",
@@ -36,9 +36,9 @@
     "name": "Microsoft Corporation"
   },
   "license": "Apache-2.0",
-  "bin": {
-    "playwright": "./lib/cli/cli.js"
-  },
+  "workspaces": [
+    "packages/*"
+  ],
   "DEPS-NOTE": "Any non-test dependency must be added to the build_package.js script as well",
   "dependencies": {
     "@babel/code-frame": "^7.14.5",

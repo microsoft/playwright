@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-module.exports = require('../../lib/test/index');
+module.exports = require('playwright-core/lib/test/index');

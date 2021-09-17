@@ -13,6 +13,6 @@
   ],
   "ignore": [
     "**/*.d.ts",
-    "src/injected/**/*"
+    "packages/playwright-core/src/injected/**/*"
   ]
 }

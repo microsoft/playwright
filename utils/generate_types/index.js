@@ -18,7 +18,7 @@
 const path = require('path');
 const os = require('os');
 const toKebabCase = require('lodash/kebabCase')
-const devices = require('../../src/server/deviceDescriptors');
+const devices = require('playwright-core/src/server/deviceDescriptors');
 const Documentation = require('../doclint/documentation');
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 const fs = require('fs');
@@ -472,7 +472,7 @@ class TypesGenerator {
   const typesDir = path.join(PROJECT_DIR, 'types');
   if (!fs.existsSync(typesDir))
     fs.mkdirSync(typesDir)
-  writeFile(path.join(typesDir, 'protocol.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'src', 'server', 'chromium', 'protocol.d.ts'), 'utf8'));
+  writeFile(path.join(typesDir, 'protocol.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'packages', 'playwright-core', 'src', 'server', 'chromium', 'protocol.d.ts'), 'utf8'));
 
   const apiDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
   apiDocumentation.index();

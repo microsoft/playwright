@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-const pwt = require('../../../lib/test/index');
-const playwright = require('../../../lib/inprocess');
+const pwt = require('playwright-core/lib/test/index');
+const playwright = require('playwright-core/lib/inprocess');
 const combinedExports = {
   ...playwright,
   ...pwt,

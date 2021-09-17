@@ -13,5 +13,5 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+export * from 'playwright-core';
 
-// Explicitly empty install.js to avoid touching browser registry at all.

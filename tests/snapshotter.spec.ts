@@ -15,9 +15,9 @@
  */
 
 import { contextTest, expect } from './config/browserTest';
-import { InMemorySnapshotter } from '../lib/server/snapshot/inMemorySnapshotter';
-import { HttpServer } from '../lib/utils/httpServer';
-import { SnapshotServer } from '../lib/server/snapshot/snapshotServer';
+import { InMemorySnapshotter } from 'playwright-core/lib/server/snapshot/inMemorySnapshotter';
+import { HttpServer } from 'playwright-core/lib/utils/httpServer';
+import { SnapshotServer } from 'playwright-core/lib/server/snapshot/snapshotServer';
 import type { Frame } from '..';
 
 const it = contextTest.extend<{ snapshotPort: number, snapshotter: InMemorySnapshotter, showSnapshot: (snapshot: any) => Promise<Frame> }>({

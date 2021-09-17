@@ -14,9 +14,4 @@
  * limitations under the License.
  */
 
-import { chromium, firefox, webkit, selectors, devices, errors } from 'playwright-firefox';
-import playwright from 'playwright-firefox';
-import errorsFile from 'playwright-firefox/lib/utils/errors.js';
-
-import testESM from './esm.mjs';
-testESM({ chromium, firefox, webkit, selectors, devices, errors, playwright, errorsFile }, [firefox]);
+module.exports = require('playwright-core');

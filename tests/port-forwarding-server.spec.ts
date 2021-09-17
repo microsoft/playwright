@@ -20,7 +20,7 @@ import path from 'path';
 import net from 'net';
 
 import { contextTest, expect } from './config/browserTest';
-import { PlaywrightClient } from '../lib/remote/playwrightClient';
+import { PlaywrightClient } from 'playwright-core/lib/remote/playwrightClient';
 import type { Page } from '..';
 
 class OutOfProcessPlaywrightServer {

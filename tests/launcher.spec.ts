@@ -18,12 +18,12 @@
 import { playwrightTest as it, expect } from './config/browserTest';
 
 it('should require top-level Errors', async ({}) => {
-  const Errors = require('../lib/utils/errors.js');
+  const Errors = require('playwright-core/lib/utils/errors.js');
   expect(String(Errors.TimeoutError)).toContain('TimeoutError');
 });
 
 it('should require top-level DeviceDescriptors', async ({ playwright }) => {
-  const Devices = require('../lib/server/deviceDescriptors.js');
+  const Devices = require('playwright-core/lib/server/deviceDescriptors.js');
   expect(Devices['iPhone 6']).toBeTruthy();
   expect(Devices['iPhone 6']).toEqual(playwright.devices['iPhone 6']);
   expect(playwright.devices['iPhone 6'].defaultBrowserType).toBe('webkit');
