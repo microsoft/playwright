@@ -35,6 +35,7 @@ import { CallLog, CallLogStatus, EventData, Mode, Source, UIState } from './reco
 import { createGuid, isUnderTest, monotonicTime } from '../../utils/utils';
 import { metadataToCallLog } from './recorder/recorderUtils';
 import { Debugger } from './debugger';
+import { ImbaLanguageGenerator } from './recorder/imba';
 
 type BindingSource = { frame: Frame, page: Page };
 
@@ -81,6 +82,8 @@ export class RecorderSupplement implements InstrumentationListener {
     const language = params.language || context._browser.options.sdkLanguage;
 
     const languages = new Set([
+      new ImbaLanguageGenerator(true),
+      new ImbaLanguageGenerator(false),
       new JavaLanguageGenerator(),
       new JavaScriptLanguageGenerator(false),
       new JavaScriptLanguageGenerator(true),
@@ -489,6 +492,8 @@ export class RecorderSupplement implements InstrumentationListener {
 }
 
 function languageForFile(file: string) {
+  if (file.endsWith('.imba'))
+    return 'imba';
   if (file.endsWith('.py'))
     return 'python';
   if (file.endsWith('.java'))

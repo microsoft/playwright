@@ -37,6 +37,9 @@ test.describe('cli codegen', () => {
     expect(sources.get('JavaScript').text).toContain(`
   // Click text=Submit
   await page.click('text=Submit');`);
+    expect(sources.get('Imba').text).toContain(`
+    # Click text=Submit
+    await page.click 'text=Submit'`);
 
     expect(sources.get('Python').text).toContain(`
     # Click text=Submit
@@ -116,6 +119,10 @@ test.describe('cli codegen', () => {
     # Click text=Submit
     page.click("text=Submit")`);
 
+    expect(sources.get('Imba').text).toContain(`
+    # Click text=Submit
+    await page.click 'text=Submit'`);
+
     expect(sources.get('Python Async').text).toContain(`
     # Click text=Submit
     await page.click("text=Submit")`);
@@ -185,6 +192,10 @@ test.describe('cli codegen', () => {
       // Fill input[name="name"]
       page.fill("input[name=\\\"name\\\"]", "John");`);
 
+    expect(sources.get('Imba').text).toContain(`
+    # Fill input[name="name"]
+    await page.fill 'input[name="name"]', 'John'`);
+
     expect(sources.get('Python').text).toContain(`
     # Fill input[name="name"]
     page.fill(\"input[name=\\\"name\\\"]\", \"John\")`);
@@ -245,6 +256,9 @@ test.describe('cli codegen', () => {
     expect(sources.get('Python').text).toContain(`
     # Press Enter with modifiers
     page.press(\"input[name=\\\"name\\\"]\", \"Shift+Enter\")`);
+    expect(sources.get('Imba').text).toContain(`
+    # Press Enter with modifiers
+    await page.press 'input[name="name"]', 'Shift+Enter'`);
 
     expect(sources.get('Python Async').text).toContain(`
     # Press Enter with modifiers
@@ -355,6 +369,9 @@ test.describe('cli codegen', () => {
     expect(sources.get('JavaScript').text).toContain(`
   // Check input[name="accept"]
   await page.check('input[name="accept"]');`);
+    expect(sources.get('Imba').text).toContain(`
+    # Check input[name="accept"]
+    await page.check 'input[name="accept"]'`);
 
     expect(sources.get('Java').text).toContain(`
       // Check input[name="accept"]
@@ -413,6 +430,10 @@ test.describe('cli codegen', () => {
   // Uncheck input[name="accept"]
   await page.uncheck('input[name="accept"]');`);
 
+    expect(sources.get('Imba').text).toContain(`
+    # Uncheck input[name="accept"]
+    await page.uncheck 'input[name="accept"]'`);
+
     expect(sources.get('Java').text).toContain(`
       // Uncheck input[name="accept"]
       page.uncheck("input[name=\\\"accept\\\"]");`);
@@ -450,6 +471,9 @@ test.describe('cli codegen', () => {
   // Select 2
   await page.selectOption('select', '2');`);
 
+    expect(sources.get('Imba').text).toContain(`
+    # Select 2
+    await page.selectOption 'select', '2'`);
     expect(sources.get('Java').text).toContain(`
       // Select 2
       page.selectOption("select", "2");`);
@@ -491,6 +515,12 @@ test.describe('cli codegen', () => {
     page.click('text=link')
   ]);`);
 
+    expect(sources.get('Imba').text).toContain(`
+    # Click text=link
+    const [page1] = await Promise.all [
+        page.waitForEvent 'popup',
+        page.click 'text=link'
+    ]`);
     expect(sources.get('Java').text).toContain(`
       // Click text=link
       Page page1 = page.waitForPopup(() -> {
@@ -535,6 +565,11 @@ test.describe('cli codegen', () => {
   // Click text=link
   await page.click('text=link');
   // assert.equal(page.url(), 'about:blank#foo');`);
+
+    expect(sources.get('Imba').text).toContain(`
+    # Click text=link
+    await page.click 'text=link'
+    # assert.equal page.url(), 'about:blank#foo'`);
 
     expect(sources.get('Playwright Test').text).toContain(`
   // Click text=link
@@ -586,6 +621,14 @@ test.describe('cli codegen', () => {
     page.click('text=link')
   ]);`);
 
+    expect(sources.get('Imba').text).toContain(`
+    # Click text=link
+    await Promise.all [
+        page.waitForNavigation(
+        #    { url: 'about:blank#foo' }
+        ),
+        page.click 'text=link'
+    ]`);
     expect(sources.get('Java').text).toContain(`
       // Click text=link
       // page.waitForNavigation(new Page.WaitForNavigationOptions().setUrl("about:blank#foo"), () ->
@@ -647,6 +690,10 @@ test.describe('cli codegen', () => {
     button: 'middle'
   });`);
 
+    expect(sources.get('Imba').text).toContain(`
+    await page.click 'text=Click me', {
+        button: 'middle'
+    }`);
     expect(sources.get('Python').text).toContain(`
     page.click("text=Click me", button="middle")`);
 
