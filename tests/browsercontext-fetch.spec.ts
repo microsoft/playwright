@@ -430,6 +430,20 @@ it('should add default headers', async ({context, server, page}) => {
   expect(request.headers['accept-encoding']).toBe('gzip,deflate,br');
 });
 
+it('should send content-length', async function({context, asset, server}) {
+  const bytes = [];
+  for (let i = 0; i < 256; i++)
+    bytes.push(i);
+  const [request] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    context._request.post(server.EMPTY_PAGE, {
+      data: Buffer.from(bytes)
+    })
+  ]);
+  expect(request.headers['content-length']).toBe('256');
+  expect(request.headers['content-type']).toBe('application/octet-stream');
+});
+
 it('should add default headers to redirects', async ({context, server, page}) => {
   server.setRedirect('/redirect', '/empty.html');
   const [request] = await Promise.all([
@@ -726,6 +740,7 @@ it('should support application/x-www-form-urlencoded', async function({context, 
   expect(req.headers['content-type']).toBe('application/x-www-form-urlencoded');
   const body = (await req.postBody).toString('utf8');
   const params = new URLSearchParams(body);
+  expect(req.headers['content-length']).toBe(String(params.toString().length));
   expect(params.get('firstName')).toBe('John');
   expect(params.get('lastName')).toBe('Doe');
   expect(params.get('file')).toBe('f.js');
@@ -817,6 +832,7 @@ it('should support multipart/form-data with ReadSream values', async function({c
   expect(error).toBeFalsy();
   expect(serverRequest.method).toBe('POST');
   expect(serverRequest.headers['content-type']).toContain('multipart/form-data');
+  expect(serverRequest.headers['content-length']).toContain('5498');
   expect(fields['firstName']).toBe('John');
   expect(fields['lastName']).toBe('Doe');
   expect(files['readStream'].name).toBe('simplezip.json');

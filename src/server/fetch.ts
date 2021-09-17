@@ -136,7 +136,10 @@ export abstract class FetchRequest extends SdkObject {
         postData = params.formData ? serilizeFormData(params.formData, headers) : params.postData;
       else if (params.postData || params.formData)
         throw new Error(`Method ${method} does not accept post data`);
-
+      if (postData) {
+        headers['content-length'] = String(postData.byteLength);
+        headers['content-type'] ??= 'application/octet-stream';
+      }
       const fetchResponse = await this._sendRequest(requestUrl, options, postData);
       const fetchUid = this._storeResponseBody(fetchResponse.body);
       if (params.failOnStatusCode && (fetchResponse.status < 200 || fetchResponse.status >= 400))
