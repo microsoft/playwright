@@ -15,23 +15,24 @@
  */
 
 export class MultiMap<K, V> {
-  private _map: Map<K, Set<V>>;
+  private _map: Map<K, V[]>;
 
   constructor() {
-    this._map = new Map<K, Set<V>>();
+    this._map = new Map<K, V[]>();
   }
 
   set(key: K, value: V) {
-    let set = this._map.get(key);
-    if (!set) {
-      set = new Set<V>();
-      this._map.set(key, set);
+    let values = this._map.get(key);
+    if (!values) {
+      values = [];
+      this._map.set(key, values);
     }
-    set.add(value);
+    values.push(value);
+    // console.log('set ' + key + ' => ' + values);
   }
 
-  get(key: K): Set<V> {
-    return this._map.get(key) || new Set();
+  get(key: K): V[] {
+    return this._map.get(key) || [];
   }
 
   has(key: K): boolean {
@@ -39,26 +40,14 @@ export class MultiMap<K, V> {
   }
 
   hasValue(key: K, value: V): boolean {
-    const set = this._map.get(key);
-    if (!set)
+    const values = this._map.get(key);
+    if (!values)
       return false;
-    return set.has(value);
+    return values.includes(value);
   }
 
   get size(): number {
     return this._map.size;
-  }
-
-  delete(key: K, value: V): boolean {
-    const values = this.get(key);
-    const result = values.delete(value);
-    if (!values.size)
-      this._map.delete(key);
-    return result;
-  }
-
-  deleteAll(key: K) {
-    this._map.delete(key);
   }
 
   keys(): IterableIterator<K> {
@@ -68,7 +57,7 @@ export class MultiMap<K, V> {
   values(): Iterable<V> {
     const result: V[] = [];
     for (const key of this.keys())
-      result.push(...Array.from(this.get(key)!));
+      result.push(...this.get(key));
     return result;
   }
 
