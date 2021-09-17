@@ -118,6 +118,7 @@ test.describe('headed block', () => {
 
 These are commonly used options for various scenarios. You usually set them globally in [configuration file](#global-configuration).
 
+- `actionTimeout` - Timeout for each Playwright action in milliseconds. Defaults to `0` (no timeout).
 - `baseURL` - Base URL used for all pages in the context. Allows navigating by using just the path, for example `page.goto('/settings')`.
 - `browserName` - Name of the browser that will run the tests, one of `chromium`, `firefox`, or `webkit`.
 - `bypassCSP` - Toggles bypassing Content-Security-Policy. Useful when CSP includes the production origin.
