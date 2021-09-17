@@ -18,6 +18,7 @@ import { Protocol } from './protocol';
 import { ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
 import { Readable } from 'stream';
+import { ReadStream } from 'fs';
 import { Serializable, EvaluationArgument, PageFunction, PageFunctionOn, SmartHandle, ElementHandleForTag, BindingSource } from './structs';
 
 type PageWaitForSelectorOptionsNotHidden = PageWaitForSelectorOptions & {
@@ -2750,6 +2751,11 @@ export interface Page {
   }): Promise<null|Response>;
 
   /**
+   * API testing helper associated with this page. Requests made with this API will use page cookies.
+   */
+  request: ApiRequestContext;
+
+  /**
    * Routing provides the capability to modify network requests that are made by a page.
    *
    * Once routing is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.
@@ -3622,7 +3628,9 @@ export interface Page {
     timeout?: number;
 
     /**
-     * A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation.
+     * A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if the
+     * parameter is a string without wilcard characters, the method will wait for navigation to URL that is exactly equal to
+     * the string.
      */
     url?: string|RegExp|((url: URL) => boolean);
 
@@ -3733,7 +3741,8 @@ export interface Page {
    *
    * Shortcut for main frame's
    * [frame.waitForURL(url[, options])](https://playwright.dev/docs/api/class-frame#frame-wait-for-url).
-   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation.
+   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if the parameter is a string without wilcard characters, the method will wait for navigation to URL that is exactly equal to
+   * the string.
    * @param options
    */
   waitForURL(url: string|RegExp|((url: URL) => boolean), options?: {
@@ -5740,7 +5749,9 @@ export interface Frame {
     timeout?: number;
 
     /**
-     * A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation.
+     * A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if the
+     * parameter is a string without wilcard characters, the method will wait for navigation to URL that is exactly equal to
+     * the string.
      */
     url?: string|RegExp|((url: URL) => boolean);
 
@@ -5770,7 +5781,8 @@ export interface Frame {
    * await frame.waitForURL('**\/target.html');
    * ```
    *
-   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation.
+   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if the parameter is a string without wilcard characters, the method will wait for navigation to URL that is exactly equal to
+   * the string.
    * @param options
    */
   waitForURL(url: string|RegExp|((url: URL) => boolean), options?: {
@@ -5801,8 +5813,9 @@ export interface Frame {
  * If a page opens another page, e.g. with a `window.open` call, the popup will belong to the parent page's browser
  * context.
  *
- * Playwright allows creation of "incognito" browser contexts with `browser.newContext()` method. "Incognito" browser
- * contexts don't write any browsing data to disk.
+ * Playwright allows creating "incognito" browser contexts with
+ * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context) method. "Incognito"
+ * browser contexts don't write any browsing data to disk.
  *
  * ```js
  * // Create a new incognito browser context
@@ -6439,6 +6452,11 @@ export interface BrowserContext {
    * Returns all open pages in the context.
    */
   pages(): Array<Page>;
+
+  /**
+   * API testing helper associated with this context. Requests made with this API will use context cookies.
+   */
+  request: ApiRequestContext;
 
   /**
    * Routing provides the capability to modify network requests that are made by any page in the browser context. Once route
@@ -9535,6 +9553,40 @@ export interface Locator {
      * `false`. Useful to wait until the element is ready for the action without performing it.
      */
     trial?: boolean;
+  }): Promise<void>;
+
+  /**
+   * Returns when element specified by locator satisfies the `state` option.
+   *
+   * If target element already satisfies the condition, the method returns immediately. Otherwise, waits for up to `timeout`
+   * milliseconds until the condition is met.
+   *
+   * ```js
+   * const orderSent = page.locator('#order-sent');
+   * await orderSent.waitFor();
+   * ```
+   *
+   * @param options
+   */
+  waitFor(options?: {
+    /**
+     * Defaults to `'visible'`. Can be either:
+     * - `'attached'` - wait for element to be present in DOM.
+     * - `'detached'` - wait for element to not be present in DOM.
+     * - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element without
+     *   any content or with `display:none` has an empty bounding box and is not considered visible.
+     * - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or `visibility:hidden`.
+     *   This is opposite to the `'visible'` option.
+     */
+    state?: "attached"|"detached"|"visible"|"hidden";
+
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
   }): Promise<void>;}
 
 /**
@@ -9640,7 +9692,8 @@ export interface BrowserType<Unused = {}> {
    * context will automatically close the browser.
    * @param userDataDir Path to a User Data Directory, which stores browser session data like cookies and local storage. More details for [Chromium](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md#introduction) and
    * [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options#User_Profile). Note that Chromium's user
-   * data directory is the **parent** directory of the "Profile Path" seen at `chrome://version`.
+   * data directory is the **parent** directory of the "Profile Path" seen at `chrome://version`. Pass an empty string to use
+   * a temporary directory instead.
    * @param options
    */
   launchPersistentContext(userDataDir: string, options?: {
@@ -9723,7 +9776,7 @@ export interface BrowserType<Unused = {}> {
     executablePath?: string;
 
     /**
-     * An object containing additional HTTP headers to be sent with every request. All header values must be strings.
+     * An object containing additional HTTP headers to be sent with every request.
      */
     extraHTTPHeaders?: { [key: string]: string; };
 
@@ -9797,7 +9850,7 @@ export interface BrowserType<Unused = {}> {
     ignoreDefaultArgs?: boolean|Array<string>;
 
     /**
-     * Whether to ignore HTTPS errors during navigation. Defaults to `false`.
+     * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
      */
     ignoreHTTPSErrors?: boolean;
 
@@ -10344,7 +10397,6 @@ type AccessibilityNode = {
   children?: AccessibilityNode[];
 }
 
-export const selectors: Selectors;
 export const devices: Devices & DeviceDescriptor[];
 
 //@ts-ignore this will be any if electron is not installed
@@ -10653,9 +10705,6 @@ export type AndroidKey =
   'Copy' |
   'Paste';
 
-export const chromium: BrowserType;
-export const firefox: BrowserType;
-export const webkit: BrowserType;
 export const _electron: Electron;
 export const _android: Android;
 
@@ -10917,7 +10966,7 @@ export interface AndroidDevice {
     deviceScaleFactor?: number;
 
     /**
-     * An object containing additional HTTP headers to be sent with every request. All header values must be strings.
+     * An object containing additional HTTP headers to be sent with every request.
      */
     extraHTTPHeaders?: { [key: string]: string; };
 
@@ -10962,7 +11011,7 @@ export interface AndroidDevice {
     };
 
     /**
-     * Whether to ignore HTTPS errors during navigation. Defaults to `false`.
+     * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
      */
     ignoreHTTPSErrors?: boolean;
 
@@ -11542,6 +11591,654 @@ export interface AndroidWebView {
 }
 
 /**
+ * Exposes API that can be used for the Web API testing.
+ */
+export interface ApiRequest {
+  /**
+   * **experimental** Creates new instances of [ApiRequestContext].
+   * @param options
+   */
+  newContext(options?: {
+    /**
+     * When using
+     * [apiRequestContext.get(url[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-get),
+     * [apiRequestContext.post(url[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-post),
+     * [apiRequestContext.fetch(urlOrRequest[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-fetch)
+     * it takes the base URL in consideration by using the [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL)
+     * constructor for building the corresponding URL. Examples:
+     * - baseURL: `http://localhost:3000` and sending rquest to `/bar.html` results in `http://localhost:3000/bar.html`
+     * - baseURL: `http://localhost:3000/foo/` and sending rquest to `./bar.html` results in
+     *   `http://localhost:3000/foo/bar.html`
+     */
+    baseURL?: string;
+
+    /**
+     * An object containing additional HTTP headers to be sent with every request.
+     */
+    extraHTTPHeaders?: { [key: string]: string; };
+
+    /**
+     * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
+     */
+    httpCredentials?: {
+      username: string;
+
+      password: string;
+    };
+
+    /**
+     * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+     */
+    ignoreHTTPSErrors?: boolean;
+
+    /**
+     * Network proxy settings.
+     */
+    proxy?: {
+      /**
+       * Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example `http://myproxy.com:3128` or
+       * `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
+       */
+      server: string;
+
+      /**
+       * Optional coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+       */
+      bypass?: string;
+
+      /**
+       * Optional username to use if HTTP proxy requires authentication.
+       */
+      username?: string;
+
+      /**
+       * Optional password to use if HTTP proxy requires authentication.
+       */
+      password?: string;
+    };
+
+    /**
+     * Populates context with given storage state. This option can be used to initialize context with logged-in information
+     * obtained via
+     * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state)
+     * or
+     * [apiRequestContext.storageState([options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-storage-state).
+     * Either a path to the file with saved storage, or the value returned by one of
+     * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state)
+     * or
+     * [apiRequestContext.storageState([options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-storage-state)
+     * methods.
+     */
+    storageState?: string|{
+      cookies: Array<{
+        name: string;
+
+        value: string;
+
+        domain: string;
+
+        path: string;
+
+        /**
+         * Unix time in seconds.
+         */
+        expires: number;
+
+        httpOnly: boolean;
+
+        secure: boolean;
+
+        sameSite: "Strict"|"Lax"|"None";
+      }>;
+
+      origins: Array<{
+        origin: string;
+
+        localStorage: Array<{
+          name: string;
+
+          value: string;
+        }>;
+      }>;
+    };
+
+    /**
+     * Maximum time in milliseconds to wait for the response. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+     */
+    timeout?: number;
+
+    /**
+     * Specific user agent to use in this context.
+     */
+    userAgent?: string;
+  }): Promise<ApiRequestContext>;
+}
+
+/**
+ * This API is used for the Web API testing. You can use it to trigger API endpoints, configure micro-services, prepare
+ * environment or the service to your e2e test. When used on [Page] or a [BrowserContext], this API will automatically use
+ * the cookies from the corresponding [BrowserContext]. This means that if you log in using this API, your e2e test will be
+ * logged in and vice versa.
+ */
+export interface ApiRequestContext {
+  /**
+   * Sends HTTP(S) [DELETE](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/DELETE) request and returns its
+   * response. The method will populate request cookies from the context and update context cookies from the response. The
+   * method will automatically follow redirects.
+   * @param url Target URL.
+   * @param options
+   */
+  delete(url: string, options?: {
+    /**
+     * Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status codes.
+     */
+    failOnStatusCode?: boolean;
+
+    /**
+     * Allows to set HTTP headers.
+     */
+    headers?: { [key: string]: string; };
+
+    /**
+     * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+     */
+    ignoreHTTPSErrors?: boolean;
+
+    /**
+     * Query parameters to be send with the URL.
+     */
+    params?: { [key: string]: string|number|boolean; };
+
+    /**
+     * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+     */
+    timeout?: number;
+  }): Promise<ApiResponse>;
+
+  /**
+   * All responses received through
+   * [apiRequestContext.fetch(urlOrRequest[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-fetch),
+   * [apiRequestContext.get(url[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-get),
+   * [apiRequestContext.post(url[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-post)
+   * and other methods are stored in the memory, so that you can later call
+   * [apiResponse.body()](https://playwright.dev/docs/api/class-apiresponse#api-response-body). This method discards all
+   * stored responses, and makes [apiResponse.body()](https://playwright.dev/docs/api/class-apiresponse#api-response-body)
+   * throw "Response disposed" error.
+   */
+  dispose(): Promise<void>;
+
+  /**
+   * Sends HTTP(S) request and returns its response. The method will populate request cookies from the context and update
+   * context cookies from the response. The method will automatically follow redirects.
+   * @param urlOrRequest Target URL or Request to get all parameters from.
+   * @param options
+   */
+  fetch(urlOrRequest: string|Request, options?: {
+    /**
+     * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string and
+     * `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type` header will
+     * be set to `application/octet-stream` if not explicitly set.
+     */
+    data?: string|Buffer|Serializable;
+
+    /**
+     * Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status codes.
+     */
+    failOnStatusCode?: boolean;
+
+    /**
+     * Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent as
+     * this request body. If this parameter is specified `content-type` header will be set to
+     * `application/x-www-form-urlencoded` unless explicitly provided.
+     */
+    form?: { [key: string]: string|number|boolean; };
+
+    /**
+     * Allows to set HTTP headers.
+     */
+    headers?: { [key: string]: string; };
+
+    /**
+     * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+     */
+    ignoreHTTPSErrors?: boolean;
+
+    /**
+     * If set changes the fetch method (e.g. [PUT](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PUT) or
+     * [POST](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST)). If not specified, GET method is used.
+     */
+    method?: string;
+
+    /**
+     * Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this request
+     * body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless explicitly
+     * provided. File values can be passed either as [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream)
+     * or as file-like object containing file name, mime-type and its content.
+     */
+    multipart?: { [key: string]: string|number|boolean|ReadStream|{
+      /**
+       * File name
+       */
+      name: string;
+
+      /**
+       * File type
+       */
+      mimeType: string;
+
+      /**
+       * File content
+       */
+      buffer: Buffer;
+    }; };
+
+    /**
+     * Query parameters to be send with the URL.
+     */
+    params?: { [key: string]: string|number|boolean; };
+
+    /**
+     * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+     */
+    timeout?: number;
+  }): Promise<ApiResponse>;
+
+  /**
+   * Sends HTTP(S) [GET](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/GET) request and returns its response. The
+   * method will populate request cookies from the context and update context cookies from the response. The method will
+   * automatically follow redirects.
+   * @param url Target URL.
+   * @param options
+   */
+  get(url: string, options?: {
+    /**
+     * Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status codes.
+     */
+    failOnStatusCode?: boolean;
+
+    /**
+     * Allows to set HTTP headers.
+     */
+    headers?: { [key: string]: string; };
+
+    /**
+     * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+     */
+    ignoreHTTPSErrors?: boolean;
+
+    /**
+     * Query parameters to be send with the URL.
+     */
+    params?: { [key: string]: string|number|boolean; };
+
+    /**
+     * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+     */
+    timeout?: number;
+  }): Promise<ApiResponse>;
+
+  /**
+   * Sends HTTP(S) [HEAD](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/HEAD) request and returns its response.
+   * The method will populate request cookies from the context and update context cookies from the response. The method will
+   * automatically follow redirects.
+   * @param url Target URL.
+   * @param options
+   */
+  head(url: string, options?: {
+    /**
+     * Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status codes.
+     */
+    failOnStatusCode?: boolean;
+
+    /**
+     * Allows to set HTTP headers.
+     */
+    headers?: { [key: string]: string; };
+
+    /**
+     * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+     */
+    ignoreHTTPSErrors?: boolean;
+
+    /**
+     * Query parameters to be send with the URL.
+     */
+    params?: { [key: string]: string|number|boolean; };
+
+    /**
+     * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+     */
+    timeout?: number;
+  }): Promise<ApiResponse>;
+
+  /**
+   * Sends HTTP(S) [PATCH](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PATCH) request and returns its response.
+   * The method will populate request cookies from the context and update context cookies from the response. The method will
+   * automatically follow redirects.
+   * @param url Target URL.
+   * @param options
+   */
+  patch(url: string, options?: {
+    /**
+     * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string and
+     * `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type` header will
+     * be set to `application/octet-stream` if not explicitly set.
+     */
+    data?: string|Buffer|Serializable;
+
+    /**
+     * Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status codes.
+     */
+    failOnStatusCode?: boolean;
+
+    /**
+     * Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent as
+     * this request body. If this parameter is specified `content-type` header will be set to
+     * `application/x-www-form-urlencoded` unless explicitly provided.
+     */
+    form?: { [key: string]: string|number|boolean; };
+
+    /**
+     * Allows to set HTTP headers.
+     */
+    headers?: { [key: string]: string; };
+
+    /**
+     * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+     */
+    ignoreHTTPSErrors?: boolean;
+
+    /**
+     * Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this request
+     * body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless explicitly
+     * provided. File values can be passed either as [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream)
+     * or as file-like object containing file name, mime-type and its content.
+     */
+    multipart?: { [key: string]: string|number|boolean|ReadStream|{
+      /**
+       * File name
+       */
+      name: string;
+
+      /**
+       * File type
+       */
+      mimeType: string;
+
+      /**
+       * File content
+       */
+      buffer: Buffer;
+    }; };
+
+    /**
+     * Query parameters to be send with the URL.
+     */
+    params?: { [key: string]: string|number|boolean; };
+
+    /**
+     * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+     */
+    timeout?: number;
+  }): Promise<ApiResponse>;
+
+  /**
+   * Sends HTTP(S) [POST](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST) request and returns its response.
+   * The method will populate request cookies from the context and update context cookies from the response. The method will
+   * automatically follow redirects.
+   * @param url Target URL.
+   * @param options
+   */
+  post(url: string, options?: {
+    /**
+     * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string and
+     * `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type` header will
+     * be set to `application/octet-stream` if not explicitly set.
+     */
+    data?: string|Buffer|Serializable;
+
+    /**
+     * Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status codes.
+     */
+    failOnStatusCode?: boolean;
+
+    /**
+     * Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent as
+     * this request body. If this parameter is specified `content-type` header will be set to
+     * `application/x-www-form-urlencoded` unless explicitly provided.
+     */
+    form?: { [key: string]: string|number|boolean; };
+
+    /**
+     * Allows to set HTTP headers.
+     */
+    headers?: { [key: string]: string; };
+
+    /**
+     * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+     */
+    ignoreHTTPSErrors?: boolean;
+
+    /**
+     * Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this request
+     * body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless explicitly
+     * provided. File values can be passed either as [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream)
+     * or as file-like object containing file name, mime-type and its content.
+     */
+    multipart?: { [key: string]: string|number|boolean|ReadStream|{
+      /**
+       * File name
+       */
+      name: string;
+
+      /**
+       * File type
+       */
+      mimeType: string;
+
+      /**
+       * File content
+       */
+      buffer: Buffer;
+    }; };
+
+    /**
+     * Query parameters to be send with the URL.
+     */
+    params?: { [key: string]: string|number|boolean; };
+
+    /**
+     * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+     */
+    timeout?: number;
+  }): Promise<ApiResponse>;
+
+  /**
+   * Sends HTTP(S) [PUT](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PUT) request and returns its response. The
+   * method will populate request cookies from the context and update context cookies from the response. The method will
+   * automatically follow redirects.
+   * @param url Target URL.
+   * @param options
+   */
+  put(url: string, options?: {
+    /**
+     * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string and
+     * `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type` header will
+     * be set to `application/octet-stream` if not explicitly set.
+     */
+    data?: string|Buffer|Serializable;
+
+    /**
+     * Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status codes.
+     */
+    failOnStatusCode?: boolean;
+
+    /**
+     * Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent as
+     * this request body. If this parameter is specified `content-type` header will be set to
+     * `application/x-www-form-urlencoded` unless explicitly provided.
+     */
+    form?: { [key: string]: string|number|boolean; };
+
+    /**
+     * Allows to set HTTP headers.
+     */
+    headers?: { [key: string]: string; };
+
+    /**
+     * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+     */
+    ignoreHTTPSErrors?: boolean;
+
+    /**
+     * Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this request
+     * body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless explicitly
+     * provided. File values can be passed either as [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream)
+     * or as file-like object containing file name, mime-type and its content.
+     */
+    multipart?: { [key: string]: string|number|boolean|ReadStream|{
+      /**
+       * File name
+       */
+      name: string;
+
+      /**
+       * File type
+       */
+      mimeType: string;
+
+      /**
+       * File content
+       */
+      buffer: Buffer;
+    }; };
+
+    /**
+     * Query parameters to be send with the URL.
+     */
+    params?: { [key: string]: string|number|boolean; };
+
+    /**
+     * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+     */
+    timeout?: number;
+  }): Promise<ApiResponse>;
+
+  /**
+   * Returns storage state for this request context, contains current cookies and local storage snapshot if it was passed to
+   * the constructor.
+   * @param options
+   */
+  storageState(options?: {
+    /**
+     * The file path to save the storage state to. If `path` is a relative path, then it is resolved relative to current
+     * working directory. If no path is provided, storage state is still returned, but won't be saved to the disk.
+     */
+    path?: string;
+  }): Promise<{
+    cookies: Array<{
+      name: string;
+
+      value: string;
+
+      domain: string;
+
+      path: string;
+
+      /**
+       * Unix time in seconds.
+       */
+      expires: number;
+
+      httpOnly: boolean;
+
+      secure: boolean;
+
+      sameSite: "Strict"|"Lax"|"None";
+    }>;
+
+    origins: Array<{
+      origin: string;
+
+      localStorage: Array<{
+        name: string;
+
+        value: string;
+      }>;
+    }>;
+  }>;
+}
+
+/**
+ * [ApiResponse] class represents responses received from
+ * [apiRequestContext.fetch(urlOrRequest[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-fetch).
+ */
+export interface ApiResponse {
+  /**
+   * Returns the buffer with response body.
+   */
+  body(): Promise<Buffer>;
+
+  /**
+   * Disposes the body of this response. If not called then the body will stay in memory until the context closes.
+   */
+  dispose(): Promise<void>;
+
+  /**
+   * An object with all the response HTTP headers associated with this response.
+   */
+  headers(): { [key: string]: string; };
+
+  /**
+   * An array with all the request HTTP headers associated with this response. Header names are not lower-cased. Headers with
+   * multiple entries, such as `Set-Cookie`, appear in the array multiple times.
+   */
+  headersArray(): Array<{
+    /**
+     * Name of the header.
+     */
+    name: string;
+
+    /**
+     * Value of the header.
+     */
+    value: string;
+  }>;
+
+  /**
+   * Returns the JSON representation of response body.
+   *
+   * This method will throw if the response body is not parsable via `JSON.parse`.
+   */
+  json(): Promise<Serializable>;
+
+  /**
+   * Contains a boolean stating whether the response was successful (status in the range 200-299) or not.
+   */
+  ok(): boolean;
+
+  /**
+   * Contains the status code of the response (e.g., 200 for a success).
+   */
+  status(): number;
+
+  /**
+   * Contains the status text of the response (e.g. usually an "OK" for a success).
+   */
+  statusText(): string;
+
+  /**
+   * Returns the text representation of response body.
+   */
+  text(): Promise<string>;
+
+  /**
+   * Contains the URL of the response.
+   */
+  url(): string;
+}
+
+/**
  * - extends: [EventEmitter]
  *
  * A Browser is created via
@@ -11693,7 +12390,7 @@ export interface Browser extends EventEmitter {
     deviceScaleFactor?: number;
 
     /**
-     * An object containing additional HTTP headers to be sent with every request. All header values must be strings.
+     * An object containing additional HTTP headers to be sent with every request.
      */
     extraHTTPHeaders?: { [key: string]: string; };
 
@@ -11738,7 +12435,7 @@ export interface Browser extends EventEmitter {
     };
 
     /**
-     * Whether to ignore HTTPS errors during navigation. Defaults to `false`.
+     * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
      */
     ignoreHTTPSErrors?: boolean;
 
@@ -11884,53 +12581,42 @@ export interface Browser extends EventEmitter {
      */
     storageState?: string|{
       /**
-       * Optional cookies to set for context
+       * cookies to set for context
        */
-      cookies?: Array<{
+      cookies: Array<{
         name: string;
 
         value: string;
 
         /**
-         * Optional either url or domain / path are required
+         * domain and path are required
          */
-        url?: string;
+        domain: string;
 
         /**
-         * Optional either url or domain / path are required
+         * domain and path are required
          */
-        domain?: string;
+        path: string;
 
         /**
-         * Optional either url or domain / path are required
+         * Unix time in seconds.
          */
-        path?: string;
+        expires: number;
+
+        httpOnly: boolean;
+
+        secure: boolean;
 
         /**
-         * Optional Unix time in seconds.
+         * sameSite flag
          */
-        expires?: number;
-
-        /**
-         * Optional httpOnly flag
-         */
-        httpOnly?: boolean;
-
-        /**
-         * Optional secure flag
-         */
-        secure?: boolean;
-
-        /**
-         * Optional sameSite flag
-         */
-        sameSite?: "Strict"|"Lax"|"None";
+        sameSite: "Strict"|"Lax"|"None";
       }>;
 
       /**
-       * Optional localStorage to set for context
+       * localStorage to set for context
        */
-      origins?: Array<{
+      origins: Array<{
         origin: string;
 
         localStorage: Array<{
@@ -12499,7 +13185,7 @@ export interface Electron {
     executablePath?: string;
 
     /**
-     * An object containing additional HTTP headers to be sent with every request. All header values must be strings.
+     * An object containing additional HTTP headers to be sent with every request.
      */
     extraHTTPHeaders?: { [key: string]: string; };
 
@@ -12530,7 +13216,7 @@ export interface Electron {
     };
 
     /**
-     * Whether to ignore HTTPS errors during navigation. Defaults to `false`.
+     * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
      */
     ignoreHTTPSErrors?: boolean;
 
@@ -12999,8 +13685,43 @@ export interface Mouse {
      */
     clickCount?: number;
   }): Promise<void>;
+
+  /**
+   * Dispatches a `wheel` event.
+   *
+   * > NOTE: Wheel events may cause scrolling if they are not handled, and this method does not wait for the scrolling to
+   * finish before returning.
+   * @param deltaX Pixels to scroll horizontally.
+   * @param deltaY Pixels to scroll vertically.
+   */
+  wheel(deltaX: number, deltaY: number): Promise<void>;
 }
 
+/**
+ * This object can be used to launch or connect to Chromium, returning instances of [Browser].
+ */
+export const chromium: BrowserType;
+
+/**
+ * This object can be used to launch or connect to Firefox, returning instances of [Browser].
+ */
+export const firefox: BrowserType;
+
+/**
+ * Exposes API that can be used for the Web API testing.
+ */
+export const request: ApiRequest;
+
+/**
+ * Selectors can be used to install custom selector engines. See [Working with selectors](https://playwright.dev/docs/selectors) for more
+ * information.
+ */
+export const selectors: Selectors;
+
+/**
+ * This object can be used to launch or connect to WebKit, returning instances of [Browser].
+ */
+export const webkit: BrowserType;
 /**
  * Whenever the page sends a request for a network resource the following sequence of events are emitted by [Page]:
  * - [page.on('request')](https://playwright.dev/docs/api/class-page#page-event-request) emitted when the request is
@@ -13058,10 +13779,26 @@ export interface Request {
 
   /**
    * An array with all the request HTTP headers associated with this request. Unlike
-   * [request.allHeaders()](https://playwright.dev/docs/api/class-request#request-all-headers), header names are not
+   * [request.allHeaders()](https://playwright.dev/docs/api/class-request#request-all-headers), header names are NOT
    * lower-cased. Headers with multiple entries, such as `Set-Cookie`, appear in the array multiple times.
    */
-  headersArray(): Promise<Array<Array<string>>>;
+  headersArray(): Promise<Array<{
+    /**
+     * Name of the header.
+     */
+    name: string;
+
+    /**
+     * Value of the header.
+     */
+    value: string;
+  }>>;
+
+  /**
+   * Returns the value of the header matching the name. The name is case insensitive.
+   * @param name Name of the header.
+   */
+  headerValue(name: string): Promise<null|string>;
 
   /**
    * Whether this request is driving frame's navigation.
@@ -13089,7 +13826,7 @@ export interface Request {
    * When the response is `application/x-www-form-urlencoded` then a key/value object of the values will be returned.
    * Otherwise it will be parsed as JSON.
    */
-  postDataJSON(): null|any;
+  postDataJSON(): null|Serializable;
 
   /**
    * Request that was redirected by the server to this one, if any.
@@ -13273,10 +14010,34 @@ export interface Response {
 
   /**
    * An array with all the request HTTP headers associated with this response. Unlike
-   * [response.allHeaders()](https://playwright.dev/docs/api/class-response#response-all-headers), header names are not
+   * [response.allHeaders()](https://playwright.dev/docs/api/class-response#response-all-headers), header names are NOT
    * lower-cased. Headers with multiple entries, such as `Set-Cookie`, appear in the array multiple times.
    */
-  headersArray(): Promise<Array<Array<string>>>;
+  headersArray(): Promise<Array<{
+    /**
+     * Name of the header.
+     */
+    name: string;
+
+    /**
+     * Value of the header.
+     */
+    value: string;
+  }>>;
+
+  /**
+   * Returns the value of the header matching the name. The name is case insensitive. If multiple headers have the same name
+   * (except `set-cookie`), they are returned as a list separated by `, `. For `set-cookie`, the `\n` separator is used. If
+   * no headers are found, `null` is returned.
+   * @param name Name of the header.
+   */
+  headerValue(name: string): Promise<null|string>;
+
+  /**
+   * Returns all values of the headers matching the name, for example `set-cookie`. The name is case insensitive.
+   * @param name Name of the header.
+   */
+  headerValues(name: string): Promise<Array<string>>;
 
   /**
    * Returns the JSON representation of response body.
@@ -13471,6 +14232,12 @@ export interface Route {
      * is resolved relative to the current working directory.
      */
     path?: string;
+
+    /**
+     * [ApiResponse] to fulfill route's request with. Individual fields of the response (such as headers) can be overridden
+     * using fulfill options.
+     */
+    response?: ApiResponse;
 
     /**
      * Response status code, defaults to `200`.
@@ -13944,7 +14711,7 @@ export interface BrowserContextOptions {
   deviceScaleFactor?: number;
 
   /**
-   * An object containing additional HTTP headers to be sent with every request. All header values must be strings.
+   * An object containing additional HTTP headers to be sent with every request.
    */
   extraHTTPHeaders?: { [key: string]: string; };
 
@@ -13970,7 +14737,7 @@ export interface BrowserContextOptions {
   httpCredentials?: HTTPCredentials;
 
   /**
-   * Whether to ignore HTTPS errors during navigation. Defaults to `false`.
+   * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
    */
   ignoreHTTPSErrors?: boolean;
 
@@ -14116,53 +14883,42 @@ export interface BrowserContextOptions {
    */
   storageState?: string|{
     /**
-     * Optional cookies to set for context
+     * cookies to set for context
      */
-    cookies?: Array<{
+    cookies: Array<{
       name: string;
 
       value: string;
 
       /**
-       * Optional either url or domain / path are required
+       * domain and path are required
        */
-      url?: string;
+      domain: string;
 
       /**
-       * Optional either url or domain / path are required
+       * domain and path are required
        */
-      domain?: string;
+      path: string;
 
       /**
-       * Optional either url or domain / path are required
+       * Unix time in seconds.
        */
-      path?: string;
+      expires: number;
+
+      httpOnly: boolean;
+
+      secure: boolean;
 
       /**
-       * Optional Unix time in seconds.
+       * sameSite flag
        */
-      expires?: number;
-
-      /**
-       * Optional httpOnly flag
-       */
-      httpOnly?: boolean;
-
-      /**
-       * Optional secure flag
-       */
-      secure?: boolean;
-
-      /**
-       * Optional sameSite flag
-       */
-      sameSite?: "Strict"|"Lax"|"None";
+      sameSite: "Strict"|"Lax"|"None";
     }>;
 
     /**
-     * Optional localStorage to set for context
+     * localStorage to set for context
      */
-    origins?: Array<{
+    origins: Array<{
       origin: string;
 
       localStorage: Array<{
@@ -14646,6 +15402,14 @@ type Devices = {
   "iPhone 12 Pro landscape": DeviceDescriptor;
   "iPhone 12 Pro Max": DeviceDescriptor;
   "iPhone 12 Pro Max landscape": DeviceDescriptor;
+  "iPhone 13": DeviceDescriptor;
+  "iPhone 13 landscape": DeviceDescriptor;
+  "iPhone 13 Pro": DeviceDescriptor;
+  "iPhone 13 Pro landscape": DeviceDescriptor;
+  "iPhone 13 Pro Max": DeviceDescriptor;
+  "iPhone 13 Pro Max landscape": DeviceDescriptor;
+  "iPhone 13 Mini": DeviceDescriptor;
+  "iPhone 13 Mini landscape": DeviceDescriptor;
   "JioPhone 2": DeviceDescriptor;
   "JioPhone 2 landscape": DeviceDescriptor;
   "Kindle Fire HDX": DeviceDescriptor;

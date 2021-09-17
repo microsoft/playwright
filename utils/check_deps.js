@@ -21,8 +21,8 @@ const ts = require('typescript');
 const path = require('path');
 
 async function checkDeps() {
-  const root = path.normalize(path.join(__dirname, '..'));
-  const src = path.normalize(path.join(__dirname, '..', 'src'));
+  const root = path.normalize(path.join(__dirname, '..', 'packages', 'playwright-core'));
+  const src = path.normalize(path.join(__dirname, '..', 'packages', 'playwright-core', 'src'));
   const packageJSON = require(path.join(root, 'package.json'));
   const program = ts.createProgram({
     options: {

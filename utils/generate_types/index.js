@@ -469,7 +469,7 @@ class TypesGenerator {
     fs.writeFileSync(filePath, content, 'utf8');
   }
 
-  const typesDir = path.join(PROJECT_DIR, 'types');
+  const typesDir = path.join(PROJECT_DIR, 'packages', 'playwright-core', 'types');
   if (!fs.existsSync(typesDir))
     fs.mkdirSync(typesDir)
   writeFile(path.join(typesDir, 'protocol.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'packages', 'playwright-core', 'src', 'server', 'chromium', 'protocol.d.ts'), 'utf8'));

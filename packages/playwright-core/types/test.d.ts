@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials } from './types';
+import type { ApiRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials } from './types';
 import type { Expect } from './testExpect';
 
 export type { Expect } from './testExpect';
@@ -24,6 +24,7 @@ export type ReporterDescription =
   ['dot'] |
   ['line'] |
   ['list'] |
+  ['github'] |
   ['junit'] | ['junit', { outputFile?: string, stripANSIControlSequences?: boolean }] |
   ['json'] | ['json', { outputFile?: string }] |
   ['null'] |
@@ -35,6 +36,7 @@ export type PreserveOutput = 'always' | 'never' | 'failures-only';
 export type UpdateSnapshots = 'all' | 'none' | 'missing';
 
 type FixtureDefine<TestArgs extends KeyValue = {}, WorkerArgs extends KeyValue = {}> = { test: TestType<TestArgs, WorkerArgs>, fixtures: Fixtures<{}, {}, TestArgs, WorkerArgs> };
+type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K] } & { [K in keyof TestArgs]?: TestArgs[K] };
 
 type ExpectSettings = {
   // Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
@@ -283,9 +285,9 @@ interface TestProject {
 export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
   define?: FixtureDefine | FixtureDefine[];
   /**
-   * Additional fixtures for this project. Most useful for specifying options, for example
-   * [fixtures.browserName](https://playwright.dev/docs/api/class-fixtures#fixtures-browser-name). Learn more about
-   * [Fixtures] and [configuration](https://playwright.dev/docs/test-configuration).
+   * Options for all tests in this project, for example
+   * [testOptions.browserName](https://playwright.dev/docs/api/class-testoptions#test-options-browser-name). Learn more about
+   * [configuration](https://playwright.dev/docs/test-configuration) and see [available options][TestOptions].
    *
    * ```ts
    * // playwright.config.ts
@@ -305,10 +307,10 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
    * ```
    *
    */
-  use?: Fixtures<{}, {}, TestArgs, WorkerArgs>;
+  use?: UseOptions<TestArgs, WorkerArgs>;
 }
 
-export type FullProject<TestArgs = {}, WorkerArgs = {}> = Required<Project<TestArgs, WorkerArgs>>;
+export type FullProject<TestArgs = {}, WorkerArgs = {}> = Required<Project<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>>;
 
 export type WebServerConfig = {
   /**
@@ -460,7 +462,7 @@ interface TestConfig {
    * ```
    *
    */
-  reporter?: LiteralUnion<'list'|'dot'|'line'|'json'|'junit'|'null', string> | ReporterDescription[];
+  reporter?: LiteralUnion<'list'|'dot'|'line'|'github'|'json'|'junit'|'null', string> | ReporterDescription[];
   /**
    * Whether to report slow tests. Pass `null` to disable this feature.
    *
@@ -594,9 +596,9 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
   projects?: Project<TestArgs, WorkerArgs>[];
   define?: FixtureDefine | FixtureDefine[];
   /**
-   * Additional fixtures for this project. Most useful for specifying options, for example
-   * [fixtures.browserName](https://playwright.dev/docs/api/class-fixtures#fixtures-browser-name). Learn more about
-   * [Fixtures] and [configuration](https://playwright.dev/docs/test-configuration).
+   * Global options for all tests, for example
+   * [testOptions.browserName](https://playwright.dev/docs/api/class-testoptions#test-options-browser-name). Learn more about
+   * [configuration](https://playwright.dev/docs/test-configuration) and see [available options][TestOptions].
    *
    * ```ts
    * // playwright.config.ts
@@ -611,7 +613,7 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
    * ```
    *
    */
-  use?: Fixtures<{}, {}, TestArgs, WorkerArgs>;
+  use?: UseOptions<TestArgs, WorkerArgs>;
 }
 
 /**
@@ -636,7 +638,7 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
  * ```
  *
  */
-export interface FullConfig {
+export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   /**
    * Whether to exit with an error if any tests or groups are marked as
    * [test.only(title, testFunction)](https://playwright.dev/docs/api/class-test#test-only) or
@@ -706,7 +708,7 @@ export interface FullConfig {
   /**
    * Playwright Test supports running multiple test projects at the same time. See [TestProject] for more information.
    */
-  projects: FullProject[];
+  projects: FullProject<TestArgs, WorkerArgs>[];
   /**
    * The list of reporters to use. Each reporter can be:
    * - A builtin reporter name like `'list'` or `'json'`.
@@ -1100,10 +1102,15 @@ export interface TestInfo {
    */
   outputDir: string;
   /**
-   * Returns a path to a snapshot file with the given `snapshotName`. Learn more about [snapshots](https://playwright.dev/docs/test-snapshots).
-   * @param snapshotName
+   * Returns a path to a snapshot file with the given `pathSegments`. Learn more about [snapshots](https://playwright.dev/docs/test-snapshots).
+   *
+   * > Note that `pathSegments` accepts path segments to the snapshot file such as `testInfo.snapshotPath('relative', 'path',
+   * 'to', 'snapshot.png')`.
+   * > However, this path must stay within the snapshots directory for each test file (i.e. `a.spec.js-snapshots`), otherwise
+   * it will throw.
+   * @param pathSegments The name of the snapshot or the path segments to define the snapshot file path. Snapshots with the same name in the same test file are expected to be the same.
    */
-  snapshotPath: (snapshotName: string) => string;
+  snapshotPath: (...pathSegments: string[]) => string;
   /**
    * Returns a path inside the [testInfo.outputDir](https://playwright.dev/docs/api/class-testinfo#test-info-output-dir)
    * where the test can safely put a temporary file. Guarantees that tests running in parallel will not interfere with each
@@ -1119,6 +1126,11 @@ export interface TestInfo {
    * });
    * ```
    *
+   * > Note that `pathSegments` accepts path segments to the test output directory such as `testInfo.outputPath('relative',
+   * 'path', 'to', 'output')`.
+   * > However, this path must stay within the
+   * [testInfo.outputDir](https://playwright.dev/docs/api/class-testinfo#test-info-output-dir) directory for each test (i.e.
+   * `test-results/a-test-title`), otherwise it will throw.
    * @param pathSegments Path segments to append at the end of the resulting path.
    */
   outputPath: (...pathSegments: string[]) => string;
@@ -1266,22 +1278,9 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    */
   parallel: SuiteFunction & {
       /**
-   * Declares a focused group of tests that could be run in parallel. By default, tests in a single test file run one after
-   * another, but using
-   * [test.describe.parallel(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-parallel) allows them
-   * to run in parallel. If there are some focused tests or suites, all of them will be run but nothing else.
-   *
-   * ```ts
-   * test.describe.parallel.only('group', () => {
-   *   test('runs in parallel 1', async ({ page }) => {
-   *   });
-   *   test('runs in parallel 2', async ({ page }) => {
-   *   });
-   * });
-   * ```
-   *
-   * Note that parallel tests are executed in separate processes and cannot share any state or global variables. Each of the
-   * parallel tests executes all relevant hooks.
+   * Declares a focused group of tests that could be run in parallel. This is similar to
+   * [test.describe.parallel(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-parallel), but
+   * focuses the group. If there are some focused tests or suites, all of them will be run but nothing else.
    * @param title Group title.
    * @param callback A callback that is run immediately when calling [test.describe.parallel.only(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-parallel-only).
    * Any tests added in this callback will belong to the group.
@@ -2217,9 +2216,9 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    */
   afterAll(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   /**
-   * Specifies parameters or fixtures to use in a single test file or a
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group. Most useful to
-   * configure a fixture, for example set `locale` to configure `context` fixture.
+   * Specifies options or fixtures to use in a single test file or a
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group. Most useful to set an
+   * option, for example set `locale` to configure `context` fixture.
    *
    * ```ts
    * import { test, expect } from '@playwright/test';
@@ -2231,7 +2230,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * It is possible not only to provide a fixture value, but also to override a fixture by providing a fixture function.
+   * It is also possible to override a fixture by providing a function.
    *
    * ```ts
    * import { test, expect } from '@playwright/test';
@@ -2249,7 +2248,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * @param fixtures An object with fixture definitions.
+   * @param options An object with local options.
    */
   use(fixtures: Fixtures<{}, {}, TestArgs, WorkerArgs>): void;
   /**
@@ -2281,8 +2280,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
 type KeyValue = { [key: string]: any };
 export type TestFixture<R, Args extends KeyValue> = (args: Args, use: (r: R) => Promise<void>, testInfo: TestInfo) => any;
 export type WorkerFixture<R, Args extends KeyValue> = (args: Args, use: (r: R) => Promise<void>, workerInfo: WorkerInfo) => any;
-type TestFixtureValue<R, Args> = R | TestFixture<R, Args>;
-type WorkerFixtureValue<R, Args> = R | WorkerFixture<R, Args>;
+type TestFixtureValue<R, Args> = Exclude<R, Function> | TestFixture<R, Args>;
+type WorkerFixtureValue<R, Args> = Exclude<R, Function> | WorkerFixture<R, Args>;
 export type Fixtures<T extends KeyValue = {}, W extends KeyValue = {}, PT extends KeyValue = {}, PW extends KeyValue = {}> = {
   [K in keyof PW]?: WorkerFixtureValue<PW[K], W & PW> | [WorkerFixtureValue<PW[K], W & PW>, { scope: 'worker' }];
 } & {
@@ -2301,27 +2300,11 @@ type Proxy = Exclude<BrowserContextOptions['proxy'], undefined>;
 type StorageState = Exclude<BrowserContextOptions['storageState'], undefined>;
 
 /**
- * Playwright Test is based on the concept of the [test fixtures](https://playwright.dev/docs/test-fixtures). Test fixtures are used to establish
- * environment for each test, giving the test everything it needs and nothing else.
+ * Playwright Test provides many options to configure test environment, [Browser], [BrowserContext] and more.
  *
- * Playwright Test looks at each test declaration, analyses the set of fixtures the test needs and prepares those fixtures
- * specifically for the test. Values prepared by the fixtures are merged into a single object that is available to the
- * `test`, hooks, annotations and other fixtures as a first parameter.
- *
- * ```ts
- * import { test, expect } from '@playwright/test';
- *
- * test('basic test', async ({ page }) => {
- *   // ...
- * });
- * ```
- *
- * Given the test above, Playwright Test will set up the `page` fixture before running the test, and tear it down after the
- * test has finished. `page` fixture provides a [Page] object that is available to the test.
- *
- * Playwright Test comes with builtin fixtures listed below, and you can add your own fixtures as well. Many fixtures are
- * designed as "options" that you can set in your
- * [testConfig.use](https://playwright.dev/docs/api/class-testconfig#test-config-use) section.
+ * These options are usually provided in the [configuration file](https://playwright.dev/docs/test-configuration) through
+ * [testConfig.use](https://playwright.dev/docs/api/class-testconfig#test-config-use) and
+ * [testProject.use](https://playwright.dev/docs/api/class-testproject#test-project-use).
  *
  * ```ts
  * import { PlaywrightTestConfig } from '@playwright/test';
@@ -2336,7 +2319,7 @@ type StorageState = Exclude<BrowserContextOptions['storageState'], undefined>;
  * export default config;
  * ```
  *
- * Alternatively, with [test.use(fixtures)](https://playwright.dev/docs/api/class-test#test-use) you can override some
+ * Alternatively, with [test.use(options)](https://playwright.dev/docs/api/class-test#test-use) you can override some
  * options for a file.
  *
  * ```ts
@@ -2388,8 +2371,8 @@ export interface PlaywrightWorkerOptions {
   /**
    * Options used to launch the browser, as passed to
    * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch). Specific options
-   * [fixtures.headless](https://playwright.dev/docs/api/class-fixtures#fixtures-headless) and
-   * [fixtures.channel](https://playwright.dev/docs/api/class-fixtures#fixtures-channel) take priority over this.
+   * [testOptions.headless](https://playwright.dev/docs/api/class-testoptions#test-options-headless) and
+   * [testOptions.channel](https://playwright.dev/docs/api/class-testoptions#test-options-channel) take priority over this.
    */
   launchOptions: LaunchOptions;
   /**
@@ -2426,27 +2409,11 @@ export interface PlaywrightWorkerOptions {
 export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | /** deprecated */ 'retry-with-video';
 
 /**
- * Playwright Test is based on the concept of the [test fixtures](https://playwright.dev/docs/test-fixtures). Test fixtures are used to establish
- * environment for each test, giving the test everything it needs and nothing else.
+ * Playwright Test provides many options to configure test environment, [Browser], [BrowserContext] and more.
  *
- * Playwright Test looks at each test declaration, analyses the set of fixtures the test needs and prepares those fixtures
- * specifically for the test. Values prepared by the fixtures are merged into a single object that is available to the
- * `test`, hooks, annotations and other fixtures as a first parameter.
- *
- * ```ts
- * import { test, expect } from '@playwright/test';
- *
- * test('basic test', async ({ page }) => {
- *   // ...
- * });
- * ```
- *
- * Given the test above, Playwright Test will set up the `page` fixture before running the test, and tear it down after the
- * test has finished. `page` fixture provides a [Page] object that is available to the test.
- *
- * Playwright Test comes with builtin fixtures listed below, and you can add your own fixtures as well. Many fixtures are
- * designed as "options" that you can set in your
- * [testConfig.use](https://playwright.dev/docs/api/class-testconfig#test-config-use) section.
+ * These options are usually provided in the [configuration file](https://playwright.dev/docs/test-configuration) through
+ * [testConfig.use](https://playwright.dev/docs/api/class-testconfig#test-config-use) and
+ * [testProject.use](https://playwright.dev/docs/api/class-testproject#test-project-use).
  *
  * ```ts
  * import { PlaywrightTestConfig } from '@playwright/test';
@@ -2461,7 +2428,7 @@ export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 
  * export default config;
  * ```
  *
- * Alternatively, with [test.use(fixtures)](https://playwright.dev/docs/api/class-test#test-use) you can override some
+ * Alternatively, with [test.use(options)](https://playwright.dev/docs/api/class-test#test-use) you can override some
  * options for a file.
  *
  * ```ts
@@ -2477,7 +2444,7 @@ export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 
  * ```
  *
  */
-export interface PlaywrightTestOptions {
+export interface PlaywrightTestOptions extends PlaywrightTest.ExtraUseOptions {
   /**
    * Whether to automatically download all the attachments. Defaults to `false` where all the downloads are canceled.
    */
@@ -2497,7 +2464,7 @@ export interface PlaywrightTestOptions {
    */
   deviceScaleFactor: number | undefined;
   /**
-   * An object containing additional HTTP headers to be sent with every request. All header values must be strings.
+   * An object containing additional HTTP headers to be sent with every request.
    */
   extraHTTPHeaders: ExtraHTTPHeaders | undefined;
   geolocation: Geolocation | undefined;
@@ -2510,7 +2477,7 @@ export interface PlaywrightTestOptions {
    */
   httpCredentials: HTTPCredentials | undefined;
   /**
-   * Whether to ignore HTTPS errors during navigation. Defaults to `false`.
+   * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
    */
   ignoreHTTPSErrors: boolean | undefined;
   /**
@@ -2577,7 +2544,8 @@ export interface PlaywrightTestOptions {
   /**
    * Options used to create the context, as passed to
    * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context). Specific options
-   * like [fixtures.viewport](https://playwright.dev/docs/api/class-fixtures#fixtures-viewport) take priority over this.
+   * like [testOptions.viewport](https://playwright.dev/docs/api/class-testoptions#test-options-viewport) take priority over
+   * this.
    */
   contextOptions: BrowserContextOptions;
   /**
@@ -2616,41 +2584,20 @@ export interface PlaywrightTestOptions {
  * Given the test above, Playwright Test will set up the `page` fixture before running the test, and tear it down after the
  * test has finished. `page` fixture provides a [Page] object that is available to the test.
  *
- * Playwright Test comes with builtin fixtures listed below, and you can add your own fixtures as well. Many fixtures are
- * designed as "options" that you can set in your
- * [testConfig.use](https://playwright.dev/docs/api/class-testconfig#test-config-use) section.
- *
- * ```ts
- * import { PlaywrightTestConfig } from '@playwright/test';
- * const config: PlaywrightTestConfig = {
- *   use: {
- *     headless: false,
- *     viewport: { width: 1280, height: 720 },
- *     ignoreHTTPSErrors: true,
- *     video: 'on-first-retry',
- *   },
- * };
- * export default config;
- * ```
- *
- * Alternatively, with [test.use(fixtures)](https://playwright.dev/docs/api/class-test#test-use) you can override some
- * options for a file.
- *
- * ```ts
- * // example.spec.ts
- * import { test, expect } from '@playwright/test';
- *
- * // Run tests in this file with portrait-like viewport.
- * test.use({ viewport: { width: 600, height: 900 } });
- *
- * test('my portrait test', async ({ page }) => {
- *   // ...
- * });
- * ```
- *
+ * Playwright Test comes with builtin fixtures listed below, and you can add your own fixtures as well. Playwright Test
+ * also [provides options][TestOptions] to  configure
+ * [fixtures.browser](https://playwright.dev/docs/api/class-fixtures#fixtures-browser),
+ * [fixtures.context](https://playwright.dev/docs/api/class-fixtures#fixtures-context) and
+ * [fixtures.page](https://playwright.dev/docs/api/class-fixtures#fixtures-page).
  */
 export interface PlaywrightWorkerArgs {
   playwright: typeof import('..');
+  /**
+   * [Browser] instance is shared between all tests in the [same worker](https://playwright.dev/docs/test-parallel) - this makes testing efficient.
+   * However, each test runs in an isolated [BrowserContext]  and gets a fresh environment.
+   *
+   * Learn how to [configure browser](https://playwright.dev/docs/test-configuration) and see [available options][TestOptions].
+   */
   browser: Browser;
 }
 
@@ -2673,48 +2620,20 @@ export interface PlaywrightWorkerArgs {
  * Given the test above, Playwright Test will set up the `page` fixture before running the test, and tear it down after the
  * test has finished. `page` fixture provides a [Page] object that is available to the test.
  *
- * Playwright Test comes with builtin fixtures listed below, and you can add your own fixtures as well. Many fixtures are
- * designed as "options" that you can set in your
- * [testConfig.use](https://playwright.dev/docs/api/class-testconfig#test-config-use) section.
- *
- * ```ts
- * import { PlaywrightTestConfig } from '@playwright/test';
- * const config: PlaywrightTestConfig = {
- *   use: {
- *     headless: false,
- *     viewport: { width: 1280, height: 720 },
- *     ignoreHTTPSErrors: true,
- *     video: 'on-first-retry',
- *   },
- * };
- * export default config;
- * ```
- *
- * Alternatively, with [test.use(fixtures)](https://playwright.dev/docs/api/class-test#test-use) you can override some
- * options for a file.
- *
- * ```ts
- * // example.spec.ts
- * import { test, expect } from '@playwright/test';
- *
- * // Run tests in this file with portrait-like viewport.
- * test.use({ viewport: { width: 600, height: 900 } });
- *
- * test('my portrait test', async ({ page }) => {
- *   // ...
- * });
- * ```
- *
+ * Playwright Test comes with builtin fixtures listed below, and you can add your own fixtures as well. Playwright Test
+ * also [provides options][TestOptions] to  configure
+ * [fixtures.browser](https://playwright.dev/docs/api/class-fixtures#fixtures-browser),
+ * [fixtures.context](https://playwright.dev/docs/api/class-fixtures#fixtures-context) and
+ * [fixtures.page](https://playwright.dev/docs/api/class-fixtures#fixtures-page).
  */
 export interface PlaywrightTestArgs {
-  createContext: (options?: BrowserContextOptions) => Promise<BrowserContext>;
   /**
    * Isolated [BrowserContext] instance, created for each test. Since contexts are isolated between each other, every test
    * gets a fresh environment, even when multiple tests run in a single [Browser] for maximum efficiency.
    *
-   * Learn how to [configure context](https://playwright.dev/docs/test-configuration) through other fixtures and options.
+   * Learn how to [configure context](https://playwright.dev/docs/test-configuration) and see [available options][TestOptions].
    *
-   * The [fixtures.page](https://playwright.dev/docs/api/class-fixtures#fixtures-page) belongs to this context.
+   * Default [fixtures.page](https://playwright.dev/docs/api/class-fixtures#fixtures-page) belongs to this context.
    */
   context: BrowserContext;
   /**
@@ -2737,6 +2656,25 @@ export interface PlaywrightTestArgs {
    *
    */
   page: Page;
+  /**
+   * Isolated [ApiRequestContext] instance for each test.
+   *
+   * ```ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('basic test', async ({ request }) => {
+   *   await request.post('/signin', {
+   *     data: {
+   *       username: 'user',
+   *       password: 'password'
+   *     }
+   *   });
+   *   // ...
+   * });
+   * ```
+   *
+   */
+  request: ApiRequestContext;
 }
 
 export type PlaywrightTestProject<TestArgs = {}, WorkerArgs = {}> = Project<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
