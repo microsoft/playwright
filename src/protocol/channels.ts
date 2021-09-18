@@ -150,12 +150,66 @@ export type InterceptedResponse = {
   headers: NameValue[],
 };
 
+// ----------- FetchRequest -----------
+export type FetchRequestInitializer = {};
+export interface FetchRequestChannel extends Channel {
+  fetch(params: FetchRequestFetchParams, metadata?: Metadata): Promise<FetchRequestFetchResult>;
+  fetchResponseBody(params: FetchRequestFetchResponseBodyParams, metadata?: Metadata): Promise<FetchRequestFetchResponseBodyResult>;
+  disposeFetchResponse(params: FetchRequestDisposeFetchResponseParams, metadata?: Metadata): Promise<FetchRequestDisposeFetchResponseResult>;
+  dispose(params?: FetchRequestDisposeParams, metadata?: Metadata): Promise<FetchRequestDisposeResult>;
+}
+export type FetchRequestFetchParams = {
+  url: string,
+  params?: NameValue[],
+  method?: string,
+  headers?: NameValue[],
+  postData?: Binary,
+  formData?: any,
+  timeout?: number,
+  failOnStatusCode?: boolean,
+};
+export type FetchRequestFetchOptions = {
+  params?: NameValue[],
+  method?: string,
+  headers?: NameValue[],
+  postData?: Binary,
+  formData?: any,
+  timeout?: number,
+  failOnStatusCode?: boolean,
+};
+export type FetchRequestFetchResult = {
+  response?: FetchResponse,
+  error?: string,
+};
+export type FetchRequestFetchResponseBodyParams = {
+  fetchUid: string,
+};
+export type FetchRequestFetchResponseBodyOptions = {
+
+};
+export type FetchRequestFetchResponseBodyResult = {
+  binary?: Binary,
+};
+export type FetchRequestDisposeFetchResponseParams = {
+  fetchUid: string,
+};
+export type FetchRequestDisposeFetchResponseOptions = {
+
+};
+export type FetchRequestDisposeFetchResponseResult = void;
+export type FetchRequestDisposeParams = {};
+export type FetchRequestDisposeOptions = {};
+export type FetchRequestDisposeResult = void;
+
+export interface FetchRequestEvents {
+}
+
 export type FetchResponse = {
+  fetchUid: string,
   url: string,
   status: number,
   statusText: string,
   headers: NameValue[],
-  body: Binary,
 };
 
 // ----------- Root -----------
@@ -213,6 +267,7 @@ export interface PlaywrightChannel extends Channel {
   socksData(params: PlaywrightSocksDataParams, metadata?: Metadata): Promise<PlaywrightSocksDataResult>;
   socksError(params: PlaywrightSocksErrorParams, metadata?: Metadata): Promise<PlaywrightSocksErrorResult>;
   socksEnd(params: PlaywrightSocksEndParams, metadata?: Metadata): Promise<PlaywrightSocksEndResult>;
+  newRequest(params: PlaywrightNewRequestParams, metadata?: Metadata): Promise<PlaywrightNewRequestResult>;
 }
 export type PlaywrightSocksRequestedEvent = {
   uid: string,
@@ -266,6 +321,15 @@ export type PlaywrightSocksEndOptions = {
 
 };
 export type PlaywrightSocksEndResult = void;
+export type PlaywrightNewRequestParams = {
+  ignoreHTTPSErrors?: boolean,
+};
+export type PlaywrightNewRequestOptions = {
+  ignoreHTTPSErrors?: boolean,
+};
+export type PlaywrightNewRequestResult = {
+  request: FetchRequestChannel,
+};
 
 export interface PlaywrightEvents {
   'socksRequested': PlaywrightSocksRequestedEvent;
@@ -733,6 +797,7 @@ export interface EventTargetEvents {
 // ----------- BrowserContext -----------
 export type BrowserContextInitializer = {
   isChromium: boolean,
+  fetchRequest: FetchRequestChannel,
 };
 export interface BrowserContextChannel extends EventTargetChannel {
   on(event: 'bindingCall', callback: (params: BrowserContextBindingCallEvent) => void): this;
@@ -753,7 +818,6 @@ export interface BrowserContextChannel extends EventTargetChannel {
   close(params?: BrowserContextCloseParams, metadata?: Metadata): Promise<BrowserContextCloseResult>;
   cookies(params: BrowserContextCookiesParams, metadata?: Metadata): Promise<BrowserContextCookiesResult>;
   exposeBinding(params: BrowserContextExposeBindingParams, metadata?: Metadata): Promise<BrowserContextExposeBindingResult>;
-  fetch(params: BrowserContextFetchParams, metadata?: Metadata): Promise<BrowserContextFetchResult>;
   grantPermissions(params: BrowserContextGrantPermissionsParams, metadata?: Metadata): Promise<BrowserContextGrantPermissionsResult>;
   newPage(params?: BrowserContextNewPageParams, metadata?: Metadata): Promise<BrowserContextNewPageResult>;
   setDefaultNavigationTimeoutNoReply(params: BrowserContextSetDefaultNavigationTimeoutNoReplyParams, metadata?: Metadata): Promise<BrowserContextSetDefaultNavigationTimeoutNoReplyResult>;
@@ -853,21 +917,6 @@ export type BrowserContextExposeBindingOptions = {
   needsHandle?: boolean,
 };
 export type BrowserContextExposeBindingResult = void;
-export type BrowserContextFetchParams = {
-  url: string,
-  method?: string,
-  headers?: NameValue[],
-  postData?: Binary,
-};
-export type BrowserContextFetchOptions = {
-  method?: string,
-  headers?: NameValue[],
-  postData?: Binary,
-};
-export type BrowserContextFetchResult = {
-  response?: FetchResponse,
-  error?: string,
-};
 export type BrowserContextGrantPermissionsParams = {
   permissions: string[],
   origin?: string,
@@ -1081,6 +1130,7 @@ export interface PageChannel extends EventTargetChannel {
   mouseDown(params: PageMouseDownParams, metadata?: Metadata): Promise<PageMouseDownResult>;
   mouseUp(params: PageMouseUpParams, metadata?: Metadata): Promise<PageMouseUpResult>;
   mouseClick(params: PageMouseClickParams, metadata?: Metadata): Promise<PageMouseClickResult>;
+  mouseWheel(params: PageMouseWheelParams, metadata?: Metadata): Promise<PageMouseWheelResult>;
   touchscreenTap(params: PageTouchscreenTapParams, metadata?: Metadata): Promise<PageTouchscreenTapResult>;
   accessibilitySnapshot(params: PageAccessibilitySnapshotParams, metadata?: Metadata): Promise<PageAccessibilitySnapshotResult>;
   pdf(params: PagePdfParams, metadata?: Metadata): Promise<PagePdfResult>;
@@ -1343,6 +1393,14 @@ export type PageMouseClickOptions = {
   clickCount?: number,
 };
 export type PageMouseClickResult = void;
+export type PageMouseWheelParams = {
+  deltaX: number,
+  deltaY: number,
+};
+export type PageMouseWheelOptions = {
+
+};
+export type PageMouseWheelResult = void;
 export type PageTouchscreenTapParams = {
   x: number,
   y: number,
@@ -2660,6 +2718,7 @@ export type RouteFulfillParams = {
   body?: string,
   isBase64?: boolean,
   useInterceptedResponseBody?: boolean,
+  fetchResponseUid?: string,
 };
 export type RouteFulfillOptions = {
   status?: number,
@@ -2667,6 +2726,7 @@ export type RouteFulfillOptions = {
   body?: string,
   isBase64?: boolean,
   useInterceptedResponseBody?: boolean,
+  fetchResponseUid?: string,
 };
 export type RouteFulfillResult = void;
 export type RouteResponseBodyParams = {};
@@ -2753,7 +2813,6 @@ export type RequestSizes = {
   requestHeadersSize: number,
   responseBodySize: number,
   responseHeadersSize: number,
-  responseTransferSize: number,
 };
 
 export type RemoteAddr = {
@@ -3601,6 +3660,7 @@ export const commandsWithTracingSnapshots = new Set([
   'Page.mouseDown',
   'Page.mouseUp',
   'Page.mouseClick',
+  'Page.mouseWheel',
   'Page.touchscreenTap',
   'Frame.evalOnSelector',
   'Frame.evalOnSelectorAll',
@@ -3608,6 +3668,7 @@ export const commandsWithTracingSnapshots = new Set([
   'Frame.addStyleTag',
   'Frame.check',
   'Frame.click',
+  'Frame.dragAndDrop',
   'Frame.dblclick',
   'Frame.dispatchEvent',
   'Frame.evaluateExpression',
@@ -3623,6 +3684,8 @@ export const commandsWithTracingSnapshots = new Set([
   'Frame.isChecked',
   'Frame.isDisabled',
   'Frame.isEnabled',
+  'Frame.isHidden',
+  'Frame.isVisible',
   'Frame.isEditable',
   'Frame.press',
   'Frame.selectOption',
@@ -3646,14 +3709,50 @@ export const commandsWithTracingSnapshots = new Set([
   'ElementHandle.dispatchEvent',
   'ElementHandle.fill',
   'ElementHandle.hover',
+  'ElementHandle.innerHTML',
+  'ElementHandle.innerText',
+  'ElementHandle.inputValue',
+  'ElementHandle.isChecked',
+  'ElementHandle.isDisabled',
+  'ElementHandle.isEditable',
+  'ElementHandle.isEnabled',
+  'ElementHandle.isHidden',
+  'ElementHandle.isVisible',
   'ElementHandle.press',
   'ElementHandle.scrollIntoViewIfNeeded',
   'ElementHandle.selectOption',
   'ElementHandle.selectText',
   'ElementHandle.setInputFiles',
   'ElementHandle.tap',
+  'ElementHandle.textContent',
   'ElementHandle.type',
   'ElementHandle.uncheck',
   'ElementHandle.waitForElementState',
   'ElementHandle.waitForSelector'
+]);
+
+export const pausesBeforeInputActions = new Set([
+  'Frame.check',
+  'Frame.click',
+  'Frame.dragAndDrop',
+  'Frame.dblclick',
+  'Frame.fill',
+  'Frame.hover',
+  'Frame.press',
+  'Frame.selectOption',
+  'Frame.setInputFiles',
+  'Frame.tap',
+  'Frame.type',
+  'Frame.uncheck',
+  'ElementHandle.check',
+  'ElementHandle.click',
+  'ElementHandle.dblclick',
+  'ElementHandle.fill',
+  'ElementHandle.hover',
+  'ElementHandle.press',
+  'ElementHandle.selectOption',
+  'ElementHandle.setInputFiles',
+  'ElementHandle.tap',
+  'ElementHandle.type',
+  'ElementHandle.uncheck'
 ]);

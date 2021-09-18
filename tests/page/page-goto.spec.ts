@@ -526,3 +526,21 @@ it('should not crash when RTCPeerConnection is used', async ({ page, server, bro
     });
   });
 });
+
+it('should properly wait for load', async ({page, server, browserName}) => {
+  it.fixme(browserName === 'webkit', 'WebKit has a bug where Page.frameStoppedLoading is sent too early.');
+  server.setRoute('/slow.js', async (req, res) => {
+    await new Promise(x => setTimeout(x, 100));
+    res.writeHead(200, {'Content-Type': 'application/javascript'});
+    res.end(`window.results.push('slow module');export const foo = 'slow';`);
+  });
+  await page.goto(server.PREFIX + '/load-event/load-event.html');
+  const results = await page.evaluate('window.results');
+  expect(results).toEqual([
+    'script tag after after module',
+    'slow module',
+    'module',
+    'DOMContentLoaded',
+    'load'
+  ]);
+});

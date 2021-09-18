@@ -85,6 +85,24 @@ it('should check radio', async ({page}) => {
   expect(await page.evaluate(() => window['two'].checked)).toBe(true);
 });
 
+it('should check radio by aria role', async ({page}) => {
+  await page.setContent(`<div role='radio' id='checkbox'>CHECKBOX</div>
+    <script>
+      checkbox.addEventListener('click', () => checkbox.setAttribute('aria-checked', 'true'));
+    </script>`);
+  await page.check('div');
+  expect(await page.evaluate(() => window['checkbox'].getAttribute('aria-checked'))).toBe('true');
+});
+
+it('should uncheck radio by aria role', async ({page}) => {
+  await page.setContent(`<div role='radio' id='checkbox' aria-checked="true">CHECKBOX</div>
+    <script>
+      checkbox.addEventListener('click', () => checkbox.setAttribute('aria-checked', 'false'));
+    </script>`);
+  await page.uncheck('div');
+  expect(await page.evaluate(() => window['checkbox'].getAttribute('aria-checked'))).toBe('false');
+});
+
 it('should check the box by aria role', async ({page}) => {
   await page.setContent(`<div role='checkbox' id='checkbox'>CHECKBOX</div>
     <script>
@@ -92,6 +110,15 @@ it('should check the box by aria role', async ({page}) => {
     </script>`);
   await page.check('div');
   expect(await page.evaluate(() => window['checkbox'].getAttribute('aria-checked'))).toBe('true');
+});
+
+it('should uncheck the box by aria role', async ({page}) => {
+  await page.setContent(`<div role='checkbox' id='checkbox' aria-checked="true">CHECKBOX</div>
+    <script>
+      checkbox.addEventListener('click', () => checkbox.setAttribute('aria-checked', 'false'));
+    </script>`);
+  await page.uncheck('div');
+  expect(await page.evaluate(() => window['checkbox'].getAttribute('aria-checked'))).toBe('false');
 });
 
 it('should throw when not a checkbox', async ({page}) => {

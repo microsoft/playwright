@@ -238,10 +238,10 @@ class TestServer {
       request.on('data', chunk => body = Buffer.concat([body, chunk]));
       request.on('end', () => resolve(body));
     });
-    const pathName = url.parse(request.url).path;
-    this.debugServer(`request ${request.method} ${pathName}`);
-    if (this._auths.has(pathName)) {
-      const auth = this._auths.get(pathName);
+    const path = url.parse(request.url).path;
+    this.debugServer(`request ${request.method} ${path}`);
+    if (this._auths.has(path)) {
+      const auth = this._auths.get(path);
       const credentials = Buffer.from((request.headers.authorization || '').split(' ')[1] || '', 'base64').toString();
       this.debugServer(`request credentials ${credentials}`);
       this.debugServer(`actual credentials ${auth.username}:${auth.password}`);
@@ -253,11 +253,11 @@ class TestServer {
       }
     }
     // Notify request subscriber.
-    if (this._requestSubscribers.has(pathName)) {
-      this._requestSubscribers.get(pathName)[fulfillSymbol].call(null, request);
-      this._requestSubscribers.delete(pathName);
+    if (this._requestSubscribers.has(path)) {
+      this._requestSubscribers.get(path)[fulfillSymbol].call(null, request);
+      this._requestSubscribers.delete(path);
     }
-    const handler = this._routes.get(pathName);
+    const handler = this._routes.get(path);
     if (handler) {
       handler.call(null, request, response);
     } else {

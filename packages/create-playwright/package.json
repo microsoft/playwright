@@ -1,0 +1,29 @@
+{
+  "name": "create-playwright",
+  "version": "0.1.6",
+  "description": "Getting started with writing end-to-end tests with Playwright.",
+  "repository": "github:Microsoft/playwright",
+  "homepage": "https://playwright.dev",
+  "author": "Microsoft",
+  "engines": {
+    "node": ">=12"
+  },
+  "main": "index.js",
+  "bin": {
+    "create-playwright": "./index.js"
+  },
+  "license": "MIT",
+  "scripts": {
+    "prepublish": "npm run build",
+    "watch": "cd src && ncc build index.ts --watch --out ../lib && cd ..",
+    "build": "cd src && ncc build index.ts --minify --out ../lib && cd ..",
+    "test": "npx playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.15.0-next-alpha-sep-10-2021",
+    "@types/node": "^16.9.0",
+    "@vercel/ncc": "^0.30.0",
+    "enquirer": "^2.3.6",
+    "typescript": "^4.4.2"
+  }
+}

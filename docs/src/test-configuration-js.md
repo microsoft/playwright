@@ -9,11 +9,13 @@ Finally, there are plenty of testing options like `timeout` or `testDir` that co
 
 You can specify any options globally in the configuration file, and most of them locally in a test file.
 
+See the full list of [test options][TestOptions] and all [configuration properties][TestConfig].
+
 <!-- TOC -->
 
 ## Global configuration
 
-Create `playwright.config.js` (or `playwright.config.ts`) and specify options in the `use` section.
+Create `playwright.config.js` (or `playwright.config.ts`) and specify options in the [`property: TestConfig.use`] section.
 
 ```js js-flavor=js
 // @ts-check
@@ -58,7 +60,7 @@ npx playwright test --config=tests/my.config.js
 
 ## Local configuration
 
-With `test.use()` you can override some options for a file or a `test.describe` block.
+With [`method: Test.use`] you can override some options for a file or a [`method: Test.describe`] block.
 
 ```js js-flavor=js
 // example.spec.js
@@ -118,6 +120,7 @@ test.describe('headed block', () => {
 
 These are commonly used options for various scenarios. You usually set them globally in [configuration file](#global-configuration).
 
+- `actionTimeout` - Timeout for each Playwright action in milliseconds. Defaults to `0` (no timeout).
 - `baseURL` - Base URL used for all pages in the context. Allows navigating by using just the path, for example `page.goto('/settings')`.
 - `browserName` - Name of the browser that will run the tests, one of `chromium`, `firefox`, or `webkit`.
 - `bypassCSP` - Toggles bypassing Content-Security-Policy. Useful when CSP includes the production origin.
@@ -162,7 +165,7 @@ Here is an example configuration that runs tests in "Pixel 4" and "iPhone 11" em
 ```js js-flavor=js
 // playwright.config.js
 // @ts-check
-const { devices } = require('playwright');
+const { devices } = require('@playwright/test');
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
@@ -192,8 +195,7 @@ module.exports = config;
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
-import { devices } from 'playwright';
+import { PlaywrightTestConfig, devices } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   projects: [

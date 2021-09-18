@@ -1040,7 +1040,7 @@ export class Frame extends SdkObject {
     const info = this._page.parseSelector(selector, options);
     const task = dom.textContentTask(info);
     return controller.run(async progress => {
-      progress.log(`  retrieving textContent from "${selector}"`);
+      progress.log(`  waiting for selector "${selector}"\u2026`);
       return this._scheduleRerunnableTask(progress, info.world, task);
     }, this._page._timeoutSettings.timeout(options));
   }
@@ -1299,8 +1299,8 @@ export class Frame extends SdkObject {
     this._networkIdleTimer = undefined;
   }
 
-  async extendInjectedScript(world: types.World, source: string, arg?: any): Promise<js.JSHandle> {
-    const context = await this._context(world);
+  async extendInjectedScript(source: string, arg?: any): Promise<js.JSHandle> {
+    const context = await this._context('main');
     const injectedScriptHandle = await context.injectedScript();
     return injectedScriptHandle.evaluateHandle((injectedScript, {source, arg}) => {
       return injectedScript.extend(source, arg);

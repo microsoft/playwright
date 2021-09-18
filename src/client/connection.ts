@@ -39,7 +39,7 @@ import { ParsedStackTrace } from '../utils/stackTrace';
 import { Artifact } from './artifact';
 import { EventEmitter } from 'events';
 import { JsonPipe } from './jsonPipe';
-import type { LogContainer } from './types';
+import { FetchRequest } from './fetch';
 
 class Root extends ChannelOwner<channels.RootChannel, {}> {
   constructor(connection: Connection) {
@@ -58,7 +58,7 @@ export class Connection extends EventEmitter {
   private _waitingForObject = new Map<string, any>();
   onmessage = (message: object): void => {};
   private _lastId = 0;
-  private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void, stackTrace: ParsedStackTrace, logContainer: LogContainer | undefined }>();
+  private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void, stackTrace: ParsedStackTrace }>();
   private _rootObject: Root;
   private _disconnectedErrorMessage: string | undefined;
   private _onClose?: () => void;
@@ -81,21 +81,21 @@ export class Connection extends EventEmitter {
     return this._objects.get(guid)!;
   }
 
-  async sendMessageToServer(object: ChannelOwner, method: string, params: any, maybeStackTrace: ParsedStackTrace | null, logContainer?: LogContainer): Promise<any> {
+  async sendMessageToServer(object: ChannelOwner, method: string, params: any, maybeStackTrace: ParsedStackTrace | null): Promise<any> {
     const guid = object._guid;
-    const stackTrace = maybeStackTrace || { frameTexts: [], frames: [], apiName: '' };
+    const stackTrace: ParsedStackTrace = maybeStackTrace || { frameTexts: [], frames: [], apiName: '', allFrames: [] };
     const { frames, apiName } = stackTrace;
 
     const id = ++this._lastId;
     const converted = { id, guid, method, params };
     // Do not include metadata in debug logs to avoid noise.
     debugLogger.log('channel:command', converted);
-    const metadata: channels.Metadata = { stack: frames, apiName, collectLogs: logContainer ? true : undefined };
+    const metadata: channels.Metadata = { stack: frames, apiName };
     this.onmessage({ ...converted, metadata });
 
     if (this._disconnectedErrorMessage)
       throw new Error(this._disconnectedErrorMessage);
-    return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, stackTrace, logContainer }));
+    return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, stackTrace }));
   }
 
   _debugScopeState(): any {
@@ -103,15 +103,13 @@ export class Connection extends EventEmitter {
   }
 
   dispatch(message: object) {
-    const { id, guid, method, params, result, error, log } = message as any;
+    const { id, guid, method, params, result, error } = message as any;
     if (id) {
       debugLogger.log('channel:response', message);
       const callback = this._callbacks.get(id);
       if (!callback)
         throw new Error(`Cannot find command to respond: ${id}`);
       this._callbacks.delete(id);
-      if (log && callback.logContainer)
-        callback.logContainer.log.push(...log);
       if (error)
         callback.reject(parseError(error));
       else
@@ -218,6 +216,9 @@ export class Connection extends EventEmitter {
         break;
       case 'ElementHandle':
         result = new ElementHandle(parent, type, guid, initializer);
+        break;
+      case 'FetchRequest':
+        result = new FetchRequest(parent, type, guid, initializer);
         break;
       case 'Frame':
         result = new Frame(parent, type, guid, initializer);

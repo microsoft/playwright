@@ -1,6 +1,7 @@
 name: "devrelease:docker"
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - master

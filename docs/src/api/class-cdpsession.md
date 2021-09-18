@@ -24,7 +24,7 @@ await client.send('Animation.setPlaybackRate', {
 ```
 
 ```python async
-client = await page.context().new_cdp_session(page)
+client = await page.context.new_cdp_session(page)
 await client.send("Animation.enable")
 client.on("Animation.animationCreated", lambda: print("animation created!"))
 response = await client.send("Animation.getPlaybackRate")
@@ -35,7 +35,7 @@ await client.send("Animation.setPlaybackRate", {
 ```
 
 ```python sync
-client = page.context().new_cdp_session(page)
+client = page.context.new_cdp_session(page)
 client.send("Animation.enable")
 client.on("Animation.animationCreated", lambda: print("animation created!"))
 response = client.send("Animation.getPlaybackRate")

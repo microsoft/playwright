@@ -14,17 +14,9 @@
  * limitations under the License.
  */
 
-import { equals } from 'expect/build/jasmineUtils';
 import {
   iterableEquality
 } from 'expect/build/utils';
-import {
-  matcherHint, MatcherHintOptions,
-  printDiffOrStringify,
-  printExpected,
-  printReceived,
-  stringify
-} from 'jest-matcher-utils';
 import { currentTestInfo } from '../globals';
 import type { Expect } from '../types';
 import { expectType, pollUntilDeadline } from '../util';
@@ -57,7 +49,7 @@ export async function toEqual<T>(
     throw new Error(`${matcherName} must be called during the test`);
   expectType(receiver, receiverType, matcherName);
 
-  const matcherOptions: MatcherHintOptions = {
+  const matcherOptions = {
     comment: 'deep equality',
     isNot: this.isNot,
     promise: this.promise,
@@ -68,22 +60,22 @@ export async function toEqual<T>(
 
   await pollUntilDeadline(testInfo, async remainingTime => {
     received = await query(remainingTime);
-    pass = equals(received, expected, [iterableEquality, regExpTester]);
+    pass = this.equals(received, expected, [iterableEquality, regExpTester]);
     return pass === !matcherOptions.isNot;
   }, options.timeout, testInfo._testFinished);
 
   const message = pass
     ? () =>
-      matcherHint(matcherName, undefined, undefined, matcherOptions) +
+      this.utils.matcherHint(matcherName, undefined, undefined, matcherOptions) +
       '\n\n' +
-      `Expected: not ${printExpected(expected)}\n` +
-      (stringify(expected) !== stringify(received)
-        ? `Received:     ${printReceived(received)}`
+      `Expected: not ${this.utils.printExpected(expected)}\n` +
+      (this.utils.stringify(expected) !== this.utils.stringify(received)
+        ? `Received:     ${this.utils.printReceived(received)}`
         : '')
     : () =>
-      matcherHint(matcherName, undefined, undefined, matcherOptions) +
+      this.utils.matcherHint(matcherName, undefined, undefined, matcherOptions) +
       '\n\n' +
-      printDiffOrStringify(
+      this.utils.printDiffOrStringify(
           expected,
           received,
           EXPECTED_LABEL,

@@ -108,11 +108,11 @@ test('should render stdout', async ({ runInlineTest }) => {
     `,
   }, { reporter: 'junit' });
   const xml = parseXML(result.output);
-  const suite = xml['testsuites']['testsuite'][0];
-  expect(suite['system-out'].length).toBe(1);
-  expect(suite['system-out'][0]).toContain('Hello world');
-  expect(suite['system-out'][0]).not.toContain('u00');
-  expect(suite['testcase'][0]['failure'][0]['_']).toContain(`>  9 |         test.expect("abc").toBe('abcd');`);
+  const testcase = xml['testsuites']['testsuite'][0]['testcase'][0];
+  expect(testcase['system-out'].length).toBe(1);
+  expect(testcase['system-out'][0]).toContain('Hello world');
+  expect(testcase['system-out'][0]).not.toContain('u00');
+  expect(testcase['failure'][0]['_']).toContain(`>  9 |         test.expect("abc").toBe('abcd');`);
   expect(result.exitCode).toBe(1);
 });
 
@@ -132,9 +132,9 @@ test('should render stdout without ansi escapes', async ({ runInlineTest }) => {
     `,
   }, { reporter: '' });
   const xml = parseXML(result.output);
-  const suite = xml['testsuites']['testsuite'][0];
-  expect(suite['system-out'].length).toBe(1);
-  expect(suite['system-out'][0].trim()).toBe('Hello world');
+  const testcase = xml['testsuites']['testsuite'][0]['testcase'][0];
+  expect(testcase['system-out'].length).toBe(1);
+  expect(testcase['system-out'][0].trim()).toBe('Hello world');
   expect(result.exitCode).toBe(0);
 });
 
@@ -232,9 +232,9 @@ test('should render attachments', async ({ runInlineTest }) => {
     `,
   }, { reporter: 'junit' });
   const xml = parseXML(result.output);
-  const suite = xml['testsuites']['testsuite'][0];
-  expect(suite['system-out'].length).toBe(1);
-  expect(suite['system-out'][0].trim()).toBe(`[[ATTACHMENT|test-results${path.sep}a-one${path.sep}test-finished-1.png]]`);
+  const testcase = xml['testsuites']['testsuite'][0]['testcase'][0];
+  expect(testcase['system-out'].length).toBe(1);
+  expect(testcase['system-out'][0].trim()).toBe(`[[ATTACHMENT|test-results${path.sep}a-one${path.sep}test-finished-1.png]]`);
   expect(result.exitCode).toBe(0);
 });
 

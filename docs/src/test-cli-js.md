@@ -61,16 +61,7 @@ Here are the most common options available in the command line.
 
 - Run in debug mode with [Playwright Inspector](./inspector.md)
   ```bash
-  # Linux/macOS
-  PWDEBUG=1 npx playwright test
-
-  # Windows with cmd.exe
-  set PWDEBUG=1
-  npx playwright test
-
-  # Windows with PowerShell
-  $env:PWDEBUG=1
-  npx playwright test
+  npx playwright test --debug
   ```
 
 - Ask for help
@@ -85,6 +76,8 @@ Complete set of Playwright Test options is available in the [configuration file]
 - `--headed`: Run tests in headed browsers. Useful for debugging.
 
 - `--browser`: Run test in a specific browser. Available options are  `"chromium"`, `"firefox"`, `"webkit"` or `"all"` to run tests in all three browsers at the same time.
+
+- `--debug`: Run tests with Playwright Inspector. Shortcut for `PWDEBUG=1` environment variable and `--timeout=0 --maxFailures=1 --headed --workers=1` options
 
 - `-c <file>` or `--config <file>`: Configuration file. If not passed, defaults to `playwright.config.ts` or `playwright.config.js` in the current directory.
 
@@ -112,7 +105,7 @@ Complete set of Playwright Test options is available in the [configuration file]
 
 - `--reporter <reporter>`: Choose a reporter: minimalist `dot`, concise `line` or detailed `list`. See [reporters](./test-reporters.md) for more information.
 
-- `--retries <number>`: The maximum number of [retries](./test-retries.md) for flaky tests, defaults to zero (no retries).
+- `--retries <number>`: The maximum number of [retries](./test-retries.md#retries) for flaky tests, defaults to zero (no retries).
 
 - `--shard <shard>`: [Shard](./test-parallel.md#shard-tests-between-multiple-machines) tests and execute only selected shard, specified in the form `current/all`, 1-based, for example `3/5`.
 

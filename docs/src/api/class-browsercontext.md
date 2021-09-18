@@ -189,6 +189,12 @@ Service workers are only supported on Chromium-based browsers.
 
 Emitted when new service worker is created in the context.
 
+## property: BrowserContext._request
+* langs: js
+- type: <[FetchRequest]>
+
+API testing helper associated with this context. Requests made with this API will use context cookies.
+
 ## async method: BrowserContext.addCookies
 
 Adds cookies into this browser context. All pages within this context will have these cookies installed. Cookies can be

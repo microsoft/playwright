@@ -3,7 +3,7 @@
 [Response] class represents responses which are received by page.
 
 ## async method: Response.allHeaders
-- returns: <[Headers]>
+- returns: <[Object]<[string], [string]>>
 
 An object with all the response HTTP headers associated with this response.
 
@@ -15,7 +15,7 @@ Returns the buffer with response body.
 ## async method: Response.finished
 - returns: <[null]|[string]>
 
-Waits for this response to finish, returns failure error if request failed.
+Waits for this response to finish, returns always `null`.
 
 ## method: Response.frame
 - returns: <[Frame]>
@@ -27,6 +27,35 @@ Returns the [Frame] that initiated this response.
 
 **DEPRECATED** Incomplete list of headers as seen by the rendering engine. Use [`method: Response.allHeaders`] instead.
 
+## async method: Response.headersArray
+- returns: <[Array]<[Object]>>
+  - `name` <[string]> Name of the header.
+  - `value` <[string]> Value of the header.
+
+An array with all the request HTTP headers associated with this response. Unlike [`method: Response.allHeaders`], header names are NOT lower-cased.
+Headers with multiple entries, such as `Set-Cookie`, appear in the array multiple times.
+
+## async method: Response.headerValue
+- returns: <[null]|[string]>
+
+Returns the value of the header matching the name. The name is case insensitive. If multiple headers have
+the same name (except `set-cookie`), they are returned as a list separated by `, `. For `set-cookie`, the `\n` separator is used. If no headers are found, `null` is returned.
+
+### param: Response.headerValue.name
+- `name` <[string]>
+
+Name of the header.
+
+## async method: Response.headerValues
+- returns: <[Array]<[string]>>
+
+Returns all values of the headers matching the name, for example `set-cookie`. The name is case insensitive.
+
+### param: Response.headerValues.name
+- `name` <[string]>
+
+Name of the header.
+
 ## async method: Response.json
 * langs: js, python
 - returns: <[Serializable]>
@@ -37,7 +66,7 @@ This method will throw if the response body is not parsable via `JSON.parse`.
 
 ## async method: Response.json
 * langs: csharp
-- returns: <[JsonElement?]>
+- returns: <[null]|[JsonElement]>
 
 Returns the JSON representation of response body.
 

@@ -56,6 +56,7 @@ it('should work with path', async ({playwright, browser, asset}) => {
   await playwright.selectors.register('foo', { path: asset('sectionselectorengine.js') });
   await page.setContent('<section></section>');
   expect(await page.$eval('foo=whatever', e => e.nodeName)).toBe('SECTION');
+  await page.close();
 });
 
 it('should work in main and isolated world', async ({playwright, browser}) => {
@@ -88,6 +89,7 @@ it('should work in main and isolated world', async ({playwright, browser}) => {
   expect(await page.$eval('isolated=ignored >> main=ignored', e => e.nodeName)).toBe('SPAN');
   // Can be chained to css.
   expect(await page.$eval('main=ignored >> css=section', e => e.nodeName)).toBe('SECTION');
+  await page.close();
 });
 
 it('should handle errors', async ({playwright, browser}) => {
@@ -116,6 +118,7 @@ it('should handle errors', async ({playwright, browser}) => {
 
   error = await playwright.selectors.register('css', createDummySelector).catch(e => e);
   expect(error.message).toBe('"css" is a predefined selector engine');
+  await page.close();
 });
 
 it('should not rely on engines working from the root', async ({ playwright, browser }) => {
@@ -132,6 +135,7 @@ it('should not rely on engines working from the root', async ({ playwright, brow
   await playwright.selectors.register('__value', createValueEngine);
   await page.setContent(`<input id=input1 value=value1><input id=input2 value=value2>`);
   expect(await page.$eval('input >> __value=value2', e => e.id)).toBe('input2');
+  await page.close();
 });
 
 it('should throw a nice error if the selector returns a bad value', async ({ playwright, browser }) => {
@@ -148,4 +152,5 @@ it('should throw a nice error if the selector returns a bad value', async ({ pla
   await playwright.selectors.register('__fake', createFakeEngine);
   const error = await page.$('__fake=value2').catch(e => e);
   expect(error.message).toContain('Expected a Node but got [object Array]');
+  await page.close();
 });

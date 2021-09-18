@@ -69,11 +69,22 @@ export async function installDependenciesLinux(targets: Set<DependencyGroup>) {
   commands.push(['apt-get', 'install', '-y', '--no-install-recommends',
     ...uniqueLibraries,
   ].join(' '));
-  const isRoot = (process.getuid() === 0);
-  const child = isRoot ?
-    childProcess.spawn('sh', ['-c', `${commands.join('; ')}`], { stdio: 'inherit' }) :
-    childProcess.spawn('sudo', ['--', 'sh', '-c', `${commands.join('; ')}`], { stdio: 'inherit' });
-  await new Promise(f => child.on('exit', f));
+  const [command, args] = await buildAptProcessArgs(commands);
+  const child = childProcess.spawn(command, args, { stdio: 'inherit' });
+  await new Promise((resolve, reject) => {
+    child.on('exit', resolve);
+    child.on('error', reject);
+  });
+}
+
+async function buildAptProcessArgs(commands: string[]): Promise<[string, string[]]> {
+  const isRoot = process.getuid() === 0;
+  if (isRoot)
+    return ['sh', ['-c', `${commands.join('&& ')}`]];
+  const sudoExists = await utils.spawnAsync('which', ['sudo']);
+  if (sudoExists.code === 0)
+    return ['sudo', ['--', 'sh', '-c', `${commands.join('&& ')}`]];
+  return ['su', ['root', '-c', `${commands.join('&& ')}`]];
 }
 
 export async function validateDependenciesWindows(windowsExeAndDllDirectories: string[]) {

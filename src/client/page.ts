@@ -47,6 +47,7 @@ import { isString, isRegExp, isObject, mkdirIfNeeded, headersObjectToArray } fro
 import { isSafeCloseError } from '../utils/errors';
 import { Video } from './video';
 import { Artifact } from './artifact';
+import { FetchRequest } from './fetch';
 
 type PDFOptions = Omit<channels.PagePdfParams, 'width' | 'height' | 'margin'> & {
   width?: string | number,
@@ -77,6 +78,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   readonly coverage: Coverage;
   readonly keyboard: Keyboard;
   readonly mouse: Mouse;
+  readonly _request: FetchRequest;
   readonly touchscreen: Touchscreen;
 
   readonly _bindings = new Map<string, (source: structs.BindingSource, ...args: any[]) => any>();
@@ -98,9 +100,10 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this._timeoutSettings = new TimeoutSettings(this._browserContext._timeoutSettings);
 
     this.accessibility = new Accessibility(this._channel);
-    this.keyboard = new Keyboard(this._channel);
-    this.mouse = new Mouse(this._channel);
-    this.touchscreen = new Touchscreen(this._channel);
+    this.keyboard = new Keyboard(this);
+    this.mouse = new Mouse(this);
+    this._request = this._browserContext._request;
+    this.touchscreen = new Touchscreen(this);
 
     this._mainFrame = Frame.from(initializer.mainFrame);
     this._mainFrame._page = this;
@@ -114,8 +117,13 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this._channel.on('console', ({ message }) => this.emit(Events.Page.Console, ConsoleMessage.from(message)));
     this._channel.on('crash', () => this._onCrash());
     this._channel.on('dialog', ({ dialog }) => {
-      if (!this.emit(Events.Page.Dialog, Dialog.from(dialog)))
-        dialog.dismiss().catch(() => {});
+      const dialogObj = Dialog.from(dialog);
+      if (!this.emit(Events.Page.Dialog, dialogObj)) {
+        if (dialogObj.type() === 'beforeunload')
+          dialog.accept({}).catch(() => {});
+        else
+          dialog.dismiss().catch(() => {});
+      }
     });
     this._channel.on('domcontentloaded', () => this.emit(Events.Page.DOMContentLoaded, this));
     this._channel.on('download', ({ url, suggestedFilename, artifact }) => {
@@ -375,9 +383,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   }
 
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
-    return this._wrapApiCall(async (channel: channels.PageChannel) => {
-      return this._waitForEvent(event, optionsOrPredicate, `waiting for event "${event}"`);
-    });
+    return this._waitForEvent(event, optionsOrPredicate, `waiting for event "${event}"`);
   }
 
   private async _waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions, logLine?: string): Promise<any> {

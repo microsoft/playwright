@@ -56,13 +56,13 @@ module.exports = function lint(documentation, jsSources, apiFileName) {
         continue;
       const params = methods.get(member.alias);
       if (!params) {
-        errors.push(`Documented "${cls.name}.${member.alias}" not found is sources`);
+        errors.push(`Documented "${cls.name}.${member.alias}" not found in sources`);
         continue;
       }
       const memberParams = paramsForMember(member);
       for (const paramName of memberParams) {
         if (!params.has(paramName) && paramName !== 'options')
-          errors.push(`Documented "${cls.name}.${member.alias}.${paramName}" not found is sources`);
+          errors.push(`Documented "${cls.name}.${member.alias}.${paramName}" not found in sources`);
       }
     }
   }
@@ -114,6 +114,8 @@ function listMethods(rootNames, apiFileName) {
    * @param {string} methodName
    */
   function shouldSkipMethodByName(className, methodName) {
+    if (methodName === '_request' && (className === 'BrowserContext' || className === 'Page'))
+      return false;
     if (methodName.startsWith('_') || methodName === 'T' || methodName === 'toString')
       return true;
     if (/** @type {any} */(EventEmitter).prototype.hasOwnProperty(methodName))

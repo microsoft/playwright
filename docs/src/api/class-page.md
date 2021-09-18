@@ -449,6 +449,12 @@ Emitted when [WebSocket] request is sent.
 Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is spawned by the
 page.
 
+## property: Page._request
+* langs: js
+- type: <[FetchRequest]>
+
+API testing helper associated with this page. Requests made with this API will use page cookies.
+
 ## property: Page.accessibility
 * langs: csharp, js, python
 - type: <[Accessibility]>

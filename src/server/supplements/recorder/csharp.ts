@@ -84,7 +84,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
       formatter.add(line);
 
     if (signals.assertNavigation)
-      formatter.add(`  // Assert.Equal(${quote(signals.assertNavigation.url)}, ${pageAlias}.Url);`);
+      formatter.add(`  // Assert.AreEqual(${quote(signals.assertNavigation.url)}, ${pageAlias}.Url);`);
     return formatter.format();
   }
 

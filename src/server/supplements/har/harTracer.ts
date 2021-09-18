@@ -22,6 +22,7 @@ import * as har from './har';
 import { calculateSha1, monotonicTime } from '../../../utils/utils';
 import { eventsHelper, RegisteredListener } from '../../../utils/eventsHelper';
 import * as mime from 'mime';
+import { ManualPromise } from '../../../utils/async';
 
 const FALLBACK_HTTP_VERSION = 'HTTP/1.1';
 
@@ -132,9 +133,6 @@ export class HarTracer {
   }
 
   private _onRequest(request: network.Request) {
-    if (this._options.skipScripts && request.resourceType() === 'script')
-      return;
-
     const page = request.frame()._page;
     const url = network.parsedURL(request.url());
     if (!url)
@@ -143,6 +141,7 @@ export class HarTracer {
     const pageEntry = this._ensurePageEntry(page);
     const harEntry: har.Entry = {
       pageref: pageEntry.id,
+      _requestref: request.guid,
       _frameref: request.frame().guid,
       _monotonicTime: monotonicTime(),
       startedDateTime: new Date(),
@@ -205,9 +204,36 @@ export class HarTracer {
     harEntry.request.httpVersion = httpVersion;
     harEntry.response.httpVersion = httpVersion;
 
+    const compressionCalculationBarrier = {
+      _encodedBodySize: -1,
+      _decodedBodySize: -1,
+      barrier: new ManualPromise<void>(),
+      _check: function() {
+        if (this._encodedBodySize !== -1 && this._decodedBodySize !== -1) {
+          harEntry.response.content.compression = Math.max(0, this._decodedBodySize - this._encodedBodySize);
+          this.barrier.resolve();
+        }
+      },
+      setEncodedBodySize: function(encodedBodySize: number){
+        this._encodedBodySize = encodedBodySize;
+        this._check();
+      },
+      setDecodedBodySize: function(decodedBodySize: number) {
+        this._decodedBodySize = decodedBodySize;
+        this._check();
+      }
+    };
+    this._addBarrier(page, compressionCalculationBarrier.barrier);
+
     const promise = response.body().then(buffer => {
+      if (this._options.skipScripts && request.resourceType() === 'script') {
+        compressionCalculationBarrier.setDecodedBodySize(0);
+        return;
+      }
+
       const content = harEntry.response.content;
       content.size = buffer.length;
+      compressionCalculationBarrier.setDecodedBodySize(buffer.length);
       if (buffer && buffer.length > 0) {
         if (this._options.content === 'embedded') {
           content.text = buffer.toString('base64');
@@ -218,7 +244,9 @@ export class HarTracer {
             this._delegate.onContentBlob(content._sha1, buffer);
         }
       }
-    }).catch(() => {}).then(() => {
+    }).catch(() => {
+      compressionCalculationBarrier.setDecodedBodySize(0);
+    }).then(() => {
       const postData = response.request().postDataBuffer();
       if (postData && harEntry.request.postData && this._options.content === 'sha1') {
         harEntry.request.postData._sha1 = calculateSha1(postData) + '.' + (mime.getExtension(harEntry.request.postData.mimeType) || 'dat');
@@ -229,13 +257,13 @@ export class HarTracer {
         this._delegate.onEntryFinished(harEntry);
     });
     this._addBarrier(page, promise);
-    this._addBarrier(page, response.sizes().then(async sizes => {
+    this._addBarrier(page, response.sizes().then(sizes => {
       harEntry.response.bodySize = sizes.responseBodySize;
       harEntry.response.headersSize = sizes.responseHeadersSize;
-      harEntry.response._transferSize = sizes.responseTransferSize;
+      // Fallback for WebKit by calculating it manually
+      harEntry.response._transferSize = response.request().responseSize.transferSize || (sizes.responseHeadersSize + sizes.responseBodySize);
       harEntry.request.headersSize = sizes.requestHeadersSize;
-      const content = harEntry.response.content;
-      content.compression = Math.max(0, sizes.responseBodySize - sizes.responseTransferSize - sizes.responseHeadersSize);
+      compressionCalculationBarrier.setEncodedBodySize(sizes.responseBodySize);
     }));
   }
 

@@ -5,7 +5,7 @@ title: "Advanced: TypeScript"
 
 ## Manually compile tests with TypeScript
 
-Playwright Test supports TypeScript out the box. We automatically transform
+Playwright Test supports TypeScript out of the box. We automatically transform
 TypeScript code to javascript to run it.
 
 However if you find that the TypeScript code is not being transpiled correctly,

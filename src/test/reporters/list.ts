@@ -30,11 +30,13 @@ class ListReporter extends BaseReporter {
   private _lastRow = 0;
   private _testRows = new Map<TestCase, number>();
   private _needNewLine = false;
-  private _liveTerminal: string | boolean | undefined;
+  private readonly _liveTerminal: string | boolean | undefined;
+  private readonly _ttyWidthForTest: number;
 
   constructor() {
     super();
-    this._liveTerminal = process.stdout.isTTY || process.env.PWTEST_SKIP_TEST_OUTPUT;
+    this._ttyWidthForTest = parseInt(process.env.PWTEST_TTY_WIDTH || '', 10);
+    this._liveTerminal = process.stdout.isTTY || process.env.PWTEST_SKIP_TEST_OUTPUT || !!this._ttyWidthForTest;
   }
 
   override onBegin(config: FullConfig, suite: Suite) {
@@ -49,7 +51,8 @@ class ListReporter extends BaseReporter {
         process.stdout.write('\n');
         this._lastRow++;
       }
-      process.stdout.write('     ' + colors.gray(formatTestTitle(this.config, test)) + '\n');
+      const line = '     ' + colors.gray(formatTestTitle(this.config, test));
+      process.stdout.write(this._fitToScreen(line) + '\n');
     }
     this._testRows.set(test, this._lastRow++);
   }
@@ -134,10 +137,31 @@ class ListReporter extends BaseReporter {
       process.stdout.write(`\u001B[${this._lastRow - testRow}A`);
     // Erase line
     process.stdout.write('\u001B[2K');
-    process.stdout.write(line);
+    process.stdout.write(this._fitToScreen(line));
     // Go down if needed.
     if (testRow !== this._lastRow)
       process.stdout.write(`\u001B[${this._lastRow - testRow}E`);
+  }
+
+  private _fitToScreen(line: string): string {
+    if (!this._ttyWidth() || line.length <= this._ttyWidth())
+      return line;
+    // Matches '\u001b[2K\u001b[0G' and all color codes.
+    const re = /\u001b\[2K\u001b\[0G|\x1B\[\d+m/g;
+    let m;
+    let colorLen = 0;
+    while ((m = re.exec(line)) !== null) {
+      const visibleLen = m.index - colorLen;
+      if (visibleLen >= this._ttyWidth())
+        break;
+      colorLen += m[0].length;
+    }
+    // Truncate and reset all colors.
+    return line.substr(0, this._ttyWidth() + colorLen) + '\u001b[0m';
+  }
+
+  private _ttyWidth(): number {
+    return this._ttyWidthForTest || process.stdout.columns || 0;
   }
 
   private _updateTestLineForTest(test: TestCase, line: string) {

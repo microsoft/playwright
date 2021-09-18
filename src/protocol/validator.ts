@@ -147,12 +147,29 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     statusText: tString,
     headers: tArray(tType('NameValue')),
   });
+  scheme.FetchRequestFetchParams = tObject({
+    url: tString,
+    params: tOptional(tArray(tType('NameValue'))),
+    method: tOptional(tString),
+    headers: tOptional(tArray(tType('NameValue'))),
+    postData: tOptional(tBinary),
+    formData: tOptional(tAny),
+    timeout: tOptional(tNumber),
+    failOnStatusCode: tOptional(tBoolean),
+  });
+  scheme.FetchRequestFetchResponseBodyParams = tObject({
+    fetchUid: tString,
+  });
+  scheme.FetchRequestDisposeFetchResponseParams = tObject({
+    fetchUid: tString,
+  });
+  scheme.FetchRequestDisposeParams = tOptional(tObject({}));
   scheme.FetchResponse = tObject({
+    fetchUid: tString,
     url: tString,
     status: tNumber,
     statusText: tString,
     headers: tArray(tType('NameValue')),
-    body: tBinary,
   });
   scheme.RootInitializeParams = tObject({
     sdkLanguage: tString,
@@ -176,6 +193,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.PlaywrightSocksEndParams = tObject({
     uid: tString,
+  });
+  scheme.PlaywrightNewRequestParams = tObject({
+    ignoreHTTPSErrors: tOptional(tBoolean),
   });
   scheme.SelectorsRegisterParams = tObject({
     name: tString,
@@ -392,12 +412,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     name: tString,
     needsHandle: tOptional(tBoolean),
   });
-  scheme.BrowserContextFetchParams = tObject({
-    url: tString,
-    method: tOptional(tString),
-    headers: tOptional(tArray(tType('NameValue'))),
-    postData: tOptional(tBinary),
-  });
   scheme.BrowserContextGrantPermissionsParams = tObject({
     permissions: tArray(tString),
     origin: tOptional(tString),
@@ -551,6 +565,10 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     delay: tOptional(tNumber),
     button: tOptional(tEnum(['left', 'right', 'middle'])),
     clickCount: tOptional(tNumber),
+  });
+  scheme.PageMouseWheelParams = tObject({
+    deltaX: tNumber,
+    deltaY: tNumber,
   });
   scheme.PageTouchscreenTapParams = tObject({
     x: tNumber,
@@ -1042,6 +1060,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     body: tOptional(tString),
     isBase64: tOptional(tBoolean),
     useInterceptedResponseBody: tOptional(tBoolean),
+    fetchResponseUid: tOptional(tString),
   });
   scheme.RouteResponseBodyParams = tOptional(tObject({}));
   scheme.ResourceTiming = tObject({
@@ -1072,7 +1091,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     requestHeadersSize: tNumber,
     responseBodySize: tNumber,
     responseHeadersSize: tNumber,
-    responseTransferSize: tNumber,
   });
   scheme.RemoteAddr = tObject({
     ipAddress: tString,

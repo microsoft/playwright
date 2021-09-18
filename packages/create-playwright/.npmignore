@@ -1,0 +1,8 @@
+!/lib/**/*
+/node_modules/
+/test-results/
+/src/**/*
+/tests/**/*
+/playwright.config.ts
+/tsconfig.json
+/assets/.eslintrc.js

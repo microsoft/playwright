@@ -213,10 +213,14 @@ it('should pause intercepted fetch request until continue', async ({page, server
   expect(status).toBe(200);
 });
 
-it('should work with custom referer headers', async ({page, server}) => {
+it('should work with custom referer headers', async ({page, server, browserName}) => {
   await page.setExtraHTTPHeaders({ 'referer': server.EMPTY_PAGE });
   await page.route('**/*', route => {
-    expect(route.request().headers()['referer']).toBe(server.EMPTY_PAGE);
+    // See https://github.com/microsoft/playwright/issues/8999
+    if (browserName === 'chromium')
+      expect(route.request().headers()['referer']).toBe(server.EMPTY_PAGE + ', ' + server.EMPTY_PAGE);
+    else
+      expect(route.request().headers()['referer']).toBe(server.EMPTY_PAGE);
     route.continue();
   });
   const response = await page.goto(server.EMPTY_PAGE);

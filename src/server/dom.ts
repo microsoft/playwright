@@ -989,6 +989,7 @@ export function textContentTask(selector: SelectorInfo): SchedulableTask<string 
       if (!element)
         return continuePolling;
       progress.log(`  selector resolved to ${injected.previewNode(element)}`);
+      progress.log(`  retrieving textContent`);
       return element.textContent;
     });
   }, { parsed: selector.parsed, strict: selector.strict });

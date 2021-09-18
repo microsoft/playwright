@@ -16,13 +16,14 @@
 
 /* eslint-disable no-console */
 
-import * as commander from 'commander';
-import * as fs from 'fs';
-import * as path from 'path';
+import commander from 'commander';
+import fs from 'fs';
+import path from 'path';
 import type { Config } from './types';
 import { Runner, builtInReporters, BuiltInReporter } from './runner';
 import { stopProfiling, startProfiling } from './profiler';
 import { FilePatternFilter } from './util';
+import { Loader } from './loader';
 
 const defaultTimeout = 30000;
 const defaultReporter: BuiltInReporter = process.env.CI ? 'dot' : 'list';
@@ -43,6 +44,7 @@ export function addTestCommand(program: commander.CommanderStatic) {
   command.description('Run tests with Playwright Test');
   command.option('--browser <browser>', `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")`);
   command.option('--headed', `Run tests in headed browsers (default: headless)`);
+  command.option('--debug', `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --maxFailures=1 --headed --workers=1" options`);
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "${tsConfig}"/"${jsConfig}"`);
   command.option('--forbid-only', `Fail if test.only is called (default: false)`);
   command.option('-g, --grep <grep>', `Only run tests matching this regular expression (default: ".*")`);
@@ -81,9 +83,7 @@ export function addTestCommand(program: commander.CommanderStatic) {
   });
 }
 
-async function runTests(args: string[], opts: { [key: string]: any }) {
-  await startProfiling();
-
+async function createLoader(opts: { [key: string]: any }): Promise<Loader> {
   if (opts.browser) {
     const browserOpt = opts.browser.toLowerCase();
     if (!['all', 'chromium', 'firefox', 'webkit'].includes(browserOpt))
@@ -98,15 +98,21 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   }
 
   const overrides = overridesFromOptions(opts);
-  if (opts.headed)
+  if (opts.headed || opts.debug)
     overrides.use = { headless: false };
-  const runner = new Runner(defaultConfig, overrides);
+  if (opts.debug) {
+    overrides.maxFailures = 1;
+    overrides.timeout = 0;
+    overrides.workers = 1;
+    process.env.PWDEBUG = '1';
+  }
+  const loader = new Loader(defaultConfig, overrides);
 
   async function loadConfig(configFile: string) {
     if (fs.existsSync(configFile)) {
       if (process.stdout.isTTY)
         console.log(`Using config at ` + configFile);
-      const loadedConfig = await runner.loadConfigFile(configFile);
+      const loadedConfig = await loader.loadConfigFile(configFile);
       if (('projects' in loadedConfig) && opts.browser)
         throw new Error(`Cannot use --browser option when configuration file defines projects. Specify browserName in the projects instead.`);
       return true;
@@ -131,7 +137,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
       // When passed a directory, look for a config file inside.
       if (!await loadConfigFromDirectory(configFile)) {
         // If there is no config, assume this as a root testing directory.
-        runner.loadEmptyConfig(configFile);
+        loader.loadEmptyConfig(configFile);
       }
     } else {
       // When passed a file, it must be a config file.
@@ -140,9 +146,15 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   } else if (!await loadConfigFromDirectory(process.cwd())) {
     // No --config option, let's look for the config file in the current directory.
     // If not, scan the world.
-    runner.loadEmptyConfig(process.cwd());
+    loader.loadEmptyConfig(process.cwd());
   }
+  return loader;
+}
 
+async function runTests(args: string[], opts: { [key: string]: any }) {
+  await startProfiling();
+
+  const loader = await createLoader(opts);
   const filePatternFilters: FilePatternFilter[] = args.map(arg => {
     const match = /^(.*):(\d+)$/.exec(arg);
     return {
@@ -150,6 +162,8 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
       line: match ? parseInt(match[2], 10) : null,
     };
   });
+
+  const runner = new Runner(loader);
   const result = await runner.run(!!opts.list, filePatternFilters, opts.project || undefined);
   await stopProfiling(undefined);
 

@@ -7,7 +7,6 @@
  */
 
 import type * as expect from 'expect';
-import type { ExpectedAssertionsErrors } from 'expect/build/types';
 
 export declare type AsymmetricMatcher = Record<string, any>;
 
@@ -17,7 +16,7 @@ export declare type Expect = {
   // Sourced from node_modules/expect/build/types.d.ts
   assertions(arg0: number): void;
   extend(arg0: any): void;
-  extractExpectedAssertionsErrors: () => ExpectedAssertionsErrors;
+  extractExpectedAssertionsErrors: typeof expect['extractExpectedAssertionsErrors'];
   getState(): expect.MatcherState;
   hasAssertions(): void;
   setState(state: Partial<expect.MatcherState>): void;
@@ -132,7 +131,7 @@ declare global {
       /**
        * Asserts element's computed CSS property `name` matches expected value.
        */
-      toHaveCSS(expected: string | RegExp, name: string, options?: { timeout?: number }): Promise<R>;
+      toHaveCSS(name: string, expected: string | RegExp, options?: { timeout?: number }): Promise<R>;
 
       /**
        * Asserts element's `id` attribute matches expected value.
