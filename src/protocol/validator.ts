@@ -434,6 +434,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.BrowserContextStorageStateParams = tOptional(tObject({}));
   scheme.BrowserContextPauseParams = tOptional(tObject({}));
   scheme.BrowserContextRecorderSupplementEnableParams = tObject({
+    languageGenerator: tOptional(tAny),
     language: tOptional(tString),
     startRecording: tOptional(tBoolean),
     pauseOnNextStatement: tOptional(tBoolean),

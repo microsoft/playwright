@@ -690,6 +690,7 @@ BrowserContext:
     recorderSupplementEnable:
       experimental: True
       parameters:
+        languageGenerator: json?
         language: string?
         startRecording: boolean?
         pauseOnNextStatement: boolean?

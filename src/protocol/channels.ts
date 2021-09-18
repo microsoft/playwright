@@ -954,6 +954,7 @@ export type BrowserContextPauseParams = {};
 export type BrowserContextPauseOptions = {};
 export type BrowserContextPauseResult = void;
 export type BrowserContextRecorderSupplementEnableParams = {
+  languageGenerator?: any,
   language?: string,
   startRecording?: boolean,
   pauseOnNextStatement?: boolean,
@@ -964,6 +965,7 @@ export type BrowserContextRecorderSupplementEnableParams = {
   outputFile?: string,
 };
 export type BrowserContextRecorderSupplementEnableOptions = {
+  languageGenerator?: any,
   language?: string,
   startRecording?: boolean,
   pauseOnNextStatement?: boolean,
