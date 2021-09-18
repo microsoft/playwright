@@ -790,3 +790,33 @@ it('should click zero-sized input by label', async ({page}) => {
   await page.click('text=Click me');
   expect(await page.evaluate('window.__clicked')).toBe(true);
 });
+
+it('should not throw protocol error when navigating during the click', async ({page, server, mode}) => {
+  it.skip(mode !== 'default');
+
+  await page.goto(server.PREFIX + '/input/button.html');
+  let firstTime = true;
+  const __testHookBeforeStable = async () => {
+    if (!firstTime)
+      return;
+    firstTime = false;
+    await page.goto(server.PREFIX + '/input/button.html');
+  };
+  await page.click('button', { __testHookBeforeStable } as any);
+  expect(await page.evaluate('result')).toBe('Clicked');
+});
+
+it('should retry when navigating during the click', async ({page, server, mode}) => {
+  it.skip(mode !== 'default');
+
+  await page.goto(server.PREFIX + '/input/button.html');
+  let firstTime = true;
+  const __testHookBeforeStable = async () => {
+    if (!firstTime)
+      return;
+    firstTime = false;
+    await page.goto(server.EMPTY_PAGE);
+  };
+  const error = await page.click('button', { __testHookBeforeStable, timeout: 2000 } as any).catch(e => e);
+  expect(error.message).toContain('element was detached from the DOM, retrying');
+});
