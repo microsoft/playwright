@@ -31,10 +31,6 @@ test.describe('cli codegen', () => {
   // Open new page
   const page = await context.newPage();`);
 
-    expect(sources.get('Imba').text).toContain(`
-    # Open new page
-    const page = await context.newPage!`);
-
     expect(sources.get('Java').text).toContain(`
       // Open new page
       Page page = context.newPage();`);
@@ -62,10 +58,6 @@ test.describe('cli codegen', () => {
     expect(sources.get('JavaScript').text).toContain(`
   // Open new page
   const page1 = await context.newPage();`);
-
-    expect(sources.get('Imba').text).toContain(`
-    # Open new page
-    const page1 = await context.newPage!`);
 
     expect(sources.get('Java').text).toContain(`
       // Open new page
@@ -95,9 +87,6 @@ test.describe('cli codegen', () => {
     expect(sources.get('JavaScript').text).toContain(`
   await page.close();`);
 
-    console.log(sources.get('Imba').text);
-    expect(sources.get('Imba').text).toContain(`
-    await page.close!`);
     expect(sources.get('Java').text).toContain(`
       page.close();`);
 
@@ -146,10 +135,6 @@ test.describe('cli codegen', () => {
   // Upload file-to-upload.txt
   await page.setInputFiles('input[type="file"]', 'file-to-upload.txt');`);
 
-    expect(sources.get('Imba').text).toContain(`
-    # Upload file-to-upload.txt
-    await page.setInputFiles 'input[type="file"]', 'file-to-upload.txt'`);
-
     expect(sources.get('Java').text).toContain(`
       // Upload file-to-upload.txt
       page.setInputFiles("input[type=\\\"file\\\"]", Paths.get("file-to-upload.txt"));`);
@@ -187,10 +172,6 @@ test.describe('cli codegen', () => {
   // Upload file-to-upload.txt, file-to-upload-2.txt
   await page.setInputFiles('input[type=\"file\"]', ['file-to-upload.txt', 'file-to-upload-2.txt']);`);
 
-    expect(sources.get('Imba').text).toContain(`
-    # Upload file-to-upload.txt, file-to-upload-2.txt
-    await page.setInputFiles 'input[type=\"file\"]', ['file-to-upload.txt', 'file-to-upload-2.txt']`);
-
     expect(sources.get('Java').text).toContain(`
       // Upload file-to-upload.txt, file-to-upload-2.txt
       page.setInputFiles("input[type=\\\"file\\\"]", new Path[] {Paths.get("file-to-upload.txt"), Paths.get("file-to-upload-2.txt")});`);
@@ -227,10 +208,6 @@ test.describe('cli codegen', () => {
     expect(sources.get('JavaScript').text).toContain(`
   // Clear selected files
   await page.setInputFiles('input[type=\"file\"]', []);`);
-    console.log(sources.get('Imba').text);
-    expect(sources.get('Imba').text).toContain(`
-    # Clear selected files
-    await page.setInputFiles 'input[type=\"file\"]', []`);
 
     expect(sources.get('Java').text).toContain(`
       // Clear selected files
@@ -284,17 +261,7 @@ test.describe('cli codegen', () => {
     page.waitForEvent('download'),
     page.click('text=Download')
   ]);`);
-    console.log(sources.get('Imba').text);
-    expect(sources.get('Imba').text).toContain(`
-    const context = await browser.newContext({
-        acceptDownloads: true
-    })`);
-    expect(sources.get('Imba').text).toContain(`
-    # Click text=Download
-    const [download] = await Promise.all [
-        page.waitForEvent 'download',
-        page.click 'text=Download'
-    ]`);
+
     expect(sources.get('Java').text).toContain(`
       BrowserContext context = browser.newContext(new Browser.NewContextOptions()
         .setAcceptDownloads(true));`);
@@ -355,14 +322,6 @@ test.describe('cli codegen', () => {
   });
   await page.click('text=click me');`);
 
-    console.log(sources.get('Imba').text);
-    expect(sources.get('Imba').text).toContain(`
-    # Click text=click me
-    page.once 'dialog', do(dialog)
-        console.log "Dialog message: {dialog.message!}"
-        dialog.dismiss().catch do 1
-
-    await page.click 'text=click me'`);
     expect(sources.get('Java').text).toContain(`
       // Click text=click me
       page.onceDialog(dialog -> {
@@ -427,10 +386,6 @@ test.describe('cli codegen', () => {
   // Open new page
   const page1 = await context.newPage();
   await page1.goto('about:blank?foo');`);
-      expect(sources.get('Imba').text).toContain(`
-    # Open new page
-    const page1 = await context.newPage!
-    await page1.goto 'about:blank?foo'`);
       expect(sources.get('Python Async').text).toContain(`
     # Open new page
     page1 = await context.new_page()
@@ -476,9 +431,6 @@ test.describe('cli codegen', () => {
     const sources = recorder.sources();
     expect(sources.get('JavaScript').text).toContain(`await page1.fill('input', 'TextA');`);
     expect(sources.get('JavaScript').text).toContain(`await page2.fill('input', 'TextB');`);
-
-    expect(sources.get('Imba').text).toContain(`await page1.fill 'input', 'TextA'`);
-    expect(sources.get('Imba').text).toContain(`await page2.fill 'input', 'TextB'`);
 
     expect(sources.get('Java').text).toContain(`page1.fill("input", "TextA");`);
     expect(sources.get('Java').text).toContain(`page2.fill("input", "TextB");`);
@@ -572,13 +524,6 @@ test.describe('cli codegen', () => {
     name: 'one'
   }).click('text=Hi, I\\'m frame');`);
 
-    console.log(sources.get('Imba').text);
-    expect(sources.get('Imba').text).toContain(`
-    # Click text=Hi, I'm frame
-    await page.frame({
-        name: 'one'
-    }).click 'text=Hi, I\\'m frame'`);
-
     expect(sources.get('Java').text).toContain(`
       // Click text=Hi, I'm frame
       page.frame("one").click("text=Hi, I'm frame");`);
@@ -606,13 +551,6 @@ test.describe('cli codegen', () => {
     name: 'two'
   }).click('text=Hi, I\\'m frame');`);
 
-    console.log(sources.get('Imba').text);
-    expect(sources.get('Imba').text).toContain(`
-    # Click text=Hi, I'm frame
-    await page.frame({
-        name: 'two'
-    }).click 'text=Hi, I\\'m frame'`);
-
     expect(sources.get('Java').text).toContain(`
       // Click text=Hi, I'm frame
       page.frame("two").click("text=Hi, I'm frame");`);
@@ -639,12 +577,6 @@ test.describe('cli codegen', () => {
   await page.frame({
     url: 'http://localhost:${server.PORT}/frames/frame.html'
   }).click('text=Hi, I\\'m frame');`);
-
-    expect(sources.get('Imba').text).toContain(`
-    # Click text=Hi, I'm frame
-    await page.frame({
-        url: 'http://localhost:${server.PORT}/frames/frame.html'
-    }).click 'text=Hi, I\\'m frame'`);
 
     expect(sources.get('Java').text).toContain(`
       // Click text=Hi, I'm frame
@@ -730,9 +662,6 @@ test.describe('cli codegen', () => {
     expect(sources.get('JavaScript').text).toContain(`
   // Fill textarea[name="name"]
   await page.fill('textarea[name="name"]', 'Hello\\'"\`\\nWorld');`);
-    expect(sources.get('Imba').text).toContain(`
-    # Fill textarea[name="name"]
-    await page.fill 'textarea[name="name"]', 'Hello\\'"\`\\nWorld'`);
     expect(sources.get('Java').text).toContain(`
       // Fill textarea[name="name"]
       page.fill("textarea[name=\\\"name\\\"]", "Hello'\\"\`\\nWorld");`);
