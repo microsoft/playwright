@@ -101,6 +101,11 @@ export const NetworkResourceDetails: React.FunctionComponent<{
   const requestContentType = requestContentTypeHeader ? requestContentTypeHeader.value : '';
   const resourceName = resource.request.url.substring(resource.request.url.lastIndexOf('/') + 1);
 
+  let contentType = resource.response.content.mimeType;
+  const charset = contentType.match(/^(.*);\s*charset=.*$/);
+  if (charset)
+    contentType = charset[1];
+
   return <div
     className={'network-request ' + (selected ? 'selected' : '')} onClick={() => setSelected(index)}>
     <Expandable expanded={expanded} setExpanded={setExpanded} style={{ width: '100%' }} title={
@@ -108,7 +113,7 @@ export const NetworkResourceDetails: React.FunctionComponent<{
         <div className={'network-request-title-status ' + formatStatus(resource.response.status)}>{resource.response.status}</div>
         <div className='network-request-title-method'>{resource.request.method}</div>
         <div className='network-request-title-url'>{resourceName}</div>
-        <div className='network-request-title-content-type'>{resource.response.content.mimeType}</div>
+        <div className='network-request-title-content-type'>{contentType}</div>
       </div>
     } body={
       <div className='network-request-details'>

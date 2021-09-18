@@ -25,6 +25,9 @@ test('should collect trace with resources, but no js', async ({ context, page, s
   await page.goto(server.PREFIX + '/frames/frame.html');
   await page.setContent('<button>Click</button>');
   await page.click('"Click"');
+  await page.mouse.move(20, 20);
+  await page.mouse.dblclick(30, 30);
+  await page.keyboard.insertText('abc');
   await page.waitForTimeout(2000);  // Give it some time to produce screenshots.
   await page.close();
   await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
@@ -34,12 +37,19 @@ test('should collect trace with resources, but no js', async ({ context, page, s
   expect(events.find(e => e.metadata?.apiName === 'page.goto')).toBeTruthy();
   expect(events.find(e => e.metadata?.apiName === 'page.setContent')).toBeTruthy();
   expect(events.find(e => e.metadata?.apiName === 'page.click')).toBeTruthy();
+  expect(events.find(e => e.metadata?.apiName === 'mouse.move')).toBeTruthy();
+  expect(events.find(e => e.metadata?.apiName === 'mouse.dblclick')).toBeTruthy();
+  expect(events.find(e => e.metadata?.apiName === 'keyboard.insertText')).toBeTruthy();
   expect(events.find(e => e.metadata?.apiName === 'page.close')).toBeTruthy();
 
   expect(events.some(e => e.type === 'frame-snapshot')).toBeTruthy();
-  expect(events.some(e => e.type === 'resource-snapshot' && e.snapshot.request.url.endsWith('style.css'))).toBeTruthy();
-  expect(events.some(e => e.type === 'resource-snapshot' && e.snapshot.request.url.endsWith('script.js'))).toBeFalsy();
   expect(events.some(e => e.type === 'screencast-frame')).toBeTruthy();
+  const style = events.find(e => e.type === 'resource-snapshot' && e.snapshot.request.url.endsWith('style.css'));
+  expect(style).toBeTruthy();
+  expect(style.snapshot.response.content._sha1).toBeTruthy();
+  const script = events.find(e => e.type === 'resource-snapshot' && e.snapshot.request.url.endsWith('script.js'));
+  expect(script).toBeTruthy();
+  expect(script.snapshot.response.content._sha1).toBe(undefined);
 });
 
 test('should not collect snapshots by default', async ({ context, page, server }, testInfo) => {

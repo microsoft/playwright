@@ -21,7 +21,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
 import { Dispatcher, TestGroup } from './dispatcher';
-import { createMatcher, FilePatternFilter, monotonicTime } from './util';
+import { createFileMatcher, createTitleMatcher, FilePatternFilter, monotonicTime } from './util';
 import { TestCase, Suite } from './test';
 import { Loader } from './loader';
 import { Reporter } from '../../types/testReporter';
@@ -34,7 +34,7 @@ import JUnitReporter from './reporters/junit';
 import EmptyReporter from './reporters/empty';
 import { ProjectImpl } from './project';
 import { Minimatch } from 'minimatch';
-import { Config, FullConfig } from './types';
+import { FullConfig } from './types';
 import { WebServer } from './webServer';
 import { raceAgainstDeadline } from '../utils/async';
 
@@ -59,12 +59,11 @@ export class Runner {
   private _reporter!: Reporter;
   private _didBegin = false;
 
-  constructor(defaultConfig: Config, configOverrides: Config) {
-    this._loader = new Loader(defaultConfig, configOverrides);
+  constructor(loader: Loader) {
+    this._loader = loader;
   }
 
   private async _createReporter(list: boolean) {
-    const reporters: Reporter[] = [];
     const defaultReporters: {[key in BuiltInReporter]: new(arg: any) => Reporter} = {
       dot: list ? ListModeReporter : DotReporter,
       line: list ? ListModeReporter : LineReporter,
@@ -73,6 +72,7 @@ export class Runner {
       junit: JUnitReporter,
       null: EmptyReporter,
     };
+    const reporters: Reporter[] = [];
     for (const r of this._loader.fullConfig().reporter) {
       const [name, arg] = r;
       if (name in defaultReporters) {
@@ -83,14 +83,6 @@ export class Runner {
       }
     }
     return new Multiplexer(reporters);
-  }
-
-  loadConfigFile(file: string): Promise<Config> {
-    return this._loader.loadConfigFile(file);
-  }
-
-  loadEmptyConfig(rootDir: string) {
-    this._loader.loadEmptyConfig(rootDir);
   }
 
   async run(list: boolean, filePatternFilters: FilePatternFilter[], projectNames?: string[]): Promise<RunResultStatus> {
@@ -138,7 +130,7 @@ export class Runner {
   }
 
   async _run(list: boolean, testFileReFilters: FilePatternFilter[], projectNames?: string[]): Promise<RunResult> {
-    const testFileFilter = testFileReFilters.length ? createMatcher(testFileReFilters.map(e => e.re)) : () => true;
+    const testFileFilter = testFileReFilters.length ? createFileMatcher(testFileReFilters.map(e => e.re)) : () => true;
     const config = this._loader.fullConfig();
 
     let projectsToFind: Set<string> | undefined;
@@ -176,8 +168,8 @@ export class Runner {
       if (!fs.statSync(testDir).isDirectory())
         throw new Error(`${testDir} is not a directory`);
       const allFiles = await collectFiles(project.config.testDir);
-      const testMatch = createMatcher(project.config.testMatch);
-      const testIgnore = createMatcher(project.config.testIgnore);
+      const testMatch = createFileMatcher(project.config.testMatch);
+      const testIgnore = createFileMatcher(project.config.testIgnore);
       const testFileExtension = (file: string) => ['.js', '.ts', '.mjs'].includes(path.extname(file));
       const testFiles = allFiles.filter(file => !testIgnore(file) && testMatch(file) && testFileFilter(file) && testFileExtension(file));
       files.set(project, testFiles);
@@ -217,11 +209,12 @@ export class Runner {
         fileSuites.set(fileSuite._requireFile, fileSuite);
 
       const outputDirs = new Set<string>();
-      const grepMatcher = createMatcher(config.grep);
-      const grepInvertMatcher = config.grepInvert ? createMatcher(config.grepInvert) : null;
+      const grepMatcher = createTitleMatcher(config.grep);
+      const grepInvertMatcher = config.grepInvert ? createTitleMatcher(config.grepInvert) : null;
       const rootSuite = new Suite('');
       for (const project of projects) {
         const projectSuite = new Suite(project.config.name);
+        projectSuite._projectConfig = project.config;
         rootSuite._addSuite(projectSuite);
         for (const file of files.get(project)!) {
           const fileSuite = fileSuites.get(file);

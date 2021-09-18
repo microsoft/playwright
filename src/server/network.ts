@@ -20,6 +20,7 @@ import { assert } from '../utils/utils';
 import { ManualPromise } from '../utils/async';
 import { SdkObject } from './instrumentation';
 import { NameValue } from '../common/types';
+import { FetchRequest } from './fetch';
 
 export function filterCookies(cookies: types.NetworkCookie[], urls: string[]): types.NetworkCookie[] {
   const parsedURLs = urls.map(s => new URL(s));
@@ -52,7 +53,7 @@ export function rewriteCookies(cookies: types.SetNetworkCookieParam[]): types.Se
     assert(c.value, 'Cookie should have a value');
     assert(c.url || (c.domain && c.path), 'Cookie should have a url or a domain/path pair');
     assert(!(c.url && c.domain), 'Cookie should have either url or domain');
-    assert(!(c.url && c.path), 'Cookie should have either url or domain');
+    assert(!(c.url && c.path), 'Cookie should have either url or path');
     const copy = {...c};
     if (copy.url) {
       assert(copy.url !== 'about:blank', `Blank page can not have cookie "${c.name}"`);
@@ -81,9 +82,9 @@ export function stripFragmentFromUrl(url: string): string {
 }
 
 type ResponseSize = {
-  bodySize: number;
   encodedBodySize: number;
   transferSize: number;
+  responseHeadersSize: number;
 };
 
 export class Request extends SdkObject {
@@ -102,7 +103,7 @@ export class Request extends SdkObject {
   private _frame: frames.Frame;
   private _waitForResponsePromise = new ManualPromise<Response | null>();
   _responseEndTiming = -1;
-  readonly responseSize: ResponseSize = { bodySize: 0, encodedBodySize: 0, transferSize: 0 };
+  readonly responseSize: ResponseSize = { encodedBodySize: 0, transferSize: 0, responseHeadersSize: 0 };
 
   constructor(frame: frames.Frame, redirectedFrom: Request | null, documentId: string | undefined,
     url: string, resourceType: string, method: string, postData: Buffer | null, headers: types.HeadersArray) {
@@ -220,13 +221,19 @@ export class Route extends SdkObject {
     await this._delegate.abort(errorCode);
   }
 
-  async fulfill(overrides: { status?: number, headers?: types.HeadersArray, body?: string, isBase64?: boolean, useInterceptedResponseBody?: boolean }) {
+  async fulfill(overrides: { status?: number, headers?: types.HeadersArray, body?: string, isBase64?: boolean, useInterceptedResponseBody?: boolean, fetchResponseUid?: string }) {
     assert(!this._handled, 'Route is already handled!');
     this._handled = true;
     let body = overrides.body;
     let isBase64 = overrides.isBase64 || false;
     if (body === undefined) {
-      if (this._response && overrides.useInterceptedResponseBody) {
+      if (overrides.fetchResponseUid) {
+        const context = this._request.frame()._page._browserContext;
+        const buffer = context.fetchRequest.fetchResponses.get(overrides.fetchResponseUid) || FetchRequest.findResponseBody(overrides.fetchResponseUid);
+        assert(buffer, 'Fetch response has been disposed');
+        body = buffer.toString('utf8');
+        isBase64 = false;
+      } else if (this._response && overrides.useInterceptedResponseBody) {
         body = (await this._delegate.responseBody()).toString('utf8');
         isBase64 = false;
       } else {
@@ -281,7 +288,6 @@ export type ResourceSizes = {
   requestHeadersSize: number,
   responseBodySize: number,
   responseHeadersSize: number,
-  responseTransferSize: number,
 };
 
 export type RemoteAddr = {
@@ -442,6 +448,8 @@ export class Response extends SdkObject {
   }
 
   private async _responseHeadersSize(): Promise<number> {
+    if (this._request.responseSize.responseHeadersSize)
+      return this._request.responseSize.responseHeadersSize;
     let headersSize = 4; // 4 = 2 spaces + 2 line breaks (HTTP/1.1 200 Ok\r\n)
     headersSize += 8; // httpVersion;
     headersSize += 3; // statusCode;
@@ -461,29 +469,17 @@ export class Response extends SdkObject {
     await this._finishedPromise;
     const requestHeadersSize = await this._requestHeadersSize();
     const responseHeadersSize = await this._responseHeadersSize();
-    let { bodySize, encodedBodySize, transferSize } = this._request.responseSize;
-    if (!bodySize) {
+    let { encodedBodySize } = this._request.responseSize;
+    if (!encodedBodySize) {
       const headers = await this._bestEffortResponseHeaders();
       const contentLength = headers.find(h => h.name.toLowerCase() === 'content-length')?.value;
-      bodySize = contentLength ? +contentLength : 0;
-    }
-    if (!encodedBodySize && transferSize) {
-      // Chromium only populates transferSize
-      // Firefox can return 0 transferSize
-      encodedBodySize = Math.max(0, transferSize - responseHeadersSize);
-      // Firefox only populate transferSize.
-      if (!bodySize)
-        bodySize = encodedBodySize;
-    } else if (!transferSize) {
-      // WebKit does not provide transfer size.
-      transferSize = encodedBodySize + responseHeadersSize;
+      encodedBodySize = contentLength ? +contentLength : 0;
     }
     return {
       requestBodySize: this._request.bodySize(),
       requestHeadersSize,
-      responseBodySize: bodySize,
+      responseBodySize: encodedBodySize,
       responseHeadersSize,
-      responseTransferSize: transferSize,
     };
   }
 }

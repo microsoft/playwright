@@ -22,9 +22,12 @@ test('should support toHaveText w/ regex', async ({ runInlineTest }) => {
       const { test } = pwt;
 
       test('pass', async ({ page }) => {
-        await page.setContent('<div id=node>Text content</div>');
+        await page.setContent('<div id=node>Text   content</div>');
         const locator = page.locator('#node');
         await expect(locator).toHaveText(/Text/);
+
+        // Should not normalize whitespace.
+        await expect(locator).toHaveText(/Text   content/);
       });
 
       test('fail', async ({ page }) => {
@@ -50,15 +53,18 @@ test('should support toHaveText w/ text', async ({ runInlineTest }) => {
       const { test } = pwt;
 
       test('pass', async ({ page }) => {
-        await page.setContent('<div id=node>Text content</div>');
+        await page.setContent('<div id=node><span></span>Text \\ncontent&nbsp;    </div>');
         const locator = page.locator('#node');
-        await expect(locator).toHaveText('Text content');
+        // Should normalize whitespace.
+        await expect(locator).toHaveText('Text                        content');
       });
 
       test('pass contain', async ({ page }) => {
         await page.setContent('<div id=node>Text content</div>');
         const locator = page.locator('#node');
         await expect(locator).toContainText('Text');
+        // Should normalize whitespace.
+        await expect(locator).toContainText('   Text        content\\n  ');
       });
 
       test('fail', async ({ page }) => {
@@ -84,9 +90,10 @@ test('should support toHaveText w/ array', async ({ runInlineTest }) => {
       const { test } = pwt;
 
       test('pass', async ({ page }) => {
-        await page.setContent('<div>Text 1</div><div>Text 2a</div>');
+        await page.setContent('<div>Text    \\n1</div><div>Text   2a</div>');
         const locator = page.locator('div');
-        await expect(locator).toHaveText(['Text 1', /Text \\d+a/]);
+        // Should only normalize whitespace in the first item.
+        await expect(locator).toHaveText(['Text  1', /Text   \\d+a/]);
       });
 
       test('fail', async ({ page }) => {
@@ -223,4 +230,24 @@ test('should print expected/received before timeout', async ({ runInlineTest }) 
   expect(result.output).toContain('Timeout of 2000ms exceeded.');
   expect(stripAscii(result.output)).toContain('Expected string: "Text 2"');
   expect(stripAscii(result.output)).toContain('Received string: "Text content"');
+});
+
+test('should print nice error for toHaveText', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('fail', async ({ page }) => {
+        await page.setContent('<div id=node>Text content</div>');
+        await expect(page.locator('no-such-thing')).toHaveText('Text');
+      });
+      `,
+  }, { workers: 1, timeout: 2000 });
+  expect(result.failed).toBe(1);
+  expect(result.exitCode).toBe(1);
+  const output = stripAscii(result.output);
+  expect(output).toContain('Pending operations:');
+  expect(output).toContain('Error: expect(received).toHaveText(expected)');
+  expect(output).toContain('Expected string: "Text"');
+  expect(output).toContain('Received string: undefined');
 });

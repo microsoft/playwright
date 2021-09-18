@@ -562,6 +562,25 @@ export class Registry {
         else
           throw new Error(`ERROR: Playwright does not support installing ${executable.name}`);
       }
+    } catch (e) {
+      if (e.code === 'ELOCKED') {
+        const rmCommand = process.platform === 'win32' ? 'rm -R' : 'rm -rf';
+        throw new Error('\n' + wrapInASCIIBox([
+          `An active lockfile is found at:`,
+          ``,
+          `  ${lockfilePath}`,
+          ``,
+          `Either:`,
+          `- wait a few minutes if other Playwright is installing browsers in parallel`,
+          `- remove lock manually with:`,
+          ``,
+          `    ${rmCommand} ${lockfilePath}`,
+          ``,
+          `<3 Playwright Team`,
+        ].join('\n'), 1));
+      } else {
+        throw e;
+      }
     } finally {
       await releaseLock();
     }

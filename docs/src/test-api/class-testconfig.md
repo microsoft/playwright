@@ -219,7 +219,7 @@ Tests that took more than `threshold` milliseconds are considered slow, and the 
 ## property: TestConfig.retries
 - type: <[int]>
 
-The maximum number of retry attempts given to failed tests. Learn more about [test retries](./test-retries.md).
+The maximum number of retry attempts given to failed tests. Learn more about [test retries](./test-retries.md#retries).
 
 ## property: TestConfig.shard
 - type: <[Object]>
@@ -267,9 +267,9 @@ Whether to update expected snapshots with the actual results produced by the tes
 Learn more about [snapshots](./test-snapshots.md).
 
 ## property: TestConfig.use
-- type: <[Fixtures]>
+- type: <[TestOptions]>
 
-Additional fixtures for this project. Most useful for specifying options, for example [`property: Fixtures.browserName`]. Learn more about [Fixtures] and [configuration](./test-configuration.md).
+Global options for all tests, for example [`property: TestOptions.browserName`]. Learn more about [configuration](./test-configuration.md) and see [available options][TestOptions].
 
 ```js js-flavor=js
 // playwright.config.js

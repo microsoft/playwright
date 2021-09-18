@@ -220,6 +220,12 @@ Optional response body as raw bytes.
 File path to respond with. The content type will be inferred from file extension. If `path` is a relative path, then it
 is resolved relative to the current working directory.
 
+### option: Route.fulfill.response
+* langs: js
+- `response` <[FetchResponse]>
+
+[FetchResponse] to fulfill route's request with. Individual fields of the response (such as headers) can be overridden using fulfill options.
+
 ## method: Route.request
 - returns: <[Request]>
 

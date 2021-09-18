@@ -17,6 +17,7 @@
 import type { TestInfoImpl } from './types';
 import util from 'util';
 import path from 'path';
+import url from 'url';
 import type { TestError, Location } from './types';
 import { default as minimatch } from 'minimatch';
 import { errors } from '../..';
@@ -91,7 +92,7 @@ export type FilePatternFilter = {
   line: number | null;
 };
 
-export function createMatcher(patterns: string | RegExp | (string | RegExp)[]): Matcher {
+export function createFileMatcher(patterns: string | RegExp | (string | RegExp)[]): Matcher {
   const reList: RegExp[] = [];
   const filePatterns: string[] = [];
   for (const pattern of Array.isArray(patterns) ? patterns : [patterns]) {
@@ -104,17 +105,36 @@ export function createMatcher(patterns: string | RegExp | (string | RegExp)[]): 
         filePatterns.push(pattern);
     }
   }
+  return (filePath: string) => {
+    for (const re of reList) {
+      re.lastIndex = 0;
+      if (re.test(filePath))
+        return true;
+    }
+    // Windows might still recieve unix style paths from Cygwin or Git Bash.
+    // Check against the file url as well.
+    if (path.sep === '\\') {
+      const fileURL = url.pathToFileURL(filePath).href;
+      for (const re of reList) {
+        re.lastIndex = 0;
+        if (re.test(fileURL))
+          return true;
+      }
+    }
+    for (const pattern of filePatterns) {
+      if (minimatch(filePath, pattern, { nocase: true, dot: true }))
+        return true;
+    }
+    return false;
+  };
+}
 
+export function createTitleMatcher(patterns:  RegExp | RegExp[]): Matcher {
+  const reList = Array.isArray(patterns) ? patterns : [patterns];
   return (value: string) => {
     for (const re of reList) {
       re.lastIndex = 0;
       if (re.test(value))
-        return true;
-    }
-    for (const pattern of filePatterns) {
-      if (minimatch(value, pattern, {
-        nocase: true,
-      }))
         return true;
     }
     return false;

@@ -146,7 +146,7 @@ export interface TestCase {
   /**
    * The maximum number of retries given to this test in the configuration.
    *
-   * Learn more about [test retries](https://playwright.dev/docs/test-retries).
+   * Learn more about [test retries](https://playwright.dev/docs/test-retries#retries).
    */
   retries: number;
   /**
@@ -173,7 +173,7 @@ export interface TestResult {
   /**
    * When test is retries multiple times, each retry attempt is given a sequential number.
    *
-   * Learn more about [test retries](https://playwright.dev/docs/test-retries).
+   * Learn more about [test retries](https://playwright.dev/docs/test-retries#retries).
    */
   retry: number;
   /**
@@ -306,6 +306,7 @@ export interface FullResult {
  * ```
  *
  * Now use this reporter with [testConfig.reporter](https://playwright.dev/docs/api/class-testconfig#test-config-reporter).
+ * Learn more about [using reporters](https://playwright.dev/docs/test-reporters).
  *
  * ```ts
  * // playwright.config.ts
@@ -317,7 +318,29 @@ export interface FullResult {
  * export default config;
  * ```
  *
- * Learn more about [reporters](https://playwright.dev/docs/test-reporters).
+ * Here is a typical order of reporter calls:
+ * - [reporter.onBegin(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-on-begin) is called once
+ *   with a root suite that contains all other suites and tests. Learn more about [suites hierarchy][Suite].
+ * - [reporter.onTestBegin(test, result)](https://playwright.dev/docs/api/class-reporter#reporter-on-test-begin) is
+ *   called for each test run. It is given a [TestCase] that is executed, and a [TestResult] that is almost empty. Test
+ *   result will be populated while the test runs (for example, with steps and stdio) and will get final `status` once
+ *   the test finishes.
+ * - [reporter.onStepBegin(test, result, step)](https://playwright.dev/docs/api/class-reporter#reporter-on-step-begin)
+ *   and [reporter.onStepEnd(test, result, step)](https://playwright.dev/docs/api/class-reporter#reporter-on-step-end)
+ *   are called for each executed step inside the test. When steps are executed, test run has not finished yet.
+ * - [reporter.onTestEnd(test, result)](https://playwright.dev/docs/api/class-reporter#reporter-on-test-end) is called
+ *   when test run has finished. By this time, [TestResult] is complete and you can use
+ *   [testResult.status](https://playwright.dev/docs/api/class-testresult#test-result-status),
+ *   [testResult.error](https://playwright.dev/docs/api/class-testresult#test-result-error) and more.
+ * - [reporter.onEnd(result)](https://playwright.dev/docs/api/class-reporter#reporter-on-end) is called once after all
+ *   tests that should run had finished.
+ *
+ * Additionally,
+ * [reporter.onStdOut(chunk, test, result)](https://playwright.dev/docs/api/class-reporter#reporter-on-std-out) and
+ * [reporter.onStdErr(chunk, test, result)](https://playwright.dev/docs/api/class-reporter#reporter-on-std-err) are called
+ * when standard output is produced in the worker process, possibly during a test execution, and
+ * [reporter.onError(error)](https://playwright.dev/docs/api/class-reporter#reporter-on-error) is called when something
+ * went wrong outside of the test execution.
  */
 export interface Reporter {
   /**

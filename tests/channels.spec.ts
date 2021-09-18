@@ -57,6 +57,7 @@ it('should scope context handles', async ({browserType, browserOptions, server})
             { _guid: 'request', objects: [] },
             { _guid: 'response', objects: [] },
           ]},
+          { _guid: 'fetchRequest', objects: [] }
         ] },
       ] },
       { _guid: 'electron', objects: [] },
@@ -140,7 +141,8 @@ it('should scope browser handles', async ({browserType, browserOptions}) => {
       { _guid: 'browser-type', objects: [
         {
           _guid: 'browser', objects: [
-            { _guid: 'browser-context', objects: [] }
+            { _guid: 'browser-context', objects: [] },
+            { _guid: 'fetchRequest', objects: [] }
           ]
         },
       ]

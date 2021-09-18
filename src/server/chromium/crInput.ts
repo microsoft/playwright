@@ -135,6 +135,17 @@ export class RawMouseImpl implements input.RawMouse {
       clickCount
     });
   }
+
+  async wheel(x: number, y: number, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, deltaX: number, deltaY: number): Promise<void> {
+    await this._client.send('Input.dispatchMouseEvent', {
+      type: 'mouseWheel',
+      x,
+      y,
+      modifiers: toModifiersMask(modifiers),
+      deltaX,
+      deltaY,
+    });
+  }
 }
 
 export class RawTouchscreenImpl implements input.RawTouchscreen {

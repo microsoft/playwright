@@ -55,6 +55,7 @@ export type Entry = {
   timings: Timings;
   serverIPAddress?: string;
   connection?: string;
+  _requestref: string;
   _frameref: string;
   _monotonicTime: number;
   _serverPort?: number;

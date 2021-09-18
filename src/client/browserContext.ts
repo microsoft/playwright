@@ -28,7 +28,7 @@ import { Events } from './events';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { Waiter } from './waiter';
 import { URLMatch, Headers, WaitForEventOptions, BrowserContextOptions, StorageState, LaunchOptions } from './types';
-import { isUnderTest, headersObjectToArray, mkdirIfNeeded, isString } from '../utils/utils';
+import { isUnderTest, headersObjectToArray, mkdirIfNeeded } from '../utils/utils';
 import { isSafeCloseError } from '../utils/errors';
 import * as api from '../../types/types';
 import * as structs from '../../types/structs';
@@ -37,6 +37,7 @@ import { Tracing } from './tracing';
 import type { BrowserType } from './browserType';
 import { Artifact } from './artifact';
 import { LanguageGenerator } from '../server/supplements/recorder/language';
+import { FetchRequest } from './fetch';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel, channels.BrowserContextInitializer> implements api.BrowserContext {
   _pages = new Set<Page>();
@@ -49,8 +50,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   private _closedPromise: Promise<void>;
   _options: channels.BrowserNewContextParams = { };
 
+  readonly _request: FetchRequest;
   readonly tracing: Tracing;
-  private _closed = false;
   readonly _backgroundPages = new Set<Page>();
   readonly _serviceWorkers = new Set<Worker>();
   readonly _isChromium: boolean;
@@ -69,6 +70,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
       this._browser = parent;
     this._isChromium = this._browser?._name === 'chromium';
     this.tracing = new Tracing(this);
+    this._request = FetchRequest.from(initializer.fetchRequest);
 
     this._channel.on('bindingCall', ({binding}) => this._onBinding(BindingCall.from(binding)));
     this._channel.on('close', () => this._onClose());
@@ -217,21 +219,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     });
   }
 
-  async _fetch(url: string, options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer } = {}): Promise<network.FetchResponse> {
-    return this._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
-      const postDataBuffer = isString(options.postData) ? Buffer.from(options.postData, 'utf8') : options.postData;
-      const result = await channel.fetch({
-        url,
-        method: options.method,
-        headers: options.headers ? headersObjectToArray(options.headers) : undefined,
-        postData: postDataBuffer ? postDataBuffer.toString('base64') : undefined,
-      });
-      if (result.error)
-        throw new Error(`Request failed: ${result.error}`);
-      return new network.FetchResponse(result.response!);
-    });
-  }
-
   async setGeolocation(geolocation: { longitude: number, latitude: number, accuracy?: number } | null): Promise<void> {
     return this._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
       await channel.setGeolocation({ geolocation: geolocation || undefined });
@@ -341,7 +328,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   }
 
   _onClose() {
-    this._closed = true;
     if (this._browser)
       this._browser._contexts.delete(this);
     this._browserType?._contexts?.delete(this);

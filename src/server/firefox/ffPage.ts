@@ -63,6 +63,7 @@ export class FFPage implements PageDelegate {
     this._contextIdToContext = new Map();
     this._browserContext = browserContext;
     this._page = new Page(this, browserContext);
+    this.rawMouse.setPage(this._page);
     this._networkManager = new FFNetworkManager(session, this._page);
     this._page.on(Page.Events.FrameDetached, frame => this._removeContextsForFrame(frame));
     // TODO: remove Page.willOpenNewWindowAsynchronously from the protocol.
@@ -317,8 +318,7 @@ export class FFPage implements PageDelegate {
   }
 
   async exposeBinding(binding: PageBinding) {
-    const worldName = binding.world === 'utility' ? UTILITY_WORLD_NAME : '';
-    await this._session.send('Page.addBinding', { name: binding.name, script: binding.source, worldName });
+    await this._session.send('Page.addBinding', { name: binding.name, script: binding.source });
   }
 
   didClose() {

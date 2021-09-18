@@ -1,6 +1,6 @@
 ## method: Request.PostDataJSON
 * langs: csharp
-- returns: <[JsonElement?]>
+- returns: <[null]|[JsonElement]>
 
 Returns parsed request's body for `form-urlencoded` and JSON as a fallback if any.
 

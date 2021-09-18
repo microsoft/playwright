@@ -27,7 +27,7 @@ An error thrown during the test execution, if any.
 
 When test is retries multiple times, each retry attempt is given a sequential number.
 
-Learn more about [test retries](./test-retries.md).
+Learn more about [test retries](./test-retries.md#retries).
 
 ## property: TestResult.startTime
 - type: <[Date]>

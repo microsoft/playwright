@@ -297,7 +297,7 @@ export class Dispatcher {
         return;
       }
       const { test, result, steps, stepStack } = this._testById.get(params.testId)!;
-      const parentStep = [...stepStack].pop();
+      const parentStep = params.forceNoParent ? undefined : [...stepStack].pop();
       const step: TestStep = {
         title: params.title,
         titlePath: () => {
@@ -313,7 +313,8 @@ export class Dispatcher {
       };
       steps.set(params.stepId, step);
       (parentStep || result).steps.push(step);
-      stepStack.add(step);
+      if (params.canHaveChildren)
+        stepStack.add(step);
       this._reporter.onStepBegin?.(test, result, step);
     });
     worker.on('stepEnd', (params: StepEndPayload) => {
@@ -331,7 +332,6 @@ export class Dispatcher {
       step.duration = params.wallTime - step.startTime.getTime();
       if (params.error)
         step.error = params.error;
-      step.data = params.data;
       stepStack.delete(step);
       steps.delete(params.stepId);
       this._reporter.onStepEnd?.(test, result, step);

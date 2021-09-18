@@ -17,7 +17,12 @@
 import type { Expect } from '../types';
 import { currentTestInfo } from '../globals';
 import { compare } from './golden';
-import { SyncExpectationResult } from 'expect/build/types';
+
+// from expect/build/types
+type SyncExpectationResult = {
+  pass: boolean;
+  message: () => string;
+};
 
 export function toMatchSnapshot(this: ReturnType<Expect['getState']>, received: Buffer | string, nameOrOptions: string | { name: string, threshold?: number }, optOptions: { threshold?: number } = {}): SyncExpectationResult {
   let options: { name: string, threshold?: number };

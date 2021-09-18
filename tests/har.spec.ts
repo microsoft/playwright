@@ -280,7 +280,6 @@ it('should include sizes', async ({ contextFactory, server, asset }, testInfo) =
 });
 
 it('should work with gzip compression', async ({ contextFactory, server, browserName }, testInfo) => {
-  it.fixme(browserName !== 'chromium');
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   server.enableGzip('/simplezip.json');
   const response = await page.goto(server.PREFIX + '/simplezip.json');
@@ -521,7 +520,7 @@ it('should filter favicon and favicon redirects', async ({server, browserName, c
 
   // Browsers aggresively cache favicons, so force bust with the
   // `d` parameter to make iterating on this test more predictable and isolated.
-  const favicon = `/favicon.ico`;
+  const favicon = `/no-cache-2/favicon.ico`;
   const hashedFaviconUrl = `/favicon-hashed.ico`;
   server.setRedirect(favicon, hashedFaviconUrl);
   server.setRoute(hashedFaviconUrl, (req, res) => {
@@ -589,4 +588,43 @@ it('should have different hars for concurrent contexts', async ({ contextFactory
     expect(pageEntry.id).not.toBe(log0.pages[0].id);
     expect(pageEntry.title).toBe('One');
   }
+});
+
+it('should include _requestref', async ({ contextFactory, server }, testInfo) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  const resp = await page.goto(server.EMPTY_PAGE);
+  const log = await getLog();
+  expect(log.entries.length).toBe(1);
+  const entry = log.entries[0];
+  expect(entry._requestref).toMatch(/^request@[a-f0-9]{32}$/);
+  expect(entry._requestref).toBe((resp.request() as any)._guid);
+});
+
+it('should include _requestref for redirects', async ({ contextFactory, server }, testInfo) => {
+  server.setRedirect('/start', '/one-more');
+  server.setRedirect('/one-more', server.EMPTY_PAGE);
+
+  const { page, getLog, context } = await pageWithHar(contextFactory, testInfo);
+
+  const requests = new Map<string, string>();
+  context.on('request', request => {
+    requests.set(request.url(), (request as any)._guid);
+  });
+
+  await page.goto(server.PREFIX + '/start');
+
+  const log = await getLog();
+  expect(log.entries.length).toBe(3);
+
+  const entryStart = log.entries[0];
+  expect(entryStart.request.url).toBe(server.PREFIX + '/start');
+  expect(entryStart._requestref).toBe(requests.get(entryStart.request.url));
+
+  const entryOneMore = log.entries[1];
+  expect(entryOneMore.request.url).toBe(server.PREFIX + '/one-more');
+  expect(entryOneMore._requestref).toBe(requests.get(entryOneMore.request.url));
+
+  const entryEmptyPage = log.entries[2];
+  expect(entryEmptyPage.request.url).toBe(server.EMPTY_PAGE);
+  expect(entryEmptyPage._requestref).toBe(requests.get(entryEmptyPage.request.url));
 });

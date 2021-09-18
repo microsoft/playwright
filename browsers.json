@@ -3,27 +3,27 @@
   "browsers": [
     {
       "name": "chromium",
-      "revision": "917400",
+      "revision": "922354",
       "installByDefault": true
     },
     {
       "name": "chromium-with-symbols",
-      "revision": "917400",
+      "revision": "922354",
       "installByDefault": false
     },
     {
       "name": "firefox",
-      "revision": "1291",
+      "revision": "1295",
       "installByDefault": true
     },
     {
       "name": "firefox-beta",
-      "revision": "1288",
+      "revision": "1289",
       "installByDefault": false
     },
     {
       "name": "webkit",
-      "revision": "1540",
+      "revision": "1542",
       "installByDefault": true,
       "revisionOverrides": {
         "mac10.14": "1446"

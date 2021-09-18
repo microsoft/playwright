@@ -79,7 +79,7 @@
 
 .call-log-selector {
   color: var(--orange);
-  white-space: normal;
+  white-space: nowrap;
 }
 
 .call-log-time {

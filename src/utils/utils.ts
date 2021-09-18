@@ -20,10 +20,11 @@ import stream from 'stream';
 import removeFolder from 'rimraf';
 import * as crypto from 'crypto';
 import os from 'os';
-import { spawn } from 'child_process';
+import { spawn, SpawnOptions } from 'child_process';
 import { getProxyForUrl } from 'proxy-from-env';
 import * as URL from 'url';
 import { getUbuntuVersionSync } from './ubuntuVersion';
+import { NameValue } from '../protocol/channels';
 
 // `https-proxy-agent` v5 is written in TypeScript and exposes generated types.
 // However, as of June 2020, its types are generated with tsconfig that enables
@@ -130,7 +131,7 @@ export function downloadFile(url: string, destinationPath: string, options: {pro
   }
 }
 
-export function spawnAsync(cmd: string, args: string[], options: any): Promise<{stdout: string, stderr: string, code: number, error?: Error}> {
+export function spawnAsync(cmd: string, args: string[], options?: SpawnOptions): Promise<{stdout: string, stderr: string, code: number, error?: Error}> {
   const process = spawn(cmd, args, options);
 
   return new Promise(resolve => {
@@ -288,6 +289,24 @@ class HashStream extends stream.Writable {
   }
 }
 
+export function objectToArray(map?:  { [key: string]: string }): NameValue[] | undefined {
+  if (!map)
+    return undefined;
+  const result = [];
+  for (const [name, value] of Object.entries(map))
+    result.push({ name, value });
+  return result;
+}
+
+export function arrayToObject(array?: NameValue[]): { [key: string]: string } | undefined {
+  if (!array)
+    return undefined;
+  const result: { [key: string]: string } = {};
+  for (const {name, value} of array)
+    result[name] = value;
+  return result;
+}
+
 export async function calculateFileSha1(filename: string): Promise<string> {
   const hashStream = new HashStream();
   const stream = fs.createReadStream(filename);
@@ -331,21 +350,13 @@ export function canAccessFile(file: string) {
   }
 }
 
-const localIpAddresses = [
-  'localhost',
-  '127.0.0.1',
-  '::ffff:127.0.0.1',
-  '::1',
-  '0000:0000:0000:0000:0000:0000:0000:0001', // WebKit (Windows)
-];
-
-export function isLocalIpAddress(ipAdress: string): boolean {
-  return localIpAddresses.includes(ipAdress);
+export function getUserAgent() {
+  return `Playwright/${getPlaywrightVersion()} (${os.arch()}/${os.platform()}/${os.release()})`;
 }
 
-export function getUserAgent() {
+export function getPlaywrightVersion(majorMinorOnly = false) {
   const packageJson = require('./../../package.json');
-  return `Playwright/${packageJson.version} (${os.arch()}/${os.platform()}/${os.release()})`;
+  return majorMinorOnly ? packageJson.version.split('.').slice(0, 2).join('.') : packageJson.version;
 }
 
 export function constructURLBasedOnBaseURL(baseURL: string | undefined, givenURL: string): string {
@@ -399,4 +410,8 @@ export function wrapInASCIIBox(text: string, padding = 0): string {
     ...lines.map(line => '║' + ' '.repeat(padding) + line + ' '.repeat(maxLength - line.length + padding) + '║'),
     '╚' + '═'.repeat(maxLength + padding * 2) + '╝',
   ].join('\n');
+}
+
+export function isFilePayload(value: any): boolean {
+  return typeof value === 'object' && value['name'] && value['mimeType'] && value['buffer'];
 }

@@ -79,6 +79,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer, c
     page.on(Page.Events.Video, (artifact: Artifact) => this._dispatchEvent('video', { artifact: existingDispatcher<ArtifactDispatcher>(artifact) }));
     if (page._video)
       this._dispatchEvent('video', { artifact: existingDispatcher<ArtifactDispatcher>(page._video) });
+    // Ensure client knows about all frames.
+    const frames = page._frameManager.frames();
+    for (let i = 1; i < frames.length; i++)
+      this._onFrameAttached(frames[i]);
   }
 
   page(): Page {
@@ -190,6 +194,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer, c
 
   async mouseClick(params: channels.PageMouseClickParams, metadata: CallMetadata): Promise<void> {
     await this._page.mouse.click(params.x, params.y, params);
+  }
+
+  async mouseWheel(params: channels.PageMouseWheelParams, metadata: CallMetadata): Promise<void> {
+    await this._page.mouse.wheel(params.deltaX, params.deltaY);
   }
 
   async touchscreenTap(params: channels.PageTouchscreenTapParams, metadata: CallMetadata): Promise<void> {

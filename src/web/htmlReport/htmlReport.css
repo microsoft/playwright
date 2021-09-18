@@ -14,6 +14,14 @@
   limitations under the License.
 */
 
+body {
+  --box-shadow-thick: rgb(0 0 0 / 10%) 0px 1.8px 1.9px,
+  rgb(0 0 0 / 15%) 0px 6.1px 6.3px,
+  rgb(0 0 0 / 10%) 0px -2px 4px,
+  rgb(0 0 0 / 15%) 0px -6.1px 12px,
+  rgb(0 0 0 / 25%) 0px 27px 28px;
+}
+
 .suite-tree-column {
   line-height: 18px;
   flex: auto;
@@ -23,7 +31,7 @@
 }
 
 .tree-item-title {
-  padding: 8px 0;
+  padding: 8px 8px 8px 0;
   cursor: pointer;
 }
 
@@ -51,8 +59,9 @@
   color: white;
   padding: 5px;
   overflow: auto;
-  margin: 20px 0;
-  flex: auto;
+  margin: 20px;
+  flex: none;
+  box-shadow: var(--box-shadow-thick);
 }
 
 .status-icon {
@@ -80,35 +89,14 @@
   flex: auto;
   display: flex;
   flex-direction: column;
-  padding-right: 8px;
+  max-width: 600px;
+  overflow: auto;
 }
 
 .test-overview-title {
-  padding: 10px 0;
+  padding: 30px 10px 10px;
   font-size: 18px;
   flex: none;
-}
-
-.awesome {
-  font-size: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-}
-
-.image-preview img {
-  max-width: 500px;
-  max-height: 500px;
-}
-
-.image-preview {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 550px;
-  height: 550px;
 }
 
 .test-result .tabbed-pane .tab-content {
@@ -136,6 +124,10 @@
 
 .test-result .tree-item-title.selected * {
   color: white !important;
+}
+
+.test-result > div {
+  flex: none;
 }
 
 .suite-tree-column .tab-strip,
@@ -173,9 +165,6 @@
   display: flex;
   align-items: center;
   padding: 0 10px 10px;
-  color: var(--blue);
-  text-decoration: underline;
-  cursor: pointer;
 }
 
 .test-details-column {
@@ -186,4 +175,40 @@
   line-height: 20px;
   white-space: pre;
   padding: 8px;
+}
+
+.tree-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stats {
+  background-color: gray;
+  border-radius: 2px;
+  min-width: 14px;
+  color: white;
+  margin: 0 2px;
+  padding: 0 2px;
+  text-align: center;
+}
+
+.stats.expected {
+  background-color: var(--green);
+}
+
+.stats.unexpected {
+  background-color: var(--red);
+}
+
+.stats.flaky {
+  background-color: var(--yellow);
+}
+
+video, img {
+  flex: none;
+  box-shadow: var(--box-shadow-thick);
+  width: 80%;
+  margin: 20px auto;
+  min-width: 80%;
+  min-height: 300px;
 }

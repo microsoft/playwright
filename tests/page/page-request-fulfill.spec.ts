@@ -193,3 +193,57 @@ it('should include the origin header', async ({page, server, isAndroid}) => {
   expect(text).toBe('done');
   expect(interceptedRequest.headers()['origin']).toEqual(server.PREFIX);
 });
+
+it('should fulfill with global fetch result', async ({playwright, page, server, isElectron}) => {
+  it.fixme(isElectron, 'error: Browser context management is not supported.');
+  await page.route('**/*', async route => {
+    const request = await playwright._newRequest();
+    const response = await request.get(server.PREFIX + '/simple.json');
+    route.fulfill({ response });
+  });
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(response.status()).toBe(200);
+  expect(await response.json()).toEqual({'foo': 'bar'});
+});
+
+it('should fulfill with fetch result', async ({page, server, isElectron}) => {
+  it.fixme(isElectron, 'error: Browser context management is not supported.');
+  await page.route('**/*', async route => {
+    const response = await page._request.get(server.PREFIX + '/simple.json');
+    route.fulfill({ response });
+  });
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(response.status()).toBe(200);
+  expect(await response.json()).toEqual({'foo': 'bar'});
+});
+
+it('should fulfill with fetch result and overrides', async ({page, server, isElectron}) => {
+  it.fixme(isElectron, 'error: Browser context management is not supported.');
+  await page.route('**/*', async route => {
+    const response = await page._request.get(server.PREFIX + '/simple.json');
+    route.fulfill({
+      response,
+      status: 201,
+      headers: {
+        'foo': 'bar'
+      }
+    });
+  });
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(response.status()).toBe(201);
+  expect((await response.allHeaders()).foo).toEqual('bar');
+  expect(await response.json()).toEqual({'foo': 'bar'});
+});
+
+it('should fetch original request and fulfill', async ({page, server, isElectron}) => {
+  it.fixme(isElectron, 'error: Browser context management is not supported.');
+  await page.route('**/*', async route => {
+    const response = await page._request.get(route.request());
+    route.fulfill({
+      response,
+    });
+  });
+  const response = await page.goto(server.PREFIX + '/title.html');
+  expect(response.status()).toBe(200);
+  expect(await page.title()).toEqual('Woof-Woof');
+});

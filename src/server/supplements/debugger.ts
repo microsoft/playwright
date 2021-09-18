@@ -19,6 +19,7 @@ import { debugMode, isUnderTest, monotonicTime } from '../../utils/utils';
 import { BrowserContext } from '../browserContext';
 import { CallMetadata, InstrumentationListener, SdkObject } from '../instrumentation';
 import { debugLogger } from '../../utils/debugLogger';
+import { commandsWithTracingSnapshots, pausesBeforeInputActions } from '../../protocol/channels';
 
 const symbol = Symbol('Debugger');
 
@@ -55,7 +56,7 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
     if (this._muted)
       return;
-    if (shouldPauseOnCall(sdkObject, metadata) || (this._pauseOnNextStatement && shouldPauseOnNonInputStep(sdkObject, metadata)))
+    if (shouldPauseOnCall(sdkObject, metadata) || (this._pauseOnNextStatement && shouldPauseBeforeStep(metadata)))
       await this.pause(sdkObject, metadata);
   }
 
@@ -117,8 +118,14 @@ function shouldPauseOnCall(sdkObject: SdkObject, metadata: CallMetadata): boolea
   return metadata.method === 'pause';
 }
 
-const nonInputActionsToStep = new Set(['close', 'evaluate', 'evaluateHandle', 'goto', 'setContent']);
-
-function shouldPauseOnNonInputStep(sdkObject: SdkObject, metadata: CallMetadata): boolean {
-  return nonInputActionsToStep.has(metadata.method);
+function shouldPauseBeforeStep(metadata: CallMetadata): boolean {
+  // Always stop on 'close'
+  if (metadata.method === 'close')
+    return true;
+  if (metadata.method === 'waitForSelector' || metadata.method === 'waitForEventInfo')
+    return false;  // Never stop on those, primarily for the test harness.
+  const step = metadata.type + '.' + metadata.method;
+  // Stop before everything that generates snapshot. But don't stop before those marked as pausesBeforeInputActions
+  // since we stop in them on a separate instrumentation signal.
+  return commandsWithTracingSnapshots.has(step) && !pausesBeforeInputActions.has(metadata.type + '.' + metadata.method);
 }

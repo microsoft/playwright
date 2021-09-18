@@ -122,7 +122,6 @@ it('should proxy localhost requests', async ({ pageFactory, server, browserName,
 });
 
 it('should proxy local.playwright requests', async ({ pageFactory, server, browserName }, workerInfo) => {
-  it.fixme(browserName === 'firefox', 'Firefox performs DNS on browser side');
   const { testServerPort, stopTestServer } = await startTestServer();
   let reachedOriginalTarget = false;
   server.setRoute('/foo.html', async (req, res) => {

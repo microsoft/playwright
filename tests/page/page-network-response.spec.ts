@@ -25,11 +25,29 @@ it('should work', async ({page, server}) => {
     res.end();
   });
   const response = await page.goto(server.EMPTY_PAGE);
-  expect(response.headers()['foo']).toBe('bar');
-  expect(response.headers()['baz']).toBe('bAz');
-  expect(response.headers()['BaZ']).toBe(undefined);
+  expect((await response.allHeaders())['foo']).toBe('bar');
+  expect((await response.allHeaders())['baz']).toBe('bAz');
+  expect((await response.allHeaders())['BaZ']).toBe(undefined);
 });
 
+it('should return multiple header value', async ({page, server, browserName, platform}) => {
+  it.fixme(browserName === 'webkit' && platform === 'win32', 'libcurl does not support non-set-cookie multivalue headers');
+  server.setRoute('/headers', (req, res) => {
+    // Headers array is only supported since Node v14.14.0 so we write directly to the socket.
+    // res.writeHead(200, ['name-a', 'v1','name-b', 'v4','Name-a', 'v2', 'name-A', 'v3']);
+    const conn = res.connection;
+    conn.write('HTTP/1.1 200 OK\r\n');
+    conn.write('Name-A: v1\r\n');
+    conn.write('Name-a: v2\r\n');
+    conn.write('name-A: v3\r\n');
+    conn.write('\r\n');
+    conn.uncork();
+    conn.end();
+  });
+  const response = await page.goto(`${server.PREFIX}/headers`);
+  expect(response.status()).toBe(200);
+  expect(response.headers()['name-a']).toBe('v1, v2, v3');
+});
 
 it('should return text', async ({page, server}) => {
   const response = await page.goto(server.PREFIX + '/simple.json');
@@ -89,6 +107,48 @@ it('should wait until response completes', async ({page, server}) => {
   expect(await responseText).toBe('hello world!');
 });
 
+it('should reject response.finished if page closes', async ({page, server}) => {
+  it.fixme();
+  await page.goto(server.EMPTY_PAGE);
+  server.setRoute('/get', (req, res) => {
+    // In Firefox, |fetch| will be hanging until it receives |Content-Type| header
+    // from server.
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.write('hello ');
+  });
+  // send request and wait for server response
+  const [pageResponse] = await Promise.all([
+    page.waitForEvent('response'),
+    page.evaluate(() => fetch('./get', { method: 'GET'})),
+  ]);
+
+  const finishPromise = pageResponse.finished().catch(e => e);
+  await page.close();
+  const error = await finishPromise;
+  expect(error.message).toContain('closed');
+});
+
+it('should reject response.finished if context closes', async ({page, server}) => {
+  it.fixme();
+  await page.goto(server.EMPTY_PAGE);
+  server.setRoute('/get', (req, res) => {
+    // In Firefox, |fetch| will be hanging until it receives |Content-Type| header
+    // from server.
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.write('hello ');
+  });
+  // send request and wait for server response
+  const [pageResponse] = await Promise.all([
+    page.waitForEvent('response'),
+    page.evaluate(() => fetch('./get', { method: 'GET'})),
+  ]);
+
+  const finishPromise = pageResponse.finished().catch(e => e);
+  await page.context().close();
+  const error = await finishPromise;
+  expect(error.message).toContain('closed');
+});
+
 it('should return json', async ({page, server}) => {
   const response = await page.goto(server.PREFIX + '/simple.json');
   expect(await response.json()).toEqual({foo: 'bar'});
@@ -134,10 +194,13 @@ it('should report all headers', async ({ page, server, browserName, platform }) 
     page.waitForResponse('**/*'),
     page.evaluate(() => fetch('/headers'))
   ]);
-  const headers = await response.allHeaders();
+  const headers = await response.headersArray();
   const actualHeaders = {};
-  for (const name of headers.headerNames())
-    actualHeaders[name] = headers.getAll(name);
+  for (const { name, value } of headers) {
+    if (!actualHeaders[name])
+      actualHeaders[name] = [];
+    actualHeaders[name].push(value);
+  }
   delete actualHeaders['Keep-Alive'];
   delete actualHeaders['keep-alive'];
   delete actualHeaders['Connection'];
@@ -163,7 +226,44 @@ it('should report multiple set-cookie headers', async ({ page, server }) => {
     page.waitForResponse('**/*'),
     page.evaluate(() => fetch('/headers'))
   ]);
-  const headers = await response.allHeaders();
-  const cookies = headers.getAll('set-cookie');
+  const headers = await response.headersArray();
+  const cookies = headers.filter(({ name }) => name.toLowerCase() === 'set-cookie').map(({ value }) => value);
   expect(cookies).toEqual(['a=b', 'c=d']);
+  expect(await response.headerValue('not-there')).toEqual(null);
+  expect(await response.headerValue('set-cookie')).toEqual('a=b\nc=d');
+  expect(await response.headerValues('set-cookie')).toEqual(['a=b', 'c=d']);
 });
+
+it('should behave the same way for headers and allHeaders', async ({ page, server, browserName, channel, platform }) => {
+  it.fixme(browserName === 'webkit' && platform === 'win32', 'libcurl does not support non-set-cookie multivalue headers');
+  it.skip(!!channel, 'Stable chrome uses \n as a header separator in non-raw headers');
+  server.setRoute('/headers', (req, res) => {
+    const headers = {
+      'Set-Cookie': ['a=b', 'c=d'],
+      'header-a': ['a=b', 'c=d'],
+      'Name-A': 'v1',
+      'name-b': 'v4',
+      'Name-a': 'v2',
+      'name-A': 'v3',
+    };
+    // Chromium does not report set-cookie headers immediately, so they are missing from .headers()
+    if (browserName === 'chromium')
+      delete headers['Set-Cookie'];
+
+    res.writeHead(200, headers);
+    res.write('\r\n');
+    res.end();
+  });
+
+  await page.goto(server.EMPTY_PAGE);
+  const [response] = await Promise.all([
+    page.waitForResponse('**/*'),
+    page.evaluate(() => fetch('/headers'))
+  ]);
+  const allHeaders = await response.allHeaders();
+  expect(response.headers()).toEqual(allHeaders);
+  expect(allHeaders['header-a']).toEqual('a=b, c=d');
+  expect(allHeaders['name-a']).toEqual('v1, v2, v3');
+  expect(allHeaders['name-b']).toEqual('v4');
+});
+

@@ -26,6 +26,7 @@ class TraceViewerPage {
   consoleLineMessages: Locator;
   consoleStacks: Locator;
   stackFrames: Locator;
+  networkRequests: Locator;
 
   constructor(public page: Page) {
     this.actionTitles = page.locator('.action-title');
@@ -34,6 +35,7 @@ class TraceViewerPage {
     this.consoleLineMessages = page.locator('.console-line-message');
     this.consoleStacks = page.locator('.console-stack');
     this.stackFrames = page.locator('.stack-trace-frame');
+    this.networkRequests = page.locator('.network-request-title');
   }
 
   async actionIconsText(action: string) {
@@ -60,6 +62,10 @@ class TraceViewerPage {
 
   async showSourceTab() {
     await this.page.click('text="Source"');
+  }
+
+  async showNetworkTab() {
+    await this.page.click('text="Network"');
   }
 
   async eventBars() {
@@ -98,7 +104,7 @@ const test = playwrightTest.extend<{ showTraceViewer: (trace: string) => Promise
 
 let traceFile: string;
 
-test.beforeAll(async function recordTrace({ browser, browserName, browserType }, workerInfo) {
+test.beforeAll(async function recordTrace({ browser, browserName, browserType, server }, workerInfo) {
   const context = await browser.newContext();
   await context.tracing.start({ name: 'test', screenshots: true, snapshots: true });
   const page = await context.newPage();
@@ -125,7 +131,7 @@ test.beforeAll(async function recordTrace({ browser, browserName, browserType },
 
   await Promise.all([
     page.waitForNavigation(),
-    page.waitForTimeout(200).then(() => page.goto('data:text/html,<html>Hello world 2</html>'))
+    page.waitForTimeout(200).then(() => page.goto(server.PREFIX + '/frames/frame.html'))
   ]);
   await page.setViewportSize({ width: 500, height: 600 });
 
@@ -153,7 +159,7 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
     /page.evaluate— \d+ms/,
     /page.click"Click"— \d+ms/,
     /page.waitForNavigation— \d+ms/,
-    /page.gotodata:text\/html,<html>Hello world 2<\/html>— \d+ms/,
+    /page.gotohttp:\/\/localhost:\d+\/frames\/frame.html— \d+ms/,
     /page.setViewportSize— \d+ms/,
     /page.hoverbody— \d+ms/,
   ]);
@@ -231,5 +237,16 @@ test('should have correct stack trace', async ({ showTraceViewer }) => {
   const stack2 = (await traceViewer.stackFrames.allInnerTexts()).map(s => s.replace(/\s+/g, ' ').replace(/:[0-9]+/g, ':XXX'));
   expect(stack2.slice(0, 1)).toEqual([
     'BrowserType.browserType._onWillCloseContext trace-viewer.spec.ts :XXX',
+  ]);
+});
+
+test('should have network requests', async ({ showTraceViewer }) => {
+  const traceViewer = await showTraceViewer(traceFile);
+  await traceViewer.selectAction('http://localhost');
+  await traceViewer.showNetworkTab();
+  await expect(traceViewer.networkRequests).toHaveText([
+    '200GETframe.htmltext/html',
+    '200GETstyle.csstext/css',
+    '200GETscript.jsapplication/javascript',
   ]);
 });

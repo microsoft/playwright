@@ -51,6 +51,8 @@ export type StepBeginPayload = {
   stepId: string;
   title: string;
   category: string;
+  canHaveChildren: boolean;
+  forceNoParent: boolean;
   wallTime: number;  // milliseconds since unix epoch
 };
 
@@ -59,7 +61,6 @@ export type StepEndPayload = {
   stepId: string;
   wallTime: number;  // milliseconds since unix epoch
   error?: TestError;
-  data: { [key: string]: any };
 };
 
 export type TestEntry = {

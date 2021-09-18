@@ -17,9 +17,9 @@ If request gets a 'redirect' response, the request is successfully finished with
 request is  issued to a redirected url.
 
 ## async method: Request.allHeaders
-- returns: <[Headers]>
+- returns: <[Object]<[string], [string]>>
 
-An object with all the request HTTP headers associated with this request.
+An object with all the request HTTP headers associated with this request. The header names are lower-cased.
 
 ## method: Request.failure
 - returns: <[null]|[string]>
@@ -60,6 +60,25 @@ Returns the [Frame] that initiated this request.
 - returns: <[Object]<[string], [string]>>
 
 **DEPRECATED** Incomplete list of headers as seen by the rendering engine. Use [`method: Request.allHeaders`] instead.
+
+## async method: Request.headersArray
+- returns: <[Array]<[Object]>>
+  - `name` <[string]> Name of the header.
+  - `value` <[string]> Value of the header.
+
+An array with all the request HTTP headers associated with this request. Unlike [`method: Request.allHeaders`], header names are NOT lower-cased.
+Headers with multiple entries, such as `Set-Cookie`, appear in the array multiple times.
+
+## async method: Request.headerValue
+- returns: <[null]|[string]>
+
+Returns the value of the header matching the name. The name is case insensitive.
+
+### param: Request.headerValue.name
+- `name` <[string]>
+
+Name of the header.
+
 
 ## method: Request.isNavigationRequest
 - returns: <[boolean]>
@@ -192,12 +211,10 @@ Returns the matching [Response] object, or `null` if the response was not receiv
 - returns: <[Object]>
   - `requestBodySize` <[int]> Size of the request body (POST data payload) in bytes. Set to 0 if there was no body.
   - `requestHeadersSize` <[int]> Total number of bytes from the start of the HTTP request message until (and including) the double CRLF before the body.
-  - `responseBodySize` <[int]> Size of the received response body in bytes.
+  - `responseBodySize` <[int]> Size of the received response body (encoded) in bytes.
   - `responseHeadersSize` <[int]> Total number of bytes from the start of the HTTP response message until (and including) the double CRLF before the body.
-  - `responseTransferSize` <[int]> Total number of bytes received for the request.
 
-Returns resource size information for given request. Requires the response to be finished via [`method: Response.finished`]
-to ensure the info is available.
+Returns resource size information for given request.
 
 ## method: Request.timing
 - returns: <[Object]>

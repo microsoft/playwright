@@ -372,11 +372,27 @@ export type SetStorageState = {
   origins?: OriginStorage[]
 };
 
+export type FileInfo = {
+  name: string,
+  mimeType?: string,
+  buffer: Buffer,
+};
+
+export type FormField = {
+  name: string,
+  value?: string,
+  file?: FileInfo,
+};
+
 export type FetchOptions = {
   url: string,
+  params?: { [name: string]: string },
   method?: string,
   headers?: { [name: string]: string },
   postData?: Buffer,
+  formData?: FormField[],
+  timeout?: number,
+  failOnStatusCode?: boolean,
 };
 
 export type FetchResponse = {

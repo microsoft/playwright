@@ -85,6 +85,7 @@ export class WKPage implements PageDelegate {
     this.rawTouchscreen = new RawTouchscreenImpl(pageProxySession);
     this._contextIdToContext = new Map();
     this._page = new Page(this, browserContext);
+    this.rawMouse.setPage(this._page);
     this._workers = new WKWorkers(this._page);
     this._session = undefined as any as WKSession;
     this._browserContext = browserContext;
@@ -139,6 +140,7 @@ export class WKPage implements PageDelegate {
     eventsHelper.removeEventListeners(this._sessionListeners);
     this._session = session;
     this.rawKeyboard.setSession(session);
+    this.rawMouse.setSession(session);
     this._addSessionListeners();
     this._workers.setSession(session);
   }
@@ -185,12 +187,10 @@ export class WKPage implements PageDelegate {
       promises.push(session.send('Page.overrideUserAgent', { value: contextOptions.userAgent }));
     if (this._page._state.mediaType || this._page._state.colorScheme || this._page._state.reducedMotion)
       promises.push(WKPage._setEmulateMedia(session, this._page._state.mediaType, this._page._state.colorScheme, this._page._state.reducedMotion));
-    for (const world of ['main', 'utility'] as const) {
-      const bootstrapScript = this._calculateBootstrapScript(world);
-      if (bootstrapScript.length)
-        promises.push(session.send('Page.setBootstrapScript', { source: bootstrapScript, worldName: webkitWorldName(world) }));
-      this._page.frames().map(frame => frame.evaluateExpression(bootstrapScript, false, undefined, world).catch(e => {}));
-    }
+    const bootstrapScript = this._calculateBootstrapScript();
+    if (bootstrapScript.length)
+      promises.push(session.send('Page.setBootstrapScript', { source: bootstrapScript }));
+    this._page.frames().map(frame => frame.evaluateExpression(bootstrapScript, false, undefined).catch(e => {}));
     if (contextOptions.bypassCSP)
       promises.push(session.send('Page.setBypassCSP', { enabled: true }));
     if (this._page._state.emulatedSize) {
@@ -379,7 +379,6 @@ export class WKPage implements PageDelegate {
       eventsHelper.addEventListener(this._session, 'Network.responseReceived', e => this._onResponseReceived(e)),
       eventsHelper.addEventListener(this._session, 'Network.loadingFinished', e => this._onLoadingFinished(e)),
       eventsHelper.addEventListener(this._session, 'Network.loadingFailed', e => this._onLoadingFailed(e)),
-      eventsHelper.addEventListener(this._session, 'Network.dataReceived', e => this._onDataReceived(e)),
       eventsHelper.addEventListener(this._session, 'Network.webSocketCreated', e => this._page._frameManager.onWebSocketCreated(e.requestId, e.url)),
       eventsHelper.addEventListener(this._session, 'Network.webSocketWillSendHandshakeRequest', e => this._page._frameManager.onWebSocketRequest(e.requestId)),
       eventsHelper.addEventListener(this._session, 'Network.webSocketHandshakeResponseReceived', e => this._page._frameManager.onWebSocketResponse(e.requestId, e.response.status, e.response.statusText)),
@@ -721,38 +720,34 @@ export class WKPage implements PageDelegate {
   }
 
   async exposeBinding(binding: PageBinding): Promise<void> {
-    await this._updateBootstrapScript(binding.world);
+    await this._updateBootstrapScript();
     await this._evaluateBindingScript(binding);
   }
 
   private async _evaluateBindingScript(binding: PageBinding): Promise<void> {
     const script = this._bindingToScript(binding);
-    await Promise.all(this._page.frames().map(frame => frame.evaluateExpression(script, false, {}, binding.world).catch(e => {})));
+    await Promise.all(this._page.frames().map(frame => frame.evaluateExpression(script, false, {}).catch(e => {})));
   }
 
   async evaluateOnNewDocument(script: string): Promise<void> {
-    await this._updateBootstrapScript('main');
+    await this._updateBootstrapScript();
   }
 
   private _bindingToScript(binding: PageBinding): string {
     return `self.${binding.name} = (param) => console.debug('${BINDING_CALL_MESSAGE}', {}, param); ${binding.source}`;
   }
 
-  private _calculateBootstrapScript(world: types.World): string {
+  private _calculateBootstrapScript(): string {
     const scripts: string[] = [];
-    for (const binding of this._page.allBindings()) {
-      if (binding.world === world)
-        scripts.push(this._bindingToScript(binding));
-    }
-    if (world === 'main') {
-      scripts.push(...this._browserContext._evaluateOnNewDocumentSources);
-      scripts.push(...this._page._evaluateOnNewDocumentSources);
-    }
+    for (const binding of this._page.allBindings())
+      scripts.push(this._bindingToScript(binding));
+    scripts.push(...this._browserContext._evaluateOnNewDocumentSources);
+    scripts.push(...this._page._evaluateOnNewDocumentSources);
     return scripts.join(';');
   }
 
-  async _updateBootstrapScript(world: types.World): Promise<void> {
-    await this._updateState('Page.setBootstrapScript', { source: this._calculateBootstrapScript(world), worldName: webkitWorldName(world) });
+  async _updateBootstrapScript(): Promise<void> {
+    await this._updateState('Page.setBootstrapScript', { source: this._calculateBootstrapScript() });
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
@@ -1055,6 +1050,11 @@ export class WKPage implements PageDelegate {
       });
       if (event.metrics?.protocol)
         response._setHttpVersion(event.metrics.protocol);
+      if (event.metrics?.responseBodyBytesReceived)
+        request.request.responseSize.encodedBodySize = event.metrics.responseBodyBytesReceived;
+      if (event.metrics?.responseHeaderBytesReceived)
+        request.request.responseSize.responseHeadersSize = event.metrics.responseHeaderBytesReceived;
+
       response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp));
     }
 
@@ -1083,14 +1083,6 @@ export class WKPage implements PageDelegate {
     this._page._frameManager.requestFailed(request.request, event.errorText.includes('cancelled'));
   }
 
-  _onDataReceived(event: Protocol.Network.dataReceivedPayload) {
-    const request = this._requestIdToRequest.get(event.requestId);
-    if (!request)
-      return;
-    request.request.responseSize.bodySize += event.dataLength || (event.encodedDataLength === -1 ? 0 : event.encodedDataLength);
-    request.request.responseSize.encodedBodySize += event.encodedDataLength !== -1 ? event.encodedDataLength : event.dataLength;
-  }
-
   async _grantPermissions(origin: string, permissions: string[]) {
     const webPermissionToProtocol = new Map<string, string>([
       ['geolocation', 'geolocation'],
@@ -1106,13 +1098,6 @@ export class WKPage implements PageDelegate {
 
   async _clearPermissions() {
     await this._pageProxySession.send('Emulation.resetPermissions', {});
-  }
-}
-
-function webkitWorldName(world: types.World) {
-  switch (world) {
-    case 'main': return undefined;
-    case 'utility': return UTILITY_WORLD_NAME;
   }
 }
 

@@ -33,8 +33,11 @@ export function rewriteErrorMessage<E extends Error>(e: E, newMessage: string): 
 const ROOT_DIR = path.resolve(__dirname, '..', '..');
 const CLIENT_LIB = path.join(ROOT_DIR, 'lib', 'client');
 const CLIENT_SRC = path.join(ROOT_DIR, 'src', 'client');
+const TEST_LIB = path.join(ROOT_DIR, 'lib', 'test');
+const TEST_SRC = path.join(ROOT_DIR, 'src', 'test');
 
 export type ParsedStackTrace = {
+  allFrames: StackFrame[];
   frames: StackFrame[];
   frameTexts: string[];
   apiName: string;
@@ -59,9 +62,18 @@ export function captureStackTrace(): ParsedStackTrace {
       return null;
     if (frame.file.startsWith('internal'))
       return null;
+    if (frame.file.includes(path.join('node_modules', 'expect')))
+      return null;
     const fileName = path.resolve(process.cwd(), frame.file);
     if (isTesting && fileName.includes(path.join('playwright', 'tests', 'config', 'coverage.js')))
       return null;
+    const inClient =
+      // Allow fixtures in the reported stacks.
+      (!fileName.includes('test/index') && !fileName.includes('test\\index')) && (
+        fileName.startsWith(CLIENT_LIB)
+        || fileName.startsWith(CLIENT_SRC)
+        || fileName.startsWith(TEST_LIB)
+        || fileName.startsWith(TEST_SRC));
     const parsed: ParsedFrame = {
       frame: {
         file: fileName,
@@ -70,14 +82,15 @@ export function captureStackTrace(): ParsedStackTrace {
         function: frame.function,
       },
       frameText: line,
-      inClient: fileName.startsWith(CLIENT_LIB) || fileName.startsWith(CLIENT_SRC),
+      inClient
     };
     return parsed;
-  }).filter(frame => !!frame) as ParsedFrame[];
+  }).filter(Boolean) as ParsedFrame[];
 
   let apiName = '';
   // Deepest transition between non-client code calling into client code
   // is the api entry.
+  const allFrames = parsedFrames;
   for (let i = 0; i < parsedFrames.length - 1; i++) {
     if (parsedFrames[i].inClient && !parsedFrames[i + 1].inClient) {
       const frame = parsedFrames[i].frame;
@@ -88,6 +101,7 @@ export function captureStackTrace(): ParsedStackTrace {
   }
 
   return {
+    allFrames: allFrames.map(p => p.frame),
     frames: parsedFrames.map(p => p.frame),
     frameTexts: parsedFrames.map(p => p.frameText),
     apiName

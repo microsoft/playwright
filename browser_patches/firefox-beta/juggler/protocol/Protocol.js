@@ -508,6 +508,7 @@ const Network = {
       requestId: t.String,
       responseEndTime: t.Number,
       transferSize: t.Number,
+      encodedBodySize: t.Number,
       protocolVersion: t.String,
     },
     'requestFailed': {

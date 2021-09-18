@@ -17,10 +17,9 @@
 import { BrowserContext } from '../server/browserContext';
 import { Dispatcher, DispatcherScope, lookupDispatcher } from './dispatcher';
 import { PageDispatcher, BindingCallDispatcher, WorkerDispatcher } from './pageDispatcher';
-import { playwrightFetch } from '../server/fetch';
 import { FrameDispatcher } from './frameDispatcher';
 import * as channels from '../protocol/channels';
-import { RouteDispatcher, RequestDispatcher, ResponseDispatcher } from './networkDispatchers';
+import { RouteDispatcher, RequestDispatcher, ResponseDispatcher, FetchRequestDispatcher } from './networkDispatchers';
 import { CRBrowserContext } from '../server/chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { RecorderSupplement } from '../server/supplements/recorderSupplement';
@@ -28,13 +27,15 @@ import { CallMetadata } from '../server/instrumentation';
 import { ArtifactDispatcher } from './artifactDispatcher';
 import { Artifact } from '../server/artifact';
 import { Request, Response } from '../server/network';
-import { headersArrayToObject } from '../utils/utils';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextInitializer, channels.BrowserContextEvents> implements channels.BrowserContextChannel {
   private _context: BrowserContext;
 
   constructor(scope: DispatcherScope, context: BrowserContext) {
-    super(scope, context, 'BrowserContext', { isChromium: context._browser.options.isChromium }, true);
+    super(scope, context, 'BrowserContext', {
+      isChromium: context._browser.options.isChromium,
+      fetchRequest: FetchRequestDispatcher.from(scope, context.fetchRequest),
+    }, true);
     this._context = context;
     // Note: when launching persistent context, dispatcher is created very late,
     // so we can already have pages, videos and everything else.
@@ -104,27 +105,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       const binding = new BindingCallDispatcher(this._scope, params.name, !!params.needsHandle, source, args);
       this._dispatchEvent('bindingCall', { binding });
       return binding.promise();
-    }, 'main');
-  }
-
-  async fetch(params: channels.BrowserContextFetchParams): Promise<channels.BrowserContextFetchResult> {
-    const { fetchResponse, error } = await playwrightFetch(this._context, {
-      url: params.url,
-      method: params.method,
-      headers: params.headers ? headersArrayToObject(params.headers, false) : undefined,
-      postData: params.postData ? Buffer.from(params.postData, 'base64') : undefined,
     });
-    let response;
-    if (fetchResponse) {
-      response = {
-        url: fetchResponse.url,
-        status: fetchResponse.status,
-        statusText: fetchResponse.statusText,
-        headers: fetchResponse.headers,
-        body: fetchResponse.body.toString('base64')
-      };
-    }
-    return { response, error };
   }
 
   async newPage(params: channels.BrowserContextNewPageParams, metadata: CallMetadata): Promise<channels.BrowserContextNewPageResult> {
