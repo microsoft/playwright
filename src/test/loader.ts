@@ -26,6 +26,7 @@ import * as fs from 'fs';
 import { ProjectImpl } from './project';
 import { Reporter } from '../../types/testReporter';
 import { BuiltInReporter, builtInReporters } from './runner';
+import { LanguageGenerator } from '../server/supplements/recorder/language';
 
 export class Loader {
   private _defaultConfig: Config;
@@ -138,6 +139,14 @@ export class Loader {
       func = func['default'];
     if (typeof func !== 'function')
       throw errorWithFile(file, `reporter file must export a single class.`);
+    return func;
+  }
+  async loadRecorder(file: string): Promise<new (arg?: any) => LanguageGenerator> {
+    let func = await this._requireOrImport(path.resolve(this._fullConfig.rootDir, file));
+    if (func && typeof func === 'object' && ('default' in func))
+      func = func['default'];
+    if (typeof func !== 'function')
+      throw errorWithFile(file, `recorder file must export a single class.`);
     return func;
   }
 

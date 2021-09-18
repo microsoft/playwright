@@ -36,6 +36,7 @@ import { CDPSession } from './cdpSession';
 import { Tracing } from './tracing';
 import type { BrowserType } from './browserType';
 import { Artifact } from './artifact';
+import { LanguageGenerator } from '../server/supplements/recorder/language';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel, channels.BrowserContextInitializer> implements api.BrowserContext {
   _pages = new Set<Page>();
@@ -370,6 +371,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   }
 
   async _enableRecorder(params: {
+      languageGenerator?: LanguageGenerator,
       language: string,
       launchOptions?: LaunchOptions,
       contextOptions?: BrowserContextOptions,

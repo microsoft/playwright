@@ -32,6 +32,7 @@ import { BrowserType } from '../client/browserType';
 import { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
 import { registry, Executable } from '../utils/registry';
+import { Loader } from '../test/loader';
 
 const packageJSON = require('../../package.json');
 
@@ -55,6 +56,7 @@ commandWithOpenOptions('codegen [url]', 'open page and generate code for user ac
     [
       ['-o, --output <file name>', 'saves the generated script to a file'],
       ['--target <language>', `language to generate, one of javascript, test, python, python-async, csharp`, language()],
+      ['--recorder <recorder>', `a custom recorder. local path or npm module`],
     ]).action(function(url, command) {
   codegen(command, url, command.target, command.output).catch(logErrorAndExit);
 }).on('--help', function() {
@@ -64,6 +66,7 @@ commandWithOpenOptions('codegen [url]', 'open page and generate code for user ac
   console.log('  $ codegen');
   console.log('  $ codegen --target=python');
   console.log('  $ codegen -b webkit https://example.com');
+  console.log('  $ codegen --recorder "./recorder.js" https://example.com');
 });
 
 program
@@ -275,6 +278,7 @@ type Options = {
   timezone?: string;
   viewportSize?: string;
   userAgent?: string;
+  recorder?: string;
 };
 
 type CaptureOptions = {
@@ -448,7 +452,11 @@ async function open(options: Options, url: string | undefined, language: string)
 
 async function codegen(options: Options, url: string | undefined, language: string, outputFile?: string) {
   const { context, launchOptions, contextOptions } = await launchContext(options, !!process.env.PWTEST_CLI_HEADLESS, process.env.PWTEST_CLI_EXECUTABLE_PATH);
+  const recorder = options.recorder;
+  console.log('recorder', recorder);
+  const loader = new Loader({}, {});
   await context._enableRecorder({
+    languageGenerator: recorder ? new (await loader.loadRecorder(recorder))() : undefined,
     language,
     launchOptions,
     contextOptions,

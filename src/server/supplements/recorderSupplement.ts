@@ -35,7 +35,7 @@ import { CallLog, CallLogStatus, EventData, Mode, Source, UIState } from './reco
 import { createGuid, isUnderTest, monotonicTime } from '../../utils/utils';
 import { metadataToCallLog } from './recorder/recorderUtils';
 import { Debugger } from './debugger';
-import { ImbaLanguageGenerator } from './recorder/imba';
+import { LanguageGenerator } from './recorder/language';
 
 type BindingSource = { frame: Frame, page: Page };
 
@@ -79,18 +79,20 @@ export class RecorderSupplement implements InstrumentationListener {
     context.instrumentation.addListener(this);
     this._params = params;
     this._mode = params.startRecording ? 'recording' : 'none';
-    const language = params.language || context._browser.options.sdkLanguage;
+    const language = params.languageGenerator?.id || params.language || context._browser.options.sdkLanguage;
 
-    const languages = new Set([
+    const languages = new Set<LanguageGenerator>([
       new JavaLanguageGenerator(),
       new JavaScriptLanguageGenerator(false),
       new JavaScriptLanguageGenerator(true),
       new PythonLanguageGenerator(false),
       new PythonLanguageGenerator(true),
       new CSharpLanguageGenerator(),
-      new ImbaLanguageGenerator(true),
-      new ImbaLanguageGenerator(false),
     ]);
+
+    if (params.languageGenerator)
+      languages.add(params.languageGenerator);
+
     const primaryLanguage = [...languages].find(l => l.id === language)!;
     if (!primaryLanguage)
       throw new Error(`\n===============================\nUnsupported language: '${language}'\n===============================\n`);
