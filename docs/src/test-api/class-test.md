@@ -974,7 +974,7 @@ Step body.
 
 ## method: Test.use
 
-Specifies parameters or fixtures to use in a single test file or a [`method: Test.describe`] group. Most useful to configure a fixture, for example set `locale` to configure `context` fixture.
+Specifies options or fixtures to use in a single test file or a [`method: Test.describe`] group. Most useful to set an option, for example set `locale` to configure `context` fixture.
 
 ```js js-flavor=js
 const { test, expect } = require('@playwright/test');
@@ -996,7 +996,7 @@ test('test with locale', async ({ page }) => {
 });
 ```
 
-It is possible not only to provide a fixture value, but also to override a fixture by providing a fixture function.
+It is also possible to override a fixture by providing a function.
 
 ```js js-flavor=js
 const { test, expect } = require('@playwright/test');
@@ -1031,8 +1031,8 @@ test('test with locale', async ({ page }) => {
 ```
 
 ### param: Test.use.fixtures
-- `fixtures` <[Fixtures]>
+- `options` <[TestOptions]>
 
-An object with fixture definitions.
+An object with local options.
 
 
