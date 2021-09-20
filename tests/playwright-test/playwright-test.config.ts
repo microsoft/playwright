@@ -22,6 +22,7 @@ const config: Config = {
   timeout: 30000,
   forbidOnly: !!process.env.CI,
   preserveOutput: process.env.CI ? 'failures-only' : 'always',
+  globalSetup: './setup',
   projects: [
     { name: 'playwright-test' },
   ]

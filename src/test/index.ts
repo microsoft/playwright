@@ -16,11 +16,13 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type { LaunchOptions, BrowserContextOptions, Page, BrowserContext, BrowserType } from '../../types/types';
+import type { IncomingMessage } from 'http';
+import type { LaunchOptions, BrowserContextOptions, Page, Browser, BrowserContext, BrowserType } from '../../types/types';
 import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo } from '../../types/test';
 import { rootTestType } from './testType';
-import { createGuid, removeFolders } from '../utils/utils';
+import { createGuid, removeFolders, fetchData } from '../utils/utils';
 import { GridClient } from '../grid/gridClient';
+import { prepareChromiumArgs } from '../utils/chromium';
 export { expect } from './expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
@@ -85,7 +87,19 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
     (browserType as any)._defaultLaunchOptions = undefined;
   }, { scope: 'worker' }],
 
-  browser: [ async ({ _browserType }, use) => {
+  browser: [ async ({ _browserType, browserName, launchOptions, headless, playwright }, use) => {
+    if (process.env.SELENIUM_REMOTE_URL) {
+      if (browserName !== 'chromium')
+        throw new Error(`Cannot use Selenium Grid hub for "${browserName}"`);
+      const args = prepareChromiumArgs({
+        ...launchOptions,
+        headless: headless === undefined ? true : !!headless
+      });
+      if (!args.some(arg => arg.startsWith('--remote-debugging-port')))
+        args.push('--remote-debugging-port=0');
+      await connectToSeleniumHub(process.env.SELENIUM_REMOTE_URL, args, playwright, use);
+      return;
+    }
     const browser = await _browserType.launch();
     await use(browser);
     await browser.close();
@@ -405,3 +419,66 @@ type ParsedStackTrace = {
 };
 
 const kTracingStarted = Symbol('kTracingStarted');
+
+async function connectToSeleniumHub(hubUrl: string, args: string[], playwright: PlaywrightWorkerArgs['playwright'], use: (browser: Browser) => Promise<void>) {
+  if (!hubUrl.endsWith('/'))
+    hubUrl = hubUrl + '/';
+
+  const errorHandler = async (response: IncomingMessage, prefix: string) => {
+    const body = await new Promise<string>((resolve, reject) => {
+      const chunks: Buffer[] = [];
+      response.on('data', chunk => chunks.push(Buffer.from(chunk)));
+      response.on('error', reject);
+      response.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+    });
+    let message = '';
+    try {
+      const json = JSON.parse(body);
+      message = json.value.localizedMessage || json.value.message;
+    } catch (e) {
+    }
+    return new Error(`${prefix}: ${message}`);
+  };
+
+  const desiredCapabilities = { 'browserName': 'chrome', 'goog:chromeOptions': { args } };
+  const response = JSON.parse(await fetchData({
+    url: hubUrl + 'session',
+    method: 'POST',
+    data: JSON.stringify({
+      desiredCapabilities,
+      capabilities: { alwaysMatch: desiredCapabilities }
+    }),
+  }, response => errorHandler(response, `Error connecting to Selenium Grid at ${hubUrl}`)));
+
+  const sessionId = response.value.sessionId;
+  const quit = async () => {
+    await fetchData({
+      url: hubUrl + 'session/' + sessionId,
+      method: 'DELETE',
+    }, response => errorHandler(response, `Error disconnecting from Selenium Grid`));
+  };
+
+  const capabilities = response.value.capabilities;
+  const maybeChromeOptions = capabilities['goog:chromeOptions'];
+  const chromeOptions = maybeChromeOptions && typeof maybeChromeOptions === 'object' ? maybeChromeOptions : undefined;
+  const debuggerAddress = chromeOptions && typeof chromeOptions.debuggerAddress === 'string' ? chromeOptions.debuggerAddress : undefined;
+  const chromeOptionsURL = typeof maybeChromeOptions === 'string' ? maybeChromeOptions : undefined;
+  const endpointURL = capabilities['se:cdp'] || debuggerAddress || chromeOptionsURL;
+
+  let browser: Browser | undefined;
+  try {
+    let connectURL = endpointURL;
+    if (!['ws://', 'wss://', 'http://', 'https://'].some(protocol => connectURL.startsWith(protocol)))
+      connectURL =  'http://' + connectURL;
+    if (process.env.PWTEST_CACHE_DIR)
+      process.stdout.write(`Connecting to CDP endpoint ${connectURL}\n`);
+    browser = await playwright.chromium.connectOverCDP(connectURL);
+  } catch (e) {
+    await quit();
+    throw e;
+  }
+
+  await use(browser);
+  await browser.close();
+  await quit();
+}

@@ -84,11 +84,12 @@ function httpRequest(params: HTTPRequestParams, onResponse: (r: http.IncomingMes
   request.end(params.data);
 }
 
-export function fetchData(params: HTTPRequestParams): Promise<string> {
+export function fetchData(params: HTTPRequestParams, onError?: (response: http.IncomingMessage) => Promise<Error>): Promise<string> {
   return new Promise((resolve, reject) => {
-    httpRequest(params, response => {
+    httpRequest(params, async response => {
       if (response.statusCode !== 200) {
-        reject(new Error(`fetch failed: server returned code ${response.statusCode}. URL: ${params.url}`));
+        const error = onError ? await onError(response) : new Error(`fetch failed: server returned code ${response.statusCode}. URL: ${params.url}`);
+        reject(error);
         return;
       }
       let body = '';

@@ -36,6 +36,7 @@ import { CallMetadata } from '../instrumentation';
 import http from 'http';
 import https from 'https';
 import { registry } from '../../utils/registry';
+import { prepareChromiumArgs } from '../../utils/chromium';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
@@ -129,15 +130,18 @@ export class Chromium extends BrowserType {
   }
 
   _defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
-    const { args = [], proxy } = options;
-    const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir'));
+    const customArgs = options.args || [];
+    const userDataDirArg = customArgs.find(arg => arg.startsWith('--user-data-dir'));
     if (userDataDirArg)
       throw new Error('Pass userDataDir parameter to `browserType.launchPersistentContext(userDataDir, ...)` instead of specifying --user-data-dir argument');
-    if (args.find(arg => arg.startsWith('--remote-debugging-pipe')))
+    if (customArgs.find(arg => arg.startsWith('--remote-debugging-pipe')))
       throw new Error('Playwright manages remote debugging connection itself.');
-    if (args.find(arg => !arg.startsWith('-')))
+    if (customArgs.find(arg => !arg.startsWith('-')))
       throw new Error('Arguments can not specify page to be opened');
-    const chromeArguments = [...DEFAULT_ARGS];
+    const chromeArguments = prepareChromiumArgs({
+      ...options,
+      socksProxyPort: this._playwrightOptions.socksProxyPort,
+    });
     chromeArguments.push(`--user-data-dir=${userDataDir}`);
 
     // See https://github.com/microsoft/playwright/issues/7362
@@ -148,37 +152,7 @@ export class Chromium extends BrowserType {
       chromeArguments.push('--remote-debugging-port=0');
     else
       chromeArguments.push('--remote-debugging-pipe');
-    if (options.devtools)
-      chromeArguments.push('--auto-open-devtools-for-tabs');
-    if (options.headless) {
-      chromeArguments.push(
-          '--headless',
-          '--hide-scrollbars',
-          '--mute-audio',
-          '--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4',
-      );
-    }
-    if (options.chromiumSandbox !== true)
-      chromeArguments.push('--no-sandbox');
-    if (proxy) {
-      const proxyURL = new URL(proxy.server);
-      const isSocks = proxyURL.protocol === 'socks5:';
-      // https://www.chromium.org/developers/design-documents/network-settings
-      if (isSocks && !this._playwrightOptions.socksProxyPort) {
-        // https://www.chromium.org/developers/design-documents/network-stack/socks-proxy
-        chromeArguments.push(`--host-resolver-rules="MAP * ~NOTFOUND , EXCLUDE ${proxyURL.hostname}"`);
-      }
-      chromeArguments.push(`--proxy-server=${proxy.server}`);
-      const proxyBypassRules = [];
-      // https://source.chromium.org/chromium/chromium/src/+/master:net/docs/proxy.md;l=548;drc=71698e610121078e0d1a811054dcf9fd89b49578
-      if (this._playwrightOptions.socksProxyPort)
-        proxyBypassRules.push('<-loopback>');
-      if (proxy.bypass)
-        proxyBypassRules.push(...proxy.bypass.split(',').map(t => t.trim()).map(t => t.startsWith('.') ? '*' + t : t));
-      if (proxyBypassRules.length > 0)
-        chromeArguments.push(`--proxy-bypass-list=${proxyBypassRules.join(';')}`);
-    }
-    chromeArguments.push(...args);
+
     if (isPersistent)
       chromeArguments.push('about:blank');
     else
@@ -186,35 +160,6 @@ export class Chromium extends BrowserType {
     return chromeArguments;
   }
 }
-
-const DEFAULT_ARGS = [
-  '--disable-background-networking',
-  '--enable-features=NetworkService,NetworkServiceInProcess',
-  '--disable-background-timer-throttling',
-  '--disable-backgrounding-occluded-windows',
-  '--disable-breakpad',
-  '--disable-client-side-phishing-detection',
-  '--disable-component-extensions-with-background-pages',
-  '--disable-default-apps',
-  '--disable-dev-shm-usage',
-  '--disable-extensions',
-  '--disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter',
-  '--allow-pre-commit-input',
-  '--disable-hang-monitor',
-  '--disable-ipc-flooding-protection',
-  '--disable-popup-blocking',
-  '--disable-prompt-on-repost',
-  '--disable-renderer-backgrounding',
-  '--disable-sync',
-  '--force-color-profile=srgb',
-  '--metrics-recording-only',
-  '--no-first-run',
-  '--enable-automation',
-  '--password-store=basic',
-  '--use-mock-keychain',
-  // See https://chromium-review.googlesource.com/c/chromium/src/+/2436773
-  '--no-service-autorun',
-];
 
 async function urlToWSEndpoint(endpointURL: string) {
   if (endpointURL.startsWith('ws'))
