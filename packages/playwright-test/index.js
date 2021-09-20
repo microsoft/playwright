@@ -14,6 +14,13 @@
  * limitations under the License.
  */
 
-export * from 'playwright-core/types/test';
-export * from 'playwright-core/types/types';
-export { default } from 'playwright-core/types/test';
+const pwt = require('playwright-core/lib/test/index');
+const playwright = require('playwright-core/lib/inprocess');
+const combinedExports = {
+  ...playwright,
+  ...pwt,
+};
+
+Object.defineProperty(combinedExports, '__esModule', { value: true });
+
+module.exports = combinedExports;

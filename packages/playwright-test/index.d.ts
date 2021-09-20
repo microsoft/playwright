@@ -14,4 +14,7 @@
  * limitations under the License.
  */
 
-module.exports = require('@playwright/test');
+export * from 'playwright-core';
+export * from 'playwright-core/types/test';
+export { default } from 'playwright-core/types/test';
+ 

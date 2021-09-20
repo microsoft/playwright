@@ -1,3 +1,5 @@
 {
-  "name": "playwright"
+  "name": "playwright",
+  "dependencies": {
+  }
 }

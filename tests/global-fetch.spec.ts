@@ -15,7 +15,7 @@
  */
 
 import http from 'http';
-import { getPlaywrightVersion } from '../lib/utils/utils';
+import { getPlaywrightVersion } from 'playwright-core/lib/utils/utils';
 import { expect, playwrightTest as it } from './config/browserTest';
 
 it.skip(({ mode }) => mode !== 'default');

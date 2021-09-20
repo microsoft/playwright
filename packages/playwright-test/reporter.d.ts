@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-module.exports = require('@playwright/test');
+export * from 'playwright-core/types/testReporter';

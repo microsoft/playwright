@@ -14,11 +14,4 @@
  * limitations under the License.
  */
 
-const pwt = require('playwright-core/lib/test/index');
-const playwright = require('playwright-core/lib/inprocess');
-const combinedExports = {
-  ...playwright,
-  ...pwt,
-};
-Object.defineProperty(combinedExports, '__esModule', { value: true });
-module.exports = combinedExports;
+// We only export types in reporter.d.ts.

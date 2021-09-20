@@ -17,7 +17,7 @@
 import type { Fixtures } from './test-runner';
 import type { Browser, BrowserContext, BrowserContextOptions, BrowserType, LaunchOptions, Page } from '../../index';
 import { removeFolders } from 'playwright-core/lib/utils/utils';
-import { ReuseBrowserContextStorage } from '../../lib/test/index';
+import { ReuseBrowserContextStorage } from 'playwright-core/lib/test/index';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
