@@ -1,0 +1,19 @@
+{
+  "capabilities":
+  [
+    {
+      "browserName": "chrome",
+      "maxInstances": 5,
+      "seleniumProtocol": "WebDriver"
+    }
+  ],
+  "role": "standalone",
+  "port": 4444,
+  "debug": false,
+  "browserTimeout": 0,
+  "timeout": 1800,
+  "enablePassThrough": true,
+  "server": {
+    "port": 4444
+  }
+}
