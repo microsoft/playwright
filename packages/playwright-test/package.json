@@ -1,6 +1,24 @@
 {
   "name": "@playwright/test",
   "version": "1.15.0-next",
+  "description": "Playwright Test",
+  "repository": "github:Microsoft/playwright",
+  "homepage": "https://playwright.dev",
+  "engines": {
+    "node": ">=12"
+  },
+  "main": "index.js",
+  "exports": {
+      ".": {
+        "import": "./index.mjs",
+        "require": "./index.js"
+      },
+      "./": "./"
+  },
+  "author": {
+    "name": "Microsoft Corporation"
+  },
+  "license": "Apache-2.0",
   "dependencies": {
     "@babel/code-frame": "^7.14.5",
     "@babel/core": "^7.14.8",
@@ -27,12 +45,5 @@
     "pirates": "^4.0.1",
     "pixelmatch": "^5.2.1",
     "source-map-support": "^0.4.18"
-  },
-  "exports": {
-    ".": {
-      "import": "./index.mjs",
-      "require": "./index.js"
-    },
-    "./": "./"
   }
 }

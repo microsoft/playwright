@@ -8,6 +8,10 @@
   "engines": {
     "node": ">=12"
   },
+  "author": {
+    "name": "Microsoft Corporation"
+  },
+  "license": "Apache-2.0",
   "scripts": {
     "basetest": "cross-env PWTEST_CLI_ALLOW_TEST_COMMAND=1 playwright test",
     "ctest": "npm run basetest -- --config=tests/config/default.config.ts --project=chromium",
@@ -32,10 +36,6 @@
     "check-deps": "node utils/check_deps.js",
     "build-android-driver": "./utils/build_android_driver.sh"
   },
-  "author": {
-    "name": "Microsoft Corporation"
-  },
-  "license": "Apache-2.0",
   "workspaces": [
     "packages/*"
   ],
