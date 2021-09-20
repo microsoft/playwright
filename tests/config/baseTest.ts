@@ -65,7 +65,7 @@ class ServiceMode {
 
   async setup(workerIndex: number) {
     const port = 10507 + workerIndex;
-    this._serviceProcess = childProcess.fork(path.join(__dirname, '..', '..', 'lib', 'cli', 'cli.js'), ['run-server', String(port)], {
+    this._serviceProcess = childProcess.fork(path.join(__dirname, '..', '..', 'packages', 'playwright-core', 'lib', 'cli', 'cli.js'), ['run-server', String(port)], {
       stdio: 'pipe'
     });
     this._serviceProcess.stderr.pipe(process.stderr);

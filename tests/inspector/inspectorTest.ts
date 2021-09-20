@@ -186,7 +186,7 @@ class CLIMock {
   constructor(childProcess: CommonFixtures['childProcess'], browserName: string, channel: string | undefined, headless: boolean | undefined, args: string[], executablePath: string | undefined) {
     const nodeArgs = [
       'node',
-      path.join(__dirname, '..', '..', 'lib', 'cli', 'cli.js'),
+      path.join(__dirname, '..', '..', 'packages', 'playwright-core', 'lib', 'cli', 'cli.js'),
       'codegen',
       ...args,
       `--browser=${browserName}`,

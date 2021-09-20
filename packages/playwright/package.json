@@ -1,5 +1,6 @@
 {
   "name": "playwright",
+  "version": "1.15.0-next",
   "dependencies": {
   }
 }

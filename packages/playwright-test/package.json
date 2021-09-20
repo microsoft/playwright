@@ -1,5 +1,6 @@
 {
   "name": "@playwright/test",
+  "version": "1.15.0-next",
   "dependencies": {
     "@babel/code-frame": "^7.14.5",
     "@babel/core": "^7.14.8",
