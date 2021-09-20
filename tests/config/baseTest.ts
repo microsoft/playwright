@@ -23,7 +23,7 @@ import { installCoverageHooks } from './coverage';
 import * as childProcess from 'child_process';
 import { start } from 'playwright-core/lib/outofprocess';
 import { PlaywrightClient } from 'playwright-core/lib/remote/playwrightClient';
-import type { LaunchOptions } from '../../index';
+import type { LaunchOptions } from 'playwright-core';
 import { TestProxy } from './proxy';
 import { commonFixtures, CommonFixtures } from './commonFixtures';
 
@@ -39,7 +39,7 @@ type BaseOptions = {
 };
 type BaseFixtures = {
   platform: 'win32' | 'darwin' | 'linux';
-  playwright: typeof import('../../index');
+  playwright: typeof import('playwright-core');
   toImpl: (rpcObject: any) => any;
   isWindows: boolean;
   isMac: boolean;
@@ -95,7 +95,7 @@ class ServiceMode {
 
 class DefaultMode {
   async setup(workerIndex: number) {
-    return require('../../index');
+    return require('playwright-core');
   }
 
   async teardown() {

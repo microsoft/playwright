@@ -21,7 +21,7 @@ import net from 'net';
 
 import { contextTest, expect } from './config/browserTest';
 import { PlaywrightClient } from 'playwright-core/lib/remote/playwrightClient';
-import type { Page } from '..';
+import type { Page } from 'playwright-core';
 
 class OutOfProcessPlaywrightServer {
   private _driverProcess: childProcess.ChildProcess;

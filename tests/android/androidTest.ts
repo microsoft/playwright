@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { AndroidDevice, BrowserContext } from '../../index';
+import type { AndroidDevice, BrowserContext } from 'playwright-core';
 import { CommonWorkerFixtures, baseTest } from '../config/baseTest';
 import type { Fixtures } from '../config/test-runner';
 import { PageTestFixtures } from '../page/pageTest';

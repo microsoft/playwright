@@ -15,7 +15,7 @@
  */
 
 import { baseTest, CommonWorkerFixtures } from '../config/baseTest';
-import { ElectronApplication, Page } from '../../index';
+import { ElectronApplication, Page } from 'playwright-core';
 import type { Fixtures } from '../config/test-runner';
 import * as path from 'path';
 import { PageTestFixtures } from '../page/pageTest';

@@ -19,7 +19,7 @@ import { browserTest as it, expect } from './config/browserTest';
 import * as path from 'path';
 import fs from 'fs';
 import http2 from 'http2';
-import type { BrowserContext, BrowserContextOptions } from '../index';
+import type { BrowserContext, BrowserContextOptions } from 'playwright-core';
 import type { AddressInfo } from 'net';
 import type { Log } from 'playwright-core/src/server/supplements/har/har';
 

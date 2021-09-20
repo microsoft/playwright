@@ -17,7 +17,7 @@
 
 //@ts-check
 
-const playwright = require('../../');
+const playwright = require('playwright-core');
 const fs = require('fs');
 const path = require('path');
 const { parseApi } = require('./api_parser');

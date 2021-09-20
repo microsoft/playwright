@@ -23,7 +23,7 @@
     "doc": "node utils/doclint/cli.js",
     "lint": "npm run eslint && npm run tsc && npm run doc && npm run check-deps && node utils/generate_channels.js && node utils/generate_types/ --check-clean && npm run test-types",
     "flint": "concurrently -s all \"npm run eslint\" \"npm run tsc\" \"npm run doc\" \"npm run check-deps\" \"node utils/generate_channels.js\" \"node utils/generate_types/ --check-clean\" \"npm run test-types\"",
-    "clean": "rimraf lib && rimraf src/generated/",
+    "clean": "rimraf packages/playwright-core/lib && rimraf packages/playwright-core/src/generated/",
     "prepare": "node install-from-github.js",
     "build": "node utils/build/build.js",
     "watch": "node utils/build/build.js --watch --lint",

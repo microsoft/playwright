@@ -15,7 +15,7 @@
  */
 
 import path from 'path';
-import type { BrowserType, Browser, LaunchOptions } from '../../index';
+import type { BrowserType, Browser, LaunchOptions } from 'playwright-core';
 import { CommonFixtures, TestChildProcess } from './commonFixtures';
 
 const playwrightPath = path.join(__dirname, '..', '..');
