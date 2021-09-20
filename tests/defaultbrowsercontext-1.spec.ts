@@ -140,6 +140,11 @@ it('should support userAgent option', async ({ server, launchPersistent }) => {
   expect(request.headers['user-agent']).toBe('foobar');
 });
 
+it('should support platform option', async ({ launchPersistent }) => {
+  const { page } = await launchPersistent({ platform: 'foobar' });
+  expect(await page.evaluate(() => navigator.platform)).toBe('foobar');
+});
+
 it('should support bypassCSP option', async ({ server, launchPersistent }) => {
   const { page } = await launchPersistent({ bypassCSP: true });
   await page.goto(server.PREFIX + '/csp.html');

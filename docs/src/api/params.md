@@ -405,6 +405,11 @@ Does not enforce fixed viewport, allows resizing window in the headed mode.
 
 Specific user agent to use in this context.
 
+## context-option-platform
+- `platform` <[string]>
+
+Specific platform to use in this context.
+
 ## context-option-devicescalefactor
 - `deviceScaleFactor` <[float]>
 
@@ -699,6 +704,7 @@ using the [`method: AndroidDevice.setDefaultTimeout`] method.
 - %%-context-option-screen-%%
 - %%-python-context-option-no-viewport-%%
 - %%-context-option-useragent-%%
+- %%-context-option-platform-%%
 - %%-context-option-devicescalefactor-%%
 - %%-context-option-ismobile-%%
 - %%-context-option-hastouch-%%

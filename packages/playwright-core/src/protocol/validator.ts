@@ -305,6 +305,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     javaScriptEnabled: tOptional(tBoolean),
     bypassCSP: tOptional(tBoolean),
     userAgent: tOptional(tString),
+    platform: tOptional(tString),
     locale: tOptional(tString),
     timezoneId: tOptional(tString),
     geolocation: tOptional(tObject({
@@ -365,6 +366,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     javaScriptEnabled: tOptional(tBoolean),
     bypassCSP: tOptional(tBoolean),
     userAgent: tOptional(tString),
+    platform: tOptional(tString),
     locale: tOptional(tString),
     timezoneId: tOptional(tString),
     geolocation: tOptional(tObject({

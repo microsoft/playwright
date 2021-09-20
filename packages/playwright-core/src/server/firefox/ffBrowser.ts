@@ -181,6 +181,8 @@ export class FFBrowserContext extends BrowserContext {
       promises.push(this._browser._connection.send('Browser.setTouchOverride', { browserContextId, hasTouch: true }));
     if (this._options.userAgent)
       promises.push(this._browser._connection.send('Browser.setUserAgentOverride', { browserContextId, userAgent: this._options.userAgent }));
+    if (this._options.platform)
+      promises.push(this._browser._connection.send('Browser.setPlatformOverride', { browserContextId, platform: this._options.platform }));
     if (this._options.bypassCSP)
       promises.push(this._browser._connection.send('Browser.setBypassCSP', { browserContextId, bypassCSP: true }));
     if (this._options.ignoreHTTPSErrors)

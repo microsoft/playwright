@@ -9889,6 +9889,11 @@ export interface BrowserType<Unused = {}> {
     permissions?: Array<string>;
 
     /**
+     * Specific platform to use in this context.
+     */
+    platform?: string;
+
+    /**
      * Network proxy settings.
      */
     proxy?: {
@@ -11048,6 +11053,11 @@ export interface AndroidDevice {
      * for more details.
      */
     permissions?: Array<string>;
+
+    /**
+     * Specific platform to use in this context.
+     */
+    platform?: string;
 
     /**
      * Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file. If not
@@ -14774,6 +14784,11 @@ export interface BrowserContextOptions {
    * for more details.
    */
   permissions?: Array<string>;
+
+  /**
+   * Specific platform to use in this context.
+   */
+  platform?: string;
 
   /**
    * Network proxy settings to use with this context.

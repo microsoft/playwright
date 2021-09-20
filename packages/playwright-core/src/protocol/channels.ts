@@ -534,6 +534,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
   userAgent?: string,
+  platform?: string,
   locale?: string,
   timezoneId?: string,
   geolocation?: {
@@ -607,6 +608,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
   userAgent?: string,
+  platform?: string,
   locale?: string,
   timezoneId?: string,
   geolocation?: {
@@ -701,6 +703,7 @@ export type BrowserNewContextParams = {
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
   userAgent?: string,
+  platform?: string,
   locale?: string,
   timezoneId?: string,
   geolocation?: {
@@ -761,6 +764,7 @@ export type BrowserNewContextOptions = {
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
   userAgent?: string,
+  platform?: string,
   locale?: string,
   timezoneId?: string,
   geolocation?: {

@@ -514,8 +514,8 @@ class FrameSession {
       promises.push(this._client.send('Emulation.setTouchEmulationEnabled', { enabled: true }));
     if (options.javaScriptEnabled === false)
       promises.push(this._client.send('Emulation.setScriptExecutionDisabled', { value: true }));
-    if (options.userAgent || options.locale)
-      promises.push(this._client.send('Emulation.setUserAgentOverride', { userAgent: options.userAgent || '', acceptLanguage: options.locale }));
+    if (options.userAgent || options.platform || options.locale)
+      promises.push(this._client.send('Emulation.setUserAgentOverride', { userAgent: options.userAgent || '', platform: options.platform, acceptLanguage: options.locale }));
     if (options.locale)
       promises.push(emulateLocale(this._client, options.locale));
     if (options.timezoneId)

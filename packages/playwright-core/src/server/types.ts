@@ -247,6 +247,7 @@ export type BrowserContextOptions = {
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
   userAgent?: string,
+  platform?: string,
   locale?: string,
   timezoneId?: string,
   geolocation?: Geolocation,

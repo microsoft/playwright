@@ -185,6 +185,8 @@ export class WKPage implements PageDelegate {
     const contextOptions = this._browserContext._options;
     if (contextOptions.userAgent)
       promises.push(session.send('Page.overrideUserAgent', { value: contextOptions.userAgent }));
+    if (contextOptions.platform)
+      promises.push(session.send('Page.overridePlatform', { value: contextOptions.platform }));
     if (this._page._state.mediaType || this._page._state.colorScheme || this._page._state.reducedMotion)
       promises.push(WKPage._setEmulateMedia(session, this._page._state.mediaType, this._page._state.colorScheme, this._page._state.reducedMotion));
     const bootstrapScript = this._calculateBootstrapScript();
