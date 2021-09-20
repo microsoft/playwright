@@ -239,6 +239,8 @@ program
       console.log('Examples:');
       console.log('');
       console.log('  $ show-trace trace/directory');
+      console.log('');
+      console.log('  $ show-trace https://example.com/trace.zip');
     });
 
 if (!process.env.PW_CLI_TARGET_LANG) {
