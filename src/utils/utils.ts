@@ -25,6 +25,7 @@ import { getProxyForUrl } from 'proxy-from-env';
 import * as URL from 'url';
 import { getUbuntuVersionSync } from './ubuntuVersion';
 import { NameValue } from '../protocol/channels';
+import ProgressBar from 'progress';
 
 // `https-proxy-agent` v5 is written in TypeScript and exposes generated types.
 // However, as of June 2020, its types are generated with tsconfig that enables
@@ -415,3 +416,37 @@ export function wrapInASCIIBox(text: string, padding = 0): string {
 export function isFilePayload(value: any): boolean {
   return typeof value === 'object' && value['name'] && value['mimeType'] && value['buffer'];
 }
+
+
+function toMegabytes(bytes: number) {
+  const mb = bytes / 1024 / 1024;
+  return `${Math.round(mb * 10) / 10} Mb`;
+}
+
+export function getDownloadProgress(progressBarName: string) {
+
+  let progressBar: ProgressBar;
+  let lastDownloadedBytes = 0;
+
+  return (downloadedBytes: number, totalBytes: number) => {
+    if (!process.stderr.isTTY) return;
+    if (!progressBar) {
+      progressBar = new ProgressBar(
+          `Downloading ${progressBarName} - ${toMegabytes(
+              totalBytes
+          )} [:bar] :percent :etas `,
+          {
+            complete: '=',
+            incomplete: ' ',
+            width: 20,
+            total: totalBytes,
+          }
+      );
+    }
+    const delta = downloadedBytes - lastDownloadedBytes;
+    lastDownloadedBytes = downloadedBytes;
+    progressBar.tick(delta);
+  };
+}
+
+export const getErrorMessage = (error: Error) => typeof error === 'object' && typeof error.message === 'string' ? error.message : '';

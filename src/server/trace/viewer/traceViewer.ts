@@ -25,7 +25,7 @@ import { PersistentSnapshotStorage, TraceModel } from './traceModel';
 import { ServerRouteHandler, HttpServer } from '../../../utils/httpServer';
 import { SnapshotServer } from '../../snapshot/snapshotServer';
 import * as consoleApiSource from '../../../generated/consoleApiSource';
-import { isUnderTest } from '../../../utils/utils';
+import { downloadFile, getDownloadProgress, getErrorMessage, isUnderTest } from '../../../utils/utils';
 import { internalCallMetadata } from '../../instrumentation';
 import { ProgressController } from '../../progress';
 import { BrowserContext } from '../../browserContext';
@@ -196,6 +196,21 @@ async function appendTraceEvents(model: TraceModel, file: string) {
 }
 
 export async function showTraceViewer(tracePath: string, browserName: string, headless = false): Promise<BrowserContext | undefined> {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), `playwright-trace`));
+  process.on('exit', () => rimraf.sync(dir));
+
+  if (tracePath.startsWith('http')){
+    const downloadZipPath = path.join(dir, 'trace.zip');
+    const {error} = await downloadFile(tracePath, downloadZipPath, {
+      progressCallback: getDownloadProgress('Trace File'),
+    });
+    if (error) {
+      console.log(`Download failed. ${getErrorMessage(error)}`); // eslint-disable-line no-console
+      return;
+    }
+    tracePath = downloadZipPath;
+  }
+
   let stat;
   try {
     stat = fs.statSync(tracePath);
@@ -210,8 +225,6 @@ export async function showTraceViewer(tracePath: string, browserName: string, he
   }
 
   const zipFile = tracePath;
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), `playwright-trace`));
-  process.on('exit', () => rimraf.sync(dir));
   try {
     await extract(zipFile, { dir });
   } catch (e) {
