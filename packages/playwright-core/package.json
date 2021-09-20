@@ -1,6 +1,6 @@
 {
   "name": "playwright-core",
-  "version": "1.15.0-next",
+  "version": "1.16.0-next",
   "types": "types/types.d.ts",
   "bin": {
     "playwright": "./lib/cli/cli.js"

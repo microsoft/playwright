@@ -30,9 +30,9 @@ export function rewriteErrorMessage<E extends Error>(e: E, newMessage: string): 
   return e;
 }
 
-const ROOT_DIR = path.resolve(__dirname, '..', '..');
-const CLIENT_LIB = path.join(ROOT_DIR, 'lib', 'client');
-const CLIENT_SRC = path.join(ROOT_DIR, 'src', 'client');
+const CORE_DIR = path.resolve(__dirname, '..', '..');
+const CLIENT_LIB = path.join(CORE_DIR, 'lib', 'client');
+const CLIENT_SRC = path.join(CORE_DIR, 'src', 'client');
 
 export type ParsedStackTrace = {
   allFrames: StackFrame[];

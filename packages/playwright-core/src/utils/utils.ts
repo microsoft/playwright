@@ -423,9 +423,9 @@ export function createGuid(): string {
   return crypto.randomBytes(16).toString('hex');
 }
 
-export async function removeFolders(dirs: string[]): Promise<Array<Error|undefined>> {
+export async function removeFolders(dirs: string[]): Promise<Array<Error|null|undefined>> {
   return await Promise.all(dirs.map((dir: string) => {
-    return new Promise<Error|undefined>(fulfill => {
+    return new Promise<Error|null|undefined>(fulfill => {
       removeFolder(dir, { maxBusyTries: 10 }, error => {
         fulfill(error ?? undefined);
       });
