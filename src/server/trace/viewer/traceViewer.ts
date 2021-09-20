@@ -199,7 +199,7 @@ export async function showTraceViewer(tracePath: string, browserName: string, he
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), `playwright-trace`));
   process.on('exit', () => rimraf.sync(dir));
 
-  if (tracePath.startsWith('http')){
+  if (/^https?:\/\//i.test(tracePath)){
     const downloadZipPath = path.join(dir, 'trace.zip');
     const {error} = await downloadFile(tracePath, downloadZipPath, {
       progressCallback: getDownloadProgress('Trace File'),
