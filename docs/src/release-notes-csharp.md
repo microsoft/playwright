@@ -7,13 +7,13 @@ title: "Release notes"
 
 ## Version 1.15
 
-### 🖱️ Mouse wheel emulation
+### 🖱️ Mouse Wheel
 
 By using [`Page.Mouse.WheelAsync`](https://playwright.dev/dotnet/docs/next/api/class-mouse#mouse-wheel) you are now able to scroll vertically or horizontally.
 
-### 📜 New Header API
+### 📜 New Headers API
 
-Previously it was not possible to get multiple header values of a response. This is now  possible and additional helper functions were added:
+Previously it was not possible to get multiple header values of a response. This is now possible and additional helper functions are available:
 
 - [Request.AllHeadersAsync()](https://playwright.dev/dotnet/docs/next/api/class-request#request-all-headers)
 - [Request.HeadersArrayAsync()](https://playwright.dev/dotnet/docs/next/api/class-request#request-headers-array)
@@ -29,7 +29,7 @@ Its now possible to emulate the `forced-colors` CSS media feature by passing it 
 
 ### New APIs
 
-- [Page.RouteAsync()](https://playwright.dev/dotnet/docs/next/api/class-page#page-route) accepts now a `times` option to specify how often a route should be matched.
+- [Page.RouteAsync()](https://playwright.dev/dotnet/docs/next/api/class-page#page-route) accepts new `times` option to specify how many times this route should be matched.
 - [Page.SetCheckedAsync(selector: string, checked: Boolean)](https://playwright.dev/dotnet/docs/next/api/class-page#page-set-checked) and [Locator.SetCheckedAsync(selector: string, checked: Boolean)](https://playwright.dev/dotnet/docs/next/api/class-locator#locator-set-checked) was introduced to set the checked state of a checkbox.
 - [Request.SizesAsync()](https://playwright.dev/dotnet/docs/next/api/class-request#request-sizes) Returns resource size information for given http request.
 - [Tracing.StartChunkAsync()](https://playwright.dev/dotnet/docs/next/api/class-tracing#tracing-start-chunk) - Start a new trace chunk.
