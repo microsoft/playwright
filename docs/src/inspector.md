@@ -147,9 +147,51 @@ automatically generate selectors for those elements.
 
 <img width="602" alt="Selectors toolbar" src="https://user-images.githubusercontent.com/883973/108614696-ad5eaa00-73b1-11eb-81f5-9eebe62543a2.png"></img>
 
+You can also use the following API inside the Developer Tools Console of any browser.
+
+<img src="https://user-images.githubusercontent.com/284612/92536317-37dd9380-f1ee-11ea-875d-daf1b206dd56.png"></img>
+
+#### playwright.$(selector)
+
+Query Playwright selector, using the actual Playwright query engine, for example:
+
+```js
+> playwright.$('.auth-form >> text=Log in');
+
+<button>Log in</button>
+```
+
+#### playwright.$$(selector)
+
+Same as `playwright.$`, but returns all matching elements.
+
+```js
+> playwright.$$('li >> text=John')
+
+> [<li>, <li>, <li>, <li>]
+```
+
+#### playwright.inspect(selector)
+
+Reveal element in the Elements panel (if DevTools of the respective browser supports it).
+
+```js
+> playwright.inspect('text=Log in')
+```
+
+#### playwright.selector(element)
+
+Generates selector for the given element.
+
+```js
+> playwright.selector($0)
+
+"div[id="glow-ingress-block"] >> text=/.*Hello.*/"
+```
+
 ## Recording scripts
 
-At any moment, clicking Record action enables recorder (codegen) mode.
+At any moment, clicking Record action enables [codegen mode](./codegen.md).
 Every action on the target page is turned into the generated script:
 
 <img width="712" alt="Recorded script" src="https://user-images.githubusercontent.com/883973/108614897-85704600-73b3-11eb-8bcd-f2e129786c49.png"></img>
