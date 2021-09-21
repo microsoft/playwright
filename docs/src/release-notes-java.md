@@ -5,6 +5,42 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.15
+
+### 🖱️ Mouse Wheel
+
+By using [`Mouse.wheel`](https://playwright.dev/java/docs/api/class-mouse#mouse-wheel) you are now able to scroll vertically or horizontally.
+
+### 📜 New Headers API
+
+Previously it was not possible to get multiple header values of a response. This is now possible and additional helper functions are available:
+
+- [Request.allHeaders()](https://playwright.dev/java/docs/api/class-request#request-all-headers)
+- [Request.headersArray()](https://playwright.dev/java/docs/api/class-request#request-headers-array)
+- [Request.headerValue(name: string)](https://playwright.dev/java/docs/api/class-request#request-header-value)
+- [Response.allHeaders()](https://playwright.dev/java/docs/api/class-response#response-all-headers)
+- [Response.headersArray()](https://playwright.dev/java/docs/api/class-response#response-headers-array)
+- [Response.headerValue(name: string)](https://playwright.dev/java/docs/api/class-response#response-header-value)
+- [Response.headerValues(name: string)](https://playwright.dev/java/docs/api/class-response/#response-header-values)
+
+### 🌈 Forced-Colors emulation
+
+Its now possible to emulate the `forced-colors` CSS media feature by passing it in the [context options](https://playwright.dev/java/docs/api/class-browser#browser-new-context-option-color-scheme) or calling [Page.emulateMedia()](https://playwright.dev/java/docs/api/class-page#page-emulate-media).
+
+### New APIs
+
+- [Page.route()](https://playwright.dev/java/docs/api/class-page#page-route) accepts new `times` option to specify how many times this route should be matched.
+- [Page.setChecked(selector: string, checked: boolean)](https://playwright.dev/java/docs/api/class-page#page-set-checked) and [Locator.setChecked(selector: string, checked: boolean)](https://playwright.dev/java/docs/api/class-locator#locator-set-checked) was introduced to set the checked state of a checkbox.
+- [Request.sizes()](https://playwright.dev/java/docs/api/class-request#request-sizes) Returns resource size information for given http request.
+- [Tracing.startChunk()](https://playwright.dev/java/docs/api/class-tracing#tracing-start-chunk) - Start a new trace chunk.
+- [Tracing.stopChunk()](https://playwright.dev/java/docs/api/class-tracing#tracing-stop-chunk) - Stops a new trace chunk.
+
+### Browser Versions
+
+- Chromium 96.0.4641.0
+- Mozilla Firefox 92.0
+- WebKit 15.0
+
 ## Version 1.14
 
 #### ⚡️ New "strict" mode
