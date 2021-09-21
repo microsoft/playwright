@@ -215,6 +215,10 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameInitializer
     return await this._frame.uncheck(metadata, params.selector, params);
   }
 
+  async waitForTimeout(params: channels.FrameWaitForTimeoutParams, metadata: CallMetadata): Promise<void> {
+    return await this._frame.waitForTimeout(metadata, params.timeout);
+  }
+
   async waitForFunction(params: channels.FrameWaitForFunctionParams, metadata: CallMetadata): Promise<channels.FrameWaitForFunctionResult> {
     return { handle: ElementHandleDispatcher.fromJSHandle(this._scope, await this._frame._waitForFunctionExpression(metadata, params.expression, params.isFunction, parseArgument(params.arg), params)) };
   }

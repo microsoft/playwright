@@ -159,6 +159,7 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
     /page.evaluate— \d+ms/,
     /page.click"Click"— \d+ms/,
     /page.waitForNavigation— \d+ms/,
+    /page.waitForTimeout— \d+ms/,
     /page.gotohttp:\/\/localhost:\d+\/frames\/frame.html— \d+ms/,
     /page.setViewportSize— \d+ms/,
     /page.hoverbody— \d+ms/,

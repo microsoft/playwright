@@ -846,6 +846,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     timeout: tOptional(tNumber),
     trial: tOptional(tBoolean),
   });
+  scheme.FrameWaitForTimeoutParams = tObject({
+    timeout: tNumber,
+  });
   scheme.FrameWaitForFunctionParams = tObject({
     expression: tString,
     isFunction: tOptional(tBoolean),
