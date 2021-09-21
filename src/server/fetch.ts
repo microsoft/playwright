@@ -22,16 +22,17 @@ import * as https from 'https';
 import { BrowserContext } from './browserContext';
 import * as types from './types';
 import { pipeline, Readable, Transform } from 'stream';
-import { createGuid, isFilePayload, monotonicTime } from '../utils/utils';
+import { createGuid, headersArrayToObject, headersObjectToArray, isFilePayload, monotonicTime } from '../utils/utils';
 import { SdkObject } from './instrumentation';
 import { Playwright } from './playwright';
 import { HeadersArray, ProxySettings } from './types';
 import { HTTPCredentials } from '../../types/types';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { MultipartFormData } from './formData';
+import { NameValue, NewRequestOptions } from '../common/types';
 
 
-type FetchRequestOptions = {
+export type FetchRequestOptions = {
   userAgent: string;
   extraHTTPHeaders?: HeadersArray;
   httpCredentials?: HTTPCredentials;
@@ -336,8 +337,30 @@ export class BrowserContextFetchRequest extends FetchRequest {
 
 
 export class GlobalFetchRequest extends FetchRequest {
-  constructor(playwright: Playwright) {
+  private readonly _options: FetchRequestOptions;
+  constructor(playwright: Playwright, options: Omit<NewRequestOptions, 'extraHTTPHeaders'> & { extraHTTPHeaders?: NameValue[] }) {
     super(playwright);
+    const timeoutSettings = new TimeoutSettings();
+    if (options.timeout !== undefined)
+      timeoutSettings.setDefaultTimeout(options.timeout);
+    // console.log(JSON.stringify(extraHTTPHeaders, null, 2));
+    const proxy = options.proxy;
+    if (proxy?.server) {
+      let url = proxy?.server.trim();
+      if (!/^\w+:\/\//.test(url))
+        url = 'http://' + url;
+      proxy.server = url;
+    }
+    this._options = {
+      baseURL: options.baseURL,
+      userAgent: options.userAgent || '',
+      extraHTTPHeaders: options.extraHTTPHeaders,
+      ignoreHTTPSErrors: !!options.ignoreHTTPSErrors,
+      httpCredentials: options.httpCredentials,
+      proxy,
+      timeoutSettings,
+    };
+
   }
 
   override dispose() {
@@ -345,14 +368,7 @@ export class GlobalFetchRequest extends FetchRequest {
   }
 
   _defaultOptions(): FetchRequestOptions {
-    return {
-      userAgent: '',
-      extraHTTPHeaders: undefined,
-      proxy: undefined,
-      timeoutSettings: new TimeoutSettings(),
-      ignoreHTTPSErrors: false,
-      baseURL: undefined,
-    };
+    return this._options;
   }
 
   async _addCookies(cookies: types.SetNetworkCookieParam[]): Promise<void> {

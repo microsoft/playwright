@@ -83,6 +83,56 @@ class PlaywrightExample
 }
 ```
 
+## async method: Playwright._newRequest
+- returns: <[FetchRequest]>
+
+**experimental** Creates new instances of [FetchRequest].
+
+### option: Playwright._newRequest.useragent
+- `userAgent` <[string]>
+
+Specific user agent to use in the request.
+
+### option: Playwright._newRequest.extraHTTPHeaders
+- `extraHTTPHeaders` <[Object]<[string], [string]>>
+
+An object containing additional HTTP headers to be sent with every request.
+
+### option: Playwright._newRequest.httpCredentials
+- `httpCredentials` <[Object]>
+  - `username` <[string]>
+  - `password` <[string]>
+
+Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
+
+### option: Playwright._newRequest.proxy
+- `proxy` <[Object]>
+  - `server` <[string]> Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example
+    `http://myproxy.com:3128` or `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
+  - `bypass` <[string]> Optional coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+  - `username` <[string]> Optional username to use if HTTP proxy requires authentication.
+  - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
+
+Network proxy settings to use with the request.
+
+### option: Playwright._newRequest.timeout
+- `timeout` <[float]>
+
+Maximum time in milliseconds to wait for the response. Defaults to
+`30000` (30 seconds). Pass `0` to disable timeout.
+
+### option: Playwright._newRequest.ignoreHTTPSErrors
+- `ignoreHTTPSErrors` <[boolean]>
+
+Whether to ignore HTTPS errors during navigation. Defaults to `false`.
+
+### option: Playwright._newRequest.baseURL
+- `baseURL` <[string]>
+
+When using [`method: FetchRequest.get`], [`method: FetchRequest.post`], [`method: FetchRequest.fetch`] it takes the base URL in consideration by using the [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor for building the corresponding URL. Examples:
+* baseURL: `http://localhost:3000` and sending rquest to `/bar.html` results in `http://localhost:3000/bar.html`
+* baseURL: `http://localhost:3000/foo/` and sending rquest to `./bar.html` results in `http://localhost:3000/foo/bar.html`
+
 ## property: Playwright.chromium
 - type: <[BrowserType]>
 

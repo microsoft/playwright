@@ -26,8 +26,9 @@ import * as types from '../server/types';
 import { SocksConnection, SocksConnectionClient } from '../utils/socksProxy';
 import { createGuid } from '../utils/utils';
 import { debugLogger } from '../utils/debugLogger';
-import { GlobalFetchRequest } from '../server/fetch';
+import { FetchRequestOptions, GlobalFetchRequest } from '../server/fetch';
 import { FetchRequestDispatcher } from './networkDispatchers';
+import { TimeoutSettings } from '../utils/timeoutSettings';
 
 export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.PlaywrightInitializer, channels.PlaywrightEvents> implements channels.PlaywrightChannel {
   private _socksProxy: SocksProxy | undefined;
@@ -75,7 +76,7 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
   }
 
   async newRequest(params: channels.PlaywrightNewRequestParams, metadata?: channels.Metadata): Promise<channels.PlaywrightNewRequestResult> {
-    const request = new GlobalFetchRequest(this._object);
+    const request = new GlobalFetchRequest(this._object, params);
     return { request: FetchRequestDispatcher.from(this._scope, request) };
   }
 }

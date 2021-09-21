@@ -455,7 +455,26 @@ Playwright:
 
     newRequest:
       parameters:
+        baseURL: string?
+        userAgent: string?
         ignoreHTTPSErrors: boolean?
+        extraHTTPHeaders:
+          type: array?
+          items: NameValue
+        httpCredentials:
+          type: object?
+          properties:
+            username: string
+            password: string
+        proxy:
+          type: object?
+          properties:
+            server: string
+            bypass: string?
+            username: string?
+            password: string?
+        timeout: number?
+
       returns:
         request: FetchRequest
 
