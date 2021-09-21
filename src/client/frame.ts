@@ -446,7 +446,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
 
   async waitForTimeout(timeout: number) {
     return this._wrapApiCall(async (channel: channels.FrameChannel) => {
-      await new Promise(fulfill => setTimeout(fulfill, timeout));
+      await channel.waitForTimeout({ timeout });
     });
   }
 

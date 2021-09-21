@@ -1175,6 +1175,13 @@ export class Frame extends SdkObject {
     }, this._page._timeoutSettings.timeout(options));
   }
 
+  async waitForTimeout(metadata: CallMetadata, timeout: number) {
+    const controller = new ProgressController(metadata, this);
+    return controller.run(async () => {
+      await new Promise(resolve => setTimeout(resolve, timeout));
+    });
+  }
+
   async _waitForFunctionExpression<R>(metadata: CallMetadata, expression: string, isFunction: boolean | undefined, arg: any, options: types.WaitForFunctionOptions, world: types.World = 'main'): Promise<js.SmartHandle<R>> {
     const controller = new ProgressController(metadata, this);
     if (typeof options.pollingInterval === 'number')

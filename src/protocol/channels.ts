@@ -1578,6 +1578,7 @@ export interface FrameChannel extends Channel {
   title(params?: FrameTitleParams, metadata?: Metadata): Promise<FrameTitleResult>;
   type(params: FrameTypeParams, metadata?: Metadata): Promise<FrameTypeResult>;
   uncheck(params: FrameUncheckParams, metadata?: Metadata): Promise<FrameUncheckResult>;
+  waitForTimeout(params: FrameWaitForTimeoutParams, metadata?: Metadata): Promise<FrameWaitForTimeoutResult>;
   waitForFunction(params: FrameWaitForFunctionParams, metadata?: Metadata): Promise<FrameWaitForFunctionResult>;
   waitForSelector(params: FrameWaitForSelectorParams, metadata?: Metadata): Promise<FrameWaitForSelectorResult>;
 }
@@ -2107,6 +2108,13 @@ export type FrameUncheckOptions = {
   trial?: boolean,
 };
 export type FrameUncheckResult = void;
+export type FrameWaitForTimeoutParams = {
+  timeout: number,
+};
+export type FrameWaitForTimeoutOptions = {
+
+};
+export type FrameWaitForTimeoutResult = void;
 export type FrameWaitForFunctionParams = {
   expression: string,
   isFunction?: boolean,
@@ -3695,6 +3703,7 @@ export const commandsWithTracingSnapshots = new Set([
   'Frame.textContent',
   'Frame.type',
   'Frame.uncheck',
+  'Frame.waitForTimeout',
   'Frame.waitForFunction',
   'Frame.waitForSelector',
   'JSHandle.evaluateExpression',

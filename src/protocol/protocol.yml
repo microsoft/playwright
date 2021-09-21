@@ -1687,6 +1687,12 @@ Frame:
         snapshot: true
         pausesBeforeInput: true
 
+    waitForTimeout:
+      parameters:
+        timeout: number
+      tracing:
+        snapshot: true
+
     waitForFunction:
       parameters:
         expression: string
