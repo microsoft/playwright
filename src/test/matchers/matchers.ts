@@ -16,7 +16,6 @@
 
 import { Locator, Page } from '../../..';
 import { constructURLBasedOnBaseURL, isString } from '../../utils/utils';
-import { currentTestInfo } from '../globals';
 import type { Expect } from '../types';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
@@ -239,10 +238,7 @@ export function toHaveURL(
   expected: string | RegExp,
   options?: { timeout?: number },
 ) {
-  const testInfo = currentTestInfo();
-  if (!testInfo)
-    throw new Error(`toHaveURL must be called during the test`);
-  const baseURL = testInfo.project.use.baseURL;
+  const baseURL = (page.context() as any)._options.baseURL;
 
   return toMatchText.call(this, 'toHaveURL', page, 'Page', async () => {
     return page.url();
