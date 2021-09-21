@@ -1,6 +1,6 @@
 {
-  "name": "playwright",
-  "version": "1.15.0-next",
+  "name": "playwright-chromium",
+  "version": "1.16.0-next",
   "description": "A high-level API to automate web browsers",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
@@ -21,5 +21,7 @@
   "scripts": {
     "install": "node install.js"
   },
-  "dependencies": {}
+  "dependencies": {
+    "playwright-core": "=1.16.0-next"
+  }
 }
