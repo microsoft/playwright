@@ -149,6 +149,17 @@ test('should send default User-Agent header with connect request', async ({brows
   expect(request.headers['foo']).toBe('bar');
 });
 
+test('should support slowmo option', async ({browserType, startRemoteServer}) => {
+  const remoteServer = await startRemoteServer();
+
+  const browser1 = await browserType.connect(remoteServer.wsEndpoint(), { slowMo: 200 });
+  const start = Date.now();
+  await browser1.newContext();
+  await browser1.close();
+  console.log(Date.now() - start);
+  expect(Date.now() - start).toBeGreaterThan(199);
+});
+
 test('disconnected event should be emitted when browser is closed or server is closed', async ({browserType, startRemoteServer}) => {
   const remoteServer = await startRemoteServer();
 

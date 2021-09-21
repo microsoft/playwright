@@ -131,7 +131,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
     return await this._wrapApiCall(async (channel: channels.BrowserTypeChannel) => {
       const deadline = params.timeout ? monotonicTime() + params.timeout : 0;
       let browser: Browser;
-      const { pipe } = await channel.connect({ wsEndpoint, headers: params.headers, timeout: params.timeout });
+      const { pipe } = await channel.connect({ wsEndpoint, headers: params.headers, slowMo: params.slowMo, timeout: params.timeout });
       const closePipe = () => pipe.close().catch(() => {});
       const connection = new Connection(closePipe);
 
