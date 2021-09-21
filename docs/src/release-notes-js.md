@@ -9,13 +9,13 @@ title: "Release notes"
 
 ## 🎭 Playwright Library
 
-### 🖱️ Mouse wheel emulation
+### 🖱️ Mouse Wheel
 
 By using [`Page.mouse.wheel`](https://playwright.dev/docs/api/class-mouse#mouse-wheel) you are now able to scroll vertically or horizontally.
 
-### 📜 New Header API
+### 📜 New Headers API
 
-Previously it was not possible to get multiple header values of a response. This is now  possible and additional helper functions were added:
+Previously it was not possible to get multiple header values of a response. This is now  possible and additional helper functions are available:
 
 - [Request.allHeaders()](https://playwright.dev/docs/api/class-request#request-all-headers)
 - [Request.headersArray()](https://playwright.dev/docs/api/class-request#request-headers-array)
@@ -31,7 +31,7 @@ Its now possible to emulate the `forced-colors` CSS media feature by passing it 
 
 ### New APIs
 
-- [Page.route()](https://playwright.dev/docs/api/class-page#page-route) accepts now a `times` option to specify how often a route should be matched.
+- [Page.route()](https://playwright.dev/docs/api/class-page#page-route) accepts new `times` option to specify how many times this route should be matched.
 - [Page.setChecked(selector: string, checked: boolean)](https://playwright.dev/docs/api/class-page#page-set-checked) and [Locator.setChecked(selector: string, checked: boolean)](https://playwright.dev/docs/api/class-locator#locator-set-checked) was introduced to set the checked state of a checkbox.
 - [Request.sizes()](https://playwright.dev/docs/api/class-request#request-sizes) Returns resource size information for given http request.
 - [BrowserContext.tracing.startChunk()](https://playwright.dev/docs/api/class-tracing#tracing-start-chunk) - Start a new trace chunk.
