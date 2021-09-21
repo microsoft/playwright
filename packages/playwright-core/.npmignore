@@ -37,7 +37,5 @@ lib/**/injected/
 !NOTICE
 # Include browser descriptors.
 !browsers.json
-# Include commit info
-!commitinfo
 # Include generated devices descriptors
 !deviceDescriptorsSource.json
