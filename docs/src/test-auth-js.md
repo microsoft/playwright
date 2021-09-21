@@ -158,7 +158,7 @@ If you can log in once and commit the `storageState.json` into the repository, y
 setup at all, just specify the `storageState.json` in Playwright Config as above and it'll be picked up.
 :::
 
-### Multiple signed in roles
+## Multiple signed in roles
 
 Sometimes you have more than one signed-in user in your end to end tests. You can achieve that via logging in for these users multiple times in globalSetup and saving that state into different files.
 
@@ -236,7 +236,7 @@ test.describe(() => {
 });
 ```
 
-### Reuse the signed in page in multiple tests
+## Reuse the signed in page in multiple tests
 
 Although discouraged, sometimes it is necessary to sacrifice the isolation and run a number of tests
 in the same page. In that case, you can log into that page once in `beforeAll` and then use that same
