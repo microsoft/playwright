@@ -13,7 +13,5 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+export * from 'playwright-core';
 
-const { installDefaultBrowsersForNpmInstall } = require('playwright-core/lib/utils/registry');
-
-installDefaultBrowsersForNpmInstall();
