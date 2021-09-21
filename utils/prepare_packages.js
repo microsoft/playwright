@@ -19,6 +19,7 @@ const fs = require('fs');
 const path = require('path');
 const ncp = require('ncp');
 const util = require('util');
+const { packageNameToPath } = require('./list_packages');
 
 const cpAsync = util.promisify(ncp);
 
@@ -62,11 +63,9 @@ const PACKAGES = {
 };
 
 const dirtyFiles = [];
-const packageNameToPath = new Map();
-
 
 (async function () {
-  for (const packagePath of require('./listPackages').packages) {
+  for (const packagePath of require('./list_packages').packages) {
     const packageJSON = require(path.join(packagePath, 'package.json'));
     packageNameToPath.set(packageJSON.name, packagePath);
   }

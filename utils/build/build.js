@@ -20,7 +20,7 @@ const child_process = require('child_process');
 const path = require('path');
 const chokidar = require('chokidar');
 const fs = require('fs');
-const { packages } = require('../listPackages');
+const { packages } = require('../list_packages');
 
 /**
  * @typedef {{
