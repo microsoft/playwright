@@ -281,7 +281,7 @@ image: mcr.microsoft.com/playwright:focal
 While the Docker image supports sandboxing for Chromium, it does not work in the Bitbucket Pipelines environment. To launch Chromium on Bitbucket Pipelines, use the `chromiumSandbox: false` launch argument.
 
 ```js
-const { chromium } = require('playwright');
+const { chromium } = require('@playwright/test');
 const browser = await chromium.launch({ chromiumSandbox: false });
 ```
 
@@ -397,7 +397,7 @@ By default, Playwright launches browsers in headless mode. This can be changed b
 
 ```js
 // Works across chromium, firefox and webkit
-const { chromium } = require('playwright');
+const { chromium } = require('@playwright/test');
 const browser = await chromium.launch({ headless: false });
 ```
 

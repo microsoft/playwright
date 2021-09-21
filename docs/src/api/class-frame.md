@@ -13,7 +13,7 @@ At every point of time, page exposes its current frame tree via the [`method: Pa
 An example of dumping frame tree:
 
 ```js
-const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
+const { firefox } = require('@playwright/test');  // Or 'chromium' or 'webkit'.
 
 (async () => {
   const browser = await firefox.launch();
@@ -1282,7 +1282,7 @@ Returns when the [`param: expression`] returns a truthy value, returns that valu
 The [`method: Frame.waitForFunction`] can be used to observe viewport size change:
 
 ```js
-const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
+const { firefox } = require('@playwright/test');  // Or 'chromium' or 'webkit'.
 
 (async () => {
   const browser = await firefox.launch();
@@ -1512,7 +1512,7 @@ function will throw.
 This method works across navigations:
 
 ```js
-const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
+const { chromium } = require('@playwright/test');  // Or 'firefox' or 'webkit'.
 
 (async () => {
   const browser = await chromium.launch();

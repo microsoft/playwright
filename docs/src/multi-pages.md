@@ -14,7 +14,7 @@ Playwright can create multiple browser contexts within a single scenario. This i
 multi-user functionality, like chat.
 
 ```js
-const { chromium } = require('playwright');
+const { chromium } = require('@playwright/test');
 
 // Create a Chromium browser instance
 const browser = await chromium.launch();

@@ -58,7 +58,7 @@ export default config;
 ```
 
 ```js js-flavor=library
-const { chromium } = require('playwright');
+const { chromium } = require('@playwright/test');
 const browser = await chromium.launch({
   channel: 'chrome' // or 'msedge', 'chrome-beta', 'msedge-beta', 'msedge-dev', etc.
 });

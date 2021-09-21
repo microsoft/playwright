@@ -16,7 +16,7 @@ With a few lines of code, you can hook up Playwright to your existing JavaScript
 For Jest, [jest-playwright](https://github.com/playwright-community/jest-playwright) can be used. However for a light-weight solution, requiring playwright directly works fine. Jest shares it's syntax with Jasmine, so this applies to Jasmine as well.
 
 ```js
-const {chromium} = require('playwright');
+const {chromium} = require('@playwright/test');
 const expect = require('expect');
 let browser;
 let page;
@@ -44,7 +44,7 @@ it('should work', async () => {
 Tests run concurrently in AVA, so a single page variable cannot be shared between tests. Instead, create new pages with a macro function.
 
 ```js
-const {chromium} = require('playwright');
+const {chromium} = require('@playwright/test');
 const test = require('ava').default;
 const browserPromise = chromium.launch();
 
@@ -69,7 +69,7 @@ test('should work', pageMacro, async (t, page) => {
 Mocha looks very similar to the Jest/Jasmine setup, and functions in the same way.
 
 ```js
-const {chromium} = require('playwright');
+const {chromium} = require('@playwright/test');
 const assert = require('assert');
 let browser;
 before(async() => {
@@ -96,7 +96,7 @@ it('should work', async () => {
 These simple examples can be extended to support multiple browsers using an environment variable.
 
 ```js
-const {chromium, webkit, firefox} = require('playwright');
+const {chromium, webkit, firefox} = require('@playwright/test');
 const browserName = process.env.BROWSER || 'webkit';
 let browser;
 beforeAll(async() => {

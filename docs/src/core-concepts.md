@@ -23,7 +23,7 @@ and end with closing the browser. Browser instances can be launched in headless
 (without a GUI) or headed mode.
 
 ```js
-const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
+const { chromium } = require('@playwright/test');  // Or 'firefox' or 'webkit'.
 
 const browser = await chromium.launch({ headless: false });
 await browser.close();
@@ -130,7 +130,7 @@ Browser contexts can also be used to emulate multi-page scenarios involving
 mobile devices, permissions, locale and color scheme.
 
 ```js
-const { devices } = require('playwright');
+const { devices } = require('@playwright/test');
 const iPhone = devices['iPhone 11 Pro'];
 
 const context = await browser.newContext({

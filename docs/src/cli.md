@@ -183,7 +183,7 @@ playwright codegen --load-storage=auth.json my.web.app
 If you would like to use codegen in some non-standard setup (for example, use [`method: BrowserContext.route`]), it is possible to call [`method: Page.pause`] that will open a separate window with codegen controls.
 
 ```js
-const { chromium } = require('playwright');
+const { chromium } = require('@playwright/test');
 
 (async () => {
   // Make sure to run headed.

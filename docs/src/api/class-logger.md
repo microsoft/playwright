@@ -4,7 +4,7 @@
 Playwright generates a lot of logs and they are accessible via the pluggable logger sink.
 
 ```js
-const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
+const { chromium } = require('@playwright/test');  // Or 'firefox' or 'webkit'.
 
 (async () => {
   const browser = await chromium.launch({

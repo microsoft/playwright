@@ -4,7 +4,7 @@
 A Browser is created via [`method: BrowserType.launch`]. An example of using a [Browser] to create a [Page]:
 
 ```js
-const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
+const { firefox } = require('@playwright/test');  // Or 'chromium' or 'webkit'.
 
 (async () => {
   const browser = await firefox.launch();

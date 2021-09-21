@@ -10,7 +10,7 @@ Extensions only work in Chrome / Chromium in non-headless mode.
 The following is code for getting a handle to the [background page](https://developer.chrome.com/extensions/background_pages) of an extension whose source is located in `./my-extension`:
 
 ```js
-const { chromium } = require('playwright');
+const { chromium } = require('@playwright/test');
 
 (async () => {
   const pathToExtension = require('path').join(__dirname, 'my-extension');

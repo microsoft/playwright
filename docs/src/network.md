@@ -167,7 +167,7 @@ using var context = await Browser.NewContextAsync(new BrowserNewContextOptions
 You can monitor all the requests and responses:
 
 ```js
-const { chromium, webkit, firefox } = require('playwright');
+const { chromium, webkit, firefox } = require('@playwright/test');
 
 (async () => {
   const browser = await chromium.launch();

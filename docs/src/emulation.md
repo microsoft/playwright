@@ -23,7 +23,7 @@ Playwright comes with a registry of device parameters for selected mobile device
 behavior on a mobile device:
 
 ```js
-const { chromium, devices } = require('playwright');
+const { chromium, devices } = require('@playwright/test');
 const browser = await chromium.launch();
 
 const pixel2 = devices['Pixel 2'];

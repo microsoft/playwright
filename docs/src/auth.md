@@ -373,7 +373,7 @@ and cannot be shared across browser types.
 User data directories can be used with the [`method: BrowserType.launchPersistentContext`] API.
 
 ```js
-const { chromium } = require('playwright');
+const { chromium } = require('@playwright/test');
 
 const userDataDir = '/path/to/directory';
 const context = await chromium.launchPersistentContext(userDataDir, { headless: false });

@@ -21,7 +21,7 @@ This single command downloads the Playwright NPM package and browser binaries fo
 Once installed, you can `require` Playwright in a Node.js script, and launch any of the 3 browsers (`chromium`, `firefox` and `webkit`).
 
 ```js
-const { chromium } = require('playwright');
+const { chromium } = require('@playwright/test');
 
 (async () => {
   const browser = await chromium.launch();
@@ -44,7 +44,7 @@ Playwright APIs are asynchronous and return Promise objects. Our code examples u
 In our first script, we will navigate to `whatsmyuseragent.org` and take a screenshot in WebKit.
 
 ```js
-const { webkit } = require('playwright');
+const { webkit } = require('@playwright/test');
 
 (async () => {
   const browser = await webkit.launch();
@@ -84,7 +84,7 @@ Add the following to the top of your JavaScript file to get type-checking in VS 
 Alternatively, you can use JSDoc to set types for variables.
 
 ```js
-/** @type {import('playwright').Page} */
+/** @type {import('@playwright/test').Page} */
 let page;
 ```
 
@@ -92,7 +92,7 @@ let page;
 TypeScript support will work out-of-the-box. Types can also be imported explicitly.
 
 ```js
-let page: import('playwright').Page;
+let page: import('@playwright/test').Page;
 ```
 
 ## System requirements

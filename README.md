@@ -45,7 +45,7 @@ Playwright is built to automate the broad and growing set of web browser capabil
 This code snippet navigates to whatsmyuseragent.org in Chromium, Firefox and WebKit, and saves 3 screenshots.
 
 ```js
-const playwright = require('playwright');
+const playwright = require('@playwright/test');
 
 (async () => {
   for (const browserType of ['chromium', 'firefox', 'webkit']) {
@@ -64,7 +64,7 @@ const playwright = require('playwright');
 This snippet emulates Mobile Safari on a device at a given geolocation, navigates to maps.google.com, performs action and takes a screenshot.
 
 ```js
-const { webkit, devices } = require('playwright');
+const { webkit, devices } = require('@playwright/test');
 const iPhone11 = devices['iPhone 11 Pro'];
 
 (async () => {
@@ -89,7 +89,7 @@ const iPhone11 = devices['iPhone 11 Pro'];
 This code snippet navigates to example.com in Firefox, and executes a script in the page context.
 
 ```js
-const { firefox } = require('playwright');
+const { firefox } = require('@playwright/test');
 
 (async () => {
   const browser = await firefox.launch();
@@ -114,7 +114,7 @@ const { firefox } = require('playwright');
 This code snippet sets up request routing for a WebKit page to log all network requests.
 
 ```js
-const { webkit } = require('playwright');
+const { webkit } = require('@playwright/test');
 
 (async () => {
   const browser = await webkit.launch();

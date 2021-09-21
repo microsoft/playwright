@@ -4,7 +4,7 @@ BrowserType provides methods to launch a specific browser instance or connect to
 typical example of using Playwright to drive automation:
 
 ```js
-const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
+const { chromium } = require('@playwright/test');  // Or 'firefox' or 'webkit'.
 
 (async () => {
   const browser = await chromium.launch();
@@ -262,7 +262,7 @@ Launches browser server that client can connect to. An example of launching a br
 later:
 
 ```js
-const { chromium } = require('playwright');  // Or 'webkit' or 'firefox'.
+const { chromium } = require('@playwright/test');  // Or 'webkit' or 'firefox'.
 
 (async () => {
   const browserServer = await chromium.launchServer();

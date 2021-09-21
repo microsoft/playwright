@@ -8,7 +8,7 @@ instance might have multiple [Page] instances.
 This example creates a page, navigates it to a URL, and then saves a screenshot:
 
 ```js
-const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
+const { webkit } = require('@playwright/test');  // Or 'chromium' or 'firefox'.
 
 (async () => {
   const browser = await webkit.launch();
@@ -1344,7 +1344,7 @@ Functions installed via [`method: Page.exposeBinding`] survive navigations.
 An example of exposing page URL to all frames in a page:
 
 ```js
-const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
+const { webkit } = require('@playwright/test');  // Or 'chromium' or 'firefox'.
 
 (async () => {
   const browser = await webkit.launch({ headless: false });
@@ -1574,7 +1574,7 @@ Functions installed via [`method: Page.exposeFunction`] survive navigations.
 An example of adding a `sha256` function to the page:
 
 ```js
-const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
+const { webkit } = require('@playwright/test');  // Or 'chromium' or 'firefox'.
 const crypto = require('crypto');
 
 (async () => {
@@ -3118,7 +3118,7 @@ Returns when the [`param: expression`] returns a truthy value. It resolves to a 
 The [`method: Page.waitForFunction`] can be used to observe viewport size change:
 
 ```js
-const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
+const { webkit } = require('@playwright/test');  // Or 'chromium' or 'firefox'.
 
 (async () => {
   const browser = await webkit.launch();
@@ -3636,7 +3636,7 @@ function will throw.
 This method works across navigations:
 
 ```js
-const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
+const { chromium } = require('@playwright/test');  // Or 'firefox' or 'webkit'.
 
 (async () => {
   const browser = await chromium.launch();

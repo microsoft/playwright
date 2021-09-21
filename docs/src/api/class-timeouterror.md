@@ -5,7 +5,7 @@ TimeoutError is emitted whenever certain operations are terminated due to timeou
 Page.waitForSelector`] or [`method: BrowserType.launch`].
 
 ```js
-const playwright = require('playwright');
+const playwright = require('@playwright/test');
 
 (async () => {
   const browser = await playwright.chromium.launch();

@@ -4,13 +4,13 @@
 Playwright has **experimental** support for Electron automation. You can access electron namespace via:
 
 ```js
-const { _electron } = require('playwright');
+const { _electron } = require('@playwright/test');
 ```
 
 An example of the Electron automation script would be:
 
 ```js
-const { _electron: electron } = require('playwright');
+const { _electron: electron } = require('@playwright/test');
 
 (async () => {
   // Launch Electron app.

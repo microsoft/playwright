@@ -21,7 +21,7 @@ Playwright has **experimental** support for Android automation. This includes Ch
 An example of the Android automation script would be:
 
 ```js
-const { _android: android } = require('playwright');
+const { _android: android } = require('@playwright/test');
 
 (async () => {
   // Connect to the device.

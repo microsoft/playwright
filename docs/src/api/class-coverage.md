@@ -10,7 +10,7 @@ Coverage APIs are only supported on Chromium-based browsers.
 :::
 
 ```js
-const { chromium } = require('playwright');
+const { chromium } = require('@playwright/test');
 const v8toIstanbul = require('v8-to-istanbul');
 
 (async() => {

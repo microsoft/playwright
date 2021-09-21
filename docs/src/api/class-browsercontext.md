@@ -402,7 +402,7 @@ See [`method: Page.exposeBinding`] for page-only version.
 An example of exposing page URL to all frames in all pages in the context:
 
 ```js
-const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
+const { webkit } = require('@playwright/test');  // Or 'chromium' or 'firefox'.
 
 (async () => {
   const browser = await webkit.launch({ headless: false });
@@ -629,7 +629,7 @@ See [`method: Page.exposeFunction`] for page-only version.
 An example of adding a `sha256` function to all pages in the context:
 
 ```js
-const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
+const { webkit } = require('@playwright/test');  // Or 'chromium' or 'firefox'.
 const crypto = require('crypto');
 
 (async () => {

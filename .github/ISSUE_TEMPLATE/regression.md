@@ -19,7 +19,7 @@ Help us help you! Put down a short code snippet that illustrates your bug and
 that we can run and debug locally. For example:
 
 ```javascript
-const {chromium, webkit, firefox} = require('playwright');
+const {chromium, webkit, firefox} = require('@playwright/test');
 
 (async () => {
   const browser = await chromium.launch();

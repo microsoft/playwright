@@ -4,7 +4,7 @@ Playwright module provides a method to launch a browser instance. The following 
 to drive automation:
 
 ```js
-const { chromium, firefox, webkit } = require('playwright');
+const { chromium, firefox, webkit } = require('@playwright/test');
 
 (async () => {
   const browser = await chromium.launch();  // Or 'firefox' or 'webkit'.
@@ -95,7 +95,7 @@ This object can be used to launch or connect to Chromium, returning instances of
 Returns a dictionary of devices to be used with [`method: Browser.newContext`] or [`method: Browser.newPage`].
 
 ```js
-const { webkit, devices } = require('playwright');
+const { webkit, devices } = require('@playwright/test');
 const iPhone = devices['iPhone 6'];
 
 (async () => {
