@@ -60,7 +60,7 @@ const dirtyFiles = [];
 
 (async function() {
   for (const packageName of require('./listPackages').packages)
-    await lintPackage(packageName);
+    await lintPackage(path.basename(packageName));
   for (const file of dirtyFiles) {
     console.warn('Updated', path.relative(ROOT_PATH, file));
   }

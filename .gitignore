@@ -20,3 +20,6 @@ nohup.out
 allure*
 playwright-report
 /demo/
+/packages/*/LICENSE
+/packages/*/NOTICE
+/packages/playwright/README.md

@@ -12,11 +12,11 @@
   },
   "license": "Apache-2.0",
   "exports": {
-      ".": {
-        "import": "./index.mjs",
-        "require": "./index.js"
-      },
-      "./": "./"
+    ".": {
+      "import": "./index.mjs",
+      "require": "./index.js"
+    },
+    "./": "./"
   },
   "types": "types/types.d.ts",
   "bin": {

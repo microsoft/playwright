@@ -1,7 +1,7 @@
 {
   "name": "@playwright/test",
   "version": "1.15.0-next",
-  "description": "Playwright Test",
+  "description": "A high-level API to automate web browsers",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
   "engines": {
@@ -9,11 +9,11 @@
   },
   "main": "index.js",
   "exports": {
-      ".": {
-        "import": "./index.mjs",
-        "require": "./index.js"
-      },
-      "./": "./"
+    ".": {
+      "import": "./index.mjs",
+      "require": "./index.js"
+    },
+    "./": "./"
   },
   "author": {
     "name": "Microsoft Corporation"
