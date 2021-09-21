@@ -185,7 +185,7 @@ test('should match cli string argument', async ({ runInlineTest }) => {
       const { test } = pwt;
       test('pass', ({}) => {});
     `
-  }, { args: [`dir\\${path.sep}a`] });
+  }, {}, {}, { additionalArgs: [`dir\\${path.sep}a`] });
   expect(result.passed).toBe(1);
   expect(result.report.suites.map(s => s.file).sort()).toEqual(['a.test.ts']);
   expect(result.exitCode).toBe(0);
@@ -205,7 +205,7 @@ test('should match regex string argument', async ({ runInlineTest }) => {
       const { test } = pwt;
       test('pass', ({}) => {});
     `
-  }, { args: ['/filea.*ts/'] });
+  }, {}, {}, { additionalArgs: ['/filea.*ts/'] });
   expect(result.passed).toBe(2);
   expect(result.report.suites.map(s => s.file).sort()).toEqual(['dir/filea.test.ts', 'filea.test.ts']);
   expect(result.exitCode).toBe(0);
@@ -222,7 +222,7 @@ test('should match regex string with a colon argument', async ({ runInlineTest }
       const { test } = pwt;
       test('pass', ({}) => {});
     `
-  }, { args: ['/weird:file\.test\.ts/'] });
+  }, {}, {}, { additionalArgs: ['/weird:file\.test\.ts/'] });
   expect(result.passed).toBe(1);
   expect(result.report.suites.map(s => s.file).sort()).toEqual(['weird:file.test.ts']);
   expect(result.exitCode).toBe(0);
@@ -242,7 +242,7 @@ test('should match case insensitive', async ({ runInlineTest }) => {
       const { test } = pwt;
       test('pass', ({}) => {});
     `
-  }, { args: ['a.test.ts'] });
+  }, {}, {}, { additionalArgs: ['a.test.ts'] });
   expect(result.passed).toBe(2);
   expect(result.report.suites.map(s => s.file).sort()).toEqual(['capital/A.test.ts', 'lowercase/a.test.ts']);
   expect(result.exitCode).toBe(0);
@@ -260,7 +260,7 @@ test('should focus a single test spec', async ({ runInlineTest }) => {
       const { test } = pwt;
       test('no-pass1', ({}) => {});
     `,
-  }, { args: ['foo.test.ts:7'] });
+  }, {}, {}, { additionalArgs: ['foo.test.ts:7'] });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   expect(result.skipped).toBe(0);
@@ -287,7 +287,7 @@ test('should focus a single nested test spec', async ({ runInlineTest }) => {
       const { test } = pwt;
       test('no-pass1', ({}) => {});
     `,
-  }, { args: ['foo.test.ts:9', 'bar.test.ts'] });
+  }, {}, {}, { additionalArgs: ['foo.test.ts:9', 'bar.test.ts'] });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
   expect(result.skipped).toBe(0);
@@ -312,7 +312,7 @@ test('should focus a single test suite', async ({ runInlineTest }) => {
       const { test } = pwt;
       test('no-pass1', ({}) => {});
     `,
-  }, { args: ['foo.test.ts:8'] });
+  }, {}, {}, { additionalArgs: ['foo.test.ts:8'] });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
   expect(result.skipped).toBe(0);
@@ -338,7 +338,7 @@ test('should match by directory', async ({ runInlineTest }) => {
       const { test } = pwt;
       test('pass', ({}) => {});
     `
-  }, { args: ['dir-b'] });
+  }, {}, {}, { additionalArgs: ['dir-b'] });
   expect(result.passed).toBe(2);
   expect(result.report.suites.map(s => s.file).sort()).toEqual(['dir-b/file1.test.ts', 'dir-b/file2.test.ts']);
   expect(result.exitCode).toBe(0);
@@ -438,7 +438,7 @@ test('should always work with unix separators', async ({ runInlineTest }) => {
       const { test } = pwt;
       test('pass', ({}) => {});
     `
-  }, { args: [`dir/a`] });
+  }, {}, {}, { additionalArgs: [`dir/a`] });
   expect(result.passed).toBe(1);
   expect(result.report.suites.map(s => s.file).sort()).toEqual(['a.test.ts']);
   expect(result.exitCode).toBe(0);
