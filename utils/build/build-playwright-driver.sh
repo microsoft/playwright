@@ -12,7 +12,8 @@ rm -rf ./output
 mkdir -p ./output
 
 echo "Building playwright package"
-../../packages/build_package.js playwright ./output/playwright.tgz
+npm pack ../../packages/playwright
+mv ../../packages/playwright/playwright.tar.gz ./output/playwright.tgz
 
 echo "Building api.json and protocol.yml"
 node ../../utils/doclint/generateApiJson.js > ./output/api.json

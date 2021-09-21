@@ -1,7 +1,3 @@
-# NOTE: theoretically, we can remove this file, because we always create
-# a directory for each package and only copy necessary files there.
-# However, we keep it to double check the list of files.
-#
 # This ignores everything by default, except for package.json and LICENSE and README.md.
 # See https://docs.npmjs.com/misc/developers
 **/*
