@@ -18,8 +18,8 @@ import { contextTest } from '../config/browserTest';
 import type { Page } from '../../index';
 import * as path from 'path';
 import type { Source } from '../../src/server/supplements/recorder/recorderTypes';
-import { ChildProcess, spawn } from 'child_process';
 import { chromium } from '../../index';
+import { CommonFixtures, TestChildProcess } from '../config/commonFixtures';
 export { expect } from '../config/test-runner';
 
 type CLITestArgs = {
@@ -49,13 +49,13 @@ export const test = contextTest.extend<CLITestArgs>({
     });
   },
 
-  runCLI: async ({ browserName, channel, headless, mode, executablePath }, run, testInfo) => {
+  runCLI: async ({ childProcess, browserName, channel, headless, mode, executablePath }, run, testInfo) => {
     process.env.PWTEST_RECORDER_PORT = String(10907 + testInfo.workerIndex);
     testInfo.skip(mode === 'service');
 
     let cli: CLIMock | undefined;
     await run(cliArgs => {
-      cli = new CLIMock(browserName, channel, headless, cliArgs, executablePath);
+      cli = new CLIMock(childProcess, browserName, channel, headless, cliArgs, executablePath);
       return cli;
     });
     if (cli)
@@ -177,15 +177,14 @@ class Recorder {
 }
 
 class CLIMock {
-  private process: ChildProcess;
-  private data: string;
+  private process: TestChildProcess;
   private waitForText: string;
   private waitForCallback: () => void;
   exited: Promise<void>;
 
-  constructor(browserName: string, channel: string | undefined, headless: boolean | undefined, args: string[], executablePath: string | undefined) {
-    this.data = '';
+  constructor(childProcess: CommonFixtures['childProcess'], browserName: string, channel: string | undefined, headless: boolean | undefined, args: string[], executablePath: string | undefined) {
     const nodeArgs = [
+      'node',
       path.join(__dirname, '..', '..', 'lib', 'cli', 'cli.js'),
       'codegen',
       ...args,
@@ -193,36 +192,23 @@ class CLIMock {
     ];
     if (channel)
       nodeArgs.push(`--channel=${channel}`);
-    this.process = spawn('node', nodeArgs, {
+    this.process = childProcess({
+      command: nodeArgs,
       env: {
-        ...process.env,
         PWTEST_CLI_EXIT: '1',
         PWTEST_CLI_HEADLESS: headless ? '1' : undefined,
         PWTEST_CLI_EXECUTABLE_PATH: executablePath,
       },
-      stdio: 'pipe'
     });
-    this.process.stdout.on('data', data => {
-      this.data = data.toString();
-      if (this.waitForCallback && this.data.includes(this.waitForText))
+    this.process.onOutput = () => {
+      if (this.waitForCallback && this.process.output.includes(this.waitForText))
         this.waitForCallback();
-    });
-    this.exited = new Promise((f, r) => {
-      this.process.stderr.on('data', data => {
-        console.error(data.toString());
-      });
-      this.process.on('exit', (exitCode, signal) => {
-        if (exitCode)
-          r(new Error(`Process failed with exit code ${exitCode}`));
-        if (signal)
-          r(new Error(`Process recieved signal: ${signal}`));
-        f();
-      });
-    });
+    };
+    this.exited = this.process.cleanExit();
   }
 
   async waitFor(text: string, timeout = 10_000): Promise<void> {
-    if (this.data.includes(text))
+    if (this.process.output.includes(text))
       return Promise.resolve();
     this.waitForText = text;
     return new Promise((f, r) => {
@@ -236,7 +222,7 @@ class CLIMock {
   }
 
   text() {
-    return removeAnsiColors(this.data);
+    return removeAnsiColors(this.process.output);
   }
 }
 

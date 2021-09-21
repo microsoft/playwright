@@ -22,6 +22,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import { RemoteServer, RemoteServerOptions } from './remoteServer';
 import { baseTest, CommonWorkerFixtures } from './baseTest';
+import { CommonFixtures } from './commonFixtures';
 
 type PlaywrightWorkerOptions = {
   executablePath: LaunchOptions['executablePath'];
@@ -48,7 +49,7 @@ type PlaywrightTestFixtures = {
 };
 export type PlaywrightOptions = PlaywrightWorkerOptions & PlaywrightTestOptions;
 
-export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTestFixtures, PlaywrightWorkerOptions & PlaywrightWorkerFixtures, {}, CommonWorkerFixtures> = {
+export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTestFixtures, PlaywrightWorkerOptions & PlaywrightWorkerFixtures, CommonFixtures, CommonWorkerFixtures> = {
   executablePath: [ undefined, { scope: 'worker' } ],
   proxy: [ undefined, { scope: 'worker' } ],
   args: [ undefined, { scope: 'worker' } ],
@@ -109,13 +110,13 @@ export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTest
       await persistentContext.close();
   },
 
-  startRemoteServer: async ({ browserType, browserOptions }, run) => {
+  startRemoteServer: async ({ childProcess, browserType, browserOptions }, run) => {
     let remoteServer: RemoteServer | undefined;
     await run(async options => {
       if (remoteServer)
         throw new Error('can only start one remote server');
       remoteServer = new RemoteServer();
-      await remoteServer._start(browserType, browserOptions, options);
+      await remoteServer._start(childProcess, browserType, browserOptions, options);
       return remoteServer;
     });
     if (remoteServer)
