@@ -303,7 +303,7 @@ test('should accept a relative path for outputDir', async ({ runInlineTest }, te
       { outputDir: './my-output-dir' },
     ] };
     `,
-  }, {usesCustomOutputDir: true});
+  }, {}, {}, { usesCustomOutputDir: true });
   expect(result.exitCode).toBe(0);
 });
 
