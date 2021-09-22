@@ -101,3 +101,18 @@ it('should work with newline', async ({page, server}) => {
   await page.setContent('<div>\n</div>');
   expect(await page.$eval('div', div => div.textContent)).toBe('\n');
 });
+
+it('content() should throw nice error during navigation', async ({page, server}) => {
+  for (let timeout = 0; timeout < 200; timeout += 20) {
+    await page.setContent('<div>hello</div>');
+    const promise = page.goto(server.EMPTY_PAGE);
+    await page.waitForTimeout(timeout);
+    const [contentOrError] = await Promise.all([
+      page.content().catch(e => e),
+      promise,
+    ]);
+    const emptyOutput = '<html><head></head><body></body></html>';
+    if (contentOrError !== expectedOutput && contentOrError !== emptyOutput)
+      expect(contentOrError?.message).toContain('Unable to retrieve content because the page is navigating and changing the content.');
+  }
+});
