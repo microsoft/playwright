@@ -9739,7 +9739,7 @@ export interface BrowserType<Unused = {}> {
     executablePath?: string;
 
     /**
-     * An object containing additional HTTP headers to be sent with every request. All header values must be strings.
+     * An object containing additional HTTP headers to be sent with every request.
      */
     extraHTTPHeaders?: { [key: string]: string; };
 
@@ -10934,7 +10934,7 @@ export interface AndroidDevice {
     deviceScaleFactor?: number;
 
     /**
-     * An object containing additional HTTP headers to be sent with every request. All header values must be strings.
+     * An object containing additional HTTP headers to be sent with every request.
      */
     extraHTTPHeaders?: { [key: string]: string; };
 
@@ -11710,7 +11710,7 @@ export interface Browser extends EventEmitter {
     deviceScaleFactor?: number;
 
     /**
-     * An object containing additional HTTP headers to be sent with every request. All header values must be strings.
+     * An object containing additional HTTP headers to be sent with every request.
      */
     extraHTTPHeaders?: { [key: string]: string; };
 
@@ -12516,7 +12516,7 @@ export interface Electron {
     executablePath?: string;
 
     /**
-     * An object containing additional HTTP headers to be sent with every request. All header values must be strings.
+     * An object containing additional HTTP headers to be sent with every request.
      */
     extraHTTPHeaders?: { [key: string]: string; };
 
@@ -14216,7 +14216,7 @@ export interface BrowserContextOptions {
   deviceScaleFactor?: number;
 
   /**
-   * An object containing additional HTTP headers to be sent with every request. All header values must be strings.
+   * An object containing additional HTTP headers to be sent with every request.
    */
   extraHTTPHeaders?: { [key: string]: string; };
 

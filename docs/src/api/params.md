@@ -395,7 +395,7 @@ A list of permissions to grant to all pages in this context. See
 ## context-option-extrahttpheaders
 - `extraHTTPHeaders` <[Object]<[string], [string]>>
 
-An object containing additional HTTP headers to be sent with every request. All header values must be strings.
+An object containing additional HTTP headers to be sent with every request.
 
 ## context-option-offline
 - `offline` <[boolean]>

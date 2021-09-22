@@ -2466,7 +2466,7 @@ export interface PlaywrightTestOptions {
    */
   deviceScaleFactor: number | undefined;
   /**
-   * An object containing additional HTTP headers to be sent with every request. All header values must be strings.
+   * An object containing additional HTTP headers to be sent with every request.
    */
   extraHTTPHeaders: ExtraHTTPHeaders | undefined;
   geolocation: Geolocation | undefined;
