@@ -84,6 +84,7 @@ class PlaywrightExample
 ```
 
 ## async method: Playwright._newRequest
+* langs: js
 - returns: <[FetchRequest]>
 
 **experimental** Creates new instances of [FetchRequest].
