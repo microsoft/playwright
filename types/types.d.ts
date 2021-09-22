@@ -13241,7 +13241,7 @@ export const _newRequest: (options?: {
   baseURL?: string;
 
   /**
-   * An object containing additional HTTP headers to be sent with every request. All header values must be strings.
+   * An object containing additional HTTP headers to be sent with every request.
    */
   extraHTTPHeaders?: { [key: string]: string; };
 
@@ -13255,7 +13255,7 @@ export const _newRequest: (options?: {
   };
 
   /**
-   * Whether to ignore HTTPS errors during navigation. Defaults to `false`.
+   * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
    */
   ignoreHTTPSErrors?: boolean;
 
