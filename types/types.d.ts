@@ -9739,7 +9739,7 @@ export interface BrowserType<Unused = {}> {
     executablePath?: string;
 
     /**
-     * An object containing additional HTTP headers to be sent with every request. All header values must be strings.
+     * An object containing additional HTTP headers to be sent with every request.
      */
     extraHTTPHeaders?: { [key: string]: string; };
 
@@ -9813,7 +9813,7 @@ export interface BrowserType<Unused = {}> {
     ignoreDefaultArgs?: boolean|Array<string>;
 
     /**
-     * Whether to ignore HTTPS errors during navigation. Defaults to `false`.
+     * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
      */
     ignoreHTTPSErrors?: boolean;
 
@@ -10934,7 +10934,7 @@ export interface AndroidDevice {
     deviceScaleFactor?: number;
 
     /**
-     * An object containing additional HTTP headers to be sent with every request. All header values must be strings.
+     * An object containing additional HTTP headers to be sent with every request.
      */
     extraHTTPHeaders?: { [key: string]: string; };
 
@@ -10979,7 +10979,7 @@ export interface AndroidDevice {
     };
 
     /**
-     * Whether to ignore HTTPS errors during navigation. Defaults to `false`.
+     * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
      */
     ignoreHTTPSErrors?: boolean;
 
@@ -11710,7 +11710,7 @@ export interface Browser extends EventEmitter {
     deviceScaleFactor?: number;
 
     /**
-     * An object containing additional HTTP headers to be sent with every request. All header values must be strings.
+     * An object containing additional HTTP headers to be sent with every request.
      */
     extraHTTPHeaders?: { [key: string]: string; };
 
@@ -11755,7 +11755,7 @@ export interface Browser extends EventEmitter {
     };
 
     /**
-     * Whether to ignore HTTPS errors during navigation. Defaults to `false`.
+     * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
      */
     ignoreHTTPSErrors?: boolean;
 
@@ -12516,7 +12516,7 @@ export interface Electron {
     executablePath?: string;
 
     /**
-     * An object containing additional HTTP headers to be sent with every request. All header values must be strings.
+     * An object containing additional HTTP headers to be sent with every request.
      */
     extraHTTPHeaders?: { [key: string]: string; };
 
@@ -12547,7 +12547,7 @@ export interface Electron {
     };
 
     /**
-     * Whether to ignore HTTPS errors during navigation. Defaults to `false`.
+     * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
      */
     ignoreHTTPSErrors?: boolean;
 
@@ -14216,7 +14216,7 @@ export interface BrowserContextOptions {
   deviceScaleFactor?: number;
 
   /**
-   * An object containing additional HTTP headers to be sent with every request. All header values must be strings.
+   * An object containing additional HTTP headers to be sent with every request.
    */
   extraHTTPHeaders?: { [key: string]: string; };
 
@@ -14242,7 +14242,7 @@ export interface BrowserContextOptions {
   httpCredentials?: HTTPCredentials;
 
   /**
-   * Whether to ignore HTTPS errors during navigation. Defaults to `false`.
+   * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
    */
   ignoreHTTPSErrors?: boolean;
 
