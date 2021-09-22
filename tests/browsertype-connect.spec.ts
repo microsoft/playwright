@@ -156,7 +156,6 @@ test('should support slowmo option', async ({browserType, startRemoteServer}) =>
   const start = Date.now();
   await browser1.newContext();
   await browser1.close();
-  console.log(Date.now() - start);
   expect(Date.now() - start).toBeGreaterThan(199);
 });
 
