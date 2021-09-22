@@ -15,13 +15,15 @@
  */
 
 import { playwrightTest as test, expect } from './config/browserTest';
-import { standalone314159, selenium400rc1, chromeDriver } from './config/setup';
 import type { TestInfo } from '../types/test';
 import path from 'path';
 import fs from 'fs';
 
-const brokenDriver = path.join(__dirname, 'assets', 'broken-selenium-driver.js');
-const seleniumConfigStandalone = path.join(__dirname, 'assets', 'selenium-config-standalone.json');
+const chromeDriver = require('chromedriver').path;
+const brokenDriver = path.join(__dirname, 'assets', 'selenium-grid', 'broken-selenium-driver.js');
+const seleniumConfigStandalone = path.join(__dirname, 'assets', 'selenium-grid', 'selenium-config-standalone.json');
+const standalone_3_141_59 = path.join(__dirname, 'assets', 'selenium-grid', 'selenium-server-standalone-3.141.59.jar');
+const selenium_4_0_0_rc1 = path.join(__dirname, 'assets', 'selenium-grid', 'selenium-server-4.0.0-rc-1.jar');
 
 function writeSeleniumConfig(testInfo: TestInfo, port: number) {
   const content = fs.readFileSync(seleniumConfigStandalone, 'utf8').replace(/4444/g, String(port));
@@ -30,12 +32,15 @@ function writeSeleniumConfig(testInfo: TestInfo, port: number) {
   return file;
 }
 
+test.skip(({ mode }) => mode !== 'default', 'Using test hooks');
+test.skip(() => !!process.env.INSIDE_DOCKER, 'Docker image does not have Java');
+
 test('selenium grid 3.141.59 standalone chromium', async ({ browserOptions, browserName, childProcess, waitForPort, browserType }, testInfo) => {
   test.skip(browserName !== 'chromium');
 
   const port = testInfo.workerIndex + 15123;
   const grid = childProcess({
-    command: ['java', `-Dwebdriver.chrome.driver=${chromeDriver}`, '-jar', standalone314159, '-config', writeSeleniumConfig(testInfo, port)],
+    command: ['java', `-Dwebdriver.chrome.driver=${chromeDriver}`, '-jar', standalone_3_141_59, '-config', writeSeleniumConfig(testInfo, port)],
     cwd: __dirname,
   });
   await waitForPort(port);
@@ -49,6 +54,8 @@ test('selenium grid 3.141.59 standalone chromium', async ({ browserOptions, brow
   await browser.close();
 
   expect(grid.output).toContain('Starting ChromeDriver');
+  expect(grid.output).toContain('Started new session');
+  await grid.waitForOutput('Removing session');
 });
 
 test('selenium grid 4.0.0-rc-1 standalone chromium', async ({ browserOptions, browserName, childProcess, waitForPort, browserType }, testInfo) => {
@@ -56,7 +63,7 @@ test('selenium grid 4.0.0-rc-1 standalone chromium', async ({ browserOptions, br
 
   const port = testInfo.workerIndex + 15123;
   const grid = childProcess({
-    command: ['java', `-Dwebdriver.chrome.driver=${chromeDriver}`, '-jar', selenium400rc1, 'standalone', '--config', writeSeleniumConfig(testInfo, port)],
+    command: ['java', `-Dwebdriver.chrome.driver=${chromeDriver}`, '-jar', selenium_4_0_0_rc1, 'standalone', '--config', writeSeleniumConfig(testInfo, port)],
     cwd: __dirname,
   });
   await waitForPort(port);
@@ -70,6 +77,8 @@ test('selenium grid 4.0.0-rc-1 standalone chromium', async ({ browserOptions, br
   await browser.close();
 
   expect(grid.output).toContain('Starting ChromeDriver');
+  expect(grid.output).toContain('Session created');
+  await grid.waitForOutput('Deleted session');
 });
 
 test('selenium grid 4.0.0-rc-1 standalone chromium broken driver', async ({ browserOptions, browserName, childProcess, waitForPort, browserType }, testInfo) => {
@@ -77,7 +86,7 @@ test('selenium grid 4.0.0-rc-1 standalone chromium broken driver', async ({ brow
 
   const port = testInfo.workerIndex + 15123;
   const grid = childProcess({
-    command: ['java', `-Dwebdriver.chrome.driver=${brokenDriver}`, '-jar', selenium400rc1, 'standalone', '--config', writeSeleniumConfig(testInfo, port)],
+    command: ['java', `-Dwebdriver.chrome.driver=${brokenDriver}`, '-jar', selenium_4_0_0_rc1, 'standalone', '--config', writeSeleniumConfig(testInfo, port)],
     cwd: __dirname,
   });
   await waitForPort(port);

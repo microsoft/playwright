@@ -111,6 +111,7 @@
     "ansi-to-html": "^0.7.1",
     "babel-loader": "^8.2.2",
     "chokidar": "^3.5.0",
+    "chromedriver": "^93.0.1",
     "commonmark": "^0.29.1",
     "concurrently": "^6.2.1",
     "cross-env": "^7.0.2",

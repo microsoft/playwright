@@ -51,7 +51,6 @@ const config: Config<CommonOptions & PlaywrightOptions> = {
   outputDir,
   timeout: video ? 60000 : 30000,
   globalTimeout: 5400000,
-  globalSetup: './setup',
   workers: process.env.CI ? 1 : undefined,
   forbidOnly: !!process.env.CI,
   preserveOutput: process.env.CI ? 'failures-only' : 'always',

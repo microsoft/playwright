@@ -34,6 +34,8 @@ export class TestChildProcess {
   exited: Promise<{ exitCode: number | null, signal: string | null }>;
   exitCode: Promise<number>;
 
+  private _outputCallbacks = new Set<() => void>();
+
   constructor(params: TestChildParams) {
     this.params = params;
     this.process = spawn(params.command[0], params.command.slice(1), {
@@ -53,6 +55,9 @@ export class TestChildProcess {
       if (process.env.PWTEST_DEBUG)
         process.stdout.write(String(chunk));
       this.onOutput?.();
+      for (const cb of this._outputCallbacks)
+        cb();
+      this._outputCallbacks.clear();
     };
 
     this.process.stderr.on('data', appendChunk);
@@ -90,6 +95,11 @@ export class TestChildProcess {
       throw new Error(`Process failed with exit code ${r.exitCode}`);
     if (r.signal)
       throw new Error(`Process recieved signal: ${r.signal}`);
+  }
+
+  async waitForOutput(substring: string) {
+    while (!this.output.includes(substring))
+      await new Promise<void>(f => this._outputCallbacks.add(f));
   }
 }
 

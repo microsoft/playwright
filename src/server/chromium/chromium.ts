@@ -167,7 +167,7 @@ export class Chromium extends BrowserType {
       await fetchData({
         url: hubUrl + 'session/' + sessionId,
         method: 'DELETE',
-      }).catch(() => {});
+      }).catch(error => progress.log(`<error disconnecting from selenium>: ${error}`));
       progress.log(`<disconnected from selenium> sessionId=${sessionId}`);
     };
 
