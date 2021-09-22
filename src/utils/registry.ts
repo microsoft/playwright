@@ -487,10 +487,12 @@ export class Registry {
     return this._executables.find(b => b.name === name);
   }
 
-  private _addRequirementsAndDedupe(executables: Executable[] | undefined): ExecutableImpl[] {
+  defaultExecutables(): Executable[] {
+    return this._executables.filter(e => e.installType === 'download-by-default');
+  }
+
+  private _addRequirementsAndDedupe(executables: Executable[]): ExecutableImpl[] {
     const set = new Set<ExecutableImpl>();
-    if (!executables)
-      executables = this._executables.filter(executable => executable.installType === 'download-by-default');
     for (const executable of executables as ExecutableImpl[]) {
       set.add(executable);
       if (executable.browserName === 'chromium')
@@ -514,7 +516,7 @@ export class Registry {
       return await validateDependenciesWindows(windowsExeAndDllDirectories.map(d => path.join(browserDirectory, d)));
   }
 
-  async installDeps(executablesToInstallDeps?: Executable[]) {
+  async installDeps(executablesToInstallDeps: Executable[]) {
     const executables = this._addRequirementsAndDedupe(executablesToInstallDeps);
     const targets = new Set<DependencyGroup>();
     for (const executable of executables) {
@@ -528,7 +530,7 @@ export class Registry {
       return await installDependenciesLinux(targets);
   }
 
-  async install(executablesToInstall?: Executable[]) {
+  async install(executablesToInstall: Executable[]) {
     const executables = this._addRequirementsAndDedupe(executablesToInstall);
     await fs.promises.mkdir(registryDirectory, { recursive: true });
     const lockfilePath = path.join(registryDirectory, '__dirlock');
@@ -703,12 +705,25 @@ function buildPlaywrightCLICommand(sdkLanguage: string, parameters: string): str
 }
 
 export async function installDefaultBrowsersForNpmInstall() {
+  const defaultBrowserNames = registry.defaultExecutables().map(e => e.name);
+  return installBrowsersForNpmInstall(defaultBrowserNames);
+}
+
+export async function installBrowsersForNpmInstall(browsers: string[]) {
   // PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD should have a value of 0 or 1
   if (getAsBooleanFromENV('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD')) {
     logPolitely('Skipping browsers download because `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` env variable is set');
     return false;
   }
-  await registry.install();
+  const executables: Executable[] = [];
+  for (const browserName of browsers) {
+    const executable = registry.findExecutable(browserName);
+    if (!executable || executable.installType === 'none')
+      throw new Error(`Cannot install ${browserName}`);
+    executables.push(executable);
+  }
+
+  await registry.install(executables);
 }
 
 export const registry = new Registry(require('../../browsers.json'));
