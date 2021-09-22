@@ -18,7 +18,7 @@ import { playwrightTest as it, expect } from './config/browserTest';
 import { parseCSS, serializeSelector as serialize } from '../src/server/common/cssParser';
 
 const parse = (selector: string) => {
-  return parseCSS(selector, new Set(['text', 'not', 'has', 'react', 'scope', 'right-of', 'scope', 'is'])).selector;
+  return parseCSS(selector, new Set(['text', 'not', 'has', 'react', 'scope', 'right-of', 'is'])).selector;
 };
 
 it('should parse css', async () => {
@@ -48,6 +48,7 @@ it('should parse css', async () => {
   expect(serialize(parse('div~ span'))).toBe('div ~ span');
   expect(serialize(parse('div   >.class #id+ span'))).toBe('div > .class #id + span');
   expect(serialize(parse('div>span+.class'))).toBe('div > span + .class');
+  expect(serialize(parse('>span'))).toBe(':scope() > span');
 
   expect(serialize(parse('div:not(span)'))).toBe('div:not(span)');
   expect(serialize(parse(':not(span)#id'))).toBe('#id:not(span)');
