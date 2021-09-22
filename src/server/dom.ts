@@ -209,7 +209,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return throwFatalDOMError(throwRetargetableDOMError(await this.evaluateInUtility(([injected, node]) => {
       if (node.nodeType !== Node.ELEMENT_NODE)
         return 'error:notelement';
-      if (node.namespaceURI !== 'http://www.w3.org/1999/xhtml')
+      if ((node as unknown as Element).namespaceURI !== 'http://www.w3.org/1999/xhtml')
         return 'error:nothtmlelement';
       const element = node as unknown as HTMLElement;
       return { value: element.innerText };
