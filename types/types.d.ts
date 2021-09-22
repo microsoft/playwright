@@ -13241,7 +13241,7 @@ export const _newRequest: (options?: {
   baseURL?: string;
 
   /**
-   * An object containing additional HTTP headers to be sent with every request.
+   * An object containing additional HTTP headers to be sent with every request. All header values must be strings.
    */
   extraHTTPHeaders?: { [key: string]: string; };
 
@@ -13260,7 +13260,7 @@ export const _newRequest: (options?: {
   ignoreHTTPSErrors?: boolean;
 
   /**
-   * Network proxy settings to use with the request.
+   * Network proxy settings.
    */
   proxy?: {
     /**
@@ -13291,7 +13291,7 @@ export const _newRequest: (options?: {
   timeout?: number;
 
   /**
-   * Specific user agent to use in the request.
+   * Specific user agent to use in this context.
    */
   userAgent?: string;
 }) => Promise<FetchRequest>;

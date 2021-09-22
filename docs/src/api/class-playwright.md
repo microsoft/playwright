@@ -89,32 +89,13 @@ class PlaywrightExample
 
 **experimental** Creates new instances of [FetchRequest].
 
-### option: Playwright._newRequest.useragent
-- `userAgent` <[string]>
+### option: Playwright._newRequest.useragent = %%-context-option-useragent-%%
 
-Specific user agent to use in the request.
+### option: Playwright._newRequest.extraHTTPHeaders = %%-context-option-extrahttpheaders-%%
 
-### option: Playwright._newRequest.extraHTTPHeaders
-- `extraHTTPHeaders` <[Object]<[string], [string]>>
+### option: Playwright._newRequest.httpCredentials = %%-context-option-httpcredentials-%%
 
-An object containing additional HTTP headers to be sent with every request.
-
-### option: Playwright._newRequest.httpCredentials
-- `httpCredentials` <[Object]>
-  - `username` <[string]>
-  - `password` <[string]>
-
-Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
-
-### option: Playwright._newRequest.proxy
-- `proxy` <[Object]>
-  - `server` <[string]> Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example
-    `http://myproxy.com:3128` or `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
-  - `bypass` <[string]> Optional coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
-  - `username` <[string]> Optional username to use if HTTP proxy requires authentication.
-  - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
-
-Network proxy settings to use with the request.
+### option: Playwright._newRequest.proxy = %%-browser-option-proxy-%%
 
 ### option: Playwright._newRequest.timeout
 - `timeout` <[float]>
@@ -122,10 +103,7 @@ Network proxy settings to use with the request.
 Maximum time in milliseconds to wait for the response. Defaults to
 `30000` (30 seconds). Pass `0` to disable timeout.
 
-### option: Playwright._newRequest.ignoreHTTPSErrors
-- `ignoreHTTPSErrors` <[boolean]>
-
-Whether to ignore HTTPS errors during navigation. Defaults to `false`.
+### option: Playwright._newRequest.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
 
 ### option: Playwright._newRequest.baseURL
 - `baseURL` <[string]>
