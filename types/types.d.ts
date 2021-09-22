@@ -10360,7 +10360,6 @@ type AccessibilityNode = {
   children?: AccessibilityNode[];
 }
 
-export const selectors: Selectors;
 export const devices: Devices & DeviceDescriptor[];
 
 //@ts-ignore this will be any if electron is not installed
@@ -10669,12 +10668,8 @@ export type AndroidKey =
   'Copy' |
   'Paste';
 
-export const chromium: BrowserType;
-export const firefox: BrowserType;
-export const webkit: BrowserType;
 export const _electron: Electron;
 export const _android: Android;
-export const _newRequest: () => Promise<FetchRequest>;
 
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export {};
@@ -13227,6 +13222,100 @@ export interface Mouse {
   wheel(deltaX: number, deltaY: number): Promise<void>;
 }
 
+/**
+ * **experimental** Creates new instances of [FetchRequest].
+ * @param options
+ */
+export const _newRequest: (options?: {
+  /**
+   * When using
+   * [fetchRequest.get(urlOrRequest[, options])](https://playwright.dev/docs/api/class-fetchrequest#fetch-request-get),
+   * [fetchRequest.post(urlOrRequest[, options])](https://playwright.dev/docs/api/class-fetchrequest#fetch-request-post),
+   * [fetchRequest.fetch(urlOrRequest[, options])](https://playwright.dev/docs/api/class-fetchrequest#fetch-request-fetch) it
+   * takes the base URL in consideration by using the [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL)
+   * constructor for building the corresponding URL. Examples:
+   * - baseURL: `http://localhost:3000` and sending rquest to `/bar.html` results in `http://localhost:3000/bar.html`
+   * - baseURL: `http://localhost:3000/foo/` and sending rquest to `./bar.html` results in
+   *   `http://localhost:3000/foo/bar.html`
+   */
+  baseURL?: string;
+
+  /**
+   * An object containing additional HTTP headers to be sent with every request.
+   */
+  extraHTTPHeaders?: { [key: string]: string; };
+
+  /**
+   * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
+   */
+  httpCredentials?: {
+    username: string;
+
+    password: string;
+  };
+
+  /**
+   * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+   */
+  ignoreHTTPSErrors?: boolean;
+
+  /**
+   * Network proxy settings.
+   */
+  proxy?: {
+    /**
+     * Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example `http://myproxy.com:3128` or
+     * `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
+     */
+    server: string;
+
+    /**
+     * Optional coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+     */
+    bypass?: string;
+
+    /**
+     * Optional username to use if HTTP proxy requires authentication.
+     */
+    username?: string;
+
+    /**
+     * Optional password to use if HTTP proxy requires authentication.
+     */
+    password?: string;
+  };
+
+  /**
+   * Maximum time in milliseconds to wait for the response. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+   */
+  timeout?: number;
+
+  /**
+   * Specific user agent to use in this context.
+   */
+  userAgent?: string;
+}) => Promise<FetchRequest>;
+
+/**
+ * This object can be used to launch or connect to Chromium, returning instances of [Browser].
+ */
+export const chromium: BrowserType;
+
+/**
+ * This object can be used to launch or connect to Firefox, returning instances of [Browser].
+ */
+export const firefox: BrowserType;
+
+/**
+ * Selectors can be used to install custom selector engines. See [Working with selectors](https://playwright.dev/docs/selectors) for more
+ * information.
+ */
+export const selectors: Selectors;
+
+/**
+ * This object can be used to launch or connect to WebKit, returning instances of [Browser].
+ */
+export const webkit: BrowserType;
 /**
  * Whenever the page sends a request for a network resource the following sequence of events are emitted by [Page]:
  * - [page.on('request')](https://playwright.dev/docs/api/class-page#page-event-request) emitted when the request is

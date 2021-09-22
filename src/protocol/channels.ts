@@ -322,10 +322,38 @@ export type PlaywrightSocksEndOptions = {
 };
 export type PlaywrightSocksEndResult = void;
 export type PlaywrightNewRequestParams = {
+  baseURL?: string,
+  userAgent?: string,
   ignoreHTTPSErrors?: boolean,
+  extraHTTPHeaders?: NameValue[],
+  httpCredentials?: {
+    username: string,
+    password: string,
+  },
+  proxy?: {
+    server: string,
+    bypass?: string,
+    username?: string,
+    password?: string,
+  },
+  timeout?: number,
 };
 export type PlaywrightNewRequestOptions = {
+  baseURL?: string,
+  userAgent?: string,
   ignoreHTTPSErrors?: boolean,
+  extraHTTPHeaders?: NameValue[],
+  httpCredentials?: {
+    username: string,
+    password: string,
+  },
+  proxy?: {
+    server: string,
+    bypass?: string,
+    username?: string,
+    password?: string,
+  },
+  timeout?: number,
 };
 export type PlaywrightNewRequestResult = {
   request: FetchRequestChannel,

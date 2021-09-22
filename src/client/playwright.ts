@@ -20,13 +20,14 @@ import util from 'util';
 import * as channels from '../protocol/channels';
 import { TimeoutError } from '../utils/errors';
 import { createSocket } from '../utils/netUtils';
+import { headersObjectToArray } from '../utils/utils';
 import { Android } from './android';
 import { BrowserType } from './browserType';
 import { ChannelOwner } from './channelOwner';
 import { Electron } from './electron';
 import { FetchRequest } from './fetch';
 import { Selectors, SelectorsOwner, sharedSelectors } from './selectors';
-import { Size } from './types';
+import { NewRequestOptions, Size } from './types';
 const dnsLookupAsync = util.promisify(dns.lookup);
 
 type DeviceDescriptor = {
@@ -69,9 +70,12 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel, channel
     this.selectors._addChannel(this._selectorsOwner);
   }
 
-  async _newRequest(options?: {}): Promise<FetchRequest> {
+  async _newRequest(options: NewRequestOptions = {}): Promise<FetchRequest> {
     return await this._wrapApiCall(async (channel: channels.PlaywrightChannel) => {
-      return FetchRequest.from((await channel.newRequest({})).request);
+      return FetchRequest.from((await channel.newRequest({
+        ...options,
+        extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined
+      })).request);
     });
   }
 
