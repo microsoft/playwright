@@ -2479,7 +2479,7 @@ export interface PlaywrightTestOptions {
    */
   httpCredentials: HTTPCredentials | undefined;
   /**
-   * Whether to ignore HTTPS errors during navigation. Defaults to `false`.
+   * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
    */
   ignoreHTTPSErrors: boolean | undefined;
   /**

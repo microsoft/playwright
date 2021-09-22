@@ -248,7 +248,7 @@ Whether to automatically download all the attachments. Defaults to `false` where
 ## context-option-ignorehttpserrors
 - `ignoreHTTPSErrors` <[boolean]>
 
-Whether to ignore HTTPS errors during navigation. Defaults to `false`.
+Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
 
 ## context-option-bypasscsp
 - `bypassCSP` <[boolean]>
