@@ -72,7 +72,7 @@ export default config;
 
 ### Reporters on CI
 
-You can use different reporters locally and on CI. For example, using concise `'dot'` reporter avoids too much output.
+You can use different reporters locally and on CI. For example, using concise `'dot'` reporter avoids too much output. This is the default on CI.
 
 ```js js-flavor=js
 // playwright.config.js
@@ -104,7 +104,7 @@ All built-in reporters show detailed information about failures, and mostly diff
 
 ### List reporter
 
-List reporter is default. It prints a line for each test being run.
+List reporter is default (except on CI where the `dot` reporter is default). It prints a line for each test being run.
 
 ```bash
 npx playwright test --reporter=list
@@ -195,7 +195,7 @@ Running 124 tests using 6 workers
 
 ### Dot reporter
 
-Dot reporter is very concise - it only produces a single character per successful test run. It is useful on CI where you don't want a lot of output.
+Dot reporter is very concise - it only produces a single character per successful test run. It is the default on CI and useful where you don't want a lot of output.
 
 ```bash
 npx playwright test --reporter=dot
