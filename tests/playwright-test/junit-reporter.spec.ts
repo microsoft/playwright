@@ -103,6 +103,8 @@ test('should render stdout', async ({ runInlineTest }) => {
       const { test } = pwt;
       test('one', async ({}) => {
         console.log(colors.yellow('Hello world'));
+        console.log('Hello again');
+        console.error('My error');
         test.expect("abc").toBe('abcd');
       });
     `,
@@ -110,9 +112,10 @@ test('should render stdout', async ({ runInlineTest }) => {
   const xml = parseXML(result.output);
   const testcase = xml['testsuites']['testsuite'][0]['testcase'][0];
   expect(testcase['system-out'].length).toBe(1);
-  expect(testcase['system-out'][0]).toContain('Hello world');
+  expect(testcase['system-out'][0]).toContain('[33mHello world[39m\nHello again');
   expect(testcase['system-out'][0]).not.toContain('u00');
-  expect(testcase['failure'][0]['_']).toContain(`>  9 |         test.expect("abc").toBe('abcd');`);
+  expect(testcase['system-err'][0]).toContain('My error');
+  expect(testcase['failure'][0]['_']).toContain(`> 11 |         test.expect("abc").toBe('abcd');`);
   expect(result.exitCode).toBe(1);
 });
 
@@ -221,20 +224,29 @@ test('should render projects', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should render attachments', async ({ runInlineTest }) => {
+test('should render existing attachments, but not missing ones', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
       const { test } = pwt;
       test.use({ screenshot: 'on' });
-      test('one', async ({ page }) => {
+      test('one', async ({ page }, testInfo) => {
         await page.setContent('hello');
+        const file = testInfo.outputPath('file.txt');
+        require('fs').writeFileSync(file, 'my file', 'utf8');
+        testInfo.attachments.push({ name: 'my-file', path: file, contentType: 'text/plain' });
+        testInfo.attachments.push({ name: 'my-file-missing', path: file + '-missing', contentType: 'text/plain' });
+        console.log('log here');
       });
     `,
   }, { reporter: 'junit' });
   const xml = parseXML(result.output);
   const testcase = xml['testsuites']['testsuite'][0]['testcase'][0];
   expect(testcase['system-out'].length).toBe(1);
-  expect(testcase['system-out'][0].trim()).toBe(`[[ATTACHMENT|test-results${path.sep}a-one${path.sep}test-finished-1.png]]`);
+  expect(testcase['system-out'][0].trim()).toBe([
+    `log here`,
+    `\n[[ATTACHMENT|test-results${path.sep}a-one${path.sep}file.txt]]`,
+    `\n[[ATTACHMENT|test-results${path.sep}a-one${path.sep}test-finished-1.png]]`,
+  ].join('\n'));
   expect(result.exitCode).toBe(0);
 });
 
