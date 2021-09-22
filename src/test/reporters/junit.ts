@@ -145,30 +145,28 @@ class JUnitReporter implements Reporter {
         text: stripAnsiEscapes(formatFailure(this.config, test))
       });
     }
-    for (const result of test.results) {
-      for (const stdout of result.stdout) {
-        entry.children.push({
-          name: 'system-out',
-          text: stdout.toString()
-        });
-      }
 
+    const systemOut: string[] = [];
+    const systemErr: string[] = [];
+    for (const result of test.results) {
+      systemOut.push(...result.stdout.map(item => item.toString()));
+      systemErr.push(...result.stderr.map(item => item.toString()));
       for (const attachment of result.attachments) {
-        if (attachment.path) {
-          entry.children.push({
-            name: 'system-out',
-            text: `[[ATTACHMENT|${path.relative(this.config.rootDir, attachment.path)}]]`
-          });
+        if (!attachment.path)
+          continue;
+        try {
+          if (fs.existsSync(attachment.path))
+            systemOut.push(`\n[[ATTACHMENT|${path.relative(this.config.rootDir, attachment.path)}]]\n`);
+        } catch (e) {
         }
       }
-
-      for (const stderr of result.stderr) {
-        entry.children.push({
-          name: 'system-err',
-          text: stderr.toString()
-        });
-      }
     }
+    // Note: it is important to only produce a single system-out/system-err entry
+    // so that parsers in the wild understand it.
+    if (systemOut.length)
+      entry.children.push({ name: 'system-out', text: systemOut.join('') });
+    if (systemErr.length)
+      entry.children.push({ name: 'system-err', text: systemErr.join('') });
   }
 }
 
