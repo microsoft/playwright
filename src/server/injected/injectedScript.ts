@@ -27,6 +27,7 @@ import { generateSelector } from './selectorGenerator';
 type Predicate<T> = (progress: InjectedScriptProgress, continuePolling: symbol) => T | symbol;
 
 export type InjectedScriptProgress = {
+  injectedScript: InjectedScript,
   aborted: boolean,
   log: (message: string) => void,
   logRepeating: (message: string) => void,
@@ -325,6 +326,7 @@ export class InjectedScript {
 
     let lastLog = '';
     const progress: InjectedScriptProgress = {
+      injectedScript: this,
       aborted: false,
       log: (message: string) => {
         lastLog = message;

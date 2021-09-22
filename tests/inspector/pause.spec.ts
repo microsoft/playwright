@@ -225,7 +225,6 @@ it.describe('pause', () => {
     expect(await sanitizeLog(recorderPage)).toEqual([
       'page.pause- XXms',
       'page.isChecked(button)- XXms',
-      'checking \"checked\" state of \"button\"',
       'selector resolved to <button onclick=\"console.log(1)\">Submit</button>',
       'error: Not a checkbox or radio button',
     ]);
