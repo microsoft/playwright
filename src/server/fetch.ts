@@ -110,7 +110,7 @@ export abstract class FetchRequest extends SdkObject {
       }
 
       const timeout = defaults.timeoutSettings.timeout(params);
-      const deadline = monotonicTime() + timeout;
+      const deadline = timeout && (monotonicTime() + timeout);
 
       const options: https.RequestOptions & { maxRedirects: number, deadline: number } = {
         method,
@@ -269,16 +269,20 @@ export abstract class FetchRequest extends SdkObject {
         body.on('error',reject);
       });
       request.on('error', reject);
-      const rejectOnTimeout = () =>  {
-        reject(new Error(`Request timed out after ${options.timeout}ms`));
-        request.abort();
-      };
-      const remaining = options.deadline - monotonicTime();
-      if (remaining <= 0) {
-        rejectOnTimeout();
-        return;
+
+      if (options.deadline) {
+        const rejectOnTimeout = () =>  {
+          reject(new Error(`Request timed out after ${options.timeout}ms`));
+          request.abort();
+        };
+        const remaining = options.deadline - monotonicTime();
+        if (remaining <= 0) {
+          rejectOnTimeout();
+          return;
+        }
+        request.setTimeout(remaining, rejectOnTimeout);
       }
-      request.setTimeout(remaining, rejectOnTimeout);
+
       if (postData)
         request.write(postData);
       request.end();

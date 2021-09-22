@@ -643,6 +643,23 @@ it('should support timeout option', async function({context, server}) {
   expect(error.message).toContain(`Request timed out after 10ms`);
 });
 
+it('should support a timeout of 0', async function({context, server}) {
+  server.setRoute('/slow', (req, res) => {
+    res.writeHead(200, {
+      'content-length': 4,
+      'content-type': 'text/html',
+    });
+    setTimeout(() => {
+      res.end('done');
+    }, 50);
+  });
+
+  const response = await context._request.get(server.PREFIX + '/slow', {
+    timeout: 0,
+  });
+  expect(await response.text()).toBe('done');
+});
+
 it('should respect timeout after redirects', async function({context, server}) {
   server.setRedirect('/redirect', '/slow');
   server.setRoute('/slow', (req, res) => {
