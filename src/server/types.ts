@@ -16,6 +16,7 @@
  */
 
 import { Size, Point, Rect, TimeoutOptions } from '../common/types';
+import { ExpectedTextValue } from '../protocol/channels';
 export { Size, Point, Rect, Quad, URLMatch, TimeoutOptions } from '../common/types';
 
 export type StrictOptions = {
@@ -401,4 +402,8 @@ export type FetchResponse = {
   statusText: string,
   headers: HeadersArray,
   body: Buffer,
+};
+
+export type ExpectedTextOptions = {
+  expected?: ExpectedTextValue;
 };

@@ -16,7 +16,7 @@
 
 import { EventEmitter } from 'events';
 import * as channels from '../protocol/channels';
-import { serializeError } from '../protocol/serializers';
+import { serializeError, serializeValue } from '../protocol/serializers';
 import { createScheme, Validator, ValidationError } from '../protocol/validator';
 import { assert, debugAssert, isUnderTest, monotonicTime } from '../utils/utils';
 import { tOptional } from '../protocol/validatorPrimitives';
@@ -264,7 +264,7 @@ export class DispatcherConnection {
     }
 
 
-    let error: any;
+    let error: channels.SerializedError | undefined;
     await sdkObject?.instrumentation.onBeforeCall(sdkObject, callMetadata);
     try {
       const result = await (dispatcher as any)[method](validParams, callMetadata);
@@ -276,6 +276,8 @@ export class DispatcherConnection {
       if (callMetadata.log.length)
         rewriteErrorMessage(e, e.message + formatLogRecording(callMetadata.log));
       error = serializeError(e);
+      if (callMetadata.lastActualValue)
+        error.actualValue = serializeValue(callMetadata.lastActualValue);
     } finally {
       callMetadata.endTime = monotonicTime();
       await sdkObject?.instrumentation.onAfterCall(sdkObject, callMetadata);

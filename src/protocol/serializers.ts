@@ -29,18 +29,22 @@ export function parseError(error: SerializedError): Error {
       throw new Error('Serialized error must have either an error or a value');
     return parseSerializedValue(error.value, undefined);
   }
+
+  let e: Error;
   if (error.error.name === 'TimeoutError') {
-    const e = new TimeoutError(error.error.message);
-    e.stack = error.error.stack || '';
-    return e;
+    e = new TimeoutError(error.error.message);
+  } else {
+    e = new Error(error.error.message);
+    e.name = error.error.name;
   }
-  const e = new Error(error.error.message);
   e.stack = error.error.stack || '';
-  e.name = error.error.name;
+
+  if (error.actualValue)
+    (e as any).actualValue = parseSerializedValue(error.actualValue);
   return e;
 }
 
-export function parseSerializedValue(value: SerializedValue, handles: any[] | undefined): any {
+export function parseSerializedValue(value: SerializedValue, handles: any[] = []): any {
   if (value.n !== undefined)
     return value.n;
   if (value.s !== undefined)
@@ -82,12 +86,14 @@ export function parseSerializedValue(value: SerializedValue, handles: any[] | un
 }
 
 export type HandleOrValue = { h: number } | { fallThrough: any };
-export function serializeValue(value: any, handleSerializer: (value: any) => HandleOrValue, visited: Set<any>): SerializedValue {
-  const handle = handleSerializer(value);
-  if ('fallThrough' in handle)
-    value = handle.fallThrough;
-  else
-    return handle;
+export function serializeValue(value: any, handleSerializer?: (value: any) => HandleOrValue, visited: Set<any> = new Set()): SerializedValue {
+  if (handleSerializer) {
+    const handle = handleSerializer(value);
+    if ('fallThrough' in handle)
+      value = handle.fallThrough;
+    else
+      return handle;
+  }
 
   if (visited.has(value))
     throw new Error('Argument is a circular structure');

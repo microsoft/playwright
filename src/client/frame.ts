@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { assert } from '../utils/utils';
+import { assert, isRegExp, isString } from '../utils/utils';
 import * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { Locator } from './locator';
@@ -359,6 +359,16 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     });
   }
 
+  async _expectInputValue(selector: string, expected: string | RegExp, isSubstring: boolean, options: channels.FrameInputValueOptions = {}): Promise<string> {
+    return this._wrapApiCall(async (channel: channels.FrameChannel) => {
+      return (await channel.inputValue({
+        selector,
+        expected: serializeExpectedTextValue(expected, isSubstring),
+        ...options,
+      })).value;
+    });
+  }
+
   async isChecked(selector: string, options: channels.FrameIsCheckedOptions = {}): Promise<boolean> {
     return this._wrapApiCall(async (channel: channels.FrameChannel) => {
       return (await channel.isChecked({ selector, ...options })).value;
@@ -478,4 +488,13 @@ export function verifyLoadState(name: string, waitUntil: LifecycleEvent): Lifecy
   if (!kLifecycleEvents.has(waitUntil))
     throw new Error(`${name}: expected one of (load|domcontentloaded|networkidle)`);
   return waitUntil;
+}
+
+function serializeExpectedTextValue(expected: string | RegExp, isSubstring: boolean): channels.ExpectedTextValue {
+  return {
+    string: isString(expected) && !isSubstring ? expected : undefined,
+    substring: isString(expected) && isSubstring ? expected : undefined,
+    regexSource: isRegExp(expected) ? expected.source : undefined,
+    regexFlags: isRegExp(expected) ? expected.flags : undefined,
+  };
 }

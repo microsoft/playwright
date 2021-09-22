@@ -1076,10 +1076,10 @@ export class Frame extends SdkObject {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async inputValue(metadata: CallMetadata, selector: string, options: types.TimeoutOptions & types.StrictOptions = {}): Promise<string> {
+  async inputValue(metadata: CallMetadata, selector: string, options: types.TimeoutOptions & types.StrictOptions & types.ExpectedTextOptions = {}): Promise<string> {
     const controller = new ProgressController(metadata, this);
     const info = this._page.parseSelector(selector, options);
-    const task = dom.inputValueTask(info);
+    const task = dom.inputValueTask(info, options.expected);
     return controller.run(async progress => {
       progress.log(`  retrieving value from "${selector}"`);
       return dom.throwFatalDOMError(await this._scheduleRerunnableTask(progress, info.world, task));

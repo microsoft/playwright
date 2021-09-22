@@ -133,6 +133,10 @@ export class Locator implements api.Locator {
     return this._frame.inputValue(this._selector, { strict: true, ...options });
   }
 
+  async _expectInputValue(expected: string | RegExp, isSubstring: boolean, options: channels.FrameInputValueOptions = {}): Promise<string> {
+    return this._frame._expectInputValue(this._selector, expected, isSubstring, { strict: true, ...options });
+  }
+
   async isChecked(options?: TimeoutOptions): Promise<boolean> {
     return this._frame.isChecked(this._selector, { strict: true, ...options });
   }

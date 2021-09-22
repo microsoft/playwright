@@ -97,6 +97,15 @@ SerializedArgument:
       items: Channel
 
 
+ExpectedTextValue:
+  type: object
+  properties:
+    string: string?
+    substring: string?
+    regexSource: string?
+    regexFlags: string?
+
+
 AXNode:
   type: object
   properties:
@@ -204,6 +213,7 @@ SerializedError:
         name: string
         stack: string?
     value: SerializedValue?
+    actualValue: SerializedValue?
 
 
 InterceptedResponse:
@@ -1478,6 +1488,7 @@ Frame:
       parameters:
         selector: string
         strict: boolean?
+        expected: ExpectedTextValue?
         timeout: number?
       returns:
         value: string

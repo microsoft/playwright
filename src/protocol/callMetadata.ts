@@ -35,4 +35,5 @@ export type CallMetadata = {
   objectId?: string;
   pageId?: string;
   frameId?: string;
+  lastActualValue?: string;
 };

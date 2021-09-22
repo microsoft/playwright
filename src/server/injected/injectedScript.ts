@@ -23,21 +23,28 @@ import { FatalDOMError } from '../common/domErrors';
 import { SelectorEvaluatorImpl, isVisible, parentElementOrShadowHost, elementMatchesText, TextMatcher, createRegexTextMatcher, createStrictTextMatcher, createLaxTextMatcher } from './selectorEvaluator';
 import { CSSComplexSelectorList } from '../common/cssParser';
 import { generateSelector } from './selectorGenerator';
+import type { ExpectedTextValue } from '../../protocol/channels';
 
 type Predicate<T> = (progress: InjectedScriptProgress, continuePolling: symbol) => T | symbol;
 
 export type InjectedScriptProgress = {
-  aborted: boolean,
-  log: (message: string) => void,
-  logRepeating: (message: string) => void,
+  aborted: boolean;
+  log: (message: string) => void;
+  logRepeating: (message: string) => void;
+  setLastValue: (value: string) => void;
+};
+
+export type LogEntry = {
+  message?: string;
+  value?: string;
 };
 
 export type InjectedScriptPoll<T> = {
   run: () => Promise<T>,
   // Takes more logs, waiting until at least one message is available.
-  takeNextLogs: () => Promise<string[]>,
+  takeNextLogs: () => Promise<LogEntry[]>,
   // Takes all current logs without waiting.
-  takeLastLogs: () => string[],
+  takeLastLogs: () => LogEntry[],
   cancel: () => void,
 };
 
@@ -306,34 +313,42 @@ export class InjectedScript {
   }
 
   private _runAbortableTask<T>(task: (progess: InjectedScriptProgress) => Promise<T>): InjectedScriptPoll<T> {
-    let unsentLogs: string[] = [];
-    let takeNextLogsCallback: ((logs: string[]) => void) | undefined;
+    let unsentLog: LogEntry[] = [];
+    let takeNextLogsCallback: ((logs: LogEntry[]) => void) | undefined;
     let taskFinished = false;
     const logReady = () => {
       if (!takeNextLogsCallback)
         return;
-      takeNextLogsCallback(unsentLogs);
-      unsentLogs = [];
+      takeNextLogsCallback(unsentLog);
+      unsentLog = [];
       takeNextLogsCallback = undefined;
     };
 
-    const takeNextLogs = () => new Promise<string[]>(fulfill => {
+    const takeNextLogs = () => new Promise<LogEntry[]>(fulfill => {
       takeNextLogsCallback = fulfill;
-      if (unsentLogs.length || taskFinished)
+      if (unsentLog.length || taskFinished)
         logReady();
     });
 
-    let lastLog = '';
+    let lastMessage = '';
+    let lastValue: string | undefined = undefined;
     const progress: InjectedScriptProgress = {
       aborted: false,
       log: (message: string) => {
-        lastLog = message;
-        unsentLogs.push(message);
+        lastMessage = message;
+        unsentLog.push({ message });
         logReady();
       },
       logRepeating: (message: string) => {
-        if (message !== lastLog)
+        if (message !== lastMessage)
           progress.log(message);
+      },
+      setLastValue: (value: string) => {
+        if (lastValue === value)
+          return;
+        lastValue = value;
+        unsentLog.push({ value });
+        logReady();
       },
     };
 
@@ -355,7 +370,7 @@ export class InjectedScript {
       takeNextLogs,
       run,
       cancel: () => { progress.aborted = true; },
-      takeLastLogs: () => unsentLogs,
+      takeLastLogs: () => unsentLog,
     };
   }
 
@@ -755,6 +770,10 @@ export class InjectedScript {
     delete error.stack;
     return error;
   }
+
+  expectedTextMatcher(expected: ExpectedTextValue): ExpectedTextMatcher {
+    return new ExpectedTextMatcher(expected);
+  }
 }
 
 const autoClosingTags = new Set(['AREA', 'BASE', 'BR', 'COL', 'COMMAND', 'EMBED', 'HR', 'IMG', 'INPUT', 'KEYGEN', 'LINK', 'MENUITEM', 'META', 'PARAM', 'SOURCE', 'TRACK', 'WBR']);
@@ -842,6 +861,28 @@ function createTextMatcher(selector: string): { matcher: TextMatcher, kind: 'reg
   }
   const matcher = strict ? createStrictTextMatcher(selector) : createLaxTextMatcher(selector);
   return { matcher, kind: strict ? 'strict' : 'lax' };
+}
+
+class ExpectedTextMatcher {
+  private _string: string | undefined;
+  private _substring: string | undefined;
+  private _regex: RegExp | undefined;
+
+  constructor(expected: ExpectedTextValue) {
+    this._string = expected.string;
+    this._substring = expected.substring;
+    this._regex = expected.regexSource ? new RegExp(expected.regexSource, expected.regexFlags) : undefined;
+  }
+
+  matches(text: string): boolean {
+    if (this._string !== undefined)
+      return text === this._string;
+    if (this._substring !== undefined)
+      return text.includes(text);
+    if (this._regex)
+      return !!text.match(this._regex);
+    return false;
+  }
 }
 
 export default InjectedScript;

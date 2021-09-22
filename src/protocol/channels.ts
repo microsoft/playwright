@@ -71,6 +71,13 @@ export type SerializedArgument = {
   handles: Channel[],
 };
 
+export type ExpectedTextValue = {
+  string?: string,
+  substring?: string,
+  regexSource?: string,
+  regexFlags?: string,
+};
+
 export type AXNode = {
   role: string,
   name: string,
@@ -141,6 +148,7 @@ export type SerializedError = {
     stack?: string,
   },
   value?: SerializedValue,
+  actualValue?: SerializedValue,
 };
 
 export type InterceptedResponse = {
@@ -1872,10 +1880,12 @@ export type FrameInnerTextResult = {
 export type FrameInputValueParams = {
   selector: string,
   strict?: boolean,
+  expected?: ExpectedTextValue,
   timeout?: number,
 };
 export type FrameInputValueOptions = {
   strict?: boolean,
+  expected?: ExpectedTextValue,
   timeout?: number,
 };
 export type FrameInputValueResult = {

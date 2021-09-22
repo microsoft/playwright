@@ -163,7 +163,7 @@ DEPS['src/server/'] = [
 // No dependencies for code shared between node and page.
 DEPS['src/server/common/'] = [];
 // Strict dependencies for injected code.
-DEPS['src/server/injected/'] = ['src/server/common/'];
+DEPS['src/server/injected/'] = ['src/server/common/', 'src/protocol/channels.ts'];
 
 // Electron and Clank use chromium internally.
 DEPS['src/server/android/'] = [...DEPS['src/server/'], 'src/server/chromium/', 'src/protocol/'];

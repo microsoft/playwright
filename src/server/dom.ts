@@ -16,7 +16,7 @@
 
 import * as channels from '../protocol/channels';
 import * as frames from './frames';
-import type { ElementStateWithoutStable, InjectedScript, InjectedScriptPoll } from './injected/injectedScript';
+import type { ElementStateWithoutStable, InjectedScript, InjectedScriptPoll, LogEntry } from './injected/injectedScript';
 import * as injectedScriptSource from '../generated/injectedScriptSource';
 import * as js from './javascript';
 import * as mime from 'mime';
@@ -850,11 +850,11 @@ export class InjectedScriptPollHandler<T> {
 
   private async _streamLogs() {
     while (this._poll && this._progress.isRunning()) {
-      const messages = await this._poll.evaluate(poll => poll.takeNextLogs()).catch(e => [] as string[]);
+      const log = await this._poll.evaluate(poll => poll.takeNextLogs()).catch(e => [] as LogEntry[]);
       if (!this._poll || !this._progress.isRunning())
         return;
-      for (const message of messages)
-        this._progress.log(message);
+      for (const entry of log)
+        this._progress.logEntry(entry);
     }
   }
 
@@ -886,9 +886,9 @@ export class InjectedScriptPollHandler<T> {
     if (!this._poll)
       return;
     // Retrieve all the logs before continuing.
-    const messages = await this._poll.evaluate(poll => poll.takeLastLogs()).catch(e => [] as string[]);
-    for (const message of messages)
-      this._progress.log(message);
+    const log = await this._poll.evaluate(poll => poll.takeLastLogs()).catch(e => [] as LogEntry[]);
+    for (const entry of log)
+      this._progress.logEntry(entry);
   }
 
   async cancel() {
@@ -1066,8 +1066,9 @@ export function getAttributeTask(selector: SelectorInfo, name: string): Schedula
   }, { parsed: selector.parsed, strict: selector.strict, name });
 }
 
-export function inputValueTask(selector: SelectorInfo): SchedulableTask<string> {
-  return injectedScript => injectedScript.evaluateHandle((injected, { parsed, strict }) => {
+export function inputValueTask(selector: SelectorInfo, expected: channels.ExpectedTextValue | undefined): SchedulableTask<string> {
+  return injectedScript => injectedScript.evaluateHandle((injected, { parsed, strict, expected }) => {
+    const matcher = expected ? injected.expectedTextMatcher(expected) : undefined;
     return injected.pollRaf((progress, continuePolling) => {
       const element = injected.querySelector(parsed, document, strict);
       if (!element)
@@ -1075,9 +1076,13 @@ export function inputValueTask(selector: SelectorInfo): SchedulableTask<string> 
       progress.log(`  selector resolved to ${injected.previewNode(element)}`);
       if (element.nodeName !== 'INPUT' && element.nodeName !== 'TEXTAREA' && element.nodeName !== 'SELECT')
         return 'error:hasnovalue';
-      return (element as any).value;
+      const value = (element as any).value;
+      progress.setLastValue(value);
+      if (matcher && !matcher.matches(value))
+        return continuePolling;
+      return value;
     });
-  }, { parsed: selector.parsed, strict: selector.strict,  });
+  }, { parsed: selector.parsed, strict: selector.strict, expected });
 }
 
 export function elementStateTask(selector: SelectorInfo, state: ElementStateWithoutStable): SchedulableTask<boolean | 'error:notconnected' | FatalDOMError> {

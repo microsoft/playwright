@@ -75,6 +75,12 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     value: tType('SerializedValue'),
     handles: tArray(tChannel('*')),
   });
+  scheme.ExpectedTextValue = tObject({
+    string: tOptional(tString),
+    substring: tOptional(tString),
+    regexSource: tOptional(tString),
+    regexFlags: tOptional(tString),
+  });
   scheme.AXNode = tObject({
     role: tString,
     name: tString,
@@ -140,6 +146,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       stack: tOptional(tString),
     })),
     value: tOptional(tType('SerializedValue')),
+    actualValue: tOptional(tType('SerializedValue')),
   });
   scheme.InterceptedResponse = tObject({
     request: tChannel('Request'),
@@ -739,6 +746,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.FrameInputValueParams = tObject({
     selector: tString,
     strict: tOptional(tBoolean),
+    expected: tOptional(tType('ExpectedTextValue')),
     timeout: tOptional(tNumber),
   });
   scheme.FrameIsCheckedParams = tObject({
