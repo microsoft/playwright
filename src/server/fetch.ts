@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-import { HttpsProxyAgent } from 'https-proxy-agent';
-import url from 'url';
-import zlib from 'zlib';
 import * as http from 'http';
 import * as https from 'https';
-import { BrowserContext } from './browserContext';
-import * as types from './types';
+import { HttpsProxyAgent } from 'https-proxy-agent';
 import { pipeline, Readable, Transform } from 'stream';
-import { createGuid, headersArrayToObject, headersObjectToArray, isFilePayload, monotonicTime } from '../utils/utils';
+import url from 'url';
+import zlib from 'zlib';
+import { HTTPCredentials } from '../../types/types';
+import { NameValue, NewRequestOptions } from '../common/types';
+import { TimeoutSettings } from '../utils/timeoutSettings';
+import { createGuid, isFilePayload, monotonicTime } from '../utils/utils';
+import { BrowserContext } from './browserContext';
+import { MultipartFormData } from './formData';
 import { SdkObject } from './instrumentation';
 import { Playwright } from './playwright';
+import * as types from './types';
 import { HeadersArray, ProxySettings } from './types';
-import { HTTPCredentials } from '../../types/types';
-import { TimeoutSettings } from '../utils/timeoutSettings';
-import { MultipartFormData } from './formData';
-import { NameValue, NewRequestOptions } from '../common/types';
 
 
 export type FetchRequestOptions = {
@@ -343,7 +343,6 @@ export class GlobalFetchRequest extends FetchRequest {
     const timeoutSettings = new TimeoutSettings();
     if (options.timeout !== undefined)
       timeoutSettings.setDefaultTimeout(options.timeout);
-    // console.log(JSON.stringify(extraHTTPHeaders, null, 2));
     const proxy = options.proxy;
     if (proxy?.server) {
       let url = proxy?.server.trim();
