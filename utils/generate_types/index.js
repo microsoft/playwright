@@ -475,8 +475,6 @@ class TypesGenerator {
   writeFile(path.join(typesDir, 'protocol.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'src', 'server', 'chromium', 'protocol.d.ts'), 'utf8'));
 
   const apiDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
-  // Root module types are overridden.
-  // apiDocumentation.classesArray = apiDocumentation.classesArray.filter(cls => cls.name === 'Playwright');
   apiDocumentation.index();
   const apiTypesGenerator = new TypesGenerator(apiDocumentation);
   let apiTypes = await apiTypesGenerator.generateTypes(path.join(__dirname, 'overrides.d.ts'));
