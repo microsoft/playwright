@@ -9656,8 +9656,8 @@ export interface BrowserType<Unused = {}> {
    * context will automatically close the browser.
    * @param userDataDir Path to a User Data Directory, which stores browser session data like cookies and local storage. More details for [Chromium](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md#introduction) and
    * [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options#User_Profile). Note that Chromium's user
-   * data directory is the **parent** directory of the "Profile Path" seen at `chrome://version`. Use an empty string to
-   * generate and destroy it automatically.
+   * data directory is the **parent** directory of the "Profile Path" seen at `chrome://version`. Pass an empty string to
+   * use a temporary directory instead.
    * @param options
    */
   launchPersistentContext(userDataDir: string, options?: {
