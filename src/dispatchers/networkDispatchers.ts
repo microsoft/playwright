@@ -188,6 +188,7 @@ export class FetchRequestDispatcher extends Dispatcher<FetchRequest, channels.Fe
       method: params.method,
       headers: params.headers ? headersArrayToObject(params.headers, false) : undefined,
       postData: params.postData ? Buffer.from(params.postData, 'base64') : undefined,
+      formData: params.formData,
       timeout: params.timeout,
       failOnStatusCode: params.failOnStatusCode,
     });
@@ -213,4 +214,3 @@ export class FetchRequestDispatcher extends Dispatcher<FetchRequest, channels.Fe
     this._object.fetchResponses.delete(params.fetchUid);
   }
 }
-
