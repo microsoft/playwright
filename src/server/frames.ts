@@ -769,15 +769,21 @@ export class Frame extends SdkObject {
   }
 
   async content(): Promise<string> {
-    const context = await this._utilityContext();
-    return context.evaluate(() => {
-      let retVal = '';
-      if (document.doctype)
-        retVal = new XMLSerializer().serializeToString(document.doctype);
-      if (document.documentElement)
-        retVal += document.documentElement.outerHTML;
-      return retVal;
-    });
+    try {
+      const context = await this._utilityContext();
+      return await context.evaluate(() => {
+        let retVal = '';
+        if (document.doctype)
+          retVal = new XMLSerializer().serializeToString(document.doctype);
+        if (document.documentElement)
+          retVal += document.documentElement.outerHTML;
+        return retVal;
+      });
+    } catch (e) {
+      if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e))
+        throw e;
+      throw new Error(`Unable to retrieve content because the page is navigating and changing the content.`);
+    }
   }
 
   async setContent(metadata: CallMetadata, html: string, options: types.NavigateOptions = {}): Promise<void> {
