@@ -52,7 +52,7 @@ module.exports = {packages, packageNameToPath};
 /**
  * @param {string} packagePath
  */
-function * internalDependencies(packagePath) {
+function* internalDependencies(packagePath) {
   yield packagePath;
   for (const dependency of Object.keys(packagePathToJSON.get(packagePath).dependencies || [])) {
     const dependencyPath = packageNameToPath.get(dependency);
