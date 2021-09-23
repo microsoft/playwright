@@ -406,7 +406,10 @@ it.describe('download event', () => {
       page.context().close(),
     ]);
     expect(downloadPath).toBe(null);
-    expect(saveError.message).toContain('File not found on disk. Check download.failure() for details.');
+    expect([
+      'download.saveAs: File not found on disk. Check download.failure() for details.',
+      'download.saveAs: canceled',
+    ]).toContain(saveError.message);
   });
 
   it('should close the context without awaiting the download', async ({browser, server, browserName, platform}, testInfo) => {
