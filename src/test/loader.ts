@@ -16,7 +16,7 @@
 
 import { installTransform } from './transform';
 import type { FullConfig, Config, FullProject, Project, ReporterDescription, PreserveOutput } from './types';
-import { isRegExp, mergeObjects, errorWithFile } from './util';
+import { mergeObjects, errorWithFile } from './util';
 import { setCurrentlyLoadingFileSuite } from './globals';
 import { Suite } from './test';
 import { SerializedLoaderData } from './ipc';
@@ -26,6 +26,7 @@ import * as fs from 'fs';
 import { ProjectImpl } from './project';
 import { Reporter } from '../../types/testReporter';
 import { BuiltInReporter, builtInReporters } from './runner';
+import { isRegExp } from '../utils/utils';
 
 export class Loader {
   private _defaultConfig: Config;

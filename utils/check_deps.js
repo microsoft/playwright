@@ -163,7 +163,7 @@ DEPS['src/server/'] = [
 // No dependencies for code shared between node and page.
 DEPS['src/server/common/'] = [];
 // Strict dependencies for injected code.
-DEPS['src/server/injected/'] = ['src/server/common/'];
+DEPS['src/server/injected/'] = ['src/server/common/', 'src/protocol/channels.ts'];
 
 // Electron and Clank use chromium internally.
 DEPS['src/server/android/'] = [...DEPS['src/server/'], 'src/server/chromium/', 'src/protocol/'];
@@ -193,7 +193,7 @@ DEPS['src/server/trace/recorder/'] = ['src/server/trace/common/', ...DEPS['src/s
 DEPS['src/server/trace/viewer/'] = ['src/server/trace/common/', 'src/server/trace/recorder/', 'src/server/chromium/', ...DEPS['src/server/trace/common/']];
 
 // Playwright Test
-DEPS['src/test/'] = ['src/test/**', 'src/utils/utils.ts', 'src/utils/**'];
+DEPS['src/test/'] = ['src/test/**', 'src/utils/utils.ts', 'src/utils/**', 'src/protocol/channels.ts'];
 DEPS['src/test/index.ts'] = [... DEPS['src/test/'], 'src/grid/gridClient.ts' ];
 
 // HTML report
