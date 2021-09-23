@@ -2498,7 +2498,7 @@ export interface PlaywrightTestOptions {
    */
   deviceScaleFactor: number | undefined;
   /**
-   * An object containing additional HTTP headers to be sent with every request. All header values must be strings.
+   * An object containing additional HTTP headers to be sent with every request.
    */
   extraHTTPHeaders: ExtraHTTPHeaders | undefined;
   geolocation: Geolocation | undefined;
@@ -2511,7 +2511,7 @@ export interface PlaywrightTestOptions {
    */
   httpCredentials: HTTPCredentials | undefined;
   /**
-   * Whether to ignore HTTPS errors during navigation. Defaults to `false`.
+   * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
    */
   ignoreHTTPSErrors: boolean | undefined;
   /**
