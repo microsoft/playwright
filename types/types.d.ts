@@ -13420,7 +13420,7 @@ export interface Request {
    * When the response is `application/x-www-form-urlencoded` then a key/value object of the values will be returned.
    * Otherwise it will be parsed as JSON.
    */
-  postDataJSON(): null|any;
+  postDataJSON(): null|Serializable;
 
   /**
    * Request that was redirected by the server to this one, if any.

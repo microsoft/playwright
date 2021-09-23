@@ -793,10 +793,11 @@ playwright.chromium.launch().then(async browser => {
 (async () => {
   const browser = await playwright.chromium.launch();
   const page = await browser.newPage();
-  await Promise.all([
+  const [response] = await Promise.all([
     page.waitForResponse(response => response.url().includes('example.com')),
     page.goto('https://example.com')
   ]);
+  console.log((await response!.json()).foobar); // JSON return value should be any
 
   await browser.close();
 })();
