@@ -18,19 +18,20 @@ import {
   printReceivedStringContainExpectedResult,
   printReceivedStringContainExpectedSubstring
 } from 'expect/build/print';
-import { isString } from '../../utils/utils';
+import { ExpectedTextValue } from '../../protocol/channels';
+import { isRegExp, isString } from '../../utils/utils';
 import { currentTestInfo } from '../globals';
 import type { Expect } from '../types';
-import { expectType, pollUntilDeadline } from '../util';
+import { expectType } from '../util';
 
 export async function toMatchText(
   this: ReturnType<Expect['getState']>,
   matcherName: string,
   receiver: any,
   receiverType: string,
-  query: (timeout: number) => Promise<string>,
+  query: (expected: ExpectedTextValue, isNot: boolean, timeout: number) => Promise<{ pass: boolean, received: string }>,
   expected: string | RegExp,
-  options: { timeout?: number, matchSubstring?: boolean, normalizeWhiteSpace?: boolean } = {},
+  options: { timeout?: number, matchSubstring?: boolean, normalizeWhiteSpace?: boolean, useInnerText?: boolean } = {},
 ) {
   const testInfo = currentTestInfo();
   if (!testInfo)
@@ -57,25 +58,21 @@ export async function toMatchText(
     );
   }
 
-  let received: string;
-  let pass = false;
-  if (options.normalizeWhiteSpace && isString(expected))
-    expected = normalizeWhiteSpace(expected);
+  let defaultExpectTimeout = testInfo.project.expect?.timeout;
+  if (typeof defaultExpectTimeout === 'undefined')
+    defaultExpectTimeout = 5000;
+  const timeout = options.timeout === 0 ? 0 : options.timeout || defaultExpectTimeout;
 
-  await pollUntilDeadline(testInfo, async remainingTime => {
-    received = await query(remainingTime);
-    if (options.normalizeWhiteSpace && isString(expected))
-      received = normalizeWhiteSpace(received);
-    if (options.matchSubstring)
-      pass = received.includes(expected as string);
-    else if (typeof expected === 'string')
-      pass = received === expected;
-    else
-      pass = expected.test(received);
+  const expectedValue: ExpectedTextValue = {
+    string: isString(expected) ? expected : undefined,
+    regexSource: isRegExp(expected) ? expected.source : undefined,
+    regexFlags: isRegExp(expected) ? expected.flags : undefined,
+    matchSubstring: options.matchSubstring,
+    normalizeWhiteSpace: options.normalizeWhiteSpace,
+    useInnerText: options.useInnerText,
+  };
 
-    return pass === !matcherOptions.isNot;
-  }, options.timeout, testInfo._testFinished);
-
+  const { pass, received } = await query(expectedValue, this.isNot, timeout);
   const stringSubstring = options.matchSubstring ? 'substring' : 'string';
   const message = pass
     ? () =>
@@ -83,7 +80,7 @@ export async function toMatchText(
         ? this.utils.matcherHint(matcherName, undefined, undefined, matcherOptions) +
         '\n\n' +
         `Expected ${stringSubstring}: not ${this.utils.printExpected(expected)}\n` +
-        `Received string:        ${printReceivedStringContainExpectedSubstring(
+        `Received string: ${printReceivedStringContainExpectedSubstring(
             received,
             received.indexOf(expected),
             expected.length,
@@ -91,7 +88,7 @@ export async function toMatchText(
         : this.utils.matcherHint(matcherName, undefined, undefined, matcherOptions) +
         '\n\n' +
         `Expected pattern: not ${this.utils.printExpected(expected)}\n` +
-        `Received string:      ${printReceivedStringContainExpectedResult(
+        `Received string: ${printReceivedStringContainExpectedResult(
             received,
             typeof expected.exec === 'function'
               ? expected.exec(received)

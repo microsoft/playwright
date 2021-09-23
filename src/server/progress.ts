@@ -19,9 +19,12 @@ import { assert, monotonicTime } from '../utils/utils';
 import { LogName } from '../utils/debugLogger';
 import { CallMetadata, Instrumentation, SdkObject } from './instrumentation';
 import { ElementHandle } from './dom';
+import { ManualPromise } from '../utils/async';
+import type { LogEntry } from './injected/injectedScript';
 
 export interface Progress {
   log(message: string): void;
+  logEntry(entry: LogEntry): void;
   timeUntilDeadline(): number;
   isRunning(): boolean;
   cleanupWhenAborted(cleanup: () => any): void;
@@ -31,10 +34,7 @@ export interface Progress {
 }
 
 export class ProgressController {
-  // Promise and callback that forcefully abort the progress.
-  // This promise always rejects.
-  private _forceAbort: (error: Error) => void = () => {};
-  private _forceAbortPromise: Promise<any>;
+  private _forceAbortPromise = new ManualPromise<any>();
 
   // Cleanups to be run only in the case of abort.
   private _cleanups: (() => any)[] = [];
@@ -43,6 +43,7 @@ export class ProgressController {
   private _state: 'before' | 'running' | 'aborted' | 'finished' = 'before';
   private _deadline: number = 0;
   private _timeout: number = 0;
+  private _lastIntermediateResult: any;
   readonly metadata: CallMetadata;
   readonly instrumentation: Instrumentation;
   readonly sdkObject: SdkObject;
@@ -51,12 +52,15 @@ export class ProgressController {
     this.metadata = metadata;
     this.sdkObject = sdkObject;
     this.instrumentation = sdkObject.instrumentation;
-    this._forceAbortPromise = new Promise((resolve, reject) => this._forceAbort = reject);
     this._forceAbortPromise.catch(e => null);  // Prevent unhandled promise rejection.
   }
 
   setLogName(logName: LogName) {
     this._logName = logName;
+  }
+
+  lastIntermediateResult() {
+    return this._lastIntermediateResult;
   }
 
   async run<T>(task: (progress: Progress) => Promise<T>, timeout?: number): Promise<T> {
@@ -70,10 +74,18 @@ export class ProgressController {
 
     const progress: Progress = {
       log: message => {
-        if (this._state === 'running')
-          this.metadata.log.push(message);
-        // Note: we might be sending logs after progress has finished, for example browser logs.
-        this.instrumentation.onCallLog(this._logName, message, this.sdkObject, this.metadata);
+        progress.logEntry({ message });
+      },
+      logEntry: entry => {
+        if ('message' in entry) {
+          const message = entry.message!;
+          if (this._state === 'running')
+            this.metadata.log.push(message);
+          // Note: we might be sending logs after progress has finished, for example browser logs.
+          this.instrumentation.onCallLog(this._logName, message, this.sdkObject, this.metadata);
+        }
+        if ('intermediateResult' in entry)
+          this._lastIntermediateResult = entry.intermediateResult;
       },
       timeUntilDeadline: () => this._deadline ? this._deadline - monotonicTime() : 2147483647, // 2^31-1 safe setTimeout in Node.
       isRunning: () => this._state === 'running',
@@ -94,7 +106,7 @@ export class ProgressController {
     };
 
     const timeoutError = new TimeoutError(`Timeout ${this._timeout}ms exceeded.`);
-    const timer = setTimeout(() => this._forceAbort(timeoutError), progress.timeUntilDeadline());
+    const timer = setTimeout(() => this._forceAbortPromise.reject(timeoutError), progress.timeUntilDeadline());
     try {
       const promise = task(progress);
       const result = await Promise.race([promise, this._forceAbortPromise]);

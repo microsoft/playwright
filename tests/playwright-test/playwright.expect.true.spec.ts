@@ -27,12 +27,6 @@ test('should support toBeChecked', async ({ runInlineTest }) => {
         await expect(locator).toBeChecked();
       });
 
-      test('pass not', async ({ page }) => {
-        await page.setContent('<input type=checkbox></input>');
-        const locator = page.locator('input');
-        await expect(locator).not.toBeChecked();
-      });
-
       test('fail', async ({ page }) => {
         await page.setContent('<input type=checkbox></input>');
         const locator = page.locator('input');
@@ -43,7 +37,33 @@ test('should support toBeChecked', async ({ runInlineTest }) => {
   const output = stripAscii(result.output);
   expect(output).toContain('Error: expect(received).toBeChecked()');
   expect(output).toContain('expect(locator).toBeChecked');
-  expect(result.passed).toBe(2);
+  expect(result.passed).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.exitCode).toBe(1);
+});
+
+test('should support toBeChecked w/ not', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('pass not', async ({ page }) => {
+        await page.setContent('<input type=checkbox></input>');
+        const locator = page.locator('input');
+        await expect(locator).not.toBeChecked();
+      });
+
+      test('fail not', async ({ page }) => {
+        await page.setContent('<input type=checkbox checked></input>');
+        const locator = page.locator('input');
+        await expect(locator).not.toBeChecked({ timeout: 1000 });
+      });
+      `,
+  }, { workers: 1 });
+  const output = stripAscii(result.output);
+  expect(output).toContain('Error: expect(received).not.toBeChecked()');
+  expect(output).toContain('expect(locator).not.toBeChecked');
+  expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
 });

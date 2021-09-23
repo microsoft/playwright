@@ -20,7 +20,7 @@ import * as channels from '../protocol/channels';
 import { FatalDOMError, RetargetableDOMError } from './common/domErrors';
 import { isSessionClosedError } from './common/protocolError';
 import * as frames from './frames';
-import type { InjectedScript, InjectedScriptPoll } from './injected/injectedScript';
+import type { InjectedScript, InjectedScriptPoll, LogEntry } from './injected/injectedScript';
 import { CallMetadata } from './instrumentation';
 import * as js from './javascript';
 import { Page } from './page';
@@ -672,7 +672,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _setChecked(progress: Progress, state: boolean, options: { position?: types.Point } & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     const isChecked = async () => {
-      const result = await this.evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'checked'), {});
+      const result = await this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'checked'), {});
       return throwRetargetableDOMError(throwFatalDOMError(result));
     };
     if (await isChecked() === state)
@@ -723,34 +723,34 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async isVisible(): Promise<boolean> {
-    const result = await this.evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'visible'), {});
+    const result = await this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'visible'), {});
     if (result === 'error:notconnected')
       return false;
     return throwFatalDOMError(result);
   }
 
   async isHidden(): Promise<boolean> {
-    const result = await this.evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'hidden'), {});
+    const result = await this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'hidden'), {});
     return throwRetargetableDOMError(throwFatalDOMError(result));
   }
 
   async isEnabled(): Promise<boolean> {
-    const result = await this.evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'enabled'), {});
+    const result = await this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'enabled'), {});
     return throwRetargetableDOMError(throwFatalDOMError(result));
   }
 
   async isDisabled(): Promise<boolean> {
-    const result = await this.evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'disabled'), {});
+    const result = await this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'disabled'), {});
     return throwRetargetableDOMError(throwFatalDOMError(result));
   }
 
   async isEditable(): Promise<boolean> {
-    const result = await this.evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'editable'), {});
+    const result = await this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'editable'), {});
     return throwRetargetableDOMError(throwFatalDOMError(result));
   }
 
   async isChecked(): Promise<boolean> {
-    const result = await this.evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'checked'), {});
+    const result = await this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'checked'), {});
     return throwRetargetableDOMError(throwFatalDOMError(result));
   }
 
@@ -850,11 +850,11 @@ export class InjectedScriptPollHandler<T> {
 
   private async _streamLogs() {
     while (this._poll && this._progress.isRunning()) {
-      const messages = await this._poll.evaluate(poll => poll.takeNextLogs()).catch(e => [] as string[]);
+      const log = await this._poll.evaluate(poll => poll.takeNextLogs()).catch(e => [] as LogEntry[]);
       if (!this._poll || !this._progress.isRunning())
         return;
-      for (const message of messages)
-        this._progress.log(message);
+      for (const entry of log)
+        this._progress.logEntry(entry);
     }
   }
 
@@ -886,9 +886,9 @@ export class InjectedScriptPollHandler<T> {
     if (!this._poll)
       return;
     // Retrieve all the logs before continuing.
-    const messages = await this._poll.evaluate(poll => poll.takeLastLogs()).catch(e => [] as string[]);
-    for (const message of messages)
-      this._progress.log(message);
+    const log = await this._poll.evaluate(poll => poll.takeLastLogs()).catch(e => [] as LogEntry[]);
+    for (const entry of log)
+      this._progress.logEntry(entry);
   }
 
   async cancel() {

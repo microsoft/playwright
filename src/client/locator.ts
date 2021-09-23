@@ -212,6 +212,12 @@ export class Locator implements api.Locator {
     return this._frame.$$eval(this._selector, ee => ee.map(e => e.textContent || ''));
   }
 
+  async _expect(expression: string, options: channels.FrameExpectOptions): Promise<{ pass: boolean, received: string }> {
+    return this._frame._wrapApiCall(async (channel: channels.FrameChannel) => {
+      return (await channel.expect({ selector: this._selector, expression, ...options }));
+    });
+  }
+
   [(util.inspect as any).custom]() {
     return this.toString();
   }

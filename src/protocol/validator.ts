@@ -75,6 +75,14 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     value: tType('SerializedValue'),
     handles: tArray(tChannel('*')),
   });
+  scheme.ExpectedTextValue = tObject({
+    string: tOptional(tString),
+    regexSource: tOptional(tString),
+    regexFlags: tOptional(tString),
+    matchSubstring: tOptional(tBoolean),
+    normalizeWhiteSpace: tOptional(tBoolean),
+    useInnerText: tOptional(tBoolean),
+  });
   scheme.AXNode = tObject({
     role: tString,
     name: tString,
@@ -875,6 +883,14 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     strict: tOptional(tBoolean),
     timeout: tOptional(tNumber),
     state: tOptional(tEnum(['attached', 'detached', 'visible', 'hidden'])),
+  });
+  scheme.FrameExpectParams = tObject({
+    selector: tString,
+    expression: tString,
+    expected: tOptional(tType('ExpectedTextValue')),
+    isNot: tOptional(tBoolean),
+    data: tOptional(tAny),
+    timeout: tOptional(tNumber),
   });
   scheme.WorkerEvaluateExpressionParams = tObject({
     expression: tString,

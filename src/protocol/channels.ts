@@ -71,6 +71,15 @@ export type SerializedArgument = {
   handles: Channel[],
 };
 
+export type ExpectedTextValue = {
+  string?: string,
+  regexSource?: string,
+  regexFlags?: string,
+  matchSubstring?: boolean,
+  normalizeWhiteSpace?: boolean,
+  useInnerText?: boolean,
+};
+
 export type AXNode = {
   role: string,
   name: string,
@@ -1609,6 +1618,7 @@ export interface FrameChannel extends Channel {
   waitForTimeout(params: FrameWaitForTimeoutParams, metadata?: Metadata): Promise<FrameWaitForTimeoutResult>;
   waitForFunction(params: FrameWaitForFunctionParams, metadata?: Metadata): Promise<FrameWaitForFunctionResult>;
   waitForSelector(params: FrameWaitForSelectorParams, metadata?: Metadata): Promise<FrameWaitForSelectorResult>;
+  expect(params: FrameExpectParams, metadata?: Metadata): Promise<FrameExpectResult>;
 }
 export type FrameLoadstateEvent = {
   add?: 'load' | 'domcontentloaded' | 'networkidle',
@@ -2171,6 +2181,25 @@ export type FrameWaitForSelectorOptions = {
 };
 export type FrameWaitForSelectorResult = {
   element?: ElementHandleChannel,
+};
+export type FrameExpectParams = {
+  selector: string,
+  expression: string,
+  expected?: ExpectedTextValue,
+  isNot?: boolean,
+  data?: any,
+  timeout?: number,
+};
+export type FrameExpectOptions = {
+  expected?: ExpectedTextValue,
+  isNot?: boolean,
+  data?: any,
+  timeout?: number,
+};
+export type FrameExpectResult = {
+  pass: boolean,
+  received: string,
+  log: string[],
 };
 
 export interface FrameEvents {
@@ -3734,6 +3763,7 @@ export const commandsWithTracingSnapshots = new Set([
   'Frame.waitForTimeout',
   'Frame.waitForFunction',
   'Frame.waitForSelector',
+  'Frame.expect',
   'JSHandle.evaluateExpression',
   'ElementHandle.evaluateExpression',
   'JSHandle.evaluateExpressionHandle',

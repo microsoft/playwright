@@ -226,4 +226,8 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameInitializer
   async title(params: channels.FrameTitleParams, metadata: CallMetadata): Promise<channels.FrameTitleResult> {
     return { value: await this._frame.title() };
   }
+
+  async expect(params: channels.FrameExpectParams, metadata: CallMetadata): Promise<channels.FrameExpectResult> {
+    return await this._frame.expect(metadata, params.selector, params.expression, params);
+  }
 }

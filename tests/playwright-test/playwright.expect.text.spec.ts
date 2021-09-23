@@ -84,6 +84,34 @@ test('should support toHaveText w/ text', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
 });
 
+test('should support toHaveText w/ not', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('pass', async ({ page }) => {
+        await page.setContent('<div id=node>Text content</div>');
+        const locator = page.locator('#node');
+        await expect(locator).not.toHaveText('Text2');
+      });
+
+      test('fail', async ({ page }) => {
+        await page.setContent('<div id=node>Text content</div>');
+        const locator = page.locator('#node');
+        await expect(locator).not.toHaveText('Text content', { timeout: 100 });
+      });
+      `,
+  }, { workers: 1 });
+  const output = stripAscii(result.output);
+  expect(output).toContain('Error: expect(received).not.toHaveText(expected)');
+  expect(output).toContain('Expected string: not "Text content"');
+  expect(output).toContain('Received string: "Text content');
+  expect(output).toContain('expect(locator).not.toHaveText');
+  expect(result.passed).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.exitCode).toBe(1);
+});
+
 test('should support toHaveText w/ array', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
@@ -211,6 +239,41 @@ test('should support toHaveValue', async ({ runInlineTest }) => {
   }, { workers: 1 });
   expect(result.passed).toBe(1);
   expect(result.exitCode).toBe(0);
+});
+
+test('should support toHaveValue regex', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('pass', async ({ page }) => {
+        await page.setContent('<input id=node></input>');
+        const locator = page.locator('#node');
+        await locator.fill('Text content');
+        await expect(locator).toHaveValue(/Text/);
+      });
+      `,
+  }, { workers: 1 });
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
+
+test('should support toHaveValue failing', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('pass', async ({ page }) => {
+        await page.setContent('<input id=node></input>');
+        const locator = page.locator('#node');
+        await locator.fill('Text content');
+        await expect(locator).toHaveValue(/Text2/, { timeout: 1000 });
+      });
+      `,
+  }, { workers: 1 });
+  expect(result.passed).toBe(0);
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('"Text content"');
 });
 
 test('should print expected/received before timeout', async ({ runInlineTest }) => {

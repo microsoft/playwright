@@ -97,6 +97,17 @@ SerializedArgument:
       items: Channel
 
 
+ExpectedTextValue:
+  type: object
+  properties:
+    string: string?
+    regexSource: string?
+    regexFlags: string?
+    matchSubstring: boolean?
+    normalizeWhiteSpace: boolean?
+    useInnerText: boolean?
+
+
 AXNode:
   type: object
   properties:
@@ -1739,6 +1750,21 @@ Frame:
           - hidden
       returns:
         element: ElementHandle?
+      tracing:
+        snapshot: true
+
+    expect:
+      parameters:
+        selector: string
+        expression: string
+        expected: ExpectedTextValue?
+        isNot: boolean?
+        data: json?
+        timeout: number?
+      returns:
+        pass: boolean
+        received: string
+        log: string[]
       tracing:
         snapshot: true
 
