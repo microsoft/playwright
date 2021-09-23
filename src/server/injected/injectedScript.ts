@@ -698,7 +698,7 @@ export class InjectedScript {
     while (container) {
       // elementFromPoint works incorrectly in Chromium (http://crbug.com/1188919),
       // so we use elementsFromPoint instead.
-      const elements = container.elementsFromPoint(x, y);
+      const elements = (container as Document).elementsFromPoint(x, y);
       const innerElement = elements[0] as Element | undefined;
       if (!innerElement || element === innerElement)
         break;
