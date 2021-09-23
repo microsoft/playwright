@@ -5756,19 +5756,6 @@ index 16edb3bc689b8e2dde17597b642b706c1343e1f5..f363b2ca2410f22cff8d6ad908a88527
      ~UserGestureEmulationScope();
  
  private:
-diff --git a/Source/WebCore/layout/integration/LayoutIntegrationLineLayout.cpp b/Source/WebCore/layout/integration/LayoutIntegrationLineLayout.cpp
-index 39e185d538e7e3970db879ca0d2934478815591e..de5d5b922256d73dc1391c01e11478bcdd92c03a 100644
---- a/Source/WebCore/layout/integration/LayoutIntegrationLineLayout.cpp
-+++ b/Source/WebCore/layout/integration/LayoutIntegrationLineLayout.cpp
-@@ -250,7 +250,7 @@ void LineLayout::prepareLayoutState()
- 
-     auto& rootGeometry = m_layoutState.ensureGeometryForBox(rootLayoutBox());
-     rootGeometry.setContentBoxWidth(flow.contentSize().width());
--    rootGeometry.setPadding(Layout::Edges { { flow.paddingStart(), flow.paddingEnd() }, { flow.paddingBefore(), flow.paddingAfter() } });
-+    rootGeometry.setPadding(Layout::Edges{});
-     rootGeometry.setBorder(Layout::Edges { { flow.borderStart(), flow.borderEnd() }, { flow.borderBefore(), flow.borderAfter() } });
-     rootGeometry.setHorizontalMargin({ });
-     rootGeometry.setVerticalMargin({ });
 diff --git a/Source/WebCore/loader/CookieJar.h b/Source/WebCore/loader/CookieJar.h
 index 982691dd2dfe2f65201370a12302b5086703c126..4af72beb3b1405ffac78e89e7fbb2b14d6647903 100644
 --- a/Source/WebCore/loader/CookieJar.h
