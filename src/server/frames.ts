@@ -1226,7 +1226,7 @@ export class Frame extends SdkObject {
     return controller.run(async progress => {
       const rerunnableTask = new RerunnableTask(data, progress, injectedScript => {
         return injectedScript.evaluateHandle((injected, { info, taskData, callbackText }) => {
-          const callback = window.eval(callbackText);
+          const callback = injected.eval(callbackText);
           return injected.pollRaf((progress, continuePolling) => {
             const element = injected.querySelector(info.parsed, document, info.strict);
             if (!element)

@@ -89,6 +89,10 @@ export class InjectedScript {
     this._replaceRafWithTimeout = replaceRafWithTimeout;
   }
 
+  eval(expression: string): any {
+    return global.eval(expression);
+  }
+
   parseSelector(selector: string): ParsedSelector {
     const result = parseSelector(selector);
     for (const part of result.parts) {
