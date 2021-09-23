@@ -44,6 +44,7 @@ type HTTPRequestParams = {
   method?: string,
   headers?: http.OutgoingHttpHeaders,
   data?: string | Buffer,
+  timeout?: number,
 };
 
 function httpRequest(params: HTTPRequestParams, onResponse: (r: http.IncomingMessage) => void, onError: (error: Error) => void) {
@@ -81,14 +82,26 @@ function httpRequest(params: HTTPRequestParams, onResponse: (r: http.IncomingMes
     https.request(options, requestCallback) :
     http.request(options, requestCallback);
   request.on('error', onError);
+  if (params.timeout !== undefined) {
+    const rejectOnTimeout = () =>  {
+      onError(new Error(`Request to ${params.url} timed out after ${params.timeout}ms`));
+      request.abort();
+    };
+    if (params.timeout <= 0) {
+      rejectOnTimeout();
+      return;
+    }
+    request.setTimeout(params.timeout, rejectOnTimeout);
+  }
   request.end(params.data);
 }
 
-export function fetchData(params: HTTPRequestParams): Promise<string> {
+export function fetchData(params: HTTPRequestParams, onError?: (response: http.IncomingMessage) => Promise<Error>): Promise<string> {
   return new Promise((resolve, reject) => {
-    httpRequest(params, response => {
+    httpRequest(params, async response => {
       if (response.statusCode !== 200) {
-        reject(new Error(`fetch failed: server returned code ${response.statusCode}. URL: ${params.url}`));
+        const error = onError ? await onError(response) : new Error(`fetch failed: server returned code ${response.statusCode}. URL: ${params.url}`);
+        reject(error);
         return;
       }
       let body = '';
@@ -425,4 +438,13 @@ export function wrapInASCIIBox(text: string, padding = 0): string {
 
 export function isFilePayload(value: any): boolean {
   return typeof value === 'object' && value['name'] && value['mimeType'] && value['buffer'];
+}
+
+export function streamToString(stream: stream.Readable): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    stream.on('data', chunk => chunks.push(Buffer.from(chunk)));
+    stream.on('error', reject);
+    stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+  });
 }
