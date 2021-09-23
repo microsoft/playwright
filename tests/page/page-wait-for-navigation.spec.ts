@@ -238,12 +238,10 @@ it('should fail when frame detaches', async ({page, server}) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   const frame = page.frames()[1];
   server.setRoute('/empty.html', () => {});
-  let error = null;
-  await Promise.all([
-    frame.waitForNavigation().catch(e => error = e),
-    frame.evaluate('window.location.href = "/empty.html"'),
-    page.evaluate('setTimeout(() => document.querySelector("iframe").remove())'),
-  ]).catch(e => error = e);
+  const [error] = await Promise.all([
+    frame.waitForNavigation().catch(e => e),
+    page.evaluate('var frame = document.querySelector("iframe"); frame.contentWindow.location.href = "/empty.html"; setTimeout(() => frame.remove())'),
+  ]);
   expect(error.message).toContain('waiting for navigation until "load"');
   expect(error.message).toContain('frame was detached');
 });
