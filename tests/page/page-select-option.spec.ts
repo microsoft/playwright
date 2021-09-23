@@ -139,7 +139,7 @@ it('should throw when element is not a <select>', async ({page, server}) => {
   let error = null;
   await page.goto(server.PREFIX + '/input/select.html');
   await page.selectOption('body', '').catch(e => error = e);
-  expect(error.message).toContain('Element is not a <select> element.');
+  expect(error.message).toContain('Element is not a <select> element');
 });
 
 it('should return [] on no matched values', async ({page, server}) => {

@@ -186,11 +186,11 @@ it('should fill elements with existing value and selection', async ({page, serve
   expect(await page.$eval('div[contenteditable]', div => div.textContent)).toBe('replace with this');
 });
 
-it('should throw when element is not an <input>, <textarea> or [contenteditable]', async ({page, server}) => {
+it('should throw nice error without injected script stack when element is not an <input>', async ({page, server}) => {
   let error = null;
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.fill('body', '').catch(e => error = e);
-  expect(error.message).toContain('Element is not an <input>');
+  expect(error.message).toContain('page.fill: Error: Element is not an <input>, <textarea> or [contenteditable] element\n=========================== logs');
 });
 
 it('should throw if passed a non-string value', async ({page, server}) => {
