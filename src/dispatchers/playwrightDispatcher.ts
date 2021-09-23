@@ -16,18 +16,18 @@
 
 import net, { AddressInfo } from 'net';
 import * as channels from '../protocol/channels';
+import { GlobalFetchRequest } from '../server/fetch';
 import { Playwright } from '../server/playwright';
+import * as types from '../server/types';
+import { debugLogger } from '../utils/debugLogger';
+import { SocksConnection, SocksConnectionClient } from '../utils/socksProxy';
+import { createGuid } from '../utils/utils';
 import { AndroidDispatcher } from './androidDispatcher';
 import { BrowserTypeDispatcher } from './browserTypeDispatcher';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { ElectronDispatcher } from './electronDispatcher';
-import { SelectorsDispatcher } from './selectorsDispatcher';
-import * as types from '../server/types';
-import { SocksConnection, SocksConnectionClient } from '../utils/socksProxy';
-import { createGuid } from '../utils/utils';
-import { debugLogger } from '../utils/debugLogger';
-import { GlobalFetchRequest } from '../server/fetch';
 import { FetchRequestDispatcher } from './networkDispatchers';
+import { SelectorsDispatcher } from './selectorsDispatcher';
 
 export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.PlaywrightInitializer, channels.PlaywrightEvents> implements channels.PlaywrightChannel {
   private _socksProxy: SocksProxy | undefined;
@@ -75,7 +75,7 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
   }
 
   async newRequest(params: channels.PlaywrightNewRequestParams, metadata?: channels.Metadata): Promise<channels.PlaywrightNewRequestResult> {
-    const request = new GlobalFetchRequest(this._object);
+    const request = new GlobalFetchRequest(this._object, params);
     return { request: FetchRequestDispatcher.from(this._scope, request) };
   }
 }

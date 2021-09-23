@@ -195,7 +195,21 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     uid: tString,
   });
   scheme.PlaywrightNewRequestParams = tObject({
+    baseURL: tOptional(tString),
+    userAgent: tOptional(tString),
     ignoreHTTPSErrors: tOptional(tBoolean),
+    extraHTTPHeaders: tOptional(tArray(tType('NameValue'))),
+    httpCredentials: tOptional(tObject({
+      username: tString,
+      password: tString,
+    })),
+    proxy: tOptional(tObject({
+      server: tString,
+      bypass: tOptional(tString),
+      username: tOptional(tString),
+      password: tOptional(tString),
+    })),
+    timeout: tOptional(tNumber),
   });
   scheme.SelectorsRegisterParams = tObject({
     name: tString,
