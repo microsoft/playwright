@@ -58,6 +58,16 @@ it('should work cross-process', async ({page, server}) => {
   expect(response.url()).toBe(url);
 });
 
+it('should work with Cross-Origin-Opener-Policy', async ({page, server, browserName}) => {
+  it.fail(browserName === 'webkit', 'Regressed in https://trac.webkit.org/changeset/281516/webkit');
+  server.setRoute('/empty.html', (req, res) => {
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+    res.end();
+  });
+  await page.goto(server.EMPTY_PAGE);
+  expect(page.url()).toBe(server.EMPTY_PAGE);
+});
+
 it('should capture iframe navigation request', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   expect(page.url()).toBe(server.EMPTY_PAGE);
