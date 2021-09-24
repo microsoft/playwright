@@ -82,6 +82,18 @@ test('should check types of fixtures', async ({runTSC}) => {
         // @ts-expect-error
         }, { scope: 'test' } ],
       });
+
+      type AssertNotAny<S> = {notRealProperty: number} extends S ? false : true;
+      type AssertType<T, S> = S extends T ? AssertNotAny<S> : false;
+      const funcTest = pwt.test.extend<{ foo: (x: number, y: string) => Promise<string> }>({
+        foo: async ({}, use) => {
+          await use(async (x, y) => {
+            const assertionX: AssertType<number, typeof x> = true;
+            const assertionY: AssertType<string, typeof y> = true;
+            return y;
+          });
+        },
+      })
     `,
     'playwright.config.ts': `
       import { MyOptions } from './helper';
