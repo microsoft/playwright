@@ -228,6 +228,10 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameInitializer
   }
 
   async expect(params: channels.FrameExpectParams, metadata: CallMetadata): Promise<channels.FrameExpectResult> {
-    return await this._frame.expect(metadata, params.selector, params.expression, params);
+    const expectedValue = params.expectedValue ? parseArgument(params.expectedValue) : undefined;
+    const result = await this._frame.expect(metadata, params.selector, { ...params, expectedValue });
+    if (result.received !== undefined)
+      result.received = serializeResult(result.received);
+    return result;
   }
 }

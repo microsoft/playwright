@@ -105,7 +105,6 @@ ExpectedTextValue:
     regexFlags: string?
     matchSubstring: boolean?
     normalizeWhiteSpace: boolean?
-    useInnerText: boolean?
 
 
 AXNode:
@@ -1757,14 +1756,21 @@ Frame:
       parameters:
         selector: string
         expression: string
-        expected: ExpectedTextValue?
+        expressionArg: json?
+        expectedText:
+          type: array?
+          items: ExpectedTextValue
+        expectedNumber: number?
+        expectedValue: SerializedArgument?
+        useInnerText: boolean?
         isNot: boolean?
-        data: json?
         timeout: number?
       returns:
         pass: boolean
-        received: string
-        log: string[]
+        received: SerializedValue?
+        log:
+          type: array?
+          items: string
       tracing:
         snapshot: true
 
