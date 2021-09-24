@@ -113,8 +113,6 @@ it('should work with Cross-Origin-Opener-Policy after redirect', async ({ page, 
     events.push('response');
     requests.add(r.request());
   });
-  console.log('\n\n\n\n');
-  // const response = await page.goto(server.EMPTY_PAGE);
   const response = await page.goto(server.PREFIX + '/redirect');
   expect(page.url()).toBe(server.EMPTY_PAGE);
   await response.finished();
