@@ -27,6 +27,7 @@ class TraceViewerPage {
   consoleStacks: Locator;
   stackFrames: Locator;
   networkRequests: Locator;
+  snapshotContainer: Locator;
 
   constructor(public page: Page) {
     this.actionTitles = page.locator('.action-title');
@@ -36,6 +37,7 @@ class TraceViewerPage {
     this.consoleStacks = page.locator('.console-stack');
     this.stackFrames = page.locator('.stack-trace-frame');
     this.networkRequests = page.locator('.network-request-title');
+    this.snapshotContainer = page.locator('.snapshot-container');
   }
 
   async actionIconsText(action: string) {
@@ -78,13 +80,6 @@ class TraceViewerPage {
     }
     const result = [...set];
     return result.sort();
-  }
-
-  async snapshotSize() {
-    return this.page.$eval('.snapshot-container', e => {
-      const style = window.getComputedStyle(e);
-      return { width: style.width, height: style.height };
-    });
   }
 }
 
@@ -159,6 +154,7 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
     /page.evaluate— \d+ms/,
     /page.click"Click"— \d+ms/,
     /page.waitForNavigation— \d+ms/,
+    /page.waitForTimeout— \d+ms/,
     /page.gotohttp:\/\/localhost:\d+\/frames\/frame.html— \d+ms/,
     /page.setViewportSize— \d+ms/,
     /page.hoverbody— \d+ms/,
@@ -212,13 +208,15 @@ test('should show params and return value', async ({ showTraceViewer, browserNam
   ]);
 });
 
-test('should have correct snapshot size', async ({ showTraceViewer }) => {
+test('should have correct snapshot size', async ({ showTraceViewer }, testInfo) => {
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.selectAction('page.setViewport');
   await traceViewer.selectSnapshot('Before');
-  expect(await traceViewer.snapshotSize()).toEqual({ width: '1280px', height: '720px' });
+  await expect(traceViewer.snapshotContainer).toHaveCSS('width', '1280px');
+  await expect(traceViewer.snapshotContainer).toHaveCSS('height', '720px');
   await traceViewer.selectSnapshot('After');
-  expect(await traceViewer.snapshotSize()).toEqual({ width: '500px', height: '600px' });
+  await expect(traceViewer.snapshotContainer).toHaveCSS('width', '500px');
+  await expect(traceViewer.snapshotContainer).toHaveCSS('height', '600px');
 });
 
 test('should have correct stack trace', async ({ showTraceViewer }) => {

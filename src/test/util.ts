@@ -21,6 +21,8 @@ import url from 'url';
 import type { TestError, Location } from './types';
 import { default as minimatch } from 'minimatch';
 import { errors } from '../..';
+import debug from 'debug';
+import { isRegExp } from '../utils/utils';
 
 export async function pollUntilDeadline(testInfo: TestInfoImpl, func: (remainingTime: number) => Promise<boolean>, pollTime: number | undefined, deadlinePromise: Promise<void>): Promise<void> {
   let defaultExpectTimeout = testInfo.project.expect?.timeout;
@@ -79,10 +81,6 @@ export function serializeError(error: Error | any): TestError {
 export function monotonicTime(): number {
   const [seconds, nanoseconds] = process.hrtime();
   return seconds * 1000 + (nanoseconds / 1000000 | 0);
-}
-
-export function isRegExp(e: any): e is RegExp {
-  return e && typeof e === 'object' && (e instanceof RegExp || Object.prototype.toString.call(e) === '[object RegExp]');
 }
 
 export type Matcher = (value: string) => boolean;
@@ -189,3 +187,5 @@ export function expectType(receiver: any, type: string, matcherName: string) {
 export function sanitizeForFilePath(s: string) {
   return s.replace(/[\x00-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F]+/g, '-');
 }
+
+export const debugTest = debug('pw:test');

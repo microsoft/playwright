@@ -5,6 +5,63 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.15
+
+### 🎭 Playwright Library
+
+#### 🖱️ Mouse Wheel
+
+By using [`Page.mouse.wheel`](https://playwright.dev/docs/api/class-mouse#mouse-wheel) you are now able to scroll vertically or horizontally.
+
+#### 📜 New Headers API
+
+Previously it was not possible to get multiple header values of a response. This is now  possible and additional helper functions are available:
+
+- [Request.allHeaders()](https://playwright.dev/docs/api/class-request#request-all-headers)
+- [Request.headersArray()](https://playwright.dev/docs/api/class-request#request-headers-array)
+- [Request.headerValue(name: string)](https://playwright.dev/docs/api/class-request#request-header-value)
+- [Response.allHeaders()](https://playwright.dev/docs/api/class-response#response-all-headers)
+- [Response.headersArray()](https://playwright.dev/docs/api/class-response#response-headers-array)
+- [Response.headerValue(name: string)](https://playwright.dev/docs/api/class-response#response-header-value)
+- [Response.headerValues(name: string)](https://playwright.dev/docs/api/class-response/#response-header-values)
+
+#### 🌈 Forced-Colors emulation
+
+Its now possible to emulate the `forced-colors` CSS media feature by passing it in the [context options](https://playwright.dev/docs/api/class-browser#browser-new-context-option-forced-colors) or calling [Page.emulateMedia()](https://playwright.dev/docs/api/class-page#page-emulate-media).
+
+#### New APIs
+
+- [Page.route()](https://playwright.dev/docs/api/class-page#page-route) accepts new `times` option to specify how many times this route should be matched.
+- [Page.setChecked(selector: string, checked: boolean)](https://playwright.dev/docs/api/class-page#page-set-checked) and [Locator.setChecked(selector: string, checked: boolean)](https://playwright.dev/docs/api/class-locator#locator-set-checked) was introduced to set the checked state of a checkbox.
+- [Request.sizes()](https://playwright.dev/docs/api/class-request#request-sizes) Returns resource size information for given http request.
+- [BrowserContext.tracing.startChunk()](https://playwright.dev/docs/api/class-tracing#tracing-start-chunk) - Start a new trace chunk.
+- [BrowserContext.tracing.stopChunk()](https://playwright.dev/docs/api/class-tracing#tracing-stop-chunk) - Stops a new trace chunk.
+
+### 🎭 Playwright Test
+
+#### 🤝 `test.parallel()` run tests in the same file in parallel
+
+```ts
+test.describe.parallel('group', () => {
+  test('runs in parallel 1', async ({ page }) => {
+  });
+  test('runs in parallel 2', async ({ page }) => {
+  });
+});
+```
+
+By default, tests in a single file are run in order. If you have many independent tests in a single file, you can now run them in parallel with [test.describe.parallel(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-parallel).
+
+#### 🛠 Add `--debug` CLI flag
+
+By using `npx playwright test --debug` it will enable the [Playwright Inspector](https://playwright.dev/docs/debug#playwright-inspector) for you to debug your tests.
+
+### Browser Versions
+
+- Chromium 96.0.4641.0
+- Mozilla Firefox 92.0
+- WebKit 15.0
+
 ## Version 1.14
 
 ### 🎭 Playwright Library

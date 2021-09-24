@@ -7,13 +7,13 @@ on:
       - release-*
     paths:
       - '.github/workflows/tests_docker.yml'
-      - '**/Dockerfile'
+      - '**/Dockerfile*'
       - 'browsers.json'
       - 'package.json'
   pull_request:
     paths:
       - '.github/workflows/tests_docker.yml'
-      - '**/Dockerfile'
+      - '**/Dockerfile*'
       - 'browsers.json'
       - 'package.json'
     branches:
@@ -47,16 +47,19 @@ jobs:
       run: |
         npm run clean
         rm -rf node_modules/
-        # The whole folder has to be world-writable to avoid UID conflicts between this mount and docker.
-        chmod -R 777 .
+        if [[ ${{ matrix.user }} == 'root' ]]; then
+          sudo chown -R 0 $(pwd)
+        else
+          sudo chown -R 1000 $(pwd)
+        fi
     - name: Launch container
-      run: docker run --rm -v $(pwd):/tmp/playwright --name playwright-docker-${{matrix.tag}}-test -d -t playwright:localbuild-${{ matrix.tag }} /bin/bash
+      run: docker run --rm --user=${{ matrix.user }} -v $(pwd):/tmp/playwright --workdir /tmp/playwright/ --name playwright-docker-${{ matrix.tag }}-test -d -t playwright:localbuild-${{ matrix.tag }} /bin/bash
     - name: Run "npm ci" inside docker
-      run: docker exec --workdir /tmp/playwright/ --user=${{ matrix.user }} playwright-docker-${{matrix.tag}}-test  npm ci
+      run: docker exec playwright-docker-${{ matrix.tag }}-test npm ci
     - name: Run "npm run build" inside docker
-      run: docker exec --workdir /tmp/playwright/ --user=${{ matrix.user }} playwright-docker-${{matrix.tag}}-test npm run build
+      run: docker exec playwright-docker-${{ matrix.tag }}-test npm run build
     - name: Run "npm run test" inside docker
-      run: docker exec --workdir /tmp/playwright/ --user=${{ matrix.user }} -e INSIDE_DOCKER=1 -e CI=1 playwright-docker-${{matrix.tag}}-test xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run test
+      run: docker exec -e INSIDE_DOCKER=1 -e CI=1 playwright-docker-${{ matrix.tag }}-test xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run test
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
     - uses: actions/upload-artifact@v1

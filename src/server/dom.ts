@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-import * as channels from '../protocol/channels';
-import * as frames from './frames';
-import type { ElementStateWithoutStable, InjectedScript, InjectedScriptPoll } from './injected/injectedScript';
-import * as injectedScriptSource from '../generated/injectedScriptSource';
-import * as js from './javascript';
 import * as mime from 'mime';
+import * as injectedScriptSource from '../generated/injectedScriptSource';
+import * as channels from '../protocol/channels';
+import { FatalDOMError, RetargetableDOMError } from './common/domErrors';
+import { isSessionClosedError } from './common/protocolError';
+import * as frames from './frames';
+import type { InjectedScript, InjectedScriptPoll, LogEntry } from './injected/injectedScript';
+import { CallMetadata } from './instrumentation';
+import * as js from './javascript';
 import { Page } from './page';
+import { Progress, ProgressController } from './progress';
 import { SelectorInfo } from './selectors';
 import * as types from './types';
-import { Progress, ProgressController } from './progress';
-import { FatalDOMError, RetargetableDOMError } from './common/domErrors';
-import { CallMetadata } from './instrumentation';
-import { isSessionClosedError } from './common/protocolError';
 
 type SetInputFilesFiles = channels.ElementHandleSetInputFilesParams['files'];
 
@@ -209,7 +209,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return throwFatalDOMError(throwRetargetableDOMError(await this.evaluateInUtility(([injected, node]) => {
       if (node.nodeType !== Node.ELEMENT_NODE)
         return 'error:notelement';
-      if (node.namespaceURI !== 'http://www.w3.org/1999/xhtml')
+      if ((node as unknown as Element).namespaceURI !== 'http://www.w3.org/1999/xhtml')
         return 'error:nothtmlelement';
       const element = node as unknown as HTMLElement;
       return { value: element.innerText };
@@ -672,7 +672,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _setChecked(progress: Progress, state: boolean, options: { position?: types.Point } & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     const isChecked = async () => {
-      const result = await this.evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'checked'), {});
+      const result = await this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'checked'), {});
       return throwRetargetableDOMError(throwFatalDOMError(result));
     };
     if (await isChecked() === state)
@@ -723,34 +723,34 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async isVisible(): Promise<boolean> {
-    const result = await this.evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'visible'), {});
+    const result = await this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'visible'), {});
     if (result === 'error:notconnected')
       return false;
     return throwFatalDOMError(result);
   }
 
   async isHidden(): Promise<boolean> {
-    const result = await this.evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'hidden'), {});
+    const result = await this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'hidden'), {});
     return throwRetargetableDOMError(throwFatalDOMError(result));
   }
 
   async isEnabled(): Promise<boolean> {
-    const result = await this.evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'enabled'), {});
+    const result = await this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'enabled'), {});
     return throwRetargetableDOMError(throwFatalDOMError(result));
   }
 
   async isDisabled(): Promise<boolean> {
-    const result = await this.evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'disabled'), {});
+    const result = await this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'disabled'), {});
     return throwRetargetableDOMError(throwFatalDOMError(result));
   }
 
   async isEditable(): Promise<boolean> {
-    const result = await this.evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'editable'), {});
+    const result = await this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'editable'), {});
     return throwRetargetableDOMError(throwFatalDOMError(result));
   }
 
   async isChecked(): Promise<boolean> {
-    const result = await this.evaluateInUtility(([injected, node]) => injected.checkElementState(node, 'checked'), {});
+    const result = await this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'checked'), {});
     return throwRetargetableDOMError(throwFatalDOMError(result));
   }
 
@@ -850,11 +850,11 @@ export class InjectedScriptPollHandler<T> {
 
   private async _streamLogs() {
     while (this._poll && this._progress.isRunning()) {
-      const messages = await this._poll.evaluate(poll => poll.takeNextLogs()).catch(e => [] as string[]);
+      const log = await this._poll.evaluate(poll => poll.takeNextLogs()).catch(e => [] as LogEntry[]);
       if (!this._poll || !this._progress.isRunning())
         return;
-      for (const message of messages)
-        this._progress.log(message);
+      for (const entry of log)
+        this._progress.logEntry(entry);
     }
   }
 
@@ -886,9 +886,9 @@ export class InjectedScriptPollHandler<T> {
     if (!this._poll)
       return;
     // Retrieve all the logs before continuing.
-    const messages = await this._poll.evaluate(poll => poll.takeLastLogs()).catch(e => [] as string[]);
-    for (const message of messages)
-      this._progress.log(message);
+    const log = await this._poll.evaluate(poll => poll.takeLastLogs()).catch(e => [] as LogEntry[]);
+    for (const entry of log)
+      this._progress.logEntry(entry);
   }
 
   async cancel() {
@@ -1001,95 +1001,6 @@ export function waitForSelectorTask(selector: SelectorInfo, state: 'attached' | 
       }
     });
   }, { parsed: selector.parsed, strict: selector.strict, state, root });
-}
-
-export function dispatchEventTask(selector: SelectorInfo, type: string, eventInit: Object): SchedulableTask<undefined> {
-  return injectedScript => injectedScript.evaluateHandle((injected, { parsed, strict, type, eventInit }) => {
-    return injected.pollRaf<undefined>((progress, continuePolling) => {
-      const element = injected.querySelector(parsed, document, strict);
-      if (!element)
-        return continuePolling;
-      progress.log(`  selector resolved to ${injected.previewNode(element)}`);
-      injected.dispatchEvent(element, type, eventInit);
-    });
-  }, { parsed: selector.parsed, strict: selector.strict, type, eventInit });
-}
-
-export function textContentTask(selector: SelectorInfo): SchedulableTask<string | null> {
-  return injectedScript => injectedScript.evaluateHandle((injected, { parsed, strict }) => {
-    return injected.pollRaf((progress, continuePolling) => {
-      const element = injected.querySelector(parsed, document, strict);
-      if (!element)
-        return continuePolling;
-      progress.log(`  selector resolved to ${injected.previewNode(element)}`);
-      progress.log(`  retrieving textContent`);
-      return element.textContent;
-    });
-  }, { parsed: selector.parsed, strict: selector.strict });
-}
-
-export function innerTextTask(selector: SelectorInfo): SchedulableTask<'error:nothtmlelement' | { innerText: string }> {
-  return injectedScript => injectedScript.evaluateHandle((injected, { parsed, strict }) => {
-    return injected.pollRaf((progress, continuePolling) => {
-      const element = injected.querySelector(parsed, document, strict);
-      if (!element)
-        return continuePolling;
-      progress.log(`  selector resolved to ${injected.previewNode(element)}`);
-      if (element.namespaceURI !== 'http://www.w3.org/1999/xhtml')
-        return 'error:nothtmlelement';
-      return { innerText: (element as HTMLElement).innerText };
-    });
-  }, { parsed: selector.parsed, strict: selector.strict });
-}
-
-export function innerHTMLTask(selector: SelectorInfo): SchedulableTask<string> {
-  return injectedScript => injectedScript.evaluateHandle((injected, { parsed, strict }) => {
-    return injected.pollRaf((progress, continuePolling) => {
-      const element = injected.querySelector(parsed, document, strict);
-      if (!element)
-        return continuePolling;
-      progress.log(`  selector resolved to ${injected.previewNode(element)}`);
-      return element.innerHTML;
-    });
-  }, { parsed: selector.parsed, strict: selector.strict });
-}
-
-export function getAttributeTask(selector: SelectorInfo, name: string): SchedulableTask<string | null> {
-  return injectedScript => injectedScript.evaluateHandle((injected, { parsed, strict, name }) => {
-    return injected.pollRaf((progress, continuePolling) => {
-      const element = injected.querySelector(parsed, document, strict);
-      if (!element)
-        return continuePolling;
-      progress.log(`  selector resolved to ${injected.previewNode(element)}`);
-      return element.getAttribute(name);
-    });
-  }, { parsed: selector.parsed, strict: selector.strict, name });
-}
-
-export function inputValueTask(selector: SelectorInfo): SchedulableTask<string> {
-  return injectedScript => injectedScript.evaluateHandle((injected, { parsed, strict }) => {
-    return injected.pollRaf((progress, continuePolling) => {
-      const element = injected.querySelector(parsed, document, strict);
-      if (!element)
-        return continuePolling;
-      progress.log(`  selector resolved to ${injected.previewNode(element)}`);
-      if (element.nodeName !== 'INPUT' && element.nodeName !== 'TEXTAREA' && element.nodeName !== 'SELECT')
-        return 'error:hasnovalue';
-      return (element as any).value;
-    });
-  }, { parsed: selector.parsed, strict: selector.strict,  });
-}
-
-export function elementStateTask(selector: SelectorInfo, state: ElementStateWithoutStable): SchedulableTask<boolean | 'error:notconnected' | FatalDOMError> {
-  return injectedScript => injectedScript.evaluateHandle((injected, { parsed, strict, state }) => {
-    return injected.pollRaf((progress, continuePolling) => {
-      const element = injected.querySelector(parsed, document, strict);
-      if (!element)
-        return continuePolling;
-      progress.log(`  selector resolved to ${injected.previewNode(element)}`);
-      return injected.checkElementState(element, state);
-    });
-  }, { parsed: selector.parsed, strict: selector.strict, state });
 }
 
 export const kUnableToAdoptErrorMessage = 'Unable to adopt element handle from a different document';

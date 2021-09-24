@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { formatLocation, wrapInPromise } from './util';
+import { formatLocation, wrapInPromise, debugTest } from './util';
 import * as crypto from 'crypto';
 import { FixturesWithLocation, Location, WorkerInfo, TestInfo, TestStepInternal } from './types';
 
@@ -67,6 +67,7 @@ class Fixture {
     let called = false;
     const setupFence = new Promise<void>((f, r) => { setupFenceFulfill = f; setupFenceReject = r; });
     const teardownFence = new Promise(f => this._teardownFenceCallback = f);
+    debugTest(`setup ${this.registration.name}`);
     this._tearDownComplete = wrapInPromise(this.registration.fn(params, async (value: any) => {
       if (called)
         throw new Error(`Cannot provide fixture value for the second time`);
@@ -94,6 +95,7 @@ class Fixture {
       await fixture.teardown();
     this.usages.clear();
     if (this._setup) {
+      debugTest(`teardown ${this.registration.name}`);
       this._teardownFenceCallback();
       await this._tearDownComplete;
     }

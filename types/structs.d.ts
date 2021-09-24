@@ -19,7 +19,7 @@ import { JSHandle, ElementHandle, Frame, Page, BrowserContext, Locator } from '.
 /**
  * Can be converted to JSON
  */
-export type Serializable = {};
+export type Serializable = any;
 /**
  * Can be converted to JSON, but may also contain JSHandles.
  */

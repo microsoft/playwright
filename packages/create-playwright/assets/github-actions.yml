@@ -20,7 +20,7 @@ jobs:
     - name: Run Playwright tests
       run: {{runTestsCommand}}
     - uses: actions/upload-artifact@v2
-      if: failure()
+      if: always()
       with:
         name: playwright-test-results
         path: test-results/

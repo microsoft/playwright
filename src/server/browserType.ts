@@ -57,6 +57,9 @@ export abstract class BrowserType extends SdkObject {
     const controller = new ProgressController(metadata, this);
     controller.setLogName('browser');
     const browser = await controller.run(progress => {
+      const seleniumHubUrl = (options as any).__testHookSeleniumRemoteURL || process.env.SELENIUM_REMOTE_URL;
+      if (seleniumHubUrl)
+        return this._launchWithSeleniumHub(progress, seleniumHubUrl, options);
       return this._innerLaunchWithRetries(progress, options, undefined, helper.debugProtocolLogger(protocolLogger)).catch(e => { throw this._rewriteStartupError(e); });
     }, TimeoutSettings.timeout(options));
     return browser;
@@ -241,6 +244,10 @@ export abstract class BrowserType extends SdkObject {
 
   async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number }, timeout?: number): Promise<Browser> {
     throw new Error('CDP connections are only supported by Chromium');
+  }
+
+  async _launchWithSeleniumHub(progress: Progress, hubUrl: string, options: types.LaunchOptions): Promise<Browser> {
+    throw new Error('Connecting to SELENIUM_REMOTE_URL is only supported by Chromium');
   }
 
   private _validateLaunchOptions<Options extends types.LaunchOptions>(options: Options): Options {

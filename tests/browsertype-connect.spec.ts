@@ -104,8 +104,8 @@ test('should be able to connect two browsers at the same time', async ({browserT
 
 test('should timeout in socket while connecting', async ({browserType, startRemoteServer, server}) => {
   const e = await browserType.connect({
-    wsEndpoint: `ws://localhost:${server.PORT}/ws`,
-    timeout: 1,
+    wsEndpoint: `ws://localhost:${server.PORT}/ws-slow`,
+    timeout: 1000,
   }).catch(e => e);
   expect(e.message).toContain('browserType.connect: Opening handshake has timed out');
 });
@@ -147,6 +147,16 @@ test('should send default User-Agent header with connect request', async ({brows
   ]);
   expect(request.headers['user-agent']).toBe(getUserAgent());
   expect(request.headers['foo']).toBe('bar');
+});
+
+test('should support slowmo option', async ({browserType, startRemoteServer}) => {
+  const remoteServer = await startRemoteServer();
+
+  const browser1 = await browserType.connect(remoteServer.wsEndpoint(), { slowMo: 200 });
+  const start = Date.now();
+  await browser1.newContext();
+  await browser1.close();
+  expect(Date.now() - start).toBeGreaterThan(199);
 });
 
 test('disconnected event should be emitted when browser is closed or server is closed', async ({browserType, startRemoteServer}) => {

@@ -23,21 +23,29 @@ import { FatalDOMError } from '../common/domErrors';
 import { SelectorEvaluatorImpl, isVisible, parentElementOrShadowHost, elementMatchesText, TextMatcher, createRegexTextMatcher, createStrictTextMatcher, createLaxTextMatcher } from './selectorEvaluator';
 import { CSSComplexSelectorList } from '../common/cssParser';
 import { generateSelector } from './selectorGenerator';
+import type { ExpectedTextValue } from '../../protocol/channels';
 
 type Predicate<T> = (progress: InjectedScriptProgress, continuePolling: symbol) => T | symbol;
 
 export type InjectedScriptProgress = {
-  aborted: boolean,
-  log: (message: string) => void,
-  logRepeating: (message: string) => void,
+  injectedScript: InjectedScript;
+  aborted: boolean;
+  log: (message: string) => void;
+  logRepeating: (message: string) => void;
+  setIntermediateResult: (intermediateResult: any) => void;
+};
+
+export type LogEntry = {
+  message?: string;
+  intermediateResult?: string;
 };
 
 export type InjectedScriptPoll<T> = {
   run: () => Promise<T>,
   // Takes more logs, waiting until at least one message is available.
-  takeNextLogs: () => Promise<string[]>,
+  takeNextLogs: () => Promise<LogEntry[]>,
   // Takes all current logs without waiting.
-  takeLastLogs: () => string[],
+  takeLastLogs: () => LogEntry[],
   cancel: () => void,
 };
 
@@ -86,6 +94,10 @@ export class InjectedScript {
 
     this._stableRafCount = stableRafCount;
     this._replaceRafWithTimeout = replaceRafWithTimeout;
+  }
+
+  eval(expression: string): any {
+    return global.eval(expression);
   }
 
   parseSelector(selector: string): ParsedSelector {
@@ -306,34 +318,43 @@ export class InjectedScript {
   }
 
   private _runAbortableTask<T>(task: (progess: InjectedScriptProgress) => Promise<T>): InjectedScriptPoll<T> {
-    let unsentLogs: string[] = [];
-    let takeNextLogsCallback: ((logs: string[]) => void) | undefined;
+    let unsentLog: LogEntry[] = [];
+    let takeNextLogsCallback: ((logs: LogEntry[]) => void) | undefined;
     let taskFinished = false;
     const logReady = () => {
       if (!takeNextLogsCallback)
         return;
-      takeNextLogsCallback(unsentLogs);
-      unsentLogs = [];
+      takeNextLogsCallback(unsentLog);
+      unsentLog = [];
       takeNextLogsCallback = undefined;
     };
 
-    const takeNextLogs = () => new Promise<string[]>(fulfill => {
+    const takeNextLogs = () => new Promise<LogEntry[]>(fulfill => {
       takeNextLogsCallback = fulfill;
-      if (unsentLogs.length || taskFinished)
+      if (unsentLog.length || taskFinished)
         logReady();
     });
 
-    let lastLog = '';
+    let lastMessage = '';
+    let lastIntermediateResult: any = undefined;
     const progress: InjectedScriptProgress = {
+      injectedScript: this,
       aborted: false,
       log: (message: string) => {
-        lastLog = message;
-        unsentLogs.push(message);
+        lastMessage = message;
+        unsentLog.push({ message });
         logReady();
       },
       logRepeating: (message: string) => {
-        if (message !== lastLog)
+        if (message !== lastMessage)
           progress.log(message);
+      },
+      setIntermediateResult: (intermediateResult: any) => {
+        if (lastIntermediateResult === intermediateResult)
+          return;
+        lastIntermediateResult = intermediateResult;
+        unsentLog.push({ intermediateResult });
+        logReady();
       },
     };
 
@@ -355,7 +376,7 @@ export class InjectedScript {
       takeNextLogs,
       run,
       cancel: () => { progress.aborted = true; },
-      takeLastLogs: () => unsentLogs,
+      takeLastLogs: () => unsentLog,
     };
   }
 
@@ -399,7 +420,7 @@ export class InjectedScript {
 
       for (const state of states) {
         if (state !== 'stable') {
-          const result = this.checkElementState(node, state);
+          const result = this.elementState(node, state);
           if (typeof result !== 'boolean')
             return result;
           if (!result) {
@@ -450,7 +471,7 @@ export class InjectedScript {
       return this.pollRaf(predicate);
   }
 
-  checkElementState(node: Node, state: ElementStateWithoutStable): boolean | 'error:notconnected' | FatalDOMError {
+  elementState(node: Node, state: ElementStateWithoutStable): boolean | 'error:notconnected' | 'error:notcheckbox' {
     const element = this.retarget(node, ['stable', 'visible', 'hidden'].includes(state) ? 'no-follow-label' : 'follow-label');
     if (!element || !element.isConnected) {
       if (state === 'hidden')
@@ -692,7 +713,7 @@ export class InjectedScript {
     while (container) {
       // elementFromPoint works incorrectly in Chromium (http://crbug.com/1188919),
       // so we use elementsFromPoint instead.
-      const elements = container.elementsFromPoint(x, y);
+      const elements = (container as Document).elementsFromPoint(x, y);
       const innerElement = elements[0] as Element | undefined;
       if (!innerElement || element === innerElement)
         break;
@@ -754,6 +775,10 @@ export class InjectedScript {
     const error = new Error(message);
     delete error.stack;
     return error;
+  }
+
+  expectedTextMatcher(expected: ExpectedTextValue): ExpectedTextMatcher {
+    return new ExpectedTextMatcher(expected);
   }
 }
 
@@ -842,6 +867,38 @@ function createTextMatcher(selector: string): { matcher: TextMatcher, kind: 'reg
   }
   const matcher = strict ? createStrictTextMatcher(selector) : createLaxTextMatcher(selector);
   return { matcher, kind: strict ? 'strict' : 'lax' };
+}
+
+class ExpectedTextMatcher {
+  _string: string | undefined;
+  private _substring: string | undefined;
+  private _regex: RegExp | undefined;
+  private _normalizeWhiteSpace: boolean | undefined;
+
+  constructor(expected: ExpectedTextValue) {
+    this._normalizeWhiteSpace = expected.normalizeWhiteSpace;
+    this._string = expected.matchSubstring ? undefined : this.normalizeWhiteSpace(expected.string);
+    this._substring = expected.matchSubstring ? this.normalizeWhiteSpace(expected.string) : undefined;
+    this._regex = expected.regexSource ? new RegExp(expected.regexSource, expected.regexFlags) : undefined;
+  }
+
+  matches(text: string): boolean {
+    if (this._normalizeWhiteSpace && !this._regex)
+      text = this.normalizeWhiteSpace(text)!;
+    if (this._string !== undefined)
+      return text === this._string;
+    if (this._substring !== undefined)
+      return text.includes(this._substring);
+    if (this._regex)
+      return !!this._regex.test(text);
+    return false;
+  }
+
+  private normalizeWhiteSpace(s: string | undefined): string | undefined {
+    if (!s)
+      return s;
+    return this._normalizeWhiteSpace ? s.trim().replace(/\s+/g, ' ') : s;
+  }
 }
 
 export default InjectedScript;

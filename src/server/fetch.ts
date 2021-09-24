@@ -14,24 +14,25 @@
  * limitations under the License.
  */
 
-import { HttpsProxyAgent } from 'https-proxy-agent';
-import url from 'url';
-import zlib from 'zlib';
 import * as http from 'http';
 import * as https from 'https';
-import { BrowserContext } from './browserContext';
-import * as types from './types';
+import { HttpsProxyAgent } from 'https-proxy-agent';
 import { pipeline, Readable, Transform } from 'stream';
+import url from 'url';
+import zlib from 'zlib';
+import { HTTPCredentials } from '../../types/types';
+import { NameValue, NewRequestOptions } from '../common/types';
+import { TimeoutSettings } from '../utils/timeoutSettings';
 import { createGuid, isFilePayload, monotonicTime } from '../utils/utils';
+import { BrowserContext } from './browserContext';
+import { MultipartFormData } from './formData';
 import { SdkObject } from './instrumentation';
 import { Playwright } from './playwright';
+import * as types from './types';
 import { HeadersArray, ProxySettings } from './types';
-import { HTTPCredentials } from '../../types/types';
-import { TimeoutSettings } from '../utils/timeoutSettings';
-import { MultipartFormData } from './formData';
 
 
-type FetchRequestOptions = {
+export type FetchRequestOptions = {
   userAgent: string;
   extraHTTPHeaders?: HeadersArray;
   httpCredentials?: HTTPCredentials;
@@ -111,7 +112,7 @@ export abstract class FetchRequest extends SdkObject {
       }
 
       const timeout = defaults.timeoutSettings.timeout(params);
-      const deadline = monotonicTime() + timeout;
+      const deadline = timeout && (monotonicTime() + timeout);
 
       const options: https.RequestOptions & { maxRedirects: number, deadline: number } = {
         method,
@@ -279,16 +280,20 @@ export abstract class FetchRequest extends SdkObject {
         body.on('error',reject);
       });
       request.on('error', reject);
-      const rejectOnTimeout = () =>  {
-        reject(new Error(`Request timed out after ${options.timeout}ms`));
-        request.abort();
-      };
-      const remaining = options.deadline - monotonicTime();
-      if (remaining <= 0) {
-        rejectOnTimeout();
-        return;
+
+      if (options.deadline) {
+        const rejectOnTimeout = () =>  {
+          reject(new Error(`Request timed out after ${options.timeout}ms`));
+          request.abort();
+        };
+        const remaining = options.deadline - monotonicTime();
+        if (remaining <= 0) {
+          rejectOnTimeout();
+          return;
+        }
+        request.setTimeout(remaining, rejectOnTimeout);
       }
-      request.setTimeout(remaining, rejectOnTimeout);
+
       if (postData)
         request.write(postData);
       request.end();
@@ -332,8 +337,29 @@ export class BrowserContextFetchRequest extends FetchRequest {
 
 
 export class GlobalFetchRequest extends FetchRequest {
-  constructor(playwright: Playwright) {
+  private readonly _options: FetchRequestOptions;
+  constructor(playwright: Playwright, options: Omit<NewRequestOptions, 'extraHTTPHeaders'> & { extraHTTPHeaders?: NameValue[] }) {
     super(playwright);
+    const timeoutSettings = new TimeoutSettings();
+    if (options.timeout !== undefined)
+      timeoutSettings.setDefaultTimeout(options.timeout);
+    const proxy = options.proxy;
+    if (proxy?.server) {
+      let url = proxy?.server.trim();
+      if (!/^\w+:\/\//.test(url))
+        url = 'http://' + url;
+      proxy.server = url;
+    }
+    this._options = {
+      baseURL: options.baseURL,
+      userAgent: options.userAgent || '',
+      extraHTTPHeaders: options.extraHTTPHeaders,
+      ignoreHTTPSErrors: !!options.ignoreHTTPSErrors,
+      httpCredentials: options.httpCredentials,
+      proxy,
+      timeoutSettings,
+    };
+
   }
 
   override dispose() {
@@ -341,14 +367,7 @@ export class GlobalFetchRequest extends FetchRequest {
   }
 
   _defaultOptions(): FetchRequestOptions {
-    return {
-      userAgent: '',
-      extraHTTPHeaders: undefined,
-      proxy: undefined,
-      timeoutSettings: new TimeoutSettings(),
-      ignoreHTTPSErrors: false,
-      baseURL: undefined,
-    };
+    return this._options;
   }
 
   async _addCookies(cookies: types.SetNetworkCookieParam[]): Promise<void> {

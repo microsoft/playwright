@@ -10,6 +10,7 @@
     "resolveJsonModule": true,
     "noEmit": true,
     "noImplicitOverride": true,
+    "useUnknownInCatchVariables": false,
   },
   "compileOnSave": true,
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js", "src/server/deviceDescriptorsSource.json"],

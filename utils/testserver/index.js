@@ -70,17 +70,24 @@ class TestServer {
     else
       this._server = http.createServer(this._onRequest.bind(this));
     this._server.on('connection', socket => this._onSocket(socket));
-    this._wsServer = new WebSocketServer({server: this._server });
-    this._wsServer.shouldHandle = (request) => {
+    this._wsServer = new WebSocketServer({ noServer: true });
+    this._server.on('upgrade', async (request, socket, head) => {
       const pathname = url.parse(request.url).pathname;
-      return ['/ws', '/ws-emit-and-close'].includes(pathname);
-    };
-    this._wsServer.on('connection', (ws, request) => {
-      const pathname = url.parse(request.url).pathname;
-      if (this._onWebSocketConnectionData !== undefined)
-        ws.send(this._onWebSocketConnectionData);
-      if (pathname === '/ws-emit-and-close')
-        ws.close(1003, 'closed by Playwright test-server');
+      if (pathname === '/ws-slow')
+        await new Promise(f => setTimeout(f, 2000));
+      if (!['/ws', '/ws-slow', '/ws-emit-and-close'].includes(pathname)) {
+        socket.write('HTTP/1.1 400 Bad Request\r\n\r\n');
+        socket.destroy();
+        return;
+      }
+      this._wsServer.handleUpgrade(request, socket, head, ws => {
+        // Next emit is only for our internal 'connection' listeners.
+        this._wsServer.emit('connection', ws, request);
+        if (this._onWebSocketConnectionData !== undefined)
+          ws.send(this._onWebSocketConnectionData);
+        if (pathname === '/ws-emit-and-close')
+          ws.close(1003, 'closed by Playwright test-server');
+      });
     });
     this._server.listen(port);
     this._dirPath = dirPath;

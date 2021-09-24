@@ -71,6 +71,15 @@ export type SerializedArgument = {
   handles: Channel[],
 };
 
+export type ExpectedTextValue = {
+  string?: string,
+  regexSource?: string,
+  regexFlags?: string,
+  matchSubstring?: boolean,
+  normalizeWhiteSpace?: boolean,
+  useInnerText?: boolean,
+};
+
 export type AXNode = {
   role: string,
   name: string,
@@ -322,10 +331,38 @@ export type PlaywrightSocksEndOptions = {
 };
 export type PlaywrightSocksEndResult = void;
 export type PlaywrightNewRequestParams = {
+  baseURL?: string,
+  userAgent?: string,
   ignoreHTTPSErrors?: boolean,
+  extraHTTPHeaders?: NameValue[],
+  httpCredentials?: {
+    username: string,
+    password: string,
+  },
+  proxy?: {
+    server: string,
+    bypass?: string,
+    username?: string,
+    password?: string,
+  },
+  timeout?: number,
 };
 export type PlaywrightNewRequestOptions = {
+  baseURL?: string,
+  userAgent?: string,
   ignoreHTTPSErrors?: boolean,
+  extraHTTPHeaders?: NameValue[],
+  httpCredentials?: {
+    username: string,
+    password: string,
+  },
+  proxy?: {
+    server: string,
+    bypass?: string,
+    username?: string,
+    password?: string,
+  },
+  timeout?: number,
 };
 export type PlaywrightNewRequestResult = {
   request: FetchRequestChannel,
@@ -1578,8 +1615,10 @@ export interface FrameChannel extends Channel {
   title(params?: FrameTitleParams, metadata?: Metadata): Promise<FrameTitleResult>;
   type(params: FrameTypeParams, metadata?: Metadata): Promise<FrameTypeResult>;
   uncheck(params: FrameUncheckParams, metadata?: Metadata): Promise<FrameUncheckResult>;
+  waitForTimeout(params: FrameWaitForTimeoutParams, metadata?: Metadata): Promise<FrameWaitForTimeoutResult>;
   waitForFunction(params: FrameWaitForFunctionParams, metadata?: Metadata): Promise<FrameWaitForFunctionResult>;
   waitForSelector(params: FrameWaitForSelectorParams, metadata?: Metadata): Promise<FrameWaitForSelectorResult>;
+  expect(params: FrameExpectParams, metadata?: Metadata): Promise<FrameExpectResult>;
 }
 export type FrameLoadstateEvent = {
   add?: 'load' | 'domcontentloaded' | 'networkidle',
@@ -2107,6 +2146,13 @@ export type FrameUncheckOptions = {
   trial?: boolean,
 };
 export type FrameUncheckResult = void;
+export type FrameWaitForTimeoutParams = {
+  timeout: number,
+};
+export type FrameWaitForTimeoutOptions = {
+
+};
+export type FrameWaitForTimeoutResult = void;
 export type FrameWaitForFunctionParams = {
   expression: string,
   isFunction?: boolean,
@@ -2135,6 +2181,25 @@ export type FrameWaitForSelectorOptions = {
 };
 export type FrameWaitForSelectorResult = {
   element?: ElementHandleChannel,
+};
+export type FrameExpectParams = {
+  selector: string,
+  expression: string,
+  expected?: ExpectedTextValue,
+  isNot?: boolean,
+  data?: any,
+  timeout?: number,
+};
+export type FrameExpectOptions = {
+  expected?: ExpectedTextValue,
+  isNot?: boolean,
+  data?: any,
+  timeout?: number,
+};
+export type FrameExpectResult = {
+  pass: boolean,
+  received: string,
+  log: string[],
 };
 
 export interface FrameEvents {
@@ -3695,8 +3760,10 @@ export const commandsWithTracingSnapshots = new Set([
   'Frame.textContent',
   'Frame.type',
   'Frame.uncheck',
+  'Frame.waitForTimeout',
   'Frame.waitForFunction',
   'Frame.waitForSelector',
+  'Frame.expect',
   'JSHandle.evaluateExpression',
   'ElementHandle.evaluateExpression',
   'JSHandle.evaluateExpressionHandle',

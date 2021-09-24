@@ -225,7 +225,6 @@ it.describe('pause', () => {
     expect(await sanitizeLog(recorderPage)).toEqual([
       'page.pause- XXms',
       'page.isChecked(button)- XXms',
-      'checking \"checked\" state of \"button\"',
       'selector resolved to <button onclick=\"console.log(1)\">Submit</button>',
       'error: Not a checkbox or radio button',
     ]);
@@ -238,22 +237,22 @@ it.describe('pause', () => {
     const scriptPromise = (async () => {
       await page.pause();
       await Promise.all([
-        page.waitForEvent('console', { timeout: 1 }),
-        page.click('button'),
+        page.waitForEvent('console', { timeout: 1 }).catch(() => {}),
+        page.pause(),
       ]);
-    })().catch(() => {});
+    })();
     const recorderPage = await recorderPageGetter();
     await recorderPage.click('[title="Step over"]');
-    await recorderPage.waitForSelector('.source-line-paused:has-text("page.click")');
+    await recorderPage.waitForSelector('.source-line-paused:has-text("page.pause")');
     await recorderPage.waitForSelector('.source-line-error:has-text("page.waitForEvent")');
-    await recorderPage.click('[title="Resume"]');
     expect(await sanitizeLog(recorderPage)).toEqual([
       'page.pause- XXms',
       'page.waitForEvent(console)',
       'waiting for event \"console\"',
       'error: Timeout while waiting for event \"console\"',
-      'page.click(button)- XXms',
+      'page.pause',
     ]);
+    await recorderPage.click('[title="Resume"]');
     await scriptPromise;
   });
 
@@ -277,7 +276,8 @@ it.describe('pause', () => {
     const recorderPage = await recorderPageGetter();
     await recorderPage.click('[title="Step over"]');
     await recorderPage.waitForSelector('.source-line-paused:has-text("page.context().close();")');
-    await recorderPage.click('[title=Resume]');
+    // Next line can throw because closing context also closes the inspector page.
+    await recorderPage.click('[title=Resume]').catch(e => {});
     await scriptPromise;
   });
 

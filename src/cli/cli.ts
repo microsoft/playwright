@@ -113,9 +113,10 @@ program
     .action(async function(args: string[], command: program.Command) {
       try {
         if (!args.length) {
+          const executables = registry.defaultExecutables();
           if (command.opts().withDeps)
-            await registry.installDeps();
-          await registry.install();
+            await registry.installDeps(executables);
+          await registry.install(executables);
         } else {
           const executables = checkBrowsersToInstall(args);
           if (command.opts().withDeps)
@@ -143,7 +144,7 @@ program
     .action(async function(args: string[]) {
       try {
         if (!args.length)
-          await registry.installDeps();
+          await registry.installDeps(registry.defaultExecutables());
         else
           await registry.installDeps(checkBrowsersToInstall(args));
       } catch (e) {

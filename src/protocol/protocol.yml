@@ -97,6 +97,17 @@ SerializedArgument:
       items: Channel
 
 
+ExpectedTextValue:
+  type: object
+  properties:
+    string: string?
+    regexSource: string?
+    regexFlags: string?
+    matchSubstring: boolean?
+    normalizeWhiteSpace: boolean?
+    useInnerText: boolean?
+
+
 AXNode:
   type: object
   properties:
@@ -455,7 +466,26 @@ Playwright:
 
     newRequest:
       parameters:
+        baseURL: string?
+        userAgent: string?
         ignoreHTTPSErrors: boolean?
+        extraHTTPHeaders:
+          type: array?
+          items: NameValue
+        httpCredentials:
+          type: object?
+          properties:
+            username: string
+            password: string
+        proxy:
+          type: object?
+          properties:
+            server: string
+            bypass: string?
+            username: string?
+            password: string?
+        timeout: number?
+
       returns:
         request: FetchRequest
 
@@ -1687,6 +1717,12 @@ Frame:
         snapshot: true
         pausesBeforeInput: true
 
+    waitForTimeout:
+      parameters:
+        timeout: number
+      tracing:
+        snapshot: true
+
     waitForFunction:
       parameters:
         expression: string
@@ -1714,6 +1750,21 @@ Frame:
           - hidden
       returns:
         element: ElementHandle?
+      tracing:
+        snapshot: true
+
+    expect:
+      parameters:
+        selector: string
+        expression: string
+        expected: ExpectedTextValue?
+        isNot: boolean?
+        data: json?
+        timeout: number?
+      returns:
+        pass: boolean
+        received: string
+        log: string[]
       tracing:
         snapshot: true
 
