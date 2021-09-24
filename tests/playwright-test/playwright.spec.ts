@@ -456,3 +456,90 @@ test('should work with video size', async ({ runInlineTest }, testInfo) => {
   expect(videoPlayer.videoWidth).toBe(220);
   expect(videoPlayer.videoHeight).toBe(110);
 });
+
+test('should be able to re-use the context when debug mode is used', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test.use({
+        colorScheme: 'light',
+        viewport: {
+          width: 1920,
+          height: 1080,
+        },
+      })
+      
+      const host1 = 'http://host1.com/foobar';
+      
+      test.beforeEach(async({page, context}) => {
+        context.route(host1, route => route.fulfill({body: '<html></html>', contentType: 'text/html'}, {times: 1}));
+        console.log(page._guid + '|');
+        console.log(context._guid + '|');
+      })
+      
+      test('initial setup', async ({ page }) => {
+        await page.goto(host1);
+        expect(await page.evaluate(() => window.localStorage.getItem('foobar'))).toBe(null);
+        await page.evaluate(() => window.localStorage.setItem('foobar', 'bar'));
+        expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
+        expect(page.viewportSize()).toStrictEqual({
+          width: 1920,
+          height: 1080,
+        });
+      });
+      
+      test('second run after persistent data has changed', async ({ page }) => {
+        await page.goto(host1);
+        expect(await page.evaluate(() => window.localStorage.getItem('foobar'))).toBe(null);
+        await page.evaluate(() => window.localStorage.setItem('foobar', 'bar'));
+        expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
+        expect(page.viewportSize()).toStrictEqual({
+          width: 1920,
+          height: 1080,
+        });
+      });
+      
+      test.describe('inside a describe block', () => {
+        test.use({
+          colorScheme: 'dark',
+          viewport: {
+            width: 1000,
+            height: 500,
+          },
+        });
+        test('using different options', async ({ page }) => {
+          await page.goto(host1);
+          expect(await page.evaluate(() => window.localStorage.getItem('foobar'))).toBe(null);
+          expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(false);
+          expect(page.viewportSize()).toStrictEqual({
+              width: 1000,
+              height: 500,
+          });
+        });
+      });
+      
+      test('after the describe block', async ({ page }) => {
+        await page.goto(host1);
+        await page.pause();
+        expect(await page.evaluate(() => window.localStorage.getItem('foobar'))).toBe(null);
+        expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
+        expect(page.viewportSize()).toStrictEqual({
+          width: 1920,
+          height: 1080,
+        });
+      });
+    `
+  }, undefined, {
+    PWTEST_REUSE_CONTEXT: '1',
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(4);
+  const pageIds = result.output.match(/page@(.*)\|/g);
+  const browserContextIds = result.output.match(/browser-context@(.*)\|/g);
+  expect(pageIds.length).toBe(4);
+  expect(new Set(pageIds).size).toBe(1);
+  expect(browserContextIds.length).toBe(4);
+  expect(new Set(browserContextIds).size).toBe(1);
+});
+

@@ -103,6 +103,7 @@ async function createLoader(opts: { [key: string]: any }): Promise<Loader> {
     overrides.timeout = 0;
     overrides.workers = 1;
     process.env.PWDEBUG = '1';
+    process.env.PWTEST_REUSE_CONTEXT = '1';
   }
   const loader = new Loader(defaultConfig, overrides);
 

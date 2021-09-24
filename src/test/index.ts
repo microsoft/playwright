@@ -19,7 +19,7 @@ import * as path from 'path';
 import type { LaunchOptions, BrowserContextOptions, Page, BrowserContext, BrowserType } from '../../types/types';
 import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo } from '../../types/test';
 import { rootTestType } from './testType';
-import { createGuid, removeFolders } from '../utils/utils';
+import { assert, createGuid, removeFolders } from '../utils/utils';
 import { GridClient } from '../grid/gridClient';
 export { expect } from './expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
@@ -31,7 +31,85 @@ type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
 type WorkerAndFileFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
   _browserType: BrowserType;
   _artifactsDir: () => string,
+  _reuseBrowerContext: ReuseBrowerContextStorage,
 };
+
+class ReuseBrowerContextStorage {
+  private _browserContext?: BrowserContext;
+  private _uniqueOrigins = new Set<string>();
+
+  isEnabled(): boolean {
+    return !!process.env.PWTEST_REUSE_CONTEXT;
+  }
+
+  hasContext(): boolean {
+    return !!this._browserContext;
+  }
+
+  setContext(context: BrowserContext) {
+    assert(!this._browserContext);
+    this._browserContext = context;
+    this._browserContext.on('page', page => page.on('framenavigated', frame => this._uniqueOrigins.add(new URL(frame.url()).origin)));
+  }
+
+  async obtainContext(newContextOptions: BrowserContextOptions): Promise<BrowserContext> {
+    assert(this._browserContext);
+    let pages = this._browserContext.pages();
+    const page = pages[0];
+    if (this._uniqueOrigins.size > 0) {
+      let pageWorker = null;
+      if (pages.length > 1) {
+        await page.bringToFront();
+        pageWorker = pages[1];
+      } else {
+        pageWorker = await this._browserContext.newPage();
+        pages = this._browserContext.pages();
+      }
+      for (const origin of this._uniqueOrigins) {
+        await pageWorker.route(origin, route => route.fulfill({body: `<html></html>`, contentType: 'text/html'}), { times: 1 });
+        await pageWorker.goto(origin);
+        await pageWorker.evaluate(() => window.localStorage.clear());
+        await pageWorker.evaluate(() => window.sessionStorage.clear());
+      }
+    }
+    for (const p of pages.slice(1))
+      await p.close();
+    await this._browserContext.clearCookies();
+    await this._applyNewContextOptions(page, newContextOptions);
+    await page.goto('about:blank');
+    this._uniqueOrigins.clear();
+    return this._browserContext;
+  }
+
+  private async _applyNewContextOptions(page: Page, newOptions: BrowserContextOptions) {
+    const oldOptions: BrowserContextOptions = (this._browserContext as any)._options;
+    if (
+      (
+        oldOptions.viewport?.width !== newOptions.viewport?.width ||
+        oldOptions.viewport?.height !== newOptions.viewport?.height
+      ) &&
+      (newOptions.viewport?.height && newOptions.viewport?.width)
+    )
+      await page.setViewportSize({width: newOptions.viewport?.width, height: newOptions.viewport?.height });
+    const emulateMediaOptions: Partial<Parameters<Page['emulateMedia']>[0]> = {};
+    if (oldOptions.colorScheme !== newOptions.colorScheme)
+      emulateMediaOptions.colorScheme = newOptions.colorScheme;
+    if (oldOptions.forcedColors !== newOptions.forcedColors)
+      emulateMediaOptions.forcedColors = newOptions.forcedColors;
+    if (oldOptions.reducedMotion !== newOptions.reducedMotion)
+      emulateMediaOptions.reducedMotion = newOptions.reducedMotion;
+    if (Object.keys(emulateMediaOptions).length > 0)
+      await page.emulateMedia(emulateMediaOptions);
+    (this._browserContext as any)._options = newOptions;
+  }
+
+  async obtainPage(): Promise<Page> {
+    assert(this._browserContext);
+    if (this._browserContext.pages().length === 0)
+      return await this._browserContext.newPage();
+    return this._browserContext.pages()[0];
+  }
+}
 
 export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
   defaultBrowserType: [ 'chromium', { scope: 'worker' } ],
@@ -311,10 +389,17 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
     }));
   }, { auto: true }],
 
-  context: async ({ browser, video, _artifactsDir }, use, testInfo) => {
+  _reuseBrowerContext: [new ReuseBrowerContextStorage(), { scope: 'worker' }],
+
+  context: async ({ browser, video, _artifactsDir, _reuseBrowerContext, _combinedContextOptions }, use, testInfo) => {
     const hook = hookType(testInfo);
     if (hook)
       throw new Error(`"context" and "page" fixtures are not supported in ${hook}. Use browser.newContext() instead.`);
+    if (_reuseBrowerContext.isEnabled() && _reuseBrowerContext.hasContext()) {
+      const context = await _reuseBrowerContext.obtainContext(_combinedContextOptions);
+      await use(context);
+      return;
+    }
 
     let videoMode = typeof video === 'string' ? video : video.mode;
     if (videoMode === 'retry-with-video')
@@ -332,7 +417,13 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
     const allPages: Page[] = [];
     context.on('page', page => allPages.push(page));
 
+    if (_reuseBrowerContext.isEnabled())
+      _reuseBrowerContext.setContext(context);
+
     await use(context);
+
+    if (_reuseBrowerContext.isEnabled())
+      return;
 
     const prependToError = testInfo.status === 'timedOut' ?
       formatPendingCalls((context as any)._connection.pendingProtocolCalls()) : '';
@@ -366,7 +457,11 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
     }
   },
 
-  page: async ({ context }, use) => {
+  page: async ({ context, _reuseBrowerContext }, use) => {
+    if (_reuseBrowerContext.isEnabled() && _reuseBrowerContext.hasContext()) {
+      await use(await _reuseBrowerContext.obtainPage());
+      return;
+    }
     await use(await context.newPage());
   },
 });
