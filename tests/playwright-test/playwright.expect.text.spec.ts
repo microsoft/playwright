@@ -312,5 +312,49 @@ test('should print nice error for toHaveText', async ({ runInlineTest }) => {
   expect(output).toContain('Pending operations:');
   expect(output).toContain('Error: expect(received).toHaveText(expected)');
   expect(output).toContain('Expected string: "Text"');
-  expect(output).toContain('Received string: undefined');
+  expect(output).toContain('Received string: ""');
+  expect(output).toContain('waiting for selector "no-such-thing"');
+});
+
+test('should print expected/received on Ctrl+C', async ({ runInlineTest }) => {
+  test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
+
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('times out waiting for text', async ({ page }) => {
+        await page.setContent('<div id=node>Text content</div>');
+        const promise = expect(page.locator('#node')).toHaveText('Text 2');
+        await new Promise(f => setTimeout(f, 500));
+        console.log('\\n%%SEND-SIGINT%%');
+        await promise;
+      });
+      `,
+  }, { workers: 1 }, {}, { sendSIGINTAfter: 1 });
+  expect(result.exitCode).toBe(130);
+  expect(result.passed).toBe(0);
+  expect(result.skipped).toBe(1);
+  expect(stripAscii(result.output)).toContain('Expected string: "Text 2"');
+  expect(stripAscii(result.output)).toContain('Received string: "Text content"');
+});
+
+test('should support not.toHaveText when selector does not match', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('fails', async ({ page }) => {
+        await page.setContent('<div>hello</div>');
+        await expect(page.locator('span')).not.toHaveText('hello', { timeout: 1000 });
+      });
+      `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.failed).toBe(1);
+  const output = stripAscii(result.output);
+  expect(output).toContain('Expected string: not "hello"');
+  expect(output).toContain('Received string: ""');
+  expect(output).toContain('waiting for selector "span"');
 });
