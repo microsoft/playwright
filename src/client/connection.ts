@@ -110,7 +110,7 @@ export class Connection extends EventEmitter {
       if (!callback)
         throw new Error(`Cannot find command to respond: ${id}`);
       this._callbacks.delete(id);
-      if (error)
+      if (error && !result)
         callback.reject(parseError(error));
       else
         callback.resolve(this._replaceGuidsWithChannels(result));

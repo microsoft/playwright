@@ -42,7 +42,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.Metadata = tObject({
     stack: tOptional(tArray(tType('StackFrame'))),
     apiName: tOptional(tString),
-    collectLogs: tOptional(tBoolean),
   });
   scheme.Point = tObject({
     x: tNumber,
