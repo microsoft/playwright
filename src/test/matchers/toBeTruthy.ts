@@ -17,13 +17,14 @@
 import { currentTestInfo } from '../globals';
 import type { Expect } from '../types';
 import { expectType } from '../util';
+import { callLogText } from './toMatchText';
 
 export async function toBeTruthy(
   this: ReturnType<Expect['getState']>,
   matcherName: string,
   receiver: any,
   receiverType: string,
-  query: (isNot: boolean, timeout: number) => Promise<{ pass: boolean }>,
+  query: (isNot: boolean, timeout: number) => Promise<{ pass: boolean, log?: string[] }>,
   options: { timeout?: number } = {},
 ) {
   const testInfo = currentTestInfo();
@@ -41,10 +42,10 @@ export async function toBeTruthy(
     defaultExpectTimeout = 5000;
   const timeout = options.timeout === 0 ? 0 : options.timeout || defaultExpectTimeout;
 
-  const { pass } = await query(this.isNot, timeout);
+  const { pass, log } = await query(this.isNot, timeout);
 
   const message = () => {
-    return this.utils.matcherHint(matcherName, undefined, '', matcherOptions);
+    return this.utils.matcherHint(matcherName, undefined, '', matcherOptions) + callLogText(log);
   };
 
   return { message, pass };
