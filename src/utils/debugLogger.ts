@@ -64,7 +64,7 @@ class DebugLogger {
 
 export const debugLogger = new DebugLogger();
 
-const kLogCount = 50;
+const kLogCount = 500;
 export class RecentLogsCollector {
   private _logs: string[] = [];
 
