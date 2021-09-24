@@ -23,7 +23,7 @@ import { FatalDOMError } from '../common/domErrors';
 import { SelectorEvaluatorImpl, isVisible, parentElementOrShadowHost, elementMatchesText, TextMatcher, createRegexTextMatcher, createStrictTextMatcher, createLaxTextMatcher } from './selectorEvaluator';
 import { CSSComplexSelectorList } from '../common/cssParser';
 import { generateSelector } from './selectorGenerator';
-import type { ExpectedTextValue } from '../../protocol/channels';
+import type * as channels from '../../protocol/channels';
 
 type Predicate<T> = (progress: InjectedScriptProgress, continuePolling: symbol) => T | symbol;
 
@@ -39,6 +39,8 @@ export type LogEntry = {
   message?: string;
   intermediateResult?: string;
 };
+
+export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue'> & { expectedValue?: any };
 
 export type InjectedScriptPoll<T> = {
   run: () => Promise<T>,
@@ -265,12 +267,26 @@ export class InjectedScript {
   }
 
   pollRaf<T>(predicate: Predicate<T>): InjectedScriptPoll<T> {
+    return this.poll(predicate, next => requestAnimationFrame(next));
+  }
+
+  pollInterval<T>(pollInterval: number, predicate: Predicate<T>): InjectedScriptPoll<T> {
+    return this.poll(predicate, next => setTimeout(next, pollInterval));
+  }
+
+  pollLogScale<T>(predicate: Predicate<T>): InjectedScriptPoll<T> {
+    const pollIntervals = [100, 250, 500];
+    let attempts = 0;
+    return this.poll(predicate, next => setTimeout(next, pollIntervals[attempts++] || 1000));
+  }
+
+  poll<T>(predicate: Predicate<T>, scheduleNext: (next: () => void) => void): InjectedScriptPoll<T> {
     return this._runAbortableTask(progress => {
       let fulfill: (result: T) => void;
       let reject: (error: Error) => void;
       const result = new Promise<T>((f, r) => { fulfill = f; reject = r; });
 
-      const onRaf = () => {
+      const next = () => {
         if (progress.aborted)
           return;
         try {
@@ -279,40 +295,14 @@ export class InjectedScript {
           if (success !== continuePolling)
             fulfill(success as T);
           else
-            requestAnimationFrame(onRaf);
+            scheduleNext(next);
         } catch (e) {
           progress.log('  ' + e.message);
           reject(e);
         }
       };
 
-      onRaf();
-      return result;
-    });
-  }
-
-  pollInterval<T>(pollInterval: number, predicate: Predicate<T>): InjectedScriptPoll<T> {
-    return this._runAbortableTask(progress => {
-      let fulfill: (result: T) => void;
-      let reject: (error: Error) => void;
-      const result = new Promise<T>((f, r) => { fulfill = f; reject = r; });
-
-      const onTimeout = () => {
-        if (progress.aborted)
-          return;
-        try {
-          const continuePolling = Symbol('continuePolling');
-          const success = predicate(progress, continuePolling);
-          if (success !== continuePolling)
-            fulfill(success as T);
-          else
-            setTimeout(onTimeout, pollInterval);
-        } catch (e) {
-          reject(e);
-        }
-      };
-
-      onTimeout();
+      next();
       return result;
     });
   }
@@ -777,8 +767,127 @@ export class InjectedScript {
     return error;
   }
 
-  expectedTextMatcher(expected: ExpectedTextValue): ExpectedTextMatcher {
-    return new ExpectedTextMatcher(expected);
+  expect(progress: InjectedScriptProgress, element: Element, options: FrameExpectParams, elements: Element[], continuePolling: any): { pass: boolean, received?: any } {
+    const injected = progress.injectedScript;
+    const expression = options.expression;
+
+    {
+      // Element state / boolean values.
+      let elementState: boolean | 'error:notconnected' | 'error:notcheckbox' | undefined;
+      if (expression === 'to.be.checked') {
+        elementState = progress.injectedScript.elementState(element, 'checked');
+      } else if (expression === 'to.be.disabled') {
+        elementState = progress.injectedScript.elementState(element, 'disabled');
+      } else if (expression === 'to.be.editable') {
+        elementState = progress.injectedScript.elementState(element, 'editable');
+      } else if (expression === 'to.be.empty') {
+        if (element.nodeName === 'INPUT' || element.nodeName === 'TEXTAREA')
+          elementState = !(element as HTMLInputElement).value;
+        else
+          elementState = !element.textContent?.trim();
+      } else if (expression === 'to.be.enabled') {
+        elementState = progress.injectedScript.elementState(element, 'enabled');
+      } else if (expression === 'to.be.focused') {
+        elementState = document.activeElement === element;
+      } else if (expression === 'to.be.hidden') {
+        elementState = progress.injectedScript.elementState(element, 'hidden');
+      } else if (expression === 'to.be.visible') {
+        elementState = progress.injectedScript.elementState(element, 'visible');
+      }
+
+      if (elementState !== undefined) {
+        if (elementState === 'error:notcheckbox')
+          throw injected.createStacklessError('Element is not a checkbox');
+        if (elementState === 'error:notconnected')
+          throw injected.createStacklessError('Element is not connected');
+        if (elementState === options.isNot)
+          return continuePolling;
+        return { pass: !options.isNot };
+      }
+    }
+
+    {
+      // Single number value.
+      if (expression === 'to.have.count') {
+        const received = elements.length;
+        const matches = received === options.expectedNumber;
+        if (matches === options.isNot)
+          return continuePolling;
+        return { pass: !options.isNot, received };
+      }
+    }
+
+    {
+      // JS property
+      if (expression === 'to.have.property') {
+        const received = (element as any)[options.expressionArg];
+        const matches = deepEquals(received, options.expectedValue);
+        if (matches === options.isNot) {
+          progress.setIntermediateResult(received);
+          return continuePolling;
+        }
+        return { received, pass: !options.isNot };
+      }
+    }
+
+    {
+      // Single text value.
+      let received: string | undefined;
+      if (expression === 'to.have.attribute') {
+        received = element.getAttribute(options.expressionArg) || '';
+      } else if (expression === 'to.have.class') {
+        received = element.className;
+      } else if (expression === 'to.have.css') {
+        received = (window.getComputedStyle(element) as any)[options.expressionArg];
+      } else if (expression === 'to.have.id') {
+        received = element.id;
+      } else if (expression === 'to.have.text') {
+        received = options.useInnerText ? (element as HTMLElement).innerText : element.textContent || '';
+      } else if (expression === 'to.have.title') {
+        received = document.title;
+      } else if (expression === 'to.have.url') {
+        received = document.location.href;
+      } else if (expression === 'to.have.value') {
+        if (element.nodeName !== 'INPUT' && element.nodeName !== 'TEXTAREA' && element.nodeName !== 'SELECT')
+          throw this.createStacklessError('Not an input element');
+        received = (element as any).value;
+      }
+
+      if (received !== undefined && options.expectedText) {
+        const matcher = new ExpectedTextMatcher(options.expectedText[0]);
+        if (matcher.matches(received) === options.isNot) {
+          progress.setIntermediateResult(received);
+          return continuePolling;
+        }
+        return { received, pass: !options.isNot };
+      }
+    }
+
+    {
+      // List of values.
+      let received: string[] | undefined;
+      if (expression === 'to.have.text.array')
+        received = elements.map(e => options.useInnerText ? (e as HTMLElement).innerText : e.textContent || '');
+      else if (expression === 'to.have.class.array')
+        received = elements.map(e => e.className);
+
+      if (received && options.expectedText) {
+        if (received.length !== options.expectedText.length) {
+          progress.setIntermediateResult(received);
+          return continuePolling;
+        }
+
+        const matchers = options.expectedText.map(e => new ExpectedTextMatcher(e));
+        for (let i = 0; i < received.length; ++i) {
+          if (matchers[i].matches(received[i]) === options.isNot) {
+            progress.setIntermediateResult(received);
+            return continuePolling;
+          }
+        }
+        return { received, pass: !options.isNot };
+      }
+    }
+    throw this.createStacklessError('Unknown expect matcher: ' + options.expression);
   }
 }
 
@@ -875,7 +984,7 @@ class ExpectedTextMatcher {
   private _regex: RegExp | undefined;
   private _normalizeWhiteSpace: boolean | undefined;
 
-  constructor(expected: ExpectedTextValue) {
+  constructor(expected: channels.ExpectedTextValue) {
     this._normalizeWhiteSpace = expected.normalizeWhiteSpace;
     this._string = expected.matchSubstring ? undefined : this.normalizeWhiteSpace(expected.string);
     this._substring = expected.matchSubstring ? this.normalizeWhiteSpace(expected.string) : undefined;
@@ -899,6 +1008,53 @@ class ExpectedTextMatcher {
       return s;
     return this._normalizeWhiteSpace ? s.trim().replace(/\s+/g, ' ') : s;
   }
+}
+
+function deepEquals(a: any, b: any): boolean {
+  if (a === b)
+    return true;
+
+  if (a && b && typeof a === 'object' && typeof b === 'object') {
+    if (a.constructor !== b.constructor)
+      return false;
+
+    if (Array.isArray(a)) {
+      if (a.length !== b.length)
+        return false;
+      for (let i = 0; i < a.length; ++i) {
+        if (!deepEquals(a[i], b[i]))
+          return false;
+      }
+      return true;
+    }
+
+    if (a instanceof RegExp)
+      return a.source === b.source && a.flags === b.flags;
+    // This covers Date.
+    if (a.valueOf !== Object.prototype.valueOf)
+      return a.valueOf() === b.valueOf();
+    // This covers custom objects.
+    if (a.toString !== Object.prototype.toString)
+      return a.toString() === b.toString();
+
+    const keys = Object.keys(a);
+    if (keys.length !== Object.keys(b).length)
+      return false;
+
+    for (let i = 0; i < keys.length; ++i) {
+      if (!b.hasOwnProperty(keys[i]))
+        return false;
+    }
+
+    for (const key of keys) {
+      if (!deepEquals(a[key], b[key]))
+        return false;
+    }
+    return true;
+  }
+
+  // NaN
+  return isNaN(a) === isNaN(b);
 }
 
 export default InjectedScript;

@@ -30,7 +30,8 @@ import { assert, constructURLBasedOnBaseURL, makeWaitForNextTask } from '../util
 import { ManualPromise } from '../utils/async';
 import { debugLogger } from '../utils/debugLogger';
 import { CallMetadata, internalCallMetadata, SdkObject } from './instrumentation';
-import InjectedScript, { ElementStateWithoutStable, InjectedScriptPoll, InjectedScriptProgress } from './injected/injectedScript';
+import type InjectedScript from './injected/injectedScript';
+import type { ElementStateWithoutStable, FrameExpectParams, InjectedScriptPoll, InjectedScriptProgress } from './injected/injectedScript';
 import { isSessionClosedError } from './common/protocolError';
 
 type ContextData = {
@@ -69,7 +70,7 @@ export type NavigationEvent = {
 };
 
 export type SchedulableTask<T> = (injectedScript: js.JSHandle<InjectedScript>) => Promise<js.JSHandle<InjectedScriptPoll<T>>>;
-export type DomTaskBody<T, R> = (progress: InjectedScriptProgress, element: Element, data: T, continuePolling: any) => R;
+export type DomTaskBody<T, R> = (progress: InjectedScriptProgress, element: Element, data: T, elements: Element[], continuePolling: any) => R;
 
 export class FrameManager {
   private _page: Page;
@@ -1160,78 +1161,16 @@ export class Frame extends SdkObject {
     });
   }
 
-  async expect(metadata: CallMetadata, selector: string, expression: string, options: channels.FrameExpectParams): Promise<{ pass: boolean, received: string, log: string[] }> {
+  async expect(metadata: CallMetadata, selector: string, options: FrameExpectParams): Promise<{ pass: boolean, received?: any, log?: string[] }> {
     const controller = new ProgressController(metadata, this);
-    return await this._scheduleRerunnableTaskWithController(controller, selector, (progress, element, data, continuePolling) => {
-      const injected = progress.injectedScript;
-      const matcher = data.expected ? injected.expectedTextMatcher(data.expected) : null;
-      let received: string;
-      let elementState: boolean | 'error:notconnected' | 'error:notcheckbox' | undefined;
-
-      if (data.expression === 'to.be.checked') {
-        elementState = progress.injectedScript.elementState(element, 'checked');
-      } else if (data.expression === 'to.be.disabled') {
-        elementState = progress.injectedScript.elementState(element, 'disabled');
-      } else if (data.expression === 'to.be.editable') {
-        elementState = progress.injectedScript.elementState(element, 'editable');
-      } else if (data.expression === 'to.be.empty') {
-        if (element.nodeName === 'INPUT' || element.nodeName === 'TEXTAREA')
-          elementState = !(element as HTMLInputElement).value;
-        else
-          elementState = !element.textContent?.trim();
-      } else if (data.expression === 'to.be.enabled') {
-        elementState = progress.injectedScript.elementState(element, 'enabled');
-      } else if (data.expression === 'to.be.focused') {
-        elementState = document.activeElement === element;
-      } else if (data.expression === 'to.be.hidden') {
-        elementState = progress.injectedScript.elementState(element, 'hidden');
-      } else if (data.expression === 'to.be.visible') {
-        elementState = progress.injectedScript.elementState(element, 'visible');
-      }
-
-      if (elementState !== undefined) {
-        if (elementState === 'error:notcheckbox')
-          throw injected.createStacklessError('Element is not a checkbox');
-        if (elementState === 'error:notconnected')
-          throw injected.createStacklessError('Element is not connected');
-        if (elementState === data.isNot)
-          return continuePolling;
-        return { pass: !data.isNot };
-      }
-
-      if (data.expression === 'to.have.attribute') {
-        received = element.getAttribute(data.data.name) || '';
-      } else if (data.expression === 'to.have.class') {
-        received = element.className;
-      } else if (data.expression === 'to.have.css') {
-        received = (window.getComputedStyle(element) as any)[data.data.name];
-      } else if (data.expression === 'to.have.id') {
-        received = element.id;
-      } else if (data.expression === 'to.have.text') {
-        received = data.expected!.useInnerText ? (element as HTMLElement).innerText : element.textContent || '';
-      } else if (data.expression === 'to.have.title') {
-        received = document.title;
-      } else if (data.expression === 'to.have.url') {
-        received = document.location.href;
-      } else if (data.expression === 'to.have.value') {
-        if (element.nodeName !== 'INPUT' && element.nodeName !== 'TEXTAREA' && element.nodeName !== 'SELECT') {
-          progress.log('Not an input element');
-          return 'error:hasnovalue';
-        }
-        received = (element as any).value;
-      } else {
-        throw new Error(`Internal error, unknown matcher ${data.expression}`);
-      }
-
-      progress.setIntermediateResult(received);
-
-      if (matcher && matcher.matches(received) === data.isNot)
-        return continuePolling;
-      return { received, pass: !data.isNot } as any;
-    }, { expression, expected: options.expected, isNot: options.isNot, data: options.data }, { strict: true, ...options }).catch(e => {
+    const querySelectorAll = options.expression === 'to.have.count' || options.expression.endsWith('.array');
+    const mainWorld = options.expression === 'to.have.property';
+    return await this._scheduleRerunnableTaskWithController(controller, selector, (progress, element, options, elements, continuePolling) => {
+      return progress.injectedScript.expect(progress, element, options, elements, continuePolling);
+    }, options, { strict: true, querySelectorAll, mainWorld, logScale: true, ...options }).catch(e => {
       if (js.isJavaScriptErrorInEvaluate(e))
         throw e;
-      return { received: controller.lastIntermediateResult(), pass: options.isNot, log: metadata.log };
+      return { received: controller.lastIntermediateResult(), pass: !!options.isNot, log: metadata.log };
     });
   }
 
@@ -1297,27 +1236,39 @@ export class Frame extends SdkObject {
     return this._scheduleRerunnableTaskWithController(controller, selector, body, taskData, options);
   }
 
-  private async _scheduleRerunnableTaskWithController<T, R>(controller: ProgressController, selector: string, body: DomTaskBody<T, R>, taskData: T, options: types.TimeoutOptions & types.StrictOptions & { mainWorld?: boolean } = {}): Promise<R> {
+  private async _scheduleRerunnableTaskWithController<T, R>(
+    controller: ProgressController,
+    selector: string,
+    body: DomTaskBody<T, R>,
+    taskData: T,
+    options: types.TimeoutOptions & types.StrictOptions & { mainWorld?: boolean } & { querySelectorAll?: boolean } & { logScale?: boolean } = {}): Promise<R> {
+
     const info = this._page.parseSelector(selector, options);
     const callbackText = body.toString();
     const data = this._contextData.get(options.mainWorld ? 'main' : info.world)!;
 
     return controller.run(async progress => {
       const rerunnableTask = new RerunnableTask(data, progress, injectedScript => {
-        return injectedScript.evaluateHandle((injected, { info, taskData, callbackText }) => {
-          const callback = injected.eval(callbackText);
-          return injected.pollRaf((progress, continuePolling) => {
+        return injectedScript.evaluateHandle((injected, { info, taskData, callbackText, querySelectorAll, logScale }) => {
+          const callback = injected.eval(callbackText) as DomTaskBody<T, R>;
+          const poller = logScale ? injected.pollLogScale.bind(injected) : injected.pollRaf.bind(injected);
+          return poller((progress, continuePolling) => {
+            if (querySelectorAll) {
+              const elements = injected.querySelectorAll(info.parsed, document);
+              return callback(progress, elements[0], taskData as T, elements, continuePolling);
+            }
+
             const element = injected.querySelector(info.parsed, document, info.strict);
             if (!element)
               return continuePolling;
             progress.logRepeating(`  selector resolved to ${injected.previewNode(element)}`);
-            return callback(progress, element, taskData, continuePolling);
+            return callback(progress, element, taskData as T, [], continuePolling);
           });
-        }, { info, taskData, callbackText });
+        }, { info, taskData, callbackText, querySelectorAll: options.querySelectorAll, logScale: options.logScale });
       }, true);
 
       if (this._detached)
-        rerunnableTask.terminate(new Error('waitForFunction failed: frame got detached.'));
+        rerunnableTask.terminate(new Error('Frame got detached.'));
       if (data.context)
         rerunnableTask.rerun(data.context);
       const result = await rerunnableTask.promise;

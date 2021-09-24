@@ -77,7 +77,6 @@ export type ExpectedTextValue = {
   regexFlags?: string,
   matchSubstring?: boolean,
   normalizeWhiteSpace?: boolean,
-  useInnerText?: boolean,
 };
 
 export type AXNode = {
@@ -2185,21 +2184,27 @@ export type FrameWaitForSelectorResult = {
 export type FrameExpectParams = {
   selector: string,
   expression: string,
-  expected?: ExpectedTextValue,
+  expressionArg?: any,
+  expectedText?: ExpectedTextValue[],
+  expectedNumber?: number,
+  expectedValue?: SerializedArgument,
+  useInnerText?: boolean,
   isNot?: boolean,
-  data?: any,
   timeout?: number,
 };
 export type FrameExpectOptions = {
-  expected?: ExpectedTextValue,
+  expressionArg?: any,
+  expectedText?: ExpectedTextValue[],
+  expectedNumber?: number,
+  expectedValue?: SerializedArgument,
+  useInnerText?: boolean,
   isNot?: boolean,
-  data?: any,
   timeout?: number,
 };
 export type FrameExpectResult = {
   pass: boolean,
-  received: string,
-  log: string[],
+  received?: SerializedValue,
+  log?: string[],
 };
 
 export interface FrameEvents {
