@@ -19,7 +19,7 @@ import fs from 'fs';
 import { prompt } from 'enquirer';
 import colors from 'ansi-colors';
 
-import { executeCommands, createFiles, determinePackageManager, executeTemplate, determineRootDir, Command, languagetoFileExtension } from './utils';
+import { executeCommands, createFiles, determinePackageManager, executeTemplate, Command, languagetoFileExtension } from './utils';
 
 export type PromptOptions = {
   testDir: string,
@@ -189,7 +189,7 @@ export function commandToRunTests(packageManager: 'npm' | 'yarn', args?: string)
 }
 
 (async () => {
-  const rootDir = determineRootDir();
+  const rootDir = path.resolve(process.cwd(), process.argv[2]);
   const generator = new Generator(rootDir);
   await generator.run();
 })().catch(error => {
