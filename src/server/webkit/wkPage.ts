@@ -944,7 +944,7 @@ export class WKPage implements PageDelegate {
   }
 
   _onRequestWillBeSentProvisional(session: WKSession, event: Protocol.Network.requestWillBeSentPayload) {
-    if (!this._currentMainFrameNavigation?.isSameNavigationInNewProcess(event)) {
+    if (!this._currentMainFrameNavigation?.checkIfSameNavigationInNewProcess(event)) {
       this._onRequestWillBeSent(session, event);
       return;
     }
@@ -1204,6 +1204,8 @@ class WKNavigation {
   readonly _originalRequestId: Protocol.Network.RequestId;
   private readonly _frameId: string;
   private _responseReceived: boolean = false;
+  private _didCheckFirstRequestInProvisionalPage: boolean = false;
+  private _provisionalPageRequestId: string | undefined;
 
   constructor(page: WKPage, event: Protocol.Network.requestWillBeSentPayload) {
     this._page = page;
@@ -1230,12 +1232,17 @@ class WKNavigation {
     return this._page.hasProvisionalPage();
   }
 
-  isSameNavigationInNewProcess(event: Protocol.Network.requestWillBeSentPayload) {
-    return event.loaderId === this._loaderId;
+  checkIfSameNavigationInNewProcess(event: Protocol.Network.requestWillBeSentPayload) {
+    if (this._didCheckFirstRequestInProvisionalPage)
+      return false;
+    this._didCheckFirstRequestInProvisionalPage = true;
+    if (event.loaderId !== this._loaderId)
+      return false;
+    this._provisionalPageRequestId = event.requestId;
   }
 
   checkIfDuplicateResponseEvent(event: Protocol.Network.responseReceivedPayload) {
-    if (event.loaderId !== this._loaderId)
+    if (this._provisionalPageRequestId !== event.requestId)
       return false;
     const result = this._responseReceived;
     this._responseReceived = true;
