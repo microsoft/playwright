@@ -261,10 +261,9 @@ it.describe('screencast', () => {
 
     const saveAsPath = testInfo.outputPath('my-video.webm');
     const error = await popup.video().saveAs(saveAsPath).catch(e => e);
-    // WebKit pauses renderer before win.close() and actually writes something.
-    if (browserName === 'webkit')
-      expect(fs.existsSync(saveAsPath)).toBeTruthy();
-    else
+    // WebKit pauses renderer before win.close() and actually writes something,
+    // and other browsers are sometimes fast as well.
+    if (!fs.existsSync(saveAsPath))
       expect(error.message).toContain('Page did not produce any video frames');
   });
 
