@@ -76,6 +76,7 @@ export class WKPage implements PageDelegate {
   private _nextWindowOpenPopupFeatures?: string[];
   private _recordingVideoFile: string | null = null;
   private _screencastGeneration: number = 0;
+  private _currentMainFrameNavigation: WKNavigation | undefined;
 
   constructor(browserContext: WKBrowserContext, pageProxySession: WKSession, opener: WKPage | null) {
     this._pageProxySession = pageProxySession;
@@ -411,6 +412,8 @@ export class WKPage implements PageDelegate {
   }
 
   private _onFrameStoppedLoading(frameId: string) {
+    if (this._currentMainFrameNavigation?.shouldIgnoreFrameStoppedLoading(frameId))
+      return;
     this._page._frameManager.frameStoppedLoading(frameId);
   }
 
@@ -940,7 +943,26 @@ export class WKPage implements PageDelegate {
     return result.handle;
   }
 
-  _onRequestWillBeSent(session: WKSession, event: Protocol.Network.requestWillBeSentPayload) {
+  _onRequestWillBeSentProvisional(session: WKSession, event: Protocol.Network.requestWillBeSentPayload) {
+    if (!this._currentMainFrameNavigation?.checkIfSameNavigationInNewProcess(event)) {
+      this._onRequestWillBeSent(session, event);
+      return;
+    }
+    const oldId = this._currentMainFrameNavigation._originalRequestId;
+    const request = this._requestIdToRequest.get(oldId);
+    if (!request)
+      return;
+    const payload = this._requestIdToResponseReceivedPayloadEvent.get(oldId);
+    this._requestIdToRequest.delete(oldId);
+    this._requestIdToResponseReceivedPayloadEvent.delete(oldId);
+    const newId = event.requestId;
+    request._requestId = newId;
+    this._requestIdToRequest.set(newId, request);
+    if (payload)
+      this._requestIdToResponseReceivedPayloadEvent.set(newId, payload);
+  }
+
+  private _onRequestWillBeSent(session: WKSession, event: Protocol.Network.requestWillBeSentPayload) {
     if (event.request.url.startsWith('data:'))
       return;
     let redirectedFrom: WKInterceptableRequest | null = null;
@@ -961,6 +983,8 @@ export class WKPage implements PageDelegate {
     // TODO(einbinder) this will fail if we are an XHR document request
     const isNavigationRequest = event.type === 'Document';
     const documentId = isNavigationRequest ? event.loaderId : undefined;
+    if (isNavigationRequest && frame.isMainFrame())
+      this._currentMainFrameNavigation = new WKNavigation(this, event);
     let route = null;
     // We do not support intercepting redirects.
     if (this._page._needsRequestInterception() && !redirectedFrom)
@@ -1006,6 +1030,8 @@ export class WKPage implements PageDelegate {
   }
 
   _onResponseReceived(event: Protocol.Network.responseReceivedPayload) {
+    if (this._currentMainFrameNavigation?.checkIfDuplicateResponseEvent(event))
+      return;
     const request = this._requestIdToRequest.get(event.requestId);
     // FileUpload sends a response without a matching request.
     if (!request)
@@ -1063,7 +1089,12 @@ export class WKPage implements PageDelegate {
     this._page._frameManager.reportRequestFinished(request.request, response);
   }
 
-  _onLoadingFailed(event: Protocol.Network.loadingFailedPayload) {
+  private _onLoadingFailed(event: Protocol.Network.loadingFailedPayload) {
+    if (!this._currentMainFrameNavigation?.shouldIgnoreLoadingFailedEvent(event))
+      this._onLoadingFailedShared(event);
+  }
+
+  _onLoadingFailedShared(event: Protocol.Network.loadingFailedPayload) {
     const request = this._requestIdToRequest.get(event.requestId);
     // For certain requestIds we never receive requestWillBeSent event.
     // @see https://crbug.com/750469
@@ -1098,6 +1129,10 @@ export class WKPage implements PageDelegate {
 
   async _clearPermissions() {
     await this._pageProxySession.send('Emulation.resetPermissions', {});
+  }
+
+  hasProvisionalPage() {
+    return !!this._provisionalPage;
   }
 }
 
@@ -1159,4 +1194,56 @@ function isLoadedSecurely(url: string, timing: network.ResourceTiming) {
       return false;
     return true;
   } catch (_) {}
+}
+
+
+class WKNavigation {
+  private readonly _page: WKPage;
+  // loaderId is a navigation id which is unique within browser and persists during cross-process navigation.
+  private readonly _loaderId: string;
+  readonly _originalRequestId: Protocol.Network.RequestId;
+  private readonly _frameId: string;
+  private _responseReceived: boolean = false;
+  private _newProcessRequestId: Protocol.Network.RequestId;
+
+  constructor(page: WKPage, event: Protocol.Network.requestWillBeSentPayload) {
+    this._page = page;
+    this._loaderId = event.loaderId;
+    this._originalRequestId = event.requestId;
+    this._frameId = event.frameId;
+  }
+
+  shouldIgnoreFrameStoppedLoading(frameId: string) {
+    if (frameId !== this._frameId)
+      return false;
+    // Navigation in the original frame is canceled and actually continues in the
+    // provisional page, so we ignore failure events from the original page.
+    return this._page.hasProvisionalPage();
+  }
+
+  shouldIgnoreLoadingFailedEvent(event: Protocol.Network.loadingFailedPayload) {
+    if (event.requestId !== this._originalRequestId)
+      return false;
+    if (!event.canceled)
+      return true;
+    // Navigation in the original frame is canceled and actually continues in the
+    // provisional page, so we ignore failure events from the original page.
+    return this._page.hasProvisionalPage();
+  }
+
+  checkIfSameNavigationInNewProcess(event: Protocol.Network.requestWillBeSentPayload) {
+    if (event.loaderId === this._loaderId) {
+      this._newProcessRequestId = event.requestId;
+      return true;
+    }
+    return false;
+  }
+
+  checkIfDuplicateResponseEvent(event: Protocol.Network.responseReceivedPayload) {
+    if (event.loaderId !== this._loaderId)
+      return false;
+    const result = this._responseReceived;
+    this._responseReceived = true;
+    return result;
+  }
 }

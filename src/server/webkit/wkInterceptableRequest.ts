@@ -45,7 +45,7 @@ const errorReasons: { [reason: string]: Protocol.Network.ResourceErrorType } = {
 export class WKInterceptableRequest {
   private readonly _session: WKSession;
   readonly request: network.Request;
-  readonly _requestId: string;
+  _requestId: string;
   _timestamp: number;
   _wallTime: number;
   readonly _route: WKRouteImpl | null;

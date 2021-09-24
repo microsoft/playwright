@@ -42,12 +42,12 @@ export class WKProvisionalPage {
     const wkPage = this._wkPage;
 
     this._sessionListeners = [
-      eventsHelper.addEventListener(session, 'Network.requestWillBeSent', overrideFrameId(e => wkPage._onRequestWillBeSent(session, e))),
+      eventsHelper.addEventListener(session, 'Network.requestWillBeSent', overrideFrameId(e => wkPage._onRequestWillBeSentProvisional(session, e))),
       eventsHelper.addEventListener(session, 'Network.requestIntercepted', overrideFrameId(e => wkPage._onRequestIntercepted(session, e))),
       eventsHelper.addEventListener(session, 'Network.responseIntercepted', overrideFrameId(e => wkPage._onResponseIntercepted(session, e))),
       eventsHelper.addEventListener(session, 'Network.responseReceived', overrideFrameId(e => wkPage._onResponseReceived(e))),
       eventsHelper.addEventListener(session, 'Network.loadingFinished', overrideFrameId(e => wkPage._onLoadingFinished(e))),
-      eventsHelper.addEventListener(session, 'Network.loadingFailed', overrideFrameId(e => wkPage._onLoadingFailed(e))),
+      eventsHelper.addEventListener(session, 'Network.loadingFailed', overrideFrameId(e => wkPage._onLoadingFailedShared(e))),
     ];
 
     this.initializationPromise = this._wkPage._initializeSession(session, true, ({ frameTree }) => this._handleFrameTree(frameTree));

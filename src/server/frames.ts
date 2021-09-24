@@ -823,6 +823,10 @@ export class Frame extends SdkObject {
     return this._parentFrame;
   }
 
+  isMainFrame(): boolean {
+    return this._page.mainFrame() === this;
+  }
+
   childFrames(): Frame[] {
     return Array.from(this._childFrames);
   }
