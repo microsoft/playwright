@@ -1214,7 +1214,7 @@ class WKNavigation {
     this._frameId = event.frameId;
   }
 
-  shouldIgnoreFrameStoppedLoading(frameId: string) {
+  shouldIgnoreFrameStoppedLoading(frameId: string): boolean {
     if (frameId !== this._frameId)
       return false;
     // Navigation in the original frame is canceled and actually continues in the
@@ -1222,7 +1222,7 @@ class WKNavigation {
     return this._page.hasProvisionalPage();
   }
 
-  shouldIgnoreLoadingFailedEvent(event: Protocol.Network.loadingFailedPayload) {
+  shouldIgnoreLoadingFailedEvent(event: Protocol.Network.loadingFailedPayload): boolean {
     if (event.requestId !== this._originalRequestId)
       return false;
     if (!event.canceled)
@@ -1232,20 +1232,25 @@ class WKNavigation {
     return this._page.hasProvisionalPage();
   }
 
-  checkIfSameNavigationInNewProcess(event: Protocol.Network.requestWillBeSentPayload) {
+  checkIfSameNavigationInNewProcess(event: Protocol.Network.requestWillBeSentPayload): boolean {
     if (this._didCheckFirstRequestInProvisionalPage)
       return false;
     this._didCheckFirstRequestInProvisionalPage = true;
     if (event.loaderId !== this._loaderId)
       return false;
     this._provisionalPageRequestId = event.requestId;
+    return true;
   }
 
-  checkIfDuplicateResponseEvent(event: Protocol.Network.responseReceivedPayload) {
-    if (this._provisionalPageRequestId !== event.requestId)
-      return false;
-    const result = this._responseReceived;
-    this._responseReceived = true;
-    return result;
+  checkIfDuplicateResponseEvent(event: Protocol.Network.responseReceivedPayload): boolean {
+    if (this._originalRequestId === event.requestId || this._provisionalPageRequestId === event.requestId) {
+      // In case of cross-process navigation caused by Cross-Origin-Opener-Policy response header
+      // WebKit sends two responseReceived events from the old web process and one such event from the
+      // new provisonal web process.
+      if (this._responseReceived)
+        return true;
+      this._responseReceived = true;
+    }
+    return false;
   }
 }
