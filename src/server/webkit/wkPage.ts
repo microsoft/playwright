@@ -1224,7 +1224,7 @@ class WKNavigation {
     if (event.requestId !== this._originalRequestId)
       return false;
     if (!event.canceled)
-      return true;
+      return false;
     // Navigation in the original frame is canceled and actually continues in the
     // provisional page, so we ignore failure events from the original page.
     return this._page.hasProvisionalPage();
