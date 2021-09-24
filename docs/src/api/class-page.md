@@ -1006,6 +1006,7 @@ Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce
 Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. Passing `null` disables reduced motion emulation.
 
 ### option: Page.emulateMedia.forcedColors
+* langs: js, python, java
 - `forcedColors` <null|[ForcedColors]<"active"|"none">>
 
 Emulates `'forced-colors'` media feature, supported values are `'active'` and `'none'`. Passing `null` disables forced colors emulation.
@@ -1013,6 +1014,10 @@ Emulates `'forced-colors'` media feature, supported values are `'active'` and `'
 :::note
 It's not supported in WebKit, see [here](https://bugs.webkit.org/show_bug.cgi?id=225281) in their issue tracker.
 :::
+
+### option: Page.emulateMedia.forcedColors
+* langs: csharp
+- `forcedColors` <[ForcedColors]<"active"|"none"|"null">>
 
 ## async method: Page.evalOnSelector
 * langs:
