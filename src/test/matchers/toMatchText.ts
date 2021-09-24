@@ -29,7 +29,7 @@ export async function toMatchText(
   matcherName: string,
   receiver: any,
   receiverType: string,
-  query: (isNot: boolean, timeout: number) => Promise<{ pass: boolean, received?: string }>,
+  query: (isNot: boolean, timeout: number) => Promise<{ pass: boolean, received?: string, log?: string[] }>,
   expected: string | RegExp,
   options: { timeout?: number, matchSubstring?: boolean } = {},
 ) {
@@ -63,7 +63,7 @@ export async function toMatchText(
     defaultExpectTimeout = 5000;
   const timeout = options.timeout === 0 ? 0 : options.timeout || defaultExpectTimeout;
 
-  const { pass, received } = await query(this.isNot, timeout);
+  const { pass, received, log } = await query(this.isNot, timeout);
   const stringSubstring = options.matchSubstring ? 'substring' : 'string';
   const message = pass
     ? () =>
@@ -84,7 +84,7 @@ export async function toMatchText(
             typeof expected.exec === 'function'
               ? expected.exec(received!)
               : null,
-        )}`
+        )}` + callLogText(log)
     : () => {
       const labelExpected = `Expected ${typeof expected === 'string' ? stringSubstring : 'pattern'
       }`;
@@ -99,7 +99,7 @@ export async function toMatchText(
             labelExpected,
             labelReceived,
             this.expand !== false,
-        ));
+        )) + callLogText(log);
     };
 
   return { message, pass };
@@ -117,4 +117,14 @@ export function toExpectedTextValues(items: (string | RegExp)[], options: { matc
     matchSubstring: options.matchSubstring,
     normalizeWhiteSpace: options.normalizeWhiteSpace,
   }));
+}
+
+export function callLogText(log: string[] | undefined): string {
+  if (!log)
+    return '';
+  return `
+
+Call log:
+${(log || []).join('\n')}
+`;
 }

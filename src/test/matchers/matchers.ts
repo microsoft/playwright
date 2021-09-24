@@ -23,7 +23,7 @@ import { toEqual } from './toEqual';
 import { toExpectedTextValues, toMatchText } from './toMatchText';
 
 interface LocatorEx extends Locator {
-  _expect(expression: string, options: channels.FrameExpectOptions): Promise<{ pass: boolean, received?: string, log?: string[] }>;
+  _expect(expression: string, options: channels.FrameExpectOptions): Promise<{ pass: boolean, received?: any, log?: string[] }>;
 }
 
 export function toBeChecked(
@@ -115,7 +115,7 @@ export function toContainText(
   return toMatchText.call(this, 'toContainText', locator, 'Locator', async (isNot, timeout) => {
     const expectedText = toExpectedTextValues([expected], { matchSubstring: true, normalizeWhiteSpace: true });
     return await locator._expect('to.have.text', { expectedText, isNot, useInnerText: options?.useInnerText, timeout });
-  }, expected, { ...options, matchSubstring: true });
+  }, expected, options);
 }
 
 export function toHaveAttribute(

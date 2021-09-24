@@ -17,6 +17,7 @@
 import { currentTestInfo } from '../globals';
 import type { Expect } from '../types';
 import { expectType } from '../util';
+import { callLogText } from './toMatchText';
 
 // Omit colon and one or more spaces, so can call getLabelPrinter.
 const EXPECTED_LABEL = 'Expected';
@@ -30,7 +31,7 @@ export async function toEqual<T>(
   matcherName: string,
   receiver: any,
   receiverType: string,
-  query: (isNot: boolean, timeout: number) => Promise<{ pass: boolean, received?: any }>,
+  query: (isNot: boolean, timeout: number) => Promise<{ pass: boolean, received?: any, log?: string[] }>,
   expected: T,
   options: { timeout?: number } = {},
 ) {
@@ -50,7 +51,7 @@ export async function toEqual<T>(
     defaultExpectTimeout = 5000;
   const timeout = options.timeout === 0 ? 0 : options.timeout || defaultExpectTimeout;
 
-  const { pass, received } = await query(this.isNot, timeout);
+  const { pass, received, log } = await query(this.isNot, timeout);
 
   const message = pass
     ? () =>
@@ -59,7 +60,7 @@ export async function toEqual<T>(
       `Expected: not ${this.utils.printExpected(expected)}\n` +
       (this.utils.stringify(expected) !== this.utils.stringify(received)
         ? `Received:     ${this.utils.printReceived(received)}`
-        : '')
+        : '') + callLogText(log)
     : () =>
       this.utils.matcherHint(matcherName, undefined, undefined, matcherOptions) +
       '\n\n' +
@@ -69,7 +70,7 @@ export async function toEqual<T>(
           EXPECTED_LABEL,
           RECEIVED_LABEL,
           isExpand(this.expand),
-      );
+      ) + callLogText(log);
 
   // Passing the actual and expected objects so that a custom reporter
   // could access them, for example in order to display a custom visual diff,

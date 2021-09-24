@@ -220,3 +220,23 @@ test('should support respect expect.timeout', async ({ runInlineTest }) => {
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
 });
+
+test('should log scale the time', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('pass', async ({ page }) => {
+        await page.setContent('<div id=div>Wrong</div>');
+        await expect(page.locator('div')).toHaveText('Text', { timeout: 2000 });
+      });
+      `,
+  }, { workers: 1 });
+  const output = stripAscii(result.output);
+  const tokens = output.split('unexpected value');
+  // Log scale: 0, 100, 250, 500, 1000, 1000, should be less than 8.
+  expect(tokens.length).toBeGreaterThan(1);
+  expect(tokens.length).toBeLessThan(8);
+  expect(result.passed).toBe(0);
+  expect(result.exitCode).toBe(1);
+});

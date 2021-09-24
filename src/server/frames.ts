@@ -1241,7 +1241,7 @@ export class Frame extends SdkObject {
     selector: string,
     body: DomTaskBody<T, R>,
     taskData: T,
-    options: types.TimeoutOptions & types.StrictOptions & { mainWorld?: boolean } & { querySelectorAll?: boolean } & { logScale?: boolean } = {}): Promise<R> {
+    options: types.TimeoutOptions & types.StrictOptions & { mainWorld?: boolean, querySelectorAll?: boolean, logScale?: boolean } = {}): Promise<R> {
 
     const info = this._page.parseSelector(selector, options);
     const callbackText = body.toString();

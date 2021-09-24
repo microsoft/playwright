@@ -800,8 +800,11 @@ export class InjectedScript {
           throw injected.createStacklessError('Element is not a checkbox');
         if (elementState === 'error:notconnected')
           throw injected.createStacklessError('Element is not connected');
-        if (elementState === options.isNot)
+        if (elementState === options.isNot) {
+          progress.setIntermediateResult(elementState);
+          progress.log(`  unexpected value "${elementState}"`);
           return continuePolling;
+        }
         return { pass: !options.isNot };
       }
     }
@@ -811,8 +814,11 @@ export class InjectedScript {
       if (expression === 'to.have.count') {
         const received = elements.length;
         const matches = received === options.expectedNumber;
-        if (matches === options.isNot)
+        if (matches === options.isNot) {
+          progress.setIntermediateResult(received);
+          progress.log(`  unexpected value "${received}"`);
           return continuePolling;
+        }
         return { pass: !options.isNot, received };
       }
     }
@@ -824,6 +830,7 @@ export class InjectedScript {
         const matches = deepEquals(received, options.expectedValue);
         if (matches === options.isNot) {
           progress.setIntermediateResult(received);
+          progress.log(`  unexpected value "${received}"`);
           return continuePolling;
         }
         return { received, pass: !options.isNot };
@@ -857,6 +864,7 @@ export class InjectedScript {
         const matcher = new ExpectedTextMatcher(options.expectedText[0]);
         if (matcher.matches(received) === options.isNot) {
           progress.setIntermediateResult(received);
+          progress.log(`  unexpected value "${received}"`);
           return continuePolling;
         }
         return { received, pass: !options.isNot };
