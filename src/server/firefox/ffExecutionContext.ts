@@ -106,7 +106,7 @@ function checkException(exceptionDetails?: Protocol.Runtime.ExceptionDetails) {
   if (exceptionDetails.value)
     throw new js.JavaScriptErrorInEvaluate(JSON.stringify(exceptionDetails.value));
   else
-    throw new js.JavaScriptErrorInEvaluate(exceptionDetails.text + '\n' + exceptionDetails.stack);
+    throw new js.JavaScriptErrorInEvaluate(exceptionDetails.text + (exceptionDetails.stack ? '\n' + exceptionDetails.stack : ''));
 }
 
 function rewriteError(error: Error): (Protocol.Runtime.evaluateReturnValue | Protocol.Runtime.callFunctionReturnValue) {

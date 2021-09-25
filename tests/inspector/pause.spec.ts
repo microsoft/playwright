@@ -227,7 +227,7 @@ it.describe('pause', () => {
       'page.isChecked(button)- XXms',
       'waiting for selector "button"',
       'selector resolved to <button onclick=\"console.log(1)\">Submit</button>',
-      'error: Not a checkbox or radio button',
+      'error: Error: Not a checkbox or radio button',
     ]);
     const error = await scriptPromise;
     expect(error.message).toContain('Not a checkbox or radio button');

@@ -53,9 +53,9 @@ it('inputValue should work', async ({ page, server }) => {
   const locator = page.locator('#input');
   expect(await locator.inputValue()).toBe('input value');
 
-  expect(await page.inputValue('#inner').catch(e => e.message)).toContain('Node is not an HTMLInputElement or HTMLTextAreaElement or HTMLSelectElement');
+  expect(await page.inputValue('#inner').catch(e => e.message)).toContain('Node is not an <input>, <textarea> or <select> element');
   const locator2 = page.locator('#inner');
-  expect(await locator2.inputValue().catch(e => e.message)).toContain('Node is not an HTMLInputElement or HTMLTextAreaElement or HTMLSelectElement');
+  expect(await locator2.inputValue().catch(e => e.message)).toContain('Node is not an <input>, <textarea> or <select> element');
 });
 
 it('innerHTML should work', async ({ page, server }) => {
@@ -75,10 +75,10 @@ it('innerText should work', async ({ page, server }) => {
 it('innerText should throw', async ({ page, server }) => {
   await page.setContent(`<svg>text</svg>`);
   const error1 = await page.innerText('svg').catch(e => e);
-  expect(error1.message).toContain('Not an HTMLElement');
+  expect(error1.message).toContain('Node is not an HTMLElement');
   const locator = page.locator('svg');
   const error2 = await locator.innerText().catch(e => e);
-  expect(error2.message).toContain('Not an HTMLElement');
+  expect(error2.message).toContain('Node is not an HTMLElement');
 });
 
 it('innerText should produce log', async ({ page, server }) => {

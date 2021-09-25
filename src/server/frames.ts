@@ -1047,7 +1047,7 @@ export class Frame extends SdkObject {
   async innerText(metadata: CallMetadata, selector: string, options: types.QueryOnSelectorOptions = {}): Promise<string> {
     return this._scheduleRerunnableTask(metadata, selector, (progress, element) => {
       if (element.namespaceURI !== 'http://www.w3.org/1999/xhtml')
-        return 'error:nothtmlelement';
+        throw progress.injectedScript.createStacklessError('Node is not an HTMLElement');
       return (element as HTMLElement).innerText;
     }, undefined, options);
   }
@@ -1063,7 +1063,7 @@ export class Frame extends SdkObject {
   async inputValue(metadata: CallMetadata, selector: string, options: types.TimeoutOptions & types.StrictOptions = {}): Promise<string> {
     return this._scheduleRerunnableTask(metadata, selector, (progress, element) => {
       if (element.nodeName !== 'INPUT' && element.nodeName !== 'TEXTAREA' && element.nodeName !== 'SELECT')
-        return 'error:hasnovalue';
+        throw progress.injectedScript.createStacklessError('Node is not an <input>, <textarea> or <select> element');
       return (element as any).value;
     }, undefined, options);
   }
@@ -1073,7 +1073,7 @@ export class Frame extends SdkObject {
       const injected = progress.injectedScript;
       return injected.elementState(element, data.state);
     }, { state }, options);
-    return dom.throwFatalDOMError(dom.throwRetargetableDOMError(result));
+    return dom.throwRetargetableDOMError(result);
   }
 
   async isVisible(metadata: CallMetadata, selector: string, options: types.StrictOptions = {}): Promise<boolean> {
@@ -1272,8 +1272,7 @@ export class Frame extends SdkObject {
         rerunnableTask.terminate(new Error('Frame got detached.'));
       if (data.context)
         rerunnableTask.rerun(data.context);
-      const result = await rerunnableTask.promise;
-      return dom.throwFatalDOMError(result);
+      return await rerunnableTask.promise;
     }, this._page._timeoutSettings.timeout(options));
   }
 
