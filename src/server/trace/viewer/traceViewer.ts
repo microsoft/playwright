@@ -25,7 +25,8 @@ import { PersistentSnapshotStorage, TraceModel } from './traceModel';
 import { ServerRouteHandler, HttpServer } from '../../../utils/httpServer';
 import { SnapshotServer } from '../../snapshot/snapshotServer';
 import * as consoleApiSource from '../../../generated/consoleApiSource';
-import { downloadFile, getDownloadProgress, getErrorMessage, isUnderTest } from '../../../utils/utils';
+import { getErrorMessage, isUnderTest } from '../../../utils/utils';
+import { download } from '../../../utils/download';
 import { internalCallMetadata } from '../../instrumentation';
 import { ProgressController } from '../../progress';
 import { BrowserContext } from '../../browserContext';
@@ -201,10 +202,11 @@ export async function showTraceViewer(tracePath: string, browserName: string, he
 
   if (/^https?:\/\//i.test(tracePath)){
     const downloadZipPath = path.join(dir, 'trace.zip');
-    const {error} = await downloadFile(tracePath, downloadZipPath, {
-      progressCallback: getDownloadProgress('Trace File'),
-    });
-    if (error) {
+    try {
+      await download(tracePath, downloadZipPath, {
+        progressBarName: 'Trace File',
+      });
+    } catch (error) {
       console.log(`Download failed. ${getErrorMessage(error)}`); // eslint-disable-line no-console
       return;
     }

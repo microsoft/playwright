@@ -27,7 +27,6 @@ import { getProxyForUrl } from 'proxy-from-env';
 import * as URL from 'url';
 import { getUbuntuVersionSync } from './ubuntuVersion';
 import { NameValue } from '../protocol/channels';
-import ProgressBar from 'progress';
 
 // `https-proxy-agent` v5 is written in TypeScript and exposes generated types.
 // However, as of June 2020, its types are generated with tsconfig that enables
@@ -48,7 +47,7 @@ type HTTPRequestParams = {
   timeout?: number,
 };
 
-function httpRequest(params: HTTPRequestParams, onResponse: (r: http.IncomingMessage) => void, onError: (error: Error) => void) {
+export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.IncomingMessage) => void, onError: (error: Error) => void) {
   const parsedUrl = URL.parse(params.url);
   let options: https.RequestOptions = { ...parsedUrl };
   options.method = params.method || 'GET';
@@ -111,49 +110,6 @@ export function fetchData(params: HTTPRequestParams, onError?: (response: http.I
       response.on('end', () => resolve(body));
     }, reject);
   });
-}
-
-type OnProgressCallback = (downloadedBytes: number, totalBytes: number) => void;
-type DownloadFileLogger = (message: string) => void;
-
-export function downloadFile(url: string, destinationPath: string, options: {progressCallback?: OnProgressCallback, log?: DownloadFileLogger} = {}): Promise<{error: any}> {
-  const {
-    progressCallback,
-    log = () => {},
-  } = options;
-  log(`running download:`);
-  log(`-- from url: ${url}`);
-  log(`-- to location: ${destinationPath}`);
-  let fulfill: ({error}: {error: any}) => void = ({error}) => {};
-  let downloadedBytes = 0;
-  let totalBytes = 0;
-
-  const promise: Promise<{error: any}> = new Promise(x => { fulfill = x; });
-
-  httpRequest({ url }, response => {
-    log(`-- response status code: ${response.statusCode}`);
-    if (response.statusCode !== 200) {
-      const error = new Error(`Download failed: server returned code ${response.statusCode}. URL: ${url}`);
-      // consume response data to free up memory
-      response.resume();
-      fulfill({error});
-      return;
-    }
-    const file = fs.createWriteStream(destinationPath);
-    file.on('finish', () => fulfill({error: null}));
-    file.on('error', error => fulfill({error}));
-    response.pipe(file);
-    totalBytes = parseInt(response.headers['content-length'] || '0', 10);
-    log(`-- total bytes: ${totalBytes}`);
-    if (progressCallback)
-      response.on('data', onData);
-  }, (error: any) => fulfill({error}));
-  return promise;
-
-  function onData(chunk: string) {
-    downloadedBytes += chunk.length;
-    progressCallback!(downloadedBytes, totalBytes);
-  }
 }
 
 export function spawnAsync(cmd: string, args: string[], options?: SpawnOptions): Promise<{stdout: string, stderr: string, code: number, error?: Error}> {
@@ -441,39 +397,7 @@ export function isFilePayload(value: any): boolean {
   return typeof value === 'object' && value['name'] && value['mimeType'] && value['buffer'];
 }
 
-
-function toMegabytes(bytes: number) {
-  const mb = bytes / 1024 / 1024;
-  return `${Math.round(mb * 10) / 10} Mb`;
-}
-
-export function getDownloadProgress(progressBarName: string) {
-
-  let progressBar: ProgressBar;
-  let lastDownloadedBytes = 0;
-
-  return (downloadedBytes: number, totalBytes: number) => {
-    if (!process.stderr.isTTY) return;
-    if (!progressBar) {
-      progressBar = new ProgressBar(
-          `Downloading ${progressBarName} - ${toMegabytes(
-              totalBytes
-          )} [:bar] :percent :etas `,
-          {
-            complete: '=',
-            incomplete: ' ',
-            width: 20,
-            total: totalBytes,
-          }
-      );
-    }
-    const delta = downloadedBytes - lastDownloadedBytes;
-    lastDownloadedBytes = downloadedBytes;
-    progressBar.tick(delta);
-  };
-}
-
-export const getErrorMessage = (error: Error) => typeof error === 'object' && typeof error.message === 'string' ? error.message : '';
+export const getErrorMessage = (error: Error): string => typeof error === 'object' && typeof error.message === 'string' ? error.message : '';
 
 export function streamToString(stream: stream.Readable): Promise<string> {
   return new Promise<string>((resolve, reject) => {

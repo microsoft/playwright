@@ -19,7 +19,8 @@ import extract from 'extract-zip';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { downloadFile, existsAsync, getDownloadProgress, getErrorMessage } from './utils';
+import { existsAsync } from './utils';
+import { download } from './download';
 import { debugLogger } from './debugLogger';
 
 export async function downloadBrowserWithProgressBar(title: string, browserDirectory: string, executablePath: string, downloadURL: string, downloadFileName: string): Promise<boolean> {
@@ -33,24 +34,9 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
   const url = downloadURL;
   const zipPath = path.join(os.tmpdir(), downloadFileName);
   try {
-    for (let attempt = 1, N = 3; attempt <= N; ++attempt) {
-      debugLogger.log('install', `downloading ${progressBarName} - attempt #${attempt}`);
-      const {error} = await downloadFile(url, zipPath, {progressCallback: getDownloadProgress(progressBarName), log: debugLogger.log.bind(debugLogger, 'install')});
-      if (!error) {
-        debugLogger.log('install', `SUCCESS downloading ${progressBarName}`);
-        break;
-      }
-      const errorMessage = getErrorMessage(error);
-      debugLogger.log('install', `attempt #${attempt} - ERROR: ${errorMessage}`);
-      if (attempt < N && (errorMessage.includes('ECONNRESET') || errorMessage.includes('ETIMEDOUT'))) {
-        // Maximum delay is 3rd retry: 1337.5ms
-        const millis = (Math.random() * 200) + (250 * Math.pow(1.5, attempt));
-        debugLogger.log('install', `sleeping ${millis}ms before retry...`);
-        await new Promise(c => setTimeout(c, millis));
-      } else {
-        throw error;
-      }
-    }
+    await download(url, zipPath, {
+      progressBarName,
+    });
     debugLogger.log('install', `extracting archive`);
     debugLogger.log('install', `-- zip: ${zipPath}`);
     debugLogger.log('install', `-- location: ${browserDirectory}`);
