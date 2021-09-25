@@ -65,6 +65,7 @@ export async function toMatchText(
 
   const { pass, received, log } = await query(this.isNot, timeout);
   const stringSubstring = options.matchSubstring ? 'substring' : 'string';
+  const receivedString = received || '';
   const message = pass
     ? () =>
       typeof expected === 'string'
@@ -72,17 +73,17 @@ export async function toMatchText(
         '\n\n' +
         `Expected ${stringSubstring}: not ${this.utils.printExpected(expected)}\n` +
         `Received string: ${printReceivedStringContainExpectedSubstring(
-            received!,
-            received!.indexOf(expected),
+            receivedString,
+            receivedString.indexOf(expected),
             expected.length,
-        )}`
+        )}` + callLogText(log)
         : this.utils.matcherHint(matcherName, undefined, undefined, matcherOptions) +
         '\n\n' +
         `Expected pattern: not ${this.utils.printExpected(expected)}\n` +
         `Received string: ${printReceivedStringContainExpectedResult(
-            received!,
+            receivedString,
             typeof expected.exec === 'function'
-              ? expected.exec(received!)
+              ? expected.exec(receivedString)
               : null,
         )}` + callLogText(log)
     : () => {
@@ -95,7 +96,7 @@ export async function toMatchText(
         '\n\n' +
         this.utils.printDiffOrStringify(
             expected,
-            received,
+            receivedString,
             labelExpected,
             labelReceived,
             this.expand !== false,
@@ -103,10 +104,6 @@ export async function toMatchText(
     };
 
   return { message, pass };
-}
-
-export function normalizeWhiteSpace(s: string) {
-  return s.trim().replace(/\s+/g, ' ');
 }
 
 export function toExpectedTextValues(items: (string | RegExp)[], options: { matchSubstring?: boolean, normalizeWhiteSpace?: boolean } = {}): ExpectedTextValue[] {

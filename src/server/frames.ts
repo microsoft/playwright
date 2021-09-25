@@ -1248,6 +1248,7 @@ export class Frame extends SdkObject {
     const data = this._contextData.get(options.mainWorld ? 'main' : info.world)!;
 
     return controller.run(async progress => {
+      progress.log(`waiting for selector "${selector}"`);
       const rerunnableTask = new RerunnableTask(data, progress, injectedScript => {
         return injectedScript.evaluateHandle((injected, { info, taskData, callbackText, querySelectorAll, logScale }) => {
           const callback = injected.eval(callbackText) as DomTaskBody<T, R>;
