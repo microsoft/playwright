@@ -83,13 +83,13 @@ function compareText(actual: Buffer | string, expectedBuffer: Buffer): { diff?: 
 export function compare(
   actual: Buffer | string,
   name: string,
-  snapshotPath: (name: string) => string,
+  snapshotPath: (name: string, path?: string) => string,
   outputPath: (name: string) => string,
   updateSnapshots: UpdateSnapshots,
   withNegateComparison: boolean,
-  options?: { threshold?: number }
+  options?: { threshold?: number, path?: string }
 ): { pass: boolean; message?: string; expectedPath?: string, actualPath?: string, diffPath?: string, mimeType?: string } {
-  const snapshotFile = snapshotPath(name);
+  const snapshotFile = snapshotPath(name, options?.path);
   const outputFile = outputPath(name);
   const expectedPath = addSuffix(outputFile, '-expected');
   const actualPath = addSuffix(outputFile, '-actual');

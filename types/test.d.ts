@@ -1104,7 +1104,7 @@ export interface TestInfo {
    * Returns a path to a snapshot file with the given `snapshotName`. Learn more about [snapshots](https://playwright.dev/docs/test-snapshots).
    * @param snapshotName
    */
-  snapshotPath: (snapshotName: string) => string;
+  snapshotPath: (snapshotName: string, path?: string) => string;
   /**
    * Returns a path inside the [testInfo.outputDir](https://playwright.dev/docs/api/class-testinfo#test-info-output-dir)
    * where the test can safely put a temporary file. Guarantees that tests running in parallel will not interfere with each

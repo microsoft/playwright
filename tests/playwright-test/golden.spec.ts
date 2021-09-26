@@ -488,6 +488,54 @@ test('should write missing expectations with sanitized snapshot name', async ({r
   expect(data.toString()).toBe('Hello world');
 });
 
+test('should lookup snapshot with path', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...files,
+    'a.spec.js-snapshots/test/path/snapshot.txt': `Hello world`,
+    'a.spec.js': `
+      const { test } = require('./helper');
+      test('is a test', ({}) => {
+        expect('Hello world').toMatchSnapshot('snapshot.txt', { path: 'test/path' });
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(0);
+});
+
+test('should set snapshot with path', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    ...files,
+    'a.spec.js': `
+      const { test } = require('./helper');
+      test('is a test', ({}) => {
+        expect('Hello world').toMatchSnapshot('snapshot.txt', { path: 'test/path' });
+      });
+    `
+  }, { 'update-snapshots': true });
+
+  expect(result.exitCode).toBe(0);
+  const snapshotOutputPath = testInfo.outputPath('a.spec.js-snapshots/test/path/snapshot.txt');
+  expect(result.output).toContain(`${snapshotOutputPath} is missing in snapshots, writing actual`);
+  const data = fs.readFileSync(snapshotOutputPath);
+  expect(data.toString()).toBe('Hello world');
+});
+
+test('should fail to write snapshot with parent path', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...files,
+    'test/snapshot.txt': `Hello world`,
+    'a.spec.js': `
+      const { test } = require('./helper');
+      test('is a test', ({}) => {
+        expect('Hello world').toMatchSnapshot('snapshot.txt', { path: "../test" });
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(1);
+});
+
 test('should attach expected/actual/diff', async ({runInlineTest}, testInfo) => {
   const result = await runInlineTest({
     ...files,

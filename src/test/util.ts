@@ -144,4 +144,14 @@ export function sanitizeForFilePath(s: string) {
   return s.replace(/[\x00-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F]+/g, '-');
 }
 
+/**
+ * prevent parent directory traversal
+ */
+export function sanitizeForParentPath(parentPath: string, p?: string): string {
+  if (!p) return '';
+
+  const joinedPath = path.join(parentPath, path.normalize(p));
+  return /\.{2,}\//.test(path.relative(parentPath, joinedPath)) ? '' : path.normalize(p);
+}
+
 export const debugTest = debug('pw:test');

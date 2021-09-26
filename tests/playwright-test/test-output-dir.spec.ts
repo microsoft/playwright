@@ -216,6 +216,39 @@ test('should include the project name', async ({ runInlineTest }) => {
   expect(result.output).toContain('my-test.spec.js-snapshots/bar-Bar-space--suffix.txt');
 });
 
+test('should include path option in snapshot', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'helper.ts': `
+      export const test = pwt.test.extend({
+        auto: [ async ({}, run, testInfo) => {
+          testInfo.snapshotSuffix = 'suffix';
+          await run();
+        }, { auto: true } ]
+      });
+    `,
+    'playwright.config.ts': `
+      module.exports = { projects: [
+        { name: 'foo' },
+      ] };
+    `,
+    'my-test.spec.js': `
+      const { test } = require('./helper');
+      test('test with path', async ({}, testInfo) => {
+        console.log(testInfo.snapshotPath('bar.txt', 'test/path').replace(/\\\\/g, '/'));
+      });
+      test('test with parent path', async ({}, testInfo) => {
+        console.log(testInfo.snapshotPath('bar.txt', '../test/path').replace(/\\\\/g, '/'));
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.results[0].status).toBe('passed');
+  expect(result.results[1].status).toBe('passed'); // reverts to base snapshot path
+
+  expect(result.output).toContain('my-test.spec.js-snapshots/test/path/bar-foo-suffix.txt');
+  expect(result.output).toContain('my-test.spec.js-snapshots/bar-foo-suffix.txt');
+});
+
 test('should remove output dirs for projects run', async ({runInlineTest}, testInfo) => {
   const paths: string[] = [];
   const files: string[] = [];
