@@ -283,27 +283,7 @@ A callback that is run immediately when calling [`method: Test.describe.parallel
 
 ## method: Test.describe.parallel.only
 
-Declares a focused group of tests that could be run in parallel. By default, tests in a single test file run one after another, but using [`method: Test.describe.parallel`] allows them to run in parallel. If there are some focused tests or suites, all of them will be run but nothing else.
-
-```js js-flavor=js
-test.describe.parallel.only('group', () => {
-  test('runs in parallel 1', async ({ page }) => {
-  });
-  test('runs in parallel 2', async ({ page }) => {
-  });
-});
-```
-
-```js js-flavor=ts
-test.describe.parallel.only('group', () => {
-  test('runs in parallel 1', async ({ page }) => {
-  });
-  test('runs in parallel 2', async ({ page }) => {
-  });
-});
-```
-
-Note that parallel tests are executed in separate processes and cannot share any state or global variables. Each of the parallel tests executes all relevant hooks.
+Declares a focused group of tests that could be run in parallel. This is similar to [`method: Test.describe.parallel`], but focuses the group. If there are some focused tests or suites, all of them will be run but nothing else.
 
 ### param: Test.describe.parallel.only.title
 - `title` <[string]>
