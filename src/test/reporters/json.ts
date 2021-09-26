@@ -17,6 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import { FullConfig, TestCase, Suite, TestResult, TestError, TestStep, FullResult, TestStatus, Location, Reporter } from '../../../types/testReporter';
+import { positionInFile } from './base';
 
 export interface JSONReport {
   config: Omit<FullConfig, 'projects'> & {
@@ -65,11 +66,18 @@ export interface JSONReportTestResult {
   status: TestStatus | undefined;
   duration: number;
   error: TestError | undefined;
-  stdout: JSONReportSTDIOEntry[],
-  stderr: JSONReportSTDIOEntry[],
+  stdout: JSONReportSTDIOEntry[];
+  stderr: JSONReportSTDIOEntry[];
   retry: number;
   steps?: JSONReportTestStep[];
-  attachments: { name: string, path?: string, body?: string, contentType: string }[];
+  attachments: {
+    name: string;
+    path?: string;
+    body?: string;
+    contentType: string;
+  }[];
+  line?: number;
+  column?: number;
 }
 export interface JSONReportTestStep {
   title: string;
@@ -216,13 +224,24 @@ class JSONReporter implements Reporter {
       annotations: test.annotations,
       expectedStatus: test.expectedStatus,
       projectName: test.titlePath()[1],
-      results: test.results.map(r => this._serializeTestResult(r)),
+      results: test.results.map(r => this._serializeTestResult(r, test.location.file)),
       status: test.outcome(),
     };
   }
 
-  private _serializeTestResult(result: TestResult): JSONReportTestResult {
+  private _serializeTestResult(result: TestResult, file: string): JSONReportTestResult {
     const steps = result.steps.filter(s => s.category === 'test.step');
+    let position: { column?: number; line?: number } = {};
+    if (file && result.status === 'failed'){
+      const lines = result.error?.stack?.split('\n') ?? [];
+      const firstStackLine = lines.findIndex(line =>
+        line.startsWith('    at ')
+      );
+      if (firstStackLine !== -1) {
+        const stackLines = lines.slice(firstStackLine);
+        position = positionInFile(stackLines, file) ?? {};
+      }
+    }
     return {
       workerIndex: result.workerIndex,
       status: result.status,
@@ -238,6 +257,7 @@ class JSONReporter implements Reporter {
         path: a.path,
         body: a.body?.toString('base64')
       })),
+      ...position
     };
   }
 
