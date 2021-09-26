@@ -88,7 +88,6 @@ class GithubLogger {
   }
 }
 
-
 interface Annotation {
   filePath: string;
   title: string;
@@ -221,7 +220,7 @@ function workspaceRelativePath(filePath: string): string {
   return path.relative(process.env['GITHUB_WORKSPACE'] ?? '', filePath);
 }
 
-export function formatFailure(
+function formatFailure(
   config: FullConfig,
   test: TestCase,
   index?: number,
@@ -268,7 +267,7 @@ export function formatFailure(
   return annotations;
 }
 
-export function formatResultFailure(
+function formatResultFailure(
   test: TestCase,
   result: TestResult,
   initialIndent: string
@@ -295,7 +294,7 @@ export function formatResultFailure(
   };
 }
 
-export function formatTestTitle(
+function formatTestTitle(
   config: FullConfig,
   test: TestCase,
   step?: TestStep
@@ -309,8 +308,7 @@ export function formatTestTitle(
   return `${projectTitle}${location} › ${titles.join(' ')}${stepSuffix(step)}`;
 }
 
-
-export function formatError(error: TestError, file?: string): ErrorDetails {
+function formatError(error: TestError, file?: string): ErrorDetails {
   const stack = error.stack;
   const tokens = [''];
   let position: Position | undefined;
