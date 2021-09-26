@@ -232,8 +232,8 @@ class JSONReporter implements Reporter {
   private _serializeTestResult(result: TestResult, file: string): JSONReportTestResult {
     const steps = result.steps.filter(s => s.category === 'test.step');
     let position: { column?: number; line?: number } = {};
-    if (file && result.status === 'failed'){
-      const lines = result.error?.stack?.split('\n') ?? [];
+    if (file && result.error?.stack !== undefined) {
+      const lines = result.error.stack.split('\n') ?? [];
       const firstStackLine = lines.findIndex(line =>
         line.startsWith('    at ')
       );
