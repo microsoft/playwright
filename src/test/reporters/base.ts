@@ -25,9 +25,12 @@ import { FullConfig, TestCase, Suite, TestResult, TestError, Reporter, FullResul
 
 const stackUtils = new StackUtils();
 
-type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
-const kOutputSymbol = Symbol('output');
-
+export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
+export const kOutputSymbol = Symbol('output');
+export interface Position {
+  column: number;
+  line: number;
+}
 export class BaseReporter implements Reporter  {
   duration = 0;
   config!: FullConfig;
@@ -215,11 +218,11 @@ export function formatResultFailure(test: TestCase, result: TestResult, initialI
   return resultTokens;
 }
 
-function relativeTestPath(config: FullConfig, test: TestCase): string {
+export function relativeTestPath(config: FullConfig, test: TestCase): string {
   return path.relative(config.rootDir, test.location.file) || path.basename(test.location.file);
 }
 
-function stepSuffix(step: TestStep | undefined) {
+export function stepSuffix(step: TestStep | undefined) {
   const stepTitles = step ? step.titlePath() : [];
   return stepTitles.map(t => ' › ' + t).join('');
 }
@@ -232,7 +235,7 @@ export function formatTestTitle(config: FullConfig, test: TestCase, step?: TestS
   return `${projectTitle}${location} › ${titles.join(' ')}${stepSuffix(step)}`;
 }
 
-function formatTestHeader(config: FullConfig, test: TestCase, indent: string, index?: number): string {
+export function formatTestHeader(config: FullConfig, test: TestCase, indent: string, index?: number): string {
   const title = formatTestTitle(config, test);
   const header = `${indent}${index ? index + ') ' : ''}${title}`;
   return pad(header, '=');
@@ -273,11 +276,11 @@ function pad(line: string, char: string): string {
   return line + colors.gray(char.repeat(Math.max(0, 100 - line.length)));
 }
 
-function indent(lines: string, tab: string) {
+export function indent(lines: string, tab: string) {
   return lines.replace(/^(?=.+$)/gm, tab);
 }
 
-function positionInFile(stackLines: string[], file: string): { column: number; line: number; } | undefined {
+export function positionInFile(stackLines: string[], file: string): Position | undefined {
   // Stack will have /private/var/folders instead of /var/folders on Mac.
   file = fs.realpathSync(file);
   for (const line of stackLines) {
