@@ -130,7 +130,7 @@ test('should time out waiting for a server', async ({ runInlineTest }, { workerI
     `,
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`Timed out waiting 100ms from config.launch.`);
+  expect(result.output).toContain(`Timed out waiting 100ms from config.webServer.`);
 });
 
 test('should be able to specify the baseURL without the server', async ({ runInlineTest }, { workerIndex }) => {
@@ -190,7 +190,7 @@ test('should be able to use an existing server when reuseExistingServer:true ', 
   });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  expect(result.output).not.toContain('[Launch] ');
+  expect(result.output).not.toContain('[WebServer] ');
   expect(result.report.suites[0].specs[0].tests[0].results[0].status).toContain('passed');
   await new Promise(resolve => server.close(resolve));
 });
