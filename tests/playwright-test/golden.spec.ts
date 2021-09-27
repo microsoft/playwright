@@ -456,33 +456,34 @@ test('should respect project threshold', async ({runInlineTest}) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should sanitize snapshot name', async ({runInlineTest}) => {
+test('should contain snapshot name/path to snapshot directory', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...files,
-    'a.spec.js-snapshots/-snapshot-.txt': `Hello world`,
+    'a.spec.js-snapshots/snapshot.txt': `Hello world`,
     'a.spec.js': `
       const { test } = require('./helper');
       test('is a test', ({}) => {
-        expect('Hello world').toMatchSnapshot('../../snapshot!.txt');
+        expect('Hello world').toMatchSnapshot('../test/snapshot.txt');
       });
     `
   });
+
   expect(result.exitCode).toBe(0);
 });
 
-test('should write missing expectations with sanitized snapshot name', async ({runInlineTest}, testInfo) => {
+test('should write missing expectations to contained outputPath using basename', async ({runInlineTest}, testInfo) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js': `
       const { test } = require('./helper');
       test('is a test', ({}) => {
-        expect('Hello world').toMatchSnapshot('../../snapshot!.txt');
+        expect('Hello world').toMatchSnapshot('../test/snapshot.txt');
       });
     `
-  }, {}, { CI: '' });
+  });
 
   expect(result.exitCode).toBe(1);
-  const snapshotOutputPath = testInfo.outputPath('a.spec.js-snapshots/-snapshot-.txt');
+  const snapshotOutputPath = testInfo.outputPath('a.spec.js-snapshots/snapshot.txt');
   expect(result.output).toContain(`${snapshotOutputPath} is missing in snapshots, writing actual`);
   const data = fs.readFileSync(snapshotOutputPath);
   expect(data.toString()).toBe('Hello world');
@@ -495,7 +496,7 @@ test('should lookup snapshot with path', async ({ runInlineTest }) => {
     'a.spec.js': `
       const { test } = require('./helper');
       test('is a test', ({}) => {
-        expect('Hello world').toMatchSnapshot('snapshot.txt', { path: 'test/path' });
+        expect('Hello world').toMatchSnapshot('test/path/snapshot.txt');
       });
     `
   });
@@ -503,13 +504,13 @@ test('should lookup snapshot with path', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should set snapshot with path', async ({ runInlineTest }, testInfo) => {
+test('should update snapshot with path', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js': `
       const { test } = require('./helper');
       test('is a test', ({}) => {
-        expect('Hello world').toMatchSnapshot('snapshot.txt', { path: 'test/path' });
+        expect('Hello world').toMatchSnapshot('test/path/snapshot.txt');
       });
     `
   }, { 'update-snapshots': true });
@@ -521,22 +522,46 @@ test('should set snapshot with path', async ({ runInlineTest }, testInfo) => {
   expect(data.toString()).toBe('Hello world');
 });
 
-test('should fail to write snapshot with parent path', async ({ runInlineTest }) => {
+test('should attach expected/actual/diff with snapshot path', async ({runInlineTest}, testInfo) => {
   const result = await runInlineTest({
     ...files,
-    'test/snapshot.txt': `Hello world`,
+    'a.spec.js-snapshots/test/path/snapshot.png':
+        Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg==', 'base64'),
     'a.spec.js': `
       const { test } = require('./helper');
+      test.afterEach(async ({}, testInfo) => {
+        console.log('## ' + JSON.stringify(testInfo.attachments));
+      });
       test('is a test', ({}) => {
-        expect('Hello world').toMatchSnapshot('snapshot.txt', { path: "../test" });
+        expect(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVQYV2NgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII==', 'base64')).toMatchSnapshot('test/path/snapshot.png');
       });
     `
   });
 
-  expect(result.exitCode).toBe(1);
+  const outputText = stripAscii(result.output);
+  const attachments = outputText.split('\n').filter(l => l.startsWith('## ')).map(l => l.substring(3)).map(l => JSON.parse(l))[0];
+  for (const attachment of attachments)
+    attachment.path = attachment.path.replace(/\\/g, '/').replace(/.*test-results\//, '');
+  expect(attachments).toEqual([
+    {
+      name: 'expected',
+      contentType: 'image/png',
+      path: 'a-is-a-test/test/path/snapshot-expected.png'
+    },
+    {
+      name: 'actual',
+      contentType: 'image/png',
+      path: 'a-is-a-test/test/path/snapshot-actual.png'
+    },
+    {
+      name: 'diff',
+      contentType: 'image/png',
+      path: 'a-is-a-test/test/path/snapshot-diff.png'
+    }
+  ]);
 });
 
-test('should attach expected/actual/diff', async ({runInlineTest}, testInfo) => {
+test('should attach expected/actual/diff', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js-snapshots/snapshot.png':

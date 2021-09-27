@@ -234,13 +234,14 @@ test('should include path option in snapshot', async ({ runInlineTest }) => {
     'my-test.spec.js': `
       const { test } = require('./helper');
       test('test with path', async ({}, testInfo) => {
-        console.log(testInfo.snapshotPath('bar.txt', 'test/path').replace(/\\\\/g, '/'));
+        console.log(testInfo.snapshotPath('test/path/bar.txt').replace(/\\\\/g, '/'));
       });
       test('test with parent path', async ({}, testInfo) => {
-        console.log(testInfo.snapshotPath('bar.txt', '../test/path').replace(/\\\\/g, '/'));
+        console.log(testInfo.snapshotPath('../test/path/bar.txt').replace(/\\\\/g, '/'));
       });
     `,
   });
+
   expect(result.exitCode).toBe(0);
   expect(result.results[0].status).toBe('passed');
   expect(result.results[1].status).toBe('passed'); // reverts to base snapshot path

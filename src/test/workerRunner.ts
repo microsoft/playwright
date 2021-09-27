@@ -20,7 +20,7 @@ import rimraf from 'rimraf';
 import util from 'util';
 import colors from 'colors/safe';
 import { EventEmitter } from 'events';
-import { monotonicTime, serializeError, sanitizeForFilePath, sanitizeForParentPath } from './util';
+import { monotonicTime, serializeError, sanitizeForFilePath, getContainedPath } from './util';
 import { TestBeginPayload, TestEndPayload, RunPayload, TestEntry, DonePayload, WorkerInitParams, StepBeginPayload, StepEndPayload } from './ipc';
 import { setCurrentTestInfo } from './globals';
 import { Loader } from './loader';
@@ -242,23 +242,23 @@ export class WorkerRunner extends EventEmitter {
       outputDir: baseOutputDir,
       outputPath: (...pathSegments: string[]): string => {
         fs.mkdirSync(baseOutputDir, { recursive: true });
-        return path.join(baseOutputDir, ...pathSegments);
+        return getContainedPath(baseOutputDir, path.join(...pathSegments));
       },
-      snapshotPath: (snapshotName: string, snapshotPath?: string): string => {
+      snapshotPath: (snapshotName: string): string => {
         let suffix = '';
         if (this._projectNamePathSegment)
           suffix += '-' + this._projectNamePathSegment;
         if (testInfo.snapshotSuffix)
           suffix += '-' + testInfo.snapshotSuffix;
-        const ext = path.extname(snapshotName);
-        if (ext)
-          snapshotName = sanitizeForFilePath(snapshotName.substring(0, snapshotName.length - ext.length)) + suffix + ext;
-        else
-          snapshotName = sanitizeForFilePath(snapshotName) + suffix;
+        if (suffix) {
+          const ext = path.extname(snapshotName);
+          if (ext)
+            snapshotName = snapshotName.substring(0, snapshotName.length - ext.length) + suffix + ext;
+          else
+            snapshotName += suffix;
+        }
         const baseSnapshotPath = test._requireFile + '-snapshots';
-        const subPath = sanitizeForParentPath(test._requireFile, snapshotPath);
-
-        return path.join(baseSnapshotPath, subPath, snapshotName);
+        return getContainedPath(baseSnapshotPath, snapshotName);
       },
       skip: (...args: [arg?: any, description?: string]) => modifier(testInfo, 'skip', args),
       fixme: (...args: [arg?: any, description?: string]) => modifier(testInfo, 'fixme', args),

@@ -83,13 +83,13 @@ function compareText(actual: Buffer | string, expectedBuffer: Buffer): { diff?: 
 export function compare(
   actual: Buffer | string,
   name: string,
-  snapshotPath: (name: string, path?: string) => string,
+  snapshotPath: (name: string) => string,
   outputPath: (name: string) => string,
   updateSnapshots: UpdateSnapshots,
   withNegateComparison: boolean,
-  options?: { threshold?: number, path?: string }
+  options?: { threshold?: number }
 ): { pass: boolean; message?: string; expectedPath?: string, actualPath?: string, diffPath?: string, mimeType?: string } {
-  const snapshotFile = snapshotPath(name, options?.path);
+  const snapshotFile = snapshotPath(name);
   const outputFile = outputPath(name);
   const expectedPath = addSuffix(outputFile, '-expected');
   const actualPath = addSuffix(outputFile, '-actual');
@@ -104,6 +104,7 @@ export function compare(
     }
     if (isWriteMissingMode) {
       fs.mkdirSync(path.dirname(snapshotFile), { recursive: true });
+      fs.mkdirSync(path.dirname(actualPath), { recursive: true });
       fs.writeFileSync(snapshotFile, actual);
       fs.writeFileSync(actualPath, actual);
     }
@@ -159,6 +160,7 @@ export function compare(
     };
   }
 
+  fs.mkdirSync(path.dirname(expectedPath), { recursive: true });
   fs.writeFileSync(expectedPath, expected);
   fs.writeFileSync(actualPath, actual);
   if (result.diff)
