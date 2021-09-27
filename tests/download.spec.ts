@@ -94,7 +94,7 @@ it.describe('download event', () => {
       expect(page.url()).toBe('about:blank');
     } else {
       expect(responseOrError.status()).toBe(200);
-      expect(page.url()).toBe(server.PREFIX + '/download');
+      expect(page.url()).toBe(server.PREFIX + '/downloadWithCOOP');
     }
     await page.close();
   });
