@@ -168,7 +168,7 @@ it.describe('', () => {
   });
 });
 
-it('should work with Cross-Origin-Opener-Policy', async ({ page, server }) => {
+it('should work with Cross-Origin-Opener-Policy', async ({ page, server, browserName }) => {
   let serverHeaders;
   const serverRequests = [];
   server.setRoute('/empty.html', (req, res) => {
@@ -208,7 +208,10 @@ it('should work with Cross-Origin-Opener-Policy', async ({ page, server }) => {
   const response = await page.goto(server.EMPTY_PAGE);
   expect(intercepted).toEqual([server.EMPTY_PAGE]);
   // There should be only one request to the server.
-  expect(serverRequests).toEqual(['/empty.html']);
+  if (browserName === 'webkit')
+    expect(serverRequests).toEqual(['/empty.html', '/empty.html']);
+  else
+    expect(serverRequests).toEqual(['/empty.html']);
   expect(serverHeaders['foo']).toBe('bar');
   expect(page.url()).toBe(server.EMPTY_PAGE);
   await response.finished();
