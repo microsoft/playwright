@@ -364,7 +364,7 @@ export class Dispatcher {
         pair.result.stderr.push(chunk);
       this._reporter.onStdErr?.(chunk, pair?.test, pair?.result);
     });
-    worker.on('teardownError', ({error}) => {
+    worker.on('teardownError', ({ error }) => {
       this._hasWorkerErrors = true;
       this._reporter.onError?.(error);
     });

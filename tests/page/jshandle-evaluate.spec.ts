@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work with function', async ({page}) => {
+it('should work with function', async ({ page }) => {
   const windowHandle = await page.evaluateHandle(() => {
     window['foo'] = [1, 2];
     return window;
@@ -25,7 +25,7 @@ it('should work with function', async ({page}) => {
   expect(await windowHandle.evaluate(w => w['foo'])).toEqual([1, 2]);
 });
 
-it('should work with expression', async ({page}) => {
+it('should work with expression', async ({ page }) => {
   const windowHandle = await page.evaluateHandle(() => {
     window['foo'] = [1, 2];
     return window;

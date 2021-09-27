@@ -17,7 +17,7 @@
 
 import { browserTest as it, expect } from './config/browserTest';
 
-it('should work', async ({playwright, browser}) => {
+it('should work', async ({ playwright, browser }) => {
   const createTagSelector = () => ({
     query(root, selector) {
       return root.querySelector(selector);
@@ -51,7 +51,7 @@ it('should work', async ({playwright, browser}) => {
   await context.close();
 });
 
-it('should work with path', async ({playwright, browser, asset}) => {
+it('should work with path', async ({ playwright, browser, asset }) => {
   const page = await browser.newPage();
   await playwright.selectors.register('foo', { path: asset('sectionselectorengine.js') });
   await page.setContent('<section></section>');
@@ -59,7 +59,7 @@ it('should work with path', async ({playwright, browser, asset}) => {
   await page.close();
 });
 
-it('should work in main and isolated world', async ({playwright, browser}) => {
+it('should work in main and isolated world', async ({ playwright, browser }) => {
   const page = await browser.newPage();
   const createDummySelector = () => ({
     query(root, selector) {
@@ -92,7 +92,7 @@ it('should work in main and isolated world', async ({playwright, browser}) => {
   await page.close();
 });
 
-it('should handle errors', async ({playwright, browser}) => {
+it('should handle errors', async ({ playwright, browser }) => {
   const page = await browser.newPage();
   let error = await page.$('neverregister=ignored').catch(e => e);
   expect(error.message).toContain('Unknown engine "neverregister" while parsing selector neverregister=ignored');

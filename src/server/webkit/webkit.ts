@@ -42,7 +42,7 @@ export class WebKit extends BrowserType {
   }
 
   _attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
-    transport.send({method: 'Playwright.close', params: {}, id: kBrowserCloseMessageId});
+    transport.send({ method: 'Playwright.close', params: {}, id: kBrowserCloseMessageId });
   }
 
   _defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {

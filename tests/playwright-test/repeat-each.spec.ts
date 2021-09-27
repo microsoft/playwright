@@ -16,7 +16,7 @@
 
 import { test, expect } from './playwright-test-fixtures';
 
-test('should repeat from command line', async ({runInlineTest}) => {
+test('should repeat from command line', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.js': `
       const { test } = pwt;

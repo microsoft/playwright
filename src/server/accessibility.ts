@@ -40,7 +40,7 @@ export class Accessibility {
       interestingOnly = true,
       root = null,
     } = options;
-    const {tree, needle} = await this._getAXTree(root || undefined);
+    const { tree, needle } = await this._getAXTree(root || undefined);
     if (!interestingOnly) {
       if (root)
         return needle && serializeTree(needle)[0];

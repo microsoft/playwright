@@ -338,7 +338,7 @@ function filterOnly(suite: Suite) {
 }
 
 function filterByFocusedLine(suite: Suite, focusedTestFileLines: FilePatternFilter[]) {
-  const testFileLineMatches = (testFileName: string, testLine: number) => focusedTestFileLines.some(({re, line}) => {
+  const testFileLineMatches = (testFileName: string, testLine: number) => focusedTestFileLines.some(({ re, line }) => {
     re.lastIndex = 0;
     return re.test(testFileName) && (line === testLine || line === null);
   });

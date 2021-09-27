@@ -30,7 +30,7 @@ function initServer(server: TestServer): string[] {
 
 it.skip(({ isAndroid }) => isAndroid, 'Too flaky on Android');
 
-it('should await navigation when clicking anchor', async ({page, server}) => {
+it('should await navigation when clicking anchor', async ({ page, server }) => {
   const messages = initServer(server);
   await page.setContent(`<a id="anchor" href="${server.EMPTY_PAGE}">empty.html</a>`);
   await Promise.all([
@@ -40,7 +40,7 @@ it('should await navigation when clicking anchor', async ({page, server}) => {
   expect(messages.join('|')).toBe('route|navigated|click');
 });
 
-it('should await navigation when clicking anchor programmatically', async ({page, server}) => {
+it('should await navigation when clicking anchor programmatically', async ({ page, server }) => {
   const messages = initServer(server);
   await page.setContent(`<a id="anchor" href="${server.EMPTY_PAGE}">empty.html</a>`);
   await Promise.all([
@@ -50,7 +50,7 @@ it('should await navigation when clicking anchor programmatically', async ({page
   expect(messages.join('|')).toBe('route|navigated|click');
 });
 
-it('should await navigation when clicking anchor via $eval', async ({page, server}) => {
+it('should await navigation when clicking anchor via $eval', async ({ page, server }) => {
   const messages = initServer(server);
   await page.setContent(`<a id="anchor" href="${server.EMPTY_PAGE}">empty.html</a>`);
   await Promise.all([
@@ -60,7 +60,7 @@ it('should await navigation when clicking anchor via $eval', async ({page, serve
   expect(messages.join('|')).toBe('route|navigated|click');
 });
 
-it('should await navigation when clicking anchor via handle.eval', async ({page, server}) => {
+it('should await navigation when clicking anchor via handle.eval', async ({ page, server }) => {
   const messages = initServer(server);
   await page.setContent(`<a id="anchor" href="${server.EMPTY_PAGE}">empty.html</a>`);
   const handle = await page.evaluateHandle('document');
@@ -71,7 +71,7 @@ it('should await navigation when clicking anchor via handle.eval', async ({page,
   expect(messages.join('|')).toBe('route|navigated|click');
 });
 
-it('should await navigation when clicking anchor via handle.$eval', async ({page, server}) => {
+it('should await navigation when clicking anchor via handle.$eval', async ({ page, server }) => {
   const messages = initServer(server);
   await page.setContent(`<a id="anchor" href="${server.EMPTY_PAGE}">empty.html</a>`);
   const handle = await page.$('body');
@@ -82,7 +82,7 @@ it('should await navigation when clicking anchor via handle.$eval', async ({page
   expect(messages.join('|')).toBe('route|navigated|click');
 });
 
-it('should await cross-process navigation when clicking anchor', async ({page, server}) => {
+it('should await cross-process navigation when clicking anchor', async ({ page, server }) => {
   const messages = initServer(server);
   await page.setContent(`<a href="${server.CROSS_PROCESS_PREFIX + '/empty.html'}">empty.html</a>`);
 
@@ -93,7 +93,7 @@ it('should await cross-process navigation when clicking anchor', async ({page, s
   expect(messages.join('|')).toBe('route|navigated|click');
 });
 
-it('should await cross-process navigation when clicking anchor programatically', async ({page, server}) => {
+it('should await cross-process navigation when clicking anchor programatically', async ({ page, server }) => {
   const messages = initServer(server);
   await page.setContent(`<a id="anchor" href="${server.CROSS_PROCESS_PREFIX + '/empty.html'}">empty.html</a>`);
 
@@ -104,7 +104,7 @@ it('should await cross-process navigation when clicking anchor programatically',
   expect(messages.join('|')).toBe('route|navigated|click');
 });
 
-it('should await form-get on click', async ({page, server}) => {
+it('should await form-get on click', async ({ page, server }) => {
   const messages = [];
   server.setRoute('/empty.html?foo=bar', async (req, res) => {
     messages.push('route');
@@ -125,7 +125,7 @@ it('should await form-get on click', async ({page, server}) => {
   expect(messages.join('|')).toBe('route|navigated|click');
 });
 
-it('should await form-post on click', async ({page, server}) => {
+it('should await form-post on click', async ({ page, server }) => {
   const messages = initServer(server);
   await page.setContent(`
     <form action="${server.EMPTY_PAGE}" method="post">
@@ -140,7 +140,7 @@ it('should await form-post on click', async ({page, server}) => {
   expect(messages.join('|')).toBe('route|navigated|click');
 });
 
-it('should await navigation when assigning location', async ({page, server}) => {
+it('should await navigation when assigning location', async ({ page, server }) => {
   const messages = initServer(server);
   await Promise.all([
     page.evaluate(`window.location.href = "${server.EMPTY_PAGE}"`).then(() => messages.push('evaluate')),
@@ -149,7 +149,7 @@ it('should await navigation when assigning location', async ({page, server}) => 
   expect(messages.join('|')).toBe('route|navigated|evaluate');
 });
 
-it('should await navigation when assigning location twice', async ({page, server}) => {
+it('should await navigation when assigning location twice', async ({ page, server }) => {
   const messages = [];
   server.setRoute('/empty.html?cancel', async (req, res) => { res.end('done'); });
   server.setRoute('/empty.html?override', async (req, res) => { messages.push('routeoverride'); res.end('done'); });
@@ -161,7 +161,7 @@ it('should await navigation when assigning location twice', async ({page, server
   expect(messages.join('|')).toBe('routeoverride|evaluate');
 });
 
-it('should await navigation when evaluating reload', async ({page, server}) => {
+it('should await navigation when evaluating reload', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const messages = initServer(server);
   await Promise.all([
@@ -171,19 +171,19 @@ it('should await navigation when evaluating reload', async ({page, server}) => {
   expect(messages.join('|')).toBe('route|navigated|evaluate');
 });
 
-it('should work with noWaitAfter: true', async ({page, server}) => {
+it('should work with noWaitAfter: true', async ({ page, server }) => {
   server.setRoute('/empty.html', async () => {});
   await page.setContent(`<a id="anchor" href="${server.EMPTY_PAGE}">empty.html</a>`);
   await page.click('a', { noWaitAfter: true });
 });
 
-it('should work with dblclick noWaitAfter: true', async ({page, server}) => {
+it('should work with dblclick noWaitAfter: true', async ({ page, server }) => {
   server.setRoute('/empty.html', async () => {});
   await page.setContent(`<a id="anchor" href="${server.EMPTY_PAGE}">empty.html</a>`);
   await page.dblclick('a', { noWaitAfter: true });
 });
 
-it('should work with waitForLoadState(load)', async ({page, server}) => {
+it('should work with waitForLoadState(load)', async ({ page, server }) => {
   const messages = initServer(server);
   await page.setContent(`<a id="anchor" href="${server.EMPTY_PAGE}">empty.html</a>`);
   await Promise.all([
@@ -193,7 +193,7 @@ it('should work with waitForLoadState(load)', async ({page, server}) => {
   expect(messages.join('|')).toBe('route|domcontentloaded|clickload');
 });
 
-it('should work with goto following click', async ({page, server}) => {
+it('should work with goto following click', async ({ page, server }) => {
   server.setRoute('/login.html', async (req, res) => {
     res.setHeader('Content-Type', 'text/html');
     res.end(`You are logged in`);
@@ -210,7 +210,7 @@ it('should work with goto following click', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
 });
 
-it('should report navigation in the log when clicking anchor', async ({page, server, mode}) => {
+it('should report navigation in the log when clicking anchor', async ({ page, server, mode }) => {
   it.skip(mode !== 'default');
 
   await page.setContent(`<a href="${server.PREFIX + '/frames/one-frame.html'}">click me</a>`);

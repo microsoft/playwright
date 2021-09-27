@@ -64,7 +64,7 @@ it('should type', async ({ page }) => {
 it('should take screenshot', async ({ page, server, browserName, headless, isAndroid }) => {
   it.skip(browserName === 'firefox' && !headless);
   it.skip(isAndroid, 'Different dpr. Remove after using 1x scale for screenshots.');
-  await page.setViewportSize({width: 500, height: 500});
+  await page.setViewportSize({ width: 500, height: 500 });
   await page.goto(server.PREFIX + '/grid.html');
   await page.evaluate(() => window.scrollBy(50, 100));
   const element = page.locator('.box:nth-of-type(3)');

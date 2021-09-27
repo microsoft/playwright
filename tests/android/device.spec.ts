@@ -38,7 +38,7 @@ test('androidDevice.screenshot', async function({ androidDevice }, testInfo) {
   const result = await androidDevice.screenshot({ path });
   const buffer = fs.readFileSync(path);
   expect(result.length).toBe(buffer.length);
-  const { width, height} = PNG.sync.read(result);
+  const { width, height } = PNG.sync.read(result);
   expect(width).toBe(1080);
   expect(height).toBe(1920);
 });

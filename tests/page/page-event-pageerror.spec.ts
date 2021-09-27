@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should fire', async ({page, server, browserName}) => {
+it('should fire', async ({ page, server, browserName }) => {
   const url = server.PREFIX + '/error.html';
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
@@ -57,7 +57,7 @@ it('should not receive console message for pageError', async ({ page, server, br
   expect(messages.length).toBe(1);
 });
 
-it('should contain sourceURL', async ({page, server, browserName}) => {
+it('should contain sourceURL', async ({ page, server, browserName }) => {
   it.fail(browserName === 'webkit');
 
   const [error] = await Promise.all([
@@ -97,7 +97,7 @@ it('should support an empty Error.name property', async ({ page }) => {
   expect(error.message).toBe('my-message');
 });
 
-it('should handle odd values', async ({page}) => {
+it('should handle odd values', async ({ page }) => {
   const cases = [
     [null, 'null'],
     [undefined, 'undefined'],
@@ -113,7 +113,7 @@ it('should handle odd values', async ({page}) => {
   }
 });
 
-it('should handle object', async ({page, browserName}) => {
+it('should handle object', async ({ page, browserName }) => {
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
     page.evaluate(() => setTimeout(() => { throw {}; }, 0)),
@@ -121,7 +121,7 @@ it('should handle object', async ({page, browserName}) => {
   expect(error.message).toBe(browserName === 'chromium' ? 'Object' : '[object Object]');
 });
 
-it('should handle window', async ({page, browserName, isElectron}) => {
+it('should handle window', async ({ page, browserName, isElectron }) => {
   it.skip(isElectron);
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),

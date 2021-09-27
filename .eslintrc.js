@@ -24,6 +24,7 @@ module.exports = {
          * Enforced rules
          */
         // syntax preferences
+        "object-curly-spacing": ["error", "always"],
         "quotes": [2, "single", {
             "avoidEscape": true,
             "allowTemplateLiterals": true

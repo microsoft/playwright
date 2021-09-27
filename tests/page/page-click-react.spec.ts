@@ -21,7 +21,7 @@ declare const renderComponent;
 declare const e;
 declare const MyButton;
 
-it('should report that selector does not match anymore', async ({page, server}) => {
+it('should report that selector does not match anymore', async ({ page, server }) => {
   it.fixme();
 
   await page.goto(server.PREFIX + '/react.html');
@@ -42,7 +42,7 @@ it('should report that selector does not match anymore', async ({page, server}) 
   expect(error.message).toContain('element does not match the selector anymore');
 });
 
-it('should not retarget the handle when element is recycled', async ({page, server}) => {
+it('should not retarget the handle when element is recycled', async ({ page, server }) => {
   it.fixme();
 
   await page.goto(server.PREFIX + '/react.html');
@@ -62,7 +62,7 @@ it('should not retarget the handle when element is recycled', async ({page, serv
   expect(error.message).toContain('element is disabled - waiting');
 });
 
-it('should timeout when click opens alert', async ({page, server}) => {
+it('should timeout when click opens alert', async ({ page, server }) => {
   const dialogPromise = page.waitForEvent('dialog');
   await page.setContent(`<div onclick='window.alert(123)'>Click me</div>`);
   const error = await page.click('div', { timeout: 3000 }).catch(e => e);
@@ -71,7 +71,7 @@ it('should timeout when click opens alert', async ({page, server}) => {
   await dialog.dismiss();
 });
 
-it('should retarget when element is recycled during hit testing', async ({page, server}) => {
+it('should retarget when element is recycled during hit testing', async ({ page, server }) => {
   it.fixme();
 
   await page.goto(server.PREFIX + '/react.html');
@@ -88,7 +88,7 @@ it('should retarget when element is recycled during hit testing', async ({page, 
   expect(await page.evaluate('window.button2')).toBe(undefined);
 });
 
-it('should retarget when element is recycled before enabled check', async ({page, server}) => {
+it('should retarget when element is recycled before enabled check', async ({ page, server }) => {
   it.fixme();
 
   await page.goto(server.PREFIX + '/react.html');
@@ -105,7 +105,7 @@ it('should retarget when element is recycled before enabled check', async ({page
   expect(await page.evaluate('window.button2')).toBe(undefined);
 });
 
-it('should not retarget when element changes on hover', async ({page, server}) => {
+it('should not retarget when element changes on hover', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/react.html');
   await page.evaluate(() => {
     renderComponent(e('div', {}, [e(MyButton, { name: 'button1', renameOnHover: true }), e(MyButton, { name: 'button2' })]));
@@ -115,7 +115,7 @@ it('should not retarget when element changes on hover', async ({page, server}) =
   expect(await page.evaluate('window.button2')).toBe(undefined);
 });
 
-it('should not retarget when element is recycled on hover', async ({page, server}) => {
+it('should not retarget when element is recycled on hover', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/react.html');
   await page.evaluate(() => {
     function shuffle() {

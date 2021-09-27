@@ -53,7 +53,7 @@ export const SplitView: React.FC<SplitViewProps> = ({
 
   return <div className={'split-view ' + orientation + (sidebarIsFirst ? ' sidebar-first' : '') }>
     <div className='split-view-main'>{childrenArray[0]}</div>
-    { !sidebarHidden && <div style={{flexBasis: size}} className='split-view-sidebar'>{childrenArray[1]}</div> }
+    { !sidebarHidden && <div style={{ flexBasis: size }} className='split-view-sidebar'>{childrenArray[1]}</div> }
     { !sidebarHidden && <div
       style={resizerStyle}
       className='split-view-resizer'

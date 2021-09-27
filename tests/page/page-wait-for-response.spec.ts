@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work', async ({page, server}) => {
+it('should work', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [response] = await Promise.all([
     page.waitForResponse(server.PREFIX + '/digits/2.png'),
@@ -30,27 +30,27 @@ it('should work', async ({page, server}) => {
   expect(response.url()).toBe(server.PREFIX + '/digits/2.png');
 });
 
-it('should respect timeout', async ({page, playwright}) => {
+it('should respect timeout', async ({ page, playwright }) => {
   let error = null;
   await page.waitForEvent('response', { predicate: () => false, timeout: 1 }).catch(e => error = e);
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
-it('should respect default timeout', async ({page, playwright}) => {
+it('should respect default timeout', async ({ page, playwright }) => {
   let error = null;
   page.setDefaultTimeout(1);
   await page.waitForEvent('response', () => false).catch(e => error = e);
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
-it('should log the url', async ({page}) => {
+it('should log the url', async ({ page }) => {
   const error1 = await page.waitForResponse('foo.css', { timeout: 100 }).catch(e => e);
   expect(error1.message).toContain('waiting for response "foo.css"');
   const error2 = await page.waitForResponse(/foo.css/i, { timeout: 100 }).catch(e => e);
   expect(error2.message).toContain('waiting for response /foo.css/i');
 });
 
-it('should work with predicate', async ({page, server}) => {
+it('should work with predicate', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [response] = await Promise.all([
     page.waitForEvent('response', response => response.url() === server.PREFIX + '/digits/2.png'),
@@ -63,7 +63,7 @@ it('should work with predicate', async ({page, server}) => {
   expect(response.url()).toBe(server.PREFIX + '/digits/2.png');
 });
 
-it('should work with async predicate', async ({page, server}) => {
+it('should work with async predicate', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [response1, response2] = await Promise.all([
     page.waitForEvent('response', async response => {
@@ -83,7 +83,7 @@ it('should work with async predicate', async ({page, server}) => {
   expect(response2.url()).toBe(server.PREFIX + '/simple.json');
 });
 
-it('sync predicate should be only called once', async ({page, server}) => {
+it('sync predicate should be only called once', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   let counter = 0;
   const [response] = await Promise.all([
@@ -101,7 +101,7 @@ it('sync predicate should be only called once', async ({page, server}) => {
   expect(counter).toBe(1);
 });
 
-it('should work with no timeout', async ({page, server}) => {
+it('should work with no timeout', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [response] = await Promise.all([
     page.waitForResponse(server.PREFIX + '/digits/2.png', { timeout: 0 }),

@@ -1336,7 +1336,7 @@ export class Frame extends SdkObject {
   async extendInjectedScript(source: string, arg?: any): Promise<js.JSHandle> {
     const context = await this._context('main');
     const injectedScriptHandle = await context.injectedScript();
-    return injectedScriptHandle.evaluateHandle((injectedScript, {source, arg}) => {
+    return injectedScriptHandle.evaluateHandle((injectedScript, { source, arg }) => {
       return injectedScript.extend(source, arg);
     }, { source, arg });
   }

@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work', async ({page}) => {
+it('should work', async ({ page }) => {
   await page.setContent(`<div>yo</div><div>ya</div><div>\nye  </div>`);
   expect(await page.$eval(`text=ya`, e => e.outerHTML)).toBe('<div>ya</div>');
   expect(await page.$eval(`text="ya"`, e => e.outerHTML)).toBe('<div>ya</div>');
@@ -108,7 +108,7 @@ it('should work', async ({page}) => {
   expect((await page.$$(`text="lo \nwo"`)).length).toBe(0);
 });
 
-it('should work with :text', async ({page}) => {
+it('should work with :text', async ({ page }) => {
   await page.setContent(`<div>yo</div><div>ya</div><div>\nHELLO   \n world  </div>`);
   expect(await page.$eval(`:text("ya")`, e => e.outerHTML)).toBe('<div>ya</div>');
   expect(await page.$eval(`:text-is("ya")`, e => e.outerHTML)).toBe('<div>ya</div>');
@@ -129,7 +129,7 @@ it('should work with :text', async ({page}) => {
   expect(error2.message).toContain(`"text" engine expects a single string`);
 });
 
-it('should work across nodes', async ({page}) => {
+it('should work across nodes', async ({ page }) => {
   await page.setContent(`<div id=target1>Hello<i>,</i> <span id=target2>world</span><b>!</b></div>`);
 
   expect(await page.$eval(`:text("Hello, world!")`, e => e.id)).toBe('target1');
@@ -162,7 +162,7 @@ it('should work across nodes', async ({page}) => {
   expect(await page.$$eval(`text=/world/`, els => els.length)).toBe(1);
 });
 
-it('should work with text nodes in quoted mode', async ({page}) => {
+it('should work with text nodes in quoted mode', async ({ page }) => {
   await page.setContent(`<div id=target1>Hello<span id=target2>wo  rld  </span>  Hi again  </div>`);
   expect(await page.$eval(`text="Hello"`, e => e.id)).toBe('target1');
   expect(await page.$eval(`text="Hi again"`, e => e.id)).toBe('target1');
@@ -176,7 +176,7 @@ it('should work with text nodes in quoted mode', async ({page}) => {
   expect(await page.$eval(`text=hi again`, e => e.id)).toBe('target1');
 });
 
-it('should clear caches', async ({page}) => {
+it('should clear caches', async ({ page }) => {
   await page.setContent(`<div id=target1>text</div><div id=target2>text</div>`);
   const div = await page.$('#target1');
 
@@ -201,7 +201,7 @@ it('should clear caches', async ({page}) => {
   expect(await page.$$eval(`:text("text")`, els => els.length)).toBe(1);
 });
 
-it('should work with :has-text', async ({page}) => {
+it('should work with :has-text', async ({ page }) => {
   await page.setContent(`
     <input id=input2>
     <div id=div1>
@@ -228,7 +228,7 @@ it('should work with :has-text', async ({page}) => {
   expect(error2.message).toContain(`"has-text" engine expects a single string`);
 });
 
-it('should work with large DOM', async ({page}) => {
+it('should work with large DOM', async ({ page }) => {
   await page.evaluate(() => {
     let id = 0;
     const next = (tag: string) => {
@@ -285,19 +285,19 @@ it('should work with large DOM', async ({page}) => {
   }
 });
 
-it('should be case sensitive if quotes are specified', async ({page}) => {
+it('should be case sensitive if quotes are specified', async ({ page }) => {
   await page.setContent(`<div>yo</div><div>ya</div><div>\nye  </div>`);
   expect(await page.$eval(`text=yA`, e => e.outerHTML)).toBe('<div>ya</div>');
   expect(await page.$(`text="yA"`)).toBe(null);
 });
 
-it('should search for a substring without quotes', async ({page}) => {
+it('should search for a substring without quotes', async ({ page }) => {
   await page.setContent(`<div>textwithsubstring</div>`);
   expect(await page.$eval(`text=with`, e => e.outerHTML)).toBe('<div>textwithsubstring</div>');
   expect(await page.$(`text="with"`)).toBe(null);
 });
 
-it('should skip head, script and style', async ({page}) => {
+it('should skip head, script and style', async ({ page }) => {
   await page.setContent(`
     <head>
       <title>title</title>
@@ -323,13 +323,13 @@ it('should skip head, script and style', async ({page}) => {
   }
 });
 
-it('should match input[type=button|submit]', async ({page}) => {
+it('should match input[type=button|submit]', async ({ page }) => {
   await page.setContent(`<input type="submit" value="hello"><input type="button" value="world">`);
   expect(await page.$eval(`text=hello`, e => e.outerHTML)).toBe('<input type="submit" value="hello">');
   expect(await page.$eval(`text=world`, e => e.outerHTML)).toBe('<input type="button" value="world">');
 });
 
-it('should work for open shadow roots', async ({page, server}) => {
+it('should work for open shadow roots', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/deep-shadow.html');
   expect(await page.$eval(`text=root1`, e => e.textContent)).toBe('Hello from root1');
   expect(await page.$eval(`text=root2`, e => e.textContent)).toBe('Hello from root2');
@@ -341,7 +341,7 @@ it('should work for open shadow roots', async ({page, server}) => {
   expect(await page.$(`text:light=root3`)).toBe(null);
 });
 
-it('should prioritize light dom over shadow dom in the same parent', async ({page, server}) => {
+it('should prioritize light dom over shadow dom in the same parent', async ({ page, server }) => {
   await page.evaluate(() => {
     const div = document.createElement('div');
     document.body.appendChild(div);
@@ -358,7 +358,7 @@ it('should prioritize light dom over shadow dom in the same parent', async ({pag
   expect(await page.$eval(`div >> text=Hello`, e => e.textContent)).toBe('Hello from light');
 });
 
-it('should waitForSelector with distributed elements', async ({page, server}) => {
+it('should waitForSelector with distributed elements', async ({ page, server }) => {
   const promise = page.waitForSelector(`div >> text=Hello`);
   await page.evaluate(() => {
     const div = document.createElement('div');
@@ -378,7 +378,7 @@ it('should waitForSelector with distributed elements', async ({page, server}) =>
   expect(await handle.textContent()).toBe('Hello from light');
 });
 
-it('should match root after >>', async ({page, server}) => {
+it('should match root after >>', async ({ page, server }) => {
   await page.setContent('<section>test</section>');
   const element = await page.$('css=section >> text=test');
   expect(element).toBeTruthy();

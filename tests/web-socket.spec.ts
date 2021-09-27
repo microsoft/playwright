@@ -136,7 +136,7 @@ it('should emit binary frame events', async ({ page, server }) => {
     expect(sent[1][i]).toBe(i);
 });
 
-it('should emit error', async ({page, server, browserName}) => {
+it('should emit error', async ({ page, server, browserName }) => {
   let callback;
   const result = new Promise(f => callback = f);
   page.on('websocket', ws => ws.on('socketerror', callback));
@@ -150,7 +150,7 @@ it('should emit error', async ({page, server, browserName}) => {
     expect(message).toContain(': 400');
 });
 
-it('should not have stray error events', async ({page, server}) => {
+it('should not have stray error events', async ({ page, server }) => {
   server.sendOnWebSocketConnection('incoming');
   let error;
   page.on('websocket', ws => ws.on('socketerror', e => error = e));
@@ -167,7 +167,7 @@ it('should not have stray error events', async ({page, server}) => {
   expect(error).toBeFalsy();
 });
 
-it('should reject waitForEvent on socket close', async ({page, server}) => {
+it('should reject waitForEvent on socket close', async ({ page, server }) => {
   server.sendOnWebSocketConnection('incoming');
   const [ws] = await Promise.all([
     page.waitForEvent('websocket').then(async ws => {
@@ -183,7 +183,7 @@ it('should reject waitForEvent on socket close', async ({page, server}) => {
   expect((await error).message).toContain('Socket closed');
 });
 
-it('should reject waitForEvent on page close', async ({page, server}) => {
+it('should reject waitForEvent on page close', async ({ page, server }) => {
   server.sendOnWebSocketConnection('incoming');
   const [ws] = await Promise.all([
     page.waitForEvent('websocket').then(async ws => {
@@ -199,7 +199,7 @@ it('should reject waitForEvent on page close', async ({page, server}) => {
   expect((await error).message).toContain('Page closed');
 });
 
-it('should turn off when offline', async ({page}) => {
+it('should turn off when offline', async ({ page }) => {
   it.fixme();
 
   const webSocketServer = new WebSocketServer();

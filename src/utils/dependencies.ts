@@ -39,7 +39,7 @@ export type DependencyGroup = 'chromium' | 'firefox' | 'webkit' | 'tools';
 
 export async function installDependenciesWindows(targets: Set<DependencyGroup>) {
   if (targets.has('chromium')) {
-    const {code} = await utils.spawnAsync('powershell.exe', [path.join(BIN_DIRECTORY, 'install_media_pack.ps1')], { cwd: BIN_DIRECTORY, stdio: 'inherit' });
+    const { code } = await utils.spawnAsync('powershell.exe', [path.join(BIN_DIRECTORY, 'install_media_pack.ps1')], { cwd: BIN_DIRECTORY, stdio: 'inherit' });
     if (code !== 0)
       throw new Error('Failed to install windows dependencies!');
   }
@@ -255,7 +255,7 @@ async function executablesOrSharedLibraries(directoryPath: string): Promise<stri
 async function missingFileDependenciesWindows(filePath: string): Promise<Array<string>> {
   const executable = path.join(__dirname, '..', '..', 'bin', 'PrintDeps.exe');
   const dirname = path.dirname(filePath);
-  const {stdout, code} = await utils.spawnAsync(executable, [filePath], {
+  const { stdout, code } = await utils.spawnAsync(executable, [filePath], {
     cwd: dirname,
     env: {
       ...process.env,
@@ -273,7 +273,7 @@ async function missingFileDependencies(filePath: string, extraLDPaths: string[])
   let LD_LIBRARY_PATH = extraLDPaths.join(':');
   if (process.env.LD_LIBRARY_PATH)
     LD_LIBRARY_PATH = `${process.env.LD_LIBRARY_PATH}:${LD_LIBRARY_PATH}`;
-  const {stdout, code} = await utils.spawnAsync('ldd', [filePath], {
+  const { stdout, code } = await utils.spawnAsync('ldd', [filePath], {
     cwd: dirname,
     env: {
       ...process.env,
@@ -292,7 +292,7 @@ async function missingDLOPENLibraries(libraries: string[]): Promise<string[]> {
   // NOTE: Using full-qualified path to `ldconfig` since `/sbin` is not part of the
   // default PATH in CRON.
   // @see https://github.com/microsoft/playwright/issues/3397
-  const {stdout, code, error} = await utils.spawnAsync('/sbin/ldconfig', ['-p'], {});
+  const { stdout, code, error } = await utils.spawnAsync('/sbin/ldconfig', ['-p'], {});
   if (code !== 0 || error)
     return [];
   const isLibraryAvailable = (library: string) => stdout.toLowerCase().includes(library.toLowerCase());

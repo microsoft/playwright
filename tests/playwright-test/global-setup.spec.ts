@@ -285,7 +285,7 @@ test('globalSetup should work for auth', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
 });
 
-test('globalSetup auth should compile', async ({runTSC}) => {
+test('globalSetup auth should compile', async ({ runTSC }) => {
   const result = await runTSC(authFiles);
   expect(result.exitCode).toBe(0);
 });

@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work with large DOM', async ({page, server}) => {
+it('should work with large DOM', async ({ page, server }) => {
   await page.evaluate(() => {
     let id = 0;
     const next = (tag: string) => {
@@ -73,7 +73,7 @@ it('should work with large DOM', async ({page, server}) => {
   }
 });
 
-it('should work for open shadow roots', async ({page, server}) => {
+it('should work for open shadow roots', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/deep-shadow.html');
   expect(await page.$eval(`css=span`, e => e.textContent)).toBe('Hello from root1');
   expect(await page.$eval(`css=[attr="value\\ space"]`, e => e.textContent)).toBe('Hello from root3 #2');
@@ -101,7 +101,7 @@ it('should work for open shadow roots', async ({page, server}) => {
   expect(await root3.$(`css:light=[attr*="value"]`)).toBe(null);
 });
 
-it('should work with > combinator and spaces', async ({page, server}) => {
+it('should work with > combinator and spaces', async ({ page, server }) => {
   await page.setContent(`<div foo="bar" bar="baz"><span></span></div>`);
   expect(await page.$eval(`div[foo="bar"] > span`, e => e.outerHTML)).toBe(`<span></span>`);
   expect(await page.$eval(`div[foo="bar"]> span`, e => e.outerHTML)).toBe(`<span></span>`);
@@ -119,7 +119,7 @@ it('should work with > combinator and spaces', async ({page, server}) => {
   expect(await page.$eval(`div[foo="bar"][bar="baz"]     >span`, e => e.outerHTML)).toBe(`<span></span>`);
 });
 
-it('should work with comma separated list', async ({page, server}) => {
+it('should work with comma separated list', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/deep-shadow.html');
   expect(await page.$$eval(`css=span,section #root1`, els => els.length)).toBe(5);
   expect(await page.$$eval(`css=section #root1, div span`, els => els.length)).toBe(5);
@@ -132,7 +132,7 @@ it('should work with comma separated list', async ({page, server}) => {
   expect(await page.$$eval(`css=#target,[data-testid="foo"],[attr="value\\ space"],span`, els => els.length)).toBe(4);
 });
 
-it('should keep dom order with comma separated list', async ({page}) => {
+it('should keep dom order with comma separated list', async ({ page }) => {
   await page.setContent(`<section><span><div><x></x><y></y></div></span></section>`);
   expect(await page.$$eval(`css=span,div`, els => els.map(e => e.nodeName).join(','))).toBe('SPAN,DIV');
   expect(await page.$$eval(`css=div,span`, els => els.map(e => e.nodeName).join(','))).toBe('SPAN,DIV');
@@ -143,17 +143,17 @@ it('should keep dom order with comma separated list', async ({page}) => {
   expect(await page.$$eval(`css=section >> *css=div,span >> css=y`, els => els.map(e => e.nodeName).join(','))).toBe('SPAN,DIV');
 });
 
-it('should return multiple captures for the same node', async ({page}) => {
+it('should return multiple captures for the same node', async ({ page }) => {
   await page.setContent(`<div><div><div><span></span></div></div></div>`);
   expect(await page.$$eval(`*css=div >> span`, els => els.map(e => e.nodeName).join(','))).toBe('DIV,DIV,DIV');
 });
 
-it('should return multiple captures when going up the hierarchy', async ({page}) => {
+it('should return multiple captures when going up the hierarchy', async ({ page }) => {
   await page.setContent(`<section>Hello<ul><li></li><li></li></ul></section>`);
   expect(await page.$$eval(`*css=li >> ../.. >> text=Hello`, els => els.map(e => e.nodeName).join(','))).toBe('LI,LI');
 });
 
-it('should work with comma separated list in various positions', async ({page}) => {
+it('should work with comma separated list in various positions', async ({ page }) => {
   await page.setContent(`<section><span><div><x></x><y></y></div></span></section>`);
   expect(await page.$$eval(`css=span,div >> css=x,y`, els => els.map(e => e.nodeName).join(','))).toBe('X,Y');
   expect(await page.$$eval(`css=span,div >> css=x`, els => els.map(e => e.nodeName).join(','))).toBe('X');
@@ -167,7 +167,7 @@ it('should work with comma separated list in various positions', async ({page}) 
   expect(await page.$$eval(`css=section >> css=span >> css=x,y`, els => els.map(e => e.nodeName).join(','))).toBe('X,Y');
 });
 
-it('should work with comma inside text', async ({page}) => {
+it('should work with comma inside text', async ({ page }) => {
   await page.setContent(`<span></span><div attr="hello,world!"></div>`);
   expect(await page.$eval(`css=div[attr="hello,world!"]`, e => e.outerHTML)).toBe('<div attr="hello,world!"></div>');
   expect(await page.$eval(`css=[attr="hello,world!"]`, e => e.outerHTML)).toBe('<div attr="hello,world!"></div>');
@@ -176,7 +176,7 @@ it('should work with comma inside text', async ({page}) => {
   expect(await page.$eval(`css=div[attr="hello,world!"],span`, e => e.outerHTML)).toBe('<span></span>');
 });
 
-it('should work with attribute selectors', async ({page}) => {
+it('should work with attribute selectors', async ({ page }) => {
   await page.setContent(`<div attr="hello world" attr2="hello-''>>foo=bar[]" attr3="] span"><span></span></div>`);
   await page.evaluate(() => window['div'] = document.querySelector('div'));
   const selectors = [
@@ -200,19 +200,19 @@ it('should work with attribute selectors', async ({page}) => {
   expect(await page.$eval(`[attr3="] span"] >> span`, e => e.parentNode === window['div'])).toBe(true);
 });
 
-it('should not match root after >>', async ({page, server}) => {
+it('should not match root after >>', async ({ page, server }) => {
   await page.setContent('<section><div>test</div></section>');
   const element = await page.$('css=section >> css=section');
   expect(element).toBe(null);
 });
 
-it('should work with numerical id', async ({page, server}) => {
+it('should work with numerical id', async ({ page, server }) => {
   await page.setContent('<section id="123"></section>');
   const element = await page.$('#\\31\\32\\33');
   expect(element).toBeTruthy();
 });
 
-it('should work with wrong-case id', async ({page}) => {
+it('should work with wrong-case id', async ({ page }) => {
   await page.setContent('<section id="Hello"></section>');
   expect(await page.$eval('#Hello', e => e.tagName)).toBe('SECTION');
   expect(await page.$eval('#hello', e => e.tagName)).toBe('SECTION');
@@ -220,7 +220,7 @@ it('should work with wrong-case id', async ({page}) => {
   expect(await page.$eval('#helLO', e => e.tagName)).toBe('SECTION');
 });
 
-it('should work with *', async ({page}) => {
+it('should work with *', async ({ page }) => {
   await page.setContent('<div id=div1></div><div id=div2><span><span></span></span></div>');
   // Includes html, head and body.
   expect(await page.$$eval('*', els => els.length)).toBe(7);
@@ -259,7 +259,7 @@ it('should work with *', async ({page}) => {
   expect(await body.$$eval('* *:not(span)', els => els.length)).toBe(0);
 });
 
-it('should work with :nth-child', async ({page, server}) => {
+it('should work with :nth-child', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/deep-shadow.html');
   expect(await page.$$eval(`css=span:nth-child(odd)`, els => els.length)).toBe(3);
   expect(await page.$$eval(`css=span:nth-child(even)`, els => els.length)).toBe(1);
@@ -273,14 +273,14 @@ it('should work with :nth-child', async ({page, server}) => {
   expect(await page.$$eval(`css=span:nth-child(23n+2)`, els => els.length)).toBe(1);
 });
 
-it('should work with :not', async ({page, server}) => {
+it('should work with :not', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/deep-shadow.html');
   expect(await page.$$eval(`css=div:not(#root1)`, els => els.length)).toBe(2);
   expect(await page.$$eval(`css=body :not(span)`, els => els.length)).toBe(4);
   expect(await page.$$eval(`css=div > :not(span):not(div)`, els => els.length)).toBe(0);
 });
 
-it('should work with ~', async ({page}) => {
+it('should work with ~', async ({ page }) => {
   await page.setContent(`
     <div id=div1></div>
     <div id=div2></div>
@@ -298,7 +298,7 @@ it('should work with ~', async ({page}) => {
   expect(await page.$$eval(`css=#div3 ~ #div4 ~ #div5`, els => els.length)).toBe(1);
 });
 
-it('should work with +', async ({page}) => {
+it('should work with +', async ({ page }) => {
   await page.setContent(`
     <section>
       <div id=div1></div>
@@ -325,7 +325,7 @@ it('should work with +', async ({page}) => {
   // expect(await page.$eval(`css=div:has(:scope + #div5)`, e => e.id)).toBe('div4');
 });
 
-it('should work with spaces in :nth-child and :not', async ({page, server}) => {
+it('should work with spaces in :nth-child and :not', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/deep-shadow.html');
   expect(await page.$$eval(`css=span:nth-child(23n +2)`, els => els.length)).toBe(1);
   expect(await page.$$eval(`css=span:nth-child(23n+ 2)`, els => els.length)).toBe(1);
@@ -339,7 +339,7 @@ it('should work with spaces in :nth-child and :not', async ({page, server}) => {
   expect(await page.$$eval(`span:nth-child(23n+ 2) >> xpath=.`, els => els.length)).toBe(1);
 });
 
-it('should work with :is', async ({page, server}) => {
+it('should work with :is', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/deep-shadow.html');
   expect(await page.$$eval(`css=div:is(#root1)`, els => els.length)).toBe(1);
   expect(await page.$$eval(`css=div:is(#root1, #target)`, els => els.length)).toBe(1);
@@ -353,7 +353,7 @@ it('should work with :is', async ({page, server}) => {
   expect(await page.$$eval(`css=#root1:has(:is(:scope, #root1))`, els => els.length)).toBe(1);
 });
 
-it('should work with :has', async ({page, server}) => {
+it('should work with :has', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/deep-shadow.html');
   expect(await page.$$eval(`css=div:has(#target)`, els => els.length)).toBe(2);
   expect(await page.$$eval(`css=div:has([data-testid=foo])`, els => els.length)).toBe(3);
@@ -367,7 +367,7 @@ it('should work with :has', async ({page, server}) => {
   expect(await page.$$eval(`section:has(span, br, div)`, els => els.length)).toBe(2);
 });
 
-it('should work with :scope', async ({page, server}) => {
+it('should work with :scope', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/deep-shadow.html');
   // 'is' does not change the scope, so it remains 'html'.
   expect(await page.$$eval(`css=div:is(:scope#root1)`, els => els.length)).toBe(0);
@@ -385,7 +385,7 @@ it('should work with :scope', async ({page, server}) => {
   }
 });
 
-it('should absolutize relative selectors', async ({page, server}) => {
+it('should absolutize relative selectors', async ({ page, server }) => {
   await page.setContent(`<div><span>Hi</span></div>`);
   expect(await page.$eval('div >> >span', e => e.textContent)).toBe('Hi');
   expect(await page.locator('div').locator('>span').textContent()).toBe('Hi');

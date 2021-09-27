@@ -50,7 +50,7 @@ test('should be able to call expect.extend in config', async ({ runInlineTest })
   expect(result.passed).toBe(1);
 });
 
-test('should work with default expect prototype functions', async ({runTSC}) => {
+test('should work with default expect prototype functions', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
       const { test } = pwt;
@@ -63,7 +63,7 @@ test('should work with default expect prototype functions', async ({runTSC}) => 
   expect(result.exitCode).toBe(0);
 });
 
-test('should work with default expect matchers', async ({runTSC}) => {
+test('should work with default expect matchers', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
       const { test } = pwt;
@@ -73,7 +73,7 @@ test('should work with default expect matchers', async ({runTSC}) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should work with default expect matchers and esModuleInterop=false', async ({runTSC}) => {
+test('should work with default expect matchers and esModuleInterop=false', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
       const { test } = pwt;
@@ -98,7 +98,7 @@ test('should work with default expect matchers and esModuleInterop=false', async
   expect(result.exitCode).toBe(0);
 });
 
-test('should work with custom PlaywrightTest namespace', async ({runTSC}) => {
+test('should work with custom PlaywrightTest namespace', async ({ runTSC }) => {
   const result = await runTSC({
     'global.d.ts': `
       // Extracted example from their typings.
@@ -126,7 +126,7 @@ test('should work with custom PlaywrightTest namespace', async ({runTSC}) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should not expand huge arrays', async ({runInlineTest}) => {
+test('should not expand huge arrays', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'expect-test.spec.ts': `
       const { test } = pwt;

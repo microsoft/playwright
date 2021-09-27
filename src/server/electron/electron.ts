@@ -26,7 +26,7 @@ import { TimeoutSettings } from '../../utils/timeoutSettings';
 import { WebSocketTransport } from '../transport';
 import { launchProcess, envArrayToObject } from '../../utils/processLauncher';
 import { BrowserContext } from '../browserContext';
-import type {BrowserWindow} from 'electron';
+import type { BrowserWindow } from 'electron';
 import { Progress, ProgressController } from '../progress';
 import { helper } from '../helper';
 import { eventsHelper } from '../../utils/eventsHelper';

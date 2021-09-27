@@ -22,7 +22,7 @@ import { verifyViewport } from './config/utils';
 browserTest.describe('page screenshot', () => {
   browserTest.skip(({ browserName, headless }) => browserName === 'firefox' && !headless, 'Firefox headed produces a different image.');
 
-  browserTest('should run in parallel in multiple pages', async ({server, contextFactory}) => {
+  browserTest('should run in parallel in multiple pages', async ({ server, contextFactory }) => {
     const context = await contextFactory();
     const N = 5;
     const pages = await Promise.all(Array(N).fill(0).map(async () => {
@@ -39,7 +39,7 @@ browserTest.describe('page screenshot', () => {
     await Promise.all(pages.map(page => page.close()));
   });
 
-  browserTest('should work with a mobile viewport', async ({browser, server, browserName}) => {
+  browserTest('should work with a mobile viewport', async ({ browser, server, browserName }) => {
     browserTest.skip(browserName === 'firefox');
     browserTest.fixme(browserName === 'chromium');
 
@@ -51,11 +51,11 @@ browserTest.describe('page screenshot', () => {
     await context.close();
   });
 
-  browserTest('should work with a mobile viewport and clip', async ({browser, server, browserName, channel}) => {
+  browserTest('should work with a mobile viewport and clip', async ({ browser, server, browserName, channel }) => {
     browserTest.skip(browserName === 'firefox');
     browserTest.skip(!!channel, 'Different result in stable/beta');
 
-    const context = await browser.newContext({viewport: { width: 320, height: 480 }, isMobile: true});
+    const context = await browser.newContext({ viewport: { width: 320, height: 480 }, isMobile: true });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/overflow.html');
     const screenshot = await page.screenshot({ clip: { x: 10, y: 10, width: 100, height: 150 } });
@@ -63,10 +63,10 @@ browserTest.describe('page screenshot', () => {
     await context.close();
   });
 
-  browserTest('should work with a mobile viewport and fullPage', async ({browser, server, browserName}) => {
+  browserTest('should work with a mobile viewport and fullPage', async ({ browser, server, browserName }) => {
     browserTest.skip(browserName === 'firefox');
 
-    const context = await browser.newContext({viewport: { width: 320, height: 480 }, isMobile: true});
+    const context = await browser.newContext({ viewport: { width: 320, height: 480 }, isMobile: true });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/overflow-large.html');
     const screenshot = await page.screenshot({ fullPage: true });
@@ -74,7 +74,7 @@ browserTest.describe('page screenshot', () => {
     await context.close();
   });
 
-  browserTest('should work with device scale factor', async ({browser, server}) => {
+  browserTest('should work with device scale factor', async ({ browser, server }) => {
     const context = await browser.newContext({ viewport: { width: 320, height: 480 }, deviceScaleFactor: 2 });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/grid.html');
@@ -122,10 +122,10 @@ browserTest.describe('page screenshot', () => {
 browserTest.describe('element sceenshot', () => {
   browserTest.skip(({ browserName, headless }) => browserName === 'firefox' && !headless);
 
-  browserTest('element screenshot should work with a mobile viewport', async ({browser, server, browserName}) => {
+  browserTest('element screenshot should work with a mobile viewport', async ({ browser, server, browserName }) => {
     browserTest.skip(browserName === 'firefox');
 
-    const context = await browser.newContext({viewport: { width: 320, height: 480 }, isMobile: true});
+    const context = await browser.newContext({ viewport: { width: 320, height: 480 }, isMobile: true });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/grid.html');
     await page.evaluate(() => window.scrollBy(50, 100));
@@ -135,7 +135,7 @@ browserTest.describe('element sceenshot', () => {
     await context.close();
   });
 
-  browserTest('element screenshot should work with device scale factor', async ({browser, server, browserName}) => {
+  browserTest('element screenshot should work with device scale factor', async ({ browser, server, browserName }) => {
     browserTest.skip(browserName === 'firefox');
 
     const context = await browser.newContext({ viewport: { width: 320, height: 480 }, deviceScaleFactor: 2 });
@@ -148,7 +148,7 @@ browserTest.describe('element sceenshot', () => {
     await context.close();
   });
 
-  browserTest('should take screenshots when default viewport is null', async ({server, browser}) => {
+  browserTest('should take screenshots when default viewport is null', async ({ server, browser }) => {
     const context = await browser.newContext({ viewport: null });
     const page = await context.newPage();
     await page.setContent(`<div style='height: 10000px; background: red'></div>`);
@@ -167,7 +167,7 @@ browserTest.describe('element sceenshot', () => {
     await context.close();
   });
 
-  browserTest('should take fullPage screenshots when default viewport is null', async ({server, browser}) => {
+  browserTest('should take fullPage screenshots when default viewport is null', async ({ server, browser }) => {
     const context = await browser.newContext({ viewport: null });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/grid.html');
@@ -222,8 +222,8 @@ browserTest.describe('element sceenshot', () => {
     await context.close();
   });
 
-  browserTest('should take element screenshot when default viewport is null and restore back', async ({server, browser}) => {
-    const context = await browser.newContext({viewport: null});
+  browserTest('should take element screenshot when default viewport is null and restore back', async ({ server, browser }) => {
+    const context = await browser.newContext({ viewport: null });
     const page = await context.newPage();
     await page.setContent(`
       <div style="height: 14px">oooo</div>
@@ -252,7 +252,7 @@ browserTest.describe('element sceenshot', () => {
     await context.close();
   });
 
-  browserTest('should restore viewport after element screenshot and exception', async ({browser, mode}) => {
+  browserTest('should restore viewport after element screenshot and exception', async ({ browser, mode }) => {
     browserTest.skip(mode !== 'default');
 
     const context = await browser.newContext({ viewport: { width: 350, height: 360 } });

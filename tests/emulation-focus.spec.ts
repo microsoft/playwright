@@ -18,18 +18,18 @@
 import { contextTest as it, browserTest, expect } from './config/browserTest';
 import { attachFrame } from './config/utils';
 
-it('should think that it is focused by default', async ({page}) => {
+it('should think that it is focused by default', async ({ page }) => {
   expect(await page.evaluate('document.hasFocus()')).toBe(true);
 });
 
-it('should think that all pages are focused', async ({page}) => {
+it('should think that all pages are focused', async ({ page }) => {
   const page2 = await page.context().newPage();
   expect(await page.evaluate('document.hasFocus()')).toBe(true);
   expect(await page2.evaluate('document.hasFocus()')).toBe(true);
   await page2.close();
 });
 
-it('should focus popups by default', async ({page, server}) => {
+it('should focus popups by default', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
@@ -39,7 +39,7 @@ it('should focus popups by default', async ({page, server}) => {
   expect(await page.evaluate('document.hasFocus()')).toBe(true);
 });
 
-it('should provide target for keyboard events', async ({page, server}) => {
+it('should provide target for keyboard events', async ({ page, server }) => {
   const page2 = await page.context().newPage();
   await Promise.all([
     page.goto(server.PREFIX + '/input/textarea.html'),
@@ -62,7 +62,7 @@ it('should provide target for keyboard events', async ({page, server}) => {
   expect(results).toEqual([text, text2]);
 });
 
-it('should not affect mouse event target page', async ({page, server}) => {
+it('should not affect mouse event target page', async ({ page, server }) => {
   const page2 = await page.context().newPage();
   function clickCounter() {
     document.onclick = () => window['clickCount']  = (window['clickCount'] || 0) + 1;
@@ -84,7 +84,7 @@ it('should not affect mouse event target page', async ({page, server}) => {
   expect(counters).toEqual([1,1]);
 });
 
-it('should change document.activeElement', async ({page, server}) => {
+it('should change document.activeElement', async ({ page, server }) => {
   const page2 = await page.context().newPage();
   await Promise.all([
     page.goto(server.PREFIX + '/input/textarea.html'),
@@ -101,14 +101,14 @@ it('should change document.activeElement', async ({page, server}) => {
   expect(active).toEqual(['INPUT', 'TEXTAREA']);
 });
 
-it('should not affect screenshots', async ({page, server, browserName, headless}) => {
+it('should not affect screenshots', async ({ page, server, browserName, headless }) => {
   it.skip(browserName === 'firefox' && !headless, 'Firefox headede produces a different image');
 
   const page2 = await page.context().newPage();
   await Promise.all([
-    page.setViewportSize({width: 500, height: 500}),
+    page.setViewportSize({ width: 500, height: 500 }),
     page.goto(server.PREFIX + '/grid.html'),
-    page2.setViewportSize({width: 50, height: 50}),
+    page2.setViewportSize({ width: 50, height: 50 }),
     page2.goto(server.PREFIX + '/grid.html'),
   ]);
   await Promise.all([
@@ -123,7 +123,7 @@ it('should not affect screenshots', async ({page, server, browserName, headless}
   expect(screenshots[1]).toMatchSnapshot('grid-cell-0.png');
 });
 
-it('should change focused iframe', async ({page, server}) => {
+it('should change focused iframe', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [frame1, frame2] = await Promise.all([
     attachFrame(page, 'frame1', server.PREFIX + '/input/textarea.html'),
@@ -172,7 +172,7 @@ it('should change focused iframe', async ({page, server}) => {
 });
 
 // @see https://github.com/microsoft/playwright/issues/3476
-browserTest('should focus with more than one page/context', async ({contextFactory}) => {
+browserTest('should focus with more than one page/context', async ({ contextFactory }) => {
   const page1 = await (await contextFactory()).newPage();
   const page2 = await (await contextFactory()).newPage();
   await page1.setContent(`<button id="foo" onfocus="window.gotFocus=true">foo</button>`);

@@ -18,7 +18,7 @@
 import { test as it, expect } from './pageTest';
 import url from 'url';
 
-it('page.goBack should work', async ({page, server}) => {
+it('page.goBack should work', async ({ page, server }) => {
   expect(await page.goBack()).toBe(null);
 
   await page.goto(server.EMPTY_PAGE);
@@ -36,7 +36,7 @@ it('page.goBack should work', async ({page, server}) => {
   expect(response).toBe(null);
 });
 
-it('page.goBack should work with HistoryAPI', async ({page, server}) => {
+it('page.goBack should work with HistoryAPI', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => {
     history.pushState({}, '', '/first.html');
@@ -52,7 +52,7 @@ it('page.goBack should work with HistoryAPI', async ({page, server}) => {
   expect(page.url()).toBe(server.PREFIX + '/first.html');
 });
 
-it('page.goBack should work for file urls', async ({page, server, asset, browserName, platform, isAndroid}) => {
+it('page.goBack should work for file urls', async ({ page, server, asset, browserName, platform, isAndroid }) => {
   it.fail(browserName === 'webkit' && platform === 'darwin');
   it.skip(isAndroid, 'No files on Android');
 
@@ -80,21 +80,21 @@ it('page.goBack should work for file urls', async ({page, server, asset, browser
   await page.screenshot();
 });
 
-it('page.reload should work', async ({page, server}) => {
+it('page.reload should work', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => window['_foo'] = 10);
   await page.reload();
   expect(await page.evaluate(() => window['_foo'])).toBe(undefined);
 });
 
-it('page.reload should work with data url', async ({page, server}) => {
+it('page.reload should work with data url', async ({ page, server }) => {
   await page.goto('data:text/html,hello');
   expect(await page.content()).toContain('hello');
   expect(await page.reload()).toBe(null);
   expect(await page.content()).toContain('hello');
 });
 
-it('page.reload during renderer-initiated navigation', async ({page, server}) => {
+it('page.reload during renderer-initiated navigation', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/one-style.html');
   await page.setContent(`<form method='POST' action='/post'>Form is here<input type='submit'></form>`);
   server.setRoute('/post', (req, res) => {});
@@ -114,7 +114,7 @@ it('page.reload during renderer-initiated navigation', async ({page, server}) =>
   await page.waitForSelector('text=hello');
 });
 
-it('page.goBack during renderer-initiated navigation', async ({page, server}) => {
+it('page.goBack during renderer-initiated navigation', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/one-style.html');
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<form method='POST' action='/post'>Form is here<input type='submit'></form>`);
@@ -135,7 +135,7 @@ it('page.goBack during renderer-initiated navigation', async ({page, server}) =>
   await page.waitForSelector('text=hello');
 });
 
-it('page.goForward during renderer-initiated navigation', async ({page, server}) => {
+it('page.goForward during renderer-initiated navigation', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.goto(server.PREFIX + '/one-style.html');
   await page.goBack();

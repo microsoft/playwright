@@ -17,7 +17,7 @@
 
 import { browserTest as it, expect } from './config/browserTest';
 
-it('should work', async ({browser, httpsServer}) => {
+it('should work', async ({ browser, httpsServer }) => {
   let error = null;
   const context = await browser.newContext({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
@@ -27,7 +27,7 @@ it('should work', async ({browser, httpsServer}) => {
   await context.close();
 });
 
-it('should isolate contexts', async ({browser, httpsServer}) => {
+it('should isolate contexts', async ({ browser, httpsServer }) => {
   {
     let error = null;
     const context = await browser.newContext({ ignoreHTTPSErrors: true });
@@ -47,13 +47,13 @@ it('should isolate contexts', async ({browser, httpsServer}) => {
   }
 });
 
-it('should work with mixed content', async ({browser, server, httpsServer}) => {
+it('should work with mixed content', async ({ browser, server, httpsServer }) => {
   httpsServer.setRoute('/mixedcontent.html', (req, res) => {
     res.end(`<iframe src=${server.EMPTY_PAGE}></iframe>`);
   });
   const context = await browser.newContext({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
-  await page.goto(httpsServer.PREFIX + '/mixedcontent.html', {waitUntil: 'domcontentloaded'});
+  await page.goto(httpsServer.PREFIX + '/mixedcontent.html', { waitUntil: 'domcontentloaded' });
   expect(page.frames().length).toBe(2);
   // Make sure blocked iframe has functional execution context
   // @see https://github.com/GoogleChrome/puppeteer/issues/2709
@@ -62,7 +62,7 @@ it('should work with mixed content', async ({browser, server, httpsServer}) => {
   await context.close();
 });
 
-it('should work with WebSocket', async ({browser, httpsServer}) => {
+it('should work with WebSocket', async ({ browser, httpsServer }) => {
   httpsServer.sendOnWebSocketConnection('incoming');
   const context = await browser.newContext({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
@@ -78,7 +78,7 @@ it('should work with WebSocket', async ({browser, httpsServer}) => {
   await context.close();
 });
 
-it('should fail with WebSocket if not ignored', async ({browser, httpsServer}) => {
+it('should fail with WebSocket if not ignored', async ({ browser, httpsServer }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   const value = await page.evaluate(endpoint => {

@@ -16,7 +16,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work', async function({page, browserName}) {
+it('should work', async function({ page, browserName }) {
   it.skip(browserName === 'firefox');
 
   await page.setContent(`<div id=d1 tabIndex=0></div>`);
@@ -25,7 +25,7 @@ it('should work', async function({page, browserName}) {
   expect(await page.evaluate(() => document.activeElement.id)).toBe('d1');
 });
 
-it('should emit focus event', async function({page}) {
+it('should emit focus event', async function({ page }) {
   await page.setContent(`<div id=d1 tabIndex=0></div>`);
   let focused = false;
   await page.exposeFunction('focusEvent', () => focused = true);
@@ -34,7 +34,7 @@ it('should emit focus event', async function({page}) {
   expect(focused).toBe(true);
 });
 
-it('should emit blur event', async function({page}) {
+it('should emit blur event', async function({ page }) {
   await page.setContent(`<div id=d1 tabIndex=0>DIV1</div><div id=d2 tabIndex=0>DIV2</div>`);
   await page.focus('#d1');
   let focused = false;
@@ -48,7 +48,7 @@ it('should emit blur event', async function({page}) {
   expect(blurred).toBe(true);
 });
 
-it('should traverse focus', async function({page}) {
+it('should traverse focus', async function({ page }) {
   await page.setContent(`<input id="i1"><input id="i2">`);
   let focused = false;
   await page.exposeFunction('focusEvent', () => focused = true);
@@ -64,7 +64,7 @@ it('should traverse focus', async function({page}) {
   expect(await page.$eval('#i2', e => (e as HTMLInputElement).value)).toBe('Last');
 });
 
-it('should traverse focus in all directions', async function({page}) {
+it('should traverse focus in all directions', async function({ page }) {
   await page.setContent(`<input value="1"><input value="2"><input value="3">`);
   await page.keyboard.press('Tab');
   expect(await page.evaluate(() => (document.activeElement as HTMLInputElement).value)).toBe('1');
@@ -78,7 +78,7 @@ it('should traverse focus in all directions', async function({page}) {
   expect(await page.evaluate(() => (document.activeElement as HTMLInputElement).value)).toBe('1');
 });
 
-it('should traverse only form elements', async function({page, browserName, platform}) {
+it('should traverse only form elements', async function({ page, browserName, platform }) {
   it.skip(platform !== 'darwin' || browserName !== 'webkit',
       'Chromium and WebKit both have settings for tab traversing all links, but it is only on by default in WebKit.');
 

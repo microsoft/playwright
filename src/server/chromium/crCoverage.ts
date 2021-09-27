@@ -85,7 +85,7 @@ class JSCoverage {
       this._client.send('Profiler.enable'),
       this._client.send('Profiler.startPreciseCoverage', { callCount: true, detailed: true }),
       this._client.send('Debugger.enable'),
-      this._client.send('Debugger.setSkipAllPauses', {skip: true})
+      this._client.send('Debugger.setSkipAllPauses', { skip: true })
     ]);
   }
 
@@ -106,7 +106,7 @@ class JSCoverage {
     if (!event.url && !this._reportAnonymousScripts)
       return;
     // This might fail if the page has already navigated away.
-    const response = await this._client._sendMayFail('Debugger.getScriptSource', {scriptId: event.scriptId});
+    const response = await this._client._sendMayFail('Debugger.getScriptSource', { scriptId: event.scriptId });
     if (response)
       this._scriptSources.set(event.scriptId, response.scriptSource);
   }
@@ -130,7 +130,7 @@ class JSCoverage {
         continue;
       const source = this._scriptSources.get(entry.scriptId);
       if (source)
-        coverage.push({...entry, source});
+        coverage.push({ ...entry, source });
       else
         coverage.push(entry);
     }
@@ -157,7 +157,7 @@ class CSSCoverage {
 
   async start(options: types.CSSCoverageOptions = {}) {
     assert(!this._enabled, 'CSSCoverage is already enabled');
-    const {resetOnNavigation = true} = options;
+    const { resetOnNavigation = true } = options;
     this._resetOnNavigation = resetOnNavigation;
     this._enabled = true;
     this._stylesheetURLs.clear();
@@ -186,7 +186,7 @@ class CSSCoverage {
     if (!header.sourceURL)
       return;
     // This might fail if the page has already navigated away.
-    const response = await this._client._sendMayFail('CSS.getStyleSheetText', {styleSheetId: header.styleSheetId});
+    const response = await this._client._sendMayFail('CSS.getStyleSheetText', { styleSheetId: header.styleSheetId });
     if (response) {
       this._stylesheetURLs.set(header.styleSheetId, header.sourceURL);
       this._stylesheetSources.set(header.styleSheetId, response.text);
@@ -266,7 +266,7 @@ function convertToDisjointRanges(nestedRanges: {
       if (lastResult && lastResult.end === lastOffset)
         lastResult.end = point.offset;
       else
-        results.push({start: lastOffset, end: point.offset});
+        results.push({ start: lastOffset, end: point.offset });
     }
     lastOffset = point.offset;
     if (point.type === 0)

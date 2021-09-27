@@ -184,7 +184,7 @@ test('should load esm when package.json has type module', async ({ runInlineTest
       import * as fs from 'fs';
       export default { projects: [{name: 'foo'}] };
     `,
-    'package.json': JSON.stringify({type: 'module'}),
+    'package.json': JSON.stringify({ type: 'module' }),
     'a.test.ts': `
       const { test } = pwt;
       test('check project name', ({}, testInfo) => {

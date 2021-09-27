@@ -105,7 +105,7 @@ export class CRNetworkManager {
         this._client.send('Network.setCacheDisabled', { cacheDisabled: true }),
         this._client.send('Fetch.enable', {
           handleAuthRequests: true,
-          patterns: [{urlPattern: '*', requestStage: 'Request'}, {urlPattern: '*', requestStage: 'Response'}],
+          patterns: [{ urlPattern: '*', requestStage: 'Request' }, { urlPattern: '*', requestStage: 'Response' }],
         }),
       ]);
     } else {
@@ -146,7 +146,7 @@ export class CRNetworkManager {
       response = 'ProvideCredentials';
       this._attemptedAuthentications.add(event.requestId);
     }
-    const {username, password} = this._credentials || {username: undefined, password: undefined};
+    const { username, password } = this._credentials || { username: undefined, password: undefined };
     this._client._sendMayFail('Fetch.continueWithAuth', {
       requestId: event.requestId,
       authChallengeResponse: { response, username, password },

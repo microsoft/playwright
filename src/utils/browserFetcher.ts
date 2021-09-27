@@ -55,7 +55,7 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
   try {
     for (let attempt = 1, N = 3; attempt <= N; ++attempt) {
       debugLogger.log('install', `downloading ${progressBarName} - attempt #${attempt}`);
-      const {error} = await downloadFile(url, zipPath, {progressCallback: progress, log: debugLogger.log.bind(debugLogger, 'install')});
+      const { error } = await downloadFile(url, zipPath, { progressCallback: progress, log: debugLogger.log.bind(debugLogger, 'install') });
       if (!error) {
         debugLogger.log('install', `SUCCESS downloading ${progressBarName}`);
         break;
@@ -74,7 +74,7 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
     debugLogger.log('install', `extracting archive`);
     debugLogger.log('install', `-- zip: ${zipPath}`);
     debugLogger.log('install', `-- location: ${browserDirectory}`);
-    await extract(zipPath, { dir: browserDirectory});
+    await extract(zipPath, { dir: browserDirectory });
     debugLogger.log('install', `fixing permissions at ${executablePath}`);
     await fs.promises.chmod(executablePath, 0o755);
   } catch (e) {
