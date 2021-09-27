@@ -171,6 +171,36 @@ it.describe('page screenshot', () => {
     expect(screenshot).toMatchSnapshot('screenshot-canvas.png', { threshold: 0.4 });
   });
 
+  it('should capture canvas changes', async ({ page, browserName, isMac }) => {
+    it.fail(browserName === 'webkit' && isMac, 'https://github.com/microsoft/playwright/issues/8796');
+    await page.goto('data:text/html,<canvas></canvas>');
+    await page.evaluate(() => {
+      const canvas = document.querySelector('canvas');
+      canvas.width = 600;
+      canvas.height = 600;
+    });
+
+    async function addLine(step: number) {
+      await page.evaluate(n => {
+        const canvas = document.querySelector('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, n * 100);
+        ctx.lineTo(300, n * 100);
+        ctx.stroke();
+      }, step);
+    }
+
+    for (let i = 0; i < 3; i++) {
+      await addLine(i);
+      // With the slight delay WebKit stops reflecting changes in the screenshots on macOS.
+      await new Promise(f => setTimeout(f, 100));
+      const screenshot = await page.screenshot();
+      expect(screenshot).toMatchSnapshot(`canvas-changes-${i}.png`);
+    }
+  });
+
   it('should work for webgl', async ({ page, server, browserName }) => {
     it.fixme(browserName === 'firefox' || browserName === 'webkit');
 
