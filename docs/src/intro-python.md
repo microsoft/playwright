@@ -189,9 +189,9 @@ Playwright runs the driver in a subprocess, so it requires `ProactorEventLoop` o
 
 On Windows Python 3.7, Playwright sets the default event loop to `ProactorEventLoop` as it is default on Python 3.8+.
 
-### Threading and Playwright Sync API are incompatible
+### Threading
 
-Playwright's Sync API is not thread-safe. If you are using Playwright in a multi-threaded environment, you should create a playwright instance per thread. See [threading issue](https://github.com/microsoft/playwright-python/issues/623) for more details.
+Playwright's API is not thread-safe. If you are using Playwright in a multi-threaded environment, you should create a playwright instance per thread. See [threading issue](https://github.com/microsoft/playwright-python/issues/623) for more details.
 
 
 ## System requirements
