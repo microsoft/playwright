@@ -85,6 +85,7 @@ class BrowserTypeExamples
 ```
 
 ## async method: BrowserType.connect
+* langs: js, python, java
 - returns: <[Browser]>
 
 This methods attaches Playwright to an existing browser instance.
