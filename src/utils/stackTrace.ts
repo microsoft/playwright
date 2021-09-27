@@ -62,15 +62,14 @@ export function captureStackTrace(): ParsedStackTrace {
       return null;
     if (frame.file.startsWith('internal'))
       return null;
-    if (frame.file.includes(path.join('node_modules', 'expect')))
-      return null;
     const fileName = path.resolve(process.cwd(), frame.file);
     if (isTesting && fileName.includes(path.join('playwright', 'tests', 'config', 'coverage.js')))
       return null;
     const inClient =
       // Allow fixtures in the reported stacks.
       (!fileName.includes('test/index') && !fileName.includes('test\\index')) && (
-        fileName.startsWith(CLIENT_LIB)
+        frame.file.includes(path.join('node_modules', 'expect'))
+        || fileName.startsWith(CLIENT_LIB)
         || fileName.startsWith(CLIENT_SRC)
         || fileName.startsWith(TEST_LIB)
         || fileName.startsWith(TEST_SRC));
@@ -94,7 +93,15 @@ export function captureStackTrace(): ParsedStackTrace {
   for (let i = 0; i < parsedFrames.length - 1; i++) {
     if (parsedFrames[i].inClient && !parsedFrames[i + 1].inClient) {
       const frame = parsedFrames[i].frame;
-      apiName = frame.function ? frame.function[0].toLowerCase() + frame.function.slice(1) : '';
+      const text = parsedFrames[i].frameText;
+      // expect matchers have the following stack structure:
+      // at __EXTERNAL_MATCHER_TRAP__ (.../index.js:342:30)
+      // at Object.throwingMatcher [as toBeChecked] (.../index.js:343:15)
+      const aliasIndex = text.indexOf('[as ');
+      if (aliasIndex !== -1)
+        apiName = 'expect.' + text.substring(aliasIndex + 4, text.indexOf(']'));
+      else
+        apiName = frame.function ? frame.function[0].toLowerCase() + frame.function.slice(1) : '';
       parsedFrames = parsedFrames.slice(i + 1);
       break;
     }

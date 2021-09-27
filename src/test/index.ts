@@ -212,6 +212,8 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
       }
       (context as any)._csi = {
         onApiCallBegin: (apiCall: string) => {
+          if (apiCall.startsWith('expect.'))
+            return { userObject: null };
           const step = (testInfo as any)._addStep({
             category: 'pw:api',
             title: apiCall,
