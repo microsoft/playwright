@@ -232,18 +232,16 @@ test('should have correct stack trace', async ({ showTraceViewer }) => {
 
   await traceViewer.selectAction('page.click');
   await traceViewer.showSourceTab();
-  const stack1 = (await traceViewer.stackFrames.allInnerTexts()).map(s => s.replace(/\s+/g, ' ').replace(/:[0-9]+/g, ':XXX'));
-  expect(stack1.slice(0, 2)).toEqual([
-    'doClick trace-viewer.spec.ts :XXX',
-    'recordTrace trace-viewer.spec.ts :XXX',
-  ]);
+  await expect(traceViewer.stackFrames).toContainText([
+    /doClick\s+trace-viewer.spec.ts\s+:\d+/,
+    /recordTrace\s+trace-viewer.spec.ts\s+:\d+/,
+  ], { useInnerText: true });
 
   await traceViewer.selectAction('page.hover');
   await traceViewer.showSourceTab();
-  const stack2 = (await traceViewer.stackFrames.allInnerTexts()).map(s => s.replace(/\s+/g, ' ').replace(/:[0-9]+/g, ':XXX'));
-  expect(stack2.slice(0, 1)).toEqual([
-    'BrowserType.browserType._onWillCloseContext trace-viewer.spec.ts :XXX',
-  ]);
+  await expect(traceViewer.stackFrames).toContainText([
+    /BrowserType.browserType._onWillCloseContext\s+trace-viewer.spec.ts\s+:\d+/,
+  ], { useInnerText: true });
 });
 
 test('should have network requests', async ({ showTraceViewer }) => {

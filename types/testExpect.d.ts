@@ -111,7 +111,7 @@ declare global {
       /**
        * Asserts element's text content matches given pattern or contains given substring.
        */
-      toContainText(expected: string, options?: { timeout?: number, useInnerText?: boolean }): Promise<R>;
+      toContainText(expected: string | RegExp | (string|RegExp)[], options?: { timeout?: number, useInnerText?: boolean }): Promise<R>;
 
       /**
        * Asserts element's attributes `name` matches expected value.
