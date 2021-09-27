@@ -40,46 +40,46 @@ it('should work', async ({ page, browserName }) => {
     role: 'document',
     name: 'Accessibility Test',
     children: [
-      {role: 'heading', name: 'Inputs', level: 1},
-      {role: 'textbox', name: 'Empty input', focused: true},
-      {role: 'textbox', name: 'readonly input', readonly: true},
-      {role: 'textbox', name: 'disabled input', disabled: true},
-      {role: 'textbox', name: 'Input with whitespace', value: '  '},
-      {role: 'textbox', name: '', value: 'value only'},
-      {role: 'textbox', name: '', value: 'and a value'}, // firefox doesn't use aria-placeholder for the name
-      {role: 'textbox', name: '', value: 'and a value', description: 'This is a description!'}, // and here
+      { role: 'heading', name: 'Inputs', level: 1 },
+      { role: 'textbox', name: 'Empty input', focused: true },
+      { role: 'textbox', name: 'readonly input', readonly: true },
+      { role: 'textbox', name: 'disabled input', disabled: true },
+      { role: 'textbox', name: 'Input with whitespace', value: '  ' },
+      { role: 'textbox', name: '', value: 'value only' },
+      { role: 'textbox', name: '', value: 'and a value' }, // firefox doesn't use aria-placeholder for the name
+      { role: 'textbox', name: '', value: 'and a value', description: 'This is a description!' }, // and here
     ]
   } : (browserName === 'chromium') ? {
     role: 'WebArea',
     name: 'Accessibility Test',
     children: [
-      {role: 'heading', name: 'Inputs', level: 1},
-      {role: 'textbox', name: 'Empty input', focused: true},
-      {role: 'textbox', name: 'readonly input', readonly: true},
-      {role: 'textbox', name: 'disabled input', disabled: true},
-      {role: 'textbox', name: 'Input with whitespace', value: '  '},
-      {role: 'textbox', name: '', value: 'value only'},
-      {role: 'textbox', name: 'placeholder', value: 'and a value'},
-      {role: 'textbox', name: 'placeholder', value: 'and a value', description: 'This is a description!'},
+      { role: 'heading', name: 'Inputs', level: 1 },
+      { role: 'textbox', name: 'Empty input', focused: true },
+      { role: 'textbox', name: 'readonly input', readonly: true },
+      { role: 'textbox', name: 'disabled input', disabled: true },
+      { role: 'textbox', name: 'Input with whitespace', value: '  ' },
+      { role: 'textbox', name: '', value: 'value only' },
+      { role: 'textbox', name: 'placeholder', value: 'and a value' },
+      { role: 'textbox', name: 'placeholder', value: 'and a value', description: 'This is a description!' },
     ]
   } : {
     role: 'WebArea',
     name: 'Accessibility Test',
     children: [
-      {role: 'heading', name: 'Inputs', level: 1},
-      {role: 'textbox', name: 'Empty input', focused: true},
-      {role: 'textbox', name: 'readonly input', readonly: true},
-      {role: 'textbox', name: 'disabled input', disabled: true},
-      {role: 'textbox', name: 'Input with whitespace', value: '  ' },
-      {role: 'textbox', name: '', value: 'value only' },
-      {role: 'textbox', name: 'placeholder', value: 'and a value'},
-      {role: 'textbox', name: 'This is a description!',value: 'and a value'}, // webkit uses the description over placeholder for the name
+      { role: 'heading', name: 'Inputs', level: 1 },
+      { role: 'textbox', name: 'Empty input', focused: true },
+      { role: 'textbox', name: 'readonly input', readonly: true },
+      { role: 'textbox', name: 'disabled input', disabled: true },
+      { role: 'textbox', name: 'Input with whitespace', value: '  ' },
+      { role: 'textbox', name: '', value: 'value only' },
+      { role: 'textbox', name: 'placeholder', value: 'and a value' },
+      { role: 'textbox', name: 'This is a description!',value: 'and a value' }, // webkit uses the description over placeholder for the name
     ]
   };
   expect(await page.accessibility.snapshot()).toEqual(golden);
 });
 
-it('should work with regular text', async ({page, browserName}) => {
+it('should work with regular text', async ({ page, browserName }) => {
   await page.setContent(`<div>Hello World</div>`);
   const snapshot = await page.accessibility.snapshot();
   expect(snapshot.children[0]).toEqual({
@@ -88,37 +88,37 @@ it('should work with regular text', async ({page, browserName}) => {
   });
 });
 
-it('roledescription', async ({page}) => {
+it('roledescription', async ({ page }) => {
   await page.setContent('<p tabIndex=-1 aria-roledescription="foo">Hi</p>');
   const snapshot = await page.accessibility.snapshot();
   expect(snapshot.children[0].roledescription).toEqual('foo');
 });
 
-it('orientation', async ({page}) => {
+it('orientation', async ({ page }) => {
   await page.setContent('<a href="" role="slider" aria-orientation="vertical">11</a>');
   const snapshot = await page.accessibility.snapshot();
   expect(snapshot.children[0].orientation).toEqual('vertical');
 });
 
-it('autocomplete', async ({page}) => {
+it('autocomplete', async ({ page }) => {
   await page.setContent('<div role="textbox" aria-autocomplete="list">hi</div>');
   const snapshot = await page.accessibility.snapshot();
   expect(snapshot.children[0].autocomplete).toEqual('list');
 });
 
-it('multiselectable', async ({page}) => {
+it('multiselectable', async ({ page }) => {
   await page.setContent('<div role="grid" tabIndex=-1 aria-multiselectable=true>hey</div>');
   const snapshot = await page.accessibility.snapshot();
   expect(snapshot.children[0].multiselectable).toEqual(true);
 });
 
-it('keyshortcuts', async ({page}) => {
+it('keyshortcuts', async ({ page }) => {
   await page.setContent('<div role="grid" tabIndex=-1 aria-keyshortcuts="foo">hey</div>');
   const snapshot = await page.accessibility.snapshot();
   expect(snapshot.children[0].keyshortcuts).toEqual('foo');
 });
 
-it('should not report text nodes inside controls', async function({page, browserName}) {
+it('should not report text nodes inside controls', async function({ page, browserName }) {
   await page.setContent(`
   <div role="tablist">
     <div role="tab" aria-selected="true"><b>Tab1</b></div>
@@ -139,7 +139,7 @@ it('should not report text nodes inside controls', async function({page, browser
   expect(await page.accessibility.snapshot()).toEqual(golden);
 });
 
-it('rich text editable fields should have children', async function({page, browserName}) {
+it('rich text editable fields should have children', async function({ page, browserName }) {
   it.skip(browserName === 'webkit', 'WebKit rich text accessibility is iffy');
 
   await page.setContent(`
@@ -172,7 +172,7 @@ it('rich text editable fields should have children', async function({page, brows
   expect(snapshot.children[0]).toEqual(golden);
 });
 
-it('rich text editable fields with role should have children', async function({page, browserName, browserMajorVersion}) {
+it('rich text editable fields with role should have children', async function({ page, browserName, browserMajorVersion }) {
   it.skip(browserName === 'webkit', 'WebKit rich text accessibility is iffy');
 
   await page.setContent(`
@@ -204,7 +204,7 @@ it('rich text editable fields with role should have children', async function({p
   expect(snapshot.children[0]).toEqual(golden);
 });
 
-it('non editable textbox with role and tabIndex and label should not have children', async function({page, browserName}) {
+it('non editable textbox with role and tabIndex and label should not have children', async function({ page, browserName }) {
   await page.setContent(`
   <div role="textbox" tabIndex=0 aria-checked="true" aria-label="my favorite textbox">
     this is the inner content
@@ -227,7 +227,7 @@ it('non editable textbox with role and tabIndex and label should not have childr
   expect(snapshot.children[0]).toEqual(golden);
 });
 
-it('checkbox with and tabIndex and label should not have children', async function({page}) {
+it('checkbox with and tabIndex and label should not have children', async function({ page }) {
   await page.setContent(`
   <div role="checkbox" tabIndex=0 aria-checked="true" aria-label="my favorite checkbox">
     this is the inner content
@@ -242,7 +242,7 @@ it('checkbox with and tabIndex and label should not have children', async functi
   expect(snapshot.children[0]).toEqual(golden);
 });
 
-it('checkbox without label should not have children', async ({page, browserName}) => {
+it('checkbox without label should not have children', async ({ page, browserName }) => {
   await page.setContent(`
   <div role="checkbox" aria-checked="true">
     this is the inner content
@@ -261,28 +261,28 @@ it('checkbox without label should not have children', async ({page, browserName}
   expect(snapshot.children[0]).toEqual(golden);
 });
 
-it('should work a button', async ({page}) => {
+it('should work a button', async ({ page }) => {
   await page.setContent(`<button>My Button</button>`);
 
   const button = await page.$('button');
-  expect(await page.accessibility.snapshot({root: button})).toEqual({
+  expect(await page.accessibility.snapshot({ root: button })).toEqual({
     role: 'button',
     name: 'My Button'
   });
 });
 
-it('should work an input', async ({page}) => {
+it('should work an input', async ({ page }) => {
   await page.setContent(`<input title="My Input" value="My Value">`);
 
   const input = await page.$('input');
-  expect(await page.accessibility.snapshot({root: input})).toEqual({
+  expect(await page.accessibility.snapshot({ root: input })).toEqual({
     role: 'textbox',
     name: 'My Input',
     value: 'My Value'
   });
 });
 
-it('should work on a menu', async ({page, browserName}) => {
+it('should work on a menu', async ({ page, browserName }) => {
   await page.setContent(`
     <div role="menu" title="My Menu">
       <div role="menuitem">First Item</div>
@@ -292,7 +292,7 @@ it('should work on a menu', async ({page, browserName}) => {
   `);
 
   const menu = await page.$('div[role="menu"]');
-  expect(await page.accessibility.snapshot({root: menu})).toEqual({
+  expect(await page.accessibility.snapshot({ root: menu })).toEqual({
     role: 'menu',
     name: 'My Menu',
     children:
@@ -303,14 +303,14 @@ it('should work on a menu', async ({page, browserName}) => {
   });
 });
 
-it('should return null when the element is no longer in DOM', async ({page}) => {
+it('should return null when the element is no longer in DOM', async ({ page }) => {
   await page.setContent(`<button>My Button</button>`);
   const button = await page.$('button');
   await page.$eval('button', button => button.remove());
-  expect(await page.accessibility.snapshot({root: button})).toEqual(null);
+  expect(await page.accessibility.snapshot({ root: button })).toEqual(null);
 });
 
-it('should show uninteresting nodes', async ({page}) => {
+it('should show uninteresting nodes', async ({ page }) => {
   await page.setContent(`
     <div id="root" role="textbox">
       <div>
@@ -323,14 +323,14 @@ it('should show uninteresting nodes', async ({page}) => {
   `);
 
   const root = await page.$('#root');
-  const snapshot = await page.accessibility.snapshot({root, interestingOnly: false});
+  const snapshot = await page.accessibility.snapshot({ root, interestingOnly: false });
   expect(snapshot.role).toBe('textbox');
   expect(snapshot.value).toContain('hello');
   expect(snapshot.value).toContain('world');
   expect(!!snapshot.children).toBe(true);
 });
 
-it('should work when there is a title ', async ({page}) => {
+it('should work when there is a title ', async ({ page }) => {
   await page.setContent(`
     <title>This is the title</title>
     <div>This is the content</div>

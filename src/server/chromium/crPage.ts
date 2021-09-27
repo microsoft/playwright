@@ -460,7 +460,7 @@ class FrameSession {
     this._addBrowserListeners();
     const promises: Promise<any>[] = [
       this._client.send('Page.enable'),
-      this._client.send('Page.getFrameTree').then(({frameTree}) => {
+      this._client.send('Page.getFrameTree').then(({ frameTree }) => {
         if (this._isMainFrame()) {
           this._handleFrameTree(frameTree);
           this._addRendererListeners();
@@ -815,7 +815,7 @@ class FrameSession {
   }
 
   _onLogEntryAdded(event: Protocol.Log.entryAddedPayload) {
-    const {level, text, args, source, url, lineNumber} = event.entry;
+    const { level, text, args, source, url, lineNumber } = event.entry;
     if (args)
       args.map(arg => releaseObject(this._client, arg.objectId!));
     if (source !== 'worker') {
@@ -853,7 +853,7 @@ class FrameSession {
   }
 
   _onScreencastFrame(payload: Protocol.Page.screencastFramePayload) {
-    this._client.send('Page.screencastFrameAck', {sessionId: payload.sessionId}).catch(() => {});
+    this._client.send('Page.screencastFrameAck', { sessionId: payload.sessionId }).catch(() => {});
     const buffer = Buffer.from(payload.data, 'base64');
     this._page.emit(Page.Events.ScreencastFrame, {
       buffer,

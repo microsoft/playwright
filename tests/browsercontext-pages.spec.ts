@@ -18,7 +18,7 @@
 import { browserTest as it, expect } from './config/browserTest';
 import { attachFrame, chromiumVersionLessThan } from './config/utils';
 
-it('should not be visible in context.pages', async ({contextFactory}) => {
+it('should not be visible in context.pages', async ({ contextFactory }) => {
   const context = await contextFactory();
   const page = await context.newPage();
   expect(context.pages()).toContain(page);
@@ -26,7 +26,7 @@ it('should not be visible in context.pages', async ({contextFactory}) => {
   expect(context.pages()).not.toContain(page);
 });
 
-it('page.context should return the correct instance', async function({contextFactory}) {
+it('page.context should return the correct instance', async function({ contextFactory }) {
   const context = await contextFactory();
   const page = await context.newPage();
   expect(page.context()).toBe(context);
@@ -43,7 +43,7 @@ it('frame.focus should work multiple times', async ({ contextFactory }) => {
   }
 });
 
-it('should click with disabled javascript', async ({browser, server}) => {
+it('should click with disabled javascript', async ({ browser, server }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/wrappedlink.html');
@@ -55,7 +55,7 @@ it('should click with disabled javascript', async ({browser, server}) => {
   await context.close();
 });
 
-it('should not hang with touch-enabled viewports', async ({browser, playwright}) => {
+it('should not hang with touch-enabled viewports', async ({ browser, playwright }) => {
   // @see https://github.com/GoogleChrome/puppeteer/issues/161
   const { viewport, hasTouch } = playwright.devices['iPhone 6'];
   const context = await browser.newContext({ viewport, hasTouch });
@@ -66,7 +66,7 @@ it('should not hang with touch-enabled viewports', async ({browser, playwright})
   await context.close();
 });
 
-it('should click the button with deviceScaleFactor set', async ({browser, server}) => {
+it('should click the button with deviceScaleFactor set', async ({ browser, server }) => {
   const context = await browser.newContext({ viewport: { width: 400, height: 400 }, deviceScaleFactor: 5 });
   const page = await context.newPage();
   expect(await page.evaluate(() => window.devicePixelRatio)).toBe(5);
@@ -79,7 +79,7 @@ it('should click the button with deviceScaleFactor set', async ({browser, server
   await context.close();
 });
 
-it('should click the button with offset with page scale', async ({browser, server, headless, browserName, browserVersion}) => {
+it('should click the button with offset with page scale', async ({ browser, server, headless, browserName, browserVersion }) => {
   it.skip(browserName === 'firefox');
 
   const context = await browser.newContext({ viewport: { width: 400, height: 400 }, isMobile: true });
@@ -131,7 +131,7 @@ it('should return bounding box with page scale', async ({ browser, server, brows
   await context.close();
 });
 
-it('should not leak listeners during navigation of 20 pages', async ({contextFactory, server}) => {
+it('should not leak listeners during navigation of 20 pages', async ({ contextFactory, server }) => {
   it.slow(true, 'We open 20 pages here!');
 
   const context = await contextFactory();

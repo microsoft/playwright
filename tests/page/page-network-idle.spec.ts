@@ -19,7 +19,7 @@ import { test as it, expect } from './pageTest';
 import type { Frame } from '../../index';
 import { TestServer } from '../../utils/testserver';
 
-it('should navigate to empty page with networkidle', async ({page, server}) => {
+it('should navigate to empty page with networkidle', async ({ page, server }) => {
   const response = await page.goto(server.EMPTY_PAGE, { waitUntil: 'networkidle' });
   expect(response.status()).toBe(200);
 });
@@ -80,13 +80,13 @@ async function networkIdleTest(frame: Frame, server: TestServer, action: () => P
     expect(response.ok()).toBe(true);
 }
 
-it('should wait for networkidle to succeed navigation', async ({page, server}) => {
+it('should wait for networkidle to succeed navigation', async ({ page, server }) => {
   await networkIdleTest(page.mainFrame(), server, () => {
     return page.goto(server.PREFIX + '/networkidle.html', { waitUntil: 'networkidle' });
   });
 });
 
-it('should wait for networkidle to succeed navigation with request from previous navigation', async ({page, server}) => {
+it('should wait for networkidle to succeed navigation with request from previous navigation', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/foo.js', () => {});
   await page.setContent(`<script>fetch('foo.js');</script>`);
@@ -95,7 +95,7 @@ it('should wait for networkidle to succeed navigation with request from previous
   });
 });
 
-it('should wait for networkidle in waitForNavigation', async ({page, server}) => {
+it('should wait for networkidle in waitForNavigation', async ({ page, server }) => {
   await networkIdleTest(page.mainFrame(), server, () => {
     const promise = page.waitForNavigation({ waitUntil: 'networkidle' });
     page.goto(server.PREFIX + '/networkidle.html');
@@ -103,14 +103,14 @@ it('should wait for networkidle in waitForNavigation', async ({page, server}) =>
   });
 });
 
-it('should wait for networkidle in setContent', async ({page, server}) => {
+it('should wait for networkidle in setContent', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await networkIdleTest(page.mainFrame(), server, () => {
     return page.setContent(`<script src='networkidle.js'></script>`, { waitUntil: 'networkidle' });
   }, true);
 });
 
-it('should wait for networkidle in setContent with request from previous navigation', async ({page, server}) => {
+it('should wait for networkidle in setContent with request from previous navigation', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/foo.js', () => {});
   await page.setContent(`<script>fetch('foo.js');</script>`);
@@ -119,26 +119,26 @@ it('should wait for networkidle in setContent with request from previous navigat
   }, true);
 });
 
-it('should wait for networkidle when navigating iframe', async ({page, server}) => {
+it('should wait for networkidle when navigating iframe', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   const frame = page.mainFrame().childFrames()[0];
   await networkIdleTest(frame, server, () => frame.goto(server.PREFIX + '/networkidle.html', { waitUntil: 'networkidle' }));
 });
 
-it('should wait for networkidle in setContent from the child frame', async ({page, server}) => {
+it('should wait for networkidle in setContent from the child frame', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await networkIdleTest(page.mainFrame(), server, () => {
     return page.setContent(`<iframe src='networkidle.html'></iframe>`, { waitUntil: 'networkidle' });
   }, true);
 });
 
-it('should wait for networkidle from the child frame', async ({page, server}) => {
+it('should wait for networkidle from the child frame', async ({ page, server }) => {
   await networkIdleTest(page.mainFrame(), server, () => {
     return page.goto(server.PREFIX + '/networkidle-frame.html', { waitUntil: 'networkidle' });
   });
 });
 
-it('should wait for networkidle from the popup', async ({page, server, isAndroid}) => {
+it('should wait for networkidle from the popup', async ({ page, server, isAndroid }) => {
   it.skip(isAndroid, 'Too slow');
 
   await page.goto(server.EMPTY_PAGE);

@@ -28,7 +28,7 @@ const DEFAULT_ENVIRONMENT_VARIABLES = {
 
 const newProcessLogPrefixer = () => new stream.Transform({
   transform(this: stream.Transform, chunk: Buffer, encoding: string, callback: stream.TransformCallback) {
-    this.push(chunk.toString().split(os.EOL).map((line: string): string => line ? `[Launch] ${line}` : line).join(os.EOL));
+    this.push(chunk.toString().split(os.EOL).map((line: string): string => line ? `[WebServer] ${line}` : line).join(os.EOL));
     callback();
   },
 });
@@ -58,7 +58,7 @@ export class WebServer {
     if (portIsUsed) {
       if (this.config.reuseExistingServer)
         return;
-      throw new Error(`Port ${this.config.port} is used, make sure that nothing is running on the port or set strict:false in config.launch.`);
+      throw new Error(`Port ${this.config.port} is used, make sure that nothing is running on the port or set strict:false in config.webServer.`);
     }
 
     const { launchedProcess, kill } = await launchProcess({
@@ -73,7 +73,7 @@ export class WebServer {
       shell: true,
       attemptToGracefullyClose: async () => {},
       log: () => {},
-      onExit: code => processExitedReject(new Error(`Process from config.launch was not able to start. Exit code: ${code}`)),
+      onExit: code => processExitedReject(new Error(`Process from config.webServer was not able to start. Exit code: ${code}`)),
       tempDirectories: [],
     });
     this._killProcess = kill;
@@ -97,7 +97,7 @@ export class WebServer {
     ]));
     cancellationToken.canceled = true;
     if (timedOut)
-      throw new Error(`Timed out waiting ${launchTimeout}ms from config.launch.`);
+      throw new Error(`Timed out waiting ${launchTimeout}ms from config.webServer.`);
   }
   public async kill() {
     await this._killProcess?.();

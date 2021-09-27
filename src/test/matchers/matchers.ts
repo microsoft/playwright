@@ -109,13 +109,20 @@ export function toBeVisible(
 export function toContainText(
   this: ReturnType<Expect['getState']>,
   locator: LocatorEx,
-  expected: string,
+  expected: string | RegExp | (string | RegExp)[],
   options?: { timeout?: number, useInnerText?: boolean },
 ) {
-  return toMatchText.call(this, 'toContainText', locator, 'Locator', async (isNot, timeout) => {
-    const expectedText = toExpectedTextValues([expected], { matchSubstring: true, normalizeWhiteSpace: true });
-    return await locator._expect('to.have.text', { expectedText, isNot, useInnerText: options?.useInnerText, timeout });
-  }, expected, options);
+  if (Array.isArray(expected)) {
+    return toEqual.call(this, 'toContainText', locator, 'Locator', async (isNot, timeout) => {
+      const expectedText = toExpectedTextValues(expected, { matchSubstring: true, normalizeWhiteSpace: true });
+      return await locator._expect('to.contain.text.array', { expectedText, isNot, useInnerText: options?.useInnerText, timeout });
+    }, expected, { ...options, contains: true });
+  } else {
+    return toMatchText.call(this, 'toContainText', locator, 'Locator', async (isNot, timeout) => {
+      const expectedText = toExpectedTextValues([expected], { matchSubstring: true, normalizeWhiteSpace: true });
+      return await locator._expect('to.have.text', { expectedText, isNot, useInnerText: options?.useInnerText, timeout });
+    }, expected, options);
+  }
 }
 
 export function toHaveAttribute(

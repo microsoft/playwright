@@ -140,7 +140,7 @@ export class Screenshotter {
     progress.throwIfAborted(); // Screenshotting is expensive - avoid extra work.
     const shouldSetDefaultBackground = options.omitBackground && format === 'png';
     if (shouldSetDefaultBackground) {
-      await this._page._delegate.setBackgroundColor({ r: 0, g: 0, b: 0, a: 0});
+      await this._page._delegate.setBackgroundColor({ r: 0, g: 0, b: 0, a: 0 });
       progress.cleanupWhenAborted(() => this._page._delegate.setBackgroundColor());
     }
     progress.throwIfAborted(); // Avoid extra work.

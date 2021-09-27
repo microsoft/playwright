@@ -54,7 +54,7 @@ export class Chromium extends BrowserType {
     controller.setLogName('browser');
     return controller.run(async progress => {
       return await this._connectOverCDPInternal(progress, endpointURL, options);
-    }, TimeoutSettings.timeout({timeout}));
+    }, TimeoutSettings.timeout({ timeout }));
   }
 
   async _connectOverCDPInternal(progress: Progress, endpointURL: string, options: { slowMo?: number, headers?: types.HeadersArray }, onClose?: () => Promise<void>) {

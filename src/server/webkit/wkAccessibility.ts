@@ -21,7 +21,7 @@ import * as types from '../types';
 
 export async function getAccessibilityTree(session: WKSession, needle?: dom.ElementHandle) {
   const objectId = needle ? needle._objectId : undefined;
-  const {axNode} = await session.send('Page.accessibilitySnapshot', { objectId });
+  const { axNode } = await session.send('Page.accessibilitySnapshot', { objectId });
   const tree = new WKAXNode(axNode);
   return {
     tree,
@@ -127,7 +127,7 @@ class WKAXNode implements accessibility.AXNode {
     }
 
     isInteresting(insideControl: boolean): boolean {
-      const {role, focusable} = this._payload;
+      const { role, focusable } = this._payload;
       const name = this._name();
       if (role === 'ScrollArea')
         return false;

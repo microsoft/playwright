@@ -360,7 +360,7 @@ function toSelectorChannel(selector: api.AndroidSelector): channels.AndroidSelec
     focusable,
     focused,
     hasChild: hasChild ? { selector: toSelectorChannel(hasChild.selector) } : undefined,
-    hasDescendant: hasDescendant ? { selector: toSelectorChannel(hasDescendant.selector), maxDepth: hasDescendant.maxDepth} : undefined,
+    hasDescendant: hasDescendant ? { selector: toSelectorChannel(hasDescendant.selector), maxDepth: hasDescendant.maxDepth } : undefined,
     longClickable,
     scrollable,
     selected,

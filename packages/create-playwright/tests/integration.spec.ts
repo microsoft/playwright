@@ -67,9 +67,9 @@ const test = base.extend<TestFixtures>({
   },
 });
 
-for (const packageManager of ['npm', 'yarn'] as ('npm'|'yarn')[]) {
+for (const packageManager of ['npm', 'yarn'] as ('npm' | 'yarn')[]) {
   test.describe(`Package manager: ${packageManager}`, () => {
-    test.use({packageManager});
+    test.use({ packageManager });
 
     test('should generate a project in the current directory', async ({ run }) => {
       const { exitCode, dir, stdout } = await run([], { installGitHubActions: true, testDir: 'e2e', language: 'TypeScript' });

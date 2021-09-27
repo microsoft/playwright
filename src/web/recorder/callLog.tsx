@@ -32,7 +32,7 @@ export const CallLogView: React.FC<CallLogProps> = ({
     if (log.find(callLog => callLog.reveal))
       messagesEndRef.current?.scrollIntoView({ block: 'center', inline: 'nearest' });
   }, [messagesEndRef, log]);
-  return <div className='call-log' style={{flex: 'auto'}}>
+  return <div className='call-log' style={{ flex: 'auto' }}>
     {log.map(callLog => {
       const expandOverride = expandOverrides.get(callLog.id);
       const isExpanded = typeof expandOverride === 'boolean' ? expandOverride : callLog.status !== 'done';

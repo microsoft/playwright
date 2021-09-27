@@ -118,17 +118,25 @@ const locator = page.locator('.my-element');
 await expect(locator).toBeVisible();
 ```
 
-## expect(locator).toContainText(text, options?)
-- `text`: <[string]> Text to look for inside the element
+## expect(locator).toContainText(expected, options?)
+- `expected`: <[string] | [RegExp] | [Array]<[string]|[RegExp]>>
 - `options`
-  - `timeout`: <[number]> Time to wait for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout`: <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
   - `useInnerText`: <[boolean]> Whether to use `element.innerText` instead of `element.textContent` when retrieving DOM node text.
 
-Ensures [Locator] points to a selected option.
+Ensures [Locator] points to an element that contains the given text. You can use regular expressions for the value as well.
 
 ```js
 const locator = page.locator('.title');
 await expect(locator).toContainText('substring');
+await expect(locator).toContainText(/\d messages/);
+```
+
+Note that if array is passed as an expected value, entire lists can be asserted:
+
+```js
+const locator = page.locator('list > .list-item');
+await expect(locator).toContainText(['Text 1', 'Text 4', 'Text 5']);
 ```
 
 ## expect(locator).toHaveAttribute(name, value)
@@ -171,7 +179,7 @@ await expect(locator).toHaveClass(['component', 'component selected', 'component
 Ensures [Locator] resolves to an exact number of DOM nodes.
 
 ```js
-const list = page.locator('list > #component');
+const list = page.locator('list > .component');
 await expect(list).toHaveCount(3);
 ```
 
@@ -181,7 +189,7 @@ await expect(list).toHaveCount(3);
 - `options`
   - `timeout`: <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
 
-Ensures [Locator] resolves to an element with the given computed CSS style
+Ensures [Locator] resolves to an element with the given computed CSS style.
 
 ```js
 const locator = page.locator('button');
@@ -224,13 +232,14 @@ Ensures [Locator] points to an element with the given text. You can use regular 
 
 ```js
 const locator = page.locator('.title');
+await expect(locator).toHaveText(/Welcome, Test User/);
 await expect(locator).toHaveText(/Welcome, .*/);
 ```
 
 Note that if array is passed as an expected value, entire lists can be asserted:
 
 ```js
-const locator = page.locator('list > #component');
+const locator = page.locator('list > .component');
 await expect(locator).toHaveText(['Text 1', 'Text 2', 'Text 3']);
 ```
 

@@ -49,7 +49,7 @@ export async function readProtocolStream(client: CRSession, handle: string, path
   }
   const bufs = [];
   while (!eof) {
-    const response = await client.send('IO.read', {handle});
+    const response = await client.send('IO.read', { handle });
     eof = response.eof;
     const buf = Buffer.from(response.data, response.base64Encoded ? 'base64' : undefined);
     bufs.push(buf);
@@ -58,7 +58,7 @@ export async function readProtocolStream(client: CRSession, handle: string, path
   }
   if (fd)
     await fd.close();
-  await client.send('IO.close', {handle});
+  await client.send('IO.close', { handle });
   return Buffer.concat(bufs);
 }
 
@@ -82,7 +82,7 @@ export function exceptionToError(exceptionDetails: Protocol.Runtime.ExceptionDet
     messageWithName = lines.slice(0, firstStackTraceLine).join('\n');
     stack = messageWithStack;
   }
-  const {name, message} = splitErrorMessage(messageWithName);
+  const { name, message } = splitErrorMessage(messageWithName);
 
   const err = new Error(message);
   err.stack = stack;

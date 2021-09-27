@@ -16,7 +16,7 @@
 
 import { browserTest as it, expect } from './config/browserTest';
 
-it('should inherit user agent from browser context', async function({browser, server}) {
+it('should inherit user agent from browser context', async function({ browser, server }) {
   const context = await browser.newContext({
     userAgent: 'hey'
   });
@@ -36,7 +36,7 @@ it('should inherit user agent from browser context', async function({browser, se
   expect(request.headers['user-agent']).toBe('hey');
 });
 
-it('should respect routes from browser context', async function({browser, server}) {
+it('should respect routes from browser context', async function({ browser, server }) {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -54,7 +54,7 @@ it('should respect routes from browser context', async function({browser, server
   expect(intercepted).toBe(true);
 });
 
-it('should inherit extra headers from browser context', async function({browser, server}) {
+it('should inherit extra headers from browser context', async function({ browser, server }) {
   const context = await browser.newContext({
     extraHTTPHeaders: { 'foo': 'bar' },
   });
@@ -67,7 +67,7 @@ it('should inherit extra headers from browser context', async function({browser,
   expect(request.headers['foo']).toBe('bar');
 });
 
-it('should inherit offline from browser context', async function({browser, server}) {
+it('should inherit offline from browser context', async function({ browser, server }) {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -80,7 +80,7 @@ it('should inherit offline from browser context', async function({browser, serve
   expect(online).toBe(false);
 });
 
-it('should inherit http credentials from browser context', async function({browser, server}) {
+it('should inherit http credentials from browser context', async function({ browser, server }) {
   server.setAuth('/title.html', 'user', 'pass');
   const context = await browser.newContext({
     httpCredentials: { username: 'user', password: 'pass' }
@@ -96,7 +96,7 @@ it('should inherit http credentials from browser context', async function({brows
   await context.close();
 });
 
-it('should inherit touch support from browser context', async function({browser, server}) {
+it('should inherit touch support from browser context', async function({ browser, server }) {
   const context = await browser.newContext({
     viewport: { width: 400, height: 500 },
     hasTouch: true
@@ -111,7 +111,7 @@ it('should inherit touch support from browser context', async function({browser,
   expect(hasTouch).toBe(true);
 });
 
-it('should inherit viewport size from browser context', async function({browser, server}) {
+it('should inherit viewport size from browser context', async function({ browser, server }) {
   const context = await browser.newContext({
     viewport: { width: 400, height: 500 }
   });
@@ -122,10 +122,10 @@ it('should inherit viewport size from browser context', async function({browser,
     return { width: win.innerWidth, height: win.innerHeight };
   });
   await context.close();
-  expect(size).toEqual({width: 400, height: 500});
+  expect(size).toEqual({ width: 400, height: 500 });
 });
 
-it('should use viewport size from window features', async function({browser, server}) {
+it('should use viewport size from window features', async function({ browser, server }) {
   const context = await browser.newContext({
     viewport: { width: 700, height: 700 }
   });
@@ -142,11 +142,11 @@ it('should use viewport size from window features', async function({browser, ser
   await popup.waitForLoadState();
   const resized = await popup.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }));
   await context.close();
-  expect(size).toEqual({width: 600, height: 300});
-  expect(resized).toEqual({width: 500, height: 400});
+  expect(size).toEqual({ width: 600, height: 300 });
+  expect(resized).toEqual({ width: 500, height: 400 });
 });
 
-it('should respect routes from browser context when using window.open', async function({browser, server}) {
+it('should respect routes from browser context when using window.open', async function({ browser, server }) {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -163,7 +163,7 @@ it('should respect routes from browser context when using window.open', async fu
   await context.close();
 });
 
-it('BrowserContext.addInitScript should apply to an in-process popup', async function({browser, server}) {
+it('BrowserContext.addInitScript should apply to an in-process popup', async function({ browser, server }) {
   const context = await browser.newContext();
   await context.addInitScript(() => window['injected'] = 123);
   const page = await context.newPage();
@@ -176,7 +176,7 @@ it('BrowserContext.addInitScript should apply to an in-process popup', async fun
   expect(injected).toBe(123);
 });
 
-it('BrowserContext.addInitScript should apply to a cross-process popup', async function({browser, server}) {
+it('BrowserContext.addInitScript should apply to a cross-process popup', async function({ browser, server }) {
   const context = await browser.newContext();
   await context.addInitScript(() => window['injected'] = 123);
   const page = await context.newPage();
@@ -191,7 +191,7 @@ it('BrowserContext.addInitScript should apply to a cross-process popup', async f
   await context.close();
 });
 
-it('should expose function from browser context', async function({browser, server}) {
+it('should expose function from browser context', async function({ browser, server }) {
   const context = await browser.newContext();
   const messages = [];
   await context.exposeFunction('add', (a, b) => {
@@ -210,7 +210,7 @@ it('should expose function from browser context', async function({browser, serve
   expect(messages.join('|')).toBe('page|binding');
 });
 
-it('should not dispatch binding on a closed page', async function({browser, server, browserName}) {
+it('should not dispatch binding on a closed page', async function({ browser, server, browserName }) {
   const context = await browser.newContext();
   const messages = [];
   await context.exposeFunction('add', (a, b) => {

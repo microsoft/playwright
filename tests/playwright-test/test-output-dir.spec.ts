@@ -67,7 +67,7 @@ test('should work and remove non-failures', async ({ runInlineTest }, testInfo) 
   expect(fs.existsSync(testInfo.outputPath('test-results', 'my-test-test-1-chromium-retry2'))).toBe(false);
 });
 
-test('should include repeat token', async ({runInlineTest}) => {
+test('should include repeat token', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.js': `
       const { test } = pwt;
@@ -83,7 +83,7 @@ test('should include repeat token', async ({runInlineTest}) => {
   expect(result.passed).toBe(3);
 });
 
-test('should be unique for beforeAll and afterAll hooks', async ({runInlineTest}, testInfo) => {
+test('should be unique for beforeAll and afterAll hooks', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'a.spec.js': `
       const { test } = pwt;
@@ -250,7 +250,7 @@ test('should include path option in snapshot', async ({ runInlineTest }) => {
   expect(result.output).toContain('my-test.spec.js-snapshots/bar-foo-suffix.txt');
 });
 
-test('should remove output dirs for projects run', async ({runInlineTest}, testInfo) => {
+test('should remove output dirs for projects run', async ({ runInlineTest }, testInfo) => {
   const paths: string[] = [];
   const files: string[] = [];
 

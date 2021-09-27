@@ -132,7 +132,7 @@ export class JSHandle<T = any> extends SdkObject {
 
   async getProperty(propertyName: string): Promise<JSHandle> {
     const objectHandle = await this.evaluateHandle((object: any, propertyName) => {
-      const result: any = {__proto__: null};
+      const result: any = { __proto__: null };
       result[propertyName] = object[propertyName];
       return result;
     }, propertyName);

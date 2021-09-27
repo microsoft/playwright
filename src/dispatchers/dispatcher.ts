@@ -281,11 +281,12 @@ export class DispatcherConnection {
       await sdkObject?.instrumentation.onAfterCall(sdkObject, callMetadata);
     }
 
-    const log = validMetadata.collectLogs ? callMetadata.log : undefined;
-    if (callMetadata.error)
-      this.onmessage({ id, error: error, log });
-    else
-      this.onmessage({ id, result: callMetadata.result, log });
+    const response: any = { id };
+    if (callMetadata.result)
+      response.result = callMetadata.result;
+    if (error)
+      response.error = error;
+    this.onmessage(response);
   }
 
   private _replaceDispatchersWithGuids(payload: any): any {

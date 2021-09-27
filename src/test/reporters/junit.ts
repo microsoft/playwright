@@ -131,7 +131,7 @@ class JUnitReporter implements Reporter {
     entries.push(entry);
 
     if (test.outcome() === 'skipped') {
-      entry.children.push({ name: 'skipped'});
+      entry.children.push({ name: 'skipped' });
       return;
     }
 

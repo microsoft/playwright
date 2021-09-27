@@ -16,7 +16,7 @@
 
 import { test, expect } from './playwright-test-fixtures';
 
-test('basics should work', async ({runTSC}) => {
+test('basics should work', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
       const { test } = pwt;
@@ -34,7 +34,7 @@ test('basics should work', async ({runTSC}) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('can pass sync functions everywhere', async ({runTSC}) => {
+test('can pass sync functions everywhere', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
       const test = pwt.test.extend<{ foo: string }>({
@@ -50,7 +50,7 @@ test('can pass sync functions everywhere', async ({runTSC}) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('can return anything from hooks', async ({runTSC}) => {
+test('can return anything from hooks', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
       const { test } = pwt;
@@ -63,7 +63,7 @@ test('can return anything from hooks', async ({runTSC}) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('test.declare should check types', async ({runTSC}) => {
+test('test.declare should check types', async ({ runTSC }) => {
   const result = await runTSC({
     'helper.ts': `
       export const test = pwt.test;

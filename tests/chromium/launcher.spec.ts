@@ -16,7 +16,7 @@
 
 import { playwrightTest as it, expect } from '../config/browserTest';
 
-it('should throw with remote-debugging-pipe argument', async ({browserType, browserOptions, mode}) => {
+it('should throw with remote-debugging-pipe argument', async ({ browserType, browserOptions, mode }) => {
   it.skip(mode !== 'default');
 
   const options = Object.assign({}, browserOptions);
@@ -25,7 +25,7 @@ it('should throw with remote-debugging-pipe argument', async ({browserType, brow
   expect(error.message).toContain('Playwright manages remote debugging connection itself');
 });
 
-it('should not throw with remote-debugging-port argument', async ({browserType, browserOptions, mode}) => {
+it('should not throw with remote-debugging-port argument', async ({ browserType, browserOptions, mode }) => {
   it.skip(mode !== 'default');
 
   const options = Object.assign({}, browserOptions);
@@ -34,7 +34,7 @@ it('should not throw with remote-debugging-port argument', async ({browserType, 
   await browser.close();
 });
 
-it('should open devtools when "devtools: true" option is given', async ({browserType, browserOptions, mode, platform, channel}) => {
+it('should open devtools when "devtools: true" option is given', async ({ browserType, browserOptions, mode, platform, channel }) => {
   it.skip(mode !== 'default' || platform === 'win32' || !!channel);
 
   let devtoolsCallback;
@@ -43,7 +43,7 @@ it('should open devtools when "devtools: true" option is given', async ({browser
     if (parsed.method === 'getPreferences')
       devtoolsCallback();
   };
-  const browser = await browserType.launch({...browserOptions, headless: false, devtools: true, __testHookForDevTools} as any);
+  const browser = await browserType.launch({ ...browserOptions, headless: false, devtools: true, __testHookForDevTools } as any);
   const context = await browser.newContext();
   await Promise.all([
     devtoolsPromise,
@@ -52,10 +52,10 @@ it('should open devtools when "devtools: true" option is given', async ({browser
   await browser.close();
 });
 
-it('should return background pages', async ({browserType, browserOptions, createUserDataDir, asset}) => {
+it('should return background pages', async ({ browserType, browserOptions, createUserDataDir, asset }) => {
   const userDataDir = await createUserDataDir();
   const extensionPath = asset('simple-extension');
-  const extensionOptions = {...browserOptions,
+  const extensionOptions = { ...browserOptions,
     headless: false,
     args: [
       `--disable-extensions-except=${extensionPath}`,
@@ -75,10 +75,10 @@ it('should return background pages', async ({browserType, browserOptions, create
   expect(context.backgroundPages().length).toBe(0);
 });
 
-it('should return background pages when recording video', async ({browserType, browserOptions, createUserDataDir, asset}, testInfo) => {
+it('should return background pages when recording video', async ({ browserType, browserOptions, createUserDataDir, asset }, testInfo) => {
   const userDataDir = await createUserDataDir();
   const extensionPath = asset('simple-extension');
-  const extensionOptions = {...browserOptions,
+  const extensionOptions = { ...browserOptions,
     headless: false,
     args: [
       `--disable-extensions-except=${extensionPath}`,
@@ -99,11 +99,11 @@ it('should return background pages when recording video', async ({browserType, b
   await context.close();
 });
 
-it('should not create pages automatically', async ({browserType, browserOptions}) => {
+it('should not create pages automatically', async ({ browserType, browserOptions }) => {
   const browser = await browserType.launch(browserOptions);
   const browserSession = await browser.newBrowserCDPSession();
   const targets = [];
-  browserSession.on('Target.targetCreated', async ({targetInfo}) => {
+  browserSession.on('Target.targetCreated', async ({ targetInfo }) => {
     if (targetInfo.type !== 'browser')
       targets.push(targetInfo);
   });

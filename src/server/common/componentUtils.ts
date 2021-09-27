@@ -142,7 +142,7 @@ export function parseComponentSelector(selector: string): ParsedComponentSelecto
     // check property is truthy: [enabled]
     if (next() === ']') {
       eat1();
-      return {jsonPath, op: '<truthy>', value: null, caseSensetive: false};
+      return { jsonPath, op: '<truthy>', value: null, caseSensetive: false };
     }
 
     const operator = readOperator();
@@ -181,7 +181,7 @@ export function parseComponentSelector(selector: string): ParsedComponentSelecto
     eat1();
     if (operator !== '=' && typeof value !== 'string')
       throw new Error(`Error while parsing selector \`${selector}\` - cannot use ${operator} in attribute with non-string matching value - ${value}`);
-    return {jsonPath, op: operator, value, caseSensetive};
+    return { jsonPath, op: operator, value, caseSensetive };
   }
 
   const result: ParsedComponentSelector = {

@@ -30,7 +30,7 @@ export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel, ch
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.JSHandleInitializer) {
     super(parent, type, guid, initializer);
     this._preview = this._initializer.preview;
-    this._channel.on('previewUpdated', ({preview}) => this._preview = preview);
+    this._channel.on('previewUpdated', ({ preview }) => this._preview = preview);
   }
 
   async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<T, Arg, R>, arg?: Arg): Promise<R> {

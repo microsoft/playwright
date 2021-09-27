@@ -30,7 +30,7 @@ const files = {
   `
 };
 
-test('should support golden', async ({runInlineTest}) => {
+test('should support golden', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js-snapshots/snapshot.txt': `Hello world`,
@@ -44,7 +44,7 @@ test('should support golden', async ({runInlineTest}) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should fail on wrong golden', async ({runInlineTest}) => {
+test('should fail on wrong golden', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js-snapshots/snapshot.txt': `Line1
@@ -78,7 +78,7 @@ Line7`,
   expect(result.output).toContain('Line7');
 });
 
-test('should write detailed failure result to an output folder', async ({runInlineTest}, testInfo) => {
+test('should write detailed failure result to an output folder', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js-snapshots/snapshot.txt': `Hello world`,
@@ -101,7 +101,7 @@ test('should write detailed failure result to an output folder', async ({runInli
   expect(fs.existsSync(actualSnapshotArtifactPath)).toBe(true);
 });
 
-test("doesn\'t create comparison artifacts in an output folder for passed negated snapshot matcher", async ({runInlineTest}, testInfo) => {
+test("doesn\'t create comparison artifacts in an output folder for passed negated snapshot matcher", async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js-snapshots/snapshot.txt': `Hello world`,
@@ -123,7 +123,7 @@ test("doesn\'t create comparison artifacts in an output folder for passed negate
   expect(fs.existsSync(actualSnapshotArtifactPath)).toBe(false);
 });
 
-test('should pass on different snapshots with negate matcher', async ({runInlineTest}) => {
+test('should pass on different snapshots with negate matcher', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js-snapshots/snapshot.txt': `Hello world`,
@@ -138,7 +138,7 @@ test('should pass on different snapshots with negate matcher', async ({runInline
   expect(result.exitCode).toBe(0);
 });
 
-test('should fail on same snapshots with negate matcher', async ({runInlineTest}) => {
+test('should fail on same snapshots with negate matcher', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js-snapshots/snapshot.txt': `Hello world`,
@@ -155,7 +155,7 @@ test('should fail on same snapshots with negate matcher', async ({runInlineTest}
   expect(result.output).toContain('Expected result should be different from the actual one.');
 });
 
-test('should write missing expectations locally', async ({runInlineTest}, testInfo) => {
+test('should write missing expectations locally', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js': `
@@ -173,7 +173,7 @@ test('should write missing expectations locally', async ({runInlineTest}, testIn
   expect(data.toString()).toBe('Hello world');
 });
 
-test('shouldn\'t write missing expectations locally for negated matcher', async ({runInlineTest}, testInfo) => {
+test('shouldn\'t write missing expectations locally for negated matcher', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js': `
@@ -190,7 +190,7 @@ test('shouldn\'t write missing expectations locally for negated matcher', async 
   expect(fs.existsSync(snapshotOutputPath)).toBe(false);
 });
 
-test('should update snapshot with the update-snapshots flag', async ({runInlineTest}, testInfo) => {
+test('should update snapshot with the update-snapshots flag', async ({ runInlineTest }, testInfo) => {
   const EXPECTED_SNAPSHOT = 'Hello world';
   const ACTUAL_SNAPSHOT = 'Hello world updated';
   const result = await runInlineTest({
@@ -211,7 +211,7 @@ test('should update snapshot with the update-snapshots flag', async ({runInlineT
   expect(data.toString()).toBe(ACTUAL_SNAPSHOT);
 });
 
-test('shouldn\'t update snapshot with the update-snapshots flag for negated matcher', async ({runInlineTest}, testInfo) => {
+test('shouldn\'t update snapshot with the update-snapshots flag for negated matcher', async ({ runInlineTest }, testInfo) => {
   const EXPECTED_SNAPSHOT = 'Hello world';
   const ACTUAL_SNAPSHOT = 'Hello world updated';
   const result = await runInlineTest({
@@ -231,7 +231,7 @@ test('shouldn\'t update snapshot with the update-snapshots flag for negated matc
   expect(data.toString()).toBe(EXPECTED_SNAPSHOT);
 });
 
-test('should silently write missing expectations locally with the update-snapshots flag', async ({runInlineTest}, testInfo) => {
+test('should silently write missing expectations locally with the update-snapshots flag', async ({ runInlineTest }, testInfo) => {
   const ACTUAL_SNAPSHOT = 'Hello world new';
   const result = await runInlineTest({
     ...files,
@@ -250,7 +250,7 @@ test('should silently write missing expectations locally with the update-snapsho
   expect(data.toString()).toBe(ACTUAL_SNAPSHOT);
 });
 
-test('should silently write missing expectations locally with the update-snapshots flag for negated matcher', async ({runInlineTest}, testInfo) => {
+test('should silently write missing expectations locally with the update-snapshots flag for negated matcher', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js': `
@@ -267,7 +267,7 @@ test('should silently write missing expectations locally with the update-snapsho
   expect(fs.existsSync(snapshotOutputPath)).toBe(false);
 });
 
-test('should match multiple snapshots', async ({runInlineTest}) => {
+test('should match multiple snapshots', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js-snapshots/snapshot1.txt': `Snapshot1`,
@@ -285,7 +285,7 @@ test('should match multiple snapshots', async ({runInlineTest}) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should match snapshots from multiple projects', async ({runInlineTest}) => {
+test('should match snapshots from multiple projects', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...files,
     'playwright.config.ts': `
@@ -313,7 +313,7 @@ test('should match snapshots from multiple projects', async ({runInlineTest}) =>
   expect(result.exitCode).toBe(0);
 });
 
-test('should use provided name', async ({runInlineTest}) => {
+test('should use provided name', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js-snapshots/provided.txt': `Hello world`,
@@ -327,7 +327,7 @@ test('should use provided name', async ({runInlineTest}) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should throw without a name', async ({runInlineTest}) => {
+test('should throw without a name', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js': `
@@ -341,7 +341,7 @@ test('should throw without a name', async ({runInlineTest}) => {
   expect(result.output).toContain('toMatchSnapshot() requires a "name" parameter');
 });
 
-test('should use provided name via options', async ({runInlineTest}) => {
+test('should use provided name via options', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js-snapshots/provided.txt': `Hello world`,
@@ -355,10 +355,10 @@ test('should use provided name via options', async ({runInlineTest}) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should compare binary', async ({runInlineTest}) => {
+test('should compare binary', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...files,
-    'a.spec.js-snapshots/snapshot.dat': Buffer.from([1,2,3,4]),
+    'a.spec.js-snapshots/snapshot.dat': Buffer.from([1, 2, 3, 4]),
     'a.spec.js': `
       const { test } = require('./helper');
       test('is a test', ({}) => {
@@ -369,11 +369,11 @@ test('should compare binary', async ({runInlineTest}) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should compare PNG images', async ({runInlineTest}) => {
+test('should compare PNG images', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js-snapshots/snapshot.png':
-        Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg==', 'base64'),
+      Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg==', 'base64'),
     'a.spec.js': `
       const { test } = require('./helper');
       test('is a test', ({}) => {
@@ -384,11 +384,11 @@ test('should compare PNG images', async ({runInlineTest}) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should compare different PNG images', async ({runInlineTest}, testInfo) => {
+test('should compare different PNG images', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js-snapshots/snapshot.png':
-        Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg==', 'base64'),
+      Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg==', 'base64'),
     'a.spec.js': `
       const { test } = require('./helper');
       test('is a test', ({}) => {
@@ -411,7 +411,7 @@ test('should compare different PNG images', async ({runInlineTest}, testInfo) =>
   expect(fs.existsSync(diffSnapshotArtifactPath)).toBe(true);
 });
 
-test('should respect threshold', async ({runInlineTest}) => {
+test('should respect threshold', async ({ runInlineTest }) => {
   const expected = fs.readFileSync(path.join(__dirname, 'assets/screenshot-canvas-expected.png'));
   const actual = fs.readFileSync(path.join(__dirname, 'assets/screenshot-canvas-actual.png'));
   const result = await runInlineTest({
@@ -431,7 +431,7 @@ test('should respect threshold', async ({runInlineTest}) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should respect project threshold', async ({runInlineTest}) => {
+test('should respect project threshold', async ({ runInlineTest }) => {
   const expected = fs.readFileSync(path.join(__dirname, 'assets/screenshot-canvas-expected.png'));
   const actual = fs.readFileSync(path.join(__dirname, 'assets/screenshot-canvas-actual.png'));
   const result = await runInlineTest({
@@ -456,7 +456,7 @@ test('should respect project threshold', async ({runInlineTest}) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should contain snapshot name/path to snapshot directory', async ({ runInlineTest }) => {
+test('should sanitize snapshot name', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js-snapshots/snapshot.txt': `Hello world`,
@@ -471,7 +471,7 @@ test('should contain snapshot name/path to snapshot directory', async ({ runInli
   expect(result.exitCode).toBe(0);
 });
 
-test('should write missing expectations to contained outputPath using basename', async ({runInlineTest}, testInfo) => {
+test('should write missing expectations to contained outputPath using basename', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js': `
@@ -522,7 +522,7 @@ test('should update snapshot with path', async ({ runInlineTest }, testInfo) => 
   expect(data.toString()).toBe('Hello world');
 });
 
-test('should attach expected/actual/diff with snapshot path', async ({runInlineTest}, testInfo) => {
+test('should attach expected/actual/diff with snapshot path', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js-snapshots/test/path/snapshot.png':
@@ -565,7 +565,7 @@ test('should attach expected/actual/diff', async ({ runInlineTest }, testInfo) =
   const result = await runInlineTest({
     ...files,
     'a.spec.js-snapshots/snapshot.png':
-        Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg==', 'base64'),
+      Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg==', 'base64'),
     'a.spec.js': `
       const { test } = require('./helper');
       test.afterEach(async ({}, testInfo) => {
@@ -600,11 +600,11 @@ test('should attach expected/actual/diff', async ({ runInlineTest }, testInfo) =
   ]);
 });
 
-test('should attach expected/actual and no diff', async ({runInlineTest}, testInfo) => {
+test('should attach expected/actual and no diff', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js-snapshots/snapshot.png':
-        Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAEklEQVR42mP8z8AARAwMjDAGACwBA/9IB8FMAAAAAElFTkSuQmCC', 'base64'),
+      Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAEklEQVR42mP8z8AARAwMjDAGACwBA/9IB8FMAAAAAElFTkSuQmCC', 'base64'),
     'a.spec.js': `
       const { test } = require('./helper');
       test.afterEach(async ({}, testInfo) => {

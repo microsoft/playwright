@@ -106,9 +106,9 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
 
 function rewriteError(error: Error): Protocol.Runtime.evaluateReturnValue {
   if (error.message.includes('Object reference chain is too long'))
-    return {result: {type: 'undefined'}};
+    return { result: { type: 'undefined' } };
   if (error.message.includes('Object couldn\'t be returned by value'))
-    return {result: {type: 'undefined'}};
+    return { result: { type: 'undefined' } };
 
   if (error instanceof TypeError && error.message.startsWith('Converting circular structure to JSON'))
     rewriteErrorMessage(error, error.message + ' Are you passing a nested JSHandle?');
