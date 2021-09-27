@@ -145,13 +145,12 @@ export function sanitizeForFilePath(s: string) {
 }
 
 /**
- * prevent parent directory traversal
+ * Get absolute path contained within parent directory, otherwise returns parent path
  */
-export function sanitizeForParentPath(parentPath: string, p?: string): string {
-  if (!p) return '';
-
-  const joinedPath = path.join(parentPath, path.normalize(p));
-  return /\.{2,}\//.test(path.relative(parentPath, joinedPath)) ? '' : path.normalize(p);
+export function getContainedPath(parentPath: string, subPath?: string): string {
+  if (!subPath) return parentPath;
+  const resolvedPath = path.resolve(parentPath, subPath);
+  return resolvedPath.startsWith(parentPath) ? resolvedPath : path.join(parentPath, path.basename(subPath));
 }
 
 export const debugTest = debug('pw:test');
