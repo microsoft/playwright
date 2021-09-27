@@ -1010,7 +1010,7 @@ export class WKPage implements PageDelegate {
       session.sendMayFail('Network.interceptRequestWithError', { errorType: 'Cancellation', requestId: event.requestId });
       return;
     }
-    if (!request._route) {
+    if (!request._route || this._currentMainFrameNavigation.shoudIgnoreRequestInterception(event)) {
       // Intercepted, although we do not intend to allow interception.
       // Just continue.
       session.sendMayFail('Network.interceptWithRequest', { requestId: request._requestId });
@@ -1252,5 +1252,11 @@ class WKNavigation {
       this._responseReceived = true;
     }
     return false;
+  }
+
+  shoudIgnoreRequestInterception(event: Protocol.Network.requestInterceptedPayload): boolean {
+    // It only makes sense to intercept request in the old process before it is sent to
+    // the server (in the new process the response is already received and will be replayed)
+    return this._provisionalPageRequestId === event.requestId;
   }
 }

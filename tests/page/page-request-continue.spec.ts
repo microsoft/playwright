@@ -167,3 +167,52 @@ it.describe('', () => {
       expect(arr[i]).toBe(buffer[i]);
   });
 });
+
+it('should work with Cross-Origin-Opener-Policy', async ({ page, server }) => {
+  let serverHeaders;
+  const serverRequests = [];
+  server.setRoute('/empty.html', (req, res) => {
+    serverRequests.push(req.url);
+    serverHeaders ??= req.headers;
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+    res.end();
+  });
+
+  const intercepted = [];
+  await page.route('**/*', (route, req) => {
+    intercepted.push(req.url());
+    route.continue({
+      headers: {
+        foo: 'bar'
+      }
+    });
+  });
+  const requests = new Set();
+  const events = [];
+  page.on('request', r => {
+    events.push('request');
+    requests.add(r);
+  });
+  page.on('requestfailed', r => {
+    events.push('requestfailed');
+    requests.add(r);
+  });
+  page.on('requestfinished', r => {
+    events.push('requestfinished');
+    requests.add(r);
+  });
+  page.on('response', r => {
+    events.push('response');
+    requests.add(r.request());
+  });
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(intercepted).toEqual([server.EMPTY_PAGE]);
+  // There should be only one request to the server.
+  expect(serverRequests).toEqual(['/empty.html']);
+  expect(serverHeaders['foo']).toBe('bar');
+  expect(page.url()).toBe(server.EMPTY_PAGE);
+  await response.finished();
+  expect(events).toEqual(['request', 'response', 'requestfinished']);
+  expect(requests.size).toBe(1);
+  expect(response.request().failure()).toBeNull();
+});
