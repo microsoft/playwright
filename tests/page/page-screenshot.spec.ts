@@ -172,7 +172,7 @@ it.describe('page screenshot', () => {
   });
 
   it('should capture canvas changes', async ({ page, browserName, isMac }) => {
-    it.fail(browserName === 'webkit' && isMac, "https://github.com/microsoft/playwright/issues/8796");
+    it.fail(browserName === 'webkit' && isMac, 'https://github.com/microsoft/playwright/issues/8796');
     await page.goto('data:text/html,<canvas></canvas>');
     await page.evaluate(() => {
       const canvas = document.querySelector('canvas');
@@ -181,9 +181,9 @@ it.describe('page screenshot', () => {
     });
 
     async function addLine(step: number) {
-      await page.evaluate((n) => {
+      await page.evaluate(n => {
         const canvas = document.querySelector('canvas');
-        var ctx = canvas.getContext("2d");
+        const ctx = canvas.getContext('2d');
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(0, n * 100);
