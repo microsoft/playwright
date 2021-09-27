@@ -43,7 +43,7 @@ export class WorkerRunner extends EventEmitter {
   private _uniqueProjectNamePathSegment = '';
   private _fixtureRunner: FixtureRunner;
 
-  private _failedTestId: string | undefined;
+  private _failedTest: TestData | undefined;
   private _fatalError: TestError | undefined;
   private _entries = new Map<string, TestEntry>();
   private _isStopped = false;
@@ -328,7 +328,8 @@ export class WorkerRunner extends EventEmitter {
       }
     }
 
-    this._currentTest = { testInfo, testId, type: test._type };
+    const testData: TestData = { testInfo, testId, type: test._type };
+    this._currentTest = testData;
     setCurrentTestInfo(testInfo);
 
     const deadline = () => {
@@ -385,7 +386,7 @@ export class WorkerRunner extends EventEmitter {
 
     if (isFailure) {
       if (test._type === 'test') {
-        this._failedTestId = testId;
+        this._failedTest = testData;
       } else if (!this._fatalError) {
         if (testInfo.status === 'timedOut')
           this._fatalError = { message: colors.red(`Timeout of ${testInfo.timeout}ms exceeded in ${test._type} hook.`) };
@@ -515,12 +516,10 @@ export class WorkerRunner extends EventEmitter {
   }
 
   private _reportDone() {
-    const donePayload: DonePayload = {
-      failedTestId: this._failedTestId,
-      fatalError: this._fatalError,
-    };
+    const donePayload: DonePayload = { fatalError: this._fatalError };
     this.emit('done', donePayload);
     this._fatalError = undefined;
+    this._failedTest = undefined;
   }
 }
 
