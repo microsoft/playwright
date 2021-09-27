@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should respect first() and last()', async ({page}) => {
+it('should respect first() and last()', async ({ page }) => {
   await page.setContent(`
   <section>
     <div><p>A</p></div>
@@ -30,7 +30,7 @@ it('should respect first() and last()', async ({page}) => {
   expect(await page.locator('div').last().locator('p').count()).toBe(3);
 });
 
-it('should respect nth()', async ({page}) => {
+it('should respect nth()', async ({ page }) => {
   await page.setContent(`
   <section>
     <div><p>A</p></div>
@@ -42,19 +42,19 @@ it('should respect nth()', async ({page}) => {
   expect(await page.locator('div').nth(2).locator('p').count()).toBe(3);
 });
 
-it('should throw on capture w/ nth()', async ({page}) => {
+it('should throw on capture w/ nth()', async ({ page }) => {
   await page.setContent(`<section><div><p>A</p></div></section>`);
   const e = await page.locator('*css=div >> p').nth(1).click().catch(e => e);
   expect(e.message).toContain(`Can't query n-th element`);
 });
 
-it('should throw on due to strictness', async ({page}) => {
+it('should throw on due to strictness', async ({ page }) => {
   await page.setContent(`<div>A</div><div>B</div>`);
   const e = await page.locator('div').isVisible().catch(e => e);
   expect(e.message).toContain(`strict mode violation`);
 });
 
-it('should throw on due to strictness 2', async ({page}) => {
+it('should throw on due to strictness 2', async ({ page }) => {
   await page.setContent(`<select><option>One</option><option>Two</option></select>`);
   const e = await page.locator('option').evaluate(e => {}).catch(e => e);
   expect(e.message).toContain(`strict mode violation`);

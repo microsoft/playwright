@@ -17,14 +17,14 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work', async ({page, server}) => {
+it('should work', async ({ page, server }) => {
   await page.setContent('<html><body><div class="tweet"><div class="like">100</div><div class="retweets">10</div></div></body></html>');
   const tweet = await page.$('.tweet');
   const content = await tweet.$eval('.like', node => (node as HTMLElement).innerText);
   expect(content).toBe('100');
 });
 
-it('should retrieve content from subtree', async ({page, server}) => {
+it('should retrieve content from subtree', async ({ page, server }) => {
   const htmlContent = '<div class="a">not-a-child-div</div><div id="myId"><div class="a">a-child-div</div></div>';
   await page.setContent(htmlContent);
   const elementHandle = await page.$('#myId');
@@ -32,7 +32,7 @@ it('should retrieve content from subtree', async ({page, server}) => {
   expect(content).toBe('a-child-div');
 });
 
-it('should throw in case of missing selector', async ({page, server}) => {
+it('should throw in case of missing selector', async ({ page, server }) => {
   const htmlContent = '<div class="a">not-a-child-div</div><div id="myId"></div>';
   await page.setContent(htmlContent);
   const elementHandle = await page.$('#myId');
@@ -40,14 +40,14 @@ it('should throw in case of missing selector', async ({page, server}) => {
   expect(errorMessage).toContain(`Error: failed to find element matching selector ".a"`);
 });
 
-it('should work for all', async ({page, server}) => {
+it('should work for all', async ({ page, server }) => {
   await page.setContent('<html><body><div class="tweet"><div class="like">100</div><div class="like">10</div></div></body></html>');
   const tweet = await page.$('.tweet');
   const content = await tweet.$$eval('.like', nodes => nodes.map(n => (n as HTMLElement).innerText));
   expect(content).toEqual(['100', '10']);
 });
 
-it('should retrieve content from subtree for all', async ({page, server}) => {
+it('should retrieve content from subtree for all', async ({ page, server }) => {
   const htmlContent = '<div class="a">not-a-child-div</div><div id="myId"><div class="a">a1-child-div</div><div class="a">a2-child-div</div></div>';
   await page.setContent(htmlContent);
   const elementHandle = await page.$('#myId');
@@ -55,7 +55,7 @@ it('should retrieve content from subtree for all', async ({page, server}) => {
   expect(content).toEqual(['a1-child-div', 'a2-child-div']);
 });
 
-it('should not throw in case of missing selector for all', async ({page, server}) => {
+it('should not throw in case of missing selector for all', async ({ page, server }) => {
   const htmlContent = '<div class="a">not-a-child-div</div><div id="myId"></div>';
   await page.setContent(htmlContent);
   const elementHandle = await page.$('#myId');

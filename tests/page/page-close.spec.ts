@@ -17,14 +17,14 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should close page with active dialog', async ({page}) => {
+it('should close page with active dialog', async ({ page }) => {
   await page.setContent(`<button onclick="setTimeout(() => alert(1))">alert</button>`);
   page.click('button');
   await page.waitForEvent('dialog');
   await page.close();
 });
 
-it('should not accept after close', async ({page}) => {
+it('should not accept after close', async ({ page }) => {
   page.evaluate(() => alert()).catch(() => {});
   const dialog = await page.waitForEvent('dialog');
   await page.close();

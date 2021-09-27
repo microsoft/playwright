@@ -20,18 +20,18 @@ import { browserTest as it, expect } from './config/browserTest';
 it.describe('mobile viewport', () => {
   it.skip(({ browserName }) => browserName === 'firefox');
 
-  it('should support mobile emulation', async ({playwright, browser, server}) => {
+  it('should support mobile emulation', async ({ playwright, browser, server }) => {
     const iPhone = playwright.devices['iPhone 6'];
     const context = await browser.newContext({ ...iPhone });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/mobile.html');
     expect(await page.evaluate(() => window.innerWidth)).toBe(375);
-    await page.setViewportSize({width: 400, height: 300});
+    await page.setViewportSize({ width: 400, height: 300 });
     expect(await page.evaluate(() => window.innerWidth)).toBe(400);
     await context.close();
   });
 
-  it('should support touch emulation', async ({playwright, browser, server}) => {
+  it('should support touch emulation', async ({ playwright, browser, server }) => {
     const iPhone = playwright.devices['iPhone 6'];
     const context = await browser.newContext({ ...iPhone });
     const page = await context.newPage();
@@ -54,7 +54,7 @@ it.describe('mobile viewport', () => {
     }
   });
 
-  it('should be detectable by Modernizr', async ({playwright, browser, server}) => {
+  it('should be detectable by Modernizr', async ({ playwright, browser, server }) => {
     const iPhone = playwright.devices['iPhone 6'];
     const context = await browser.newContext({ ...iPhone });
     const page = await context.newPage();
@@ -63,16 +63,16 @@ it.describe('mobile viewport', () => {
     await context.close();
   });
 
-  it('should detect touch when applying viewport with touches', async ({browser, server}) => {
+  it('should detect touch when applying viewport with touches', async ({ browser, server }) => {
     const context = await browser.newContext({ viewport: { width: 800, height: 600 }, hasTouch: true });
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
-    await page.addScriptTag({url: server.PREFIX + '/modernizr.js'});
+    await page.addScriptTag({ url: server.PREFIX + '/modernizr.js' });
     expect(await page.evaluate(() => window['Modernizr'].touchevents)).toBe(true);
     await context.close();
   });
 
-  it('should support landscape emulation', async ({playwright, browser, server}) => {
+  it('should support landscape emulation', async ({ playwright, browser, server }) => {
     const iPhone = playwright.devices['iPhone 6'];
     const iPhoneLandscape = playwright.devices['iPhone 6 landscape'];
     const context1 = await browser.newContext({ ...iPhone });
@@ -86,17 +86,17 @@ it.describe('mobile viewport', () => {
     await context2.close();
   });
 
-  it('should support window.orientation emulation', async ({browser, server}) => {
+  it('should support window.orientation emulation', async ({ browser, server }) => {
     const context = await browser.newContext({ viewport: { width: 300, height: 400 }, isMobile: true });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/mobile.html');
     expect(await page.evaluate(() => window.orientation)).toBe(0);
-    await page.setViewportSize({width: 400, height: 300});
+    await page.setViewportSize({ width: 400, height: 300 });
     expect(await page.evaluate(() => window.orientation)).toBe(90);
     await context.close();
   });
 
-  it('should fire orientationchange event', async ({browser, server}) => {
+  it('should fire orientationchange event', async ({ browser, server }) => {
     const context = await browser.newContext({ viewport: { width: 300, height: 400 }, isMobile: true });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/mobile.html');
@@ -106,32 +106,32 @@ it.describe('mobile viewport', () => {
     });
 
     const event1 = page.waitForEvent('console');
-    await page.setViewportSize({width: 400, height: 300});
+    await page.setViewportSize({ width: 400, height: 300 });
     expect((await event1).text()).toBe('1');
 
     const event2 = page.waitForEvent('console');
-    await page.setViewportSize({width: 300, height: 400});
+    await page.setViewportSize({ width: 300, height: 400 });
     expect((await event2).text()).toBe('2');
     await context.close();
   });
 
-  it('default mobile viewports to 980 width', async ({browser, server}) => {
-    const context = await browser.newContext({ viewport: {width: 320, height: 480 }, isMobile: true });
+  it('default mobile viewports to 980 width', async ({ browser, server }) => {
+    const context = await browser.newContext({ viewport: { width: 320, height: 480 }, isMobile: true });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/empty.html');
     expect(await page.evaluate(() => window.innerWidth)).toBe(980);
     await context.close();
   });
 
-  it('respect meta viewport tag', async ({browser, server}) => {
-    const context = await browser.newContext({ viewport: {width: 320, height: 480 }, isMobile: true });
+  it('respect meta viewport tag', async ({ browser, server }) => {
+    const context = await browser.newContext({ viewport: { width: 320, height: 480 }, isMobile: true });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/mobile.html');
     expect(await page.evaluate(() => window.innerWidth)).toBe(320);
     await context.close();
   });
 
-  it('should emulate the hover media feature', async ({playwright, browser}) => {
+  it('should emulate the hover media feature', async ({ playwright, browser }) => {
     const iPhone = playwright.devices['iPhone 6'];
     const mobilepage = await browser.newPage({ ...iPhone });
     expect(await mobilepage.evaluate(() => matchMedia('(hover: hover)').matches)).toBe(false);
@@ -156,21 +156,21 @@ it.describe('mobile viewport', () => {
     await desktopPage.close();
   });
 
-  it('mouse should work with mobile viewports and cross process navigations', async ({browser, server, browserName}) => {
+  it('mouse should work with mobile viewports and cross process navigations', async ({ browser, server, browserName }) => {
     // @see https://crbug.com/929806
-    const context = await browser.newContext({ viewport: {width: 360, height: 640}, isMobile: true });
+    const context = await browser.newContext({ viewport: { width: 360, height: 640 }, isMobile: true });
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
     await page.goto(server.CROSS_PROCESS_PREFIX + '/mobile.html');
     await page.evaluate(() => {
       document.addEventListener('click', event => {
-        window['result'] = {x: event.clientX, y: event.clientY};
+        window['result'] = { x: event.clientX, y: event.clientY };
       });
     });
 
     await page.mouse.click(30, 40);
 
-    expect(await page.evaluate('result')).toEqual({x: 30, y: 40});
+    expect(await page.evaluate('result')).toEqual({ x: 30, y: 40 });
     await context.close();
   });
 });

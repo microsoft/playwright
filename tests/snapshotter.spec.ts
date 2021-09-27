@@ -125,7 +125,7 @@ it.describe('snapshots', () => {
     expect(distillSnapshot(snapshot2)).toBe('<DIV id=\"div\" attr1=\"1\"></DIV>');
   });
 
-  it('should have a custom doctype', async ({page, server, toImpl, snapshotter}) => {
+  it('should have a custom doctype', async ({ page, server, toImpl, snapshotter }) => {
     await page.goto(server.EMPTY_PAGE);
     await page.setContent('<!DOCTYPE foo><body>hi</body>');
 

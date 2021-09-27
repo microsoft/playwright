@@ -22,7 +22,7 @@ import * as accessibility from '../accessibility';
 import * as types from '../types';
 
 export async function getAccessibilityTree(client: CRSession, needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}> {
-  const {nodes} = await client.send('Accessibility.getFullAXTree');
+  const { nodes } = await client.send('Accessibility.getFullAXTree');
   const tree = CRAXNode.createTree(client, nodes);
   return {
     tree,
@@ -97,7 +97,7 @@ class CRAXNode implements accessibility.AXNode {
 
   async _findElement(element: dom.ElementHandle): Promise<CRAXNode | null> {
     const objectId = element._objectId;
-    const {node: {backendNodeId}} = await this._client.send('DOM.describeNode', { objectId });
+    const { node: { backendNodeId } } = await this._client.send('DOM.describeNode', { objectId });
     const needle = this.find(node => node._payload.backendDOMNodeId === backendNodeId);
     return needle || null;
   }

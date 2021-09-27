@@ -22,7 +22,7 @@ import { playwrightTest as it, expect } from './config/browserTest';
 // Otherwise, a browser launched for other tests in this worker will affect the expectations.
 it.use({ args: [] });
 
-it('should scope context handles', async ({browserType, browserOptions, server}) => {
+it('should scope context handles', async ({ browserType, browserOptions, server }) => {
   const browser = await browserType.launch(browserOptions);
   const GOLDEN_PRECONDITION = {
     _guid: '',
@@ -53,10 +53,10 @@ it('should scope context handles', async ({browserType, browserOptions, server})
         { _guid: 'browser', objects: [
           { _guid: 'browser-context', objects: [
             { _guid: 'frame', objects: [] },
-            { _guid: 'page', objects: []},
+            { _guid: 'page', objects: [] },
             { _guid: 'request', objects: [] },
             { _guid: 'response', objects: [] },
-          ]},
+          ] },
           { _guid: 'fetchRequest', objects: [] }
         ] },
       ] },
@@ -71,7 +71,7 @@ it('should scope context handles', async ({browserType, browserOptions, server})
   await browser.close();
 });
 
-it('should scope CDPSession handles', async ({browserType, browserOptions, browserName}) => {
+it('should scope CDPSession handles', async ({ browserType, browserOptions, browserName }) => {
   it.skip(browserName !== 'chromium');
 
   const browser = await browserType.launch(browserOptions);
@@ -115,7 +115,7 @@ it('should scope CDPSession handles', async ({browserType, browserOptions, brows
   await browser.close();
 });
 
-it('should scope browser handles', async ({browserType, browserOptions}) => {
+it('should scope browser handles', async ({ browserType, browserOptions }) => {
   const GOLDEN_PRECONDITION = {
     _guid: '',
     objects: [

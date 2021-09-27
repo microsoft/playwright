@@ -17,7 +17,7 @@
 
 import { browserTest as it, expect } from './config/browserTest';
 
-it('should intercept', async ({browser, server}) => {
+it('should intercept', async ({ browser, server }) => {
   const context = await browser.newContext();
   let intercepted = false;
   await context.route('**/empty.html', route => {
@@ -40,7 +40,7 @@ it('should intercept', async ({browser, server}) => {
   await context.close();
 });
 
-it('should unroute', async ({browser, server}) => {
+it('should unroute', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
 
@@ -78,7 +78,7 @@ it('should unroute', async ({browser, server}) => {
   await context.close();
 });
 
-it('should yield to page.route', async ({browser, server}) => {
+it('should yield to page.route', async ({ browser, server }) => {
   const context = await browser.newContext();
   await context.route('**/empty.html', route => {
     route.fulfill({ status: 200, body: 'context' });
@@ -93,7 +93,7 @@ it('should yield to page.route', async ({browser, server}) => {
   await context.close();
 });
 
-it('should fall back to context.route', async ({browser, server}) => {
+it('should fall back to context.route', async ({ browser, server }) => {
   const context = await browser.newContext();
   await context.route('**/empty.html', route => {
     route.fulfill({ status: 200, body: 'context' });
@@ -108,7 +108,7 @@ it('should fall back to context.route', async ({browser, server}) => {
   await context.close();
 });
 
-it('should support Set-Cookie header', async ({contextFactory, server, browserName}) => {
+it('should support Set-Cookie header', async ({ contextFactory, server, browserName }) => {
   it.fixme(browserName === 'webkit');
 
   const context = await contextFactory();
@@ -135,7 +135,7 @@ it('should support Set-Cookie header', async ({contextFactory, server, browserNa
   }]);
 });
 
-it('should ignore secure Set-Cookie header for insecure requests', async ({contextFactory, server, browserName}) => {
+it('should ignore secure Set-Cookie header for insecure requests', async ({ contextFactory, server, browserName }) => {
   it.fixme(browserName === 'webkit');
 
   const context = await contextFactory();
@@ -153,7 +153,7 @@ it('should ignore secure Set-Cookie header for insecure requests', async ({conte
   expect(await context.cookies()).toEqual([]);
 });
 
-it('should use Set-Cookie header in future requests', async ({contextFactory, server, browserName}) => {
+it('should use Set-Cookie header in future requests', async ({ contextFactory, server, browserName }) => {
   it.fixme(browserName === 'webkit');
 
   const context = await contextFactory();
@@ -189,7 +189,7 @@ it('should use Set-Cookie header in future requests', async ({contextFactory, se
   expect(cookie).toBe('name=value');
 });
 
-it('should work with ignoreHTTPSErrors', async ({browser, httpsServer}) => {
+it('should work with ignoreHTTPSErrors', async ({ browser, httpsServer }) => {
   const context = await browser.newContext({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
 
@@ -199,12 +199,12 @@ it('should work with ignoreHTTPSErrors', async ({browser, httpsServer}) => {
   await context.close();
 });
 
-it('should support the times parameter with route matching', async ({context, page, server}) => {
+it('should support the times parameter with route matching', async ({ context, page, server }) => {
   const intercepted = [];
   await context.route('**/empty.html', route => {
     intercepted.push(1);
     route.continue();
-  }, { times: 1});
+  }, { times: 1 });
   await page.goto(server.EMPTY_PAGE);
   await page.goto(server.EMPTY_PAGE);
   await page.goto(server.EMPTY_PAGE);

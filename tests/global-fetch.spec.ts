@@ -38,7 +38,7 @@ it.afterAll(() => {
 });
 
 for (const method of ['get', 'post', 'fetch']) {
-  it(`${method} should work`, async ({playwright, server}) => {
+  it(`${method} should work`, async ({ playwright, server }) => {
     const request = await playwright._newRequest();
     const response = await request[method](server.PREFIX + '/simple.json');
     expect(response.url()).toBe(server.PREFIX + '/simple.json');
@@ -51,7 +51,7 @@ for (const method of ['get', 'post', 'fetch']) {
     expect(await response.text()).toBe('{"foo": "bar"}\n');
   });
 
-  it(`should dispose global ${method} request`, async function({playwright, context, server}) {
+  it(`should dispose global ${method} request`, async function({ playwright, context, server }) {
     const request = await playwright._newRequest();
     const response = await request.get(server.PREFIX + '/simple.json');
     expect(await response.json()).toEqual({ foo: 'bar' });
@@ -61,8 +61,8 @@ for (const method of ['get', 'post', 'fetch']) {
   });
 }
 
-it('should support global userAgent option', async ({playwright, server}) => {
-  const request = await playwright._newRequest({ userAgent: 'My Agent'});
+it('should support global userAgent option', async ({ playwright, server }) => {
+  const request = await playwright._newRequest({ userAgent: 'My Agent' });
   const [serverRequest, response] = await Promise.all([
     server.waitForRequest('/empty.html'),
     request.get(server.EMPTY_PAGE)
@@ -72,17 +72,17 @@ it('should support global userAgent option', async ({playwright, server}) => {
   expect(serverRequest.headers['user-agent']).toBe('My Agent');
 });
 
-it('should support global timeout option', async ({playwright, server}) => {
-  const request = await playwright._newRequest({ timeout: 1});
+it('should support global timeout option', async ({ playwright, server }) => {
+  const request = await playwright._newRequest({ timeout: 1 });
   server.setRoute('/empty.html', (req, res) => {});
   const error = await request.get(server.EMPTY_PAGE).catch(e => e);
   expect(error.message).toContain('Request timed out after 1ms');
 });
 
-it('should propagate extra http headers with redirects', async ({playwright, server}) => {
+it('should propagate extra http headers with redirects', async ({ playwright, server }) => {
   server.setRedirect('/a/redirect1', '/b/c/redirect2');
   server.setRedirect('/b/c/redirect2', '/simple.json');
-  const request = await playwright._newRequest({ extraHTTPHeaders: { 'My-Secret': 'Value' }});
+  const request = await playwright._newRequest({ extraHTTPHeaders: { 'My-Secret': 'Value' } });
   const [req1, req2, req3] = await Promise.all([
     server.waitForRequest('/a/redirect1'),
     server.waitForRequest('/b/c/redirect2'),
@@ -94,27 +94,27 @@ it('should propagate extra http headers with redirects', async ({playwright, ser
   expect(req3.headers['my-secret']).toBe('Value');
 });
 
-it('should support global httpCredentials option', async ({playwright, server}) => {
+it('should support global httpCredentials option', async ({ playwright, server }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const request1 = await playwright._newRequest();
   const response1 = await request1.get(server.EMPTY_PAGE);
   expect(response1.status()).toBe(401);
   await request1.dispose();
 
-  const request2 = await playwright._newRequest({ httpCredentials: { username: 'user', password: 'pass' }});
+  const request2 = await playwright._newRequest({ httpCredentials: { username: 'user', password: 'pass' } });
   const response2 = await request2.get(server.EMPTY_PAGE);
   expect(response2.status()).toBe(200);
   await request2.dispose();
 });
 
-it('should return error with wrong credentials', async ({playwright, server}) => {
+it('should return error with wrong credentials', async ({ playwright, server }) => {
   server.setAuth('/empty.html', 'user', 'pass');
-  const request = await playwright._newRequest({ httpCredentials: { username: 'user', password: 'wrong' }});
+  const request = await playwright._newRequest({ httpCredentials: { username: 'user', password: 'wrong' } });
   const response2 = await request.get(server.EMPTY_PAGE);
   expect(response2.status()).toBe(401);
 });
 
-it('should pass proxy credentials', async ({playwright, server, proxyServer}) => {
+it('should pass proxy credentials', async ({ playwright, server, proxyServer }) => {
   proxyServer.forwardTo(server.PORT);
   let auth;
   proxyServer.setAuthHandler(req => {
@@ -127,17 +127,17 @@ it('should pass proxy credentials', async ({playwright, server, proxyServer}) =>
   const response = await request.get('http://non-existent.com/simple.json');
   expect(proxyServer.connectHosts).toContain('non-existent.com:80');
   expect(auth).toBe('Basic ' + Buffer.from('user:secret').toString('base64'));
-  expect(await response.json()).toEqual({foo: 'bar'});
+  expect(await response.json()).toEqual({ foo: 'bar' });
   await request.dispose();
 });
 
-it('should support global ignoreHTTPSErrors option', async ({playwright, httpsServer}) => {
+it('should support global ignoreHTTPSErrors option', async ({ playwright, httpsServer }) => {
   const request = await playwright._newRequest({ ignoreHTTPSErrors: true });
   const response = await request.get(httpsServer.EMPTY_PAGE);
   expect(response.status()).toBe(200);
 });
 
-it('should resolve url relative to gobal baseURL option', async ({playwright, server}) => {
+it('should resolve url relative to gobal baseURL option', async ({ playwright, server }) => {
   const request = await playwright._newRequest({ baseURL: server.PREFIX });
   const response = await request.get('/empty.html');
   expect(response.url()).toBe(server.EMPTY_PAGE);

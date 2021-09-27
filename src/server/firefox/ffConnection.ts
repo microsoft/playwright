@@ -75,9 +75,9 @@ export class FFConnection extends EventEmitter {
   ): Promise<Protocol.CommandReturnValues[T]> {
     this._checkClosed(method);
     const id = this.nextMessageId();
-    this._rawSend({id, method, params});
+    this._rawSend({ id, method, params });
     return new Promise((resolve, reject) => {
-      this._callbacks.set(id, {resolve, reject, error: new ProtocolError(false), method});
+      this._callbacks.set(id, { resolve, reject, error: new ProtocolError(false), method });
     });
   }
 
@@ -141,7 +141,7 @@ export class FFConnection extends EventEmitter {
   }
 
   createSession(sessionId: string): FFSession {
-    const session = new FFSession(this, sessionId, message => this._rawSend({...message, sessionId}));
+    const session = new FFSession(this, sessionId, message => this._rawSend({ ...message, sessionId }));
     this._sessions.set(sessionId, session);
     return session;
   }
@@ -193,9 +193,9 @@ export class FFSession extends EventEmitter {
     if (this._disposed)
       throw new ProtocolError(true, 'Target closed');
     const id = this._connection.nextMessageId();
-    this._rawSend({method, params, id});
+    this._rawSend({ method, params, id });
     return new Promise((resolve, reject) => {
-      this._callbacks.set(id, {resolve, reject, error: new ProtocolError(false), method});
+      this._callbacks.set(id, { resolve, reject, error: new ProtocolError(false), method });
     });
   }
 

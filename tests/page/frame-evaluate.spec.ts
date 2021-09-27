@@ -106,7 +106,7 @@ it('should not allow cross-frame element handles when frames do not script each 
   expect(error.message).toContain('Unable to adopt element handle from a different document');
 });
 
-it('should throw for detached frames', async ({page, server}) => {
+it('should throw for detached frames', async ({ page, server }) => {
   const frame1 = await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   await detachFrame(page, 'frame1');
   let error = null;
@@ -114,7 +114,7 @@ it('should throw for detached frames', async ({page, server}) => {
   expect(error.message).toContain('Execution Context is not available in detached frame');
 });
 
-it('should be isolated between frames', async ({page, server}) => {
+it('should be isolated between frames', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   expect(page.frames().length).toBe(2);
@@ -133,7 +133,7 @@ it('should be isolated between frames', async ({page, server}) => {
   expect(a2).toBe(2);
 });
 
-it('should work in iframes that failed initial navigation', async ({page, browserName}) => {
+it('should work in iframes that failed initial navigation', async ({ page, browserName }) => {
   it.fail(browserName === 'chromium');
   it.fixme(browserName === 'firefox');
 
@@ -157,7 +157,7 @@ it('should work in iframes that failed initial navigation', async ({page, browse
   expect(await page.frames()[1].$('div')).toBeTruthy();
 });
 
-it('should work in iframes that interrupted initial javascript url navigation', async ({page, server, browserName}) => {
+it('should work in iframes that interrupted initial javascript url navigation', async ({ page, server, browserName }) => {
   it.fixme(browserName === 'chromium');
 
   // Chromium does not report isolated world for the iframe.
@@ -176,7 +176,7 @@ it('should work in iframes that interrupted initial javascript url navigation', 
   expect(await page.frames()[1].$('div')).toBeTruthy();
 });
 
-it('evaluateHandle should work', async ({page, server}) => {
+it('evaluateHandle should work', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const mainFrame = page.mainFrame();
   const windowHandle = await mainFrame.evaluateHandle(() => window);

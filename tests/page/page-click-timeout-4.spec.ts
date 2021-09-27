@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should timeout waiting for stable position', async ({page, server}) => {
+it('should timeout waiting for stable position', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   const button = await page.$('button');
   await button.evaluate(button => {

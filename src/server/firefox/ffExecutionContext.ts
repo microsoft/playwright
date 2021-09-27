@@ -111,7 +111,7 @@ function checkException(exceptionDetails?: Protocol.Runtime.ExceptionDetails) {
 
 function rewriteError(error: Error): (Protocol.Runtime.evaluateReturnValue | Protocol.Runtime.callFunctionReturnValue) {
   if (error.message.includes('cyclic object value') || error.message.includes('Object is not serializable'))
-    return {result: {type: 'undefined', value: undefined}};
+    return { result: { type: 'undefined', value: undefined } };
   if (error instanceof TypeError && error.message.startsWith('Converting circular structure to JSON'))
     rewriteErrorMessage(error, error.message + ' Are you passing a nested JSHandle?');
   if (!js.isJavaScriptErrorInEvaluate(error) && !isSessionClosedError(error))

@@ -138,7 +138,7 @@ export class WKSession extends EventEmitter {
     const messageObj = { id, method, params };
     this._rawSend(messageObj);
     return new Promise<Protocol.CommandReturnValues[T]>((resolve, reject) => {
-      this._callbacks.set(id, {resolve, reject, error: new ProtocolError(false), method});
+      this._callbacks.set(id, { resolve, reject, error: new ProtocolError(false), method });
     });
   }
 

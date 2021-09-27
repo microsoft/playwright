@@ -233,7 +233,7 @@ const StepTreeItem: React.FC<{
 const StatsView: React.FC<{
   stats: Stats
 }> = ({ stats }) => {
-  return <div className='hbox' style={{flex: 'none'}}>
+  return <div className='hbox' style={{ flex: 'none' }}>
     {!!stats.expected && <div className='stats expected' title='Passed'>{stats.expected}</div>}
     {!!stats.unexpected && <div className='stats unexpected' title='Failed'>{stats.unexpected}</div>}
     {!!stats.flaky && <div className='stats flaky' title='Flaky'>{stats.flaky}</div>}

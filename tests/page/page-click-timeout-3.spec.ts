@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should fail when element jumps during hit testing', async ({page, mode}) => {
+it('should fail when element jumps during hit testing', async ({ page, mode }) => {
   it.skip(mode !== 'default');
 
   await page.setContent('<button>Click me</button>');
@@ -36,7 +36,7 @@ it('should fail when element jumps during hit testing', async ({page, mode}) => 
   expect(error.message).toContain('retrying click action');
 });
 
-it('should timeout waiting for hit target', async ({page, server}) => {
+it('should timeout waiting for hit target', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   const button = await page.$('button');
   await page.evaluate(() => {
@@ -57,7 +57,7 @@ it('should timeout waiting for hit target', async ({page, server}) => {
   expect(error.message).toContain('waiting 500ms');
 });
 
-it('should report wrong hit target subtree', async ({page, server}) => {
+it('should report wrong hit target subtree', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   const button = await page.$('button');
   await page.evaluate(() => {

@@ -18,49 +18,49 @@
 import { playwrightTest as it, expect } from './config/browserTest';
 
 it.describe('launch server', () => {
-  it.skip(({ mode}) => mode !== 'default');
+  it.skip(({ mode }) => mode !== 'default');
 
-  it('should work', async ({browserType, browserOptions}) => {
+  it('should work', async ({ browserType, browserOptions }) => {
     const browserServer = await browserType.launchServer(browserOptions);
     expect(browserServer.wsEndpoint()).not.toBe(null);
     await browserServer.close();
   });
 
-  it('should work with port', async ({browserType, browserOptions}, testInfo) => {
+  it('should work with port', async ({ browserType, browserOptions }, testInfo) => {
     const port = 8800 + testInfo.workerIndex;
     const browserServer = await browserType.launchServer({ ...browserOptions, port });
     expect(browserServer.wsEndpoint()).toContain(String(port));
     await browserServer.close();
   });
 
-  it('should work with wsPath', async ({browserType, browserOptions}) => {
+  it('should work with wsPath', async ({ browserType, browserOptions }) => {
     const wsPath = '/unguessable-token';
     const browserServer = await browserType.launchServer({ ...browserOptions, wsPath });
     expect(browserServer.wsEndpoint()).toMatch(/:\d+\/unguessable-token$/);
     await browserServer.close();
   });
 
-  it('should work when wsPath is missing leading slash', async ({browserType, browserOptions}) => {
+  it('should work when wsPath is missing leading slash', async ({ browserType, browserOptions }) => {
     const wsPath = 'unguessable-token';
     const browserServer = await browserType.launchServer({ ...browserOptions, wsPath });
     expect(browserServer.wsEndpoint()).toMatch(/:\d+\/unguessable-token$/);
     await browserServer.close();
   });
 
-  it('should default to random wsPath', async ({browserType, browserOptions}) => {
+  it('should default to random wsPath', async ({ browserType, browserOptions }) => {
     const browserServer = await browserType.launchServer({ ...browserOptions });
     expect(browserServer.wsEndpoint()).toMatch(/:\d+\/[a-f\d]{32}$/);
     await browserServer.close();
   });
 
-  it('should provide an error when ws endpoint is incorrect', async ({browserType, browserOptions}) => {
+  it('should provide an error when ws endpoint is incorrect', async ({ browserType, browserOptions }) => {
     const browserServer = await browserType.launchServer(browserOptions);
     const error = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() + '-foo' }).catch(e => e);
     await browserServer.close();
     expect(error.message).toContain('Unexpected server response: 400');
   });
 
-  it('should fire "close" event during kill', async ({browserType, browserOptions}) => {
+  it('should fire "close" event during kill', async ({ browserType, browserOptions }) => {
     const order = [];
     const browserServer = await browserType.launchServer(browserOptions);
     const closedPromise = new Promise<void>(f => browserServer.on('close', () => {
@@ -74,13 +74,13 @@ it.describe('launch server', () => {
     expect(order).toEqual(['closed', 'killed']);
   });
 
-  it('should return child_process instance', async ({browserType, browserOptions}) => {
+  it('should return child_process instance', async ({ browserType, browserOptions }) => {
     const browserServer = await browserType.launchServer(browserOptions);
     expect(browserServer.process().pid).toBeGreaterThan(0);
     await browserServer.close();
   });
 
-  it('should fire close event', async ({browserType, browserOptions}) => {
+  it('should fire close event', async ({ browserType, browserOptions }) => {
     const browserServer = await browserType.launchServer(browserOptions);
     const [result] = await Promise.all([
       // @ts-expect-error The signal parameter is not documented.
@@ -91,7 +91,7 @@ it.describe('launch server', () => {
     expect(result['signal']).toBe(null);
   });
 
-  it('should log protocol', async ({browserType, browserOptions}) => {
+  it('should log protocol', async ({ browserType, browserOptions }) => {
     const logs: string[] = [];
     const logger = {
       isEnabled(name: string) {

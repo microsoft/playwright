@@ -19,7 +19,7 @@ import { test as it, expect } from './pageTest';
 
 it.skip(({ isAndroid }) => isAndroid);
 
-it('should emulate type', async ({page}) => {
+it('should emulate type', async ({ page }) => {
   expect(await page.evaluate(() => matchMedia('screen').matches)).toBe(true);
   expect(await page.evaluate(() => matchMedia('print').matches)).toBe(false);
   await page.emulateMedia({ media: 'print' });
@@ -33,14 +33,14 @@ it('should emulate type', async ({page}) => {
   expect(await page.evaluate(() => matchMedia('print').matches)).toBe(false);
 });
 
-it('should throw in case of bad media argument', async ({page}) => {
+it('should throw in case of bad media argument', async ({ page }) => {
   let error = null;
   // @ts-expect-error 'bad' is not a valid media type
-  await page.emulateMedia({ media: 'bad'}).catch(e => error = e);
+  await page.emulateMedia({ media: 'bad' }).catch(e => error = e);
   expect(error.message).toContain('media: expected one of (screen|print|null)');
 });
 
-it('should emulate colorScheme should work', async ({page}) => {
+it('should emulate colorScheme should work', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'light' });
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(false);
@@ -49,7 +49,7 @@ it('should emulate colorScheme should work', async ({page}) => {
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(false);
 });
 
-it('should default to light', async ({page}) => {
+it('should default to light', async ({ page }) => {
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(false);
 
@@ -62,14 +62,14 @@ it('should default to light', async ({page}) => {
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
 });
 
-it('should throw in case of bad colorScheme argument', async ({page}) => {
+it('should throw in case of bad colorScheme argument', async ({ page }) => {
   let error = null;
   // @ts-expect-error 'bad' is not a valid media type
   await page.emulateMedia({ colorScheme: 'bad' }).catch(e => error = e);
   expect(error.message).toContain('colorScheme: expected one of (dark|light|no-preference|null)');
 });
 
-it('should work during navigation', async ({page, server}) => {
+it('should work during navigation', async ({ page, server }) => {
   await page.emulateMedia({ colorScheme: 'light' });
   const navigated = page.goto(server.EMPTY_PAGE);
   for (let i = 0; i < 9; i++) {
@@ -82,7 +82,7 @@ it('should work during navigation', async ({page, server}) => {
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
 });
 
-it('should change the actual colors in css', async ({page}) => {
+it('should change the actual colors in css', async ({ page }) => {
   await page.setContent(`
     <style>
       @media (prefers-color-scheme: dark) {
@@ -115,7 +115,7 @@ it('should change the actual colors in css', async ({page}) => {
   expect(await getBackgroundColor()).toBe('rgb(255, 255, 255)');
 });
 
-it('should emulate reduced motion', async ({page}) => {
+it('should emulate reduced motion', async ({ page }) => {
   expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: no-preference)').matches)).toBe(true);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true);
@@ -126,7 +126,7 @@ it('should emulate reduced motion', async ({page}) => {
   await page.emulateMedia({ reducedMotion: null });
 });
 
-it('should emulate forcedColors ', async ({page, browserName, isElectron}) => {
+it('should emulate forcedColors ', async ({ page, browserName, isElectron }) => {
   it.skip(browserName === 'webkit', 'https://bugs.webkit.org/show_bug.cgi?id=225281');
   it.fixme(isElectron);
   expect(await page.evaluate(() => matchMedia('(forced-colors: none)').matches)).toBe(true);

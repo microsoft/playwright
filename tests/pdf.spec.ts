@@ -17,12 +17,12 @@
 import { browserTest as it, expect } from './config/browserTest';
 import fs from 'fs';
 
-it('should be able to save file', async ({contextFactory, headless, browserName}, testInfo) => {
+it('should be able to save file', async ({ contextFactory, headless, browserName }, testInfo) => {
   it.skip(!headless || browserName !== 'chromium', 'Printing to pdf is currently only supported in headless chromium.');
 
   const context = await contextFactory();
   const page = await context.newPage();
   const outputFile = testInfo.outputPath('output.pdf');
-  await page.pdf({path: outputFile});
+  await page.pdf({ path: outputFile });
   expect(fs.readFileSync(outputFile).byteLength).toBeGreaterThan(0);
 });
