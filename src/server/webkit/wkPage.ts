@@ -1010,7 +1010,7 @@ export class WKPage implements PageDelegate {
       session.sendMayFail('Network.interceptRequestWithError', { errorType: 'Cancellation', requestId: event.requestId });
       return;
     }
-    if (!request._route || this._currentMainFrameNavigation.shoudIgnoreRequestInterception(event)) {
+    if (!request._route || this._currentMainFrameNavigation?.shoudIgnoreRequestInterception(event)) {
       // Intercepted, although we do not intend to allow interception.
       // Just continue.
       session.sendMayFail('Network.interceptWithRequest', { requestId: request._requestId });
