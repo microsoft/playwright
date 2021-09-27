@@ -100,6 +100,78 @@ test('test.describe.serial should work with retry', async ({ runInlineTest }) =>
   ]);
 });
 
+test('test.describe.serial should work with retry and beforeAll failure', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      test.describe.serial('serial suite', () => {
+        test('test1', async ({}) => {
+          console.log('\\n%%test1');
+        });
+
+        test.describe('inner suite', () => {
+          test.beforeAll(async ({}, testInfo) => {
+            console.log('\\n%%beforeAll');
+            expect(testInfo.retry).toBe(1);
+          });
+          test('test2', async ({}) => {
+            console.log('\\n%%test2');
+          });
+        });
+      });
+    `,
+  }, { retries: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.flaky).toBe(1);
+  expect(result.failed).toBe(0);
+  expect(result.skipped).toBe(0);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%test1',
+    '%%beforeAll',
+    '%%test1',
+    '%%beforeAll',
+    '%%test2',
+  ]);
+});
+
+test('test.describe.serial should work with retry and afterAll failure', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      test.describe.serial('serial suite', () => {
+        test.describe('inner suite', () => {
+          let firstRun = false;
+          test('test1', async ({}, testInfo) => {
+            console.log('\\n%%test1');
+            firstRun = testInfo.retry === 0;
+          });
+          test.afterAll(async ({}, testInfo) => {
+            console.log('\\n%%afterAll');
+            expect(firstRun).toBe(false);
+          });
+        });
+
+        test('test2', async ({}) => {
+          console.log('\\n%%test2');
+        });
+      });
+    `,
+  }, { retries: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.flaky).toBe(1);
+  expect(result.failed).toBe(0);
+  expect(result.skipped).toBe(0);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%test1',
+    '%%afterAll',
+    '%%test1',
+    '%%afterAll',
+    '%%test2',
+  ]);
+});
+
 test('test.describe.serial.only should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
