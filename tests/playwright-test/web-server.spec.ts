@@ -275,10 +275,10 @@ test('should create multiple servers', async ({ runInlineTest }, { workerIndex }
       module.exports = {
         webServer: [{
           command: 'node ${JSON.stringify(path.join(__dirname, 'assets', 'simple-server.js'))} ${port1}',
-          waitForPort: ${port1},
+          port: ${port1},
         },{
           command: 'node ${JSON.stringify(path.join(__dirname, 'assets', 'simple-server.js'))} ${port2}',
-          waitForPort: ${port2},
+          port: ${port2},
         }],
       };
     `,
