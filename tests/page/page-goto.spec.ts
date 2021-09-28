@@ -58,19 +58,14 @@ it('should work cross-process', async ({ page, server }) => {
   expect(response.url()).toBe(url);
 });
 
-it('should work with cross-process that fails before committing', async ({ page, server, browserName }) => {
+it('should work with cross-process that fails before committing', async ({ page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     req.socket.destroy();
   });
   const response1 = await page.goto(server.CROSS_PROCESS_PREFIX + '/title.html');
   await response1.finished();
   const error = await page.goto(server.EMPTY_PAGE).catch(e => e);
-  if (browserName === 'chromium')
-    expect(error.message).toContain('net::ERR_EMPTY_RESPONSE');
-  if (browserName === 'webkit')
-    expect(error.message).toContain('Message Corrupt');
-  if (browserName === 'firefox')
-    expect(error.message).toContain('NS_ERROR_NET_RESET');
+  expect(error instanceof Error).toBeTruthy();
 });
 
 it('should work with Cross-Origin-Opener-Policy', async ({ page, server, browserName }) => {
