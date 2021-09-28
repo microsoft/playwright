@@ -18,6 +18,7 @@ import {
   printReceivedStringContainExpectedResult,
   printReceivedStringContainExpectedSubstring
 } from 'expect/build/print';
+import colors from 'colors/safe';
 import { ExpectedTextValue } from '../../protocol/channels';
 import { isRegExp, isString } from '../../utils/utils';
 import { currentTestInfo } from '../globals';
@@ -122,6 +123,6 @@ export function callLogText(log: string[] | undefined): string {
   return `
 
 Call log:
-${(log || []).join('\n')}
+  - ${colors.dim((log || []).join('\n  - '))}
 `;
 }
