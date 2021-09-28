@@ -162,6 +162,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     formData: tOptional(tAny),
     timeout: tOptional(tNumber),
     failOnStatusCode: tOptional(tBoolean),
+    ignoreHTTPSErrors: tOptional(tBoolean),
   });
   scheme.FetchRequestFetchResponseBodyParams = tObject({
     fetchUid: tString,

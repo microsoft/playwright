@@ -157,6 +157,11 @@ for (const method of ['get', 'post', 'fetch']) {
     }).catch(e => e);
     expect(error.message).toContain('404 Not Found');
   });
+
+  it(`${method}should support ignoreHTTPSErrors option`, async ({ context, httpsServer }) => {
+    const response = await context._request[method](httpsServer.EMPTY_PAGE, { ignoreHTTPSErrors: true });
+    expect(response.status()).toBe(200);
+  });
 }
 
 it('should not add context cookie if cookie header passed as a parameter', async ({ context, server }) => {
@@ -517,7 +522,7 @@ it('should support https', async ({ context, httpsServer }) => {
   }
 });
 
-it('should support ignoreHTTPSErrors', async ({ contextFactory, contextOptions, httpsServer }) => {
+it('should inherit ignoreHTTPSErrors from context', async ({ contextFactory, contextOptions, httpsServer }) => {
   const context = await contextFactory({ ...contextOptions, ignoreHTTPSErrors: true });
   const response = await context._request.get(httpsServer.EMPTY_PAGE);
   expect(response.status()).toBe(200);

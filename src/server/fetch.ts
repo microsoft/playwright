@@ -123,7 +123,7 @@ export abstract class FetchRequest extends SdkObject {
         deadline
       };
       // rejectUnauthorized = undefined is treated as true in node 12.
-      if (defaults.ignoreHTTPSErrors)
+      if (params.ignoreHTTPSErrors || defaults.ignoreHTTPSErrors)
         options.rejectUnauthorized = false;
 
       const requestUrl = new URL(params.url, defaults.baseURL);

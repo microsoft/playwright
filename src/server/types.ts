@@ -393,6 +393,7 @@ export type FetchOptions = {
   formData?: FormField[],
   timeout?: number,
   failOnStatusCode?: boolean,
+  ignoreHTTPSErrors?: boolean,
 };
 
 export type FetchResponse = {
