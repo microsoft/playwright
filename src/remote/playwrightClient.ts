@@ -17,6 +17,7 @@
 import WebSocket from 'ws';
 import { Connection } from '../client/connection';
 import { Playwright } from '../client/playwright';
+import { makeWaitForNextTask } from '../utils/utils';
 
 export type PlaywrightClientConnectOptions = {
   wsEndpoint: string;
@@ -32,14 +33,23 @@ export class PlaywrightClient {
     const { wsEndpoint, timeout = 30000 } = options;
     const connection = new Connection();
     const ws = new WebSocket(wsEndpoint);
-    connection.onmessage = message => ws.send(JSON.stringify(message));
-    ws.on('message', message => connection.dispatch(JSON.parse(message.toString())));
+    const waitForNextTask = makeWaitForNextTask();
+    connection.onmessage = message => {
+      if (ws.readyState === 2 /** CLOSING */ || ws.readyState === 3 /** CLOSED */)
+        throw new Error('PlaywrightClient: writing to closed WebSocket connection');
+      ws.send(JSON.stringify(message));
+    };
+    ws.on('message', message => waitForNextTask(() => connection.dispatch(JSON.parse(message.toString()))));
     const errorPromise = new Promise((_, reject) => ws.on('error', error => reject(error)));
     const closePromise = new Promise((_, reject) => ws.on('close', () => reject(new Error('Connection closed'))));
     const playwrightClientPromise = new Promise<PlaywrightClient>((resolve, reject) => {
+      let playwright: Playwright;
       ws.on('open', async () => {
-        const playwright = await connection.initializePlaywright();
+        playwright = await connection.initializePlaywright();
         resolve(new PlaywrightClient(playwright, ws));
+      });
+      ws.on('close', () => {
+        playwright?._cleanup();
       });
     });
     let timer: NodeJS.Timeout;
