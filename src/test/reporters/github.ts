@@ -51,6 +51,22 @@ type GithubLogOptions = Partial<{
   endLine: number;
 }>;
 
+type Annotation = {
+  filePath: string;
+  title: string;
+  message: string;
+  position?: Position;
+};
+
+type FailureDetails = {
+  tokens: string[];
+  position?: Position;
+};
+
+type ErrorDetails = {
+  message: string;
+  position?: Position;
+};
 class GithubLogger {
 	isCI: boolean = process.env.CI === 'true';
   isGithubAction: boolean = process.env.GITHUB_ACTION !== undefined;
@@ -86,23 +102,6 @@ class GithubLogger {
   warning(message: string, options?: GithubLogOptions) {
     this.log(message, 'warning', options);
   }
-}
-
-interface Annotation {
-  filePath: string;
-  title: string;
-  message: string;
-  position?: Position;
-}
-
-interface FailureDetails {
-  position?: Position;
-  tokens: string[];
-}
-
-interface ErrorDetails {
-  position?: Position;
-  message: string;
 }
 
 export class GithubReporter extends BaseReporter {
