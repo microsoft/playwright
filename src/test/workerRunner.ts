@@ -74,6 +74,12 @@ export class WorkerRunner extends EventEmitter {
   async cleanup() {
     // We have to load the project to get the right deadline below.
     await this._loadIfNeeded();
+    await this._teardownScopes();
+    if (this._fatalError)
+      this.emit('teardownError', { error: this._fatalError });
+  }
+
+  private async _teardownScopes() {
     // TODO: separate timeout for teardown?
     const result = await raceAgainstDeadline((async () => {
       await this._fixtureRunner.teardownScope('test');
@@ -81,8 +87,6 @@ export class WorkerRunner extends EventEmitter {
     })(), this._deadline());
     if (result.timedOut && !this._fatalError)
       this._fatalError = { message: colors.red(`Timeout of ${this._project.config.timeout}ms exceeded while shutting down environment`) };
-    if (this._fatalError)
-      this.emit('teardownError', { error: this._fatalError });
   }
 
   unhandledError(error: Error | any) {
@@ -144,12 +148,19 @@ export class WorkerRunner extends EventEmitter {
         this._fixtureRunner.setPool(anyPool);
         await this._runSuite(suite, []);
       }
+      if (this._failedTest)
+        await this._teardownScopes();
     } catch (e) {
       // In theory, we should run above code without any errors.
       // However, in the case we screwed up, or loadTestFile failed in the worker
       // but not in the runner, let's do a fatal error.
       this.unhandledError(e);
     } finally {
+      if (this._failedTest) {
+        // Now that we did run all hooks and teared down scopes, we can
+        // report the failure, possibly with any error details revealed by teardown.
+        this.emit('testEnd', buildTestEndPayload(this._failedTest.testId, this._failedTest.testInfo));
+      }
       this._reportDone();
       runFinishedCallback();
     }
@@ -370,22 +381,15 @@ export class WorkerRunner extends EventEmitter {
       await deadlineRunner.result;
     }
 
-    this._currentDeadlineRunner = undefined;
     testInfo.duration = monotonicTime() - startTime;
-    if (reportEvents)
-      this.emit('testEnd', buildTestEndPayload(testId, testInfo));
-
-    const isFailure = testInfo.status !== 'skipped' && testInfo.status !== testInfo.expectedStatus;
-    const preserveOutput = this._loader.fullConfig().preserveOutput === 'always' ||
-      (this._loader.fullConfig().preserveOutput === 'failures-only' && isFailure);
-    if (!preserveOutput)
-      await removeFolderAsync(testInfo.outputDir).catch(e => {});
-
+    this._currentDeadlineRunner = undefined;
     this._currentTest = null;
     setCurrentTestInfo(null);
 
+    const isFailure = testInfo.status !== 'skipped' && testInfo.status !== testInfo.expectedStatus;
     if (isFailure) {
       if (test._type === 'test') {
+        // Delay reporting testEnd result until after teardownScopes is done.
         this._failedTest = testData;
       } else if (!this._fatalError) {
         if (testInfo.status === 'timedOut')
@@ -394,7 +398,14 @@ export class WorkerRunner extends EventEmitter {
           this._fatalError = testInfo.error;
       }
       this.stop();
+    } else if (reportEvents) {
+      this.emit('testEnd', buildTestEndPayload(testId, testInfo));
     }
+
+    const preserveOutput = this._loader.fullConfig().preserveOutput === 'always' ||
+      (this._loader.fullConfig().preserveOutput === 'failures-only' && isFailure);
+    if (!preserveOutput)
+      await removeFolderAsync(testInfo.outputDir).catch(e => {});
   }
 
   private async _runBeforeHooks(test: TestCase, testInfo: TestInfoImpl) {
