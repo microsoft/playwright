@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import { FullConfig, TestCase, Suite, TestResult, TestError, TestStep, FullResult, TestStatus, Location, Reporter } from '../../../types/testReporter';
-import { positionInFile } from './base';
+import { PositionInFile, prepareErrorStack } from './base';
 
 export interface JSONReport {
   config: Omit<FullConfig, 'projects'> & {
@@ -231,16 +231,13 @@ class JSONReporter implements Reporter {
 
   private _serializeTestResult(result: TestResult, file: string): JSONReportTestResult {
     const steps = result.steps.filter(s => s.category === 'test.step');
-    let position: { column?: number; line?: number } = {};
-    if (file && result.error?.stack !== undefined) {
-      const lines = result.error.stack.split('\n') ?? [];
-      const firstStackLine = lines.findIndex(line =>
-        line.startsWith('    at ')
+    let errorPosition: PositionInFile | undefined;
+    if (result.error?.stack){
+      const { position } = prepareErrorStack(
+          result.error.stack,
+          file
       );
-      if (firstStackLine !== -1) {
-        const stackLines = lines.slice(firstStackLine);
-        position = positionInFile(stackLines, file) ?? {};
-      }
+      errorPosition = position;
     }
     return {
       workerIndex: result.workerIndex,
@@ -257,7 +254,7 @@ class JSONReporter implements Reporter {
         path: a.path,
         body: a.body?.toString('base64')
       })),
-      ...position
+      ...errorPosition
     };
   }
 

@@ -26,6 +26,7 @@ import { FullConfig, TestCase, Suite, TestResult, TestError, Reporter, FullResul
 const stackUtils = new StackUtils();
 
 type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
+export type PositionInFile = { column: number; line: number };
 const kOutputSymbol = Symbol('output');
 
 export class BaseReporter implements Reporter  {
@@ -240,28 +241,22 @@ function formatTestHeader(config: FullConfig, test: TestCase, indent: string, in
 
 export function formatError(error: TestError, file?: string) {
   const stack = error.stack;
-  const tokens = [];
+  const tokens = [''];
   if (stack) {
-    tokens.push('');
-    const lines = stack.split('\n');
-    let firstStackLine = lines.findIndex(line => line.startsWith('    at '));
-    if (firstStackLine === -1)
-      firstStackLine = lines.length;
-    tokens.push(lines.slice(0, firstStackLine).join('\n'));
-    const stackLines = lines.slice(firstStackLine);
-    const position = file ? positionInFile(stackLines, file) : null;
-    if (position) {
-      const source = fs.readFileSync(file!, 'utf8');
+    const { message, stackLines, codeFrame } = prepareErrorStack(
+        stack,
+        file
+    );
+    tokens.push(message);
+    if (codeFrame) {
       tokens.push('');
-      tokens.push(codeFrameColumns(source, { start: position }, { highlightCode: colors.enabled }));
+      tokens.push(codeFrame);
     }
     tokens.push('');
     tokens.push(colors.dim(stackLines.join('\n')));
   } else if (error.message) {
-    tokens.push('');
     tokens.push(error.message);
-  } else {
-    tokens.push('');
+  } else if (error.value) {
     tokens.push(error.value);
   }
   return tokens.join('\n');
@@ -277,7 +272,39 @@ function indent(lines: string, tab: string) {
   return lines.replace(/^(?=.+$)/gm, tab);
 }
 
-export function positionInFile(stackLines: string[], file: string): { column: number; line: number; } | undefined {
+export function prepareErrorStack(
+  stack: string,
+  file?: string
+): {
+  message: string;
+  stackLines: string[];
+  position?: PositionInFile;
+  codeFrame?: string;
+} {
+  const lines = stack.split('\n');
+  let firstStackLine = lines.findIndex(line => line.startsWith('    at '));
+  if (firstStackLine === -1) firstStackLine = lines.length;
+  const message = lines.slice(0, firstStackLine).join('\n');
+  const stackLines = lines.slice(firstStackLine);
+  const position = file ? positionInFile(stackLines, file) : undefined;
+  let codeFrame;
+  if (position) {
+    const source = fs.readFileSync(file!, 'utf8');
+    codeFrame = codeFrameColumns(
+        source,
+        { start: position },
+        { highlightCode: colors.enabled }
+    );
+  }
+  return {
+    message,
+    stackLines,
+    position,
+    codeFrame,
+  };
+}
+
+function positionInFile(stackLines: string[], file: string): { column: number; line: number; } | undefined {
   // Stack will have /private/var/folders instead of /var/folders on Mac.
   file = fs.realpathSync(file);
   for (const line of stackLines) {
