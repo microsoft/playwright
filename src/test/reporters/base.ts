@@ -300,16 +300,16 @@ export function formatResultFailure(test: TestCase, result: TestResult, initialI
   };
 }
 
-export function relativeTestPath(config: FullConfig, test: TestCase): string {
+function relativeTestPath(config: FullConfig, test: TestCase): string {
   return path.relative(config.rootDir, test.location.file) || path.basename(test.location.file);
 }
 
-export function stepSuffix(step: TestStep | undefined) {
+function stepSuffix(step: TestStep | undefined) {
   const stepTitles = step ? step.titlePath() : [];
   return stepTitles.map(t => ' › ' + t).join('');
 }
 
-export function formatTestTitle(config: FullConfig, test: TestCase, step?: TestStep): string {
+function formatTestTitle(config: FullConfig, test: TestCase, step?: TestStep): string {
   // root, project, file, ...describes, test
   const [, projectName, , ...titles] = test.titlePath();
   const location = `${relativeTestPath(config, test)}:${test.location.line}:${test.location.column}`;
@@ -317,7 +317,7 @@ export function formatTestTitle(config: FullConfig, test: TestCase, step?: TestS
   return `${projectTitle}${location} › ${titles.join(' ')}${stepSuffix(step)}`;
 }
 
-export function formatTestHeader(config: FullConfig, test: TestCase, indent: string, index?: number): string {
+function formatTestHeader(config: FullConfig, test: TestCase, indent: string, index?: number): string {
   const title = formatTestTitle(config, test);
   const header = `${indent}${index ? index + ') ' : ''}${title}`;
   return pad(header, '=');
@@ -363,11 +363,11 @@ function pad(line: string, char: string): string {
   return line + colors.gray(char.repeat(Math.max(0, 100 - line.length)));
 }
 
-export function indent(lines: string, tab: string) {
+function indent(lines: string, tab: string) {
   return lines.replace(/^(?=.+$)/gm, tab);
 }
 
-export function positionInFile(stackLines: string[], file: string): Position | undefined {
+function positionInFile(stackLines: string[], file: string): Position | undefined {
   // Stack will have /private/var/folders instead of /var/folders on Mac.
   file = fs.realpathSync(file);
   for (const line of stackLines) {
