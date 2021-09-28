@@ -309,7 +309,7 @@ function stepSuffix(step: TestStep | undefined) {
   return stepTitles.map(t => ' › ' + t).join('');
 }
 
-function formatTestTitle(config: FullConfig, test: TestCase, step?: TestStep): string {
+export function formatTestTitle(config: FullConfig, test: TestCase, step?: TestStep): string {
   // root, project, file, ...describes, test
   const [, projectName, , ...titles] = test.titlePath();
   const location = `${relativeTestPath(config, test)}:${test.location.line}:${test.location.column}`;
