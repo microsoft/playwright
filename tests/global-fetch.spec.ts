@@ -15,6 +15,7 @@
  */
 
 import http from 'http';
+import { getPlaywrightVersion } from '../lib/utils/utils';
 import { expect, playwrightTest as it } from './config/browserTest';
 
 it.skip(({ mode }) => mode !== 'default');
@@ -149,5 +150,5 @@ it('should set playwright as user-agent', async ({ playwright, server }) => {
     server.waitForRequest('/empty.html'),
     request.get(server.EMPTY_PAGE)
   ]);
-  expect(serverRequest.headers['user-agent']).toBe('Playwright');
+  expect(serverRequest.headers['user-agent']).toBe('Playwright/' + getPlaywrightVersion());
 });
