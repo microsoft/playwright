@@ -31,7 +31,6 @@ import { ProgressController } from '../../progress';
 import { BrowserContext } from '../../browserContext';
 import { registry } from '../../../utils/registry';
 import { installAppIcon } from '../../chromium/crApp';
-import { debugLogger } from '../../../utils/debugLogger';
 
 export class TraceViewer {
   private _server: HttpServer;
