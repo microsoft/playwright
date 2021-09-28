@@ -95,6 +95,26 @@ test('should handle worker tear down fixture error', async ({ runInlineTest }) =
   expect(result.exitCode).toBe(1);
 });
 
+test('should handle worker tear down fixture error after failed test', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const test = pwt.test.extend({
+        failure: [async ({}, runTest) => {
+          await runTest();
+          throw new Error('Worker failed');
+        }, { scope: 'worker' }]
+      });
+
+      test('timeout', async ({failure}) => {
+        await new Promise(f => setTimeout(f, 2000));
+      });
+    `
+  }, { timeout: 1000 });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Timeout of 1000ms exceeded.');
+  expect(result.output).toContain('Worker failed');
+});
+
 test('should throw when using non-defined super worker fixture', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `

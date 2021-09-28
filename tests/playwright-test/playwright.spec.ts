@@ -272,6 +272,30 @@ test('should report error and pending operations on timeout', async ({ runInline
   expect(stripAscii(result.output)).toContain(`10 |           page.textContent('text=More missing'),`);
 });
 
+test('should report error on timeout with shared page', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      let page;
+      test.beforeAll(async ({ browser }) => {
+        page = await browser.newPage();
+      });
+      test('passed', async () => {
+        await page.setContent('<div>Click me</div>');
+      });
+      test('timedout', async () => {
+        await page.click('text=Missing');
+      });
+    `,
+  }, { workers: 1, timeout: 2000 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('waiting for selector "text=Missing"');
+  expect(stripAscii(result.output)).toContain(`14 |         await page.click('text=Missing');`);
+});
+
 test('should not report waitForEventInfo as pending', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'a.test.ts': `
