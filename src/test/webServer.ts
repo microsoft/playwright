@@ -33,7 +33,7 @@ const newProcessLogPrefixer = () => new stream.Transform({
   },
 });
 
-export class WebServer {
+class WebServer {
   private _killProcess?: () => Promise<void>;
   private _processExitedPromise!: Promise<any>;
   constructor(private readonly config: WebServerConfig) { }
@@ -124,5 +124,27 @@ async function waitForSocket(port: number, delay: number, cancellationToken: { c
     if (connected)
       return;
     await new Promise(x => setTimeout(x, delay));
+  }
+}
+
+export class WebServers {
+  private readonly _servers: WebServer[] = [];
+
+  public static async create(configs: WebServerConfig[]): Promise<WebServers> {
+    const webServers = new WebServers();
+    try {
+      for (const config of configs)
+        webServers._servers.push(await WebServer.create(config));
+    } catch (error) {
+      for (const server of webServers._servers)
+        await server.kill();
+      throw error;
+    }
+    return webServers;
+  }
+
+  public async killAll() {
+    for (const server of this._servers)
+      await server.kill();
   }
 }

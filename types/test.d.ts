@@ -485,7 +485,7 @@ interface TestConfig {
    * Learn more about [snapshots](https://playwright.dev/docs/test-snapshots).
    */
   updateSnapshots?: UpdateSnapshots;
-  webServer?: WebServerConfig;
+  webServer?: WebServerConfig | WebServerConfig[];
   /**
    * The maximum number of concurrent worker processes to use for parallelizing tests.
    *
@@ -768,7 +768,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * Playwright Test.
    */
   workers: number;
-  webServer: WebServerConfig | null;
+  webServer: WebServerConfig[];
 }
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped';

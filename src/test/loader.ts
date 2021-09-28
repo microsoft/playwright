@@ -15,7 +15,7 @@
  */
 
 import { installTransform } from './transform';
-import type { FullConfig, Config, FullProject, Project, ReporterDescription, PreserveOutput } from './types';
+import type { FullConfig, Config, FullProject, Project, ReporterDescription, PreserveOutput, WebServerConfig } from './types';
 import { mergeObjects, errorWithFile } from './util';
 import { setCurrentlyLoadingFileSuite } from './globals';
 import { Suite } from './test';
@@ -101,7 +101,7 @@ export class Loader {
     this._fullConfig.shard = takeFirst(this._configOverrides.shard, this._config.shard, baseFullConfig.shard);
     this._fullConfig.updateSnapshots = takeFirst(this._configOverrides.updateSnapshots, this._config.updateSnapshots, baseFullConfig.updateSnapshots);
     this._fullConfig.workers = takeFirst(this._configOverrides.workers, this._config.workers, baseFullConfig.workers);
-    this._fullConfig.webServer = takeFirst(this._configOverrides.webServer, this._config.webServer, baseFullConfig.webServer);
+    this._fullConfig.webServer = takeFirst(toLaunchServers(this._configOverrides.webServer), toLaunchServers(this._config.webServer), baseFullConfig.webServer);
 
     for (const project of projects)
       this._addProject(project, this._fullConfig.rootDir);
@@ -228,6 +228,14 @@ function toReporters(reporters: BuiltInReporter | ReporterDescription[] | undefi
   if (typeof reporters === 'string')
     return [ [reporters] ];
   return reporters;
+}
+
+function toLaunchServers(webServerConfigs?: WebServerConfig | WebServerConfig[]): WebServerConfig[]|undefined {
+  if (!webServerConfigs)
+    return;
+  if (!Array.isArray(webServerConfigs))
+    return [webServerConfigs];
+  return webServerConfigs;
 }
 
 function validateConfig(file: string, config: Config) {
@@ -427,7 +435,7 @@ const baseFullConfig: FullConfig = {
   shard: null,
   updateSnapshots: 'missing',
   workers: 1,
-  webServer: null,
+  webServer: [],
 };
 
 function resolveReporters(reporters: Config['reporter'], rootDir: string): ReporterDescription[]|undefined {

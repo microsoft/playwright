@@ -259,3 +259,31 @@ for (const host of ['localhost', '127.0.0.1', '0.0.0.0']) {
     }
   });
 }
+
+test('should create multiple servers', async ({ runInlineTest }, { workerIndex }) => {
+  const port1 = workerIndex + 10500;
+  const port2 = workerIndex + 10600;
+  const result = await runInlineTest({
+    'test.spec.ts': `
+      const { test } = pwt;
+      test('connect to the server via the baseURL', async ({baseURL, page}) => {
+        await page.goto('http://localhost:${port1}/hello');
+        await page.goto('http://localhost:${port2}/hello');
+      });
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        webServer: [{
+          command: 'node ${JSON.stringify(path.join(__dirname, 'assets', 'simple-server.js'))} ${port1}',
+          waitForPort: ${port1},
+        },{
+          command: 'node ${JSON.stringify(path.join(__dirname, 'assets', 'simple-server.js'))} ${port2}',
+          waitForPort: ${port2},
+        }],
+      };
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.report.suites[0].specs[0].tests[0].results[0].status).toContain('passed');
+});
