@@ -56,6 +56,7 @@ export function captureStackTrace(): ParsedStackTrace {
     frameText: string;
     inClient: boolean;
   };
+  console.log(stack);
   let parsedFrames = stack.split('\n').map(line => {
     const frame = stackUtils.parseLine(line);
     if (!frame || !frame.file)
@@ -65,6 +66,7 @@ export function captureStackTrace(): ParsedStackTrace {
     const fileName = path.resolve(process.cwd(), frame.file);
     if (isTesting && fileName.includes(path.join('playwright', 'tests', 'config', 'coverage.js')))
       return null;
+    console.log(frame);
     const inClient =
       // Allow fixtures in the reported stacks.
       (!fileName.includes('test/index') && !fileName.includes('test\\index')) && (
@@ -85,6 +87,7 @@ export function captureStackTrace(): ParsedStackTrace {
     };
     return parsed;
   }).filter(Boolean) as ParsedFrame[];
+  console.log(parsedFrames);
 
   let apiName = '';
   // Deepest transition between non-client code calling into client code

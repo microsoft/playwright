@@ -20,7 +20,7 @@ const config: Config = {
   testDir: __dirname,
   testIgnore: ['assets/**', 'stable-test-runner/**'],
   timeout: 30000,
-  forbidOnly: !!process.env.CI,
+  // forbidOnly: !!process.env.CI,
   preserveOutput: process.env.CI ? 'failures-only' : 'always',
   projects: [
     { name: 'playwright-test' },

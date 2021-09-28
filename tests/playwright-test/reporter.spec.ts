@@ -185,7 +185,7 @@ test('should load reporter from node_modules', async ({ runInlineTest }) => {
   ]);
 });
 
-test('should report expect steps', async ({ runInlineTest }) => {
+test.only('should report expect steps', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepsReporterJS,
     'playwright.config.ts': `
