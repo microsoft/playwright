@@ -770,7 +770,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     if (!['attached', 'detached', 'visible', 'hidden'].includes(state))
       throw new Error(`state: expected one of (attached|detached|visible|hidden)`);
     const info = this._page.parseSelector(selector, options);
-    const task = waitForSelectorTask(info, state, this);
+    const task = waitForSelectorTask(info, state, false, this);
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       progress.log(`waiting for selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);
@@ -939,13 +939,13 @@ function compensateHalfIntegerRoundingError(point: types.Point) {
 
 export type SchedulableTask<T> = (injectedScript: js.JSHandle<InjectedScript>) => Promise<js.JSHandle<InjectedScriptPoll<T>>>;
 
-export function waitForSelectorTask(selector: SelectorInfo, state: 'attached' | 'detached' | 'visible' | 'hidden', root?: ElementHandle): SchedulableTask<Element | undefined> {
-  return injectedScript => injectedScript.evaluateHandle((injected, { parsed, strict, state, root }) => {
+export function waitForSelectorTask(selector: SelectorInfo, state: 'attached' | 'detached' | 'visible' | 'hidden', omitReturnValue?: boolean, root?: ElementHandle): SchedulableTask<Element | undefined> {
+  return injectedScript => injectedScript.evaluateHandle((injected, { parsed, strict, state, omitReturnValue, root }) => {
     let lastElement: Element | undefined;
 
     return injected.pollRaf((progress, continuePolling) => {
       const elements = injected.querySelectorAll(parsed, root || document);
-      const element = elements[0];
+      let element: Element | undefined  = elements[0];
       const visible = element ? injected.isVisible(element) : false;
 
       if (lastElement !== element) {
@@ -962,18 +962,22 @@ export function waitForSelectorTask(selector: SelectorInfo, state: 'attached' | 
         }
       }
 
+      const hasElement = !!element;
+      if (omitReturnValue)
+        element = undefined;
+
       switch (state) {
         case 'attached':
-          return element ? element : continuePolling;
+          return hasElement ? element : continuePolling;
         case 'detached':
-          return !element ? undefined : continuePolling;
+          return !hasElement ? undefined : continuePolling;
         case 'visible':
           return visible ? element : continuePolling;
         case 'hidden':
           return !visible ? undefined : continuePolling;
       }
     });
-  }, { parsed: selector.parsed, strict: selector.strict, state, root });
+  }, { parsed: selector.parsed, strict: selector.strict, state, omitReturnValue, root });
 }
 
 export const kUnableToAdoptErrorMessage = 'Unable to adopt element handle from a different document';

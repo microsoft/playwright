@@ -213,6 +213,14 @@ export class Locator implements api.Locator {
     return this._frame.$$eval(this._selector, ee => ee.map(e => e.textContent || ''));
   }
 
+  waitFor(options: channels.FrameWaitForSelectorOptions & { state: 'attached' | 'visible' }): Promise<void>;
+  waitFor(options?: channels.FrameWaitForSelectorOptions): Promise<void>;
+  async waitFor(options?: channels.FrameWaitForSelectorOptions): Promise<void> {
+    return this._frame._wrapApiCall(async (channel: channels.FrameChannel) => {
+      await channel.waitForSelector({ selector: this._selector, strict: true, omitReturnValue: true, ...options });
+    });
+  }
+
   async _expect(expression: string, options: channels.FrameExpectOptions): Promise<{ pass: boolean, received?: any, log?: string[] }> {
     return this._frame._wrapApiCall(async (channel: channels.FrameChannel) => {
       const params: any = { selector: this._selector, expression, ...options };

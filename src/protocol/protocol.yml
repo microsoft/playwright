@@ -1746,6 +1746,7 @@ Frame:
           - detached
           - visible
           - hidden
+        omitReturnValue: boolean?
       returns:
         element: ElementHandle?
       tracing:

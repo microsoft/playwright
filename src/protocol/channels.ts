@@ -2171,11 +2171,13 @@ export type FrameWaitForSelectorParams = {
   strict?: boolean,
   timeout?: number,
   state?: 'attached' | 'detached' | 'visible' | 'hidden',
+  omitReturnValue?: boolean,
 };
 export type FrameWaitForSelectorOptions = {
   strict?: boolean,
   timeout?: number,
   state?: 'attached' | 'detached' | 'visible' | 'hidden',
+  omitReturnValue?: boolean,
 };
 export type FrameWaitForSelectorResult = {
   element?: ElementHandleChannel,
