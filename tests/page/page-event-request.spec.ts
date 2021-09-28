@@ -56,3 +56,16 @@ it('should report requests and responses handled by service worker', async ({ pa
   expect(response.url()).toBe(server.PREFIX + '/serviceworkers/fetchdummy/foo');
   expect(await response.text()).toBe('responseFromServiceWorker:foo');
 });
+
+it('should return response body when Cross-Origin-Opener-Policy is set', async ({ page, server, browserName }) => {
+  it.fail(browserName === 'webkit', 'https://github.com/microsoft/playwright/issues/8796');
+  server.setRoute('/empty.html', (req, res) => {
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+    res.end('Hello there!');
+  });
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(page.url()).toBe(server.EMPTY_PAGE);
+  await response.finished();
+  expect(response.request().failure()).toBeNull();
+  expect(await response.text()).toBe('Hello there!');
+});
