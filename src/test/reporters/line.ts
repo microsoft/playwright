@@ -61,7 +61,7 @@ class LineReporter extends BaseReporter {
     process.stdout.write(`\u001B[1A\u001B[2K${title}\n`);
     if (!this.willRetry(test) && (test.outcome() === 'flaky' || test.outcome() === 'unexpected')) {
       process.stdout.write(`\u001B[1A\u001B[2K`);
-      console.log(formatFailure(this.config, test, ++this._failures));
+      console.log(formatFailure(this.config, test, ++this._failures).message);
       console.log();
     }
   }
