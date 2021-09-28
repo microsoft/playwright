@@ -352,7 +352,7 @@ export class GlobalFetchRequest extends FetchRequest {
     }
     this._options = {
       baseURL: options.baseURL,
-      userAgent: options.userAgent || '',
+      userAgent: options.userAgent || 'Playwright',
       extraHTTPHeaders: options.extraHTTPHeaders,
       ignoreHTTPSErrors: !!options.ignoreHTTPSErrors,
       httpCredentials: options.httpCredentials,
