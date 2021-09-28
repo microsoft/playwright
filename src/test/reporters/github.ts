@@ -68,17 +68,17 @@ type ErrorDetails = {
   position?: Position;
 };
 class GithubLogger {
-	isCI: boolean = process.env.CI === 'true';
-  isGithubAction: boolean = process.env.GITHUB_ACTION !== undefined;
-  shouldLog = (this.isCI && this.isGithubAction) || process.env.PW_GH_ACTION_DEBUG === 'true' ;
+	private _isCI: boolean = process.env.CI === 'true';
+  private _isGithubAction: boolean = process.env.GITHUB_ACTION !== undefined;
+  private _shouldLog = (this._isCI && this._isGithubAction) || process.env.PW_GH_ACTION_DEBUG === 'true' ;
 
-  log(
+  private _log(
     message: string,
     type: GithubLogType = 'notice',
     options: GithubLogOptions = {}
   ) {
-    if (this.shouldLog) {
-      if (this.isGithubAction) message = message.replace(/\n/g, '%0A');
+    if (this._shouldLog) {
+      if (this._isGithubAction) message = message.replace(/\n/g, '%0A');
 
       const configs = Object.entries(options)
           .map(([key, option]) => `${key}=${option}`)
@@ -88,19 +88,19 @@ class GithubLogger {
   }
 
   debug(message: string, options?: GithubLogOptions) {
-    this.log(message, 'debug', options);
+    this._log(message, 'debug', options);
   }
 
   error(message: string, options?: GithubLogOptions) {
-    this.log(message, 'error', options);
+    this._log(message, 'error', options);
   }
 
   notice(message: string, options?: GithubLogOptions) {
-    this.log(message, 'notice', options);
+    this._log(message, 'notice', options);
   }
 
   warning(message: string, options?: GithubLogOptions) {
-    this.log(message, 'warning', options);
+    this._log(message, 'warning', options);
   }
 }
 
