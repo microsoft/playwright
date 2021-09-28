@@ -556,7 +556,7 @@ export class PageBinding {
   }
 
   static async dispatch(page: Page, payload: string, context: dom.FrameExecutionContext) {
-    const {name, seq, args} = JSON.parse(payload);
+    const { name, seq, args } = JSON.parse(payload);
     try {
       assert(context.world);
       const binding = page.getBinding(name)!;
@@ -620,12 +620,12 @@ function addPageBinding(bindingName: string, needsHandle: boolean) {
       handles = new Map();
       me['handles'] = handles;
     }
-    const promise = new Promise((resolve, reject) => callbacks.set(seq, {resolve, reject}));
+    const promise = new Promise((resolve, reject) => callbacks.set(seq, { resolve, reject }));
     if (needsHandle) {
       handles.set(seq, args[0]);
-      binding(JSON.stringify({name: bindingName, seq}));
+      binding(JSON.stringify({ name: bindingName, seq }));
     } else {
-      binding(JSON.stringify({name: bindingName, seq, args}));
+      binding(JSON.stringify({ name: bindingName, seq, args }));
     }
     return promise;
   };

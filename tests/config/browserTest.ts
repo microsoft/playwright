@@ -143,6 +143,8 @@ export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTest
         await context.tracing.start({ screenshots: true, snapshots: true });
       (context as any)._csi = {
         onApiCallBegin: (apiCall: string) => {
+          if (apiCall.startsWith('expect.'))
+            return { userObject: null };
           const testInfoImpl = testInfo as any;
           const step = testInfoImpl._addStep({
             category: 'pw:api',

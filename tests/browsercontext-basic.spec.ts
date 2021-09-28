@@ -18,7 +18,7 @@
 import { browserTest as it, expect } from './config/browserTest';
 import { attachFrame, verifyViewport } from './config/utils';
 
-it('should create new context', async function({browser}) {
+it('should create new context', async function({ browser }) {
   expect(browser.contexts().length).toBe(0);
   const context = await browser.newContext();
   expect(browser.contexts().length).toBe(1);
@@ -29,7 +29,7 @@ it('should create new context', async function({browser}) {
   expect(browser).toBe(context.browser());
 });
 
-it('window.open should use parent tab context', async function({browser, server}) {
+it('window.open should use parent tab context', async function({ browser, server }) {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -41,7 +41,7 @@ it('window.open should use parent tab context', async function({browser, server}
   await context.close();
 });
 
-it('should isolate localStorage and cookies', async function({browser, server}) {
+it('should isolate localStorage and cookies', async function({ browser, server }) {
   // Create two incognito contexts.
   const context1 = await browser.newContext();
   const context2 = await browser.newContext();
@@ -132,7 +132,7 @@ it('close() should abort waitForEvent', async ({ browser }) => {
   expect(error.message).toContain('Context closed');
 });
 
-it('close() should be callable twice', async ({browser}) => {
+it('close() should be callable twice', async ({ browser }) => {
   const context = await browser.newContext();
   await Promise.all([
     context.close(),
@@ -141,7 +141,7 @@ it('close() should be callable twice', async ({browser}) => {
   await context.close();
 });
 
-it('should pass self to close event', async ({browser}) => {
+it('should pass self to close event', async ({ browser }) => {
   const newContext = await browser.newContext();
   const [closedContext] = await Promise.all([
     newContext.waitForEvent('close'),
@@ -150,7 +150,7 @@ it('should pass self to close event', async ({browser}) => {
   expect(closedContext).toBe(newContext);
 });
 
-it('should not report frameless pages on error', async ({browser, server}) => {
+it('should not report frameless pages on error', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   server.setRoute('/empty.html', (req, res) => {
@@ -168,7 +168,7 @@ it('should not report frameless pages on error', async ({browser, server}) => {
   }
 });
 
-it('should return all of the pages', async ({browser, server}) => {
+it('should return all of the pages', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   const second = await context.newPage();
@@ -179,7 +179,7 @@ it('should return all of the pages', async ({browser, server}) => {
   await context.close();
 });
 
-it('should close all belonging pages once closing context', async function({browser}) {
+it('should close all belonging pages once closing context', async function({ browser }) {
   const context = await browser.newContext();
   await context.newPage();
   expect(context.pages().length).toBe(1);
@@ -188,7 +188,7 @@ it('should close all belonging pages once closing context', async function({brow
   expect(context.pages().length).toBe(0);
 });
 
-it('should disable javascript', async ({browser, browserName}) => {
+it('should disable javascript', async ({ browser, browserName }) => {
   {
     const context = await browser.newContext({ javaScriptEnabled: false });
     const page = await context.newPage();
@@ -211,15 +211,15 @@ it('should disable javascript', async ({browser, browserName}) => {
   }
 });
 
-it('should be able to navigate after disabling javascript', async ({browser, server}) => {
+it('should be able to navigate after disabling javascript', async ({ browser, server }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
   await context.close();
 });
 
-it('should work with offline option', async ({browser, server}) => {
-  const context = await browser.newContext({offline: true});
+it('should work with offline option', async ({ browser, server }) => {
+  const context = await browser.newContext({ offline: true });
   const page = await context.newPage();
   let error = null;
   await page.goto(server.EMPTY_PAGE).catch(e => error = e);
@@ -230,7 +230,7 @@ it('should work with offline option', async ({browser, server}) => {
   await context.close();
 });
 
-it('should emulate navigator.onLine', async ({browser, server}) => {
+it('should emulate navigator.onLine', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   expect(await page.evaluate(() => window.navigator.onLine)).toBe(true);
@@ -241,7 +241,7 @@ it('should emulate navigator.onLine', async ({browser, server}) => {
   await context.close();
 });
 
-it('should emulate media in popup', async ({browser, server}) => {
+it('should emulate media in popup', async ({ browser, server }) => {
   {
     const context = await browser.newContext({ colorScheme: 'dark' });
     const page = await context.newPage();
@@ -267,7 +267,7 @@ it('should emulate media in popup', async ({browser, server}) => {
   }
 });
 
-it('should emulate media in cross-process iframe', async ({browser, server}) => {
+it('should emulate media in cross-process iframe', async ({ browser, server }) => {
   const page = await browser.newPage({ colorScheme: 'dark' });
   await page.goto(server.EMPTY_PAGE);
   await attachFrame(page, 'frame1', server.CROSS_PROCESS_PREFIX + '/empty.html');

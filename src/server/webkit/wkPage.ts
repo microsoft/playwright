@@ -308,7 +308,7 @@ export class WKPage implements PageDelegate {
         this._setSession(session);
         await Promise.all([
           this._initializePageProxySession(),
-          this._initializeSession(session, false, ({frameTree}) => this._handleFrameTree(frameTree)),
+          this._initializeSession(session, false, ({ frameTree }) => this._handleFrameTree(frameTree)),
         ]);
         pageOrError = this._page;
       } catch (e) {
@@ -552,7 +552,7 @@ export class WKPage implements PageDelegate {
         columnNumber: (columnNumber || 1) - 1,
       }
     };
-    this._onConsoleRepeatCountUpdated({ count: 1});
+    this._onConsoleRepeatCountUpdated({ count: 1 });
   }
 
   _onConsoleRepeatCountUpdated(event: Protocol.Console.messageRepeatCountUpdatedPayload) {
@@ -983,7 +983,7 @@ export class WKPage implements PageDelegate {
   _onRequestIntercepted(session: WKSession, event: Protocol.Network.requestInterceptedPayload) {
     const request = this._requestIdToRequest.get(event.requestId);
     if (!request) {
-      session.sendMayFail('Network.interceptRequestWithError', {errorType: 'Cancellation', requestId: event.requestId});
+      session.sendMayFail('Network.interceptRequestWithError', { errorType: 'Cancellation', requestId: event.requestId });
       return;
     }
     if (!request._route) {

@@ -18,7 +18,7 @@
 import { test as it, expect } from './pageTest';
 import { attachFrame } from '../config/utils';
 
-it('should navigate subframes', async ({page, server}) => {
+it('should navigate subframes', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   expect(page.frames()[0].url()).toContain('/frames/one-frame.html');
   expect(page.frames()[1].url()).toContain('/frames/frame.html');
@@ -28,7 +28,7 @@ it('should navigate subframes', async ({page, server}) => {
   expect(response.frame()).toBe(page.frames()[1]);
 });
 
-it('should reject when frame detaches', async ({page, server}) => {
+it('should reject when frame detaches', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
 
   server.setRoute('/empty.html', () => {});
@@ -40,7 +40,7 @@ it('should reject when frame detaches', async ({page, server}) => {
   expect(error.message).toContain('frame was detached');
 });
 
-it('should continue after client redirect', async ({page, server, isAndroid}) => {
+it('should continue after client redirect', async ({ page, server, isAndroid }) => {
   it.fixme(isAndroid);
 
   server.setRoute('/frames/script.js', () => {});
@@ -50,7 +50,7 @@ it('should continue after client redirect', async ({page, server, isAndroid}) =>
   expect(error.message).toContain(`navigating to "${url}", waiting until "networkidle"`);
 });
 
-it('should return matching responses', async ({page, server}) => {
+it('should return matching responses', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   // Attach three frames.
   const frames = [

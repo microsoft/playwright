@@ -16,7 +16,7 @@
 
 import { browserTest as test, expect } from './config/browserTest';
 
-test('should create new page', async function({browser}) {
+test('should create new page', async function({ browser }) {
   const page1 = await browser.newPage();
   expect(browser.contexts().length).toBe(1);
 
@@ -30,7 +30,7 @@ test('should create new page', async function({browser}) {
   expect(browser.contexts().length).toBe(0);
 });
 
-test('should throw upon second create new page', async function({browser}) {
+test('should throw upon second create new page', async function({ browser }) {
   const page = await browser.newPage();
   let error;
   await page.context().newPage().catch(e => error = e);
@@ -38,7 +38,7 @@ test('should throw upon second create new page', async function({browser}) {
   expect(error.message).toContain('Please use browser.newContext()');
 });
 
-test('version should work', async function({browser, browserName}) {
+test('version should work', async function({ browser, browserName }) {
   const version = browser.version();
   if (browserName === 'chromium')
     expect(version.match(/^\d+\.\d+\.\d+\.\d+$/)).toBeTruthy();

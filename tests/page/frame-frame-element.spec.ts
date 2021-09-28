@@ -18,7 +18,7 @@
 import { test as it, expect } from './pageTest';
 import { attachFrame } from '../config/utils';
 
-it('should work', async ({page, server}) => {
+it('should work', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const frame1 = await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   await attachFrame(page, 'frame2', server.EMPTY_PAGE);
@@ -32,7 +32,7 @@ it('should work', async ({page, server}) => {
   expect(await frame1handle1.evaluate((a, b) => a === b, frame3handle1)).toBe(false);
 });
 
-it('should work with contentFrame', async ({page, server}) => {
+it('should work with contentFrame', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const frame = await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   const handle = await frame.frameElement();
@@ -40,7 +40,7 @@ it('should work with contentFrame', async ({page, server}) => {
   expect(contentFrame).toBe(frame);
 });
 
-it('should work with frameset', async ({page, server}) => {
+it('should work with frameset', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/frameset.html');
   const frameElement1 = await page.$('frame');
   const frame = await frameElement1.contentFrame();
@@ -48,7 +48,7 @@ it('should work with frameset', async ({page, server}) => {
   expect(await frameElement1.evaluate((a, b) => a === b, frameElement2)).toBe(true);
 });
 
-it('should throw when detached', async ({page, server}) => {
+it('should throw when detached', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const frame1 = await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   await page.$eval('#frame1', e => e.remove());

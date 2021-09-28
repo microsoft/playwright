@@ -19,7 +19,7 @@ import { test as it, expect } from './pageTest';
 import { globToRegex } from '../../lib/client/clientHelper';
 import vm from 'vm';
 
-it('should work with navigation', async ({page, server}) => {
+it('should work with navigation', async ({ page, server }) => {
   const requests = new Map();
   await page.route('**/*', route => {
     requests.set(route.request().url().split('/').pop(), route.request());
@@ -33,7 +33,7 @@ it('should work with navigation', async ({page, server}) => {
   expect(requests.get('style.css').isNavigationRequest()).toBe(false);
 });
 
-it('should intercept after a service worker', async ({page, server, isAndroid}) => {
+it('should intercept after a service worker', async ({ page, server, isAndroid }) => {
   it.skip(isAndroid);
 
   await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
@@ -83,7 +83,7 @@ it('should work with glob', async () => {
   expect(globToRegex('http://localhost:3000/signin-oidc*').test('http://localhost:3000/signin-oidcnice')).toBeTruthy();
 });
 
-it('should intercept network activity from worker', async function({page, server, isAndroid}) {
+it('should intercept network activity from worker', async function({ page, server, isAndroid }) {
   it.skip(isAndroid);
 
   await page.goto(server.EMPTY_PAGE);
@@ -99,12 +99,12 @@ it('should intercept network activity from worker', async function({page, server
     page.waitForEvent('console'),
     page.evaluate(url => new Worker(URL.createObjectURL(new Blob([`
       fetch("${url}").then(response => response.text()).then(console.log);
-    `], {type: 'application/javascript'}))), url),
+    `], { type: 'application/javascript' }))), url),
   ]);
   expect(msg.text()).toBe('intercepted');
 });
 
-it('should intercept network activity from worker 2', async function({page, server, isElectron, isAndroid}) {
+it('should intercept network activity from worker 2', async function({ page, server, isElectron, isAndroid }) {
   it.skip(isAndroid);
   it.fixme(isElectron);
 
@@ -123,7 +123,7 @@ it('should intercept network activity from worker 2', async function({page, serv
   expect(msg.text()).toBe('intercepted');
 });
 
-it('should work with regular expression passed from a different context', async ({page, server, isElectron}) => {
+it('should work with regular expression passed from a different context', async ({ page, server, isElectron }) => {
   it.skip(isElectron);
 
   const ctx = vm.createContext();

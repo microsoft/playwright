@@ -195,7 +195,7 @@ it('isVisible and isHidden should work', async ({ page }) => {
   expect(await page.isHidden('no-such-element')).toBe(true);
 });
 
-it('element state checks should work for label with zero-sized input', async ({page, server}) => {
+it('element state checks should work for label with zero-sized input', async ({ page, server }) => {
   await page.setContent(`
     <label>
       Click me
@@ -211,7 +211,7 @@ it('element state checks should work for label with zero-sized input', async ({p
   expect(await page.isDisabled('text=Click me')).toBe(true);
 });
 
-it('isVisible should not throw when the DOM element is not connected', async ({page}) => {
+it('isVisible should not throw when the DOM element is not connected', async ({ page }) => {
   await page.setContent(`<div id="root"></div>`);
   await page.evaluate(() => {
     function insert() {
@@ -267,7 +267,7 @@ it('isEditable should work', async ({ page }) => {
   expect(await page.isEditable('textarea')).toBe(false);
 });
 
-it('isChecked should work', async ({page}) => {
+it('isChecked should work', async ({ page }) => {
   await page.setContent(`<input type='checkbox' checked><div>Not a checkbox</div>`);
   const handle = await page.$('input');
   expect(await handle.isChecked()).toBe(true);

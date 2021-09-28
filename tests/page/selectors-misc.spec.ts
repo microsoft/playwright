@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work for open shadow roots', async ({page, server}) => {
+it('should work for open shadow roots', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/deep-shadow.html');
   expect(await page.$eval(`id=target`, e => e.textContent)).toBe('Hello from root2');
   expect(await page.$eval(`data-testid=foo`, e => e.textContent)).toBe('Hello from root1');
@@ -27,7 +27,7 @@ it('should work for open shadow roots', async ({page, server}) => {
   expect(await page.$$(`data-testid:light=foo`)).toEqual([]);
 });
 
-it('should click on links in shadow dom', async ({page, server, browserName, browserMajorVersion, isElectron, isAndroid}) => {
+it('should click on links in shadow dom', async ({ page, server, browserName, browserMajorVersion, isElectron, isAndroid }) => {
   it.fixme(browserName === 'chromium' && browserMajorVersion < 91, 'Remove when crrev.com/864024 gets to the stable channel');
   it.fixme(isAndroid);
   it.fixme(isElectron);
@@ -38,7 +38,7 @@ it('should click on links in shadow dom', async ({page, server, browserName, bro
   expect(await page.evaluate(() => (window as any).clickCount)).toBe(1);
 });
 
-it('should work with :visible', async ({page}) => {
+it('should work with :visible', async ({ page }) => {
   await page.setContent(`
     <section>
       <div id=target1></div>
@@ -58,7 +58,7 @@ it('should work with :visible', async ({page}) => {
   expect(await page.$eval('div:visible', div => div.id)).toBe('target2');
 });
 
-it('should work with >> visible=', async ({page}) => {
+it('should work with >> visible=', async ({ page }) => {
   await page.setContent(`
     <section>
       <div id=target1></div>
@@ -78,7 +78,7 @@ it('should work with >> visible=', async ({page}) => {
   expect(await page.$eval('div >> visible=true', div => div.id)).toBe('target2');
 });
 
-it('should work with :nth-match', async ({page}) => {
+it('should work with :nth-match', async ({ page }) => {
   await page.setContent(`
     <section>
       <div id=target1></div>
@@ -113,7 +113,7 @@ it('should work with :nth-match', async ({page}) => {
   expect(await element.evaluate(e => e.id)).toBe('target3');
 });
 
-it('should work with nth=', async ({page}) => {
+it('should work with nth=', async ({ page }) => {
   await page.setContent(`
     <section>
       <div id=target1></div>
@@ -137,7 +137,7 @@ it('should work with nth=', async ({page}) => {
   expect(await element.evaluate(e => e.id)).toBe('target3');
 });
 
-it('should work with position selectors', async ({page}) => {
+it('should work with position selectors', async ({ page }) => {
   /*
 
        +--+  +--+

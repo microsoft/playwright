@@ -17,7 +17,7 @@
 
 import { browserTest as it, expect } from './config/browserTest';
 
-it('BrowserContext.Events.Request', async ({context, server}) => {
+it('BrowserContext.Events.Request', async ({ context, server }) => {
   const page = await context.newPage();
   const requests = [];
   context.on('request', request => requests.push(request));
@@ -36,7 +36,7 @@ it('BrowserContext.Events.Request', async ({context, server}) => {
   ]);
 });
 
-it('BrowserContext.Events.Response', async ({context, server}) => {
+it('BrowserContext.Events.Response', async ({ context, server }) => {
   const page = await context.newPage();
   const responses = [];
   context.on('response', response => responses.push(response));
@@ -55,7 +55,7 @@ it('BrowserContext.Events.Response', async ({context, server}) => {
   ]);
 });
 
-it('BrowserContext.Events.RequestFailed', async ({context, server}) => {
+it('BrowserContext.Events.RequestFailed', async ({ context, server }) => {
   server.setRoute('/one-style.css', (_, res) => {
     res.setHeader('Content-Type', 'text/css');
     res.connection.destroy();
@@ -72,7 +72,7 @@ it('BrowserContext.Events.RequestFailed', async ({context, server}) => {
 });
 
 
-it('BrowserContext.Events.RequestFinished', async ({context, server}) => {
+it('BrowserContext.Events.RequestFinished', async ({ context, server }) => {
   const page = await context.newPage();
   const [response] = await Promise.all([
     page.goto(server.EMPTY_PAGE),
@@ -86,7 +86,7 @@ it('BrowserContext.Events.RequestFinished', async ({context, server}) => {
   expect(request.failure()).toBe(null);
 });
 
-it('should fire events in proper order', async ({context, server}) => {
+it('should fire events in proper order', async ({ context, server }) => {
   const page = await context.newPage();
   const events = [];
   context.on('request', () => events.push('request'));
@@ -103,7 +103,7 @@ it('should fire events in proper order', async ({context, server}) => {
   ]);
 });
 
-it('should not fire events for favicon or favicon redirects', async ({context, page, server, browserName, channel, headless}) => {
+it('should not fire events for favicon or favicon redirects', async ({ context, page, server, browserName, channel, headless }) => {
   it.skip(headless && browserName !== 'firefox', 'headless browsers, except firefox, do not request favicons');
   it.skip(!headless && browserName === 'webkit' && !channel, 'headed webkit does not have a favicon feature');
   const favicon = `/no-cache/favicon.ico`;

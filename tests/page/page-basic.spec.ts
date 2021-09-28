@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should reject all promises when page is closed', async ({page}) => {
+it('should reject all promises when page is closed', async ({ page }) => {
   let error = null;
   await Promise.all([
     page.evaluate(() => new Promise(r => {})).catch(e => error = e),
@@ -26,13 +26,13 @@ it('should reject all promises when page is closed', async ({page}) => {
   expect(error.message).toContain('Target closed');
 });
 
-it('should set the page close state', async ({page}) => {
+it('should set the page close state', async ({ page }) => {
   expect(page.isClosed()).toBe(false);
   await page.close();
   expect(page.isClosed()).toBe(true);
 });
 
-it('should pass page to close event', async ({page, isAndroid}) => {
+it('should pass page to close event', async ({ page, isAndroid }) => {
   it.fixme(isAndroid);
 
   const [closedPage] = await Promise.all([
@@ -42,7 +42,7 @@ it('should pass page to close event', async ({page, isAndroid}) => {
   expect(closedPage).toBe(page);
 });
 
-it('should terminate network waiters', async ({page, server, isAndroid}) => {
+it('should terminate network waiters', async ({ page, server, isAndroid }) => {
   it.fixme(isAndroid);
   const results = await Promise.all([
     page.waitForRequest(server.EMPTY_PAGE).catch(e => e),
@@ -56,7 +56,7 @@ it('should terminate network waiters', async ({page, server, isAndroid}) => {
   }
 });
 
-it('should be callable twice', async ({page}) => {
+it('should be callable twice', async ({ page }) => {
   await Promise.all([
     page.close(),
     page.close(),
@@ -64,14 +64,14 @@ it('should be callable twice', async ({page}) => {
   await page.close();
 });
 
-it('should fire load when expected', async ({page}) => {
+it('should fire load when expected', async ({ page }) => {
   await Promise.all([
     page.goto('about:blank'),
     page.waitForEvent('load'),
   ]);
 });
 
-it('async stacks should work', async ({page, server}) => {
+it('async stacks should work', async ({ page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     req.socket.end();
   });
@@ -81,7 +81,7 @@ it('async stacks should work', async ({page, server}) => {
   expect(error.stack).toContain(__filename);
 });
 
-it('should provide access to the opener page', async ({page}) => {
+it('should provide access to the opener page', async ({ page }) => {
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => window.open('about:blank')),
@@ -90,7 +90,7 @@ it('should provide access to the opener page', async ({page}) => {
   expect(opener).toBe(page);
 });
 
-it('should return null if parent page has been closed', async ({page}) => {
+it('should return null if parent page has been closed', async ({ page }) => {
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => window.open('about:blank')),
@@ -100,13 +100,13 @@ it('should return null if parent page has been closed', async ({page}) => {
   expect(opener).toBe(null);
 });
 
-it('should fire domcontentloaded when expected', async ({page}) => {
+it('should fire domcontentloaded when expected', async ({ page }) => {
   const navigatedPromise = page.goto('about:blank');
   await page.waitForEvent('domcontentloaded');
   await navigatedPromise;
 });
 
-it('should pass self as argument to domcontentloaded event', async ({page}) => {
+it('should pass self as argument to domcontentloaded event', async ({ page }) => {
   const [eventArg] = await Promise.all([
     new Promise(f => page.on('domcontentloaded', f)),
     page.goto('about:blank')
@@ -114,7 +114,7 @@ it('should pass self as argument to domcontentloaded event', async ({page}) => {
   expect(eventArg).toBe(page);
 });
 
-it('should pass self as argument to load event', async ({page}) => {
+it('should pass self as argument to load event', async ({ page }) => {
   const [eventArg] = await Promise.all([
     new Promise(f => page.on('load', f)),
     page.goto('about:blank')
@@ -122,7 +122,7 @@ it('should pass self as argument to load event', async ({page}) => {
   expect(eventArg).toBe(page);
 });
 
-it('should fail with error upon disconnect', async ({page, isAndroid}) => {
+it('should fail with error upon disconnect', async ({ page, isAndroid }) => {
   it.fixme(isAndroid);
 
   let error;
@@ -132,7 +132,7 @@ it('should fail with error upon disconnect', async ({page, isAndroid}) => {
   expect(error.message).toContain('Page closed');
 });
 
-it('page.url should work', async ({page, server, isElectron}) => {
+it('page.url should work', async ({ page, server, isElectron }) => {
   it.fixme(isElectron);
 
   expect(page.url()).toBe('about:blank');
@@ -140,7 +140,7 @@ it('page.url should work', async ({page, server, isElectron}) => {
   expect(page.url()).toBe(server.EMPTY_PAGE);
 });
 
-it('page.url should include hashes', async ({page, server}) => {
+it('page.url should include hashes', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE + '#hash');
   expect(page.url()).toBe(server.EMPTY_PAGE + '#hash');
   await page.evaluate(() => {
@@ -149,7 +149,7 @@ it('page.url should include hashes', async ({page, server}) => {
   expect(page.url()).toBe(server.EMPTY_PAGE + '#dynamic');
 });
 
-it('page.title should return the page title', async ({page, server}) => {
+it('page.title should return the page title', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/title.html');
   expect(await page.title()).toBe('Woof-Woof');
 });
@@ -169,7 +169,7 @@ it('page.close should work with page.close', async function({ page }) {
   await closedPromise;
 });
 
-it('page.frame should respect name', async function({page}) {
+it('page.frame should respect name', async function({ page }) {
   await page.setContent(`<iframe name=target></iframe>`);
   expect(page.frame({ name: 'bogus' })).toBe(null);
   const frame = page.frame({ name: 'target' });
@@ -177,13 +177,13 @@ it('page.frame should respect name', async function({page}) {
   expect(frame === page.mainFrame().childFrames()[0]).toBeTruthy();
 });
 
-it('page.frame should respect url', async function({page, server}) {
+it('page.frame should respect url', async function({ page, server }) {
   await page.setContent(`<iframe src="${server.EMPTY_PAGE}"></iframe>`);
   expect(page.frame({ url: /bogus/ })).toBe(null);
   expect(page.frame({ url: /empty/ }).url()).toBe(server.EMPTY_PAGE);
 });
 
-it('should have sane user agent', async ({page, browserName, isElectron, isAndroid}) => {
+it('should have sane user agent', async ({ page, browserName, isElectron, isAndroid }) => {
   it.skip(isAndroid);
   it.skip(isElectron);
 
@@ -220,13 +220,13 @@ it('should have sane user agent', async ({page, browserName, isElectron, isAndro
     expect(engine.startsWith('Version/')).toBe(true);
 });
 
-it('page.press should work', async ({page, server}) => {
+it('page.press should work', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.press('textarea', 'a');
   expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('a');
 });
 
-it('page.press should work for Enter', async ({page}) => {
+it('page.press should work for Enter', async ({ page }) => {
   await page.setContent(`<input onkeypress="console.log('press')"></input>`);
   const messages = [];
   page.on('console', message => messages.push(message));
@@ -234,7 +234,7 @@ it('page.press should work for Enter', async ({page}) => {
   expect(messages[0].text()).toBe('press');
 });
 
-it('frame.press should work', async ({page, server}) => {
+it('frame.press should work', async ({ page, server }) => {
   await page.setContent(`<iframe name=inner src="${server.PREFIX}/input/textarea.html"></iframe>`);
   const frame = page.frame('inner');
   await frame.press('textarea', 'a');

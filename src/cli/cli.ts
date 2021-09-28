@@ -167,7 +167,7 @@ const browsers = [
   { alias: 'wk', name: 'WebKit', type: 'webkit' },
 ];
 
-for (const {alias, name, type} of browsers) {
+for (const { alias, name, type } of browsers) {
   commandWithOpenOptions(`${alias} [url]`, `open page in ${name}`, [])
       .action(function(url, command) {
         open({ ...command, browser: type }, url, command.target).catch(logErrorAndExit);

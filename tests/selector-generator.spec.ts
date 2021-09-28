@@ -277,7 +277,7 @@ it.describe('selector generator', () => {
     }
   });
 
-  it('should work with tricky ids', async ({page}) => {
+  it('should work with tricky ids', async ({ page }) => {
     await page.setContent(`<button id="this:is-my-tricky.id"><span></span></button>`);
     expect(await generate(page, 'button')).toBe('[id="this:is-my-tricky.id"]');
   });

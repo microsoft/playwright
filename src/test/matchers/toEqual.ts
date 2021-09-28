@@ -33,7 +33,7 @@ export async function toEqual<T>(
   receiverType: string,
   query: (isNot: boolean, timeout: number) => Promise<{ pass: boolean, received?: any, log?: string[] }>,
   expected: T,
-  options: { timeout?: number } = {},
+  options: { timeout?: number, contains?: boolean } = {},
 ) {
   const testInfo = currentTestInfo();
   if (!testInfo)
@@ -41,7 +41,7 @@ export async function toEqual<T>(
   expectType(receiver, receiverType, matcherName);
 
   const matcherOptions = {
-    comment: 'deep equality',
+    comment: options.contains ? '' : 'deep equality',
     isNot: this.isNot,
     promise: this.promise,
   };

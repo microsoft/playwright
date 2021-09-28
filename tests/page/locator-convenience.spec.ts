@@ -151,7 +151,7 @@ it('isEditable should work', async ({ page }) => {
   expect(await page.isEditable('textarea')).toBe(false);
 });
 
-it('isChecked should work', async ({page}) => {
+it('isChecked should work', async ({ page }) => {
   await page.setContent(`<input type='checkbox' checked><div>Not a checkbox</div>`);
   const element = page.locator('input');
   expect(await element.isChecked()).toBe(true);
@@ -163,12 +163,12 @@ it('isChecked should work', async ({page}) => {
   expect(error.message).toContain('Not a checkbox or radio button');
 });
 
-it('allTextContents should work', async ({page}) => {
+it('allTextContents should work', async ({ page }) => {
   await page.setContent(`<div>A</div><div>B</div><div>C</div>`);
   expect(await page.locator('div').allTextContents()).toEqual(['A', 'B', 'C']);
 });
 
-it('allInnerTexts should work', async ({page}) => {
+it('allInnerTexts should work', async ({ page }) => {
   await page.setContent(`<div>A</div><div>B</div><div>C</div>`);
   expect(await page.locator('div').allInnerTexts()).toEqual(['A', 'B', 'C']);
 });

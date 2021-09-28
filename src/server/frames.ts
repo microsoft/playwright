@@ -1256,6 +1256,7 @@ export class Frame extends SdkObject {
           return poller((progress, continuePolling) => {
             if (querySelectorAll) {
               const elements = injected.querySelectorAll(info.parsed, document);
+              progress.logRepeating(`  selector resolved to ${elements.length} element${elements.length === 1 ? '' : 's'}`);
               return callback(progress, elements[0], taskData as T, elements, continuePolling);
             }
 
@@ -1336,7 +1337,7 @@ export class Frame extends SdkObject {
   async extendInjectedScript(source: string, arg?: any): Promise<js.JSHandle> {
     const context = await this._context('main');
     const injectedScriptHandle = await context.injectedScript();
-    return injectedScriptHandle.evaluateHandle((injectedScript, {source, arg}) => {
+    return injectedScriptHandle.evaluateHandle((injectedScript, { source, arg }) => {
       return injectedScript.extend(source, arg);
     }, { source, arg });
   }

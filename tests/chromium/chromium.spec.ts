@@ -21,7 +21,7 @@ import http from 'http';
 import { getUserAgent } from '../../lib/utils/utils';
 import { suppressCertificateWarning } from '../config/utils';
 
-test('should create a worker from a service worker', async ({page, server}) => {
+test('should create a worker from a service worker', async ({ page, server }) => {
   const [worker] = await Promise.all([
     page.context().waitForEvent('serviceworker'),
     page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
@@ -29,7 +29,7 @@ test('should create a worker from a service worker', async ({page, server}) => {
   expect(await worker.evaluate(() => self.toString())).toBe('[object ServiceWorkerGlobalScope]');
 });
 
-test('serviceWorkers() should return current workers', async ({page, server}) => {
+test('serviceWorkers() should return current workers', async ({ page, server }) => {
   const context = page.context();
   const [worker1] = await Promise.all([
     context.waitForEvent('serviceworker'),
@@ -48,7 +48,7 @@ test('serviceWorkers() should return current workers', async ({page, server}) =>
   expect(workers).toContain(worker2);
 });
 
-test('should not create a worker from a shared worker', async ({page, server}) => {
+test('should not create a worker from a shared worker', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   let serviceWorkerCreated;
   page.context().once('serviceworker', () => serviceWorkerCreated = true);
@@ -58,7 +58,7 @@ test('should not create a worker from a shared worker', async ({page, server}) =
   expect(serviceWorkerCreated).not.toBeTruthy();
 });
 
-test('Page.route should work with intervention headers', async ({server, page}) => {
+test('Page.route should work with intervention headers', async ({ server, page }) => {
   server.setRoute('/intervention', (req, res) => res.end(`
     <script>
       document.write('<script src="${server.CROSS_PROCESS_PREFIX}/intervention.js">' + '</scr' + 'ipt>');
@@ -78,7 +78,7 @@ test('Page.route should work with intervention headers', async ({server, page}) 
   expect(serverRequest.headers.intervention).toContain('feature/5718547946799104');
 });
 
-playwrightTest('should close service worker together with the context', async ({browserType, browserOptions, server}) => {
+playwrightTest('should close service worker together with the context', async ({ browserType, browserOptions, server }) => {
   const browser = await browserType.launch(browserOptions);
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -169,7 +169,7 @@ playwrightTest('should connect to existing page with iframe and navigate', async
   }
 });
 
-playwrightTest('should connect to existing service workers', async ({browserType, browserOptions, server}, testInfo) => {
+playwrightTest('should connect to existing service workers', async ({ browserType, browserOptions, server }, testInfo) => {
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({
     ...browserOptions,
@@ -199,7 +199,7 @@ playwrightTest('should connect to existing service workers', async ({browserType
   }
 });
 
-playwrightTest('should connect over a ws endpoint', async ({browserType, browserOptions, server}, testInfo) => {
+playwrightTest('should connect over a ws endpoint', async ({ browserType, browserOptions, server }, testInfo) => {
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({
     ...browserOptions,
@@ -232,7 +232,7 @@ playwrightTest('should connect over a ws endpoint', async ({browserType, browser
   }
 });
 
-playwrightTest('should send extra headers with connect request', async ({browserType, browserOptions, server}, testInfo) => {
+playwrightTest('should send extra headers with connect request', async ({ browserType, browserOptions, server }, testInfo) => {
   {
     const [request] = await Promise.all([
       server.waitForWebSocketConnectionRequest(),
@@ -265,7 +265,7 @@ playwrightTest('should send extra headers with connect request', async ({browser
   }
 });
 
-playwrightTest('should send default User-Agent header with connect request', async ({browserType, browserOptions, server}, testInfo) => {
+playwrightTest('should send default User-Agent header with connect request', async ({ browserType, browserOptions, server }, testInfo) => {
   {
     const [request] = await Promise.all([
       server.waitForWebSocketConnectionRequest(),

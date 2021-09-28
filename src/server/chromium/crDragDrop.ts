@@ -28,7 +28,7 @@ declare global {
 export class DragManager {
   private _crPage: CRPage;
   private _dragState: Protocol.Input.DragData | null = null;
-  private _lastPosition = {x: 0, y: 0};
+  private _lastPosition = { x: 0, y: 0 };
   constructor(page: CRPage) {
     this._crPage = page;
   }
@@ -50,7 +50,7 @@ export class DragManager {
   }
 
   async interceptDragCausedByMove(x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, moveCallback: () => Promise<void>): Promise<void> {
-    this._lastPosition = {x, y};
+    this._lastPosition = { x, y };
     if (this._dragState) {
       await this._crPage._mainFrameSession._client.send('Input.dispatchDragEvent', {
         type: 'dragOver',
@@ -75,15 +75,15 @@ export class DragManager {
         const dragListener = (event: Event) => dragEvent = event;
         const mouseListener = () => {
           didStartDrag = new Promise<boolean>(callback => {
-            window.addEventListener('dragstart', dragListener, {once: true, capture: true});
+            window.addEventListener('dragstart', dragListener, { once: true, capture: true });
             setTimeout(() => callback(dragEvent ? !dragEvent.defaultPrevented : false), 0);
           });
         };
-        window.addEventListener('mousemove', mouseListener, {once: true, capture: true});
+        window.addEventListener('mousemove', mouseListener, { once: true, capture: true });
         window.__cleanupDrag = async () => {
           const val = await didStartDrag;
-          window.removeEventListener('mousemove', mouseListener, {capture: true});
-          window.removeEventListener('dragstart', dragListener, {capture: true});
+          window.removeEventListener('mousemove', mouseListener, { capture: true });
+          window.removeEventListener('dragstart', dragListener, { capture: true });
           return val;
         };
       }).toString(), true, 'utility').catch(() => {});
@@ -91,7 +91,7 @@ export class DragManager {
 
     client.on('Input.dragIntercepted', onDragIntercepted!);
     try {
-      await client.send('Input.setInterceptDrags', {enabled: true});
+      await client.send('Input.setInterceptDrags', { enabled: true });
     } catch {
       // If Input.setInterceptDrags is not supported, just do a regular move.
       // This can be removed once we stop supporting old Electron.
@@ -105,7 +105,7 @@ export class DragManager {
     }))).some(x => x);
     this._dragState = expectingDrag ? (await dragInterceptedPromise).data : null;
     client.off('Input.dragIntercepted', onDragIntercepted!);
-    await client.send('Input.setInterceptDrags', {enabled: false});
+    await client.send('Input.setInterceptDrags', { enabled: false });
 
 
     if (this._dragState) {

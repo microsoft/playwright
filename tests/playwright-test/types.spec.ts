@@ -16,7 +16,7 @@
 
 import { test, expect } from './playwright-test-fixtures';
 
-test('should check types of fixtures', async ({runTSC}) => {
+test('should check types of fixtures', async ({ runTSC }) => {
   const result = await runTSC({
     'helper.ts': `
       export type MyOptions = { foo: string, bar: number };
@@ -165,7 +165,7 @@ test('should check types of fixtures', async ({runTSC}) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('config should allow void/empty options', async ({runTSC}) => {
+test('config should allow void/empty options', async ({ runTSC }) => {
   const result = await runTSC({
     'playwright.config.ts': `
       const configs: pwt.Config[] = [];

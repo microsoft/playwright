@@ -27,7 +27,7 @@ export const Expandable: React.FunctionComponent<{
     <div className='expandable-title' style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', whiteSpace: 'nowrap' }}>
       <div
         className={'codicon codicon-' + (expanded ? 'chevron-down' : 'chevron-right')}
-        style={{ cursor: 'pointer', color: 'var(--color)', marginRight: '4px'}}
+        style={{ cursor: 'pointer', color: 'var(--color)', marginRight: '4px' }}
         onClick={() => setExpanded(!expanded)} />
       {title}
     </div>

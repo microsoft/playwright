@@ -45,7 +45,7 @@ it('should work', async ({ browser, browserName }) => {
   }
 });
 
-it('should throw for invalid timezone IDs when creating pages', async ({browser}) => {
+it('should throw for invalid timezone IDs when creating pages', async ({ browser }) => {
   for (const timezoneId of ['Foo/Bar', 'Baz/Qux']) {
     let error = null;
     const context = await browser.newContext({ timezoneId });
@@ -55,7 +55,7 @@ it('should throw for invalid timezone IDs when creating pages', async ({browser}
   }
 });
 
-it('should work for multiple pages sharing same process', async ({browser, server}) => {
+it('should work for multiple pages sharing same process', async ({ browser, server }) => {
   const context = await browser.newContext({ timezoneId: 'Europe/Moscow' });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -70,7 +70,7 @@ it('should work for multiple pages sharing same process', async ({browser, serve
   await context.close();
 });
 
-it('should not change default timezone in another context', async ({browser, server}) => {
+it('should not change default timezone in another context', async ({ browser, server }) => {
   async function getContextTimezone(context) {
     const page = await context.newPage();
     return await page.evaluate(() => Intl.DateTimeFormat().resolvedOptions().timeZone);
@@ -84,7 +84,7 @@ it('should not change default timezone in another context', async ({browser, ser
   }
   const timezoneOverride = defaultTimezone === 'Europe/Moscow' ? 'America/Los_Angeles' : 'Europe/Moscow';
   {
-    const context = await browser.newContext({ timezoneId: timezoneOverride});
+    const context = await browser.newContext({ timezoneId: timezoneOverride });
     expect(await getContextTimezone(context)).toBe(timezoneOverride);
     await context.close();
   }

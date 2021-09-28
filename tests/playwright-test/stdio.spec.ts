@@ -16,7 +16,7 @@
 
 import { test, expect } from './playwright-test-fixtures';
 
-test('should get top level stdio', async ({runInlineTest}) => {
+test('should get top level stdio', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.js': `
       const { test } = pwt;
@@ -39,7 +39,7 @@ test('should get top level stdio', async ({runInlineTest}) => {
   ]);
 });
 
-test('should get stdio from env afterAll', async ({runInlineTest}) => {
+test('should get stdio from env afterAll', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
       export const test = pwt.test.extend({
@@ -61,7 +61,7 @@ test('should get stdio from env afterAll', async ({runInlineTest}) => {
   ]);
 });
 
-test('should ignore stdio when quiet', async ({runInlineTest}) => {
+test('should ignore stdio when quiet', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { quiet: true };

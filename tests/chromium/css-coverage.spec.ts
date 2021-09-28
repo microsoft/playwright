@@ -16,20 +16,20 @@
 
 import { contextTest as it, expect } from '../config/browserTest';
 
-it('should work', async function({page, server}) {
+it('should work', async function({ page, server }) {
   await page.coverage.startCSSCoverage();
   await page.goto(server.PREFIX + '/csscoverage/simple.html');
   const coverage = await page.coverage.stopCSSCoverage();
   expect(coverage.length).toBe(1);
   expect(coverage[0].url).toContain('/csscoverage/simple.html');
   expect(coverage[0].ranges).toEqual([
-    {start: 1, end: 22}
+    { start: 1, end: 22 }
   ]);
   const range = coverage[0].ranges[0];
   expect(coverage[0].text.substring(range.start, range.end)).toBe('div { color: green; }');
 });
 
-it('should report sourceURLs', async function({page, server}) {
+it('should report sourceURLs', async function({ page, server }) {
   await page.coverage.startCSSCoverage();
   await page.goto(server.PREFIX + '/csscoverage/sourceurl.html');
   const coverage = await page.coverage.stopCSSCoverage();
@@ -37,7 +37,7 @@ it('should report sourceURLs', async function({page, server}) {
   expect(coverage[0].url).toBe('nicename.css');
 });
 
-it('should report multiple stylesheets', async function({page, server}) {
+it('should report multiple stylesheets', async function({ page, server }) {
   await page.coverage.startCSSCoverage();
   await page.goto(server.PREFIX + '/csscoverage/multiple.html');
   const coverage = await page.coverage.stopCSSCoverage();
@@ -47,7 +47,7 @@ it('should report multiple stylesheets', async function({page, server}) {
   expect(coverage[1].url).toContain('/csscoverage/stylesheet2.css');
 });
 
-it('should report stylesheets that have no coverage', async function({page, server}) {
+it('should report stylesheets that have no coverage', async function({ page, server }) {
   await page.coverage.startCSSCoverage();
   await page.goto(server.PREFIX + '/csscoverage/unused.html');
   const coverage = await page.coverage.stopCSSCoverage();
@@ -56,18 +56,18 @@ it('should report stylesheets that have no coverage', async function({page, serv
   expect(coverage[0].ranges.length).toBe(0);
 });
 
-it('should work with media queries', async function({page, server}) {
+it('should work with media queries', async function({ page, server }) {
   await page.coverage.startCSSCoverage();
   await page.goto(server.PREFIX + '/csscoverage/media.html');
   const coverage = await page.coverage.stopCSSCoverage();
   expect(coverage.length).toBe(1);
   expect(coverage[0].url).toContain('/csscoverage/media.html');
   expect(coverage[0].ranges).toEqual([
-    {start: 17, end: 38}
+    { start: 17, end: 38 }
   ]);
 });
 
-it('should work with complicated usecases', async function({page, server}) {
+it('should work with complicated usecases', async function({ page, server }) {
   await page.coverage.startCSSCoverage();
   await page.goto(server.PREFIX + '/csscoverage/involved.html');
   const coverage: any = await page.coverage.stopCSSCoverage();
@@ -91,9 +91,9 @@ it('should work with complicated usecases', async function({page, server}) {
   );
 });
 
-it('should ignore injected stylesheets', async function({page, server}) {
+it('should ignore injected stylesheets', async function({ page, server }) {
   await page.coverage.startCSSCoverage();
-  await page.addStyleTag({content: 'body { margin: 10px;}'});
+  await page.addStyleTag({ content: 'body { margin: 10px;}' });
   // trigger style recalc
   const margin = await page.evaluate(() => window.getComputedStyle(document.body).margin);
   expect(margin).toBe('10px');
@@ -101,15 +101,15 @@ it('should ignore injected stylesheets', async function({page, server}) {
   expect(coverage.length).toBe(0);
 });
 
-it('should report stylesheets across navigations', async function({page, server}) {
-  await page.coverage.startCSSCoverage({resetOnNavigation: false});
+it('should report stylesheets across navigations', async function({ page, server }) {
+  await page.coverage.startCSSCoverage({ resetOnNavigation: false });
   await page.goto(server.PREFIX + '/csscoverage/multiple.html');
   await page.goto(server.EMPTY_PAGE);
   const coverage = await page.coverage.stopCSSCoverage();
   expect(coverage.length).toBe(2);
 });
 
-it('should NOT report scripts across navigations', async function({page, server}) {
+it('should NOT report scripts across navigations', async function({ page, server }) {
   await page.coverage.startCSSCoverage(); // Enabled by default.
   await page.goto(server.PREFIX + '/csscoverage/multiple.html');
   await page.goto(server.EMPTY_PAGE);
@@ -117,7 +117,7 @@ it('should NOT report scripts across navigations', async function({page, server}
   expect(coverage.length).toBe(0);
 });
 
-it('should work with a recently loaded stylesheet', async function({page, server}) {
+it('should work with a recently loaded stylesheet', async function({ page, server }) {
   await page.coverage.startCSSCoverage();
   await page.evaluate(async url => {
     document.body.textContent = 'hello, world';

@@ -18,12 +18,12 @@
 import { test as it, expect } from './pageTest';
 import type { Route } from '../../index';
 
-it('should pick up ongoing navigation', async ({page, server}) => {
+it('should pick up ongoing navigation', async ({ page, server }) => {
   let response = null;
   server.setRoute('/one-style.css', (req, res) => response = res);
   await Promise.all([
     server.waitForRequest('/one-style.css'),
-    page.goto(server.PREFIX + '/one-style.html', {waitUntil: 'domcontentloaded'}),
+    page.goto(server.PREFIX + '/one-style.html', { waitUntil: 'domcontentloaded' }),
   ]);
   const waitPromise = page.waitForLoadState();
   response.statusCode = 404;
@@ -31,34 +31,34 @@ it('should pick up ongoing navigation', async ({page, server}) => {
   await waitPromise;
 });
 
-it('should respect timeout', async ({page, server}) => {
+it('should respect timeout', async ({ page, server }) => {
   server.setRoute('/one-style.css', (req, res) => void 0);
-  await page.goto(server.PREFIX + '/one-style.html', {waitUntil: 'domcontentloaded'});
+  await page.goto(server.PREFIX + '/one-style.html', { waitUntil: 'domcontentloaded' });
   const error = await page.waitForLoadState('load', { timeout: 1 }).catch(e => e);
   expect(error.message).toContain('page.waitForLoadState: Timeout 1ms exceeded.');
   expect(error.stack.split('\n')[1]).toContain(__filename);
 });
 
-it('should resolve immediately if loaded', async ({page, server}) => {
+it('should resolve immediately if loaded', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/one-style.html');
   await page.waitForLoadState();
 });
 
-it('should throw for bad state', async ({page, server}) => {
+it('should throw for bad state', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/one-style.html');
   // @ts-expect-error 'bad' is not a valid load state
   const error = await page.waitForLoadState('bad').catch(e => e);
   expect(error.message).toContain(`state: expected one of (load|domcontentloaded|networkidle)`);
 });
 
-it('should resolve immediately if load state matches', async ({page, server}) => {
+it('should resolve immediately if load state matches', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/one-style.css', (req, res) => void 0);
-  await page.goto(server.PREFIX + '/one-style.html', {waitUntil: 'domcontentloaded'});
+  await page.goto(server.PREFIX + '/one-style.html', { waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('domcontentloaded');
 });
 
-it('should work with pages that have loaded before being connected to', async ({page, server}) => {
+it('should work with pages that have loaded before being connected to', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
@@ -70,7 +70,7 @@ it('should work with pages that have loaded before being connected to', async ({
   expect(popup.url()).toBe(server.EMPTY_PAGE);
 });
 
-it('should wait for load state of empty url popup', async ({page, browserName}) => {
+it('should wait for load state of empty url popup', async ({ page, browserName }) => {
   const [popup, readyState] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => {
@@ -83,7 +83,7 @@ it('should wait for load state of empty url popup', async ({page, browserName}) 
   expect(await popup.evaluate(() => document.readyState)).toBe(browserName === 'firefox' ? 'uninitialized' : 'complete');
 });
 
-it('should wait for load state of about:blank popup ', async ({page}) => {
+it('should wait for load state of about:blank popup ', async ({ page }) => {
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => window.open('about:blank') && 1),
@@ -92,7 +92,7 @@ it('should wait for load state of about:blank popup ', async ({page}) => {
   expect(await popup.evaluate(() => document.readyState)).toBe('complete');
 });
 
-it('should wait for load state of about:blank popup with noopener ', async ({page}) => {
+it('should wait for load state of about:blank popup with noopener ', async ({ page }) => {
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => window.open('about:blank', null, 'noopener') && 1),
@@ -101,7 +101,7 @@ it('should wait for load state of about:blank popup with noopener ', async ({pag
   expect(await popup.evaluate(() => document.readyState)).toBe('complete');
 });
 
-it('should wait for load state of popup with network url ', async ({page, server}) => {
+it('should wait for load state of popup with network url ', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
@@ -111,7 +111,7 @@ it('should wait for load state of popup with network url ', async ({page, server
   expect(await popup.evaluate(() => document.readyState)).toBe('complete');
 });
 
-it('should wait for load state of popup with network url and noopener ', async ({page, server}) => {
+it('should wait for load state of popup with network url and noopener ', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
@@ -121,7 +121,7 @@ it('should wait for load state of popup with network url and noopener ', async (
   expect(await popup.evaluate(() => document.readyState)).toBe('complete');
 });
 
-it('should work with clicking target=_blank', async ({page, server}) => {
+it('should work with clicking target=_blank', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<a target=_blank rel="opener" href="/one-style.html">yo</a>');
   const [popup] = await Promise.all([
@@ -132,7 +132,7 @@ it('should work with clicking target=_blank', async ({page, server}) => {
   expect(await popup.evaluate(() => document.readyState)).toBe('complete');
 });
 
-it('should wait for load state of newPage', async ({page, server, isElectron}) => {
+it('should wait for load state of newPage', async ({ page, server, isElectron }) => {
   it.fixme(isElectron, 'BrowserContext.newPage does not work in Electron');
 
   const [newPage] = await Promise.all([
@@ -143,7 +143,7 @@ it('should wait for load state of newPage', async ({page, server, isElectron}) =
   expect(await newPage.evaluate(() => document.readyState)).toBe('complete');
 });
 
-it('should resolve after popup load', async ({page, server}) => {
+it('should resolve after popup load', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   // Stall the 'load' by delaying css.
   let cssResponse;
@@ -165,12 +165,12 @@ it('should resolve after popup load', async ({page, server}) => {
   expect(popup.url()).toBe(server.PREFIX + '/one-style.html');
 });
 
-it('should work for frame', async ({page, server}) => {
+it('should work for frame', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   const frame = page.frames()[1];
 
   const requestPromise = new Promise<Route>(resolve => page.route(server.PREFIX + '/one-style.css',resolve));
-  await frame.goto(server.PREFIX + '/one-style.html', {waitUntil: 'domcontentloaded'});
+  await frame.goto(server.PREFIX + '/one-style.html', { waitUntil: 'domcontentloaded' });
   const request = await requestPromise;
   let resolved = false;
   const loadPromise = frame.waitForLoadState().then(() => resolved = true);

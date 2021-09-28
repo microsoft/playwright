@@ -18,7 +18,7 @@
 import { test as it, expect } from './pageTest';
 import fs from 'fs';
 
-it('should work', async ({page, server}) => {
+it('should work', async ({ page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('foo', 'bar');
     res.setHeader('BaZ', 'bAz');
@@ -30,7 +30,7 @@ it('should work', async ({page, server}) => {
   expect((await response.allHeaders())['BaZ']).toBe(undefined);
 });
 
-it('should return multiple header value', async ({page, server, browserName, platform}) => {
+it('should return multiple header value', async ({ page, server, browserName, platform }) => {
   it.fixme(browserName === 'webkit' && platform === 'win32', 'libcurl does not support non-set-cookie multivalue headers');
   server.setRoute('/headers', (req, res) => {
     // Headers array is only supported since Node v14.14.0 so we write directly to the socket.
@@ -49,19 +49,19 @@ it('should return multiple header value', async ({page, server, browserName, pla
   expect(response.headers()['name-a']).toBe('v1, v2, v3');
 });
 
-it('should return text', async ({page, server}) => {
+it('should return text', async ({ page, server }) => {
   const response = await page.goto(server.PREFIX + '/simple.json');
   expect(await response.text()).toBe('{"foo": "bar"}\n');
 });
 
-it('should return uncompressed text', async ({page, server}) => {
+it('should return uncompressed text', async ({ page, server }) => {
   server.enableGzip('/simple.json');
   const response = await page.goto(server.PREFIX + '/simple.json');
   expect(response.headers()['content-encoding']).toBe('gzip');
   expect(await response.text()).toBe('{"foo": "bar"}\n');
 });
 
-it('should throw when requesting body of redirected response', async ({page, server}) => {
+it('should throw when requesting body of redirected response', async ({ page, server }) => {
   server.setRedirect('/foo.html', '/empty.html');
   const response = await page.goto(server.PREFIX + '/foo.html');
   const redirectedFrom = response.request().redirectedFrom();
@@ -73,7 +73,7 @@ it('should throw when requesting body of redirected response', async ({page, ser
   expect(error.message).toContain('Response body is unavailable for redirect responses');
 });
 
-it('should wait until response completes', async ({page, server}) => {
+it('should wait until response completes', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   // Setup server to trap request.
   let serverResponse = null;
@@ -90,7 +90,7 @@ it('should wait until response completes', async ({page, server}) => {
   // send request and wait for server response
   const [pageResponse] = await Promise.all([
     page.waitForEvent('response'),
-    page.evaluate(() => fetch('./get', { method: 'GET'})),
+    page.evaluate(() => fetch('./get', { method: 'GET' })),
     server.waitForRequest('/get'),
   ]);
 
@@ -107,7 +107,7 @@ it('should wait until response completes', async ({page, server}) => {
   expect(await responseText).toBe('hello world!');
 });
 
-it('should reject response.finished if page closes', async ({page, server}) => {
+it('should reject response.finished if page closes', async ({ page, server }) => {
   it.fixme();
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/get', (req, res) => {
@@ -119,7 +119,7 @@ it('should reject response.finished if page closes', async ({page, server}) => {
   // send request and wait for server response
   const [pageResponse] = await Promise.all([
     page.waitForEvent('response'),
-    page.evaluate(() => fetch('./get', { method: 'GET'})),
+    page.evaluate(() => fetch('./get', { method: 'GET' })),
   ]);
 
   const finishPromise = pageResponse.finished().catch(e => e);
@@ -128,7 +128,7 @@ it('should reject response.finished if page closes', async ({page, server}) => {
   expect(error.message).toContain('closed');
 });
 
-it('should reject response.finished if context closes', async ({page, server}) => {
+it('should reject response.finished if context closes', async ({ page, server }) => {
   it.fixme();
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/get', (req, res) => {
@@ -140,7 +140,7 @@ it('should reject response.finished if context closes', async ({page, server}) =
   // send request and wait for server response
   const [pageResponse] = await Promise.all([
     page.waitForEvent('response'),
-    page.evaluate(() => fetch('./get', { method: 'GET'})),
+    page.evaluate(() => fetch('./get', { method: 'GET' })),
   ]);
 
   const finishPromise = pageResponse.finished().catch(e => e);
@@ -149,19 +149,19 @@ it('should reject response.finished if context closes', async ({page, server}) =
   expect(error.message).toContain('closed');
 });
 
-it('should return json', async ({page, server}) => {
+it('should return json', async ({ page, server }) => {
   const response = await page.goto(server.PREFIX + '/simple.json');
-  expect(await response.json()).toEqual({foo: 'bar'});
+  expect(await response.json()).toEqual({ foo: 'bar' });
 });
 
-it('should return body', async ({page, server, asset}) => {
+it('should return body', async ({ page, server, asset }) => {
   const response = await page.goto(server.PREFIX + '/pptr.png');
   const imageBuffer = fs.readFileSync(asset('pptr.png'));
   const responseBuffer = await response.body();
   expect(responseBuffer.equals(imageBuffer)).toBe(true);
 });
 
-it('should return body with compression', async ({page, server, asset}) => {
+it('should return body with compression', async ({ page, server, asset }) => {
   server.enableGzip('/pptr.png');
   const response = await page.goto(server.PREFIX + '/pptr.png');
   const imageBuffer = fs.readFileSync(asset('pptr.png'));
@@ -169,7 +169,7 @@ it('should return body with compression', async ({page, server, asset}) => {
   expect(responseBuffer.equals(imageBuffer)).toBe(true);
 });
 
-it('should return status text', async ({page, server}) => {
+it('should return status text', async ({ page, server }) => {
   server.setRoute('/cool', (req, res) => {
     res.writeHead(200, 'cool!');
     res.end();

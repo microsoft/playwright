@@ -16,7 +16,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work', async ({page}) => {
+it('should work', async ({ page }) => {
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => window['__popup'] = window.open('about:blank')),
@@ -25,7 +25,7 @@ it('should work', async ({page}) => {
   expect(await popup.evaluate(() => !!window.opener)).toBe(true);
 });
 
-it('should work with window features', async ({page, server}) => {
+it('should work with window features', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
@@ -35,7 +35,7 @@ it('should work with window features', async ({page, server}) => {
   expect(await popup.evaluate(() => !!window.opener)).toBe(true);
 });
 
-it('should emit for immediately closed popups', async ({page}) => {
+it('should emit for immediately closed popups', async ({ page }) => {
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => {
@@ -46,7 +46,7 @@ it('should emit for immediately closed popups', async ({page}) => {
   expect(popup).toBeTruthy();
 });
 
-it('should emit for immediately closed popups 2', async ({page, server, browserName, video}) => {
+it('should emit for immediately closed popups 2', async ({ page, server, browserName, video }) => {
   it.fixme(browserName === 'firefox' && video);
 
   await page.goto(server.EMPTY_PAGE);
@@ -60,7 +60,7 @@ it('should emit for immediately closed popups 2', async ({page, server, browserN
   expect(popup).toBeTruthy();
 });
 
-it('should be able to capture alert', async ({page}) => {
+it('should be able to capture alert', async ({ page }) => {
   const evaluatePromise = page.evaluate(() => {
     const win = window.open('');
     win.alert('hello');
@@ -72,7 +72,7 @@ it('should be able to capture alert', async ({page}) => {
   await evaluatePromise;
 });
 
-it('should work with empty url', async ({page}) => {
+it('should work with empty url', async ({ page }) => {
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => window['__popup'] = window.open('')),
@@ -81,7 +81,7 @@ it('should work with empty url', async ({page}) => {
   expect(await popup.evaluate(() => !!window.opener)).toBe(true);
 });
 
-it('should work with noopener and no url', async ({page}) => {
+it('should work with noopener and no url', async ({ page }) => {
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => window['__popup'] = window.open(undefined, null, 'noopener')),
@@ -92,7 +92,7 @@ it('should work with noopener and no url', async ({page}) => {
   expect(await popup.evaluate(() => !!window.opener)).toBe(false);
 });
 
-it('should work with noopener and about:blank', async ({page}) => {
+it('should work with noopener and about:blank', async ({ page }) => {
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => window['__popup'] = window.open('about:blank', null, 'noopener')),
@@ -101,7 +101,7 @@ it('should work with noopener and about:blank', async ({page}) => {
   expect(await popup.evaluate(() => !!window.opener)).toBe(false);
 });
 
-it('should work with noopener and url', async ({page, server}) => {
+it('should work with noopener and url', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
@@ -111,7 +111,7 @@ it('should work with noopener and url', async ({page, server}) => {
   expect(await popup.evaluate(() => !!window.opener)).toBe(false);
 });
 
-it('should work with clicking target=_blank', async ({page, server}) => {
+it('should work with clicking target=_blank', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<a target=_blank rel="opener" href="/one-style.html">yo</a>');
   const [popup] = await Promise.all([
@@ -122,7 +122,7 @@ it('should work with clicking target=_blank', async ({page, server}) => {
   expect(await popup.evaluate(() => !!window.opener)).toBe(true);
 });
 
-it('should work with fake-clicking target=_blank and rel=noopener', async ({page, server}) => {
+it('should work with fake-clicking target=_blank and rel=noopener', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
   const [popup] = await Promise.all([
@@ -133,7 +133,7 @@ it('should work with fake-clicking target=_blank and rel=noopener', async ({page
   expect(await popup.evaluate(() => !!window.opener)).toBe(false);
 });
 
-it('should work with clicking target=_blank and rel=noopener', async ({page, server}) => {
+it('should work with clicking target=_blank and rel=noopener', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
   const [popup] = await Promise.all([
@@ -144,7 +144,7 @@ it('should work with clicking target=_blank and rel=noopener', async ({page, ser
   expect(await popup.evaluate(() => !!window.opener)).toBe(false);
 });
 
-it('should not treat navigations as new popups', async ({page, server}) => {
+it('should not treat navigations as new popups', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
   const [popup] = await Promise.all([

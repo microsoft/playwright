@@ -210,7 +210,7 @@ function findVueRoots(): VueRoot[] {
   // Vue3 roots are marked with [data-v-app] attribute
   for (const node of document.querySelectorAll('[data-v-app]')) {
     if ((node as any)._vnode && (node as any)._vnode.component)
-      roots.push({root: (node as any)._vnode.component, version: 3});
+      roots.push({ root: (node as any)._vnode.component, version: 3 });
   }
   // Vue2 roots are referred to from elements.
   const walker = document.createTreeWalker(document, NodeFilter.SHOW_ELEMENT);
@@ -231,7 +231,7 @@ function findVueRoots(): VueRoot[] {
 
 export const VueEngine: SelectorEngine = {
   queryAll(scope: SelectorRoot, selector: string): Element[] {
-    const {name, attributes} = parseComponentSelector(selector);
+    const { name, attributes } = parseComponentSelector(selector);
     const vueRoots = findVueRoots();
     const trees = vueRoots.map(vueRoot => vueRoot.version === 3 ? buildComponentsTreeVue3(vueRoot.root) : buildComponentsTreeVue2(vueRoot.root));
     const treeNodes = trees.map(tree => filterComponentsTree(tree, treeNode => {

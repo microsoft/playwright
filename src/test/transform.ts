@@ -92,7 +92,7 @@ export function installTransform(): () => void {
       sourceMaps: 'both',
     } as babel.TransformOptions)!;
     if (result.code) {
-      fs.mkdirSync(path.dirname(cachePath), {recursive: true});
+      fs.mkdirSync(path.dirname(cachePath), { recursive: true });
       if (result.map)
         fs.writeFileSync(sourceMapPath, JSON.stringify(result.map), 'utf8');
       fs.writeFileSync(codePath, result.code, 'utf8');

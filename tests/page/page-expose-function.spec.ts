@@ -18,7 +18,7 @@
 import { test as it, expect } from './pageTest';
 import type { ElementHandle } from '../../index';
 
-it('exposeBinding should work', async ({page}) => {
+it('exposeBinding should work', async ({ page }) => {
   let bindingSource;
   await page.exposeBinding('add', (source, a, b) => {
     bindingSource = source;
@@ -33,7 +33,7 @@ it('exposeBinding should work', async ({page}) => {
   expect(result).toEqual(11);
 });
 
-it('should work', async ({page, server}) => {
+it('should work', async ({ page, server }) => {
   await page.exposeFunction('compute', function(a, b) {
     return a * b;
   });
@@ -43,7 +43,7 @@ it('should work', async ({page, server}) => {
   expect(result).toBe(36);
 });
 
-it('should work with handles and complex objects', async ({page, server}) => {
+it('should work with handles and complex objects', async ({ page, server }) => {
   const fooHandle = await page.evaluateHandle(() => {
     window['fooValue'] = { bar: 2 };
     return window['fooValue'];
@@ -59,22 +59,22 @@ it('should work with handles and complex objects', async ({page, server}) => {
   expect(equals).toBe(true);
 });
 
-it('should throw exception in page context', async ({page, server}) => {
+it('should throw exception in page context', async ({ page, server }) => {
   await page.exposeFunction('woof', function() {
     throw new Error('WOOF WOOF');
   });
-  const {message, stack} = await page.evaluate(async () => {
+  const { message, stack } = await page.evaluate(async () => {
     try {
       await window['woof']();
     } catch (e) {
-      return {message: e.message, stack: e.stack};
+      return { message: e.message, stack: e.stack };
     }
   });
   expect(message).toBe('WOOF WOOF');
   expect(stack).toContain(__filename);
 });
 
-it('should support throwing "null"', async ({page, server}) => {
+it('should support throwing "null"', async ({ page, server }) => {
   await page.exposeFunction('woof', function() {
     throw null;
   });
@@ -88,7 +88,7 @@ it('should support throwing "null"', async ({page, server}) => {
   expect(thrown).toBe(null);
 });
 
-it('should be callable from-inside addInitScript', async ({page, server}) => {
+it('should be callable from-inside addInitScript', async ({ page, server }) => {
   let called = false;
   await page.exposeFunction('woof', function() {
     called = true;
@@ -98,7 +98,7 @@ it('should be callable from-inside addInitScript', async ({page, server}) => {
   expect(called).toBe(true);
 });
 
-it('should survive navigation', async ({page, server}) => {
+it('should survive navigation', async ({ page, server }) => {
   await page.exposeFunction('compute', function(a, b) {
     return a * b;
   });
@@ -110,7 +110,7 @@ it('should survive navigation', async ({page, server}) => {
   expect(result).toBe(36);
 });
 
-it('should await returned promise', async ({page, server}) => {
+it('should await returned promise', async ({ page, server }) => {
   await page.exposeFunction('compute', function(a, b) {
     return Promise.resolve(a * b);
   });
@@ -121,7 +121,7 @@ it('should await returned promise', async ({page, server}) => {
   expect(result).toBe(15);
 });
 
-it('should work on frames', async ({page, server}) => {
+it('should work on frames', async ({ page, server }) => {
   await page.exposeFunction('compute', function(a, b) {
     return Promise.resolve(a * b);
   });
@@ -134,7 +134,7 @@ it('should work on frames', async ({page, server}) => {
   expect(result).toBe(15);
 });
 
-it('should work on frames before navigation', async ({page, server}) => {
+it('should work on frames before navigation', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/nested-frames.html');
   await page.exposeFunction('compute', function(a, b) {
     return Promise.resolve(a * b);
@@ -147,7 +147,7 @@ it('should work on frames before navigation', async ({page, server}) => {
   expect(result).toBe(15);
 });
 
-it('should work after cross origin navigation', async ({page, server}) => {
+it('should work after cross origin navigation', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.exposeFunction('compute', function(a, b) {
     return a * b;
@@ -160,15 +160,15 @@ it('should work after cross origin navigation', async ({page, server}) => {
   expect(result).toBe(36);
 });
 
-it('should work with complex objects', async ({page, server}) => {
+it('should work with complex objects', async ({ page, server }) => {
   await page.exposeFunction('complexObject', function(a, b) {
-    return {x: a.x + b.x};
+    return { x: a.x + b.x };
   });
-  const result = await page.evaluate(async () => window['complexObject']({x: 5}, {x: 2}));
+  const result = await page.evaluate(async () => window['complexObject']({ x: 5 }, { x: 2 }));
   expect(result.x).toBe(7);
 });
 
-it('exposeBindingHandle should work', async ({page}) => {
+it('exposeBindingHandle should work', async ({ page }) => {
   let target;
   await page.exposeBinding('logme', (source, t) => {
     target = t;
@@ -181,7 +181,7 @@ it('exposeBindingHandle should work', async ({page}) => {
   expect(result).toEqual(17);
 });
 
-it('exposeBindingHandle should not throw during navigation', async ({page, server}) => {
+it('exposeBindingHandle should not throw during navigation', async ({ page, server }) => {
   await page.exposeBinding('logme', (source, t) => {
     return 17;
   }, { handle: true });
@@ -195,13 +195,13 @@ it('exposeBindingHandle should not throw during navigation', async ({page, serve
   ]);
 });
 
-it('should throw for duplicate registrations', async ({page}) => {
+it('should throw for duplicate registrations', async ({ page }) => {
   await page.exposeFunction('foo', () => {});
   const error = await page.exposeFunction('foo', () => {}).catch(e => e);
   expect(error.message).toContain('page.exposeFunction: Function "foo" has been already registered');
 });
 
-it('exposeBindingHandle should throw for multiple arguments', async ({page}) => {
+it('exposeBindingHandle should throw for multiple arguments', async ({ page }) => {
   await page.exposeBinding('logme', (source, t) => {
     return 17;
   }, { handle: true });
@@ -221,7 +221,7 @@ it('exposeBindingHandle should throw for multiple arguments', async ({page}) => 
   expect(error.message).toContain('exposeBindingHandle supports a single argument, 2 received');
 });
 
-it('should not result in unhandled rejection', async ({page, isAndroid}) => {
+it('should not result in unhandled rejection', async ({ page, isAndroid }) => {
   it.fixme(isAndroid);
 
   const closedPromise = page.waitForEvent('close');
@@ -237,7 +237,7 @@ it('should not result in unhandled rejection', async ({page, isAndroid}) => {
   expect(await page.evaluate('1 + 1').catch(e => e)).toBeInstanceOf(Error);
 });
 
-it('exposeBinding(handle) should work with element handles', async ({ page}) => {
+it('exposeBinding(handle) should work with element handles', async ({ page }) => {
   let cb;
   const promise = new Promise(f => cb = f);
   await page.exposeBinding('clicked', async (source, element: ElementHandle) => {
@@ -254,7 +254,7 @@ it('exposeBinding(handle) should work with element handles', async ({ page}) => 
   expect(await promise).toBe('Click me');
 });
 
-it('should work with setContent', async ({page, server}) => {
+it('should work with setContent', async ({ page, server }) => {
   await page.exposeFunction('compute', function(a, b) {
     return Promise.resolve(a * b);
   });
