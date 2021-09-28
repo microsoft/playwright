@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-import {
-  iterableEquality
-} from 'expect/build/utils';
 import { currentTestInfo } from '../globals';
 import type { Expect } from '../types';
-import { expectType, pollUntilDeadline } from '../util';
+import { expectType } from '../util';
+import { callLogText } from './toMatchText';
 
 // Omit colon and one or more spaces, so can call getLabelPrinter.
 const EXPECTED_LABEL = 'Expected';
@@ -28,21 +26,14 @@ const RECEIVED_LABEL = 'Received';
 // The optional property of matcher context is true if undefined.
 const isExpand = (expand?: boolean): boolean => expand !== false;
 
-function regExpTester(a: any, b: any): boolean | undefined {
-  if (typeof a === 'string' && b instanceof RegExp) {
-    b.lastIndex = 0;
-    return b.test(a);
-  }
-}
-
 export async function toEqual<T>(
   this: ReturnType<Expect['getState']>,
   matcherName: string,
   receiver: any,
   receiverType: string,
-  query: (timeout: number) => Promise<T>,
+  query: (isNot: boolean, timeout: number) => Promise<{ pass: boolean, received?: any, log?: string[] }>,
   expected: T,
-  options: { timeout?: number } = {},
+  options: { timeout?: number, contains?: boolean } = {},
 ) {
   const testInfo = currentTestInfo();
   if (!testInfo)
@@ -50,19 +41,17 @@ export async function toEqual<T>(
   expectType(receiver, receiverType, matcherName);
 
   const matcherOptions = {
-    comment: 'deep equality',
+    comment: options.contains ? '' : 'deep equality',
     isNot: this.isNot,
     promise: this.promise,
   };
 
-  let received: T | undefined = undefined;
-  let pass = false;
+  let defaultExpectTimeout = testInfo.project.expect?.timeout;
+  if (typeof defaultExpectTimeout === 'undefined')
+    defaultExpectTimeout = 5000;
+  const timeout = options.timeout === 0 ? 0 : options.timeout || defaultExpectTimeout;
 
-  await pollUntilDeadline(testInfo, async remainingTime => {
-    received = await query(remainingTime);
-    pass = this.equals(received, expected, [iterableEquality, regExpTester]);
-    return pass === !matcherOptions.isNot;
-  }, options.timeout, testInfo._testFinished);
+  const { pass, received, log } = await query(this.isNot, timeout);
 
   const message = pass
     ? () =>
@@ -71,7 +60,7 @@ export async function toEqual<T>(
       `Expected: not ${this.utils.printExpected(expected)}\n` +
       (this.utils.stringify(expected) !== this.utils.stringify(received)
         ? `Received:     ${this.utils.printReceived(received)}`
-        : '')
+        : '') + callLogText(log)
     : () =>
       this.utils.matcherHint(matcherName, undefined, undefined, matcherOptions) +
       '\n\n' +
@@ -81,7 +70,7 @@ export async function toEqual<T>(
           EXPECTED_LABEL,
           RECEIVED_LABEL,
           isExpand(this.expand),
-      );
+      ) + callLogText(log);
 
   // Passing the actual and expected objects so that a custom reporter
   // could access them, for example in order to display a custom visual diff,

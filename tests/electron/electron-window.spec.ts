@@ -16,28 +16,28 @@
 
 import { electronTest as test, expect } from './electronTest';
 
-test('should click the button', async ({newWindow, server}) => {
+test('should click the button', async ({ newWindow, server }) => {
   const window = await newWindow();
   await window.goto(server.PREFIX + '/input/button.html');
   await window.click('button');
   expect(await window.evaluate('result')).toBe('Clicked');
 });
 
-test('should check the box', async ({newWindow}) => {
+test('should check the box', async ({ newWindow }) => {
   const window = await newWindow();
   await window.setContent(`<input id='checkbox' type='checkbox'></input>`);
   await window.check('input');
   expect(await window.evaluate('checkbox.checked')).toBe(true);
 });
 
-test('should not check the checked box', async ({newWindow}) => {
+test('should not check the checked box', async ({ newWindow }) => {
   const window = await newWindow();
   await window.setContent(`<input id='checkbox' type='checkbox' checked></input>`);
   await window.check('input');
   expect(await window.evaluate('checkbox.checked')).toBe(true);
 });
 
-test('should type into a textarea', async ({newWindow}) => {
+test('should type into a textarea', async ({ newWindow }) => {
   const window = await newWindow();
   await window.evaluate(() => {
     const textarea = document.createElement('textarea');

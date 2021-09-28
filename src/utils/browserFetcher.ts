@@ -40,7 +40,7 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
     debugLogger.log('install', `extracting archive`);
     debugLogger.log('install', `-- zip: ${zipPath}`);
     debugLogger.log('install', `-- location: ${browserDirectory}`);
-    await extract(zipPath, { dir: browserDirectory});
+    await extract(zipPath, { dir: browserDirectory });
     debugLogger.log('install', `fixing permissions at ${executablePath}`);
     await fs.promises.chmod(executablePath, 0o755);
   } catch (e) {

@@ -285,7 +285,7 @@ function positionInFile(stackLines: string[], file: string): { column: number; l
     if (!parsed || !parsed.file)
       continue;
     if (path.resolve(process.cwd(), parsed.file) === file)
-      return {column: parsed.column || 0, line: parsed.line || 0};
+      return { column: parsed.column || 0, line: parsed.line || 0 };
   }
 }
 

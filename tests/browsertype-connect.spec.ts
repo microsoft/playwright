@@ -24,7 +24,7 @@ import { suppressCertificateWarning } from './config/utils';
 
 test.slow(true, 'All connect tests are slow');
 
-test('should connect over wss', async ({browserType , startRemoteServer, httpsServer, mode}) => {
+test('should connect over wss', async ({ browserType , startRemoteServer, httpsServer, mode }) => {
   test.skip(mode !== 'default'); // Out of process transport does not allow us to set env vars dynamically.
   const remoteServer = await startRemoteServer();
 
@@ -60,7 +60,7 @@ test('should connect over wss', async ({browserType , startRemoteServer, httpsSe
   }
 });
 
-test('should be able to reconnect to a browser', async ({browserType, startRemoteServer, server}) => {
+test('should be able to reconnect to a browser', async ({ browserType, startRemoteServer, server }) => {
   const remoteServer = await startRemoteServer();
   {
     const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
@@ -80,7 +80,7 @@ test('should be able to reconnect to a browser', async ({browserType, startRemot
   }
 });
 
-test('should be able to connect two browsers at the same time', async ({browserType, startRemoteServer}) => {
+test('should be able to connect two browsers at the same time', async ({ browserType, startRemoteServer }) => {
   const remoteServer = await startRemoteServer();
 
   const browser1 = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
@@ -102,7 +102,7 @@ test('should be able to connect two browsers at the same time', async ({browserT
   await browser2.close();
 });
 
-test('should timeout in socket while connecting', async ({browserType, startRemoteServer, server}) => {
+test('should timeout in socket while connecting', async ({ browserType, startRemoteServer, server }) => {
   const e = await browserType.connect({
     wsEndpoint: `ws://localhost:${server.PORT}/ws-slow`,
     timeout: 1000,
@@ -110,7 +110,7 @@ test('should timeout in socket while connecting', async ({browserType, startRemo
   expect(e.message).toContain('browserType.connect: Opening handshake has timed out');
 });
 
-test('should timeout in connect while connecting', async ({browserType, startRemoteServer, server}) => {
+test('should timeout in connect while connecting', async ({ browserType, startRemoteServer, server }) => {
   const e = await browserType.connect({
     wsEndpoint: `ws://localhost:${server.PORT}/ws`,
     timeout: 100,
@@ -118,7 +118,7 @@ test('should timeout in connect while connecting', async ({browserType, startRem
   expect(e.message).toContain('browserType.connect: Timeout 100ms exceeded');
 });
 
-test('should send extra headers with connect request', async ({browserType, startRemoteServer, server}) => {
+test('should send extra headers with connect request', async ({ browserType, startRemoteServer, server }) => {
   const [request] = await Promise.all([
     server.waitForWebSocketConnectionRequest(),
     browserType.connect({
@@ -134,7 +134,7 @@ test('should send extra headers with connect request', async ({browserType, star
   expect(request.headers['foo']).toBe('bar');
 });
 
-test('should send default User-Agent header with connect request', async ({browserType, startRemoteServer, server}) => {
+test('should send default User-Agent header with connect request', async ({ browserType, startRemoteServer, server }) => {
   const [request] = await Promise.all([
     server.waitForWebSocketConnectionRequest(),
     browserType.connect({
@@ -149,7 +149,7 @@ test('should send default User-Agent header with connect request', async ({brows
   expect(request.headers['foo']).toBe('bar');
 });
 
-test('should support slowmo option', async ({browserType, startRemoteServer}) => {
+test('should support slowmo option', async ({ browserType, startRemoteServer }) => {
   const remoteServer = await startRemoteServer();
 
   const browser1 = await browserType.connect(remoteServer.wsEndpoint(), { slowMo: 200 });
@@ -159,7 +159,7 @@ test('should support slowmo option', async ({browserType, startRemoteServer}) =>
   expect(Date.now() - start).toBeGreaterThan(199);
 });
 
-test('disconnected event should be emitted when browser is closed or server is closed', async ({browserType, startRemoteServer}) => {
+test('disconnected event should be emitted when browser is closed or server is closed', async ({ browserType, startRemoteServer }) => {
   const remoteServer = await startRemoteServer();
 
   const browser1 = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
@@ -188,7 +188,7 @@ test('disconnected event should be emitted when browser is closed or server is c
   expect(disconnected2).toBe(1);
 });
 
-test('disconnected event should have browser as argument', async ({browserType, startRemoteServer}) => {
+test('disconnected event should have browser as argument', async ({ browserType, startRemoteServer }) => {
   const remoteServer = await startRemoteServer();
   const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
   const [disconnected] = await Promise.all([
@@ -198,7 +198,7 @@ test('disconnected event should have browser as argument', async ({browserType, 
   expect(disconnected).toBe(browser);
 });
 
-test('should handle exceptions during connect', async ({browserType, startRemoteServer, mode}) => {
+test('should handle exceptions during connect', async ({ browserType, startRemoteServer, mode }) => {
   test.skip(mode !== 'default');
 
   const remoteServer = await startRemoteServer();
@@ -207,7 +207,7 @@ test('should handle exceptions during connect', async ({browserType, startRemote
   expect(error.message).toContain('Dummy');
 });
 
-test('should set the browser connected state', async ({browserType, startRemoteServer}) => {
+test('should set the browser connected state', async ({ browserType, startRemoteServer }) => {
   const remoteServer = await startRemoteServer();
   const remote = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
   expect(remote.isConnected()).toBe(true);
@@ -215,7 +215,7 @@ test('should set the browser connected state', async ({browserType, startRemoteS
   expect(remote.isConnected()).toBe(false);
 });
 
-test('should throw when used after isConnected returns false', async ({browserType, startRemoteServer}) => {
+test('should throw when used after isConnected returns false', async ({ browserType, startRemoteServer }) => {
   const remoteServer = await startRemoteServer();
   const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
   const page = await browser.newPage();
@@ -228,7 +228,7 @@ test('should throw when used after isConnected returns false', async ({browserTy
   expect(error.message).toContain('has been closed');
 });
 
-test('should throw when calling waitForNavigation after disconnect', async ({browserType, startRemoteServer}) => {
+test('should throw when calling waitForNavigation after disconnect', async ({ browserType, startRemoteServer }) => {
   const remoteServer = await startRemoteServer();
   const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
   const page = await browser.newPage();
@@ -241,19 +241,19 @@ test('should throw when calling waitForNavigation after disconnect', async ({bro
   expect(error.message).toContain('Navigation failed because page was closed');
 });
 
-test('should reject navigation when browser closes', async ({browserType, startRemoteServer, server}) => {
+test('should reject navigation when browser closes', async ({ browserType, startRemoteServer, server }) => {
   const remoteServer = await startRemoteServer();
   server.setRoute('/one-style.css', () => {});
   const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
   const page = await browser.newPage();
-  const navigationPromise = page.goto(server.PREFIX + '/one-style.html', {timeout: 60000}).catch(e => e);
+  const navigationPromise = page.goto(server.PREFIX + '/one-style.html', { timeout: 60000 }).catch(e => e);
   await server.waitForRequest('/one-style.css');
   await browser.close();
   const error = await navigationPromise;
   expect(error.message).toContain('has been closed');
 });
 
-test('should reject waitForSelector when browser closes', async ({browserType, startRemoteServer, server}) => {
+test('should reject waitForSelector when browser closes', async ({ browserType, startRemoteServer, server }) => {
   const remoteServer = await startRemoteServer();
   server.setRoute('/empty.html', () => {});
   const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
@@ -268,7 +268,7 @@ test('should reject waitForSelector when browser closes', async ({browserType, s
   expect(error.message).toContain('has been closed');
 });
 
-test('should emit close events on pages and contexts', async ({browserType, startRemoteServer}) => {
+test('should emit close events on pages and contexts', async ({ browserType, startRemoteServer }) => {
   const remoteServer = await startRemoteServer();
   const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
   const context = await browser.newContext();
@@ -282,7 +282,7 @@ test('should emit close events on pages and contexts', async ({browserType, star
   expect(pageClosed).toBeTruthy();
 });
 
-test('should terminate network waiters', async ({browserType, startRemoteServer, server}) => {
+test('should terminate network waiters', async ({ browserType, startRemoteServer, server }) => {
   const remoteServer = await startRemoteServer();
   const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
   const newPage = await browser.newPage();
@@ -339,7 +339,7 @@ test('should respect selectors', async ({ playwright, browserType, startRemoteSe
   await browser1.close();
 });
 
-test('should not throw on close after disconnect', async ({browserType, startRemoteServer}) => {
+test('should not throw on close after disconnect', async ({ browserType, startRemoteServer }) => {
   const remoteServer = await startRemoteServer();
   const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
   await browser.newPage();
@@ -350,7 +350,7 @@ test('should not throw on close after disconnect', async ({browserType, startRem
   await browser.close();
 });
 
-test('should not throw on context.close after disconnect', async ({browserType, startRemoteServer}) => {
+test('should not throw on context.close after disconnect', async ({ browserType, startRemoteServer }) => {
   const remoteServer = await startRemoteServer();
   const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
   const context = await browser.newContext();
@@ -362,7 +362,7 @@ test('should not throw on context.close after disconnect', async ({browserType, 
   await context.close();
 });
 
-test('should not throw on page.close after disconnect', async ({browserType, startRemoteServer}) => {
+test('should not throw on page.close after disconnect', async ({ browserType, startRemoteServer }) => {
   const remoteServer = await startRemoteServer();
   const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
   const page = await browser.newPage();
@@ -373,7 +373,7 @@ test('should not throw on page.close after disconnect', async ({browserType, sta
   await page.close();
 });
 
-test('should saveAs videos from remote browser', async ({browserType, startRemoteServer}, testInfo) => {
+test('should saveAs videos from remote browser', async ({ browserType, startRemoteServer }, testInfo) => {
   const remoteServer = await startRemoteServer();
   const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
   const videosPath = testInfo.outputPath();
@@ -392,7 +392,7 @@ test('should saveAs videos from remote browser', async ({browserType, startRemot
   expect(error.message).toContain('Path is not available when using browserType.connect(). Use saveAs() to save a local copy.');
 });
 
-test('should be able to connect 20 times to a single server without warnings', async ({browserType, startRemoteServer}) => {
+test('should be able to connect 20 times to a single server without warnings', async ({ browserType, startRemoteServer }) => {
   const remoteServer = await startRemoteServer();
 
   let warning = null;
@@ -408,7 +408,7 @@ test('should be able to connect 20 times to a single server without warnings', a
   expect(warning).toBe(null);
 });
 
-test('should save download', async ({server, browserType, startRemoteServer}, testInfo) => {
+test('should save download', async ({ server, browserType, startRemoteServer }, testInfo) => {
   server.setRoute('/download', (req, res) => {
     res.setHeader('Content-Type', 'application/octet-stream');
     res.setHeader('Content-Disposition', 'attachment');
@@ -432,7 +432,7 @@ test('should save download', async ({server, browserType, startRemoteServer}, te
   await browser.close();
 });
 
-test('should error when saving download after deletion', async ({server, browserType, startRemoteServer}, testInfo) => {
+test('should error when saving download after deletion', async ({ server, browserType, startRemoteServer }, testInfo) => {
   server.setRoute('/download', (req, res) => {
     res.setHeader('Content-Type', 'application/octet-stream');
     res.setHeader('Content-Disposition', 'attachment');
@@ -454,19 +454,19 @@ test('should error when saving download after deletion', async ({server, browser
   await browser.close();
 });
 
-test('should work with cluster', async ({browserType, startRemoteServer}) => {
+test('should work with cluster', async ({ browserType, startRemoteServer }) => {
   const remoteServer = await startRemoteServer({ inCluster: true });
   const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
   const page = await browser.newPage();
   expect(await page.evaluate('1 + 2')).toBe(3);
 });
 
-test('should properly disconnect when connection closes from the client side', async ({browserType, startRemoteServer, server}) => {
+test('should properly disconnect when connection closes from the client side', async ({ browserType, startRemoteServer, server }) => {
   server.setRoute('/one-style.css', () => {});
   const remoteServer = await startRemoteServer();
   const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
   const page = await browser.newPage();
-  const navigationPromise = page.goto(server.PREFIX + '/one-style.html', {timeout: 60000}).catch(e => e);
+  const navigationPromise = page.goto(server.PREFIX + '/one-style.html', { timeout: 60000 }).catch(e => e);
   const waitForNavigationPromise = page.waitForNavigation().catch(e => e);
 
   const disconnectedPromise = new Promise(f => browser.once('disconnected', f));
@@ -481,14 +481,14 @@ test('should properly disconnect when connection closes from the client side', a
   expect((await page.waitForNavigation().catch(e => e)).message).toContain('Navigation failed because page was closed');
 });
 
-test('should properly disconnect when connection closes from the server side', async ({browserType, startRemoteServer, server, platform}) => {
+test('should properly disconnect when connection closes from the server side', async ({ browserType, startRemoteServer, server, platform }) => {
   test.skip(platform === 'win32', 'Cannot send signals');
 
   server.setRoute('/one-style.css', () => {});
   const remoteServer = await startRemoteServer({ disconnectOnSIGHUP: true });
   const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
   const page = await browser.newPage();
-  const navigationPromise = page.goto(server.PREFIX + '/one-style.html', {timeout: 60000}).catch(e => e);
+  const navigationPromise = page.goto(server.PREFIX + '/one-style.html', { timeout: 60000 }).catch(e => e);
   const waitForNavigationPromise = page.waitForNavigation().catch(e => e);
 
   const disconnectedPromise = new Promise(f => browser.once('disconnected', f));
@@ -503,7 +503,7 @@ test('should properly disconnect when connection closes from the server side', a
   expect((await page.waitForNavigation().catch(e => e)).message).toContain('Navigation failed because page was closed');
 });
 
-test('should be able to connect when the wsEndpont is passed as the first argument', async ({browserType, startRemoteServer}) => {
+test('should be able to connect when the wsEndpont is passed as the first argument', async ({ browserType, startRemoteServer }) => {
   const remoteServer = await startRemoteServer();
   const browser = await browserType.connect(remoteServer.wsEndpoint());
   const page = await browser.newPage();
@@ -511,7 +511,7 @@ test('should be able to connect when the wsEndpont is passed as the first argume
   await browser.close();
 });
 
-test('should save har', async ({browserType, startRemoteServer, server}, testInfo) => {
+test('should save har', async ({ browserType, startRemoteServer, server }, testInfo) => {
   const remoteServer = await startRemoteServer();
   const browser = await browserType.connect(remoteServer.wsEndpoint());
   const harPath = testInfo.outputPath('test.har');

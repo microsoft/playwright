@@ -91,7 +91,7 @@ export abstract class FetchRequest extends SdkObject {
       headers['accept-encoding'] = 'gzip,deflate,br';
 
       if (defaults.extraHTTPHeaders) {
-        for (const {name, value} of defaults.extraHTTPHeaders)
+        for (const { name, value } of defaults.extraHTTPHeaders)
           headers[name.toLowerCase()] = value;
       }
 
@@ -235,7 +235,7 @@ export abstract class FetchRequest extends SdkObject {
           const auth = response.headers['www-authenticate'];
           const credentials = this._defaultOptions().httpCredentials;
           if (auth?.trim().startsWith('Basic ') && credentials) {
-            const {username, password} = credentials;
+            const { username, password } = credentials;
             const encoded = Buffer.from(`${username || ''}:${password || ''}`).toString('base64');
             options.headers!['authorization'] = `Basic ${encoded}`;
             fulfill(this._sendRequest(url, options, postData));

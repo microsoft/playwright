@@ -124,7 +124,7 @@ function downloadFile(url: string, destinationPath: string, options: {progressCa
   log(`running download:`);
   log(`-- from url: ${url}`);
   log(`-- to location: ${destinationPath}`);
-  let fulfill: ({error}: {error: any}) => void = ({error}) => {};
+  let fulfill: ({ error }: {error: any}) => void = ({ error }) => {};
   let downloadedBytes = 0;
   let totalBytes = 0;
 
@@ -136,18 +136,18 @@ function downloadFile(url: string, destinationPath: string, options: {progressCa
       const error = new Error(`Download failed: server returned code ${response.statusCode}. URL: ${url}`);
       // consume response data to free up memory
       response.resume();
-      fulfill({error});
+      fulfill({ error });
       return;
     }
     const file = fs.createWriteStream(destinationPath);
-    file.on('finish', () => fulfill({error: null}));
-    file.on('error', error => fulfill({error}));
+    file.on('finish', () => fulfill({ error: null }));
+    file.on('error', error => fulfill({ error }));
     response.pipe(file);
     totalBytes = parseInt(response.headers['content-length'] || '0', 10);
     log(`-- total bytes: ${totalBytes}`);
     if (progressCallback)
       response.on('data', onData);
-  }, (error: any) => fulfill({error}));
+  }, (error: any) => fulfill({ error }));
   return promise;
 
   function onData(chunk: string) {
@@ -236,8 +236,8 @@ export function spawnAsync(cmd: string, args: string[], options?: SpawnOptions):
       process.stdout.on('data', data => stdout += data);
     if (process.stderr)
       process.stderr.on('data', data => stderr += data);
-    process.on('close', code => resolve({stdout, stderr, code}));
-    process.on('error', error => resolve({stdout, stderr, code: 0, error}));
+    process.on('close', code => resolve({ stdout, stderr, code }));
+    process.on('error', error => resolve({ stdout, stderr, code: 0, error }));
   });
 }
 
@@ -336,7 +336,7 @@ export function getAsBooleanFromENV(name: string): boolean {
 
 export async function mkdirIfNeeded(filePath: string) {
   // This will harmlessly throw on windows if the dirname is the root directory.
-  await fs.promises.mkdir(path.dirname(filePath), {recursive: true}).catch(() => {});
+  await fs.promises.mkdir(path.dirname(filePath), { recursive: true }).catch(() => {});
 }
 
 type HeadersArray = { name: string, value: string }[];
@@ -397,7 +397,7 @@ export function arrayToObject(array?: NameValue[]): { [key: string]: string } | 
   if (!array)
     return undefined;
   const result: { [key: string]: string } = {};
-  for (const {name, value} of array)
+  for (const { name, value } of array)
     result[name] = value;
   return result;
 }

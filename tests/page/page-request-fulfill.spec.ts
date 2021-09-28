@@ -18,7 +18,7 @@
 import { test as it, expect } from './pageTest';
 import fs from 'fs';
 
-it('should work', async ({page, server}) => {
+it('should work', async ({ page, server }) => {
   await page.route('**/*', route => {
     route.fulfill({
       status: 201,
@@ -35,7 +35,7 @@ it('should work', async ({page, server}) => {
   expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
 });
 
-it('should work with buffer as body', async ({page, server, browserName, isLinux}) => {
+it('should work with buffer as body', async ({ page, server, browserName, isLinux }) => {
   it.fail(browserName === 'webkit' && isLinux, 'Loading of application/octet-stream resource fails');
   await page.route('**/*', route => {
     route.fulfill({
@@ -48,7 +48,7 @@ it('should work with buffer as body', async ({page, server, browserName, isLinux
   expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
 });
 
-it('should work with status code 422', async ({page, server}) => {
+it('should work with status code 422', async ({ page, server }) => {
   await page.route('**/*', route => {
     route.fulfill({
       status: 422,
@@ -61,7 +61,7 @@ it('should work with status code 422', async ({page, server}) => {
   expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
 });
 
-it('should allow mocking binary responses', async ({page, server, browserName, headless, asset, isAndroid}) => {
+it('should allow mocking binary responses', async ({ page, server, browserName, headless, asset, isAndroid }) => {
   it.skip(browserName === 'firefox' && !headless, 'Firefox headed produces a different image.');
   it.skip(isAndroid);
 
@@ -82,7 +82,7 @@ it('should allow mocking binary responses', async ({page, server, browserName, h
   expect(await img.screenshot()).toMatchSnapshot('mock-binary-response.png');
 });
 
-it('should allow mocking svg with charset', async ({page, server, browserName, headless, isAndroid}) => {
+it('should allow mocking svg with charset', async ({ page, server, browserName, headless, isAndroid }) => {
   it.skip(browserName === 'firefox' && !headless, 'Firefox headed produces a different image.');
   it.skip(isAndroid);
 
@@ -102,7 +102,7 @@ it('should allow mocking svg with charset', async ({page, server, browserName, h
   expect(await img.screenshot()).toMatchSnapshot('mock-svg.png');
 });
 
-it('should work with file path', async ({page, server, asset, isAndroid}) => {
+it('should work with file path', async ({ page, server, asset, isAndroid }) => {
   it.skip(isAndroid);
 
   await page.route('**/*', route => route.fulfill({ contentType: 'shouldBeIgnored', path: asset('pptr.png') }));
@@ -116,7 +116,7 @@ it('should work with file path', async ({page, server, asset, isAndroid}) => {
   expect(await img.screenshot()).toMatchSnapshot('mock-binary-response.png');
 });
 
-it('should stringify intercepted request response headers', async ({page, server}) => {
+it('should stringify intercepted request response headers', async ({ page, server }) => {
   await page.route('**/*', route => {
     route.fulfill({
       status: 200,
@@ -133,7 +133,7 @@ it('should stringify intercepted request response headers', async ({page, server
   expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
 });
 
-it('should not modify the headers sent to the server', async ({page, server}) => {
+it('should not modify the headers sent to the server', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/empty.html');
   const interceptedRequests = [];
 
@@ -170,7 +170,7 @@ it('should not modify the headers sent to the server', async ({page, server}) =>
   expect(interceptedRequests[1].headers).toEqual(interceptedRequests[0].headers);
 });
 
-it('should include the origin header', async ({page, server, isAndroid}) => {
+it('should include the origin header', async ({ page, server, isAndroid }) => {
   it.skip(isAndroid, 'No cross-process on Android');
 
   await page.goto(server.PREFIX + '/empty.html');
@@ -194,7 +194,7 @@ it('should include the origin header', async ({page, server, isAndroid}) => {
   expect(interceptedRequest.headers()['origin']).toEqual(server.PREFIX);
 });
 
-it('should fulfill with global fetch result', async ({playwright, page, server, isElectron}) => {
+it('should fulfill with global fetch result', async ({ playwright, page, server, isElectron }) => {
   it.fixme(isElectron, 'error: Browser context management is not supported.');
   await page.route('**/*', async route => {
     const request = await playwright._newRequest();
@@ -203,10 +203,10 @@ it('should fulfill with global fetch result', async ({playwright, page, server, 
   });
   const response = await page.goto(server.EMPTY_PAGE);
   expect(response.status()).toBe(200);
-  expect(await response.json()).toEqual({'foo': 'bar'});
+  expect(await response.json()).toEqual({ 'foo': 'bar' });
 });
 
-it('should fulfill with fetch result', async ({page, server, isElectron}) => {
+it('should fulfill with fetch result', async ({ page, server, isElectron }) => {
   it.fixme(isElectron, 'error: Browser context management is not supported.');
   await page.route('**/*', async route => {
     const response = await page._request.get(server.PREFIX + '/simple.json');
@@ -214,10 +214,10 @@ it('should fulfill with fetch result', async ({page, server, isElectron}) => {
   });
   const response = await page.goto(server.EMPTY_PAGE);
   expect(response.status()).toBe(200);
-  expect(await response.json()).toEqual({'foo': 'bar'});
+  expect(await response.json()).toEqual({ 'foo': 'bar' });
 });
 
-it('should fulfill with fetch result and overrides', async ({page, server, isElectron}) => {
+it('should fulfill with fetch result and overrides', async ({ page, server, isElectron }) => {
   it.fixme(isElectron, 'error: Browser context management is not supported.');
   await page.route('**/*', async route => {
     const response = await page._request.get(server.PREFIX + '/simple.json');
@@ -232,10 +232,10 @@ it('should fulfill with fetch result and overrides', async ({page, server, isEle
   const response = await page.goto(server.EMPTY_PAGE);
   expect(response.status()).toBe(201);
   expect((await response.allHeaders()).foo).toEqual('bar');
-  expect(await response.json()).toEqual({'foo': 'bar'});
+  expect(await response.json()).toEqual({ 'foo': 'bar' });
 });
 
-it('should fetch original request and fulfill', async ({page, server, isElectron}) => {
+it('should fetch original request and fulfill', async ({ page, server, isElectron }) => {
   it.fixme(isElectron, 'error: Browser context management is not supported.');
   await page.route('**/*', async route => {
     const response = await page._request.get(route.request());

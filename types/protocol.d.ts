@@ -553,6 +553,9 @@ animation/transition.
     }
   }
   
+  /**
+   * The domain is deprecated as AppCache is being removed (see crbug.com/582750).
+   */
   export module ApplicationCache {
     /**
      * Detailed application cache resource information.
@@ -917,12 +920,23 @@ instead of "limited-quirks".
       targetOrigin: string;
       isWarning: boolean;
     }
+    export type GenericIssueErrorType = "CrossOriginPortalPostMessageError";
+    /**
+     * Depending on the concrete errorType, different properties are set.
+     */
+    export interface GenericIssueDetails {
+      /**
+       * Issues with the same errorType are aggregated in the frontend.
+       */
+      errorType: GenericIssueErrorType;
+      frameId?: Page.FrameId;
+    }
     /**
      * A unique identifier for the type of issue. Each type may use one of the
 optional fields in InspectorIssueDetails to convey more specific
 information about the kind of issue.
      */
-    export type InspectorIssueCode = "SameSiteCookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"TrustedWebActivityIssue"|"LowTextContrastIssue"|"CorsIssue"|"AttributionReportingIssue"|"QuirksModeIssue"|"NavigatorUserAgentIssue"|"WasmCrossOriginModuleSharingIssue";
+    export type InspectorIssueCode = "SameSiteCookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"TrustedWebActivityIssue"|"LowTextContrastIssue"|"CorsIssue"|"AttributionReportingIssue"|"QuirksModeIssue"|"NavigatorUserAgentIssue"|"WasmCrossOriginModuleSharingIssue"|"GenericIssue";
     /**
      * This struct holds a list of optional fields with additional information
 specific to the kind of issue. When adding a new issue code, please also
@@ -942,6 +956,7 @@ add a new optional field to this type.
       quirksModeIssueDetails?: QuirksModeIssueDetails;
       navigatorUserAgentIssueDetails?: NavigatorUserAgentIssueDetails;
       wasmCrossOriginModuleSharingIssue?: WasmCrossOriginModuleSharingIssueDetails;
+      genericIssueDetails?: GenericIssueDetails;
     }
     /**
      * A unique id for a DevTools inspector issue. Allows other entities (e.g.
@@ -7619,11 +7634,11 @@ This is a temporary ability and it will be removed in the future.
     /**
      * Types of reasons why a cookie may not be stored from a response.
      */
-    export type SetCookieBlockedReason = "SecureOnly"|"SameSiteStrict"|"SameSiteLax"|"SameSiteUnspecifiedTreatedAsLax"|"SameSiteNoneInsecure"|"UserPreferences"|"SyntaxError"|"SchemeNotSupported"|"OverwriteSecure"|"InvalidDomain"|"InvalidPrefix"|"UnknownError"|"SchemefulSameSiteStrict"|"SchemefulSameSiteLax"|"SchemefulSameSiteUnspecifiedTreatedAsLax"|"SamePartyFromCrossPartyContext"|"SamePartyConflictsWithOtherAttributes";
+    export type SetCookieBlockedReason = "SecureOnly"|"SameSiteStrict"|"SameSiteLax"|"SameSiteUnspecifiedTreatedAsLax"|"SameSiteNoneInsecure"|"UserPreferences"|"SyntaxError"|"SchemeNotSupported"|"OverwriteSecure"|"InvalidDomain"|"InvalidPrefix"|"UnknownError"|"SchemefulSameSiteStrict"|"SchemefulSameSiteLax"|"SchemefulSameSiteUnspecifiedTreatedAsLax"|"SamePartyFromCrossPartyContext"|"SamePartyConflictsWithOtherAttributes"|"NameValuePairExceedsMaxSize";
     /**
      * Types of reasons why a cookie may not be sent with a request.
      */
-    export type CookieBlockedReason = "SecureOnly"|"NotOnPath"|"DomainMismatch"|"SameSiteStrict"|"SameSiteLax"|"SameSiteUnspecifiedTreatedAsLax"|"SameSiteNoneInsecure"|"UserPreferences"|"UnknownError"|"SchemefulSameSiteStrict"|"SchemefulSameSiteLax"|"SchemefulSameSiteUnspecifiedTreatedAsLax"|"SamePartyFromCrossPartyContext";
+    export type CookieBlockedReason = "SecureOnly"|"NotOnPath"|"DomainMismatch"|"SameSiteStrict"|"SameSiteLax"|"SameSiteUnspecifiedTreatedAsLax"|"SameSiteNoneInsecure"|"UserPreferences"|"UnknownError"|"SchemefulSameSiteStrict"|"SchemefulSameSiteLax"|"SchemefulSameSiteUnspecifiedTreatedAsLax"|"SamePartyFromCrossPartyContext"|"NameValuePairExceedsMaxSize";
     /**
      * A cookie which was not stored from a response with the corresponding reason.
      */
@@ -10410,7 +10425,7 @@ Example URLs: http://www.google.com/file.html -> "google.com"
     /**
      * List of not restored reasons for back-forward cache.
      */
-    export type BackForwardCacheNotRestoredReason = "NotMainFrame"|"BackForwardCacheDisabled"|"RelatedActiveContentsExist"|"HTTPStatusNotOK"|"SchemeNotHTTPOrHTTPS"|"Loading"|"WasGrantedMediaAccess"|"DisableForRenderFrameHostCalled"|"DomainNotAllowed"|"HTTPMethodNotGET"|"SubframeIsNavigating"|"Timeout"|"CacheLimit"|"JavaScriptExecution"|"RendererProcessKilled"|"RendererProcessCrashed"|"GrantedMediaStreamAccess"|"SchedulerTrackedFeatureUsed"|"ConflictingBrowsingInstance"|"CacheFlushed"|"ServiceWorkerVersionActivation"|"SessionRestored"|"ServiceWorkerPostMessage"|"EnteredBackForwardCacheBeforeServiceWorkerHostAdded"|"RenderFrameHostReused_SameSite"|"RenderFrameHostReused_CrossSite"|"ServiceWorkerClaim"|"IgnoreEventAndEvict"|"HaveInnerContents"|"TimeoutPuttingInCache"|"BackForwardCacheDisabledByLowMemory"|"BackForwardCacheDisabledByCommandLine"|"NetworkRequestDatapipeDrainedAsBytesConsumer"|"NetworkRequestRedirected"|"NetworkRequestTimeout"|"NetworkExceedsBufferLimit"|"NavigationCancelledWhileRestoring"|"NotMostRecentNavigationEntry"|"BackForwardCacheDisabledForPrerender"|"UserAgentOverrideDiffers"|"ForegroundCacheLimit"|"BrowsingInstanceNotSwapped"|"BackForwardCacheDisabledForDelegate"|"OptInUnloadHeaderNotPresent"|"UnloadHandlerExistsInMainFrame"|"UnloadHandlerExistsInSubFrame"|"ServiceWorkerUnregistration"|"CacheControlNoStore"|"CacheControlNoStoreCookieModified"|"CacheControlNoStoreHTTPOnlyCookieModified"|"NoResponseHead"|"Unknown"|"ActivationNavigationsDisallowedForBug1234857"|"WebSocket"|"WebTransport"|"WebRTC"|"MainResourceHasCacheControlNoStore"|"MainResourceHasCacheControlNoCache"|"SubresourceHasCacheControlNoStore"|"SubresourceHasCacheControlNoCache"|"ContainsPlugins"|"DocumentLoaded"|"DedicatedWorkerOrWorklet"|"OutstandingNetworkRequestOthers"|"OutstandingIndexedDBTransaction"|"RequestedNotificationsPermission"|"RequestedMIDIPermission"|"RequestedAudioCapturePermission"|"RequestedVideoCapturePermission"|"RequestedBackForwardCacheBlockedSensors"|"RequestedBackgroundWorkPermission"|"BroadcastChannel"|"IndexedDBConnection"|"WebXR"|"SharedWorker"|"WebLocks"|"WebHID"|"WebShare"|"RequestedStorageAccessGrant"|"WebNfc"|"OutstandingNetworkRequestFetch"|"OutstandingNetworkRequestXHR"|"AppBanner"|"Printing"|"WebDatabase"|"PictureInPicture"|"Portal"|"SpeechRecognizer"|"IdleManager"|"PaymentManager"|"SpeechSynthesis"|"KeyboardLock"|"WebOTPService"|"OutstandingNetworkRequestDirectSocket"|"InjectedJavascript"|"InjectedStyleSheet"|"Dummy"|"ContentSecurityHandler"|"ContentWebAuthenticationAPI"|"ContentFileChooser"|"ContentSerial"|"ContentFileSystemAccess"|"ContentMediaDevicesDispatcherHost"|"ContentWebBluetooth"|"ContentWebUSB"|"ContentMediaSession"|"EmbedderPopupBlockerTabHelper"|"EmbedderSafeBrowsingTriggeredPopupBlocker"|"EmbedderSafeBrowsingThreatDetails"|"EmbedderAppBannerManager"|"EmbedderDomDistillerViewerSource"|"EmbedderDomDistillerSelfDeletingRequestDelegate"|"EmbedderOomInterventionTabHelper"|"EmbedderOfflinePage"|"EmbedderChromePasswordManagerClientBindCredentialManager"|"EmbedderPermissionRequestManager"|"EmbedderModalDialog"|"EmbedderExtensions"|"EmbedderExtensionMessaging"|"EmbedderExtensionMessagingForOpenPort"|"EmbedderExtensionSentMessageToCachedFrame";
+    export type BackForwardCacheNotRestoredReason = "NotMainFrame"|"BackForwardCacheDisabled"|"RelatedActiveContentsExist"|"HTTPStatusNotOK"|"SchemeNotHTTPOrHTTPS"|"Loading"|"WasGrantedMediaAccess"|"DisableForRenderFrameHostCalled"|"DomainNotAllowed"|"HTTPMethodNotGET"|"SubframeIsNavigating"|"Timeout"|"CacheLimit"|"JavaScriptExecution"|"RendererProcessKilled"|"RendererProcessCrashed"|"GrantedMediaStreamAccess"|"SchedulerTrackedFeatureUsed"|"ConflictingBrowsingInstance"|"CacheFlushed"|"ServiceWorkerVersionActivation"|"SessionRestored"|"ServiceWorkerPostMessage"|"EnteredBackForwardCacheBeforeServiceWorkerHostAdded"|"RenderFrameHostReused_SameSite"|"RenderFrameHostReused_CrossSite"|"ServiceWorkerClaim"|"IgnoreEventAndEvict"|"HaveInnerContents"|"TimeoutPuttingInCache"|"BackForwardCacheDisabledByLowMemory"|"BackForwardCacheDisabledByCommandLine"|"NetworkRequestDatapipeDrainedAsBytesConsumer"|"NetworkRequestRedirected"|"NetworkRequestTimeout"|"NetworkExceedsBufferLimit"|"NavigationCancelledWhileRestoring"|"NotMostRecentNavigationEntry"|"BackForwardCacheDisabledForPrerender"|"UserAgentOverrideDiffers"|"ForegroundCacheLimit"|"BrowsingInstanceNotSwapped"|"BackForwardCacheDisabledForDelegate"|"OptInUnloadHeaderNotPresent"|"UnloadHandlerExistsInMainFrame"|"UnloadHandlerExistsInSubFrame"|"ServiceWorkerUnregistration"|"CacheControlNoStore"|"CacheControlNoStoreCookieModified"|"CacheControlNoStoreHTTPOnlyCookieModified"|"NoResponseHead"|"Unknown"|"ActivationNavigationsDisallowedForBug1234857"|"WebSocket"|"WebTransport"|"WebRTC"|"MainResourceHasCacheControlNoStore"|"MainResourceHasCacheControlNoCache"|"SubresourceHasCacheControlNoStore"|"SubresourceHasCacheControlNoCache"|"ContainsPlugins"|"DocumentLoaded"|"DedicatedWorkerOrWorklet"|"OutstandingNetworkRequestOthers"|"OutstandingIndexedDBTransaction"|"RequestedNotificationsPermission"|"RequestedMIDIPermission"|"RequestedAudioCapturePermission"|"RequestedVideoCapturePermission"|"RequestedBackForwardCacheBlockedSensors"|"RequestedBackgroundWorkPermission"|"BroadcastChannel"|"IndexedDBConnection"|"WebXR"|"SharedWorker"|"WebLocks"|"WebHID"|"WebShare"|"RequestedStorageAccessGrant"|"WebNfc"|"OutstandingNetworkRequestFetch"|"OutstandingNetworkRequestXHR"|"AppBanner"|"Printing"|"WebDatabase"|"PictureInPicture"|"Portal"|"SpeechRecognizer"|"IdleManager"|"PaymentManager"|"SpeechSynthesis"|"KeyboardLock"|"WebOTPService"|"OutstandingNetworkRequestDirectSocket"|"InjectedJavascript"|"InjectedStyleSheet"|"Dummy"|"ContentSecurityHandler"|"ContentWebAuthenticationAPI"|"ContentFileChooser"|"ContentSerial"|"ContentFileSystemAccess"|"ContentMediaDevicesDispatcherHost"|"ContentWebBluetooth"|"ContentWebUSB"|"ContentMediaSession"|"ContentMediaSessionService"|"ContentMediaPlay"|"EmbedderPopupBlockerTabHelper"|"EmbedderSafeBrowsingTriggeredPopupBlocker"|"EmbedderSafeBrowsingThreatDetails"|"EmbedderAppBannerManager"|"EmbedderDomDistillerViewerSource"|"EmbedderDomDistillerSelfDeletingRequestDelegate"|"EmbedderOomInterventionTabHelper"|"EmbedderOfflinePage"|"EmbedderChromePasswordManagerClientBindCredentialManager"|"EmbedderPermissionRequestManager"|"EmbedderModalDialog"|"EmbedderExtensions"|"EmbedderExtensionMessaging"|"EmbedderExtensionMessagingForOpenPort"|"EmbedderExtensionSentMessageToCachedFrame";
     /**
      * Types of not restored reasons for back-forward cache.
      */
@@ -10961,14 +10976,19 @@ option, use with caution.
     }
     /**
      * Returns the unique (PWA) app id.
+Only returns values if the feature flag 'WebAppEnableManifestId' is enabled
      */
     export type getAppIdParameters = {
     }
     export type getAppIdReturnValue = {
       /**
-       * Only returns a value if the feature flag 'WebAppEnableManifestId' is enabled
+       * App id, either from manifest's id attribute or computed from start_url
        */
       appId?: string;
+      /**
+       * Recommendation for manifest's id attribute to match current id computed from start_url
+       */
+      recommendedId?: string;
     }
     /**
      * Returns all browser cookies. Depending on the backend support, will return detailed cookie

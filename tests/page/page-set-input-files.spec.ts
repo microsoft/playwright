@@ -22,7 +22,7 @@ import path from 'path';
 import fs from 'fs';
 import formidable from 'formidable';
 
-it('should upload the file', async ({page, server, asset}) => {
+it('should upload the file', async ({ page, server, asset }) => {
   await page.goto(server.PREFIX + '/input/fileupload.html');
   const filePath = path.relative(process.cwd(), asset('file-to-upload.txt'));
   const input = await page.$('input');
@@ -36,21 +36,21 @@ it('should upload the file', async ({page, server, asset}) => {
   }, input)).toBe('contents of the file');
 });
 
-it('should work', async ({page, asset}) => {
+it('should work', async ({ page, asset }) => {
   await page.setContent(`<input type=file>`);
   await page.setInputFiles('input', asset('file-to-upload.txt'));
   expect(await page.$eval('input', input => input.files.length)).toBe(1);
   expect(await page.$eval('input', input => input.files[0].name)).toBe('file-to-upload.txt');
 });
 
-it('should work with label', async ({page, asset}) => {
+it('should work with label', async ({ page, asset }) => {
   await page.setContent(`<label for=target>Choose a file</label><input id=target type=file>`);
   await page.setInputFiles('text=Choose a file', asset('file-to-upload.txt'));
   expect(await page.$eval('input', input => input.files.length)).toBe(1);
   expect(await page.$eval('input', input => input.files[0].name)).toBe('file-to-upload.txt');
 });
 
-it('should set from memory', async ({page}) => {
+it('should set from memory', async ({ page }) => {
   await page.setContent(`<input type=file>`);
   await page.setInputFiles('input', {
     name: 'test.txt',
@@ -61,7 +61,7 @@ it('should set from memory', async ({page}) => {
   expect(await page.$eval('input', input => input.files[0].name)).toBe('test.txt');
 });
 
-it('should emit event once', async ({page, server}) => {
+it('should emit event once', async ({ page, server }) => {
   await page.setContent(`<input type=file>`);
   const [chooser] = await Promise.all([
     new Promise(f => page.once('filechooser', f)),
@@ -70,7 +70,7 @@ it('should emit event once', async ({page, server}) => {
   expect(chooser).toBeTruthy();
 });
 
-it('should emit event for iframe', async ({page, server, browserName}) => {
+it('should emit event for iframe', async ({ page, server, browserName }) => {
   it.skip(browserName === 'firefox');
   const frame = await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   await frame.setContent(`<input type=file>`);
@@ -81,7 +81,7 @@ it('should emit event for iframe', async ({page, server, browserName}) => {
   expect(chooser).toBeTruthy();
 });
 
-it('should emit event on/off', async ({page, server}) => {
+it('should emit event on/off', async ({ page, server }) => {
   await page.setContent(`<input type=file>`);
   const [chooser] = await Promise.all([
     new Promise(f => {
@@ -96,7 +96,7 @@ it('should emit event on/off', async ({page, server}) => {
   expect(chooser).toBeTruthy();
 });
 
-it('should emit event addListener/removeListener', async ({page, server}) => {
+it('should emit event addListener/removeListener', async ({ page, server }) => {
   await page.setContent(`<input type=file>`);
   const [chooser] = await Promise.all([
     new Promise(f => {
@@ -111,7 +111,7 @@ it('should emit event addListener/removeListener', async ({page, server}) => {
   expect(chooser).toBeTruthy();
 });
 
-it('should work when file input is attached to DOM', async ({page, server}) => {
+it('should work when file input is attached to DOM', async ({ page, server }) => {
   await page.setContent(`<input type=file>`);
   const [chooser] = await Promise.all([
     page.waitForEvent('filechooser'),
@@ -120,7 +120,7 @@ it('should work when file input is attached to DOM', async ({page, server}) => {
   expect(chooser).toBeTruthy();
 });
 
-it('should work when file input is not attached to DOM', async ({page, asset}) => {
+it('should work when file input is not attached to DOM', async ({ page, asset }) => {
   const [,content] = await Promise.all([
     page.waitForEvent('filechooser').then(chooser => chooser.setFiles(asset('file-to-upload.txt'))),
     page.evaluate(async () => {
@@ -137,7 +137,7 @@ it('should work when file input is not attached to DOM', async ({page, asset}) =
   expect(content).toBe('contents of the file');
 });
 
-it('should not throw when filechooser belongs to iframe', async ({page, server, browserName}) => {
+it('should not throw when filechooser belongs to iframe', async ({ page, server, browserName }) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   const frame = page.mainFrame().childFrames()[0];
   await frame.setContent(`
@@ -158,7 +158,7 @@ it('should not throw when filechooser belongs to iframe', async ({page, server, 
   await page.waitForFunction(() => (window as any).__done);
 });
 
-it('should not throw when frame is detached immediately', async ({page, server}) => {
+it('should not throw when frame is detached immediately', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   const frame = page.mainFrame().childFrames()[0];
   await frame.setContent(`
@@ -179,7 +179,7 @@ it('should not throw when frame is detached immediately', async ({page, server})
   await page.waitForFunction(() => (window as any).__done);
 });
 
-it('should work with CSP', async ({page, server, asset}) => {
+it('should work with CSP', async ({ page, server, asset }) => {
   server.setCSP('/empty.html', 'default-src "none"');
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<input type=file>`);
@@ -188,29 +188,29 @@ it('should work with CSP', async ({page, server, asset}) => {
   expect(await page.$eval('input', input => input.files[0].name)).toBe('file-to-upload.txt');
 });
 
-it('should respect timeout', async ({page, playwright}) => {
+it('should respect timeout', async ({ page, playwright }) => {
   let error = null;
-  await page.waitForEvent('filechooser', {timeout: 1}).catch(e => error = e);
+  await page.waitForEvent('filechooser', { timeout: 1 }).catch(e => error = e);
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
-it('should respect default timeout when there is no custom timeout', async ({page, playwright}) => {
+it('should respect default timeout when there is no custom timeout', async ({ page, playwright }) => {
   page.setDefaultTimeout(1);
   let error = null;
   await page.waitForEvent('filechooser').catch(e => error = e);
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
-it('should prioritize exact timeout over default timeout', async ({page, playwright}) => {
+it('should prioritize exact timeout over default timeout', async ({ page, playwright }) => {
   page.setDefaultTimeout(0);
   let error = null;
-  await page.waitForEvent('filechooser', {timeout: 1}).catch(e => error = e);
+  await page.waitForEvent('filechooser', { timeout: 1 }).catch(e => error = e);
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
-it('should work with no timeout', async ({page, server}) => {
+it('should work with no timeout', async ({ page, server }) => {
   const [chooser] = await Promise.all([
-    page.waitForEvent('filechooser', {timeout: 0}),
+    page.waitForEvent('filechooser', { timeout: 0 }),
     page.evaluate(() => setTimeout(() => {
       const el = document.createElement('input');
       el.type = 'file';
@@ -220,7 +220,7 @@ it('should work with no timeout', async ({page, server}) => {
   expect(chooser).toBeTruthy();
 });
 
-it('should return the same file chooser when there are many watchdogs simultaneously', async ({page, server}) => {
+it('should return the same file chooser when there are many watchdogs simultaneously', async ({ page, server }) => {
   await page.setContent(`<input type=file>`);
   const [fileChooser1, fileChooser2] = await Promise.all([
     page.waitForEvent('filechooser'),
@@ -230,7 +230,7 @@ it('should return the same file chooser when there are many watchdogs simultaneo
   expect(fileChooser1 === fileChooser2).toBe(true);
 });
 
-it('should accept single file', async ({page, asset}) => {
+it('should accept single file', async ({ page, asset }) => {
   await page.setContent(`<input type=file oninput='javascript:console.timeStamp()'>`);
   const [fileChooser] = await Promise.all([
     page.waitForEvent('filechooser'),
@@ -243,7 +243,7 @@ it('should accept single file', async ({page, asset}) => {
   expect(await page.$eval('input', input => input.files[0].name)).toBe('file-to-upload.txt');
 });
 
-it('should detect mime type', async ({page, server, asset, isAndroid}) => {
+it('should detect mime type', async ({ page, server, asset, isAndroid }) => {
   it.fixme(isAndroid);
 
   let files;
@@ -279,7 +279,7 @@ it('should detect mime type', async ({page, server, asset, isAndroid}) => {
 });
 
 // @see https://github.com/microsoft/playwright/issues/4704
-it('should not trim big uploaded files', async ({page, server, asset, isAndroid}) => {
+it('should not trim big uploaded files', async ({ page, server, asset, isAndroid }) => {
   it.fixme(isAndroid);
 
   let files;
@@ -304,7 +304,7 @@ it('should not trim big uploaded files', async ({page, server, asset, isAndroid}
   expect(files.file.size).toBe(DATA_SIZE);
 });
 
-it('should be able to read selected file', async ({page, asset}) => {
+it('should be able to read selected file', async ({ page, asset }) => {
   await page.setContent(`<input type=file>`);
   const [, content] = await Promise.all([
     page.waitForEvent('filechooser').then(fileChooser => fileChooser.setFiles(asset('file-to-upload.txt'))),
@@ -320,7 +320,7 @@ it('should be able to read selected file', async ({page, asset}) => {
   expect(content).toBe('contents of the file');
 });
 
-it('should be able to reset selected files with empty file list', async ({page, asset}) => {
+it('should be able to reset selected files with empty file list', async ({ page, asset }) => {
   await page.setContent(`<input type=file>`);
   const [, fileLength1] = await Promise.all([
     page.waitForEvent('filechooser').then(fileChooser => fileChooser.setFiles(asset('file-to-upload.txt'))),
@@ -342,7 +342,7 @@ it('should be able to reset selected files with empty file list', async ({page, 
   expect(fileLength2).toBe(0);
 });
 
-it('should not accept multiple files for single-file input', async ({page, asset}) => {
+it('should not accept multiple files for single-file input', async ({ page, asset }) => {
   await page.setContent(`<input type=file>`);
   const [fileChooser] = await Promise.all([
     page.waitForEvent('filechooser'),
@@ -356,7 +356,7 @@ it('should not accept multiple files for single-file input', async ({page, asset
   expect(error).not.toBe(null);
 });
 
-it('should emit input and change events', async ({page, asset}) => {
+it('should emit input and change events', async ({ page, asset }) => {
   const events = [];
   await page.exposeFunction('eventHandled', e => events.push(e));
   await page.setContent(`
@@ -371,7 +371,7 @@ it('should emit input and change events', async ({page, asset}) => {
   expect(events[1].type).toBe('change');
 });
 
-it('should work for single file pick', async ({page, server}) => {
+it('should work for single file pick', async ({ page, server }) => {
   await page.setContent(`<input type=file>`);
   const [fileChooser] = await Promise.all([
     page.waitForEvent('filechooser'),
@@ -380,7 +380,7 @@ it('should work for single file pick', async ({page, server}) => {
   expect(fileChooser.isMultiple()).toBe(false);
 });
 
-it('should work for "multiple"', async ({page, server}) => {
+it('should work for "multiple"', async ({ page, server }) => {
   await page.setContent(`<input multiple type=file>`);
   const [fileChooser] = await Promise.all([
     page.waitForEvent('filechooser'),
@@ -389,7 +389,7 @@ it('should work for "multiple"', async ({page, server}) => {
   expect(fileChooser.isMultiple()).toBe(true);
 });
 
-it('should work for "webkitdirectory"', async ({page, server}) => {
+it('should work for "webkitdirectory"', async ({ page, server }) => {
   await page.setContent(`<input multiple webkitdirectory type=file>`);
   const [fileChooser] = await Promise.all([
     page.waitForEvent('filechooser'),

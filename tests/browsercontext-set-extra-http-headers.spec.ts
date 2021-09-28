@@ -17,7 +17,7 @@
 
 import { browserTest as it, expect } from './config/browserTest';
 
-it('should override extra headers from browser context', async ({browser, server}) => {
+it('should override extra headers from browser context', async ({ browser, server }) => {
   const context = await browser.newContext({
     extraHTTPHeaders: { 'fOo': 'bAr', 'baR': 'foO' },
   });
@@ -34,7 +34,7 @@ it('should override extra headers from browser context', async ({browser, server
   expect(request.headers['bar']).toBe('foO');
 });
 
-it('should throw for non-string header values', async ({browser}) => {
+it('should throw for non-string header values', async ({ browser }) => {
   const error3 = await browser.newContext({ extraHTTPHeaders: { 'foo': null } }).catch(e => e);
   expect(error3.message).toContain('Expected value of header "foo" to be String, but "object" is found.');
 });

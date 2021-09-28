@@ -107,7 +107,6 @@ function wrap(matcherName: string, matcher: any) {
       reportStepError(e);
     }
   };
-  result.displayName = 'expect.' + matcherName;
   return result;
 }
 

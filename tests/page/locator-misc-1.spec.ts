@@ -87,14 +87,14 @@ it('should focus a button', async ({ page, server }) => {
   expect(await button.evaluate(button => document.activeElement === button)).toBe(true);
 });
 
-it('should dispatch click event via ElementHandles', async ({page, server}) => {
+it('should dispatch click event via ElementHandles', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   const button = page.locator('button');
   await button.dispatchEvent('click');
   expect(await page.evaluate(() => window['result'])).toBe('Clicked');
 });
 
-it('should upload the file', async ({page, server, asset}) => {
+it('should upload the file', async ({ page, server, asset }) => {
   await page.goto(server.PREFIX + '/input/fileupload.html');
   const filePath = path.relative(process.cwd(), asset('file-to-upload.txt'));
   const input = page.locator('input[type=file]');

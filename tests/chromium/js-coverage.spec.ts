@@ -18,7 +18,7 @@ import { contextTest as it, expect } from '../config/browserTest';
 
 it.skip(({ trace }) => !!trace);
 
-it('should work', async function({page, server}) {
+it('should work', async function({ page, server }) {
   await page.coverage.startJSCoverage();
   await page.goto(server.PREFIX + '/jscoverage/simple.html', { waitUntil: 'load' });
   const coverage = await page.coverage.stopJSCoverage();
@@ -27,7 +27,7 @@ it('should work', async function({page, server}) {
   expect(coverage[0].functions.find(f => f.functionName === 'foo').ranges[0].count).toEqual(1);
 });
 
-it('should report sourceURLs', async function({page, server}) {
+it('should report sourceURLs', async function({ page, server }) {
   await page.coverage.startJSCoverage();
   await page.goto(server.PREFIX + '/jscoverage/sourceurl.html');
   const coverage = await page.coverage.stopJSCoverage();
@@ -35,22 +35,22 @@ it('should report sourceURLs', async function({page, server}) {
   expect(coverage[0].url).toBe('nicename.js');
 });
 
-it('should ignore eval() scripts by default', async function({page, server}) {
+it('should ignore eval() scripts by default', async function({ page, server }) {
   await page.coverage.startJSCoverage();
   await page.goto(server.PREFIX + '/jscoverage/eval.html');
   const coverage = await page.coverage.stopJSCoverage();
   expect(coverage.length).toBe(1);
 });
 
-it('shouldn\'t ignore eval() scripts if reportAnonymousScripts is true', async function({page, server}) {
-  await page.coverage.startJSCoverage({reportAnonymousScripts: true});
+it('shouldn\'t ignore eval() scripts if reportAnonymousScripts is true', async function({ page, server }) {
+  await page.coverage.startJSCoverage({ reportAnonymousScripts: true });
   await page.goto(server.PREFIX + '/jscoverage/eval.html');
   const coverage = await page.coverage.stopJSCoverage();
   expect(coverage.find(entry => entry.url === '').source).toBe('console.log("foo")');
   expect(coverage.length).toBe(2);
 });
 
-it('should report multiple scripts', async function({page, server}) {
+it('should report multiple scripts', async function({ page, server }) {
   await page.coverage.startJSCoverage();
   await page.goto(server.PREFIX + '/jscoverage/multiple.html');
   const coverage = await page.coverage.stopJSCoverage();
@@ -60,15 +60,15 @@ it('should report multiple scripts', async function({page, server}) {
   expect(coverage[1].url).toContain('/jscoverage/script2.js');
 });
 
-it('should report scripts across navigations when disabled', async function({page, server}) {
-  await page.coverage.startJSCoverage({resetOnNavigation: false});
+it('should report scripts across navigations when disabled', async function({ page, server }) {
+  await page.coverage.startJSCoverage({ resetOnNavigation: false });
   await page.goto(server.PREFIX + '/jscoverage/multiple.html');
   await page.goto(server.EMPTY_PAGE);
   const coverage = await page.coverage.stopJSCoverage();
   expect(coverage.length).toBe(2);
 });
 
-it('should NOT report scripts across navigations when enabled', async function({page, server}) {
+it('should NOT report scripts across navigations when enabled', async function({ page, server }) {
   await page.coverage.startJSCoverage(); // Enabled by default.
   await page.goto(server.PREFIX + '/jscoverage/multiple.html');
   await page.goto(server.EMPTY_PAGE);
@@ -76,7 +76,7 @@ it('should NOT report scripts across navigations when enabled', async function({
   expect(coverage.length).toBe(0);
 });
 
-it('should not hang when there is a debugger statement', async function({page, server}) {
+it('should not hang when there is a debugger statement', async function({ page, server }) {
   await page.coverage.startJSCoverage();
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => {

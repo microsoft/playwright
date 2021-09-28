@@ -19,11 +19,10 @@ import { XPathEngine } from './xpathSelectorEngine';
 import { ReactEngine } from './reactSelectorEngine';
 import { VueEngine } from './vueSelectorEngine';
 import { ParsedSelector, ParsedSelectorPart, parseSelector } from '../common/selectorParser';
-import { FatalDOMError } from '../common/domErrors';
 import { SelectorEvaluatorImpl, isVisible, parentElementOrShadowHost, elementMatchesText, TextMatcher, createRegexTextMatcher, createStrictTextMatcher, createLaxTextMatcher } from './selectorEvaluator';
 import { CSSComplexSelectorList } from '../common/cssParser';
 import { generateSelector } from './selectorGenerator';
-import type { ExpectedTextValue } from '../../protocol/channels';
+import type * as channels from '../../protocol/channels';
 
 type Predicate<T> = (progress: InjectedScriptProgress, continuePolling: symbol) => T | symbol;
 
@@ -39,6 +38,8 @@ export type LogEntry = {
   message?: string;
   intermediateResult?: string;
 };
+
+export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue'> & { expectedValue?: any };
 
 export type InjectedScriptPoll<T> = {
   run: () => Promise<T>,
@@ -66,8 +67,9 @@ export class InjectedScript {
   _evaluator: SelectorEvaluatorImpl;
   private _stableRafCount: number;
   private _replaceRafWithTimeout: boolean;
+  private _browserName: string;
 
-  constructor(stableRafCount: number, replaceRafWithTimeout: boolean, customEngines: { name: string, engine: SelectorEngine}[]) {
+  constructor(stableRafCount: number, replaceRafWithTimeout: boolean, browserName: string, customEngines: { name: string, engine: SelectorEngine}[]) {
     this._evaluator = new SelectorEvaluatorImpl(new Map());
 
     this._engines = new Map();
@@ -94,6 +96,7 @@ export class InjectedScript {
 
     this._stableRafCount = stableRafCount;
     this._replaceRafWithTimeout = replaceRafWithTimeout;
+    this._browserName = browserName;
   }
 
   eval(expression: string): any {
@@ -265,12 +268,26 @@ export class InjectedScript {
   }
 
   pollRaf<T>(predicate: Predicate<T>): InjectedScriptPoll<T> {
+    return this.poll(predicate, next => requestAnimationFrame(next));
+  }
+
+  pollInterval<T>(pollInterval: number, predicate: Predicate<T>): InjectedScriptPoll<T> {
+    return this.poll(predicate, next => setTimeout(next, pollInterval));
+  }
+
+  pollLogScale<T>(predicate: Predicate<T>): InjectedScriptPoll<T> {
+    const pollIntervals = [100, 250, 500];
+    let attempts = 0;
+    return this.poll(predicate, next => setTimeout(next, pollIntervals[attempts++] || 1000));
+  }
+
+  poll<T>(predicate: Predicate<T>, scheduleNext: (next: () => void) => void): InjectedScriptPoll<T> {
     return this._runAbortableTask(progress => {
       let fulfill: (result: T) => void;
       let reject: (error: Error) => void;
       const result = new Promise<T>((f, r) => { fulfill = f; reject = r; });
 
-      const onRaf = () => {
+      const next = () => {
         if (progress.aborted)
           return;
         try {
@@ -279,40 +296,14 @@ export class InjectedScript {
           if (success !== continuePolling)
             fulfill(success as T);
           else
-            requestAnimationFrame(onRaf);
+            scheduleNext(next);
         } catch (e) {
           progress.log('  ' + e.message);
           reject(e);
         }
       };
 
-      onRaf();
-      return result;
-    });
-  }
-
-  pollInterval<T>(pollInterval: number, predicate: Predicate<T>): InjectedScriptPoll<T> {
-    return this._runAbortableTask(progress => {
-      let fulfill: (result: T) => void;
-      let reject: (error: Error) => void;
-      const result = new Promise<T>((f, r) => { fulfill = f; reject = r; });
-
-      const onTimeout = () => {
-        if (progress.aborted)
-          return;
-        try {
-          const continuePolling = Symbol('continuePolling');
-          const success = predicate(progress, continuePolling);
-          if (success !== continuePolling)
-            fulfill(success as T);
-          else
-            setTimeout(onTimeout, pollInterval);
-        } catch (e) {
-          reject(e);
-        }
-      };
-
-      onTimeout();
+      next();
       return result;
     });
   }
@@ -406,7 +397,7 @@ export class InjectedScript {
   }
 
   waitForElementStatesAndPerformAction<T>(node: Node, states: ElementState[], force: boolean | undefined,
-    callback: (node: Node, progress: InjectedScriptProgress, continuePolling: symbol) => T | symbol): InjectedScriptPoll<T | 'error:notconnected' | FatalDOMError> {
+    callback: (node: Node, progress: InjectedScriptProgress, continuePolling: symbol) => T | symbol): InjectedScriptPoll<T | 'error:notconnected'> {
     let lastRect: { x: number, y: number, width: number, height: number } | undefined;
     let counter = 0;
     let samePositionCounter = 0;
@@ -471,7 +462,7 @@ export class InjectedScript {
       return this.pollRaf(predicate);
   }
 
-  elementState(node: Node, state: ElementStateWithoutStable): boolean | 'error:notconnected' | 'error:notcheckbox' {
+  elementState(node: Node, state: ElementStateWithoutStable): boolean | 'error:notconnected' {
     const element = this.retarget(node, ['stable', 'visible', 'hidden'].includes(state) ? 'no-follow-label' : 'follow-label');
     if (!element || !element.isConnected) {
       if (state === 'hidden')
@@ -498,21 +489,21 @@ export class InjectedScript {
       if (['checkbox', 'radio'].includes(element.getAttribute('role') || ''))
         return element.getAttribute('aria-checked') === 'true';
       if (element.nodeName !== 'INPUT')
-        return 'error:notcheckbox';
+        throw this.createStacklessError('Not a checkbox or radio button');
       if (!['radio', 'checkbox'].includes((element as HTMLInputElement).type.toLowerCase()))
-        return 'error:notcheckbox';
+        throw this.createStacklessError('Not a checkbox or radio button');
       return (element as HTMLInputElement).checked;
     }
     throw this.createStacklessError(`Unexpected element state "${state}"`);
   }
 
   selectOptions(optionsToSelect: (Node | { value?: string, label?: string, index?: number })[],
-    node: Node, progress: InjectedScriptProgress, continuePolling: symbol): string[] | 'error:notconnected' | FatalDOMError | symbol {
+    node: Node, progress: InjectedScriptProgress, continuePolling: symbol): string[] | 'error:notconnected' | symbol {
     const element = this.retarget(node, 'follow-label');
     if (!element)
       return 'error:notconnected';
     if (element.nodeName.toLowerCase() !== 'select')
-      return 'error:notselect';
+      throw this.createStacklessError('Element is not a <select> element');
     const select = element as HTMLSelectElement;
     const options = [...select.options];
     const selectedOptions = [];
@@ -553,7 +544,7 @@ export class InjectedScript {
     return selectedOptions.map(option => option.value);
   }
 
-  fill(value: string, node: Node, progress: InjectedScriptProgress): FatalDOMError | 'error:notconnected' | 'needsinput' | 'done' {
+  fill(value: string, node: Node, progress: InjectedScriptProgress): 'error:notconnected' | 'needsinput' | 'done' {
     const element = this.retarget(node, 'follow-label');
     if (!element)
       return 'error:notconnected';
@@ -564,19 +555,19 @@ export class InjectedScript {
       const kTextInputTypes = new Set(['', 'email', 'number', 'password', 'search', 'tel', 'text', 'url']);
       if (!kTextInputTypes.has(type) && !kDateTypes.has(type)) {
         progress.log(`    input of type "${type}" cannot be filled`);
-        return 'error:notfillableinputtype';
+        throw this.createStacklessError(`Input of type "${type}" cannot be filled`);
       }
       if (type === 'number') {
         value = value.trim();
         if (isNaN(Number(value)))
-          return 'error:notfillablenumberinput';
+          throw this.createStacklessError('Cannot type text into input[type=number]');
       }
       if (kDateTypes.has(type)) {
         value = value.trim();
         input.focus();
         input.value = value;
         if (input.value !== value)
-          return 'error:notvaliddate';
+          throw this.createStacklessError('Malformed value');
         element.dispatchEvent(new Event('input', { 'bubbles': true }));
         element.dispatchEvent(new Event('change', { 'bubbles': true }));
         return 'done';  // We have already changed the value, no need to input it.
@@ -584,7 +575,7 @@ export class InjectedScript {
     } else if (element.nodeName.toLowerCase() === 'textarea') {
       // Nothing to check here.
     } else if (!(element as HTMLElement).isContentEditable) {
-      return 'error:notfillableelement';
+      throw this.createStacklessError('Element is not an <input>, <textarea> or [contenteditable] element');
     }
     this.selectText(element);
     return 'needsinput';  // Still need to input the value.
@@ -618,11 +609,11 @@ export class InjectedScript {
     return 'done';
   }
 
-  focusNode(node: Node, resetSelectionIfNotFocused?: boolean): FatalDOMError | 'error:notconnected' | 'done' {
+  focusNode(node: Node, resetSelectionIfNotFocused?: boolean): 'error:notconnected' | 'done' {
     if (!node.isConnected)
       return 'error:notconnected';
     if (node.nodeType !== Node.ELEMENT_NODE)
-      return 'error:notelement';
+      throw this.createStacklessError('Node is not an element');
     const wasFocused = (node.getRootNode() as (Document | ShadowRoot)).activeElement === node && node.ownerDocument && node.ownerDocument.hasFocus();
     (node as HTMLElement | SVGElement).focus();
 
@@ -772,13 +763,153 @@ export class InjectedScript {
   }
 
   createStacklessError(message: string): Error {
+    if (this._browserName === 'firefox') {
+      const error = new Error('Error: ' + message);
+      // Firefox cannot delete the stack, so assign to an empty string.
+      error.stack = '';
+      return error;
+    }
     const error = new Error(message);
+    // Chromium/WebKit should delete the stack instead.
     delete error.stack;
     return error;
   }
 
-  expectedTextMatcher(expected: ExpectedTextValue): ExpectedTextMatcher {
-    return new ExpectedTextMatcher(expected);
+  expect(progress: InjectedScriptProgress, element: Element, options: FrameExpectParams, elements: Element[], continuePolling: any): { pass: boolean, received?: any } {
+    const injected = progress.injectedScript;
+    const expression = options.expression;
+
+    {
+      // Element state / boolean values.
+      let elementState: boolean | 'error:notconnected' | 'error:notcheckbox' | undefined;
+      if (expression === 'to.be.checked') {
+        elementState = progress.injectedScript.elementState(element, 'checked');
+      } else if (expression === 'to.be.disabled') {
+        elementState = progress.injectedScript.elementState(element, 'disabled');
+      } else if (expression === 'to.be.editable') {
+        elementState = progress.injectedScript.elementState(element, 'editable');
+      } else if (expression === 'to.be.empty') {
+        if (element.nodeName === 'INPUT' || element.nodeName === 'TEXTAREA')
+          elementState = !(element as HTMLInputElement).value;
+        else
+          elementState = !element.textContent?.trim();
+      } else if (expression === 'to.be.enabled') {
+        elementState = progress.injectedScript.elementState(element, 'enabled');
+      } else if (expression === 'to.be.focused') {
+        elementState = document.activeElement === element;
+      } else if (expression === 'to.be.hidden') {
+        elementState = progress.injectedScript.elementState(element, 'hidden');
+      } else if (expression === 'to.be.visible') {
+        elementState = progress.injectedScript.elementState(element, 'visible');
+      }
+
+      if (elementState !== undefined) {
+        if (elementState === 'error:notcheckbox')
+          throw injected.createStacklessError('Element is not a checkbox');
+        if (elementState === 'error:notconnected')
+          throw injected.createStacklessError('Element is not connected');
+        if (elementState === options.isNot) {
+          progress.setIntermediateResult(elementState);
+          progress.log(`  unexpected value "${elementState}"`);
+          return continuePolling;
+        }
+        return { pass: !options.isNot };
+      }
+    }
+
+    {
+      // Single number value.
+      if (expression === 'to.have.count') {
+        const received = elements.length;
+        const matches = received === options.expectedNumber;
+        if (matches === options.isNot) {
+          progress.setIntermediateResult(received);
+          progress.log(`  unexpected value "${received}"`);
+          return continuePolling;
+        }
+        return { pass: !options.isNot, received };
+      }
+    }
+
+    {
+      // JS property
+      if (expression === 'to.have.property') {
+        const received = (element as any)[options.expressionArg];
+        const matches = deepEquals(received, options.expectedValue);
+        if (matches === options.isNot) {
+          progress.setIntermediateResult(received);
+          progress.log(`  unexpected value "${received}"`);
+          return continuePolling;
+        }
+        return { received, pass: !options.isNot };
+      }
+    }
+
+    {
+      // Single text value.
+      let received: string | undefined;
+      if (expression === 'to.have.attribute') {
+        received = element.getAttribute(options.expressionArg) || '';
+      } else if (expression === 'to.have.class') {
+        received = element.className;
+      } else if (expression === 'to.have.css') {
+        received = (window.getComputedStyle(element) as any)[options.expressionArg];
+      } else if (expression === 'to.have.id') {
+        received = element.id;
+      } else if (expression === 'to.have.text') {
+        received = options.useInnerText ? (element as HTMLElement).innerText : element.textContent || '';
+      } else if (expression === 'to.have.title') {
+        received = document.title;
+      } else if (expression === 'to.have.url') {
+        received = document.location.href;
+      } else if (expression === 'to.have.value') {
+        if (element.nodeName !== 'INPUT' && element.nodeName !== 'TEXTAREA' && element.nodeName !== 'SELECT')
+          throw this.createStacklessError('Not an input element');
+        received = (element as any).value;
+      }
+
+      if (received !== undefined && options.expectedText) {
+        const matcher = new ExpectedTextMatcher(options.expectedText[0]);
+        if (matcher.matches(received) === options.isNot) {
+          progress.setIntermediateResult(received);
+          progress.log(`  unexpected value "${received}"`);
+          return continuePolling;
+        }
+        return { received, pass: !options.isNot };
+      }
+    }
+
+    {
+      // List of values.
+      let received: string[] | undefined;
+      if (expression === 'to.have.text.array' || expression === 'to.contain.text.array')
+        received = elements.map(e => options.useInnerText ? (e as HTMLElement).innerText : e.textContent || '');
+      else if (expression === 'to.have.class.array')
+        received = elements.map(e => e.className);
+
+      if (received && options.expectedText) {
+        // "To match an array" is "to contain an array" + "equal length"
+        const lengthShouldMatch = expression !== 'to.contain.text.array';
+        if (received.length !== options.expectedText.length && lengthShouldMatch) {
+          progress.setIntermediateResult(received);
+          return continuePolling;
+        }
+
+        // Each matcher should get a "received" that matches it, in order.
+        let i = 0;
+        const matchers = options.expectedText.map(e => new ExpectedTextMatcher(e));
+        for (const matcher of matchers) {
+          while (i < received.length && matcher.matches(received[i]) === options.isNot)
+            i++;
+          if (i === received.length) {
+            progress.setIntermediateResult(received);
+            return continuePolling;
+          }
+        }
+        return { received, pass: !options.isNot };
+      }
+    }
+    throw this.createStacklessError('Unknown expect matcher: ' + options.expression);
   }
 }
 
@@ -875,7 +1006,7 @@ class ExpectedTextMatcher {
   private _regex: RegExp | undefined;
   private _normalizeWhiteSpace: boolean | undefined;
 
-  constructor(expected: ExpectedTextValue) {
+  constructor(expected: channels.ExpectedTextValue) {
     this._normalizeWhiteSpace = expected.normalizeWhiteSpace;
     this._string = expected.matchSubstring ? undefined : this.normalizeWhiteSpace(expected.string);
     this._substring = expected.matchSubstring ? this.normalizeWhiteSpace(expected.string) : undefined;
@@ -899,6 +1030,53 @@ class ExpectedTextMatcher {
       return s;
     return this._normalizeWhiteSpace ? s.trim().replace(/\s+/g, ' ') : s;
   }
+}
+
+function deepEquals(a: any, b: any): boolean {
+  if (a === b)
+    return true;
+
+  if (a && b && typeof a === 'object' && typeof b === 'object') {
+    if (a.constructor !== b.constructor)
+      return false;
+
+    if (Array.isArray(a)) {
+      if (a.length !== b.length)
+        return false;
+      for (let i = 0; i < a.length; ++i) {
+        if (!deepEquals(a[i], b[i]))
+          return false;
+      }
+      return true;
+    }
+
+    if (a instanceof RegExp)
+      return a.source === b.source && a.flags === b.flags;
+    // This covers Date.
+    if (a.valueOf !== Object.prototype.valueOf)
+      return a.valueOf() === b.valueOf();
+    // This covers custom objects.
+    if (a.toString !== Object.prototype.toString)
+      return a.toString() === b.toString();
+
+    const keys = Object.keys(a);
+    if (keys.length !== Object.keys(b).length)
+      return false;
+
+    for (let i = 0; i < keys.length; ++i) {
+      if (!b.hasOwnProperty(keys[i]))
+        return false;
+    }
+
+    for (const key of keys) {
+      if (!deepEquals(a[key], b[key]))
+        return false;
+    }
+    return true;
+  }
+
+  // NaN
+  return isNaN(a) === isNaN(b);
 }
 
 export default InjectedScript;

@@ -65,7 +65,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
         this._dispatchEvent('backgroundPage', { page: new PageDispatcher(this._scope, page) });
       context.on(CRBrowserContext.CREvents.BackgroundPage, page => this._dispatchEvent('backgroundPage', { page: new PageDispatcher(this._scope, page) }));
       for (const serviceWorker of (context as CRBrowserContext).serviceWorkers())
-        this._dispatchEvent('serviceWorker', { worker: new WorkerDispatcher(this._scope, serviceWorker)});
+        this._dispatchEvent('serviceWorker', { worker: new WorkerDispatcher(this._scope, serviceWorker) });
       context.on(CRBrowserContext.CREvents.ServiceWorker, serviceWorker => this._dispatchEvent('serviceWorker', { worker: new WorkerDispatcher(this._scope, serviceWorker) }));
     }
     context.on(BrowserContext.Events.Request, (request: Request) =>  {
@@ -84,7 +84,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       responseEndTiming: request._responseEndTiming,
       page: PageDispatcher.fromNullable(this._scope, request.frame()._page.initializedOrUndefined())
     }));
-    context.on(BrowserContext.Events.RequestFinished, ({ request, response}: { request: Request, response: Response | null }) => this._dispatchEvent('requestFinished', {
+    context.on(BrowserContext.Events.RequestFinished, ({ request, response }: { request: Request, response: Response | null }) => this._dispatchEvent('requestFinished', {
       request: RequestDispatcher.from(scope, request),
       response: ResponseDispatcher.fromNullable(scope, response),
       responseEndTiming: request._responseEndTiming,

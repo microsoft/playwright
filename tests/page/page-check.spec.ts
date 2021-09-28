@@ -17,49 +17,49 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should check the box', async ({page}) => {
+it('should check the box', async ({ page }) => {
   await page.setContent(`<input id='checkbox' type='checkbox'></input>`);
   await page.check('input');
   expect(await page.evaluate(() => window['checkbox'].checked)).toBe(true);
 });
 
-it('should not check the checked box', async ({page}) => {
+it('should not check the checked box', async ({ page }) => {
   await page.setContent(`<input id='checkbox' type='checkbox' checked></input>`);
   await page.check('input');
   expect(await page.evaluate(() => window['checkbox'].checked)).toBe(true);
 });
 
-it('should uncheck the box', async ({page}) => {
+it('should uncheck the box', async ({ page }) => {
   await page.setContent(`<input id='checkbox' type='checkbox' checked></input>`);
   await page.uncheck('input');
   expect(await page.evaluate(() => window['checkbox'].checked)).toBe(false);
 });
 
-it('should not uncheck the unchecked box', async ({page}) => {
+it('should not uncheck the unchecked box', async ({ page }) => {
   await page.setContent(`<input id='checkbox' type='checkbox'></input>`);
   await page.uncheck('input');
   expect(await page.evaluate(() => window['checkbox'].checked)).toBe(false);
 });
 
-it('should check the box by label', async ({page}) => {
+it('should check the box by label', async ({ page }) => {
   await page.setContent(`<label for='checkbox'><input id='checkbox' type='checkbox'></input></label>`);
   await page.check('label');
   expect(await page.evaluate(() => window['checkbox'].checked)).toBe(true);
 });
 
-it('should check the box outside label', async ({page}) => {
+it('should check the box outside label', async ({ page }) => {
   await page.setContent(`<label for='checkbox'>Text</label><div><input id='checkbox' type='checkbox'></input></div>`);
   await page.check('label');
   expect(await page.evaluate(() => window['checkbox'].checked)).toBe(true);
 });
 
-it('should check the box inside label w/o id', async ({page}) => {
+it('should check the box inside label w/o id', async ({ page }) => {
   await page.setContent(`<label>Text<span><input id='checkbox' type='checkbox'></input></span></label>`);
   await page.check('label');
   expect(await page.evaluate(() => window['checkbox'].checked)).toBe(true);
 });
 
-it('should check the box outside shadow dom label', async ({page}) => {
+it('should check the box outside shadow dom label', async ({ page }) => {
   await page.setContent('<div></div>');
   await page.$eval('div', div => {
     const root = div.attachShadow({ mode: 'open' });
@@ -76,7 +76,7 @@ it('should check the box outside shadow dom label', async ({page}) => {
   expect(await page.$eval('input', input => input.checked)).toBe(true);
 });
 
-it('should check radio', async ({page}) => {
+it('should check radio', async ({ page }) => {
   await page.setContent(`
     <input type='radio'>one</input>
     <input id='two' type='radio'>two</input>
@@ -85,7 +85,7 @@ it('should check radio', async ({page}) => {
   expect(await page.evaluate(() => window['two'].checked)).toBe(true);
 });
 
-it('should check radio by aria role', async ({page}) => {
+it('should check radio by aria role', async ({ page }) => {
   await page.setContent(`<div role='radio' id='checkbox'>CHECKBOX</div>
     <script>
       checkbox.addEventListener('click', () => checkbox.setAttribute('aria-checked', 'true'));
@@ -94,7 +94,7 @@ it('should check radio by aria role', async ({page}) => {
   expect(await page.evaluate(() => window['checkbox'].getAttribute('aria-checked'))).toBe('true');
 });
 
-it('should uncheck radio by aria role', async ({page}) => {
+it('should uncheck radio by aria role', async ({ page }) => {
   await page.setContent(`<div role='radio' id='checkbox' aria-checked="true">CHECKBOX</div>
     <script>
       checkbox.addEventListener('click', () => checkbox.setAttribute('aria-checked', 'false'));
@@ -103,7 +103,7 @@ it('should uncheck radio by aria role', async ({page}) => {
   expect(await page.evaluate(() => window['checkbox'].getAttribute('aria-checked'))).toBe('false');
 });
 
-it('should check the box by aria role', async ({page}) => {
+it('should check the box by aria role', async ({ page }) => {
   await page.setContent(`<div role='checkbox' id='checkbox'>CHECKBOX</div>
     <script>
       checkbox.addEventListener('click', () => checkbox.setAttribute('aria-checked', 'true'));
@@ -112,7 +112,7 @@ it('should check the box by aria role', async ({page}) => {
   expect(await page.evaluate(() => window['checkbox'].getAttribute('aria-checked'))).toBe('true');
 });
 
-it('should uncheck the box by aria role', async ({page}) => {
+it('should uncheck the box by aria role', async ({ page }) => {
   await page.setContent(`<div role='checkbox' id='checkbox' aria-checked="true">CHECKBOX</div>
     <script>
       checkbox.addEventListener('click', () => checkbox.setAttribute('aria-checked', 'false'));
@@ -121,13 +121,13 @@ it('should uncheck the box by aria role', async ({page}) => {
   expect(await page.evaluate(() => window['checkbox'].getAttribute('aria-checked'))).toBe('false');
 });
 
-it('should throw when not a checkbox', async ({page}) => {
+it('should throw when not a checkbox', async ({ page }) => {
   await page.setContent(`<div>Check me</div>`);
   const error = await page.check('div').catch(e => e);
   expect(error.message).toContain('Not a checkbox or radio button');
 });
 
-it('should check the box inside a button', async ({page}) => {
+it('should check the box inside a button', async ({ page }) => {
   await page.setContent(`<div role='button'><input type='checkbox'></div>`);
   await page.check('input');
   expect(await page.$eval('input', input => input.checked)).toBe(true);
@@ -135,7 +135,7 @@ it('should check the box inside a button', async ({page}) => {
   expect(await (await page.$('input')).isChecked()).toBe(true);
 });
 
-it('should check the label with position', async ({page, server}) => {
+it('should check the label with position', async ({ page, server }) => {
   await page.setContent(`
     <input id='checkbox' type='checkbox' style='width: 5px; height: 5px;'>
     <label for='checkbox'>
@@ -147,19 +147,19 @@ it('should check the label with position', async ({page, server}) => {
   expect(await page.$eval('input', input => input.checked)).toBe(true);
 });
 
-it('trial run should not check', async ({page}) => {
+it('trial run should not check', async ({ page }) => {
   await page.setContent(`<input id='checkbox' type='checkbox'></input>`);
   await page.check('input', { trial: true });
   expect(await page.evaluate(() => window['checkbox'].checked)).toBe(false);
 });
 
-it('trial run should not uncheck', async ({page}) => {
+it('trial run should not uncheck', async ({ page }) => {
   await page.setContent(`<input id='checkbox' type='checkbox' checked></input>`);
   await page.uncheck('input', { trial: true });
   expect(await page.evaluate(() => window['checkbox'].checked)).toBe(true);
 });
 
-it('should check the box using setChecked', async ({page}) => {
+it('should check the box using setChecked', async ({ page }) => {
   await page.setContent(`<input id='checkbox' type='checkbox'></input>`);
   await page.setChecked('input', true);
   expect(await page.evaluate(() => window['checkbox'].checked)).toBe(true);

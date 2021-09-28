@@ -152,7 +152,7 @@ export class FFPage implements PageDelegate {
   }
 
   _onExecutionContextCreated(payload: Protocol.Runtime.executionContextCreatedPayload) {
-    const {executionContextId, auxData} = payload;
+    const { executionContextId, auxData } = payload;
     const frame = this._page._frameManager.frame(auxData.frameId!);
     if (!frame)
       return;
@@ -169,7 +169,7 @@ export class FFPage implements PageDelegate {
   }
 
   _onExecutionContextDestroyed(payload: Protocol.Runtime.executionContextDestroyedPayload) {
-    const {executionContextId} = payload;
+    const { executionContextId } = payload;
     const context = this._contextIdToContext.get(executionContextId);
     if (!context)
       return;
@@ -220,7 +220,7 @@ export class FFPage implements PageDelegate {
   }
 
   _onEventFired(payload: Protocol.Page.eventFiredPayload) {
-    const {frameId, name} = payload;
+    const { frameId, name } = payload;
     if (name === 'load')
       this._page._frameManager.frameLifecycleEvent(frameId, 'load');
     if (name === 'DOMContentLoaded')
@@ -236,7 +236,7 @@ export class FFPage implements PageDelegate {
   }
 
   _onConsole(payload: Protocol.Runtime.consolePayload) {
-    const {type, args, executionContextId, location} = payload;
+    const { type, args, executionContextId, location } = payload;
     const context = this._contextIdToContext.get(executionContextId)!;
     this._page._addConsoleMessage(type, args.map(arg => context.createHandle(arg)), location);
   }
@@ -260,7 +260,7 @@ export class FFPage implements PageDelegate {
   }
 
   async _onFileChooserOpened(payload: Protocol.Page.fileChooserOpenedPayload) {
-    const {executionContextId, element} = payload;
+    const { executionContextId, element } = payload;
     const context = this._contextIdToContext.get(executionContextId)!;
     const handle = context.createHandle(element).asElement()!;
     await this._page._onFileChooserOpened(handle);
@@ -284,7 +284,7 @@ export class FFPage implements PageDelegate {
       worker._createExecutionContext(new FFExecutionContext(workerSession, event.executionContextId));
     });
     workerSession.on('Runtime.console', event => {
-      const {type, args, location} = event;
+      const { type, args, location } = event;
       const context = worker._existingExecutionContext!;
       this._page._addConsoleMessage(type, args.map(arg => context.createHandle(arg)), location);
     });

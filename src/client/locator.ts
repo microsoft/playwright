@@ -22,6 +22,7 @@ import { monotonicTime } from '../utils/utils';
 import { ElementHandle } from './elementHandle';
 import { Frame } from './frame';
 import { FilePayload, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
+import { parseResult, serializeArgument } from './jsHandle';
 
 export class Locator implements api.Locator {
   private _frame: Frame;
@@ -212,9 +213,15 @@ export class Locator implements api.Locator {
     return this._frame.$$eval(this._selector, ee => ee.map(e => e.textContent || ''));
   }
 
-  async _expect(expression: string, options: channels.FrameExpectOptions): Promise<{ pass: boolean, received: string }> {
+  async _expect(expression: string, options: channels.FrameExpectOptions): Promise<{ pass: boolean, received?: any, log?: string[] }> {
     return this._frame._wrapApiCall(async (channel: channels.FrameChannel) => {
-      return (await channel.expect({ selector: this._selector, expression, ...options }));
+      const params: any = { selector: this._selector, expression, ...options };
+      if (options.expectedValue)
+        params.expectedValue = serializeArgument(options.expectedValue);
+      const result = (await channel.expect(params));
+      if (result.received !== undefined)
+        result.received = parseResult(result.received);
+      return result;
     });
   }
 

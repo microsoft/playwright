@@ -18,7 +18,7 @@
 import { test as it, expect } from './pageTest';
 import type { ElementHandle } from '../../index';
 
-it('should work', async ({page}) => {
+it('should work', async ({ page }) => {
   const aHandle = await page.evaluateHandle(() => ({
     one: 1,
     two: 2,
@@ -28,7 +28,7 @@ it('should work', async ({page}) => {
   expect(await twoHandle.jsonValue()).toEqual(2);
 });
 
-it('should work with undefined, null, and empty', async ({page}) => {
+it('should work with undefined, null, and empty', async ({ page }) => {
   const aHandle = await page.evaluateHandle(() => ({
     undefined: undefined,
     null: null,
@@ -41,7 +41,7 @@ it('should work with undefined, null, and empty', async ({page}) => {
   expect(String(await emptyhandle.jsonValue())).toEqual('undefined');
 });
 
-it('should work with unserializable values', async ({page}) => {
+it('should work with unserializable values', async ({ page }) => {
   const aHandle = await page.evaluateHandle(() => ({
     infinity: Infinity,
     nInfinity: -Infinity,
@@ -58,7 +58,7 @@ it('should work with unserializable values', async ({page}) => {
   expect(await nzeroHandle.jsonValue()).toEqual(-0);
 });
 
-it('getProperties should work', async ({page}) => {
+it('getProperties should work', async ({ page }) => {
   const aHandle = await page.evaluateHandle(() => ({
     foo: 'bar'
   }));
@@ -68,13 +68,13 @@ it('getProperties should work', async ({page}) => {
   expect(await foo.jsonValue()).toBe('bar');
 });
 
-it('getProperties should return empty map for non-objects', async ({page}) => {
+it('getProperties should return empty map for non-objects', async ({ page }) => {
   const aHandle = await page.evaluateHandle(() => 123);
   const properties = await aHandle.getProperties();
   expect(properties.size).toBe(0);
 });
 
-it('getProperties should return even non-own properties', async ({page}) => {
+it('getProperties should return even non-own properties', async ({ page }) => {
   const aHandle = await page.evaluateHandle(() => {
     class A {
       a: string;
@@ -96,7 +96,7 @@ it('getProperties should return even non-own properties', async ({page}) => {
   expect(await properties.get('b').jsonValue()).toBe('2');
 });
 
-it('getProperties should work with elements', async ({page}) => {
+it('getProperties should work with elements', async ({ page }) => {
   await page.setContent(`<div>Hello</div>`);
   const handle = await page.evaluateHandle(() => ({ body: document.body }));
   const properties = await handle.getProperties();

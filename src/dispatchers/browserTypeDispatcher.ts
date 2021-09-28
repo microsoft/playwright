@@ -56,7 +56,7 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.Brow
     const waitForNextTask = params.slowMo
       ? (cb: () => any) => setTimeout(cb, params.slowMo)
       : makeWaitForNextTask();
-    const paramsHeaders = Object.assign({'User-Agent': getUserAgent()}, params.headers || {});
+    const paramsHeaders = Object.assign({ 'User-Agent': getUserAgent() }, params.headers || {});
     const ws = new WebSocket(params.wsEndpoint, [], {
       perMessageDeflate: false,
       maxPayload: 256 * 1024 * 1024, // 256Mb,

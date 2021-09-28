@@ -53,9 +53,9 @@ it('inputValue should work', async ({ page, server }) => {
   const handle = await page.$('#input');
   expect(await handle.inputValue()).toBe('input value');
 
-  expect(await page.inputValue('#inner').catch(e => e.message)).toContain('Node is not an HTMLInputElement or HTMLTextAreaElement or HTMLSelectElement');
+  expect(await page.inputValue('#inner').catch(e => e.message)).toContain('Node is not an <input>, <textarea> or <select> element');
   const handle2 = await page.$('#inner');
-  expect(await handle2.inputValue().catch(e => e.message)).toContain('Node is not an HTMLInputElement or HTMLTextAreaElement or HTMLSelectElement');
+  expect(await handle2.inputValue().catch(e => e.message)).toContain('Node is not an <input>, <textarea> or <select> element');
 });
 
 it('innerHTML should work', async ({ page, server }) => {
@@ -75,10 +75,10 @@ it('innerText should work', async ({ page, server }) => {
 it('innerText should throw', async ({ page, server }) => {
   await page.setContent(`<svg>text</svg>`);
   const error1 = await page.innerText('svg').catch(e => e);
-  expect(error1.message).toContain('Not an HTMLElement');
+  expect(error1.message).toContain('Node is not an HTMLElement');
   const handle = await page.$('svg');
   const error2 = await handle.innerText().catch(e => e);
-  expect(error2.message).toContain('Not an HTMLElement');
+  expect(error2.message).toContain('Node is not an HTMLElement');
 });
 
 it('textContent should work', async ({ page, server }) => {
@@ -195,7 +195,7 @@ it('isVisible and isHidden should work', async ({ page }) => {
   expect(await page.isHidden('no-such-element')).toBe(true);
 });
 
-it('element state checks should work for label with zero-sized input', async ({page, server}) => {
+it('element state checks should work for label with zero-sized input', async ({ page, server }) => {
   await page.setContent(`
     <label>
       Click me
@@ -211,7 +211,7 @@ it('element state checks should work for label with zero-sized input', async ({p
   expect(await page.isDisabled('text=Click me')).toBe(true);
 });
 
-it('isVisible should not throw when the DOM element is not connected', async ({page}) => {
+it('isVisible should not throw when the DOM element is not connected', async ({ page }) => {
   await page.setContent(`<div id="root"></div>`);
   await page.evaluate(() => {
     function insert() {
@@ -267,7 +267,7 @@ it('isEditable should work', async ({ page }) => {
   expect(await page.isEditable('textarea')).toBe(false);
 });
 
-it('isChecked should work', async ({page}) => {
+it('isChecked should work', async ({ page }) => {
   await page.setContent(`<input type='checkbox' checked><div>Not a checkbox</div>`);
   const handle = await page.$('input');
   expect(await handle.isChecked()).toBe(true);

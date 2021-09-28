@@ -71,16 +71,16 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     this.tracing = new Tracing(this);
     this._request = FetchRequest.from(initializer.fetchRequest);
 
-    this._channel.on('bindingCall', ({binding}) => this._onBinding(BindingCall.from(binding)));
+    this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));
     this._channel.on('close', () => this._onClose());
-    this._channel.on('page', ({page}) => this._onPage(Page.from(page)));
+    this._channel.on('page', ({ page }) => this._onPage(Page.from(page)));
     this._channel.on('route', ({ route, request }) => this._onRoute(network.Route.from(route), network.Request.from(request)));
     this._channel.on('backgroundPage', ({ page }) => {
       const backgroundPage = Page.from(page);
       this._backgroundPages.add(backgroundPage);
       this.emit(Events.BrowserContext.BackgroundPage, backgroundPage);
     });
-    this._channel.on('serviceWorker', ({worker}) => {
+    this._channel.on('serviceWorker', ({ worker }) => {
       const serviceWorker = Worker.from(worker);
       serviceWorker._context = this;
       this._serviceWorkers.add(serviceWorker);

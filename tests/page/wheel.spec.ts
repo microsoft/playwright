@@ -15,11 +15,11 @@
  */
 import type { Page } from '../../';
 import { test as it, expect } from './pageTest';
-it.skip(({isElectron, browserMajorVersion}) => {
+it.skip(({ isElectron, browserMajorVersion }) => {
   // Old Electron has flaky wheel events.
   return isElectron && browserMajorVersion <= 11;
 });
-it('should dispatch wheel events', async ({page, server}) => {
+it('should dispatch wheel events', async ({ page, server }) => {
   await page.setContent(`<div style="width: 5000px; height: 5000px;"></div>`);
   await page.mouse.move(50, 60);
   await listenForWheelEvents(page, 'div');
@@ -38,14 +38,14 @@ it('should dispatch wheel events', async ({page, server}) => {
   await page.waitForFunction('window.scrollY === 100');
 });
 
-it('should scroll when nobody is listening', async ({page, server}) => {
+it('should scroll when nobody is listening', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/scrollable.html');
   await page.mouse.move(50, 60);
   await page.mouse.wheel(0, 100);
   await page.waitForFunction('window.scrollY === 100');
 });
 
-it('should set the modifiers', async ({page}) => {
+it('should set the modifiers', async ({ page }) => {
   await page.setContent(`<div style="width: 5000px; height: 5000px;"></div>`);
   await page.mouse.move(50, 60);
   await listenForWheelEvents(page, 'div');
@@ -64,7 +64,7 @@ it('should set the modifiers', async ({page}) => {
   });
 });
 
-it('should scroll horizontally', async ({page}) => {
+it('should scroll horizontally', async ({ page }) => {
   await page.setContent(`<div style="width: 5000px; height: 5000px;"></div>`);
   await page.mouse.move(50, 60);
   await listenForWheelEvents(page, 'div');
@@ -83,7 +83,7 @@ it('should scroll horizontally', async ({page}) => {
   await page.waitForFunction('window.scrollX === 100');
 });
 
-it('should work when the event is canceled', async ({page}) => {
+it('should work when the event is canceled', async ({ page }) => {
   await page.setContent(`<div style="width: 5000px; height: 5000px;"></div>`);
   await page.mouse.move(50, 60);
   await listenForWheelEvents(page, 'div');

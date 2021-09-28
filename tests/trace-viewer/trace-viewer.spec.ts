@@ -124,6 +124,13 @@ test.beforeAll(async function recordTrace({ browser, browserName, browserType, s
   }
   await doClick();
 
+  const styleDone = page.waitForEvent('requestfinished', request => request.url().includes('style.css'));
+  await page.route(server.PREFIX + '/frames/script.js', async route => {
+    // Make sure script arrives after style for predictable results.
+    await styleDone;
+    await route.continue();
+  });
+
   await Promise.all([
     page.waitForNavigation(),
     page.waitForTimeout(200).then(() => page.goto(server.PREFIX + '/frames/frame.html'))
@@ -149,15 +156,16 @@ test('should show empty trace viewer', async ({ showTraceViewer }, testInfo) => 
 test('should open simple trace viewer', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await expect(traceViewer.actionTitles).toHaveText([
-    /page.gotodata:text\/html,<html>Hello world<\/html>— \d+ms/,
-    /page.setContent— \d+ms/,
-    /page.evaluate— \d+ms/,
-    /page.click"Click"— \d+ms/,
-    /page.waitForNavigation— \d+ms/,
-    /page.waitForTimeout— \d+ms/,
-    /page.gotohttp:\/\/localhost:\d+\/frames\/frame.html— \d+ms/,
-    /page.setViewportSize— \d+ms/,
-    /page.hoverbody— \d+ms/,
+    /page.gotodata:text\/html,<html>Hello world<\/html>— [\d.ms]+/,
+    /page.setContent— [\d.ms]+/,
+    /page.evaluate— [\d.ms]+/,
+    /page.click"Click"— [\d.ms]+/,
+    /page.waitForEvent— [\d.ms]+/,
+    /page.waitForNavigation— [\d.ms]+/,
+    /page.waitForTimeout— [\d.ms]+/,
+    /page.gotohttp:\/\/localhost:\d+\/frames\/frame.html— [\d.ms]+/,
+    /page.setViewportSize— [\d.ms]+/,
+    /page.hoverbody— [\d.ms]+/,
   ]);
 });
 
@@ -200,7 +208,7 @@ test('should show params and return value', async ({ showTraceViewer, browserNam
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.selectAction('page.evaluate');
   await expect(traceViewer.callLines).toHaveText([
-    /page.evaluate — \d+ms/,
+    /page.evaluate — [\d.ms]+/,
     'expression: "({↵    a↵  }) => {↵    console.log(\'Info\');↵    console.warn(\'Warning\');↵    con…"',
     'isFunction: true',
     'arg: {"a":"paramA","b":4}',
@@ -224,18 +232,16 @@ test('should have correct stack trace', async ({ showTraceViewer }) => {
 
   await traceViewer.selectAction('page.click');
   await traceViewer.showSourceTab();
-  const stack1 = (await traceViewer.stackFrames.allInnerTexts()).map(s => s.replace(/\s+/g, ' ').replace(/:[0-9]+/g, ':XXX'));
-  expect(stack1.slice(0, 2)).toEqual([
-    'doClick trace-viewer.spec.ts :XXX',
-    'recordTrace trace-viewer.spec.ts :XXX',
-  ]);
+  await expect(traceViewer.stackFrames).toContainText([
+    /doClick\s+trace-viewer.spec.ts\s+:\d+/,
+    /recordTrace\s+trace-viewer.spec.ts\s+:\d+/,
+  ], { useInnerText: true });
 
   await traceViewer.selectAction('page.hover');
   await traceViewer.showSourceTab();
-  const stack2 = (await traceViewer.stackFrames.allInnerTexts()).map(s => s.replace(/\s+/g, ' ').replace(/:[0-9]+/g, ':XXX'));
-  expect(stack2.slice(0, 1)).toEqual([
-    'BrowserType.browserType._onWillCloseContext trace-viewer.spec.ts :XXX',
-  ]);
+  await expect(traceViewer.stackFrames).toContainText([
+    /BrowserType.browserType._onWillCloseContext\s+trace-viewer.spec.ts\s+:\d+/,
+  ], { useInnerText: true });
 });
 
 test('should have network requests', async ({ showTraceViewer }) => {

@@ -32,6 +32,8 @@ import { DeadlineRunner, raceAgainstDeadline } from '../utils/async';
 
 const removeFolderAsync = util.promisify(rimraf);
 
+type TestData = { testId: string, testInfo: TestInfoImpl, type: 'test' | 'beforeAll' | 'afterAll' };
+
 export class WorkerRunner extends EventEmitter {
   private _params: WorkerInitParams;
   private _loader!: Loader;
@@ -47,7 +49,7 @@ export class WorkerRunner extends EventEmitter {
   private _isStopped = false;
   private _runFinished = Promise.resolve();
   private _currentDeadlineRunner: DeadlineRunner<any> | undefined;
-  _currentTest: { testId: string, testInfo: TestInfoImpl, type: 'test' | 'beforeAll' | 'afterAll' } | null = null;
+  _currentTest: TestData | null = null;
 
   constructor(params: WorkerInitParams) {
     super();

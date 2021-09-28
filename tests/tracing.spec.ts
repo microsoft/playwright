@@ -159,7 +159,7 @@ for (const params of [
     const previewWidth = params.width * scale;
     const previewHeight = params.height * scale;
 
-    const context = await contextFactory({ viewport: { width: params.width, height: params.height }});
+    const context = await contextFactory({ viewport: { width: params.width, height: params.height } });
     await context.tracing.start({ screenshots: true, snapshots: true });
     const page = await context.newPage();
     // Make sure we have a chance to paint.

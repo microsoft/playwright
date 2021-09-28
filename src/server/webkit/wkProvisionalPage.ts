@@ -50,7 +50,7 @@ export class WKProvisionalPage {
       eventsHelper.addEventListener(session, 'Network.loadingFailed', overrideFrameId(e => wkPage._onLoadingFailed(e))),
     ];
 
-    this.initializationPromise = this._wkPage._initializeSession(session, true, ({frameTree}) => this._handleFrameTree(frameTree));
+    this.initializationPromise = this._wkPage._initializeSession(session, true, ({ frameTree }) => this._handleFrameTree(frameTree));
   }
 
   dispose() {

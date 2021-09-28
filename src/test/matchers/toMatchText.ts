@@ -29,9 +29,9 @@ export async function toMatchText(
   matcherName: string,
   receiver: any,
   receiverType: string,
-  query: (expected: ExpectedTextValue, isNot: boolean, timeout: number) => Promise<{ pass: boolean, received: string }>,
+  query: (isNot: boolean, timeout: number) => Promise<{ pass: boolean, received?: string, log?: string[] }>,
   expected: string | RegExp,
-  options: { timeout?: number, matchSubstring?: boolean, normalizeWhiteSpace?: boolean, useInnerText?: boolean } = {},
+  options: { timeout?: number, matchSubstring?: boolean } = {},
 ) {
   const testInfo = currentTestInfo();
   if (!testInfo)
@@ -63,17 +63,9 @@ export async function toMatchText(
     defaultExpectTimeout = 5000;
   const timeout = options.timeout === 0 ? 0 : options.timeout || defaultExpectTimeout;
 
-  const expectedValue: ExpectedTextValue = {
-    string: isString(expected) ? expected : undefined,
-    regexSource: isRegExp(expected) ? expected.source : undefined,
-    regexFlags: isRegExp(expected) ? expected.flags : undefined,
-    matchSubstring: options.matchSubstring,
-    normalizeWhiteSpace: options.normalizeWhiteSpace,
-    useInnerText: options.useInnerText,
-  };
-
-  const { pass, received } = await query(expectedValue, this.isNot, timeout);
+  const { pass, received, log } = await query(this.isNot, timeout);
   const stringSubstring = options.matchSubstring ? 'substring' : 'string';
+  const receivedString = received || '';
   const message = pass
     ? () =>
       typeof expected === 'string'
@@ -81,19 +73,19 @@ export async function toMatchText(
         '\n\n' +
         `Expected ${stringSubstring}: not ${this.utils.printExpected(expected)}\n` +
         `Received string: ${printReceivedStringContainExpectedSubstring(
-            received,
-            received.indexOf(expected),
+            receivedString,
+            receivedString.indexOf(expected),
             expected.length,
-        )}`
+        )}` + callLogText(log)
         : this.utils.matcherHint(matcherName, undefined, undefined, matcherOptions) +
         '\n\n' +
         `Expected pattern: not ${this.utils.printExpected(expected)}\n` +
         `Received string: ${printReceivedStringContainExpectedResult(
-            received,
+            receivedString,
             typeof expected.exec === 'function'
-              ? expected.exec(received)
+              ? expected.exec(receivedString)
               : null,
-        )}`
+        )}` + callLogText(log)
     : () => {
       const labelExpected = `Expected ${typeof expected === 'string' ? stringSubstring : 'pattern'
       }`;
@@ -104,16 +96,32 @@ export async function toMatchText(
         '\n\n' +
         this.utils.printDiffOrStringify(
             expected,
-            received,
+            receivedString,
             labelExpected,
             labelReceived,
             this.expand !== false,
-        ));
+        )) + callLogText(log);
     };
 
   return { message, pass };
 }
 
-export function normalizeWhiteSpace(s: string) {
-  return s.trim().replace(/\s+/g, ' ');
+export function toExpectedTextValues(items: (string | RegExp)[], options: { matchSubstring?: boolean, normalizeWhiteSpace?: boolean } = {}): ExpectedTextValue[] {
+  return items.map(i => ({
+    string: isString(i) ? i : undefined,
+    regexSource: isRegExp(i) ? i.source : undefined,
+    regexFlags: isRegExp(i) ? i.flags : undefined,
+    matchSubstring: options.matchSubstring,
+    normalizeWhiteSpace: options.normalizeWhiteSpace,
+  }));
+}
+
+export function callLogText(log: string[] | undefined): string {
+  if (!log)
+    return '';
+  return `
+
+Call log:
+${(log || []).join('\n')}
+`;
 }

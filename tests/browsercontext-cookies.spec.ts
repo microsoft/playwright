@@ -17,11 +17,11 @@
 
 import { contextTest as it, expect } from './config/browserTest';
 
-it('should return no cookies in pristine browser context', async ({context, page, server}) => {
+it('should return no cookies in pristine browser context', async ({ context, page, server }) => {
   expect(await context.cookies()).toEqual([]);
 });
 
-it('should get a cookie', async ({context, page, server, browserName}) => {
+it('should get a cookie', async ({ context, page, server, browserName }) => {
   await page.goto(server.EMPTY_PAGE);
   const documentCookie = await page.evaluate(() => {
     document.cookie = 'username=John Doe';
@@ -40,7 +40,7 @@ it('should get a cookie', async ({context, page, server, browserName}) => {
   }]);
 });
 
-it('should get a non-session cookie', async ({context, page, server, browserName}) => {
+it('should get a non-session cookie', async ({ context, page, server, browserName }) => {
   await page.goto(server.EMPTY_PAGE);
   // @see https://en.wikipedia.org/wiki/Year_2038_problem
   const date = +(new Date('1/1/2038'));
@@ -62,7 +62,7 @@ it('should get a non-session cookie', async ({context, page, server, browserName
   }]);
 });
 
-it('should properly report httpOnly cookie', async ({context, page, server}) => {
+it('should properly report httpOnly cookie', async ({ context, page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', 'name=value;HttpOnly; Path=/');
     res.end();
@@ -73,7 +73,7 @@ it('should properly report httpOnly cookie', async ({context, page, server}) => 
   expect(cookies[0].httpOnly).toBe(true);
 });
 
-it('should properly report "Strict" sameSite cookie', async ({context, page, server, browserName, platform}) => {
+it('should properly report "Strict" sameSite cookie', async ({ context, page, server, browserName, platform }) => {
   it.fail(browserName === 'webkit' && platform === 'win32');
 
   server.setRoute('/empty.html', (req, res) => {
@@ -86,7 +86,7 @@ it('should properly report "Strict" sameSite cookie', async ({context, page, ser
   expect(cookies[0].sameSite).toBe('Strict');
 });
 
-it('should properly report "Lax" sameSite cookie', async ({context, page, server, browserName, platform}) => {
+it('should properly report "Lax" sameSite cookie', async ({ context, page, server, browserName, platform }) => {
   it.fail(browserName === 'webkit' && platform === 'win32');
 
   server.setRoute('/empty.html', (req, res) => {
@@ -99,7 +99,7 @@ it('should properly report "Lax" sameSite cookie', async ({context, page, server
   expect(cookies[0].sameSite).toBe('Lax');
 });
 
-it('should get multiple cookies', async ({context, page, server, browserName}) => {
+it('should get multiple cookies', async ({ context, page, server, browserName }) => {
   await page.goto(server.EMPTY_PAGE);
   const documentCookie = await page.evaluate(() => {
     document.cookie = 'username=John Doe';
@@ -132,7 +132,7 @@ it('should get multiple cookies', async ({context, page, server, browserName}) =
   ]));
 });
 
-it('should get cookies from multiple urls', async ({context, browserName, isWindows}) => {
+it('should get cookies from multiple urls', async ({ context, browserName, isWindows }) => {
   await context.addCookies([{
     url: 'https://foo.com',
     name: 'doggo',
@@ -171,7 +171,7 @@ it('should get cookies from multiple urls', async ({context, browserName, isWind
   }]));
 });
 
-it('should work with subdomain cookie', async ({context, browserName, isWindows}) => {
+it('should work with subdomain cookie', async ({ context, browserName, isWindows }) => {
   await context.addCookies([{
     domain: '.foo.com',
     path: '/',
@@ -202,7 +202,7 @@ it('should work with subdomain cookie', async ({context, browserName, isWindows}
   }]);
 });
 
-it('should not return cookies with empty value', async ({context, page, server}) => {
+it('should not return cookies with empty value', async ({ context, page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', 'name=;Path=/');
     res.end();
@@ -212,7 +212,7 @@ it('should not return cookies with empty value', async ({context, page, server})
   expect(cookies.length).toBe(0);
 });
 
-it('should return secure cookies based on HTTP(S) protocol', async ({context, browserName, isWindows}) => {
+it('should return secure cookies based on HTTP(S) protocol', async ({ context, browserName, isWindows }) => {
   await context.addCookies([{
     url: 'https://foo.com',
     name: 'doggo',

@@ -16,7 +16,7 @@
 
 import { test, expect } from './playwright-test-fixtures';
 
-test('should respect .gitignore', async ({runInlineTest}) => {
+test('should respect .gitignore', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     '.gitignore': `a.spec.js`,
     'a.spec.js': `
@@ -32,7 +32,7 @@ test('should respect .gitignore', async ({runInlineTest}) => {
   expect(result.passed).toBe(1);
 });
 
-test('should respect nested .gitignore', async ({runInlineTest}) => {
+test('should respect nested .gitignore', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a/.gitignore': `a.spec.js`,
     'a/a.spec.js': `
@@ -48,7 +48,7 @@ test('should respect nested .gitignore', async ({runInlineTest}) => {
   expect(result.passed).toBe(1);
 });
 
-test('should respect enclosing .gitignore', async ({runInlineTest}) => {
+test('should respect enclosing .gitignore', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     '.gitignore': `a/a.spec.js`,
     'a/a.spec.js': `
@@ -64,7 +64,7 @@ test('should respect enclosing .gitignore', async ({runInlineTest}) => {
   expect(result.passed).toBe(1);
 });
 
-test('should respect negations and comments in .gitignore', async ({runInlineTest}) => {
+test('should respect negations and comments in .gitignore', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     '.gitignore': `
       # A comment

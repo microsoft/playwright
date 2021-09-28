@@ -17,7 +17,6 @@
 import * as mime from 'mime';
 import * as injectedScriptSource from '../generated/injectedScriptSource';
 import * as channels from '../protocol/channels';
-import { FatalDOMError, RetargetableDOMError } from './common/domErrors';
 import { isSessionClosedError } from './common/protocolError';
 import * as frames from './frames';
 import type { InjectedScript, InjectedScriptPoll, LogEntry } from './injected/injectedScript';
@@ -98,6 +97,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
         return new pwExport(
           ${this.frame._page._delegate.rafCountForStablePosition()},
           ${!!process.env.PWTEST_USE_TIMEOUT_FOR_RAF},
+          "${this.frame._page._browserContext._browser.options.name}",
           [${custom.join(',\n')}]
         );
         })();
@@ -182,21 +182,21 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async getAttribute(name: string): Promise<string | null> {
-    return throwFatalDOMError(throwRetargetableDOMError(await this.evaluateInUtility(([injeced, node, name]) => {
+    return throwRetargetableDOMError(await this.evaluateInUtility(([injected, node, name]) => {
       if (node.nodeType !== Node.ELEMENT_NODE)
-        return 'error:notelement';
+        throw injected.createStacklessError('Node is not an element');
       const element = node as unknown as Element;
       return { value: element.getAttribute(name) };
-    }, name))).value;
+    }, name)).value;
   }
 
   async inputValue(): Promise<string> {
-    return throwFatalDOMError(throwRetargetableDOMError(await this.evaluateInUtility(([injeced, node]) => {
+    return throwRetargetableDOMError(await this.evaluateInUtility(([injected, node]) => {
       if (node.nodeType !== Node.ELEMENT_NODE || (node.nodeName !== 'INPUT' && node.nodeName !== 'TEXTAREA' && node.nodeName !== 'SELECT'))
-        return 'error:hasnovalue';
+        throw injected.createStacklessError('Node is not an <input>, <textarea> or <select> element');
       const element = node as unknown as (HTMLInputElement | HTMLTextAreaElement);
       return { value: element.value };
-    }, undefined))).value;
+    }, undefined)).value;
   }
 
   async textContent(): Promise<string | null> {
@@ -206,23 +206,23 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async innerText(): Promise<string> {
-    return throwFatalDOMError(throwRetargetableDOMError(await this.evaluateInUtility(([injected, node]) => {
+    return throwRetargetableDOMError(await this.evaluateInUtility(([injected, node]) => {
       if (node.nodeType !== Node.ELEMENT_NODE)
-        return 'error:notelement';
+        throw injected.createStacklessError('Node is not an element');
       if ((node as unknown as Element).namespaceURI !== 'http://www.w3.org/1999/xhtml')
-        return 'error:nothtmlelement';
+        throw injected.createStacklessError('Node is not an HTMLElement');
       const element = node as unknown as HTMLElement;
       return { value: element.innerText };
-    }, undefined))).value;
+    }, undefined)).value;
   }
 
   async innerHTML(): Promise<string> {
-    return throwFatalDOMError(throwRetargetableDOMError(await this.evaluateInUtility(([injected, node]) => {
+    return throwRetargetableDOMError(await this.evaluateInUtility(([injected, node]) => {
       if (node.nodeType !== Node.ELEMENT_NODE)
-        return 'error:notelement';
+        throw injected.createStacklessError('Node is not an element');
       const element = node as unknown as Element;
       return { value: element.innerHTML };
-    }, undefined))).value;
+    }, undefined)).value;
   }
 
   async dispatchEvent(type: string, eventInit: Object = {}) {
@@ -277,7 +277,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
     const [quads, metrics] = await Promise.all([
       this._page._delegate.getContentQuads(this),
-      this._page.mainFrame()._utilityContext().then(utility => utility.evaluate(() => ({width: innerWidth, height: innerHeight}))),
+      this._page.mainFrame()._utilityContext().then(utility => utility.evaluate(() => ({ width: innerWidth, height: innerHeight }))),
     ] as const);
     if (!quads || !quads.length)
       return 'error:notvisible';
@@ -505,7 +505,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (poll === 'error:notconnected')
         return poll;
       const pollHandler = new InjectedScriptPollHandler(progress, poll);
-      const result = throwFatalDOMError(await pollHandler.finish());
+      const result = await pollHandler.finish();
       await this._page._doSlowMo();
       return result;
     });
@@ -530,7 +530,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (poll === 'error:notconnected')
         return poll;
       const pollHandler = new InjectedScriptPollHandler(progress, poll);
-      const filled = throwFatalDOMError(await pollHandler.finish());
+      const filled = await pollHandler.finish();
       progress.throwIfAborted();  // Avoid action that has side-effects.
       if (filled === 'error:notconnected')
         return filled;
@@ -556,7 +556,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         return injected.waitForElementStatesAndPerformAction(node, ['visible'], force, injected.selectText.bind(injected));
       }, options.force);
       const pollHandler = new InjectedScriptPollHandler(progress, throwRetargetableDOMError(poll));
-      const result = throwFatalDOMError(await pollHandler.finish());
+      const result = await pollHandler.finish();
       assertDone(throwRetargetableDOMError(result));
     }, this._page._timeoutSettings.timeout(options));
   }
@@ -574,20 +574,20 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (!payload.mimeType)
         payload.mimeType = mime.getType(payload.name) || 'application/octet-stream';
     }
-    const retargeted = await this.evaluateHandleInUtility(([injected, node, multiple]): FatalDOMError | 'error:notconnected' | Element => {
+    const retargeted = await this.evaluateHandleInUtility(([injected, node, multiple]): 'error:notconnected' | Element => {
       const element = injected.retarget(node, 'follow-label');
       if (!element)
         return 'error:notconnected';
       if (element.tagName !== 'INPUT')
-        return 'error:notinput';
+        throw injected.createStacklessError('Node is not an HTMLInputElement');
       if (multiple && !(element as HTMLInputElement).multiple)
-        return 'error:notmultiplefileinput';
+        throw injected.createStacklessError('Non-multiple file input can only accept single file');
       return element;
     }, files.length > 1);
     if (retargeted === 'error:notconnected')
       return retargeted;
     if (!retargeted._objectId)
-      return throwFatalDOMError(retargeted.rawValue() as FatalDOMError | 'error:notconnected');
+      return retargeted.rawValue() as 'error:notconnected';
     await progress.beforeInputAction(this);
     await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
@@ -608,8 +608,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _focus(progress: Progress, resetSelectionIfNotFocused?: boolean): Promise<'error:notconnected' | 'done'> {
     progress.throwIfAborted();  // Avoid action that has side-effects.
-    const result = await this.evaluateInUtility(([injected, node, resetSelectionIfNotFocused]) => injected.focusNode(node, resetSelectionIfNotFocused), resetSelectionIfNotFocused);
-    return throwFatalDOMError(result);
+    return await this.evaluateInUtility(([injected, node, resetSelectionIfNotFocused]) => injected.focusNode(node, resetSelectionIfNotFocused), resetSelectionIfNotFocused);
   }
 
   async type(metadata: CallMetadata, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions): Promise<void> {
@@ -673,7 +672,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async _setChecked(progress: Progress, state: boolean, options: { position?: types.Point } & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     const isChecked = async () => {
       const result = await this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'checked'), {});
-      return throwRetargetableDOMError(throwFatalDOMError(result));
+      return throwRetargetableDOMError(result);
     };
     if (await isChecked() === state)
       return 'done';
@@ -726,32 +725,32 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const result = await this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'visible'), {});
     if (result === 'error:notconnected')
       return false;
-    return throwFatalDOMError(result);
+    return result;
   }
 
   async isHidden(): Promise<boolean> {
     const result = await this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'hidden'), {});
-    return throwRetargetableDOMError(throwFatalDOMError(result));
+    return throwRetargetableDOMError(result);
   }
 
   async isEnabled(): Promise<boolean> {
     const result = await this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'enabled'), {});
-    return throwRetargetableDOMError(throwFatalDOMError(result));
+    return throwRetargetableDOMError(result);
   }
 
   async isDisabled(): Promise<boolean> {
     const result = await this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'disabled'), {});
-    return throwRetargetableDOMError(throwFatalDOMError(result));
+    return throwRetargetableDOMError(result);
   }
 
   async isEditable(): Promise<boolean> {
     const result = await this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'editable'), {});
-    return throwRetargetableDOMError(throwFatalDOMError(result));
+    return throwRetargetableDOMError(result);
   }
 
   async isChecked(): Promise<boolean> {
     const result = await this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'checked'), {});
-    return throwRetargetableDOMError(throwFatalDOMError(result));
+    return throwRetargetableDOMError(result);
   }
 
   async waitForElementState(metadata: CallMetadata, state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled' | 'editable', options: types.TimeoutOptions = {}): Promise<void> {
@@ -762,7 +761,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         return injected.waitForElementStatesAndPerformAction(node, [state], false, () => 'done' as const);
       }, state);
       const pollHandler = new InjectedScriptPollHandler(progress, throwRetargetableDOMError(poll));
-      assertDone(throwRetargetableDOMError(throwFatalDOMError(await pollHandler.finish())));
+      assertDone(throwRetargetableDOMError(await pollHandler.finish()));
     }, this._page._timeoutSettings.timeout(options));
   }
 
@@ -814,7 +813,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       progress.log('  element is visible, enabled and stable');
     else
       progress.log('  element is visible and stable');
-    return throwFatalDOMError(result);
+    return result;
   }
 
   async _checkHitTargetAt(point: types.Point): Promise<'error:notconnected' | { hitTargetDescription: string } | 'done'> {
@@ -901,33 +900,7 @@ export class InjectedScriptPollHandler<T> {
   }
 }
 
-export function throwFatalDOMError<T>(result: T | FatalDOMError): T {
-  if (result === 'error:notelement')
-    throw new Error('Node is not an element');
-  if (result === 'error:nothtmlelement')
-    throw new Error('Not an HTMLElement');
-  if (result === 'error:notfillableelement')
-    throw new Error('Element is not an <input>, <textarea> or [contenteditable] element');
-  if (result === 'error:notfillableinputtype')
-    throw new Error('Input of this type cannot be filled');
-  if (result === 'error:notfillablenumberinput')
-    throw new Error('Cannot type text into input[type=number]');
-  if (result === 'error:notvaliddate')
-    throw new Error(`Malformed value`);
-  if (result === 'error:notinput')
-    throw new Error('Node is not an HTMLInputElement');
-  if (result === 'error:hasnovalue')
-    throw new Error('Node is not an HTMLInputElement or HTMLTextAreaElement or HTMLSelectElement');
-  if (result === 'error:notselect')
-    throw new Error('Element is not a <select> element.');
-  if (result === 'error:notcheckbox')
-    throw new Error('Not a checkbox or radio button');
-  if (result === 'error:notmultiplefileinput')
-    throw new Error('Non-multiple file input can only accept single file');
-  return result;
-}
-
-export function throwRetargetableDOMError<T>(result: T | RetargetableDOMError): T {
+export function throwRetargetableDOMError<T>(result: T | 'error:notconnected'): T {
   if (result === 'error:notconnected')
     throw new Error('Element is not attached to the DOM');
   return result;

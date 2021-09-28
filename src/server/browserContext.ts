@@ -76,7 +76,7 @@ export abstract class BrowserContext extends SdkObject {
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
 
     if (this._options.recordHar)
-      this._harRecorder = new HarRecorder(this, {...this._options.recordHar, path: path.join(this._browser.options.artifactsDir, `${createGuid()}.har`)});
+      this._harRecorder = new HarRecorder(this, { ...this._options.recordHar, path: path.join(this._browser.options.artifactsDir, `${createGuid()}.har`) });
 
     this.tracing = new Tracing(this);
     this.fetchRequest = new BrowserContextFetchRequest(this);

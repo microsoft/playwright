@@ -126,7 +126,9 @@ export class Dispatcher {
       worker.stop();
       worker.didFail = true;
 
-      const retryCandidates = new Set<string>();
+      const failedTestIds = new Set<string>();
+      if (params.failedTestId)
+        failedTestIds.add(params.failedTestId);
 
       // In case of fatal error, report first remaining test as failing with this error,
       // and all others as skipped.
@@ -142,7 +144,7 @@ export class Dispatcher {
           result.error = params.fatalError;
           result.status = first ? 'failed' : 'skipped';
           this._reportTestEnd(test, result);
-          retryCandidates.add(test._id);
+          failedTestIds.add(test._id);
           first = false;
         }
         if (first) {
@@ -156,40 +158,45 @@ export class Dispatcher {
         remaining = [];
       }
 
-      if (params.failedTestId) {
-        retryCandidates.add(params.failedTestId);
+      const retryCandidates = new Set<string>();
+      const serialSuitesWithFailures = new Set<Suite>();
+
+      for (const failedTestId of failedTestIds) {
+        retryCandidates.add(failedTestId);
 
         let outermostSerialSuite: Suite | undefined;
-        for (let parent = this._testById.get(params.failedTestId)!.test.parent; parent; parent = parent.parent) {
+        for (let parent = this._testById.get(failedTestId)!.test.parent; parent; parent = parent.parent) {
           if (parent._parallelMode ===  'serial')
             outermostSerialSuite = parent;
         }
+        if (outermostSerialSuite)
+          serialSuitesWithFailures.add(outermostSerialSuite);
+      }
 
-        if (outermostSerialSuite) {
-          // Failed test belongs to a serial suite. We should skip all future tests
-          // from the same serial suite.
-          remaining = remaining.filter(test => {
-            let parent = test.parent;
-            while (parent && parent !== outermostSerialSuite)
-              parent = parent.parent;
+      // We have failed tests that belong to a serial suite.
+      // We should skip all future tests from the same serial suite.
+      remaining = remaining.filter(test => {
+        let parent = test.parent;
+        while (parent && !serialSuitesWithFailures.has(parent))
+          parent = parent.parent;
 
-            // Does not belong to the same serial suite, keep it.
-            if (!parent)
-              return true;
+        // Does not belong to the failed serial suite, keep it.
+        if (!parent)
+          return true;
 
-            // Emulate a "skipped" run, and drop this test from remaining.
-            const { result } = this._testById.get(test._id)!;
-            this._reporter.onTestBegin?.(test, result);
-            result.status = 'skipped';
-            this._reportTestEnd(test, result);
-            return false;
-          });
+        // Emulate a "skipped" run, and drop this test from remaining.
+        const { result } = this._testById.get(test._id)!;
+        this._reporter.onTestBegin?.(test, result);
+        result.status = 'skipped';
+        this._reportTestEnd(test, result);
+        return false;
+      });
 
-          // Add all tests from the same serial suite for possible retry.
-          // These will only be retried together, because they have the same
-          // "retries" setting and the same number of previous runs.
-          outermostSerialSuite.allTests().forEach(test => retryCandidates.add(test._id));
-        }
+      for (const serialSuite of serialSuitesWithFailures) {
+        // Add all tests from faiiled serial suites for possible retry.
+        // These will only be retried together, because they have the same
+        // "retries" setting and the same number of previous runs.
+        serialSuite.allTests().forEach(test => retryCandidates.add(test._id));
       }
 
       for (const testId of retryCandidates) {
@@ -364,7 +371,7 @@ export class Dispatcher {
         pair.result.stderr.push(chunk);
       this._reporter.onStdErr?.(chunk, pair?.test, pair?.result);
     });
-    worker.on('teardownError', ({error}) => {
+    worker.on('teardownError', ({ error }) => {
       this._hasWorkerErrors = true;
       this._reporter.onError?.(error);
     });

@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('Page.Events.Request', async ({page, server}) => {
+it('Page.Events.Request', async ({ page, server }) => {
   const requests = [];
   page.on('request', request => requests.push(request));
   await page.goto(server.EMPTY_PAGE);
@@ -30,7 +30,7 @@ it('Page.Events.Request', async ({page, server}) => {
   expect(requests[0].frame().url()).toBe(server.EMPTY_PAGE);
 });
 
-it('Page.Events.Response', async ({page, server}) => {
+it('Page.Events.Response', async ({ page, server }) => {
   const responses = [];
   page.on('response', response => responses.push(response));
   await page.goto(server.EMPTY_PAGE);
@@ -41,7 +41,7 @@ it('Page.Events.Response', async ({page, server}) => {
   expect(responses[0].request()).toBeTruthy();
 });
 
-it('Page.Events.RequestFailed', async ({page, server, browserName, isMac, isWindows}) => {
+it('Page.Events.RequestFailed', async ({ page, server, browserName, isMac, isWindows }) => {
   server.setRoute('/one-style.css', (req, res) => {
     res.setHeader('Content-Type', 'text/css');
     res.connection.destroy();
@@ -68,7 +68,7 @@ it('Page.Events.RequestFailed', async ({page, server, browserName, isMac, isWind
   expect(failedRequests[0].frame()).toBeTruthy();
 });
 
-it('Page.Events.RequestFinished', async ({page, server}) => {
+it('Page.Events.RequestFinished', async ({ page, server }) => {
   const [response] = await Promise.all([
     page.goto(server.EMPTY_PAGE),
     page.waitForEvent('requestfinished')
@@ -81,7 +81,7 @@ it('Page.Events.RequestFinished', async ({page, server}) => {
   expect(request.failure()).toBe(null);
 });
 
-it('should fire events in proper order', async ({page, server}) => {
+it('should fire events in proper order', async ({ page, server }) => {
   const events = [];
   page.on('request', request => events.push('request'));
   page.on('response', response => events.push('response'));
@@ -91,7 +91,7 @@ it('should fire events in proper order', async ({page, server}) => {
   expect(events).toEqual(['request', 'response', 'requestfinished']);
 });
 
-it('should support redirects', async ({page, server}) => {
+it('should support redirects', async ({ page, server }) => {
   const FOO_URL = server.PREFIX + '/foo.html';
   const events = {};
   events[server.EMPTY_PAGE] = [];

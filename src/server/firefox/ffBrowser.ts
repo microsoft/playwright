@@ -106,7 +106,7 @@ export class FFBrowser extends Browser {
   }
 
   _onAttachedToTarget(payload: Protocol.Browser.attachedToTargetPayload) {
-    const {targetId, browserContextId, openerId, type} = payload.targetInfo;
+    const { targetId, browserContextId, openerId, type } = payload.targetInfo;
     assert(type === 'page');
     const context = browserContextId ? this._contexts.get(browserContextId)! : this._defaultContext as FFBrowserContext;
     assert(context, `Unknown context id:${browserContextId}, _defaultContext: ${this._defaultContext}`);
@@ -290,7 +290,7 @@ export class FFBrowserContext extends BrowserContext {
         throw new Error('Unknown permission: ' + permission);
       return protocolPermission;
     });
-    await this._browser._connection.send('Browser.grantPermissions', { origin: origin, browserContextId: this._browserContextId, permissions: filtered});
+    await this._browser._connection.send('Browser.grantPermissions', { origin: origin, browserContextId: this._browserContextId, permissions: filtered });
   }
 
   async _doClearPermissions() {

@@ -18,7 +18,7 @@
 import { browserTest as it, expect } from './config/browserTest';
 import { attachFrame } from './config/utils';
 
-it('should work', async ({browser, server}) => {
+it('should work', async ({ browser, server }) => {
   {
     const context = await browser.newContext();
     const page = await context.newPage();
@@ -37,7 +37,7 @@ it('should work', async ({browser, server}) => {
   }
 });
 
-it('should work for subframes', async ({browser, server}) => {
+it('should work for subframes', async ({ browser, server }) => {
   {
     const context = await browser.newContext();
     const page = await context.newPage();
@@ -56,7 +56,7 @@ it('should work for subframes', async ({browser, server}) => {
   }
 });
 
-it('should emulate device user-agent', async ({browser, server, playwright}) => {
+it('should emulate device user-agent', async ({ browser, server, playwright }) => {
   {
     const context = await browser.newContext();
     const page = await context.newPage();
@@ -73,7 +73,7 @@ it('should emulate device user-agent', async ({browser, server, playwright}) => 
   }
 });
 
-it('should make a copy of default options', async ({browser, server}) => {
+it('should make a copy of default options', async ({ browser, server }) => {
   const options = { userAgent: 'foobar' };
   const context = await browser.newContext(options);
   options.userAgent = 'wrong';

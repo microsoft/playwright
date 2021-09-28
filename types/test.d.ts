@@ -1267,22 +1267,9 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    */
   parallel: SuiteFunction & {
       /**
-   * Declares a focused group of tests that could be run in parallel. By default, tests in a single test file run one after
-   * another, but using
-   * [test.describe.parallel(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-parallel) allows them
-   * to run in parallel. If there are some focused tests or suites, all of them will be run but nothing else.
-   *
-   * ```ts
-   * test.describe.parallel.only('group', () => {
-   *   test('runs in parallel 1', async ({ page }) => {
-   *   });
-   *   test('runs in parallel 2', async ({ page }) => {
-   *   });
-   * });
-   * ```
-   *
-   * Note that parallel tests are executed in separate processes and cannot share any state or global variables. Each of the
-   * parallel tests executes all relevant hooks.
+   * Declares a focused group of tests that could be run in parallel. This is similar to
+   * [test.describe.parallel(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-parallel), but
+   * focuses the group. If there are some focused tests or suites, all of them will be run but nothing else.
    * @param title Group title.
    * @param callback A callback that is run immediately when calling [test.describe.parallel.only(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-parallel-only).
    * Any tests added in this callback will belong to the group.
@@ -2282,8 +2269,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
 type KeyValue = { [key: string]: any };
 export type TestFixture<R, Args extends KeyValue> = (args: Args, use: (r: R) => Promise<void>, testInfo: TestInfo) => any;
 export type WorkerFixture<R, Args extends KeyValue> = (args: Args, use: (r: R) => Promise<void>, workerInfo: WorkerInfo) => any;
-type TestFixtureValue<R, Args> = R | TestFixture<R, Args>;
-type WorkerFixtureValue<R, Args> = R | WorkerFixture<R, Args>;
+type TestFixtureValue<R, Args> = Exclude<R, Function> | TestFixture<R, Args>;
+type WorkerFixtureValue<R, Args> = Exclude<R, Function> | WorkerFixture<R, Args>;
 export type Fixtures<T extends KeyValue = {}, W extends KeyValue = {}, PT extends KeyValue = {}, PW extends KeyValue = {}> = {
   [K in keyof PW]?: WorkerFixtureValue<PW[K], W & PW> | [WorkerFixtureValue<PW[K], W & PW>, { scope: 'worker' }];
 } & {

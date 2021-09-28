@@ -22,49 +22,49 @@ async function giveItAChanceToFill(page) {
     await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
 }
 
-it('should fill textarea', async ({page, server}) => {
+it('should fill textarea', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.fill('textarea', 'some value');
   expect(await page.evaluate(() => window['result'])).toBe('some value');
 });
 
-it('should fill input', async ({page, server}) => {
+it('should fill input', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.fill('input', 'some value');
   expect(await page.evaluate(() => window['result'])).toBe('some value');
 });
 
-it('should fill input with label', async ({page}) => {
+it('should fill input with label', async ({ page }) => {
   await page.setContent(`<label for=target>Fill me</label><input id=target>`);
   await page.fill('text=Fill me', 'some value');
   expect(await page.$eval('input', input => input.value)).toBe('some value');
 });
 
-it('should fill input with label 2', async ({page}) => {
+it('should fill input with label 2', async ({ page }) => {
   await page.setContent(`<label>Fill me<input id=target></label>`);
   await page.fill('text=Fill me', 'some value');
   expect(await page.$eval('input', input => input.value)).toBe('some value');
 });
 
-it('should fill input with span inside the label', async ({page}) => {
+it('should fill input with span inside the label', async ({ page }) => {
   await page.setContent(`<label for=target><span>Fill me</span></label><input id=target>`);
   await page.fill('text=Fill me', 'some value');
   expect(await page.$eval('input', input => input.value)).toBe('some value');
 });
 
-it('should fill input inside the label', async ({page}) => {
+it('should fill input inside the label', async ({ page }) => {
   await page.setContent(`<label><input id=target></label>`);
   await page.fill('input', 'some value');
   expect(await page.$eval('input', input => input.value)).toBe('some value');
 });
 
-it('should fill textarea with label', async ({page}) => {
+it('should fill textarea with label', async ({ page }) => {
   await page.setContent(`<label for=target>Fill me</label><textarea id=target>hey</textarea>`);
   await page.fill('text=Fill me', 'some value');
   expect(await page.$eval('textarea', textarea => textarea.value)).toBe('some value');
 });
 
-it('should throw on unsupported inputs', async ({page, server}) => {
+it('should throw on unsupported inputs', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   for (const type of ['button', 'checkbox', 'file', 'image', 'radio', 'range', 'reset', 'submit']) {
     await page.$eval('input', (input, type) => input.setAttribute('type', type), type);
@@ -74,7 +74,7 @@ it('should throw on unsupported inputs', async ({page, server}) => {
   }
 });
 
-it('should fill different input types', async ({page, server}) => {
+it('should fill different input types', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   for (const type of ['password', 'search', 'tel', 'text', 'url', 'invalid-type']) {
     await page.$eval('input', (input, type) => input.setAttribute('type', type), type);
@@ -83,14 +83,14 @@ it('should fill different input types', async ({page, server}) => {
   }
 });
 
-it('should fill date input after clicking', async ({page, server}) => {
+it('should fill date input after clicking', async ({ page, server }) => {
   await page.setContent('<input type=date>');
   await page.click('input');
   await page.fill('input', '2020-03-02');
   expect(await page.$eval('input', input => input.value)).toBe('2020-03-02');
 });
 
-it('should throw on incorrect date', async ({page, browserName}) => {
+it('should throw on incorrect date', async ({ page, browserName }) => {
   it.skip(browserName === 'webkit', 'WebKit does not support date inputs');
 
   await page.setContent('<input type=date>');
@@ -98,19 +98,19 @@ it('should throw on incorrect date', async ({page, browserName}) => {
   expect(error.message).toContain('Malformed value');
 });
 
-it('should fill time input', async ({page}) => {
+it('should fill time input', async ({ page }) => {
   await page.setContent('<input type=time>');
   await page.fill('input', '13:15');
   expect(await page.$eval('input', input => input.value)).toBe('13:15');
 });
 
-it('should fill month input', async ({page}) => {
+it('should fill month input', async ({ page }) => {
   await page.setContent('<input type=month>');
   await page.fill('input', '2020-07');
   expect(await page.$eval('input', input => input.value)).toBe('2020-07');
 });
 
-it('should throw on incorrect month', async ({page, browserName}) => {
+it('should throw on incorrect month', async ({ page, browserName }) => {
   it.skip(browserName !== 'chromium', 'Only Chromium supports month inputs');
 
   await page.setContent('<input type=month>');
@@ -118,13 +118,13 @@ it('should throw on incorrect month', async ({page, browserName}) => {
   expect(error.message).toContain('Malformed value');
 });
 
-it('should fill week input', async ({page}) => {
+it('should fill week input', async ({ page }) => {
   await page.setContent('<input type=week>');
   await page.fill('input', '2020-W50');
   expect(await page.$eval('input', input => input.value)).toBe('2020-W50');
 });
 
-it('should throw on incorrect week', async ({page, browserName}) => {
+it('should throw on incorrect week', async ({ page, browserName }) => {
   it.skip(browserName !== 'chromium', 'Only Chromium supports week inputs');
 
   await page.setContent('<input type=week>');
@@ -132,7 +132,7 @@ it('should throw on incorrect week', async ({page, browserName}) => {
   expect(error.message).toContain('Malformed value');
 });
 
-it('should throw on incorrect time', async ({page, browserName}) => {
+it('should throw on incorrect time', async ({ page, browserName }) => {
   it.skip(browserName === 'webkit', 'WebKit does not support time inputs');
 
   await page.setContent('<input type=time>');
@@ -140,13 +140,13 @@ it('should throw on incorrect time', async ({page, browserName}) => {
   expect(error.message).toContain('Malformed value');
 });
 
-it('should fill datetime-local input', async ({page, server}) => {
+it('should fill datetime-local input', async ({ page, server }) => {
   await page.setContent('<input type=datetime-local>');
   await page.fill('input', '2020-03-02T05:15');
   expect(await page.$eval('input', input => input.value)).toBe('2020-03-02T05:15');
 });
 
-it('should throw on incorrect datetime-local', async ({page, server, browserName}) => {
+it('should throw on incorrect datetime-local', async ({ page, server, browserName }) => {
   it.skip(browserName !== 'chromium', 'Only Chromium supports datetime-local inputs');
 
   await page.setContent('<input type=datetime-local>');
@@ -154,13 +154,13 @@ it('should throw on incorrect datetime-local', async ({page, server, browserName
   expect(error.message).toContain('Malformed value');
 });
 
-it('should fill contenteditable', async ({page, server}) => {
+it('should fill contenteditable', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.fill('div[contenteditable]', 'some value');
   expect(await page.$eval('div[contenteditable]', div => div.textContent)).toBe('some value');
 });
 
-it('should fill elements with existing value and selection', async ({page, server}) => {
+it('should fill elements with existing value and selection', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
 
   await page.$eval('input', input => input.value = 'value one');
@@ -186,14 +186,14 @@ it('should fill elements with existing value and selection', async ({page, serve
   expect(await page.$eval('div[contenteditable]', div => div.textContent)).toBe('replace with this');
 });
 
-it('should throw when element is not an <input>, <textarea> or [contenteditable]', async ({page, server}) => {
+it('should throw nice error without injected script stack when element is not an <input>', async ({ page, server }) => {
   let error = null;
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.fill('body', '').catch(e => error = e);
-  expect(error.message).toContain('Element is not an <input>');
+  expect(error.message).toContain('page.fill: Error: Element is not an <input>, <textarea> or [contenteditable] element\n=========================== logs');
 });
 
-it('should throw if passed a non-string value', async ({page, server}) => {
+it('should throw if passed a non-string value', async ({ page, server }) => {
   let error = null;
   await page.goto(server.PREFIX + '/input/textarea.html');
   // @ts-expect-error fill only accepts string values
@@ -201,7 +201,7 @@ it('should throw if passed a non-string value', async ({page, server}) => {
   expect(error.message).toContain('value: expected string, got number');
 });
 
-it('should retry on disabled element', async ({page, server}) => {
+it('should retry on disabled element', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.$eval('input', i => i.disabled = true);
   let done = false;
@@ -216,7 +216,7 @@ it('should retry on disabled element', async ({page, server}) => {
   expect(await page.evaluate(() => window['result'])).toBe('some value');
 });
 
-it('should retry on readonly element', async ({page, server}) => {
+it('should retry on readonly element', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.$eval('textarea', i => i.readOnly = true);
   let done = false;
@@ -231,7 +231,7 @@ it('should retry on readonly element', async ({page, server}) => {
   expect(await page.evaluate(() => window['result'])).toBe('some value');
 });
 
-it('should retry on invisible element', async ({page, server}) => {
+it('should retry on invisible element', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.$eval('input', i => i.style.display = 'none');
   let done = false;
@@ -246,19 +246,19 @@ it('should retry on invisible element', async ({page, server}) => {
   expect(await page.evaluate(() => window['result'])).toBe('some value');
 });
 
-it('should be able to fill the body', async ({page}) => {
+it('should be able to fill the body', async ({ page }) => {
   await page.setContent(`<body contentEditable="true"></body>`);
   await page.fill('body', 'some value');
   expect(await page.evaluate(() => document.body.textContent)).toBe('some value');
 });
 
-it('should fill fixed position input', async ({page}) => {
+it('should fill fixed position input', async ({ page }) => {
   await page.setContent(`<input style='position: fixed;' />`);
   await page.fill('input', 'some value');
   expect(await page.evaluate(() => document.querySelector('input').value)).toBe('some value');
 });
 
-it('should be able to fill when focus is in the wrong frame', async ({page}) => {
+it('should be able to fill when focus is in the wrong frame', async ({ page }) => {
   await page.setContent(`
     <div contentEditable="true"></div>
     <iframe></iframe>
@@ -268,32 +268,32 @@ it('should be able to fill when focus is in the wrong frame', async ({page}) => 
   expect(await page.$eval('div', d => d.textContent)).toBe('some value');
 });
 
-it('should be able to fill the input[type=number]', async ({page}) => {
+it('should be able to fill the input[type=number]', async ({ page }) => {
   await page.setContent(`<input id="input" type="number"></input>`);
   await page.fill('input', '42');
   expect(await page.evaluate(() => window['input'].value)).toBe('42');
 });
 
-it('should be able to fill exponent into the input[type=number]', async ({page}) => {
+it('should be able to fill exponent into the input[type=number]', async ({ page }) => {
   await page.setContent(`<input id="input" type="number"></input>`);
   await page.fill('input', '-10e5');
   expect(await page.evaluate(() => window['input'].value)).toBe('-10e5');
 });
 
-it('should be able to fill input[type=number] with empty string', async ({page}) => {
+it('should be able to fill input[type=number] with empty string', async ({ page }) => {
   await page.setContent(`<input id="input" type="number" value="123"></input>`);
   await page.fill('input', '');
   expect(await page.evaluate(() => window['input'].value)).toBe('');
 });
 
-it('should not be able to fill text into the input[type=number]', async ({page}) => {
+it('should not be able to fill text into the input[type=number]', async ({ page }) => {
   await page.setContent(`<input id="input" type="number"></input>`);
   let error = null;
   await page.fill('input', 'abc').catch(e => error = e);
   expect(error.message).toContain('Cannot type text into input[type=number]');
 });
 
-it('should be able to clear', async ({page, server}) => {
+it('should be able to clear', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.fill('input', 'some value');
   expect(await page.evaluate(() => window['result'])).toBe('some value');
@@ -301,7 +301,7 @@ it('should be able to clear', async ({page, server}) => {
   expect(await page.evaluate(() => window['result'])).toBe('');
 });
 
-it('should not throw when fill causes navigation', async ({page, server}) => {
+it('should not throw when fill causes navigation', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.setContent('<input type=date>');
   await page.$eval('input', select => select.addEventListener('input', () => window.location.href = '/empty.html'));

@@ -81,7 +81,7 @@ export const Recorder: React.FC<RecorderProps> = ({
   return <div className='recorder'>
     <Toolbar>
       <ToolbarButton icon='record' title='Record' toggled={mode === 'recording'} onClick={() => {
-        window.dispatch({ event: 'setMode', params: { mode: mode === 'recording' ? 'none' : 'recording' }});
+        window.dispatch({ event: 'setMode', params: { mode: mode === 'recording' ? 'none' : 'recording' } });
       }}>Record</ToolbarButton>
       <ToolbarButton icon='files' title='Copy' disabled={!source || !source.text} onClick={() => {
         copy(source.text);
@@ -95,7 +95,7 @@ export const Recorder: React.FC<RecorderProps> = ({
       <ToolbarButton icon='debug-step-over' title='Step over' disabled={!paused} onClick={() => {
         window.dispatch({ event: 'step' });
       }}></ToolbarButton>
-      <div style={{flex: 'auto'}}></div>
+      <div style={{ flex: 'auto' }}></div>
       <div>Target:</div>
       <select className='recorder-chooser' hidden={!sources.length} value={file} onChange={event => {
         setFile(event.target.selectedOptions[0].value);
@@ -115,7 +115,7 @@ export const Recorder: React.FC<RecorderProps> = ({
       <div className='vbox'>
         <Toolbar>
           <ToolbarButton icon='microscope' title='Explore' toggled={mode === 'inspecting'} onClick={() => {
-            window.dispatch({ event: 'setMode', params: { mode: mode === 'inspecting' ? 'none' : 'inspecting' }}).catch(() => { });
+            window.dispatch({ event: 'setMode', params: { mode: mode === 'inspecting' ? 'none' : 'inspecting' } }).catch(() => { });
           }}>Explore</ToolbarButton>
           <input ref={selectorInputRef} className='selector-input' placeholder='Playwright Selector' value={selector} disabled={mode !== 'none'} onChange={event => {
             setSelector(event.target.value);

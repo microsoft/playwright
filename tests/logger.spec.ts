@@ -16,12 +16,12 @@
 
 import { playwrightTest as it, expect } from './config/browserTest';
 
-it('should log', async ({browserType, browserOptions}) => {
+it('should log', async ({ browserType, browserOptions }) => {
   const log = [];
-  const browser = await browserType.launch({...browserOptions, logger: {
-    log: (name, severity, message) => log.push({name, severity, message}),
+  const browser = await browserType.launch({ ...browserOptions, logger: {
+    log: (name, severity, message) => log.push({ name, severity, message }),
     isEnabled: (name, severity) => severity !== 'verbose'
-  }});
+  } });
   await browser.newContext();
   await browser.close();
   expect(log.length > 0).toBeTruthy();
@@ -30,12 +30,12 @@ it('should log', async ({browserType, browserOptions}) => {
   expect(log.filter(item => item.message.includes('browserType.launch succeeded')).length > 0).toBeTruthy();
 });
 
-it('should log context-level', async ({browserType, browserOptions}) => {
+it('should log context-level', async ({ browserType, browserOptions }) => {
   const log = [];
   const browser = await browserType.launch(browserOptions);
   const context = await browser.newContext({
     logger: {
-      log: (name, severity, message) => log.push({name, severity, message}),
+      log: (name, severity, message) => log.push({ name, severity, message }),
       isEnabled: (name, severity) => severity !== 'verbose'
     }
   });

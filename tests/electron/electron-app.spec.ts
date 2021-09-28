@@ -86,8 +86,8 @@ test('should wait for first window', async ({ electronApp }) => {
 
 test('should have a clipboard instance', async ({ electronApp }) => {
   const clipboardContentToWrite = 'Hello from Playwright';
-  await electronApp.evaluate(async ({clipboard}, text) => clipboard.writeText(text), clipboardContentToWrite);
-  const clipboardContentRead = await electronApp.evaluate(async ({clipboard}) => clipboard.readText());
+  await electronApp.evaluate(async ({ clipboard }, text) => clipboard.writeText(text), clipboardContentToWrite);
+  const clipboardContentRead = await electronApp.evaluate(async ({ clipboard }) => clipboard.readText());
   expect(clipboardContentRead).toEqual(clipboardContentToWrite);
 });
 
@@ -108,7 +108,7 @@ test('should return browser window', async ({ playwright }) => {
   await electronApp.close();
 });
 
-test('should bypass csp', async ({playwright, server}) => {
+test('should bypass csp', async ({ playwright, server }) => {
   const app = await playwright._electron.launch({
     args: [require('path').join(__dirname, 'electron-app.js')],
     bypassCSP: true,
@@ -122,7 +122,7 @@ test('should bypass csp', async ({playwright, server}) => {
   });
   const page = await app.firstWindow();
   await page.goto(server.PREFIX + '/csp.html');
-  await page.addScriptTag({content: 'window["__injected"] = 42;'});
+  await page.addScriptTag({ content: 'window["__injected"] = 42;' });
   expect(await page.evaluate('window["__injected"]')).toBe(42);
   await app.close();
 });

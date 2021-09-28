@@ -74,7 +74,8 @@ Example:
     // 3. Download new browser.
     console.log('\nDownloading new browser...');
     const registry = new Registry(browsersJSON);
-    await registry.install();
+    const executables = registry.defaultExecutables();
+    await registry.install(executables);
 
     // 4. Generate types.
     console.log('\nGenerating protocol types...');

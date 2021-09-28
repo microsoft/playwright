@@ -18,11 +18,11 @@
 import { test as it, expect } from './pageTest';
 import util from 'util';
 
-it('should work', async ({page, browserName}) => {
+it('should work', async ({ page, browserName }) => {
   let message = null;
   page.once('console', m => message = m);
   await Promise.all([
-    page.evaluate(() => console.log('hello', 5, {foo: 'bar'})),
+    page.evaluate(() => console.log('hello', 5, { foo: 'bar' })),
     page.waitForEvent('console')
   ]);
   if (browserName !== 'firefox')
@@ -32,17 +32,17 @@ it('should work', async ({page, browserName}) => {
   expect(message.type()).toEqual('log');
   expect(await message.args()[0].jsonValue()).toEqual('hello');
   expect(await message.args()[1].jsonValue()).toEqual(5);
-  expect(await message.args()[2].jsonValue()).toEqual({foo: 'bar'});
+  expect(await message.args()[2].jsonValue()).toEqual({ foo: 'bar' });
 });
 
-it('should emit same log twice', async ({page}) => {
+it('should emit same log twice', async ({ page }) => {
   const messages = [];
   page.on('console', m => messages.push(m.text()));
   await page.evaluate(() => { for (let i = 0; i < 2; ++i) console.log('hello'); });
   expect(messages).toEqual(['hello', 'hello']);
 });
 
-it('should use text() for inspection', async ({page}) => {
+it('should use text() for inspection', async ({ page }) => {
   let text;
   const inspect = value => {
     text = util.inspect(value);
@@ -52,7 +52,7 @@ it('should use text() for inspection', async ({page}) => {
   expect(text).toEqual('Hello world');
 });
 
-it('should work for different console API calls', async ({page}) => {
+it('should work for different console API calls', async ({ page }) => {
   const messages = [];
   page.on('console', msg => messages.push(msg));
   // All console events will be reported before `page.evaluate` is finished.
@@ -92,7 +92,7 @@ it('should not fail for window object', async ({ page, browserName }) => {
     expect(message.text()).toEqual('JSHandle@object');
 });
 
-it('should trigger correct Log', async ({page, server, browserName, isWindows}) => {
+it('should trigger correct Log', async ({ page, server, browserName, isWindows }) => {
   it.skip(browserName === 'webkit' && isWindows, 'Upstream issue https://bugs.webkit.org/show_bug.cgi?id=229515');
   await page.goto('about:blank');
   const [message] = await Promise.all([
@@ -103,7 +103,7 @@ it('should trigger correct Log', async ({page, server, browserName, isWindows}) 
   expect(message.type()).toEqual('error');
 });
 
-it('should have location for console API calls', async ({page, server}) => {
+it('should have location for console API calls', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [message] = await Promise.all([
     page.waitForEvent('console', m => m.text() === 'yellow'),
@@ -119,7 +119,7 @@ it('should have location for console API calls', async ({page, server}) => {
   });
 });
 
-it('should not throw when there are console messages in detached iframes', async ({page, server}) => {
+it('should not throw when there are console messages in detached iframes', async ({ page, server }) => {
   // @see https://github.com/GoogleChrome/puppeteer/issues/3865
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
@@ -143,12 +143,12 @@ it('should not throw when there are console messages in detached iframes', async
   expect(await popup.evaluate('1 + 1')).toBe(2);
 });
 
-it('should use object previews for arrays and objects', async ({page, browserName}) => {
+it('should use object previews for arrays and objects', async ({ page, browserName }) => {
   let text: string;
   page.on('console', message => {
     text = message.text();
   });
-  await page.evaluate(() => console.log([1, 2, 3], {a: 1}, window));
+  await page.evaluate(() => console.log([1, 2, 3], { a: 1 }, window));
 
   if (browserName !== 'firefox')
     expect(text).toEqual('[1,2,3] {a: 1} Window');
@@ -156,7 +156,7 @@ it('should use object previews for arrays and objects', async ({page, browserNam
     expect(text).toEqual('Array JSHandle@object JSHandle@object');
 });
 
-it('should use object previews for errors', async ({page, browserName}) => {
+it('should use object previews for errors', async ({ page, browserName }) => {
   let text: string;
   page.on('console', message => {
     text = message.text();

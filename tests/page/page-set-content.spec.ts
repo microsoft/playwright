@@ -19,26 +19,26 @@ import { test as it, expect } from './pageTest';
 
 const expectedOutput = '<html><head></head><body><div>hello</div></body></html>';
 
-it('should work', async ({page, server}) => {
+it('should work', async ({ page, server }) => {
   await page.setContent('<div>hello</div>');
   const result = await page.content();
   expect(result).toBe(expectedOutput);
 });
 
-it('should work with domcontentloaded', async ({page, server}) => {
+it('should work with domcontentloaded', async ({ page, server }) => {
   await page.setContent('<div>hello</div>', { waitUntil: 'domcontentloaded' });
   const result = await page.content();
   expect(result).toBe(expectedOutput);
 });
 
-it('should work with doctype', async ({page, server}) => {
+it('should work with doctype', async ({ page, server }) => {
   const doctype = '<!DOCTYPE html>';
   await page.setContent(`${doctype}<div>hello</div>`);
   const result = await page.content();
   expect(result).toBe(`${doctype}${expectedOutput}`);
 });
 
-it('should work with HTML 4 doctype', async ({page, server}) => {
+it('should work with HTML 4 doctype', async ({ page, server }) => {
   const doctype = '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" ' +
     '"http://www.w3.org/TR/html4/strict.dtd">';
   await page.setContent(`${doctype}<div>hello</div>`);
@@ -46,16 +46,16 @@ it('should work with HTML 4 doctype', async ({page, server}) => {
   expect(result).toBe(`${doctype}${expectedOutput}`);
 });
 
-it('should respect timeout', async ({page, server, playwright}) => {
+it('should respect timeout', async ({ page, server, playwright }) => {
   const imgPath = '/img.png';
   // stall for image
   server.setRoute(imgPath, (req, res) => {});
   let error = null;
-  await page.setContent(`<img src="${server.PREFIX + imgPath}"></img>`, {timeout: 1}).catch(e => error = e);
+  await page.setContent(`<img src="${server.PREFIX + imgPath}"></img>`, { timeout: 1 }).catch(e => error = e);
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
-it('should respect default navigation timeout', async ({page, server, playwright}) => {
+it('should respect default navigation timeout', async ({ page, server, playwright }) => {
   page.setDefaultNavigationTimeout(1);
   const imgPath = '/img.png';
   // stall for image
@@ -65,7 +65,7 @@ it('should respect default navigation timeout', async ({page, server, playwright
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
-it('should await resources to load', async ({page, server}) => {
+it('should await resources to load', async ({ page, server }) => {
   const imgPath = '/img.png';
   let imgResponse = null;
   server.setRoute(imgPath, (req, res) => imgResponse = res);
@@ -77,32 +77,32 @@ it('should await resources to load', async ({page, server}) => {
   await contentPromise;
 });
 
-it('should work fast enough', async ({page, server}) => {
+it('should work fast enough', async ({ page, server }) => {
   for (let i = 0; i < 20; ++i)
     await page.setContent('<div>yo</div>');
 });
 
-it('should work with tricky content', async ({page, server}) => {
+it('should work with tricky content', async ({ page, server }) => {
   await page.setContent('<div>hello world</div>' + '\x7F');
   expect(await page.$eval('div', div => div.textContent)).toBe('hello world');
 });
 
-it('should work with accents', async ({page, server}) => {
+it('should work with accents', async ({ page, server }) => {
   await page.setContent('<div>aberración</div>');
   expect(await page.$eval('div', div => div.textContent)).toBe('aberración');
 });
 
-it('should work with emojis', async ({page, server}) => {
+it('should work with emojis', async ({ page, server }) => {
   await page.setContent('<div>🐥</div>');
   expect(await page.$eval('div', div => div.textContent)).toBe('🐥');
 });
 
-it('should work with newline', async ({page, server}) => {
+it('should work with newline', async ({ page, server }) => {
   await page.setContent('<div>\n</div>');
   expect(await page.$eval('div', div => div.textContent)).toBe('\n');
 });
 
-it('content() should throw nice error during navigation', async ({page, server}) => {
+it('content() should throw nice error during navigation', async ({ page, server }) => {
   for (let timeout = 0; timeout < 200; timeout += 20) {
     await page.setContent('<div>hello</div>');
     const promise = page.goto(server.EMPTY_PAGE);
