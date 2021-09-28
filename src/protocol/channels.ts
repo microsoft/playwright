@@ -174,6 +174,7 @@ export type FetchRequestFetchParams = {
   formData?: any,
   timeout?: number,
   failOnStatusCode?: boolean,
+  ignoreHTTPSErrors?: boolean,
 };
 export type FetchRequestFetchOptions = {
   params?: NameValue[],
@@ -183,6 +184,7 @@ export type FetchRequestFetchOptions = {
   formData?: any,
   timeout?: number,
   failOnStatusCode?: boolean,
+  ignoreHTTPSErrors?: boolean,
 };
 export type FetchRequestFetchResult = {
   response?: FetchResponse,

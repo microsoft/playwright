@@ -245,6 +245,7 @@ FetchRequest:
         formData: json?
         timeout: number?
         failOnStatusCode: boolean?
+        ignoreHTTPSErrors: boolean?
       returns:
         response: FetchResponse?
         error: string?

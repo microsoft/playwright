@@ -57,6 +57,8 @@ Request timeout in milliseconds.
 Whether to throw on response codes other than 2xx and 3xx. By default response object is returned
 for all status codes.
 
+### option: FetchRequest.fetch.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
+
 ## async method: FetchRequest.get
 - returns: <[FetchResponse]>
 
@@ -88,6 +90,8 @@ Request timeout in milliseconds.
 
 Whether to throw on response codes other than 2xx and 3xx. By default response object is returned
 for all status codes.
+
+### option: FetchRequest.get.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
 
 ## async method: FetchRequest.post
 - returns: <[FetchResponse]>
@@ -128,3 +132,5 @@ Request timeout in milliseconds.
 
 Whether to throw on response codes other than 2xx and 3xx. By default response object is returned
 for all status codes.
+
+### option: FetchRequest.post.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%

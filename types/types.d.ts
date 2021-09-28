@@ -12668,6 +12668,11 @@ export interface FetchRequest {
     headers?: { [key: string]: string; };
 
     /**
+     * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+     */
+    ignoreHTTPSErrors?: boolean;
+
+    /**
      * If set changes the fetch method (e.g. PUT or POST). If not specified, GET method is used.
      */
     method?: string;
@@ -12699,6 +12704,11 @@ export interface FetchRequest {
      * Allows to set HTTP headers.
      */
     headers?: { [key: string]: string; };
+
+    /**
+     * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+     */
+    ignoreHTTPSErrors?: boolean;
 
     /**
      * Query parameters to be send with the URL.
@@ -12737,6 +12747,11 @@ export interface FetchRequest {
      * Allows to set HTTP headers.
      */
     headers?: { [key: string]: string; };
+
+    /**
+     * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+     */
+    ignoreHTTPSErrors?: boolean;
 
     /**
      * Query parameters to be send with the URL.
