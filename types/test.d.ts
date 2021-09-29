@@ -1101,10 +1101,13 @@ export interface TestInfo {
    */
   outputDir: string;
   /**
-   * Returns a path to a snapshot file with the given `snapshotName`. Learn more about [snapshots](https://playwright.dev/docs/test-snapshots).
-   * @param snapshotName
+   * Returns a path to a snapshot file with the given `pathSegments`. Learn more about [snapshots](https://playwright.dev/docs/test-snapshots).
+   *
+   * > Note that `pathSegments` accepts an array of path segments to the snapshot file such as `testInfo.snapshotPath('relative', 'path', 'to', 'snapshot.png')`.
+   * > However, this path must stay within the snapshots directory for each test file (i.e. `a.spec.js-snapshots`), otherwise it will throw.
+   * @param pathSegments The name of the snapshot file or the path segments to define the snapshot file path. Snapshots with the same name in the same test file are expected to be the same.
    */
-  snapshotPath: (snapshotName: string) => string;
+  snapshotPath: (...pathSegments: string[]) => string;
   /**
    * Returns a path inside the [testInfo.outputDir](https://playwright.dev/docs/api/class-testinfo#test-info-output-dir)
    * where the test can safely put a temporary file. Guarantees that tests running in parallel will not interfere with each
@@ -1120,6 +1123,8 @@ export interface TestInfo {
    * });
    * ```
    *
+   * > Note that `pathSegments` accepts an array of path segments to the test output directory such as `testInfo.outputPath('relative', 'path', 'to', 'output')`.
+   * > However, this path must stay within the snapshots directory for each test file (i.e. `test-results/a-test-title`), otherwise it will throw.
    * @param pathSegments Path segments to append at the end of the resulting path.
    */
   outputPath: (...pathSegments: string[]) => string;
