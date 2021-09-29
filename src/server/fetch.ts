@@ -25,7 +25,7 @@ import { NameValue, NewRequestOptions } from '../common/types';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { assert, createGuid, getPlaywrightVersion, isFilePayload, monotonicTime } from '../utils/utils';
 import { BrowserContext } from './browserContext';
-import { CookieStore } from './cookieStore';
+import { CookieStore, domainMatches } from './cookieStore';
 import { MultipartFormData } from './formData';
 import { SdkObject } from './instrumentation';
 import { Playwright } from './playwright';
@@ -167,7 +167,7 @@ export abstract class FetchRequest extends SdkObject {
         cookie.domain = url.hostname;
       else
         assert(cookie.domain.startsWith('.'));
-      if (!canSetCookie(cookie.domain!, url.hostname))
+      if (!domainMatches(url.hostname, cookie.domain!))
         continue;
       // https://datatracker.ietf.org/doc/html/rfc6265#section-5.2.4
       if (!cookie.path || !cookie.path.startsWith('/'))
@@ -392,16 +392,6 @@ function toHeadersArray(rawHeaders: string[]): types.HeadersArray {
 }
 
 const redirectStatus = [301, 302, 303, 307, 308];
-
-function canSetCookie(cookieDomain: string, hostname: string) {
-  if (cookieDomain === hostname)
-    return true;
-  // Only exact match is allowed in this case (host-only-flag is true in the spec terms).
-  if (!cookieDomain.startsWith('.'))
-    return false;
-  hostname = '.' + hostname;
-  return hostname.endsWith(cookieDomain);
-}
 
 function parseCookie(header: string): types.NetworkCookie | null {
   const pairs = header.split(';').filter(s => s.trim().length > 0).map(p => p.split('=').map(s => s.trim()));

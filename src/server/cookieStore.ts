@@ -112,7 +112,7 @@ export class CookieStore {
   }
 }
 
-function domainMatches(value: string, domain: string): boolean {
+export function domainMatches(value: string, domain: string): boolean {
   if (value === domain)
     return true;
   // Only strict match is allowed if domain doesn't start with '.' (host-only-flag is true in the spec)
