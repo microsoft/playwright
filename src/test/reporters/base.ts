@@ -32,7 +32,6 @@ export type Position = {
   line: number;
 };
 
-
 type Annotation = {
   filePath: string;
   title: string;
