@@ -19,7 +19,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { CRBrowser } from './crBrowser';
-import { Env } from '../../utils/processLauncher';
+import { Env, gracefullyCloseSet } from '../../utils/processLauncher';
 import { kBrowserCloseMessageId } from './crConnection';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { BrowserType } from '../browserType';
@@ -169,7 +169,9 @@ export class Chromium extends BrowserType {
         method: 'DELETE',
       }).catch(error => progress.log(`<error disconnecting from selenium>: ${error}`));
       progress.log(`<disconnected from selenium> sessionId=${sessionId}`);
+      gracefullyCloseSet.delete(disconnectFromSelenium);
     };
+    gracefullyCloseSet.add(disconnectFromSelenium);
 
     try {
       const capabilities = value.capabilities;
