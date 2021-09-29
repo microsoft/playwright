@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-// @ts-ignore
 import milliseconds from 'ms';
 import path from 'path';
-import { BaseReporter, formatFailure, workspaceRelativePath } from './base';
+import { BaseReporter, formatFailure } from './base';
 import {
   TestCase,
   FullResult,
@@ -35,23 +34,15 @@ type GithubLogOptions = Partial<{
 }>;
 
 class GithubLogger {
-	private _isCI: boolean = process.env.CI === 'true';
-  private _isGithubAction: boolean = process.env.GITHUB_ACTION !== undefined;
-  private _shouldLog = (this._isCI && this._isGithubAction) || process.env.PW_GH_ACTION_DEBUG === 'true' ;
+  private _isGithubAction: boolean = !!process.env.GITHUB_ACTION;
 
-  private _log(
-    message: string,
-    type: GithubLogType = 'notice',
-    options: GithubLogOptions = {}
-  ) {
-    if (this._shouldLog) {
-      if (this._isGithubAction) message = message.replace(/\n/g, '%0A');
-
-      const configs = Object.entries(options)
-          .map(([key, option]) => `${key}=${option}`)
-          .join(',');
-      console.log(`::${type} ${configs}::${message}`);
-    }
+  private _log(message: string, type: GithubLogType = 'notice', options: GithubLogOptions = {}) {
+    if (this._isGithubAction)
+      message = message.replace(/\n/g, '%0A');
+    const configs = Object.entries(options)
+        .map(([key, option]) => `${key}=${option}`)
+        .join(',');
+    console.log(`::${type} ${configs}::${message}`);
   }
 
   debug(message: string, options?: GithubLogOptions) {
@@ -81,27 +72,29 @@ export class GithubReporter extends BaseReporter {
 
   protected override printSlowTests() {
     this.getSlowTests().forEach(([file, duration]) => {
-      const filePath = workspaceRelativePath(
-          path.join(process.cwd(), file)
-      );
+      const filePath = workspaceRelativePath(path.join(process.cwd(), file));
       this.githubLogger.warning(`${filePath} (${milliseconds(duration)})`, {
         title: 'Slow Test',
         file: filePath,
       });
     });
-
-
   }
 
   protected override printSummary(summary: string){
     this.githubLogger.notice(summary, {
-      title: '🎭 Playwright Run Summary',
+      title: '🎭 Playwright Run Summary'
     });
   }
 
   protected override printFailures(failures: TestCase[]) {
     failures.forEach((test, index) => {
-      const { annotations } = formatFailure(this.config, test, index + 1, true);
+      const filePath = workspaceRelativePath(test.location.file);
+      const { annotations } = formatFailure(this.config, test, {
+        filePath,
+        index: index + 1,
+        includeStdio: true,
+        includeAttachments: false,
+      });
       annotations.forEach(({ filePath, title, message, position }) => {
         const options: GithubLogOptions = {
           file: filePath,
@@ -115,6 +108,10 @@ export class GithubReporter extends BaseReporter {
       });
     });
   }
+}
+
+function workspaceRelativePath(filePath: string): string {
+  return path.relative(process.env['GITHUB_WORKSPACE'] ?? '', filePath);
 }
 
 export default GithubReporter;

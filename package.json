@@ -91,6 +91,7 @@
     "@types/extract-zip": "^1.6.2",
     "@types/mime": "^2.0.3",
     "@types/minimatch": "^3.0.3",
+    "@types/ms": "^0.7.31",
     "@types/node": "^10.17.28",
     "@types/pixelmatch": "^5.2.1",
     "@types/pngjs": "^3.4.2",

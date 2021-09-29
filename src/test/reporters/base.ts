@@ -17,7 +17,6 @@
 import { codeFrameColumns } from '@babel/code-frame';
 import colors from 'colors/safe';
 import fs from 'fs';
-// @ts-ignore
 import milliseconds from 'ms';
 import path from 'path';
 import StackUtils from 'stack-utils';
@@ -193,7 +192,10 @@ export class BaseReporter implements Reporter  {
   protected printFailures(failures: TestCase[]) {
     console.log('');
     failures.forEach((test, index) => {
-      console.log(formatFailure(this.config, test, index + 1, this.printTestOutput).message);
+      console.log(formatFailure(this.config, test, {
+        index: index + 1,
+        includeStdio: this.printTestOutput
+      }).message);
     });
   }
 
@@ -202,23 +204,18 @@ export class BaseReporter implements Reporter  {
   }
 }
 
-export function workspaceRelativePath(filePath: string): string {
-  return path.relative(process.env['GITHUB_WORKSPACE'] ?? '', filePath);
-}
-
-export function formatFailure(config: FullConfig, test: TestCase, index?: number, stdio?: boolean, attachment = true): {
+export function formatFailure(config: FullConfig, test: TestCase, options: {index?: number, includeStdio?: boolean, includeAttachments?: boolean, filePath?: string} = {}): {
   message: string,
   annotations: Annotation[]
 } {
+  const { index, includeStdio, includeAttachments = true, filePath } = options;
   const lines: string[] = [];
   const title = formatTestTitle(config, test);
-  const filePath = workspaceRelativePath(test.location.file);
   const annotations: Annotation[] = [];
   const header = formatTestHeader(config, test, '  ', index);
   lines.push(colors.red(header));
   for (const result of test.results) {
     const resultLines: string[] = [];
-
     const { tokens: resultTokens, position } = formatResultFailure(test, result, '    ');
     if (!resultTokens.length)
       continue;
@@ -227,7 +224,7 @@ export function formatFailure(config: FullConfig, test: TestCase, index?: number
       resultLines.push(colors.gray(pad(`    Retry #${result.retry}`, '-')));
     }
     resultLines.push(...resultTokens);
-    if (attachment){
+    if (includeAttachments) {
       for (let i = 0; i < result.attachments.length; ++i) {
         const attachment = result.attachments[i];
         resultLines.push('');
@@ -254,7 +251,7 @@ export function formatFailure(config: FullConfig, test: TestCase, index?: number
       }
     }
     const output = ((result as any)[kOutputSymbol] || []) as TestResultOutput[];
-    if (stdio && output.length) {
+    if (includeStdio && output.length) {
       const outputText = output.map(({ chunk, type }) => {
         const text = chunk.toString('utf8');
         if (type === 'stderr')
@@ -264,12 +261,14 @@ export function formatFailure(config: FullConfig, test: TestCase, index?: number
       resultLines.push('');
       resultLines.push(colors.gray(pad('--- Test output', '-')) + '\n\n' + outputText + '\n' + pad('', '-'));
     }
-    annotations.push({
-      filePath,
-      position,
-      title,
-      message: [header, ...resultLines].join('\n'),
-    });
+    if (filePath) {
+      annotations.push({
+        filePath,
+        position,
+        title,
+        message: [header, ...resultLines].join('\n'),
+      });
+    }
     lines.push(...resultLines);
   }
   lines.push('');
