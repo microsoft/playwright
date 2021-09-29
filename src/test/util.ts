@@ -145,12 +145,17 @@ export function sanitizeForFilePath(s: string) {
 }
 
 /**
- * Get absolute path contained within parent directory, otherwise returns parent path
+ * Returns absolute path contained within parent directory.
  */
-export function getContainedPath(parentPath: string, subPath?: string): string {
-  if (!subPath) return parentPath;
+export function getContainedPath(parentPath: string, subPath: string = ''): string {
   const resolvedPath = path.resolve(parentPath, subPath);
-  return resolvedPath.startsWith(parentPath) ? resolvedPath : path.join(parentPath, path.basename(subPath));
+
+  if (resolvedPath.startsWith(parentPath)) return resolvedPath;
+
+  throw new Error(`Path defined outside of parent directory
+  path: ${subPath}
+  resolved path: ${resolvedPath}
+  parent: ${parentPath}`);
 }
 
 export const debugTest = debug('pw:test');
