@@ -64,10 +64,19 @@ export class GithubReporter extends BaseReporter {
 
   override async onEnd(result: FullResult) {
     super.onEnd(result);
-    this.epilogue(true);
+    this.generateAnnotations();
   }
 
-  protected override printSlowTests() {
+  private generateAnnotations() {
+    const summary = this.generateSummary();
+    const summaryMessage = this.generateSummaryMessage(summary);
+    if (summary.failuresToPrint.length)
+      this._printFailureAnnotations(summary.failuresToPrint);
+    this._printSlowTestAnnotations();
+    this._printSummaryAnnotation(summaryMessage);
+  }
+
+  private _printSlowTestAnnotations() {
     this.getSlowTests().forEach(([file, duration]) => {
       const filePath = workspaceRelativePath(path.join(process.cwd(), file));
       this.githubLogger.warning(`${filePath} (${milliseconds(duration)})`, {
@@ -77,13 +86,13 @@ export class GithubReporter extends BaseReporter {
     });
   }
 
-  protected override printSummary(summary: string){
+  private _printSummaryAnnotation(summary: string){
     this.githubLogger.notice(summary, {
       title: '🎭 Playwright Run Summary'
     });
   }
 
-  protected override printFailures(failures: TestCase[]) {
+  private _printFailureAnnotations(failures: TestCase[]) {
     failures.forEach((test, index) => {
       const filePath = workspaceRelativePath(test.location.file);
       const { annotations } = formatFailure(this.config, test, {

@@ -55,6 +55,7 @@ type TestSummary = {
   skippedWithError: TestCase[];
   unexpected: TestCase[];
   flaky: TestCase[];
+  failuresToPrint: TestCase[];
 };
 
 export class BaseReporter implements Reporter  {
@@ -114,12 +115,6 @@ export class BaseReporter implements Reporter  {
     return fileDurations.filter(([,duration]) => duration > threshold).slice(0, count);
   }
 
-  protected printSlowTests() {
-    this.getSlowTests().forEach(([file, duration]) => {
-      console.log(colors.yellow('  Slow test: ') + file + colors.yellow(` (${milliseconds(duration)})`));
-    });
-  }
-
   protected generateSummaryMessage({
     skipped,
     expected,
@@ -148,7 +143,7 @@ export class BaseReporter implements Reporter  {
     return tokens.join('\n');
   }
 
-  epilogue(full: boolean) {
+  protected generateSummary(): TestSummary {
     let skipped = 0;
     let expected = 0;
     const skippedWithError: TestCase[] = [];
@@ -170,25 +165,26 @@ export class BaseReporter implements Reporter  {
     });
 
     const failuresToPrint = [...unexpected, ...flaky, ...skippedWithError];
-    if (full && failuresToPrint.length)
-      this.printFailures(failuresToPrint);
-    this.printSlowTests();
-    const summaryMessage = this.generateSummaryMessage({
+    return {
       skipped,
       expected,
       skippedWithError,
       unexpected,
-      flaky
-    });
-    this.printSummary(summaryMessage);
+      flaky,
+      failuresToPrint
+    };
   }
 
-  protected printSummary(summary: string){
-    console.log('');
-    console.log(summary);
+  epilogue(full: boolean) {
+    const summary = this.generateSummary();
+    const summaryMessage = this.generateSummaryMessage(summary);
+    if (full && summary.failuresToPrint.length)
+      this._printFailures(summary.failuresToPrint);
+    this._printSlowTests();
+    this._printSummary(summaryMessage);
   }
 
-  protected printFailures(failures: TestCase[]) {
+  private _printFailures(failures: TestCase[]) {
     console.log('');
     failures.forEach((test, index) => {
       console.log(formatFailure(this.config, test, {
@@ -196,6 +192,17 @@ export class BaseReporter implements Reporter  {
         includeStdio: this.printTestOutput
       }).message);
     });
+  }
+
+  private _printSlowTests() {
+    this.getSlowTests().forEach(([file, duration]) => {
+      console.log(colors.yellow('  Slow test: ') + file + colors.yellow(` (${milliseconds(duration)})`));
+    });
+  }
+
+  private _printSummary(summary: string){
+    console.log('');
+    console.log(summary);
   }
 
   willRetry(test: TestCase): boolean {
