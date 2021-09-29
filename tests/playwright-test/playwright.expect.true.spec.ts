@@ -137,6 +137,12 @@ test('should support toBeVisible, toBeHidden', async ({ runInlineTest }) => {
         await expect(locator).toBeHidden();
       });
 
+      test('was hidden', async ({ page }) => {
+        await page.setContent('<div</div>');
+        const locator = page.locator('button');
+        await expect(locator).toBeHidden();
+      });
+
       test('not hidden', async ({ page }) => {
         await page.setContent('<input></input>');
         const locator = page.locator('input');
@@ -144,8 +150,94 @@ test('should support toBeVisible, toBeHidden', async ({ runInlineTest }) => {
       });
       `,
   }, { workers: 1 });
+  expect(result.passed).toBe(5);
+  expect(result.exitCode).toBe(0);
+});
+
+test('should support toBeVisible, toBeHidden wait', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('visible', async ({ page }) => {
+        await page.setContent('<div></div>');
+        const locator = page.locator('span');
+        setTimeout(() => {
+          page.$eval('div', div => div.innerHTML = '<span>Hello</span>').catch(() => {});
+        }, 0);
+        await expect(locator).toBeVisible();
+      });
+
+      test('not hidden', async ({ page }) => {
+        await page.setContent('<div></div>');
+        const locator = page.locator('span');
+        setTimeout(() => {
+          page.$eval('div', div => div.innerHTML = '<span>Hello</span>').catch(() => {});
+        }, 0);
+        await expect(locator).not.toBeHidden();
+      });
+
+      test('not visible', async ({ page }) => {
+        await page.setContent('<div><span>Hello</span></div>');
+        const locator = page.locator('span');
+        setTimeout(() => {
+          page.$eval('span', span => span.textContent = '').catch(() => {});
+        }, 0);
+        await expect(locator).not.toBeVisible();
+      });
+
+      test('hidden', async ({ page }) => {
+        await page.setContent('<div><span>Hello</span></div>');
+        const locator = page.locator('span');
+        setTimeout(() => {
+          page.$eval('span', span => span.textContent = '').catch(() => {});
+        }, 0);
+        await expect(locator).toBeHidden();
+      });
+      `,
+  }, { workers: 1 });
   expect(result.passed).toBe(4);
   expect(result.exitCode).toBe(0);
+});
+
+test('should support toBeVisible, toBeHidden fail', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('visible', async ({ page }) => {
+        await page.setContent('<button style="display: none"></button>');
+        const locator = page.locator('button');
+        await expect(locator).toBeVisible({ timeout: 500 });
+      });
+
+      test('not visible', async ({ page }) => {
+        await page.setContent('<input></input>');
+        const locator = page.locator('input');
+        await expect(locator).not.toBeVisible({ timeout: 500 });
+      });
+
+      test('hidden', async ({ page }) => {
+        await page.setContent('<input></input>');
+        const locator = page.locator('input');
+        await expect(locator).toBeHidden({ timeout: 500 });
+      });
+
+      test('not hidden', async ({ page }) => {
+        await page.setContent('<button style="display: none"></button>');
+        const locator = page.locator('button');
+        await expect(locator).not.toBeHidden({ timeout: 500 });
+      });
+
+      test('not hidden 2', async ({ page }) => {
+        await page.setContent('<div></div>');
+        const locator = page.locator('button');
+        await expect(locator).not.toBeHidden({ timeout: 500 });
+      });
+      `,
+  }, { workers: 1 });
+  expect(result.failed).toBe(5);
+  expect(result.exitCode).toBe(1);
 });
 
 test('should support toBeFocused', async ({ runInlineTest }) => {
