@@ -456,61 +456,56 @@ test('should respect project threshold', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should sanitize snapshot name', async ({ runInlineTest }) => {
+test('should sanitize snapshot name when passed as string', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    ...files,
-    'a.spec.js-snapshots/snapshot.txt': `Hello world`,
+    'a.spec.js-snapshots/-snapshot--darwin.txt': `Hello world`,
     'a.spec.js': `
-      const { test } = require('./helper');
+      const { test } = pwt;
       test('is a test', ({}) => {
-        expect('Hello world').toMatchSnapshot('../test/snapshot.txt');
+        expect('Hello world').toMatchSnapshot('../../snapshot!.txt');
       });
     `
   });
-
   expect(result.exitCode).toBe(0);
 });
 
-test('should write missing expectations to contained outputPath using basename', async ({ runInlineTest }, testInfo) => {
+test('should write missing expectations with sanitized snapshot name', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
-    ...files,
     'a.spec.js': `
-      const { test } = require('./helper');
+      const { test } = pwt;
       test('is a test', ({}) => {
-        expect('Hello world').toMatchSnapshot('../test/snapshot.txt');
+        expect('Hello world').toMatchSnapshot('../../snapshot!.txt');
       });
     `
-  });
+  }, {}, { CI: '' });
 
   expect(result.exitCode).toBe(1);
-  const snapshotOutputPath = testInfo.outputPath('a.spec.js-snapshots/snapshot.txt');
+  const snapshotOutputPath = testInfo.outputPath('a.spec.js-snapshots/-snapshot--darwin.txt');
   expect(result.output).toContain(`${snapshotOutputPath} is missing in snapshots, writing actual`);
   const data = fs.readFileSync(snapshotOutputPath);
   expect(data.toString()).toBe('Hello world');
 });
 
-test('should lookup snapshot with path', async ({ runInlineTest }) => {
+test('should join array of snapshot path segments without sanitizing ', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    ...files,
-    'a.spec.js-snapshots/test/path/snapshot.txt': `Hello world`,
+    'a.spec.js-snapshots/test/path/snapshot-darwin.txt': `Hello world`,
     'a.spec.js': `
-      const { test } = require('./helper');
+      const { test } = pwt;
       test('is a test', ({}) => {
-        expect('Hello world').toMatchSnapshot('test/path/snapshot.txt');
+        expect('Hello world').toMatchSnapshot(['test', 'path', 'snapshot.txt']);
       });
     `
   });
-
   expect(result.exitCode).toBe(0);
 });
 
-test('should update snapshot with path', async ({ runInlineTest }, testInfo) => {
+test('should update snapshot with array of path segments', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js': `
       const { test } = require('./helper');
       test('is a test', ({}) => {
-        expect('Hello world').toMatchSnapshot('test/path/snapshot.txt');
+        expect('Hello world').toMatchSnapshot(['test', 'path', 'snapshot.txt']);
       });
     `
   }, { 'update-snapshots': true });
@@ -522,7 +517,7 @@ test('should update snapshot with path', async ({ runInlineTest }, testInfo) => 
   expect(data.toString()).toBe('Hello world');
 });
 
-test('should attach expected/actual/diff with snapshot path', async ({ runInlineTest }, testInfo) => {
+test.only('should attach expected/actual/diff with snapshot path', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js-snapshots/test/path/snapshot.png':
@@ -533,7 +528,7 @@ test('should attach expected/actual/diff with snapshot path', async ({ runInline
         console.log('## ' + JSON.stringify(testInfo.attachments));
       });
       test('is a test', ({}) => {
-        expect(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVQYV2NgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII==', 'base64')).toMatchSnapshot('test/path/snapshot.png');
+        expect(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVQYV2NgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII==', 'base64')).toMatchSnapshot(['test', 'path', 'snapshot.png']);
       });
     `
   });

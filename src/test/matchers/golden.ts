@@ -22,7 +22,8 @@ import path from 'path';
 import jpeg from 'jpeg-js';
 import pixelmatch from 'pixelmatch';
 import { diff_match_patch, DIFF_INSERT, DIFF_DELETE, DIFF_EQUAL } from '../../third_party/diff_match_patch';
-import { UpdateSnapshots } from '../types';
+import { TestInfoImpl, UpdateSnapshots } from '../types';
+import { addSuffix } from '../util';
 
 // Note: we require the pngjs version of pixelmatch to avoid version mismatches.
 const { PNG } = require(require.resolve('pngjs', { paths: [require.resolve('pixelmatch')] }));
@@ -82,15 +83,15 @@ function compareText(actual: Buffer | string, expectedBuffer: Buffer): { diff?: 
 
 export function compare(
   actual: Buffer | string,
-  name: string,
-  snapshotPath: (name: string) => string,
-  outputPath: (name: string) => string,
+  pathSegments: string[],
+  snapshotPath: TestInfoImpl['snapshotPath'],
+  outputPath: TestInfoImpl['outputPath'],
   updateSnapshots: UpdateSnapshots,
   withNegateComparison: boolean,
   options?: { threshold?: number }
 ): { pass: boolean; message?: string; expectedPath?: string, actualPath?: string, diffPath?: string, mimeType?: string } {
-  const snapshotFile = snapshotPath(name);
-  const outputFile = outputPath(name);
+  const snapshotFile = snapshotPath(...pathSegments);
+  const outputFile = outputPath(...pathSegments);
   const expectedPath = addSuffix(outputFile, '-expected');
   const actualPath = addSuffix(outputFile, '-actual');
   const diffPath = addSuffix(outputFile, '-diff');
@@ -161,6 +162,7 @@ export function compare(
   }
 
   fs.mkdirSync(path.dirname(expectedPath), { recursive: true });
+  fs.mkdirSync(path.dirname(actualPath), { recursive: true });
   fs.writeFileSync(expectedPath, expected);
   fs.writeFileSync(actualPath, actual);
   if (result.diff)
@@ -191,13 +193,6 @@ export function compare(
 
 function indent(lines: string, tab: string) {
   return lines.replace(/^(?=.+$)/gm, tab);
-}
-
-function addSuffix(filePath: string, suffix: string, customExtension?: string): string {
-  const dirname = path.dirname(filePath);
-  const ext = path.extname(filePath);
-  const name = path.basename(filePath, ext);
-  return path.join(dirname, name + suffix + (customExtension || ext));
 }
 
 function diff_prettyTerminal(diffs: diff_match_patch.Diff[]) {

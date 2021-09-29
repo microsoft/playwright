@@ -20,7 +20,7 @@ import rimraf from 'rimraf';
 import util from 'util';
 import colors from 'colors/safe';
 import { EventEmitter } from 'events';
-import { monotonicTime, serializeError, sanitizeForFilePath, getContainedPath } from './util';
+import { monotonicTime, serializeError, sanitizeForFilePath, getContainedPath, addSuffix } from './util';
 import { TestBeginPayload, TestEndPayload, RunPayload, TestEntry, DonePayload, WorkerInitParams, StepBeginPayload, StepEndPayload } from './ipc';
 import { setCurrentTestInfo } from './globals';
 import { Loader } from './loader';
@@ -244,21 +244,18 @@ export class WorkerRunner extends EventEmitter {
         fs.mkdirSync(baseOutputDir, { recursive: true });
         return getContainedPath(baseOutputDir, path.join(...pathSegments));
       },
-      snapshotPath: (snapshotName: string): string => {
+      snapshotPath: (...pathSegments: string[]): string => {
         let suffix = '';
         if (this._projectNamePathSegment)
           suffix += '-' + this._projectNamePathSegment;
         if (testInfo.snapshotSuffix)
           suffix += '-' + testInfo.snapshotSuffix;
-        if (suffix) {
-          const ext = path.extname(snapshotName);
-          if (ext)
-            snapshotName = snapshotName.substring(0, snapshotName.length - ext.length) + suffix + ext;
-          else
-            snapshotName += suffix;
-        }
+
+        const snapshotPath = path.join(...pathSegments.map((segment, i, { length }) =>
+          (i < length - 1) ? segment : addSuffix(segment, suffix),
+        ));
         const baseSnapshotPath = test._requireFile + '-snapshots';
-        return getContainedPath(baseSnapshotPath, snapshotName);
+        return getContainedPath(baseSnapshotPath, snapshotPath);
       },
       skip: (...args: [arg?: any, description?: string]) => modifier(testInfo, 'skip', args),
       fixme: (...args: [arg?: any, description?: string]) => modifier(testInfo, 'fixme', args),
