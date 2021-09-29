@@ -95,6 +95,19 @@ it('should filter outgoing cookies by domain', async ({ request, server }) => {
   expect(serverRequest2.headers.cookie).toBeFalsy();
 });
 
+it('should do case-insensitive match of cookie domain', async ({ request, server }) => {
+  server.setRoute('/setcookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', ['a=v; domain=One.com', 'b=v; domain=.B.oNe.com']);
+    res.end();
+  });
+  await request.get(`http://a.b.one.com:${server.PORT}/setcookie.html`);
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    request.get(`http://www.b.one.com:${server.PORT}/empty.html`)
+  ]);
+  expect(serverRequest.headers.cookie).toBe('a=v; b=v');
+});
+
 it('should send secure cookie over https', async ({ request, server, httpsServer }) => {
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=v; secure', 'b=v']);

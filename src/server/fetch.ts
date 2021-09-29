@@ -432,7 +432,7 @@ function parseCookie(header: string): types.NetworkCookie | null {
           cookie.expires = Date.now() / 1000 + maxAgeSec;
         break;
       case 'domain':
-        cookie.domain = value || '';
+        cookie.domain = value.toLocaleLowerCase() || '';
         if (cookie.domain && !cookie.domain.startsWith('.'))
           cookie.domain = '.' + cookie.domain;
         break;
