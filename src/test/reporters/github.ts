@@ -64,10 +64,10 @@ export class GithubReporter extends BaseReporter {
 
   override async onEnd(result: FullResult) {
     super.onEnd(result);
-    this.generateAnnotations();
+    this._generateAnnotations();
   }
 
-  private generateAnnotations() {
+  private _generateAnnotations() {
     const summary = this.generateSummary();
     const summaryMessage = this.generateSummaryMessage(summary);
     if (summary.failuresToPrint.length)
