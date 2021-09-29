@@ -174,6 +174,7 @@ export type FetchRequestFetchParams = {
   formData?: any,
   timeout?: number,
   failOnStatusCode?: boolean,
+  ignoreHTTPSErrors?: boolean,
 };
 export type FetchRequestFetchOptions = {
   params?: NameValue[],
@@ -183,6 +184,7 @@ export type FetchRequestFetchOptions = {
   formData?: any,
   timeout?: number,
   failOnStatusCode?: boolean,
+  ignoreHTTPSErrors?: boolean,
 };
 export type FetchRequestFetchResult = {
   response?: FetchResponse,
@@ -2171,11 +2173,13 @@ export type FrameWaitForSelectorParams = {
   strict?: boolean,
   timeout?: number,
   state?: 'attached' | 'detached' | 'visible' | 'hidden',
+  omitReturnValue?: boolean,
 };
 export type FrameWaitForSelectorOptions = {
   strict?: boolean,
   timeout?: number,
   state?: 'attached' | 'detached' | 'visible' | 'hidden',
+  omitReturnValue?: boolean,
 };
 export type FrameWaitForSelectorResult = {
   element?: ElementHandleChannel,

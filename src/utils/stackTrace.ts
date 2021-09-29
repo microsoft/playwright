@@ -33,8 +33,6 @@ export function rewriteErrorMessage<E extends Error>(e: E, newMessage: string): 
 const ROOT_DIR = path.resolve(__dirname, '..', '..');
 const CLIENT_LIB = path.join(ROOT_DIR, 'lib', 'client');
 const CLIENT_SRC = path.join(ROOT_DIR, 'src', 'client');
-const TEST_LIB = path.join(ROOT_DIR, 'lib', 'test');
-const TEST_SRC = path.join(ROOT_DIR, 'src', 'test');
 
 export type ParsedStackTrace = {
   allFrames: StackFrame[];
@@ -65,14 +63,7 @@ export function captureStackTrace(): ParsedStackTrace {
     const fileName = path.resolve(process.cwd(), frame.file);
     if (isTesting && fileName.includes(path.join('playwright', 'tests', 'config', 'coverage.js')))
       return null;
-    const inClient =
-      // Allow fixtures in the reported stacks.
-      (!fileName.includes('test/index') && !fileName.includes('test\\index')) && (
-        frame.file.includes(path.join('node_modules', 'expect'))
-        || fileName.startsWith(CLIENT_LIB)
-        || fileName.startsWith(CLIENT_SRC)
-        || fileName.startsWith(TEST_LIB)
-        || fileName.startsWith(TEST_SRC));
+    const inClient = fileName.startsWith(CLIENT_LIB) || fileName.startsWith(CLIENT_SRC);
     const parsed: ParsedFrame = {
       frame: {
         file: fileName,
@@ -87,23 +78,29 @@ export function captureStackTrace(): ParsedStackTrace {
   }).filter(Boolean) as ParsedFrame[];
 
   let apiName = '';
-  // Deepest transition between non-client code calling into client code
-  // is the api entry.
   const allFrames = parsedFrames;
-  for (let i = 0; i < parsedFrames.length - 1; i++) {
-    if (parsedFrames[i].inClient && !parsedFrames[i + 1].inClient) {
-      const frame = parsedFrames[i].frame;
-      const text = parsedFrames[i].frameText;
-      // expect matchers have the following stack structure:
-      // at __EXTERNAL_MATCHER_TRAP__ (.../index.js:342:30)
-      // at Object.throwingMatcher [as toBeChecked] (.../index.js:343:15)
-      const aliasIndex = text.indexOf('[as ');
-      if (aliasIndex !== -1)
-        apiName = 'expect.' + text.substring(aliasIndex + 4, text.indexOf(']'));
-      else
+
+  // expect matchers have the following stack structure:
+  // at Object.__PWTRAP__[expect.toHaveText] (...)
+  // at __EXTERNAL_MATCHER_TRAP__ (...)
+  // at Object.throwingMatcher [as toHaveText] (...)
+  const TRAP = '__PWTRAP__[';
+  const expectIndex = parsedFrames.findIndex(f => f.frameText.includes(TRAP));
+  if (expectIndex !== -1) {
+    const text = parsedFrames[expectIndex].frameText;
+    const aliasIndex = text.indexOf(TRAP);
+    apiName = text.substring(aliasIndex + TRAP.length, text.indexOf(']'));
+    parsedFrames = parsedFrames.slice(expectIndex + 3);
+  } else {
+    // Deepest transition between non-client code calling into client code
+    // is the api entry.
+    for (let i = 0; i < parsedFrames.length - 1; i++) {
+      if (parsedFrames[i].inClient && !parsedFrames[i + 1].inClient) {
+        const frame = parsedFrames[i].frame;
         apiName = frame.function ? frame.function[0].toLowerCase() + frame.function.slice(1) : '';
-      parsedFrames = parsedFrames.slice(i + 1);
-      break;
+        parsedFrames = parsedFrames.slice(i + 1);
+        break;
+      }
     }
   }
 

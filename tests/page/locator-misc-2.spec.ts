@@ -82,3 +82,20 @@ it('should return bounding box', async ({ page, server, browserName, headless, i
   const box = await element.boundingBox();
   expect(box).toEqual({ x: 100, y: 50, width: 50, height: 50 });
 });
+
+it('should waitFor', async ({ page }) => {
+  await page.setContent(`<div></div>`);
+  const locator = page.locator('span');
+  const promise = locator.waitFor();
+  await page.$eval('div', div => div.innerHTML = '<span>target</span>');
+  await promise;
+  await expect(locator).toHaveText('target');
+});
+
+it('should waitFor hidden', async ({ page }) => {
+  await page.setContent(`<div><span>target</span></div>`);
+  const locator = page.locator('span');
+  const promise = locator.waitFor({ state: 'hidden' });
+  await page.$eval('div', div => div.innerHTML = '');
+  await promise;
+});

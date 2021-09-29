@@ -35,6 +35,7 @@ export type FetchOptions = {
   data?: string | Buffer | Serializable,
   timeout?: number,
   failOnStatusCode?: boolean,
+  ignoreHTTPSErrors?: boolean,
 };
 
 export class FetchRequest extends ChannelOwner<channels.FetchRequestChannel, channels.FetchRequestInitializer> implements api.FetchRequest {
@@ -59,6 +60,7 @@ export class FetchRequest extends ChannelOwner<channels.FetchRequestChannel, cha
       headers?: { [key: string]: string; };
       timeout?: number;
       failOnStatusCode?: boolean;
+      ignoreHTTPSErrors?: boolean,
     }): Promise<FetchResponse> {
     return this.fetch(urlOrRequest, {
       ...options,
@@ -74,6 +76,7 @@ export class FetchRequest extends ChannelOwner<channels.FetchRequestChannel, cha
       data?: string | Buffer | Serializable;
       timeout?: number;
       failOnStatusCode?: boolean;
+      ignoreHTTPSErrors?: boolean,
     }): Promise<FetchResponse> {
     return this.fetch(urlOrRequest, {
       ...options,
@@ -129,6 +132,7 @@ export class FetchRequest extends ChannelOwner<channels.FetchRequestChannel, cha
         formData,
         timeout: options.timeout,
         failOnStatusCode: options.failOnStatusCode,
+        ignoreHTTPSErrors: options.ignoreHTTPSErrors,
       });
       if (result.error)
         throw new Error(result.error);

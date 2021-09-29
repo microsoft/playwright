@@ -162,6 +162,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     formData: tOptional(tAny),
     timeout: tOptional(tNumber),
     failOnStatusCode: tOptional(tBoolean),
+    ignoreHTTPSErrors: tOptional(tBoolean),
   });
   scheme.FetchRequestFetchResponseBodyParams = tObject({
     fetchUid: tString,
@@ -881,6 +882,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     strict: tOptional(tBoolean),
     timeout: tOptional(tNumber),
     state: tOptional(tEnum(['attached', 'detached', 'visible', 'hidden'])),
+    omitReturnValue: tOptional(tBoolean),
   });
   scheme.FrameExpectParams = tObject({
     selector: tString,

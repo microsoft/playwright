@@ -90,6 +90,8 @@ export class Dispatcher {
     const doneWithJob = () => {
       worker.removeListener('testBegin', onTestBegin);
       worker.removeListener('testEnd', onTestEnd);
+      worker.removeListener('stepBegin', onStepBegin);
+      worker.removeListener('stepEnd', onStepEnd);
       worker.removeListener('done', onDone);
       worker.removeListener('exit', onExit);
       doneCallback();
@@ -97,16 +99,82 @@ export class Dispatcher {
 
     const remainingByTestId = new Map(testGroup.tests.map(e => [ e._id, e ]));
     let lastStartedTestId: string | undefined;
+    const failedTestIds = new Set<string>();
 
     const onTestBegin = (params: TestBeginPayload) => {
       lastStartedTestId = params.testId;
+      if (this._hasReachedMaxFailures())
+        return;
+      const { test, result: testRun  } = this._testById.get(params.testId)!;
+      testRun.workerIndex = params.workerIndex;
+      testRun.startTime = new Date(params.startWallTime);
+      this._reporter.onTestBegin?.(test, testRun);
     };
     worker.addListener('testBegin', onTestBegin);
 
     const onTestEnd = (params: TestEndPayload) => {
       remainingByTestId.delete(params.testId);
+      if (this._hasReachedMaxFailures())
+        return;
+      const { test, result } = this._testById.get(params.testId)!;
+      result.duration = params.duration;
+      result.error = params.error;
+      result.attachments = params.attachments.map(a => ({
+        name: a.name,
+        path: a.path,
+        contentType: a.contentType,
+        body: a.body ? Buffer.from(a.body, 'base64') : undefined
+      }));
+      result.status = params.status;
+      test.expectedStatus = params.expectedStatus;
+      test.annotations = params.annotations;
+      test.timeout = params.timeout;
+      const isFailure = result.status !== 'skipped' && result.status !== test.expectedStatus;
+      if (isFailure)
+        failedTestIds.add(params.testId);
+      this._reportTestEnd(test, result);
     };
     worker.addListener('testEnd', onTestEnd);
+
+    const onStepBegin = (params: StepBeginPayload) => {
+      const { test, result, steps, stepStack } = this._testById.get(params.testId)!;
+      const parentStep = params.forceNoParent ? undefined : [...stepStack].pop();
+      const step: TestStep = {
+        title: params.title,
+        titlePath: () => {
+          const parentPath = parentStep?.titlePath() || [];
+          return [...parentPath, params.title];
+        },
+        parent: parentStep,
+        category: params.category,
+        startTime: new Date(params.wallTime),
+        duration: 0,
+        steps: [],
+        data: {},
+      };
+      steps.set(params.stepId, step);
+      (parentStep || result).steps.push(step);
+      if (params.canHaveChildren)
+        stepStack.add(step);
+      this._reporter.onStepBegin?.(test, result, step);
+    };
+    worker.on('stepBegin', onStepBegin);
+
+    const onStepEnd = (params: StepEndPayload) => {
+      const { test, result, steps, stepStack } = this._testById.get(params.testId)!;
+      const step = steps.get(params.stepId);
+      if (!step) {
+        this._reporter.onStdErr?.('Internal error: step end without step begin: ' + params.stepId, test, result);
+        return;
+      }
+      step.duration = params.wallTime - step.startTime.getTime();
+      if (params.error)
+        step.error = params.error;
+      stepStack.delete(step);
+      steps.delete(params.stepId);
+      this._reporter.onStepEnd?.(test, result, step);
+    };
+    worker.on('stepEnd', onStepEnd);
 
     const onDone = (params: DonePayload) => {
       let remaining = [...remainingByTestId.values()];
@@ -115,7 +183,7 @@ export class Dispatcher {
       // - there are no remaining
       // - we are here not because something failed
       // - no unrecoverable worker error
-      if (!remaining.length && !params.failedTestId && !params.fatalError) {
+      if (!remaining.length && !failedTestIds.size && !params.fatalError) {
         this._freeWorkers.push(worker);
         this._notifyWorkerClaimer();
         doneWithJob();
@@ -125,8 +193,6 @@ export class Dispatcher {
       // When worker encounters error, we will stop it and create a new one.
       worker.stop();
       worker.didFail = true;
-
-      const retryCandidates = new Set<string>();
 
       // In case of fatal error, report first remaining test as failing with this error,
       // and all others as skipped.
@@ -142,7 +208,7 @@ export class Dispatcher {
           result.error = params.fatalError;
           result.status = first ? 'failed' : 'skipped';
           this._reportTestEnd(test, result);
-          retryCandidates.add(test._id);
+          failedTestIds.add(test._id);
           first = false;
         }
         if (first) {
@@ -156,40 +222,45 @@ export class Dispatcher {
         remaining = [];
       }
 
-      if (params.failedTestId) {
-        retryCandidates.add(params.failedTestId);
+      const retryCandidates = new Set<string>();
+      const serialSuitesWithFailures = new Set<Suite>();
+
+      for (const failedTestId of failedTestIds) {
+        retryCandidates.add(failedTestId);
 
         let outermostSerialSuite: Suite | undefined;
-        for (let parent = this._testById.get(params.failedTestId)!.test.parent; parent; parent = parent.parent) {
+        for (let parent = this._testById.get(failedTestId)!.test.parent; parent; parent = parent.parent) {
           if (parent._parallelMode ===  'serial')
             outermostSerialSuite = parent;
         }
+        if (outermostSerialSuite)
+          serialSuitesWithFailures.add(outermostSerialSuite);
+      }
 
-        if (outermostSerialSuite) {
-          // Failed test belongs to a serial suite. We should skip all future tests
-          // from the same serial suite.
-          remaining = remaining.filter(test => {
-            let parent = test.parent;
-            while (parent && parent !== outermostSerialSuite)
-              parent = parent.parent;
+      // We have failed tests that belong to a serial suite.
+      // We should skip all future tests from the same serial suite.
+      remaining = remaining.filter(test => {
+        let parent = test.parent;
+        while (parent && !serialSuitesWithFailures.has(parent))
+          parent = parent.parent;
 
-            // Does not belong to the same serial suite, keep it.
-            if (!parent)
-              return true;
+        // Does not belong to the failed serial suite, keep it.
+        if (!parent)
+          return true;
 
-            // Emulate a "skipped" run, and drop this test from remaining.
-            const { result } = this._testById.get(test._id)!;
-            this._reporter.onTestBegin?.(test, result);
-            result.status = 'skipped';
-            this._reportTestEnd(test, result);
-            return false;
-          });
+        // Emulate a "skipped" run, and drop this test from remaining.
+        const { result } = this._testById.get(test._id)!;
+        this._reporter.onTestBegin?.(test, result);
+        result.status = 'skipped';
+        this._reportTestEnd(test, result);
+        return false;
+      });
 
-          // Add all tests from the same serial suite for possible retry.
-          // These will only be retried together, because they have the same
-          // "retries" setting and the same number of previous runs.
-          outermostSerialSuite.allTests().forEach(test => retryCandidates.add(test._id));
-        }
+      for (const serialSuite of serialSuitesWithFailures) {
+        // Add all tests from faiiled serial suites for possible retry.
+        // These will only be retried together, because they have the same
+        // "retries" setting and the same number of previous runs.
+        serialSuite.allTests().forEach(test => retryCandidates.add(test._id));
       }
 
       for (const testId of retryCandidates) {
@@ -254,88 +325,6 @@ export class Dispatcher {
 
   _createWorker(testGroup: TestGroup) {
     const worker = new Worker(this);
-    worker.on('testBegin', (params: TestBeginPayload) => {
-      if (worker.didFail) {
-        // Ignore test-related messages from failed workers, because timed out tests/fixtures
-        // may be triggering unexpected messages.
-        return;
-      }
-      if (this._hasReachedMaxFailures())
-        return;
-      const { test, result: testRun  } = this._testById.get(params.testId)!;
-      testRun.workerIndex = params.workerIndex;
-      testRun.startTime = new Date(params.startWallTime);
-      this._reporter.onTestBegin?.(test, testRun);
-    });
-    worker.on('testEnd', (params: TestEndPayload) => {
-      if (worker.didFail) {
-        // Ignore test-related messages from failed workers, because timed out tests/fixtures
-        // may be triggering unexpected messages.
-        return;
-      }
-      if (this._hasReachedMaxFailures())
-        return;
-      const { test, result } = this._testById.get(params.testId)!;
-      result.duration = params.duration;
-      result.error = params.error;
-      result.attachments = params.attachments.map(a => ({
-        name: a.name,
-        path: a.path,
-        contentType: a.contentType,
-        body: a.body ? Buffer.from(a.body, 'base64') : undefined
-      }));
-      result.status = params.status;
-      test.expectedStatus = params.expectedStatus;
-      test.annotations = params.annotations;
-      test.timeout = params.timeout;
-      this._reportTestEnd(test, result);
-    });
-    worker.on('stepBegin', (params: StepBeginPayload) => {
-      if (worker.didFail) {
-        // Ignore test-related messages from failed workers, because timed out tests/fixtures
-        // may be triggering unexpected messages.
-        return;
-      }
-      const { test, result, steps, stepStack } = this._testById.get(params.testId)!;
-      const parentStep = params.forceNoParent ? undefined : [...stepStack].pop();
-      const step: TestStep = {
-        title: params.title,
-        titlePath: () => {
-          const parentPath = parentStep?.titlePath() || [];
-          return [...parentPath, params.title];
-        },
-        parent: parentStep,
-        category: params.category,
-        startTime: new Date(params.wallTime),
-        duration: 0,
-        steps: [],
-        data: {},
-      };
-      steps.set(params.stepId, step);
-      (parentStep || result).steps.push(step);
-      if (params.canHaveChildren)
-        stepStack.add(step);
-      this._reporter.onStepBegin?.(test, result, step);
-    });
-    worker.on('stepEnd', (params: StepEndPayload) => {
-      if (worker.didFail) {
-        // Ignore test-related messages from failed workers, because timed out tests/fixtures
-        // may be triggering unexpected messages.
-        return;
-      }
-      const { test, result, steps, stepStack } = this._testById.get(params.testId)!;
-      const step = steps.get(params.stepId);
-      if (!step) {
-        this._reporter.onStdErr?.('Internal error: step end without step begin: ' + params.stepId, test, result);
-        return;
-      }
-      step.duration = params.wallTime - step.startTime.getTime();
-      if (params.error)
-        step.error = params.error;
-      stepStack.delete(step);
-      steps.delete(params.stepId);
-      this._reporter.onStepEnd?.(test, result, step);
-    });
     worker.on('stdOut', (params: TestOutputPayload) => {
       const chunk = chunkFromParams(params);
       if (worker.didFail) {

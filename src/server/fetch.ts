@@ -23,7 +23,7 @@ import zlib from 'zlib';
 import { HTTPCredentials } from '../../types/types';
 import { NameValue, NewRequestOptions } from '../common/types';
 import { TimeoutSettings } from '../utils/timeoutSettings';
-import { createGuid, isFilePayload, monotonicTime } from '../utils/utils';
+import { createGuid, getPlaywrightVersion, isFilePayload, monotonicTime } from '../utils/utils';
 import { BrowserContext } from './browserContext';
 import { MultipartFormData } from './formData';
 import { SdkObject } from './instrumentation';
@@ -123,7 +123,7 @@ export abstract class FetchRequest extends SdkObject {
         deadline
       };
       // rejectUnauthorized = undefined is treated as true in node 12.
-      if (defaults.ignoreHTTPSErrors)
+      if (params.ignoreHTTPSErrors || defaults.ignoreHTTPSErrors)
         options.rejectUnauthorized = false;
 
       const requestUrl = new URL(params.url, defaults.baseURL);
@@ -352,7 +352,7 @@ export class GlobalFetchRequest extends FetchRequest {
     }
     this._options = {
       baseURL: options.baseURL,
-      userAgent: options.userAgent || '',
+      userAgent: options.userAgent || `Playwright/${getPlaywrightVersion()}`,
       extraHTTPHeaders: options.extraHTTPHeaders,
       ignoreHTTPSErrors: !!options.ignoreHTTPSErrors,
       httpCredentials: options.httpCredentials,

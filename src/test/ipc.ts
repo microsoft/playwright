@@ -74,7 +74,6 @@ export type RunPayload = {
 };
 
 export type DonePayload = {
-  failedTestId?: string;
   fatalError?: TestError;
 };
 

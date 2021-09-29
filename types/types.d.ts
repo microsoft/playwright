@@ -9551,6 +9551,40 @@ export interface Locator {
      * `false`. Useful to wait until the element is ready for the action without performing it.
      */
     trial?: boolean;
+  }): Promise<void>;
+
+  /**
+   * Returns when element specified by locator satisfies the `state` option.
+   *
+   * If target element already satisfies the condition, the method returns immediately. Otherwise, waits for up to `timeout`
+   * milliseconds until the condition is met.
+   *
+   * ```js
+   * const orderSent = page.locator('#order-sent');
+   * await orderSent.waitFor();
+   * ```
+   *
+   * @param options
+   */
+  waitFor(options?: {
+    /**
+     * Defaults to `'visible'`. Can be either:
+     * - `'attached'` - wait for element to be present in DOM.
+     * - `'detached'` - wait for element to not be present in DOM.
+     * - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element without
+     *   any content or with `display:none` has an empty bounding box and is not considered visible.
+     * - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or `visibility:hidden`.
+     *   This is opposite to the `'visible'` option.
+     */
+    state?: "attached"|"detached"|"visible"|"hidden";
+
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
   }): Promise<void>;}
 
 /**
@@ -12668,6 +12702,11 @@ export interface FetchRequest {
     headers?: { [key: string]: string; };
 
     /**
+     * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+     */
+    ignoreHTTPSErrors?: boolean;
+
+    /**
      * If set changes the fetch method (e.g. PUT or POST). If not specified, GET method is used.
      */
     method?: string;
@@ -12699,6 +12738,11 @@ export interface FetchRequest {
      * Allows to set HTTP headers.
      */
     headers?: { [key: string]: string; };
+
+    /**
+     * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+     */
+    ignoreHTTPSErrors?: boolean;
 
     /**
      * Query parameters to be send with the URL.
@@ -12737,6 +12781,11 @@ export interface FetchRequest {
      * Allows to set HTTP headers.
      */
     headers?: { [key: string]: string; };
+
+    /**
+     * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+     */
+    ignoreHTTPSErrors?: boolean;
 
     /**
      * Query parameters to be send with the URL.

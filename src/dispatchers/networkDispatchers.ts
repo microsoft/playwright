@@ -191,6 +191,7 @@ export class FetchRequestDispatcher extends Dispatcher<FetchRequest, channels.Fe
       formData: params.formData,
       timeout: params.timeout,
       failOnStatusCode: params.failOnStatusCode,
+      ignoreHTTPSErrors: params.ignoreHTTPSErrors,
     });
     let response;
     if (fetchResponse) {

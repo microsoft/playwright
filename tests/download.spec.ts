@@ -39,6 +39,12 @@ it.describe('download event', () => {
       res.write('foo');
       res.uncork();
     });
+    server.setRoute('/downloadWithCOOP', (req, res) => {
+      res.setHeader('Content-Type', 'application/octet-stream');
+      res.setHeader('Content-Disposition', 'attachment');
+      res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+      res.end(`Hello world`);
+    });
   });
 
   it('should report download when navigation turns into download', async ({ browser, server, browserName }) => {
@@ -63,6 +69,32 @@ it.describe('download event', () => {
     } else {
       expect(responseOrError.status()).toBe(200);
       expect(page.url()).toBe(server.PREFIX + '/download');
+    }
+    await page.close();
+  });
+
+  it('should work with Cross-Origin-Opener-Policy', async ({ browser, server, browserName }) => {
+    const page = await browser.newPage({ acceptDownloads: true });
+    const [ download, responseOrError ] = await Promise.all([
+      page.waitForEvent('download'),
+      page.goto(server.PREFIX + '/downloadWithCOOP').catch(e => e)
+    ]);
+    expect(download.page()).toBe(page);
+    expect(download.url()).toBe(`${server.PREFIX}/downloadWithCOOP`);
+    const path = await download.path();
+    expect(fs.existsSync(path)).toBeTruthy();
+    expect(fs.readFileSync(path).toString()).toBe('Hello world');
+    if (browserName === 'chromium') {
+      expect(responseOrError instanceof Error).toBeTruthy();
+      expect(responseOrError.message).toContain('net::ERR_ABORTED');
+      expect(page.url()).toBe('about:blank');
+    } else if (browserName === 'webkit') {
+      expect(responseOrError instanceof Error).toBeTruthy();
+      expect(responseOrError.message).toContain('Download is starting');
+      expect(page.url()).toBe('about:blank');
+    } else {
+      expect(responseOrError.status()).toBe(200);
+      expect(page.url()).toBe(server.PREFIX + '/downloadWithCOOP');
     }
     await page.close();
   });

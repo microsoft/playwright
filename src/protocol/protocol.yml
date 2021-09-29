@@ -245,6 +245,7 @@ FetchRequest:
         formData: json?
         timeout: number?
         failOnStatusCode: boolean?
+        ignoreHTTPSErrors: boolean?
       returns:
         response: FetchResponse?
         error: string?
@@ -1746,6 +1747,7 @@ Frame:
           - detached
           - visible
           - hidden
+        omitReturnValue: boolean?
       returns:
         element: ElementHandle?
       tracing:

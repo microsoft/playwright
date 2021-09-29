@@ -678,3 +678,24 @@ test('worker fixture should not receive TestInfo', async ({ runInlineTest }) => 
   });
   expect(result.exitCode).toBe(0);
 });
+
+test('worker teardown errors reflected in timed-out tests', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const test = pwt.test.extend({
+        foo: [async ({}, use) => {
+          let cb;
+          await use(new Promise((f, r) => cb = r));
+          cb(new Error('Rejecting!'));
+        }, { scope: 'worker' }]
+      });
+      test('timedout', async ({ foo }) => {
+        await foo;
+      });
+    `,
+  }, { timeout: 1000 });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Timeout of 1000ms exceeded.');
+  expect(result.output).toContain('Rejecting!');
+});

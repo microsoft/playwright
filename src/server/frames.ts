@@ -70,7 +70,7 @@ export type NavigationEvent = {
 };
 
 export type SchedulableTask<T> = (injectedScript: js.JSHandle<InjectedScript>) => Promise<js.JSHandle<InjectedScriptPoll<T>>>;
-export type DomTaskBody<T, R> = (progress: InjectedScriptProgress, element: Element, data: T, elements: Element[], continuePolling: any) => R;
+export type DomTaskBody<T, R, E> = (progress: InjectedScriptProgress, element: E, data: T, elements: Element[], continuePolling: any) => R;
 
 export class FrameManager {
   private _page: Page;
@@ -704,7 +704,7 @@ export class Frame extends SdkObject {
     return this._page.selectors.query(this, selector, options);
   }
 
-  async waitForSelector(metadata: CallMetadata, selector: string, options: types.WaitForElementOptions = {}): Promise<dom.ElementHandle<Element> | null> {
+  async waitForSelector(metadata: CallMetadata, selector: string, options: types.WaitForElementOptions & { omitReturnValue?: boolean } = {}): Promise<dom.ElementHandle<Element> | null> {
     const controller = new ProgressController(metadata, this);
     if ((options as any).visibility)
       throw new Error('options.visibility is not supported, did you mean options.state?');
@@ -714,7 +714,7 @@ export class Frame extends SdkObject {
     if (!['attached', 'detached', 'visible', 'hidden'].includes(state))
       throw new Error(`state: expected one of (attached|detached|visible|hidden)`);
     const info = this._page.parseSelector(selector, options);
-    const task = dom.waitForSelectorTask(info, state);
+    const task = dom.waitForSelectorTask(info, state, options.omitReturnValue);
     return controller.run(async progress => {
       progress.log(`waiting for selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);
       while (progress.isRunning()) {
@@ -1165,9 +1165,18 @@ export class Frame extends SdkObject {
     const controller = new ProgressController(metadata, this);
     const querySelectorAll = options.expression === 'to.have.count' || options.expression.endsWith('.array');
     const mainWorld = options.expression === 'to.have.property';
+    const omitAttached = (!options.isNot && options.expression === 'to.be.hidden') || (options.isNot && options.expression === 'to.be.visible');
+
     return await this._scheduleRerunnableTaskWithController(controller, selector, (progress, element, options, elements, continuePolling) => {
-      return progress.injectedScript.expect(progress, element, options, elements, continuePolling);
-    }, options, { strict: true, querySelectorAll, mainWorld, logScale: true, ...options }).catch(e => {
+      // We don't have an element and we don't need an element => pass.
+      if (!element && options.omitAttached)
+        return { pass: !options.isNot };
+      // We don't have an element and we DO need an element => fail.
+      if (!element)
+        return { pass: !!options.isNot };
+      // We have an element.
+      return progress.injectedScript.expect(progress, element!, options, elements, continuePolling);
+    }, { omitAttached, ...options }, { strict: true, querySelectorAll, mainWorld, omitAttached, logScale: true, ...options }).catch(e => {
       if (js.isJavaScriptErrorInEvaluate(e))
         throw e;
       return { received: controller.lastIntermediateResult(), pass: !!options.isNot, log: metadata.log };
@@ -1231,17 +1240,17 @@ export class Frame extends SdkObject {
     this._parentFrame = null;
   }
 
-  private async _scheduleRerunnableTask<T, R>(metadata: CallMetadata, selector: string, body: DomTaskBody<T, R>, taskData: T, options: types.TimeoutOptions & types.StrictOptions & { mainWorld?: boolean } = {}): Promise<R> {
+  private async _scheduleRerunnableTask<T, R>(metadata: CallMetadata, selector: string, body: DomTaskBody<T, R, Element>, taskData: T, options: types.TimeoutOptions & types.StrictOptions & { mainWorld?: boolean } = {}): Promise<R> {
     const controller = new ProgressController(metadata, this);
-    return this._scheduleRerunnableTaskWithController(controller, selector, body, taskData, options);
+    return this._scheduleRerunnableTaskWithController(controller, selector, body as DomTaskBody<T, R, Element | undefined>, taskData, options);
   }
 
   private async _scheduleRerunnableTaskWithController<T, R>(
     controller: ProgressController,
     selector: string,
-    body: DomTaskBody<T, R>,
+    body: DomTaskBody<T, R, Element | undefined>,
     taskData: T,
-    options: types.TimeoutOptions & types.StrictOptions & { mainWorld?: boolean, querySelectorAll?: boolean, logScale?: boolean } = {}): Promise<R> {
+    options: types.TimeoutOptions & types.StrictOptions & { mainWorld?: boolean, querySelectorAll?: boolean, logScale?: boolean, omitAttached?: boolean } = {}): Promise<R> {
 
     const info = this._page.parseSelector(selector, options);
     const callbackText = body.toString();
@@ -1250,8 +1259,8 @@ export class Frame extends SdkObject {
     return controller.run(async progress => {
       progress.log(`waiting for selector "${selector}"`);
       const rerunnableTask = new RerunnableTask(data, progress, injectedScript => {
-        return injectedScript.evaluateHandle((injected, { info, taskData, callbackText, querySelectorAll, logScale }) => {
-          const callback = injected.eval(callbackText) as DomTaskBody<T, R>;
+        return injectedScript.evaluateHandle((injected, { info, taskData, callbackText, querySelectorAll, logScale, omitAttached }) => {
+          const callback = injected.eval(callbackText) as DomTaskBody<T, R, Element | undefined>;
           const poller = logScale ? injected.pollLogScale.bind(injected) : injected.pollRaf.bind(injected);
           return poller((progress, continuePolling) => {
             if (querySelectorAll) {
@@ -1261,12 +1270,13 @@ export class Frame extends SdkObject {
             }
 
             const element = injected.querySelector(info.parsed, document, info.strict);
-            if (!element)
+            if (!element && !omitAttached)
               return continuePolling;
-            progress.logRepeating(`  selector resolved to ${injected.previewNode(element)}`);
+            if (element)
+              progress.logRepeating(`  selector resolved to ${injected.previewNode(element)}`);
             return callback(progress, element, taskData as T, [], continuePolling);
           });
-        }, { info, taskData, callbackText, querySelectorAll: options.querySelectorAll, logScale: options.logScale });
+        }, { info, taskData, callbackText, querySelectorAll: options.querySelectorAll, logScale: options.logScale, omitAttached: options.omitAttached });
       }, true);
 
       if (this._detached)
