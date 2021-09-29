@@ -115,12 +115,7 @@ export class BaseReporter implements Reporter  {
     return fileDurations.filter(([,duration]) => duration > threshold).slice(0, count);
   }
 
-  protected generateSummaryMessage({
-    skipped,
-    expected,
-    unexpected,
-    flaky
-  }: TestSummary) {
+  protected generateSummaryMessage({ skipped, expected, unexpected, flaky }: TestSummary) {
     const tokens: string[] = [];
     tokens.push('');
     if (unexpected.length) {
