@@ -48,7 +48,7 @@ type LaunchResult = {
   kill: () => Promise<void>,
 };
 
-const gracefullyCloseSet = new Set<() => Promise<void>>();
+export const gracefullyCloseSet = new Set<() => Promise<void>>();
 
 export async function gracefullyCloseAll() {
   await Promise.all(Array.from(gracefullyCloseSet).map(gracefullyClose => gracefullyClose().catch(e => {})));
