@@ -23,8 +23,9 @@ import zlib from 'zlib';
 import { HTTPCredentials } from '../../types/types';
 import { NameValue, NewRequestOptions } from '../common/types';
 import { TimeoutSettings } from '../utils/timeoutSettings';
-import { createGuid, getPlaywrightVersion, isFilePayload, monotonicTime } from '../utils/utils';
+import { assert, createGuid, getPlaywrightVersion, isFilePayload, monotonicTime } from '../utils/utils';
 import { BrowserContext } from './browserContext';
+import { CookieStore } from './cookieStore';
 import { MultipartFormData } from './formData';
 import { SdkObject } from './instrumentation';
 import { Playwright } from './playwright';
@@ -73,8 +74,8 @@ export abstract class FetchRequest extends SdkObject {
   abstract dispose(): void;
 
   abstract _defaultOptions(): FetchRequestOptions;
-  abstract _addCookies(cookies: types.SetNetworkCookieParam[]): Promise<void>;
-  abstract _cookies(url: string): Promise<types.NetworkCookie[]>;
+  abstract _addCookies(cookies: types.NetworkCookie[]): Promise<void>;
+  abstract _cookies(url: URL): Promise<types.NetworkCookie[]>;
 
   private _storeResponseBody(body: Buffer): string {
     const uid = createGuid();
@@ -155,14 +156,17 @@ export abstract class FetchRequest extends SdkObject {
     const url = new URL(responseUrl);
     // https://datatracker.ietf.org/doc/html/rfc6265#section-5.1.4
     const defaultPath = '/' + url.pathname.substr(1).split('/').slice(0, -1).join('/');
-    const cookies: types.SetNetworkCookieParam[] = [];
+    const cookies: types.NetworkCookie[] = [];
     for (const header of setCookie) {
       // Decode cookie value?
-      const cookie: types.SetNetworkCookieParam | null = parseCookie(header);
+      const cookie: types.NetworkCookie | null = parseCookie(header);
       if (!cookie)
         continue;
+      // https://datatracker.ietf.org/doc/html/rfc6265#section-5.2.3
       if (!cookie.domain)
         cookie.domain = url.hostname;
+      else
+        assert(cookie.domain.startsWith('.'));
       if (!canSetCookie(cookie.domain!, url.hostname))
         continue;
       // https://datatracker.ietf.org/doc/html/rfc6265#section-5.2.4
@@ -177,7 +181,7 @@ export abstract class FetchRequest extends SdkObject {
   private async _updateRequestCookieHeader(url: URL, options: http.RequestOptions) {
     if (options.headers!['cookie'] !== undefined)
       return;
-    const cookies = await this._cookies(url.toString());
+    const cookies = await this._cookies(url);
     if (cookies.length) {
       const valueArray = cookies.map(c => `${c.name}=${c.value}`);
       options.headers!['cookie'] = valueArray.join('; ');
@@ -326,17 +330,18 @@ export class BrowserContextFetchRequest extends FetchRequest {
     };
   }
 
-  async _addCookies(cookies: types.SetNetworkCookieParam[]): Promise<void> {
+  async _addCookies(cookies: types.NetworkCookie[]): Promise<void> {
     await this._context.addCookies(cookies);
   }
 
-  async _cookies(url: string): Promise<types.NetworkCookie[]> {
-    return await this._context.cookies(url);
+  async _cookies(url: URL): Promise<types.NetworkCookie[]> {
+    return await this._context.cookies(url.toString());
   }
 }
 
 
 export class GlobalFetchRequest extends FetchRequest {
+  private readonly _cookieStore: CookieStore = new CookieStore();
   private readonly _options: FetchRequestOptions;
   constructor(playwright: Playwright, options: Omit<NewRequestOptions, 'extraHTTPHeaders'> & { extraHTTPHeaders?: NameValue[] }) {
     super(playwright);
@@ -370,11 +375,12 @@ export class GlobalFetchRequest extends FetchRequest {
     return this._options;
   }
 
-  async _addCookies(cookies: types.SetNetworkCookieParam[]): Promise<void> {
+  async _addCookies(cookies: types.NetworkCookie[]): Promise<void> {
+    this._cookieStore.addCookies(cookies);
   }
 
-  async _cookies(url: string): Promise<types.NetworkCookie[]> {
-    return [];
+  async _cookies(url: URL): Promise<types.NetworkCookie[]> {
+    return this._cookieStore.cookies(url);
   }
 }
 
@@ -388,14 +394,16 @@ function toHeadersArray(rawHeaders: string[]): types.HeadersArray {
 const redirectStatus = [301, 302, 303, 307, 308];
 
 function canSetCookie(cookieDomain: string, hostname: string) {
-  // TODO: check public suffix list?
-  hostname = '.' + hostname;
+  if (cookieDomain === hostname)
+    return true;
+  // Only exact match is allowed in this case (host-only-flag is true in the spec terms).
   if (!cookieDomain.startsWith('.'))
-    cookieDomain = '.' + cookieDomain;
+    return false;
+  hostname = '.' + hostname;
   return hostname.endsWith(cookieDomain);
 }
 
-function parseCookie(header: string) {
+function parseCookie(header: string): types.NetworkCookie | null {
   const pairs = header.split(';').filter(s => s.trim().length > 0).map(p => p.split('=').map(s => s.trim()));
   if (!pairs.length)
     return null;
@@ -425,6 +433,8 @@ function parseCookie(header: string) {
         break;
       case 'domain':
         cookie.domain = value || '';
+        if (cookie.domain && !cookie.domain.startsWith('.'))
+          cookie.domain = '.' + cookie.domain;
         break;
       case 'path':
         cookie.path = value || '';
