@@ -69,7 +69,6 @@ it('should work with cross-process that fails before committing', async ({ page,
 });
 
 it('should work with Cross-Origin-Opener-Policy', async ({ page, server, browserName }) => {
-  it.fail(browserName === 'webkit', 'https://github.com/microsoft/playwright/issues/8796');
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
     res.end();
@@ -101,7 +100,6 @@ it('should work with Cross-Origin-Opener-Policy', async ({ page, server, browser
 });
 
 it('should work with Cross-Origin-Opener-Policy after redirect', async ({ page, server, browserName }) => {
-  it.fail(browserName === 'webkit', 'https://github.com/microsoft/playwright/issues/8796');
   server.setRedirect('/redirect', '/empty.html');
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
