@@ -364,7 +364,7 @@ test('test', async ({ page }) => {
 
 ## Projects
 
-Playwright Test supports running multiple test projects at the same time. This is useful for running the same tests in multiple configurations. For example, consider running tests against multiple versions of some REST backend.
+Playwright Test supports running multiple test projects at the same time. This is useful for running the same tests in multiple configurations. For example, consider running tests against multiple versions of some REST backend, or against different [emulated devices](./test-configuration.md#emulation).
 
 To make use of this feature, we will declare an "option fixture" for the backend version, and use it in the tests.
 
