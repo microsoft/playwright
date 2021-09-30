@@ -401,5 +401,5 @@ it('should not block third party SameSite=None cookies', async ({ contextFactory
   });
 
   await page.goto(httpsServer.EMPTY_PAGE);
-  expect(await cookie).toBe('a=b')
+  expect(await cookie).toBe('a=b');
 });
