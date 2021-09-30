@@ -283,7 +283,7 @@ Returns a path to a snapshot file with the given `pathSegments`. Learn more abou
 > However, this path must stay within the snapshots directory for each test file (i.e. `a.spec.js-snapshots`), otherwise it will throw.
 
 ### param: TestInfo.snapshotPath.pathSegments
-- `pathSegments` <[string...]>
+- `pathSegments` <[Array]<[string]>>
 
 The name of the snapshot or the path segments to define the snapshot file path. Snapshots with the same name in the same test file are expected to be the same.
 

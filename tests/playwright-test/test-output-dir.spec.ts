@@ -161,13 +161,13 @@ test('should include the project name', async ({ runInlineTest }) => {
       const { test, test2 } = require('./helper');
       test('test 1', async ({}, testInfo) => {
         console.log(testInfo.outputPath('bar.txt').replace(/\\\\/g, '/'));
-        console.log(testInfo.snapshotPath('bar.txt').replace(/\\\\/g, '/'));
+        console.log(testInfo.snapshotPath(['bar.txt']).replace(/\\\\/g, '/'));
         if (testInfo.retry !== 1)
           throw new Error('Give me a retry');
       });
       test2('test 2', async ({}, testInfo) => {
         console.log(testInfo.outputPath('bar.txt').replace(/\\\\/g, '/'));
-        console.log(testInfo.snapshotPath('bar.txt').replace(/\\\\/g, '/'));
+        console.log(testInfo.snapshotPath(['bar.txt']).replace(/\\\\/g, '/'));
       });
     `,
   }, { retries: 1 });
@@ -227,27 +227,48 @@ test('should include path option in snapshot', async ({ runInlineTest }) => {
       });
     `,
     'playwright.config.ts': `
-      module.exports = { projects: [
-        { name: 'foo' },
-      ] };
+    module.exports = { projects: [
+      { name: 'foo' },
+    ] };
     `,
     'my-test.spec.js': `
       const { test } = require('./helper');
       test('test with path', async ({}, testInfo) => {
-        console.log(testInfo.snapshotPath('test/path/bar.txt').replace(/\\\\/g, '/'));
-      });
-      test('test with parent path', async ({}, testInfo) => {
-        console.log(testInfo.snapshotPath('../test/path/bar.txt').replace(/\\\\/g, '/'));
+        console.log(testInfo.snapshotPath(['test', 'path', 'bar.txt']).replace(/\\\\/g, '/'));
       });
     `,
   });
 
   expect(result.exitCode).toBe(0);
   expect(result.results[0].status).toBe('passed');
-  expect(result.results[1].status).toBe('passed'); // reverts to base snapshot path
-
   expect(result.output).toContain('my-test.spec.js-snapshots/test/path/bar-foo-suffix.txt');
-  expect(result.output).toContain('my-test.spec.js-snapshots/bar-foo-suffix.txt');
+});
+
+test('should error if path is resolved to outside of parent', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'helper.ts': `
+      export const test = pwt.test.extend({
+        auto: [ async ({}, run, testInfo) => {
+          testInfo.snapshotSuffix = 'suffix';
+          await run();
+        }, { auto: true } ]
+      });
+    `,
+    'playwright.config.ts': `
+      module.exports = { projects: [
+        { name: 'foo' },
+      ] };
+    `,
+    'my-test.spec.js': `
+      const { test } = require('./helper');
+      test('test with parent path', async ({}, testInfo) => {
+        console.log(testInfo.snapshotPath(['..', 'test', 'path', 'bar.txt']).replace(/\\\\/g, '/'));
+      });
+    `,
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.results[0].status).toBe('failed');
 });
 
 test('should remove output dirs for projects run', async ({ runInlineTest }, testInfo) => {

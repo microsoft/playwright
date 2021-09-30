@@ -17,7 +17,7 @@
 import type { Expect } from '../types';
 import { currentTestInfo } from '../globals';
 import { compare } from './golden';
-import { addSuffix } from '../util';
+import { addSuffixToFilePath } from '../util';
 
 // from expect/build/types
 type SyncExpectationResult = {
@@ -42,7 +42,8 @@ export function toMatchSnapshot(this: ReturnType<Expect['getState']>, received: 
   if (options.threshold === undefined && projectThreshold !== undefined)
     options.threshold = projectThreshold;
 
-  const pathSegments = Array.isArray(options.name) ? options.name : [addSuffix(options.name, '', undefined, true)];
+  // sanitizes path if string
+  const pathSegments = Array.isArray(options.name) ? options.name : [addSuffixToFilePath(options.name, '', undefined, true)];
   const withNegateComparison = this.isNot;
   const { pass, message, expectedPath, actualPath, diffPath, mimeType } = compare(
       received,

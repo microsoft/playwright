@@ -458,9 +458,10 @@ test('should respect project threshold', async ({ runInlineTest }) => {
 
 test('should sanitize snapshot name when passed as string', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'a.spec.js-snapshots/-snapshot--darwin.txt': `Hello world`,
+    ...files,
+    'a.spec.js-snapshots/-snapshot-.txt': `Hello world`,
     'a.spec.js': `
-      const { test } = pwt;
+      const { test } = require('./helper');;
       test('is a test', ({}) => {
         expect('Hello world').toMatchSnapshot('../../snapshot!.txt');
       });
@@ -517,7 +518,7 @@ test('should update snapshot with array of path segments', async ({ runInlineTes
   expect(data.toString()).toBe('Hello world');
 });
 
-test.only('should attach expected/actual/diff with snapshot path', async ({ runInlineTest }, testInfo) => {
+test('should attach expected/actual/diff with snapshot path', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js-snapshots/test/path/snapshot.png':

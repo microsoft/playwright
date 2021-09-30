@@ -144,7 +144,7 @@ export function sanitizeForFilePath(s: string) {
   return s.replace(/[\x00-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F]+/g, '-');
 }
 
-export function addSuffix(filePath: string, suffix: string, customExtension?: string, sanitize = false): string {
+export function addSuffixToFilePath(filePath: string, suffix: string, customExtension?: string, sanitize = false): string {
   const dirname = path.dirname(filePath);
   const ext = path.extname(filePath);
   const name = path.basename(filePath, ext);

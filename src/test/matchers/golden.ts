@@ -23,7 +23,7 @@ import jpeg from 'jpeg-js';
 import pixelmatch from 'pixelmatch';
 import { diff_match_patch, DIFF_INSERT, DIFF_DELETE, DIFF_EQUAL } from '../../third_party/diff_match_patch';
 import { TestInfoImpl, UpdateSnapshots } from '../types';
-import { addSuffix } from '../util';
+import { addSuffixToFilePath } from '../util';
 
 // Note: we require the pngjs version of pixelmatch to avoid version mismatches.
 const { PNG } = require(require.resolve('pngjs', { paths: [require.resolve('pixelmatch')] }));
@@ -90,11 +90,11 @@ export function compare(
   withNegateComparison: boolean,
   options?: { threshold?: number }
 ): { pass: boolean; message?: string; expectedPath?: string, actualPath?: string, diffPath?: string, mimeType?: string } {
-  const snapshotFile = snapshotPath(...pathSegments);
+  const snapshotFile = snapshotPath(pathSegments);
   const outputFile = outputPath(...pathSegments);
-  const expectedPath = addSuffix(outputFile, '-expected');
-  const actualPath = addSuffix(outputFile, '-actual');
-  const diffPath = addSuffix(outputFile, '-diff');
+  const expectedPath = addSuffixToFilePath(outputFile, '-expected');
+  const actualPath = addSuffixToFilePath(outputFile, '-actual');
+  const diffPath = addSuffixToFilePath(outputFile, '-diff');
 
   if (!fs.existsSync(snapshotFile)) {
     const isWriteMissingMode = updateSnapshots === 'all' || updateSnapshots === 'missing';
