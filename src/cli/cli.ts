@@ -21,7 +21,7 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import program from 'commander';
+import { program, Command } from 'commander';
 import { runDriver, runServer, printApiJson, launchBrowserServer } from './driver';
 import { showTraceViewer } from '../server/trace/viewer/traceViewer';
 import * as playwright from '../..';
@@ -42,48 +42,41 @@ program
     .name(process.env.PW_CLI_NAME || 'npx playwright');
 
 commandWithOpenOptions('open [url]', 'open page in browser specified via -b, --browser', [])
-    .action(function(url, command) {
-      open(command, url, language()).catch(logErrorAndExit);
+    .action(function(url, options) {
+      open(options, url, language()).catch(logErrorAndExit);
     })
-    .on('--help', function() {
-      console.log('');
-      console.log('Examples:');
-      console.log('');
-      console.log('  $ open');
-      console.log('  $ open -b webkit https://example.com');
-    });
+    .addHelpText('afterAll', `
+Examples:
+
+  $ open  $ open -b webkit https://example.com`);
 
 commandWithOpenOptions('codegen [url]', 'open page and generate code for user actions',
     [
       ['-o, --output <file name>', 'saves the generated script to a file'],
       ['--target <language>', `language to generate, one of javascript, test, python, python-async, csharp`, language()],
-    ]).action(function(url, command) {
-  codegen(command, url, command.target, command.output).catch(logErrorAndExit);
-}).on('--help', function() {
-  console.log('');
-  console.log('Examples:');
-  console.log('');
-  console.log('  $ codegen');
-  console.log('  $ codegen --target=python');
-  console.log('  $ codegen -b webkit https://example.com');
-});
+    ]).action(function(url, options) {
+  codegen(options, url, options.target, options.output).catch(logErrorAndExit);
+}).addHelpText('afterAll', `
+Examples:
+
+  $ codegen
+  $ codegen --target=python
+  $ codegen -b webkit https://example.com`);
 
 program
     .command('debug <app> [args...]', { hidden: true })
     .description('run command in debug mode: disable timeout, open inspector')
     .allowUnknownOption(true)
-    .action(function(app, args) {
-      spawn(app, args, {
+    .action(function(app, options) {
+      spawn(app, options, {
         env: { ...process.env, PWDEBUG: '1' },
         stdio: 'inherit'
       });
-    }).on('--help', function() {
-      console.log('');
-      console.log('Examples:');
-      console.log('');
-      console.log('  $ debug node test.js');
-      console.log('  $ debug npm run test');
-    });
+    }).addHelpText('afterAll', `
+Examples:
+
+  $ debug node test.js
+  $ debug npm run test`);
 
 function suggestedBrowsersToInstall() {
   return registry.executables().filter(e => e.installType !== 'none' && e.type !== 'tool').map(e => e.name).join(', ');
@@ -110,16 +103,16 @@ program
     .command('install [browser...]')
     .description('ensure browsers necessary for this version of Playwright are installed')
     .option('--with-deps', 'install system dependencies for browsers')
-    .action(async function(args: string[], command: program.Command) {
+    .action(async function(args: string[], options: { withDeps?: boolean }) {
       try {
         if (!args.length) {
           const executables = registry.defaultExecutables();
-          if (command.opts().withDeps)
+          if (options.withDeps)
             await registry.installDeps(executables);
           await registry.install(executables);
         } else {
           const executables = checkBrowsersToInstall(args);
-          if (command.opts().withDeps)
+          if (options.withDeps)
             await registry.installDeps(executables);
           await registry.install(executables);
         }
@@ -127,15 +120,14 @@ program
         console.log(`Failed to install browsers\n${e}`);
         process.exit(1);
       }
-    }).on('--help', function() {
-      console.log(``);
-      console.log(`Examples:`);
-      console.log(`  - $ install`);
-      console.log(`    Install default browsers.`);
-      console.log(``);
-      console.log(`  - $ install chrome firefox`);
-      console.log(`    Install custom browsers, supports ${suggestedBrowsersToInstall()}.`);
-    });
+    }).addHelpText('afterAll', `
+
+Examples:
+  - $ install
+    Install default browsers.
+
+  - $ install chrome firefox
+    Install custom browsers, supports ${suggestedBrowsersToInstall()}.`);
 
 
 program
@@ -151,15 +143,13 @@ program
         console.log(`Failed to install browser dependencies\n${e}`);
         process.exit(1);
       }
-    }).on('--help', function() {
-      console.log(``);
-      console.log(`Examples:`);
-      console.log(`  - $ install-deps`);
-      console.log(`    Install dependencies for default browsers.`);
-      console.log(``);
-      console.log(`  - $ install-deps chrome firefox`);
-      console.log(`    Install dependencies for specific browsers, supports ${suggestedBrowsersToInstall()}.`);
-    });
+    }).addHelpText('afterAll', `
+Examples:
+  - $ install-deps
+    Install dependencies for default browsers.
+
+  - $ install-deps chrome firefox
+    Install dependencies for specific browsers, supports ${suggestedBrowsersToInstall()}.`);
 
 const browsers = [
   { alias: 'cr', name: 'Chromium', type: 'chromium' },
@@ -169,14 +159,12 @@ const browsers = [
 
 for (const { alias, name, type } of browsers) {
   commandWithOpenOptions(`${alias} [url]`, `open page in ${name}`, [])
-      .action(function(url, command) {
-        open({ ...command, browser: type }, url, command.target).catch(logErrorAndExit);
-      }).on('--help', function() {
-        console.log('');
-        console.log('Examples:');
-        console.log('');
-        console.log(`  $ ${alias} https://example.com`);
-      });
+      .action(function(url, options) {
+        open({ ...options, browser: type }, url, options.target).catch(logErrorAndExit);
+      }).addHelpText('afterAll', `
+Examples:
+
+  $ ${alias} https://example.com`);
 }
 
 commandWithOpenOptions('screenshot <url> <filename>', 'capture a page screenshot',
@@ -186,25 +174,21 @@ commandWithOpenOptions('screenshot <url> <filename>', 'capture a page screenshot
       ['--full-page', 'whether to take a full page screenshot (entire scrollable area)'],
     ]).action(function(url, filename, command) {
   screenshot(command, command, url, filename).catch(logErrorAndExit);
-}).on('--help', function() {
-  console.log('');
-  console.log('Examples:');
-  console.log('');
-  console.log('  $ screenshot -b webkit https://example.com example.png');
-});
+}).addHelpText('afterAll', `
+Examples:
+
+  $ screenshot -b webkit https://example.com example.png`);
 
 commandWithOpenOptions('pdf <url> <filename>', 'save page as pdf',
     [
       ['--wait-for-selector <selector>', 'wait for given selector before saving as pdf'],
       ['--wait-for-timeout <timeout>', 'wait for given timeout in milliseconds before saving as pdf'],
-    ]).action(function(url, filename, command) {
-  pdf(command, command, url, filename).catch(logErrorAndExit);
-}).on('--help', function() {
-  console.log('');
-  console.log('Examples:');
-  console.log('');
-  console.log('  $ pdf https://example.com example.pdf');
-});
+    ]).action(function(url, filename, options) {
+  pdf(options, options, url, filename).catch(logErrorAndExit);
+}).addHelpText('afterAll', `
+Examples:
+
+  $ pdf https://example.com example.pdf`);
 
 program
     .command('experimental-grid-server', { hidden: true })
@@ -227,20 +211,18 @@ program
     .command('show-trace [trace]')
     .option('-b, --browser <browserType>', 'browser to use, one of cr, chromium, ff, firefox, wk, webkit', 'chromium')
     .description('Show trace viewer')
-    .action(function(trace, command) {
-      if (command.browser === 'cr')
-        command.browser = 'chromium';
-      if (command.browser === 'ff')
-        command.browser = 'firefox';
-      if (command.browser === 'wk')
-        command.browser = 'webkit';
-      showTraceViewer(trace, command.browser).catch(logErrorAndExit);
-    }).on('--help', function() {
-      console.log('');
-      console.log('Examples:');
-      console.log('');
-      console.log('  $ show-trace trace/directory');
-    });
+    .action(function(trace, options) {
+      if (options.browser === 'cr')
+        options.browser = 'chromium';
+      if (options.browser === 'ff')
+        options.browser = 'firefox';
+      if (options.browser === 'wk')
+        options.browser = 'webkit';
+      showTraceViewer(trace, options.browser).catch(logErrorAndExit);
+    }).addHelpText('afterAll', `
+Examples:
+
+  $ show-trace trace/directory`);
 
 if (!process.env.PW_CLI_TARGET_LANG) {
   let playwrightTestPackagePath = null;
@@ -260,7 +242,7 @@ if (!process.env.PW_CLI_TARGET_LANG) {
   } else {
     const command = program.command('test').allowUnknownOption(true);
     command.description('Run tests with Playwright Test. Available in @playwright/test package.');
-    command.action(async (args, opts) => {
+    command.action(async () => {
       console.error('Please install @playwright/test package to use Playwright Test.');
       console.error('  npm install -D @playwright/test');
       process.exit(1);
@@ -560,7 +542,7 @@ function language(): string {
   return process.env.PW_CLI_TARGET_LANG || 'test';
 }
 
-function commandWithOpenOptions(command: string, description: string, options: any[][]): program.Command {
+function commandWithOpenOptions(command: string, description: string, options: any[][]): Command {
   let result = program.command(command).description(description);
   for (const option of options)
     result = result.option(option[0], ...option.slice(1));
