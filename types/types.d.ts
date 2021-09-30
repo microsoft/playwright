@@ -18,6 +18,7 @@ import { Protocol } from './protocol';
 import { ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
 import { Readable } from 'stream';
+import { ReadStream } from 'fs';
 import { Serializable, EvaluationArgument, PageFunction, PageFunctionOn, SmartHandle, ElementHandleForTag, BindingSource } from './structs';
 
 type PageWaitForSelectorOptionsNotHidden = PageWaitForSelectorOptions & {
@@ -12682,12 +12683,9 @@ export interface FetchRequest {
    */
   fetch(urlOrRequest: string|Request, options?: {
     /**
-     * Allows to set post data of the fetch. If the data parameter is an object, it will be serialized the following way:
-     * - If `content-type` header is set to `application/x-www-form-urlencoded` the object will be serialized as html form
-     *   using `application/x-www-form-urlencoded` encoding.
-     * - If `content-type` header is set to `multipart/form-data` the object will be serialized as html form using
-     *   `multipart/form-data` encoding.
-     * - Otherwise the object will be serialized to json string and `content-type` header will be set to `application/json`.
+     * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string to json
+     * string and `content-type` header will be set to `application/json` if not explicitely set. Otherwise the `content-type`
+     * header will be set to `application/octet-stream` if not explicitely set.
      */
     data?: string|Buffer|Serializable;
 
@@ -12695,6 +12693,13 @@ export interface FetchRequest {
      * Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status codes.
      */
     failOnStatusCode?: boolean;
+
+    /**
+     * Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent as
+     * this request body. If this parameter is specified `content-type` header will be set to
+     * `application/x-www-form-urlencoded` unless explicitely provided.
+     */
+    form?: { [key: string]: string|number|boolean; };
 
     /**
      * Allows to set HTTP headers.
@@ -12710,6 +12715,28 @@ export interface FetchRequest {
      * If set changes the fetch method (e.g. PUT or POST). If not specified, GET method is used.
      */
     method?: string;
+
+    /**
+     * Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this request
+     * body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless explicitely
+     * provided.
+     */
+    multipart?: { [key: string]: string|number|boolean|ReadStream|{
+      /**
+       * File name
+       */
+      name: string;
+
+      /**
+       * File type
+       */
+      mimeType: string;
+
+      /**
+       * File content
+       */
+      buffer: Buffer;
+    }; };
 
     /**
      * Query parameters to be send with the URL.
@@ -12763,12 +12790,9 @@ export interface FetchRequest {
    */
   post(urlOrRequest: string|Request, options?: {
     /**
-     * Allows to set post data of the fetch. If the data parameter is an object, it will be serialized the following way:
-     * - If `content-type` header is set to `application/x-www-form-urlencoded` the object will be serialized as html form
-     *   using `application/x-www-form-urlencoded` encoding.
-     * - If `content-type` header is set to `multipart/form-data` the object will be serialized as html form using
-     *   `multipart/form-data` encoding.
-     * - Otherwise the object will be serialized to json string and `content-type` header will be set to `application/json`.
+     * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string to json
+     * string and `content-type` header will be set to `application/json` if not explicitely set. Otherwise the `content-type`
+     * header will be set to `application/octet-stream` if not explicitely set.
      */
     data?: string|Buffer|Serializable;
 
@@ -12776,6 +12800,13 @@ export interface FetchRequest {
      * Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status codes.
      */
     failOnStatusCode?: boolean;
+
+    /**
+     * Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent as
+     * this request body. If this parameter is specified `content-type` header will be set to
+     * `application/x-www-form-urlencoded` unless explicitely provided.
+     */
+    form?: { [key: string]: string|number|boolean; };
 
     /**
      * Allows to set HTTP headers.
@@ -12786,6 +12817,28 @@ export interface FetchRequest {
      * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
      */
     ignoreHTTPSErrors?: boolean;
+
+    /**
+     * Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this request
+     * body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless explicitely
+     * provided.
+     */
+    multipart?: { [key: string]: string|number|boolean|ReadStream|{
+      /**
+       * File name
+       */
+      name: string;
+
+      /**
+       * File type
+       */
+      mimeType: string;
+
+      /**
+       * File content
+       */
+      buffer: Buffer;
+    }; };
 
     /**
      * Query parameters to be send with the URL.

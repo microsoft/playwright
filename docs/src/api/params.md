@@ -298,6 +298,31 @@ Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Us
 Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the
 [`option: viewport`] is set.
 
+## fetch-option-form
+- `form` <[Object]<[string], [string]|[float]|[boolean]>>
+
+Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent as
+this request body. If this parameter is specified `content-type` header will be set to `application/x-www-form-urlencoded`
+unless explicitely provided.
+
+## fetch-option-multipart
+- `multipart` <[Object]<[string], [string]|[float]|[boolean]|[ReadStream]|[Object]>>
+  - `name` <[string]> File name
+  - `mimeType` <[string]> File type
+  - `buffer` <[Buffer]> File content
+
+Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as
+this request body. If this parameter is specified `content-type` header will be set to `multipart/form-data`
+unless explicitely provided.
+
+## fetch-option-data
+- `data` <[string]|[Buffer]|[Serializable]>
+
+Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string to json string
+and `content-type` header will be set to `application/json` if not explicitely set. Otherwise the `content-type` header will be
+set to `application/octet-stream` if not explicitely set.
+
+
 ## evaluate-expression
 - `expression` <[string]>
 

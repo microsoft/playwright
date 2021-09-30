@@ -726,10 +726,7 @@ it('should support application/x-www-form-urlencoded', async function({ context,
   const [req] = await Promise.all([
     server.waitForRequest('/empty.html'),
     context._request.post(server.EMPTY_PAGE, {
-      headers: {
-        'content-type': 'application/x-www-form-urlencoded'
-      },
-      data: {
+      form: {
         firstName: 'John',
         lastName: 'Doe',
         file: 'f.js',
@@ -784,10 +781,7 @@ it('should support multipart/form-data', async function({ context, page, server 
   const [{ error, fields, files, serverRequest }, response] = await Promise.all([
     formReceived,
     context._request.post(server.EMPTY_PAGE, {
-      headers: {
-        'content-type': 'multipart/form-data'
-      },
-      data: {
+      multipart: {
         firstName: 'John',
         lastName: 'Doe',
         file
@@ -819,10 +813,7 @@ it('should support multipart/form-data with ReadSream values', async function({ 
   const [{ error, fields, files, serverRequest }, response] = await Promise.all([
     formReceived,
     context._request.post(server.EMPTY_PAGE, {
-      headers: {
-        'content-type': 'multipart/form-data'
-      },
-      data: {
+      multipart: {
         firstName: 'John',
         lastName: 'Doe',
         readStream
@@ -841,17 +832,24 @@ it('should support multipart/form-data with ReadSream values', async function({ 
   expect(response.status()).toBe(200);
 });
 
-it('should throw nice error on unsupported encoding', async function({ context, server }) {
-  const error = await context._request.post(server.EMPTY_PAGE, {
-    headers: {
-      'content-type': 'unknown'
-    },
-    data: {
-      firstName: 'John',
-      lastName: 'Doe',
-    }
-  }).catch(e => e);
-  expect(error.message).toContain('Cannot serialize data using content type: unknown');
+it('should serialize data to json regardless of content-type', async function({ context, server }) {
+  const data = {
+    firstName: 'John',
+    lastName: 'Doe',
+  };
+  const [req] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    context._request.post(server.EMPTY_PAGE, {
+      headers: {
+        'content-type': 'unknown'
+      },
+      data
+    }),
+  ]);
+  expect(req.method).toBe('POST');
+  expect(req.headers['content-type']).toBe('unknown');
+  const body = (await req.postBody).toString('utf8');
+  expect(body).toEqual(JSON.stringify(data));
 });
 
 it('should throw nice error on unsupported data type', async function({ context, server }) {
@@ -867,9 +865,6 @@ it('should throw nice error on unsupported data type', async function({ context,
 it('should throw when data passed for unsupported request', async function({ context, server }) {
   const error = await context._request.fetch(server.EMPTY_PAGE, {
     method: 'GET',
-    headers: {
-      'content-type': 'application/json'
-    },
     data: {
       foo: 'bar'
     }

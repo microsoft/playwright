@@ -242,7 +242,9 @@ FetchRequest:
           type: array?
           items: NameValue
         postData: binary?
+        jsonData: json?
         formData: json?
+        multipartData: json?
         timeout: number?
         failOnStatusCode: boolean?
         ignoreHTTPSErrors: boolean?
