@@ -90,7 +90,7 @@ export function compare(
   withNegateComparison: boolean,
   options?: { threshold?: number }
 ): { pass: boolean; message?: string; expectedPath?: string, actualPath?: string, diffPath?: string, mimeType?: string } {
-  const snapshotFile = snapshotPath(pathSegments);
+  const snapshotFile = snapshotPath(...pathSegments);
   const outputFile = outputPath(...pathSegments);
   const expectedPath = addSuffixToFilePath(outputFile, '-expected');
   const actualPath = addSuffixToFilePath(outputFile, '-actual');

@@ -258,10 +258,10 @@ export class WorkerRunner extends EventEmitter {
         const joinedPath = path.join(...pathSegments);
         const outputPath = getContainedPath(baseOutputDir, joinedPath);
         if (outputPath) return outputPath;
-        throw new Error(`The outputPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\toutputPath: ${outputPath}`);
+        throw new Error(`The outputPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\toutputPath: ${joinedPath}`);
 
       },
-      snapshotPath: (pathSegments: string[]): string => {
+      snapshotPath: (...pathSegments: string[]): string => {
         let suffix = '';
         if (this._projectNamePathSegment)
           suffix += '-' + this._projectNamePathSegment;
@@ -273,7 +273,7 @@ export class WorkerRunner extends EventEmitter {
         const snapshotPath =  getContainedPath(baseSnapshotPath, subPath);
 
         if (snapshotPath) return snapshotPath;
-        throw new Error(`The snapshotPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\snapshotPath: ${snapshotPath}`);
+        throw new Error(`The snapshotPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\tsnapshotPath: ${subPath}`);
       },
       skip: (...args: [arg?: any, description?: string]) => modifier(testInfo, 'skip', args),
       fixme: (...args: [arg?: any, description?: string]) => modifier(testInfo, 'fixme', args),

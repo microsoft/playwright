@@ -193,7 +193,7 @@ test('example test', async ({}, testInfo) => {
 });
 ```
 
-> Note that `pathSegments` accepts an array of path segments to the test output directory such as `testInfo.outputPath('relative', 'path', 'to', 'output')`.
+> Note that `pathSegments` accepts path segments to the test output directory such as `testInfo.outputPath('relative', 'path', 'to', 'output')`.
 > However, this path must stay within the [`property: TestInfo.outputDir`] directory for each test (i.e. `test-results/a-test-title`), otherwise it will throw.
 
 ### param: TestInfo.outputPath.pathSegments
@@ -279,11 +279,11 @@ Optional description that will be reflected in a test report.
 
 Returns a path to a snapshot file with the given `pathSegments`. Learn more about [snapshots](./test-snapshots.md).
 
-> Note that `pathSegments` accepts an array of path segments to the snapshot file such as `testInfo.snapshotPath('relative', 'path', 'to', 'snapshot.png')`.
+> Note that `pathSegments` accepts path segments to the snapshot file such as `testInfo.snapshotPath('relative', 'path', 'to', 'snapshot.png')`.
 > However, this path must stay within the snapshots directory for each test file (i.e. `a.spec.js-snapshots`), otherwise it will throw.
 
 ### param: TestInfo.snapshotPath.pathSegments
-- `pathSegments` <[Array]<[string]>>
+- `pathSegments` <[string...]>
 
 The name of the snapshot or the path segments to define the snapshot file path. Snapshots with the same name in the same test file are expected to be the same.
 

@@ -472,8 +472,9 @@ test('should sanitize snapshot name when passed as string', async ({ runInlineTe
 
 test('should write missing expectations with sanitized snapshot name', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
+    ...files,
     'a.spec.js': `
-      const { test } = pwt;
+      const { test } = require('./helper');;
       test('is a test', ({}) => {
         expect('Hello world').toMatchSnapshot('../../snapshot!.txt');
       });
@@ -481,7 +482,7 @@ test('should write missing expectations with sanitized snapshot name', async ({ 
   }, {}, { CI: '' });
 
   expect(result.exitCode).toBe(1);
-  const snapshotOutputPath = testInfo.outputPath('a.spec.js-snapshots/-snapshot--darwin.txt');
+  const snapshotOutputPath = testInfo.outputPath('a.spec.js-snapshots/-snapshot-.txt');
   expect(result.output).toContain(`${snapshotOutputPath} is missing in snapshots, writing actual`);
   const data = fs.readFileSync(snapshotOutputPath);
   expect(data.toString()).toBe('Hello world');
@@ -489,9 +490,10 @@ test('should write missing expectations with sanitized snapshot name', async ({ 
 
 test('should join array of snapshot path segments without sanitizing ', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'a.spec.js-snapshots/test/path/snapshot-darwin.txt': `Hello world`,
+    ...files,
+    'a.spec.js-snapshots/test/path/snapshot.txt': `Hello world`,
     'a.spec.js': `
-      const { test } = pwt;
+      const { test } = require('./helper');;
       test('is a test', ({}) => {
         expect('Hello world').toMatchSnapshot(['test', 'path', 'snapshot.txt']);
       });
