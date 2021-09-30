@@ -158,7 +158,7 @@ export function addSuffix(filePath: string, suffix: string, customExtension?: st
 export function getContainedPath(parentPath: string, subPath: string = ''): string {
   const resolvedPath = path.resolve(parentPath, subPath);
 
-  if (resolvedPath.startsWith(parentPath)) return resolvedPath;
+  if (resolvedPath.startsWith(parentPath + path.sep)) return resolvedPath;
 
   throw new Error(`Path defined outside of parent directory
   path: ${subPath}

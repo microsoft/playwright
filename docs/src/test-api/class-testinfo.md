@@ -194,7 +194,7 @@ test('example test', async ({}, testInfo) => {
 ```
 
 > Note that `pathSegments` accepts an array of path segments to the test output directory such as `testInfo.outputPath('relative', 'path', 'to', 'output')`.
-> However, this path must stay within the snapshots directory for each test file (i.e. `test-results/a-test-title`), otherwise it will throw.
+> However, this path must stay within the [`property: TestInfo.outputDir`] directory for each test (i.e. `test-results/a-test-title`), otherwise it will throw.
 
 ### param: TestInfo.outputPath.pathSegments
 - `pathSegments` <[string...]>
