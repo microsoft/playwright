@@ -31,6 +31,7 @@ import { ProgressController } from '../../progress';
 import { BrowserContext } from '../../browserContext';
 import { registry } from '../../../utils/registry';
 import { installAppIcon } from '../../chromium/crApp';
+import { debugLogger } from '../../../utils/debugLogger';
 
 export class TraceViewer {
   private _server: HttpServer;
@@ -203,11 +204,11 @@ export async function showTraceViewer(tracePath: string, browserName: string, he
     const downloadZipPath = path.join(dir, 'trace.zip');
     try {
       await download(tracePath, downloadZipPath, {
-        progressBarName: 'Trace File',
-        log: console.log // eslint-disable-line no-console
+        progressBarName: tracePath,
+        log: debugLogger.log.bind(debugLogger, 'download')
       });
     } catch (error) {
-      console.log(`Download failed. ${error?.message || ''}`); // eslint-disable-line no-console
+      console.log(`${error?.message || ''}`); // eslint-disable-line no-console
       return;
     }
     tracePath = downloadZipPath;
