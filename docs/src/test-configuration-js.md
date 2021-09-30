@@ -170,22 +170,13 @@ const { devices } = require('@playwright/test');
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
   projects: [
-    // "Pixel 4" tests use Chromium browser.
     {
       name: 'Pixel 4',
-      use: {
-        browserName: 'chromium',
-        ...devices['Pixel 4'],
-      },
+      use: devices['Pixel 4'],
     },
-
-    // "iPhone 11" tests use WebKit browser.
     {
       name: 'iPhone 11',
-      use: {
-        browserName: 'webkit',
-        ...devices['iPhone 11'],
-      },
+      use: devices['iPhone 11'],
     },
   ],
 };
@@ -199,29 +190,20 @@ import { PlaywrightTestConfig, devices } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   projects: [
-    // "Pixel 4" tests use Chromium browser.
     {
       name: 'Pixel 4',
-      use: {
-        browserName: 'chromium',
-        ...devices['Pixel 4'],
-      },
+      use: devices['Pixel 4'],
     },
-
-    // "iPhone 11" tests use WebKit browser.
     {
       name: 'iPhone 11',
-      use: {
-        browserName: 'webkit',
-        ...devices['iPhone 11'],
-      },
+      use: devices['iPhone 11'],
     },
   ],
 };
 export default config;
 ```
 
-You can specify options separately instead of using predefined devices. There are also more options such as locale, geolocation, and timezone which can be configured.
+You can specify options separately instead of using [predefined devices](https://github.com/microsoft/playwright/blob/master/src/server/deviceDescriptorsSource.json). There are also more options such as locale, geolocation, and timezone which can be configured.
 
 - `colorScheme` - Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`.
 - `deviceScaleFactor` - Specify device scale factor (can be thought of as dpr). Defaults to `1`.
