@@ -155,15 +155,12 @@ export function addSuffixToFilePath(filePath: string, suffix: string, customExte
 /**
  * Returns absolute path contained within parent directory.
  */
-export function getContainedPath(parentPath: string, subPath: string = ''): string {
+export function getContainedPath(parentPath: string, subPath: string = ''): string | null {
   const resolvedPath = path.resolve(parentPath, subPath);
 
   if (resolvedPath.startsWith(parentPath + path.sep)) return resolvedPath;
 
-  throw new Error(`Path defined outside of parent directory
-  path: ${subPath}
-  resolved path: ${resolvedPath}
-  parent: ${parentPath}`);
+  return null;
 }
 
 export const debugTest = debug('pw:test');

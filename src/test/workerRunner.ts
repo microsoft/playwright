@@ -255,7 +255,11 @@ export class WorkerRunner extends EventEmitter {
       outputDir: baseOutputDir,
       outputPath: (...pathSegments: string[]): string => {
         fs.mkdirSync(baseOutputDir, { recursive: true });
-        return getContainedPath(baseOutputDir, path.join(...pathSegments));
+        const joinedPath = path.join(...pathSegments);
+        const outputPath = getContainedPath(baseOutputDir, joinedPath);
+        if (outputPath) return outputPath;
+        throw new Error(`The outputPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\toutputPath: ${outputPath}`);
+
       },
       snapshotPath: (pathSegments: string[]): string => {
         let suffix = '';
@@ -265,8 +269,11 @@ export class WorkerRunner extends EventEmitter {
           suffix += '-' + testInfo.snapshotSuffix;
 
         const baseSnapshotPath = test._requireFile + '-snapshots';
-        const snapshotPath = addSuffixToFilePath(path.join(...pathSegments), suffix);
-        return getContainedPath(baseSnapshotPath, snapshotPath);
+        const subPath = addSuffixToFilePath(path.join(...pathSegments), suffix);
+        const snapshotPath =  getContainedPath(baseSnapshotPath, subPath);
+
+        if (snapshotPath) return snapshotPath;
+        throw new Error(`The snapshotPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\snapshotPath: ${snapshotPath}`);
       },
       skip: (...args: [arg?: any, description?: string]) => modifier(testInfo, 'skip', args),
       fixme: (...args: [arg?: any, description?: string]) => modifier(testInfo, 'fixme', args),
