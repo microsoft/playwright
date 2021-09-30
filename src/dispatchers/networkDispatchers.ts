@@ -177,6 +177,10 @@ export class FetchRequestDispatcher extends Dispatcher<FetchRequest, channels.Fe
     });
   }
 
+  async storageState(params?: channels.FetchRequestStorageStateParams): Promise<channels.FetchRequestStorageStateResult> {
+    return this._object.storageState();
+  }
+
   async dispose(params?: channels.FetchRequestDisposeParams): Promise<void> {
     this._object.dispose();
   }

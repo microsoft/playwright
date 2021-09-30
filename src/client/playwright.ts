@@ -15,6 +15,7 @@
  */
 
 import dns from 'dns';
+import fs from 'fs';
 import net from 'net';
 import util from 'util';
 import * as channels from '../protocol/channels';
@@ -72,9 +73,13 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel, channel
 
   async _newRequest(options: NewRequestOptions = {}): Promise<FetchRequest> {
     return await this._wrapApiCall(async (channel: channels.PlaywrightChannel) => {
+      const storageState = typeof options.storageState === 'string' ?
+        JSON.parse(await fs.promises.readFile(options.storageState, 'utf8')) :
+        options.storageState;
       return FetchRequest.from((await channel.newRequest({
         ...options,
-        extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined
+        extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
+        storageState,
       })).request);
     });
   }

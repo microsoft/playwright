@@ -112,6 +112,27 @@ When using [`method: FetchRequest.get`], [`method: FetchRequest.post`], [`method
 * baseURL: `http://localhost:3000` and sending rquest to `/bar.html` results in `http://localhost:3000/bar.html`
 * baseURL: `http://localhost:3000/foo/` and sending rquest to `./bar.html` results in `http://localhost:3000/foo/bar.html`
 
+### option: Playwright._newRequest.storageState
+- `storageState` <[path]|[Object]>
+  - `cookies` <[Array]<[Object]>>
+    - `name` <[string]>
+    - `value` <[string]>
+    - `domain` <[string]>
+    - `path` <[string]>
+    - `expires` <[float]> Unix time in seconds.
+    - `httpOnly` <[boolean]>
+    - `secure` <[boolean]>
+    - `sameSite` <[SameSiteAttribute]<"Strict"|"Lax"|"None">>
+  - `origins` <[Array]<[Object]>>
+    - `origin` <[string]>
+    - `localStorage` <[Array]<[Object]>>
+      - `name` <[string]>
+      - `value` <[string]>
+
+Populates context with given storage state. This option can be used to initialize context with logged-in information
+obtained via [`method: BrowserContext.storageState`] or [`method: FetchRequest.storageState`]. Either a path to the
+file with saved storage, or the value returned by one of the `storageStgate` methods.
+
 ## property: Playwright.chromium
 - type: <[BrowserType]>
 

@@ -17,7 +17,7 @@
 
 import * as channels from '../protocol/channels';
 import type { Size } from '../common/types';
-export { Size, Point, Rect, Quad, URLMatch, TimeoutOptions, HeadersArray, NewRequestOptions } from '../common/types';
+export { Size, Point, Rect, Quad, URLMatch, TimeoutOptions, HeadersArray } from '../common/types';
 
 type LoggerSeverity = 'verbose' | 'info' | 'warning' | 'error';
 export interface Logger {
@@ -118,3 +118,22 @@ export type SelectorEngine = {
 
 export type RemoteAddr = channels.RemoteAddr;
 export type SecurityDetails = channels.SecurityDetails;
+
+export type NewRequestOptions = {
+  baseURL?: string;
+  extraHTTPHeaders?: { [key: string]: string; };
+  httpCredentials?: {
+    username: string;
+    password: string;
+  };
+  ignoreHTTPSErrors?: boolean;
+  proxy?: {
+    server: string;
+    bypass?: string;
+    username?: string;
+    password?: string;
+  };
+  timeout?: number;
+  userAgent?: string;
+  storageState?: string | channels.BrowserNewContextOptions['storageState'];
+};

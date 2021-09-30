@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
 import http from 'http';
 import { FetchRequest } from '../index';
 import { expect, playwrightTest } from './config/browserTest';
@@ -162,3 +163,153 @@ it('should remove expired cookies', async ({ request, server }) => {
   expect(serverRequest.headers.cookie).toBe('a=v');
 });
 
+it('should export cookies to storage state', async ({ request, server }) => {
+  const expires = new Date('12/31/2100 PST');
+  server.setRoute('/setcookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', ['a=b', `c=d; expires=${expires.toUTCString()}; domain=b.one.com; path=/input`, 'e=f; domain=b.one.com; path=/input/subfolder']);
+    res.end();
+  });
+  await request.get(`http://a.b.one.com:${server.PORT}/setcookie.html`);
+  const state = await request.storageState();
+  expect(state).toEqual({
+    'cookies': [
+      {
+        'name': 'a',
+        'value': 'b',
+        'domain': 'a.b.one.com',
+        'path': '/',
+        'expires': -1,
+        'httpOnly': false,
+        'secure': false,
+        'sameSite': 'Lax'
+      },
+      {
+        'name': 'c',
+        'value': 'd',
+        'domain': '.b.one.com',
+        'path': '/input',
+        'expires': +expires / 1000,
+        'httpOnly': false,
+        'secure': false,
+        'sameSite': 'Lax'
+      },
+      {
+        'name': 'e',
+        'value': 'f',
+        'domain': '.b.one.com',
+        'path': '/input/subfolder',
+        'expires': -1,
+        'httpOnly': false,
+        'secure': false,
+        'sameSite': 'Lax'
+      }
+    ],
+    'origins': []
+  });
+});
+
+it('should preserve local storage on import/export of storage state', async ({ playwright, server }) => {
+  const storageState = {
+    cookies: [
+      {
+        'name': 'a',
+        'value': 'b',
+        'domain': 'a.b.one.com',
+        'path': '/',
+        'expires': -1,
+        'httpOnly': false,
+        'secure': false,
+        'sameSite': 'Lax'
+      }
+    ],
+    origins: [
+      {
+        origin: 'https://www.example.com',
+        localStorage: [{
+          name: 'name1',
+          value: 'value1'
+        }]
+      },
+    ]
+  };
+  const request = await playwright._newRequest({ storageState });
+  await request.get(server.EMPTY_PAGE);
+  const exportedState = await request.storageState();
+  expect(exportedState).toEqual(storageState);
+  await request.dispose();
+});
+
+it('should send cookies from storage state', async ({ playwright, server }) => {
+  const expires = new Date('12/31/2099 PST');
+  const storageState = {
+    'cookies': [
+      {
+        'name': 'a',
+        'value': 'b',
+        'domain': 'a.b.one.com',
+        'path': '/',
+        'expires': -1,
+        'httpOnly': false,
+        'secure': false,
+        'sameSite': 'Lax'
+      },
+      {
+        'name': 'c',
+        'value': 'd',
+        'domain': '.b.one.com',
+        'path': '/first/',
+        'expires': +expires / 1000,
+        'httpOnly': false,
+        'secure': false,
+        'sameSite': 'Lax'
+      },
+      {
+        'name': 'e',
+        'value': 'f',
+        'domain': '.b.one.com',
+        'path': '/first/second',
+        'expires': -1,
+        'httpOnly': false,
+        'secure': false,
+        'sameSite': 'Lax'
+      }
+    ],
+    'origins': []
+  };
+  const request = await playwright._newRequest({ storageState });
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/first/second/third/not_found.html'),
+    request.get(`http://www.a.b.one.com:${server.PORT}/first/second/third/not_found.html`)
+  ]);
+  expect(serverRequest.headers.cookie).toBe('c=d; e=f');
+});
+
+it('storage state should round-trip through file', async ({ playwright, server }, testInfo) => {
+  const storageState = {
+    'cookies': [
+      {
+        'name': 'a',
+        'value': 'b',
+        'domain': 'a.b.one.com',
+        'path': '/',
+        'expires': -1,
+        'httpOnly': false,
+        'secure': false,
+        'sameSite': 'Lax'
+      }
+    ],
+    'origins': []
+  };
+
+  const request1 = await playwright._newRequest({ storageState });
+  const path = testInfo.outputPath('storage-state.json');
+  const state1 = await request1.storageState({ path });
+  expect(state1).toEqual(storageState);
+
+  const written = await fs.promises.readFile(path, 'utf8');
+  expect(JSON.stringify(state1, undefined, 2)).toBe(written);
+
+  const request2 = await playwright._newRequest({ storageState: path });
+  const state2 = await request2.storageState();
+  expect(state2).toEqual(storageState);
+});

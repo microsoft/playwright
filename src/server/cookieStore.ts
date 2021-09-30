@@ -68,10 +68,17 @@ export class CookieStore {
 
   cookies(url: URL): types.NetworkCookie[] {
     const result = [];
-    for (const cookie of this._allCookies()) {
+    for (const cookie of this._cookiesIterator()) {
       if (cookie.matches(url))
         result.push(cookie.networkCookie());
     }
+    return result;
+  }
+
+  allCookies(): types.NetworkCookie[] {
+    const result = [];
+    for (const cookie of this._cookiesIterator())
+      result.push(cookie.networkCookie());
     return result;
   }
 
@@ -94,7 +101,7 @@ export class CookieStore {
     set.add(cookie);
   }
 
-  private *_allCookies(): IterableIterator<Cookie> {
+  private *_cookiesIterator(): IterableIterator<Cookie> {
     for (const [name, cookies] of this._nameToCookies) {
       CookieStore.pruneExpired(cookies);
       for (const cookie of cookies)

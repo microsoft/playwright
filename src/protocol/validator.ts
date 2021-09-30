@@ -167,6 +167,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.FetchRequestFetchResponseBodyParams = tObject({
     fetchUid: tString,
   });
+  scheme.FetchRequestStorageStateParams = tOptional(tObject({}));
   scheme.FetchRequestDisposeFetchResponseParams = tObject({
     fetchUid: tString,
   });
@@ -217,6 +218,10 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       password: tOptional(tString),
     })),
     timeout: tOptional(tNumber),
+    storageState: tOptional(tObject({
+      cookies: tArray(tType('NetworkCookie')),
+      origins: tArray(tType('OriginStorage')),
+    })),
   });
   scheme.SelectorsRegisterParams = tObject({
     name: tString,

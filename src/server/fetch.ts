@@ -21,7 +21,7 @@ import { pipeline, Readable, Transform } from 'stream';
 import url from 'url';
 import zlib from 'zlib';
 import { HTTPCredentials } from '../../types/types';
-import { NameValue, NewRequestOptions } from '../common/types';
+import * as channels from '../protocol/channels';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { assert, createGuid, getPlaywrightVersion, isFilePayload, monotonicTime } from '../utils/utils';
 import { BrowserContext } from './browserContext';
@@ -76,6 +76,7 @@ export abstract class FetchRequest extends SdkObject {
   abstract _defaultOptions(): FetchRequestOptions;
   abstract _addCookies(cookies: types.NetworkCookie[]): Promise<void>;
   abstract _cookies(url: URL): Promise<types.NetworkCookie[]>;
+  abstract storageState(): Promise<channels.FetchRequestStorageStateResult>;
 
   private _storeResponseBody(body: Buffer): string {
     const uid = createGuid();
@@ -337,13 +338,19 @@ export class BrowserContextFetchRequest extends FetchRequest {
   async _cookies(url: URL): Promise<types.NetworkCookie[]> {
     return await this._context.cookies(url.toString());
   }
+
+  override async storageState(): Promise<channels.FetchRequestStorageStateResult> {
+    return this._context.storageState();
+  }
 }
 
 
 export class GlobalFetchRequest extends FetchRequest {
   private readonly _cookieStore: CookieStore = new CookieStore();
   private readonly _options: FetchRequestOptions;
-  constructor(playwright: Playwright, options: Omit<NewRequestOptions, 'extraHTTPHeaders'> & { extraHTTPHeaders?: NameValue[] }) {
+  private readonly _origins: channels.OriginStorage[] | undefined;
+
+  constructor(playwright: Playwright, options: channels.PlaywrightNewRequestOptions) {
     super(playwright);
     const timeoutSettings = new TimeoutSettings();
     if (options.timeout !== undefined)
@@ -354,6 +361,10 @@ export class GlobalFetchRequest extends FetchRequest {
       if (!/^\w+:\/\//.test(url))
         url = 'http://' + url;
       proxy.server = url;
+    }
+    if (options.storageState) {
+      this._origins = options.storageState.origins;
+      this._cookieStore.addCookies(options.storageState.cookies);
     }
     this._options = {
       baseURL: options.baseURL,
@@ -381,6 +392,13 @@ export class GlobalFetchRequest extends FetchRequest {
 
   async _cookies(url: URL): Promise<types.NetworkCookie[]> {
     return this._cookieStore.cookies(url);
+  }
+
+  override async storageState(): Promise<channels.FetchRequestStorageStateResult> {
+    return {
+      cookies: this._cookieStore.allCookies(),
+      origins: this._origins || []
+    };
   }
 }
 

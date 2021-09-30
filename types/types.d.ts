@@ -12797,6 +12797,50 @@ export interface FetchRequest {
      */
     timeout?: number;
   }): Promise<FetchResponse>;
+
+  /**
+   * Returns storage state for this request context, contains current cookies and local storage snapshot if it was passed to
+   * the constructor.
+   * @param options
+   */
+  storageState(options?: {
+    /**
+     * The file path to save the storage state to. If `path` is a relative path, then it is resolved relative to current
+     * working directory. If no path is provided, storage state is still returned, but won't be saved to the disk.
+     */
+    path?: string;
+  }): Promise<{
+    cookies: Array<{
+      name: string;
+
+      value: string;
+
+      domain: string;
+
+      path: string;
+
+      /**
+       * Unix time in seconds.
+       */
+      expires: number;
+
+      httpOnly: boolean;
+
+      secure: boolean;
+
+      sameSite: "Strict"|"Lax"|"None";
+    }>;
+
+    origins: Array<{
+      origin: string;
+
+      localStorage: Array<{
+        name: string;
+
+        value: string;
+      }>;
+    }>;
+  }>;
 }
 
 /**
@@ -13333,6 +13377,47 @@ export const _newRequest: (options?: {
      * Optional password to use if HTTP proxy requires authentication.
      */
     password?: string;
+  };
+
+  /**
+   * Populates context with given storage state. This option can be used to initialize context with logged-in information
+   * obtained via
+   * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state)
+   * or
+   * [fetchRequest.storageState([options])](https://playwright.dev/docs/api/class-fetchrequest#fetch-request-storage-state).
+   * Either a path to the file with saved storage, or the value returned by one of the `storageStgate` methods.
+   */
+  storageState?: string|{
+    cookies: Array<{
+      name: string;
+
+      value: string;
+
+      domain: string;
+
+      path: string;
+
+      /**
+       * Unix time in seconds.
+       */
+      expires: number;
+
+      httpOnly: boolean;
+
+      secure: boolean;
+
+      sameSite: "Strict"|"Lax"|"None";
+    }>;
+
+    origins: Array<{
+      origin: string;
+
+      localStorage: Array<{
+        name: string;
+
+        value: string;
+      }>;
+    }>;
   };
 
   /**

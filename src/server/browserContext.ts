@@ -325,7 +325,7 @@ export abstract class BrowserContext extends SdkObject {
     this._origins.add(origin);
   }
 
-  async storageState(metadata: CallMetadata): Promise<types.StorageState> {
+  async storageState(): Promise<types.StorageState> {
     const result: types.StorageState = {
       cookies: (await this.cookies()).filter(c => c.value !== ''),
       origins: []
