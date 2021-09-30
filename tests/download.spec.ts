@@ -18,6 +18,7 @@ import { browserTest as it, expect } from './config/browserTest';
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
+import { Download } from '..';
 
 it.describe('download event', () => {
   it.beforeEach(async ({ server }) => {
@@ -580,3 +581,64 @@ it.describe('download event', () => {
     await page.close();
   });
 });
+
+it('should be able to download a PDF file', async ({ browser, server, asset }) => {
+  const page = await browser.newPage({ acceptDownloads: true });
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`
+    <a href="/empty.pdf" download>download</a>
+  `);
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('a'),
+  ]);
+  await assertDownloadToPDF(download, asset('empty.pdf'));
+  await page.close();
+});
+
+it('should be able to download a inline PDF file', async ({ browser, server, asset }) => {
+  it.fixme();
+  const page = await browser.newPage({ acceptDownloads: true });
+  await page.goto(server.EMPTY_PAGE);
+  await page.route('**/empty.pdf', async route => {
+    const response = await page.context()._request.get(route.request());
+    await route.fulfill({
+      response,
+      headers: {
+        ...response.headers(),
+        'Content-Disposition': 'attachment',
+      }
+    });
+  });
+  await page.setContent(`
+    <a href="/empty.pdf">open</a>
+  `);
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('a'),
+  ]);
+  await assertDownloadToPDF(download, asset('empty.pdf'));
+  await page.close();
+});
+
+async function assertDownloadToPDF(download: Download, filePath: string) {
+  expect(download.suggestedFilename()).toBe(path.basename(filePath));
+  const stream = await download.createReadStream();
+  const data = await new Promise<Buffer>((fulfill, reject) => {
+    const bufs = [];
+    stream.on('data', d => bufs.push(d));
+    stream.on('error', reject);
+    stream.on('end', () => fulfill(Buffer.concat(bufs)));
+  });
+  expect(download.url().endsWith('/' + path.basename(filePath))).toBeTruthy();
+  const expectedPrefix = '%PDF';
+  for (let i = 0; i < expectedPrefix.length; i++)
+    expect(data[i]).toBe(expectedPrefix.charCodeAt(i));
+  assertBuffer(data, fs.readFileSync(filePath));
+}
+
+async function assertBuffer(expected: Buffer, actual: Buffer) {
+  expect(expected.byteLength).toBe(actual.byteLength);
+  for (let i = 0; i < expected.byteLength; i++)
+    expect(expected[i]).toBe(actual[i]);
+}
