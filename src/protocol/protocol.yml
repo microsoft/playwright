@@ -256,6 +256,15 @@ FetchRequest:
       returns:
         binary?: binary
 
+    storageState:
+      returns:
+        cookies:
+          type: array
+          items: NetworkCookie
+        origins:
+          type: array
+          items: OriginStorage
+
     disposeFetchResponse:
       parameters:
         fetchUid: string
@@ -484,6 +493,15 @@ Playwright:
             username: string?
             password: string?
         timeout: number?
+        storageState:
+          type: object?
+          properties:
+            cookies:
+              type: array
+              items: NetworkCookie
+            origins:
+              type: array
+              items: OriginStorage
 
       returns:
         request: FetchRequest

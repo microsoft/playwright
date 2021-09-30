@@ -134,3 +134,24 @@ Whether to throw on response codes other than 2xx and 3xx. By default response o
 for all status codes.
 
 ### option: FetchRequest.post.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
+
+## async method: FetchRequest.storageState
+- returns: <[Object]>
+  - `cookies` <[Array]<[Object]>>
+    - `name` <[string]>
+    - `value` <[string]>
+    - `domain` <[string]>
+    - `path` <[string]>
+    - `expires` <[float]> Unix time in seconds.
+    - `httpOnly` <[boolean]>
+    - `secure` <[boolean]>
+    - `sameSite` <[SameSiteAttribute]<"Strict"|"Lax"|"None">>
+  - `origins` <[Array]<[Object]>>
+    - `origin` <[string]>
+    - `localStorage` <[Array]<[Object]>>
+      - `name` <[string]>
+      - `value` <[string]>
+
+Returns storage state for this request context, contains current cookies and local storage snapshot if it was passed to the constructor.
+
+### option: FetchRequest.storageState.path = %%-storagestate-option-path-%%

@@ -162,6 +162,7 @@ export type FetchRequestInitializer = {};
 export interface FetchRequestChannel extends Channel {
   fetch(params: FetchRequestFetchParams, metadata?: Metadata): Promise<FetchRequestFetchResult>;
   fetchResponseBody(params: FetchRequestFetchResponseBodyParams, metadata?: Metadata): Promise<FetchRequestFetchResponseBodyResult>;
+  storageState(params?: FetchRequestStorageStateParams, metadata?: Metadata): Promise<FetchRequestStorageStateResult>;
   disposeFetchResponse(params: FetchRequestDisposeFetchResponseParams, metadata?: Metadata): Promise<FetchRequestDisposeFetchResponseResult>;
   dispose(params?: FetchRequestDisposeParams, metadata?: Metadata): Promise<FetchRequestDisposeResult>;
 }
@@ -198,6 +199,12 @@ export type FetchRequestFetchResponseBodyOptions = {
 };
 export type FetchRequestFetchResponseBodyResult = {
   binary?: Binary,
+};
+export type FetchRequestStorageStateParams = {};
+export type FetchRequestStorageStateOptions = {};
+export type FetchRequestStorageStateResult = {
+  cookies: NetworkCookie[],
+  origins: OriginStorage[],
 };
 export type FetchRequestDisposeFetchResponseParams = {
   fetchUid: string,
@@ -346,6 +353,10 @@ export type PlaywrightNewRequestParams = {
     password?: string,
   },
   timeout?: number,
+  storageState?: {
+    cookies: NetworkCookie[],
+    origins: OriginStorage[],
+  },
 };
 export type PlaywrightNewRequestOptions = {
   baseURL?: string,
@@ -363,6 +374,10 @@ export type PlaywrightNewRequestOptions = {
     password?: string,
   },
   timeout?: number,
+  storageState?: {
+    cookies: NetworkCookie[],
+    origins: OriginStorage[],
+  },
 };
 export type PlaywrightNewRequestResult = {
   request: FetchRequestChannel,
