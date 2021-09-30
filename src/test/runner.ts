@@ -27,6 +27,7 @@ import { Loader } from './loader';
 import { Reporter } from '../../types/testReporter';
 import { Multiplexer } from './reporters/multiplexer';
 import DotReporter from './reporters/dot';
+import GitHubReporter from './reporters/github';
 import LineReporter from './reporters/line';
 import ListReporter from './reporters/list';
 import JSONReporter from './reporters/json';
@@ -68,6 +69,7 @@ export class Runner {
       dot: list ? ListModeReporter : DotReporter,
       line: list ? ListModeReporter : LineReporter,
       list: list ? ListModeReporter : ListReporter,
+      github: GitHubReporter,
       json: JSONReporter,
       junit: JUnitReporter,
       null: EmptyReporter,
@@ -539,5 +541,5 @@ class ListModeReporter implements Reporter {
   }
 }
 
-export const builtInReporters = ['list', 'line', 'dot', 'json', 'junit', 'null'] as const;
+export const builtInReporters = ['list', 'line', 'dot', 'json', 'junit', 'null', 'github'] as const;
 export type BuiltInReporter = typeof builtInReporters[number];

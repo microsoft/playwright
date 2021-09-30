@@ -79,7 +79,7 @@ export class GitHubReporter extends BaseReporter {
   private _printSlowTestAnnotations() {
     this.getSlowTests().forEach(([file, duration]) => {
       const filePath = workspaceRelativePath(path.join(process.cwd(), file));
-      this.githubLogger.warning(`${filePath} (${milliseconds(duration)})`, {
+      this.githubLogger.warning(`${filePath} took ${milliseconds(duration)}`, {
         title: 'Slow Test',
         file: filePath,
       });
