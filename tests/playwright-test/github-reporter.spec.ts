@@ -39,7 +39,7 @@ test('print GitHub annotations with newline if not in CI', async ({ runInlineTes
         expect(1 + 1).toBe(2);
       });
     `
-  }, { reporter: 'github' });
+  }, { reporter: 'github' }, { GITHUB_ACTION: '' });
   const text = stripAscii(result.output);
   expect(text).not.toContain('::error');
   expect(text).toContain(`::notice title=🎭 Playwright Run Summary::
@@ -56,11 +56,11 @@ test('print GitHub annotations for failed tests', async ({ runInlineTest }) => {
         expect(1 + 1).toBe(3);
       });
     `
-  }, { retries: 3, reporter: 'github' }, { GITHUB_ACTION: 'true' });
+  }, { retries: 3, reporter: 'github' }, { GITHUB_ACTION: 'true', GITHUB_WORKSPACE: process.cwd() });
   const text = stripAscii(result.output);
-  expect(text).toContain('::error file=a.test.js,title=a.test.js:6:7 › example,line=7,col=23::  1) a.test.js:6:7 › example =======================================================================%0A%0A    Retry #1');
-  expect(text).toContain('::error file=a.test.js,title=a.test.js:6:7 › example,line=7,col=23::  1) a.test.js:6:7 › example =======================================================================%0A%0A    Retry #2');
-  expect(text).toContain('::error file=a.test.js,title=a.test.js:6:7 › example,line=7,col=23::  1) a.test.js:6:7 › example =======================================================================%0A%0A    Retry #3');
+  expect(text).toContain('::error file=test-results/github-reporter-print-GitHub-annotations-for-failed-tests-playwright-test/a.test.js,title=a.test.js:6:7 › example,line=7,col=23::  1) a.test.js:6:7 › example =======================================================================%0A%0A    Retry #1');
+  expect(text).toContain('::error file=test-results/github-reporter-print-GitHub-annotations-for-failed-tests-playwright-test/a.test.js,title=a.test.js:6:7 › example,line=7,col=23::  1) a.test.js:6:7 › example =======================================================================%0A%0A    Retry #2');
+  expect(text).toContain('::error file=test-results/github-reporter-print-GitHub-annotations-for-failed-tests-playwright-test/a.test.js,title=a.test.js:6:7 › example,line=7,col=23::  1) a.test.js:6:7 › example =======================================================================%0A%0A    Retry #3');
   expect(result.exitCode).toBe(1);
 });
 
@@ -78,7 +78,7 @@ test('print GitHub annotations for slow tests', async ({ runInlineTest }) => {
         await new Promise(f => setTimeout(f, 200));
       });
     `
-  }, { retries: 3, reporter: 'github' }, { GITHUB_ACTION: 'true' });
+  }, { retries: 3, reporter: 'github' }, { GITHUB_ACTION: 'true', GITHUB_WORKSPACE: '' });
   const text = stripAscii(result.output);
   expect(text).toContain('::warning title=Slow Test,file=a.test.js::a.test.js took 2');
   expect(text).toContain('::notice title=🎭 Playwright Run Summary::%0A  1 passed');
