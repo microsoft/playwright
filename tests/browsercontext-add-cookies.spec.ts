@@ -367,3 +367,39 @@ it('should(not) block third party cookies', async ({ context, page, server, brow
     expect(cookies).toEqual([]);
   }
 });
+
+it('should not block third party SameSite=None cookies', async ({ contextFactory, httpsServer, browserName }) => {
+  it.skip(browserName === 'webkit', 'No third party cookies in WebKit');
+  const context = await contextFactory({
+    ignoreHTTPSErrors: true,
+  });
+  const page = await context.newPage();
+
+  httpsServer.setRoute('/empty.html', (req, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'text/html'
+    });
+    res.end(`<iframe src="${httpsServer.CROSS_PROCESS_PREFIX}/grid.html"></iframe>`);
+  });
+
+  httpsServer.setRoute('/grid.html', (req, res) => {
+    res.writeHead(200, {
+      'Set-Cookie': ['a=b; Path=/; Max-Age=3600; SameSite=None; Secure'],
+      'Content-Type': 'text/html'
+    });
+    res.end(`Hello world
+    <script>
+    setTimeout(() => fetch('/json'), 1000);
+    </script>`);
+  });
+
+  const cookie = new Promise(f => {
+    httpsServer.setRoute('/json', (req, res) => {
+      f(req.headers.cookie);
+      res.end();
+    });
+  });
+
+  await page.goto(httpsServer.EMPTY_PAGE);
+  expect(await cookie).toBe('a=b')
+});
