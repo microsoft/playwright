@@ -482,7 +482,6 @@ test('should be able to re-use the context when debug mode is used', async ({ ru
         await page.goto(host1);
         expect(await page.evaluate(() => window.localStorage.getItem('foobar'))).toBe(null);
         await page.evaluate(() => window.localStorage.setItem('foobar', 'bar'));
-        expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
         expect(page.viewportSize()).toStrictEqual({
           width: 1920,
           height: 1080,
@@ -493,7 +492,6 @@ test('should be able to re-use the context when debug mode is used', async ({ ru
         await page.goto(host1);
         expect(await page.evaluate(() => window.localStorage.getItem('foobar'))).toBe(null);
         await page.evaluate(() => window.localStorage.setItem('foobar', 'bar'));
-        expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
         expect(page.viewportSize()).toStrictEqual({
           width: 1920,
           height: 1080,
@@ -511,7 +509,6 @@ test('should be able to re-use the context when debug mode is used', async ({ ru
         test('using different options', async ({ page }) => {
           await page.goto(host1);
           expect(await page.evaluate(() => window.localStorage.getItem('foobar'))).toBe(null);
-          expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(false);
           expect(page.viewportSize()).toStrictEqual({
               width: 1000,
               height: 500,
@@ -522,7 +519,6 @@ test('should be able to re-use the context when debug mode is used', async ({ ru
       test('after the describe block', async ({ page }) => {
         await page.goto(host1);
         expect(await page.evaluate(() => window.localStorage.getItem('foobar'))).toBe(null);
-        expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
         expect(page.viewportSize()).toStrictEqual({
           width: 1920,
           height: 1080,

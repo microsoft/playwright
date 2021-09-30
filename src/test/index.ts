@@ -67,21 +67,24 @@ class ReuseBrowerContextStorage {
     const pages = this._browserContext.pages();
     const page = pages[0];
     this._pauseNavigationEventCollection = true;
-    const initialOrigin = new URL(page.url()).origin;
-    while (this._uniqueOrigins.size > 0) {
-      const nextOrigin = this._uniqueOrigins.has(initialOrigin) ? initialOrigin : this._uniqueOrigins.values().next().value;
-      this._uniqueOrigins.delete(nextOrigin);
-      await page.route(nextOrigin, route => route.fulfill({ body: `<html></html>`, contentType: 'text/html' }));
-      await page.goto(nextOrigin);
-      await page.evaluate(() => window.localStorage.clear());
-      await page.evaluate(() => window.sessionStorage.clear());
-      await page.unroute(nextOrigin);
+    try {
+      const initialOrigin = new URL(page.url()).origin;
+      await page.route('**/*', route => route.fulfill({ body: `<html></html>`, contentType: 'text/html' }));
+      while (this._uniqueOrigins.size > 0) {
+        const nextOrigin = this._uniqueOrigins.has(initialOrigin) ? initialOrigin : this._uniqueOrigins.values().next().value;
+        this._uniqueOrigins.delete(nextOrigin);
+        await page.goto(nextOrigin);
+        await page.evaluate(() => window.localStorage.clear());
+        await page.evaluate(() => window.sessionStorage.clear());
+      }
+      await page.unroute('**/*');
+      await Promise.all(pages.slice(1).map(page => page.close()));
+      await this._browserContext.clearCookies();
+      await this._applyNewContextOptions(page, newContextOptions);
+      await page.goto('about:blank');
+    } finally {
+      this._pauseNavigationEventCollection = false;
     }
-    await Promise.all(pages.slice(1).map(page => page.close()));
-    await this._browserContext.clearCookies();
-    await this._applyNewContextOptions(page, newContextOptions);
-    await page.goto('about:blank');
-    this._pauseNavigationEventCollection = false;
     return this._browserContext;
   }
 
@@ -95,15 +98,6 @@ class ReuseBrowerContextStorage {
       (newOptions.viewport?.height && newOptions.viewport?.width)
     )
       await page.setViewportSize({ width: newOptions.viewport?.width, height: newOptions.viewport?.height });
-    const emulateMediaOptions: Partial<Parameters<Page['emulateMedia']>[0]> = {};
-    if (this._options.colorScheme !== newOptions.colorScheme)
-      emulateMediaOptions.colorScheme = newOptions.colorScheme;
-    if (this._options.forcedColors !== newOptions.forcedColors)
-      emulateMediaOptions.forcedColors = newOptions.forcedColors;
-    if (this._options.reducedMotion !== newOptions.reducedMotion)
-      emulateMediaOptions.reducedMotion = newOptions.reducedMotion;
-    if (Object.keys(emulateMediaOptions).length > 0)
-      await page.emulateMedia(emulateMediaOptions);
     this._options = newOptions;
   }
 
