@@ -596,8 +596,8 @@ it('should be able to download a PDF file', async ({ browser, server, asset }) =
   await page.close();
 });
 
-it('should be able to download a inline PDF file', async ({ browser, server, asset }) => {
-  it.fixme();
+it('should be able to download a inline PDF file', async ({ browser, server, asset, browserName }) => {
+  it.fixme(browserName === 'webkit');
   const page = await browser.newPage({ acceptDownloads: true });
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/empty.pdf', async route => {
