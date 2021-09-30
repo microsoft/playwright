@@ -19,9 +19,9 @@ import path from 'path';
 import { BaseReporter, formatFailure } from './base';
 import { TestCase, FullResult } from '../../../types/testReporter';
 
-type GithubLogType = 'debug' | 'notice' | 'warning' | 'error';
+type GitHubLogType = 'debug' | 'notice' | 'warning' | 'error';
 
-type GithubLogOptions = Partial<{
+type GitHubLogOptions = Partial<{
   title: string;
   file: string;
   col: number;
@@ -30,11 +30,11 @@ type GithubLogOptions = Partial<{
   endLine: number;
 }>;
 
-class GithubLogger {
-  private _isGithubAction: boolean = !!process.env.GITHUB_ACTION;
+class GitHubLogger {
+  private _isGitHubAction: boolean = !!process.env.GITHUB_ACTION;
 
-  private _log(message: string, type: GithubLogType = 'notice', options: GithubLogOptions = {}) {
-    if (this._isGithubAction)
+  private _log(message: string, type: GitHubLogType = 'notice', options: GitHubLogOptions = {}) {
+    if (this._isGitHubAction)
       message = message.replace(/\n/g, '%0A');
     const configs = Object.entries(options)
         .map(([key, option]) => `${key}=${option}`)
@@ -42,32 +42,32 @@ class GithubLogger {
     console.log(`::${type} ${configs}::${message}`);
   }
 
-  debug(message: string, options?: GithubLogOptions) {
+  debug(message: string, options?: GitHubLogOptions) {
     this._log(message, 'debug', options);
   }
 
-  error(message: string, options?: GithubLogOptions) {
+  error(message: string, options?: GitHubLogOptions) {
     this._log(message, 'error', options);
   }
 
-  notice(message: string, options?: GithubLogOptions) {
+  notice(message: string, options?: GitHubLogOptions) {
     this._log(message, 'notice', options);
   }
 
-  warning(message: string, options?: GithubLogOptions) {
+  warning(message: string, options?: GitHubLogOptions) {
     this._log(message, 'warning', options);
   }
 }
 
-export class GithubReporter extends BaseReporter {
-  githubLogger = new GithubLogger();
+export class GitHubReporter extends BaseReporter {
+  githubLogger = new GitHubLogger();
 
   override async onEnd(result: FullResult) {
     super.onEnd(result);
-    this._generateAnnotations();
+    this._printAnnotations();
   }
 
-  private _generateAnnotations() {
+  private _printAnnotations() {
     const summary = this.generateSummary();
     const summaryMessage = this.generateSummaryMessage(summary);
     if (summary.failuresToPrint.length)
@@ -102,7 +102,7 @@ export class GithubReporter extends BaseReporter {
         includeAttachments: false,
       });
       annotations.forEach(({ filePath, title, message, position }) => {
-        const options: GithubLogOptions = {
+        const options: GitHubLogOptions = {
           file: filePath,
           title,
         };
@@ -120,4 +120,4 @@ function workspaceRelativePath(filePath: string): string {
   return path.relative(process.env['GITHUB_WORKSPACE'] ?? '', filePath);
 }
 
-export default GithubReporter;
+export default GitHubReporter;
