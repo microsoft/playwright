@@ -243,11 +243,13 @@ export function formatError(error: TestError, file?: string) {
   const stack = error.stack;
   const tokens = [''];
   if (stack) {
-    const { message, stackLines, codeFrame } = prepareErrorStack(
+    const { message, stackLines, position } = prepareErrorStack(
         stack,
         file
     );
     tokens.push(message);
+
+    const codeFrame = generateCodeFrame(file, position);
     if (codeFrame) {
       tokens.push('');
       tokens.push(codeFrame);
@@ -272,14 +274,24 @@ function indent(lines: string, tab: string) {
   return lines.replace(/^(?=.+$)/gm, tab);
 }
 
-export function prepareErrorStack(
-  stack: string,
-  file?: string
-): {
+function generateCodeFrame(file?: string, position?: PositionInFile): string | undefined {
+  if (!position || !file)
+    return;
+
+  const source = fs.readFileSync(file!, 'utf8');
+  const codeFrame = codeFrameColumns(
+      source,
+      { start: position },
+      { highlightCode: colors.enabled }
+  );
+
+  return codeFrame;
+}
+
+export function prepareErrorStack(stack: string, file?: string): {
   message: string;
   stackLines: string[];
   position?: PositionInFile;
-  codeFrame?: string;
 } {
   const lines = stack.split('\n');
   let firstStackLine = lines.findIndex(line => line.startsWith('    at '));
@@ -287,20 +299,10 @@ export function prepareErrorStack(
   const message = lines.slice(0, firstStackLine).join('\n');
   const stackLines = lines.slice(firstStackLine);
   const position = file ? positionInFile(stackLines, file) : undefined;
-  let codeFrame;
-  if (position) {
-    const source = fs.readFileSync(file!, 'utf8');
-    codeFrame = codeFrameColumns(
-        source,
-        { start: position },
-        { highlightCode: colors.enabled }
-    );
-  }
   return {
     message,
     stackLines,
     position,
-    codeFrame,
   };
 }
 
