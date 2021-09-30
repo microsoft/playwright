@@ -65,7 +65,7 @@ test('print GitHub annotations for failed tests', async ({ runInlineTest }) => {
 });
 
 
-test.only('print GitHub annotations for slow tests', async ({ runInlineTest }) => {
+test('print GitHub annotations for slow tests', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
