@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ReadStream } from 'fs';
+import fs from 'fs';
 import path from 'path';
 import * as mime from 'mime';
 import { Serializable } from '../../types/structs';
@@ -22,11 +22,11 @@ import * as api from '../../types/types';
 import { HeadersArray } from '../common/types';
 import * as channels from '../protocol/channels';
 import { kBrowserOrContextClosedError } from '../utils/errors';
-import { assert, headersObjectToArray, isFilePayload, isString, objectToArray } from '../utils/utils';
+import { assert, headersObjectToArray, isFilePayload, isString, mkdirIfNeeded, objectToArray } from '../utils/utils';
 import { ChannelOwner } from './channelOwner';
 import * as network from './network';
 import { RawHeaders } from './network';
-import { FilePayload, Headers } from './types';
+import { FilePayload, Headers, StorageState } from './types';
 
 export type FetchOptions = {
   params?: { [key: string]: string; },
@@ -110,8 +110,8 @@ export class FetchRequest extends ChannelOwner<channels.FetchRequestChannel, cha
               if (!Buffer.isBuffer(payload.buffer))
                 throw new Error(`Unexpected buffer type of 'data.${name}'`);
               formData[name] = filePayloadToJson(payload);
-            } else if (value instanceof ReadStream) {
-              formData[name] = await readStreamToJson(value as ReadStream);
+            } else if (value instanceof fs.ReadStream) {
+              formData[name] = await readStreamToJson(value as fs.ReadStream);
             } else {
               formData[name] = value;
             }
@@ -137,6 +137,17 @@ export class FetchRequest extends ChannelOwner<channels.FetchRequestChannel, cha
       if (result.error)
         throw new Error(result.error);
       return new FetchResponse(this, result.response!);
+    });
+  }
+
+  async storageState(options: { path?: string } = {}): Promise<StorageState> {
+    return await this._wrapApiCall(async (channel: channels.FetchRequestChannel) => {
+      const state = await channel.storageState();
+      if (options.path) {
+        await mkdirIfNeeded(options.path);
+        await fs.promises.writeFile(options.path, JSON.stringify(state, undefined, 2), 'utf8');
+      }
+      return state;
     });
   }
 }
@@ -226,7 +237,7 @@ function filePayloadToJson(payload: FilePayload): ServerFilePayload {
   };
 }
 
-async function readStreamToJson(stream: ReadStream): Promise<ServerFilePayload> {
+async function readStreamToJson(stream: fs.ReadStream): Promise<ServerFilePayload> {
   const buffer = await new Promise<Buffer>((resolve, reject) => {
     const chunks: Buffer[] = [];
     stream.on('data', chunk => chunks.push(chunk));

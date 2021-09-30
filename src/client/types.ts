@@ -17,7 +17,7 @@
 
 import * as channels from '../protocol/channels';
 import type { Size } from '../common/types';
-export { Size, Point, Rect, Quad, URLMatch, TimeoutOptions, HeadersArray, NewRequestOptions } from '../common/types';
+export { Size, Point, Rect, Quad, URLMatch, TimeoutOptions, HeadersArray } from '../common/types';
 
 type LoggerSeverity = 'verbose' | 'info' | 'warning' | 'error';
 export interface Logger {
@@ -58,7 +58,7 @@ export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'vie
   logger?: Logger,
   videosPath?: string,
   videoSize?: Size,
-  storageState?: string | channels.BrowserNewContextOptions['storageState'],
+  storageState?: string | SetStorageState,
 };
 
 type LaunchOverrides = {
@@ -118,3 +118,8 @@ export type SelectorEngine = {
 
 export type RemoteAddr = channels.RemoteAddr;
 export type SecurityDetails = channels.SecurityDetails;
+
+export type NewRequestOptions = Omit<channels.PlaywrightNewRequestOptions, 'extraHTTPHeaders' | 'storageState'> & {
+  extraHTTPHeaders?: Headers,
+  storageState?: string | StorageState,
+};

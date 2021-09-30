@@ -26,6 +26,7 @@ import { FullConfig, TestCase, Suite, TestResult, TestError, Reporter, FullResul
 const stackUtils = new StackUtils();
 
 type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
+export type PositionInFile = { column: number; line: number };
 const kOutputSymbol = Symbol('output');
 
 export class BaseReporter implements Reporter  {
@@ -240,28 +241,24 @@ function formatTestHeader(config: FullConfig, test: TestCase, indent: string, in
 
 export function formatError(error: TestError, file?: string) {
   const stack = error.stack;
-  const tokens = [];
+  const tokens = [''];
   if (stack) {
-    tokens.push('');
-    const lines = stack.split('\n');
-    let firstStackLine = lines.findIndex(line => line.startsWith('    at '));
-    if (firstStackLine === -1)
-      firstStackLine = lines.length;
-    tokens.push(lines.slice(0, firstStackLine).join('\n'));
-    const stackLines = lines.slice(firstStackLine);
-    const position = file ? positionInFile(stackLines, file) : null;
-    if (position) {
-      const source = fs.readFileSync(file!, 'utf8');
+    const { message, stackLines, position } = prepareErrorStack(
+        stack,
+        file
+    );
+    tokens.push(message);
+
+    const codeFrame = generateCodeFrame(file, position);
+    if (codeFrame) {
       tokens.push('');
-      tokens.push(codeFrameColumns(source, { start: position }, { highlightCode: colors.enabled }));
+      tokens.push(codeFrame);
     }
     tokens.push('');
     tokens.push(colors.dim(stackLines.join('\n')));
   } else if (error.message) {
-    tokens.push('');
     tokens.push(error.message);
-  } else {
-    tokens.push('');
+  } else if (error.value) {
     tokens.push(error.value);
   }
   return tokens.join('\n');
@@ -275,6 +272,38 @@ function pad(line: string, char: string): string {
 
 function indent(lines: string, tab: string) {
   return lines.replace(/^(?=.+$)/gm, tab);
+}
+
+function generateCodeFrame(file?: string, position?: PositionInFile): string | undefined {
+  if (!position || !file)
+    return;
+
+  const source = fs.readFileSync(file!, 'utf8');
+  const codeFrame = codeFrameColumns(
+      source,
+      { start: position },
+      { highlightCode: colors.enabled }
+  );
+
+  return codeFrame;
+}
+
+export function prepareErrorStack(stack: string, file?: string): {
+  message: string;
+  stackLines: string[];
+  position?: PositionInFile;
+} {
+  const lines = stack.split('\n');
+  let firstStackLine = lines.findIndex(line => line.startsWith('    at '));
+  if (firstStackLine === -1) firstStackLine = lines.length;
+  const message = lines.slice(0, firstStackLine).join('\n');
+  const stackLines = lines.slice(firstStackLine);
+  const position = file ? positionInFile(stackLines, file) : undefined;
+  return {
+    message,
+    stackLines,
+    position,
+  };
 }
 
 function positionInFile(stackLines: string[], file: string): { column: number; line: number; } | undefined {

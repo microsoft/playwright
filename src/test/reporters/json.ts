@@ -17,6 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import { FullConfig, TestCase, Suite, TestResult, TestError, TestStep, FullResult, TestStatus, Location, Reporter } from '../../../types/testReporter';
+import { PositionInFile, prepareErrorStack } from './base';
 
 export interface JSONReport {
   config: Omit<FullConfig, 'projects'> & {
@@ -65,11 +66,17 @@ export interface JSONReportTestResult {
   status: TestStatus | undefined;
   duration: number;
   error: TestError | undefined;
-  stdout: JSONReportSTDIOEntry[],
-  stderr: JSONReportSTDIOEntry[],
+  stdout: JSONReportSTDIOEntry[];
+  stderr: JSONReportSTDIOEntry[];
   retry: number;
   steps?: JSONReportTestStep[];
-  attachments: { name: string, path?: string, body?: string, contentType: string }[];
+  attachments: {
+    name: string;
+    path?: string;
+    body?: string;
+    contentType: string;
+  }[];
+  errorLocation?: PositionInFile
 }
 export interface JSONReportTestStep {
   title: string;
@@ -216,14 +223,14 @@ class JSONReporter implements Reporter {
       annotations: test.annotations,
       expectedStatus: test.expectedStatus,
       projectName: test.titlePath()[1],
-      results: test.results.map(r => this._serializeTestResult(r)),
+      results: test.results.map(r => this._serializeTestResult(r, test.location.file)),
       status: test.outcome(),
     };
   }
 
-  private _serializeTestResult(result: TestResult): JSONReportTestResult {
+  private _serializeTestResult(result: TestResult, file: string): JSONReportTestResult {
     const steps = result.steps.filter(s => s.category === 'test.step');
-    return {
+    const jsonResult: JSONReportTestResult = {
       workerIndex: result.workerIndex,
       status: result.status,
       duration: result.duration,
@@ -239,6 +246,15 @@ class JSONReporter implements Reporter {
         body: a.body?.toString('base64')
       })),
     };
+    if (result.error?.stack) {
+      const { position } = prepareErrorStack(
+          result.error.stack,
+          file
+      );
+      if (position)
+        jsonResult.errorLocation = position;
+    }
+    return jsonResult;
   }
 
   private _serializeTestStep(step: TestStep): JSONReportTestStep {

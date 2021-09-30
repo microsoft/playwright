@@ -22,20 +22,3 @@ export type URLMatch = string | RegExp | ((url: URL) => boolean);
 export type TimeoutOptions = { timeout?: number };
 export type NameValue = { name: string, value: string };
 export type HeadersArray = NameValue[];
-export type NewRequestOptions = {
-  baseURL?: string;
-  extraHTTPHeaders?: { [key: string]: string; };
-  httpCredentials?: {
-    username: string;
-    password: string;
-  };
-  ignoreHTTPSErrors?: boolean;
-  proxy?: {
-    server: string;
-    bypass?: string;
-    username?: string;
-    password?: string;
-  };
-  timeout?: number;
-  userAgent?: string;
-};
