@@ -13385,7 +13385,11 @@ export const _newRequest: (options?: {
    * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state)
    * or
    * [fetchRequest.storageState([options])](https://playwright.dev/docs/api/class-fetchrequest#fetch-request-storage-state).
-   * Either a path to the file with saved storage, or the value returned by one of the `storageStgate` methods.
+   * Either a path to the file with saved storage, or the value returned by one of
+   * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state)
+   * or
+   * [fetchRequest.storageState([options])](https://playwright.dev/docs/api/class-fetchrequest#fetch-request-storage-state)
+   * methods.
    */
   storageState?: string|{
     cookies: Array<{

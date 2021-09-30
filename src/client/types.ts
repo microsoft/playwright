@@ -58,7 +58,7 @@ export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'vie
   logger?: Logger,
   videosPath?: string,
   videoSize?: Size,
-  storageState?: string | channels.BrowserNewContextOptions['storageState'],
+  storageState?: string | SetStorageState,
 };
 
 type LaunchOverrides = {
@@ -119,21 +119,7 @@ export type SelectorEngine = {
 export type RemoteAddr = channels.RemoteAddr;
 export type SecurityDetails = channels.SecurityDetails;
 
-export type NewRequestOptions = {
-  baseURL?: string;
-  extraHTTPHeaders?: { [key: string]: string; };
-  httpCredentials?: {
-    username: string;
-    password: string;
-  };
-  ignoreHTTPSErrors?: boolean;
-  proxy?: {
-    server: string;
-    bypass?: string;
-    username?: string;
-    password?: string;
-  };
-  timeout?: number;
-  userAgent?: string;
-  storageState?: string | channels.BrowserNewContextOptions['storageState'];
+export type NewRequestOptions = Omit<channels.PlaywrightNewRequestOptions, 'extraHTTPHeaders' | 'storageState'> & {
+  extraHTTPHeaders?: Headers,
+  storageState?: string | StorageState,
 };

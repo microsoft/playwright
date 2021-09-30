@@ -131,7 +131,8 @@ When using [`method: FetchRequest.get`], [`method: FetchRequest.post`], [`method
 
 Populates context with given storage state. This option can be used to initialize context with logged-in information
 obtained via [`method: BrowserContext.storageState`] or [`method: FetchRequest.storageState`]. Either a path to the
-file with saved storage, or the value returned by one of the `storageStgate` methods.
+file with saved storage, or the value returned by one of [`method: BrowserContext.storageState`] or
+[`method: FetchRequest.storageState`] methods.
 
 ## property: Playwright.chromium
 - type: <[BrowserType]>
