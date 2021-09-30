@@ -521,7 +521,6 @@ test('should be able to re-use the context when debug mode is used', async ({ ru
       
       test('after the describe block', async ({ page }) => {
         await page.goto(host1);
-        await page.pause();
         expect(await page.evaluate(() => window.localStorage.getItem('foobar'))).toBe(null);
         expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
         expect(page.viewportSize()).toStrictEqual({
@@ -530,9 +529,7 @@ test('should be able to re-use the context when debug mode is used', async ({ ru
         });
       });
     `
-  }, undefined, {
-    PWTEST_REUSE_CONTEXT: '1',
-  });
+  }, { '--reuse-context': true });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(4);
   const pageIds = result.output.match(/page@(.*)\|/g);
