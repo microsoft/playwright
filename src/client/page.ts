@@ -169,13 +169,18 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   }
 
   private _onRoute(route: Route, request: Request) {
+    let handled = false;
     for (const routeHandler of this._routes) {
       if (routeHandler.matches(request.url())) {
         routeHandler.handle(route, request);
-        return;
+        handled = true;
+        break;
       }
     }
-    this._browserContext._onRoute(route, request);
+    if (!handled)
+      this._browserContext._onRoute(route, request);
+    else
+      this._routes = this._routes.filter(route => !route.expired());
   }
 
   async _onBinding(bindingCall: BindingCall) {
