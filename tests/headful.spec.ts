@@ -85,7 +85,7 @@ it('should(not) block third party cookies', async ({ browserType, browserOptions
     return document.cookie;
   });
   await page.waitForTimeout(2000);
-  const allowsThirdParty = browserName !== 'webkit';
+  const allowsThirdParty = browserName === 'firefox';
   expect(documentCookie).toBe(allowsThirdParty ? 'username=John Doe' : '');
   const cookies = await page.context().cookies(server.CROSS_PROCESS_PREFIX + '/grid.html');
   if (allowsThirdParty) {
@@ -140,7 +140,7 @@ it('should not block third party SameSite=None cookies', async ({ browserOptions
   });
 
   await page.goto(httpsServer.EMPTY_PAGE);
-  expect(await cookie).toBe('a=b')
+  expect(await cookie).toBe('a=b');
 });
 
 it('should not override viewport size when passed null', async function({ browserType, browserOptions, server, browserName }) {
