@@ -31,6 +31,9 @@ const it = playwrightTest.extend<GlobalFetchFixtures>({
   },
 });
 
+type PromiseArg<T> = T extends Promise<infer R> ? R : never;
+type StorageStateType = PromiseArg<ReturnType<FetchRequest['storageState']>>;
+
 it.skip(({ mode }) => mode !== 'default');
 
 let prevAgent: http.Agent;
@@ -209,7 +212,7 @@ it('should export cookies to storage state', async ({ request, server }) => {
 });
 
 it('should preserve local storage on import/export of storage state', async ({ playwright, server }) => {
-  const storageState = {
+  const storageState: StorageStateType = {
     cookies: [
       {
         'name': 'a',
@@ -241,7 +244,7 @@ it('should preserve local storage on import/export of storage state', async ({ p
 
 it('should send cookies from storage state', async ({ playwright, server }) => {
   const expires = new Date('12/31/2099 PST');
-  const storageState = {
+  const storageState: StorageStateType = {
     'cookies': [
       {
         'name': 'a',
@@ -285,7 +288,7 @@ it('should send cookies from storage state', async ({ playwright, server }) => {
 });
 
 it('storage state should round-trip through file', async ({ playwright, server }, testInfo) => {
-  const storageState = {
+  const storageState: StorageStateType = {
     'cookies': [
       {
         'name': 'a',
