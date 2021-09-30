@@ -197,6 +197,6 @@ test('should have error position in results', async ({
   });
   expect(result.exitCode).toBe(1);
   expect(result.report.suites[0].specs[0].file).toBe('a.test.js');
-  expect(result.report.suites[0].specs[0].tests[0].results[0].line).toBe(7);
-  expect(result.report.suites[0].specs[0].tests[0].results[0].column).toBe(23);
+  expect(result.report.suites[0].specs[0].tests[0].results[0].errorLocation.line).toBe(7);
+  expect(result.report.suites[0].specs[0].tests[0].results[0].errorLocation.column).toBe(23);
 });

@@ -76,8 +76,7 @@ export interface JSONReportTestResult {
     body?: string;
     contentType: string;
   }[];
-  line?: number;
-  column?: number;
+  errorLocation?: PositionInFile
 }
 export interface JSONReportTestStep {
   title: string;
@@ -231,15 +230,7 @@ class JSONReporter implements Reporter {
 
   private _serializeTestResult(result: TestResult, file: string): JSONReportTestResult {
     const steps = result.steps.filter(s => s.category === 'test.step');
-    let errorPosition: PositionInFile | undefined;
-    if (result.error?.stack){
-      const { position } = prepareErrorStack(
-          result.error.stack,
-          file
-      );
-      errorPosition = position;
-    }
-    return {
+    const jsonResult: JSONReportTestResult = {
       workerIndex: result.workerIndex,
       status: result.status,
       duration: result.duration,
@@ -254,8 +245,16 @@ class JSONReporter implements Reporter {
         path: a.path,
         body: a.body?.toString('base64')
       })),
-      ...errorPosition
     };
+    if (result.error?.stack) {
+      const { position } = prepareErrorStack(
+          result.error.stack,
+          file
+      );
+      if (position)
+        jsonResult.errorLocation = position;
+    }
+    return jsonResult;
   }
 
   private _serializeTestStep(step: TestStep): JSONReportTestStep {
