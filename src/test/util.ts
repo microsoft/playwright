@@ -158,7 +158,7 @@ export function addSuffixToFilePath(filePath: string, suffix: string, customExte
 export function getContainedPath(parentPath: string, subPath: string = ''): string | null {
   const resolvedPath = path.resolve(parentPath, subPath);
 
-  if (resolvedPath.startsWith(parentPath + path.sep)) return resolvedPath;
+  if (resolvedPath.startsWith(parentPath)) return resolvedPath;
 
   return null;
 }
