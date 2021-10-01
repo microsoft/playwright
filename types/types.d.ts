@@ -12683,9 +12683,9 @@ export interface FetchRequest {
    */
   fetch(urlOrRequest: string|Request, options?: {
     /**
-     * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string to json
-     * string and `content-type` header will be set to `application/json` if not explicitely set. Otherwise the `content-type`
-     * header will be set to `application/octet-stream` if not explicitely set.
+     * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string and
+     * `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type` header will
+     * be set to `application/octet-stream` if not explicitly set.
      */
     data?: string|Buffer|Serializable;
 
@@ -12697,7 +12697,7 @@ export interface FetchRequest {
     /**
      * Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent as
      * this request body. If this parameter is specified `content-type` header will be set to
-     * `application/x-www-form-urlencoded` unless explicitely provided.
+     * `application/x-www-form-urlencoded` unless explicitly provided.
      */
     form?: { [key: string]: string|number|boolean; };
 
@@ -12718,8 +12718,9 @@ export interface FetchRequest {
 
     /**
      * Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this request
-     * body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless explicitely
-     * provided.
+     * body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless explicitly
+     * provided. File values can be passed either as [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream)
+     * or as file-like object containing file name, mime-type and its content.
      */
     multipart?: { [key: string]: string|number|boolean|ReadStream|{
       /**
@@ -12790,9 +12791,9 @@ export interface FetchRequest {
    */
   post(urlOrRequest: string|Request, options?: {
     /**
-     * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string to json
-     * string and `content-type` header will be set to `application/json` if not explicitely set. Otherwise the `content-type`
-     * header will be set to `application/octet-stream` if not explicitely set.
+     * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string and
+     * `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type` header will
+     * be set to `application/octet-stream` if not explicitly set.
      */
     data?: string|Buffer|Serializable;
 
@@ -12804,7 +12805,7 @@ export interface FetchRequest {
     /**
      * Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent as
      * this request body. If this parameter is specified `content-type` header will be set to
-     * `application/x-www-form-urlencoded` unless explicitely provided.
+     * `application/x-www-form-urlencoded` unless explicitly provided.
      */
     form?: { [key: string]: string|number|boolean; };
 
@@ -12820,8 +12821,9 @@ export interface FetchRequest {
 
     /**
      * Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this request
-     * body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless explicitely
-     * provided.
+     * body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless explicitly
+     * provided. File values can be passed either as [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream)
+     * or as file-like object containing file name, mime-type and its content.
      */
     multipart?: { [key: string]: string|number|boolean|ReadStream|{
       /**

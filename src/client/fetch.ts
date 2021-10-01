@@ -81,7 +81,7 @@ export class FetchRequest extends ChannelOwner<channels.FetchRequestChannel, cha
     return this._wrapApiCall(async (channel: channels.FetchRequestChannel) => {
       const request: network.Request | undefined = (urlOrRequest instanceof network.Request) ? urlOrRequest as network.Request : undefined;
       assert(request || typeof urlOrRequest === 'string', 'First argument must be either URL string or Request');
-      assert((options.data ? 1 : 0) + (options.form ? 1 : 0) + (options.multipart ? 1 : 0) <= 1, `Only one of 'data', 'form' or 'multipart' can be specified`);
+      assert((options.data === undefined ? 0 : 1) + (options.form === undefined ? 0 : 1) + (options.multipart === undefined ? 0 : 1) <= 1, `Only one of 'data', 'form' or 'multipart' can be specified`);
       const url = request ? request.url() : urlOrRequest as string;
       const params = objectToArray(options.params);
       const method = options.method || request?.method();

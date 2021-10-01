@@ -467,7 +467,6 @@ function serializePostData(params: types.FetchOptions, headers: { [name: string]
     for (const [name, value] of Object.entries(params.formData))
       searchParams.append(name, String(value));
     headers['content-type'] ??= 'application/x-www-form-urlencoded';
-    console.log('set header: ' + headers['content-type']);
     return Buffer.from(searchParams.toString(), 'utf8');
   } else if (params.multipartData) {
     const formData = new MultipartFormData();
