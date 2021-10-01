@@ -15,6 +15,7 @@ These options define your test suite:
 - `metadata: any` - Any JSON-serializable metadata that will be put directly to the test report.
 - `name: string` - Project name, useful when defining multiple [test projects](#projects).
 - `outputDir: string` - Output directory for files created during the test run.
+- `snapshotDir: string` - Base output directory for snapshot files.
 - `repeatEach: number` - The number of times to repeat each test, useful for debugging flaky tests.
 - `retries: number` - The maximum number of retry attempts given to failed tests.
 - `testDir: string` - Directory that will be recursively scanned for test files.

@@ -488,12 +488,63 @@ test('should write missing expectations with sanitized snapshot name', async ({ 
   expect(data.toString()).toBe('Hello world');
 });
 
-test('should join array of snapshot path segments without sanitizing ', async ({ runInlineTest }) => {
+test('should join array of snapshot path segments without sanitizing', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js-snapshots/test/path/snapshot.txt': `Hello world`,
     'a.spec.js': `
-      const { test } = require('./helper');;
+      const { test } = require('./helper');
+      test('is a test', ({}) => {
+        expect('Hello world').toMatchSnapshot(['test', 'path', 'snapshot.txt']);
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
+
+test('should use snapshotDir as snapshot base directory', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...files,
+    'playwright.config.ts': `
+      module.exports = {
+        snapshotDir: 'snaps',
+      };
+    `,
+    'snaps/a.spec.js-snapshots/test/path/snapshot.txt': `Hello world`,
+    'tests/a.spec.js': `
+      const { test } = require('../helper');
+      test('is a test', ({}) => {
+        expect('Hello world').toMatchSnapshot(['test', 'path', 'snapshot.txt']);
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
+
+test('should use project snapshotDir over base snapshotDir', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'helper.ts': `
+      export const test = pwt.test.extend({
+        auto: [ async ({}, run, testInfo) => {
+          testInfo.snapshotSuffix = 'suffix';
+          await run();
+        }, { auto: true } ]
+      });
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          {
+            name: 'foo',
+            snapshotDir: 'project_snaps',
+           },
+        ],
+        snapshotDir: 'snaps',
+      };
+    `,
+    'project_snaps/a.spec.js-snapshots/test/path/snapshot-foo-suffix.txt': `Hello world`,
+    'a.spec.js': `
+      const { test } = require('./helper');
       test('is a test', ({}) => {
         expect('Hello world').toMatchSnapshot(['test', 'path', 'snapshot.txt']);
       });
