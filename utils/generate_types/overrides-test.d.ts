@@ -208,7 +208,7 @@ export interface TestInfo {
   stderr: (string | Buffer)[];
   snapshotSuffix: string;
   outputDir: string;
-  snapshotPath: (pathSegments: string[]) => string;
+  snapshotPath: (...pathSegments: string[]) => string;
   outputPath: (...pathSegments: string[]) => string;
 }
 
