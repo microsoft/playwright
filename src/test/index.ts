@@ -79,9 +79,9 @@ class ReuseBrowerContextStorage {
       }
       await page.unroute('**/*');
       await Promise.all(pages.slice(1).map(page => page.close()));
+      await page.goto('about:blank');
       await this._browserContext.clearCookies();
       await this._applyNewContextOptions(page, newContextOptions);
-      await page.goto('about:blank');
     } finally {
       this._pauseNavigationEventCollection = false;
     }
