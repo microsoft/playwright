@@ -23,7 +23,7 @@ import zlib from 'zlib';
 import { HTTPCredentials } from '../../types/types';
 import * as channels from '../protocol/channels';
 import { TimeoutSettings } from '../utils/timeoutSettings';
-import { assert, createGuid, getPlaywrightVersion, isFilePayload, monotonicTime } from '../utils/utils';
+import { assert, createGuid, getPlaywrightVersion, monotonicTime } from '../utils/utils';
 import { BrowserContext } from './browserContext';
 import { CookieStore, domainMatches } from './cookieStore';
 import { MultipartFormData } from './formData';
@@ -32,8 +32,7 @@ import { Playwright } from './playwright';
 import * as types from './types';
 import { HeadersArray, ProxySettings } from './types';
 
-
-export type FetchRequestOptions = {
+type FetchRequestOptions = {
   userAgent: string;
   extraHTTPHeaders?: HeadersArray;
   httpCredentials?: HTTPCredentials;
@@ -84,7 +83,7 @@ export abstract class FetchRequest extends SdkObject {
     return uid;
   }
 
-  async fetch(params: types.FetchOptions): Promise<{fetchResponse?: Omit<types.FetchResponse, 'body'> & { fetchUid: string }, error?: string}> {
+  async fetch(params: channels.FetchRequestFetchParams): Promise<{fetchResponse?: Omit<types.FetchResponse, 'body'> & { fetchUid: string }, error?: string}> {
     try {
       const headers: { [name: string]: string } = {};
       const defaults = this._defaultOptions();
@@ -98,7 +97,7 @@ export abstract class FetchRequest extends SdkObject {
       }
 
       if (params.headers) {
-        for (const [name, value] of Object.entries(params.headers))
+        for (const { name, value } of params.headers)
           headers[name.toLowerCase()] = value;
       }
 
@@ -130,7 +129,7 @@ export abstract class FetchRequest extends SdkObject {
 
       const requestUrl = new URL(params.url, defaults.baseURL);
       if (params.params) {
-        for (const [name, value] of Object.entries(params.params))
+        for (const { name, value } of params.params)
           requestUrl.searchParams.set(name, value);
       }
 
@@ -456,7 +455,7 @@ function parseCookie(header: string): types.NetworkCookie | null {
   return cookie;
 }
 
-function serializePostData(params: types.FetchOptions, headers: { [name: string]: string }): Buffer | undefined {
+function serializePostData(params: channels.FetchRequestFetchParams, headers: { [name: string]: string }): Buffer | undefined {
   assert((params.postData ? 1 : 0) + (params.jsonData ? 1 : 0) + (params.formData ? 1 : 0) + (params.multipartData ? 1 : 0) <= 1, `Only one of 'data', 'form' or 'multipart' can be specified`);
   if (params.jsonData) {
     const json = JSON.stringify(params.jsonData);
@@ -464,25 +463,23 @@ function serializePostData(params: types.FetchOptions, headers: { [name: string]
     return Buffer.from(json, 'utf8');
   } else if (params.formData) {
     const searchParams = new URLSearchParams();
-    for (const [name, value] of Object.entries(params.formData))
-      searchParams.append(name, String(value));
+    for (const { name, value } of params.formData)
+      searchParams.append(name, value);
     headers['content-type'] ??= 'application/x-www-form-urlencoded';
     return Buffer.from(searchParams.toString(), 'utf8');
   } else if (params.multipartData) {
     const formData = new MultipartFormData();
-    for (const [name, value] of Object.entries(params.multipartData)) {
-      if (isFilePayload(value)) {
-        const payload = value as types.FilePayload;
-        formData.addFileField(name, payload);
-      } else if (value !== undefined) {
-        formData.addField(name, String(value));
-      }
+    for (const field of params.multipartData) {
+      if (field.file)
+        formData.addFileField(field.name, field.file);
+      else if (field.value)
+        formData.addField(field.name, field.value);
     }
     headers['content-type'] ??= formData.contentTypeHeader();
     return formData.finish();
   } else if (params.postData) {
     headers['content-type'] ??= 'application/octet-stream';
-    return params.postData;
+    return Buffer.from(params.postData, 'base64');
   }
   return undefined;
 }

@@ -214,6 +214,17 @@ SerializedError:
         stack: string?
     value: SerializedValue?
 
+FormField:
+  type: object
+  properties:
+    name: string
+    value: string?
+    file:
+      type: object?
+      properties:
+        name: string
+        mimeType: string
+        buffer: binary
 
 InterceptedResponse:
   type: object
@@ -243,8 +254,12 @@ FetchRequest:
           items: NameValue
         postData: binary?
         jsonData: json?
-        formData: json?
-        multipartData: json?
+        formData:
+          type: array?
+          items: NameValue
+        multipartData:
+          type: array?
+          items: FormField
         timeout: number?
         failOnStatusCode: boolean?
         ignoreHTTPSErrors: boolean?

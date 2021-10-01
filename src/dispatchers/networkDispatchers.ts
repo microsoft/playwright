@@ -186,12 +186,7 @@ export class FetchRequestDispatcher extends Dispatcher<FetchRequest, channels.Fe
   }
 
   async fetch(params: channels.FetchRequestFetchParams, metadata?: channels.Metadata): Promise<channels.FetchRequestFetchResult> {
-    const { fetchResponse, error } = await this._object.fetch({
-      ...params,
-      params: arrayToObject(params.params),
-      headers: params.headers ? headersArrayToObject(params.headers, false) : undefined,
-      postData: params.postData ? Buffer.from(params.postData, 'base64') : undefined,
-    });
+    const { fetchResponse, error } = await this._object.fetch(params);
     let response;
     if (fetchResponse) {
       response = {

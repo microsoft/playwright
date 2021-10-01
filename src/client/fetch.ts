@@ -27,6 +27,7 @@ import { ChannelOwner } from './channelOwner';
 import * as network from './network';
 import { RawHeaders } from './network';
 import { FilePayload, Headers, StorageState } from './types';
+import { NameValueList } from '../server/types';
 
 export type FetchOptions = {
   params?: { [key: string]: string; },
@@ -89,8 +90,8 @@ export class FetchRequest extends ChannelOwner<channels.FetchRequestChannel, cha
       const headersObj = options.headers || request?.headers() ;
       const headers = headersObj ? headersObjectToArray(headersObj) : undefined;
       let jsonData: any;
-      let formData: any;
-      let multipartData: any;
+      let formData: NameValueList | undefined;
+      let multipartData: channels.FormField[] | undefined;
       let postDataBuffer: Buffer | undefined;
       if (options.data !== undefined) {
         if (isString(options.data))
@@ -102,20 +103,20 @@ export class FetchRequest extends ChannelOwner<channels.FetchRequestChannel, cha
         else
           throw new Error(`Unexpected 'data' type`);
       } else if (options.form) {
-        formData = options.form;
+        formData = objectToArray(options.form);
       } else if (options.multipart) {
-        multipartData = {};
+        multipartData = [];
         // Convert file-like values to ServerFilePayload structs.
         for (const [name, value] of Object.entries(options.multipart)) {
           if (isFilePayload(value)) {
             const payload = value as FilePayload;
             if (!Buffer.isBuffer(payload.buffer))
               throw new Error(`Unexpected buffer type of 'data.${name}'`);
-            multipartData[name] = filePayloadToJson(payload);
+            multipartData.push({ name, file: filePayloadToJson(payload) });
           } else if (value instanceof fs.ReadStream) {
-            multipartData[name] = await readStreamToJson(value as fs.ReadStream);
+            multipartData.push({ name, file: await readStreamToJson(value as fs.ReadStream) });
           } else {
-            multipartData[name] = value;
+            multipartData.push({ name, value: String(value) });
           }
         }
       }

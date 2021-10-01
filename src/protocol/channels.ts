@@ -150,6 +150,16 @@ export type SerializedError = {
   value?: SerializedValue,
 };
 
+export type FormField = {
+  name: string,
+  value?: string,
+  file?: {
+    name: string,
+    mimeType: string,
+    buffer: Binary,
+  },
+};
+
 export type InterceptedResponse = {
   request: RequestChannel,
   status: number,
@@ -173,8 +183,8 @@ export type FetchRequestFetchParams = {
   headers?: NameValue[],
   postData?: Binary,
   jsonData?: any,
-  formData?: any,
-  multipartData?: any,
+  formData?: NameValue[],
+  multipartData?: FormField[],
   timeout?: number,
   failOnStatusCode?: boolean,
   ignoreHTTPSErrors?: boolean,
@@ -185,8 +195,8 @@ export type FetchRequestFetchOptions = {
   headers?: NameValue[],
   postData?: Binary,
   jsonData?: any,
-  formData?: any,
-  multipartData?: any,
+  formData?: NameValue[],
+  multipartData?: FormField[],
   timeout?: number,
   failOnStatusCode?: boolean,
   ignoreHTTPSErrors?: boolean,
