@@ -356,7 +356,7 @@ export async function removeFolders(dirs: string[]): Promise<Array<Error|undefin
   return await Promise.all(dirs.map((dir: string) => {
     return new Promise<Error|undefined>(fulfill => {
       removeFolder(dir, { maxBusyTries: 10 }, error => {
-        fulfill(error);
+        fulfill(error ?? undefined);
       });
     });
   }));
