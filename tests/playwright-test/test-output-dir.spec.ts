@@ -18,7 +18,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { test, expect } from './playwright-test-fixtures';
 
-test('should work and remove non-failures', async ({ runInlineTest }, testInfo) => {
+test.only('should work and remove non-failures', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
@@ -167,7 +167,7 @@ test('should include the project name', async ({ runInlineTest }) => {
       });
       test2('test 2', async ({}, testInfo) => {
         console.log(testInfo.outputPath('bar.txt').replace(/\\\\/g, '/'));
-        console.log(testInfo.snapshotPath(bar.txt').replace(/\\\\/g, ''));
+        console.log(testInfo.snapshotPath('bar.txt').replace(/\\\\/g, ''));
       });
     `,
   }, { retries: 1 });
