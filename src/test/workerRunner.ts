@@ -231,8 +231,8 @@ export class WorkerRunner extends EventEmitter {
     })();
 
     const snapshotDir = (() => {
-      const testFileName = path.basename(test._requireFile) + '-snapshots';
-      return path.join(this._project.config.snapshotDir, testFileName);
+      const relativeTestFilePath = path.relative(this._project.config.testDir, test._requireFile);
+      return path.join(this._project.config.snapshotDir, relativeTestFilePath + '-snapshots');
     })();
 
     let testFinishedCallback = () => {};

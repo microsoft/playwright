@@ -510,6 +510,27 @@ test('should use snapshotDir as snapshot base directory', async ({ runInlineTest
         snapshotDir: 'snaps',
       };
     `,
+    'snaps/a.spec.js-snapshots/snapshot.txt': `Hello world`,
+    'a.spec.js': `
+      const { test } = require('./helper');
+      test('is a test', ({}) => {
+        expect('Hello world').toMatchSnapshot('snapshot.txt');
+      });
+    `
+  });
+  console.log(result.output);
+
+  expect(result.exitCode).toBe(0);
+});
+
+test('should use snapshotDir with path segments as snapshot directory', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...files,
+    'playwright.config.ts': `
+      module.exports = {
+        snapshotDir: 'snaps',
+      };
+    `,
     'snaps/a.spec.js-snapshots/test/path/snapshot.txt': `Hello world`,
     'tests/a.spec.js': `
       const { test } = require('../helper');
@@ -518,6 +539,27 @@ test('should use snapshotDir as snapshot base directory', async ({ runInlineTest
       });
     `
   });
+  expect(result.exitCode).toBe(0);
+});
+
+test('should use snapshotDir with nested test suite and path segments', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...files,
+    'playwright.config.ts': `
+      module.exports = {
+        snapshotDir: 'snaps',
+      };
+    `,
+    'snaps/path/to/tests/a.spec.js-snapshots/path/to/snapshot.txt': `Hello world`,
+    'path/to/tests/a.spec.js': `
+      const { test } = require('../../../helper');
+      test('is a test', ({}) => {
+        expect('Hello world').toMatchSnapshot(['path', 'to', 'snapshot.txt']);
+      });
+    `
+  });
+  console.log(result.output);
+
   expect(result.exitCode).toBe(0);
 });
 
