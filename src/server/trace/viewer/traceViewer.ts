@@ -29,7 +29,7 @@ import { isUnderTest, download } from '../../../utils/utils';
 import { internalCallMetadata } from '../../instrumentation';
 import { ProgressController } from '../../progress';
 import { BrowserContext } from '../../browserContext';
-import { registry } from '../../../utils/registry';
+import { findChromiumChannel } from '../../../utils/registry';
 import { installAppIcon } from '../../chromium/crApp';
 import { debugLogger } from '../../../utils/debugLogger';
 
@@ -134,32 +134,9 @@ export class TraceViewer {
     if (isUnderTest())
       args.push(`--remote-debugging-port=0`);
 
-    // For Chromium, fall back to the stable channels of popular vendors for work out of the box.
-    // Null means no installation and no channels found.
-    let channel = null;
-    if (traceViewerBrowser === 'chromium') {
-      for (const name of ['chromium', 'chrome', 'msedge']) {
-        try {
-          registry.findExecutable(name)!.executablePathOrDie(traceViewerPlaywright.options.sdkLanguage);
-          channel = name === 'chromium' ? undefined : name;
-          break;
-        } catch (e) {
-        }
-      }
-
-      if (channel === null) {
-        // TODO: language-specific error message, or fallback to default error.
-        throw new Error(`
-==================================================================
-Please run 'npx playwright install' to install Playwright browsers
-==================================================================
-`);
-      }
-    }
-
     const context = await traceViewerPlaywright[traceViewerBrowser as 'chromium'].launchPersistentContext(internalCallMetadata(), '', {
       // TODO: store language in the trace.
-      channel: channel as any,
+      channel: findChromiumChannel(traceViewerPlaywright.options.sdkLanguage),
       args,
       noDefaultViewport: true,
       headless,
