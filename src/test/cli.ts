@@ -16,7 +16,7 @@
 
 /* eslint-disable no-console */
 
-import commander from 'commander';
+import { Command } from 'commander';
 import fs from 'fs';
 import path from 'path';
 import type { Config } from './types';
@@ -39,7 +39,7 @@ const defaultConfig: Config = {
   workers: Math.ceil(require('os').cpus().length / 2),
 };
 
-export function addTestCommand(program: commander.CommanderStatic) {
+export function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
   command.description('Run tests with Playwright Test');
   command.option('--browser <browser>', `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")`);
@@ -71,16 +71,14 @@ export function addTestCommand(program: commander.CommanderStatic) {
       process.exit(1);
     }
   });
-  command.on('--help', () => {
-    console.log('');
-    console.log('Arguments [test-filter...]:');
-    console.log('  Pass arguments to filter test files. Each argument is treated as a regular expression.');
-    console.log('');
-    console.log('Examples:');
-    console.log('  $ test my.spec.ts');
-    console.log('  $ test --headed');
-    console.log('  $ test --browser=webkit');
-  });
+  command.addHelpText('afterAll', `
+Arguments [test-filter...]:
+  Pass arguments to filter test files. Each argument is treated as a regular expression.
+
+Examples:
+  $ test my.spec.ts
+  $ test --headed
+  $ test --browser=webkit`);
 }
 
 async function createLoader(opts: { [key: string]: any }): Promise<Loader> {

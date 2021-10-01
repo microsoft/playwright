@@ -240,6 +240,13 @@ obtained via [`method: BrowserContext.storageState`].
 Populates context with given storage state. This option can be used to initialize context with logged-in information
 obtained via [`method: BrowserContext.storageState`]. Path to the file with saved storage state.
 
+## storagestate-option-path
+- `path` <[path]>
+
+The file path to save the storage state to. If [`option: path`] is a relative path, then it is resolved relative to
+current working directory. If no path is provided, storage
+state is still returned, but won't be saved to the disk.
+
 ## context-option-acceptdownloads
 - `acceptDownloads` <[boolean]>
 

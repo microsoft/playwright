@@ -231,11 +231,11 @@ export class Route extends SdkObject {
         const context = this._request.frame()._page._browserContext;
         const buffer = context.fetchRequest.fetchResponses.get(overrides.fetchResponseUid) || FetchRequest.findResponseBody(overrides.fetchResponseUid);
         assert(buffer, 'Fetch response has been disposed');
-        body = buffer.toString('utf8');
-        isBase64 = false;
+        body = buffer.toString('base64');
+        isBase64 = true;
       } else if (this._response && overrides.useInterceptedResponseBody) {
-        body = (await this._delegate.responseBody()).toString('utf8');
-        isBase64 = false;
+        body = (await this._delegate.responseBody()).toString('base64');
+        isBase64 = true;
       } else {
         body = '';
         isBase64 = false;

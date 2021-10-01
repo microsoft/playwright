@@ -1170,12 +1170,7 @@ Returns storage state for this browser context, contains current cookies and loc
 * langs: csharp, java
 - returns: <[string]>
 
-### option: BrowserContext.storageState.path
-- `path` <[path]>
-
-The file path to save the storage state to. If [`option: path`] is a relative path, then it is resolved relative to
-current working directory. If no path is provided, storage
-state is still returned, but won't be saved to the disk.
+### option: BrowserContext.storageState.path = %%-storagestate-option-path-%%
 
 ## property: BrowserContext.tracing
 - type: <[Tracing]>

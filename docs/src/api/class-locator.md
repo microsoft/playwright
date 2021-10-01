@@ -977,3 +977,38 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.uncheck.noWaitAfter = %%-input-no-wait-after-%%
 ### option: Locator.uncheck.timeout = %%-input-timeout-%%
 ### option: Locator.uncheck.trial = %%-input-trial-%%
+
+## async method: Locator.waitFor
+
+Returns when element specified by locator satisfies the [`option: state`] option.
+
+If target element already satisfies the condition, the method returns immediately. Otherwise, waits for up to
+[`option: timeout`] milliseconds until the condition is met.
+
+```js
+const orderSent = page.locator('#order-sent');
+await orderSent.waitFor();
+```
+
+```java
+Locator orderSent = page.locator("#order-sent");
+orderSent.waitFor();
+```
+
+```python async
+order_sent = page.locator("#order-sent")
+await order_sent.wait_for()
+```
+
+```python sync
+order_sent = page.locator("#order-sent")
+order_sent.wait_for()
+```
+
+```csharp
+var orderSent = page.Locator("#order-sent");
+orderSent.WaitForAsync();
+```
+
+### option: Locator.waitFor.state = %%-wait-for-selector-state-%%
+### option: Locator.waitFor.timeout = %%-input-timeout-%%

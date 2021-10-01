@@ -141,14 +141,20 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   }
 
   _onRoute(route: network.Route, request: network.Request) {
+    let handled = false;
     for (const routeHandler of this._routes) {
       if (routeHandler.matches(request.url())) {
         routeHandler.handle(route, request);
-        return;
+        handled = true;
+        break;
       }
     }
-    // it can race with BrowserContext.close() which then throws since its closed
-    route.continue().catch(() => {});
+    if (!handled) {
+      // it can race with BrowserContext.close() which then throws since its closed
+      route.continue().catch(() => {});
+    } else {
+      this._routes = this._routes.filter(route => !route.expired());
+    }
   }
 
   async _onBinding(bindingCall: BindingCall) {
