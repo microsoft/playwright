@@ -27,7 +27,6 @@ import { ChannelOwner } from './channelOwner';
 import * as network from './network';
 import { RawHeaders } from './network';
 import { FilePayload, Headers, StorageState } from './types';
-import { NameValueList } from '../server/types';
 
 export type FetchOptions = {
   params?: { [key: string]: string; },
@@ -90,7 +89,7 @@ export class FetchRequest extends ChannelOwner<channels.FetchRequestChannel, cha
       const headersObj = options.headers || request?.headers() ;
       const headers = headersObj ? headersObjectToArray(headersObj) : undefined;
       let jsonData: any;
-      let formData: NameValueList | undefined;
+      let formData: channels.NameValue[] | undefined;
       let multipartData: channels.FormField[] | undefined;
       let postDataBuffer: Buffer | undefined;
       if (options.data !== undefined) {
