@@ -105,6 +105,7 @@ test.beforeAll(async function recordTrace({ browser, browserName, browserType, s
   const page = await context.newPage();
   await page.goto('data:text/html,<html>Hello world</html>');
   await page.setContent('<button>Click</button>');
+  await expect(page.locator('button')).toHaveText('Click');
   await page.evaluate(({ a }) => {
     console.log('Info');
     console.warn('Warning');
@@ -158,6 +159,7 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
   await expect(traceViewer.actionTitles).toHaveText([
     /page.gotodata:text\/html,<html>Hello world<\/html>— [\d.ms]+/,
     /page.setContent— [\d.ms]+/,
+    /expect.toHaveTextbutton— [\d.ms]+/,
     /page.evaluate— [\d.ms]+/,
     /page.click"Click"— [\d.ms]+/,
     /page.waitForEvent— [\d.ms]+/,

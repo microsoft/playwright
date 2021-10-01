@@ -26,27 +26,23 @@ const stackUtils = new StackUtils();
 
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
 export const kOutputSymbol = Symbol('output');
-
-export type Position = {
-  column: number;
-  line: number;
-};
+export type PositionInFile = { column: number; line: number };
 
 type Annotation = {
   filePath: string;
   title: string;
   message: string;
-  position?: Position;
+  position?: PositionInFile;
 };
 
 type FailureDetails = {
   tokens: string[];
-  position?: Position;
+  position?: PositionInFile;
 };
 
 type ErrorDetails = {
   message: string;
-  position?: Position;
+  position?: PositionInFile;
 };
 
 type TestSummary = {
@@ -325,34 +321,30 @@ function formatTestHeader(config: FullConfig, test: TestCase, indent: string, in
 
 export function formatError(error: TestError, file?: string): ErrorDetails {
   const stack = error.stack;
-  const tokens = [];
-  let position: Position | undefined;
-
+  const tokens = [''];
+  let positionInFile: PositionInFile | undefined;
   if (stack) {
-    tokens.push('');
-    const lines = stack.split('\n');
-    let firstStackLine = lines.findIndex(line => line.startsWith('    at '));
-    if (firstStackLine === -1)
-      firstStackLine = lines.length;
-    tokens.push(lines.slice(0, firstStackLine).join('\n'));
-    const stackLines = lines.slice(firstStackLine);
-    position = file ? positionInFile(stackLines, file) : undefined;
-    if (position) {
-      const source = fs.readFileSync(file!, 'utf8');
+    const { message, stackLines, position } = prepareErrorStack(
+        stack,
+        file
+    );
+    positionInFile = position;
+    tokens.push(message);
+
+    const codeFrame = generateCodeFrame(file, position);
+    if (codeFrame) {
       tokens.push('');
-      tokens.push(codeFrameColumns(source, { start: position }, { highlightCode: colors.enabled }));
+      tokens.push(codeFrame);
     }
     tokens.push('');
     tokens.push(colors.dim(stackLines.join('\n')));
   } else if (error.message) {
-    tokens.push('');
     tokens.push(error.message);
-  } else {
-    tokens.push('');
+  } else if (error.value) {
     tokens.push(error.value);
   }
   return {
-    position,
+    position: positionInFile,
     message: tokens.join('\n'),
   };
 }
@@ -367,7 +359,39 @@ function indent(lines: string, tab: string) {
   return lines.replace(/^(?=.+$)/gm, tab);
 }
 
-function positionInFile(stackLines: string[], file: string): Position | undefined {
+function generateCodeFrame(file?: string, position?: PositionInFile): string | undefined {
+  if (!position || !file)
+    return;
+
+  const source = fs.readFileSync(file!, 'utf8');
+  const codeFrame = codeFrameColumns(
+      source,
+      { start: position },
+      { highlightCode: colors.enabled }
+  );
+
+  return codeFrame;
+}
+
+export function prepareErrorStack(stack: string, file?: string): {
+  message: string;
+  stackLines: string[];
+  position?: PositionInFile;
+} {
+  const lines = stack.split('\n');
+  let firstStackLine = lines.findIndex(line => line.startsWith('    at '));
+  if (firstStackLine === -1) firstStackLine = lines.length;
+  const message = lines.slice(0, firstStackLine).join('\n');
+  const stackLines = lines.slice(firstStackLine);
+  const position = file ? positionInFile(stackLines, file) : undefined;
+  return {
+    message,
+    stackLines,
+    position,
+  };
+}
+
+function positionInFile(stackLines: string[], file: string): PositionInFile | undefined {
   // Stack will have /private/var/folders instead of /var/folders on Mac.
   file = fs.realpathSync(file);
   for (const line of stackLines) {

@@ -46,7 +46,7 @@ export function toMatchSnapshot(this: ReturnType<Expect['getState']>, received: 
       options.name,
       testInfo.snapshotPath,
       testInfo.outputPath,
-      testInfo.config.updateSnapshots,
+      testInfo.retry < testInfo.project.retries ? 'none' : testInfo.config.updateSnapshots,
       withNegateComparison,
       options
   );

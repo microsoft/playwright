@@ -162,10 +162,12 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     formData: tOptional(tAny),
     timeout: tOptional(tNumber),
     failOnStatusCode: tOptional(tBoolean),
+    ignoreHTTPSErrors: tOptional(tBoolean),
   });
   scheme.FetchRequestFetchResponseBodyParams = tObject({
     fetchUid: tString,
   });
+  scheme.FetchRequestStorageStateParams = tOptional(tObject({}));
   scheme.FetchRequestDisposeFetchResponseParams = tObject({
     fetchUid: tString,
   });
@@ -216,6 +218,10 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       password: tOptional(tString),
     })),
     timeout: tOptional(tNumber),
+    storageState: tOptional(tObject({
+      cookies: tArray(tType('NetworkCookie')),
+      origins: tArray(tType('OriginStorage')),
+    })),
   });
   scheme.SelectorsRegisterParams = tObject({
     name: tString,
@@ -881,6 +887,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     strict: tOptional(tBoolean),
     timeout: tOptional(tNumber),
     state: tOptional(tEnum(['attached', 'detached', 'visible', 'hidden'])),
+    omitReturnValue: tOptional(tBoolean),
   });
   scheme.FrameExpectParams = tObject({
     selector: tString,

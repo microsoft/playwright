@@ -626,15 +626,18 @@ export class RouteHandler {
     this.handler = handler;
   }
 
+  public expired(): boolean {
+    return !!this._times && this.handledCount >= this._times;
+  }
+
   public matches(requestURL: string): boolean {
-    if (this._times && this.handledCount >= this._times)
-      return false;
     return urlMatches(this._baseURL, requestURL, this.url);
   }
 
   public handle(route: Route, request: Request) {
     this.handler(route, request);
-    this.handledCount++;
+    if (this._times)
+      this.handledCount++;
   }
 }
 

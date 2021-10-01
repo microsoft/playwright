@@ -58,14 +58,80 @@ it('should work cross-process', async ({ page, server }) => {
   expect(response.url()).toBe(url);
 });
 
+it('should work with cross-process that fails before committing', async ({ page, server }) => {
+  server.setRoute('/empty.html', (req, res) => {
+    req.socket.destroy();
+  });
+  const response1 = await page.goto(server.CROSS_PROCESS_PREFIX + '/title.html');
+  await response1.finished();
+  const error = await page.goto(server.EMPTY_PAGE).catch(e => e);
+  expect(error instanceof Error).toBeTruthy();
+});
+
 it('should work with Cross-Origin-Opener-Policy', async ({ page, server, browserName }) => {
-  it.fail(browserName === 'webkit', 'Regressed in https://trac.webkit.org/changeset/281516/webkit');
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
     res.end();
   });
-  await page.goto(server.EMPTY_PAGE);
+  const requests = new Set();
+  const events = [];
+  page.on('request', r => {
+    events.push('request');
+    requests.add(r);
+  });
+  page.on('requestfailed', r => {
+    events.push('requestfailed');
+    requests.add(r);
+  });
+  page.on('requestfinished', r => {
+    events.push('requestfinished');
+    requests.add(r);
+  });
+  page.on('response', r => {
+    events.push('response');
+    requests.add(r.request());
+  });
+  const response = await page.goto(server.EMPTY_PAGE);
   expect(page.url()).toBe(server.EMPTY_PAGE);
+  await response.finished();
+  expect(events).toEqual(['request', 'response', 'requestfinished']);
+  expect(requests.size).toBe(1);
+  expect(response.request().failure()).toBeNull();
+});
+
+it('should work with Cross-Origin-Opener-Policy after redirect', async ({ page, server, browserName }) => {
+  server.setRedirect('/redirect', '/empty.html');
+  server.setRoute('/empty.html', (req, res) => {
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+    res.end();
+  });
+  const requests = new Set();
+  const events = [];
+  page.on('request', r => {
+    events.push('request');
+    requests.add(r);
+  });
+  page.on('requestfailed', r => {
+    events.push('requestfailed');
+    requests.add(r);
+  });
+  page.on('requestfinished', r => {
+    events.push('requestfinished');
+    requests.add(r);
+  });
+  page.on('response', r => {
+    events.push('response');
+    requests.add(r.request());
+  });
+  const response = await page.goto(server.PREFIX + '/redirect');
+  expect(page.url()).toBe(server.EMPTY_PAGE);
+  await response.finished();
+  expect(events).toEqual(['request', 'response', 'requestfinished', 'request', 'response', 'requestfinished']);
+  expect(requests.size).toBe(2);
+  expect(response.request().failure()).toBeNull();
+  const firstRequest = response.request().redirectedFrom();
+  expect(firstRequest).toBeTruthy();
+  expect(firstRequest.url()).toBe(server.PREFIX + '/redirect');
 });
 
 it('should capture iframe navigation request', async ({ page, server }) => {

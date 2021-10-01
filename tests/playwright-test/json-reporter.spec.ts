@@ -183,3 +183,20 @@ test('should have relative always-posix paths', async ({ runInlineTest }) => {
   expect(result.report.suites[0].specs[0].line).toBe(6);
   expect(result.report.suites[0].specs[0].column).toBe(7);
 });
+
+test('should have error position in results', async ({
+  runInlineTest,
+}) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('math works!', async ({}) => {
+        expect(1 + 1).toBe(3);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.report.suites[0].specs[0].file).toBe('a.test.js');
+  expect(result.report.suites[0].specs[0].tests[0].results[0].errorLocation.line).toBe(7);
+  expect(result.report.suites[0].specs[0].tests[0].results[0].errorLocation.column).toBe(23);
+});

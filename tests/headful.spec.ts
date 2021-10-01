@@ -107,6 +107,42 @@ it('should(not) block third party cookies', async ({ browserType, browserOptions
   await browser.close();
 });
 
+it('should not block third party SameSite=None cookies', async ({ browserOptions, httpsServer, browserName, browserType }) => {
+  it.skip(browserName === 'webkit', 'No third party cookies in WebKit');
+  const browser = await browserType.launch({ ...browserOptions, headless: false });
+  const page = await browser.newPage({
+    ignoreHTTPSErrors: true,
+  });
+
+  httpsServer.setRoute('/empty.html', (req, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'text/html'
+    });
+    res.end(`<iframe src="${httpsServer.CROSS_PROCESS_PREFIX}/grid.html"></iframe>`);
+  });
+
+  httpsServer.setRoute('/grid.html', (req, res) => {
+    res.writeHead(200, {
+      'Set-Cookie': ['a=b; Path=/; Max-Age=3600; SameSite=None; Secure'],
+      'Content-Type': 'text/html'
+    });
+    res.end(`Hello world
+    <script>
+    setTimeout(() => fetch('/json'), 1000);
+    </script>`);
+  });
+
+  const cookie = new Promise(f => {
+    httpsServer.setRoute('/json', (req, res) => {
+      f(req.headers.cookie);
+      res.end();
+    });
+  });
+
+  await page.goto(httpsServer.EMPTY_PAGE);
+  expect(await cookie).toBe('a=b');
+});
+
 it('should not override viewport size when passed null', async function({ browserType, browserOptions, server, browserName }) {
   it.fixme(browserName === 'webkit');
 

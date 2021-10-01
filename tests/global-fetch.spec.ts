@@ -15,6 +15,7 @@
  */
 
 import http from 'http';
+import { getPlaywrightVersion } from '../lib/utils/utils';
 import { expect, playwrightTest as it } from './config/browserTest';
 
 it.skip(({ mode }) => mode !== 'default');
@@ -143,3 +144,11 @@ it('should resolve url relative to gobal baseURL option', async ({ playwright, s
   expect(response.url()).toBe(server.EMPTY_PAGE);
 });
 
+it('should set playwright as user-agent', async ({ playwright, server }) => {
+  const request = await playwright._newRequest();
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    request.get(server.EMPTY_PAGE)
+  ]);
+  expect(serverRequest.headers['user-agent']).toBe('Playwright/' + getPlaywrightVersion());
+});

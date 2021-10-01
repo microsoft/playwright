@@ -163,7 +163,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async storageState(params: channels.BrowserContextStorageStateParams, metadata: CallMetadata): Promise<channels.BrowserContextStorageStateResult> {
-    return await this._context.storageState(metadata);
+    return await this._context.storageState();
   }
 
   async close(params: channels.BrowserContextCloseParams, metadata: CallMetadata): Promise<void> {

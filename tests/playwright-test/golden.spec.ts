@@ -562,3 +562,24 @@ test('should attach expected/actual and no diff', async ({ runInlineTest }, test
   ]);
 });
 
+test('should fail with missing expectations and retries', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    ...files,
+    'playwright.config.ts': `
+      module.exports = { retries: 1 };
+    `,
+    'a.spec.js': `
+      const { test } = require('./helper');
+      test('is a test', ({}) => {
+        expect('Hello world').toMatchSnapshot('snapshot.txt');
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  const snapshotOutputPath = testInfo.outputPath('a.spec.js-snapshots/snapshot.txt');
+  expect(result.output).toContain(`${snapshotOutputPath} is missing in snapshots, writing actual`);
+  const data = fs.readFileSync(snapshotOutputPath);
+  expect(data.toString()).toBe('Hello world');
+});

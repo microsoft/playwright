@@ -245,6 +245,7 @@ FetchRequest:
         formData: json?
         timeout: number?
         failOnStatusCode: boolean?
+        ignoreHTTPSErrors: boolean?
       returns:
         response: FetchResponse?
         error: string?
@@ -254,6 +255,15 @@ FetchRequest:
         fetchUid: string
       returns:
         binary?: binary
+
+    storageState:
+      returns:
+        cookies:
+          type: array
+          items: NetworkCookie
+        origins:
+          type: array
+          items: OriginStorage
 
     disposeFetchResponse:
       parameters:
@@ -483,6 +493,15 @@ Playwright:
             username: string?
             password: string?
         timeout: number?
+        storageState:
+          type: object?
+          properties:
+            cookies:
+              type: array
+              items: NetworkCookie
+            origins:
+              type: array
+              items: OriginStorage
 
       returns:
         request: FetchRequest
@@ -1746,6 +1765,7 @@ Frame:
           - detached
           - visible
           - hidden
+        omitReturnValue: boolean?
       returns:
         element: ElementHandle?
       tracing:

@@ -20,8 +20,8 @@ import { Playwright } from './client/playwright';
 import * as childProcess from 'child_process';
 import * as path from 'path';
 
-export async function start() {
-  const client = new PlaywrightClient();
+export async function start(env: any = {}) {
+  const client = new PlaywrightClient(env);
   const playwright = await client._playwright;
   (playwright as any).stop = () => client.stop();
   (playwright as any).driverProcess = client._driverProcess;
@@ -34,7 +34,7 @@ class PlaywrightClient {
   private _closePromise: Promise<void>;
   private _onExit: (exitCode: number | null, signal: string | null) => {};
 
-  constructor() {
+  constructor(env: any) {
     this._onExit = (exitCode: number | null, signal: string | null) => {
       throw new Error(`Server closed with exitCode=${exitCode} signal=${signal}`);
     };
@@ -42,6 +42,10 @@ class PlaywrightClient {
     this._driverProcess = childProcess.fork(path.join(__dirname, 'cli', 'cli.js'), ['run-driver'], {
       stdio: 'pipe',
       detached: true,
+      env: {
+        ...process.env,
+        ...env
+      },
     });
     this._driverProcess.unref();
     this._driverProcess.on('exit', this._onExit);
