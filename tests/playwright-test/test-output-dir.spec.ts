@@ -167,7 +167,7 @@ test('should include the project name', async ({ runInlineTest }) => {
       });
       test2('test 2', async ({}, testInfo) => {
         console.log(testInfo.outputPath('bar.txt').replace(/\\\\/g, '/'));
-        console.log(testInfo.snapshotPath('bar.txt').replace(/\\\\/g, ''));
+        console.log(testInfo.snapshotPath('bar.txt').replace(/\\\\/g, '/'));
       });
     `,
   }, { retries: 1 });

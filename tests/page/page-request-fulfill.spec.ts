@@ -217,7 +217,7 @@ it('should fulfill with fetch result', async ({ page, server, isElectron }) => {
   expect(await response.json()).toEqual({ 'foo': 'bar' });
 });
 
-it.only('should fulfill with fetch result and overrides', async ({ page, server, isElectron }) => {
+it('should fulfill with fetch result and overrides', async ({ page, server, isElectron }) => {
   it.fixme(isElectron, 'error: Browser context management is not supported.');
   await page.route('**/*', async route => {
     const response = await page._request.get(server.PREFIX + '/simple.json');
