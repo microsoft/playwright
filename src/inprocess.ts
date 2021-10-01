@@ -14,38 +14,6 @@
  * limitations under the License.
  */
 
-import { DispatcherConnection, Root } from './dispatchers/dispatcher';
-import { createPlaywright } from './server/playwright';
-import type { Playwright as PlaywrightAPI } from './client/playwright';
-import { PlaywrightDispatcher } from './dispatchers/playwrightDispatcher';
-import { Connection } from './client/connection';
-import { BrowserServerLauncherImpl } from './browserServerImpl';
+import { createInProcessPlaywright } from './inProcessFactory';
 
-function setupInProcess(): PlaywrightAPI {
-  const playwright = createPlaywright('javascript');
-
-  const clientConnection = new Connection();
-  const dispatcherConnection = new DispatcherConnection();
-
-  // Dispatch synchronously at first.
-  dispatcherConnection.onmessage = message => clientConnection.dispatch(message);
-  clientConnection.onmessage = message => dispatcherConnection.dispatch(message);
-
-  const rootScope = new Root(dispatcherConnection);
-
-  // Initialize Playwright channel.
-  new PlaywrightDispatcher(rootScope, playwright);
-  const playwrightAPI = clientConnection.getObjectWithKnownName('Playwright') as PlaywrightAPI;
-  playwrightAPI.chromium._serverLauncher = new BrowserServerLauncherImpl('chromium');
-  playwrightAPI.firefox._serverLauncher = new BrowserServerLauncherImpl('firefox');
-  playwrightAPI.webkit._serverLauncher = new BrowserServerLauncherImpl('webkit');
-
-  // Switch to async dispatch after we got Playwright object.
-  dispatcherConnection.onmessage = message => setImmediate(() => clientConnection.dispatch(message));
-  clientConnection.onmessage = message => setImmediate(() => dispatcherConnection.dispatch(message));
-
-  (playwrightAPI as any)._toImpl = (x: any) => dispatcherConnection._dispatchers.get(x._guid)!._object;
-  return playwrightAPI;
-}
-
-module.exports = setupInProcess();
+module.exports = createInProcessPlaywright();
