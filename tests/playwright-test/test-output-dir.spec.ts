@@ -18,7 +18,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { test, expect } from './playwright-test-fixtures';
 
-test.only('should work and remove non-failures', async ({ runInlineTest }, testInfo) => {
+test('should work and remove non-failures', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
