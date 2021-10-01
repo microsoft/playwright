@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-import { Request, Response, Route, WebSocket } from '../server/network';
 import * as channels from '../protocol/channels';
-import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
-import { FrameDispatcher } from './frameDispatcher';
-import { CallMetadata } from '../server/instrumentation';
 import { FetchRequest } from '../server/fetch';
-import { arrayToObject, headersArrayToObject } from '../utils/utils';
+import { CallMetadata } from '../server/instrumentation';
+import { Request, Response, Route, WebSocket } from '../server/network';
+import { Dispatcher, DispatcherScope, existingDispatcher, lookupNullableDispatcher } from './dispatcher';
+import { FrameDispatcher } from './frameDispatcher';
 
 export class RequestDispatcher extends Dispatcher<Request, channels.RequestInitializer, channels.RequestEvents> implements channels.RequestChannel {
 
