@@ -164,8 +164,8 @@ class Generator {
 
   ${colors.cyan(commandToRunTests(this.packageManager) + ` -- ${exampleSpecPath}`)}
     Runs the tests of a specific file.
-  
-  ${colors.cyan(`${commandToRunTests(this.packageManager)} --debug`)}
+
+  ${colors.cyan(`${commandToRunTests(this.packageManager)} -- --debug`)}
     Runs the tests in debug mode.
 
 We suggest that you begin by typing:
