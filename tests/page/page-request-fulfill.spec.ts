@@ -225,6 +225,7 @@ it('should fulfill with fetch result and overrides', async ({ page, server, isEl
       response,
       status: 201,
       headers: {
+        ...response.headers(),
         'foo': 'bar'
       }
     });
