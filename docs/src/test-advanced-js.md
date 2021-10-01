@@ -120,7 +120,7 @@ In addition to everything from the [`workerInfo`](#workerinfo), the following in
 - `timeout: number` - Test timeout.
 - `annotations` - [Annotations](./test-annotations.md) that were added to the test.
 - `snapshotSuffix: string` - Suffix used to locate snapshots for the test.
-- `snapshotPath(snapshotName: string)` - Function that returns the full path to a particular snapshot for the test.
+- `snapshotPath(...pathSegments: string[])` - Function that returns the full path to a particular snapshot for the test.
 - `outputDir: string` - Path to the output directory for this test run.
 - `outputPath(...pathSegments: string[])` - Function that returns the full path to a particular output artifact for the test.
 

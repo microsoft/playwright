@@ -456,12 +456,12 @@ test('should respect project threshold', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should sanitize snapshot name', async ({ runInlineTest }) => {
+test('should sanitize snapshot name when passed as string', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js-snapshots/-snapshot-.txt': `Hello world`,
     'a.spec.js': `
-      const { test } = require('./helper');
+      const { test } = require('./helper');;
       test('is a test', ({}) => {
         expect('Hello world').toMatchSnapshot('../../snapshot!.txt');
       });
@@ -474,7 +474,7 @@ test('should write missing expectations with sanitized snapshot name', async ({ 
   const result = await runInlineTest({
     ...files,
     'a.spec.js': `
-      const { test } = require('./helper');
+      const { test } = require('./helper');;
       test('is a test', ({}) => {
         expect('Hello world').toMatchSnapshot('../../snapshot!.txt');
       });
@@ -486,6 +486,77 @@ test('should write missing expectations with sanitized snapshot name', async ({ 
   expect(result.output).toContain(`${snapshotOutputPath} is missing in snapshots, writing actual`);
   const data = fs.readFileSync(snapshotOutputPath);
   expect(data.toString()).toBe('Hello world');
+});
+
+test('should join array of snapshot path segments without sanitizing ', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...files,
+    'a.spec.js-snapshots/test/path/snapshot.txt': `Hello world`,
+    'a.spec.js': `
+      const { test } = require('./helper');;
+      test('is a test', ({}) => {
+        expect('Hello world').toMatchSnapshot(['test', 'path', 'snapshot.txt']);
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
+
+test('should update snapshot with array of path segments', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    ...files,
+    'a.spec.js': `
+      const { test } = require('./helper');
+      test('is a test', ({}) => {
+        expect('Hello world').toMatchSnapshot(['test', 'path', 'snapshot.txt']);
+      });
+    `
+  }, { 'update-snapshots': true });
+
+  expect(result.exitCode).toBe(0);
+  const snapshotOutputPath = testInfo.outputPath('a.spec.js-snapshots/test/path/snapshot.txt');
+  expect(result.output).toContain(`${snapshotOutputPath} is missing in snapshots, writing actual`);
+  const data = fs.readFileSync(snapshotOutputPath);
+  expect(data.toString()).toBe('Hello world');
+});
+
+test('should attach expected/actual/diff with snapshot path', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    ...files,
+    'a.spec.js-snapshots/test/path/snapshot.png':
+        Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg==', 'base64'),
+    'a.spec.js': `
+      const { test } = require('./helper');
+      test.afterEach(async ({}, testInfo) => {
+        console.log('## ' + JSON.stringify(testInfo.attachments));
+      });
+      test('is a test', ({}) => {
+        expect(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVQYV2NgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII==', 'base64')).toMatchSnapshot(['test', 'path', 'snapshot.png']);
+      });
+    `
+  });
+
+  const outputText = stripAscii(result.output);
+  const attachments = outputText.split('\n').filter(l => l.startsWith('## ')).map(l => l.substring(3)).map(l => JSON.parse(l))[0];
+  for (const attachment of attachments)
+    attachment.path = attachment.path.replace(/\\/g, '/').replace(/.*test-results\//, '');
+  expect(attachments).toEqual([
+    {
+      name: 'expected',
+      contentType: 'image/png',
+      path: 'a-is-a-test/test/path/snapshot-expected.png'
+    },
+    {
+      name: 'actual',
+      contentType: 'image/png',
+      path: 'a-is-a-test/test/path/snapshot-actual.png'
+    },
+    {
+      name: 'diff',
+      contentType: 'image/png',
+      path: 'a-is-a-test/test/path/snapshot-diff.png'
+    }
+  ]);
 });
 
 test('should attach expected/actual/diff', async ({ runInlineTest }, testInfo) => {

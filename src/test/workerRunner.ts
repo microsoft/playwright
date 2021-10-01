@@ -20,7 +20,7 @@ import rimraf from 'rimraf';
 import util from 'util';
 import colors from 'colors/safe';
 import { EventEmitter } from 'events';
-import { monotonicTime, serializeError, sanitizeForFilePath } from './util';
+import { monotonicTime, serializeError, sanitizeForFilePath, getContainedPath, addSuffixToFilePath } from './util';
 import { TestBeginPayload, TestEndPayload, RunPayload, TestEntry, DonePayload, WorkerInitParams, StepBeginPayload, StepEndPayload } from './ipc';
 import { setCurrentTestInfo } from './globals';
 import { Loader } from './loader';
@@ -255,20 +255,25 @@ export class WorkerRunner extends EventEmitter {
       outputDir: baseOutputDir,
       outputPath: (...pathSegments: string[]): string => {
         fs.mkdirSync(baseOutputDir, { recursive: true });
-        return path.join(baseOutputDir, ...pathSegments);
+        const joinedPath = path.join(...pathSegments);
+        const outputPath = getContainedPath(baseOutputDir, joinedPath);
+        if (outputPath) return outputPath;
+        throw new Error(`The outputPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\toutputPath: ${joinedPath}`);
+
       },
-      snapshotPath: (snapshotName: string): string => {
+      snapshotPath: (...pathSegments: string[]): string => {
         let suffix = '';
         if (this._projectNamePathSegment)
           suffix += '-' + this._projectNamePathSegment;
         if (testInfo.snapshotSuffix)
           suffix += '-' + testInfo.snapshotSuffix;
-        const ext = path.extname(snapshotName);
-        if (ext)
-          snapshotName = sanitizeForFilePath(snapshotName.substring(0, snapshotName.length - ext.length)) + suffix + ext;
-        else
-          snapshotName = sanitizeForFilePath(snapshotName) + suffix;
-        return path.join(test._requireFile + '-snapshots', snapshotName);
+
+        const baseSnapshotPath = test._requireFile + '-snapshots';
+        const subPath = addSuffixToFilePath(path.join(...pathSegments), suffix);
+        const snapshotPath =  getContainedPath(baseSnapshotPath, subPath);
+
+        if (snapshotPath) return snapshotPath;
+        throw new Error(`The snapshotPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\tsnapshotPath: ${subPath}`);
       },
       skip: (...args: [arg?: any, description?: string]) => modifier(testInfo, 'skip', args),
       fixme: (...args: [arg?: any, description?: string]) => modifier(testInfo, 'fixme', args),
