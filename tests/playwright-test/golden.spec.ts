@@ -531,7 +531,7 @@ test('should use snapshotDir with path segments as snapshot directory', async ({
         snapshotDir: 'snaps',
       };
     `,
-    'snaps/a.spec.js-snapshots/test/path/snapshot.txt': `Hello world`,
+    'snaps/tests/a.spec.js-snapshots/test/path/snapshot.txt': `Hello world`,
     'tests/a.spec.js': `
       const { test } = require('../helper');
       test('is a test', ({}) => {
