@@ -147,6 +147,15 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     })),
     value: tOptional(tType('SerializedValue')),
   });
+  scheme.FormField = tObject({
+    name: tString,
+    value: tOptional(tString),
+    file: tOptional(tObject({
+      name: tString,
+      mimeType: tString,
+      buffer: tBinary,
+    })),
+  });
   scheme.InterceptedResponse = tObject({
     request: tChannel('Request'),
     status: tNumber,
@@ -159,7 +168,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     method: tOptional(tString),
     headers: tOptional(tArray(tType('NameValue'))),
     postData: tOptional(tBinary),
-    formData: tOptional(tAny),
+    jsonData: tOptional(tAny),
+    formData: tOptional(tArray(tType('NameValue'))),
+    multipartData: tOptional(tArray(tType('FormField'))),
     timeout: tOptional(tNumber),
     failOnStatusCode: tOptional(tBoolean),
     ignoreHTTPSErrors: tOptional(tBoolean),

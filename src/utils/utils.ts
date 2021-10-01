@@ -384,12 +384,12 @@ class HashStream extends stream.Writable {
   }
 }
 
-export function objectToArray(map?:  { [key: string]: string }): NameValue[] | undefined {
+export function objectToArray(map?:  { [key: string]: any }): NameValue[] | undefined {
   if (!map)
     return undefined;
   const result = [];
   for (const [name, value] of Object.entries(map))
-    result.push({ name, value });
+    result.push({ name, value: String(value) });
   return result;
 }
 
