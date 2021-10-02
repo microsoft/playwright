@@ -18,7 +18,6 @@ import { contextTest } from '../config/browserTest';
 import type { Page } from '../../index';
 import * as path from 'path';
 import type { Source } from '../../src/server/supplements/recorder/recorderTypes';
-import { chromium } from '../../index';
 import { CommonFixtures, TestChildProcess } from '../config/commonFixtures';
 export { expect } from '../config/test-runner';
 
@@ -29,6 +28,8 @@ type CLITestArgs = {
   runCLI: (args: string[]) => CLIMock;
 };
 
+const playwrightToAutomateInspector = require('../../lib/inProcessFactory').createInProcessPlaywright();
+
 export const test = contextTest.extend<CLITestArgs>({
   recorderPageGetter: async ({ context, toImpl, mode }, run, testInfo) => {
     process.env.PWTEST_RECORDER_PORT = String(10907 + testInfo.workerIndex);
@@ -37,7 +38,7 @@ export const test = contextTest.extend<CLITestArgs>({
       while (!toImpl(context).recorderAppForTest)
         await new Promise(f => setTimeout(f, 100));
       const wsEndpoint = toImpl(context).recorderAppForTest.wsEndpoint;
-      const browser = await chromium.connectOverCDP({ wsEndpoint });
+      const browser = await playwrightToAutomateInspector.chromium.connectOverCDP({ wsEndpoint });
       const c = browser.contexts()[0];
       return c.pages()[0] || await c.waitForEvent('page');
     });
