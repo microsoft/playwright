@@ -241,7 +241,7 @@ function filePayloadToJson(payload: FilePayload): ServerFilePayload {
 async function readStreamToJson(stream: fs.ReadStream): Promise<ServerFilePayload> {
   const buffer = await new Promise<Buffer>((resolve, reject) => {
     const chunks: Buffer[] = [];
-    stream.on('data', chunk => chunks.push(chunk));
+    stream.on('data', chunk => chunks.push(chunk as Buffer));
     stream.on('end', () => resolve(Buffer.concat(chunks)));
     stream.on('error', err => reject(err));
   });

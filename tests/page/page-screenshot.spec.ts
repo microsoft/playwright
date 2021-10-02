@@ -171,8 +171,9 @@ it.describe('page screenshot', () => {
     expect(screenshot).toMatchSnapshot('screenshot-canvas.png', { threshold: 0.4 });
   });
 
-  it('should capture canvas changes', async ({ page, browserName, isMac }) => {
+  it('should capture canvas changes', async ({ page, browserName, isMac, isElectron }) => {
     it.fail(browserName === 'webkit' && isMac, 'https://github.com/microsoft/playwright/issues/8796');
+    it.skip(isElectron);
     await page.goto('data:text/html,<canvas></canvas>');
     await page.evaluate(() => {
       const canvas = document.querySelector('canvas');

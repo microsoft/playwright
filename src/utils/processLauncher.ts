@@ -73,7 +73,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     shell: options.shell,
     stdio,
   };
-  const spawnedProcess = childProcess.spawn(options.command, options.args, spawnOptions);
+  const spawnedProcess = childProcess.spawn(options.command, options.args || [], spawnOptions);
 
   const cleanup = async () => {
     options.log(`[pid=${spawnedProcess.pid || 'N/A'}] starting temporary directories cleanup`);
@@ -98,12 +98,12 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
   }
   options.log(`<launched> pid=${spawnedProcess.pid}`);
 
-  const stdout = readline.createInterface({ input: spawnedProcess.stdout });
+  const stdout = readline.createInterface({ input: spawnedProcess.stdout! });
   stdout.on('line', (data: string) => {
     options.log(`[pid=${spawnedProcess.pid}][out] ` + data);
   });
 
-  const stderr = readline.createInterface({ input: spawnedProcess.stderr });
+  const stderr = readline.createInterface({ input: spawnedProcess.stderr! });
   stderr.on('line', (data: string) => {
     options.log(`[pid=${spawnedProcess.pid}][err] ` + data);
   });
