@@ -66,3 +66,6 @@ jobs:
     - run: npm run build
     - run: node lib/cli/cli install --with-deps
     - run: npm run ttest
+      if: matrix.os != 'ubuntu-latest'
+    - run: xvfb-run npm run ttest
+      if: matrix.os == 'ubuntu-latest'

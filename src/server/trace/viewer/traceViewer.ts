@@ -25,12 +25,13 @@ import { PersistentSnapshotStorage, TraceModel } from './traceModel';
 import { ServerRouteHandler, HttpServer } from '../../../utils/httpServer';
 import { SnapshotServer } from '../../snapshot/snapshotServer';
 import * as consoleApiSource from '../../../generated/consoleApiSource';
-import { isUnderTest } from '../../../utils/utils';
+import { isUnderTest, download } from '../../../utils/utils';
 import { internalCallMetadata } from '../../instrumentation';
 import { ProgressController } from '../../progress';
 import { BrowserContext } from '../../browserContext';
-import { registry } from '../../../utils/registry';
+import { findChromiumChannel } from '../../../utils/registry';
 import { installAppIcon } from '../../chromium/crApp';
+import { debugLogger } from '../../../utils/debugLogger';
 
 export class TraceViewer {
   private _server: HttpServer;
@@ -133,32 +134,9 @@ export class TraceViewer {
     if (isUnderTest())
       args.push(`--remote-debugging-port=0`);
 
-    // For Chromium, fall back to the stable channels of popular vendors for work out of the box.
-    // Null means no installation and no channels found.
-    let channel = null;
-    if (traceViewerBrowser === 'chromium') {
-      for (const name of ['chromium', 'chrome', 'msedge']) {
-        try {
-          registry.findExecutable(name)!.executablePathOrDie(traceViewerPlaywright.options.sdkLanguage);
-          channel = name === 'chromium' ? undefined : name;
-          break;
-        } catch (e) {
-        }
-      }
-
-      if (channel === null) {
-        // TODO: language-specific error message, or fallback to default error.
-        throw new Error(`
-==================================================================
-Please run 'npx playwright install' to install Playwright browsers
-==================================================================
-`);
-      }
-    }
-
     const context = await traceViewerPlaywright[traceViewerBrowser as 'chromium'].launchPersistentContext(internalCallMetadata(), '', {
       // TODO: store language in the trace.
-      channel: channel as any,
+      channel: findChromiumChannel(traceViewerPlaywright.options.sdkLanguage),
       args,
       noDefaultViewport: true,
       headless,
@@ -196,6 +174,23 @@ async function appendTraceEvents(model: TraceModel, file: string) {
 }
 
 export async function showTraceViewer(tracePath: string, browserName: string, headless = false): Promise<BrowserContext | undefined> {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), `playwright-trace`));
+  process.on('exit', () => rimraf.sync(dir));
+
+  if (/^https?:\/\//i.test(tracePath)){
+    const downloadZipPath = path.join(dir, 'trace.zip');
+    try {
+      await download(tracePath, downloadZipPath, {
+        progressBarName: tracePath,
+        log: debugLogger.log.bind(debugLogger, 'download')
+      });
+    } catch (error) {
+      console.log(`${error?.message || ''}`); // eslint-disable-line no-console
+      return;
+    }
+    tracePath = downloadZipPath;
+  }
+
   let stat;
   try {
     stat = fs.statSync(tracePath);
@@ -210,8 +205,6 @@ export async function showTraceViewer(tracePath: string, browserName: string, he
   }
 
   const zipFile = tracePath;
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), `playwright-trace`));
-  process.on('exit', () => rimraf.sync(dir));
   try {
     await extract(zipFile, { dir });
   } catch (e) {

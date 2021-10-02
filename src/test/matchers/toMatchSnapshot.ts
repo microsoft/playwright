@@ -17,6 +17,7 @@
 import type { Expect } from '../types';
 import { currentTestInfo } from '../globals';
 import { compare } from './golden';
+import { addSuffixToFilePath } from '../util';
 
 // from expect/build/types
 type SyncExpectationResult = {
@@ -24,12 +25,13 @@ type SyncExpectationResult = {
   message: () => string;
 };
 
-export function toMatchSnapshot(this: ReturnType<Expect['getState']>, received: Buffer | string, nameOrOptions: string | { name: string, threshold?: number }, optOptions: { threshold?: number } = {}): SyncExpectationResult {
-  let options: { name: string, threshold?: number };
+type NameOrSegments = string | string[];
+export function toMatchSnapshot(this: ReturnType<Expect['getState']>, received: Buffer | string, nameOrOptions: NameOrSegments | { name: NameOrSegments, threshold?: number }, optOptions: { threshold?: number } = {}): SyncExpectationResult {
+  let options: { name: NameOrSegments, threshold?: number };
   const testInfo = currentTestInfo();
   if (!testInfo)
     throw new Error(`toMatchSnapshot() must be called during the test`);
-  if (typeof nameOrOptions === 'string')
+  if (Array.isArray(nameOrOptions) || typeof nameOrOptions === 'string')
     options = { name: nameOrOptions, ...optOptions };
   else
     options = { ...nameOrOptions };
@@ -40,10 +42,12 @@ export function toMatchSnapshot(this: ReturnType<Expect['getState']>, received: 
   if (options.threshold === undefined && projectThreshold !== undefined)
     options.threshold = projectThreshold;
 
+  // sanitizes path if string
+  const pathSegments = Array.isArray(options.name) ? options.name : [addSuffixToFilePath(options.name, '', undefined, true)];
   const withNegateComparison = this.isNot;
   const { pass, message, expectedPath, actualPath, diffPath, mimeType } = compare(
       received,
-      options.name,
+      pathSegments,
       testInfo.snapshotPath,
       testInfo.outputPath,
       testInfo.retry < testInfo.project.retries ? 'none' : testInfo.config.updateSnapshots,

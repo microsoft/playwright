@@ -144,4 +144,21 @@ export function sanitizeForFilePath(s: string) {
   return s.replace(/[\x00-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F]+/g, '-');
 }
 
+export function addSuffixToFilePath(filePath: string, suffix: string, customExtension?: string, sanitize = false): string {
+  const dirname = path.dirname(filePath);
+  const ext = path.extname(filePath);
+  const name = path.basename(filePath, ext);
+  const base = path.join(dirname, name);
+  return (sanitize ? sanitizeForFilePath(base) : base) + suffix + (customExtension || ext);
+}
+
+/**
+ * Returns absolute path contained within parent directory.
+ */
+export function getContainedPath(parentPath: string, subPath: string = ''): string | null {
+  const resolvedPath = path.resolve(parentPath, subPath);
+  if (resolvedPath === parentPath || resolvedPath.startsWith(parentPath + path.sep)) return resolvedPath;
+  return null;
+}
+
 export const debugTest = debug('pw:test');

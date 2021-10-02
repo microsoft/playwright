@@ -225,6 +225,7 @@ it('should fulfill with fetch result and overrides', async ({ page, server, isEl
       response,
       status: 201,
       headers: {
+        'Content-Type': 'application/json', // Case matters for the tested behavior
         'foo': 'bar'
       }
     });

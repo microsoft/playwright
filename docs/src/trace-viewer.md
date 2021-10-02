@@ -198,3 +198,25 @@ Here is what the typical Action snapshot looks like:
 </img>
 
 Notice how it highlights both, the DOM Node as well as the exact click position.
+
+
+## Viewing remote Traces
+
+You can open remote traces using it's URL.
+They could be generated in a CI run and makes it easy to view the remote trace without having to manually download the file.
+
+```bash js
+npx playwright show-trace https://example.com/trace.zip
+```
+
+```bash java
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="show-trace https://example.com/trace.zip"
+```
+
+```bash python
+playwright show-trace https://example.com/trace.zip
+```
+
+```bash csharp
+playwright show-trace https://example.com/trace.zip
+```

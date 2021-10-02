@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-import { Request, Response, Route, WebSocket } from '../server/network';
 import * as channels from '../protocol/channels';
-import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
-import { FrameDispatcher } from './frameDispatcher';
-import { CallMetadata } from '../server/instrumentation';
 import { FetchRequest } from '../server/fetch';
-import { arrayToObject, headersArrayToObject } from '../utils/utils';
+import { CallMetadata } from '../server/instrumentation';
+import { Request, Response, Route, WebSocket } from '../server/network';
+import { Dispatcher, DispatcherScope, existingDispatcher, lookupNullableDispatcher } from './dispatcher';
+import { FrameDispatcher } from './frameDispatcher';
 
 export class RequestDispatcher extends Dispatcher<Request, channels.RequestInitializer, channels.RequestEvents> implements channels.RequestChannel {
 
@@ -186,17 +185,7 @@ export class FetchRequestDispatcher extends Dispatcher<FetchRequest, channels.Fe
   }
 
   async fetch(params: channels.FetchRequestFetchParams, metadata?: channels.Metadata): Promise<channels.FetchRequestFetchResult> {
-    const { fetchResponse, error } = await this._object.fetch({
-      url: params.url,
-      params: arrayToObject(params.params),
-      method: params.method,
-      headers: params.headers ? headersArrayToObject(params.headers, false) : undefined,
-      postData: params.postData ? Buffer.from(params.postData, 'base64') : undefined,
-      formData: params.formData,
-      timeout: params.timeout,
-      failOnStatusCode: params.failOnStatusCode,
-      ignoreHTTPSErrors: params.ignoreHTTPSErrors,
-    });
+    const { fetchResponse, error } = await this._object.fetch(params);
     let response;
     if (fetchResponse) {
       response = {

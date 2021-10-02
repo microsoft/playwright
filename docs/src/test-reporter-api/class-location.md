@@ -14,6 +14,6 @@ Path to the source file.
 Line number in the source file.
 
 ## property: Location.column
-- type: <[string]>
+- type: <[int]>
 
 Column number in the source file.

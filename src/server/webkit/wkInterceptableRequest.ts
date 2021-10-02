@@ -130,7 +130,7 @@ export class WKRouteImpl implements network.RouteDelegate {
     // In certain cases, protocol will return error if the request was already canceled
     // or the page was closed. We should tolerate these errors.
     let mimeType = response.isBase64 ? 'application/octet-stream' : 'text/plain';
-    const headers = headersArrayToObject(response.headers, false /* lowerCase */);
+    const headers = headersArrayToObject(response.headers, true /* lowerCase */);
     const contentType = headers['content-type'];
     if (contentType)
       mimeType = contentType.split(';')[0].trim();

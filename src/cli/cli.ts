@@ -222,7 +222,8 @@ program
     }).addHelpText('afterAll', `
 Examples:
 
-  $ show-trace trace/directory`);
+  $ show-trace trace/directory
+  $ show-trace https://example.com/trace.zip`);
 
 if (!process.env.PW_CLI_TARGET_LANG) {
   let playwrightTestPackagePath = null;

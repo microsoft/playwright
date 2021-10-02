@@ -27,6 +27,7 @@ import { getProxyForUrl } from 'proxy-from-env';
 import * as URL from 'url';
 import { getUbuntuVersionSync } from './ubuntuVersion';
 import { NameValue } from '../protocol/channels';
+import ProgressBar from 'progress';
 
 // `https-proxy-agent` v5 is written in TypeScript and exposes generated types.
 // However, as of June 2020, its types are generated with tsconfig that enables
@@ -115,7 +116,7 @@ export function fetchData(params: HTTPRequestParams, onError?: (response: http.I
 type OnProgressCallback = (downloadedBytes: number, totalBytes: number) => void;
 type DownloadFileLogger = (message: string) => void;
 
-export function downloadFile(url: string, destinationPath: string, options: {progressCallback?: OnProgressCallback, log?: DownloadFileLogger} = {}): Promise<{error: any}> {
+function downloadFile(url: string, destinationPath: string, options: {progressCallback?: OnProgressCallback, log?: DownloadFileLogger} = {}): Promise<{error: any}> {
   const {
     progressCallback,
     log = () => {},
@@ -155,7 +156,77 @@ export function downloadFile(url: string, destinationPath: string, options: {pro
   }
 }
 
-export function spawnAsync(cmd: string, args: string[], options?: SpawnOptions): Promise<{stdout: string, stderr: string, code: number, error?: Error}> {
+export async function download(
+  url: string,
+  destination: string,
+  options: {
+		progressBarName?: string,
+		retryCount?: number
+    log?: DownloadFileLogger
+	} = {}
+) {
+  const { progressBarName = 'file', retryCount = 3, log = () => {} } = options;
+  for (let attempt = 1; attempt <= retryCount; ++attempt) {
+    log(
+        `downloading ${progressBarName} - attempt #${attempt}`
+    );
+    const { error } = await downloadFile(url, destination, {
+      progressCallback: getDownloadProgress(progressBarName),
+      log,
+    });
+    if (!error) {
+      log(`SUCCESS downloading ${progressBarName}`);
+      break;
+    }
+    const errorMessage = error?.message || '';
+    log(`attempt #${attempt} - ERROR: ${errorMessage}`);
+    if (
+      attempt < retryCount &&
+      (errorMessage.includes('ECONNRESET') ||
+        errorMessage.includes('ETIMEDOUT'))
+    ) {
+      // Maximum default delay is 3rd retry: 1337.5ms
+      const millis = Math.random() * 200 + 250 * Math.pow(1.5, attempt);
+      log(`sleeping ${millis}ms before retry...`);
+      await new Promise(c => setTimeout(c, millis));
+    } else {
+      throw error;
+    }
+  }
+}
+
+function getDownloadProgress(progressBarName: string): OnProgressCallback {
+  let progressBar: ProgressBar;
+  let lastDownloadedBytes = 0;
+
+  return (downloadedBytes: number, totalBytes: number) => {
+    if (!process.stderr.isTTY)
+      return;
+    if (!progressBar) {
+      progressBar = new ProgressBar(
+          `Downloading ${progressBarName} - ${toMegabytes(
+              totalBytes
+          )} [:bar] :percent :etas `,
+          {
+            complete: '=',
+            incomplete: ' ',
+            width: 20,
+            total: totalBytes,
+          }
+      );
+    }
+    const delta = downloadedBytes - lastDownloadedBytes;
+    lastDownloadedBytes = downloadedBytes;
+    progressBar.tick(delta);
+  };
+}
+
+function toMegabytes(bytes: number) {
+  const mb = bytes / 1024 / 1024;
+  return `${Math.round(mb * 10) / 10} Mb`;
+}
+
+export function spawnAsync(cmd: string, args: string[], options: SpawnOptions = {}): Promise<{stdout: string, stderr: string, code: number | null, error?: Error}> {
   const process = spawn(cmd, args, options);
 
   return new Promise(resolve => {
@@ -313,12 +384,12 @@ class HashStream extends stream.Writable {
   }
 }
 
-export function objectToArray(map?:  { [key: string]: string }): NameValue[] | undefined {
+export function objectToArray(map?:  { [key: string]: any }): NameValue[] | undefined {
   if (!map)
     return undefined;
   const result = [];
   for (const [name, value] of Object.entries(map))
-    result.push({ name, value });
+    result.push({ name, value: String(value) });
   return result;
 }
 
@@ -356,7 +427,7 @@ export async function removeFolders(dirs: string[]): Promise<Array<Error|undefin
   return await Promise.all(dirs.map((dir: string) => {
     return new Promise<Error|undefined>(fulfill => {
       removeFolder(dir, { maxBusyTries: 10 }, error => {
-        fulfill(error);
+        fulfill(error ?? undefined);
       });
     });
   }));

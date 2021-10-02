@@ -21,10 +21,10 @@ import { ProgressController } from '../../progress';
 import { EventEmitter } from 'events';
 import { internalCallMetadata } from '../../instrumentation';
 import type { CallLog, EventData, Mode, Source } from './recorderTypes';
-import { BrowserContext } from '../../browserContext';
 import { isUnderTest } from '../../../utils/utils';
 import * as mime from 'mime';
 import { installAppIcon } from '../../chromium/crApp';
+import { findChromiumChannel } from '../../../utils/registry';
 
 declare global {
   interface Window {
@@ -85,7 +85,7 @@ export class RecorderApp extends EventEmitter {
     await mainFrame.goto(internalCallMetadata(), 'https://playwright/index.html');
   }
 
-  static async open(inspectedContext: BrowserContext): Promise<RecorderApp> {
+  static async open(sdkLanguage: string): Promise<RecorderApp> {
     const recorderPlaywright = (require('../../playwright').createPlaywright as typeof import('../../playwright').createPlaywright)('javascript', true);
     const args = [
       '--app=data:text/html,',
@@ -94,19 +94,11 @@ export class RecorderApp extends EventEmitter {
     ];
     if (process.env.PWTEST_RECORDER_PORT)
       args.push(`--remote-debugging-port=${process.env.PWTEST_RECORDER_PORT}`);
-    let channel: string | undefined;
-    let executablePath: string | undefined;
-    if (inspectedContext._browser.options.isChromium) {
-      channel = inspectedContext._browser.options.channel;
-      if (!channel)
-        executablePath = inspectedContext._browser.options.customExecutablePath;
-    }
     const context = await recorderPlaywright.chromium.launchPersistentContext(internalCallMetadata(), '', {
-      channel,
-      executablePath,
+      channel: findChromiumChannel(sdkLanguage),
       args,
       noDefaultViewport: true,
-      headless: !!process.env.PWTEST_CLI_HEADLESS || (isUnderTest() && !inspectedContext._browser.options.headful),
+      headless: !!process.env.PWTEST_CLI_HEADLESS || (isUnderTest() && !process.env.HEADFUL),
       useWebSocket: !!process.env.PWTEST_RECORDER_PORT
     });
     const controller = new ProgressController(internalCallMetadata(), context._browser);

@@ -23,7 +23,7 @@ import zlib from 'zlib';
 import { HTTPCredentials } from '../../types/types';
 import * as channels from '../protocol/channels';
 import { TimeoutSettings } from '../utils/timeoutSettings';
-import { assert, createGuid, getPlaywrightVersion, isFilePayload, monotonicTime } from '../utils/utils';
+import { assert, createGuid, getPlaywrightVersion, monotonicTime } from '../utils/utils';
 import { BrowserContext } from './browserContext';
 import { CookieStore, domainMatches } from './cookieStore';
 import { MultipartFormData } from './formData';
@@ -32,8 +32,7 @@ import { Playwright } from './playwright';
 import * as types from './types';
 import { HeadersArray, ProxySettings } from './types';
 
-
-export type FetchRequestOptions = {
+type FetchRequestOptions = {
   userAgent: string;
   extraHTTPHeaders?: HeadersArray;
   httpCredentials?: HTTPCredentials;
@@ -84,7 +83,7 @@ export abstract class FetchRequest extends SdkObject {
     return uid;
   }
 
-  async fetch(params: types.FetchOptions): Promise<{fetchResponse?: Omit<types.FetchResponse, 'body'> & { fetchUid: string }, error?: string}> {
+  async fetch(params: channels.FetchRequestFetchParams): Promise<{fetchResponse?: Omit<types.FetchResponse, 'body'> & { fetchUid: string }, error?: string}> {
     try {
       const headers: { [name: string]: string } = {};
       const defaults = this._defaultOptions();
@@ -98,7 +97,7 @@ export abstract class FetchRequest extends SdkObject {
       }
 
       if (params.headers) {
-        for (const [name, value] of Object.entries(params.headers))
+        for (const { name, value } of params.headers)
           headers[name.toLowerCase()] = value;
       }
 
@@ -130,19 +129,17 @@ export abstract class FetchRequest extends SdkObject {
 
       const requestUrl = new URL(params.url, defaults.baseURL);
       if (params.params) {
-        for (const [name, value] of Object.entries(params.params))
+        for (const { name, value } of params.params)
           requestUrl.searchParams.set(name, value);
       }
 
       let postData;
       if (['POST', 'PUSH', 'PATCH'].includes(method))
-        postData = params.formData ? serializeFormData(params.formData, headers) : params.postData;
-      else if (params.postData || params.formData)
+        postData = serializePostData(params, headers);
+      else if (params.postData || params.jsonData || params.formData || params.multipartData)
         throw new Error(`Method ${method} does not accept post data`);
-      if (postData) {
+      if (postData)
         headers['content-length'] = String(postData.byteLength);
-        headers['content-type'] ??= 'application/octet-stream';
-      }
       const fetchResponse = await this._sendRequest(requestUrl, options, postData);
       const fetchUid = this._storeResponseBody(fetchResponse.body);
       if (params.failOnStatusCode && (fetchResponse.status < 200 || fetchResponse.status >= 400))
@@ -458,30 +455,31 @@ function parseCookie(header: string): types.NetworkCookie | null {
   return cookie;
 }
 
-function serializeFormData(data: any, headers: { [name: string]: string }): Buffer {
-  const contentType = headers['content-type'] || 'application/json';
-  if (contentType === 'application/json') {
-    const json = JSON.stringify(data);
-    headers['content-type'] ??= contentType;
+function serializePostData(params: channels.FetchRequestFetchParams, headers: { [name: string]: string }): Buffer | undefined {
+  assert((params.postData ? 1 : 0) + (params.jsonData ? 1 : 0) + (params.formData ? 1 : 0) + (params.multipartData ? 1 : 0) <= 1, `Only one of 'data', 'form' or 'multipart' can be specified`);
+  if (params.jsonData) {
+    const json = JSON.stringify(params.jsonData);
+    headers['content-type'] ??= 'application/json';
     return Buffer.from(json, 'utf8');
-  } else if (contentType === 'application/x-www-form-urlencoded') {
+  } else if (params.formData) {
     const searchParams = new URLSearchParams();
-    for (const [name, value] of Object.entries(data))
-      searchParams.append(name, String(value));
+    for (const { name, value } of params.formData)
+      searchParams.append(name, value);
+    headers['content-type'] ??= 'application/x-www-form-urlencoded';
     return Buffer.from(searchParams.toString(), 'utf8');
-  } else if (contentType === 'multipart/form-data') {
+  } else if (params.multipartData) {
     const formData = new MultipartFormData();
-    for (const [name, value] of Object.entries(data)) {
-      if (isFilePayload(value)) {
-        const payload = value as types.FilePayload;
-        formData.addFileField(name, payload);
-      } else if (value !== undefined) {
-        formData.addField(name, String(value));
-      }
+    for (const field of params.multipartData) {
+      if (field.file)
+        formData.addFileField(field.name, field.file);
+      else if (field.value)
+        formData.addField(field.name, field.value);
     }
-    headers['content-type'] = formData.contentTypeHeader();
+    headers['content-type'] ??= formData.contentTypeHeader();
     return formData.finish();
-  } else {
-    throw new Error(`Cannot serialize data using content type: ${contentType}`);
+  } else if (params.postData) {
+    headers['content-type'] ??= 'application/octet-stream';
+    return Buffer.from(params.postData, 'base64');
   }
+  return undefined;
 }
