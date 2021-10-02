@@ -19,6 +19,7 @@ import fs from 'fs';
 import path from 'path';
 import { Server as WebSocketServer } from 'ws';
 import * as mime from 'mime';
+import { assert } from './utils';
 
 export type ServerRouteHandler = (request: http.IncomingMessage, response: http.ServerResponse) => boolean;
 
@@ -61,6 +62,7 @@ export class HttpServer {
     if (typeof address === 'string') {
       this._urlPrefix = address;
     } else {
+      assert(address, 'Could not bind server socket');
       this._port = address.port;
       this._urlPrefix = `http://127.0.0.1:${address.port}`;
     }

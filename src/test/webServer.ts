@@ -78,8 +78,8 @@ export class WebServer {
     });
     this._killProcess = kill;
 
-    launchedProcess.stderr.pipe(newProcessLogPrefixer()).pipe(process.stderr);
-    launchedProcess.stdout.on('data', () => {});
+    launchedProcess.stderr!.pipe(newProcessLogPrefixer()).pipe(process.stderr);
+    launchedProcess.stdout!.on('data', () => {});
   }
 
   private async _waitForProcess() {

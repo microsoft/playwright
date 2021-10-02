@@ -33,8 +33,9 @@ it('should work with navigation', async ({ page, server }) => {
   expect(requests.get('style.css').isNavigationRequest()).toBe(false);
 });
 
-it('should intercept after a service worker', async ({ page, server, isAndroid }) => {
+it('should intercept after a service worker', async ({ page, server, isAndroid, isElectron }) => {
   it.skip(isAndroid);
+  it.skip(isElectron);
 
   await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
   await page.evaluate(() => window['activationPromise']);

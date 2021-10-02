@@ -76,6 +76,10 @@ export class PlaywrightServer {
     const wsEndpoint = await new Promise<string>((resolve, reject) => {
       server.listen(port, () => {
         const address = server.address();
+        if (!address) {
+          reject(new Error('Could not bind server socket'));
+          return;
+        }
         const wsEndpoint = typeof address === 'string' ? `${address}${path}` : `ws://127.0.0.1:${address.port}${path}`;
         resolve(wsEndpoint);
       }).on('error', reject);
