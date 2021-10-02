@@ -15,6 +15,7 @@
  */
 
 import { test, expect, stripAscii } from './playwright-test-fixtures';
+import { relativeFilePath } from '../../src/test/util';
 
 test('print GitHub annotations for success', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -48,7 +49,7 @@ test('print GitHub annotations with newline if not in CI', async ({ runInlineTes
 });
 
 
-test('print GitHub annotations for failed tests', async ({ runInlineTest }) => {
+test('print GitHub annotations for failed tests', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'a.test.js': `
       const { test } = pwt;
@@ -58,9 +59,10 @@ test('print GitHub annotations for failed tests', async ({ runInlineTest }) => {
     `
   }, { retries: 3, reporter: 'github' }, { GITHUB_ACTION: 'true', GITHUB_WORKSPACE: process.cwd() });
   const text = stripAscii(result.output);
-  expect(text).toContain('::error file=test-results/github-reporter-print-GitHub-annotations-for-failed-tests-playwright-test/a.test.js,title=a.test.js:6:7 › example,line=7,col=23::  1) a.test.js:6:7 › example =======================================================================%0A%0A    Retry #1');
-  expect(text).toContain('::error file=test-results/github-reporter-print-GitHub-annotations-for-failed-tests-playwright-test/a.test.js,title=a.test.js:6:7 › example,line=7,col=23::  1) a.test.js:6:7 › example =======================================================================%0A%0A    Retry #2');
-  expect(text).toContain('::error file=test-results/github-reporter-print-GitHub-annotations-for-failed-tests-playwright-test/a.test.js,title=a.test.js:6:7 › example,line=7,col=23::  1) a.test.js:6:7 › example =======================================================================%0A%0A    Retry #3');
+  const testPath =  relativeFilePath(testInfo.outputPath('a.test.js'));
+  expect(text).toContain(`::error file=${testPath},title=a.test.js:6:7 › example,line=7,col=23::  1) a.test.js:6:7 › example =======================================================================%0A%0A    Retry #1`);
+  expect(text).toContain(`::error file=${testPath},title=a.test.js:6:7 › example,line=7,col=23::  1) a.test.js:6:7 › example =======================================================================%0A%0A    Retry #2`);
+  expect(text).toContain(`::error file=${testPath},title=a.test.js:6:7 › example,line=7,col=23::  1) a.test.js:6:7 › example =======================================================================%0A%0A    Retry #3`);
   expect(result.exitCode).toBe(1);
 });
 
