@@ -17,7 +17,6 @@
 import { codeFrameColumns } from '@babel/code-frame';
 import colors from 'colors/safe';
 import fs from 'fs';
-// @ts-ignore
 import milliseconds from 'ms';
 import path from 'path';
 import StackUtils from 'stack-utils';
@@ -25,9 +24,35 @@ import { FullConfig, TestCase, Suite, TestResult, TestError, Reporter, FullResul
 
 const stackUtils = new StackUtils();
 
-type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
+export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
+export const kOutputSymbol = Symbol('output');
 export type PositionInFile = { column: number; line: number };
-const kOutputSymbol = Symbol('output');
+
+type Annotation = {
+  filePath: string;
+  title: string;
+  message: string;
+  position?: PositionInFile;
+};
+
+type FailureDetails = {
+  tokens: string[];
+  position?: PositionInFile;
+};
+
+type ErrorDetails = {
+  message: string;
+  position?: PositionInFile;
+};
+
+type TestSummary = {
+  skipped: number;
+  expected: number;
+  skippedWithError: TestCase[];
+  unexpected: TestCase[];
+  flaky: TestCase[];
+  failuresToPrint: TestCase[];
+};
 
 export class BaseReporter implements Reporter  {
   duration = 0;
@@ -76,21 +101,40 @@ export class BaseReporter implements Reporter  {
     this.result = result;
   }
 
-  private _printSlowTests() {
+  protected getSlowTests(): [string, number][] {
     if (!this.config.reportSlowTests)
-      return;
+      return [];
     const fileDurations = [...this.fileDurations.entries()];
     fileDurations.sort((a, b) => b[1] - a[1]);
     const count = Math.min(fileDurations.length, this.config.reportSlowTests.max || Number.POSITIVE_INFINITY);
-    for (let i = 0; i < count; ++i) {
-      const duration = fileDurations[i][1];
-      if (duration <= this.config.reportSlowTests.threshold)
-        break;
-      console.log(colors.yellow('  Slow test: ') + fileDurations[i][0] + colors.yellow(` (${milliseconds(duration)})`));
-    }
+    const threshold =  this.config.reportSlowTests.threshold;
+    return fileDurations.filter(([,duration]) => duration > threshold).slice(0, count);
   }
 
-  epilogue(full: boolean) {
+  protected generateSummaryMessage({ skipped, expected, unexpected, flaky }: TestSummary) {
+    const tokens: string[] = [];
+    tokens.push('');
+    if (unexpected.length) {
+      tokens.push(colors.red(`  ${unexpected.length} failed`));
+      for (const test of unexpected)
+        tokens.push(colors.red(formatTestHeader(this.config, test, '    ')));
+    }
+    if (flaky.length) {
+      tokens.push(colors.yellow(`  ${flaky.length} flaky`));
+      for (const test of flaky)
+        tokens.push(colors.yellow(formatTestHeader(this.config, test, '    ')));
+    }
+    if (skipped)
+      tokens.push(colors.yellow(`  ${skipped} skipped`));
+    if (expected)
+      tokens.push(colors.green(`  ${expected} passed`) + colors.dim(` (${milliseconds(this.duration)})`));
+    if (this.result.status === 'timedout')
+      tokens.push(colors.red(`  Timed out waiting ${this.config.globalTimeout / 1000}s for the entire test run`));
+
+    return tokens.join('\n');
+  }
+
+  protected generateSummary(): TestSummary {
     let skipped = 0;
     let expected = 0;
     const skippedWithError: TestCase[] = [];
@@ -112,36 +156,44 @@ export class BaseReporter implements Reporter  {
     });
 
     const failuresToPrint = [...unexpected, ...flaky, ...skippedWithError];
-    if (full && failuresToPrint.length) {
-      console.log('');
-      this._printFailures(failuresToPrint);
-    }
+    return {
+      skipped,
+      expected,
+      skippedWithError,
+      unexpected,
+      flaky,
+      failuresToPrint
+    };
+  }
 
+  epilogue(full: boolean) {
+    const summary = this.generateSummary();
+    const summaryMessage = this.generateSummaryMessage(summary);
+    if (full && summary.failuresToPrint.length)
+      this._printFailures(summary.failuresToPrint);
     this._printSlowTests();
-
-    console.log('');
-    if (unexpected.length) {
-      console.log(colors.red(`  ${unexpected.length} failed`));
-      for (const test of unexpected)
-        console.log(colors.red(formatTestHeader(this.config, test, '    ')));
-    }
-    if (flaky.length) {
-      console.log(colors.yellow(`  ${flaky.length} flaky`));
-      for (const test of flaky)
-        console.log(colors.yellow(formatTestHeader(this.config, test, '    ')));
-    }
-    if (skipped)
-      console.log(colors.yellow(`  ${skipped} skipped`));
-    if (expected)
-      console.log(colors.green(`  ${expected} passed`) + colors.dim(` (${milliseconds(this.duration)})`));
-    if (this.result.status === 'timedout')
-      console.log(colors.red(`  Timed out waiting ${this.config.globalTimeout / 1000}s for the entire test run`));
+    this._printSummary(summaryMessage);
   }
 
   private _printFailures(failures: TestCase[]) {
+    console.log('');
     failures.forEach((test, index) => {
-      console.log(formatFailure(this.config, test, index + 1, this.printTestOutput));
+      console.log(formatFailure(this.config, test, {
+        index: index + 1,
+        includeStdio: this.printTestOutput
+      }).message);
     });
+  }
+
+  private _printSlowTests() {
+    this.getSlowTests().forEach(([file, duration]) => {
+      console.log(colors.yellow('  Slow test: ') + file + colors.yellow(` (${milliseconds(duration)})`));
+    });
+  }
+
+  private _printSummary(summary: string){
+    console.log('');
+    console.log(summary);
   }
 
   willRetry(test: TestCase): boolean {
@@ -149,59 +201,81 @@ export class BaseReporter implements Reporter  {
   }
 }
 
-export function formatFailure(config: FullConfig, test: TestCase, index?: number, stdio?: boolean): string {
+export function formatFailure(config: FullConfig, test: TestCase, options: {index?: number, includeStdio?: boolean, includeAttachments?: boolean, filePath?: string} = {}): {
+  message: string,
+  annotations: Annotation[]
+} {
+  const { index, includeStdio, includeAttachments = true, filePath } = options;
   const lines: string[] = [];
-  lines.push(colors.red(formatTestHeader(config, test, '  ', index)));
+  const title = formatTestTitle(config, test);
+  const annotations: Annotation[] = [];
+  const header = formatTestHeader(config, test, '  ', index);
+  lines.push(colors.red(header));
   for (const result of test.results) {
-    const resultTokens = formatResultFailure(test, result, '    ');
+    const resultLines: string[] = [];
+    const { tokens: resultTokens, position } = formatResultFailure(test, result, '    ');
     if (!resultTokens.length)
       continue;
     if (result.retry) {
-      lines.push('');
-      lines.push(colors.gray(pad(`    Retry #${result.retry}`, '-')));
+      resultLines.push('');
+      resultLines.push(colors.gray(pad(`    Retry #${result.retry}`, '-')));
     }
-    lines.push(...resultTokens);
-    for (let i = 0; i < result.attachments.length; ++i) {
-      const attachment = result.attachments[i];
-      lines.push('');
-      lines.push(colors.cyan(pad(`    attachment #${i + 1}: ${attachment.name} (${attachment.contentType})`, '-')));
-      if (attachment.path) {
-        const relativePath = path.relative(process.cwd(), attachment.path);
-        lines.push(colors.cyan(`    ${relativePath}`));
-        // Make this extensible
-        if (attachment.name === 'trace') {
-          lines.push(colors.cyan(`    Usage:`));
-          lines.push('');
-          lines.push(colors.cyan(`        npx playwright show-trace ${relativePath}`));
-          lines.push('');
+    resultLines.push(...resultTokens);
+    if (includeAttachments) {
+      for (let i = 0; i < result.attachments.length; ++i) {
+        const attachment = result.attachments[i];
+        resultLines.push('');
+        resultLines.push(colors.cyan(pad(`    attachment #${i + 1}: ${attachment.name} (${attachment.contentType})`, '-')));
+        if (attachment.path) {
+          const relativePath = path.relative(process.cwd(), attachment.path);
+          resultLines.push(colors.cyan(`    ${relativePath}`));
+          // Make this extensible
+          if (attachment.name === 'trace') {
+            resultLines.push(colors.cyan(`    Usage:`));
+            resultLines.push('');
+            resultLines.push(colors.cyan(`        npx playwright show-trace ${relativePath}`));
+            resultLines.push('');
+          }
+        } else {
+          if (attachment.contentType.startsWith('text/')) {
+            let text = attachment.body!.toString();
+            if (text.length > 300)
+              text = text.slice(0, 300) + '...';
+            resultLines.push(colors.cyan(`    ${text}`));
+          }
         }
-      } else {
-        if (attachment.contentType.startsWith('text/')) {
-          let text = attachment.body!.toString();
-          if (text.length > 300)
-            text = text.slice(0, 300) + '...';
-          lines.push(colors.cyan(`    ${text}`));
-        }
+        resultLines.push(colors.cyan(pad('   ', '-')));
       }
-      lines.push(colors.cyan(pad('   ', '-')));
     }
     const output = ((result as any)[kOutputSymbol] || []) as TestResultOutput[];
-    if (stdio && output.length) {
+    if (includeStdio && output.length) {
       const outputText = output.map(({ chunk, type }) => {
         const text = chunk.toString('utf8');
         if (type === 'stderr')
           return colors.red(stripAnsiEscapes(text));
         return text;
       }).join('');
-      lines.push('');
-      lines.push(colors.gray(pad('--- Test output', '-')) + '\n\n' + outputText + '\n' + pad('', '-'));
+      resultLines.push('');
+      resultLines.push(colors.gray(pad('--- Test output', '-')) + '\n\n' + outputText + '\n' + pad('', '-'));
     }
+    if (filePath) {
+      annotations.push({
+        filePath,
+        position,
+        title,
+        message: [header, ...resultLines].join('\n'),
+      });
+    }
+    lines.push(...resultLines);
   }
   lines.push('');
-  return lines.join('\n');
+  return {
+    message: lines.join('\n'),
+    annotations
+  };
 }
 
-export function formatResultFailure(test: TestCase, result: TestResult, initialIndent: string): string[] {
+export function formatResultFailure(test: TestCase, result: TestResult, initialIndent: string): FailureDetails {
   const resultTokens: string[] = [];
   if (result.status === 'timedOut') {
     resultTokens.push('');
@@ -211,9 +285,15 @@ export function formatResultFailure(test: TestCase, result: TestResult, initialI
     resultTokens.push('');
     resultTokens.push(indent(colors.red(`Expected to fail, but passed.`), initialIndent));
   }
-  if (result.error !== undefined)
-    resultTokens.push(indent(formatError(result.error, test.location.file), initialIndent));
-  return resultTokens;
+  let error: ErrorDetails | undefined = undefined;
+  if (result.error !== undefined) {
+    error = formatError(result.error, test.location.file);
+    resultTokens.push(indent(error.message, initialIndent));
+  }
+  return {
+    tokens: resultTokens,
+    position: error?.position,
+  };
 }
 
 function relativeTestPath(config: FullConfig, test: TestCase): string {
@@ -239,14 +319,16 @@ function formatTestHeader(config: FullConfig, test: TestCase, indent: string, in
   return pad(header, '=');
 }
 
-export function formatError(error: TestError, file?: string) {
+export function formatError(error: TestError, file?: string): ErrorDetails {
   const stack = error.stack;
   const tokens = [''];
+  let positionInFile: PositionInFile | undefined;
   if (stack) {
     const { message, stackLines, position } = prepareErrorStack(
         stack,
         file
     );
+    positionInFile = position;
     tokens.push(message);
 
     const codeFrame = generateCodeFrame(file, position);
@@ -261,7 +343,10 @@ export function formatError(error: TestError, file?: string) {
   } else if (error.value) {
     tokens.push(error.value);
   }
-  return tokens.join('\n');
+  return {
+    position: positionInFile,
+    message: tokens.join('\n'),
+  };
 }
 
 function pad(line: string, char: string): string {
@@ -306,7 +391,7 @@ export function prepareErrorStack(stack: string, file?: string): {
   };
 }
 
-function positionInFile(stackLines: string[], file: string): { column: number; line: number; } | undefined {
+function positionInFile(stackLines: string[], file: string): PositionInFile | undefined {
   // Stack will have /private/var/folders instead of /var/folders on Mac.
   file = fs.realpathSync(file);
   for (const line of stackLines) {

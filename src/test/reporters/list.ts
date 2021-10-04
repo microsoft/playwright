@@ -16,7 +16,6 @@
 
 /* eslint-disable no-console */
 import colors from 'colors/safe';
-// @ts-ignore
 import milliseconds from 'ms';
 import { BaseReporter, formatTestTitle } from './base';
 import { FullConfig, FullResult, Suite, TestCase, TestResult, TestStep } from '../../../types/testReporter';

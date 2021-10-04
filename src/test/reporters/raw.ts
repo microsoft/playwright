@@ -181,7 +181,7 @@ class RawReporter {
       startTime: result.startTime.toISOString(),
       duration: result.duration,
       status: result.status,
-      error: formatResultFailure(test, result, '').join('').trim(),
+      error: formatResultFailure(test, result, '').tokens.join('').trim(),
       attachments: this._createAttachments(result),
       steps: this._serializeSteps(test, result.steps)
     };
