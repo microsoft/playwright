@@ -1058,6 +1058,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     state: tOptional(tEnum(['attached', 'detached', 'visible', 'hidden'])),
   });
   scheme.RequestResponseParams = tOptional(tObject({}));
+  scheme.RequestRawRequestHeadersParams = tOptional(tObject({}));
   scheme.RouteAbortParams = tObject({
     errorCode: tOptional(tString),
   });
@@ -1090,7 +1091,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.ResponseBodyParams = tOptional(tObject({}));
   scheme.ResponseSecurityDetailsParams = tOptional(tObject({}));
   scheme.ResponseServerAddrParams = tOptional(tObject({}));
-  scheme.ResponseRawRequestHeadersParams = tOptional(tObject({}));
   scheme.ResponseRawResponseHeadersParams = tOptional(tObject({}));
   scheme.ResponseSizesParams = tOptional(tObject({}));
   scheme.SecurityDetails = tObject({

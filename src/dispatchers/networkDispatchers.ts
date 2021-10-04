@@ -47,6 +47,10 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestIniti
     });
   }
 
+  async rawRequestHeaders(params?: channels.RequestRawRequestHeadersParams): Promise<channels.RequestRawRequestHeadersResult> {
+    return { headers: await this._object.rawRequestHeaders() };
+  }
+
   async response(): Promise<channels.RequestResponseResult> {
     return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._object.response()) };
   }
@@ -85,10 +89,6 @@ export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseIn
 
   async serverAddr(): Promise<channels.ResponseServerAddrResult> {
     return { value: await this._object.serverAddr() || undefined };
-  }
-
-  async rawRequestHeaders(params?: channels.ResponseRawRequestHeadersParams): Promise<channels.ResponseRawRequestHeadersResult> {
-    return { headers: await this._object.rawRequestHeaders() };
   }
 
   async rawResponseHeaders(params?: channels.ResponseRawResponseHeadersParams): Promise<channels.ResponseRawResponseHeadersResult> {

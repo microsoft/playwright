@@ -1016,7 +1016,7 @@ export class WKPage implements PageDelegate {
       const headers = { ...event.response.requestHeaders };
       if (!headers['host'])
         headers['Host'] = new URL(request.request.url()).host;
-      response.setRawRequestHeaders(headersObjectToArray(headers));
+      request.request.setRawRequestHeaders(headersObjectToArray(headers));
     }
     this._page._frameManager.requestReceivedResponse(response);
 

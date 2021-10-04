@@ -154,6 +154,13 @@ export class CRNetworkManager {
   }
 
   _onRequestPaused(workerFrame: frames.Frame | undefined, event: Protocol.Fetch.requestPausedPayload) {
+    if (!event.responseStatusCode && !event.responseErrorReason) {
+      // Request intercepted, deliver signal to the tracker.
+      const request = this._requestIdToRequest.get(event.networkId!);
+      if (request)
+        this._responseExtraInfoTracker.requestPaused(request.request, event);
+    }
+
     if (!this._userRequestInterceptionEnabled && this._protocolRequestInterceptionEnabled) {
       this._client._sendMayFail('Fetch.continueRequest', {
         requestId: event.requestId
@@ -604,6 +611,13 @@ class ResponseExtraInfoTracker {
     this._innerResponseReceived(info, event.response);
   }
 
+  requestPaused(request: network.Request, event: Protocol.Fetch.requestPausedPayload) {
+    // requestWillBeSentExtraInfo is not being called when interception
+    // is enabled. But interception is mutually exclusive with the redirects.
+    // So we can use the headers from the Fetch.requestPausedPayload immediately.
+    request.setRawRequestHeaders(headersObjectToArray(event.request.headers, '\n'));
+  }
+
   private _innerResponseReceived(info: RequestInfo, response: Protocol.Network.Response) {
     if (!response.connectionId) {
       // Starting with this response we no longer can guarantee that response and extra info correspond to the same index.
@@ -669,7 +683,7 @@ class ResponseExtraInfoTracker {
     const response = info.responses[index];
     const requestExtraInfo = info.requestWillBeSentExtraInfo[index];
     if (response && requestExtraInfo)
-      response.setRawRequestHeaders(headersObjectToArray(requestExtraInfo.headers, '\n'));
+      response.request().setRawRequestHeaders(headersObjectToArray(requestExtraInfo.headers, '\n'));
     const responseExtraInfo = info.responseReceivedExtraInfo[index];
     if (response && responseExtraInfo) {
       response.setRawResponseHeaders(headersObjectToArray(responseExtraInfo.headers, '\n'));

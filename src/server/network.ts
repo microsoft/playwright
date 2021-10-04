@@ -100,6 +100,7 @@ export class Request extends SdkObject {
   private _postData: Buffer | null;
   readonly _headers: types.HeadersArray;
   private _headersMap = new Map<string, string>();
+  private _rawRequestHeadersPromise: ManualPromise<types.HeadersArray> | undefined;
   private _frame: frames.Frame;
   private _waitForResponsePromise = new ManualPromise<Response | null>();
   _responseEndTiming = -1;
@@ -153,8 +154,23 @@ export class Request extends SdkObject {
     return this._headersMap.get(name);
   }
 
-  async rawHeaders(): Promise<NameValue[]> {
-    return this._headers;
+  setWillReceiveExtraHeaders() {
+    if (!this._rawRequestHeadersPromise)
+      this._rawRequestHeadersPromise = new ManualPromise();
+  }
+
+  setRawRequestHeaders(headers: types.HeadersArray) {
+    if (!this._rawRequestHeadersPromise)
+      this._rawRequestHeadersPromise = new ManualPromise();
+    this._rawRequestHeadersPromise!.resolve(headers);
+  }
+
+  async rawRequestHeaders(): Promise<NameValue[]> {
+    return this._rawRequestHeadersPromise || Promise.resolve(this._headers);
+  }
+
+  rawRequestHeadersPromise(): Promise<types.HeadersArray> | undefined {
+    return this._rawRequestHeadersPromise;
   }
 
   response(): PromiseLike<Response | null> {
@@ -196,6 +212,17 @@ export class Request extends SdkObject {
 
   bodySize(): number {
     return this.postDataBuffer()?.length || 0;
+  }
+
+  async requestHeadersSize(): Promise<number> {
+    let headersSize = 4; // 4 = 2 spaces + 2 line breaks (GET /path \r\n)
+    headersSize += this.method().length;
+    headersSize += (new URL(this.url())).pathname.length;
+    headersSize += 8; // httpVersion
+    const headers = this.rawRequestHeadersPromise() ? await this.rawRequestHeadersPromise()! : this._headers;
+    for (const header of headers)
+      headersSize += header.name.length + header.value.length + 4; // 4 = ': ' + '\r\n'
+    return headersSize;
   }
 }
 
@@ -316,7 +343,6 @@ export class Response extends SdkObject {
   private _timing: ResourceTiming;
   private _serverAddrPromise = new ManualPromise<RemoteAddr | undefined>();
   private _securityDetailsPromise = new ManualPromise<SecurityDetails | undefined>();
-  private _rawRequestHeadersPromise: ManualPromise<types.HeadersArray> | undefined;
   private _rawResponseHeadersPromise: ManualPromise<types.HeadersArray> | undefined;
   private _httpVersion: string | undefined;
 
@@ -372,23 +398,13 @@ export class Response extends SdkObject {
     return this._headersMap.get(name);
   }
 
-  async rawRequestHeaders(): Promise<NameValue[]> {
-    return this._rawRequestHeadersPromise || Promise.resolve(this._request._headers);
-  }
-
   async rawResponseHeaders(): Promise<NameValue[]> {
     return this._rawResponseHeadersPromise || Promise.resolve(this._headers);
   }
 
   setWillReceiveExtraHeaders() {
-    this._rawRequestHeadersPromise = new ManualPromise();
+    this._request.setWillReceiveExtraHeaders();
     this._rawResponseHeadersPromise = new ManualPromise();
-  }
-
-  setRawRequestHeaders(headers: types.HeadersArray) {
-    if (!this._rawRequestHeadersPromise)
-      this._rawRequestHeadersPromise = new ManualPromise();
-    this._rawRequestHeadersPromise!.resolve(headers);
   }
 
   setRawResponseHeaders(headers: types.HeadersArray) {
@@ -436,17 +452,6 @@ export class Response extends SdkObject {
     return this._httpVersion;
   }
 
-  private async _requestHeadersSize(): Promise<number> {
-    let headersSize = 4; // 4 = 2 spaces + 2 line breaks (GET /path \r\n)
-    headersSize += this._request.method().length;
-    headersSize += (new URL(this.url())).pathname.length;
-    headersSize += 8; // httpVersion
-    const headers = this._rawRequestHeadersPromise ? await this._rawRequestHeadersPromise : this._request._headers;
-    for (const header of headers)
-      headersSize += header.name.length + header.value.length + 4; // 4 = ': ' + '\r\n'
-    return headersSize;
-  }
-
   private async _responseHeadersSize(): Promise<number> {
     if (this._request.responseSize.responseHeadersSize)
       return this._request.responseSize.responseHeadersSize;
@@ -467,7 +472,7 @@ export class Response extends SdkObject {
 
   async sizes(): Promise<ResourceSizes> {
     await this._finishedPromise;
-    const requestHeadersSize = await this._requestHeadersSize();
+    const requestHeadersSize = await this._request.requestHeadersSize();
     const responseHeadersSize = await this._responseHeadersSize();
     let { encodedBodySize } = this._request.responseSize;
     if (!encodedBodySize) {
