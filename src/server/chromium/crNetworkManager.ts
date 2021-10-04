@@ -514,13 +514,14 @@ class RouteImpl implements network.RouteDelegate {
     this._wasFulfilled = true;
     const body = response.isBase64 ? response.body : Buffer.from(response.body).toString('base64');
 
+    const responseHeaders = splitSetCookieHeader(response.headers);
     // In certain cases, protocol will return error if the request was already canceled
     // or the page was closed. We should tolerate these errors.
     await this._client._sendMayFail('Fetch.fulfillRequest', {
       requestId: this._interceptionId!,
       responseCode: response.status,
       responsePhrase: network.STATUS_TEXTS[String(response.status)],
-      responseHeaders: response.headers,
+      responseHeaders,
       body,
     });
   }
@@ -535,6 +536,20 @@ class RouteImpl implements network.RouteDelegate {
       errorReason
     });
   }
+}
+
+function splitSetCookieHeader(headers: types.HeadersArray): types.HeadersArray {
+  const index = headers.findIndex(({ name }) => name.toLowerCase() === 'set-cookie');
+  if (index === -1)
+    return headers;
+
+  const header = headers[index];
+  const values = header.value.split('\n');
+  if (values.length === 1)
+    return headers;
+  const result = headers.slice();
+  result.splice(index, 1, ...values.map(value => ({ name: header.name, value })));
+  return result;
 }
 
 const errorReasons: { [reason: string]: Protocol.Network.ErrorReason } = {
