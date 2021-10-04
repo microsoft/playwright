@@ -352,7 +352,7 @@ Developers can opt-in in this mode via exporting `PLAYWRIGHT_BROWSERS_PATH=$HOME
 :::
 
 ### Managing browser binaries
-* lang: js
+* langs: js
 
 You can opt into the hermetic install and place binaries in the local folder:
 
