@@ -19,20 +19,19 @@
 import { Command, Option } from 'commander';
 import fs from 'fs';
 import path from 'path';
-import type { Config } from './types';
-import { Runner, builtInReporters, BuiltInReporter } from './runner';
+import type { Config, ReporterDescription } from './types';
+import { Runner, builtInReporters } from './runner';
 import { stopProfiling, startProfiling } from './profiler';
 import { FilePatternFilter } from './util';
 import { Loader } from './loader';
 
 const defaultTimeout = 30000;
-const defaultReporter: BuiltInReporter = process.env.CI ? 'dot' : 'list';
 const tsConfig = 'playwright.config.ts';
 const jsConfig = 'playwright.config.js';
 const mjsConfig = 'playwright.config.mjs';
 const defaultConfig: Config = {
   preserveOutput: 'always',
-  reporter: [ [defaultReporter] ],
+  reporter: getDefaultReporters(),
   reportSlowTests: { max: 5, threshold: 15000 },
   timeout: defaultTimeout,
   updateSnapshots: 'missing',
@@ -57,7 +56,7 @@ export function addTestCommand(program: Command) {
   command.option('--output <dir>', `Folder for output artifacts (default: "test-results")`);
   command.option('--quiet', `Suppress stdio`);
   command.option('--repeat-each <N>', `Run each test N times (default: 1)`);
-  command.option('--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporter}")`);
+  command.option('--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporters}")`);
   command.option('--retries <retries>', `Maximum retry count for flaky tests, zero for no retries (default: no retries)`);
   command.option('--shard <shard>', `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"`);
   command.option('--project <project-name...>', `Only run tests from the specified list of projects (default: run all projects)`);
@@ -210,4 +209,11 @@ function resolveReporter(id: string) {
   if (fs.existsSync(localPath))
     return localPath;
   return require.resolve(id, { paths: [ process.cwd() ] });
+}
+
+function getDefaultReporters() {
+  const defaultReporters: ReporterDescription[] = [[process.env.CI ? 'dot' : 'list']];
+  if (process.env.GITHUB_ACTION)
+    defaultReporters.push(['github']);
+  return defaultReporters;
 }
