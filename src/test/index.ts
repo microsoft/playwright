@@ -32,10 +32,10 @@ type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
 type WorkerAndFileFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
   _browserType: BrowserType;
   _artifactsDir: () => string,
-  _reuseBrowerContext: ReuseBrowerContextStorage,
+  _reuseBrowserContext: ReuseBrowserContextStorage,
 };
 
-class ReuseBrowerContextStorage {
+class ReuseBrowserContextStorage {
   private _browserContext?: BrowserContext;
   private _uniqueOrigins = new Set<string>();
   private _options?: BrowserContextOptions;
@@ -387,14 +387,14 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
     }));
   }, { auto: true }],
 
-  _reuseBrowerContext: [new ReuseBrowerContextStorage(), { scope: 'worker' }],
+  _reuseBrowserContext: [new ReuseBrowserContextStorage(), { scope: 'worker' }],
 
-  context: async ({ browser, video, _artifactsDir, _reuseBrowerContext, _combinedContextOptions }, use, testInfo) => {
+  context: async ({ browser, video, _artifactsDir, _reuseBrowserContext, _combinedContextOptions }, use, testInfo) => {
     const hook = hookType(testInfo);
     if (hook)
       throw new Error(`"context" and "page" fixtures are not supported in ${hook}. Use browser.newContext() instead.`);
-    if (_reuseBrowerContext.isEnabled()) {
-      const context = await _reuseBrowerContext.obtainContext(browser, _combinedContextOptions);
+    if (_reuseBrowserContext.isEnabled()) {
+      const context = await _reuseBrowserContext.obtainContext(browser, _combinedContextOptions);
       await use(context);
       return;
     }
@@ -449,9 +449,9 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
     }
   },
 
-  page: async ({ context, _reuseBrowerContext }, use) => {
-    if (_reuseBrowerContext.isEnabled()) {
-      await use(await _reuseBrowerContext.obtainPage());
+  page: async ({ context, _reuseBrowserContext }, use) => {
+    if (_reuseBrowserContext.isEnabled()) {
+      await use(await _reuseBrowserContext.obtainPage());
       return;
     }
     await use(await context.newPage());
