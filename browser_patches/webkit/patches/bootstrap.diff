@@ -3960,7 +3960,7 @@ index 3386cb879f1178c1b9635775c9a0e864f5b94c52..d2350182f5f061855e8ca172779ad60e
  class Page;
  class SecurityOrigin;
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
-index 37468432577f64e3d18bc3667ca298f43a3bf503..81e54d04c6142b29241ec5379470ef475a6983de 100644
+index 37468432577f64e3d18bc3667ca298f43a3bf503..1b1eb9737c87246c1e6b88875d031cf4aa26efff 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 @@ -45,6 +45,7 @@
@@ -4146,17 +4146,19 @@ index 37468432577f64e3d18bc3667ca298f43a3bf503..81e54d04c6142b29241ec5379470ef47
      ResourceRequest request = loader.request();
      if (!!url)
          request.setURL(URL({ }, url));
-@@ -1289,14 +1370,24 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithRespons
+@@ -1289,14 +1370,25 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithRespons
      response.setHTTPStatusCode(status);
      response.setHTTPStatusText(statusText);
      HTTPHeaderMap explicitHeaders;
 +    String setCookieValue;
      for (auto& header : headers.get()) {
          auto headerValue = header.value->asString();
-         if (!!headerValue)
-             explicitHeaders.add(header.key, headerValue);
+-        if (!!headerValue)
 +        if (equalIgnoringASCIICase(header.key, "Set-Cookie"))
 +            setCookieValue = headerValue;
++        else if (!!headerValue)
+             explicitHeaders.add(header.key, headerValue);
++
      }
      response.setHTTPHeaderFields(WTFMove(explicitHeaders));
      response.setHTTPHeaderField(HTTPHeaderName::ContentType, response.mimeType());
@@ -4171,7 +4173,7 @@ index 37468432577f64e3d18bc3667ca298f43a3bf503..81e54d04c6142b29241ec5379470ef47
          if (buffer->size())
              loader->didReceiveBuffer(WTFMove(buffer), buffer->size(), DataPayloadWholeResource);
          loader->didFinishLoading(NetworkLoadMetrics());
-@@ -1337,6 +1428,12 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithError(c
+@@ -1337,6 +1429,12 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithError(c
      return { };
  }
  
@@ -4184,7 +4186,7 @@ index 37468432577f64e3d18bc3667ca298f43a3bf503..81e54d04c6142b29241ec5379470ef47
  bool InspectorNetworkAgent::shouldTreatAsText(const String& mimeType)
  {
      return startsWithLettersIgnoringASCIICase(mimeType, "text/")
-@@ -1378,6 +1475,12 @@ std::optional<String> InspectorNetworkAgent::textContentForCachedResource(Cached
+@@ -1378,6 +1476,12 @@ std::optional<String> InspectorNetworkAgent::textContentForCachedResource(Cached
      return std::nullopt;
  }
  
@@ -8330,6 +8332,18 @@ index 39cb560e54bf9efd2dad6e1fb60dd0f609daf6bf..91c132460d4b466f61a8c579f70329fd
      else
          m_commonHeaders.append(CommonHeader { name, value });
  }
+diff --git a/Source/WebCore/platform/network/NetworkStorageSession.h b/Source/WebCore/platform/network/NetworkStorageSession.h
+index 3cbe3f9473d4ef35b0577847bcb9f0c70355fc27..2505e327ddb9cd68af44df388aed789ae3f0aa15 100644
+--- a/Source/WebCore/platform/network/NetworkStorageSession.h
++++ b/Source/WebCore/platform/network/NetworkStorageSession.h
+@@ -138,6 +138,7 @@ public:
+     void setCookieObserverHandler(Function<void ()>&&);
+     void getCredentialFromPersistentStorage(const ProtectionSpace&, GCancellable*, Function<void (Credential&&)>&& completionHandler);
+     void saveCredentialToPersistentStorage(const ProtectionSpace&, const Credential&);
++    void setCookiesFromResponse(const URL& firstParty, const URL&, const String& setCookieValue);
+ #elif USE(CURL)
+     WEBCORE_EXPORT NetworkStorageSession(PAL::SessionID);
+     ~NetworkStorageSession();
 diff --git a/Source/WebCore/platform/network/ResourceResponseBase.h b/Source/WebCore/platform/network/ResourceResponseBase.h
 index 262e53180d6dd7c4d133ddc1daf5652bd6f31c76..d09aed9c9c58afe3c2040e1d5d683374365e65f8 100644
 --- a/Source/WebCore/platform/network/ResourceResponseBase.h
@@ -8561,6 +8575,33 @@ index 4b9491c11543f2b60f12d36e9e6a0cbaae34a72e..e907fc00a2a426384ce1e471847911c9
  }
  
  SocketStreamHandleImpl::~SocketStreamHandleImpl()
+diff --git a/Source/WebCore/platform/network/soup/NetworkStorageSessionSoup.cpp b/Source/WebCore/platform/network/soup/NetworkStorageSessionSoup.cpp
+index 5b32534e2bcaf1701331e9541013b8a5c38c4d36..efee59ab00e99bc0e5d4374cc0a474461c2c1386 100644
+--- a/Source/WebCore/platform/network/soup/NetworkStorageSessionSoup.cpp
++++ b/Source/WebCore/platform/network/soup/NetworkStorageSessionSoup.cpp
+@@ -408,6 +408,22 @@ void NetworkStorageSession::setCookie(const Cookie& cookie)
+     soup_cookie_jar_add_cookie(cookieStorage(), cookie.toSoupCookie());
+ }
+ 
++void  NetworkStorageSession::setCookiesFromResponse(const URL&, const URL& url, const String& setCookieValue)
++{
++    auto origin = urlToSoupURI(url);
++    if (!origin)
++        return;
++
++    for (auto& cookieString : setCookieValue.split('\n')) {
++        GUniquePtr<SoupCookie> cookie(soup_cookie_parse(cookieString.utf8().data(), origin.get()));
++
++        if (!cookie)
++            continue;
++
++        soup_cookie_jar_add_cookie(cookieStorage(), cookie.release());
++    }
++}
++
+ void NetworkStorageSession::deleteCookie(const Cookie& cookie)
+ {
+     GUniquePtr<SoupCookie> targetCookie(cookie.toSoupCookie());
 diff --git a/Source/WebCore/platform/network/soup/SocketStreamHandleImpl.h b/Source/WebCore/platform/network/soup/SocketStreamHandleImpl.h
 index 88df3748e980a22e71bd835864caf24b6b7ea50b..f83c7f2535fd1abae7b1cccca946254b9407f86f 100644
 --- a/Source/WebCore/platform/network/soup/SocketStreamHandleImpl.h
@@ -9177,7 +9218,7 @@ index 694008e0451edc5770142a0a6d9eed52b04ded80..ec93869f9486bdf7bd3bb56478c62469
      
  WEBCORE_EXPORT WTF::TextStream& operator<<(WTF::TextStream&, ScrollAlignment::Behavior);
 diff --git a/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.cpp b/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.cpp
-index aaa8731f9ecaa6a81f521dc0e7f84923faa81f06..9f0502c4058ce24e86b2c9e25775e78f9da078c6 100644
+index aaa8731f9ecaa6a81f521dc0e7f84923faa81f06..baad5424307be2e75ab3f1ce44741d64d543a1bd 100644
 --- a/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.cpp
 +++ b/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.cpp
 @@ -76,6 +76,11 @@
@@ -9192,17 +9233,21 @@ index aaa8731f9ecaa6a81f521dc0e7f84923faa81f06..9f0502c4058ce24e86b2c9e25775e78f
  #if ENABLE(APPLE_PAY_REMOTE_UI)
  #include "WebPaymentCoordinatorProxyMessages.h"
  #endif
-@@ -948,6 +953,15 @@ void NetworkConnectionToWebProcess::clearPageSpecificData(PageIdentifier pageID)
+@@ -948,6 +953,19 @@ void NetworkConnectionToWebProcess::clearPageSpecificData(PageIdentifier pageID)
  #endif
  }
  
 +void NetworkConnectionToWebProcess::setCookieFromResponse(NetworkResourceLoadParameters&& parameters, const URL& mainDocumentURL, const String& setCookieValue)
 +{
-+    if (auto* session = networkSession()) {
-+#if PLATFORM(COCOA)
++#if USE(SOUP)
++    auto* networkStorageSession = storageSession();
++    if (!networkStorageSession)
++        return;
++    networkStorageSession->setCookiesFromResponse(mainDocumentURL, parameters.request.url(), setCookieValue);
++#elif PLATFORM(COCOA)
++    if (auto* session = networkSession())
 +        NetworkDataTaskCocoa::setCookieFromResponse(*static_cast<NetworkSessionCocoa*>(session), WTFMove(parameters), mainDocumentURL, setCookieValue);
 +#endif
-+    }
 +}
 +
  #if ENABLE(INTELLIGENT_TRACKING_PREVENTION)
