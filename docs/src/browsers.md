@@ -225,109 +225,122 @@ du -hs ~/Library/Caches/ms-playwright/*
 
 You can override default behavior using environment variables. When installing Playwright, ask it to download browsers into a specific location:
 
-```bash js
-# Linux/macOS
+```bash bash-flavor=bash lang=js
 PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers npx playwright install
+```
 
-# Windows with cmd.exe
+```bash bash-flavor=batch lang=js
 set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
 npx playwright install
+```
 
-# Windows with PowerShell
+```bash bash-flavor=powershell lang=js
 $env:PLAYWRIGHT_BROWSERS_PATH="$env:USERPROFILE\pw-browsers"
 npx playwright install
 ```
 
-```bash python
-# Linux/macOS
+```bash bash-flavor=bash lang=python
 pip install playwright
 PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers python -m playwright install
+```
 
-# Windows with cmd.exe
+```bash bash-flavor=batch lang=python
 set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
 pip install playwright
 playwright install
+```
 
-# Windows with PowerShell
+```bash bash-flavor=powershell lang=python
 $env:PLAYWRIGHT_BROWSERS_PATH="$env:USERPROFILE\pw-browsers"
 pip install playwright
 playwright install
 ```
 
-```bash java
-# Linux/macOS
+```bash bash-flavor=bash lang=java
 PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers mvn test
+```
 
-# Windows with cmd.exe
+```bash bash-flavor=batch lang=java
 set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
 mvn test
+```
 
-# Windows with PowerShell
+```bash bash-flavor=powershell lang=java
 $env:PLAYWRIGHT_BROWSERS_PATH="$env:USERPROFILE\pw-browsers"
 mvn test
 ```
 
-```bash csharp
-# Linux/macOS
+```bash bash-flavor=bash lang=csharp
 PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers 
 playwright install
+```
 
-# Windows with cmd.exe
+```bash bash-flavor=batch lang=csharp
 set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
 playwright install
+```
 
-# Windows with PowerShell
+```bash bash-flavor=powershell lang=csharp
 $env:PLAYWRIGHT_BROWSERS_PATH="$env:USERPROFILE\pw-browsers"
 playwright install
 ```
 
 When running Playwright scripts, ask it to search for browsers in a shared location.
 
-```bash js
-# Linux/macOS
+```bash bash-flavor=bash lang=js
 PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers npx playwright test
+```
 
-# Windows with cmd.exe
+```bash bash-flavor=batch lang=js
 set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
 npx playwright test
+```
 
-# Windows with PowerShell
+```bash bash-flavor=powershell lang=js
 $env:PLAYWRIGHT_BROWSERS_PATH="$env:USERPROFILE\pw-browsers"
 npx playwright test
 ```
 
-```bash python
+```bash bash-flavor=bash lang=python
 # Linux/macOS
 PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers python playwright_script.py
+```
 
-# Windows with cmd.exe
+```bash bash-flavor=batch lang=python
 set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
 python playwright_script.py
+```
 
-# Windows with PowerShell
+```bash bash-flavor=powershell lang=python
+
 $env:PLAYWRIGHT_BROWSERS_PATH="$env:USERPROFILE\pw-browsers"
 python playwright_script.py
 ```
 
-```bash java
-# Windows with cmd.exe
+```bash bash-flavor=bash lang=java
+PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers mvn test
+```
+
+```bash bash-flavor=batch lang=java
 set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
 mvn test
+```
 
-# Windows with PowerShell
+```bash bash-flavor=powershell lang=java
 $env:PLAYWRIGHT_BROWSERS_PATH="$env:USERPROFILE\pw-browsers"
 mvn test
 ```
 
-```bash csharp
-# Linux/macOS
+```bash bash-flavor=bash lang=csharp
 PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers dotnet test
+```
 
-# Windows with cmd.exe
+```bash bash-flavor=batch lang=csharp
 set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
 dotnet test
+```
 
-# Windows with PowerShell
+```bash bash-flavor=powershell lang=csharp
 $env:PLAYWRIGHT_BROWSERS_PATH="$env:USERPROFILE\pw-browsers"
 dotnet test
 ```
@@ -343,17 +356,18 @@ Developers can opt-in in this mode via exporting `PLAYWRIGHT_BROWSERS_PATH=$HOME
 
 You can opt into the hermetic install and place binaries in the local folder:
 
-```bash
-# Linux/macOS
+```bash bash-flavor=bash
 # Places binaries to node_modules/@playwright/test
 PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install
+```
 
-# Windows with cmd.exe
+```bash bash-flavor=batch
 # Places binaries to node_modules\@playwright\test
 set PLAYWRIGHT_BROWSERS_PATH=0
 npx playwright install
+```
 
-# Windows with PowerShell
+```bash bash-flavor=powershell
 # Places binaries to node_modules\@playwright\test
 $env:PLAYWRIGHT_BROWSERS_PATH=0
 npx playwright install
@@ -366,44 +380,47 @@ By default, Playwright downloads browsers from Microsoft CDN.
 Sometimes companies maintain an internal proxy that blocks direct access to the public
 resources. In this case, Playwright can be configured to download browsers via a proxy server.
 
-```bash python
-# Linux/macOS
+```bash bash-flavor=bash lang=python
 pip install playwright
 HTTPS_PROXY=https://192.0.2.1 playwright install
+```
 
-# Windows with cmd.exe
+```bash bash-flavor=batch lang=python
 set HTTPS_PROXY=https://192.0.2.1
 pip install playwright
 playwright install
+```
 
-# Windows with PowerShell
+```bash bash-flavor=powershell lang=python
 $env:HTTPS_PROXY="https://192.0.2.1"
 pip install playwright
 playwright install
 ```
 
-```bash java
-# Linux/macOS
+```bash bash-flavor=bash lang=java
 HTTPS_PROXY=https://192.0.2.1 mvn test
+```
 
-# Windows with cmd.exe
+```bash bash-flavor=batch lang=java
 set HTTPS_PROXY=https://192.0.2.1
 mvn test
+```
 
-# Windows with PowerShell
+```bash bash-flavor=powershell lang=java
 $env:HTTPS_PROXY="https://192.0.2.1"
 mvn test
 ```
 
-```bash csharp
-# Linux/macOS
+```bash bash-flavor=bash lang=csharp
 HTTPS_PROXY=https://192.0.2.1 playwright install
+```
 
-# Windows with cmd.exe
+```bash bash-flavor=batch lang=csharp
 set HTTPS_PROXY=https://192.0.2.1
 playwright install
+```
 
-# Windows with PowerShell
+```bash bash-flavor=powershell lang=csharp
 $env:HTTPS_PROXY="https://192.0.2.1"
 playwright install
 ```
@@ -416,44 +433,48 @@ Sometimes companies maintain an internal artifact repository to host browser
 binaries. In this case, Playwright can be configured to download from a custom
 location using the `PLAYWRIGHT_DOWNLOAD_HOST` env variable.
 
-```bash python
-# Linux/macOS
+```bash bash-flavor=bash lang=python
 pip install playwright
 PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 playwright install
 
-# Windows with cmd.exe
+```
+
+```bash bash-flavor=batch lang=python
 set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
 pip install playwright
 playwright install
+```
 
-# Windows with PowerShell
+```bash bash-flavor=powershell lang=python
 $env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
 pip install playwright
 playwright install
 ```
 
-```bash java
-# Linux/macOS
+```bash bash-flavor=bash lang=java
 PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 mvn test
+```
 
-# Windows with cmd.exe
+```bash bash-flavor=batch lang=java
 set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
 mvn test
+```
 
-# Windows with PowerShell
+```bash bash-flavor=powershell lang=java
 $env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
 mvn test
 ```
 
-```bash csharp
-# Linux/macOS
+```bash bash-flavor=bash lang=csharp
 PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 playwright install
+```
 
-# Windows with cmd.exe
+```bash bash-flavor=batch lang=csharp
 set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
 playwright install
+```
 
-# Windows with PowerShell
+```bash bash-flavor=powershell lang=csharp
 $env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
 playwright install
 ```
@@ -484,44 +505,47 @@ browser binaries are managed separately.
 
 This can be done by setting `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` variable before installation.
 
-```bash python
-# Linux/macOS
+```bash bash-flavor=bash lang=python
 pip install playwright
 PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 python -m playwright install
+```
 
-# Windows with cmd.exe
+```bash bash-flavor=batch lang=python
 set PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 pip install playwright
 playwright install
+```
 
-# Windows with PowerShell
+```bash bash-flavor=powershell lang=python
 $env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 pip install playwright
 playwright install
 ```
 
-```bash java
-# Linux/macOS
+```bash bash-flavor=bash lang=java
 PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 mvn test
+```
 
-# Windows with cmd.exe
+```bash bash-flavor=batch lang=java
 set PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 mvn test
+```
 
-# Windows with PowerShell
+```bash bash-flavor=powershell lang=java
 $env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 mvn test
 ```
 
-```bash csharp
-# Linux/macOS
+```bash bash-flavor=bash lang=csharp
 PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 playwright install
+```
 
-# Windows with cmd.exe
+```bash bash-flavor=batch lang=csharp
 set PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 playwright install
+```
 
-# Windows with PowerShell
+```bash bash-flavor=powershell lang=csharp
 $env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 playwright install
 ```
