@@ -34,6 +34,7 @@ const config: Config<CommonOptions & PlaywrightOptions> = {
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [
     [ 'dot' ],
+    [ 'github' ],
     [ 'json', { outputFile: path.join(outputDir, 'report.json') } ],
   ] : 'line',
   projects: [],
