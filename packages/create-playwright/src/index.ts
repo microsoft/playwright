@@ -159,13 +159,13 @@ class Generator {
   ${colors.cyan(commandToRunTests(this.packageManager))}
     Runs the end-to-end tests.
 
-  ${colors.cyan(commandToRunTests(this.packageManager) + ' -- --project="Desktop Chrome"')}
+  ${colors.cyan(commandToRunTests(this.packageManager, '--project="Desktop Chrome"'))}
     Runs the tests only on Desktop Chrome.
 
-  ${colors.cyan(commandToRunTests(this.packageManager) + ` -- ${exampleSpecPath}`)}
+  ${colors.cyan(commandToRunTests(this.packageManager, exampleSpecPath))}
     Runs the tests of a specific file.
-  
-  ${colors.cyan(`${commandToRunTests(this.packageManager)} --debug`)}
+
+  ${colors.cyan(`${commandToRunTests(this.packageManager, '--debug')}`)}
     Runs the tests in debug mode.
 
 We suggest that you begin by typing:
@@ -182,10 +182,10 @@ Happy hacking! 🎭`);
   }
 }
 
-export function commandToRunTests(packageManager: 'npm' | 'yarn') {
+export function commandToRunTests(packageManager: 'npm' | 'yarn', args?: string) {
   if (packageManager === 'yarn')
-    return `yarn ${PACKAGE_JSON_TEST_SCRIPT_CMD}`;
-  return `npm run ${PACKAGE_JSON_TEST_SCRIPT_CMD}`;
+    return `yarn ${PACKAGE_JSON_TEST_SCRIPT_CMD}${args ? (' ' + args) : ''}`;
+  return `npm run ${PACKAGE_JSON_TEST_SCRIPT_CMD}${args ? (' -- ' + args) : ''}`;
 }
 
 (async () => {
