@@ -126,3 +126,44 @@ test('should bypass csp', async ({ playwright, server }) => {
   expect(await page.evaluate('window["__injected"]')).toBe(42);
   await app.close();
 });
+
+test('should create page for browser view', async ({ playwright }) => {
+  const app = await playwright._electron.launch({
+    args: [path.join(__dirname, 'electron-window-app.js')],
+  });
+  const browserViewPagePromise = app.waitForEvent('window');
+  await app.evaluate(async electron => {
+    const window = electron.BrowserWindow.getAllWindows()[0];
+    const view = new electron.BrowserView();
+    window.addBrowserView(view);
+    await view.webContents.loadURL('about:blank');
+    view.setBounds({ x: 0, y: 0, width: 256, height: 256 });
+  });
+  await browserViewPagePromise;
+  expect(app.windows()).toHaveLength(2);
+  await app.close();
+});
+
+test('should return same browser window for browser view pages', async ({ playwright }) => {
+  const app = await playwright._electron.launch({
+    args: [path.join(__dirname, 'electron-window-app.js')],
+  });
+  const browserViewPagePromise = app.waitForEvent('window');
+  await app.evaluate(async electron => {
+    const window = electron.BrowserWindow.getAllWindows()[0];
+    const view = new electron.BrowserView();
+    window.addBrowserView(view);
+    await view.webContents.loadURL('about:blank');
+    view.setBounds({ x: 0, y: 0, width: 256, height: 256 });
+  });
+  await browserViewPagePromise;
+  const [firstWindowId, secondWindowId] = await Promise.all(
+      app.windows().map(async page => {
+        const bwHandle = await app.browserWindow(page);
+        const id = await bwHandle.evaluate((bw: BrowserWindow) => bw.id);
+        return id;
+      })
+  );
+  expect(firstWindowId).toEqual(secondWindowId);
+  await app.close();
+});
