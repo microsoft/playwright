@@ -632,8 +632,14 @@ export class Registry {
     const scriptName = scripts[process.platform as 'linux' | 'darwin' | 'win32'];
     if (!scriptName)
       throw new Error(`Cannot install ${channel} on ${process.platform}`);
-    const shell = scriptName.endsWith('.ps1') ? 'powershell.exe' : 'bash';
-    const { code } = await spawnAsync(shell, [path.join(BIN_PATH, scriptName), ...scriptArgs], { cwd: BIN_PATH, stdio: 'inherit' });
+    const isPowerShell = scriptName.endsWith('.ps1');
+    const shell = isPowerShell ? 'powershell.exe' : 'bash';
+    const args = [
+      ...(isPowerShell ? ['-File'] : []),
+      path.join(BIN_PATH, scriptName),
+      ...scriptArgs
+    ];
+    const { code } = await spawnAsync(shell, args, { cwd: BIN_PATH, stdio: 'inherit' });
     if (code !== 0)
       throw new Error(`Failed to install ${channel}`);
   }
