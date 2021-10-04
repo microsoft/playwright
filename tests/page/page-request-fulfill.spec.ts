@@ -248,3 +248,54 @@ it('should fetch original request and fulfill', async ({ page, server, isElectro
   expect(response.status()).toBe(200);
   expect(await page.title()).toEqual('Woof-Woof');
 });
+
+it('should fulfill with multiple set-cookie', async ({ page, server, browserName }) => {
+  it.fail(browserName === 'webkit', 'Response contained invalid HTTP headers');
+  const cookies = ['a=b', 'c=d'];
+  await page.route('**/empty.html', async route => {
+    route.fulfill({
+      status: 200,
+      headers: {
+        'X-Header-1': 'v1',
+        'Set-Cookie': cookies.join('\n'),
+        'X-Header-2': 'v2',
+      },
+      body: ''
+    });
+  });
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect((await page.evaluate(() => document.cookie)).split(';').map(s => s.trim()).sort()).toEqual(cookies);
+  expect(await response.headerValue('X-Header-1')).toBe('v1');
+  expect(await response.headerValue('X-Header-2')).toBe('v2');
+});
+
+it('should fulfill with fetch response that has multiple set-cookie', async ({ playwright, page, server, browserName }) => {
+  it.fail(browserName === 'webkit', 'Response contained invalid HTTP headers');
+  server.setRoute('/empty.html', (req, res) => {
+    res.setHeader('Set-Cookie', ['a=b', 'c=d']);
+    res.end();
+  });
+  await page.route('**/empty.html', async route => {
+    const request = await playwright._newRequest();
+    const response = await request.fetch(route.request());
+    route.fulfill({ response });
+  });
+  await page.goto(server.EMPTY_PAGE);
+  const cookie = await page.evaluate(() => document.cookie);
+  expect(cookie.split(';').map(s => s.trim()).sort()).toEqual(['a=b', 'c=d']);
+});
+
+it('headerValue should return set-cookie from intercepted response', async ({ page, server, browserName }) => {
+  it.fail(browserName === 'chromium', 'Set-Cookie is missing in response after interception');
+  await page.route('**/empty.html', async route => {
+    route.fulfill({
+      status: 200,
+      headers: {
+        'Set-Cookie': 'a=b',
+      },
+      body: ''
+    });
+  });
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(await response.headerValue('Set-Cookie')).toBe('a=b');
+});
