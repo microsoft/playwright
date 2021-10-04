@@ -320,7 +320,7 @@ export class HarTracer {
       if (details)
         harEntry._securityDetails = details;
     }));
-    this._addBarrier(page, response.rawRequestHeaders().then(headers => {
+    this._addBarrier(page, request.rawRequestHeaders().then(headers => {
       for (const header of headers.filter(header => header.name.toLowerCase() === 'cookie'))
         harEntry.request.cookies.push(...header.value.split(';').map(parseCookie));
       harEntry.request.headers = headers;

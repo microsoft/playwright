@@ -2770,11 +2770,17 @@ export type RequestInitializer = {
 };
 export interface RequestChannel extends Channel {
   response(params?: RequestResponseParams, metadata?: Metadata): Promise<RequestResponseResult>;
+  rawRequestHeaders(params?: RequestRawRequestHeadersParams, metadata?: Metadata): Promise<RequestRawRequestHeadersResult>;
 }
 export type RequestResponseParams = {};
 export type RequestResponseOptions = {};
 export type RequestResponseResult = {
   response?: ResponseChannel,
+};
+export type RequestRawRequestHeadersParams = {};
+export type RequestRawRequestHeadersOptions = {};
+export type RequestRawRequestHeadersResult = {
+  headers: NameValue[],
 };
 
 export interface RequestEvents {
@@ -2864,7 +2870,6 @@ export interface ResponseChannel extends Channel {
   body(params?: ResponseBodyParams, metadata?: Metadata): Promise<ResponseBodyResult>;
   securityDetails(params?: ResponseSecurityDetailsParams, metadata?: Metadata): Promise<ResponseSecurityDetailsResult>;
   serverAddr(params?: ResponseServerAddrParams, metadata?: Metadata): Promise<ResponseServerAddrResult>;
-  rawRequestHeaders(params?: ResponseRawRequestHeadersParams, metadata?: Metadata): Promise<ResponseRawRequestHeadersResult>;
   rawResponseHeaders(params?: ResponseRawResponseHeadersParams, metadata?: Metadata): Promise<ResponseRawResponseHeadersResult>;
   sizes(params?: ResponseSizesParams, metadata?: Metadata): Promise<ResponseSizesResult>;
 }
@@ -2882,11 +2887,6 @@ export type ResponseServerAddrParams = {};
 export type ResponseServerAddrOptions = {};
 export type ResponseServerAddrResult = {
   value?: RemoteAddr,
-};
-export type ResponseRawRequestHeadersParams = {};
-export type ResponseRawRequestHeadersOptions = {};
-export type ResponseRawRequestHeadersResult = {
-  headers: NameValue[],
 };
 export type ResponseRawResponseHeadersParams = {};
 export type ResponseRawResponseHeadersOptions = {};

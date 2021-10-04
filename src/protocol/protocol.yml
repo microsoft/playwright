@@ -2324,6 +2324,11 @@ Request:
       returns:
         response: Response?
 
+    rawRequestHeaders:
+      returns:
+        headers:
+          type: array
+          items: NameValue
 
 
 Route:
@@ -2406,12 +2411,6 @@ Response:
     serverAddr:
       returns:
         value: RemoteAddr?
-
-    rawRequestHeaders:
-      returns:
-        headers:
-          type: array
-          items: NameValue
 
     rawResponseHeaders:
       returns:
