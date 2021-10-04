@@ -82,7 +82,7 @@ test('print GitHub annotations for slow tests', async ({ runInlineTest }) => {
     `
   }, { retries: 3, reporter: 'github' }, { GITHUB_ACTION: 'true', GITHUB_WORKSPACE: '' });
   const text = stripAscii(result.output);
-  expect(text).toContain('::warning title=Slow Test,file=a.test.js::a.test.js took 2');
+  expect(text).toContain('::warning title=Slow Test,file=a.test.js::a.test.js took');
   expect(text).toContain('::notice title=🎭 Playwright Run Summary::%0A  1 passed');
   expect(result.exitCode).toBe(0);
 });
