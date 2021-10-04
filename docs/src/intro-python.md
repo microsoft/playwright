@@ -155,17 +155,18 @@ with sync_playwright() as p:
 
 If you want to bundle browsers with the executables:
 
-```bash
-# Linux/macOS
+```bash bash-flavor=bash
 PLAYWRIGHT_BROWSERS_PATH=0 playwright install chromium
 pyinstaller -F main.py
+```
 
-# Windows with cmd.exe
+```bash bash-flavor=batch
 set PLAYWRIGHT_BROWSERS_PATH=0
 playwright install chromium
 pyinstaller -F main.py
+```
 
-# Windows with PowerShell
+```bash bash-flavor=powershell
 $env:PLAYWRIGHT_BROWSERS_PATH="0"
 playwright install chromium
 pyinstaller -F main.py
