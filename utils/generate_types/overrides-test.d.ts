@@ -298,7 +298,7 @@ export interface PlaywrightWorkerOptions {
 
 export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | /** deprecated */ 'retry-with-video';
 
-export interface PlaywrightTestOptions {
+export interface PlaywrightTestOptions extends PlaywrightTest.ExtraUseOptions {
   acceptDownloads: boolean | undefined;
   bypassCSP: boolean | undefined;
   colorScheme: ColorScheme | undefined;
