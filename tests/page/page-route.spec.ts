@@ -672,3 +672,13 @@ it('should support the times parameter with route matching', async ({ page, serv
   await page.goto(server.EMPTY_PAGE);
   expect(intercepted).toHaveLength(1);
 });
+
+it('should contain raw header', async ({ page, server }) => {
+  let headers: any;
+  await page.route('**/*', async route => {
+    headers = await route.request().allHeaders();
+    route.continue();
+  });
+  await page.goto(server.PREFIX + '/empty.html');
+  expect(headers.accept).toBeTruthy();
+});

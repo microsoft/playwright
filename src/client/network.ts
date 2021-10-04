@@ -142,13 +142,8 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
 
   _actualHeaders(): Promise<RawHeaders> {
     if (!this._actualHeadersPromise) {
-      this._actualHeadersPromise = this.response().then(response => {
-        // there is no response, so should we return the headers we have now?
-        if (!response)
-          return this._provisionalHeaders;
-        return response._wrapApiCall(async (channel: channels.ResponseChannel) => {
-          return new RawHeaders((await channel.rawRequestHeaders()).headers);
-        });
+      this._actualHeadersPromise = this._wrapApiCall(async (channel: channels.RequestChannel) => {
+        return new RawHeaders((await channel.rawRequestHeaders()).headers);
       });
     }
     return this._actualHeadersPromise;
