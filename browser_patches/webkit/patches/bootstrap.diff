@@ -8560,23 +8560,14 @@ index 7d881206c9689f433227969c9b7f9ff268bdaaed..2e8118f11f87fa5f32adcedc165aec82
      void send(CurlStreamID, UniqueArray<uint8_t>&&, size_t);
  
 diff --git a/Source/WebCore/platform/network/curl/NetworkStorageSessionCurl.cpp b/Source/WebCore/platform/network/curl/NetworkStorageSessionCurl.cpp
-index 5249bfb4a5ba52981e1f4cbe43048e27507b033a..081bd080ea6fa2055002b8c4b34b020e07993b46 100644
+index 5249bfb4a5ba52981e1f4cbe43048e27507b033a..52b8d0703ebb2fb0737b73bc7ebcf3abe3d7ed9e 100644
 --- a/Source/WebCore/platform/network/curl/NetworkStorageSessionCurl.cpp
 +++ b/Source/WebCore/platform/network/curl/NetworkStorageSessionCurl.cpp
-@@ -106,7 +106,7 @@ void NetworkStorageSession::setCookiesFromDOM(const URL& firstParty, const SameS
-     cookieDatabase().setCookie(firstParty, url, value, CookieJarDB::Source::Script, cappedLifetime);
- }
- 
--void NetworkStorageSession::setCookiesFromHTTPResponse(const URL& firstParty, const URL& url, const String& value) const
-+void NetworkStorageSession::setCookiesFromHTTPResponse(const URL& firstParty, const SameSiteInfo&, const URL& url, const String& value) const
- {
-     cookieDatabase().setCookie(firstParty, url, value, CookieJarDB::Source::Network);
- }
 @@ -116,6 +116,12 @@ void NetworkStorageSession::setCookieAcceptPolicy(CookieAcceptPolicy policy) con
      cookieDatabase().setAcceptPolicy(policy);
  }
  
-+void  NetworkStorageSession::setCookiesFromResponse(const URL& firstParty, const URL& url, const String& setCookieValue)
++void  NetworkStorageSession::setCookiesFromResponse(const URL& firstParty, const SameSiteInfo&, const URL& url, const String& setCookieValue)
 +{
 +    for (auto& cookieString : setCookieValue.split('\n'))
 +        cookieDatabase().setCookie(firstParty, url, cookieString, CookieJarDB::Source::Network);
