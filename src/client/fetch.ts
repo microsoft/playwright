@@ -56,7 +56,7 @@ export class FetchRequest extends ChannelOwner<channels.FetchRequestChannel, cha
   }
 
   async get(
-    urlOrRequest: string | api.Request,
+    url: string,
     options?: {
       params?: { [key: string]: string; };
       headers?: { [key: string]: string; };
@@ -64,14 +64,14 @@ export class FetchRequest extends ChannelOwner<channels.FetchRequestChannel, cha
       failOnStatusCode?: boolean;
       ignoreHTTPSErrors?: boolean,
     }): Promise<FetchResponse> {
-    return this.fetch(urlOrRequest, {
+    return this.fetch(url, {
       ...options,
       method: 'GET',
     });
   }
 
-  async post(urlOrRequest: string | api.Request, options?: Omit<FetchOptions, 'method'>): Promise<FetchResponse> {
-    return this.fetch(urlOrRequest, {
+  async post(url: string, options?: Omit<FetchOptions, 'method'>): Promise<FetchResponse> {
+    return this.fetch(url, {
       ...options,
       method: 'POST',
     });
