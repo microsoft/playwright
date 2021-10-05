@@ -1419,7 +1419,7 @@ export interface Page {
   /**
    * API testing helper associated with this page. Requests made with this API will use page cookies.
    */
-  _request: FetchRequest;
+  request: FetchRequest;
 
   accessibility: Accessibility;
 
@@ -6233,7 +6233,7 @@ export interface BrowserContext {
   /**
    * API testing helper associated with this context. Requests made with this API will use context cookies.
    */
-  _request: FetchRequest;
+  request: FetchRequest;
 
   /**
    * Adds cookies into this browser context. All pages within this context will have these cookies installed. Cookies can be
@@ -13375,7 +13375,7 @@ export interface Mouse {
  * **experimental** Creates new instances of [FetchRequest].
  * @param options
  */
-export const _newRequest: (options?: {
+export const newRequest: (options?: {
   /**
    * When using
    * [fetchRequest.get(urlOrRequest[, options])](https://playwright.dev/docs/api/class-fetchrequest#fetch-request-get),

@@ -449,7 +449,7 @@ Emitted when [WebSocket] request is sent.
 Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is spawned by the
 page.
 
-## property: Page._request
+## property: Page.request
 * langs: js
 - type: <[FetchRequest]>
 

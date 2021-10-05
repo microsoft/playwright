@@ -25,7 +25,7 @@ export type GlobalFetchFixtures = {
 
 const it = playwrightTest.extend<GlobalFetchFixtures>({
   request: async ({ playwright }, use) => {
-    const request = await playwright._newRequest({ ignoreHTTPSErrors: true });
+    const request = await playwright.newRequest({ ignoreHTTPSErrors: true });
     await use(request);
     await request.dispose();
   },
@@ -235,7 +235,7 @@ it('should preserve local storage on import/export of storage state', async ({ p
       },
     ]
   };
-  const request = await playwright._newRequest({ storageState });
+  const request = await playwright.newRequest({ storageState });
   await request.get(server.EMPTY_PAGE);
   const exportedState = await request.storageState();
   expect(exportedState).toEqual(storageState);
@@ -279,7 +279,7 @@ it('should send cookies from storage state', async ({ playwright, server }) => {
     ],
     'origins': []
   };
-  const request = await playwright._newRequest({ storageState });
+  const request = await playwright.newRequest({ storageState });
   const [serverRequest] = await Promise.all([
     server.waitForRequest('/first/second/third/not_found.html'),
     request.get(`http://www.a.b.one.com:${server.PORT}/first/second/third/not_found.html`)
@@ -304,7 +304,7 @@ it('storage state should round-trip through file', async ({ playwright, server }
     'origins': []
   };
 
-  const request1 = await playwright._newRequest({ storageState });
+  const request1 = await playwright.newRequest({ storageState });
   const path = testInfo.outputPath('storage-state.json');
   const state1 = await request1.storageState({ path });
   expect(state1).toEqual(storageState);
@@ -312,7 +312,7 @@ it('storage state should round-trip through file', async ({ playwright, server }
   const written = await fs.promises.readFile(path, 'utf8');
   expect(JSON.stringify(state1, undefined, 2)).toBe(written);
 
-  const request2 = await playwright._newRequest({ storageState: path });
+  const request2 = await playwright.newRequest({ storageState: path });
   const state2 = await request2.storageState();
   expect(state2).toEqual(storageState);
 });

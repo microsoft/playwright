@@ -83,36 +83,36 @@ class PlaywrightExample
 }
 ```
 
-## async method: Playwright._newRequest
+## async method: Playwright.newRequest
 * langs: js
 - returns: <[FetchRequest]>
 
 **experimental** Creates new instances of [FetchRequest].
 
-### option: Playwright._newRequest.useragent = %%-context-option-useragent-%%
+### option: Playwright.newRequest.useragent = %%-context-option-useragent-%%
 
-### option: Playwright._newRequest.extraHTTPHeaders = %%-context-option-extrahttpheaders-%%
+### option: Playwright.newRequest.extraHTTPHeaders = %%-context-option-extrahttpheaders-%%
 
-### option: Playwright._newRequest.httpCredentials = %%-context-option-httpcredentials-%%
+### option: Playwright.newRequest.httpCredentials = %%-context-option-httpcredentials-%%
 
-### option: Playwright._newRequest.proxy = %%-browser-option-proxy-%%
+### option: Playwright.newRequest.proxy = %%-browser-option-proxy-%%
 
-### option: Playwright._newRequest.timeout
+### option: Playwright.newRequest.timeout
 - `timeout` <[float]>
 
 Maximum time in milliseconds to wait for the response. Defaults to
 `30000` (30 seconds). Pass `0` to disable timeout.
 
-### option: Playwright._newRequest.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
+### option: Playwright.newRequest.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
 
-### option: Playwright._newRequest.baseURL
+### option: Playwright.newRequest.baseURL
 - `baseURL` <[string]>
 
 When using [`method: FetchRequest.get`], [`method: FetchRequest.post`], [`method: FetchRequest.fetch`] it takes the base URL in consideration by using the [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor for building the corresponding URL. Examples:
 * baseURL: `http://localhost:3000` and sending rquest to `/bar.html` results in `http://localhost:3000/bar.html`
 * baseURL: `http://localhost:3000/foo/` and sending rquest to `./bar.html` results in `http://localhost:3000/foo/bar.html`
 
-### option: Playwright._newRequest.storageState
+### option: Playwright.newRequest.storageState
 - `storageState` <[path]|[Object]>
   - `cookies` <[Array]<[Object]>>
     - `name` <[string]>

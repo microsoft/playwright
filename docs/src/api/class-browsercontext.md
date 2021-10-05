@@ -189,7 +189,7 @@ Service workers are only supported on Chromium-based browsers.
 
 Emitted when new service worker is created in the context.
 
-## property: BrowserContext._request
+## property: BrowserContext.request
 * langs: js
 - type: <[FetchRequest]>
 

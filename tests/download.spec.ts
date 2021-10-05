@@ -601,7 +601,7 @@ it('should be able to download a inline PDF file', async ({ browser, server, ass
   const page = await browser.newPage({ acceptDownloads: true });
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/empty.pdf', async route => {
-    const response = await page.context()._request.get(route.request());
+    const response = await page.context().request.get(route.request());
     await route.fulfill({
       response,
       headers: {
