@@ -64,7 +64,7 @@ Sends HTTP(S) GET request and returns its response. The method will populate fet
 context cookies from the response. The method will automatically follow redirects.
 
 ### param: FetchRequest.get.url
-- `urlOrRequest` <[string]>
+- `url` <[string]>
 
 Target URL.
 
@@ -98,7 +98,7 @@ Sends HTTP(S) fetch and returns its response. The method will populate fetch coo
 context cookies from the response. The method will automatically follow redirects.
 
 ### param: FetchRequest.post.url
-- `urlOrRequest` <[string]>
+- `url` <[string]>
 
 Target URL.
 
