@@ -8333,25 +8333,18 @@ index 39cb560e54bf9efd2dad6e1fb60dd0f609daf6bf..91c132460d4b466f61a8c579f70329fd
          m_commonHeaders.append(CommonHeader { name, value });
  }
 diff --git a/Source/WebCore/platform/network/NetworkStorageSession.h b/Source/WebCore/platform/network/NetworkStorageSession.h
-index 3cbe3f9473d4ef35b0577847bcb9f0c70355fc27..3c4609140d91a4c9bf1bcaca4e05f223f39f894f 100644
+index 3cbe3f9473d4ef35b0577847bcb9f0c70355fc27..86dc55f9d09a2c9a92e1ed535a6f3888b078cae3 100644
 --- a/Source/WebCore/platform/network/NetworkStorageSession.h
 +++ b/Source/WebCore/platform/network/NetworkStorageSession.h
-@@ -138,6 +138,7 @@ public:
-     void setCookieObserverHandler(Function<void ()>&&);
-     void getCredentialFromPersistentStorage(const ProtectionSpace&, GCancellable*, Function<void (Credential&&)>&& completionHandler);
-     void saveCredentialToPersistentStorage(const ProtectionSpace&, const Credential&);
-+    void setCookiesFromResponse(const URL& firstParty, const URL&, const String& setCookieValue);
- #elif USE(CURL)
-     WEBCORE_EXPORT NetworkStorageSession(PAL::SessionID);
-     ~NetworkStorageSession();
-@@ -147,6 +148,7 @@ public:
-     WEBCORE_EXPORT void setCookiesFromHTTPResponse(const URL& firstParty, const URL&, const String&) const;
-     WEBCORE_EXPORT void setCookieAcceptPolicy(CookieAcceptPolicy) const;
-     WEBCORE_EXPORT void setProxySettings(CurlProxySettings&&);
-+    void setCookiesFromResponse(const URL& firstParty, const URL&, const String& setCookieValue);
- #else
-     WEBCORE_EXPORT NetworkStorageSession(PAL::SessionID, NetworkingContext*);
-     ~NetworkStorageSession();
+@@ -154,6 +154,8 @@ public:
+     NetworkingContext* context() const;
+ #endif
+ 
++    WEBCORE_EXPORT void setCookiesFromResponse(const URL& firstParty, const SameSiteInfo&, const URL&, const String& setCookieValue);
++
+     WEBCORE_EXPORT HTTPCookieAcceptPolicy cookieAcceptPolicy() const;
+     WEBCORE_EXPORT void setCookie(const Cookie&);
+     WEBCORE_EXPORT void setCookies(const Vector<Cookie>&, const URL&, const URL& mainDocumentURL);
 diff --git a/Source/WebCore/platform/network/ResourceResponseBase.h b/Source/WebCore/platform/network/ResourceResponseBase.h
 index 262e53180d6dd7c4d133ddc1daf5652bd6f31c76..d09aed9c9c58afe3c2040e1d5d683374365e65f8 100644
 --- a/Source/WebCore/platform/network/ResourceResponseBase.h
@@ -8446,6 +8439,33 @@ index 311aef2d80fe7336cd8e5113c39d950db8f4394c..995545c175a9b22145f82c7efa8ef539
          const void* keys[] = {
              kCFStreamSSLPeerName,
              kCFStreamSSLLevel,
+diff --git a/Source/WebCore/platform/network/cocoa/NetworkStorageSessionCocoa.mm b/Source/WebCore/platform/network/cocoa/NetworkStorageSessionCocoa.mm
+index 50c5006f722638f5e53f7ab8d60df52ca75242bf..fffa4689a1629720cc0381889c712af6aa8910ad 100644
+--- a/Source/WebCore/platform/network/cocoa/NetworkStorageSessionCocoa.mm
++++ b/Source/WebCore/platform/network/cocoa/NetworkStorageSessionCocoa.mm
+@@ -469,6 +469,22 @@ void NetworkStorageSession::setCookiesFromDOM(const URL& firstParty, const SameS
+     END_BLOCK_OBJC_EXCEPTIONS
+ }
+ 
++void NetworkStorageSession::setCookiesFromResponse(const URL& firstParty, const SameSiteInfo& sameSiteInfo, const URL& url, const String& setCookieValue)
++{
++    Vector<String> cookieValues = setCookieValue.split('\n');
++    size_t count = cookieValues.size();
++    auto* cookies = [NSMutableArray arrayWithCapacity:count];
++    for (const auto& cookieValue : cookieValues) {
++        NSString* cookieString = (NSString *)cookieValue;
++        NSString* cookieKey = @"Set-Cookie";
++        NSDictionary* headers = [NSDictionary dictionaryWithObjects:[NSArray arrayWithObject:cookieString] forKeys:[NSArray arrayWithObject:cookieKey]];
++        NSArray<NSHTTPCookie*>* parsedCookies = [NSHTTPCookie cookiesWithResponseHeaderFields:headers forURL:(NSURL *)url];
++        [cookies addObject:parsedCookies[0]];
++    }
++    NSURL *cookieURL = url;
++    setHTTPCookiesForURL(cookieStorage().get(), cookies, cookieURL, firstParty, sameSiteInfo);
++}
++
+ static NSHTTPCookieAcceptPolicy httpCookieAcceptPolicy(CFHTTPCookieStorageRef cookieStorage)
+ {
+     ASSERT(hasProcessPrivilege(ProcessPrivilege::CanAccessRawCookies));
 diff --git a/Source/WebCore/platform/network/curl/CookieJarDB.h b/Source/WebCore/platform/network/curl/CookieJarDB.h
 index c4eb67d6f7c334076b32b798dcea40b570681e6f..ce86ab28225aa466350671441294f2ace8851bbd 100644
 --- a/Source/WebCore/platform/network/curl/CookieJarDB.h
@@ -8540,9 +8560,18 @@ index 7d881206c9689f433227969c9b7f9ff268bdaaed..2e8118f11f87fa5f32adcedc165aec82
      void send(CurlStreamID, UniqueArray<uint8_t>&&, size_t);
  
 diff --git a/Source/WebCore/platform/network/curl/NetworkStorageSessionCurl.cpp b/Source/WebCore/platform/network/curl/NetworkStorageSessionCurl.cpp
-index 5249bfb4a5ba52981e1f4cbe43048e27507b033a..a34c201179f591904d999b7feee40720695924ed 100644
+index 5249bfb4a5ba52981e1f4cbe43048e27507b033a..081bd080ea6fa2055002b8c4b34b020e07993b46 100644
 --- a/Source/WebCore/platform/network/curl/NetworkStorageSessionCurl.cpp
 +++ b/Source/WebCore/platform/network/curl/NetworkStorageSessionCurl.cpp
+@@ -106,7 +106,7 @@ void NetworkStorageSession::setCookiesFromDOM(const URL& firstParty, const SameS
+     cookieDatabase().setCookie(firstParty, url, value, CookieJarDB::Source::Script, cappedLifetime);
+ }
+ 
+-void NetworkStorageSession::setCookiesFromHTTPResponse(const URL& firstParty, const URL& url, const String& value) const
++void NetworkStorageSession::setCookiesFromHTTPResponse(const URL& firstParty, const SameSiteInfo&, const URL& url, const String& value) const
+ {
+     cookieDatabase().setCookie(firstParty, url, value, CookieJarDB::Source::Network);
+ }
 @@ -116,6 +116,12 @@ void NetworkStorageSession::setCookieAcceptPolicy(CookieAcceptPolicy policy) con
      cookieDatabase().setAcceptPolicy(policy);
  }
@@ -8601,14 +8630,14 @@ index 4b9491c11543f2b60f12d36e9e6a0cbaae34a72e..e907fc00a2a426384ce1e471847911c9
  
  SocketStreamHandleImpl::~SocketStreamHandleImpl()
 diff --git a/Source/WebCore/platform/network/soup/NetworkStorageSessionSoup.cpp b/Source/WebCore/platform/network/soup/NetworkStorageSessionSoup.cpp
-index 5b32534e2bcaf1701331e9541013b8a5c38c4d36..44ca33a774629841214ab3233f8a064557976e78 100644
+index 5b32534e2bcaf1701331e9541013b8a5c38c4d36..2e8c12c871ba10d5769c400ec31d4fca6641aaca 100644
 --- a/Source/WebCore/platform/network/soup/NetworkStorageSessionSoup.cpp
 +++ b/Source/WebCore/platform/network/soup/NetworkStorageSessionSoup.cpp
 @@ -408,6 +408,30 @@ void NetworkStorageSession::setCookie(const Cookie& cookie)
      soup_cookie_jar_add_cookie(cookieStorage(), cookie.toSoupCookie());
  }
  
-+void  NetworkStorageSession::setCookiesFromResponse(const URL& firstParty, const URL& url, const String& setCookieValue)
++void  NetworkStorageSession::setCookiesFromResponse(const URL& firstParty, const SameSiteInfo&, const URL& url, const String& setCookieValue)
 +{
 +    auto origin = urlToSoupURI(url);
 +    if (!origin)
@@ -9251,7 +9280,7 @@ index 694008e0451edc5770142a0a6d9eed52b04ded80..ec93869f9486bdf7bd3bb56478c62469
      
  WEBCORE_EXPORT WTF::TextStream& operator<<(WTF::TextStream&, ScrollAlignment::Behavior);
 diff --git a/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.cpp b/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.cpp
-index aaa8731f9ecaa6a81f521dc0e7f84923faa81f06..259403c5ff8d896f71db9f612e83d050dd75e1af 100644
+index aaa8731f9ecaa6a81f521dc0e7f84923faa81f06..3a26b1974ba1972a8e09c6d565eb37945abf973b 100644
 --- a/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.cpp
 +++ b/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.cpp
 @@ -76,6 +76,11 @@
@@ -9266,48 +9295,43 @@ index aaa8731f9ecaa6a81f521dc0e7f84923faa81f06..259403c5ff8d896f71db9f612e83d050
  #if ENABLE(APPLE_PAY_REMOTE_UI)
  #include "WebPaymentCoordinatorProxyMessages.h"
  #endif
-@@ -948,6 +953,19 @@ void NetworkConnectionToWebProcess::clearPageSpecificData(PageIdentifier pageID)
+@@ -948,6 +953,14 @@ void NetworkConnectionToWebProcess::clearPageSpecificData(PageIdentifier pageID)
  #endif
  }
  
-+void NetworkConnectionToWebProcess::setCookieFromResponse(NetworkResourceLoadParameters&& parameters, const URL& mainDocumentURL, const String& setCookieValue)
++void NetworkConnectionToWebProcess::setCookieFromResponse(const URL& firstParty, const SameSiteInfo& sameSiteInfo, const URL& url, const String& setCookieValue)
 +{
-+#if USE(SOUP) ||  USE(CURL)
 +    auto* networkStorageSession = storageSession();
 +    if (!networkStorageSession)
 +        return;
-+    networkStorageSession->setCookiesFromResponse(parameters.request.firstPartyForCookies(), parameters.request.url(), setCookieValue);
-+#elif PLATFORM(COCOA)
-+    if (auto* session = networkSession())
-+        NetworkDataTaskCocoa::setCookieFromResponse(*static_cast<NetworkSessionCocoa*>(session), WTFMove(parameters), mainDocumentURL, setCookieValue);
-+#endif
++    networkStorageSession->setCookiesFromResponse(firstParty, sameSiteInfo, url, setCookieValue);
 +}
 +
  #if ENABLE(INTELLIGENT_TRACKING_PREVENTION)
  void NetworkConnectionToWebProcess::removeStorageAccessForFrame(FrameIdentifier frameID, PageIdentifier pageID)
  {
 diff --git a/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.h b/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.h
-index cae54a6e3bba00a613e5d8d338789caa32034eb7..0e70824198f408f85de33b5c137248dab5d9aed6 100644
+index cae54a6e3bba00a613e5d8d338789caa32034eb7..f7285ccd661c24f451ed6962d3246fbb463ea56b 100644
 --- a/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.h
 +++ b/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.h
 @@ -288,6 +288,8 @@ private:
  
      void clearPageSpecificData(WebCore::PageIdentifier);
  
-+    void setCookieFromResponse(NetworkResourceLoadParameters&&, const URL& mainDocumentURL, const String& setCookieValue);
++    void setCookieFromResponse(const URL& firstParty, const WebCore::SameSiteInfo&, const URL& url, const String& setCookieValue);
 +
  #if ENABLE(INTELLIGENT_TRACKING_PREVENTION)
      void removeStorageAccessForFrame(WebCore::FrameIdentifier, WebCore::PageIdentifier);
  
 diff --git a/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.messages.in b/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.messages.in
-index 7682ba9bb29ff6f08ebebb943fc894546734c2e7..bdf77c32dfb8eeceb9ac355256b894d2c3559bc8 100644
+index 7682ba9bb29ff6f08ebebb943fc894546734c2e7..875a85484740be883e8214cd5509947b2acfc6e5 100644
 --- a/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.messages.in
 +++ b/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.messages.in
 @@ -66,6 +66,8 @@ messages -> NetworkConnectionToWebProcess LegacyReceiver {
  
      ClearPageSpecificData(WebCore::PageIdentifier pageID);
  
-+    SetCookieFromResponse(WebKit::NetworkResourceLoadParameters parameters, URL mainDocumentURL, String setCookieValue);
++    SetCookieFromResponse(URL firstParty, struct WebCore::SameSiteInfo sameSiteInfo, URL url, String setCookieValue);
 +
  #if ENABLE(INTELLIGENT_TRACKING_PREVENTION)
      RemoveStorageAccessForFrame(WebCore::FrameIdentifier frameID, WebCore::PageIdentifier pageID);
@@ -9666,97 +9690,6 @@ index d602a5f90999fc7f440e2468d40332625ed37083..577b76728f762e7f5aa509531a65eaab
      void renameOrigin(PAL::SessionID, const URL&, const URL&, CompletionHandler<void()>&&);
  
      void didReceiveMessage(IPC::Connection&, IPC::Decoder&);
-diff --git a/Source/WebKit/NetworkProcess/cocoa/NetworkDataTaskCocoa.h b/Source/WebKit/NetworkProcess/cocoa/NetworkDataTaskCocoa.h
-index b9ab0deebb9f927c73742e86a0be7f97160bd6fb..735d3bdf70f24d96d01aa84b53b4a09b0fcddaac 100644
---- a/Source/WebKit/NetworkProcess/cocoa/NetworkDataTaskCocoa.h
-+++ b/Source/WebKit/NetworkProcess/cocoa/NetworkDataTaskCocoa.h
-@@ -88,6 +88,8 @@ public:
- 
-     void checkTAO(const WebCore::ResourceResponse&);
- 
-+    static void setCookieFromResponse(NetworkSessionCocoa& session, const NetworkLoadParameters&, const URL& mainDocumentURL, const String& setCookieValue);
-+
- private:
-     NetworkDataTaskCocoa(NetworkSession&, NetworkDataTaskClient&, const NetworkLoadParameters&);
- 
-diff --git a/Source/WebKit/NetworkProcess/cocoa/NetworkDataTaskCocoa.mm b/Source/WebKit/NetworkProcess/cocoa/NetworkDataTaskCocoa.mm
-index 5c1251af416c36a21a71bc84f18d04c951a6799f..c81bb068fb16ea0c82acef3b382bc371774059d0 100644
---- a/Source/WebKit/NetworkProcess/cocoa/NetworkDataTaskCocoa.mm
-+++ b/Source/WebKit/NetworkProcess/cocoa/NetworkDataTaskCocoa.mm
-@@ -42,6 +42,7 @@
- #import <WebCore/ResourceRequest.h>
- #import <WebCore/TimingAllowOrigin.h>
- #import <pal/spi/cf/CFNetworkSPI.h>
-+#import <wtf/BlockObjCExceptions.h>
- #import <wtf/BlockPtr.h>
- #import <wtf/FileSystem.h>
- #import <wtf/MainThread.h>
-@@ -745,4 +746,65 @@ void NetworkDataTaskCocoa::checkTAO(const WebCore::ResourceResponse& response)
-         networkLoadMetrics().failsTAOCheck = !passesTimingAllowOriginCheck(response, *origin);
- }
- 
-+class DummyNetworkDataTaskClient: public NetworkDataTaskClient {
-+public:
-+  void willPerformHTTPRedirection(WebCore::ResourceResponse&&, WebCore::ResourceRequest&&, RedirectCompletionHandler&&) final {}
-+  void didReceiveChallenge(WebCore::AuthenticationChallenge&&, NegotiatedLegacyTLS, ChallengeCompletionHandler&&) final {}
-+  void didReceiveResponse(WebCore::ResourceResponse&&, NegotiatedLegacyTLS, ResponseCompletionHandler&&) final {}
-+  void didReceiveData(Ref<WebCore::SharedBuffer>&&) final {}
-+  void didCompleteWithError(const WebCore::ResourceError&, const WebCore::NetworkLoadMetrics&) final {}
-+  void didSendData(uint64_t totalBytesSent, uint64_t totalBytesExpectedToSend) final {}
-+  void wasBlocked() final {}
-+  void cannotShowURL() final {}
-+  void wasBlockedByRestrictions() final {}
-+  ~DummyNetworkDataTaskClient() {}
-+};
-+
-+// static
-+void NetworkDataTaskCocoa::setCookieFromResponse(NetworkSessionCocoa& networkSession, const NetworkLoadParameters& parameters, const URL& mainDocumentURL, const String& setCookieValue)
-+{
-+    const URL& url = parameters.request.url();
-+    DummyNetworkDataTaskClient client;
-+    RefPtr<NetworkDataTask> taskGeneric = NetworkDataTask::create(networkSession, client, parameters);
-+    NetworkDataTaskCocoa* task = static_cast<NetworkDataTaskCocoa*>(taskGeneric.get());
-+    // Note: we are not calling task->resume(), and miss some logic from there.
-+
-+    WebCore::ResourceResponse resourceResponse;
-+    resourceResponse.setURL(url);
-+    task->didReceiveResponse(WTFMove(resourceResponse), NegotiatedLegacyTLS::No, [](WebCore::PolicyAction policyAction) {});
-+
-+    if (task->m_hasBeenSetToUseStatelessCookieStorage || !task->m_sessionWrapper) {
-+        task->cancel();
-+        return;
-+    }
-+
-+    NSURLSessionConfiguration* configuration = [task->m_sessionWrapper->session configuration];
-+    if (!configuration.HTTPCookieStorage) {
-+        task->cancel();
-+        return;
-+    }
-+
-+    Vector<String> cookieValues = setCookieValue.split('\n');
-+    size_t count = cookieValues.size();
-+    auto* cookies = [NSMutableArray arrayWithCapacity:count];
-+    for (const auto& cookieValue : cookieValues) {
-+        NSString* cookieString = (NSString *)cookieValue;
-+        NSString* cookieKey = @"Set-Cookie";
-+        NSDictionary* headers = [NSDictionary dictionaryWithObjects:[NSArray arrayWithObject:cookieString] forKeys:[NSArray arrayWithObject:cookieKey]];
-+        NSArray<NSHTTPCookie*>* parsedCookies = [NSHTTPCookie cookiesWithResponseHeaderFields:headers forURL:(NSURL *)url];
-+        [cookies addObject:parsedCookies[0]];
-+    }
-+
-+    NSURL* siteForCookies = task->m_task.get()._siteForCookies;
-+    NSURL* documentURL = task->isTopLevelNavigation() ? siteForCookies : (NSURL *)mainDocumentURL;
-+    if (siteForCookies && documentURL) {
-+        // Both siteForCookies and/or documentURL may be nil, for example when one of them is about:blank.
-+        BEGIN_BLOCK_OBJC_EXCEPTIONS
-+        [configuration.HTTPCookieStorage setCookies:cookies forURL:siteForCookies mainDocumentURL:documentURL];
-+        END_BLOCK_OBJC_EXCEPTIONS
-+    }
-+
-+    task->cancel();
-+}
-+
- }
 diff --git a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm b/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
 index 040d8ccf41b57b602d0ff9906772ccc0a41659cb..c616220427b3ec6f087eef38a33d354b5c02a2b1 100644
 --- a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
@@ -21265,22 +21198,10 @@ index ba3ed840b341f9e6b84e80c451a40379fcb412eb..0a28547f21dbd8129bbe05e0226017df
      virtual void adoptLayersFromDrawingArea(DrawingArea&) { }
      virtual void adoptDisplayRefreshMonitorsFromDrawingArea(DrawingArea&) { }
 diff --git a/Source/WebKit/WebProcess/WebPage/WebCookieJar.cpp b/Source/WebKit/WebProcess/WebPage/WebCookieJar.cpp
-index 9aab0800140df2620b360e0bb8c8c904d86977ef..a5b77a7c8d5be31ade42af628805c74f996bf04a 100644
+index 9aab0800140df2620b360e0bb8c8c904d86977ef..8c89d89035ef097eefa3d177f7b7911889e1646a 100644
 --- a/Source/WebKit/WebProcess/WebPage/WebCookieJar.cpp
 +++ b/Source/WebKit/WebProcess/WebPage/WebCookieJar.cpp
-@@ -28,15 +28,19 @@
- 
- #include "NetworkConnectionToWebProcessMessages.h"
- #include "NetworkProcessConnection.h"
-+#include "NetworkResourceLoadParameters.h"
- #include "WebFrame.h"
-+#include "WebLoaderStrategy.h"
- #include "WebPage.h"
- #include "WebProcess.h"
-+#include "WebResourceLoader.h"
- #include <WebCore/CookieRequestHeaderFieldProxy.h>
- #include <WebCore/DeprecatedGlobalSettings.h>
- #include <WebCore/Document.h>
+@@ -37,6 +37,7 @@
  #include <WebCore/Frame.h>
  #include <WebCore/FrameLoader.h>
  #include <WebCore/FrameLoaderClient.h>
@@ -21288,26 +21209,14 @@ index 9aab0800140df2620b360e0bb8c8c904d86977ef..a5b77a7c8d5be31ade42af628805c74f
  #include <WebCore/Settings.h>
  #include <WebCore/StorageSessionProvider.h>
  
-@@ -255,4 +259,22 @@ void WebCookieJar::deleteCookie(const WebCore::Document& document, const URL& ur
+@@ -255,4 +256,10 @@ void WebCookieJar::deleteCookie(const WebCore::Document& document, const URL& ur
      WebProcess::singleton().ensureNetworkProcessConnection().connection().send(Messages::NetworkConnectionToWebProcess::DeleteCookie(url, cookieName), 0);
  }
  
 +void WebCookieJar::setCookieFromResponse(ResourceLoader& loader, const String& setCookieValue)
 +{
-+    auto* webFrame = WebFrame::fromCoreFrame(*loader.frame());
-+
-+    WebResourceLoader::TrackingParameters trackingParameters;
-+    trackingParameters.webPageProxyID = webFrame->page()->webPageProxyIdentifier();
-+    trackingParameters.pageID = webFrame->page()->identifier();
-+    trackingParameters.frameID = webFrame->frameID();
-+    trackingParameters.resourceID = loader.identifier();
-+
-+    NetworkResourceLoadParameters loadParameters;
-+    if (!WebLoaderStrategy::fillParametersForNetworkProcessLoad(loader, loader.request(), trackingParameters, true, 0_s, loadParameters))
-+        return;
-+
-+    URL mainDocumentURL = loader.frame()->document()->topDocument().url();
-+    WebProcess::singleton().ensureNetworkProcessConnection().connection().send(Messages::NetworkConnectionToWebProcess::SetCookieFromResponse(loadParameters, mainDocumentURL, setCookieValue), 0);
++    const auto& request = loader.request();
++    WebProcess::singleton().ensureNetworkProcessConnection().connection().send(Messages::NetworkConnectionToWebProcess::SetCookieFromResponse(request.firstPartyForCookies(), SameSiteInfo::create(request), request.url(), setCookieValue), 0);
 +}
 +
  } // namespace WebKit
