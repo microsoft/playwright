@@ -8601,17 +8601,21 @@ index 4b9491c11543f2b60f12d36e9e6a0cbaae34a72e..e907fc00a2a426384ce1e471847911c9
  
  SocketStreamHandleImpl::~SocketStreamHandleImpl()
 diff --git a/Source/WebCore/platform/network/soup/NetworkStorageSessionSoup.cpp b/Source/WebCore/platform/network/soup/NetworkStorageSessionSoup.cpp
-index 5b32534e2bcaf1701331e9541013b8a5c38c4d36..efee59ab00e99bc0e5d4374cc0a474461c2c1386 100644
+index 5b32534e2bcaf1701331e9541013b8a5c38c4d36..44ca33a774629841214ab3233f8a064557976e78 100644
 --- a/Source/WebCore/platform/network/soup/NetworkStorageSessionSoup.cpp
 +++ b/Source/WebCore/platform/network/soup/NetworkStorageSessionSoup.cpp
-@@ -408,6 +408,22 @@ void NetworkStorageSession::setCookie(const Cookie& cookie)
+@@ -408,6 +408,30 @@ void NetworkStorageSession::setCookie(const Cookie& cookie)
      soup_cookie_jar_add_cookie(cookieStorage(), cookie.toSoupCookie());
  }
  
-+void  NetworkStorageSession::setCookiesFromResponse(const URL&, const URL& url, const String& setCookieValue)
++void  NetworkStorageSession::setCookiesFromResponse(const URL& firstParty, const URL& url, const String& setCookieValue)
 +{
 +    auto origin = urlToSoupURI(url);
 +    if (!origin)
++        return;
++
++    auto firstPartyURI = urlToSoupURI(firstParty);
++    if (!firstPartyURI)
 +        return;
 +
 +    for (auto& cookieString : setCookieValue.split('\n')) {
@@ -8620,7 +8624,11 @@ index 5b32534e2bcaf1701331e9541013b8a5c38c4d36..efee59ab00e99bc0e5d4374cc0a47446
 +        if (!cookie)
 +            continue;
 +
-+        soup_cookie_jar_add_cookie(cookieStorage(), cookie.release());
++#if SOUP_CHECK_VERSION(2, 67, 1)
++        soup_cookie_jar_add_cookie_full(cookieStorage(), cookie.release(), origin.get(), firstPartyURI.get());
++#else
++        soup_cookie_jar_add_cookie_with_first_party(cookieStorage(), firstPartyURI.get(), cookie.release());
++#endif
 +    }
 +}
 +
