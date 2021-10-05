@@ -250,7 +250,6 @@ it('should fetch original request and fulfill', async ({ page, server, isElectro
 });
 
 it('should fulfill with multiple set-cookie', async ({ page, server, browserName }) => {
-  it.fail(browserName === 'webkit', 'Response contained invalid HTTP headers');
   const cookies = ['a=b', 'c=d'];
   await page.route('**/empty.html', async route => {
     route.fulfill({
@@ -270,7 +269,6 @@ it('should fulfill with multiple set-cookie', async ({ page, server, browserName
 });
 
 it('should fulfill with fetch response that has multiple set-cookie', async ({ playwright, page, server, browserName }) => {
-  it.fail(browserName === 'webkit', 'Response contained invalid HTTP headers');
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=b', 'c=d']);
     res.end();
