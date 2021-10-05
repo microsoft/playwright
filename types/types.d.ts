@@ -12665,9 +12665,9 @@ export interface FetchRequest {
   /**
    * All responses received through
    * [fetchRequest.fetch(urlOrRequest[, options])](https://playwright.dev/docs/api/class-fetchrequest#fetch-request-fetch),
-   * [fetchRequest.get(urlOrRequest[, options])](https://playwright.dev/docs/api/class-fetchrequest#fetch-request-get),
-   * [fetchRequest.post(urlOrRequest[, options])](https://playwright.dev/docs/api/class-fetchrequest#fetch-request-post) and
-   * other methods are stored in the memory, so that you can later call
+   * [fetchRequest.get(url[, options])](https://playwright.dev/docs/api/class-fetchrequest#fetch-request-get),
+   * [fetchRequest.post(url[, options])](https://playwright.dev/docs/api/class-fetchrequest#fetch-request-post) and other
+   * methods are stored in the memory, so that you can later call
    * [fetchResponse.body()](https://playwright.dev/docs/api/class-fetchresponse#fetch-response-body). This method discards
    * all stored responses, and makes
    * [fetchResponse.body()](https://playwright.dev/docs/api/class-fetchresponse#fetch-response-body) throw "Response
@@ -12753,10 +12753,10 @@ export interface FetchRequest {
   /**
    * Sends HTTP(S) GET request and returns its response. The method will populate fetch cookies from the context and update
    * context cookies from the response. The method will automatically follow redirects.
-   * @param urlOrRequest Target URL or Request to get all fetch parameters from.
+   * @param url Target URL.
    * @param options
    */
-  get(urlOrRequest: string|Request, options?: {
+  get(url: string, options?: {
     /**
      * Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status codes.
      */
@@ -12786,10 +12786,10 @@ export interface FetchRequest {
   /**
    * Sends HTTP(S) fetch and returns its response. The method will populate fetch cookies from the context and update context
    * cookies from the response. The method will automatically follow redirects.
-   * @param urlOrRequest Target URL or Request to get all fetch parameters from.
+   * @param url Target URL.
    * @param options
    */
-  post(urlOrRequest: string|Request, options?: {
+  post(url: string, options?: {
     /**
      * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string and
      * `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type` header will
@@ -13387,9 +13387,8 @@ export const firefox: BrowserType;
  */
 export const newRequest: (options?: {
   /**
-   * When using
-   * [fetchRequest.get(urlOrRequest[, options])](https://playwright.dev/docs/api/class-fetchrequest#fetch-request-get),
-   * [fetchRequest.post(urlOrRequest[, options])](https://playwright.dev/docs/api/class-fetchrequest#fetch-request-post),
+   * When using [fetchRequest.get(url[, options])](https://playwright.dev/docs/api/class-fetchrequest#fetch-request-get),
+   * [fetchRequest.post(url[, options])](https://playwright.dev/docs/api/class-fetchrequest#fetch-request-post),
    * [fetchRequest.fetch(urlOrRequest[, options])](https://playwright.dev/docs/api/class-fetchrequest#fetch-request-fetch) it
    * takes the base URL in consideration by using the [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL)
    * constructor for building the corresponding URL. Examples:

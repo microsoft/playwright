@@ -239,7 +239,7 @@ it('should fulfill with fetch result and overrides', async ({ page, server, isEl
 it('should fetch original request and fulfill', async ({ page, server, isElectron }) => {
   it.fixme(isElectron, 'error: Browser context management is not supported.');
   await page.route('**/*', async route => {
-    const response = await page.request.get(route.request());
+    const response = await page.request.fetch(route.request());
     route.fulfill({
       response,
     });

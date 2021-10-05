@@ -710,7 +710,8 @@ it('should override request parameters', async function({ context, page, server 
   ]);
   const [req] = await Promise.all([
     server.waitForRequest('/empty.html'),
-    context.request.post(pageReq, {
+    context.request.fetch(pageReq, {
+      method: 'POST',
       headers: {
         'foo': 'bar'
       },

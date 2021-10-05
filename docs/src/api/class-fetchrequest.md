@@ -63,10 +63,10 @@ for all status codes.
 Sends HTTP(S) GET request and returns its response. The method will populate fetch cookies from the context and update
 context cookies from the response. The method will automatically follow redirects.
 
-### param: FetchRequest.get.urlOrRequest
-- `urlOrRequest` <[string]|[Request]>
+### param: FetchRequest.get.url
+- `url` <[string]>
 
-Target URL or Request to get all fetch parameters from.
+Target URL.
 
 ### option: FetchRequest.get.params
 - `params` <[Object]<[string], [string]>>
@@ -97,10 +97,10 @@ for all status codes.
 Sends HTTP(S) fetch and returns its response. The method will populate fetch cookies from the context and update
 context cookies from the response. The method will automatically follow redirects.
 
-### param: FetchRequest.post.urlOrRequest
-- `urlOrRequest` <[string]|[Request]>
+### param: FetchRequest.post.url
+- `url` <[string]>
 
-Target URL or Request to get all fetch parameters from.
+Target URL.
 
 ### option: FetchRequest.post.params
 - `params` <[Object]<[string], [string]>>
