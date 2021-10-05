@@ -22,7 +22,24 @@ Playwright Test was created specifically to accommodate the needs of the end-to-
 
 ## Installation
 
-Playwright has its own test runner for end-to-end tests, we call it Playwright Test.
+Playwright has its own test runner for end-to-end tests, we call it **Playwright Test**.
+
+Add Playwright Test in a new or existing project using *Create Playwright*. This will create an example test, GitHub Action workflow, a Playwright config, and installs Playwright Test including the browsers for you:
+
+```bash
+# Starting a new project
+npm init playwright my-project
+# Adding Playwright to an existing project
+~/my-existing-project$ npm init playwright
+
+# With Yarn
+# Starting a new project
+yarn playwright my-project
+# Adding Playwright to an existing project
+~/my-existing-project$ yarn playwright
+```
+
+Alternatively, you can install Playwright Test manually:
 
 ```bash
 npm i -D @playwright/test
