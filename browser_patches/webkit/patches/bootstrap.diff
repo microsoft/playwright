@@ -9672,7 +9672,7 @@ index b9ab0deebb9f927c73742e86a0be7f97160bd6fb..735d3bdf70f24d96d01aa84b53b4a09b
      NetworkDataTaskCocoa(NetworkSession&, NetworkDataTaskClient&, const NetworkLoadParameters&);
  
 diff --git a/Source/WebKit/NetworkProcess/cocoa/NetworkDataTaskCocoa.mm b/Source/WebKit/NetworkProcess/cocoa/NetworkDataTaskCocoa.mm
-index 5c1251af416c36a21a71bc84f18d04c951a6799f..116e28a69e306dc26e0480f4471d15ea1a88ab11 100644
+index 5c1251af416c36a21a71bc84f18d04c951a6799f..c81bb068fb16ea0c82acef3b382bc371774059d0 100644
 --- a/Source/WebKit/NetworkProcess/cocoa/NetworkDataTaskCocoa.mm
 +++ b/Source/WebKit/NetworkProcess/cocoa/NetworkDataTaskCocoa.mm
 @@ -42,6 +42,7 @@
@@ -9683,7 +9683,7 @@ index 5c1251af416c36a21a71bc84f18d04c951a6799f..116e28a69e306dc26e0480f4471d15ea
  #import <wtf/BlockPtr.h>
  #import <wtf/FileSystem.h>
  #import <wtf/MainThread.h>
-@@ -745,4 +746,59 @@ void NetworkDataTaskCocoa::checkTAO(const WebCore::ResourceResponse& response)
+@@ -745,4 +746,65 @@ void NetworkDataTaskCocoa::checkTAO(const WebCore::ResourceResponse& response)
          networkLoadMetrics().failsTAOCheck = !passesTimingAllowOriginCheck(response, *origin);
  }
  
@@ -9725,10 +9725,16 @@ index 5c1251af416c36a21a71bc84f18d04c951a6799f..116e28a69e306dc26e0480f4471d15ea
 +        return;
 +    }
 +
-+    NSString* cookieString = (NSString *)setCookieValue;
-+    NSString* cookieKey = @"Set-Cookie";
-+    NSDictionary* headers = [NSDictionary dictionaryWithObjects:[NSArray arrayWithObject:cookieString] forKeys:[NSArray arrayWithObject:cookieKey]];
-+    NSArray<NSHTTPCookie*>* cookies = [NSHTTPCookie cookiesWithResponseHeaderFields:headers forURL:(NSURL *)url];
++    Vector<String> cookieValues = setCookieValue.split('\n');
++    size_t count = cookieValues.size();
++    auto* cookies = [NSMutableArray arrayWithCapacity:count];
++    for (const auto& cookieValue : cookieValues) {
++        NSString* cookieString = (NSString *)cookieValue;
++        NSString* cookieKey = @"Set-Cookie";
++        NSDictionary* headers = [NSDictionary dictionaryWithObjects:[NSArray arrayWithObject:cookieString] forKeys:[NSArray arrayWithObject:cookieKey]];
++        NSArray<NSHTTPCookie*>* parsedCookies = [NSHTTPCookie cookiesWithResponseHeaderFields:headers forURL:(NSURL *)url];
++        [cookies addObject:parsedCookies[0]];
++    }
 +
 +    NSURL* siteForCookies = task->m_task.get()._siteForCookies;
 +    NSURL* documentURL = task->isTopLevelNavigation() ? siteForCookies : (NSURL *)mainDocumentURL;
