@@ -189,7 +189,7 @@ export function commandToRunTests(packageManager: 'npm' | 'yarn', args?: string)
 }
 
 (async () => {
-  const rootDir = path.resolve(process.cwd(), process.argv[2]);
+  const rootDir = path.resolve(process.cwd(), process.argv[2] || '');
   const generator = new Generator(rootDir);
   await generator.run();
 })().catch(error => {
