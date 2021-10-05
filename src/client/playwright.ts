@@ -71,7 +71,7 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel, channel
     this.selectors._addChannel(this._selectorsOwner);
   }
 
-  async _newRequest(options: NewRequestOptions = {}): Promise<FetchRequest> {
+  async newRequest(options: NewRequestOptions = {}): Promise<FetchRequest> {
     return await this._wrapApiCall(async (channel: channels.PlaywrightChannel) => {
       const storageState = typeof options.storageState === 'string' ?
         JSON.parse(await fs.promises.readFile(options.storageState, 'utf8')) :

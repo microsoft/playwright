@@ -78,7 +78,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   readonly coverage: Coverage;
   readonly keyboard: Keyboard;
   readonly mouse: Mouse;
-  readonly _request: FetchRequest;
+  readonly request: FetchRequest;
   readonly touchscreen: Touchscreen;
 
   readonly _bindings = new Map<string, (source: structs.BindingSource, ...args: any[]) => any>();
@@ -102,7 +102,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this.accessibility = new Accessibility(this._channel);
     this.keyboard = new Keyboard(this);
     this.mouse = new Mouse(this);
-    this._request = this._browserContext._request;
+    this.request = this._browserContext.request;
     this.touchscreen = new Touchscreen(this);
 
     this._mainFrame = Frame.from(initializer.mainFrame);
