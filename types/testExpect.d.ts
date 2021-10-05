@@ -166,4 +166,11 @@ declare global {
   }
 }
 
+declare global {
+  namespace PlaywrightTest {
+    export interface ExtraUseOptions {
+    }
+  }
+}
+
 export { };
