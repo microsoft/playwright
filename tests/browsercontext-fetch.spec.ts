@@ -140,7 +140,7 @@ for (const method of ['get', 'post', 'fetch']) {
       request = req;
       server.serveFile(req, res);
     });
-    await context._request[method](server.EMPTY_PAGE + '?p1=foo', {
+    await context.request[method](server.EMPTY_PAGE + '?p1=foo', {
       params: {
         'p1': 'v1',
         'парам2': 'знач2',
@@ -152,14 +152,14 @@ for (const method of ['get', 'post', 'fetch']) {
   });
 
   it(`${method} should support failOnStatusCode`, async ({ context, server }) => {
-    const error = await context._request[method](server.PREFIX + '/does-not-exist.html', {
+    const error = await context.request[method](server.PREFIX + '/does-not-exist.html', {
       failOnStatusCode: true
     }).catch(e => e);
     expect(error.message).toContain('404 Not Found');
   });
 
   it(`${method}should support ignoreHTTPSErrors option`, async ({ context, httpsServer }) => {
-    const response = await context._request[method](httpsServer.EMPTY_PAGE, { ignoreHTTPSErrors: true });
+    const response = await context.request[method](httpsServer.EMPTY_PAGE, { ignoreHTTPSErrors: true });
     expect(response.status()).toBe(200);
   });
 }
