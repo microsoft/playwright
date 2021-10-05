@@ -655,7 +655,7 @@ test('should fail with missing expectations and retries', async ({ runInlineTest
   expect(data.toString()).toBe('Hello world');
 });
 
-test('should allow strings for binary', async ({ runInlineTest }) => {
+test('should allow comparing text with text without file extension', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js-snapshots/snapshot-no-extension': `Hello world`,
