@@ -3,11 +3,11 @@ id: test-parameterize
 title: "Parameterize tests"
 ---
 
-You can either parameterize tests on a project level or for single tests on file level.
+You can either parameterize tests on a test level or on a project level.
 
 <!-- TOC -->
 
-## Tests
+## Parametrized Tests
 
 ```js js-flavor=js
 // example.spec.js
@@ -31,7 +31,7 @@ for (const name in people) {
 }
 ```
 
-## Projects
+## Parametrized Projects
 
 Playwright Test supports running multiple test projects at the same time. In the following example, we'll run two projects with different parameters.
 A parameter itself is represented as a [`fixture`](./api/class-fixtures), where the value gets set from the config. The first project runs with the value `Alice` and the second with the value `Bob`.
@@ -55,7 +55,7 @@ export type TestOptions = {
 };
 
 export const test = base.extend<TestOptions>({
-  // Default value for the version.
+  // Default value for the person.
   person: 'not-set',
 });
 ```
