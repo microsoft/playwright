@@ -12753,10 +12753,10 @@ export interface FetchRequest {
   /**
    * Sends HTTP(S) GET request and returns its response. The method will populate fetch cookies from the context and update
    * context cookies from the response. The method will automatically follow redirects.
-   * @param urlOrRequest Target URL or Request to get all fetch parameters from.
+   * @param urlOrRequest Target URL.
    * @param options
    */
-  get(urlOrRequest: string|Request, options?: {
+  get(urlOrRequest: string, options?: {
     /**
      * Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status codes.
      */
@@ -12786,10 +12786,10 @@ export interface FetchRequest {
   /**
    * Sends HTTP(S) fetch and returns its response. The method will populate fetch cookies from the context and update context
    * cookies from the response. The method will automatically follow redirects.
-   * @param urlOrRequest Target URL or Request to get all fetch parameters from.
+   * @param urlOrRequest Target URL.
    * @param options
    */
-  post(urlOrRequest: string|Request, options?: {
+  post(urlOrRequest: string, options?: {
     /**
      * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string and
      * `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type` header will
