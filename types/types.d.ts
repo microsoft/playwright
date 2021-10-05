@@ -1416,11 +1416,6 @@ export interface Page {
    */
   off(event: 'worker', listener: (worker: Worker) => void): this;
 
-  /**
-   * API testing helper associated with this page. Requests made with this API will use page cookies.
-   */
-  request: FetchRequest;
-
   accessibility: Accessibility;
 
   /**
@@ -2754,6 +2749,11 @@ export interface Page {
      */
     waitUntil?: "load"|"domcontentloaded"|"networkidle";
   }): Promise<null|Response>;
+
+  /**
+   * API testing helper associated with this page. Requests made with this API will use page cookies.
+   */
+  request: FetchRequest;
 
   /**
    * Routing provides the capability to modify network requests that are made by a page.
@@ -6231,11 +6231,6 @@ export interface BrowserContext {
   off(event: 'serviceworker', listener: (worker: Worker) => void): this;
 
   /**
-   * API testing helper associated with this context. Requests made with this API will use context cookies.
-   */
-  request: FetchRequest;
-
-  /**
    * Adds cookies into this browser context. All pages within this context will have these cookies installed. Cookies can be
    * obtained via
    * [browserContext.cookies([urls])](https://playwright.dev/docs/api/class-browsercontext#browser-context-cookies).
@@ -6456,6 +6451,11 @@ export interface BrowserContext {
    * Returns all open pages in the context.
    */
   pages(): Array<Page>;
+
+  /**
+   * API testing helper associated with this context. Requests made with this API will use context cookies.
+   */
+  request: FetchRequest;
 
   /**
    * Routing provides the capability to modify network requests that are made by any page in the browser context. Once route
@@ -13372,6 +13372,16 @@ export interface Mouse {
 }
 
 /**
+ * This object can be used to launch or connect to Chromium, returning instances of [Browser].
+ */
+export const chromium: BrowserType;
+
+/**
+ * This object can be used to launch or connect to Firefox, returning instances of [Browser].
+ */
+export const firefox: BrowserType;
+
+/**
  * **experimental** Creates new instances of [FetchRequest].
  * @param options
  */
@@ -13489,16 +13499,6 @@ export const newRequest: (options?: {
    */
   userAgent?: string;
 }) => Promise<FetchRequest>;
-
-/**
- * This object can be used to launch or connect to Chromium, returning instances of [Browser].
- */
-export const chromium: BrowserType;
-
-/**
- * This object can be used to launch or connect to Firefox, returning instances of [Browser].
- */
-export const firefox: BrowserType;
 
 /**
  * Selectors can be used to install custom selector engines. See [Working with selectors](https://playwright.dev/docs/selectors) for more
