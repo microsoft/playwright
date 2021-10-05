@@ -8333,7 +8333,7 @@ index 39cb560e54bf9efd2dad6e1fb60dd0f609daf6bf..91c132460d4b466f61a8c579f70329fd
          m_commonHeaders.append(CommonHeader { name, value });
  }
 diff --git a/Source/WebCore/platform/network/NetworkStorageSession.h b/Source/WebCore/platform/network/NetworkStorageSession.h
-index 3cbe3f9473d4ef35b0577847bcb9f0c70355fc27..2505e327ddb9cd68af44df388aed789ae3f0aa15 100644
+index 3cbe3f9473d4ef35b0577847bcb9f0c70355fc27..3c4609140d91a4c9bf1bcaca4e05f223f39f894f 100644
 --- a/Source/WebCore/platform/network/NetworkStorageSession.h
 +++ b/Source/WebCore/platform/network/NetworkStorageSession.h
 @@ -138,6 +138,7 @@ public:
@@ -8343,6 +8343,14 @@ index 3cbe3f9473d4ef35b0577847bcb9f0c70355fc27..2505e327ddb9cd68af44df388aed789a
 +    void setCookiesFromResponse(const URL& firstParty, const URL&, const String& setCookieValue);
  #elif USE(CURL)
      WEBCORE_EXPORT NetworkStorageSession(PAL::SessionID);
+     ~NetworkStorageSession();
+@@ -147,6 +148,7 @@ public:
+     WEBCORE_EXPORT void setCookiesFromHTTPResponse(const URL& firstParty, const URL&, const String&) const;
+     WEBCORE_EXPORT void setCookieAcceptPolicy(CookieAcceptPolicy) const;
+     WEBCORE_EXPORT void setProxySettings(CurlProxySettings&&);
++    void setCookiesFromResponse(const URL& firstParty, const URL&, const String& setCookieValue);
+ #else
+     WEBCORE_EXPORT NetworkStorageSession(PAL::SessionID, NetworkingContext*);
      ~NetworkStorageSession();
 diff --git a/Source/WebCore/platform/network/ResourceResponseBase.h b/Source/WebCore/platform/network/ResourceResponseBase.h
 index 262e53180d6dd7c4d133ddc1daf5652bd6f31c76..d09aed9c9c58afe3c2040e1d5d683374365e65f8 100644
@@ -8531,6 +8539,23 @@ index 7d881206c9689f433227969c9b7f9ff268bdaaed..2e8118f11f87fa5f32adcedc165aec82
      void destroyStream(CurlStreamID);
      void send(CurlStreamID, UniqueArray<uint8_t>&&, size_t);
  
+diff --git a/Source/WebCore/platform/network/curl/NetworkStorageSessionCurl.cpp b/Source/WebCore/platform/network/curl/NetworkStorageSessionCurl.cpp
+index 5249bfb4a5ba52981e1f4cbe43048e27507b033a..a34c201179f591904d999b7feee40720695924ed 100644
+--- a/Source/WebCore/platform/network/curl/NetworkStorageSessionCurl.cpp
++++ b/Source/WebCore/platform/network/curl/NetworkStorageSessionCurl.cpp
+@@ -116,6 +116,12 @@ void NetworkStorageSession::setCookieAcceptPolicy(CookieAcceptPolicy policy) con
+     cookieDatabase().setAcceptPolicy(policy);
+ }
+ 
++void  NetworkStorageSession::setCookiesFromResponse(const URL& firstParty, const URL& url, const String& setCookieValue)
++{
++    for (auto& cookieString : setCookieValue.split('\n'))
++        cookieDatabase().setCookie(firstParty, url, cookieString, CookieJarDB::Source::Network);
++}
++
+ HTTPCookieAcceptPolicy NetworkStorageSession::cookieAcceptPolicy() const
+ {
+     switch (cookieDatabase().acceptPolicy()) {
 diff --git a/Source/WebCore/platform/network/curl/SocketStreamHandleImpl.h b/Source/WebCore/platform/network/curl/SocketStreamHandleImpl.h
 index b804fde0973bbfb28331cf7c3a1f20b043e74fe8..af3005261593b5fa91484c98c43d021227716231 100644
 --- a/Source/WebCore/platform/network/curl/SocketStreamHandleImpl.h
@@ -9218,7 +9243,7 @@ index 694008e0451edc5770142a0a6d9eed52b04ded80..ec93869f9486bdf7bd3bb56478c62469
      
  WEBCORE_EXPORT WTF::TextStream& operator<<(WTF::TextStream&, ScrollAlignment::Behavior);
 diff --git a/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.cpp b/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.cpp
-index aaa8731f9ecaa6a81f521dc0e7f84923faa81f06..baad5424307be2e75ab3f1ce44741d64d543a1bd 100644
+index aaa8731f9ecaa6a81f521dc0e7f84923faa81f06..259403c5ff8d896f71db9f612e83d050dd75e1af 100644
 --- a/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.cpp
 +++ b/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.cpp
 @@ -76,6 +76,11 @@
@@ -9239,11 +9264,11 @@ index aaa8731f9ecaa6a81f521dc0e7f84923faa81f06..baad5424307be2e75ab3f1ce44741d64
  
 +void NetworkConnectionToWebProcess::setCookieFromResponse(NetworkResourceLoadParameters&& parameters, const URL& mainDocumentURL, const String& setCookieValue)
 +{
-+#if USE(SOUP)
++#if USE(SOUP) ||  USE(CURL)
 +    auto* networkStorageSession = storageSession();
 +    if (!networkStorageSession)
 +        return;
-+    networkStorageSession->setCookiesFromResponse(mainDocumentURL, parameters.request.url(), setCookieValue);
++    networkStorageSession->setCookiesFromResponse(parameters.request.firstPartyForCookies(), parameters.request.url(), setCookieValue);
 +#elif PLATFORM(COCOA)
 +    if (auto* session = networkSession())
 +        NetworkDataTaskCocoa::setCookieFromResponse(*static_cast<NetworkSessionCocoa*>(session), WTFMove(parameters), mainDocumentURL, setCookieValue);
