@@ -129,3 +129,15 @@ it('should be callable twice', async ({ browserType, browserOptions }) => {
   ]);
   await browser.close();
 });
+
+it('should close all pages when the browser is closed', async ({ browserType, browserOptions }) => {
+  const browser = await browserType.launch(browserOptions);
+  const context = await browser.newContext();
+  let closed = 0;
+  for (let i = 0; i < 10; i++) {
+    const page = await context.newPage();
+    page.on('close', () => closed++);
+  }
+  await browser.close();
+  expect(closed).toBe(10);
+});
