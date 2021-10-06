@@ -429,6 +429,7 @@ PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 npm install playwright
 
 ```bash bash-flavor=batch lang=js
 # For Playwright Test
+set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
 npx playwright install
 
 # For Playwright Library
