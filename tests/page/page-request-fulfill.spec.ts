@@ -273,6 +273,7 @@ it('should fulfill with fetch response that has multiple set-cookie', async ({ p
   it.fail(browserName === 'webkit', 'Response contained invalid HTTP headers');
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=b', 'c=d']);
+    res.setHeader('Content-Type', 'text/html');
     res.end();
   });
   await page.route('**/empty.html', async route => {
