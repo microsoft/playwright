@@ -51,6 +51,7 @@ it('should capture local storage', async ({ contextFactory }) => {
 it('should set local storage', async ({ browser }) => {
   const context = await browser.newContext({
     storageState: {
+      cookies: [],
       origins: [
         {
           origin: 'https://www.example.com',

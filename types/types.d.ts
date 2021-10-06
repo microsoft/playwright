@@ -12367,53 +12367,42 @@ export interface Browser extends EventEmitter {
      */
     storageState?: string|{
       /**
-       * Optional cookies to set for context
+       * cookies to set for context
        */
-      cookies?: Array<{
+      cookies: Array<{
         name: string;
 
         value: string;
 
         /**
-         * Optional either url or domain / path are required
+         * domain and path are required
          */
-        url?: string;
+        domain: string;
 
         /**
-         * Optional either url or domain / path are required
+         * domain and path are required
          */
-        domain?: string;
+        path: string;
 
         /**
-         * Optional either url or domain / path are required
+         * Unix time in seconds.
          */
-        path?: string;
+        expires: number;
+
+        httpOnly: boolean;
+
+        secure: boolean;
 
         /**
-         * Optional Unix time in seconds.
+         * sameSite flag
          */
-        expires?: number;
-
-        /**
-         * Optional httpOnly flag
-         */
-        httpOnly?: boolean;
-
-        /**
-         * Optional secure flag
-         */
-        secure?: boolean;
-
-        /**
-         * Optional sameSite flag
-         */
-        sameSite?: "Strict"|"Lax"|"None";
+        sameSite: "Strict"|"Lax"|"None";
       }>;
 
       /**
-       * Optional localStorage to set for context
+       * localStorage to set for context
        */
-      origins?: Array<{
+      origins: Array<{
         origin: string;
 
         localStorage: Array<{
@@ -14680,53 +14669,42 @@ export interface BrowserContextOptions {
    */
   storageState?: string|{
     /**
-     * Optional cookies to set for context
+     * cookies to set for context
      */
-    cookies?: Array<{
+    cookies: Array<{
       name: string;
 
       value: string;
 
       /**
-       * Optional either url or domain / path are required
+       * domain and path are required
        */
-      url?: string;
+      domain: string;
 
       /**
-       * Optional either url or domain / path are required
+       * domain and path are required
        */
-      domain?: string;
+      path: string;
 
       /**
-       * Optional either url or domain / path are required
+       * Unix time in seconds.
        */
-      path?: string;
+      expires: number;
+
+      httpOnly: boolean;
+
+      secure: boolean;
 
       /**
-       * Optional Unix time in seconds.
+       * sameSite flag
        */
-      expires?: number;
-
-      /**
-       * Optional httpOnly flag
-       */
-      httpOnly?: boolean;
-
-      /**
-       * Optional secure flag
-       */
-      secure?: boolean;
-
-      /**
-       * Optional sameSite flag
-       */
-      sameSite?: "Strict"|"Lax"|"None";
+      sameSite: "Strict"|"Lax"|"None";
     }>;
 
     /**
-     * Optional localStorage to set for context
+     * localStorage to set for context
      */
-    origins?: Array<{
+    origins: Array<{
       origin: string;
 
       localStorage: Array<{
