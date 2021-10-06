@@ -703,7 +703,7 @@ it('should throw on invalid first argument', async function({ context }) {
   expect(error.message).toContain('First argument must be either URL string or Request');
 });
 
-it('should override request parameters', async function({ browser, context, page, server }) {
+it('should override request parameters', async function({ context, page, server }) {
   const [pageReq] = await Promise.all([
     page.waitForRequest('**/*'),
     page.goto(server.EMPTY_PAGE)
