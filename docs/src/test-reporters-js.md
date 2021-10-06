@@ -430,6 +430,7 @@ export default config;
   ```bash
   # Install
   npm i -D allure-playwright
+  npm i -D allure-commandline
 
   # Run tests
   npx playwright test --reporter=line,allure-playwright
