@@ -456,7 +456,15 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
     }
     await use(await context.newPage());
   },
+
+  request: async ({ playwright, _combinedContextOptions }, use) => {
+    const request = await playwright.request.newContext(_combinedContextOptions);
+    await use(request);
+    await request.dispose();
+  }
+
 });
+
 export default test;
 
 function formatPendingCalls(calls: ParsedStackTrace[]) {

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials } from './types';
+import type { ApiRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials } from './types';
 import type { Expect } from './testExpect';
 
 export type { Expect } from './testExpect';
@@ -2656,6 +2656,25 @@ export interface PlaywrightTestArgs {
    *
    */
   page: Page;
+  /**
+   * Isolated [ApiRequestContext] instance for each test.
+   *
+   * ```ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('basic test', async ({ request }) => {
+   *   await request.post('/signin', {
+   *     data: {
+   *       username: 'user',
+   *       password: 'password'
+   *     }
+   *   });
+   *   // ...
+   * });
+   * ```
+   *
+   */
+  request: ApiRequestContext;
 }
 
 export type PlaywrightTestProject<TestArgs = {}, WorkerArgs = {}> = Project<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
