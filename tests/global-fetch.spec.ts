@@ -152,3 +152,9 @@ it('should set playwright as user-agent', async ({ playwright, server }) => {
   ]);
   expect(serverRequest.headers['user-agent']).toBe('Playwright/' + getPlaywrightVersion());
 });
+
+it('should be able to construct with context options', async ({ playwright, server, contextOptions }) => {
+  const request = await playwright.newRequest(contextOptions);
+  const response = await request.get(server.EMPTY_PAGE);
+  expect(response.ok()).toBeTruthy();
+});

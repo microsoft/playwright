@@ -207,17 +207,16 @@ Specify environment variables that will be visible to the browser. Defaults to `
 ## js-python-context-option-storage-state
 * langs: js, python
 - `storageState` <[path]|[Object]>
-  - `cookies` <[Array]<[Object]>> Optional cookies to set for context
+  - `cookies` <[Array]<[Object]>> cookies to set for context
     - `name` <[string]>
     - `value` <[string]>
-    - `url` <[string]> Optional either url or domain / path are required
-    - `domain` <[string]> Optional either url or domain / path are required
-    - `path` <[string]> Optional either url or domain / path are required
-    - `expires` <[float]> Optional Unix time in seconds.
-    - `httpOnly` <[boolean]> Optional httpOnly flag
-    - `secure` <[boolean]> Optional secure flag
-    - `sameSite` <[SameSiteAttribute]<"Strict"|"Lax"|"None">> Optional sameSite flag
-  - `origins` <[Array]<[Object]>> Optional localStorage to set for context
+    - `domain` <[string]> domain and path are required
+    - `path` <[string]> domain and path are required
+    - `expires` <[float]> Unix time in seconds.
+    - `httpOnly` <[boolean]>
+    - `secure` <[boolean]>
+    - `sameSite` <[SameSiteAttribute]<"Strict"|"Lax"|"None">> sameSite flag
+  - `origins` <[Array]<[Object]>> localStorage to set for context
     - `origin` <[string]>
     - `localStorage` <[Array]<[Object]>>
       - `name` <[string]>
