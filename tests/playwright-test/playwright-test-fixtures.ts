@@ -23,6 +23,7 @@ import type { JSONReport, JSONReportSuite } from '../../src/test/reporters/json'
 import rimraf from 'rimraf';
 import { promisify } from 'util';
 import * as url from 'url';
+import { serverFixtures, ServerFixtures } from '../config/baseTest';
 
 const removeFolderAsync = promisify(rimraf);
 
@@ -194,7 +195,7 @@ type Fixtures = {
 };
 
 const common = base.extend<CommonFixtures>(commonFixtures as any);
-export const test = common.extend<Fixtures>({
+export const test = common.extend<ServerFixtures>(serverFixtures as any).extend<Fixtures>({
   writeFiles: async ({}, use, testInfo) => {
     await use(files => writeFiles(testInfo, files));
   },

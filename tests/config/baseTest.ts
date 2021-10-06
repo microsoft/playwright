@@ -130,7 +130,7 @@ const baseFixtures: Fixtures<{}, BaseOptions & BaseFixtures> = {
 type ServerOptions = {
   loopback?: string;
 };
-type ServerFixtures = {
+export type ServerFixtures = {
   server: TestServer;
   httpsServer: TestServer;
   socksPort: number;
@@ -138,8 +138,8 @@ type ServerFixtures = {
   asset: (p: string) => string;
 };
 
-type ServersInternal = ServerFixtures & { socksServer: socks.SocksServer };
-const serverFixtures: Fixtures<ServerFixtures, ServerOptions & { __servers: ServersInternal }> = {
+export type ServersInternal = ServerFixtures & { socksServer: socks.SocksServer };
+export const serverFixtures: Fixtures<ServerFixtures, ServerOptions & { __servers: ServersInternal }> = {
   loopback: [ undefined, { scope: 'worker' } ],
   __servers: [ async ({ loopback }, run, workerInfo) => {
     const assetsPath = path.join(__dirname, '..', 'assets');
