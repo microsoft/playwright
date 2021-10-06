@@ -146,21 +146,6 @@ dotnet tool install -g Microsoft.Playwright.CLI
 
 Playwright can install supported browsers by means of the CLI tool.
 
-```bash js
-# Running without arguments will install all browsers
-npx playwright install
-```
-
-```bash java
-# Running without arguments will install all browsers
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
-```
-
-```bash python
-# Running without arguments will install all browsers
-playwright install
-```
-
 ```bash csharp
 # Running without arguments will install all browsers
 playwright install
@@ -168,39 +153,12 @@ playwright install
 
 You can also install specific browsers by providing an argument:
 
-```bash js
-# Install WebKit
-npx playwright install webkit
-```
-
-```bash java
-# Install WebKit
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install webkit"
-```
-
-```bash python
-# Install WebKit
-playwright install webkit
-```
-
 ```bash csharp
 # Install WebKit
 playwright install webkit
 ```
 
 See all supported browsers:
-
-```bash js
-npx playwright install --help
-```
-
-```bash java
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --help"
-```
-
-```bash python
-playwright install --help
-```
 
 ```bash csharp
 playwright install --help
@@ -380,6 +338,34 @@ By default, Playwright downloads browsers from Microsoft CDN.
 Sometimes companies maintain an internal proxy that blocks direct access to the public
 resources. In this case, Playwright can be configured to download browsers via a proxy server.
 
+```bash bash-flavor=bash lang=js
+# For Playwright Test
+HTTPS_PROXY=https://192.0.2.1 npx playwright install
+
+# For Playwright Library
+HTTPS_PROXY=https://192.0.2.1 npm install playwright
+```
+
+```bash bash-flavor=batch lang=js
+# For Playwright Test
+set HTTPS_PROXY=https://192.0.2.1
+npx playwright install
+
+# For Playwright Library
+set HTTPS_PROXY=https://192.0.2.1
+npm install playwright
+```
+
+```bash bash-flavor=powershell lang=js
+# For Playwright Test
+$env:HTTPS_PROXY="https://192.0.2.1"
+npx playwright install
+
+# For Playwright Library
+$env:HTTPS_PROXY="https://192.0.2.1"
+npm install playwright
+```
+
 ```bash bash-flavor=bash lang=python
 pip install playwright
 HTTPS_PROXY=https://192.0.2.1 playwright install
@@ -433,10 +419,36 @@ Sometimes companies maintain an internal artifact repository to host browser
 binaries. In this case, Playwright can be configured to download from a custom
 location using the `PLAYWRIGHT_DOWNLOAD_HOST` env variable.
 
+```bash bash-flavor=bash lang=js
+# For Playwright Test
+PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 npx playwright install
+
+# For Playwright Library
+PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 npm install playwright
+```
+
+```bash bash-flavor=batch lang=js
+# For Playwright Test
+npx playwright install
+
+# For Playwright Library
+set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
+npm install playwright
+```
+
+```bash bash-flavor=powershell lang=js
+# For Playwright Test
+$env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
+npx playwright install
+
+# For Playwright Library
+$env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
+npm install playwright
+```
+
 ```bash bash-flavor=bash lang=python
 pip install playwright
 PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 playwright install
-
 ```
 
 ```bash bash-flavor=batch lang=python
@@ -482,20 +494,87 @@ playwright install
 It is also possible to use a per-browser download hosts using `PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST`, `PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST` and `PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST` env variables that
 take precedence over `PLAYWRIGHT_DOWNLOAD_HOST`.
 
-```bash python
-# Linux/macOS
-pip install playwright
-PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 python -m playwright install
+```bash bash-flavor=bash lang=js
+# For Playwright Test
+PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 npx playwright install
+
+# For Playwright Library
+PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 npm install playwright
 ```
 
-```bash java
-# Linux/macOS
+```bash bash-flavor=batch lang=js
+# For Playwright Test
+set PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3
+set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
+npx playwright install
+
+# For Playwright Library
+set PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3
+set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
+npm install playwright
+```
+
+```bash bash-flavor=powershell lang=js
+# For Playwright Test
+$env:PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST="203.0.113.3"
+$env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
+npx playwright install
+
+# For Playwright Library
+$env:PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST="203.0.113.3"
+$env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
+npm install playwright
+```
+
+```bash bash-flavor=bash lang=python
+pip install playwright
+PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 playwright install
+```
+
+```bash bash-flavor=batch lang=python
+set PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3
+set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
+pip install playwright
+playwright install
+```
+
+```bash bash-flavor=powershell lang=python
+$env:PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST="203.0.113.3"
+$env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
+pip install playwright
+playwright install
+```
+
+```bash bash-flavor=bash lang=java
 PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 mvn test
 ```
 
-```bash csharp
-# Linux/macOS
+```bash bash-flavor=batch lang=java
+set PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3
+set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
+mvn test
+```
+
+```bash bash-flavor=powershell lang=java
+$env:PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST="203.0.113.3"
+$env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
+mvn test
+```
+
+```bash bash-flavor=bash lang=csharp
 PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 playwright install
+```
+
+```bash bash-flavor=batch lang=csharp
+set PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3
+set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
+playwright install
+```
+
+```bash bash-flavor=powershell lang=csharp
+$env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
+$env:PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST="203.0.113.3"
+playwright install
 ```
 
 ## Skip browser downloads
