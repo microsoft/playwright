@@ -851,7 +851,7 @@ Returns all open pages in the context.
 
 ## property: BrowserContext.request
 * langs: js
-- type: <[FetchRequest]>
+- type: <[ApiRequestContext]>
 
 API testing helper associated with this context. Requests made with this API will use context cookies.
 

@@ -27,6 +27,7 @@ import { ChannelOwner } from './channelOwner';
 import * as network from './network';
 import { RawHeaders } from './network';
 import { FilePayload, Headers, StorageState } from './types';
+import { Playwright } from './playwright';
 
 export type FetchOptions = {
   params?: { [key: string]: string; },
@@ -40,7 +41,32 @@ export type FetchOptions = {
   ignoreHTTPSErrors?: boolean,
 };
 
-export class FetchRequest extends ChannelOwner<channels.FetchRequestChannel, channels.FetchRequestInitializer> implements api.FetchRequest {
+type NewContextOptions = Omit<channels.PlaywrightNewRequestOptions, 'extraHTTPHeaders' | 'storageState'> & {
+  extraHTTPHeaders?: Headers,
+  storageState?: string | StorageState,
+};
+
+export class Fetch implements api.ApiRequest {
+  private _playwright: Playwright;
+  constructor(playwright: Playwright) {
+    this._playwright = playwright;
+  }
+
+  async newContext(options: NewContextOptions = {}): Promise<FetchRequest> {
+    return await this._playwright._wrapApiCall(async (channel: channels.PlaywrightChannel) => {
+      const storageState = typeof options.storageState === 'string' ?
+        JSON.parse(await fs.promises.readFile(options.storageState, 'utf8')) :
+        options.storageState;
+      return FetchRequest.from((await channel.newRequest({
+        ...options,
+        extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
+        storageState,
+      })).request);
+    });
+  }
+}
+
+export class FetchRequest extends ChannelOwner<channels.FetchRequestChannel, channels.FetchRequestInitializer> implements api.ApiRequestContext {
   static from(channel: channels.FetchRequestChannel): FetchRequest {
     return (channel as any)._object;
   }
@@ -153,7 +179,7 @@ export class FetchRequest extends ChannelOwner<channels.FetchRequestChannel, cha
   }
 }
 
-export class FetchResponse implements api.FetchResponse {
+export class FetchResponse implements api.ApiResponse {
   private readonly _initializer: channels.FetchResponse;
   private readonly _headers: RawHeaders;
   private readonly _request: FetchRequest;

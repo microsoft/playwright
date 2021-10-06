@@ -2416,7 +2416,7 @@ last redirect.
 
 ## property: Page.request
 * langs: js
-- type: <[FetchRequest]>
+- type: <[ApiRequestContext]>
 
 API testing helper associated with this page. Requests made with this API will use page cookies.
 

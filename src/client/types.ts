@@ -118,8 +118,3 @@ export type SelectorEngine = {
 
 export type RemoteAddr = channels.RemoteAddr;
 export type SecurityDetails = channels.SecurityDetails;
-
-export type NewRequestOptions = Omit<channels.PlaywrightNewRequestOptions, 'extraHTTPHeaders' | 'storageState'> & {
-  extraHTTPHeaders?: Headers,
-  storageState?: string | StorageState,
-};

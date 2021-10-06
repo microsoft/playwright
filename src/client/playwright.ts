@@ -15,20 +15,18 @@
  */
 
 import dns from 'dns';
-import fs from 'fs';
 import net from 'net';
 import util from 'util';
 import * as channels from '../protocol/channels';
 import { TimeoutError } from '../utils/errors';
 import { createSocket } from '../utils/netUtils';
-import { headersObjectToArray } from '../utils/utils';
 import { Android } from './android';
 import { BrowserType } from './browserType';
 import { ChannelOwner } from './channelOwner';
 import { Electron } from './electron';
-import { FetchRequest } from './fetch';
+import { Fetch } from './fetch';
 import { Selectors, SelectorsOwner, sharedSelectors } from './selectors';
-import { NewRequestOptions, Size } from './types';
+import { Size } from './types';
 const dnsLookupAsync = util.promisify(dns.lookup);
 
 type DeviceDescriptor = {
@@ -49,6 +47,7 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel, channel
   readonly webkit: BrowserType;
   readonly devices: Devices;
   readonly selectors: Selectors;
+  readonly request: Fetch;
   readonly errors: { TimeoutError: typeof TimeoutError };
   private _selectorsOwner: SelectorsOwner;
   private _sockets = new Map<string, net.Socket>();
@@ -56,6 +55,7 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel, channel
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.PlaywrightInitializer) {
     super(parent, type, guid, initializer);
+    this.request = new Fetch(this);
     this.chromium = BrowserType.from(initializer.chromium);
     this.firefox = BrowserType.from(initializer.firefox);
     this.webkit = BrowserType.from(initializer.webkit);
@@ -69,19 +69,6 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel, channel
 
     this._selectorsOwner = SelectorsOwner.from(initializer.selectors);
     this.selectors._addChannel(this._selectorsOwner);
-  }
-
-  async newRequest(options: NewRequestOptions = {}): Promise<FetchRequest> {
-    return await this._wrapApiCall(async (channel: channels.PlaywrightChannel) => {
-      const storageState = typeof options.storageState === 'string' ?
-        JSON.parse(await fs.promises.readFile(options.storageState, 'utf8')) :
-        options.storageState;
-      return FetchRequest.from((await channel.newRequest({
-        ...options,
-        extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
-        storageState,
-      })).request);
-    });
   }
 
   _enablePortForwarding(redirectPortForTest?: number) {
