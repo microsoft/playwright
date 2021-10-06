@@ -23,7 +23,7 @@ import os from 'os';
 import path from 'path';
 import { program, Command } from 'commander';
 import { runDriver, runServer, printApiJson, launchBrowserServer } from './driver';
-import { showTraceViewer } from '../server/trace/viewer/traceViewer';
+import { showTraceViewer, serveTraceViewer } from '../server/trace/viewer/traceViewer';
 import * as playwright from '../..';
 import { BrowserContext } from '../client/browserContext';
 import { Browser } from '../client/browser';
@@ -224,6 +224,17 @@ Examples:
 
   $ show-trace trace/directory
   $ show-trace https://example.com/trace.zip`);
+
+program
+    .command('serve-trace [trace]', { hidden: true })
+    .description('Serve trace viewer and return web server URL')
+    .action(function(trace) {
+      serveTraceViewer(trace).catch(logErrorAndExit);
+    }).addHelpText('afterAll', `
+Examples:
+
+$ serve-trace trace/directory
+$ serve-trace https://example.com/trace.zip`);
 
 if (!process.env.PW_CLI_TARGET_LANG) {
   let playwrightTestPackagePath = null;

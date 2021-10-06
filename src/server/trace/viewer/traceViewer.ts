@@ -35,10 +35,8 @@ import { debugLogger } from '../../../utils/debugLogger';
 
 export class TraceViewer {
   private _server: HttpServer;
-  private _browserName: string;
 
-  constructor(tracesDir: string, browserName: string) {
-    this._browserName = browserName;
+  constructor(tracesDir: string) {
     const resourcesDir = path.join(tracesDir, 'resources');
 
     // Served by TraceServer
@@ -122,11 +120,15 @@ export class TraceViewer {
     this._server.routePrefix('/sha1/', sha1Handler);
   }
 
-  async show(headless: boolean): Promise<BrowserContext> {
+  async serve(): Promise<string> {
     const urlPrefix = await this._server.start();
+    return urlPrefix + '/traceviewer/traceViewer/index.html';
+  }
 
+  async show(browserName: string, headless: boolean): Promise<BrowserContext> {
+    const traceViewerUrl = await this.serve();
     const traceViewerPlaywright = createPlaywright('javascript', true);
-    const traceViewerBrowser = isUnderTest() ? 'chromium' : this._browserName;
+    const traceViewerBrowser = isUnderTest() ? 'chromium' : browserName;
     const args = traceViewerBrowser === 'chromium' ? [
       '--app=data:text/html,',
       '--window-size=1280,800'
@@ -158,7 +160,7 @@ export class TraceViewer {
     else
       page.on('close', () => process.exit());
 
-    await page.mainFrame().goto(internalCallMetadata(), urlPrefix + '/traceviewer/traceViewer/index.html');
+    await page.mainFrame().goto(internalCallMetadata(), traceViewerUrl);
     return context;
   }
 }
@@ -174,6 +176,24 @@ async function appendTraceEvents(model: TraceModel, file: string) {
 }
 
 export async function showTraceViewer(tracePath: string, browserName: string, headless = false): Promise<BrowserContext | undefined> {
+  const dir = await extraceTraceResource(tracePath);
+  if (!dir)
+    return;
+  const traceViewer = new TraceViewer(dir);
+  return await traceViewer.show(browserName, headless);
+}
+
+export async function serveTraceViewer(tracePath: string): Promise<void> {
+  const dir = await extraceTraceResource(tracePath);
+  if (!dir)
+    return;
+  const traceViewer = new TraceViewer(dir);
+  const traceViewerUrl = await traceViewer.serve();
+  if (!isUnderTest())
+    console.log(`Running on: ${traceViewerUrl}`); // eslint-disable-line no-console
+}
+
+async function extraceTraceResource(tracePath: string): Promise<string|undefined> {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), `playwright-trace`));
   process.on('exit', () => rimraf.sync(dir));
 
@@ -199,10 +219,8 @@ export async function showTraceViewer(tracePath: string, browserName: string, he
     return;
   }
 
-  if (stat.isDirectory()) {
-    const traceViewer = new TraceViewer(tracePath, browserName);
-    return await traceViewer.show(headless);
-  }
+  if (stat.isDirectory())
+    return tracePath;
 
   const zipFile = tracePath;
   try {
@@ -211,6 +229,5 @@ export async function showTraceViewer(tracePath: string, browserName: string, he
     console.log(`Invalid trace file: ${zipFile}`);  // eslint-disable-line no-console
     return;
   }
-  const traceViewer = new TraceViewer(dir, browserName);
-  return await traceViewer.show(headless);
+  return dir;
 }
