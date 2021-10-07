@@ -26,9 +26,6 @@ export function filterCookies(cookies: types.NetworkCookie[], urls: string[]): t
   const parsedURLs = urls.map(s => new URL(s));
   // Chromiums's cookies are missing sameSite when it is 'None'
   return cookies.filter(c => {
-    // Firefox and WebKit can return cookies with empty values.
-    if (!c.value)
-      return false;
     if (!parsedURLs.length)
       return true;
     for (const parsedURL of parsedURLs) {
@@ -50,7 +47,6 @@ export function filterCookies(cookies: types.NetworkCookie[], urls: string[]): t
 export function rewriteCookies(cookies: types.SetNetworkCookieParam[]): types.SetNetworkCookieParam[] {
   return cookies.map(c => {
     assert(c.name, 'Cookie should have a name');
-    assert(c.value, 'Cookie should have a value');
     assert(c.url || (c.domain && c.path), 'Cookie should have a url or a domain/path pair');
     assert(!(c.url && c.domain), 'Cookie should have either url or domain');
     assert(!(c.url && c.path), 'Cookie should have either url or path');
