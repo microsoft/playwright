@@ -168,7 +168,7 @@ export class Loader {
       testDir = path.resolve(rootDir, testDir);
     let outputDir = takeFirst(this._configOverrides.outputDir, projectConfig.outputDir, this._config.outputDir, path.resolve(process.cwd(), 'test-results'));
     if (!path.isAbsolute(outputDir))
-      outputDir = path.resolve(rootDir, outputDir);
+      outputDir = path.resolve(process.cwd(), outputDir);
     const fullProject: FullProject = {
       define: takeFirst(this._configOverrides.define, projectConfig.define, this._config.define, []),
       expect: takeFirst(this._configOverrides.expect, projectConfig.expect, this._config.expect, undefined),
