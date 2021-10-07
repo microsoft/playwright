@@ -218,7 +218,7 @@ export class FetchResponse implements api.ApiResponse {
     return this._request._wrapApiCall(async (channel: channels.FetchRequestChannel) => {
       try {
         const result = await channel.fetchResponseBody({ fetchUid: this._fetchUid() });
-        if (!result.binary)
+        if (result.binary === undefined)
           throw new Error('Response has been disposed');
         return Buffer.from(result.binary!, 'base64');
       } catch (e) {

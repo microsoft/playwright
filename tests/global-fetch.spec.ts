@@ -158,3 +158,14 @@ it('should be able to construct with context options', async ({ playwright, serv
   const response = await request.get(server.EMPTY_PAGE);
   expect(response.ok()).toBeTruthy();
 });
+
+it('should return empty body', async ({ playwright, server }) => {
+  const request = await playwright.request.newContext();
+  const response = await request.get(server.EMPTY_PAGE);
+  const body = await response.body();
+  expect(body.length).toBe(0);
+  expect(await response.text()).toBe('');
+  await request.dispose();
+  const error = await response.body().catch(e => e);
+  expect(error.message).toContain('Response has been disposed');
+});
