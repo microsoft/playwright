@@ -130,7 +130,7 @@ it('should add session cookies to request', async ({ context, server }) => {
   expect(req.headers.cookie).toEqual('username=John Doe');
 });
 
-for (const method of ['get', 'post', 'fetch']) {
+for (const method of ['fetch', 'delete', 'get', 'head', 'patch', 'post', 'put']) {
   it(`${method} should support queryParams`, async ({ context, server }) => {
     let request;
     const url = new URL(server.EMPTY_PAGE);

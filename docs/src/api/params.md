@@ -297,6 +297,32 @@ Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Us
 Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the
 [`option: viewport`] is set.
 
+## fetch-param-url
+- `url` <[string]>
+
+Target URL.
+
+## fetch-option-params
+- `params` <[Object]<[string], [string]>>
+
+Query parameters to be send with the URL.
+
+## fetch-option-headers
+- `headers` <[Object]<[string], [string]>>
+
+Allows to set HTTP headers.
+
+## fetch-option-timeout
+- `timeout` <[float]>
+
+Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+
+## fetch-option-failonstatuscode
+- `failOnStatusCode` <[boolean]>
+
+Whether to throw on response codes other than 2xx and 3xx. By default response object is returned
+for all status codes.
+
 ## fetch-option-form
 - `form` <[Object]<[string], [string]|[float]|[boolean]>>
 

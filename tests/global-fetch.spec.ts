@@ -38,7 +38,7 @@ it.afterAll(() => {
   http.globalAgent = prevAgent;
 });
 
-for (const method of ['get', 'post', 'fetch']) {
+for (const method of ['fetch', 'delete', 'get', 'head', 'patch', 'post', 'put']) {
   it(`${method} should work`, async ({ playwright, server }) => {
     const request = await playwright.request.newContext();
     const response = await request[method](server.PREFIX + '/simple.json');
@@ -49,7 +49,7 @@ for (const method of ['get', 'post', 'fetch']) {
     expect(response.url()).toBe(server.PREFIX + '/simple.json');
     expect(response.headers()['content-type']).toBe('application/json; charset=utf-8');
     expect(response.headersArray()).toContainEqual({ name: 'Content-Type', value: 'application/json; charset=utf-8' });
-    expect(await response.text()).toBe('{"foo": "bar"}\n');
+    expect(await response.text()).toBe(method === 'head' ? '' : '{"foo": "bar"}\n');
   });
 
   it(`should dispose global ${method} request`, async function({ playwright, context, server }) {
