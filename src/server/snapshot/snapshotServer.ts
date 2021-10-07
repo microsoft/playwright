@@ -17,7 +17,7 @@
 import * as http from 'http';
 import querystring from 'querystring';
 import { HttpServer } from '../../utils/httpServer';
-import type { RenderedFrameSnapshot } from './snapshotTypes';
+import type { RenderedFrameSnapshot, ResourceSnapshot } from './snapshotTypes';
 import { SnapshotStorage } from './snapshotStorage';
 import type { Point } from '../../common/types';
 
@@ -176,37 +176,41 @@ export class SnapshotServer {
     const sha1 = resource.response.content._sha1;
     if (!sha1)
       return false;
+    (async () => {
+      this._innerServeResource(sha1, resource, response);
+    })().catch(() => {});
+    return true;
+  }
 
-    try {
-      const content = this._snapshotStorage.resourceContent(sha1);
-      if (!content)
-        return false;
-      response.statusCode = 200;
-      let contentType = resource.response.content.mimeType;
-      const isTextEncoding = /^text\/|^application\/(javascript|json)/.test(contentType);
-      if (isTextEncoding && !contentType.includes('charset'))
-        contentType = `${contentType}; charset=utf-8`;
-      response.setHeader('Content-Type', contentType);
-      for (const { name, value } of resource.response.headers) {
-        try {
-          response.setHeader(name, value.split('\n'));
-        } catch (e) {
-          // Browser is able to handle the header, but Node is not.
-          // Swallow the error since we cannot do anything meaningful.
-        }
-      }
-
-      response.removeHeader('Content-Encoding');
-      response.removeHeader('Access-Control-Allow-Origin');
-      response.setHeader('Access-Control-Allow-Origin', '*');
-      response.removeHeader('Content-Length');
-      response.setHeader('Content-Length', content.byteLength);
-      response.setHeader('Cache-Control', 'public, max-age=31536000');
-      response.end(content);
-      return true;
-    } catch (e) {
-      return false;
+  private async _innerServeResource(sha1: string, resource: ResourceSnapshot, response: http.ServerResponse) {
+    const content = await this._snapshotStorage.resourceContent(sha1);
+    if (!content) {
+      response.statusCode = 404;
+      response.end();
+      return;
     }
+    response.statusCode = 200;
+    let contentType = resource.response.content.mimeType;
+    const isTextEncoding = /^text\/|^application\/(javascript|json)/.test(contentType);
+    if (isTextEncoding && !contentType.includes('charset'))
+      contentType = `${contentType}; charset=utf-8`;
+    response.setHeader('Content-Type', contentType);
+    for (const { name, value } of resource.response.headers) {
+      try {
+        response.setHeader(name, value.split('\n'));
+      } catch (e) {
+        // Browser is able to handle the header, but Node is not.
+        // Swallow the error since we cannot do anything meaningful.
+      }
+    }
+
+    response.removeHeader('Content-Encoding');
+    response.removeHeader('Access-Control-Allow-Origin');
+    response.setHeader('Access-Control-Allow-Origin', '*');
+    response.removeHeader('Content-Length');
+    response.setHeader('Content-Length', content.byteLength);
+    response.setHeader('Cache-Control', 'public, max-age=31536000');
+    response.end(content);
   }
 }
 

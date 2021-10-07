@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import extract from 'extract-zip';
 import fs from 'fs';
 import readline from 'readline';
 import os from 'os';
 import path from 'path';
 import rimraf from 'rimraf';
+import stream from 'stream';
 import { createPlaywright } from '../../playwright';
 import { PersistentSnapshotStorage, TraceModel } from './traceModel';
 import { ServerRouteHandler, HttpServer } from '../../../utils/httpServer';
@@ -32,15 +32,20 @@ import { BrowserContext } from '../../browserContext';
 import { findChromiumChannel } from '../../../utils/registry';
 import { installAppIcon } from '../../chromium/crApp';
 import { debugLogger } from '../../../utils/debugLogger';
+import { VirtualFileSystem, RealFileSystem, ZipFileSystem } from '../../../utils/vfs';
 
 export class TraceViewer {
+  private _vfs: VirtualFileSystem;
   private _server: HttpServer;
   private _browserName: string;
 
-  constructor(tracesDir: string, browserName: string) {
+  constructor(vfs: VirtualFileSystem, browserName: string) {
+    this._vfs = vfs;
     this._browserName = browserName;
-    const resourcesDir = path.join(tracesDir, 'resources');
+    this._server = new HttpServer();
+  }
 
+  async init() {
     // Served by TraceServer
     // - "/tracemodel" - json with trace model.
     //
@@ -55,13 +60,10 @@ export class TraceViewer {
     // - "/snapshot/pageId/..." - actual snapshot html.
     // - "/snapshot/service-worker.js" - service worker that intercepts snapshot resources
     //   and translates them into network requests.
-    const actionTraces = fs.readdirSync(tracesDir).filter(name => name.endsWith('.trace'));
-    const debugNames = actionTraces.map(name => {
-      const tracePrefix = path.join(tracesDir, name.substring(0, name.indexOf('.trace')));
-      return path.basename(tracePrefix);
+    const entries = await this._vfs.entries();
+    const debugNames = entries.filter(name => name.endsWith('.trace')).map(name => {
+      return name.substring(0, name.indexOf('.trace'));
     });
-
-    this._server = new HttpServer();
 
     const traceListHandler: ServerRouteHandler = (request, response) => {
       response.statusCode = 200;
@@ -70,7 +72,7 @@ export class TraceViewer {
       return true;
     };
     this._server.routePath('/contexts', traceListHandler);
-    const snapshotStorage = new PersistentSnapshotStorage(resourcesDir);
+    const snapshotStorage = new PersistentSnapshotStorage(this._vfs);
     new SnapshotServer(this._server, snapshotStorage);
 
     const traceModelHandler: ServerRouteHandler = (request, response) => {
@@ -79,12 +81,12 @@ export class TraceViewer {
       response.statusCode = 200;
       response.setHeader('Content-Type', 'application/json');
       (async () => {
-        const traceFile = path.join(tracesDir, debugName + '.trace');
+        const traceFile = await this._vfs.readStream(debugName + '.trace');
         const match = debugName.match(/^(.*)-\d+$/);
-        const networkFile = path.join(tracesDir, (match ? match[1] : debugName) + '.network');
+        const networkFile = await this._vfs.readStream((match ? match[1] : debugName) + '.network').catch(() => undefined);
         const model = new TraceModel(snapshotStorage);
         await appendTraceEvents(model, traceFile);
-        if (fs.existsSync(networkFile))
+        if (networkFile)
           await appendTraceEvents(model, networkFile);
         model.build();
         response.end(JSON.stringify(model.contextEntry));
@@ -117,7 +119,8 @@ export class TraceViewer {
       const sha1 = request.url!.substring('/sha1/'.length);
       if (sha1.includes('/'))
         return false;
-      return this._server.serveFile(response, path.join(resourcesDir!, sha1));
+      this._server.serveVirtualFile(response, this._vfs, 'resources/' + sha1).catch(() => {});
+      return true;
     };
     this._server.routePrefix('/sha1/', sha1Handler);
   }
@@ -163,10 +166,9 @@ export class TraceViewer {
   }
 }
 
-async function appendTraceEvents(model: TraceModel, file: string) {
-  const fileStream = fs.createReadStream(file, 'utf8');
+async function appendTraceEvents(model: TraceModel, input: stream.Readable) {
   const rl = readline.createInterface({
-    input: fileStream,
+    input,
     crlfDelay: Infinity
   });
   for await (const line of rl as any)
@@ -200,17 +202,12 @@ export async function showTraceViewer(tracePath: string, browserName: string, he
   }
 
   if (stat.isDirectory()) {
-    const traceViewer = new TraceViewer(tracePath, browserName);
+    const traceViewer = new TraceViewer(new RealFileSystem(tracePath), browserName);
+    await traceViewer.init();
     return await traceViewer.show(headless);
   }
 
-  const zipFile = tracePath;
-  try {
-    await extract(zipFile, { dir });
-  } catch (e) {
-    console.log(`Invalid trace file: ${zipFile}`);  // eslint-disable-line no-console
-    return;
-  }
-  const traceViewer = new TraceViewer(dir, browserName);
+  const traceViewer = new TraceViewer(new ZipFileSystem(tracePath), browserName);
+  await traceViewer.init();
   return await traceViewer.show(headless);
 }
