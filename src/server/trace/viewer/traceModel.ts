@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
 import * as trace from '../common/traceEvents';
 import { ResourceSnapshot } from '../../snapshot/snapshotTypes';
 import { BaseSnapshotStorage } from '../../snapshot/snapshotStorage';
 import { BrowserContextOptions } from '../../types';
 import { shouldCaptureSnapshot, VERSION } from '../recorder/tracing';
+import { VirtualFileSystem } from '../../../utils/vfs';
 export * as trace from '../common/traceEvents';
 
 export class TraceModel {
@@ -180,14 +179,13 @@ export type PageEntry = {
 };
 
 export class PersistentSnapshotStorage extends BaseSnapshotStorage {
-  private _resourcesDir: string;
-
-  constructor(resourcesDir: string) {
+  private _loader: VirtualFileSystem;
+  constructor(loader: VirtualFileSystem) {
     super();
-    this._resourcesDir = resourcesDir;
+    this._loader = loader;
   }
 
-  resourceContent(sha1: string): Buffer | undefined {
-    return fs.readFileSync(path.join(this._resourcesDir, sha1));
+  async resourceContent(sha1: string): Promise<Buffer | undefined> {
+    return this._loader.read('resources/' + sha1);
   }
 }

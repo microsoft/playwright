@@ -96,7 +96,7 @@ export class InMemorySnapshotter extends BaseSnapshotStorage implements Snapshot
     this.addFrameSnapshot(snapshot);
   }
 
-  resourceContent(sha1: string): Buffer | undefined {
+  async resourceContent(sha1: string): Promise<Buffer | undefined> {
     return this._blobs.get(sha1);
   }
 }
