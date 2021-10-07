@@ -195,3 +195,29 @@ it('should have correct responseBodySize for 404 with content', async ({ page, s
   const { responseBodySize } = await req.sizes();
   expect(responseBodySize).toBeGreaterThanOrEqual(0);
 });
+
+
+it('should return sizes without hanging', async ({ page, server, browserName }) => {
+  it.fixme(browserName === 'chromium');
+
+  server.setRoute('/has-abandoned-fetch', (req, resp) => {
+    resp.end(`
+    <!DOCTYPE html>
+    <html>
+      <head><title>t</title></head>
+      <body>
+        <script>
+          fetch("./404");
+        </script>
+      </body>
+    </html>
+    `);
+  });
+
+  const [req] = await Promise.all([
+    page.waitForRequest(/404$/),
+    page.goto(server.PREFIX + '/has-abandoned-fetch')
+  ]);
+
+  await req.sizes();
+});
