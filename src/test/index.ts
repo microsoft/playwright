@@ -35,7 +35,7 @@ type WorkerAndFileFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
   _reuseBrowserContext: ReuseBrowserContextStorage,
 };
 
-class ReuseBrowserContextStorage {
+export class ReuseBrowserContextStorage {
   private _browserContext?: BrowserContext;
   private _uniqueOrigins = new Set<string>();
   private _options?: BrowserContextOptions;
@@ -54,18 +54,25 @@ class ReuseBrowserContextStorage {
   private async _createNewContext(browser: Browser): Promise<BrowserContext> {
     this._browserContext = await browser.newContext();
     this._options = (this._browserContext as any)._options;
-    this._browserContext.on('page', page => page.on('framenavigated', frame => {
-      if (this._pauseNavigationEventCollection)
-        return;
-      this._uniqueOrigins.add(new URL(frame.url()).origin);
-    }));
+    this._browserContext.on('page', page => {
+      page.on('framenavigated', frame => {
+        if (this._pauseNavigationEventCollection)
+          return;
+        const origin = new URL(frame.url()).origin;
+        if (origin !== 'null') // 'chrome-error://chromewebdata/'
+          this._uniqueOrigins.add(origin);
+      });
+      page.on('crash', () => {
+        this._browserContext?.close().then(() => {});
+        this._browserContext = undefined;
+      });
+    });
     return this._browserContext;
   }
 
   async _refurbishExistingContext(newContextOptions: BrowserContextOptions): Promise<BrowserContext> {
     assert(this._browserContext);
-    const pages = this._browserContext.pages();
-    const page = pages[0];
+    const page = this._browserContext.pages().length > 0 ? this._browserContext.pages()[0] : await this._browserContext.newPage();
     this._pauseNavigationEventCollection = true;
     try {
       const initialOrigin = new URL(page.url()).origin;
@@ -78,8 +85,8 @@ class ReuseBrowserContextStorage {
         await page.evaluate(() => window.sessionStorage.clear());
       }
       await page.unroute('**/*');
-      await Promise.all(pages.slice(1).map(page => page.close()));
       await page.goto('about:blank');
+      await Promise.all(this._browserContext.pages().slice(1).map(page => page.close()));
       await this._browserContext.clearCookies();
       await this._applyNewContextOptions(page, newContextOptions);
     } finally {
@@ -90,14 +97,16 @@ class ReuseBrowserContextStorage {
 
   private async _applyNewContextOptions(page: Page, newOptions: BrowserContextOptions) {
     assert(this._options);
+    const currentViewport = page.viewportSize();
+    const newViewport = newOptions.viewport === undefined ? { width: 1280, height: 720 } : newOptions.viewport;
     if (
       (
-        this._options.viewport?.width !== newOptions.viewport?.width ||
-        this._options.viewport?.height !== newOptions.viewport?.height
+        currentViewport?.width !== newViewport?.width ||
+        currentViewport?.height !== newViewport?.height
       ) &&
-      (newOptions.viewport?.height && newOptions.viewport?.width)
+      (newViewport?.height && newViewport?.width)
     )
-      await page.setViewportSize({ width: newOptions.viewport?.width, height: newOptions.viewport?.height });
+      await page.setViewportSize(newViewport);
     this._options = newOptions;
   }
 
