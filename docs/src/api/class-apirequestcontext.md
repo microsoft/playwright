@@ -6,6 +6,20 @@ environment or the service to your e2e test. When used on [Page] or a [BrowserCo
 the cookies from the corresponding [BrowserContext]. This means that if you log in using this API, your e2e test
 will be logged in and vice versa.
 
+## async method: ApiRequestContext.delete
+- returns: <[ApiResponse]>
+
+Sends HTTP(S) [DELETE](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/DELETE) request and returns its response.
+The method will populate request cookies from the context and update
+context cookies from the response. The method will automatically follow redirects.
+
+### param: ApiRequestContext.delete.url = %%-fetch-param-url-%%
+### option: ApiRequestContext.delete.params = %%-fetch-option-params-%%
+### option: ApiRequestContext.delete.headers = %%-fetch-option-headers-%%
+### option: ApiRequestContext.delete.timeout = %%-fetch-option-timeout-%%
+### option: ApiRequestContext.delete.failOnStatusCode = %%-fetch-option-failonstatuscode-%%
+### option: ApiRequestContext.delete.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
+
 ## async method: ApiRequestContext.dispose
 
 All responses received through [`method: ApiRequestContext.fetch`], [`method: ApiRequestContext.get`], [`method: ApiRequestContext.post`]
@@ -15,120 +29,108 @@ discards all stored responses, and makes [`method: ApiResponse.body`] throw "Res
 ## async method: ApiRequestContext.fetch
 - returns: <[ApiResponse]>
 
-Sends HTTP(S) fetch and returns its response. The method will populate fetch cookies from the context and update
+Sends HTTP(S) request and returns its response. The method will populate request cookies from the context and update
 context cookies from the response. The method will automatically follow redirects.
 
 ### param: ApiRequestContext.fetch.urlOrRequest
 - `urlOrRequest` <[string]|[Request]>
 
-Target URL or Request to get all fetch parameters from.
+Target URL or Request to get all parameters from.
 
-### option: ApiRequestContext.fetch.params
-- `params` <[Object]<[string], [string]>>
-
-Query parameters to be send with the URL.
+### option: ApiRequestContext.fetch.params = %%-fetch-option-params-%%
 
 ### option: ApiRequestContext.fetch.method
 - `method` <[string]>
 
-If set changes the fetch method (e.g. PUT or POST). If not specified, GET method is used.
+If set changes the fetch method (e.g. [PUT](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PUT) or
+[POST](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST)). If not specified, GET method is used.
 
-### option: ApiRequestContext.fetch.headers
-- `headers` <[Object]<[string], [string]>>
-
-Allows to set HTTP headers.
-
+### option: ApiRequestContext.fetch.headers = %%-fetch-option-headers-%%
 ### option: ApiRequestContext.fetch.data = %%-fetch-option-data-%%
 ### option: ApiRequestContext.fetch.form = %%-fetch-option-form-%%
 ### option: ApiRequestContext.fetch.multipart = %%-fetch-option-multipart-%%
-
-### option: ApiRequestContext.fetch.timeout
-- `timeout` <[float]>
-
-Request timeout in milliseconds.
-
-### option: ApiRequestContext.fetch.failOnStatusCode
-- `failOnStatusCode` <[boolean]>
-
-Whether to throw on response codes other than 2xx and 3xx. By default response object is returned
-for all status codes.
-
+### option: ApiRequestContext.fetch.timeout = %%-fetch-option-timeout-%%
+### option: ApiRequestContext.fetch.failOnStatusCode = %%-fetch-option-failonstatuscode-%%
 ### option: ApiRequestContext.fetch.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
-
 
 ## async method: ApiRequestContext.get
 - returns: <[ApiResponse]>
 
-Sends HTTP(S) GET request and returns its response. The method will populate fetch cookies from the context and update
+Sends HTTP(S) [GET](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/GET) request and returns its response.
+The method will populate request cookies from the context and update
 context cookies from the response. The method will automatically follow redirects.
 
-### param: ApiRequestContext.get.url
-- `url` <[string]>
-
-Target URL.
-
-### option: ApiRequestContext.get.params
-- `params` <[Object]<[string], [string]>>
-
-Query parameters to be send with the URL.
-
-### option: ApiRequestContext.get.headers
-- `headers` <[Object]<[string], [string]>>
-
-Allows to set HTTP headers.
-
-### option: ApiRequestContext.get.timeout
-- `timeout` <[float]>
-
-Request timeout in milliseconds.
-
-### option: ApiRequestContext.get.failOnStatusCode
-- `failOnStatusCode` <[boolean]>
-
-Whether to throw on response codes other than 2xx and 3xx. By default response object is returned
-for all status codes.
-
+### param: ApiRequestContext.get.url = %%-fetch-param-url-%%
+### option: ApiRequestContext.get.params = %%-fetch-option-params-%%
+### option: ApiRequestContext.get.headers = %%-fetch-option-headers-%%
+### option: ApiRequestContext.get.timeout = %%-fetch-option-timeout-%%
+### option: ApiRequestContext.get.failOnStatusCode = %%-fetch-option-failonstatuscode-%%
 ### option: ApiRequestContext.get.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
+
+## async method: ApiRequestContext.head
+- returns: <[ApiResponse]>
+
+Sends HTTP(S) [HEAD](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/HEAD) request and returns its response.
+The method will populate request cookies from the context and update
+context cookies from the response. The method will automatically follow redirects.
+
+### param: ApiRequestContext.head.url = %%-fetch-param-url-%%
+### option: ApiRequestContext.head.params = %%-fetch-option-params-%%
+### option: ApiRequestContext.head.headers = %%-fetch-option-headers-%%
+### option: ApiRequestContext.head.timeout = %%-fetch-option-timeout-%%
+### option: ApiRequestContext.head.failOnStatusCode = %%-fetch-option-failonstatuscode-%%
+### option: ApiRequestContext.head.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
+
+## async method: ApiRequestContext.patch
+- returns: <[ApiResponse]>
+
+Sends HTTP(S) [PATCH](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PATCH) request and returns its response.
+The method will populate request cookies from the context and update
+context cookies from the response. The method will automatically follow redirects.
+
+### param: ApiRequestContext.patch.url = %%-fetch-param-url-%%
+### option: ApiRequestContext.patch.params = %%-fetch-option-params-%%
+### option: ApiRequestContext.patch.headers = %%-fetch-option-headers-%%
+### option: ApiRequestContext.patch.data = %%-fetch-option-data-%%
+### option: ApiRequestContext.patch.form = %%-fetch-option-form-%%
+### option: ApiRequestContext.patch.multipart = %%-fetch-option-multipart-%%
+### option: ApiRequestContext.patch.timeout = %%-fetch-option-timeout-%%
+### option: ApiRequestContext.patch.failOnStatusCode = %%-fetch-option-failonstatuscode-%%
+### option: ApiRequestContext.patch.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
 
 ## async method: ApiRequestContext.post
 - returns: <[ApiResponse]>
 
-Sends HTTP(S) fetch and returns its response. The method will populate fetch cookies from the context and update
+Sends HTTP(S) [POST](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST) request and returns its response.
+The method will populate request cookies from the context and update
 context cookies from the response. The method will automatically follow redirects.
 
-### param: ApiRequestContext.post.url
-- `url` <[string]>
-
-Target URL.
-
-### option: ApiRequestContext.post.params
-- `params` <[Object]<[string], [string]>>
-
-Query parameters to be send with the URL.
-
-### option: ApiRequestContext.post.headers
-- `headers` <[Object]<[string], [string]>>
-
-Allows to set HTTP headers.
-
+### param: ApiRequestContext.post.url = %%-fetch-param-url-%%
+### option: ApiRequestContext.post.params = %%-fetch-option-params-%%
+### option: ApiRequestContext.post.headers = %%-fetch-option-headers-%%
 ### option: ApiRequestContext.post.data = %%-fetch-option-data-%%
-
 ### option: ApiRequestContext.post.form = %%-fetch-option-form-%%
-
 ### option: ApiRequestContext.post.multipart = %%-fetch-option-multipart-%%
-
-### option: ApiRequestContext.post.timeout
-- `timeout` <[float]>
-
-Request timeout in milliseconds.
-
-### option: ApiRequestContext.post.failOnStatusCode
-- `failOnStatusCode` <[boolean]>
-
-Whether to throw on response codes other than 2xx and 3xx. By default response object is returned
-for all status codes.
-
+### option: ApiRequestContext.post.timeout = %%-fetch-option-timeout-%%
+### option: ApiRequestContext.post.failOnStatusCode = %%-fetch-option-failonstatuscode-%%
 ### option: ApiRequestContext.post.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
+
+## async method: ApiRequestContext.put
+- returns: <[ApiResponse]>
+
+Sends HTTP(S) [PUT](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PUT) request and returns its response.
+The method will populate request cookies from the context and update
+context cookies from the response. The method will automatically follow redirects.
+
+### param: ApiRequestContext.put.url = %%-fetch-param-url-%%
+### option: ApiRequestContext.put.params = %%-fetch-option-params-%%
+### option: ApiRequestContext.put.headers = %%-fetch-option-headers-%%
+### option: ApiRequestContext.put.data = %%-fetch-option-data-%%
+### option: ApiRequestContext.put.form = %%-fetch-option-form-%%
+### option: ApiRequestContext.put.multipart = %%-fetch-option-multipart-%%
+### option: ApiRequestContext.put.timeout = %%-fetch-option-timeout-%%
+### option: ApiRequestContext.put.failOnStatusCode = %%-fetch-option-failonstatuscode-%%
+### option: ApiRequestContext.put.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
 
 ## async method: ApiRequestContext.storageState
 - returns: <[Object]>

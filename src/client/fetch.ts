@@ -46,6 +46,9 @@ type NewContextOptions = Omit<channels.PlaywrightNewRequestOptions, 'extraHTTPHe
   storageState?: string | StorageState,
 };
 
+type RequestWithBodyOptions = Omit<FetchOptions, 'method'>;
+type RequestWithoutBodyOptions = Omit<RequestWithBodyOptions, 'data'|'form'|'multipart'>;
+
 export class Fetch implements api.ApiRequest {
   private _playwright: Playwright;
   constructor(playwright: Playwright) {
@@ -81,25 +84,45 @@ export class FetchRequest extends ChannelOwner<channels.FetchRequestChannel, cha
     });
   }
 
-  async get(
-    url: string,
-    options?: {
-      params?: { [key: string]: string; };
-      headers?: { [key: string]: string; };
-      timeout?: number;
-      failOnStatusCode?: boolean;
-      ignoreHTTPSErrors?: boolean,
-    }): Promise<FetchResponse> {
+  async delete(url: string, options?: RequestWithoutBodyOptions): Promise<FetchResponse> {
+    return this.fetch(url, {
+      ...options,
+      method: 'DELETE',
+    });
+  }
+
+  async head(url: string, options?: RequestWithoutBodyOptions): Promise<FetchResponse> {
+    return this.fetch(url, {
+      ...options,
+      method: 'HEAD',
+    });
+  }
+
+  async get(url: string, options?: RequestWithoutBodyOptions): Promise<FetchResponse> {
     return this.fetch(url, {
       ...options,
       method: 'GET',
     });
   }
 
-  async post(url: string, options?: Omit<FetchOptions, 'method'>): Promise<FetchResponse> {
+  async patch(url: string, options?: RequestWithBodyOptions): Promise<FetchResponse> {
+    return this.fetch(url, {
+      ...options,
+      method: 'PATCH',
+    });
+  }
+
+  async post(url: string, options?: RequestWithBodyOptions): Promise<FetchResponse> {
     return this.fetch(url, {
       ...options,
       method: 'POST',
+    });
+  }
+
+  async put(url: string, options?: RequestWithBodyOptions): Promise<FetchResponse> {
+    return this.fetch(url, {
+      ...options,
+      method: 'PUT',
     });
   }
 

@@ -11722,6 +11722,40 @@ export interface ApiRequest {
  */
 export interface ApiRequestContext {
   /**
+   * Sends HTTP(S) [DELETE](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/DELETE) request and returns its
+   * response. The method will populate request cookies from the context and update context cookies from the response. The
+   * method will automatically follow redirects.
+   * @param url Target URL.
+   * @param options
+   */
+  delete(url: string, options?: {
+    /**
+     * Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status codes.
+     */
+    failOnStatusCode?: boolean;
+
+    /**
+     * Allows to set HTTP headers.
+     */
+    headers?: { [key: string]: string; };
+
+    /**
+     * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+     */
+    ignoreHTTPSErrors?: boolean;
+
+    /**
+     * Query parameters to be send with the URL.
+     */
+    params?: { [key: string]: string; };
+
+    /**
+     * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+     */
+    timeout?: number;
+  }): Promise<ApiResponse>;
+
+  /**
    * All responses received through
    * [apiRequestContext.fetch(urlOrRequest[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-fetch),
    * [apiRequestContext.get(url[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-get),
@@ -11734,9 +11768,9 @@ export interface ApiRequestContext {
   dispose(): Promise<void>;
 
   /**
-   * Sends HTTP(S) fetch and returns its response. The method will populate fetch cookies from the context and update context
-   * cookies from the response. The method will automatically follow redirects.
-   * @param urlOrRequest Target URL or Request to get all fetch parameters from.
+   * Sends HTTP(S) request and returns its response. The method will populate request cookies from the context and update
+   * context cookies from the response. The method will automatically follow redirects.
+   * @param urlOrRequest Target URL or Request to get all parameters from.
    * @param options
    */
   fetch(urlOrRequest: string|Request, options?: {
@@ -11770,7 +11804,8 @@ export interface ApiRequestContext {
     ignoreHTTPSErrors?: boolean;
 
     /**
-     * If set changes the fetch method (e.g. PUT or POST). If not specified, GET method is used.
+     * If set changes the fetch method (e.g. [PUT](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PUT) or
+     * [POST](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST)). If not specified, GET method is used.
      */
     method?: string;
 
@@ -11803,14 +11838,15 @@ export interface ApiRequestContext {
     params?: { [key: string]: string; };
 
     /**
-     * Request timeout in milliseconds.
+     * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
      */
     timeout?: number;
   }): Promise<ApiResponse>;
 
   /**
-   * Sends HTTP(S) GET request and returns its response. The method will populate fetch cookies from the context and update
-   * context cookies from the response. The method will automatically follow redirects.
+   * Sends HTTP(S) [GET](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/GET) request and returns its response. The
+   * method will populate request cookies from the context and update context cookies from the response. The method will
+   * automatically follow redirects.
    * @param url Target URL.
    * @param options
    */
@@ -11836,14 +11872,120 @@ export interface ApiRequestContext {
     params?: { [key: string]: string; };
 
     /**
-     * Request timeout in milliseconds.
+     * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
      */
     timeout?: number;
   }): Promise<ApiResponse>;
 
   /**
-   * Sends HTTP(S) fetch and returns its response. The method will populate fetch cookies from the context and update context
-   * cookies from the response. The method will automatically follow redirects.
+   * Sends HTTP(S) [HEAD](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/HEAD) request and returns its response.
+   * The method will populate request cookies from the context and update context cookies from the response. The method will
+   * automatically follow redirects.
+   * @param url Target URL.
+   * @param options
+   */
+  head(url: string, options?: {
+    /**
+     * Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status codes.
+     */
+    failOnStatusCode?: boolean;
+
+    /**
+     * Allows to set HTTP headers.
+     */
+    headers?: { [key: string]: string; };
+
+    /**
+     * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+     */
+    ignoreHTTPSErrors?: boolean;
+
+    /**
+     * Query parameters to be send with the URL.
+     */
+    params?: { [key: string]: string; };
+
+    /**
+     * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+     */
+    timeout?: number;
+  }): Promise<ApiResponse>;
+
+  /**
+   * Sends HTTP(S) [PATCH](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PATCH) request and returns its response.
+   * The method will populate request cookies from the context and update context cookies from the response. The method will
+   * automatically follow redirects.
+   * @param url Target URL.
+   * @param options
+   */
+  patch(url: string, options?: {
+    /**
+     * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string and
+     * `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type` header will
+     * be set to `application/octet-stream` if not explicitly set.
+     */
+    data?: string|Buffer|Serializable;
+
+    /**
+     * Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status codes.
+     */
+    failOnStatusCode?: boolean;
+
+    /**
+     * Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent as
+     * this request body. If this parameter is specified `content-type` header will be set to
+     * `application/x-www-form-urlencoded` unless explicitly provided.
+     */
+    form?: { [key: string]: string|number|boolean; };
+
+    /**
+     * Allows to set HTTP headers.
+     */
+    headers?: { [key: string]: string; };
+
+    /**
+     * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+     */
+    ignoreHTTPSErrors?: boolean;
+
+    /**
+     * Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this request
+     * body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless explicitly
+     * provided. File values can be passed either as [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream)
+     * or as file-like object containing file name, mime-type and its content.
+     */
+    multipart?: { [key: string]: string|number|boolean|ReadStream|{
+      /**
+       * File name
+       */
+      name: string;
+
+      /**
+       * File type
+       */
+      mimeType: string;
+
+      /**
+       * File content
+       */
+      buffer: Buffer;
+    }; };
+
+    /**
+     * Query parameters to be send with the URL.
+     */
+    params?: { [key: string]: string; };
+
+    /**
+     * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+     */
+    timeout?: number;
+  }): Promise<ApiResponse>;
+
+  /**
+   * Sends HTTP(S) [POST](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST) request and returns its response.
+   * The method will populate request cookies from the context and update context cookies from the response. The method will
+   * automatically follow redirects.
    * @param url Target URL.
    * @param options
    */
@@ -11906,7 +12048,78 @@ export interface ApiRequestContext {
     params?: { [key: string]: string; };
 
     /**
-     * Request timeout in milliseconds.
+     * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+     */
+    timeout?: number;
+  }): Promise<ApiResponse>;
+
+  /**
+   * Sends HTTP(S) [PUT](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PUT) request and returns its response. The
+   * method will populate request cookies from the context and update context cookies from the response. The method will
+   * automatically follow redirects.
+   * @param url Target URL.
+   * @param options
+   */
+  put(url: string, options?: {
+    /**
+     * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string and
+     * `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type` header will
+     * be set to `application/octet-stream` if not explicitly set.
+     */
+    data?: string|Buffer|Serializable;
+
+    /**
+     * Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status codes.
+     */
+    failOnStatusCode?: boolean;
+
+    /**
+     * Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent as
+     * this request body. If this parameter is specified `content-type` header will be set to
+     * `application/x-www-form-urlencoded` unless explicitly provided.
+     */
+    form?: { [key: string]: string|number|boolean; };
+
+    /**
+     * Allows to set HTTP headers.
+     */
+    headers?: { [key: string]: string; };
+
+    /**
+     * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+     */
+    ignoreHTTPSErrors?: boolean;
+
+    /**
+     * Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this request
+     * body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless explicitly
+     * provided. File values can be passed either as [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream)
+     * or as file-like object containing file name, mime-type and its content.
+     */
+    multipart?: { [key: string]: string|number|boolean|ReadStream|{
+      /**
+       * File name
+       */
+      name: string;
+
+      /**
+       * File type
+       */
+      mimeType: string;
+
+      /**
+       * File content
+       */
+      buffer: Buffer;
+    }; };
+
+    /**
+     * Query parameters to be send with the URL.
+     */
+    params?: { [key: string]: string; };
+
+    /**
+     * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
      */
     timeout?: number;
   }): Promise<ApiResponse>;
