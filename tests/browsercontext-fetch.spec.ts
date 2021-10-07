@@ -229,6 +229,23 @@ it('should add cookies from Set-Cookie header', async ({ context, page, server }
   expect((await page.evaluate(() => document.cookie)).split(';').map(s => s.trim()).sort()).toEqual(['foo=bar', 'session=value']);
 });
 
+it('should support cookie with empty value', async ({ context, page, server }) => {
+  server.setRoute('/setcookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', ['first=']);
+    res.end();
+  });
+  await context.request.get(server.PREFIX + '/setcookie.html');
+  await page.goto(server.EMPTY_PAGE);
+  expect(await page.evaluate(() => document.cookie)).toBe('first=');
+  const cookies = await context.cookies();
+  expect(cookies.map(c => ({ name: c.name, value: c.value }))).toEqual([
+    {
+      name: 'first',
+      value: ''
+    },
+  ]);
+});
+
 it('should not lose body while handling Set-Cookie header', async ({ context, server }) => {
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', ['session=value', 'foo=bar; max-age=3600']);

@@ -327,7 +327,7 @@ export abstract class BrowserContext extends SdkObject {
 
   async storageState(): Promise<types.StorageState> {
     const result: types.StorageState = {
-      cookies: (await this.cookies()).filter(c => c.value !== ''),
+      cookies: await this.cookies(),
       origins: []
     };
     if (this._origins.size)  {
