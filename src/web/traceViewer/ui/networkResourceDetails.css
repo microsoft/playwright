@@ -43,12 +43,12 @@
 
 .network-request-title-status,
 .network-request-title-method {
-  padding-right: 5px;
+  margin-right: 5px;
 }
 
 .network-request-title-status.status-failure {
-  background-color: var(--red);
-  color: var(--white);
+  color: var(--red);
+  font-weight: bold;
 }
 
 .network-request-title-status.status-neutral {
