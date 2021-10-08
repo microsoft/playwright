@@ -20,7 +20,7 @@ test.use({
   extraHTTPHeaders: {
     'Accept': 'application/vnd.github.v3+json',
     // Add authorization token to all requests.
-    'Authorization': 'token ' + token,
+    'Authorization': `token ${process.env.API_TOKEN}`,
   }
 });
 
