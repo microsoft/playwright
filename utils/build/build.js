@@ -113,6 +113,7 @@ function copyFile(file, from, to) {
 const webPackFiles = [
   'src/server/injected/webpack.config.js',
   'src/web/traceViewer/webpack.config.js',
+  'src/web/traceViewer/webpack-sw.config.js',
   'src/web/recorder/webpack.config.js',
   'src/web/htmlReport/webpack.config.js',
 ];
@@ -172,7 +173,7 @@ copyFiles.push({
   files: 'src/**/*.js',
   from: 'src',
   to: 'lib',
-  ignored: ['**/.eslintrc.js', '**/*webpack.config.js', '**/injected/**/*']
+  ignored: ['**/.eslintrc.js', '**/webpack*.config.js', '**/injected/**/*']
 });
 
 // Sometimes we require JSON files that babel ignores.

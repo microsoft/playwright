@@ -19,6 +19,7 @@ import { InMemorySnapshotter } from '../lib/server/snapshot/inMemorySnapshotter'
 import { HttpServer } from '../lib/utils/httpServer';
 import { SnapshotServer } from '../lib/server/snapshot/snapshotServer';
 import type { Frame } from '..';
+import path from 'path';
 
 const it = contextTest.extend<{ snapshotPort: number, snapshotter: InMemorySnapshotter, showSnapshot: (snapshot: any) => Promise<Frame> }>({
   snapshotPort: async ({}, run, testInfo) => {
@@ -30,6 +31,9 @@ const it = contextTest.extend<{ snapshotPort: number, snapshotter: InMemorySnaps
     const snapshotter = new InMemorySnapshotter(toImpl(context));
     await snapshotter.initialize();
     const httpServer = new HttpServer();
+    httpServer.routePath('/snapshot/sw.js', (request, response) => {
+      return httpServer.serveFile(response, path.join(__dirname, '../lib/web/traceViewer/sw.js'));
+    });
     new SnapshotServer(httpServer, snapshotter);
     await httpServer.start(snapshotPort);
     await run(snapshotter);
@@ -37,12 +41,12 @@ const it = contextTest.extend<{ snapshotPort: number, snapshotter: InMemorySnaps
     await httpServer.stop();
   },
 
-  showSnapshot: async ({ contextFactory, snapshotPort }, use) => {
+  showSnapshot: async ({ browserType, contextFactory, snapshotPort }, use) => {
     await use(async (snapshot: any) => {
       const previewContext = await contextFactory();
       const previewPage = await previewContext.newPage();
       previewPage.on('console', console.log);
-      await previewPage.goto(`http://localhost:${snapshotPort}/snapshot/`);
+      await previewPage.goto(`http://localhost:${snapshotPort}/snapshot/?serviceWorkerForTest`);
       const frameSnapshot = snapshot.snapshot();
       await previewPage.evaluate(snapshotId => {
         (window as any).showSnapshot(snapshotId);
