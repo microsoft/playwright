@@ -58,7 +58,7 @@ elif [[ "$BUILD_FLAVOR" == "ffmpeg-mac" ]]; then
   BROWSER_NAME="ffmpeg"
   EXTRA_BUILD_ARGS="--mac"
   EXPECTED_HOST_OS="Darwin"
-  EXPECTED_HOST_OS_VERSION="10.14"
+  EXPECTED_HOST_OS_VERSION="11.6"
   BUILD_BLOB_NAME="ffmpeg-mac.zip"
 elif [[ "$BUILD_FLAVOR" == "ffmpeg-linux" ]]; then
   BROWSER_NAME="ffmpeg"
