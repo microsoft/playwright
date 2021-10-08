@@ -48,6 +48,7 @@ title: "Community Showcase"
 
 ## Frameworks
 
+* [karma-playwright-launcher](https://github.com/Onslip/karma-playwright-launcher): Playwright powered browser support for Karma
 * [query-selector-shadow-dom](https://github.com/Georgegriff/query-selector-shadow-dom): Custom selector engine to pierce shadow DOM roots
 * [playwright-fluent](https://github.com/hdorgeval/playwright-fluent): Fluent API around Playwright
 * [robotframework-browser](https://robotframework-browser.org/) Robotframework library that uses Playwright to achieve good development ergonomics.
