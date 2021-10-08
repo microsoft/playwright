@@ -1,5 +1,5 @@
 /**
- * In this script, we will login run a few tests that use GitHub API.
+ * In this script, we will login and run a few tests that use GitHub API.
  *
  * Steps summary
  * 1. Create a new repo.
