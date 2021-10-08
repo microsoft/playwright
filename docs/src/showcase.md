@@ -31,8 +31,8 @@ title: "Community Showcase"
 * [CodeceptJS](https://github.com/Codeception/CodeceptJS): Write scenario-driven Playwright tests with synchronous code
 * [dom-to-playwright](https://github.com/Xiphe/dom-to-playwright) to copy a JSDOM snapshot into a Playwright page.
 * [expected-condition-playwright](https://github.com/elaichenkov/expected-condition-playwright): Supplies a set of common expected conditions that can wait for certain states and conditions
-* [expect-playwright](https://github.com/playwright-community/expect-playwright): Matcher functions to simplify expect statements for the usage with the Playwright test runner or Jest Playwright.
 * [Headless Testing](https://headlesstesting.com/support/start/playwright.html): Run Playwright tests on browsers in the cloud
+* [Lariat](https://github.com/Widen/lariat): Simplify page object construction for your Playwright tests
 * [Lumberjack](https://github.com/JakePartusch/lumberjack): Automated accessibility scanner to run checks on your entire website
 * [mockiavelli](https://github.com/HLTech/mockiavelli) Request mocking library for Playwright to test SPA in isolation from backend APIs.
 * [Moon](https://github.com/aerokube/moon): Run Playwright tests in parallel in Kubernetes cluster (free up to 4 parallel sessions)
@@ -48,7 +48,6 @@ title: "Community Showcase"
 
 ## Frameworks
 
-* [jest-playwright](https://github.com/mmarkelov/jest-playwright): Jest preset to run Playwright tests with Jest
 * [query-selector-shadow-dom](https://github.com/Georgegriff/query-selector-shadow-dom): Custom selector engine to pierce shadow DOM roots
 * [playwright-fluent](https://github.com/hdorgeval/playwright-fluent): Fluent API around Playwright
 * [robotframework-browser](https://robotframework-browser.org/) Robotframework library that uses Playwright to achieve good development ergonomics.
