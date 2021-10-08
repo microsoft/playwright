@@ -145,7 +145,7 @@ async function run() {
 
   if (dirtyFiles.size) {
     console.log('============================')
-    console.log('ERROR: generated markdown files have changed, this is only error if happens in CI:');
+    console.log('ERROR: generated files have changed, this is only error if happens in CI:');
     [...dirtyFiles].forEach(f => console.log(f));
     console.log('============================')
     process.exit(1);
