@@ -16,6 +16,11 @@
 
 import expectLibrary from 'expect';
 import {
+  INVERTED_COLOR,
+  RECEIVED_COLOR,
+  printReceived,
+} from 'jest-matcher-utils';
+import {
   toBeChecked,
   toBeDisabled,
   toBeEditable,
@@ -41,6 +46,46 @@ import type { Expect, TestError } from './types';
 import matchers from 'expect/build/matchers';
 import { currentTestInfo } from './globals';
 import { serializeError } from './util';
+
+// #region
+// Mirrored from https://github.com/facebook/jest/blob/f13abff8df9a0e1148baf3584bcde6d1b479edc7/packages/expect/src/print.ts
+/**
+ * Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
+ *
+ * This source code is licensed under the MIT license found here
+ * https://github.com/facebook/jest/blob/1547740bbc26400d69f4576bf35645163e942829/LICENSE
+ */
+
+// Format substring but do not enclose in double quote marks.
+// The replacement is compatible with pretty-format package.
+const printSubstring = (val: string): string => val.replace(/"|\\/g, '\\$&');
+
+export const printReceivedStringContainExpectedSubstring = (
+  received: string,
+  start: number,
+  length: number, // not end
+): string =>
+  RECEIVED_COLOR(
+      '"' +
+      printSubstring(received.slice(0, start)) +
+      INVERTED_COLOR(printSubstring(received.slice(start, start + length))) +
+      printSubstring(received.slice(start + length)) +
+      '"',
+  );
+
+export const printReceivedStringContainExpectedResult = (
+  received: string,
+  result: RegExpExecArray | null,
+): string =>
+  result === null
+    ? printReceived(received)
+    : printReceivedStringContainExpectedSubstring(
+        received,
+        result.index,
+        result[0].length,
+    );
+
+// #endregion
 
 export const expect: Expect = expectLibrary as any;
 expectLibrary.setState({ expand: false });

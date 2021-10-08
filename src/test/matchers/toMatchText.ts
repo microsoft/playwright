@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-import {
-  printReceivedStringContainExpectedResult,
-  printReceivedStringContainExpectedSubstring
-} from 'expect/build/print';
+
 import colors from 'colors/safe';
 import { ExpectedTextValue } from '../../protocol/channels';
 import { isRegExp, isString } from '../../utils/utils';
 import { currentTestInfo } from '../globals';
 import type { Expect } from '../types';
 import { expectType } from '../util';
+import {
+  printReceivedStringContainExpectedResult,
+  printReceivedStringContainExpectedSubstring
+} from '../expect';
 
 export async function toMatchText(
   this: ReturnType<Expect['getState']>,
