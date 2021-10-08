@@ -22,6 +22,7 @@ import url from 'url';
 import zlib from 'zlib';
 import { HTTPCredentials } from '../../types/types';
 import * as channels from '../protocol/channels';
+import { debugLogger } from '../utils/debugLogger';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { assert, createGuid, getPlaywrightVersion, monotonicTime } from '../utils/utils';
 import { BrowserContext } from './browserContext';
@@ -192,6 +193,11 @@ export abstract class FetchRequest extends SdkObject {
       const requestConstructor: ((url: URL, options: http.RequestOptions, callback?: (res: http.IncomingMessage) => void) => http.ClientRequest)
         = (url.protocol === 'https:' ? https : http).request;
       const request = requestConstructor(url, options, async response => {
+        if (debugLogger.isEnabled('api')) {
+          debugLogger.log('api', `← ${response.statusCode} ${response.statusMessage}`);
+          for (const [name, value] of Object.entries(response.headers))
+            debugLogger.log('api', `  ${name}: ${value}`);
+        }
         if (response.headers['set-cookie'])
           await this._updateCookiesFromHeader(response.url || url.toString(), response.headers['set-cookie']);
         if (redirectStatus.includes(response.statusCode!)) {
@@ -282,6 +288,14 @@ export abstract class FetchRequest extends SdkObject {
         body.on('error',reject);
       });
       request.on('error', reject);
+
+      if (debugLogger.isEnabled('api')) {
+        debugLogger.log('api', `→ ${options.method} ${url.toString()}`);
+        if (options.headers) {
+          for (const [name, value] of Object.entries(options.headers))
+            debugLogger.log('api', `  ${name}: ${value}`);
+        }
+      }
 
       if (options.deadline) {
         const rejectOnTimeout = () =>  {
