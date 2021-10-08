@@ -413,7 +413,7 @@ test('should have output dir based on rootDir (cwd)', async ({ runInlineTest }, 
     `,
   }, {}, {}, { usesCustomOutputDir: true });
   expect(result.exitCode).toBe(0);
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'example-hello-world', 'hello')));
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'example-hello-world', 'foo.txt'))).toBe(true);
 });
 
 
