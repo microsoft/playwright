@@ -1211,6 +1211,14 @@ export module Protocol {
        */
       alpha?: boolean;
       /**
+       * 2D
+       */
+      colorSpace?: string;
+      /**
+       * 2D
+       */
+      desynchronized?: boolean;
+      /**
        * WebGL, WebGL2
        */
       depth?: boolean;
