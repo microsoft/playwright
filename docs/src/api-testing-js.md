@@ -34,7 +34,7 @@ await context.post('https://api.github.com/user/repos', {
   headers: {
     'Accept': 'application/vnd.github.v3+json',
     // Add GitHub personal access token.
-    'Authorization': 'token ' + process.env['API_TOKEN'],
+    'Authorization': `token ${process.env.API_TOKEN}`,
   },
   data: {
     name: 'test-repo-1'
@@ -44,7 +44,7 @@ const response = await request.delete(`https://api.github.com/repos/${user}/test
   headers: {
     'Accept': 'application/vnd.github.v3+json',
     // Add GitHub personal access token.
-    'Authorization': 'token ' + process.env['API_TOKEN'],
+    'Authorization': `token ${process.env.API_TOKEN}`,
   }
 });
 ```

@@ -10,12 +10,10 @@
 
 const { test, expect } = require('@playwright/test');
 
-const token = process.env['API_TOKEN'];
-const user = process.env['GITHUB_USER'];
+const user = process.env.GITHUB_USER;
 const repo = 'Test-Repo-1';
 
 test.use({
-  headless: false,
   baseURL: 'https://api.github.com',
   extraHTTPHeaders: {
     'Accept': 'application/vnd.github.v3+json',
@@ -24,7 +22,7 @@ test.use({
   }
 });
 
-test.beforeAll(async ({request}) => {
+test.beforeAll(async ({ request }) => {
   // Create repo
   const response = await request.post('/user/repos', {
     data: {
@@ -34,10 +32,10 @@ test.beforeAll(async ({request}) => {
   expect(response.ok()).toBeTruthy();
 });
 
-test.afterAll(async ({request}) => {
+test.afterAll(async ({ request }) => {
   // Delete repo
   const response = await request.delete(`/repos/${user}/${repo}`);
-  expect(response.ok()).toBeTruthy();  
+  expect(response.ok()).toBeTruthy();
 });
 
 test('should create bug report', async ({ request }) => {
