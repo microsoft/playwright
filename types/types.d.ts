@@ -15402,6 +15402,14 @@ type Devices = {
   "iPhone 12 Pro landscape": DeviceDescriptor;
   "iPhone 12 Pro Max": DeviceDescriptor;
   "iPhone 12 Pro Max landscape": DeviceDescriptor;
+  "iPhone 13": DeviceDescriptor;
+  "iPhone 13 landscape": DeviceDescriptor;
+  "iPhone 13 Pro": DeviceDescriptor;
+  "iPhone 13 Pro landscape": DeviceDescriptor;
+  "iPhone 13 Pro Max": DeviceDescriptor;
+  "iPhone 13 Pro Max landscape": DeviceDescriptor;
+  "iPhone 13 Mini": DeviceDescriptor;
+  "iPhone 13 Mini landscape": DeviceDescriptor;
   "JioPhone 2": DeviceDescriptor;
   "JioPhone 2 landscape": DeviceDescriptor;
   "Kindle Fire HDX": DeviceDescriptor;
