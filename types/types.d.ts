@@ -11747,7 +11747,7 @@ export interface ApiRequestContext {
     /**
      * Query parameters to be send with the URL.
      */
-    params?: { [key: string]: string; };
+    params?: { [key: string]: string|number|boolean; };
 
     /**
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
@@ -11835,7 +11835,7 @@ export interface ApiRequestContext {
     /**
      * Query parameters to be send with the URL.
      */
-    params?: { [key: string]: string; };
+    params?: { [key: string]: string|number|boolean; };
 
     /**
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
@@ -11869,7 +11869,7 @@ export interface ApiRequestContext {
     /**
      * Query parameters to be send with the URL.
      */
-    params?: { [key: string]: string; };
+    params?: { [key: string]: string|number|boolean; };
 
     /**
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
@@ -11903,7 +11903,7 @@ export interface ApiRequestContext {
     /**
      * Query parameters to be send with the URL.
      */
-    params?: { [key: string]: string; };
+    params?: { [key: string]: string|number|boolean; };
 
     /**
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
@@ -11974,7 +11974,7 @@ export interface ApiRequestContext {
     /**
      * Query parameters to be send with the URL.
      */
-    params?: { [key: string]: string; };
+    params?: { [key: string]: string|number|boolean; };
 
     /**
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
@@ -12045,7 +12045,7 @@ export interface ApiRequestContext {
     /**
      * Query parameters to be send with the URL.
      */
-    params?: { [key: string]: string; };
+    params?: { [key: string]: string|number|boolean; };
 
     /**
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
@@ -12116,7 +12116,7 @@ export interface ApiRequestContext {
     /**
      * Query parameters to be send with the URL.
      */
-    params?: { [key: string]: string; };
+    params?: { [key: string]: string|number|boolean; };
 
     /**
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.

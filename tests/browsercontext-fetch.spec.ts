@@ -903,3 +903,29 @@ it('context request should export same storage state as context', async ({ conte
   const pageState = await page.request.storageState();
   expect(pageState).toEqual(contextState);
 });
+
+it('should accept bool and numeric params', async ({ context, page, server }) => {
+  let request;
+  const url = new URL(server.EMPTY_PAGE);
+  url.searchParams.set('str', 's');
+  url.searchParams.set('num', '10');
+  url.searchParams.set('bool', 'true');
+  url.searchParams.set('bool2', 'false');
+  server.setRoute(url.pathname + url.search, (req, res) => {
+    request = req;
+    server.serveFile(req, res);
+  });
+  await page.request.get(server.EMPTY_PAGE, {
+    params: {
+      'str': 's',
+      'num': 10,
+      'bool': true,
+      'bool2': false,
+    }
+  });
+  const params = new URLSearchParams(request.url.substr(request.url.indexOf('?')));
+  expect(params.get('str')).toEqual('s');
+  expect(params.get('num')).toEqual('10');
+  expect(params.get('bool')).toEqual('true');
+  expect(params.get('bool2')).toEqual('false');
+});

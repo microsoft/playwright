@@ -303,7 +303,7 @@ Emulates consistent window screen size available inside web page via `window.scr
 Target URL.
 
 ## fetch-option-params
-- `params` <[Object]<[string], [string]>>
+- `params` <[Object]<[string], [string]|[float]|[boolean]>>
 
 Query parameters to be send with the URL.
 
