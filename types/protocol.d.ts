@@ -554,140 +554,6 @@ animation/transition.
   }
   
   /**
-   * The domain is deprecated as AppCache is being removed (see crbug.com/582750).
-   */
-  export module ApplicationCache {
-    /**
-     * Detailed application cache resource information.
-     */
-    export interface ApplicationCacheResource {
-      /**
-       * Resource url.
-       */
-      url: string;
-      /**
-       * Resource size.
-       */
-      size: number;
-      /**
-       * Resource type.
-       */
-      type: string;
-    }
-    /**
-     * Detailed application cache information.
-     */
-    export interface ApplicationCache {
-      /**
-       * Manifest URL.
-       */
-      manifestURL: string;
-      /**
-       * Application cache size.
-       */
-      size: number;
-      /**
-       * Application cache creation time.
-       */
-      creationTime: number;
-      /**
-       * Application cache update time.
-       */
-      updateTime: number;
-      /**
-       * Application cache resources.
-       */
-      resources: ApplicationCacheResource[];
-    }
-    /**
-     * Frame identifier - manifest URL pair.
-     */
-    export interface FrameWithManifest {
-      /**
-       * Frame identifier.
-       */
-      frameId: Page.FrameId;
-      /**
-       * Manifest URL.
-       */
-      manifestURL: string;
-      /**
-       * Application cache status.
-       */
-      status: number;
-    }
-    
-    export type applicationCacheStatusUpdatedPayload = {
-      /**
-       * Identifier of the frame containing document whose application cache updated status.
-       */
-      frameId: Page.FrameId;
-      /**
-       * Manifest URL.
-       */
-      manifestURL: string;
-      /**
-       * Updated application cache status.
-       */
-      status: number;
-    }
-    export type networkStateUpdatedPayload = {
-      isNowOnline: boolean;
-    }
-    
-    /**
-     * Enables application cache domain notifications.
-     */
-    export type enableParameters = {
-    }
-    export type enableReturnValue = {
-    }
-    /**
-     * Returns relevant application cache data for the document in given frame.
-     */
-    export type getApplicationCacheForFrameParameters = {
-      /**
-       * Identifier of the frame containing document whose application cache is retrieved.
-       */
-      frameId: Page.FrameId;
-    }
-    export type getApplicationCacheForFrameReturnValue = {
-      /**
-       * Relevant application cache data for the document in given frame.
-       */
-      applicationCache: ApplicationCache;
-    }
-    /**
-     * Returns array of frame identifiers with manifest urls for each frame containing a document
-associated with some application cache.
-     */
-    export type getFramesWithManifestsParameters = {
-    }
-    export type getFramesWithManifestsReturnValue = {
-      /**
-       * Array of frame identifiers with manifest urls for each frame containing a document
-associated with some application cache.
-       */
-      frameIds: FrameWithManifest[];
-    }
-    /**
-     * Returns manifest URL for document in the given frame.
-     */
-    export type getManifestForFrameParameters = {
-      /**
-       * Identifier of the frame containing document whose manifest is retrieved.
-       */
-      frameId: Page.FrameId;
-    }
-    export type getManifestForFrameReturnValue = {
-      /**
-       * Manifest URL for document in the given frame.
-       */
-      manifestURL: string;
-    }
-  }
-  
-  /**
    * Audits domain allows investigation of page violations and possible improvements.
    */
   export module Audits {
@@ -7334,7 +7200,7 @@ request correspondinfg to the main frame.
     /**
      * The reason why request was blocked.
      */
-    export type CorsError = "DisallowedByMode"|"InvalidResponse"|"WildcardOriginNotAllowed"|"MissingAllowOriginHeader"|"MultipleAllowOriginValues"|"InvalidAllowOriginValue"|"AllowOriginMismatch"|"InvalidAllowCredentials"|"CorsDisabledScheme"|"PreflightInvalidStatus"|"PreflightDisallowedRedirect"|"PreflightWildcardOriginNotAllowed"|"PreflightMissingAllowOriginHeader"|"PreflightMultipleAllowOriginValues"|"PreflightInvalidAllowOriginValue"|"PreflightAllowOriginMismatch"|"PreflightInvalidAllowCredentials"|"PreflightMissingAllowExternal"|"PreflightInvalidAllowExternal"|"InvalidAllowMethodsPreflightResponse"|"InvalidAllowHeadersPreflightResponse"|"MethodDisallowedByPreflightResponse"|"HeaderDisallowedByPreflightResponse"|"RedirectContainsCredentials"|"InsecurePrivateNetwork"|"InvalidPrivateNetworkAccess"|"NoCorsRedirectModeNotFollow";
+    export type CorsError = "DisallowedByMode"|"InvalidResponse"|"WildcardOriginNotAllowed"|"MissingAllowOriginHeader"|"MultipleAllowOriginValues"|"InvalidAllowOriginValue"|"AllowOriginMismatch"|"InvalidAllowCredentials"|"CorsDisabledScheme"|"PreflightInvalidStatus"|"PreflightDisallowedRedirect"|"PreflightWildcardOriginNotAllowed"|"PreflightMissingAllowOriginHeader"|"PreflightMultipleAllowOriginValues"|"PreflightInvalidAllowOriginValue"|"PreflightAllowOriginMismatch"|"PreflightInvalidAllowCredentials"|"PreflightMissingAllowExternal"|"PreflightInvalidAllowExternal"|"InvalidAllowMethodsPreflightResponse"|"InvalidAllowHeadersPreflightResponse"|"MethodDisallowedByPreflightResponse"|"HeaderDisallowedByPreflightResponse"|"RedirectContainsCredentials"|"InsecurePrivateNetwork"|"InvalidPrivateNetworkAccess"|"UnexpectedPrivateNetworkAccess"|"NoCorsRedirectModeNotFollow";
     export interface CorsErrorStatus {
       corsError: CorsError;
       failedParameter: string;
@@ -7911,7 +7777,7 @@ https://wicg.github.io/webpackage/draft-yasskin-httpbis-origin-signed-exchanges-
      * List of content encodings supported by the backend.
      */
     export type ContentEncoding = "deflate"|"gzip"|"br";
-    export type PrivateNetworkRequestPolicy = "Allow"|"BlockFromInsecureToMorePrivate"|"WarnFromInsecureToMorePrivate";
+    export type PrivateNetworkRequestPolicy = "Allow"|"BlockFromInsecureToMorePrivate"|"WarnFromInsecureToMorePrivate"|"PreflightBlock"|"PreflightWarn";
     export type IPAddressSpace = "Local"|"Private"|"Public"|"Unknown";
     export interface ConnectTiming {
       /**
@@ -16812,8 +16678,6 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Animation.animationCanceled": Animation.animationCanceledPayload;
     "Animation.animationCreated": Animation.animationCreatedPayload;
     "Animation.animationStarted": Animation.animationStartedPayload;
-    "ApplicationCache.applicationCacheStatusUpdated": ApplicationCache.applicationCacheStatusUpdatedPayload;
-    "ApplicationCache.networkStateUpdated": ApplicationCache.networkStateUpdatedPayload;
     "Audits.issueAdded": Audits.issueAddedPayload;
     "BackgroundService.recordingStateChanged": BackgroundService.recordingStateChangedPayload;
     "BackgroundService.backgroundServiceEventReceived": BackgroundService.backgroundServiceEventReceivedPayload;
@@ -16996,10 +16860,6 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Animation.setPaused": Animation.setPausedParameters;
     "Animation.setPlaybackRate": Animation.setPlaybackRateParameters;
     "Animation.setTiming": Animation.setTimingParameters;
-    "ApplicationCache.enable": ApplicationCache.enableParameters;
-    "ApplicationCache.getApplicationCacheForFrame": ApplicationCache.getApplicationCacheForFrameParameters;
-    "ApplicationCache.getFramesWithManifests": ApplicationCache.getFramesWithManifestsParameters;
-    "ApplicationCache.getManifestForFrame": ApplicationCache.getManifestForFrameParameters;
     "Audits.getEncodedResponse": Audits.getEncodedResponseParameters;
     "Audits.disable": Audits.disableParameters;
     "Audits.enable": Audits.enableParameters;
@@ -17518,10 +17378,6 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Animation.setPaused": Animation.setPausedReturnValue;
     "Animation.setPlaybackRate": Animation.setPlaybackRateReturnValue;
     "Animation.setTiming": Animation.setTimingReturnValue;
-    "ApplicationCache.enable": ApplicationCache.enableReturnValue;
-    "ApplicationCache.getApplicationCacheForFrame": ApplicationCache.getApplicationCacheForFrameReturnValue;
-    "ApplicationCache.getFramesWithManifests": ApplicationCache.getFramesWithManifestsReturnValue;
-    "ApplicationCache.getManifestForFrame": ApplicationCache.getManifestForFrameReturnValue;
     "Audits.getEncodedResponse": Audits.getEncodedResponseReturnValue;
     "Audits.disable": Audits.disableReturnValue;
     "Audits.enable": Audits.enableReturnValue;
