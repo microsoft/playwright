@@ -24,6 +24,17 @@ fi
 
 trap "cd $(pwd -P)" EXIT
 cd "$(dirname $0)"
+SCRIPT_FOLDER="$(pwd -P)"
+source "${SCRIPT_FOLDER}/../utils.sh"
+
+CURRENT_HOST_OS_VERSION=$(getMacVersion)
+# As of Oct 2021, we build FFMPEG for Mac with Xcode 13 to align toolchains.
+if [[ "${CURRENT_HOST_OS_VERSION}" == "11."* ]]; then
+  selectXcodeVersionOrDie "13"
+else
+  echo "ERROR: ${CURRENT_HOST_OS_VERSION} is not supported"
+  exit 1
+fi
 
 source ./CONFIG.sh
 
