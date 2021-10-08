@@ -13438,10 +13438,10 @@ index 0000000000000000000000000000000000000000..4ec8b96bbbddf8a7b042f53a8068754a
 +cairo_status_t cairo_image_surface_write_to_jpeg_mem(cairo_surface_t *sfc, unsigned char **data, size_t *len, int quality);
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..9a1547d6ad27f58d8276b657c6c7190ebc6b75dc
+index 0000000000000000000000000000000000000000..aebef768c2dbe9e41a6673284cf0cf3faa5bc66a
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
-@@ -0,0 +1,284 @@
+@@ -0,0 +1,293 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -13705,9 +13705,18 @@ index 0000000000000000000000000000000000000000..9a1547d6ad27f58d8276b657c6c7190e
 +            scaledImageRef = adoptCF(CGBitmapContextCreateImage(context.get()));
 +            imagePtr = scaledImageRef.get();
 +        }
-+        String base64Data = base64EncodeToString(WebCore::data(imagePtr, WebCore::jpegUTI(), m_screencastQuality * 0.1));
-+        ++m_screencastFramesInFlight;
-+        m_frontendDispatcher->screencastFrame(base64Data, displaySize.width(), displaySize.height());
++        auto data = WebCore::data(imagePtr, WebCore::jpegUTI(), m_screencastQuality * 0.1);
++
++        // Do not send the same frame over and over.
++        auto cryptoDigest = PAL::CryptoDigest::create(PAL::CryptoDigest::Algorithm::SHA_1);
++        cryptoDigest->addBytes(data.data(), data.size());
++        auto digest = cryptoDigest->computeHash();
++        if (m_lastFrameDigest != digest) {
++            String base64Data = base64EncodeToString(data);
++            ++m_screencastFramesInFlight;
++            m_frontendDispatcher->screencastFrame(base64Data, displaySize.width(), displaySize.height());
++            m_lastFrameDigest = digest;
++        }
 +    }
 +    if (m_encoder)
 +        m_encoder->encodeFrame(WTFMove(imageRef));
