@@ -890,21 +890,29 @@ export class InjectedScript {
       if (received && options.expectedText) {
         // "To match an array" is "to contain an array" + "equal length"
         const lengthShouldMatch = expression !== 'to.contain.text.array';
-        if (received.length !== options.expectedText.length && lengthShouldMatch) {
+        const matchesLength = received.length === options.expectedText.length || !lengthShouldMatch;
+        if (matchesLength === options.isNot) {
           progress.setIntermediateResult(received);
           return continuePolling;
         }
+        if (!matchesLength)
+          return { received, pass: !options.isNot };
 
         // Each matcher should get a "received" that matches it, in order.
         let i = 0;
         const matchers = options.expectedText.map(e => new ExpectedTextMatcher(e));
+        let allMatchesFound = true;
         for (const matcher of matchers) {
-          while (i < received.length && matcher.matches(received[i]) === options.isNot)
+          while (i < received.length && !matcher.matches(received[i]))
             i++;
-          if (i === received.length) {
-            progress.setIntermediateResult(received);
-            return continuePolling;
+          if (i >= received.length) {
+            allMatchesFound = false;
+            break;
           }
+        }
+        if (allMatchesFound === options.isNot) {
+          progress.setIntermediateResult(received);
+          return continuePolling;
         }
         return { received, pass: !options.isNot };
       }
