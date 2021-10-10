@@ -214,7 +214,7 @@ class PlaywrightExample
     {
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Webkit.LaunchAsync();
-        var options = new BrowserContextNewOptions(Playwright.Devices["iPhone 11 Pro"])
+        var options = new BrowserNewContextOptions(playwright.Devices["iPhone 11 Pro"])
         {
             Geolocation = new() { Longitude = 12.492507f, Latitude = 41.889938f },
             Permissions = new[] { "geolocation" },
