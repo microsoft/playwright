@@ -16,4 +16,4 @@
 
 const { installBrowsersForNpmInstall } = require('playwright-core/lib/utils/registry');
 
-installBrowsersForNpmInstall(['chromium', 'ffmpeg']);
+installBrowsersForNpmInstall(['webkit']);

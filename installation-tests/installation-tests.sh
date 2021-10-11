@@ -34,7 +34,7 @@ SCRIPTS_PATH="$(pwd -P)/.."
 TEST_ROOT="/tmp/playwright-installation-tests"
 rm -rf "${TEST_ROOT}"
 mkdir -p "${TEST_ROOT}"
-NODE_VERSION="$(node --version)"
+NODE_VERSION=$(node -e "console.log(process.version.slice(1).split('.')[0])")
 
 function copy_test_scripts {
   cp "${SCRIPTS_PATH}/inspector-custom-executable.js" .
@@ -74,17 +74,12 @@ function run_tests {
   test_playwright_cli_install_should_work
   test_playwright_cli_codegen_should_work
   test_playwright_driver_should_work
-  # npm v7 that comes with Node v16 swallows output from install scripts,
-  # so the following tests won't work.
-  # See discussion at https://github.com/npm/cli/issues/1651
-  if [[ "${NODE_VERSION}" != *"v16."* ]]; then
-    test_skip_browser_download
-    test_skip_browser_download_inspect_with_custom_executable
-    test_playwright_should_work
-    test_playwright_chromium_should_work
-    test_playwright_webkit_should_work
-    test_playwright_firefox_should_work
-  fi
+  test_skip_browser_download
+  test_skip_browser_download_inspect_with_custom_executable
+  test_playwright_should_work
+  test_playwright_chromium_should_work
+  test_playwright_webkit_should_work
+  test_playwright_firefox_should_work
 }
 
 function test_screencast {
@@ -92,6 +87,7 @@ function test_screencast {
   copy_test_scripts
 
   local BROWSERS="$(pwd -P)/browsers"
+  npm install ${PLAYWRIGHT_CORE_TGZ}
   PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" npm install ${PLAYWRIGHT_TGZ}
   PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" npm install ${PLAYWRIGHT_FIREFOX_TGZ}
   PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" npm install ${PLAYWRIGHT_WEBKIT_TGZ}
@@ -111,7 +107,7 @@ function test_typescript_types {
   copy_test_scripts
 
   # install all packages.
-  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_CORE_TGZ}
+  npm install ${PLAYWRIGHT_CORE_TGZ}
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_TGZ}
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_FIREFOX_TGZ}
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_WEBKIT_TGZ}
@@ -139,6 +135,7 @@ function test_playwright_global_installation {
   initialize_test "${FUNCNAME[0]}"
 
   local BROWSERS="$(pwd -P)/browsers"
+  npm install ${PLAYWRIGHT_CORE_TGZ}
   PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" npm install ${PLAYWRIGHT_TGZ}
   if [[ ! -d "${BROWSERS}" ]]; then
     echo "Directory for shared browsers was not created!"
@@ -156,6 +153,7 @@ function test_playwright_global_installation {
 function test_playwright_global_installation_cross_package {
   initialize_test "${FUNCNAME[0]}"
 
+  npm install ${PLAYWRIGHT_CORE_TGZ}
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_FIREFOX_TGZ}
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_WEBKIT_TGZ}
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_CHROMIUM_TGZ}
@@ -185,6 +183,7 @@ function test_playwright_global_installation_subsequent_installs {
   local BROWSERS="$(pwd -P)/browsers"
 
   mkdir install-1 && pushd install-1 && npm init -y
+  npm install ${PLAYWRIGHT_CORE_TGZ}
   PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" npm install ${PLAYWRIGHT_TGZ}
   # Note: the `npm install` would not actually crash, the error
   # is merely logged to the console. To reproduce the error, we should make
@@ -199,7 +198,8 @@ function test_playwright_global_installation_subsequent_installs {
 function test_skip_browser_download {
   initialize_test "${FUNCNAME[0]}"
 
-  OUTPUT=$(PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_TGZ})
+  npm install ${PLAYWRIGHT_CORE_TGZ}
+  OUTPUT=$(PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install --foreground-script ${PLAYWRIGHT_TGZ})
   if [[ "${OUTPUT}" != *"Skipping browsers download because"* ]]; then
     echo "missing log message that browsers download is skipped"
     exit 1
@@ -217,7 +217,8 @@ function test_skip_browser_download_inspect_with_custom_executable {
   initialize_test "${FUNCNAME[0]}"
   copy_test_scripts
 
-  OUTPUT=$(PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_TGZ})
+  npm install ${PLAYWRIGHT_CORE_TGZ}
+  OUTPUT=$(PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install --foreground-script ${PLAYWRIGHT_TGZ})
   if [[ "${OUTPUT}" != *"Skipping browsers download because"* ]]; then
     echo "missing log message that browsers download is skipped"
     exit 1
@@ -242,7 +243,8 @@ function test_skip_browser_download_inspect_with_custom_executable {
 function test_playwright_should_work {
   initialize_test "${FUNCNAME[0]}"
 
-  OUTPUT=$(npm install ${PLAYWRIGHT_TGZ})
+  npm install ${PLAYWRIGHT_CORE_TGZ}
+  OUTPUT=$(npm install --foreground-script ${PLAYWRIGHT_TGZ})
   if [[ "${OUTPUT}" != *"chromium"* ]]; then
     echo "ERROR: should download chromium"
     exit 1
@@ -259,7 +261,7 @@ function test_playwright_should_work {
 
   echo "Running sanity.js"
   node sanity.js playwright
-  if [[ "${NODE_VERSION}" == *"v14."* ]]; then
+  if [[ ${NODE_VERSION} -ge 14 ]]; then
     echo "Running esm.js"
     node esm-playwright.mjs
   fi
@@ -275,6 +277,7 @@ function test_playwright_should_work {
 
 function test_playwright_should_work_with_relative_home_path {
   initialize_test "${FUNCNAME[0]}"
+  npm install ${PLAYWRIGHT_CORE_TGZ}
   PLAYWRIGHT_BROWSERS_PATH="" HOME=. npm install ${PLAYWRIGHT_TGZ}
   copy_test_scripts
   echo "Running sanity.js"
@@ -289,6 +292,7 @@ function test_playwright_should_work_with_relative_browsers_path {
   # Make sure that browsers path is resolved relative to the `npm install` call location.
   mkdir foo
   cd foo
+  npm install ${PLAYWRIGHT_CORE_TGZ}
   PLAYWRIGHT_BROWSERS_PATH="../relative" npm install ${PLAYWRIGHT_TGZ}
   cd ..
 
@@ -301,7 +305,8 @@ function test_playwright_should_work_with_relative_browsers_path {
 function test_playwright_chromium_should_work {
   initialize_test "${FUNCNAME[0]}"
 
-  OUTPUT=$(npm install ${PLAYWRIGHT_CHROMIUM_TGZ})
+  npm install ${PLAYWRIGHT_CORE_TGZ}
+  OUTPUT=$(npm install --foreground-script ${PLAYWRIGHT_CHROMIUM_TGZ})
   if [[ "${OUTPUT}" != *"chromium"* ]]; then
     echo "ERROR: should download chromium"
     exit 1
@@ -318,7 +323,7 @@ function test_playwright_chromium_should_work {
 
   echo "Running sanity.js"
   node sanity.js playwright-chromium
-  if [[ "${NODE_VERSION}" == *"v14."* ]]; then
+  if [[ ${NODE_VERSION} -ge 14 ]]; then
     echo "Running esm.js"
     node esm-playwright-chromium.mjs
   fi
@@ -329,7 +334,8 @@ function test_playwright_chromium_should_work {
 function test_playwright_webkit_should_work {
   initialize_test "${FUNCNAME[0]}"
 
-  OUTPUT=$(npm install ${PLAYWRIGHT_WEBKIT_TGZ})
+  npm install ${PLAYWRIGHT_CORE_TGZ}
+  OUTPUT=$(npm install --foreground-script ${PLAYWRIGHT_WEBKIT_TGZ})
   if [[ "${OUTPUT}" == *"chromium"* ]]; then
     echo "ERROR: should not download chromium"
     exit 1
@@ -346,7 +352,7 @@ function test_playwright_webkit_should_work {
 
   echo "Running sanity.js"
   node sanity.js playwright-webkit
-  if [[ "${NODE_VERSION}" == *"v14."* ]]; then
+  if [[ ${NODE_VERSION} -ge 14 ]]; then
     echo "Running esm.js"
     node esm-playwright-webkit.mjs
   fi
@@ -357,7 +363,8 @@ function test_playwright_webkit_should_work {
 function test_playwright_firefox_should_work {
   initialize_test "${FUNCNAME[0]}"
 
-  OUTPUT=$(npm install ${PLAYWRIGHT_FIREFOX_TGZ})
+  npm install ${PLAYWRIGHT_CORE_TGZ}
+  OUTPUT=$(npm install --foreground-script ${PLAYWRIGHT_FIREFOX_TGZ})
   if [[ "${OUTPUT}" == *"chromium"* ]]; then
     echo "ERROR: should not download chromium"
     exit 1
@@ -374,7 +381,7 @@ function test_playwright_firefox_should_work {
 
   echo "Running sanity.js"
   node sanity.js playwright-firefox
-  if [[ "${NODE_VERSION}" == *"v14."* ]]; then
+  if [[ ${NODE_VERSION} -ge 14 ]]; then
     echo "Running esm.js"
     node esm-playwright-firefox.mjs
   fi
@@ -385,6 +392,7 @@ function test_playwright_firefox_should_work {
 function test_playwright_validate_dependencies {
   initialize_test "${FUNCNAME[0]}"
 
+  npm install ${PLAYWRIGHT_CORE_TGZ}
   npm install ${PLAYWRIGHT_TGZ}
   copy_test_scripts
 
@@ -400,6 +408,7 @@ function test_playwright_validate_dependencies {
 function test_playwright_validate_dependencies_skip_executable_path {
   initialize_test "${FUNCNAME[0]}"
 
+  npm install ${PLAYWRIGHT_CORE_TGZ}
   npm install ${PLAYWRIGHT_TGZ}
   copy_test_scripts
 
@@ -415,6 +424,7 @@ function test_playwright_validate_dependencies_skip_executable_path {
 function test_playwright_electron_should_work {
   initialize_test "${FUNCNAME[0]}"
 
+  npm install ${PLAYWRIGHT_CORE_TGZ}
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_TGZ}
   npm install electron@9.0
   copy_test_scripts
@@ -427,10 +437,11 @@ function test_playwright_electron_should_work {
 
 function test_electron_types {
   initialize_test "${FUNCNAME[0]}"
+  npm install ${PLAYWRIGHT_CORE_TGZ}
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_TGZ}
-  npm install electron@9.0
+  npm install electron@12
   npm install -D typescript@3.8
-  npm install -D @types/node@10.17
+  npm install -D @types/node@14
   echo "import { Page, _electron, ElectronApplication, Electron } from 'playwright';" > "test.ts"
 
   echo "Running tsc"
@@ -442,9 +453,10 @@ function test_electron_types {
 function test_android_types {
   initialize_test "${FUNCNAME[0]}"
 
+  npm install ${PLAYWRIGHT_CORE_TGZ}
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_TGZ}
   npm install -D typescript@3.8
-  npm install -D @types/node@10.17
+  npm install -D @types/node@14
   echo "import { AndroidDevice, _android, AndroidWebView, Page } from 'playwright';" > "test.ts"
 
   echo "Running tsc"
@@ -456,6 +468,7 @@ function test_android_types {
 function test_playwright_cli_screenshot_should_work {
   initialize_test "${FUNCNAME[0]}"
 
+  npm install ${PLAYWRIGHT_CORE_TGZ}
   npm install ${PLAYWRIGHT_TGZ}
 
   echo "Running playwright screenshot"
@@ -478,6 +491,7 @@ function test_playwright_cli_screenshot_should_work {
 function test_playwright_cli_install_should_work {
   initialize_test "${FUNCNAME[0]}"
 
+  npm install ${PLAYWRIGHT_CORE_TGZ}
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_TGZ}
 
   local BROWSERS="$(pwd -P)/browsers"
@@ -531,6 +545,7 @@ function test_playwright_cli_install_should_work {
 function test_playwright_cli_codegen_should_work {
   initialize_test "${FUNCNAME[0]}"
 
+  npm install ${PLAYWRIGHT_CORE_TGZ}
   npm install ${PLAYWRIGHT_TGZ}
 
   echo "Running playwright codegen"
@@ -561,6 +576,7 @@ function test_playwright_cli_codegen_should_work {
 function test_playwright_driver_should_work {
   initialize_test "${FUNCNAME[0]}"
 
+  npm install ${PLAYWRIGHT_CORE_TGZ}
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_TGZ}
 
   echo "Running playwright install"

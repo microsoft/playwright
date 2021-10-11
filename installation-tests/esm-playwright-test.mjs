@@ -17,7 +17,7 @@
 import { chromium, firefox, webkit, selectors, devices, errors, test, expect } from '@playwright/test';
 import * as playwright from '@playwright/test';
 import defaultExport from '@playwright/test';
-import errorsFile from '@playwright/test/lib/utils/errors.js';
+import errorsFile from 'playwright-core/lib/utils/errors';
 import testESM from './esm.mjs';
 
 if (defaultExport !== test) {
