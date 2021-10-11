@@ -163,7 +163,7 @@ class PlaywrightExample
     {
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Webkit.LaunchAsync();
-        await using var context = await browser.NewContextAsync(Playwright.Devices["iPhone 6"]);
+        await using var context = await browser.NewContextAsync(playwright.Devices["iPhone 6"]);
 
         var page = await context.NewPageAsync();
         await page.GotoAsync("https://www.theverge.com");
