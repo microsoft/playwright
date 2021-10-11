@@ -13,7 +13,8 @@
       "import": "./index.mjs",
       "require": "./index.js"
     },
-    "./": "./"
+    "./src/*": "./lib/*.js",
+    "./*": "./*.js"
   },
   "author": {
     "name": "Microsoft Corporation"

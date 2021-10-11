@@ -35,7 +35,6 @@ type RunResult = {
 const test = base.extend<TestFixtures>({
   packageManager: 'npm',
   run: async ({ packageManager }, use, testInfo) => {
-    const output = '';
     await use(async (parameters: string[], options: PromptOptions): Promise<RunResult> => {
       fs.mkdirSync(testInfo.outputDir, { recursive: true });
       const env = packageManager === 'yarn' ? {
