@@ -19,10 +19,9 @@ import { CommonFixtures, commonFixtures } from '../config/commonFixtures';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import type { JSONReport, JSONReportSuite } from '../../src/test/reporters/json';
+import type { JSONReport, JSONReportSuite } from '@playwright/test/src/reporters/json';
 import rimraf from 'rimraf';
 import { promisify } from 'util';
-import * as url from 'url';
 import { serverFixtures, ServerFixtures } from '../config/baseTest';
 
 const removeFolderAsync = promisify(rimraf);
@@ -50,15 +49,14 @@ type Env = { [key: string]: string | number | boolean | undefined };
 async function writeFiles(testInfo: TestInfo, files: Files) {
   const baseDir = testInfo.outputPath();
 
-  const internalPath = JSON.stringify(path.join(__dirname, 'entry'));
   const headerJS = `
-    const pwt = require(${internalPath});
+    const pwt = require('@playwright/test');
   `;
   const headerTS = `
-    import * as pwt from ${internalPath};
+    import * as pwt from '@playwright/test';
   `;
   const headerMJS = `
-    import * as pwt from ${JSON.stringify(url.pathToFileURL(path.join(__dirname, 'entry', 'index.mjs')))};
+    import * as pwt from '@playwright/test';
   `;
 
   const hasConfig = Object.keys(files).some(name => name.includes('.config.'));
@@ -102,7 +100,7 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
   }
   const outputDir = path.join(baseDir, 'test-results');
   const reportFile = path.join(outputDir, 'report.json');
-  const args = ['node', path.join(__dirname, '..', '..', 'lib', 'cli', 'cli.js'), 'test'];
+  const args = ['npx', 'playwright', 'test'];
   if (!options.usesCustomOutputDir)
     args.push('--output=' + outputDir);
   args.push(
@@ -119,7 +117,6 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
       ...process.env,
       PLAYWRIGHT_JSON_OUTPUT_NAME: reportFile,
       PWTEST_CACHE_DIR: cacheDir,
-      PWTEST_CLI_ALLOW_TEST_COMMAND: '1',
       PWTEST_SKIP_TEST_OUTPUT: '1',
       ...env,
     },

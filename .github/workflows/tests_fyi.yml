@@ -24,12 +24,13 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
+    - run: npm i -g npm@7
     - run: npm ci
       env:
         DEBUG: pw:install
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: node lib/cli/cli install --with-deps ${{ matrix.browser }} chromium
+    - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}
       env:
         PWTEST_VIDEO: 1
@@ -53,11 +54,12 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 14
+    - run: npm i -g npm@7
     - run: npm ci
       env:
         DEBUG: pw:install
     - run: npm run build
-    - run: node lib/cli/cli install-deps
+    - run: npx playwright install-deps
     - name: Create Android Emulator
       run: utils/avd_recreate.sh
     - name: Start Android Emulator

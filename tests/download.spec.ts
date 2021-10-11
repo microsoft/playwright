@@ -18,7 +18,7 @@ import { browserTest as it, expect } from './config/browserTest';
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { Download } from '..';
+import type { Download } from 'playwright-core';
 
 it.describe('download event', () => {
   it.beforeEach(async ({ server }) => {

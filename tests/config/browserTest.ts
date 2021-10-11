@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import type { Fixtures } from './test-runner';
-import type { Browser, BrowserContext, BrowserContextOptions, BrowserType, LaunchOptions, Page } from '../../index';
-import { removeFolders } from '../../lib/utils/utils';
-import { ReuseBrowserContextStorage } from '../../lib/test/index';
+import type { Fixtures } from '@playwright/test';
+import type { Browser, BrowserContext, BrowserContextOptions, BrowserType, LaunchOptions, Page } from 'playwright-core';
+import { removeFolders } from 'playwright-core/lib/utils/utils';
+import { ReuseBrowserContextStorage } from '@playwright/test/src/index';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -207,4 +207,4 @@ export const playwrightTest = test;
 export const browserTest = test;
 export const contextTest = test;
 
-export { expect } from './test-runner';
+export { expect } from '@playwright/test';

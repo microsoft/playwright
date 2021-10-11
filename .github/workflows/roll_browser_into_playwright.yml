@@ -12,10 +12,11 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 16
+    - run: npm i -g npm@7
     - run: npm ci
     - run: npm run build
     - name: Install dependencies
-      run: node lib/cli/cli install-deps
+      run: npx playwright install-deps
     - name: Roll to new revision
       run: |
         ./utils/roll_browser.js ${{ github.event.client_payload.browser }} ${{ github.event.client_payload.revision }}

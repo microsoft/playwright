@@ -16,8 +16,6 @@
  */
 
 const pw = require('..');
-const child_process = require('child_process');
-
 
 async function browserVersion(browserType) {
   const browser = await browserType.launch();

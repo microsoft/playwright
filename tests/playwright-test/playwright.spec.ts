@@ -18,7 +18,7 @@ import { test, expect, stripAscii } from './playwright-test-fixtures';
 import fs from 'fs';
 import path from 'path';
 import { spawnSync } from 'child_process';
-import { registry } from '../../src/utils/registry';
+import { registry } from 'playwright-core/lib/utils/registry';
 
 const ffmpeg = registry.findExecutable('ffmpeg')!.executablePath();
 

@@ -1,0 +1,46 @@
+{
+  "name": "playwright-core",
+  "version": "1.16.0-next",
+  "description": "A high-level API to automate web browsers",
+  "repository": "github:Microsoft/playwright",
+  "homepage": "https://playwright.dev",
+  "engines": {
+    "node": ">=12"
+  },
+  "scripts": {
+    "prepare": "babel --config-file ../../babel.config.json -s --extensions \".ts\" --out-dir lib/utils/ src/utils"
+  },
+  "author": {
+    "name": "Microsoft Corporation"
+  },
+  "license": "Apache-2.0",
+  "exports": {
+    ".": {
+      "import": "./index.mjs",
+      "require": "./index.js"
+    },
+    "./src/*": "./lib/*.js",
+    "./*": "./*.js"
+  },
+  "types": "types/types.d.ts",
+  "bin": {
+    "playwright": "./cli.js"
+  },
+  "dependencies": {
+    "commander": "^8.2.0",
+    "debug": "^4.1.1",
+    "extract-zip": "^2.0.1",
+    "https-proxy-agent": "^5.0.0",
+    "jpeg-js": "^0.4.2",
+    "mime": "^2.4.6",
+    "pngjs": "^5.0.0",
+    "progress": "^2.0.3",
+    "proper-lockfile": "^4.1.1",
+    "proxy-from-env": "^1.1.0",
+    "rimraf": "^3.0.2",
+    "stack-utils": "^2.0.3",
+    "ws": "^7.4.6",
+    "yazl": "^2.5.1",
+    "yauzl": "^2.10.0"
+  }
+}

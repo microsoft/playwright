@@ -1,15 +1,15 @@
 const cluster = require('cluster');
 
 async function start() {
-  const { playwrightPath, browserTypeName, launchOptions, stallOnClose, disconnectOnSIGHUP } = JSON.parse(process.argv[2]);
+  const { browserTypeName, launchOptions, stallOnClose, disconnectOnSIGHUP } = JSON.parse(process.argv[2]);
   if (stallOnClose) {
     launchOptions.__testHookGracefullyClose = () => {
       console.log(`(stalled=>true)`);
-      return new Promise(() => {});
+      return new Promise(() => { });
     };
   }
 
-  const playwright = require(require('path').join(playwrightPath, 'index'));
+  const playwright = require('playwright-core');
 
   if (disconnectOnSIGHUP)
     launchOptions.handleSIGHUP = false;

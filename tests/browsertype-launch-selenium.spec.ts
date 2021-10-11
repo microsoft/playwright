@@ -15,10 +15,10 @@
  */
 
 import { playwrightTest as test, expect } from './config/browserTest';
-import type { TestInfo } from '../types/test';
+import type { TestInfo } from 'playwright-core/types/test';
 import path from 'path';
 import fs from 'fs';
-import { start } from '../lib/outofprocess';
+import { start } from 'playwright-core/lib/outofprocess';
 
 const chromeDriver = require('chromedriver').path;
 const brokenDriver = path.join(__dirname, 'assets', 'selenium-grid', 'broken-selenium-driver.js');

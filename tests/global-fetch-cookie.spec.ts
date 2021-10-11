@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import http from 'http';
-import { ApiRequestContext } from '../index';
+import type { ApiRequestContext } from 'playwright-core';
 import { expect, playwrightTest } from './config/browserTest';
 
 export type GlobalFetchFixtures = {
