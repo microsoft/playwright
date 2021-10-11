@@ -30,15 +30,6 @@ try {
   process.exit(1);
 }
 
-console.log(`Rebuilding installer...`);
-try {
-  execSync('npm run build-installer', {
-    stdio: ['inherit', 'inherit', 'inherit'],
-  });
-} catch (e) {
-  process.exit(1);
-}
-
 console.log(`Downloading browsers...`);
 const { installDefaultBrowsersForNpmInstall } = require('./packages/playwright-core/lib/utils/registry');
 installDefaultBrowsersForNpmInstall().catch(e => {
