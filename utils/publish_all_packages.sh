@@ -57,10 +57,6 @@ if [[ $1 == "--release" ]]; then
   fi
   NPM_PUBLISH_TAG="latest"
 elif [[ $1 == "--tip-of-tree" ]]; then
-  if [[ $(git status -s) != " M package.json" ]]; then
-    echo "ERROR: git status is unexpected; some uncommitted changes or untracked files"
-    exit 1
-  fi
   # Ensure package version contains dash.
   if [[ "${VERSION}" != *-* ]]; then
     echo "ERROR: cannot publish release version with --tip-of-tree flag"
