@@ -21,7 +21,7 @@
   },
   "types": "types/types.d.ts",
   "bin": {
-    "playwright": "./lib/cli/cli.js"
+    "playwright": "./cli.js"
   },
   "dependencies": {
     "commander": "^8.2.0",
