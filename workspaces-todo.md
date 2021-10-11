@@ -3,6 +3,9 @@
 3. ~~make playright depend on playwright-core~~
 4. move playwright-test code into playwright/test
 5. make firefox/webkit/chromium packages work
-6. make the tests pass and work against real packages
-7. make typescript happy
-8. make eslint happy
+6. ~~make the tests pass and work against real packages~~
+7. ~~make typescript happy~~
+8. ~~make eslint happy~~
+9. integration tests
+10. publish scripts
+
