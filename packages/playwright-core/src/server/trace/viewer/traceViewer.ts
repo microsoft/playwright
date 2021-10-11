@@ -50,7 +50,7 @@ export class TraceViewer {
     // - "/tracemodel" - json with trace model.
     //
     // Served by TraceViewer
-    // - "/traceviewer/..." - our frontend.
+    // - "/" - our frontend.
     // - "/file?filePath" - local files, used by sources tab.
     // - "/sha1/<sha1>" - trace resource bodies, used by network previews.
     //
@@ -58,7 +58,6 @@ export class TraceViewer {
     // - "/resources/" - network resources from the trace.
     // - "/snapshot/" - root for snapshot frame.
     // - "/snapshot/pageId/..." - actual snapshot html.
-    // - "/snapshot/service-worker.js" - service worker that intercepts snapshot resources
     //   and translates them into network requests.
     const entries = await this._vfs.entries();
     const debugNames = entries.filter(name => name.endsWith('.trace')).map(name => {
@@ -95,13 +94,6 @@ export class TraceViewer {
     };
     this._server.routePrefix('/context/', traceModelHandler);
 
-    const traceViewerHandler: ServerRouteHandler = (request, response) => {
-      const relativePath = request.url!.substring('/traceviewer/'.length);
-      const absolutePath = path.join(__dirname, '..', '..', '..', 'web', ...relativePath.split('/'));
-      return this._server.serveFile(response, absolutePath);
-    };
-    this._server.routePrefix('/traceviewer/', traceViewerHandler);
-
     const fileHandler: ServerRouteHandler = (request, response) => {
       try {
         const url = new URL('http://localhost' + request.url!);
@@ -123,6 +115,13 @@ export class TraceViewer {
       return true;
     };
     this._server.routePrefix('/sha1/', sha1Handler);
+
+    const traceViewerHandler: ServerRouteHandler = (request, response) => {
+      const relativePath = request.url!;
+      const absolutePath = path.join(__dirname, '..', '..', '..', 'web', 'traceViewer', ...relativePath.split('/'));
+      return this._server.serveFile(response, absolutePath);
+    };
+    this._server.routePrefix('/', traceViewerHandler);
   }
 
   async show(headless: boolean): Promise<BrowserContext> {
@@ -161,7 +160,7 @@ export class TraceViewer {
     else
       page.on('close', () => process.exit());
 
-    await page.mainFrame().goto(internalCallMetadata(), urlPrefix + '/traceviewer/traceViewer/index.html');
+    await page.mainFrame().goto(internalCallMetadata(), urlPrefix + '/index.html');
     return context;
   }
 }

@@ -118,6 +118,7 @@ function copyFile(file, from, to) {
 const webPackFiles = [
   'packages/playwright-core/src/server/injected/webpack.config.js',
   'packages/playwright-core/src/web/traceViewer/webpack.config.js',
+  'packages/playwright-core/src/web/traceViewer/webpack-sw.config.js',
   'packages/playwright-core/src/web/recorder/webpack.config.js',
   'packages/playwright-core/src/web/htmlReport/webpack.config.js',
 ];
@@ -182,7 +183,7 @@ copyFiles.push({
   files: 'packages/playwright-core/src/**/*.js',
   from: 'packages/playwright-core/src',
   to: 'packages/playwright-core/lib',
-  ignored: ['**/.eslintrc.js', '**/*webpack.config.js', '**/injected/**/*']
+  ignored: ['**/.eslintrc.js', '**/webpack*.config.js', '**/injected/**/*']
 });
 
 // Sometimes we require JSON files that babel ignores.
