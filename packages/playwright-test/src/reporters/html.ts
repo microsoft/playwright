@@ -149,7 +149,7 @@ class HtmlBuilder {
     this._reportFolder = path.resolve(process.cwd(), outputDir);
     this._dataFolder = path.join(this._reportFolder, 'data');
     fs.mkdirSync(this._dataFolder, { recursive: true });
-    const appFolder = path.join(__dirname, '..', '..', 'web', 'htmlReport');
+    const appFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'web', 'htmlReport');
     for (const file of fs.readdirSync(appFolder))
       fs.copyFileSync(path.join(appFolder, file), path.join(this._reportFolder, file));
 

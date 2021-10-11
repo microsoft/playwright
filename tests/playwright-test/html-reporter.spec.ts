@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import { test, expect } from './playwright-test-fixtures';
 
-const kHTMLReporterPath = path.join(__dirname, '..', '..', 'packages', 'playwright-core', 'lib', 'test', 'reporters', 'html.js');
+const kHTMLReporterPath = path.join(__dirname, '..', '..', 'packages', 'playwright-test', 'lib', 'reporters', 'html.js');
 
 test('should generate report', async ({ runInlineTest }, testInfo) => {
   await runInlineTest({
