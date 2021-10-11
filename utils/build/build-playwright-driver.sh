@@ -12,7 +12,7 @@ rm -rf ./output
 mkdir -p ./output
 
 echo "Building playwright-core package"
-node ../../utils/pack_package.js playwright-core ./output/playwright-core.tar.gz
+node ../../utils/pack_package.js playwright-core ./output/playwright-core.tgz
 
 echo "Building api.json and protocol.yml"
 node ../../utils/doclint/generateApiJson.js > ./output/api.json

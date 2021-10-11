@@ -1,9 +1,9 @@
 const fs = require('fs');
 const path = require('path');
 const packageDir = path.join(__dirname, '..', 'packages');
-const packages = fs.readdirSync(packageDir).map(name => {
-  return path.join(packageDir, name);
-});
+const packages = fs.readdirSync(packageDir)
+  .filter(packageDir => !packageDir.startsWith('.'))
+  .map(name => path.join(packageDir, name));
 
 const packagePathToJSON = new Map();
 const packageNameToPath = new Map();
