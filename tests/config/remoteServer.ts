@@ -18,8 +18,6 @@ import path from 'path';
 import type { BrowserType, Browser, LaunchOptions } from 'playwright-core';
 import { CommonFixtures, TestChildProcess } from './commonFixtures';
 
-const playwrightPath = path.join(__dirname, '..', '..');
-
 export type RemoteServerOptions = {
   stallOnClose?: boolean;
   disconnectOnSIGHUP?: boolean;
@@ -54,7 +52,6 @@ export class RemoteServer {
       logger: undefined,
     };
     const options = {
-      playwrightPath,
       browserTypeName: browserType.name(),
       launchOptions,
       ...remoteServerOptions,

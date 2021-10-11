@@ -16,7 +16,7 @@
       "import": "./index.mjs",
       "require": "./index.js"
     },
-    "./": "./"
+    "./*": "./*.js"
   },
   "types": "types/types.d.ts",
   "bin": {
