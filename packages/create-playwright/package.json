@@ -20,6 +20,7 @@
     "test": "npx playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "file:../playwright-test",
     "@types/node": "^16.9.0",
     "@vercel/ncc": "^0.30.0",
     "enquirer": "^2.3.6",
