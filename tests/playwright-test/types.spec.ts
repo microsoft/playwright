@@ -182,29 +182,3 @@ test('config should allow void/empty options', async ({ runTSC }) => {
   });
   expect(result.exitCode).toBe(0);
 });
-
-test('config should allow ExtraUseOptions', async ({ runTSC }) => {
-  const result = await runTSC({
-    'playwright.config.ts': `
-      const configs: pwt.Config[] = [];
-      configs.push({ use: { myParam: 'text' }});
-    `,
-    'extraUseOptions.d.ts': `
-      export {};
-      declare global {
-        namespace PlaywrightTest {
-          export interface ExtraUseOptions {
-            myParam: string
-          }
-        }
-      }
-    `,
-    'a.spec.ts': `
-      const { test } = pwt;
-      test('my test', async ({ myParam }) => {
-        console.log(myParam);
-      });
-    `
-  });
-  expect(result.exitCode).toBe(0);
-});

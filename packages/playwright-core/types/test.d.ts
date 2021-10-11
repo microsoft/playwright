@@ -2444,7 +2444,7 @@ export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 
  * ```
  *
  */
-export interface PlaywrightTestOptions extends PlaywrightTest.ExtraUseOptions {
+export interface PlaywrightTestOptions {
   /**
    * Whether to automatically download all the attachments. Defaults to `false` where all the downloads are canceled.
    */
