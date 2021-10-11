@@ -23,7 +23,6 @@ module.exports = {
         options: {
           presets: [
             "@babel/preset-typescript",
-            "@babel/preset-react"
           ]
         },
         exclude: /node_modules/

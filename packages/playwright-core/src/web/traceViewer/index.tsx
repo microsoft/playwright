@@ -24,6 +24,10 @@ import '../common.css';
 (async () => {
   applyTheme();
   navigator.serviceWorker.register('sw.bundle.js');
-  const debugNames = await fetch('/contexts').then(response => response.json());
-  ReactDOM.render(<Workbench debugNames={debugNames} />, document.querySelector('#root'));
+  if (!navigator.serviceWorker.controller) {
+    await new Promise<void>(f => {
+      navigator.serviceWorker.oncontrollerchange = () => f();
+    });
+  }
+  ReactDOM.render(<Workbench/>, document.querySelector('#root'));
 })();

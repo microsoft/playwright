@@ -73,7 +73,7 @@ export const SnapshotTab: React.FunctionComponent<{
     })();
   }, [iframeRef, snapshotUrl, snapshotSizeUrl, pointX, pointY]);
 
-  const scale = Math.min(measure.width / snapshotSize.width, measure.height / snapshotSize.height);
+  const scale = Math.min(measure.width / snapshotSize.width, measure.height / snapshotSize.height, 1);
   const scaledSize = {
     width: snapshotSize.width * scale,
     height: snapshotSize.height * scale,

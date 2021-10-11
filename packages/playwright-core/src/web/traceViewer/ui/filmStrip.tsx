@@ -19,7 +19,7 @@ import { Boundaries, Size } from '../geometry';
 import * as React from 'react';
 import { useMeasure } from './helpers';
 import { upperBound } from '../../uiUtils';
-import { ContextEntry, PageEntry } from '../../../server/trace/viewer/traceModel';
+import { ContextEntry, PageEntry } from '../traceModel';
 
 const tileSize = { width: 200, height: 45 };
 

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import { FrameSnapshot, NodeSnapshot, RenderedFrameSnapshot, ResourceSnapshot } from './snapshotTypes';
+import { FrameSnapshot, NodeSnapshot, RenderedFrameSnapshot, ResourceSnapshot } from '../../server/trace/common/snapshotTypes';
 
 export class SnapshotRenderer {
   private _snapshots: FrameSnapshot[];
   private _index: number;
   readonly snapshotName: string | undefined;
-  private _resources: ResourceSnapshot[];
+  _resources: ResourceSnapshot[];
   private _snapshot: FrameSnapshot;
 
   constructor(resources: ResourceSnapshot[], snapshots: FrameSnapshot[], index: number) {

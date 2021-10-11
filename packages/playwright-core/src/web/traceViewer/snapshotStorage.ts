@@ -15,12 +15,12 @@
  */
 
 import { EventEmitter } from 'events';
-import { FrameSnapshot, ResourceSnapshot } from './snapshotTypes';
+import { FrameSnapshot, ResourceSnapshot } from '../../server/trace/common/snapshotTypes';
 import { SnapshotRenderer } from './snapshotRenderer';
 
 export interface SnapshotStorage {
   resources(): ResourceSnapshot[];
-  resourceContent(sha1: string): Promise<Buffer | undefined>;
+  resourceContent(sha1: string): Promise<Blob | undefined>;
   snapshotByName(pageOrFrameId: string, snapshotName: string): SnapshotRenderer | undefined;
   snapshotByIndex(frameId: string, index: number): SnapshotRenderer | undefined;
 }
@@ -58,7 +58,7 @@ export abstract class BaseSnapshotStorage extends EventEmitter implements Snapsh
     this.emit('snapshot', renderer);
   }
 
-  abstract resourceContent(sha1: string): Promise<Buffer | undefined>;
+  abstract resourceContent(sha1: string): Promise<Blob | undefined>;
 
   resources(): ResourceSnapshot[] {
     return this._resources.slice();
@@ -73,5 +73,4 @@ export abstract class BaseSnapshotStorage extends EventEmitter implements Snapsh
     const snapshot = this._frameSnapshots.get(frameId);
     return snapshot?.renderer[index];
   }
-
 }

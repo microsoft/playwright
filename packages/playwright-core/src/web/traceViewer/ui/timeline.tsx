@@ -16,7 +16,7 @@
 */
 
 import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
-import { ContextEntry } from '../../../server/trace/viewer/traceModel';
+import { ContextEntry } from '../traceModel';
 import './timeline.css';
 import { Boundaries } from '../geometry';
 import * as React from 'react';
