@@ -594,7 +594,7 @@ page.click('#free-month-promo >> text=Sign Up')
 
 ```csharp
 // Click an element with text "Sign Up" inside of a #free-month-promo.
-await page.Click("#free-month-promo >> text=Sign Up");
+await page.ClickAsync("#free-month-promo >> text=Sign Up");
 ```
 
 ```js

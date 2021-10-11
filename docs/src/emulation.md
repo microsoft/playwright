@@ -330,7 +330,7 @@ context.grant_permissions(['notifications'], origin='https://skype.com')
 ```
 
 ```csharp
-await context.GrantPermissionsAsync(new[] { "notifications" },origin: "https://skype.com");
+await context.GrantPermissionsAsync(new[] { "notifications" }, origin: "https://skype.com");
 ```
 
 Revoke all permissions:

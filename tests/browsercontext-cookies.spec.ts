@@ -202,14 +202,19 @@ it('should work with subdomain cookie', async ({ context, browserName, isWindows
   }]);
 });
 
-it('should not return cookies with empty value', async ({ context, page, server }) => {
+it('should return cookies with empty value', async ({ context, page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', 'name=;Path=/');
     res.end();
   });
   await page.goto(server.EMPTY_PAGE);
   const cookies = await context.cookies();
-  expect(cookies.length).toBe(0);
+  expect(cookies).toEqual([
+    expect.objectContaining({
+      name: 'name',
+      value: ''
+    })
+  ]);
 });
 
 it('should return secure cookies based on HTTP(S) protocol', async ({ context, browserName, isWindows }) => {

@@ -72,7 +72,7 @@ export default config;
 
 ### Reporters on CI
 
-You can use different reporters locally and on CI. For example, using concise `'dot'` reporter avoids too much output.
+You can use different reporters locally and on CI. For example, using concise `'dot'` reporter avoids too much output. This is the default on CI.
 
 ```js js-flavor=js
 // playwright.config.js
@@ -98,13 +98,41 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
+### Reporter for GitHub Actions
+
+You can use the built in `github` reporter to get automatic failure annotations when running in GitHub actions.
+
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  // 'github' for GitHub Actions CI to generate annotations, default 'list' when running locally
+  reporter: process.env.CI ? 'github' : 'list',
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  // 'github' for GitHub Actions CI to generate annotations, default 'list' when running locally
+  reporter: process.env.CI ? 'github' : 'list',
+};
+export default config;
+```
+
 ## Built-in reporters
 
 All built-in reporters show detailed information about failures, and mostly differ in verbosity for successful runs.
 
 ### List reporter
 
-List reporter is default. It prints a line for each test being run.
+List reporter is default (except on CI where the `dot` reporter is default). It prints a line for each test being run.
 
 ```bash
 npx playwright test --reporter=list
@@ -195,7 +223,7 @@ Running 124 tests using 6 workers
 
 ### Dot reporter
 
-Dot reporter is very concise - it only produces a single character per successful test run. It is useful on CI where you don't want a lot of output.
+Dot reporter is very concise - it only produces a single character per successful test run. It is the default on CI and useful where you don't want a lot of output.
 
 ```bash
 npx playwright test --reporter=dot
@@ -235,15 +263,17 @@ Running 124 tests using 6 workers
 JSON reporter produces an object with all information about the test run. It is usually used together with some terminal reporter like `dot` or `line`.
 
 Most likely you want to write the JSON to a file. When running with `--reporter=json`, use `PLAYWRIGHT_JSON_OUTPUT_NAME` environment variable:
-```bash
-# Linux/macOS
-PLAYWRIGHT_JSON_OUTPUT_NAME=results.json npx playwright test --reporter=json,dot
 
-# Windows with cmd.exe
+```bash bash-flavor=bash
+PLAYWRIGHT_JSON_OUTPUT_NAME=results.json npx playwright test --reporter=json,dot
+```
+
+```bash bash-flavor=batch
 set PLAYWRIGHT_JSON_OUTPUT_NAME=results.json
 npx playwright test --reporter=json,dot
+```
 
-# Windows with PowerShell
+```bash bash-flavor=powershell
 $env:PLAYWRIGHT_JSON_OUTPUT_NAME="results.json"
 npx playwright test --reporter=json,dot
 ```
@@ -276,15 +306,17 @@ export default config;
 JUnit reporter produces a JUnit-style xml report. It is usually used together with some terminal reporter like `dot` or `line`.
 
 Most likely you want to write the report to an xml file. When running with `--reporter=junit`, use `PLAYWRIGHT_JUNIT_OUTPUT_NAME` environment variable:
-```bash
-# Linux/macOS
-PLAYWRIGHT_JUNIT_OUTPUT_NAME=results.xml npx playwright test --reporter=junit,line
 
-# Windows with cmd.exe
+```bash bash-flavor=bash
+PLAYWRIGHT_JUNIT_OUTPUT_NAME=results.xml npx playwright test --reporter=junit,line
+```
+
+```bash bash-flavor=batch
 set PLAYWRIGHT_JUNIT_OUTPUT_NAME=results.xml
 npx playwright test --reporter=junit,line
+```
 
-# Windows with PowerShell
+```bash bash-flavor=powershell
 $env:PLAYWRIGHT_JUNIT_OUTPUT_NAME="results.xml"
 npx playwright test --reporter=junit,line
 ```

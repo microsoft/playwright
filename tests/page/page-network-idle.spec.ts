@@ -16,7 +16,7 @@
  */
 
 import { test as it, expect } from './pageTest';
-import type { Frame } from '../../index';
+import type { Frame } from 'playwright-core';
 import { TestServer } from '../../utils/testserver';
 
 it('should navigate to empty page with networkidle', async ({ page, server }) => {

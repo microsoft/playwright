@@ -45,6 +45,24 @@ it('should work with expires=-1', async ({ context, page }) => {
   expect(await page.evaluate(() => document.cookie)).toEqual('username=John Doe');
 });
 
+it('should add cookies with empty value', async ({ context, page, server }) => {
+  await context.addCookies([{
+    name: 'marker',
+    value: '',
+    domain: 'www.example.com',
+    path: '/',
+    expires: -1,
+    httpOnly: false,
+    secure: false,
+    sameSite: 'Lax',
+  }]);
+  await page.route('**/*', route => {
+    route.fulfill({ body: '<html></html>' }).catch(() => {});
+  });
+  await page.goto('https://www.example.com');
+  expect(await page.evaluate(() => document.cookie)).toEqual('marker=');
+});
+
 it('should roundtrip cookie', async ({ context, page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   // @see https://en.wikipedia.org/wiki/Year_2038_problem

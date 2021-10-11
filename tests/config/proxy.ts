@@ -31,7 +31,7 @@ export class TestProxy {
 
   static async create(port: number): Promise<TestProxy> {
     const proxy = new TestProxy(port);
-    await new Promise(f => proxy._server.listen(port, f));
+    await new Promise<void>(f => proxy._server.listen(port, f));
     return proxy;
   }
 

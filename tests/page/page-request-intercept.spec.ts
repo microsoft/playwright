@@ -17,7 +17,7 @@
 
 import { fail } from 'assert';
 import os from 'os';
-import type { Route, Response } from '../../index';
+import type { Route, Response } from 'playwright-core';
 import { expect, test as it } from './pageTest';
 
 it('should fulfill intercepted response', async ({ page, server, browserName }) => {

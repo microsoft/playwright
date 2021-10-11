@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { ElementHandle, Route } from '../../index';
+import type { ElementHandle, Route } from 'playwright-core';
 import { test as it, expect } from './pageTest';
 import { attachFrame } from '../config/utils';
 

@@ -15,10 +15,10 @@
  */
 
 import { contextTest, expect } from './config/browserTest';
-import { InMemorySnapshotter } from '../lib/server/snapshot/inMemorySnapshotter';
-import { HttpServer } from '../lib/utils/httpServer';
-import { SnapshotServer } from '../lib/server/snapshot/snapshotServer';
-import type { Frame } from '..';
+import { InMemorySnapshotter } from 'playwright-core/lib/server/snapshot/inMemorySnapshotter';
+import { HttpServer } from 'playwright-core/lib/utils/httpServer';
+import { SnapshotServer } from 'playwright-core/lib/server/snapshot/snapshotServer';
+import type { Frame } from 'playwright-core';
 
 const it = contextTest.extend<{ snapshotPort: number, snapshotter: InMemorySnapshotter, showSnapshot: (snapshot: any) => Promise<Frame> }>({
   snapshotPort: async ({}, run, testInfo) => {
@@ -146,7 +146,7 @@ it.describe('snapshots', () => {
     await page.evaluate(() => { (document.styleSheets[0].cssRules[0] as any).style.color = 'blue'; });
     const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
     const resource = snapshot2.resourceByUrl(`http://localhost:${server.PORT}/style.css`);
-    expect(snapshotter.resourceContent(resource.response.content._sha1).toString()).toBe('button { color: blue; }');
+    expect((await snapshotter.resourceContent(resource.response.content._sha1)).toString()).toBe('button { color: blue; }');
   });
 
   it('should capture iframe', async ({ page, server, toImpl, browserName, snapshotter, showSnapshot }) => {

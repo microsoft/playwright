@@ -18,11 +18,11 @@
 const path = require('path');
 const os = require('os');
 const toKebabCase = require('lodash/kebabCase')
-const devices = require('../../src/server/deviceDescriptors');
+const devices = require('playwright-core/lib/server/deviceDescriptors');
 const Documentation = require('../doclint/documentation');
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 const fs = require('fs');
-const {parseOverrides} = require('./parseOverrides');
+const { parseOverrides } = require('./parseOverrides');
 const exported = require('./exported.json');
 const { parseApi } = require('../doclint/api_parser');
 
@@ -147,7 +147,7 @@ class TypesGenerator {
     const parts = [];
     const internalWords = new Set(overriddes.split(/[^\w$]/g));
     while ((definition = this.objectDefinitions.pop())) {
-      const {name, properties} = definition;
+      const { name, properties } = definition;
       const shouldExport = !!exported[name];
       const usedInternally = internalWords.has(name);
       if (!usedInternally && !shouldExport)
@@ -234,12 +234,12 @@ class TypesGenerator {
     }
     const indent = exportMembersAsGlobals ? '' : '  ';
     for (const method of ['on', 'once', 'addListener', 'removeListener', 'off']) {
-      for (const {eventName, params, comment} of eventDescriptions) {
-          if ((method === 'on' || method === 'addListener') && comment)
-            parts.push(this.writeComment(comment, indent));
-          else
-            parts.push(this.writeComment(commentForMethod[method], indent));
-          parts.push(`  ${method}(event: '${eventName}', listener: (${params}) => void): this;\n`);
+      for (const { eventName, params, comment } of eventDescriptions) {
+        if ((method === 'on' || method === 'addListener') && comment)
+          parts.push(this.writeComment(comment, indent));
+        else
+          parts.push(this.writeComment(commentForMethod[method], indent));
+        parts.push(`  ${method}(event: '${eventName}', listener: (${params}) => void): this;\n`);
       }
     }
 
@@ -249,7 +249,7 @@ class TypesGenerator {
         return '';
       if (member.alias === 'waitForEvent') {
         const parts = [];
-        for (const {eventName, params, comment, type} of eventDescriptions) {
+        for (const { eventName, params, comment, type } of eventDescriptions) {
           if (comment)
             parts.push(this.writeComment(comment, indent));
           parts.push(`  ${member.alias}(event: '${eventName}', optionsOrPredicate?: { predicate?: (${params}) => boolean | Promise<boolean>, timeout?: number } | ((${params}) => boolean | Promise<boolean>)): Promise<${type}>;\n`);
@@ -345,7 +345,7 @@ class TypesGenerator {
   stringifyObjectType(properties, name, indent = '') {
     const parts = [];
     parts.push(`{`);
-    parts.push(properties.map(member => `${this.memberJSDOC(member, indent + '  ')}${this.nameForProperty(member)}${this.argsFromMember(member, indent + '  ', name)}: ${this.stringifyComplexType(member.type, indent + '  ',  name, member.name)};`).join('\n\n'));
+    parts.push(properties.map(member => `${this.memberJSDOC(member, indent + '  ')}${this.nameForProperty(member)}${this.argsFromMember(member, indent + '  ', name)}: ${this.stringifyComplexType(member.type, indent + '  ', name, member.name)};`).join('\n\n'));
     parts.push(indent + '}');
     return parts.join('\n');
   }
@@ -369,8 +369,8 @@ class TypesGenerator {
     if (type.name === 'Object' && type.properties && type.properties.length) {
       const name = namespace.map(n => n[0].toUpperCase() + n.substring(1)).join('');
       const shouldExport = exported[name];
-      const properties = namespace[namespace.length -1] === 'options' ? type.sortedProperties() : type.properties;
-      this.objectDefinitions.push({name, properties});
+      const properties = namespace[namespace.length - 1] === 'options' ? type.sortedProperties() : type.properties;
+      this.objectDefinitions.push({ name, properties });
       if (shouldExport) {
         out = name;
       } else {
@@ -383,7 +383,7 @@ class TypesGenerator {
         type: this.stringifySimpleType(a, indent, ...namespace),
         name: a.name.toLowerCase()
       }));
-      out = `((${stringArgs.map(({name, type}) => `${name}: ${type}`).join(', ')}) => ${this.stringifySimpleType(type.returnType, indent, ...namespace)})`;
+      out = `((${stringArgs.map(({ name, type }) => `${name}: ${type}`).join(', ')}) => ${this.stringifySimpleType(type.returnType, indent, ...namespace)})`;
     } else if (type.name === 'function') {
       out = 'Function';
     }
@@ -451,7 +451,7 @@ class TypesGenerator {
   }
 }
 
-(async function() {
+(async function () {
   let hadChanges = false;
 
   /**
@@ -469,10 +469,10 @@ class TypesGenerator {
     fs.writeFileSync(filePath, content, 'utf8');
   }
 
-  const typesDir = path.join(PROJECT_DIR, 'types');
+  const typesDir = path.join(PROJECT_DIR, 'packages', 'playwright-core', 'types');
   if (!fs.existsSync(typesDir))
     fs.mkdirSync(typesDir)
-  writeFile(path.join(typesDir, 'protocol.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'src', 'server', 'chromium', 'protocol.d.ts'), 'utf8'));
+  writeFile(path.join(typesDir, 'protocol.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'packages', 'playwright-core', 'src', 'server', 'chromium', 'protocol.d.ts'), 'utf8'));
 
   const apiDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
   apiDocumentation.index();

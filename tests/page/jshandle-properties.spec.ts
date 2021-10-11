@@ -16,7 +16,7 @@
  */
 
 import { test as it, expect } from './pageTest';
-import type { ElementHandle } from '../../index';
+import type { ElementHandle } from 'playwright-core';
 
 it('should work', async ({ page }) => {
   const aHandle = await page.evaluateHandle(() => ({

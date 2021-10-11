@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as playwright from '../../../index';
+import * as playwright from 'playwright';
 
 type AssertType<T, S> = S extends T ? AssertNotAny<S> : false;
 type AssertNotAny<S> = {notRealProperty: number} extends S ? false : true;
@@ -819,4 +819,4 @@ import {
   ViewportSize,
   Geolocation,
   HTTPCredentials,
-} from '../../../';
+} from 'playwright';

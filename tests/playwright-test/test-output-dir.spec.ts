@@ -395,6 +395,27 @@ test('should accept a relative path for outputDir', async ({ runInlineTest }, te
   expect(result.exitCode).toBe(0);
 });
 
+test('should have output dir based on rootDir (cwd)', async ({ runInlineTest }, testInfo) => {
+  test.fixme(true, 'https://github.com/microsoft/playwright/issues/9380');
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      const path = require('path');
+      module.exports = {
+        testDir: path.join(__dirname, 'e2e'),
+        outputDir: 'test-results/',
+      };`,
+    'e2e/example.spec.js': `
+      const { test } = pwt;
+      const fs = require('fs');
+      test('hello world', async ({ }, testInfo) => {
+        fs.writeFileSync(testInfo.outputPath('foo.txt'), 'hello');
+      });
+    `,
+  }, {}, {}, { usesCustomOutputDir: true });
+  expect(result.exitCode).toBe(0);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'example-hello-world', 'foo.txt'))).toBe(true);
+});
+
 
 test('should allow nonAscii characters in the output dir', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({

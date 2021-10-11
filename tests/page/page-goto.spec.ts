@@ -495,7 +495,8 @@ it('should fail when navigating and show the url at the error message', async fu
   expect(error.message).toContain(url);
 });
 
-it('should be able to navigate to a page controlled by service worker', async ({ page, server }) => {
+it('should be able to navigate to a page controlled by service worker', async ({ page, server, isElectron }) => {
+  it.skip(isElectron);
   await page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html');
   await page.evaluate(() => window['activationPromise']);
   await page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html');

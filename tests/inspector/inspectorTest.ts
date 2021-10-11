@@ -15,12 +15,11 @@
  */
 
 import { contextTest } from '../config/browserTest';
-import type { Page } from '../../index';
+import type { Page } from 'playwright-core';
 import * as path from 'path';
-import type { Source } from '../../src/server/supplements/recorder/recorderTypes';
-import { chromium } from '../../index';
+import type { Source } from 'playwright-core/src/server/supplements/recorder/recorderTypes';
 import { CommonFixtures, TestChildProcess } from '../config/commonFixtures';
-export { expect } from '../config/test-runner';
+export { expect } from '@playwright/test';
 
 type CLITestArgs = {
   recorderPageGetter: () => Promise<Page>;
@@ -28,6 +27,8 @@ type CLITestArgs = {
   openRecorder: () => Promise<Recorder>;
   runCLI: (args: string[]) => CLIMock;
 };
+
+const playwrightToAutomateInspector = require('playwright-core/lib/inProcessFactory').createInProcessPlaywright();
 
 export const test = contextTest.extend<CLITestArgs>({
   recorderPageGetter: async ({ context, toImpl, mode }, run, testInfo) => {
@@ -37,7 +38,7 @@ export const test = contextTest.extend<CLITestArgs>({
       while (!toImpl(context).recorderAppForTest)
         await new Promise(f => setTimeout(f, 100));
       const wsEndpoint = toImpl(context).recorderAppForTest.wsEndpoint;
-      const browser = await chromium.connectOverCDP({ wsEndpoint });
+      const browser = await playwrightToAutomateInspector.chromium.connectOverCDP({ wsEndpoint });
       const c = browser.contexts()[0];
       return c.pages()[0] || await c.waitForEvent('page');
     });
@@ -185,7 +186,7 @@ class CLIMock {
   constructor(childProcess: CommonFixtures['childProcess'], browserName: string, channel: string | undefined, headless: boolean | undefined, args: string[], executablePath: string | undefined) {
     const nodeArgs = [
       'node',
-      path.join(__dirname, '..', '..', 'lib', 'cli', 'cli.js'),
+      path.join(__dirname, '..', '..', 'packages', 'playwright-core', 'lib', 'cli', 'cli.js'),
       'codegen',
       ...args,
       `--browser=${browserName}`,

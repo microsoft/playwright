@@ -15,7 +15,6 @@
  */
 
 import { test, expect, stripAscii } from './playwright-test-fixtures';
-import * as path from 'path';
 
 test('should fail', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -241,7 +240,7 @@ test('should focus test from one project', async ({ runInlineTest }) => {
 test('should work with default export', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'file.spec.ts': `
-      import t from ${JSON.stringify(path.join(__dirname, 'entry'))};
+      import t from '@playwright/test';
       t('passed', () => {
         t.expect(1 + 1).toBe(2);
       });

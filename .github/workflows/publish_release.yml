@@ -15,9 +15,10 @@ jobs:
       with:
         node-version: 12
         registry-url: 'https://registry.npmjs.org'
+    - run: npm i -g npm@7
     - run: npm ci
     - run: npm run build
-    - run: node lib/cli/cli install-deps
+    - run: npx playwright install-deps
     - run: utils/publish_all_packages.sh --release
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -32,9 +33,10 @@ jobs:
       with:
         node-version: 12
         registry-url: 'https://registry.npmjs.org'
+    - run: npm i -g npm@7
     - run: npm ci
     - run: npm run build
-    - run: node lib/cli/cli install-deps
+    - run: npx playwright install-deps
     - run: utils/build/build-playwright-driver.sh
     - run: utils/build/upload-playwright-driver.sh
       env:
@@ -42,34 +44,14 @@ jobs:
         AZ_ACCOUNT_KEY: ${{ secrets.AZ_ACCOUNT_KEY }}
         AZ_ACCOUNT_NAME: ${{ secrets.AZ_ACCOUNT_NAME }}
 
-  publish-docker-release:
+  trigger-docker-build:
     name: "publish to DockerHub"
     runs-on: ubuntu-20.04
     if: github.repository == 'microsoft/playwright'
     steps:
-    - uses: actions/checkout@v2
-    - uses: azure/docker-login@v1
-      with:
-        login-server: playwright.azurecr.io
-        username: playwright
-        password: ${{ secrets.DOCKER_PASSWORD }}
-    - uses: actions/setup-node@v2
-      with:
-        node-version: 12
-    - run: npm ci
-    - run: npm run build
-    - run: node lib/cli/cli install-deps
-    - run: ./utils/docker/build.sh bionic playwright:localbuild-bionic
-    - run: ./utils/docker/build.sh focal playwright:localbuild-focal
-    - name: tag & publish
-      run: |
-        # GITHUB_REF has a form of `refs/tags/v1.3.0`.
-        # TAG_NAME would be `v1.3.0`
-        TAG_NAME=${GITHUB_REF#refs/tags/}
-        ./utils/docker/tag_and_push.sh playwright:localbuild-bionic playwright.azurecr.io/public/playwright:bionic
-        ./utils/docker/tag_and_push.sh playwright:localbuild-bionic playwright.azurecr.io/public/playwright:${TAG_NAME}-bionic
-
-        ./utils/docker/tag_and_push.sh playwright:localbuild-focal playwright.azurecr.io/public/playwright:latest
-        ./utils/docker/tag_and_push.sh playwright:localbuild-focal playwright.azurecr.io/public/playwright:focal
-        ./utils/docker/tag_and_push.sh playwright:localbuild-focal playwright.azurecr.io/public/playwright:${TAG_NAME}
-        ./utils/docker/tag_and_push.sh playwright:localbuild-focal playwright.azurecr.io/public/playwright:${TAG_NAME}-focal
+    - run: |
+        curl -X POST \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: token ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}" \
+          --data "{\"event_type\": \"build_docker_production\", \"client_payload\": {\"ref\": \"${{ github.sha }}\"}}" \
+          https://api.github.com/repos/microsoft/playwright-internal/dispatches

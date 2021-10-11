@@ -18,7 +18,7 @@ import { browserTest as it, expect } from './config/browserTest';
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { Download } from '..';
+import type { Download } from 'playwright-core';
 
 it.describe('download event', () => {
   it.beforeEach(async ({ server }) => {
@@ -601,7 +601,7 @@ it('should be able to download a inline PDF file', async ({ browser, server, ass
   const page = await browser.newPage({ acceptDownloads: true });
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/empty.pdf', async route => {
-    const response = await page.context()._request.get(route.request());
+    const response = await page.context().request.fetch(route.request());
     await route.fulfill({
       response,
       headers: {

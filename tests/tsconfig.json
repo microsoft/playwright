@@ -8,6 +8,8 @@
         "strictNullChecks": false,
         "strictBindCallApply": true,
         "allowSyntheticDefaultImports": true,
+        "useUnknownInCatchVariables": false,
     },
-    "include": ["**/*.spec.js", "**/*.ts", "index.d.ts"]
+    "include": ["**/*.spec.js", "**/*.ts", "index.d.ts"],
+    "exclude": ["playwright-test/"]
 }

@@ -6,7 +6,7 @@ BrowserContexts provide a way to operate multiple independent browser sessions.
 If a page opens another page, e.g. with a `window.open` call, the popup will belong to the parent page's browser
 context.
 
-Playwright allows creation of "incognito" browser contexts with `browser.newContext()` method. "Incognito" browser
+Playwright allows creating "incognito" browser contexts with [`method: Browser.newContext`] method. "Incognito" browser
 contexts don't write any browsing data to disk.
 
 ```js
@@ -188,12 +188,6 @@ Service workers are only supported on Chromium-based browsers.
 :::
 
 Emitted when new service worker is created in the context.
-
-## property: BrowserContext._request
-* langs: js
-- type: <[FetchRequest]>
-
-API testing helper associated with this context. Requests made with this API will use context cookies.
 
 ## async method: BrowserContext.addCookies
 
@@ -854,6 +848,12 @@ Creates a new page in the browser context.
 - returns: <[Array]<[Page]>>
 
 Returns all open pages in the context.
+
+## property: BrowserContext.request
+* langs: js
+- type: <[ApiRequestContext]>
+
+API testing helper associated with this context. Requests made with this API will use context cookies.
 
 ## async method: BrowserContext.route
 

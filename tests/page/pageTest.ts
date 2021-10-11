@@ -15,8 +15,8 @@
  */
 
 import { baseTest } from '../config/baseTest';
-import type { Page } from '../../index';
-export { expect } from '../config/test-runner';
+import type { Page } from 'playwright-core';
+export { expect } from '@playwright/test';
 
 // Page test does not guarantee an isolated context, just a new page (because Android).
 export type PageTestFixtures = {

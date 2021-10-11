@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials } from './types';
+import type { ApiRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials } from './types';
 import type { Expect } from './testExpect';
 
 export type { Expect } from './testExpect';
@@ -23,6 +23,7 @@ export type ReporterDescription =
   ['dot'] |
   ['line'] |
   ['list'] |
+  ['github'] |
   ['junit'] | ['junit', { outputFile?: string, stripANSIControlSequences?: boolean }] |
   ['json'] | ['json', { outputFile?: string }] |
   ['null'] |
@@ -109,7 +110,7 @@ interface TestConfig {
   preserveOutput?: PreserveOutput;
   projects?: Project[];
   quiet?: boolean;
-  reporter?: LiteralUnion<'list'|'dot'|'line'|'json'|'junit'|'null', string> | ReporterDescription[];
+  reporter?: LiteralUnion<'list'|'dot'|'line'|'github'|'json'|'junit'|'null', string> | ReporterDescription[];
   reportSlowTests?: ReportSlowTests;
   shard?: Shard;
   updateSnapshots?: UpdateSnapshots;
@@ -335,6 +336,7 @@ export interface PlaywrightWorkerArgs {
 export interface PlaywrightTestArgs {
   context: BrowserContext;
   page: Page;
+  request: ApiRequestContext;
 }
 
 export type PlaywrightTestProject<TestArgs = {}, WorkerArgs = {}> = Project<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
