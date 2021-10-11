@@ -117,7 +117,6 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
       ...process.env,
       PLAYWRIGHT_JSON_OUTPUT_NAME: reportFile,
       PWTEST_CACHE_DIR: cacheDir,
-      PWTEST_CLI_ALLOW_TEST_COMMAND: '1',
       PWTEST_SKIP_TEST_OUTPUT: '1',
       ...env,
     },

@@ -15,7 +15,13 @@
  */
 
 import { test, expect, stripAscii } from './playwright-test-fixtures';
-import { relativeFilePath } from '../../src/test/util';
+import path from 'path';
+
+function relativeFilePath(file: string): string {
+  if (!path.isAbsolute(file))
+    return file;
+  return path.relative(process.cwd(), file);
+}
 
 test('print GitHub annotations for success', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -59,7 +65,7 @@ test('print GitHub annotations for failed tests', async ({ runInlineTest }, test
     `
   }, { retries: 3, reporter: 'github' }, { GITHUB_ACTION: 'true', GITHUB_WORKSPACE: process.cwd() });
   const text = stripAscii(result.output);
-  const testPath =  relativeFilePath(testInfo.outputPath('a.test.js'));
+  const testPath = relativeFilePath(testInfo.outputPath('a.test.js'));
   expect(text).toContain(`::error file=${testPath},title=a.test.js:6:7 › example,line=7,col=23::  1) a.test.js:6:7 › example =======================================================================%0A%0A    Retry #1`);
   expect(text).toContain(`::error file=${testPath},title=a.test.js:6:7 › example,line=7,col=23::  1) a.test.js:6:7 › example =======================================================================%0A%0A    Retry #2`);
   expect(text).toContain(`::error file=${testPath},title=a.test.js:6:7 › example,line=7,col=23::  1) a.test.js:6:7 › example =======================================================================%0A%0A    Retry #3`);

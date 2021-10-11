@@ -16,12 +16,12 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type { LaunchOptions, BrowserContextOptions, Page, BrowserContext, BrowserType } from '../../types/types';
-import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo } from '../../types/test';
+import type { LaunchOptions, BrowserContextOptions, Page, BrowserContext, BrowserType } from 'playwright-core';
+import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo } from 'playwright-core/types/test';
 import { rootTestType } from './testType';
-import { assert, createGuid, removeFolders } from '../utils/utils';
-import { GridClient } from '../grid/gridClient';
-import { Browser } from '../..';
+import { assert, createGuid, removeFolders } from 'playwright-core/src/utils/utils';
+import { GridClient } from 'playwright-core/src/grid/gridClient';
+import { Browser } from 'playwright-core';
 export { expect } from './expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
@@ -127,7 +127,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
       await use(gridClient.playwright() as any);
       await gridClient.close();
     } else {
-      await use(require('../inprocess'));
+      await use(require('playwright-core/lib/inprocess'));
     }
   }, { scope: 'worker' } ],
   headless: [ undefined, { scope: 'worker' } ],

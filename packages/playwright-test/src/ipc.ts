@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { TestError } from '../../types/testReporter';
+import type { TestError } from 'playwright-core/types/testReporter';
 import type { Config, TestStatus } from './types';
 
 export type SerializedLoaderData = {

@@ -17,7 +17,7 @@
 import milliseconds from 'ms';
 import path from 'path';
 import { BaseReporter, formatFailure } from './base';
-import { TestCase, FullResult } from '../../../types/testReporter';
+import { TestCase, FullResult } from 'playwright-core/types/testReporter';
 
 type GitHubLogType = 'debug' | 'notice' | 'warning' | 'error';
 

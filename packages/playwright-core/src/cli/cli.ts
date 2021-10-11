@@ -228,14 +228,9 @@ Examples:
 if (!process.env.PW_CLI_TARGET_LANG) {
   let playwrightTestPackagePath = null;
   try {
-    const isLocal = packageJSON.name === '@playwright/test' || process.env.PWTEST_CLI_ALLOW_TEST_COMMAND;
-    if (isLocal) {
-      playwrightTestPackagePath = '../test/cli';
-    } else {
-      playwrightTestPackagePath = require.resolve('@playwright/test/lib/test/cli', {
-        paths: [__dirname, process.cwd()]
-      });
-    }
+    playwrightTestPackagePath = require.resolve('@playwright/test/lib/cli', {
+      paths: [__dirname, process.cwd()]
+    });
   } catch {}
 
   if (playwrightTestPackagePath) {

@@ -24,7 +24,7 @@ import { Dispatcher, TestGroup } from './dispatcher';
 import { createFileMatcher, createTitleMatcher, FilePatternFilter, monotonicTime } from './util';
 import { TestCase, Suite } from './test';
 import { Loader } from './loader';
-import { Reporter } from '../../types/testReporter';
+import { Reporter } from 'playwright-core/types/testReporter';
 import { Multiplexer } from './reporters/multiplexer';
 import DotReporter from './reporters/dot';
 import GitHubReporter from './reporters/github';
@@ -37,7 +37,7 @@ import { ProjectImpl } from './project';
 import { Minimatch } from 'minimatch';
 import { FullConfig } from './types';
 import { WebServer } from './webServer';
-import { raceAgainstDeadline } from '../utils/async';
+import { raceAgainstDeadline } from 'playwright-core/src/utils/async';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);

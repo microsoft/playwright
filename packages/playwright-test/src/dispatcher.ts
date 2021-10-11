@@ -18,7 +18,7 @@ import child_process from 'child_process';
 import path from 'path';
 import { EventEmitter } from 'events';
 import { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams, StepBeginPayload, StepEndPayload } from './ipc';
-import type { TestResult, Reporter, TestStep } from '../../types/testReporter';
+import type { TestResult, Reporter, TestStep } from 'playwright-core/types/testReporter';
 import { Suite, TestCase } from './test';
 import { Loader } from './loader';
 

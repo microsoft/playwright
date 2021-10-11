@@ -16,7 +16,7 @@
 
 import colors from 'colors/safe';
 import { BaseReporter } from './base';
-import { FullResult, TestCase, TestResult } from '../../../types/testReporter';
+import { FullResult, TestCase, TestResult } from 'playwright-core/types/testReporter';
 
 class DotReporter extends BaseReporter {
   private _counter = 0;

@@ -20,7 +20,7 @@ import url from 'url';
 import type { TestError, Location } from './types';
 import { default as minimatch } from 'minimatch';
 import debug from 'debug';
-import { isRegExp } from '../utils/utils';
+import { isRegExp } from 'playwright-core/src/utils/utils';
 
 export function serializeError(error: Error | any): TestError {
   if (error instanceof Error) {

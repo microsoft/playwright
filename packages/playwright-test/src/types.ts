@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import type { Fixtures, TestError, TestInfo } from '../../types/test';
-import type { Location } from '../../types/testReporter';
-export * from '../../types/test';
-export { Location } from '../../types/testReporter';
+import type { Fixtures, TestError, TestInfo } from 'playwright-core/types/test';
+import type { Location } from 'playwright-core/types/testReporter';
+export * from 'playwright-core/types/test';
+export { Location } from 'playwright-core/types/testReporter';
 
 export type FixturesWithLocation = {
   fixtures: Fixtures;

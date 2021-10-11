@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import * as channels from '../../protocol/channels';
-import { Locator, Page } from '../../..';
-import { constructURLBasedOnBaseURL } from '../../utils/utils';
+import * as channels from 'playwright-core/src/protocol/channels';
+import { Locator, Page } from 'playwright-core';
+import { constructURLBasedOnBaseURL } from 'playwright-core/src/utils/utils';
 import type { Expect } from '../types';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';

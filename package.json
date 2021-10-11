@@ -28,7 +28,7 @@
     "lint": "npm run eslint && npm run tsc && npm run doc && npm run check-deps && node utils/generate_channels.js && node utils/generate_types/ --check-clean && npm run test-types && npm run lint-packages",
     "lint-packages": "node utils/prepare_packages.js --check-clean",
     "flint": "concurrently \"npm run eslint\" \"npm run tsc\" \"npm run doc\" \"npm run check-deps\" \"node utils/generate_channels.js\" \"node utils/generate_types/ --check-clean\" \"npm run test-types\" \"npm run lint-packages\"",
-    "clean": "rimraf packages/playwright-core/lib && rimraf packages/playwright-core/src/generated/",
+    "clean": "rimraf packages/playwright-core/lib && rimraf packages/playwright-test/lib && rimraf packages/playwright-core/src/generated/",
     "prepare": "node install-from-github.js",
     "build": "node utils/build/build.js",
     "watch": "node utils/build/build.js --watch --lint",

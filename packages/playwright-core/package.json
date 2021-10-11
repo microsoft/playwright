@@ -16,6 +16,7 @@
       "import": "./index.mjs",
       "require": "./index.js"
     },
+    "./src/*": "./lib/*.js",
     "./*": "./*.js"
   },
   "types": "types/types.d.ts",
