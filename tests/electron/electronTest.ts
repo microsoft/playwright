@@ -16,10 +16,10 @@
 
 import { baseTest, CommonWorkerFixtures } from '../config/baseTest';
 import { ElectronApplication, Page } from 'playwright-core';
-import type { Fixtures } from '../config/test-runner';
+import type { Fixtures } from '@playwright/test';
 import * as path from 'path';
 import { PageTestFixtures } from '../page/pageTest';
-export { expect } from '../config/test-runner';
+export { expect } from '@playwright/test';
 
 type ElectronTestFixtures = PageTestFixtures & {
   electronApp: ElectronApplication;

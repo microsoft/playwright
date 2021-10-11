@@ -15,7 +15,7 @@
  */
 
 import { TestServer } from '../../utils/testserver';
-import { Fixtures, _baseTest } from './test-runner';
+import { Fixtures, _baseTest } from '@playwright/test';
 import * as path from 'path';
 import * as fs from 'fs';
 import socks from 'socksv5';

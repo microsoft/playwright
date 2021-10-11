@@ -16,9 +16,9 @@
 
 import type { AndroidDevice, BrowserContext } from 'playwright-core';
 import { CommonWorkerFixtures, baseTest } from '../config/baseTest';
-import type { Fixtures } from '../config/test-runner';
+import type { Fixtures } from '@playwright/test';
 import { PageTestFixtures } from '../page/pageTest';
-export { expect } from '../config/test-runner';
+export { expect } from '@playwright/test';
 
 type AndroidWorkerFixtures = {
   androidDevice: AndroidDevice;

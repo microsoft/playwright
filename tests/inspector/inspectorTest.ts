@@ -19,7 +19,7 @@ import type { Page } from 'playwright-core';
 import * as path from 'path';
 import type { Source } from 'playwright-core/src/server/supplements/recorder/recorderTypes';
 import { CommonFixtures, TestChildProcess } from '../config/commonFixtures';
-export { expect } from '../config/test-runner';
+export { expect } from '@playwright/test';
 
 type CLITestArgs = {
   recorderPageGetter: () => Promise<Page>;

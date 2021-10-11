@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { expect } from './test-runner';
+import { expect } from '@playwright/test';
 import type { Frame, Page } from 'playwright-core';
 
 export async function attachFrame(page: Page, frameId: string, url: string): Promise<Frame> {
