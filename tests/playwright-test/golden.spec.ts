@@ -654,3 +654,17 @@ test('should fail with missing expectations and retries', async ({ runInlineTest
   const data = fs.readFileSync(snapshotOutputPath);
   expect(data.toString()).toBe('Hello world');
 });
+
+test('should allow comparing text with text without file extension', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...files,
+    'a.spec.js-snapshots/snapshot-no-extension': `Hello world`,
+    'a.spec.js': `
+      const { test } = require('./helper');
+      test('is a test', ({}) => {
+        expect('Hello world').toMatchSnapshot('snapshot-no-extension');
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
