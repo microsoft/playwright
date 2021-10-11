@@ -106,7 +106,7 @@ class GridAgent extends EventEmitter {
   private _log: debug.Debugger;
   private _agentCreationTimeout: NodeJS.Timeout;
 
-  constructor(capacity = Infinity, creationTimeout = 5 * 60_000) {
+  constructor(capacity = Infinity, creationTimeout = 5 * 60000) {
     super();
     this._capacity = capacity;
     this._log = debug(`[agent ${this.agentId}]`);

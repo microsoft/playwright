@@ -20,7 +20,7 @@ import path from 'path';
 
 export const name = 'Agents co-located with grid';
 export const capacity = Infinity;
-export const timeout = 10_000;
+export const timeout = 10000;
 export function launch({ agentId, gridURL }: GridAgentLaunchOptions) {
   child_process.spawn(process.argv[0], [
     path.join(__dirname, '..', 'cli', 'cli.js'),
