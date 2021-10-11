@@ -56,6 +56,12 @@ function runWatch() {
     callback();
   }
 
+  for (const { files, from, to, ignored } of copyFiles) {
+    const watcher = chokidar.watch([filePath(files)], { ignored });
+    watcher.on('all', (event, file) => {
+      copyFile(file, from, to);
+    });
+  }
   const spawns = [];
   for (const step of steps)
     spawns.push(child_process.spawn(step.command, step.args, {
@@ -67,12 +73,6 @@ function runWatch() {
   process.on('exit', () => spawns.forEach(s => s.kill()));
   for (const onChange of onChanges)
     runOnChanges(onChange.inputs, onChange.script);
-  for (const { files, from, to, ignored } of copyFiles) {
-    const watcher = chokidar.watch([filePath(files)], { ignored });
-    watcher.on('all', (event, file) => {
-      copyFile(file, from, to);
-    });
-  }
 }
 
 async function runBuild() {
@@ -90,12 +90,6 @@ async function runBuild() {
       process.exit(out.status);
   }
 
-  for (const step of steps)
-    runStep(step);
-  for (const onChange of onChanges) {
-    if (!onChange.committed)
-      runStep({ command: 'node', args: [filePath(onChange.script)], shell: false });
-  }
   for (const { files, from, to, ignored } of copyFiles) {
     const watcher = chokidar.watch([filePath(files)], {
       ignored
@@ -105,6 +99,12 @@ async function runBuild() {
     });
     await new Promise(x => watcher.once('ready', x));
     watcher.close();
+  }
+  for (const step of steps)
+    runStep(step);
+  for (const onChange of onChanges) {
+    if (!onChange.committed)
+      runStep({ command: 'node', args: [filePath(onChange.script)], shell: false });
   }
 }
 
