@@ -1163,10 +1163,11 @@ export class Frame extends SdkObject {
 
   async expect(metadata: CallMetadata, selector: string, options: FrameExpectParams): Promise<{ pass: boolean, received?: any, log?: string[] }> {
     const controller = new ProgressController(metadata, this);
-    const querySelectorAll = options.expression === 'to.have.count' || options.expression.endsWith('.array');
+    const isListMatcher = options.expression.endsWith('.array');
+    const querySelectorAll = options.expression === 'to.have.count' || isListMatcher;
     const mainWorld = options.expression === 'to.have.property';
-    const omitAttached = (!options.isNot && options.expression === 'to.be.hidden') || (options.isNot && options.expression === 'to.be.visible');
-
+    const expectsEmptyList = options.expectedText?.length === 0;
+    const omitAttached = (isListMatcher && options.isNot !== expectsEmptyList) || (!options.isNot && options.expression === 'to.be.hidden') || (options.isNot && options.expression === 'to.be.visible');
     return await this._scheduleRerunnableTaskWithController(controller, selector, (progress, element, options, elements, continuePolling) => {
       // We don't have an element and we don't need an element => pass.
       if (!element && options.omitAttached)
@@ -1263,18 +1264,22 @@ export class Frame extends SdkObject {
           const callback = injected.eval(callbackText) as DomTaskBody<T, R, Element | undefined>;
           const poller = logScale ? injected.pollLogScale.bind(injected) : injected.pollRaf.bind(injected);
           return poller((progress, continuePolling) => {
+            let element: Element | undefined;
+            let elements: Element[] = [];
             if (querySelectorAll) {
-              const elements = injected.querySelectorAll(info.parsed, document);
+              elements = injected.querySelectorAll(info.parsed, document);
+              element = elements[0];
               progress.logRepeating(`  selector resolved to ${elements.length} element${elements.length === 1 ? '' : 's'}`);
-              return callback(progress, elements[0], taskData as T, elements, continuePolling);
+            } else {
+              element = injected.querySelector(info.parsed, document, info.strict);
+              elements = [];
+              if (element)
+                progress.logRepeating(`  selector resolved to ${injected.previewNode(element)}`);
             }
 
-            const element = injected.querySelector(info.parsed, document, info.strict);
             if (!element && !omitAttached)
               return continuePolling;
-            if (element)
-              progress.logRepeating(`  selector resolved to ${injected.previewNode(element)}`);
-            return callback(progress, element, taskData as T, [], continuePolling);
+            return callback(progress, element, taskData as T, elements, continuePolling);
           });
         }, { info, taskData, callbackText, querySelectorAll: options.querySelectorAll, logScale: options.logScale, omitAttached: options.omitAttached });
       }, true);
