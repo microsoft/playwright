@@ -90,6 +90,8 @@ async function writeFiles(testInfo: TestInfo, files: Files) {
   return baseDir;
 }
 
+const cliEntrypoint = path.join(__dirname, '../../packages/playwright-core/cli.js');
+
 async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseDir: string, params: any, env: Env, options: RunOptions): Promise<RunResult> {
   const paramList = [];
   for (const key of Object.keys(params)) {
@@ -100,7 +102,7 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
   }
   const outputDir = path.join(baseDir, 'test-results');
   const reportFile = path.join(outputDir, 'report.json');
-  const args = ['npx', 'playwright', 'test'];
+  const args = ['node', cliEntrypoint, 'test'];
   if (!options.usesCustomOutputDir)
     args.push('--output=' + outputDir);
   args.push(
