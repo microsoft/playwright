@@ -15,6 +15,7 @@ jobs:
       with:
         node-version: 12
         registry-url: 'https://registry.npmjs.org'
+    - run: npm i -g npm@7
     - run: npm ci
     - run: npm run build
     - run: node lib/cli/cli install-deps
@@ -32,6 +33,7 @@ jobs:
       with:
         node-version: 12
         registry-url: 'https://registry.npmjs.org'
+    - run: npm i -g npm@7
     - run: npm ci
     - run: npm run build
     - run: node lib/cli/cli install-deps
