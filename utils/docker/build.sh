@@ -23,9 +23,8 @@ function cleanup() {
 trap "cleanup; cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
 
-# We rely on `./playwright.tar.gz` to download browsers into the docker
+# We rely on `./playwright-core.tar.gz` to download browsers into the docker
 # image.
-npm pack ../../packages/playwright
-mv ../../packages/playwright/playwright.tar.gz .
+node ../../utils/pack_package.js playwright-core ./playwright-core.tar.gz
 
 docker build -t "$2" -f "Dockerfile.$1" .
