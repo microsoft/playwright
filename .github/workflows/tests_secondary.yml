@@ -126,7 +126,7 @@ jobs:
         DEBUG: pw:install
     - run: npm run build
     - run: node lib/cli/cli install-deps
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash packages/installation-tests/installation-tests.sh
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash installation-tests/installation-tests.sh
 
   headful_linux:
     name: "Headful Linux"
