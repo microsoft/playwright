@@ -110,7 +110,7 @@ async function lintPackage(packageName) {
     if (name in PACKAGES)
       currentPackageJSON.dependencies[name] = `=${pwInternalJSON.version}`;
   }
-  await writeToPackage('package.json', JSON.stringify(currentPackageJSON, null, 2));
+  await writeToPackage('package.json', JSON.stringify(currentPackageJSON, null, 2) + '\n');
 
   async function writeToPackage(fileName, content) {
     const toPath = path.join(packagePath, fileName);

@@ -20,7 +20,6 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "playwright-core": "=1.16.0-next",
     "@babel/code-frame": "^7.14.5",
     "@babel/core": "^7.14.8",
     "@babel/plugin-proposal-class-properties": "^7.14.5",
@@ -43,8 +42,10 @@
     "jest-matcher-utils": "^27.2.5",
     "minimatch": "^3.0.3",
     "ms": "^2.1.2",
+    "open": "^8.3.0",
     "pirates": "^4.0.1",
     "pixelmatch": "^5.2.1",
+    "playwright-core": "=1.16.0-next",
     "source-map-support": "^0.4.18"
   }
 }

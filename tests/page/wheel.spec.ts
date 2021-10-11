@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import type { Page } from '../../';
+import type { Page } from 'playwright-core';
 import { test as it, expect } from './pageTest';
 it.skip(({ isElectron, browserMajorVersion }) => {
   // Old Electron has flaky wheel events.
