@@ -141,11 +141,27 @@ export class Electron extends SdkObject {
         onExit: () => {},
       });
 
+      const waitForXserverError = new Promise(async (resolve, reject) => {
+        await waitForLine(progress, launchedProcess, /Unable to open X display/);
+        throw new Error([
+          'Unable to open X display!',
+          `================================`,
+          'Most likely this is because there is no X server available.',
+          "Use 'xvfb-run' on Linux to launch your tests with an emulated display server.",
+          "For example: 'xvfb-run npm run test:e2e'",
+          `================================`,
+          progress.metadata.log
+        ].join('\n'));
+      });
+
       const nodeMatch = await waitForLine(progress, launchedProcess, /^Debugger listening on (ws:\/\/.*)$/);
       const nodeTransport = await WebSocketTransport.connect(progress, nodeMatch[1]);
       const nodeConnection = new CRConnection(nodeTransport, helper.debugProtocolLogger(), browserLogsCollector);
 
-      const chromeMatch = await waitForLine(progress, launchedProcess, /^DevTools listening on (ws:\/\/.*)$/);
+      const chromeMatch = await Promise.race([
+        waitForLine(progress, launchedProcess, /^DevTools listening on (ws:\/\/.*)$/),
+        waitForXserverError,
+      ]) as RegExpMatchArray;
       const chromeTransport = await WebSocketTransport.connect(progress, chromeMatch[1]);
       const browserProcess: BrowserProcess = {
         onclose: undefined,
