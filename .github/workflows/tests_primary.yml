@@ -7,8 +7,8 @@ on:
       - release-*
   pull_request:
     paths-ignore:
-      - 'browser_patches/**'
-      - 'docs/**'
+      - "browser_patches/**"
+      - "docs/**"
     branches:
       - master
       - release-*
@@ -28,26 +28,27 @@ jobs:
         os: [ubuntu-20.04]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
-      with:
-        node-version: 12
-    - run: npm i -g npm@7
-    - run: npm ci
-      env:
-        DEBUG: pw:install
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}
-    - run: node tests/config/checkCoverage.js ${{ matrix.browser }}
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
-    - uses: actions/upload-artifact@v1
-      if: always()
-      with:
-        name: ${{ matrix.browser }}-${{ matrix.os }}-test-results
-        path: test-results
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 12
+          cache: npm
+      - run: npm i -g npm@7
+      - run: npm ci
+        env:
+          DEBUG: pw:install
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+      - run: npm run build
+      - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
+      - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}
+      - run: node tests/config/checkCoverage.js ${{ matrix.browser }}
+      - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+        if: always()
+      - uses: actions/upload-artifact@v1
+        if: always()
+        with:
+          name: ${{ matrix.browser }}-${{ matrix.os }}-test-results
+          path: test-results
 
   test_test_runner:
     name: Test Runner
@@ -57,17 +58,18 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
-      with:
-        node-version: 12
-    - run: npm i -g npm@7
-    - run: npm ci
-      env:
-        DEBUG: pw:install
-    - run: npm run build
-    - run: npx playwright install --with-deps
-    - run: npm run ttest
-      if: matrix.os != 'ubuntu-latest'
-    - run: xvfb-run npm run ttest
-      if: matrix.os == 'ubuntu-latest'
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 12
+          cache: npm
+      - run: npm i -g npm@7
+      - run: npm ci
+        env:
+          DEBUG: pw:install
+      - run: npm run build
+      - run: npx playwright install --with-deps
+      - run: npm run ttest
+        if: matrix.os != 'ubuntu-latest'
+      - run: xvfb-run npm run ttest
+        if: matrix.os == 'ubuntu-latest'

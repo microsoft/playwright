@@ -6,16 +6,16 @@ on:
       - master
       - release-*
     paths:
-      - '.github/workflows/tests_docker.yml'
-      - '**/Dockerfile*'
-      - 'browsers.json'
-      - 'package.json'
+      - ".github/workflows/tests_docker.yml"
+      - "**/Dockerfile*"
+      - "browsers.json"
+      - "package.json"
   pull_request:
     paths:
-      - '.github/workflows/tests_docker.yml'
-      - '**/Dockerfile*'
-      - 'browsers.json'
-      - 'package.json'
+      - ".github/workflows/tests_docker.yml"
+      - "**/Dockerfile*"
+      - "browsers.json"
+      - "package.json"
     branches:
       - master
       - release-*
@@ -35,37 +35,37 @@ jobs:
         tag: [bionic, focal]
         user: [pwuser, root]
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
-      with:
-        node-version: 14
-    - run: npm i -g npm@7
-    - run: npm ci
-    - run: npm run build
-    - name: Build
-      run: bash utils/docker/build.sh ${{ matrix.tag }} playwright:localbuild-${{ matrix.tag }}
-    - name: Clean & Prepare for Docker
-      run: |
-        npm run clean
-        rm -rf node_modules/
-        if [[ ${{ matrix.user }} == 'root' ]]; then
-          sudo chown -R 0 $(pwd)
-        else
-          sudo chown -R 1000 $(pwd)
-        fi
-    - name: Launch container
-      run: docker run --rm --user=${{ matrix.user }} -v $(pwd):/tmp/playwright --workdir /tmp/playwright/ --name playwright-docker-${{ matrix.tag }}-test -d -t playwright:localbuild-${{ matrix.tag }} /bin/bash
-    - name: Run "npm ci" inside docker
-      run: docker exec playwright-docker-${{ matrix.tag }}-test npm ci
-    - name: Run "npm run build" inside docker
-      run: docker exec playwright-docker-${{ matrix.tag }}-test npm run build
-    - name: Run "npm run test" inside docker
-      run: docker exec -e INSIDE_DOCKER=1 -e CI=1 playwright-docker-${{ matrix.tag }}-test xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run test
-    - run: sudo ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
-    - uses: actions/upload-artifact@v1
-      if: ${{ always() }}
-      with:
-        name: docker-ubuntu-${{ matrix.tag }}-${{ matrix.user }}-test-results
-        path: test-results
-
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 14
+          cache: npm
+      - run: npm i -g npm@7
+      - run: npm ci
+      - run: npm run build
+      - name: Build
+        run: bash utils/docker/build.sh ${{ matrix.tag }} playwright:localbuild-${{ matrix.tag }}
+      - name: Clean & Prepare for Docker
+        run: |
+          npm run clean
+          rm -rf node_modules/
+          if [[ ${{ matrix.user }} == 'root' ]]; then
+            sudo chown -R 0 $(pwd)
+          else
+            sudo chown -R 1000 $(pwd)
+          fi
+      - name: Launch container
+        run: docker run --rm --user=${{ matrix.user }} -v $(pwd):/tmp/playwright --workdir /tmp/playwright/ --name playwright-docker-${{ matrix.tag }}-test -d -t playwright:localbuild-${{ matrix.tag }} /bin/bash
+      - name: Run "npm ci" inside docker
+        run: docker exec playwright-docker-${{ matrix.tag }}-test npm ci
+      - name: Run "npm run build" inside docker
+        run: docker exec playwright-docker-${{ matrix.tag }}-test npm run build
+      - name: Run "npm run test" inside docker
+        run: docker exec -e INSIDE_DOCKER=1 -e CI=1 playwright-docker-${{ matrix.tag }}-test xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run test
+      - run: sudo ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+        if: always()
+      - uses: actions/upload-artifact@v1
+        if: ${{ always() }}
+        with:
+          name: docker-ubuntu-${{ matrix.tag }}-${{ matrix.user }}-test-results
+          path: test-results

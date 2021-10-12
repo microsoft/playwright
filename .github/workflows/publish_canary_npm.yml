@@ -1,7 +1,7 @@
 name: "devrelease:npm"
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: null
   schedule:
     - cron: "10 0 * * *"
   push:
@@ -14,20 +14,20 @@ jobs:
     runs-on: ubuntu-20.04
     if: github.repository == 'microsoft/playwright'
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
-      with:
-        node-version: 12
-        registry-url: 'https://registry.npmjs.org'
-    - run: npm i -g npm@7
-    - run: npm ci
-    - run: npm run build
-    - run: npx playwright install-deps
-    - run: node utils/build/update_canary_version.js --today-date
-      if: contains(github.ref, 'master') && github.event_name != 'workflow_dispatch'
-    - run: node utils/build/update_canary_version.js --commit-timestamp
-      if: contains(github.ref, 'release') || github.event_name == 'workflow_dispatch'
-    - run: utils/publish_all_packages.sh --tip-of-tree
-      env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 12
+          registry-url: "https://registry.npmjs.org"
+          cache: npm
+      - run: npm i -g npm@7
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install-deps
+      - run: node utils/build/update_canary_version.js --today-date
+        if: contains(github.ref, 'master') && github.event_name != 'workflow_dispatch'
+      - run: node utils/build/update_canary_version.js --commit-timestamp
+        if: contains(github.ref, 'release') || github.event_name == 'workflow_dispatch'
+      - run: utils/publish_all_packages.sh --tip-of-tree
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
