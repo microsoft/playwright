@@ -122,3 +122,15 @@
 .action-entry .codicon-warning {
   color: darkorange;
 }
+
+.no-actions-entry {
+  height: 400px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+.no-actions-entry-text {
+  font-weight: bold;
+  font-size: 1.3rem;
+}
