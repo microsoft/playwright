@@ -86,7 +86,8 @@ it('should use proxy', async ({ contextFactory, server, proxyServer }) => {
   await context.close();
 });
 
-it('should use ipv6 proxy', async ({ contextFactory, server, proxyServer }) => {
+it('should use ipv6 proxy', async ({ contextFactory, server, proxyServer, browserName }) => {
+  it.fail(browserName === 'firefox', 'page.goto: NS_ERROR_UNKNOWN_HOST');
   proxyServer.forwardTo(server.PORT);
   const context = await contextFactory({
     proxy: { server: `[0:0:0:0:0:0:0:1]:${proxyServer.PORT}` }
