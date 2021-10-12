@@ -14,37 +14,31 @@
  * limitations under the License.
  */
 
-import { HttpServer } from '../../utils/httpServer';
-import { BrowserContext } from '../browserContext';
+import { BrowserContext } from '../../server/browserContext';
 import { eventsHelper } from '../../utils/eventsHelper';
-import { Page } from '../page';
-import { FrameSnapshot } from './snapshotTypes';
+import { Page } from '../../server/page';
+import { FrameSnapshot } from '../../server/trace/common/snapshotTypes';
 import { SnapshotRenderer } from './snapshotRenderer';
-import { SnapshotServer } from './snapshotServer';
 import { BaseSnapshotStorage } from './snapshotStorage';
-import { Snapshotter, SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
-import { ElementHandle } from '../dom';
-import { HarTracer, HarTracerDelegate } from '../supplements/har/harTracer';
-import * as har from '../supplements/har/har';
+import { Snapshotter, SnapshotterBlob, SnapshotterDelegate } from '../../server/trace/recorder/snapshotter';
+import { ElementHandle } from '../../server/dom';
+import { HarTracer, HarTracerDelegate } from '../../server/supplements/har/harTracer';
+import * as har from '../../server/supplements/har/har';
 
 export class InMemorySnapshotter extends BaseSnapshotStorage implements SnapshotterDelegate, HarTracerDelegate {
   private _blobs = new Map<string, Buffer>();
-  private _server: HttpServer;
   private _snapshotter: Snapshotter;
   private _harTracer: HarTracer;
 
   constructor(context: BrowserContext) {
     super();
-    this._server = new HttpServer();
-    new SnapshotServer(this._server, this);
     this._snapshotter = new Snapshotter(context, this);
     this._harTracer = new HarTracer(context, this, { content: 'sha1', waitForContentOnStop: false, skipScripts: true });
   }
 
-  async initialize(): Promise<string> {
+  async initialize(): Promise<void> {
     await this._snapshotter.start();
     this._harTracer.start();
-    return await this._server.start();
   }
 
   async reset() {
@@ -59,7 +53,6 @@ export class InMemorySnapshotter extends BaseSnapshotStorage implements Snapshot
     this._snapshotter.dispose();
     await this._harTracer.flush();
     this._harTracer.stop();
-    await this._server.stop();
   }
 
   async captureSnapshot(page: Page, snapshotName: string, element?: ElementHandle): Promise<SnapshotRenderer> {
@@ -96,7 +89,11 @@ export class InMemorySnapshotter extends BaseSnapshotStorage implements Snapshot
     this.addFrameSnapshot(snapshot);
   }
 
-  async resourceContent(sha1: string): Promise<Buffer | undefined> {
+  async resourceContent(sha1: string): Promise<Blob | undefined> {
+    throw new Error('Not implemented');
+  }
+
+  async resourceContentForTest(sha1: string): Promise<Buffer | undefined> {
     return this._blobs.get(sha1);
   }
 }

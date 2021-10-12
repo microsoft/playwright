@@ -27,18 +27,17 @@ import { CallMetadata, InstrumentationListener, SdkObject } from '../../instrume
 import { Page } from '../../page';
 import * as trace from '../common/traceEvents';
 import { commandsWithTracingSnapshots } from '../../../protocol/channels';
-import { Snapshotter, SnapshotterBlob, SnapshotterDelegate } from '../../snapshot/snapshotter';
-import { FrameSnapshot } from '../../snapshot/snapshotTypes';
+import { Snapshotter, SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
+import { FrameSnapshot } from '../common/snapshotTypes';
 import { HarTracer, HarTracerDelegate } from '../../supplements/har/harTracer';
 import * as har from '../../supplements/har/har';
+import { VERSION } from '../common/traceEvents';
 
 export type TracerOptions = {
   name?: string;
   snapshots?: boolean;
   screenshots?: boolean;
 };
-
-export const VERSION = 3;
 
 type RecordingState = {
   options: TracerOptions,
