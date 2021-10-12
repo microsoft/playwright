@@ -66,8 +66,7 @@ export const SnapshotTab: React.FunctionComponent<{
       if (!iframeRef.current)
         return;
       try {
-        const point = pointX === undefined ? undefined : { x: pointX, y: pointY };
-        (iframeRef.current.contentWindow as any).showSnapshot(snapshotUrl, { point });
+        iframeRef.current.src = snapshotUrl + (pointX === undefined ? '' : `&pointX=${pointX}&pointY=${pointY}`);
       } catch (e) {
       }
     })();
@@ -102,7 +101,7 @@ export const SnapshotTab: React.FunctionComponent<{
         height: snapshotSize.height + 'px',
         transform: `translate(${-snapshotSize.width * (1 - scale) / 2 + (measure.width - scaledSize.width) / 2}px, ${-snapshotSize.height * (1 - scale) / 2  + (measure.height - scaledSize.height) / 2}px) scale(${scale})`,
       }}>
-        <iframe ref={iframeRef} id='snapshot' name='snapshot' src='/snapshot/'></iframe>
+        <iframe ref={iframeRef} id='snapshot' name='snapshot'></iframe>
       </div>
     </div>
   </div>;

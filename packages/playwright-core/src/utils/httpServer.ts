@@ -113,6 +113,18 @@ export class HttpServer {
   }
 
   private _onRequest(request: http.IncomingMessage, response: http.ServerResponse) {
+    response.setHeader('Access-Control-Allow-Origin', '*');
+    response.setHeader('Access-Control-Request-Method', '*');
+    response.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET');
+    if (request.headers.origin)
+      response.setHeader('Access-Control-Allow-Headers', request.headers.origin);
+
+    if (request.method === 'OPTIONS') {
+      response.writeHead(200);
+      response.end();
+      return;
+    }
+
     request.on('error', () => response.end());
     try {
       if (!request.url) {

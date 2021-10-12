@@ -124,13 +124,8 @@
 }
 
 .no-actions-entry {
-  height: 400px;
-  display: grid;
-  place-items: center;
-  text-align: center;
-}
-
-.no-actions-entry-text {
-  font-weight: bold;
-  font-size: 1.3rem;
+  flex: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

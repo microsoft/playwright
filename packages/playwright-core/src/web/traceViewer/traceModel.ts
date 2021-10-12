@@ -43,7 +43,7 @@ export class TraceModel {
   }
 
   async load(traceURL: string) {
-    const response = await fetch(traceURL);
+    const response = await fetch(traceURL, { mode: 'cors' });
     const blob = await response.blob();
     const zipReader = new zipjs.ZipReader(new zipjs.BlobReader(blob), { useWebWorkers: false }) as zip.ZipReader;
     let traceEntry: zip.Entry | undefined;
