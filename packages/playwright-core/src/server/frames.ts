@@ -1176,7 +1176,14 @@ export class Frame extends SdkObject {
       if (!element)
         return { pass: !!options.isNot };
       // We have an element.
-      return progress.injectedScript.expect(progress, element!, options, elements, continuePolling);
+      const { matches, received } = progress.injectedScript.expect(progress, element!, options, elements);
+      if (matches === options.isNot) {
+        progress.setIntermediateResult(received);
+        if (!Array.isArray(received))
+          progress.log(`  unexpected value "${received}"`);
+        return continuePolling;
+      }
+      return { pass: !options.isNot, received };
     }, { omitAttached, ...options }, { strict: true, querySelectorAll, mainWorld, omitAttached, logScale: true, ...options }).catch(e => {
       if (js.isJavaScriptErrorInEvaluate(e))
         throw e;
