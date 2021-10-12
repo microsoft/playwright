@@ -70,7 +70,7 @@ export type NavigationEvent = {
 };
 
 export type SchedulableTask<T> = (injectedScript: js.JSHandle<InjectedScript>) => Promise<js.JSHandle<InjectedScriptPoll<T>>>;
-export type DomTaskBody<T, R, E> = (progress: InjectedScriptProgress, element: E, data: T, elements: Element[], continuePolling: any) => R;
+export type DomTaskBody<T, R, E> = (progress: InjectedScriptProgress, element: E, data: T, elements: Element[], continuePolling: symbol) => R | symbol;
 
 export class FrameManager {
   private _page: Page;
@@ -1161,20 +1161,22 @@ export class Frame extends SdkObject {
     });
   }
 
-  async expect(metadata: CallMetadata, selector: string, options: FrameExpectParams): Promise<{ pass: boolean, received?: any, log?: string[] }> {
+  async expect(metadata: CallMetadata, selector: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[] }> {
     const controller = new ProgressController(metadata, this);
     const isListMatcher = options.expression.endsWith('.array');
     const querySelectorAll = options.expression === 'to.have.count' || isListMatcher;
     const mainWorld = options.expression === 'to.have.property';
+    const missingElementShouldMatch = (!options.isNot && options.expression === 'to.be.hidden') || (options.isNot && options.expression === 'to.be.visible');
     const expectsEmptyList = options.expectedText?.length === 0;
-    const omitAttached = (isListMatcher && options.isNot !== expectsEmptyList) || (!options.isNot && options.expression === 'to.be.hidden') || (options.isNot && options.expression === 'to.be.visible');
+    const emptyListShouldMatch = isListMatcher && expectsEmptyList;
+    const omitAttached = (isListMatcher && options.isNot !== expectsEmptyList) || missingElementShouldMatch;
     return await this._scheduleRerunnableTaskWithController(controller, selector, (progress, element, options, elements, continuePolling) => {
-      // We don't have an element and we don't need an element => pass.
-      if (!element && options.omitAttached)
-        return { pass: !options.isNot };
-      // We don't have an element and we DO need an element => fail.
+      // We don't have an element and we don't need an element => matches.
+      if (!element && (options.emptyListShouldMatch || options.missingElementShouldMatch))
+        return { matches: true };
+      // We don't have an element and we DO need an element => does not match.
       if (!element)
-        return { pass: !!options.isNot };
+        return { matches: false };
       // We have an element.
       const { matches, received } = progress.injectedScript.expect(progress, element!, options, elements);
       if (matches === options.isNot) {
@@ -1183,11 +1185,11 @@ export class Frame extends SdkObject {
           progress.log(`  unexpected value "${received}"`);
         return continuePolling;
       }
-      return { pass: !options.isNot, received };
-    }, { omitAttached, ...options }, { strict: true, querySelectorAll, mainWorld, omitAttached, logScale: true, ...options }).catch(e => {
+      return { matches, received };
+    }, { emptyListShouldMatch, missingElementShouldMatch, ...options }, { strict: true, querySelectorAll, mainWorld, omitAttached, logScale: true, ...options }).catch(e => {
       if (js.isJavaScriptErrorInEvaluate(e))
         throw e;
-      return { received: controller.lastIntermediateResult(), pass: !!options.isNot, log: metadata.log };
+      return { received: controller.lastIntermediateResult(), matches: options.isNot, log: metadata.log };
     });
   }
 

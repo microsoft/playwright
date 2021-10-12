@@ -31,7 +31,7 @@ export async function toMatchText(
   matcherName: string,
   receiver: any,
   receiverType: string,
-  query: (isNot: boolean, timeout: number) => Promise<{ pass: boolean, received?: string, log?: string[] }>,
+  query: (isNot: boolean, timeout: number) => Promise<{ matches: boolean, received?: string, log?: string[] }>,
   expected: string | RegExp,
   options: { timeout?: number, matchSubstring?: boolean } = {},
 ) {
@@ -65,7 +65,8 @@ export async function toMatchText(
     defaultExpectTimeout = 5000;
   const timeout = options.timeout === 0 ? 0 : options.timeout || defaultExpectTimeout;
 
-  const { pass, received, log } = await query(this.isNot, timeout);
+  const { matches, received, log } = await query(this.isNot, timeout);
+  const pass = matches;
   const stringSubstring = options.matchSubstring ? 'substring' : 'string';
   const receivedString = received || '';
   const message = pass

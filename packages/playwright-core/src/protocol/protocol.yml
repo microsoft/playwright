@@ -1802,7 +1802,7 @@ Frame:
         isNot: boolean
         timeout: number?
       returns:
-        pass: boolean
+        matches: boolean
         received: SerializedValue?
         log:
           type: array?
