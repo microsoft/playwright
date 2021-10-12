@@ -1303,7 +1303,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * @param title Test title.
    * @param testFunction Test function that takes one or two arguments: an object with fixtures and optional [TestInfo].
    */
-  skip(title: string, testFunction: (args: TestArgs, testInfo: TestInfo) => Promise<void> | void): void;
+  skip(title: string, testFunction: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
   /**
    * Unconditionally skip a test. Test is immediately aborted when you call
    * [test.skip()](https://playwright.dev/docs/api/class-test#test-skip-2).
