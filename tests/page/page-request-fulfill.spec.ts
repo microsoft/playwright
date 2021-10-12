@@ -249,7 +249,8 @@ it('should fetch original request and fulfill', async ({ page, server, isElectro
   expect(await page.title()).toEqual('Woof-Woof');
 });
 
-it('should fulfill with multiple set-cookie', async ({ page, server, browserName }) => {
+it('should fulfill with multiple set-cookie', async ({ page, server, browserName, isElectron }) => {
+  it.fixme(isElectron, 'Electron 14+ is required');
   it.fail(browserName === 'webkit', 'Response contained invalid HTTP headers');
   const cookies = ['a=b', 'c=d'];
   await page.route('**/empty.html', async route => {
