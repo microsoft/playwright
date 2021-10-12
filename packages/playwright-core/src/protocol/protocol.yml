@@ -1799,7 +1799,7 @@ Frame:
         expectedNumber: number?
         expectedValue: SerializedArgument?
         useInnerText: boolean?
-        isNot: boolean?
+        isNot: boolean
         timeout: number?
       returns:
         pass: boolean

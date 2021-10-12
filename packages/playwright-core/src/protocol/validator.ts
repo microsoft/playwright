@@ -908,7 +908,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     expectedNumber: tOptional(tNumber),
     expectedValue: tOptional(tType('SerializedArgument')),
     useInnerText: tOptional(tBoolean),
-    isNot: tOptional(tBoolean),
+    isNot: tBoolean,
     timeout: tOptional(tNumber),
   });
   scheme.WorkerEvaluateExpressionParams = tObject({
