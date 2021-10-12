@@ -490,11 +490,11 @@ page.textContent("article:has(div.promo)");
 ```
 
 ```python async
-await page.textContent("article:has(div.promo)")
+await page.text_content("article:has(div.promo)")
 ```
 
 ```python sync
-page.textContent("article:has(div.promo)")
+page.text_content("article:has(div.promo)")
 ```
 
 ```csharp
