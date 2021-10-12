@@ -49,6 +49,9 @@ class PlaywrightClient {
     });
     this._driverProcess.unref();
     this._driverProcess.on('exit', this._onExit);
+    this._driverProcess.on('exit', () => {
+      this._playwright.then(playwright => playwright._cleanup());
+    });
 
     const connection = new Connection();
     const transport = new Transport(this._driverProcess.stdin!, this._driverProcess.stdout!);
