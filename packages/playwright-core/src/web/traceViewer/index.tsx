@@ -23,6 +23,7 @@ import '../common.css';
 
 (async () => {
   applyTheme();
+  navigator.serviceWorker.register('sw.bundle.js');
   const debugNames = await fetch('/contexts').then(response => response.json());
   ReactDOM.render(<Workbench debugNames={debugNames} />, document.querySelector('#root'));
 })();

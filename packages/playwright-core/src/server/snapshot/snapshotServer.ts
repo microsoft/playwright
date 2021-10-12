@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-import * as http from 'http';
-import querystring from 'querystring';
+import http from 'http';
+import path from 'path';
 import { HttpServer } from '../../utils/httpServer';
-import type { RenderedFrameSnapshot, ResourceSnapshot } from './snapshotTypes';
+import type { ResourceSnapshot } from './snapshotTypes';
 import { SnapshotStorage } from './snapshotStorage';
 import type { Point } from '../../common/types';
+import { URLSearchParams } from 'url';
 
 export class SnapshotServer {
   private _snapshotStorage: SnapshotStorage;
@@ -27,6 +28,10 @@ export class SnapshotServer {
   constructor(server: HttpServer, snapshotStorage: SnapshotStorage) {
     this._snapshotStorage = snapshotStorage;
 
+    server.routePrefix('/snapshot/sw.bundle.js', (request, response) => {
+      server.serveFile(response, path.join(__dirname, '..', '..', 'web', 'traceViewer', 'sw.bundle.js'));
+      return true;
+    });
     server.routePrefix('/snapshot/', this._serveSnapshot.bind(this));
     server.routePrefix('/snapshotSize/', this._serveSnapshotSize.bind(this));
     server.routePrefix('/resources/', this._serveResource.bind(this));
@@ -60,103 +65,25 @@ export class SnapshotServer {
     return true;
   }
 
-  private _serveServiceWorker(request: http.IncomingMessage, response: http.ServerResponse): boolean {
-    function serviceWorkerMain(self: any /* ServiceWorkerGlobalScope */) {
-      const kBlobUrlPrefix = 'http://playwright.bloburl/#';
-      const snapshotIds = new Map<string, { frameId: string, index: number }>();
-
-      self.addEventListener('install', function(event: any) {
-      });
-
-      self.addEventListener('activate', function(event: any) {
-        event.waitUntil(self.clients.claim());
-      });
-
-      function respondNotAvailable(): Response {
-        return new Response('<body style="background: #ddd"></body>', { status: 200, headers: { 'Content-Type': 'text/html' } });
-      }
-
-      function removeHash(url: string) {
-        try {
-          const u = new URL(url);
-          u.hash = '';
-          return u.toString();
-        } catch (e) {
-          return url;
-        }
-      }
-
-      async function doFetch(event: any /* FetchEvent */): Promise<Response> {
-        const request = event.request;
-        const pathname = new URL(request.url).pathname;
-        if (pathname === '/snapshot/service-worker.js' || pathname === '/snapshot/')
-          return fetch(event.request);
-
-        const snapshotUrl = request.mode === 'navigate' ?
-          request.url : (await self.clients.get(event.clientId))!.url;
-
-        if (request.mode === 'navigate') {
-          const htmlResponse = await fetch(event.request);
-          const { html, frameId, index }: RenderedFrameSnapshot  = await htmlResponse.json();
-          if (!html)
-            return respondNotAvailable();
-          snapshotIds.set(snapshotUrl, { frameId, index });
-          const response = new Response(html, { status: 200, headers: { 'Content-Type': 'text/html' } });
-          return response;
-        }
-
-        const { frameId, index } = snapshotIds.get(snapshotUrl)!;
-        const url = request.url.startsWith(kBlobUrlPrefix) ? request.url.substring(kBlobUrlPrefix.length) : removeHash(request.url);
-        const complexUrl = btoa(JSON.stringify({ frameId, index, url }));
-        const fetchUrl = `/resources/${complexUrl}`;
-        const fetchedResponse = await fetch(fetchUrl);
-        // We make a copy of the response, instead of just forwarding,
-        // so that response url is not inherited as "/resources/...", but instead
-        // as the original request url.
-
-        // Response url turns into resource base uri that is used to resolve
-        // relative links, e.g. url(/foo/bar) in style sheets.
-        const headers = new Headers(fetchedResponse.headers);
-        const response = new Response(fetchedResponse.body, {
-          status: fetchedResponse.status,
-          statusText: fetchedResponse.statusText,
-          headers,
-        });
-        return response;
-      }
-
-      self.addEventListener('fetch', function(event: any) {
-        event.respondWith(doFetch(event));
-      });
-    }
-
-    response.statusCode = 200;
-    response.setHeader('Cache-Control', 'public, max-age=31536000');
-    response.setHeader('Content-Type', 'application/javascript');
-    response.end(`(${serviceWorkerMain.toString()})(self)`);
-    return true;
-  }
-
   private _serveSnapshot(request: http.IncomingMessage, response: http.ServerResponse): boolean {
-    if (request.url!.endsWith('/snapshot/'))
+    const { pathname, searchParams } = new URL('http://localhost' + request.url);
+    if (pathname.endsWith('/snapshot/'))
       return this._serveSnapshotRoot(request, response);
-    if (request.url!.endsWith('/snapshot/service-worker.js'))
-      return this._serveServiceWorker(request, response);
-    const snapshot = this._snapshot(request.url!.substring('/snapshot/'.length));
+    const snapshot = this._snapshot(pathname.substring('/snapshot'.length), searchParams);
     this._respondWithJson(response, snapshot ? snapshot.render() : { html: '' });
     return true;
   }
 
   private _serveSnapshotSize(request: http.IncomingMessage, response: http.ServerResponse): boolean {
-    const snapshot = this._snapshot(request.url!.substring('/snapshotSize/'.length));
+    const { pathname, searchParams } = new URL('http://localhost' + request.url);
+    const snapshot = this._snapshot(pathname.substring('/snapshotSize'.length), searchParams);
     this._respondWithJson(response, snapshot ? snapshot.viewport() : {});
     return true;
   }
 
-  private _snapshot(uri: string) {
-    const [ pageOrFrameId, query ] = uri.split('?');
-    const parsed: any = querystring.parse(query);
-    return this._snapshotStorage.snapshotByName(pageOrFrameId, parsed.name);
+  private _snapshot(pathname: string, params: URLSearchParams) {
+    const name = params.get('name')!;
+    return this._snapshotStorage.snapshotByName(pathname.slice(1), name);
   }
 
   private _respondWithJson(response: http.ServerResponse, object: any) {
@@ -220,9 +147,8 @@ declare global {
   }
 }
 function rootScript() {
-  if (!navigator.serviceWorker)
-    return;
-  navigator.serviceWorker.register('./service-worker.js');
+  if (window.location.href.endsWith('serviceWorkerForTest'))
+    navigator.serviceWorker.register('sw.bundle.js');
   let showPromise = Promise.resolve();
   if (!navigator.serviceWorker.controller) {
     showPromise = new Promise(resolve => {
