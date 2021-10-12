@@ -21,7 +21,7 @@ import * as util from 'util';
 import { monotonicTime } from '../utils/utils';
 import { ElementHandle } from './elementHandle';
 import { Frame } from './frame';
-import { FilePayload, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
+import { FilePayload, FrameExpectOptions, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
 import { parseResult, serializeArgument } from './jsHandle';
 
 export class Locator implements api.Locator {
@@ -221,9 +221,9 @@ export class Locator implements api.Locator {
     });
   }
 
-  async _expect(expression: string, options: channels.FrameExpectOptions): Promise<{ pass: boolean, received?: any, log?: string[] }> {
+  async _expect(expression: string, options: FrameExpectOptions): Promise<{ pass: boolean, received?: any, log?: string[] }> {
     return this._frame._wrapApiCall(async (channel: channels.FrameChannel) => {
-      const params: any = { selector: this._selector, expression, ...options };
+      const params: channels.FrameExpectParams = { selector: this._selector, expression, ...options, isNot: !!options.isNot };
       if (options.expectedValue)
         params.expectedValue = serializeArgument(options.expectedValue);
       const result = (await channel.expect(params));

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import * as channels from 'playwright-core/src/protocol/channels';
 import { Locator, Page } from 'playwright-core';
+import { FrameExpectOptions } from 'playwright-core/src/client/types';
 import { constructURLBasedOnBaseURL } from 'playwright-core/src/utils/utils';
 import type { Expect } from '../types';
 import { toBeTruthy } from './toBeTruthy';
@@ -23,7 +23,7 @@ import { toEqual } from './toEqual';
 import { toExpectedTextValues, toMatchText } from './toMatchText';
 
 interface LocatorEx extends Locator {
-  _expect(expression: string, options: channels.FrameExpectOptions): Promise<{ pass: boolean, received?: any, log?: string[] }>;
+  _expect(expression: string, options: FrameExpectOptions): Promise<{ pass: boolean, received?: any, log?: string[] }>;
 }
 
 export function toBeChecked(
