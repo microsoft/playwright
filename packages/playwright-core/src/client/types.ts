@@ -118,3 +118,5 @@ export type SelectorEngine = {
 
 export type RemoteAddr = channels.RemoteAddr;
 export type SecurityDetails = channels.SecurityDetails;
+
+export type FrameExpectOptions = channels.FrameExpectOptions & { isNot?: boolean };

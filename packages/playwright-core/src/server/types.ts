@@ -17,7 +17,6 @@
 
 import { Size, Point, Rect, TimeoutOptions } from '../common/types';
 export { Size, Point, Rect, Quad, URLMatch, TimeoutOptions } from '../common/types';
-import * as channels from '../protocol/channels';
 
 export type StrictOptions = {
   strict?: boolean,
@@ -380,5 +379,3 @@ export type FetchResponse = {
   headers: HeadersArray,
   body: Buffer,
 };
-
-export type FrameExpectOptions = channels.FrameExpectOptions & { isNot?: boolean };

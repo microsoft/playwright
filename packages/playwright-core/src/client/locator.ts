@@ -21,9 +21,8 @@ import * as util from 'util';
 import { monotonicTime } from '../utils/utils';
 import { ElementHandle } from './elementHandle';
 import { Frame } from './frame';
-import { FilePayload, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
+import { FilePayload, FrameExpectOptions, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
 import { parseResult, serializeArgument } from './jsHandle';
-import { FrameExpectOptions } from '../server/types';
 
 export class Locator implements api.Locator {
   private _frame: Frame;
