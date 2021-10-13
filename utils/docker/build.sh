@@ -25,6 +25,7 @@ cd "$(dirname "$0")"
 
 # We rely on `./playwright-core.tar.gz` to download browsers into the docker
 # image.
+node ../../utils/pack_package.js playwright-utils ./playwright-utils.tar.gz
 node ../../utils/pack_package.js playwright-core ./playwright-core.tar.gz
 
 docker build -t "$2" -f "Dockerfile.$1" .

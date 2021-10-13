@@ -7,6 +7,9 @@
   "engines": {
     "node": ">=12"
   },
+  "scripts": {
+    "prepare": "npx babel --config-file ../../babel.config.json -s --extensions \".ts\" --out-dir lib/ src"
+  },
   "author": {
     "name": "Microsoft Corporation"
   },

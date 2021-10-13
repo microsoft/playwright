@@ -23,8 +23,6 @@
     "test": "npm run basetest -- --config=tests/config/default.config.ts",
     "eslint": "[ \"$CI\" = true ] && eslint --quiet -f codeframe --ext ts,tsx . || eslint --ext ts,tsx .",
     "tsc": "tsc -p .",
-    "build-utils": "babel -s --extensions \".ts\" --out-dir packages/playwright-utils/lib/ packages/playwright-utils/src",
-    "build-installer": "babel -s --extensions \".ts\" --out-dir packages/playwright-core/lib/utils/ packages/playwright-core/src/utils",
     "doc": "node utils/doclint/cli.js",
     "lint": "npm run eslint && npm run tsc && npm run doc && npm run check-deps && node utils/generate_channels.js && node utils/generate_types/ --check-clean && npm run test-types && npm run lint-packages",
     "lint-packages": "node utils/prepare_packages.js --check-clean",
