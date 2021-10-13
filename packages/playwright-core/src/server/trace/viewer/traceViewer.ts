@@ -38,7 +38,7 @@ export async function showTraceViewer(traceUrl: string, browserName: string, hea
 
   server.routePrefix('/', (request, response) => {
     const relativePath = new URL('http://localhost' + request.url!).pathname;
-    const absolutePath = path.join(__dirname, '..', '..', '..', 'web', 'traceViewer', ...relativePath.split('/'));
+    const absolutePath = path.join(__dirname, '..', '..', '..', 'webpack', 'traceViewer', ...relativePath.split('/'));
     return server.serveFile(response, absolutePath);
   });
 
