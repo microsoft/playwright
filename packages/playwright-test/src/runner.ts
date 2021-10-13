@@ -24,7 +24,7 @@ import { Dispatcher, TestGroup } from './dispatcher';
 import { createFileMatcher, createTitleMatcher, FilePatternFilter, monotonicTime } from './util';
 import { TestCase, Suite } from './test';
 import { Loader } from './loader';
-import { Reporter } from 'playwright-core/types/testReporter';
+import { Reporter } from '../types/testReporter';
 import { Multiplexer } from './reporters/multiplexer';
 import DotReporter from './reporters/dot';
 import GitHubReporter from './reporters/github';

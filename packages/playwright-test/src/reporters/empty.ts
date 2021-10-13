@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Reporter } from 'playwright-core/types/testReporter';
+import { Reporter } from '../../types/testReporter';
 
 class EmptyReporter implements Reporter {
 }
