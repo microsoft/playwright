@@ -62,11 +62,20 @@ export class Connection extends EventEmitter {
   private _rootObject: Root;
   private _disconnectedErrorMessage: string | undefined;
   private _onClose?: () => void;
+  private _isRemote = false;
 
   constructor(onClose?: () => void) {
     super();
     this._rootObject = new Root(this);
     this._onClose = onClose;
+  }
+
+  markAsRemote() {
+    this._isRemote = true;
+  }
+
+  isRemote() {
+    return this._isRemote;
   }
 
   async initializePlaywright(): Promise<Playwright> {

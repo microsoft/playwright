@@ -134,6 +134,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
       const { pipe } = await channel.connect({ wsEndpoint, headers: params.headers, slowMo: params.slowMo, timeout: params.timeout });
       const closePipe = () => pipe.close().catch(() => {});
       const connection = new Connection(closePipe);
+      connection.markAsRemote();
 
       const onPipeClosed = () => {
         // Emulate all pages, contexts and the browser closing upon disconnect.
@@ -173,7 +174,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
           }
           browser = Browser.from(playwright._initializer.preLaunchedBrowser!);
           browser._logger = logger;
-          browser._remoteType = 'owns-connection';
+          browser._shouldCloseConnectionOnClose = true;
           browser._setBrowserType((playwright as any)[browser._name]);
           browser.on(Events.Browser.Disconnected, () => {
             playwright._cleanup();
@@ -221,7 +222,6 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
       const browser = Browser.from(result.browser);
       if (result.defaultContext)
         browser._contexts.add(BrowserContext.from(result.defaultContext));
-      browser._remoteType = 'uses-connection';
       browser._logger = logger;
       browser._setBrowserType(this);
       return browser;

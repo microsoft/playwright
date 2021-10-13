@@ -21,6 +21,8 @@ import crypto from 'crypto';
 import type { Download } from 'playwright-core';
 
 it.describe('download event', () => {
+  it.skip(({ mode }) => mode === 'service', 'download.path() is not available in remote mode');
+
   it.beforeEach(async ({ server }) => {
     server.setRoute('/download', (req, res) => {
       res.setHeader('Content-Type', 'application/octet-stream');
@@ -153,20 +155,6 @@ it.describe('download event', () => {
     expect(download.suggestedFilename()).toBe(`foo.zip`);
     const path = await download.path();
     expect(fs.existsSync(path)).toBeTruthy();
-    await page.close();
-  });
-
-  it('should save to user-specified path', async ({ browser, server }, testInfo) => {
-    const page = await browser.newPage({ acceptDownloads: true });
-    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    const [ download ] = await Promise.all([
-      page.waitForEvent('download'),
-      page.click('a')
-    ]);
-    const userPath = testInfo.outputPath('download.txt');
-    await download.saveAs(userPath);
-    expect(fs.existsSync(userPath)).toBeTruthy();
-    expect(fs.readFileSync(userPath).toString()).toBe('Hello world');
     await page.close();
   });
 
@@ -618,6 +606,30 @@ it('should be able to download a inline PDF file', async ({ browser, server, ass
     page.click('a'),
   ]);
   await assertDownloadToPDF(download, asset('empty.pdf'));
+  await page.close();
+});
+
+it('should save to user-specified path', async ({ browser, server, mode }, testInfo) => {
+  server.setRoute('/download', (req, res) => {
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Disposition', 'attachment');
+    res.end(`Hello world`);
+  });
+
+  const page = await browser.newPage({ acceptDownloads: true });
+  await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+  const [ download ] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('a')
+  ]);
+  if (mode === 'service') {
+    const error = await download.path().catch(e => e);
+    expect(error.message).toContain('Path is not available when connecting remotely. Use saveAs() to save a local copy.');
+  }
+  const userPath = testInfo.outputPath('download.txt');
+  await download.saveAs(userPath);
+  expect(fs.existsSync(userPath)).toBeTruthy();
+  expect(fs.readFileSync(userPath).toString()).toBe('Hello world');
   await page.close();
 });
 

@@ -346,8 +346,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
         if (this._options.recordHar)  {
           const har = await this._channel.harExport();
           const artifact = Artifact.from(har.artifact);
-          if (this.browser()?._remoteType)
-            artifact._isRemote = true;
           await artifact.saveAs(this._options.recordHar.path);
           await artifact.delete();
         }

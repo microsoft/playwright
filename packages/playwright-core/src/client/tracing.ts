@@ -57,8 +57,6 @@ export class Tracing implements api.Tracing {
     if (!result.artifact)
       return;
     const artifact = Artifact.from(result.artifact);
-    if (this._context._browser?._remoteType)
-      artifact._isRemote = true;
     await artifact.saveAs(path!);
     await artifact.delete();
   }
