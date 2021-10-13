@@ -16,7 +16,7 @@
  */
 
 import { kBrowserClosedError } from '../../utils/errors';
-import { assert } from '../../utils/utils';
+import { assert } from '@playwright/utils/src';
 import { Browser, BrowserOptions } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
 import * as network from '../network';

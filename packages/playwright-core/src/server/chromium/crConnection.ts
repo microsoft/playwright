@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { assert } from '../../utils/utils';
+import { assert } from '@playwright/utils/src';
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import { Protocol } from './protocol';
 import { EventEmitter } from 'events';

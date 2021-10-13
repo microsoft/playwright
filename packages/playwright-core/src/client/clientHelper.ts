@@ -17,7 +17,7 @@
 
 import * as types from './types';
 import fs from 'fs';
-import { isString, isRegExp, constructURLBasedOnBaseURL } from '../utils/utils';
+import { isString, isRegExp, constructURLBasedOnBaseURL } from '@playwright/utils/src';
 
 const deprecatedHits = new Set();
 export function deprecate(methodName: string, message: string) {

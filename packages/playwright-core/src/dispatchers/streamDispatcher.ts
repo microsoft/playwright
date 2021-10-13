@@ -17,7 +17,7 @@
 import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import * as stream from 'stream';
-import { createGuid } from '../utils/utils';
+import { createGuid } from '@playwright/utils/src';
 
 export class StreamDispatcher extends Dispatcher<{ guid: string, stream: stream.Readable }, channels.StreamInitializer, channels.StreamEvents> implements channels.StreamChannel {
   private _ended: boolean = false;

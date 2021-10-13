@@ -20,8 +20,8 @@ import assert from 'assert';
 import { EventEmitter } from 'events';
 import { URL } from 'url';
 import WebSocket, { Server as WebSocketServer } from 'ws';
-import { HttpServer } from '../utils/httpServer';
-import { createGuid, getPlaywrightVersion } from '../utils/utils';
+import { HttpServer } from '@playwright/utils/src/httpServer';
+import { createGuid, getPlaywrightVersion } from '@playwright/utils/src';
 
 export type GridAgentLaunchOptions = {
   agentId: string,

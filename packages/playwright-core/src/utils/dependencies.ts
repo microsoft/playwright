@@ -18,8 +18,8 @@ import fs from 'fs';
 import path from 'path';
 import * as os from 'os';
 import childProcess from 'child_process';
-import { getUbuntuVersion } from './ubuntuVersion';
-import * as utils from './utils';
+import { getUbuntuVersion } from '@playwright/utils/src/ubuntuVersion';
+import * as utils from '@playwright/utils/src';
 
 const BIN_DIRECTORY = path.join(__dirname, '..', '..', 'bin');
 

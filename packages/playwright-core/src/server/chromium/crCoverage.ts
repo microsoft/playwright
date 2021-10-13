@@ -16,10 +16,10 @@
  */
 
 import { CRSession } from './crConnection';
-import { eventsHelper, RegisteredListener } from '../../utils/eventsHelper';
+import { eventsHelper, RegisteredListener } from '@playwright/utils/src/eventsHelper';
 import { Protocol } from './protocol';
 import * as types from '../types';
-import { assert } from '../../utils/utils';
+import { assert } from '@playwright/utils/src';
 
 export class CRCoverage {
   private _jsCoverage: JSCoverage;

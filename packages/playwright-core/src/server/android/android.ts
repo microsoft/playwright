@@ -20,7 +20,7 @@ import { EventEmitter } from 'events';
 import fs from 'fs';
 import * as stream from 'stream';
 import * as ws from 'ws';
-import { createGuid, makeWaitForNextTask } from '../../utils/utils';
+import { createGuid, makeWaitForNextTask } from '@playwright/utils/src';
 import { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
 import { BrowserContext, validateBrowserContextOptions } from '../browserContext';
 import { ProgressController } from '../progress';

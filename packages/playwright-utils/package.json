@@ -1,0 +1,31 @@
+{
+  "name": "@playwright/utils",
+  "version": "1.16.0-next",
+  "description": "Playwright internal utilities",
+  "repository": "github:Microsoft/playwright",
+  "homepage": "https://playwright.dev",
+  "engines": {
+    "node": ">=12"
+  },
+  "author": {
+    "name": "Microsoft Corporation"
+  },
+  "license": "Apache-2.0",
+  "exports": {
+    ".": {
+      "import": "./index.mjs",
+      "require": "./index.js"
+    },
+    "./src": "./lib/index.js",
+    "./src/*": "./lib/*.js",
+    "./*": "./*.js"
+  },
+  "dependencies": {
+    "progress": "^2.0.3",
+    "proxy-from-env": "^1.1.0",
+    "mime": "^2.4.6",
+    "ws": "^7.4.6",
+    "https-proxy-agent": "^5.0.0",
+    "yauzl": "^2.10.0"
+  }
+}

@@ -15,9 +15,9 @@
  */
 
 import { ChildProcess } from 'child_process';
-import { assert, monotonicTime } from '../../utils/utils';
+import { assert, monotonicTime } from '@playwright/utils/src';
 import { Page } from '../page';
-import { launchProcess } from '../../utils/processLauncher';
+import { launchProcess } from '@playwright/utils/src/processLauncher';
 import { Progress, ProgressController } from '../progress';
 import { internalCallMetadata } from '../instrumentation';
 import * as types from '../types';

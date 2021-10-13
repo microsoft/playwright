@@ -19,7 +19,7 @@ import { EventEmitter } from 'events';
 import * as types from './types';
 import { Progress } from './progress';
 import { debugLogger } from '../utils/debugLogger';
-import { eventsHelper, RegisteredListener } from '../utils/eventsHelper';
+import { eventsHelper, RegisteredListener } from '@playwright/utils/src/eventsHelper';
 
 class Helper {
   static completeUserURL(urlString: string): string {

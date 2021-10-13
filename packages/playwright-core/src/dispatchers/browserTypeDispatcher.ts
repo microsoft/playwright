@@ -22,8 +22,8 @@ import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { CallMetadata } from '../server/instrumentation';
 import WebSocket from 'ws';
 import { JsonPipeDispatcher } from '../dispatchers/jsonPipeDispatcher';
-import { getUserAgent, makeWaitForNextTask } from '../utils/utils';
-import { ManualPromise } from '../utils/async';
+import { getUserAgent, makeWaitForNextTask } from '@playwright/utils/src';
+import { ManualPromise } from '@playwright/utils/src/async';
 
 export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.BrowserTypeInitializer, channels.BrowserTypeEvents> implements channels.BrowserTypeChannel {
   constructor(scope: DispatcherScope, browserType: BrowserType) {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { assert } from '../utils/utils';
+import { assert } from '@playwright/utils/src';
 import * as keyboardLayout from './usKeyboardLayout';
 import * as types from './types';
 import type { Page } from './page';

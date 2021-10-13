@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { assert } from '../utils/utils';
+import { assert } from '@playwright/utils/src';
 import * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { Locator } from './locator';

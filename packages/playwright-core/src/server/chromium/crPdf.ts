@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { assert } from '../../utils/utils';
+import { assert } from '@playwright/utils/src';
 import * as types from '../types';
 import { CRSession } from './crConnection';
 import { readProtocolStream } from './crProtocolHelper';

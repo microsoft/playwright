@@ -22,7 +22,7 @@ import { SelectOption, FilePayload, Rect, SelectOptionOptions } from './types';
 import fs from 'fs';
 import * as mime from 'mime';
 import path from 'path';
-import { assert, isString, mkdirIfNeeded } from '../utils/utils';
+import { assert, isString, mkdirIfNeeded } from '@playwright/utils/src';
 import * as api from '../../types/types';
 import * as structs from '../../types/structs';
 

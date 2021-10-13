@@ -22,7 +22,7 @@ import { BrowserContextDispatcher } from './dispatchers/browserContextDispatcher
 import * as channels from './protocol/channels';
 import { BrowserServerLauncher, BrowserServer } from './client/browserType';
 import { envObjectToArray } from './client/clientHelper';
-import { createGuid } from './utils/utils';
+import { createGuid } from '@playwright/utils/src';
 import { SelectorsDispatcher } from './dispatchers/selectorsDispatcher';
 import { Selectors } from './server/selectors';
 import { ProtocolLogger } from './server/types';

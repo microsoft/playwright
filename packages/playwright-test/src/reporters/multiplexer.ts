@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { FullConfig, Suite, TestCase, TestError, TestResult, Reporter, FullResult, TestStep } from 'playwright-core/types/testReporter';
+import type { FullConfig, Suite, TestCase, TestError, TestResult, Reporter, FullResult, TestStep } from 'playwright-core/types/testReporter';
 
 export class Multiplexer implements Reporter {
   private _reporters: Reporter[];

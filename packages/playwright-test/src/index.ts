@@ -19,9 +19,9 @@ import * as path from 'path';
 import type { LaunchOptions, BrowserContextOptions, Page, BrowserContext, BrowserType } from 'playwright-core';
 import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo } from 'playwright-core/types/test';
 import { rootTestType } from './testType';
-import { assert, createGuid, removeFolders } from 'playwright-core/src/utils/utils';
+import { assert, createGuid, removeFolders } from '@playwright/utils/src';
 import { GridClient } from 'playwright-core/src/grid/gridClient';
-import { Browser } from 'playwright-core';
+import type { Browser } from 'playwright-core';
 export { expect } from './expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 

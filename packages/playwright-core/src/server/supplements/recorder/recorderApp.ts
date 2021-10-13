@@ -21,7 +21,7 @@ import { ProgressController } from '../../progress';
 import { EventEmitter } from 'events';
 import { internalCallMetadata } from '../../instrumentation';
 import type { CallLog, EventData, Mode, Source } from './recorderTypes';
-import { isUnderTest } from '../../../utils/utils';
+import { isUnderTest } from '@playwright/utils/src';
 import * as mime from 'mime';
 import { installAppIcon } from '../../chromium/crApp';
 import { findChromiumChannel } from '../../../utils/registry';

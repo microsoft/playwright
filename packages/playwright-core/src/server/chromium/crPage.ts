@@ -18,7 +18,7 @@
 import * as dom from '../dom';
 import * as frames from '../frames';
 import { helper } from '../helper';
-import { eventsHelper, RegisteredListener } from '../../utils/eventsHelper';
+import { eventsHelper, RegisteredListener } from '@playwright/utils/src/eventsHelper';
 import * as network from '../network';
 import { CRSession, CRConnection, CRSessionEvents } from './crConnection';
 import { CRExecutionContext } from './crExecutionContext';
@@ -36,7 +36,7 @@ import { CRPDF } from './crPdf';
 import { CRBrowserContext } from './crBrowser';
 import * as types from '../types';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
-import { assert, headersArrayToObject, createGuid } from '../../utils/utils';
+import { assert, headersArrayToObject, createGuid } from '@playwright/utils/src';
 import { VideoRecorder } from './videoRecorder';
 import { Progress } from '../progress';
 import { DragManager } from './crDragDrop';

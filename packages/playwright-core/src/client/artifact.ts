@@ -17,7 +17,7 @@
 import * as channels from '../protocol/channels';
 import * as fs from 'fs';
 import { Stream } from './stream';
-import { mkdirIfNeeded } from '../utils/utils';
+import { mkdirIfNeeded } from '@playwright/utils/src';
 import { ChannelOwner } from './channelOwner';
 import { Readable } from 'stream';
 

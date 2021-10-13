@@ -15,7 +15,7 @@
  */
 
 import { EventEmitter } from 'events';
-import { debugMode, isUnderTest, monotonicTime } from '../../utils/utils';
+import { debugMode, isUnderTest, monotonicTime } from '@playwright/utils/src';
 import { BrowserContext } from '../browserContext';
 import { CallMetadata, InstrumentationListener, SdkObject } from '../instrumentation';
 import { debugLogger } from '../../utils/debugLogger';

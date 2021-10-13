@@ -16,9 +16,9 @@
 
 import path from 'path';
 import * as consoleApiSource from '../../../generated/consoleApiSource';
-import { HttpServer } from '../../../utils/httpServer';
+import { HttpServer } from '@playwright/utils/src/httpServer';
 import { findChromiumChannel } from '../../../utils/registry';
-import { isUnderTest } from '../../../utils/utils';
+import { isUnderTest } from '@playwright/utils/src';
 import { BrowserContext } from '../../browserContext';
 import { installAppIcon } from '../../chromium/crApp';
 import { internalCallMetadata } from '../../instrumentation';

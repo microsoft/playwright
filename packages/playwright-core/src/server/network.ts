@@ -16,8 +16,8 @@
 
 import * as frames from './frames';
 import * as types from './types';
-import { assert } from '../utils/utils';
-import { ManualPromise } from '../utils/async';
+import { assert } from '@playwright/utils/src';
+import { ManualPromise } from '@playwright/utils/src/async';
 import { SdkObject } from './instrumentation';
 import { NameValue } from '../common/types';
 import { FetchRequest } from './fetch';

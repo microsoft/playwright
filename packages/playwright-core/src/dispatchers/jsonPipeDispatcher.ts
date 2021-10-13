@@ -16,7 +16,7 @@
 
 import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
-import { createGuid } from '../utils/utils';
+import { createGuid } from '@playwright/utils/src';
 import { serializeError } from '../protocol/serializers';
 
 export class JsonPipeDispatcher extends Dispatcher<{ guid: string }, channels.JsonPipeInitializer, channels.JsonPipeEvents> implements channels.JsonPipeChannel {

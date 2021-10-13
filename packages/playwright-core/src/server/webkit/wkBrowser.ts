@@ -17,8 +17,8 @@
 
 import { Browser, BrowserOptions } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
-import { eventsHelper, RegisteredListener } from '../../utils/eventsHelper';
-import { assert } from '../../utils/utils';
+import { eventsHelper, RegisteredListener } from '@playwright/utils/src/eventsHelper';
+import { assert } from '@playwright/utils/src';
 import * as network from '../network';
 import { Page, PageBinding, PageDelegate } from '../page';
 import { ConnectionTransport } from '../transport';

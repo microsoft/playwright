@@ -21,7 +21,7 @@ import path from 'path';
 import { FFBrowser } from './ffBrowser';
 import { kBrowserCloseMessageId } from './ffConnection';
 import { BrowserType } from '../browserType';
-import { Env } from '../../utils/processLauncher';
+import { Env } from '@playwright/utils/src/processLauncher';
 import { ConnectionTransport } from '../transport';
 import { BrowserOptions, PlaywrightOptions } from '../browser';
 import * as types from '../types';

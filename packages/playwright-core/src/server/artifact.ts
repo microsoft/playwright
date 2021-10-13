@@ -15,8 +15,8 @@
  */
 
 import fs from 'fs';
-import { assert } from '../utils/utils';
-import { ManualPromise } from '../utils/async';
+import { assert } from '@playwright/utils/src';
+import { ManualPromise } from '@playwright/utils/src/async';
 import { SdkObject } from './instrumentation';
 
 type SaveCallback = (localPath: string, error?: string) => Promise<void>;

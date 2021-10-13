@@ -32,7 +32,7 @@ import { RecorderApp } from './recorder/recorderApp';
 import { CallMetadata, InstrumentationListener, SdkObject } from '../instrumentation';
 import { Point } from '../../common/types';
 import { CallLog, CallLogStatus, EventData, Mode, Source, UIState } from './recorder/recorderTypes';
-import { createGuid, isUnderTest, monotonicTime } from '../../utils/utils';
+import { createGuid, isUnderTest, monotonicTime } from '@playwright/utils/src';
 import { metadataToCallLog } from './recorder/recorderUtils';
 import { Debugger } from './debugger';
 import { EventEmitter } from 'events';

@@ -19,7 +19,7 @@ import * as channels from '../protocol/channels';
 import { createScheme, ValidationError, Validator } from '../protocol/validator';
 import { debugLogger } from '../utils/debugLogger';
 import { captureStackTrace, ParsedStackTrace } from '../utils/stackTrace';
-import { isUnderTest } from '../utils/utils';
+import { isUnderTest } from '@playwright/utils/src';
 import type { Connection } from './connection';
 import type { ClientSideInstrumentation, Logger } from './types';
 

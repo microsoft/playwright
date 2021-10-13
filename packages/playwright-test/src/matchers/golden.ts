@@ -21,7 +21,7 @@ import fs from 'fs';
 import path from 'path';
 import jpeg from 'jpeg-js';
 import pixelmatch from 'pixelmatch';
-import { diff_match_patch, DIFF_INSERT, DIFF_DELETE, DIFF_EQUAL } from 'playwright-core/src/third_party/diff_match_patch';
+import { diff_match_patch, DIFF_INSERT, DIFF_DELETE, DIFF_EQUAL } from '../../third_party/diff_match_patch';
 import { TestInfoImpl, UpdateSnapshots } from '../types';
 import { addSuffixToFilePath } from '../util';
 

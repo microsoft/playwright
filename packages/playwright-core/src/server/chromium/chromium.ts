@@ -19,7 +19,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { CRBrowser } from './crBrowser';
-import { Env, gracefullyCloseSet } from '../../utils/processLauncher';
+import { Env, gracefullyCloseSet } from '@playwright/utils/src/processLauncher';
 import { kBrowserCloseMessageId } from './crConnection';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { BrowserType } from '../browserType';
@@ -27,7 +27,7 @@ import { ConnectionTransport, ProtocolRequest, WebSocketTransport } from '../tra
 import { CRDevTools } from './crDevTools';
 import { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
 import * as types from '../types';
-import { debugMode, fetchData, headersArrayToObject, removeFolders, streamToString } from '../../utils/utils';
+import { debugMode, fetchData, headersArrayToObject, removeFolders, streamToString } from '@playwright/utils/src';
 import { RecentLogsCollector } from '../../utils/debugLogger';
 import { Progress, ProgressController } from '../progress';
 import { TimeoutSettings } from '../../utils/timeoutSettings';

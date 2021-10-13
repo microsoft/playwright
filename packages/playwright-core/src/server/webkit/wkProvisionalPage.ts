@@ -16,9 +16,9 @@
 
 import { WKSession } from './wkConnection';
 import { WKPage } from './wkPage';
-import { RegisteredListener, eventsHelper } from '../../utils/eventsHelper';
+import { eventsHelper, RegisteredListener } from '@playwright/utils/src/eventsHelper';
 import { Protocol } from './protocol';
-import { assert } from '../../utils/utils';
+import { assert } from '@playwright/utils/src';
 
 export class WKProvisionalPage {
   readonly _session: WKSession;

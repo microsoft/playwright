@@ -16,8 +16,8 @@
 
 
 import colors from 'colors/safe';
-import { ExpectedTextValue } from 'playwright-core/src/protocol/channels';
-import { isRegExp, isString } from 'playwright-core/src/utils/utils';
+import type { ExpectedTextValue } from 'playwright-core/src/protocol/channels';
+import { isRegExp, isString } from '@playwright/utils/src';
 import { currentTestInfo } from '../globals';
 import type { Expect } from '../types';
 import { expectType } from '../util';

@@ -33,7 +33,7 @@ import { CallMetadata } from '../server/instrumentation';
 import { Artifact } from '../server/artifact';
 import { ArtifactDispatcher } from './artifactDispatcher';
 import { Download } from '../server/download';
-import { createGuid } from '../utils/utils';
+import { createGuid } from '@playwright/utils/src';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer, channels.PageEvents> implements channels.PageChannel {
   private _page: Page;

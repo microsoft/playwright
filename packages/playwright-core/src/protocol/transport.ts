@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { makeWaitForNextTask } from '../utils/utils';
+import { makeWaitForNextTask } from '@playwright/utils/src';
 
 export interface WritableStream {
   write(data: Buffer): void;

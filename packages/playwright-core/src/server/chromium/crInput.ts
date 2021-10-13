@@ -19,7 +19,7 @@ import * as input from '../input';
 import * as types from '../types';
 import { CRSession } from './crConnection';
 import { macEditingCommands } from '../macEditingCommands';
-import { isString } from '../../utils/utils';
+import { isString } from '@playwright/utils/src';
 import { DragManager } from './crDragDrop';
 import { CRPage } from './crPage';
 import { toModifiersMask } from './crProtocolHelper';

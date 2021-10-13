@@ -17,7 +17,7 @@
 import WebSocket from 'ws';
 import { Connection } from '../client/connection';
 import { Playwright } from '../client/playwright';
-import { makeWaitForNextTask } from '../utils/utils';
+import { makeWaitForNextTask } from '@playwright/utils/src';
 
 export type PlaywrightClientConnectOptions = {
   wsEndpoint: string;

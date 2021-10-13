@@ -17,7 +17,7 @@
 
 import { Browser, BrowserOptions } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
-import { assert } from '../../utils/utils';
+import { assert } from '@playwright/utils/src';
 import * as network from '../network';
 import { Page, PageBinding, PageDelegate, Worker } from '../page';
 import { Frame } from '../frames';

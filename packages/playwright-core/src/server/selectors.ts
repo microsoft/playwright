@@ -19,7 +19,7 @@ import * as frames from './frames';
 import * as js from './javascript';
 import * as types from './types';
 import { ParsedSelector, parseSelector } from './common/selectorParser';
-import { createGuid } from '../utils/utils';
+import { createGuid } from '@playwright/utils/src';
 
 export type SelectorInfo = {
   parsed: ParsedSelector,

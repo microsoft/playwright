@@ -16,7 +16,6 @@
  */
 
 import { Events } from './events';
-import { assert } from '../utils/utils';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import * as channels from '../protocol/channels';
 import { parseError, serializeError } from '../protocol/serializers';
@@ -43,7 +42,7 @@ import fs from 'fs';
 import path from 'path';
 import { Size, URLMatch, Headers, LifecycleEvent, WaitForEventOptions, SelectOption, SelectOptionOptions, FilePayload, WaitForFunctionOptions } from './types';
 import { evaluationScript, urlMatches } from './clientHelper';
-import { isString, isRegExp, isObject, mkdirIfNeeded, headersObjectToArray } from '../utils/utils';
+import { isString, isRegExp, isObject, mkdirIfNeeded, headersObjectToArray, assert } from '@playwright/utils/src';
 import { isSafeCloseError } from '../utils/errors';
 import { Video } from './video';
 import { Artifact } from './artifact';

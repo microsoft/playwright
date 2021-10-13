@@ -15,7 +15,7 @@
  */
 
 import { BrowserContext } from '../../server/browserContext';
-import { eventsHelper } from '../../utils/eventsHelper';
+import { eventsHelper } from '@playwright/utils/src/eventsHelper';
 import { Page } from '../../server/page';
 import { FrameSnapshot } from '../../server/trace/common/snapshotTypes';
 import { SnapshotRenderer } from './snapshotRenderer';

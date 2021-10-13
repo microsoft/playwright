@@ -116,7 +116,7 @@ const baseFixtures: Fixtures<{}, BaseOptions & BaseFixtures> = {
       service: new ServiceMode(),
       driver: new DriverMode(),
     }[mode];
-    require('playwright-core/lib/utils/utils').setUnderTest();
+    require('@playwright/utils/src').setUnderTest();
     const playwright = await modeImpl.setup(workerInfo.workerIndex);
     await run(playwright);
     await modeImpl.teardown();

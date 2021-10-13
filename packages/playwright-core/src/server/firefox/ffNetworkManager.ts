@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { eventsHelper, RegisteredListener } from '../../utils/eventsHelper';
+import { eventsHelper, RegisteredListener } from '@playwright/utils/src/eventsHelper';
 import { FFSession } from './ffConnection';
 import { Page } from '../page';
 import * as network from '../network';

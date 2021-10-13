@@ -16,7 +16,7 @@
  */
 
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from './transport';
-import { makeWaitForNextTask } from '../utils/utils';
+import { makeWaitForNextTask } from '@playwright/utils/src';
 import { debugLogger } from '../utils/debugLogger';
 
 export class PipeTransport implements ConnectionTransport {

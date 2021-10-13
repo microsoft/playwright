@@ -21,12 +21,12 @@ import { BrowserContext, normalizeProxySettings, validateBrowserContextOptions }
 import { registry, BrowserName } from '../utils/registry';
 import { ConnectionTransport, WebSocketTransport } from './transport';
 import { BrowserOptions, Browser, BrowserProcess, PlaywrightOptions } from './browser';
-import { launchProcess, Env, envArrayToObject } from '../utils/processLauncher';
+import { launchProcess, Env, envArrayToObject } from '@playwright/utils/src/processLauncher';
 import { PipeTransport } from './pipeTransport';
 import { Progress, ProgressController } from './progress';
 import * as types from './types';
 import { DEFAULT_TIMEOUT, TimeoutSettings } from '../utils/timeoutSettings';
-import { debugMode, existsAsync } from '../utils/utils';
+import { debugMode, existsAsync } from '@playwright/utils/src';
 import { helper } from './helper';
 import { RecentLogsCollector } from '../utils/debugLogger';
 import { CallMetadata, SdkObject } from './instrumentation';

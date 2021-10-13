@@ -19,7 +19,7 @@ import extract from 'extract-zip';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { existsAsync, download } from './utils';
+import { existsAsync, download } from '@playwright/utils/src';
 import { debugLogger } from './debugLogger';
 
 export async function downloadBrowserWithProgressBar(title: string, browserDirectory: string, executablePath: string, downloadURL: string, downloadFileName: string): Promise<boolean> {

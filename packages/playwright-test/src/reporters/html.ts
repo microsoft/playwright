@@ -18,9 +18,9 @@ import colors from 'colors/safe';
 import fs from 'fs';
 import open from 'open';
 import path from 'path';
-import { FullConfig, Suite } from 'playwright-core/types/testReporter';
-import { HttpServer } from 'playwright-core/src/utils/httpServer';
-import { calculateSha1, removeFolders } from 'playwright-core/src/utils/utils';
+import type { FullConfig, Suite } from 'playwright-core/types/testReporter';
+import { HttpServer } from '@playwright/utils/src/httpServer';
+import { calculateSha1, removeFolders } from '@playwright/utils/src';
 import { toPosixPath } from './json';
 import RawReporter, { JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep, JsonAttachment } from './raw';
 

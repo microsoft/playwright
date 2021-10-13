@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { Locator, Page } from 'playwright-core';
-import { FrameExpectOptions } from 'playwright-core/src/client/types';
-import { constructURLBasedOnBaseURL } from 'playwright-core/src/utils/utils';
+import type { Locator, Page } from 'playwright-core';
+import type { FrameExpectOptions } from 'playwright-core/src/client/types';
+import { constructURLBasedOnBaseURL } from '@playwright/utils/src';
 import type { Expect } from '../types';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';

@@ -16,7 +16,7 @@
  */
 
 import { EventEmitter } from 'events';
-import { assert } from '../../utils/utils';
+import { assert } from '@playwright/utils/src';
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import { Protocol } from './protocol';
 import { rewriteErrorMessage } from '../../utils/stackTrace';

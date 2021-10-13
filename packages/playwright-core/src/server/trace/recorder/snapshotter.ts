@@ -16,11 +16,11 @@
 
 import { BrowserContext } from '../../browserContext';
 import { Page } from '../../page';
-import { eventsHelper, RegisteredListener } from '../../../utils/eventsHelper';
+import { eventsHelper, RegisteredListener } from '@playwright/utils/src/eventsHelper';
 import { debugLogger } from '../../../utils/debugLogger';
 import { Frame } from '../../frames';
 import { frameSnapshotStreamer, SnapshotData } from './snapshotterInjected';
-import { calculateSha1, createGuid, monotonicTime } from '../../../utils/utils';
+import { calculateSha1, createGuid, monotonicTime } from '@playwright/utils/src';
 import { FrameSnapshot } from '../common/snapshotTypes';
 import { ElementHandle } from '../../dom';
 import * as mime from 'mime';

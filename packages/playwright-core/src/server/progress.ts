@@ -15,11 +15,11 @@
  */
 
 import { TimeoutError } from '../utils/errors';
-import { assert, monotonicTime } from '../utils/utils';
+import { assert, monotonicTime } from '@playwright/utils/src';
 import { LogName } from '../utils/debugLogger';
 import { CallMetadata, Instrumentation, SdkObject } from './instrumentation';
 import { ElementHandle } from './dom';
-import { ManualPromise } from '../utils/async';
+import { ManualPromise } from '@playwright/utils/src/async';
 import type { LogEntry } from './injected/injectedScript';
 
 export interface Progress {

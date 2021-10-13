@@ -18,7 +18,7 @@ import * as structs from '../../types/structs';
 import * as api from '../../types/types';
 import * as channels from '../protocol/channels';
 import * as util from 'util';
-import { monotonicTime } from '../utils/utils';
+import { monotonicTime } from '@playwright/utils/src';
 import { ElementHandle } from './elementHandle';
 import { Frame } from './frame';
 import { FilePayload, FrameExpectOptions, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';

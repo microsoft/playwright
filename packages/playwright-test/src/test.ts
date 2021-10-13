@@ -17,8 +17,8 @@
 import type { FixturePool } from './fixtures';
 import * as reporterTypes from 'playwright-core/types/testReporter';
 import type { TestTypeImpl } from './testType';
-import { Annotations, FixturesWithLocation, Location } from './types';
-import { FullProject } from 'playwright-core/types/test';
+import type { Annotations, FixturesWithLocation, Location } from './types';
+import type { FullProject } from 'playwright-core/types/test';
 
 class Base {
   title: string;

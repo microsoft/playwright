@@ -15,7 +15,7 @@
 */
 import { CRPage } from './crPage';
 import * as types from '../types';
-import { assert } from '../../utils/utils';
+import { assert } from '@playwright/utils/src';
 import { Protocol } from './protocol';
 import { toModifiersMask } from './crProtocolHelper';
 

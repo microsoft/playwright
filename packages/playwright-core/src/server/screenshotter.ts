@@ -20,7 +20,7 @@ import { helper } from './helper';
 import { Page } from './page';
 import * as types from './types';
 import { Progress } from './progress';
-import { assert } from '../utils/utils';
+import { assert } from '@playwright/utils/src';
 
 export class Screenshotter {
   private _queue = new TaskQueue();

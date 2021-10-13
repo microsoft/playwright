@@ -26,7 +26,6 @@ import { spawn, SpawnOptions } from 'child_process';
 import { getProxyForUrl } from 'proxy-from-env';
 import * as URL from 'url';
 import { getUbuntuVersionSync } from './ubuntuVersion';
-import { NameValue } from '../protocol/channels';
 import ProgressBar from 'progress';
 
 // `https-proxy-agent` v5 is written in TypeScript and exposes generated types.
@@ -384,6 +383,11 @@ class HashStream extends stream.Writable {
   }
 }
 
+type NameValue = {
+  name: string,
+  value: string,
+};
+
 export function objectToArray(map?:  { [key: string]: any }): NameValue[] | undefined {
   if (!map)
     return undefined;
@@ -450,7 +454,7 @@ export function getUserAgent() {
 }
 
 export function getPlaywrightVersion(majorMinorOnly = false) {
-  const packageJson = require('./../../package.json');
+  const packageJson = require('../package.json');
   return majorMinorOnly ? packageJson.version.split('.').slice(0, 2).join('.') : packageJson.version;
 }
 

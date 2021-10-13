@@ -19,7 +19,7 @@ import debug from 'debug';
 import * as net from 'net';
 import { EventEmitter } from 'events';
 import { Backend, DeviceBackend, SocketBackend } from './android';
-import { createGuid } from '../../utils/utils';
+import { createGuid } from '@playwright/utils/src';
 
 export class AdbBackend implements Backend {
   async devices(): Promise<DeviceBackend[]> {

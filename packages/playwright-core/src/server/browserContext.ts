@@ -17,7 +17,7 @@
 
 import * as os from 'os';
 import { TimeoutSettings } from '../utils/timeoutSettings';
-import { debugMode, mkdirIfNeeded, createGuid } from '../utils/utils';
+import { debugMode, mkdirIfNeeded, createGuid } from '@playwright/utils/src';
 import { Browser, BrowserOptions } from './browser';
 import { Download } from './download';
 import * as frames from './frames';

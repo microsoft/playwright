@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { isUnderTest } from '../utils/utils';
+import { isUnderTest } from '@playwright/utils/src';
 
 export class ValidationError extends Error {}
 export type Validator = (arg: any, path: string) => any;

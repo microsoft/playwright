@@ -21,7 +21,7 @@ import { Playwright } from '../server/playwright';
 import * as types from '../server/types';
 import { debugLogger } from '../utils/debugLogger';
 import { SocksConnection, SocksConnectionClient } from '../utils/socksProxy';
-import { createGuid } from '../utils/utils';
+import { createGuid } from '@playwright/utils/src';
 import { AndroidDispatcher } from './androidDispatcher';
 import { BrowserTypeDispatcher } from './browserTypeDispatcher';
 import { Dispatcher, DispatcherScope } from './dispatcher';

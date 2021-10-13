@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { debugMode } from './utils';
+import { debugMode } from '@playwright/utils/src/utils';
 
 export const DEFAULT_TIMEOUT = 30000;
 const TIMEOUT = debugMode() ? 0 : DEFAULT_TIMEOUT;

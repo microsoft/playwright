@@ -16,9 +16,9 @@
 
 import fs from 'fs';
 import path from 'path';
-import { FullProject } from 'playwright-core/types/test';
-import { FullConfig, Location, Suite, TestCase, TestResult, TestStatus, TestStep } from 'playwright-core/types/testReporter';
-import { assert, calculateSha1 } from 'playwright-core/src/utils/utils';
+import type { FullProject } from 'playwright-core/types/test';
+import type { FullConfig, Location, Suite, TestCase, TestResult, TestStatus, TestStep } from 'playwright-core/types/testReporter';
+import { assert, calculateSha1 } from '@playwright/utils/src';
 import { sanitizeForFilePath } from '../util';
 import { formatResultFailure } from './base';
 import { serializePatterns } from './json';

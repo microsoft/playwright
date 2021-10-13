@@ -16,7 +16,7 @@
  */
 
 import { WKBrowser } from '../webkit/wkBrowser';
-import { Env } from '../../utils/processLauncher';
+import { Env } from '@playwright/utils/src/processLauncher';
 import path from 'path';
 import { kBrowserCloseMessageId } from './wkConnection';
 import { BrowserType } from '../browserType';

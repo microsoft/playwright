@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { eventsHelper, RegisteredListener } from '../../utils/eventsHelper';
+import { eventsHelper, RegisteredListener } from '@playwright/utils/src/eventsHelper';
 import { Page, Worker } from '../page';
 import { Protocol } from './protocol';
 import { WKSession } from './wkConnection';

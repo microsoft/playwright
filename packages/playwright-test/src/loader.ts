@@ -24,9 +24,9 @@ import * as path from 'path';
 import * as url from 'url';
 import * as fs from 'fs';
 import { ProjectImpl } from './project';
-import { Reporter } from 'playwright-core/types/testReporter';
+import type { Reporter } from 'playwright-core/types/testReporter';
 import { BuiltInReporter, builtInReporters } from './runner';
-import { isRegExp } from 'playwright-core/src/utils/utils';
+import { isRegExp } from '@playwright/utils/src';
 
 export class Loader {
   private _defaultConfig: Config;

@@ -18,7 +18,7 @@ import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { StreamDispatcher } from './streamDispatcher';
 import fs from 'fs';
-import { mkdirIfNeeded } from '../utils/utils';
+import { mkdirIfNeeded } from '@playwright/utils/src';
 import { Artifact } from '../server/artifact';
 
 export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactInitializer, channels.ArtifactEvents> implements channels.ArtifactChannel {

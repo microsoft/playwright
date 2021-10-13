@@ -19,10 +19,10 @@ import { helper } from '../../helper';
 import * as network from '../../network';
 import { Page } from '../../page';
 import * as har from './har';
-import { calculateSha1, monotonicTime } from '../../../utils/utils';
-import { eventsHelper, RegisteredListener } from '../../../utils/eventsHelper';
+import { calculateSha1, monotonicTime } from '@playwright/utils/src';
+import { eventsHelper, RegisteredListener } from '@playwright/utils/src/eventsHelper';
 import * as mime from 'mime';
-import { ManualPromise } from '../../../utils/async';
+import { ManualPromise } from '@playwright/utils/src/async';
 
 const FALLBACK_HTTP_VERSION = 'HTTP/1.1';
 

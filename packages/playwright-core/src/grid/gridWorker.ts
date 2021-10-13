@@ -19,7 +19,7 @@ import debug from 'debug';
 import { DispatcherConnection, Root } from '../dispatchers/dispatcher';
 import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
 import { createPlaywright } from '../server/playwright';
-import { gracefullyCloseAll } from '../utils/processLauncher';
+import { gracefullyCloseAll } from '@playwright/utils/src/processLauncher';
 
 function launchGridWorker(gridURL: string, agentId: string, workerId: string) {
   const log = debug(`[worker ${workerId}]`);

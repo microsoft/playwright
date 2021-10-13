@@ -14,9 +14,4 @@
  * limitations under the License.
  */
 
-import type { Reporter } from 'playwright-core/types/testReporter';
-
-class EmptyReporter implements Reporter {
-}
-
-export default EmptyReporter;
+module.exports = require('./lib/index');

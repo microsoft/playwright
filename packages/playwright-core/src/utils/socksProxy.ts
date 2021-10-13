@@ -15,7 +15,7 @@
  */
 
 import net from 'net';
-import { assert } from './utils';
+import { assert } from '@playwright/utils/src';
 
 // https://tools.ietf.org/html/rfc1928
 

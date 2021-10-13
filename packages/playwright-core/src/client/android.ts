@@ -15,7 +15,7 @@
  */
 
 import fs from 'fs';
-import { isString } from '../utils/utils';
+import { isString } from '@playwright/utils/src';
 import * as channels from '../protocol/channels';
 import { Events } from './events';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';

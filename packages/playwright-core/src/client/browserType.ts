@@ -23,10 +23,10 @@ import { Connection } from './connection';
 import { Events } from './events';
 import { ChildProcess } from 'child_process';
 import { envObjectToArray } from './clientHelper';
-import { assert, headersObjectToArray, getUserAgent, monotonicTime } from '../utils/utils';
+import { assert, headersObjectToArray, getUserAgent, monotonicTime } from '@playwright/utils/src';
 import * as api from '../../types/types';
 import { kBrowserClosedError } from '../utils/errors';
-import { raceAgainstDeadline } from '../utils/async';
+import { raceAgainstDeadline } from '@playwright/utils/src/async';
 
 export interface BrowserServerLauncher {
   launchServer(options?: LaunchServerOptions): Promise<api.BrowserServer>;
