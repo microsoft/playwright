@@ -46,13 +46,17 @@ function filePath(relative) {
   return path.join(ROOT, ...relative.split('/'));
 }
 
-function runWatch() {
-  function runOnChanges(paths, nodeFile) {
+async function runWatch() {
+  function runOnChanges(paths, mustExist = [], nodeFile) {
     nodeFile = filePath(nodeFile);
     function callback() {
+      for (const fileMustExist of mustExist) {
+        if (!fs.existsSync(filePath(fileMustExist)))
+          return;
+      }
       child_process.spawnSync('node', [nodeFile], { stdio: 'inherit' });
     }
-    chokidar.watch([...paths, nodeFile].map(filePath)).on('all', callback);
+    chokidar.watch([...paths, ...mustExist, nodeFile].map(filePath)).on('all', callback);
     callback();
   }
 
@@ -72,7 +76,7 @@ function runWatch() {
     }));
   process.on('exit', () => spawns.forEach(s => s.kill()));
   for (const onChange of onChanges)
-    runOnChanges(onChange.inputs, onChange.script);
+    runOnChanges(onChange.inputs, onChange.mustExist, onChange.script);
 }
 
 async function runBuild() {
@@ -166,6 +170,10 @@ onChanges.push({
     'utils/generate_types/overrides-testReporter.d.ts',
     'utils/generate_types/exported.json',
     'packages/playwright-core/src/server/chromium/protocol.d.ts',
+  ],
+  mustExist: [
+    'packages/playwright-core/lib/server/deviceDescriptors.js',
+    'packages/playwright-core/lib/server/deviceDescriptorsSource.json',
   ],
   script: 'utils/generate_types/index.js',
 });
