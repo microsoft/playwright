@@ -30,36 +30,6 @@ export class SnapshotServer {
     this._snapshotStorage = snapshotStorage;
   }
 
-  static serveSnapshotRoot(): Response {
-    return new Response(`
-      <style>
-        html, body {
-          margin: 0;
-          padding: 0;
-        }
-        iframe {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          border: none;
-        }
-      </style>
-      <body>
-        <script>
-        (${rootScript})();
-        </script>
-      </body>
-    `, {
-      status: 200,
-      headers: {
-        'Cache-Control': 'public, max-age=31536000',
-        'Content-Type': 'text/html'
-      }
-    });
-  }
-
   serveSnapshot(pathname: string, searchParams: URLSearchParams, snapshotUrl: string): Response {
     const snapshot = this._snapshot(pathname.substring('/snapshot'.length), searchParams);
     if (!snapshot)
@@ -130,33 +100,6 @@ declare global {
   interface Window {
     showSnapshot: (url: string, point?: Point) => Promise<void>;
   }
-}
-
-function rootScript() {
-  const pointElement = document.createElement('div');
-  pointElement.style.position = 'fixed';
-  pointElement.style.backgroundColor = 'red';
-  pointElement.style.width = '20px';
-  pointElement.style.height = '20px';
-  pointElement.style.borderRadius = '10px';
-  pointElement.style.margin = '-10px 0 0 -10px';
-  pointElement.style.zIndex = '2147483647';
-
-  const iframe = document.createElement('iframe');
-  document.body.appendChild(iframe);
-  (window as any).showSnapshot = async (url: string, options: { point?: Point } = {}) => {
-    iframe.src = url;
-    if (options.point) {
-      pointElement.style.left = options.point.x + 'px';
-      pointElement.style.top = options.point.y + 'px';
-      document.documentElement.appendChild(pointElement);
-    } else {
-      pointElement.remove();
-    }
-  };
-  window.addEventListener('message', event => {
-    window.showSnapshot(window.location.href + event.data.snapshotUrl);
-  }, false);
 }
 
 function removeHash(url: string) {

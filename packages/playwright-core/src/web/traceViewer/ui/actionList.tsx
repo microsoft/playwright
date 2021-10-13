@@ -72,16 +72,7 @@ export const ActionList: React.FC<ActionListProps> = ({
       }}
       ref={actionListRef}
     >
-      {actions.length === 0 && <div className='no-actions-entry'>
-        <div>
-          <div className='no-actions-entry-text'>
-            No actions recorded
-          </div>
-          <div>
-            Make sure that the right context was used when recording the trace.
-          </div>
-        </div>
-      </div>}
+      {actions.length === 0 && <div className='no-actions-entry'>No actions recorded</div>}
       {actions.map(action => {
         const { metadata } = action;
         const selectedSuffix = action === selectedAction ? ' selected' : '';

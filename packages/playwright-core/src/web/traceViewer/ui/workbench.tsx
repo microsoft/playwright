@@ -31,19 +31,19 @@ import * as modelUtil from './modelUtil';
 
 export const Workbench: React.FunctionComponent<{
 }> = () => {
+  const [traceURL, setTraceURL] = React.useState<string>(new URL(window.location.href).searchParams.get('trace')!);
   const [contextEntry, setContextEntry] = React.useState<ContextEntry>(emptyContext);
   const [selectedAction, setSelectedAction] = React.useState<ActionTraceEvent | undefined>();
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEvent | undefined>();
   const [selectedTab, setSelectedTab] = React.useState<string>('logs');
-  const trace = new URL(window.location.href).searchParams.get('trace');
 
   React.useEffect(() => {
     (async () => {
-      const contextEntry = (await fetch(`/context?trace=${trace}`).then(response => response.json())) as ContextEntry;
+      const contextEntry = (await fetch(`/context?trace=${traceURL}`).then(response => response.json())) as ContextEntry;
       modelUtil.indexModel(contextEntry);
       setContextEntry(contextEntry);
     })();
-  }, [trace]);
+  }, [traceURL]);
 
   const actions = React.useMemo(() => {
     const actions: ActionTraceEvent[] = [];
@@ -61,7 +61,13 @@ export const Workbench: React.FunctionComponent<{
   const consoleCount = errors + warnings;
   const networkCount = selectedAction ? modelUtil.resourcesForAction(selectedAction).length : 0;
 
-  return <div className='vbox workbench'>
+  return <div className='vbox workbench'
+    onDragOver={event => { event.preventDefault(); }}
+    onDrop={event => {
+      event.preventDefault();
+      const url = URL.createObjectURL(event.dataTransfer.files[0]);
+      setTraceURL(url.toString());
+    }}>
     <div className='hbox header'>
       <div className='logo'>🎭</div>
       <div className='product'>Playwright</div>

@@ -84,9 +84,9 @@ class TraceViewerPage {
 
   async snapshotFrame(actionName: string, ordinal: number = 0, hasSubframe: boolean = false): Promise<Frame> {
     await this.selectAction(actionName, ordinal);
-    while (this.page.frames().length < (hasSubframe ? 4 : 3))
+    while (this.page.frames().length < (hasSubframe ? 3 : 2))
       await this.page.waitForEvent('frameattached');
-    return this.page.mainFrame().childFrames()[0].childFrames()[0];
+    return this.page.mainFrame().childFrames()[0];
   }
 }
 

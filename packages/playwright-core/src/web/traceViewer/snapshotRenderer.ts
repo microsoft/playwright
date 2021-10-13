@@ -220,6 +220,23 @@ function snapshotScript() {
         element.scrollLeft = +element.getAttribute(scrollLeftAttribute)!;
         element.removeAttribute(scrollLeftAttribute);
       }
+
+      const search = new URL(window.location.href).searchParams;
+      const pointX = search.get('pointX');
+      const pointY = search.get('pointY');
+      if (pointX) {
+        const pointElement = document.createElement('x-pw-pointer');
+        pointElement.style.position = 'fixed';
+        pointElement.style.backgroundColor = 'red';
+        pointElement.style.width = '20px';
+        pointElement.style.height = '20px';
+        pointElement.style.borderRadius = '10px';
+        pointElement.style.margin = '-10px 0 0 -10px';
+        pointElement.style.zIndex = '2147483647';
+        pointElement.style.left = pointX + 'px';
+        pointElement.style.top = pointY + 'px';
+        document.documentElement.appendChild(pointElement);
+      }
     };
     window.addEventListener('load', onLoad);
   }

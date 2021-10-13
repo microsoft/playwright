@@ -31,7 +31,7 @@ let snapshotServer: SnapshotServer | undefined;
 
 async function loadTrace(trace: string): Promise<TraceModel> {
   const traceModel = new TraceModel();
-  const url = trace.startsWith('http') ? trace : `/file?path=${trace}`;
+  const url = trace.startsWith('http') || trace.startsWith('blob') ? trace : `/file?path=${trace}`;
   await traceModel.load(url);
   return traceModel;
 }
@@ -53,8 +53,6 @@ async function doFetch(event: FetchEvent): Promise<Response> {
         headers: { 'Content-Type': 'application/json' }
       });
     }
-    if (pathname === '/snapshot/')
-      return SnapshotServer.serveSnapshotRoot();
     if (pathname.startsWith('/snapshotSize/'))
       return snapshotServer!.serveSnapshotSize(pathname, searchParams);
     if (pathname.startsWith('/snapshot/'))
