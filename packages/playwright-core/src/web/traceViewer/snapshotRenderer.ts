@@ -225,7 +225,7 @@ function snapshotScript() {
       const pointX = search.get('pointX');
       const pointY = search.get('pointY');
       if (pointX) {
-        const pointElement = document.createElement('div');
+        const pointElement = document.createElement('x-pw-pointer');
         pointElement.style.position = 'fixed';
         pointElement.style.backgroundColor = 'red';
         pointElement.style.width = '20px';
