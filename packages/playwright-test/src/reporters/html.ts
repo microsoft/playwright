@@ -127,7 +127,7 @@ class HtmlReporter {
         const absolutePath = path.join(reportFolder, ...relativePath.split('/'));
         return server.serveFile(response, absolutePath);
       });
-      const url = await server.start();
+      const url = await server.start(9323);
       console.log('');
       console.log(colors.cyan(`  Serving HTML report at ${url}. Press Ctrl+C to quit.`));
       console.log('');

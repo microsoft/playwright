@@ -41,8 +41,9 @@ export const SnapshotTab: React.FunctionComponent<{
   if (action) {
     const snapshot = snapshots[snapshotIndex];
     if (snapshot && snapshot.snapshotName) {
-      snapshotUrl = new URL(`snapshot/${action.metadata.pageId}?name=${snapshot.snapshotName}`, window.location.href).toString();
-      snapshotSizeUrl = new URL(`snapshotSize/${action.metadata.pageId}?name=${snapshot.snapshotName}`, window.location.href).toString();
+      const traceUrl = new URL(window.location.href).searchParams.get('trace');
+      snapshotUrl = new URL(`snapshot/${action.metadata.pageId}?trace=${traceUrl}&name=${snapshot.snapshotName}`, window.location.href).toString();
+      snapshotSizeUrl = new URL(`snapshotSize/${action.metadata.pageId}?trace=${traceUrl}&name=${snapshot.snapshotName}`, window.location.href).toString();
       if (snapshot.snapshotName.includes('action')) {
         pointX = action.metadata.point?.x;
         pointY = action.metadata.point?.y;
