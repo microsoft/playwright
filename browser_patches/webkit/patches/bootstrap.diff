@@ -1,3 +1,20 @@
+diff --git a/LayoutTests/platform/glib/imported/w3c/web-platform-tests/media-source/mediasource-remove-expected.txt b/LayoutTests/platform/glib/imported/w3c/web-platform-tests/media-source/mediasource-remove-expected.txt
+index cbb208d223b268773e436526cc5618fb84efd979..9f581297f823c9aa2a078bdfc569e96fc00ef7a8 100644
+--- a/LayoutTests/platform/glib/imported/w3c/web-platform-tests/media-source/mediasource-remove-expected.txt
++++ b/LayoutTests/platform/glib/imported/w3c/web-platform-tests/media-source/mediasource-remove-expected.txt
+@@ -11,8 +11,8 @@ PASS Test remove while update pending.
+ PASS Test aborting a remove operation.
+ PASS Test remove with a start at the duration.
+ PASS Test remove transitioning readyState from 'ended' to 'open'.
+-PASS Test removing all appended data.
+-PASS Test removing beginning of appended data.
+-FAIL Test removing the middle of appended data. assert_equals: Buffered ranges after remove(). expected "{ [0.095, 0.997) [3.298, 6.548) }" but got "{ [0.095, 0.975) [3.298, 6.548) }"
+-FAIL Test removing the end of appended data. assert_equals: Buffered ranges after remove(). expected "{ [0.095, 1.022) }" but got "{ [0.095, 0.995) }"
++FAIL Test removing all appended data. assert_equals: Initial buffered range. expected "{ [0.095, 6.548) }" but got "{ [0.000, 6.548) }"
++FAIL Test removing beginning of appended data. assert_equals: Initial buffered range. expected "{ [0.095, 6.548) }" but got "{ [0.000, 6.548) }"
++FAIL Test removing the middle of appended data. assert_equals: Initial buffered range. expected "{ [0.095, 6.548) }" but got "{ [0.000, 6.548) }"
++FAIL Test removing the end of appended data. assert_equals: Initial buffered range. expected "{ [0.095, 6.548) }" but got "{ [0.000, 6.548) }"
+ 
 diff --git a/Source/JavaScriptCore/CMakeLists.txt b/Source/JavaScriptCore/CMakeLists.txt
 index b32c30f110f6a29e2c816f87c556a12fdbe0d6c8..c1b272fc91084525bcedcba03e4935c423f074c3 100644
 --- a/Source/JavaScriptCore/CMakeLists.txt
@@ -2359,6 +2376,21 @@ index b3679c221f372456a189e74a7dfa63b7544d568e..607588cba7862eb0a43f6501ff41a754
 +        if (isLocalOrigin || isPotentiallyTrustworthy || (isSecure && !hasMixedContent) || isRequestFromIBooks())
              return false;
      }
+ 
+diff --git a/Source/WebCore/Modules/mediasource/MediaSource.cpp b/Source/WebCore/Modules/mediasource/MediaSource.cpp
+index 71729ccbe9416732dc1958c2c099c1e166bc1cc5..0fdbf9f804176e06418be5e05f885bea99d1399b 100644
+--- a/Source/WebCore/Modules/mediasource/MediaSource.cpp
++++ b/Source/WebCore/Modules/mediasource/MediaSource.cpp
+@@ -323,8 +323,8 @@ ExceptionOr<void> MediaSource::clearLiveSeekableRange()
+ 
+ const MediaTime& MediaSource::currentTimeFudgeFactor()
+ {
+-    // Allow hasCurrentTime() to be off by as much as 100ms.
+-    static NeverDestroyed<MediaTime> fudgeFactor(1, 10);
++    // Allow hasCurrentTime() to be off by as much as the length of two 24fps video frames
++    static NeverDestroyed<MediaTime> fudgeFactor(2002, 24000);
+     return fudgeFactor;
+ }
  
 diff --git a/Source/WebCore/Modules/notifications/Notification.idl b/Source/WebCore/Modules/notifications/Notification.idl
 index d031bb73cda05092105d604dc608f89f6c834e8e..e4880a9de94ab76be48af35f28085c5cd00e91b1 100644
@@ -7468,6 +7500,19 @@ index 98ec71d24d30d3124d5ed41237186f4b9f037681..6c644cf82481446bc861d93c0b9934cf
          return true;
  #else
          return false;
+diff --git a/Source/WebCore/platform/graphics/SourceBufferPrivate.h b/Source/WebCore/platform/graphics/SourceBufferPrivate.h
+index dc3c1bbf8945515b21b588a59485113affd6c9bf..f5974dff71422b23431a4fb3ea6c975be45873b4 100644
+--- a/Source/WebCore/platform/graphics/SourceBufferPrivate.h
++++ b/Source/WebCore/platform/graphics/SourceBufferPrivate.h
+@@ -150,7 +150,7 @@ public:
+ protected:
+     // The following method should never be called directly and be overridden instead.
+     WEBCORE_EXPORT virtual void append(Vector<unsigned char>&&);
+-    virtual MediaTime timeFudgeFactor() const { return {1, 10}; }
++    virtual MediaTime timeFudgeFactor() const { return {2002, 24000}; }
+     virtual bool isActive() const { return false; }
+     virtual bool isSeeking() const { return false; }
+     virtual MediaTime currentMediaTime() const { return { }; }
 diff --git a/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp b/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp
 index 4db603a94f3af1b1bce94ab0f1ae36054c004fcc..c1820f48eb86348f8ca678fde636244e8c91267e 100644
 --- a/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp
@@ -7580,6 +7625,143 @@ index 8677d106bf2d0f53044b47fba0e6736efcd3aeb6..9b28f9d917536d2c2699f613adf296bb
  Vector<uint8_t> data(const PixelBuffer&, const String& mimeType, std::optional<double> quality);
  
  WEBCORE_EXPORT String dataURL(CGImageRef, CFStringRef destinationUTI, const String& mimeType, std::optional<double> quality);
+diff --git a/Source/WebCore/platform/graphics/gstreamer/MediaSampleGStreamer.cpp b/Source/WebCore/platform/graphics/gstreamer/MediaSampleGStreamer.cpp
+index 381bb722273793f69cbfbfa174672eaf1ee781dc..d09472dc0d2a7e8c065204ac65ab0b5f041b9c5c 100644
+--- a/Source/WebCore/platform/graphics/gstreamer/MediaSampleGStreamer.cpp
++++ b/Source/WebCore/platform/graphics/gstreamer/MediaSampleGStreamer.cpp
+@@ -183,6 +183,15 @@ RefPtr<JSC::Uint8ClampedArray> MediaSampleGStreamer::getRGBAImageData() const
+     return JSC::Uint8ClampedArray::tryCreate(WTFMove(bufferStorage), 0, byteLength);
+ }
+ 
++void MediaSampleGStreamer::extendToTheBeginning()
++{
++    // Only to be used with the first sample, as a hack for lack of support for edit lists.
++    // See AppendPipeline::appsinkNewSample()
++    ASSERT(m_dts == MediaTime::zeroTime());
++    m_duration += m_pts;
++    m_pts = MediaTime::zeroTime();
++}
++
+ void MediaSampleGStreamer::setTimestamps(const MediaTime& presentationTime, const MediaTime& decodeTime)
+ {
+     m_pts = presentationTime;
+diff --git a/Source/WebCore/platform/graphics/gstreamer/MediaSampleGStreamer.h b/Source/WebCore/platform/graphics/gstreamer/MediaSampleGStreamer.h
+index 96676ffaa32fd6c15c06543b4535fa86f7d2c9f0..d7a49b96fc33342fc03452340b5614a69dfc3803 100644
+--- a/Source/WebCore/platform/graphics/gstreamer/MediaSampleGStreamer.h
++++ b/Source/WebCore/platform/graphics/gstreamer/MediaSampleGStreamer.h
+@@ -42,6 +42,7 @@ public:
+     static Ref<MediaSampleGStreamer> createFakeSample(GstCaps*, MediaTime pts, MediaTime dts, MediaTime duration, const FloatSize& presentationSize, const AtomString& trackId);
+     static Ref<MediaSampleGStreamer> createImageSample(PixelBuffer&&, const IntSize& destinationSize = { }, double frameRate = 1);
+ 
++    void extendToTheBeginning();
+     MediaTime presentationTime() const override { return m_pts; }
+     MediaTime decodeTime() const override { return m_dts; }
+     MediaTime duration() const override { return m_duration; }
+diff --git a/Source/WebCore/platform/graphics/gstreamer/mse/AppendPipeline.cpp b/Source/WebCore/platform/graphics/gstreamer/mse/AppendPipeline.cpp
+index 5b896414c3aed331be9e052d8d0103e00b585bba..2cab8b19d143e78bd227f224c64be051707ba70f 100644
+--- a/Source/WebCore/platform/graphics/gstreamer/mse/AppendPipeline.cpp
++++ b/Source/WebCore/platform/graphics/gstreamer/mse/AppendPipeline.cpp
+@@ -375,72 +375,21 @@ void AppendPipeline::handleEndOfAppend()
+     sourceBufferPrivate().didReceiveAllPendingSamples();
+ }
+ 
+-static GstClockTime bufferTimeToStreamTimeClamped(const GstSegment* segment, GstClockTime bufferTime)
+-{
+-    guint64 streamTime;
+-    int result = gst_segment_to_stream_time_full(segment, GST_FORMAT_TIME, bufferTime, &streamTime);
+-    if (!result) {
+-        GST_ERROR("Couldn't map buffer time %" GST_TIME_FORMAT " to segment %" GST_PTR_FORMAT, GST_TIME_ARGS(bufferTime), segment);
+-        return bufferTime;
+-    }
+-    if (result < 0)
+-        return 0; // Clamp negative timestamps down to zero.
+-    return streamTime;
+-}
+-
+ void AppendPipeline::appsinkNewSample(const Track& track, GRefPtr<GstSample>&& sample)
+ {
+     ASSERT(isMainThread());
+ 
+-    GstBuffer* buffer = gst_sample_get_buffer(sample.get());
+-    if (UNLIKELY(!buffer)) {
++    if (UNLIKELY(!gst_sample_get_buffer(sample.get()))) {
+         GST_WARNING("Received sample without buffer from appsink.");
+         return;
+     }
+ 
+-    if (!GST_BUFFER_PTS_IS_VALID(buffer)) {
++    if (!GST_BUFFER_PTS_IS_VALID(gst_sample_get_buffer(sample.get()))) {
+         // When demuxing Vorbis, matroskademux creates several PTS-less frames with header information. We don't need those.
+         GST_DEBUG("Ignoring sample without PTS: %" GST_PTR_FORMAT, gst_sample_get_buffer(sample.get()));
+         return;
+     }
+ 
+-    GstSegment* segment = gst_sample_get_segment(sample.get());
+-    bool hasMappedTime = false;
+-    GstClockTime pts = GST_BUFFER_PTS(buffer);
+-    GstClockTime dts = GST_BUFFER_DTS(buffer);
+-    GstClockTime duration = GST_BUFFER_DURATION(buffer);
+-    if (segment && (segment->time || segment->start)) {
+-        // MP4 has the concept of edit lists, where some buffer time needs to be offsetted, often very slightly,
+-        // to get exact timestamps.
+-        pts = bufferTimeToStreamTimeClamped(segment, GST_BUFFER_PTS(buffer));
+-        dts = bufferTimeToStreamTimeClamped(segment, GST_BUFFER_DTS(buffer));
+-        GST_TRACE_OBJECT(track.appsinkPad.get(), "Mapped buffer to segment, PTS %" GST_TIME_FORMAT " -> %" GST_TIME_FORMAT " DTS %" GST_TIME_FORMAT " -> %" GST_TIME_FORMAT,
+-            GST_TIME_ARGS(GST_BUFFER_PTS(buffer)), GST_TIME_ARGS(pts), GST_TIME_ARGS(GST_BUFFER_DTS(buffer)), GST_TIME_ARGS(dts));
+-        hasMappedTime = true;
+-    } else if (!dts && pts > 0 && pts <= 100'000'000) {
+-        // Because a track presentation time starting at some close to zero, but not exactly zero time can cause unexpected
+-        // results for applications, we extend the duration of this first sample to the left so that it starts at zero.
+-        // This is relevant for files that should have an edit list but don't, or when using GStreamer < 1.16, where
+-        // edit lists are not parsed in push-mode.
+-
+-        GST_DEBUG("Extending first sample of track '%s' to make it start at PTS=0 %" GST_PTR_FORMAT, track.trackId.string().utf8().data(), buffer);
+-        duration += pts;
+-        pts = 0;
+-        hasMappedTime = true;
+-    }
+-
+-    if (hasMappedTime) {
+-        sample = adoptGRef(gst_sample_make_writable(sample.leakRef()));
+-        GRefPtr<GstBuffer> newBuffer = gst_sample_get_buffer(sample.get());
+-        // Unset the buffer temporarily to ensure the buffer has refcount of 1 if possible when gst_buffer_make_writable is called, therefore avoiding a copy.
+-        gst_sample_set_buffer(sample.get(), nullptr);
+-        newBuffer = adoptGRef(gst_buffer_make_writable(newBuffer.leakRef()));
+-        GST_BUFFER_PTS(newBuffer.get()) = pts;
+-        GST_BUFFER_DTS(newBuffer.get()) = dts;
+-        GST_BUFFER_DURATION(newBuffer.get()) = duration;
+-        gst_sample_set_buffer(sample.get(), newBuffer.get());
+-    }
+-
+     auto mediaSample = MediaSampleGStreamer::create(WTFMove(sample), track.presentationSize, track.trackId);
+ 
+     GST_TRACE("append: trackId=%s PTS=%s DTS=%s DUR=%s presentationSize=%.0fx%.0f",
+@@ -450,6 +399,25 @@ void AppendPipeline::appsinkNewSample(const Track& track, GRefPtr<GstSample>&& s
+         mediaSample->duration().toString().utf8().data(),
+         mediaSample->presentationSize().width(), mediaSample->presentationSize().height());
+ 
++    // Hack, rework when GStreamer >= 1.16 becomes a requirement:
++    // We're not applying edit lists. GStreamer < 1.16 doesn't emit the correct segments to do so.
++    // GStreamer fix in https://gitlab.freedesktop.org/gstreamer/gst-plugins-good/-/commit/c2a0da8096009f0f99943f78dc18066965be60f9
++    // Also, in order to apply them we would need to convert the timestamps to stream time, which we're not currently
++    // doing for consistency between GStreamer versions.
++    //
++    // In consequence, the timestamps we're handling here are unedited track time. In track time, the first sample is
++    // guaranteed to have DTS == 0, but in the case of streams with B-frames, often PTS > 0. Edit lists fix this by
++    // offsetting all timestamps by that amount in movie time, but we can't do that if we don't have access to them.
++    // (We could assume the track PTS of the sample with track DTS = 0 is the offset, but we don't have any guarantee
++    // we will get appended that sample first, or ever).
++    //
++    // Because a track presentation time starting at some close to zero, but not exactly zero time can cause unexpected
++    // results for applications, we extend the duration of this first sample to the left so that it starts at zero.
++    if (mediaSample->decodeTime() == MediaTime::zeroTime() && mediaSample->presentationTime() > MediaTime::zeroTime() && mediaSample->presentationTime() <= MediaTime(1, 10)) {
++        GST_DEBUG("Extending first sample to make it start at PTS=0");
++        mediaSample->extendToTheBeginning();
++    }
++
+     m_sourceBufferPrivate.didReceiveSample(mediaSample.get());
+ }
+ 
 diff --git a/Source/WebCore/platform/graphics/opengl/GraphicsContextGLOpenGLBase.cpp b/Source/WebCore/platform/graphics/opengl/GraphicsContextGLOpenGLBase.cpp
 index 2e46b61536c835dfcacf9f79e10e6d59ae7a3836..fa0c72d80d83c58a8407e78988de010fe97d7c38 100644
 --- a/Source/WebCore/platform/graphics/opengl/GraphicsContextGLOpenGLBase.cpp
@@ -11052,6 +11234,18 @@ index 2db0f569cb2250589e7ec16058dafb5a6a4e7bf0..14eb20db0123a6025d2ddacc1dbda1b0
  
      virtual void setStatusText(WebKit::WebPageProxy*, const WTF::String&) { }
      virtual void mouseDidMoveOverElement(WebKit::WebPageProxy&, const WebKit::WebHitTestResultData&, OptionSet<WebKit::WebEvent::Modifier>, Object*) { }
+diff --git a/Source/WebKit/UIProcess/API/APIWebAuthenticationAssertionResponse.cpp b/Source/WebKit/UIProcess/API/APIWebAuthenticationAssertionResponse.cpp
+index eeebd9bd05f563ab4b5634ff4afb6dd87cc4a0b3..79ef88b25d636f2cf1536f0e3af295f8f08a0fcd 100644
+--- a/Source/WebKit/UIProcess/API/APIWebAuthenticationAssertionResponse.cpp
++++ b/Source/WebKit/UIProcess/API/APIWebAuthenticationAssertionResponse.cpp
+@@ -29,6 +29,7 @@
+ #if ENABLE(WEB_AUTHN)
+ 
+ #include "APIData.h"
++#include <JavaScriptCore/ArrayBuffer.h>
+ 
+ namespace API {
+ using namespace WebCore;
 diff --git a/Source/WebKit/UIProcess/API/C/WKInspector.cpp b/Source/WebKit/UIProcess/API/C/WKInspector.cpp
 index e1465edd29caf3109c17d44bb3c88aaba98cfbb5..32d569d3240c583334b8b6512407430fd448ae75 100644
 --- a/Source/WebKit/UIProcess/API/C/WKInspector.cpp
