@@ -1163,30 +1163,42 @@ export class Frame extends SdkObject {
 
   async expect(metadata: CallMetadata, selector: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[] }> {
     const controller = new ProgressController(metadata, this);
-    const isListMatcher = options.expression.endsWith('.array');
-    const querySelectorAll = options.expression === 'to.have.count' || isListMatcher;
+    const querySelectorAll = options.expression === 'to.have.count' || options.expression.endsWith('.array');
     const mainWorld = options.expression === 'to.have.property';
-    const missingElementShouldMatch = (!options.isNot && options.expression === 'to.be.hidden') || (options.isNot && options.expression === 'to.be.visible');
-    const expectsEmptyList = options.expectedText?.length === 0;
-    const emptyListShouldMatch = isListMatcher && expectsEmptyList;
-    const omitAttached = (isListMatcher && options.isNot !== expectsEmptyList) || missingElementShouldMatch;
     return await this._scheduleRerunnableTaskWithController(controller, selector, (progress, element, options, elements, continuePolling) => {
-      // We don't have an element and we don't need an element => matches.
-      if (!element && (options.emptyListShouldMatch || options.missingElementShouldMatch))
-        return { matches: true };
-      // We don't have an element and we DO need an element => does not match.
-      if (!element)
-        return { matches: false };
-      // We have an element.
-      const { matches, received } = progress.injectedScript.expect(progress, element!, options, elements);
+      if (!element) {
+        // expect(locator).toBeHidden() passes when there is no element.
+        if (!options.isNot && options.expression === 'to.be.hidden')
+          return { matches: true };
+
+        // expect(locator).not.toBeVisible() passes when there is no element.
+        if (options.isNot && options.expression === 'to.be.visible')
+          return { matches: false };
+
+        // expect(listLocator).toHaveText([]) passes when there are no elements matching.
+        // expect(listLocator).not.toHaveText(['foo']) passes when there are no elements matching.
+        const expectsEmptyList = options.expectedText?.length === 0;
+        if (options.expression.endsWith('.array') && expectsEmptyList !== options.isNot)
+          return { matches: expectsEmptyList };
+
+        // When none of the above applies, keep waiting for the element.
+        return continuePolling;
+      }
+
+      const { matches, received } = progress.injectedScript.expect(progress, element, options, elements);
       if (matches === options.isNot) {
+        // Keep waiting in these cases:
+        // expect(locator).conditionThatDoesNotMatch
+        // expect(locator).not.conditionThatDoesMatch
         progress.setIntermediateResult(received);
         if (!Array.isArray(received))
           progress.log(`  unexpected value "${received}"`);
         return continuePolling;
       }
+
+      // Reached the expected state!
       return { matches, received };
-    }, { emptyListShouldMatch, missingElementShouldMatch, ...options }, { strict: true, querySelectorAll, mainWorld, omitAttached, logScale: true, ...options }).catch(e => {
+    }, options, { strict: true, querySelectorAll, mainWorld, omitAttached: true, logScale: true, ...options }).catch(e => {
       if (js.isJavaScriptErrorInEvaluate(e))
         throw e;
       return { received: controller.lastIntermediateResult(), matches: options.isNot, log: metadata.log };
