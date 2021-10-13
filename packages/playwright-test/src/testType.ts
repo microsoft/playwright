@@ -178,7 +178,7 @@ export class TestTypeImpl {
   private _use(location: Location, fixtures: Fixtures) {
     const suite = currentlyLoadingFileSuite();
     if (!suite)
-      throw errorWithLocation(location, `test.use() can only be called in a test file`);
+      throw errorWithLocation(location, `test.use() can only be called in a test file and can only be nested in test.describe()`);
     suite._use.push({ fixtures, location });
   }
 

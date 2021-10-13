@@ -163,3 +163,19 @@ test('should use options from the config', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
 });
+
+test('test.use() should throw if called from beforeAll ', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const test = pwt.test;
+      test.beforeAll(() => {
+        test.use({});
+      });
+      test('should work', async () => {
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('test.use() can only be called in a test file and can only be nested in test.describe()');
+});
+
