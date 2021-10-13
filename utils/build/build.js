@@ -194,6 +194,13 @@ copyFiles.push({
   ignored: ['**/.eslintrc.js', '**/webpack*.config.js', '**/injected/**/*']
 });
 
+copyFiles.push({
+  files: 'packages/playwright-test/src/**/*.js',
+  from: 'packages/playwright-test/src',
+  to: 'packages/playwright-test/lib',
+  ignored: ['**/.eslintrc.js']
+});
+
 // Sometimes we require JSON files that babel ignores.
 // For example, deviceDescriptorsSource.json
 copyFiles.push({
