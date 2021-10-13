@@ -163,27 +163,28 @@ const TestResultView: React.FC<{
   result: TestResult,
 }> = ({ result }) => {
 
-  const { screenshots, videos, otherAttachments, attachmentsMap } = React.useMemo(() => {
+  const { screenshots, videos, traces, otherAttachments, attachmentsMap } = React.useMemo(() => {
     const attachmentsMap = new Map<string, TestAttachment>();
     const attachments = result?.attachments || [];
     const otherAttachments: TestAttachment[] = [];
     const screenshots = attachments.filter(a => a.name === 'screenshot');
     const videos = attachments.filter(a => a.name === 'video');
-    const knownNames = new Set(['screenshot', 'image', 'expected', 'actual', 'diff', 'video']);
+    const traces = attachments.filter(a => a.name === 'trace');
+    const knownNames = new Set(['screenshot', 'image', 'expected', 'actual', 'diff', 'video', 'trace']);
     for (const a of attachments) {
       attachmentsMap.set(a.name, a);
       if (!knownNames.has(a.name))
         otherAttachments.push(a);
     }
-    return { attachmentsMap, screenshots, videos, otherAttachments };
+    return { attachmentsMap, screenshots, videos, otherAttachments, traces };
   }, [ result ]);
 
   const expected = attachmentsMap.get('expected');
   const actual = attachmentsMap.get('actual');
   const diff = attachmentsMap.get('diff');
   return <div className='test-result'>
-    {result.error && <ErrorMessage key={-1} error={result.error}></ErrorMessage>}
-    {result.steps.map((step, i) => <StepTreeItem key={i} step={step} depth={0}></StepTreeItem>)}
+    {result.error && <ErrorMessage key='error-message' error={result.error}></ErrorMessage>}
+    {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} depth={0}></StepTreeItem>)}
 
     {expected && actual && <div className='vbox'>
       <ImageDiff actual={actual} expected={expected} diff={diff}></ImageDiff>
@@ -192,24 +193,29 @@ const TestResultView: React.FC<{
       {diff && <AttachmentLink key={`diff`} attachment={diff}></AttachmentLink>}
     </div>}
 
-    {!!screenshots.length && <div className='test-overview-title'>Screenshots</div>}
+    {!!screenshots.length && <div key='screenshots-title' className='test-overview-title'>Screenshots</div>}
     {screenshots.map((a, i) => {
-      return <div className='vbox'>
-        <img key={`screenshot-${i}`} src={a.path} />
-        <AttachmentLink key={`screenshot-link-${i}`} attachment={a}></AttachmentLink>
+      return <div key={`screenshot-${i}`} className='vbox'>
+        <img src={a.path} />
+        <AttachmentLink attachment={a}></AttachmentLink>
       </div>;
     })}
 
-    {!!videos.length && <div className='test-overview-title'>Videos</div>}
-    {videos.map((a, i) => <div className='vbox'>
-      <video key={`video-${i}`} controls>
-        <source src={a.path} type={a.contentType}/>
-      </video>
-      <AttachmentLink key={`video-link-${i}`} attachment={a}></AttachmentLink>
+    {!!traces.length && <div key='traces-title' className='test-overview-title'>Traces</div>}
+    {traces.map((a, i) => <div key={`trace-${i}`} className='vbox'>
+      <AttachmentLink attachment={a} href={`trace/index.html?trace=${window.location.origin}/` + a.path}></AttachmentLink>
     </div>)}
 
-    {!!otherAttachments && <div className='test-overview-title'>Attachments</div>}
-    {otherAttachments.map((a, i) => <AttachmentLink key={`attachment-${i}`} attachment={a}></AttachmentLink>)}
+    {!!videos.length && <div key='videos-title' className='test-overview-title'>Videos</div>}
+    {videos.map((a, i) => <div key={`video-${i}`} className='vbox'>
+      <video controls>
+        <source src={a.path} type={a.contentType}/>
+      </video>
+      <AttachmentLink attachment={a}></AttachmentLink>
+    </div>)}
+
+    {!!otherAttachments && <div key='attachments-title' className='test-overview-title'>Attachments</div>}
+    {otherAttachments.map((a, i) => <AttachmentLink key={`attachment-link-${i}`} attachment={a}></AttachmentLink>)}
   </div>;
 };
 
@@ -243,10 +249,11 @@ const StatsView: React.FC<{
 
 export const AttachmentLink: React.FunctionComponent<{
   attachment: TestAttachment,
-}> = ({ attachment }) => {
+  href?: string,
+}> = ({ attachment, href }) => {
   return <TreeItem title={<div style={{ display: 'flex', alignItems: 'center', flex: 'auto' }}>
     <span className={'codicon codicon-cloud-download'}></span>
-    {attachment.path && <a href={attachment.path} target='_blank'>{attachment.name}</a>}
+    {attachment.path && <a href={href || attachment.path} target='_blank'>{attachment.name}</a>}
     {attachment.body && <span>{attachment.name}</span>}
   </div>} loadChildren={attachment.body ? () => {
     return [<div className='attachment-body'>${attachment.body}</div>];
