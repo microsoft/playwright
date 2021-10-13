@@ -180,7 +180,7 @@ export class Runner {
 
     const webServer = (!list && config.webServer) ? await WebServer.create(config.webServer) : undefined;
     let globalSetupResult: any;
-    if (config.globalSetup)
+    if (config.globalSetup && !list)
       globalSetupResult = await (await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup'))(this._loader.fullConfig());
     try {
       for (const file of allTestFiles)
@@ -326,7 +326,7 @@ export class Runner {
     } finally {
       if (globalSetupResult && typeof globalSetupResult === 'function')
         await globalSetupResult(this._loader.fullConfig());
-      if (config.globalTeardown)
+      if (config.globalTeardown && !list)
         await (await this._loader.loadGlobalHook(config.globalTeardown, 'globalTeardown'))(this._loader.fullConfig());
       await webServer?.kill();
     }
