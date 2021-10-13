@@ -12,6 +12,7 @@
     "@babel/plugin-transform-modules-commonjs"
   ],
   "ignore": [
-    "**/*.d.ts"
+    "**/*.d.ts",
+    "packages/playwright-core/src/injected/**/*"
   ]
 }
