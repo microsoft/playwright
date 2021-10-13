@@ -25,7 +25,7 @@ import { internalCallMetadata } from '../../instrumentation';
 import { createPlaywright } from '../../playwright';
 import { ProgressController } from '../../progress';
 
-export async function showTraceViewer(traceUrl: string, browserName: string, headless = false): Promise<BrowserContext | undefined> {
+export async function showTraceViewer(traceUrl: string, browserName: string, headless = false, port?: number): Promise<BrowserContext | undefined> {
   const server = new HttpServer();
   server.routePath('/file', (request, response) => {
     try {
@@ -42,7 +42,7 @@ export async function showTraceViewer(traceUrl: string, browserName: string, hea
     return server.serveFile(response, absolutePath);
   });
 
-  const urlPrefix = await server.start();
+  const urlPrefix = await server.start(port);
 
   const traceViewerPlaywright = createPlaywright('javascript', true);
   const traceViewerBrowser = isUnderTest() ? 'chromium' : browserName;

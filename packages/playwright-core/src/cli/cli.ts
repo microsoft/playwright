@@ -218,7 +218,7 @@ program
         options.browser = 'firefox';
       if (options.browser === 'wk')
         options.browser = 'webkit';
-      showTraceViewer(trace, options.browser).catch(logErrorAndExit);
+      showTraceViewer(trace, options.browser, false, 9322).catch(logErrorAndExit);
     }).addHelpText('afterAll', `
 Examples:
 
