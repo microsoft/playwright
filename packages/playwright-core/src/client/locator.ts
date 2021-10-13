@@ -221,7 +221,7 @@ export class Locator implements api.Locator {
     });
   }
 
-  async _expect(expression: string, options: FrameExpectOptions): Promise<{ pass: boolean, received?: any, log?: string[] }> {
+  async _expect(expression: string, options: FrameExpectOptions): Promise<{ matches: boolean, received?: any, log?: string[] }> {
     return this._frame._wrapApiCall(async (channel: channels.FrameChannel) => {
       const params: channels.FrameExpectParams = { selector: this._selector, expression, ...options, isNot: !!options.isNot };
       if (options.expectedValue)

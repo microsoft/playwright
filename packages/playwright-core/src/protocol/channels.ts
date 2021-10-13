@@ -2233,7 +2233,7 @@ export type FrameExpectOptions = {
   timeout?: number,
 };
 export type FrameExpectResult = {
-  pass: boolean,
+  matches: boolean,
   received?: SerializedValue,
   log?: string[],
 };

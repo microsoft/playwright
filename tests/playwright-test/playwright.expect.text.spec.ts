@@ -184,6 +184,12 @@ test('should support toHaveText w/ array', async ({ runInlineTest }) => {
         await expect(locator).not.toHaveText(['Test']);
       });
 
+      test('fail on not+empty', async ({ page }) => {
+        await page.setContent('<div></div>');
+        const locator = page.locator('p');
+        await expect(locator).not.toHaveText([], { timeout: 1000 });
+      });
+
       test('pass eventually empty', async ({ page }) => {
         await page.setContent('<div id=div><p>Text</p></div>');
         const locator = page.locator('p');
@@ -207,7 +213,7 @@ test('should support toHaveText w/ array', async ({ runInlineTest }) => {
   expect(output).toContain('waiting for selector "div"');
   expect(output).toContain('selector resolved to 2 elements');
   expect(result.passed).toBe(6);
-  expect(result.failed).toBe(1);
+  expect(result.failed).toBe(2);
   expect(result.exitCode).toBe(1);
 });
 

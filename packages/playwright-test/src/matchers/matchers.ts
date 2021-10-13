@@ -23,7 +23,7 @@ import { toEqual } from './toEqual';
 import { toExpectedTextValues, toMatchText } from './toMatchText';
 
 interface LocatorEx extends Locator {
-  _expect(expression: string, options: FrameExpectOptions): Promise<{ pass: boolean, received?: any, log?: string[] }>;
+  _expect(expression: string, options: FrameExpectOptions): Promise<{ matches: boolean, received?: any, log?: string[] }>;
 }
 
 export function toBeChecked(
