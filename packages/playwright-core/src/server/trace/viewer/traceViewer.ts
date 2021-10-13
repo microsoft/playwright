@@ -37,7 +37,7 @@ export async function showTraceViewer(traceUrl: string, browserName: string, hea
   });
 
   server.routePrefix('/', (request, response) => {
-    const relativePath = new URL('http://localhost' + request.url!).pathname;
+    const relativePath = new URL('http://localhost' + request.url!).pathname.slice('/trace'.length);
     const absolutePath = path.join(__dirname, '..', '..', '..', 'webpack', 'traceViewer', ...relativePath.split('/'));
     return server.serveFile(response, absolutePath);
   });
@@ -77,6 +77,6 @@ export async function showTraceViewer(traceUrl: string, browserName: string, hea
   else
     page.on('close', () => process.exit());
 
-  await page.mainFrame().goto(internalCallMetadata(), urlPrefix + `/index.html?trace=${traceUrl}`);
+  await page.mainFrame().goto(internalCallMetadata(), urlPrefix + `/trace/index.html?trace=${traceUrl}`);
   return context;
 }

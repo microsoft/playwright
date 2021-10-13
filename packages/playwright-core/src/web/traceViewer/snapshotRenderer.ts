@@ -185,7 +185,8 @@ function snapshotScript() {
           iframe.setAttribute('src', 'data:text/html,<body style="background: #ddd"></body>');
         } else {
           // Append query parameters to inherit ?name= or ?time= values from parent.
-          iframe.setAttribute('src', new URL(src + window.location.search, window.location.href).toString());
+          const url = new URL('/trace' + src + window.location.search, window.location.href).toString();
+          iframe.setAttribute('src', url);
         }
       }
 

@@ -23,7 +23,9 @@ import '../common.css';
 
 (async () => {
   applyTheme();
-  navigator.serviceWorker.register('sw.bundle.js');
+  navigator.serviceWorker.register('/trace/sw.bundle.js', {
+    scope: '/trace/'
+  });
   if (!navigator.serviceWorker.controller) {
     await new Promise<void>(f => {
       navigator.serviceWorker.oncontrollerchange = () => f();
