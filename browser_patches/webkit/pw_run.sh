@@ -4,8 +4,8 @@ function runOSX() {
   # if script is run as-is
   if [[ -f "${SCRIPT_PATH}/EXPECTED_BUILDS" && -n "$WK_CHECKOUT_PATH" && -d "$WK_CHECKOUT_PATH/WebKitBuild/Release/Playwright.app" ]]; then
     DYLIB_PATH="$WK_CHECKOUT_PATH/WebKitBuild/Release"
-  elif [[ -f "${SCRIPT_PATH}/EXPECTED_BUILDS" && -d $SCRIPT_PATH/checkout/WebKitBuild/Release/Playwright.app ]]; then
-    DYLIB_PATH="$SCRIPT_PATH/checkout/WebKitBuild/Release"
+  elif [[ -f "${SCRIPT_PATH}/EXPECTED_BUILDS" && -d "$HOME/webkit/WebKitBuild/Release/Playwright.app" ]]; then
+    DYLIB_PATH="$HOME/webkit/WebKitBuild/Release"
   elif [[ -d $SCRIPT_PATH/Playwright.app ]]; then
     DYLIB_PATH="$SCRIPT_PATH"
   elif [[ -d $SCRIPT_PATH/WebKitBuild/Release/Playwright.app ]]; then
@@ -36,11 +36,11 @@ function runLinux() {
   # the zip bundle wrapper already sets itself the needed env variables.
   if [[ -d $SCRIPT_PATH/$MINIBROWSER_FOLDER ]]; then
     MINIBROWSER="$SCRIPT_PATH/$MINIBROWSER_FOLDER/MiniBrowser"
-  elif [[ -d $SCRIPT_PATH/checkout/$BUILD_FOLDER ]]; then
-    LD_PATH="$SCRIPT_PATH/checkout/$BUILD_FOLDER/$DEPENDENCIES_FOLDER/Root/lib:$SCRIPT_PATH/checkout/$BUILD_FOLDER/Release/bin"
-    GIO_DIR="$SCRIPT_PATH/checkout/$BUILD_FOLDER/$DEPENDENCIES_FOLDER/Root/lib/gio/modules"
-    BUNDLE_DIR="$SCRIPT_PATH/checkout/$BUILD_FOLDER/Release/lib"
-    MINIBROWSER="$SCRIPT_PATH/checkout/$BUILD_FOLDER/Release/bin/MiniBrowser"
+  elif [[ -d $HOME/webkit/$BUILD_FOLDER ]]; then
+    LD_PATH="$HOME/webkit/$BUILD_FOLDER/$DEPENDENCIES_FOLDER/Root/lib:$SCRIPT_PATH/checkout/$BUILD_FOLDER/Release/bin"
+    GIO_DIR="$HOME/webkit/$BUILD_FOLDER/$DEPENDENCIES_FOLDER/Root/lib/gio/modules"
+    BUNDLE_DIR="$HOME/webkit/$BUILD_FOLDER/Release/lib"
+    MINIBROWSER="$HOME/webkit/$BUILD_FOLDER/Release/bin/MiniBrowser"
   elif [[ -f $SCRIPT_PATH/MiniBrowser ]]; then
     MINIBROWSER="$SCRIPT_PATH/MiniBrowser"
   elif [[ -d $SCRIPT_PATH/$BUILD_FOLDER ]]; then

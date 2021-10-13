@@ -82,18 +82,19 @@ elif [[ ("$1" == "winldd") || ("$1" == "winldd/") ]]; then
   echo "FYI: winldd source code is available right away"
   exit 0
 elif [[ ("$1" == "firefox") || ("$1" == "firefox/") || ("$1" == "ff") ]]; then
-  FRIENDLY_CHECKOUT_PATH='$HOME/firefox';
-  CHECKOUT_PATH="$HOME/firefox"
+  if [[ -z "${FF_CHECKOUT_PATH}" ]]; then
+    FRIENDLY_CHECKOUT_PATH='$HOME/firefox';
+    CHECKOUT_PATH="$HOME/firefox"
+  else
+    echo "WARNING: using checkout path from FF_CHECKOUT_PATH env: ${FF_CHECKOUT_PATH}"
+    CHECKOUT_PATH="${FF_CHECKOUT_PATH}"
+    FRIENDLY_CHECKOUT_PATH="<FF_CHECKOUT_PATH>"
+  fi
 
   PATCHES_PATH="$PWD/firefox/patches"
   FIREFOX_EXTRA_FOLDER_PATH="$PWD/firefox/juggler"
   BUILD_NUMBER=$(head -1 "$PWD/firefox/BUILD_NUMBER")
   source "./firefox/UPSTREAM_CONFIG.sh"
-  if [[ ! -z "${FF_CHECKOUT_PATH}" ]]; then
-    echo "WARNING: using checkout path from FF_CHECKOUT_PATH env: ${FF_CHECKOUT_PATH}"
-    CHECKOUT_PATH="${FF_CHECKOUT_PATH}"
-    FRIENDLY_CHECKOUT_PATH="<FF_CHECKOUT_PATH>"
-  fi
 elif [[ ("$1" == "firefox-beta") || ("$1" == "ff-beta") ]]; then
   # NOTE: firefox-beta re-uses firefox checkout.
   if [[ -z "${FF_CHECKOUT_PATH}" ]]; then
