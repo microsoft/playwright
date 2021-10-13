@@ -1,10 +1,10 @@
 // @ts-check
 const { devices } = require('@playwright/test');
-const path = require('path')
+const path = require('path');
 
 /**
  * @see https://playwright.dev/docs/test-configuration
- * @type{import('@playwright/test').PlaywrightTestConfig}
+ * @type {import('@playwright/test').PlaywrightTestConfig}
  */
 const config = {
   // Timeout per test

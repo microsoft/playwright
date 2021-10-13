@@ -55,14 +55,6 @@ export async function createFiles(rootDir: string, files: Map<string, string>, f
   }
 }
 
-export function determineRootDir() {
-  const givenPath = process.argv[2];
-  if (givenPath)
-    return path.isAbsolute(givenPath) ? process.argv[2] : path.join(process.cwd(), process.argv[2]);
-
-  return process.cwd();
-}
-
 export function determinePackageManager(rootDir: string): 'yarn' | 'npm' {
   if (fs.existsSync(path.join(rootDir, 'yarn.lock')))
     return 'yarn';
