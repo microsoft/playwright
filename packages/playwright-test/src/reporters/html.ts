@@ -121,7 +121,7 @@ class HtmlReporter {
     if (!process.env.CI && !process.env.PWTEST_SKIP_TEST_OUTPUT) {
       const server = new HttpServer();
       server.routePrefix('/', (request, response) => {
-        let relativePath = request.url!;
+        let relativePath = new URL('http://localhost' + request.url).pathname;
         if (relativePath === '/')
           relativePath = '/index.html';
         const absolutePath = path.join(reportFolder, ...relativePath.split('/'));
@@ -149,9 +149,21 @@ class HtmlBuilder {
     this._reportFolder = path.resolve(process.cwd(), outputDir);
     this._dataFolder = path.join(this._reportFolder, 'data');
     fs.mkdirSync(this._dataFolder, { recursive: true });
+
+    // Copy app.
     const appFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'web', 'htmlReport');
     for (const file of fs.readdirSync(appFolder))
       fs.copyFileSync(path.join(appFolder, file), path.join(this._reportFolder, file));
+
+    // Copy trace viewer.
+    const traceViewerFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'web', 'traceViewer');
+    const traceViewerTargetFolder = path.join(this._reportFolder, 'trace');
+    fs.mkdirSync(traceViewerTargetFolder, { recursive: true });
+    // TODO (#9471): remove file filter when the babel build is fixed.
+    for (const file of fs.readdirSync(traceViewerFolder)) {
+      if (fs.statSync(path.join(traceViewerFolder, file)).isFile())
+        fs.copyFileSync(path.join(traceViewerFolder, file), path.join(traceViewerTargetFolder, file));
+    }
 
     const projects: ProjectTreeItem[] = [];
     for (const projectJson of rawReports) {

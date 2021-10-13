@@ -20,7 +20,9 @@ import { TraceModel } from './traceModel';
 // @ts-ignore
 declare const self: ServiceWorkerGlobalScope;
 
-self.addEventListener('install', function(event: any) {});
+self.addEventListener('install', function(event: any) {
+  self.skipWaiting();
+});
 
 self.addEventListener('activate', function(event: any) {
   event.waitUntil(self.clients.claim());
@@ -28,6 +30,7 @@ self.addEventListener('activate', function(event: any) {
 
 let traceModel: TraceModel | undefined;
 let snapshotServer: SnapshotServer | undefined;
+const scopePath = new URL(self.registration.scope).pathname;
 
 async function loadTrace(trace: string): Promise<TraceModel> {
   const traceModel = new TraceModel();
@@ -39,13 +42,14 @@ async function loadTrace(trace: string): Promise<TraceModel> {
 // @ts-ignore
 async function doFetch(event: FetchEvent): Promise<Response> {
   const request = event.request;
-  const { pathname, searchParams } = new URL(request.url);
+  const url = new URL(request.url);
   const snapshotUrl = request.mode === 'navigate' ?
     request.url : (await self.clients.get(event.clientId))!.url;
 
-  if (request.url.startsWith(self.location.origin)) {
-    if (pathname === '/context') {
-      const trace = searchParams.get('trace')!;
+  if (request.url.startsWith(self.registration.scope)) {
+    const relativePath = url.pathname.substring(scopePath.length - 1);
+    if (relativePath === '/context') {
+      const trace = url.searchParams.get('trace')!;
       traceModel = await loadTrace(trace);
       snapshotServer = new SnapshotServer(traceModel.storage());
       return new Response(JSON.stringify(traceModel!.contextEntry), {
@@ -53,12 +57,12 @@ async function doFetch(event: FetchEvent): Promise<Response> {
         headers: { 'Content-Type': 'application/json' }
       });
     }
-    if (pathname.startsWith('/snapshotSize/'))
-      return snapshotServer!.serveSnapshotSize(pathname, searchParams);
-    if (pathname.startsWith('/snapshot/'))
-      return snapshotServer!.serveSnapshot(pathname, searchParams, snapshotUrl);
-    if (pathname.startsWith('/sha1/')) {
-      const blob = await traceModel!.resourceForSha1(pathname.slice('/sha1/'.length));
+    if (relativePath.startsWith('/snapshotSize/'))
+      return snapshotServer!.serveSnapshotSize(relativePath, url.searchParams);
+    if (relativePath.startsWith('/snapshot/'))
+      return snapshotServer!.serveSnapshot(relativePath, url.searchParams, snapshotUrl);
+    if (relativePath.startsWith('/sha1/')) {
+      const blob = await traceModel!.resourceForSha1(relativePath.slice('/sha1/'.length));
       if (blob)
         return new Response(blob, { status: 200 });
       else
@@ -66,6 +70,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
     }
     return fetch(event.request);
   }
+
 
   if (!snapshotServer)
     return new Response(null, { status: 404 });
