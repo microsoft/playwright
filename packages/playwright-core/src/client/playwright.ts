@@ -26,7 +26,7 @@ import { ChannelOwner } from './channelOwner';
 import { Electron } from './electron';
 import { Fetch } from './fetch';
 import { Selectors, SelectorsOwner, sharedSelectors } from './selectors';
-import { Size } from './types';
+import { BrowserContextOptions, LaunchOptions, Size } from './types';
 const dnsLookupAsync = util.promisify(dns.lookup);
 
 type DeviceDescriptor = {
@@ -76,6 +76,18 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel, channel
     this._channel.on('socksRequested', ({ uid, host, port }) => this._onSocksRequested(uid, host, port));
     this._channel.on('socksData', ({ uid, data }) => this._onSocksData(uid, Buffer.from(data, 'base64')));
     this._channel.on('socksClosed', ({ uid }) => this._onSocksClosed(uid));
+  }
+
+  async _enableRecorder(params: {
+    language: string,
+    launchOptions?: LaunchOptions,
+    contextOptions?: BrowserContextOptions,
+    device?: string,
+    saveStorage?: string,
+    startRecording?: boolean,
+    outputFile?: string
+  }) {
+    await this._channel.recorderSupplementEnable(params);
   }
 
   private async _onSocksRequested(uid: string, host: string, port: number): Promise<void> {

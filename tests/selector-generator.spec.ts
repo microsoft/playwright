@@ -24,8 +24,12 @@ async function generate(pageOrFrame: Page | Frame, target: string): Promise<stri
 it.describe('selector generator', () => {
   it.skip(({ mode }) => mode !== 'default');
 
-  it.beforeEach(async ({ context }) => {
-    await (context as any)._enableRecorder({ language: 'javascript' });
+  it.beforeAll(async ({ playwright }) => {
+    await (playwright as any)._enableRecorder({ language: 'javascript' });
+  });
+
+  it.afterAll(async ({ playwright, toImpl }) => {
+    await toImpl(playwright).recorderAppForTest.close();
   });
 
   it('should prefer button over inner span', async ({ page }) => {

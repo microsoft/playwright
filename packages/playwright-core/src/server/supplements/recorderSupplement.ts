@@ -36,51 +36,51 @@ import { createGuid, isUnderTest, monotonicTime } from '../../utils/utils';
 import { metadataToCallLog } from './recorder/recorderUtils';
 import { Debugger } from './debugger';
 import { EventEmitter } from 'events';
+import type { Playwright } from '../playwright';
 
 type BindingSource = { frame: Frame, page: Page };
 
 const symbol = Symbol('RecorderSupplement');
 
 export class RecorderSupplement implements InstrumentationListener {
-  private _context: BrowserContext;
+  private _playwright: Playwright;
   private _mode: Mode;
   private _highlightedSelector = '';
   private _recorderApp: RecorderApp | null = null;
   private _currentCallsMetadata = new Map<CallMetadata, SdkObject>();
-  private _recorderSources: Source[] = [];
   private _userSources = new Map<string, Source>();
   private _allMetadatas = new Map<string, CallMetadata>();
   private _debugger: Debugger;
-  private _contextRecorder: ContextRecorder;
+  private _contextRecorders = new Map<BrowserContext, ContextRecorder>();
+  private _params: channels.PlaywrightRecorderSupplementEnableParams;
 
-  static showInspector(context: BrowserContext) {
-    RecorderSupplement.show(context, {}).catch(() => {});
-  }
-
-  static show(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams = {}): Promise<RecorderSupplement> {
-    let recorderPromise = (context as any)[symbol] as Promise<RecorderSupplement>;
+  static show(playwright: Playwright, params: channels.PlaywrightRecorderSupplementEnableParams = {}) {
+    let recorderPromise = (playwright as any)[symbol] as Promise<RecorderSupplement>;
     if (!recorderPromise) {
-      const recorder = new RecorderSupplement(context, params);
+      const recorder = new RecorderSupplement(playwright, params);
       recorderPromise = recorder.install().then(() => recorder);
-      (context as any)[symbol] = recorderPromise;
+      (playwright as any)[symbol] = recorderPromise;
     }
-    return recorderPromise;
+    return recorderPromise.catch(() => {});
   }
 
-  constructor(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams) {
+  constructor(playwright: Playwright, params: channels.PlaywrightRecorderSupplementEnableParams) {
     this._mode = params.startRecording ? 'recording' : 'none';
-    this._contextRecorder = new ContextRecorder(context, params);
-    this._context = context;
-    this._debugger = Debugger.lookup(context)!;
-    context.instrumentation.addListener(this);
+    this._debugger = playwright.playwrightDebugger;
+    this._params = params;
+    this._playwright = playwright;
+    playwright.instrumentation.addListener(this);
   }
 
   async install() {
-    const recorderApp = await RecorderApp.open(this._context._browser.options.sdkLanguage);
+    const recorderApp = await RecorderApp.open(this._playwright.options.sdkLanguage);
     this._recorderApp = recorderApp;
     recorderApp.once('close', () => {
       this._debugger.resume(false);
       this._recorderApp = null;
+      this._playwright.instrumentation.removeListener(this);
+      delete (this._playwright as any)[symbol];
+      delete (this._playwright as any).recorderAppForTest;
     });
     recorderApp.on('event', (data: EventData) => {
       if (data.event === 'setMode') {
@@ -106,7 +106,8 @@ export class RecorderSupplement implements InstrumentationListener {
         return;
       }
       if (data.event === 'clear') {
-        this._contextRecorder.clearScript();
+        for (const contextRecorder of this._contextRecorders.values())
+          contextRecorder.clearScript();
         return;
       }
     });
@@ -117,17 +118,31 @@ export class RecorderSupplement implements InstrumentationListener {
       this._pushAllSources()
     ]);
 
-    this._context.once(BrowserContext.Events.Close, () => {
-      this._contextRecorder.dispose();
-      recorderApp.close().catch(() => {});
-    });
-    this._contextRecorder.on(ContextRecorder.Events.Change, (data: { sources: Source[], primaryFileName: string }) => {
-      this._recorderSources = data.sources;
-      this._pushAllSources();
-      this._recorderApp?.setFile(data.primaryFileName);
+    for (const context of this._debugger.browserContexts())
+      await this.onBrowserContextCreated(context);
+
+    if (this._debugger.isPaused())
+      this._pausedStateChanged();
+    this._debugger.on(Debugger.Events.PausedStateChanged, () => this._pausedStateChanged());
+
+    (this._playwright as any).recorderAppForTest = recorderApp;
+  }
+
+  async onBrowserContextCreated(context: BrowserContext) {
+    const contextRecorder = new ContextRecorder(context, this._params);
+    this._contextRecorders.set(context, contextRecorder);
+
+    context.once(BrowserContext.Events.Close, () => {
+      contextRecorder.dispose();
+      this._contextRecorders.delete(context);
     });
 
-    await this._context.exposeBinding('_playwrightRecorderState', false, source => {
+    contextRecorder.on(ContextRecorder.Events.Change, () => {
+      this._pushAllSources();
+      this._recorderApp?.setFile(contextRecorder.primaryFileName);
+    });
+
+    await context.exposeBinding('_playwrightRecorderState', false, source => {
       let actionSelector = this._highlightedSelector;
       let actionPoint: Point | undefined;
       for (const [metadata, sdkObject] of this._currentCallsMetadata) {
@@ -144,24 +159,18 @@ export class RecorderSupplement implements InstrumentationListener {
       return uiState;
     });
 
-    await this._context.exposeBinding('_playwrightRecorderSetSelector', false, async (_, selector: string) => {
+    await context.exposeBinding('_playwrightRecorderSetSelector', false, async (_, selector: string) => {
       this._setMode('none');
       await this._recorderApp?.setSelector(selector, true);
       await this._recorderApp?.bringToFront();
     });
 
-    await this._context.exposeBinding('_playwrightResume', false, () => {
+    await context.exposeBinding('_playwrightResume', false, () => {
       this._debugger.resume(false);
     });
-    await this._context.extendInjectedScript(consoleApiSource.source);
+    await context.extendInjectedScript(consoleApiSource.source);
 
-    await this._contextRecorder.install();
-
-    if (this._debugger.isPaused())
-      this._pausedStateChanged();
-    this._debugger.on(Debugger.Events.PausedStateChanged, () => this._pausedStateChanged());
-
-    (this._context as any).recorderAppForTest = recorderApp;
+    await contextRecorder.install();
   }
 
   _pausedStateChanged() {
@@ -178,15 +187,24 @@ export class RecorderSupplement implements InstrumentationListener {
   private _setMode(mode: Mode) {
     this._mode = mode;
     this._recorderApp?.setMode(this._mode);
-    this._contextRecorder.setEnabled(this._mode === 'recording');
+    for (const contextRecorder of this._contextRecorders.values())
+      contextRecorder.setEnabled(this._mode === 'recording');
     this._debugger.setMuted(this._mode === 'recording');
-    if (this._mode !== 'none')
-      this._context.pages()[0].bringToFront().catch(() => {});
+    if (this._mode !== 'none') {
+      for (const context of this._contextRecorders.keys()) {
+        if (context.pages().length > 0) {
+          context.pages()[0].bringToFront().catch(() => {});
+          break;
+        }
+      }
+    }
   }
 
   private _refreshOverlay() {
-    for (const page of this._context.pages())
-      page.mainFrame().evaluateExpression('window._playwrightRefreshOverlay()', false, undefined, 'main').catch(() => {});
+    for (const context of this._contextRecorders.keys()) {
+      for (const page of context.pages())
+        page.mainFrame().evaluateExpression('window._playwrightRefreshOverlay()', false, undefined, 'main').catch(() => {});
+    }
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
@@ -242,14 +260,26 @@ export class RecorderSupplement implements InstrumentationListener {
   }
 
   private _pushAllSources() {
-    this._recorderApp?.setSources([...this._recorderSources, ...this._userSources.values()]);
+    const sources: Source[] = [];
+    let index = 0;
+    for (const contextRecorder of this._contextRecorders.values()) {
+      sources.push(...contextRecorder.sources().map(source => {
+        if (!index)
+          return source;
+        return { ...source, file: source.file + ` (context #${index + 1})` };
+      }));
+      index++;
+    }
+    sources.push(...this._userSources.values());
+    this._recorderApp?.setSources(sources);
   }
 
   async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata) {
   }
 
   async onCallLog(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    this.updateCallLog([metadata]);
+    if (this._currentCallsMetadata.has(metadata))
+      this.updateCallLog([metadata]);
   }
 
   updateCallLog(metadatas: CallMetadata[]) {
@@ -289,13 +319,14 @@ class ContextRecorder extends EventEmitter {
   private _lastDialogOrdinal = 0;
   private _lastDownloadOrdinal = 0;
   private _timers = new Set<NodeJS.Timeout>();
-  private _context: BrowserContext;
-  private _params: channels.BrowserContextRecorderSupplementEnableParams;
+  readonly context: BrowserContext;
+  private _params: channels.PlaywrightRecorderSupplementEnableParams;
   private _recorderSources: Source[];
+  readonly primaryFileName: string;
 
-  constructor(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams) {
+  constructor(context: BrowserContext, params: channels.PlaywrightRecorderSupplementEnableParams) {
     super();
-    this._context = context;
+    this.context = context;
     this._params = params;
     const language = params.language || context._browser.options.sdkLanguage;
 
@@ -313,6 +344,7 @@ class ContextRecorder extends EventEmitter {
 
     languages.delete(primaryLanguage);
     const orderedLanguages = [primaryLanguage, ...languages];
+    this.primaryFileName = primaryLanguage.fileName;
 
     this._recorderSources = [];
     const generator = new CodeGenerator(context._browser.options.name, !!params.startRecording, params.launchOptions || {}, params.contextOptions || {}, params.device, params.saveStorage);
@@ -331,10 +363,7 @@ class ContextRecorder extends EventEmitter {
         if (languageGenerator === orderedLanguages[0])
           text = source.text;
       }
-      this.emit(ContextRecorder.Events.Change, {
-        sources: this._recorderSources,
-        primaryFileName: primaryLanguage.fileName
-      });
+      this.emit(ContextRecorder.Events.Change);
     });
     if (params.outputFile) {
       context.on(BrowserContext.Events.BeforeClose, () => {
@@ -349,21 +378,25 @@ class ContextRecorder extends EventEmitter {
     this._generator = generator;
   }
 
+  sources() {
+    return this._recorderSources;
+  }
+
   async install() {
-    this._context.on(BrowserContext.Events.Page, page => this._onPage(page));
-    for (const page of this._context.pages())
+    this.context.on(BrowserContext.Events.Page, page => this._onPage(page));
+    for (const page of this.context.pages())
       this._onPage(page);
 
     // Input actions that potentially lead to navigation are intercepted on the page and are
     // performed by the Playwright.
-    await this._context.exposeBinding('_playwrightRecorderPerformAction', false,
+    await this.context.exposeBinding('_playwrightRecorderPerformAction', false,
         (source: BindingSource, action: actions.Action) => this._performAction(source.frame, action));
 
     // Other non-essential actions are simply being recorded.
-    await this._context.exposeBinding('_playwrightRecorderRecordAction', false,
+    await this.context.exposeBinding('_playwrightRecorderRecordAction', false,
         (source: BindingSource, action: actions.Action) => this._recordAction(source.frame, action));
 
-    await this._context.extendInjectedScript(recorderSource.source, { isUnderTest: isUnderTest() });
+    await this.context.extendInjectedScript(recorderSource.source, { isUnderTest: isUnderTest() });
   }
 
   setEnabled(enabled: boolean) {
@@ -417,7 +450,7 @@ class ContextRecorder extends EventEmitter {
   clearScript(): void {
     this._generator.restart();
     if (!!this._params.startRecording) {
-      for (const page of this._context.pages())
+      for (const page of this.context.pages())
         this._onFrameNavigated(page.mainFrame(), page);
     }
   }

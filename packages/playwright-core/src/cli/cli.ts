@@ -24,17 +24,18 @@ import path from 'path';
 import { program, Command } from 'commander';
 import { runDriver, runServer, printApiJson, launchBrowserServer } from './driver';
 import { showTraceViewer } from '../server/trace/viewer/traceViewer';
-import * as playwright from '../..';
-import { BrowserContext } from '../client/browserContext';
-import { Browser } from '../client/browser';
-import { Page } from '../client/page';
-import { BrowserType } from '../client/browserType';
+import type { BrowserContext } from '../client/browserContext';
+import type { Browser } from '../client/browser';
+import type { Page } from '../client/page';
+import type { BrowserType } from '../client/browserType';
+import type { Playwright } from '../client/playwright';
 import { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
 import { registry, Executable } from '../utils/registry';
 import { launchGridAgent } from '../grid/gridAgent';
 import { launchGridServer } from '../grid/gridServer';
 
+const playwright = require('../..') as Playwright;
 const packageJSON = require('../../package.json');
 
 program
@@ -391,6 +392,8 @@ async function launchContext(options: Options, headless: boolean, executablePath
     if (options.saveStorage)
       await context.storageState({ path: options.saveStorage }).catch(e => null);
     await browser.close();
+    if (process.env.PWTEST_CLI_EXIT)
+      process.exit(0);
   }
 
   context.on('page', page => {
@@ -433,7 +436,7 @@ async function openPage(context: BrowserContext, url: string | undefined): Promi
 
 async function open(options: Options, url: string | undefined, language: string) {
   const { context, launchOptions, contextOptions } = await launchContext(options, !!process.env.PWTEST_CLI_HEADLESS, process.env.PWTEST_CLI_EXECUTABLE_PATH);
-  await context._enableRecorder({
+  await playwright._enableRecorder({
     language,
     launchOptions,
     contextOptions,
@@ -447,7 +450,7 @@ async function open(options: Options, url: string | undefined, language: string)
 
 async function codegen(options: Options, url: string | undefined, language: string, outputFile?: string) {
   const { context, launchOptions, contextOptions } = await launchContext(options, !!process.env.PWTEST_CLI_HEADLESS, process.env.PWTEST_CLI_EXECUTABLE_PATH);
-  await context._enableRecorder({
+  await playwright._enableRecorder({
     language,
     launchOptions,
     contextOptions,

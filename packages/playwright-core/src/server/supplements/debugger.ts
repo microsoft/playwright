@@ -16,41 +16,44 @@
 
 import { EventEmitter } from 'events';
 import { debugMode, isUnderTest, monotonicTime } from '../../utils/utils';
-import { BrowserContext } from '../browserContext';
 import { CallMetadata, InstrumentationListener, SdkObject } from '../instrumentation';
 import { debugLogger } from '../../utils/debugLogger';
 import { commandsWithTracingSnapshots, pausesBeforeInputActions } from '../../protocol/channels';
-
-const symbol = Symbol('Debugger');
+import { BrowserContext } from '../browserContext';
 
 export class Debugger extends EventEmitter implements InstrumentationListener {
   private _pauseOnNextStatement = false;
   private _pausedCallsMetadata = new Map<CallMetadata, { resolve: () => void, sdkObject: SdkObject }>();
   private _enabled: boolean;
-  private _context: BrowserContext;
+  private _contexts = new Set<BrowserContext>();
 
   static Events = {
     PausedStateChanged: 'pausedstatechanged'
   };
   private _muted = false;
 
-  constructor(context: BrowserContext) {
+  constructor() {
     super();
-    this._context = context;
-    (this._context as any)[symbol] = this;
+    this.setMaxListeners(0);
     this._enabled = debugMode() === 'inspector';
     if (this._enabled)
       this.pauseOnNextStatement();
   }
 
-  static lookup(context?: BrowserContext): Debugger | undefined {
-    if (!context)
-      return;
-    return (context as any)[symbol] as Debugger | undefined;
-  }
-
   async setMuted(muted: boolean) {
     this._muted = muted;
+  }
+
+  async onBrowserContextCreated(context: BrowserContext): Promise<void> {
+    this._contexts.add(context);
+  }
+
+  onBrowserContextDestroyed(context: BrowserContext): void {
+    this._contexts.delete(context);
+  }
+
+  browserContexts() {
+    return this._contexts;
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {

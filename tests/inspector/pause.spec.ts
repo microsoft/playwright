@@ -32,15 +32,6 @@ it('should resume when closing inspector', async ({ page, recorderPageGetter, cl
 it.describe('pause', () => {
   it.skip(({ mode }) => mode !== 'default');
 
-  it.afterEach(async ({ recorderPageGetter }) => {
-    try {
-      const recorderPage = await recorderPageGetter();
-      recorderPage.click('[title=Resume]').catch(() => {});
-    } catch (e) {
-      // Some tests close context.
-    }
-  });
-
   it('should pause and resume the script', async ({ page, recorderPageGetter }) => {
     const scriptPromise = (async () => {
       await page.pause();

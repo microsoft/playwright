@@ -233,6 +233,7 @@ export class WKBrowserContext extends BrowserContext {
     if (this._options.httpCredentials)
       promises.push(this.setHTTPCredentials(this._options.httpCredentials));
     await Promise.all(promises);
+    await this.instrumentation.onBrowserContextCreated(this);
   }
 
   _wkPages(): WKPage[] {

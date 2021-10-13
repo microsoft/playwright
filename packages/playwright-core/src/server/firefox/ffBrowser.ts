@@ -233,6 +233,7 @@ export class FFBrowserContext extends BrowserContext {
     }
 
     await Promise.all(promises);
+    await this.instrumentation.onBrowserContextCreated(this);
   }
 
   _ffPages(): FFPage[] {

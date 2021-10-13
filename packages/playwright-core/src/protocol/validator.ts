@@ -213,6 +213,16 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.PlaywrightSocksEndParams = tObject({
     uid: tString,
   });
+  scheme.PlaywrightRecorderSupplementEnableParams = tObject({
+    language: tOptional(tString),
+    startRecording: tOptional(tBoolean),
+    pauseOnNextStatement: tOptional(tBoolean),
+    launchOptions: tOptional(tAny),
+    contextOptions: tOptional(tAny),
+    device: tOptional(tString),
+    saveStorage: tOptional(tString),
+    outputFile: tOptional(tString),
+  });
   scheme.PlaywrightNewRequestParams = tObject({
     baseURL: tOptional(tString),
     userAgent: tOptional(tString),
@@ -484,16 +494,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.BrowserContextStorageStateParams = tOptional(tObject({}));
   scheme.BrowserContextPauseParams = tOptional(tObject({}));
-  scheme.BrowserContextRecorderSupplementEnableParams = tObject({
-    language: tOptional(tString),
-    startRecording: tOptional(tBoolean),
-    pauseOnNextStatement: tOptional(tBoolean),
-    launchOptions: tOptional(tAny),
-    contextOptions: tOptional(tAny),
-    device: tOptional(tString),
-    saveStorage: tOptional(tString),
-    outputFile: tOptional(tString),
-  });
   scheme.BrowserContextNewCDPSessionParams = tObject({
     page: tOptional(tChannel('Page')),
     frame: tOptional(tChannel('Frame')),

@@ -489,6 +489,18 @@ Playwright:
       parameters:
         uid: string
 
+    recorderSupplementEnable:
+      experimental: True
+      parameters:
+        language: string?
+        startRecording: boolean?
+        pauseOnNextStatement: boolean?
+        launchOptions: json?
+        contextOptions: json?
+        device: string?
+        saveStorage: string?
+        outputFile: string?
+
     newRequest:
       parameters:
         baseURL: string?
@@ -781,18 +793,6 @@ BrowserContext:
 
     pause:
       experimental: True
-
-    recorderSupplementEnable:
-      experimental: True
-      parameters:
-        language: string?
-        startRecording: boolean?
-        pauseOnNextStatement: boolean?
-        launchOptions: json?
-        contextOptions: json?
-        device: string?
-        saveStorage: string?
-        outputFile: string?
 
     newCDPSession:
       parameters:

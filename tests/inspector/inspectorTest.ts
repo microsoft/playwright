@@ -31,22 +31,24 @@ type CLITestArgs = {
 const playwrightToAutomateInspector = require('playwright-core/lib/inProcessFactory').createInProcessPlaywright();
 
 export const test = contextTest.extend<CLITestArgs>({
-  recorderPageGetter: async ({ context, toImpl, mode }, run, testInfo) => {
+  recorderPageGetter: async ({ playwright, toImpl, mode }, run, testInfo) => {
     process.env.PWTEST_RECORDER_PORT = String(10907 + testInfo.workerIndex);
     testInfo.skip(mode === 'service');
     await run(async () => {
-      while (!toImpl(context).recorderAppForTest)
+      while (!toImpl(playwright).recorderAppForTest)
         await new Promise(f => setTimeout(f, 100));
-      const wsEndpoint = toImpl(context).recorderAppForTest.wsEndpoint;
+      const wsEndpoint = toImpl(playwright).recorderAppForTest.wsEndpoint;
       const browser = await playwrightToAutomateInspector.chromium.connectOverCDP({ wsEndpoint });
       const c = browser.contexts()[0];
       return c.pages()[0] || await c.waitForEvent('page');
     });
+    const app = toImpl(playwright).recorderAppForTest;
+    await app?.close(); // Recorder could be closed already.
   },
 
-  closeRecorder: async ({ context, toImpl }, run) => {
+  closeRecorder: async ({ playwright, toImpl }, run) => {
     await run(async () => {
-      await toImpl(context).recorderAppForTest.close();
+      await toImpl(playwright).recorderAppForTest.close();
     });
   },
 
@@ -63,9 +65,9 @@ export const test = contextTest.extend<CLITestArgs>({
       await cli.exited;
   },
 
-  openRecorder: async ({ page, recorderPageGetter }, run) => {
+  openRecorder: async ({ playwright, page, recorderPageGetter }, run) => {
     await run(async () => {
-      await (page.context() as any)._enableRecorder({ language: 'javascript', startRecording: true });
+      await (playwright as any)._enableRecorder({ language: 'javascript', startRecording: true });
       return new Recorder(page, await recorderPageGetter());
     });
   },

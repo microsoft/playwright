@@ -108,6 +108,7 @@ export class Electron extends SdkObject {
     const {
       args = [],
     } = options;
+    await this.instrumentation.onActivity();
     const controller = new ProgressController(internalCallMetadata(), this);
     controller.setLogName('browser');
     return controller.run(async progress => {

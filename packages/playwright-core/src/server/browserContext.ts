@@ -29,10 +29,8 @@ import { Selectors } from './selectors';
 import * as types from './types';
 import path from 'path';
 import { CallMetadata, internalCallMetadata, createInstrumentation, SdkObject } from './instrumentation';
-import { Debugger } from './supplements/debugger';
 import { Tracing } from './trace/recorder/tracing';
 import { HarRecorder } from './supplements/har/harRecorder';
-import { RecorderSupplement } from './supplements/recorderSupplement';
 import * as consoleApiSource from '../generated/consoleApiSource';
 import { BrowserContextFetchRequest } from './fetch';
 
@@ -94,23 +92,7 @@ export abstract class BrowserContext extends SdkObject {
     if (this.attribution.isInternal)
       return;
     // Create instrumentation per context.
-    this.instrumentation = createInstrumentation();
-
-    // Debugger will pause execution upon page.pause in headed mode.
-    const contextDebugger = new Debugger(this);
-    this.instrumentation.addListener(contextDebugger);
-
-    // When PWDEBUG=1, show inspector for each context.
-    if (debugMode() === 'inspector')
-      await RecorderSupplement.show(this, { pauseOnNextStatement: true });
-
-    // When paused, show inspector.
-    if (contextDebugger.isPaused())
-      RecorderSupplement.showInspector(this);
-    contextDebugger.on(Debugger.Events.PausedStateChanged, () => {
-      RecorderSupplement.showInspector(this);
-    });
-
+    this.instrumentation = createInstrumentation(this.instrumentation);
     if (debugMode() === 'console')
       await this.extendInjectedScript(consoleApiSource.source);
   }
@@ -139,6 +121,7 @@ export abstract class BrowserContext extends SdkObject {
       this._onClosePersistent();
     this._closePromiseFulfill!(new Error('Context closed'));
     this.emit(BrowserContext.Events.Close);
+    this.instrumentation.onBrowserContextDestroyed(this);
   }
 
   // BrowserContext methods.

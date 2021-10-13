@@ -297,6 +297,7 @@ export interface PlaywrightChannel extends Channel {
   socksData(params: PlaywrightSocksDataParams, metadata?: Metadata): Promise<PlaywrightSocksDataResult>;
   socksError(params: PlaywrightSocksErrorParams, metadata?: Metadata): Promise<PlaywrightSocksErrorResult>;
   socksEnd(params: PlaywrightSocksEndParams, metadata?: Metadata): Promise<PlaywrightSocksEndResult>;
+  recorderSupplementEnable(params: PlaywrightRecorderSupplementEnableParams, metadata?: Metadata): Promise<PlaywrightRecorderSupplementEnableResult>;
   newRequest(params: PlaywrightNewRequestParams, metadata?: Metadata): Promise<PlaywrightNewRequestResult>;
 }
 export type PlaywrightSocksRequestedEvent = {
@@ -351,6 +352,27 @@ export type PlaywrightSocksEndOptions = {
 
 };
 export type PlaywrightSocksEndResult = void;
+export type PlaywrightRecorderSupplementEnableParams = {
+  language?: string,
+  startRecording?: boolean,
+  pauseOnNextStatement?: boolean,
+  launchOptions?: any,
+  contextOptions?: any,
+  device?: string,
+  saveStorage?: string,
+  outputFile?: string,
+};
+export type PlaywrightRecorderSupplementEnableOptions = {
+  language?: string,
+  startRecording?: boolean,
+  pauseOnNextStatement?: boolean,
+  launchOptions?: any,
+  contextOptions?: any,
+  device?: string,
+  saveStorage?: string,
+  outputFile?: string,
+};
+export type PlaywrightRecorderSupplementEnableResult = void;
 export type PlaywrightNewRequestParams = {
   baseURL?: string,
   userAgent?: string,
@@ -895,7 +917,6 @@ export interface BrowserContextChannel extends EventTargetChannel {
   setOffline(params: BrowserContextSetOfflineParams, metadata?: Metadata): Promise<BrowserContextSetOfflineResult>;
   storageState(params?: BrowserContextStorageStateParams, metadata?: Metadata): Promise<BrowserContextStorageStateResult>;
   pause(params?: BrowserContextPauseParams, metadata?: Metadata): Promise<BrowserContextPauseResult>;
-  recorderSupplementEnable(params: BrowserContextRecorderSupplementEnableParams, metadata?: Metadata): Promise<BrowserContextRecorderSupplementEnableResult>;
   newCDPSession(params: BrowserContextNewCDPSessionParams, metadata?: Metadata): Promise<BrowserContextNewCDPSessionResult>;
   tracingStart(params: BrowserContextTracingStartParams, metadata?: Metadata): Promise<BrowserContextTracingStartResult>;
   tracingStartChunk(params?: BrowserContextTracingStartChunkParams, metadata?: Metadata): Promise<BrowserContextTracingStartChunkResult>;
@@ -1068,27 +1089,6 @@ export type BrowserContextStorageStateResult = {
 export type BrowserContextPauseParams = {};
 export type BrowserContextPauseOptions = {};
 export type BrowserContextPauseResult = void;
-export type BrowserContextRecorderSupplementEnableParams = {
-  language?: string,
-  startRecording?: boolean,
-  pauseOnNextStatement?: boolean,
-  launchOptions?: any,
-  contextOptions?: any,
-  device?: string,
-  saveStorage?: string,
-  outputFile?: string,
-};
-export type BrowserContextRecorderSupplementEnableOptions = {
-  language?: string,
-  startRecording?: boolean,
-  pauseOnNextStatement?: boolean,
-  launchOptions?: any,
-  contextOptions?: any,
-  device?: string,
-  saveStorage?: string,
-  outputFile?: string,
-};
-export type BrowserContextRecorderSupplementEnableResult = void;
 export type BrowserContextNewCDPSessionParams = {
   page?: PageChannel,
   frame?: FrameChannel,

@@ -22,8 +22,10 @@ import { Electron } from './electron/electron';
 import { Firefox } from './firefox/firefox';
 import { Selectors } from './selectors';
 import { WebKit } from './webkit/webkit';
-import { CallMetadata, createInstrumentation, SdkObject } from './instrumentation';
-import { debugLogger } from '../utils/debugLogger';
+import { createInstrumentation, SdkObject } from './instrumentation';
+import { Debugger } from './supplements/debugger';
+import { debugMode } from '../utils/utils';
+import { RecorderSupplement } from './supplements/recorderSupplement';
 
 export class Playwright extends SdkObject {
   readonly selectors: Selectors;
@@ -33,14 +35,10 @@ export class Playwright extends SdkObject {
   readonly firefox: Firefox;
   readonly webkit: WebKit;
   readonly options: PlaywrightOptions;
+  readonly playwrightDebugger: Debugger;
 
   constructor(sdkLanguage: string, isInternal: boolean) {
     super({ attribution: { isInternal }, instrumentation: createInstrumentation() } as any, undefined, 'Playwright');
-    this.instrumentation.addListener({
-      onCallLog: (logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata) => {
-        debugLogger.log(logName as any, message);
-      }
-    });
     this.options = {
       rootSdkObject: this,
       selectors: new Selectors(),
@@ -52,6 +50,25 @@ export class Playwright extends SdkObject {
     this.electron = new Electron(this.options);
     this.android = new Android(new AdbBackend(), this.options);
     this.selectors = this.options.selectors;
+
+    // Debugger will pause execution upon page.pause in headed mode.
+    this.playwrightDebugger = new Debugger();
+    this.instrumentation.addListener(this.playwrightDebugger);
+
+    this.instrumentation.addListener({
+      onActivity: async () => {
+        // When PWDEBUG=1, show inspector on first launch.
+        if (debugMode() === 'inspector' && !isInternal)
+          await RecorderSupplement.show(this, { pauseOnNextStatement: true });
+      },
+    });
+
+    // When paused, show inspector.
+    if (this.playwrightDebugger.isPaused())
+      RecorderSupplement.show(this);
+    this.playwrightDebugger.on(Debugger.Events.PausedStateChanged, () => {
+      RecorderSupplement.show(this);
+    });
   }
 }
 

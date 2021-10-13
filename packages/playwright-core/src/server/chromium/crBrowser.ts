@@ -328,6 +328,7 @@ export class CRBrowserContext extends BrowserContext {
     if (this._options.permissions)
       promises.push(this.grantPermissions(this._options.permissions));
     await Promise.all(promises);
+    await this.instrumentation.onBrowserContextCreated(this);
   }
 
   pages(): Page[] {

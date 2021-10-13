@@ -57,6 +57,9 @@ export interface Instrumentation {
   onCallLog(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): void;
   onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
   onEvent(sdkObject: SdkObject, metadata: CallMetadata): void;
+  onActivity(): Promise<void>;
+  onBrowserContextCreated(context: BrowserContext): Promise<void>;
+  onBrowserContextDestroyed(context: BrowserContext): void;
 }
 
 export interface InstrumentationListener {
@@ -65,9 +68,12 @@ export interface InstrumentationListener {
   onCallLog?(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): void;
   onAfterCall?(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
   onEvent?(sdkObject: SdkObject, metadata: CallMetadata): void;
+  onActivity?(): Promise<void>;
+  onBrowserContextCreated?(context: BrowserContext): Promise<void>;
+  onBrowserContextDestroyed?(context: BrowserContext): void;
 }
 
-export function createInstrumentation(): Instrumentation {
+export function createInstrumentation(parent?: Instrumentation): Instrumentation {
   const listeners: InstrumentationListener[] = [];
   return new Proxy({}, {
     get: (obj: any, prop: string) => {
@@ -80,6 +86,8 @@ export function createInstrumentation(): Instrumentation {
       return async (...params: any[]) => {
         for (const listener of listeners)
           await (listener as any)[prop]?.(...params);
+        if (parent)
+          await (parent as any)[prop](...params);
       };
     },
   });
