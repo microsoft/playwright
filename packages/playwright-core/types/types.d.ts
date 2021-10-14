@@ -9899,7 +9899,7 @@ export interface BrowserType<Unused = {}> {
       server: string;
 
       /**
-       * Optional coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+       * Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
        */
       bypass?: string;
 
@@ -10178,7 +10178,7 @@ export interface BrowserType<Unused = {}> {
       server: string;
 
       /**
-       * Optional coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+       * Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
        */
       bypass?: string;
 
@@ -11595,19 +11595,17 @@ export interface AndroidWebView {
  */
 export interface ApiRequest {
   /**
-   * **experimental** Creates new instances of [ApiRequestContext].
+   * Creates new instances of [ApiRequestContext].
    * @param options
    */
   newContext(options?: {
     /**
-     * When using
-     * [apiRequestContext.get(url[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-get),
-     * [apiRequestContext.post(url[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-post),
-     * [apiRequestContext.fetch(urlOrRequest[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-fetch)
-     * it takes the base URL in consideration by using the [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL)
+     * Methods like
+     * [apiRequestContext.get(url[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-get)
+     * take the base URL into consideration by using the [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL)
      * constructor for building the corresponding URL. Examples:
-     * - baseURL: `http://localhost:3000` and sending rquest to `/bar.html` results in `http://localhost:3000/bar.html`
-     * - baseURL: `http://localhost:3000/foo/` and sending rquest to `./bar.html` results in
+     * - baseURL: `http://localhost:3000` and sending request to `/bar.html` results in `http://localhost:3000/bar.html`
+     * - baseURL: `http://localhost:3000/foo/` and sending request to `./bar.html` results in
      *   `http://localhost:3000/foo/bar.html`
      */
     baseURL?: string;
@@ -11642,7 +11640,7 @@ export interface ApiRequest {
       server: string;
 
       /**
-       * Optional coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+       * Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
        */
       bypass?: string;
 
@@ -11756,11 +11754,9 @@ export interface ApiRequestContext {
   }): Promise<ApiResponse>;
 
   /**
-   * All responses received through
-   * [apiRequestContext.fetch(urlOrRequest[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-fetch),
-   * [apiRequestContext.get(url[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-get),
-   * [apiRequestContext.post(url[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-post)
-   * and other methods are stored in the memory, so that you can later call
+   * All responses returned by
+   * [apiRequestContext.get(url[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-get)
+   * and similar methods are stored in the memory, so that you can later call
    * [apiResponse.body()](https://playwright.dev/docs/api/class-apiresponse#api-response-body). This method discards all
    * stored responses, and makes [apiResponse.body()](https://playwright.dev/docs/api/class-apiresponse#api-response-body)
    * throw "Response disposed" error.
@@ -12170,8 +12166,9 @@ export interface ApiRequestContext {
 }
 
 /**
- * [ApiResponse] class represents responses received from
- * [apiRequestContext.fetch(urlOrRequest[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-fetch).
+ * [ApiResponse] class represents responses returned by
+ * [apiRequestContext.get(url[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-get)
+ * and similar methods.
  */
 export interface ApiResponse {
   /**
@@ -12488,7 +12485,7 @@ export interface Browser extends EventEmitter {
       server: string;
 
       /**
-       * Optional coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+       * Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
        */
       bypass?: string;
 
@@ -14790,7 +14787,7 @@ export interface BrowserContextOptions {
     server: string;
 
     /**
-     * Optional coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+     * Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
      */
     bypass?: string;
 
@@ -15106,7 +15103,7 @@ export interface LaunchOptions {
     server: string;
 
     /**
-     * Optional coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+     * Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
      */
     bypass?: string;
 
