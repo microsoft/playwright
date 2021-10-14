@@ -50,7 +50,6 @@ export class Chromium extends BrowserType {
   }
 
   override async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number, headers?: types.HeadersArray }, timeout?: number) {
-    await this.instrumentation.onActivity();
     const controller = new ProgressController(metadata, this);
     controller.setLogName('browser');
     return controller.run(async progress => {

@@ -502,6 +502,7 @@ Playwright:
         outputFile: string?
 
     newRequest:
+      openDebugger: True
       parameters:
         baseURL: string?
         userAgent: string?
@@ -574,6 +575,7 @@ BrowserType:
   commands:
 
     connect:
+      openDebugger: True
       parameters:
         wsEndpoint: string
         headers: json?
@@ -583,6 +585,7 @@ BrowserType:
         pipe: JsonPipe
 
     launch:
+      openDebugger: True
       parameters:
         $mixin: LaunchOptions
         firefoxUserPrefs: json?
@@ -591,6 +594,7 @@ BrowserType:
         browser: Browser
 
     launchPersistentContext:
+      openDebugger: True
       parameters:
         $mixin1: LaunchOptions
         $mixin2: ContextOptions
@@ -600,6 +604,7 @@ BrowserType:
         context: BrowserContext
 
     connectOverCDP:
+      openDebugger: True
       parameters:
         endpointURL: string
         headers:
@@ -2612,6 +2617,7 @@ Electron:
   commands:
 
     launch:
+      openDebugger: True
       parameters:
         executablePath: string?
         args:
@@ -2712,6 +2718,7 @@ Android:
   commands:
 
     devices:
+      openDebugger: True
       returns:
         devices:
           type: array

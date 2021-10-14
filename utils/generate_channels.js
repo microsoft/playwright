@@ -170,6 +170,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
 `];
 
 const tracingSnapshots = [];
+const openDebugger = [];
 const pausesBeforeInputActions = [];
 
 const yml = fs.readFileSync(path.join(__dirname, '..', 'packages', 'playwright-core', 'src', 'protocol', 'protocol.yml'), 'utf-8');
@@ -233,6 +234,11 @@ for (const [name, item] of Object.entries(protocol)) {
         for (const derived of derivedClasses.get(name) || [])
           tracingSnapshots.push(derived + '.' + methodName);
       }
+      if (method.openDebugger) {
+        openDebugger.push(name + '.' + methodName);
+        for (const derived of derivedClasses.get(name) || [])
+          openDebugger.push(derived + '.' + methodName);
+      }
       if (method.tracing && method.tracing.pausesBeforeInput) {
         pausesBeforeInputActions.push(name + '.' + methodName);
         for (const derived of derivedClasses.get(name) || [])
@@ -280,6 +286,10 @@ channels_ts.push(`export const commandsWithTracingSnapshots = new Set([
 channels_ts.push('');
 channels_ts.push(`export const pausesBeforeInputActions = new Set([
   '${pausesBeforeInputActions.join(`',\n  '`)}'
+]);`);
+channels_ts.push('');
+channels_ts.push(`export const commandsThatOpenDebugger = new Set([
+  '${openDebugger.join(`',\n  '`)}'
 ]);`);
 
 validator_ts.push(`

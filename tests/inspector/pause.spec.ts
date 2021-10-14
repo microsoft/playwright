@@ -17,10 +17,9 @@
 import { Page } from 'playwright-core';
 import { test as it, expect } from './inspectorTest';
 
+it.skip(({ mode }) => mode !== 'default');
 
-it('should resume when closing inspector', async ({ page, recorderPageGetter, closeRecorder, mode }) => {
-  it.skip(mode !== 'default');
-
+it('should resume when closing inspector', async ({ page, recorderPageGetter, closeRecorder }) => {
   const scriptPromise = (async () => {
     await page.pause();
   })();
@@ -29,9 +28,28 @@ it('should resume when closing inspector', async ({ page, recorderPageGetter, cl
   await scriptPromise;
 });
 
-it.describe('pause', () => {
-  it.skip(({ mode }) => mode !== 'default');
+it.describe('debug mode', () => {
+  it.beforeAll(() => {
+    process.env.PWTEST_PWDEBUG = '1';
+  });
+  it.afterAll(() => {
+    delete process.env.PWTEST_PWDEBUG;
+  });
 
+  it('should open inspector on launch', async ({ browserType, browserOptions, recorderPageGetter }) => {
+    const scriptPromise = (async () => {
+      const browser = await browserType.launch(browserOptions);
+      await browser.newPage();
+      return browser;
+    })();
+    const recorderPage = await recorderPageGetter();
+    await recorderPage.click('[title=Resume]');
+    const browser = await scriptPromise;
+    await browser.close();
+  });
+});
+
+it.describe('pause', () => {
   it('should pause and resume the script', async ({ page, recorderPageGetter }) => {
     const scriptPromise = (async () => {
       await page.pause();

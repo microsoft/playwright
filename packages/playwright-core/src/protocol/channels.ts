@@ -3859,3 +3859,13 @@ export const pausesBeforeInputActions = new Set([
   'ElementHandle.type',
   'ElementHandle.uncheck'
 ]);
+
+export const commandsThatOpenDebugger = new Set([
+  'Playwright.newRequest',
+  'BrowserType.connect',
+  'BrowserType.launch',
+  'BrowserType.launchPersistentContext',
+  'BrowserType.connectOverCDP',
+  'Electron.launch',
+  'Android.devices'
+]);

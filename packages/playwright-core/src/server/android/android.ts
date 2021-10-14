@@ -70,7 +70,6 @@ export class Android extends SdkObject {
   }
 
   async devices(): Promise<AndroidDevice[]> {
-    await this.instrumentation.onActivity();
     const devices = (await this._backend.devices()).filter(d => d.status === 'device');
     const newSerials = new Set<string>();
     for (const d of devices) {

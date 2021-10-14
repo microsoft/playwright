@@ -22,10 +22,11 @@ import { Electron } from './electron/electron';
 import { Firefox } from './firefox/firefox';
 import { Selectors } from './selectors';
 import { WebKit } from './webkit/webkit';
-import { createInstrumentation, SdkObject } from './instrumentation';
+import { CallMetadata, createInstrumentation, SdkObject } from './instrumentation';
 import { Debugger } from './supplements/debugger';
 import { debugMode } from '../utils/utils';
 import { RecorderSupplement } from './supplements/recorderSupplement';
+import { commandsThatOpenDebugger } from '../protocol/channels';
 
 export class Playwright extends SdkObject {
   readonly selectors: Selectors;
@@ -56,9 +57,10 @@ export class Playwright extends SdkObject {
     this.instrumentation.addListener(this.playwrightDebugger);
 
     this.instrumentation.addListener({
-      onActivity: async () => {
-        // When PWDEBUG=1, show inspector on first launch.
-        if (debugMode() === 'inspector' && !isInternal)
+      onBeforeCall: async (sdkObject: SdkObject, metadata: CallMetadata) => {
+        const isDebugMode = debugMode() === 'inspector' || process.env.PWTEST_PWDEBUG;
+        const command = metadata.type + '.' + metadata.method;
+        if (commandsThatOpenDebugger.has(command) && isDebugMode && !isInternal)
           await RecorderSupplement.show(this, { pauseOnNextStatement: true });
       },
     });

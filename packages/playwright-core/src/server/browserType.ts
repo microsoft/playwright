@@ -53,7 +53,6 @@ export abstract class BrowserType extends SdkObject {
   }
 
   async launch(metadata: CallMetadata, options: types.LaunchOptions, protocolLogger?: types.ProtocolLogger): Promise<Browser> {
-    await this.instrumentation.onActivity();
     options = this._validateLaunchOptions(options);
     const controller = new ProgressController(metadata, this);
     controller.setLogName('browser');
@@ -67,7 +66,6 @@ export abstract class BrowserType extends SdkObject {
   }
 
   async launchPersistentContext(metadata: CallMetadata, userDataDir: string, options: types.LaunchPersistentOptions): Promise<BrowserContext> {
-    await this.instrumentation.onActivity();
     options = this._validateLaunchOptions(options);
     const controller = new ProgressController(metadata, this);
     const persistent: types.BrowserContextOptions = options;

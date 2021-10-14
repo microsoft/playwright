@@ -21,8 +21,8 @@ import { PlaywrightDispatcher } from './dispatchers/playwrightDispatcher';
 import { Connection } from './client/connection';
 import { BrowserServerLauncherImpl } from './browserServerImpl';
 
-export function createInProcessPlaywright(): PlaywrightAPI {
-  const playwright = createPlaywright('javascript');
+export function createInProcessPlaywright(isInternal?: boolean): PlaywrightAPI {
+  const playwright = createPlaywright('javascript', isInternal);
 
   const clientConnection = new Connection();
   const dispatcherConnection = new DispatcherConnection();
