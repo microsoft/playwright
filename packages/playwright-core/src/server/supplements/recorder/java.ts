@@ -102,6 +102,8 @@ export class JavaLanguageGenerator implements LanguageGenerator {
           options.modifiers = modifiers;
         if (action.clickCount > 2)
           options.clickCount = action.clickCount;
+        if (action.position)
+          options.position = action.position;
         const optionsText = formatClickOptions(options, isPage);
         return `${method}(${quote(action.selector)}${optionsText ? ', ' : ''}${optionsText})`;
       }
@@ -222,6 +224,8 @@ function formatClickOptions(options: MouseClickOptions, isPage: boolean) {
     lines.push(`  .setModifiers(Arrays.asList(${options.modifiers.map(m => `KeyboardModifier.${m.toUpperCase()}`).join(', ')}))`);
   if (options.clickCount)
     lines.push(`  .setClickCount(${options.clickCount})`);
+  if (options.position)
+    lines.push(`  .setPosition(${options.position.x}, ${options.position.y})`);
   if (!lines.length)
     return '';
   lines.unshift(`new ${isPage ? 'Page' : 'Frame'}.ClickOptions()`);

@@ -31,6 +31,8 @@ export function toClickOptions(action: actions.ClickAction): { method: 'click' |
     options.modifiers = modifiers;
   if (action.clickCount > 2)
     options.clickCount = action.clickCount;
+  if (action.position)
+    options.position = action.position;
   return { method, options };
 }
 

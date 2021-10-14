@@ -69,6 +69,7 @@ export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTest
       proxy,
       args,
       handleSIGINT: false,
+      devtools: process.env.DEVTOOLS === '1',
     });
   }, { scope: 'worker' } ],
 
