@@ -52,6 +52,7 @@ function copy_test_scripts {
   cp "${SCRIPTS_PATH}/electron-app.js" .
   cp "${SCRIPTS_PATH}/driver-client.js" .
   cp "${SCRIPTS_PATH}/sample.spec.js" .
+  cp "${SCRIPTS_PATH}/failing.spec.js" .
   cp "${SCRIPTS_PATH}/read-json-report.js" .
   cp "${SCRIPTS_PATH}/playwright-test-types.ts" .
 }
@@ -80,6 +81,7 @@ function run_tests {
   test_playwright_chromium_should_work
   test_playwright_webkit_should_work
   test_playwright_firefox_should_work
+  test_playwright_test_stacks_should_work
 }
 
 function test_screencast {
@@ -606,7 +608,7 @@ function test_playwright_test_should_work {
   PLAYWRIGHT_BROWSERS_PATH="0" npx playwright install
 
   echo "Running playwright test"
-  PLAYWRIGHT_JSON_OUTPUT_NAME=report.json PLAYWRIGHT_BROWSERS_PATH="0" npx playwright test -c . --browser=all --reporter=list,json
+  PLAYWRIGHT_JSON_OUTPUT_NAME=report.json PLAYWRIGHT_BROWSERS_PATH="0" npx playwright test -c . --browser=all --reporter=list,json sample.spec.js
 
   echo "Checking the report"
   node ./read-json-report.js ./report.json
@@ -616,6 +618,28 @@ function test_playwright_test_should_work {
   if [[ "${NODE_VERSION}" == *"v14."* ]]; then
     echo "Running esm.js"
     node esm-playwright-test.mjs
+  fi
+
+  echo "${FUNCNAME[0]} success"
+}
+
+function test_playwright_test_stacks_should_work {
+  initialize_test "${FUNCNAME[0]}"
+
+  npm install ${PLAYWRIGHT_CORE_TGZ}
+  npm install ${PLAYWRIGHT_TEST_TGZ}
+  PLAYWRIGHT_BROWSERS_PATH="0" npx playwright install chromium
+  copy_test_scripts
+
+  echo "Running playwright test"
+  OUTPUT=$(DEBUG=pw:api npx playwright test -c . failing.spec.js || true)
+  if [[ "${OUTPUT}" != *"expect.toHaveText started"* ]]; then
+    echo "ERROR: missing 'expect.toHaveText started' in the output"
+    exit 1
+  fi
+  if [[ "${OUTPUT}" != *"failing.spec.js:5:38"* ]]; then
+    echo "ERROR: missing 'failing.spec.js:5:38' in the output"
+    exit 1
   fi
 
   echo "${FUNCNAME[0]} success"
