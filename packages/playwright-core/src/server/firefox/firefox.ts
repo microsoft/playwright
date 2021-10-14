@@ -49,13 +49,6 @@ export class Firefox extends BrowserType {
         LD_LIBRARY_PATH: `${path.dirname(executable)}:${process.env.LD_LIBRARY_PATH}`,
       };
     }
-    if (os.platform() === 'darwin') {
-      return {
-        ...env,
-        // @see https://github.com/microsoft/playwright/issues/5721
-        MOZ_WEBRENDER: 0,
-      };
-    }
     return env;
   }
 
