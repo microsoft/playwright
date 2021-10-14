@@ -1920,7 +1920,7 @@ index b32d426ba38045d14e6f1e79d17e8e6061e78227..df782034e79466fcc251e9a06e99d2e1
    }
  
 diff --git a/js/src/vm/DateTime.cpp b/js/src/vm/DateTime.cpp
-index e8f27fb69691aa6062c860a14ec94660fb9e5189..ee1bfd5527c910b37ee5c1c40a8afc83f4ce5161 100644
+index e8f27fb69691aa6062c860a14ec94660fb9e5189..dd0218a5c2b3f2908f1549b8ef44a73df062b50e 100644
 --- a/js/src/vm/DateTime.cpp
 +++ b/js/src/vm/DateTime.cpp
 @@ -170,6 +170,11 @@ void js::DateTimeInfo::internalResetTimeZone(ResetTimeZoneMode mode) {
@@ -1935,7 +1935,7 @@ index e8f27fb69691aa6062c860a14ec94660fb9e5189..ee1bfd5527c910b37ee5c1c40a8afc83
  void js::DateTimeInfo::updateTimeZone() {
    MOZ_ASSERT(timeZoneStatus_ != TimeZoneStatus::Valid);
  
-@@ -494,6 +499,11 @@ void js::ResetTimeZoneInternal(ResetTimeZoneMode mode) {
+@@ -494,10 +499,24 @@ void js::ResetTimeZoneInternal(ResetTimeZoneMode mode) {
    js::DateTimeInfo::resetTimeZone(mode);
  }
  
@@ -1947,9 +1947,6 @@ index e8f27fb69691aa6062c860a14ec94660fb9e5189..ee1bfd5527c910b37ee5c1c40a8afc83
  JS_PUBLIC_API void JS::ResetTimeZone() {
    js::ResetTimeZoneInternal(js::ResetTimeZoneMode::ResetEvenIfOffsetUnchanged);
  }
-@@ -595,6 +605,15 @@ static bool IsTimeZoneId(std::string_view timeZone) {
-   return true;
- }
  
 +JS_PUBLIC_API bool JS::SetTimeZoneOverride(const char* timeZoneId) {
 +  if (!mozilla::intl::TimeZone::IsValidTimeZoneId(timeZoneId)) {
@@ -1960,9 +1957,9 @@ index e8f27fb69691aa6062c860a14ec94660fb9e5189..ee1bfd5527c910b37ee5c1c40a8afc83
 +  return true;
 +}
 +
- using TimeZoneIdentifierVector =
-     js::Vector<char, mozilla::intl::TimeZone::TimeZoneIdentifierLength,
-                js::SystemAllocPolicy>;
+ #if JS_HAS_INTL_API
+ #  if defined(XP_WIN)
+ static bool IsOlsonCompatibleWindowsTimeZoneId(std::string_view tz) {
 @@ -719,9 +738,14 @@ void js::ResyncICUDefaultTimeZone() {
  
  void js::DateTimeInfo::internalResyncICUDefaultTimeZone() {
