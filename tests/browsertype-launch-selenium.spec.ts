@@ -15,7 +15,7 @@
  */
 
 import { playwrightTest as test, expect } from './config/browserTest';
-import type { TestInfo } from 'playwright-core/types/test';
+import type { TestInfo } from '@playwright/test';
 import path from 'path';
 import fs from 'fs';
 import { start } from 'playwright-core/lib/outofprocess';

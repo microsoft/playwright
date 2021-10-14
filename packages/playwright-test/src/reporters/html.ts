@@ -18,7 +18,7 @@ import colors from 'colors/safe';
 import fs from 'fs';
 import open from 'open';
 import path from 'path';
-import { FullConfig, Suite } from 'playwright-core/types/testReporter';
+import { FullConfig, Suite } from '../../types/testReporter';
 import { HttpServer } from 'playwright-core/src/utils/httpServer';
 import { calculateSha1, removeFolders } from 'playwright-core/src/utils/utils';
 import { toPosixPath } from './json';

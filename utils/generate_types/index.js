@@ -469,10 +469,13 @@ class TypesGenerator {
     fs.writeFileSync(filePath, content, 'utf8');
   }
 
-  const typesDir = path.join(PROJECT_DIR, 'packages', 'playwright-core', 'types');
-  if (!fs.existsSync(typesDir))
-    fs.mkdirSync(typesDir)
-  writeFile(path.join(typesDir, 'protocol.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'packages', 'playwright-core', 'src', 'server', 'chromium', 'protocol.d.ts'), 'utf8'));
+  const coreTypesDir = path.join(PROJECT_DIR, 'packages', 'playwright-core', 'types');
+  if (!fs.existsSync(coreTypesDir))
+    fs.mkdirSync(coreTypesDir)
+  const testTypesDir = path.join(PROJECT_DIR, 'packages', 'playwright-test', 'types');
+  if (!fs.existsSync(testTypesDir))
+    fs.mkdirSync(testTypesDir)
+  writeFile(path.join(coreTypesDir, 'protocol.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'packages', 'playwright-core', 'src', 'server', 'chromium', 'protocol.d.ts'), 'utf8'));
 
   const apiDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
   apiDocumentation.index();
@@ -495,7 +498,7 @@ class TypesGenerator {
   for (const [key, value] of Object.entries(exported))
     apiTypes = apiTypes.replace(new RegExp('\\b' + key + '\\b', 'g'), value);
   apiTypes = apiTypes.replace(/( +)\n/g, '\n'); // remove trailing whitespace
-  writeFile(path.join(typesDir, 'types.d.ts'), apiTypes);
+  writeFile(path.join(coreTypesDir, 'types.d.ts'), apiTypes);
 
   const testOnlyDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'test-api'), path.join(PROJECT_DIR, 'docs', 'src', 'api', 'params.md'));
   const testDocumentation = apiDocumentation.mergeWith(testOnlyDocumentation);
@@ -512,14 +515,14 @@ class TypesGenerator {
   ]);
   let testTypes = await testTypesGenerator.generateTypes(path.join(__dirname, 'overrides-test.d.ts'), testClassMapping);
   testTypes = testTypes.replace(/( +)\n/g, '\n'); // remove trailing whitespace
-  writeFile(path.join(typesDir, 'test.d.ts'), testTypes);
+  writeFile(path.join(testTypesDir, 'test.d.ts'), testTypes);
 
   const testReporterOnlyDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'test-reporter-api'));
   const testReporterDocumentation = testDocumentation.mergeWith(testReporterOnlyDocumentation);
   const testReporterTypesGenerator = new TypesGenerator(testReporterDocumentation);
   let testReporterTypes = await testReporterTypesGenerator.generateTypes(path.join(__dirname, 'overrides-testReporter.d.ts'), new Map());
   testReporterTypes = testReporterTypes.replace(/( +)\n/g, '\n'); // remove trailing whitespace
-  writeFile(path.join(typesDir, 'testReporter.d.ts'), testReporterTypes);
+  writeFile(path.join(testTypesDir, 'testReporter.d.ts'), testReporterTypes);
 
   process.exit(hadChanges && process.argv.includes('--check-clean') ? 1 : 0);
 })().catch(e => {

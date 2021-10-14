@@ -19,7 +19,7 @@ import os from 'os';
 import stream from 'stream';
 import { monotonicTime } from './util';
 import { raceAgainstDeadline } from 'playwright-core/src/utils/async';
-import { WebServerConfig } from 'playwright-core/types/test';
+import { WebServerConfig } from './types';
 import { launchProcess } from 'playwright-core/src/utils/processLauncher';
 
 const DEFAULT_ENVIRONMENT_VARIABLES = {
