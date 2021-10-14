@@ -70,7 +70,6 @@ it('should play video', async ({ page, asset, browserName, platform }) => {
   // apparently due to a Media Pack issue in the Windows Server.
   // Also the test is very flaky on Linux WebKit.
   it.fixme(browserName === 'webkit' && platform !== 'darwin');
-  it.fixme(browserName === 'firefox', 'Does not work in headless firefox in 93.0b3');
   it.fixme(browserName === 'webkit' && platform === 'darwin' && parseInt(os.release(), 10) >= 20, 'Does not work on BigSur');
 
   // Safari only plays mp4 so we test WebKit with an .mp4 clip.
