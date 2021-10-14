@@ -16,9 +16,29 @@
 
 import fs from 'fs';
 import path from 'path';
-import { test, expect } from './playwright-test-fixtures';
+import { test as baseTest, expect } from './playwright-test-fixtures';
+import { HttpServer } from 'playwright-core/src/utils/httpServer';
 
-const kHTMLReporterPath = path.join(__dirname, '..', '..', 'packages', 'playwright-test', 'lib', 'reporters', 'html.js');
+const test = baseTest.extend<{ showReport: () => Promise<void> }>({
+  showReport: async ({ page }, use, testInfo) => {
+    const server = new HttpServer();
+    await use(async () => {
+      const reportFolder = testInfo.outputPath('playwright-report');
+      server.routePrefix('/', (request, response) => {
+        let relativePath = new URL('http://localhost' + request.url).pathname;
+        if (relativePath === '/')
+          relativePath = '/index.html';
+        const absolutePath = path.join(reportFolder, ...relativePath.split('/'));
+        return server.serveFile(response, absolutePath);
+      });
+      const location = await server.start();
+      await page.goto(location);
+    });
+    await server.stop();
+  }
+});
+
+test.use({ channel: 'chrome' });
 
 test('should generate report', async ({ runInlineTest }, testInfo) => {
   await runInlineTest({
@@ -38,7 +58,7 @@ test('should generate report', async ({ runInlineTest }, testInfo) => {
         expect(testInfo.retry).toBe(1);
       });
     `,
-  }, { reporter: 'dot,' + kHTMLReporterPath, retries: 1 });
+  }, { reporter: 'dot,html', retries: 1 });
   const report = testInfo.outputPath('playwright-report', 'data', 'projects.json');
   const reportObject = JSON.parse(fs.readFileSync(report, 'utf-8'));
   delete reportObject[0].suites[0].duration;
@@ -138,7 +158,73 @@ test('should not throw when attachment is missing', async ({ runInlineTest }) =>
         testInfo.attachments.push({ name: 'screenshot', path: screenshot, contentType: 'image/png' });
       });
     `,
-  }, { reporter: 'dot,' + kHTMLReporterPath });
+  }, { reporter: 'dot,html' });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
+});
+
+test('should include image diff', async ({ runInlineTest, page, showReport }) => {
+  const expected = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAYAAACtWK6eAAAAAXNSR0IArs4c6QAAAhVJREFUeJzt07ERwCAQwLCQ/Xd+FuDcQiFN4MZrZuYDjv7bAfAyg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAiEDVPZBYx6ffy+AAAAAElFTkSuQmCC', 'base64');
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { viewport: { width: 200, height: 200 }} };
+    `,
+    'a.test.js-snapshots/expected-linux.png': expected,
+    'a.test.js-snapshots/expected-darwin.png': expected,
+    'a.test.js-snapshots/expected-win32.png': expected,
+    'a.test.js': `
+      const { test } = pwt;
+      test('fails', async ({ page }, testInfo) => {
+        await page.setContent('<html>Hello World</html>');
+        const screenshot = await page.screenshot();
+        await expect(screenshot).toMatchSnapshot('expected.png');
+      });
+    `,
+  }, { reporter: 'dot,html' });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+
+  await showReport();
+  await page.click('text=a.test.js');
+  await page.click('text=fails');
+  const imageDiff = page.locator('.test-image-mismatch');
+  const image = imageDiff.locator('img');
+  await expect(image).toHaveAttribute('src', /.*png/);
+  const actualSrc = await image.getAttribute('src');
+  await imageDiff.locator('text=Expected').click();
+  const expectedSrc = await image.getAttribute('src');
+  await imageDiff.locator('text=Diff').click();
+  const diffSrc = await image.getAttribute('src');
+  const set = new Set([expectedSrc, actualSrc, diffSrc]);
+  expect(set.size).toBe(3);
+});
+
+test('should include screenshot on failure', async ({ runInlineTest, page, showReport }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        use: {
+          viewport: { width: 200, height: 200 },
+          screenshot: 'only-on-failure',
+        }
+      };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('fails', async ({ page }) => {
+        await page.setContent('<html>Failed state</html>');
+        await expect(true).toBeFalsy();
+      });
+    `,
+  }, { reporter: 'dot,html' });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+
+  await showReport();
+  await page.click('text=a.test.js');
+  await page.click('text=fails');
+  await expect(page.locator('text=Screenshots')).toBeVisible();
+  await expect(page.locator('img')).toBeVisible();
+  const src = await page.locator('img').getAttribute('src');
+  expect(src).toBeTruthy();
 });

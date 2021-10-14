@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-import { TestInfo, test as base } from './stable-test-runner';
-import { CommonFixtures, commonFixtures } from '../config/commonFixtures';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as os from 'os';
 import type { JSONReport, JSONReportSuite } from '@playwright/test/src/reporters/json';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import rimraf from 'rimraf';
 import { promisify } from 'util';
-import { serverFixtures, ServerFixtures } from '../config/baseTest';
+import { CommonFixtures, commonFixtures, serverFixtures, ServerFixtures } from '../config/commonFixtures';
+import { test as base, TestInfo } from './stable-test-runner';
 
 const removeFolderAsync = promisify(rimraf);
 

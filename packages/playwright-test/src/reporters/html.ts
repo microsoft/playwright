@@ -249,9 +249,12 @@ class HtmlBuilder {
       status: result.status,
       attachments: result.attachments.map(a => {
         if (a.path) {
-          const fileName = 'data/' + test.testId + path.extname(a.path);
+          let fileName = a.path;
           try {
-            fs.copyFileSync(a.path, path.join(this._reportFolder, fileName));
+            const buffer = fs.readFileSync(a.path);
+            const sha1 = calculateSha1(buffer) + path.extname(a.path);
+            fileName = 'data/' + sha1;
+            fs.writeFileSync(path.join(this._reportFolder, 'data', sha1), buffer);
           } catch (e) {
           }
           return {
