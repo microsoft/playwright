@@ -142,8 +142,7 @@ export class Electron extends SdkObject {
       });
 
       const waitForXserverError = new Promise(async (resolve, reject) => {
-        await waitForLine(progress, launchedProcess, /Unable to open X display/);
-        throw new Error([
+        waitForLine(progress, launchedProcess, /Unable to open X display/).then(() => reject(new Error([
           'Unable to open X display!',
           `================================`,
           'Most likely this is because there is no X server available.',
@@ -151,7 +150,7 @@ export class Electron extends SdkObject {
           "For example: 'xvfb-run npm run test:e2e'",
           `================================`,
           progress.metadata.log
-        ].join('\n'));
+        ].join('\n')))).catch(() => {});
       });
 
       const nodeMatch = await waitForLine(progress, launchedProcess, /^Debugger listening on (ws:\/\/.*)$/);
