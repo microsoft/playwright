@@ -23,7 +23,7 @@ import { TabbedPane } from '../traceViewer/ui/tabbedPane';
 import { msToString } from '../uiUtils';
 import type { ProjectTreeItem, SuiteTreeItem, TestCase, TestResult, TestStep, TestTreeItem, Location, TestFile, Stats, TestAttachment } from '@playwright/test/src/reporters/html';
 
-type Filter = 'Failing' | 'All';
+type Filter = 'failing' | 'all';
 
 type TestId = {
   fileId: string;
@@ -46,22 +46,18 @@ export const Report: React.FC = () => {
       }
     })();
   }, []);
-  const [filter, setFilter] = React.useState<Filter>('Failing');
+  const [filter, setFilter] = React.useState<Filter>('failing');
 
-  return <div className='hbox'>
+  return <div className='hbox columns'>
     <SplitView sidebarSize={300} orientation='horizontal' sidebarIsFirst={true}>
       <TestCaseView key={testId?.testId} testId={testId}></TestCaseView>
       <div className='suite-tree-column'>
-        <div className='tab-strip'>{
-          (['Failing', 'All'] as Filter[]).map(item => {
-            const selected = item === filter;
-            return <div key={item} className={'tab-element' + (selected ? ' selected' : '')} onClick={e => {
-              setFilter(item);
-            }}>{item}</div>;
-          })
-        }</div>
-        {!fetchError && filter === 'All' && report?.map((project, i) => <ProjectTreeItemView key={i} project={project} setTestId={setTestId} testId={testId} failingOnly={false}></ProjectTreeItemView>)}
-        {!fetchError && filter === 'Failing' && report?.map((project, i) => <ProjectTreeItemView key={i} project={project} setTestId={setTestId} testId={testId} failingOnly={true}></ProjectTreeItemView>)}
+        <div className='tab-strip'>
+          <div key='all' title='All tests' className={'tab-element' + ('all' === filter ? ' selected' : '')} onClick={() => setFilter('all')}>All</div>
+          <div key='failing' title='Failing tests' className={'tab-element' + ('failing' === filter ? ' selected' : '')} onClick={() => setFilter('failing')}>Failing</div>
+        </div>
+        {!fetchError && filter === 'all' && report?.map((project, i) => <ProjectTreeItemView key={i} project={project} setTestId={setTestId} testId={testId} failingOnly={false}></ProjectTreeItemView>)}
+        {!fetchError && filter === 'failing' && report?.map((project, i) => <ProjectTreeItemView key={i} project={project} setTestId={setTestId} testId={testId} failingOnly={true}></ProjectTreeItemView>)}
       </div>
     </SplitView>
   </div>;
@@ -92,7 +88,7 @@ const SuiteTreeItemView: React.FC<{
   depth: number,
 }> = ({ suite, testId, setTestId, failingOnly, depth }) => {
   return <TreeItem title={<div className='hbox'>
-    <div className='tree-text' title={suite.title}>{suite.title}</div>
+    <div className='tree-text' title={suite.title}>{suite.title || '<untitled>'}</div>
     <div style={{ flex: 'auto' }}></div>
     <StatsView stats={suite.stats}></StatsView>
   </div>
