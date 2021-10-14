@@ -1,5 +1,5 @@
 ---
-id: auth
+id: api-testing
 title: "API testing"
 ---
 
