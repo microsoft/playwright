@@ -33,6 +33,7 @@ import ListReporter from './reporters/list';
 import JSONReporter from './reporters/json';
 import JUnitReporter from './reporters/junit';
 import EmptyReporter from './reporters/empty';
+import HtmlReporter from './reporters/html';
 import { ProjectImpl } from './project';
 import { Minimatch } from 'minimatch';
 import { FullConfig } from './types';
@@ -73,6 +74,7 @@ export class Runner {
       json: JSONReporter,
       junit: JUnitReporter,
       null: EmptyReporter,
+      html: HtmlReporter,
     };
     const reporters: Reporter[] = [];
     for (const r of this._loader.fullConfig().reporter) {
@@ -541,5 +543,5 @@ class ListModeReporter implements Reporter {
   }
 }
 
-export const builtInReporters = ['list', 'line', 'dot', 'json', 'junit', 'null', 'github'] as const;
+export const builtInReporters = ['list', 'line', 'dot', 'json', 'junit', 'null', 'github', 'html'] as const;
 export type BuiltInReporter = typeof builtInReporters[number];
