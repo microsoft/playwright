@@ -128,7 +128,6 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this._channel.on('domcontentloaded', () => this.emit(Events.Page.DOMContentLoaded, this));
     this._channel.on('download', ({ url, suggestedFilename, artifact }) => {
       const artifactObject = Artifact.from(artifact);
-      artifactObject._isRemote = !!this._browserContext._browser && !!this._browserContext._browser._remoteType;
       this.emit(Events.Page.Download, new Download(this, url, suggestedFilename, artifactObject));
     });
     this._channel.on('fileChooser', ({ element, isMultiple }) => this.emit(Events.Page.FileChooser, new FileChooser(this, ElementHandle.from(element), isMultiple)));
@@ -250,7 +249,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
 
   private _forceVideo(): Video {
     if (!this._video)
-      this._video = new Video(this);
+      this._video = new Video(this, this._connection);
     return this._video;
   }
 

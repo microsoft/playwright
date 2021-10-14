@@ -19,6 +19,8 @@ import fs from 'fs';
 import path from 'path';
 
 it.describe('downloads path', () => {
+  it.skip(({ mode }) => mode === 'service', 'download.path() is not available in remote mode');
+
   it.beforeEach(async ({ server }) => {
     server.setRoute('/download', (req, res) => {
       res.setHeader('Content-Type', 'application/octet-stream');

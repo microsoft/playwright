@@ -32,6 +32,7 @@ export class PlaywrightClient {
   static async connect(options: PlaywrightClientConnectOptions): Promise<PlaywrightClient> {
     const { wsEndpoint, timeout = 30000 } = options;
     const connection = new Connection();
+    connection.markAsRemote();
     const ws = new WebSocket(wsEndpoint);
     const waitForNextTask = makeWaitForNextTask();
     connection.onmessage = message => {
