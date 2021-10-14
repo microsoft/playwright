@@ -17,6 +17,7 @@
 
 import { playwrightTest as it, expect } from './config/browserTest';
 import fs from 'fs';
+import path from 'path';
 
 it('should support hasTouch option', async ({ server, launchPersistent }) => {
   const { page } = await launchPersistent({ hasTouch: true });
@@ -117,6 +118,13 @@ it('should restore state from userDataDir', async ({ browserType, browserOptions
   await page3.goto(server.EMPTY_PAGE);
   expect(await page3.evaluate(() => localStorage.hey)).not.toBe('hello');
   await browserContext3.close();
+});
+
+it('should create userDataDir if it does not exist', async ({ createUserDataDir, browserType, browserOptions }) => {
+  const userDataDir = path.join(await createUserDataDir(), 'nonexisting');
+  const context = await browserType.launchPersistentContext(userDataDir, browserOptions);
+  await context.close();
+  expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
 });
 
 it('should restore cookies from userDataDir', async ({ browserType, browserOptions,  server, createUserDataDir, platform, channel }) => {
