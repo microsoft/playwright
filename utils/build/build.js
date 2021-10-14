@@ -143,7 +143,13 @@ for (const packageDir of packages) {
     continue;
   steps.push({
     command: 'npx',
-    args: ['babel', ...(watchMode ? ['-w', '--source-maps'] : []), '--extensions', '.ts', '--out-dir', path.join(packageDir, 'lib'), path.join(packageDir, 'src')],
+    args: [
+      'babel',
+      ...(watchMode ? ['-w', '--source-maps'] : []),
+      '--extensions', '.ts',
+      '--out-dir', path.join(packageDir, 'lib'),
+      '--ignore', 'packages/playwright-core/src/server/injected/**/*',
+      path.join(packageDir, 'src')],
     shell: true,
   });
 }

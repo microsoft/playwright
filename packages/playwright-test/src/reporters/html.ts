@@ -151,12 +151,12 @@ class HtmlBuilder {
     fs.mkdirSync(this._dataFolder, { recursive: true });
 
     // Copy app.
-    const appFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'web', 'htmlReport');
+    const appFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'webpack', 'htmlReport');
     for (const file of fs.readdirSync(appFolder))
       fs.copyFileSync(path.join(appFolder, file), path.join(this._reportFolder, file));
 
     // Copy trace viewer.
-    const traceViewerFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'web', 'traceViewer');
+    const traceViewerFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'webpack', 'traceViewer');
     const traceViewerTargetFolder = path.join(this._reportFolder, 'trace');
     fs.mkdirSync(traceViewerTargetFolder, { recursive: true });
     // TODO (#9471): remove file filter when the babel build is fixed.
