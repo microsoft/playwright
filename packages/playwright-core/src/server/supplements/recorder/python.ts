@@ -111,6 +111,8 @@ export class PythonLanguageGenerator implements LanguageGenerator {
           options.modifiers = modifiers;
         if (action.clickCount > 2)
           options.clickCount = action.clickCount;
+        if (action.position)
+          options.position = action.position;
         const optionsString = formatOptions(options, true);
         return `${method}(${quote(action.selector)}${optionsString})`;
       }
@@ -198,6 +200,8 @@ function formatValue(value: any): string {
     return `[${value.map(formatValue).join(', ')}]`;
   if (typeof value === 'string')
     return quote(value);
+  if (typeof value === 'object')
+    return JSON.stringify(value);
   return String(value);
 }
 

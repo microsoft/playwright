@@ -88,6 +88,66 @@ test.describe('cli codegen', () => {
     expect(message.text()).toBe('click');
   });
 
+  test('should make a positioned click on a canvas', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
+    await recorder.setContentAndWait(`
+      <canvas width="500" height="500" style="margin: 42px"/>
+      <script>
+      document.querySelector("canvas").addEventListener("click", event => {
+        const rect = event.target.getBoundingClientRect();
+        console.log("click", event.clientX - rect.left, event.clientY - rect.top);
+      })
+      </script>
+    `);
+
+    const selector = await recorder.waitForHighlight(() => recorder.page.hover('canvas', {
+      position: { x: 250, y: 250 },
+    }));
+    expect(selector).toBe('canvas');
+    const [message, sources] = await Promise.all([
+      page.waitForEvent('console', msg => msg.type() !== 'error'),
+      recorder.waitForOutput('JavaScript', 'click'),
+      recorder.page.click('canvas', {
+        position: { x: 250, y: 250 },
+      })
+    ]);
+
+    expect(sources.get('JavaScript').text).toContain(`
+  // Click canvas
+  await page.click('canvas', {
+    position: {
+      x: 250,
+      y: 250
+    }
+  });`);
+
+    expect(sources.get('Python').text).toContain(`
+    # Click canvas
+    page.click("canvas", position={"x":250,"y":250})`);
+
+    expect(sources.get('Python Async').text).toContain(`
+    # Click canvas
+    await page.click("canvas", position={"x":250,"y":250})`);
+
+    expect(sources.get('Java').text).toContain(`
+      // Click canvas
+      page.click("canvas", new Page.ClickOptions()
+        .setPosition(250, 250));`);
+
+    expect(sources.get('C#').text).toContain(`
+        // Click canvas
+        await page.ClickAsync("canvas", new PageClickOptions
+        {
+            Position = new Position
+            {
+                X = 250,
+                Y = 250,
+            },
+        });`);
+    expect(message.text()).toBe('click 250 250');
+  });
+
   test('should work with TrustedTypes', async ({ page, openRecorder }) => {
     const recorder = await openRecorder();
 

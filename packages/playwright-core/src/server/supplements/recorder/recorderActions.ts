@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import type { Point } from '../../../common/types';
+
 export type ActionName =
   'check' |
   'click' |
@@ -37,6 +39,7 @@ export type ClickAction = ActionBase & {
   button: 'left' | 'middle' | 'right',
   modifiers: number,
   clickCount: number,
+  position?: Point,
 };
 
 export type CheckAction = ActionBase & {

@@ -106,6 +106,8 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
           options.modifiers = modifiers;
         if (action.clickCount > 2)
           options.clickCount = action.clickCount;
+        if (action.position)
+          options.position = action.position;
         if (!Object.entries(options).length)
           return `${method}Async(${quote(action.selector)})`;
         const optionsString = formatObject(options, '    ', (isPage ? 'Page' : 'Frame') + method + 'Options');
