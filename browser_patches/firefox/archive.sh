@@ -5,7 +5,7 @@ set +x
 if [[ ("$1" == "-h") || ("$1" == "--help") ]]; then
   echo "usage: $(basename "$0") [output-absolute-path]"
   echo
-  echo "Generate distributable .zip archive from ./checkout folder that was previously built."
+  echo "Generate distributable .zip archive from Firefox checkout folder that was previously built."
   echo
   exit 0
 fi
@@ -36,7 +36,7 @@ if [[ ! -z "${FF_CHECKOUT_PATH}" ]]; then
   cd "${FF_CHECKOUT_PATH}"
   echo "WARNING: checkout path from FF_CHECKOUT_PATH env: ${FF_CHECKOUT_PATH}"
 else
-  cd "checkout"
+  cd "$HOME/firefox"
 fi
 
 OBJ_FOLDER="obj-build-playwright"
@@ -45,7 +45,7 @@ OBJ_FOLDER="obj-build-playwright"
 node "${SCRIPT_FOLDER}"/install-preferences.js "$PWD"/$OBJ_FOLDER/dist/firefox
 
 if ! [[ -d $OBJ_FOLDER/dist/firefox ]]; then
-  echo "ERROR: cannot find $OBJ_FOLDER/dist/firefox folder in the checkout/. Did you build?"
+  echo "ERROR: cannot find $OBJ_FOLDER/dist/firefox folder in the firefox checkout. Did you build?"
   exit 1;
 fi
 
