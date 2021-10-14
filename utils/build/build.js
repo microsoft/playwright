@@ -129,7 +129,7 @@ const webPackFiles = [
 for (const file of webPackFiles) {
   steps.push({
     command: 'npx',
-    args: ['webpack', '--config', filePath(file), ...(watchMode ? ['--watch', '--silent'] : [])],
+    args: ['webpack', '--config', filePath(file), ...(watchMode ? ['--watch', '--stats', 'none'] : [])],
     shell: true,
     env: {
       NODE_ENV: watchMode ? 'development' : 'production'
