@@ -18,20 +18,22 @@ if [[ $# == 0 ]]; then
   exit 1
 fi
 
-if [[ ("$1" == "firefox") || ("$1" == "firefox/") || ("$1" == "ff") ]]; then
+CMD="$1"
+shift
+if [[ ("$CMD" == "firefox") || ("$CMD" == "firefox/") || ("$CMD" == "ff") ]]; then
   bash ./firefox/clean.sh "$@"
-elif [[ ("$1" == "firefox-beta") || ("$1" == "ff-beta") ]]; then
+elif [[ ("$CMD" == "firefox-beta") || ("$CMD" == "ff-beta") ]]; then
   bash ./firefox-beta/clean.sh "$@"
-elif [[ ("$1" == "webkit") || ("$1" == "webkit/") || ("$1" == "wk") ]]; then
+elif [[ ("$CMD" == "webkit") || ("$CMD" == "webkit/") || ("$CMD" == "wk") ]]; then
   bash ./webkit/clean.sh "$@"
-elif [[ ("$1" == "chromium") || ("$1" == "chromium/") || ("$1" == "cr") ]]; then
+elif [[ ("$CMD" == "chromium") || ("$CMD" == "chromium/") || ("$CMD" == "cr") ]]; then
   bash ./chromium/clean.sh "$@"
-elif [[ ("$1" == "winldd") ]]; then
+elif [[ ("$CMD" == "winldd") ]]; then
   bash ./winldd/clean.sh "$@"
-elif [[ ("$1" == "ffmpeg") ]]; then
+elif [[ ("$CMD" == "ffmpeg") ]]; then
   bash ./ffmpeg/clean.sh "$@"
 else
-  echo ERROR: unknown browser to build - "$1"
+  echo ERROR: unknown browser to build - "$CMD"
   exit 1
 fi
 
