@@ -114,6 +114,8 @@ const test = playwrightTest.extend<{ showTraceViewer: (trace: string) => Promise
   }
 });
 
+test.skip(({ trace }) => trace);
+
 let traceFile: string;
 
 test.beforeAll(async function recordTrace({ browser, browserName, browserType, server }, workerInfo) {
