@@ -214,7 +214,7 @@ const TestResultView: React.FC<{
       <AttachmentLink attachment={a}></AttachmentLink>
     </div>)}
 
-    {!!otherAttachments && <div key='attachments-title' className='test-overview-title'>Attachments</div>}
+    {!!otherAttachments.length && <div key='attachments-title' className='test-overview-title'>Attachments</div>}
     {otherAttachments.map((a, i) => <AttachmentLink key={`attachment-link-${i}`} attachment={a}></AttachmentLink>)}
   </div>;
 };
