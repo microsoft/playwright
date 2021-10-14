@@ -103,7 +103,8 @@ const test = playwrightTest.extend<{ showTraceViewer: (trace: string) => Promise
     await contextImpl._browser.close();
   },
 
-  runAndTrace: async ({ context, showTraceViewer }, use, testInfo) => {
+  runAndTrace: async ({ context, showTraceViewer, trace }, use, testInfo) => {
+    test.skip(!!trace, 'Running in trace mode interferes with manual tracing start/stop');
     await use(async (body: () => Promise<void>) => {
       const traceFile = testInfo.outputPath('trace.zip');
       await context.tracing.start({ snapshots: true, screenshots: true });
