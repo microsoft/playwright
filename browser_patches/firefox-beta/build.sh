@@ -26,29 +26,12 @@ rm -rf .mozconfig
 
 if [[ "$(uname)" == "Darwin" ]]; then
   CURRENT_HOST_OS_VERSION=$(getMacVersion)
-  if [[ "${CURRENT_HOST_OS_VERSION}" == "10.14" ]]; then
-    selectXcodeVersionOrDie "11.3.1"
-  elif [[ "${CURRENT_HOST_OS_VERSION}" == "11."* ]]; then
-    # As of Jan 2021, building Firefox on Apple Silicon requires XCode 12.2
-    selectXcodeVersionOrDie "12.2"
+  # As of Oct 2021, building Firefox requires XCode 13
+  if [[ "${CURRENT_HOST_OS_VERSION}" == "11."* ]]; then
+    selectXcodeVersionOrDie "13"
   else
     echo "ERROR: ${CURRENT_HOST_OS_VERSION} is not supported"
     exit 1
-  fi
-  if [[ "${CURRENT_HOST_OS_VERSION}" == "10."* ]]; then
-    # Firefox currently does not build on 10.14 or 10.15 out of the box - it requires SDK for 10.12.
-    # Make sure the SDK is out there.
-    if ! [[ -d $HOME/SDK-archive/MacOSX${MACOS_SDK_VERSION}.sdk ]]; then
-      echo "As of Dec 2020, Firefox does not build on Mac ${CURRENT_HOST_OS_VERSION} without ${MACOS_SDK_VERSION} SDK."
-      echo "Download XCode ${XCODE_VERSION_WITH_REQUIRED_SDK_VERSION} from https://developer.apple.com/download/more/ and"
-      echo "extract SDK to $HOME/SDK-archive/MacOSX${MACOS_SDK_VERSION}.sdk"
-      echo ""
-      echo "More info: https://firefox-source-docs.mozilla.org/setup/macos_build.html"
-      exit 1
-    else
-      echo "-- configuting .mozconfig with ${MACOS_SDK_VERSION} SDK path"
-      echo "ac_add_options --with-macos-sdk=$HOME/SDK-archive/MacOSX${MACOS_SDK_VERSION}.sdk/" >> .mozconfig
-    fi
   fi
   echo "-- building on Mac"
 elif [[ "$(uname)" == "Linux" ]]; then

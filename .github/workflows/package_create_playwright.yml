@@ -21,6 +21,8 @@ jobs:
       with:
         node-version: 14
         cache: 'npm'
+    - run: npm i -g npm@7
     - run: npm ci
+    - run: npm i --no-save @playwright/test
     - run: npm run build
     - run: npm run test

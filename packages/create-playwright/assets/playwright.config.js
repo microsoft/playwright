@@ -1,18 +1,18 @@
 // @ts-check
 const { devices } = require('@playwright/test');
-const path = require('path')
+const path = require('path');
 
 /**
  * @see https://playwright.dev/docs/test-configuration
- * @type{import('@playwright/test').PlaywrightTestConfig}
+ * @type {import('@playwright/test').PlaywrightTestConfig}
  */
 const config = {
   // Timeout per test
   timeout: 30 * 1000,
   // Test directory
   testDir: path.join(__dirname, '{{testDir}}'),
-  // If a test fails, retry it additional 2 times
-  retries: 2,
+  // If a test fails on CI, retry it additional 2 times
+  retries: process.env.CI ? 2 : 0,
   // Artifacts folder where screenshots, videos, and traces are stored.
   outputDir: 'test-results/',
 
@@ -26,7 +26,7 @@ const config = {
   use: {
     // Retry a test if its failing with enabled tracing. This allows you to analyse the DOM, console logs, network traffic etc.
     // More information: https://playwright.dev/docs/trace-viewer
-    trace: 'retry-with-trace',
+    trace: 'on-first-retry',
 
     // All available context options: https://playwright.dev/docs/api/class-browser#browser-new-context
     contextOptions: {

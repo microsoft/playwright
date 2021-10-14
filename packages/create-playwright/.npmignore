@@ -1,8 +1,9 @@
+# This ignores everything by default, except for package.json and LICENSE and README.md.
+# See https://docs.npmjs.com/misc/developers
+**/*
+
 !/lib/**/*
-/node_modules/
-/test-results/
-/src/**/*
-/tests/**/*
-/playwright.config.ts
-/tsconfig.json
+!index.js
+
+!/assets/**/*
 /assets/.eslintrc.js

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials } from './types';
+import type { ApiRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials } from './types';
 import type { Expect } from './testExpect';
 
 export type { Expect } from './testExpect';
@@ -232,7 +232,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
       only: SuiteFunction;
     };
   };
-  skip(title: string, testFunction: (args: TestArgs, testInfo: TestInfo) => Promise<void> | void): void;
+  skip(title: string, testFunction: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
   skip(): void;
   skip(condition: boolean, description?: string): void;
   skip(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
@@ -333,6 +333,7 @@ export interface PlaywrightWorkerArgs {
 export interface PlaywrightTestArgs {
   context: BrowserContext;
   page: Page;
+  request: ApiRequestContext;
 }
 
 export type PlaywrightTestProject<TestArgs = {}, WorkerArgs = {}> = Project<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;

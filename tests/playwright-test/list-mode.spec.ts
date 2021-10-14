@@ -64,3 +64,44 @@ test('should not list tests to stdout when JSON reporter is used', async ({ runI
   expect(result.report.suites[0].specs.length).toBe(2);
   expect(result.report.suites[0].specs.map(spec => spec.title)).toStrictEqual(['example1', 'example2']);
 });
+
+test('globalSetup and globalTeardown should not run', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      import * as path from 'path';
+      module.exports = {
+        globalSetup: './globalSetup',
+        globalTeardown: './globalTeardown.ts',
+      };
+    `,
+    'globalSetup.ts': `
+      module.exports = () => {
+        console.log('Running globalSetup');
+      };
+    `,
+    'globalTeardown.ts': `
+      module.exports = () => {
+        console.log('Running globalTeardown');
+      };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('should work 1', async ({}, testInfo) => {
+        console.log('Running test 1');
+      });
+    `,
+    'b.test.js': `
+      const { test } = pwt;
+      test('should work 2', async ({}, testInfo) => {
+        console.log('Running test 2');
+      });
+    `,
+  }, { 'list': true });
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toContain([
+    `Listing tests:`,
+    `  a.test.js:6:7 › should work 1`,
+    `  b.test.js:6:7 › should work 2`,
+    `Total: 2 tests in 2 files`,
+  ].join('\n'));
+});

@@ -3,6 +3,10 @@
     "target": "ES2019",
     "module": "commonjs",
     "lib": ["esnext", "dom", "DOM.Iterable"],
+    "baseUrl": ".",
+    "paths": {
+      "*": ["./packages/*/"]
+    },
     "esModuleInterop": true,
     "strict": true,
     "allowJs": true,
@@ -13,6 +17,6 @@
     "useUnknownInCatchVariables": false,
   },
   "compileOnSave": true,
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js", "src/server/deviceDescriptorsSource.json"],
-  "exclude": ["node_modules", "src/.eslintrc.js", "src/**/*webpack.config.js"]
+  "include": ["packages"],
+  "exclude": ["packages/*/lib"]
 }

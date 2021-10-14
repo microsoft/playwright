@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Config } from './test-runner';
+import type { Config } from '@playwright/test';
 import * as path from 'path';
 import { PlaywrightOptions, playwrightFixtures } from './browserTest';
 import { test as pageTest } from '../page/pageTest';

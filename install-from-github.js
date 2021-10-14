@@ -17,7 +17,7 @@
 
 // This file is only run when someone installs via the github repo
 
-const {execSync} = require('child_process');
+const { execSync } = require('child_process');
 const path = require('path');
 
 console.log(`Updating test runner...`);
@@ -30,18 +30,9 @@ try {
   process.exit(1);
 }
 
-console.log(`Rebuilding installer...`);
-try {
-  execSync('npm run build-installer', {
-    stdio: ['inherit', 'inherit', 'inherit'],
-  });
-} catch (e) {
-  process.exit(1);
-}
-
 console.log(`Downloading browsers...`);
-const { installDefaultBrowsersForNpmInstall } = require('./lib/utils/registry');
-installDefaultBrowsersForNpmInstall().catch(e =>  {
+const { installDefaultBrowsersForNpmInstall } = require('./packages/playwright-core/lib/utils/registry');
+installDefaultBrowsersForNpmInstall().catch(e => {
   console.error(`Failed to install browsers, caused by\n${e.stack}`);
   process.exit(1);
 });

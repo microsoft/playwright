@@ -39,6 +39,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 14
+    - run: npm i -g npm@7
     - run: npm ci
     - run: npm run build
     - name: Build
@@ -60,7 +61,7 @@ jobs:
       run: docker exec playwright-docker-${{ matrix.tag }}-test npm run build
     - name: Run "npm run test" inside docker
       run: docker exec -e INSIDE_DOCKER=1 -e CI=1 playwright-docker-${{ matrix.tag }}-test xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run test
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+    - run: sudo ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}

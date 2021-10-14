@@ -1,0 +1,3070 @@
+# Copyright (c) Microsoft Corporation.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+StackFrame:
+  type: object
+  properties:
+    file: string
+    line: number?
+    column: number?
+    function: string?
+
+# This object can be send with any rpc call in the "metadata" field.
+
+Metadata:
+  type: object
+  properties:
+    stack:
+      type: array?
+      items: StackFrame
+    apiName: string?
+
+
+Point:
+  type: object
+  properties:
+    x: number
+    y: number
+
+
+Rect:
+  type: object
+  properties:
+    x: number
+    y: number
+    width: number
+    height: number
+
+
+SerializedValue:
+  type: object
+  # Exactly one of the properties must be present.
+  properties:
+    n: number?
+    b: boolean?
+    s: string?
+    v:
+      type: enum?
+      literals:
+      - null
+      - undefined
+      - NaN
+      - Infinity
+      - -Infinity
+      - "-0"
+    # String representation of the Date.
+    d: string?
+    # Regular expression pattern and flags.
+    r:
+      type: object?
+      properties:
+        p: string
+        f: string
+    a:
+      type: array?
+      items: SerializedValue
+    # Object with keys and values.
+    o:
+      type: array?
+      items:
+        type: object
+        properties:
+          k: string
+          v: SerializedValue
+    # An index in the handles array from SerializedArgument.
+    h: number?
+
+
+# Represents a value with handle references.
+SerializedArgument:
+  type: object
+  properties:
+    value: SerializedValue
+    handles:
+      type: array
+      items: Channel
+
+
+ExpectedTextValue:
+  type: object
+  properties:
+    string: string?
+    regexSource: string?
+    regexFlags: string?
+    matchSubstring: boolean?
+    normalizeWhiteSpace: boolean?
+
+
+AXNode:
+  type: object
+  properties:
+    role: string
+    name: string
+    valueString: string?
+    valueNumber: number?
+    description: string?
+    keyshortcuts: string?
+    roledescription: string?
+    valuetext: string?
+    disabled: boolean?
+    expanded: boolean?
+    focused: boolean?
+    modal: boolean?
+    multiline: boolean?
+    multiselectable: boolean?
+    readonly: boolean?
+    required: boolean?
+    selected: boolean?
+    checked:
+      type: enum?
+      literals:
+      - checked
+      - unchecked
+      - mixed
+    pressed:
+      type: enum?
+      literals:
+      - pressed
+      - released
+      - mixed
+    level: number?
+    valuemin: number?
+    valuemax: number?
+    autocomplete: string?
+    haspopup: string?
+    invalid: string?
+    orientation: string?
+    children:
+      type: array?
+      items: AXNode
+
+
+SetNetworkCookie:
+  type: object
+  properties:
+    name: string
+    value: string
+    url: string?
+    domain: string?
+    path: string?
+    expires: number?
+    httpOnly: boolean?
+    secure: boolean?
+    sameSite:
+      type: enum?
+      literals:
+      - Strict
+      - Lax
+      - None
+
+
+NetworkCookie:
+  type: object
+  properties:
+    name: string
+    value: string
+    domain: string
+    path: string
+    expires: number
+    httpOnly: boolean
+    secure: boolean
+    sameSite:
+      type: enum
+      literals:
+      - Strict
+      - Lax
+      - None
+
+
+NameValue:
+  type: object
+  properties:
+    name: string
+    value: string
+
+
+OriginStorage:
+  type: object
+  properties:
+    origin: string
+    localStorage:
+      type: array
+      items: NameValue
+
+
+SerializedError:
+  type: object
+  properties:
+    error:
+      type: object?
+      properties:
+        message: string
+        name: string
+        stack: string?
+    value: SerializedValue?
+
+FormField:
+  type: object
+  properties:
+    name: string
+    value: string?
+    file:
+      type: object?
+      properties:
+        name: string
+        mimeType: string
+        buffer: binary
+
+InterceptedResponse:
+  type: object
+  properties:
+    request: Request
+    status: number
+    statusText: string
+    headers:
+      type: array
+      items: NameValue
+
+
+FetchRequest:
+  type: interface
+
+  commands:
+
+    fetch:
+      parameters:
+        url: string
+        params:
+          type: array?
+          items: NameValue
+        method: string?
+        headers:
+          type: array?
+          items: NameValue
+        postData: binary?
+        jsonData: json?
+        formData:
+          type: array?
+          items: NameValue
+        multipartData:
+          type: array?
+          items: FormField
+        timeout: number?
+        failOnStatusCode: boolean?
+        ignoreHTTPSErrors: boolean?
+      returns:
+        response: FetchResponse?
+        error: string?
+
+    fetchResponseBody:
+      parameters:
+        fetchUid: string
+      returns:
+        binary?: binary
+
+    storageState:
+      returns:
+        cookies:
+          type: array
+          items: NetworkCookie
+        origins:
+          type: array
+          items: OriginStorage
+
+    disposeFetchResponse:
+      parameters:
+        fetchUid: string
+
+    dispose:
+
+
+FetchResponse:
+  type: object
+  properties:
+    fetchUid: string
+    url: string
+    status: number
+    statusText: string
+    headers:
+      type: array
+      items: NameValue
+
+LaunchOptions:
+  type: mixin
+  properties:
+    channel: string?
+    executablePath: string?
+    args:
+      type: array?
+      items: string
+    ignoreAllDefaultArgs: boolean?
+    ignoreDefaultArgs:
+      type: array?
+      items: string
+    handleSIGINT: boolean?
+    handleSIGTERM: boolean?
+    handleSIGHUP: boolean?
+    timeout: number?
+    env:
+      type: array?
+      items: NameValue
+    headless: boolean?
+    devtools: boolean?
+    proxy:
+      type: object?
+      properties:
+        server: string
+        bypass: string?
+        username: string?
+        password: string?
+    downloadsPath: string?
+    tracesDir: string?
+    chromiumSandbox: boolean?
+
+
+ContextOptions:
+  type: mixin
+  properties:
+    noDefaultViewport: boolean?
+    viewport:
+      type: object?
+      properties:
+        width: number
+        height: number
+    screen:
+      type: object?
+      properties:
+        width: number
+        height: number
+    ignoreHTTPSErrors: boolean?
+    javaScriptEnabled: boolean?
+    bypassCSP: boolean?
+    userAgent: string?
+    locale: string?
+    timezoneId: string?
+    geolocation:
+      type: object?
+      properties:
+        longitude: number
+        latitude: number
+        accuracy: number?
+    permissions:
+      type: array?
+      items: string
+    extraHTTPHeaders:
+      type: array?
+      items: NameValue
+    offline: boolean?
+    httpCredentials:
+      type: object?
+      properties:
+        username: string
+        password: string
+    deviceScaleFactor: number?
+    isMobile: boolean?
+    hasTouch: boolean?
+    colorScheme:
+      type: enum?
+      literals:
+      - dark
+      - light
+      - no-preference
+    reducedMotion:
+      type: enum?
+      literals:
+      - reduce
+      - no-preference
+    forcedColors:
+      type: enum?
+      literals:
+      - active
+      - none
+    acceptDownloads: boolean?
+    baseURL: string?
+    _debugName: string?
+    recordVideo:
+      type: object?
+      properties:
+        dir: string
+        size:
+          type: object?
+          properties:
+            width: number
+            height: number
+    recordHar:
+      type: object?
+      properties:
+        omitContent: boolean?
+        path: string
+    strictSelectors: boolean?
+
+Root:
+  type: interface
+
+  commands:
+
+    initialize:
+      parameters:
+        sdkLanguage: string
+      returns:
+        playwright: Playwright
+
+Playwright:
+  type: interface
+
+  initializer:
+    chromium: BrowserType
+    firefox: BrowserType
+    webkit: BrowserType
+    android: Android
+    electron: Electron
+    deviceDescriptors:
+      type: array
+      items:
+        type: object
+        properties:
+          name: string
+          descriptor:
+            type: object
+            properties:
+              userAgent: string
+              viewport:
+                type: object
+                properties:
+                  width: number
+                  height: number
+              screen:
+                type: object?
+                properties:
+                  width: number
+                  height: number
+              deviceScaleFactor: number
+              isMobile: boolean
+              hasTouch: boolean
+              defaultBrowserType:
+                type: enum
+                literals:
+                - chromium
+                - firefox
+                - webkit
+    selectors: Selectors
+    # Only present when connecting remotely via BrowserType.connect() method.
+    preLaunchedBrowser: Browser?
+
+  commands:
+
+    socksConnected:
+      parameters:
+        uid: string
+        host: string
+        port: number
+
+    socksFailed:
+      parameters:
+        uid: string
+        errorCode: string
+
+    socksData:
+      parameters:
+        uid: string
+        data: binary
+
+    socksError:
+      parameters:
+        uid: string
+        error: string
+
+    socksEnd:
+      parameters:
+        uid: string
+
+    newRequest:
+      parameters:
+        baseURL: string?
+        userAgent: string?
+        ignoreHTTPSErrors: boolean?
+        extraHTTPHeaders:
+          type: array?
+          items: NameValue
+        httpCredentials:
+          type: object?
+          properties:
+            username: string
+            password: string
+        proxy:
+          type: object?
+          properties:
+            server: string
+            bypass: string?
+            username: string?
+            password: string?
+        timeout: number?
+        storageState:
+          type: object?
+          properties:
+            cookies:
+              type: array
+              items: NetworkCookie
+            origins:
+              type: array
+              items: OriginStorage
+
+      returns:
+        request: FetchRequest
+
+  events:
+    socksRequested:
+      parameters:
+        uid: string
+        host: string
+        port: number
+
+    socksData:
+      parameters:
+        uid: string
+        data: binary
+
+    socksClosed:
+      parameters:
+        uid: string
+
+
+Selectors:
+  type: interface
+
+  commands:
+
+    register:
+      parameters:
+        name: string
+        source: string
+        contentScript: boolean?
+
+
+BrowserType:
+  type: interface
+
+  initializer:
+    executablePath: string
+    name: string
+
+  commands:
+
+    connect:
+      parameters:
+        wsEndpoint: string
+        headers: json?
+        slowMo: number?
+        timeout: number?
+      returns:
+        pipe: JsonPipe
+
+    launch:
+      parameters:
+        $mixin: LaunchOptions
+        firefoxUserPrefs: json?
+        slowMo: number?
+      returns:
+        browser: Browser
+
+    launchPersistentContext:
+      parameters:
+        $mixin1: LaunchOptions
+        $mixin2: ContextOptions
+        userDataDir: string
+        slowMo: number?
+      returns:
+        context: BrowserContext
+
+    connectOverCDP:
+      parameters:
+        endpointURL: string
+        headers:
+          type: array?
+          items: NameValue
+        slowMo: number?
+        timeout: number?
+      returns:
+        browser: Browser
+        defaultContext: BrowserContext?
+
+Browser:
+  type: interface
+
+  initializer:
+    version: string
+    name: string
+
+  commands:
+
+    close:
+
+    killForTests:
+
+    newContext:
+      parameters:
+        $mixin: ContextOptions
+        proxy:
+          type: object?
+          properties:
+            server: string
+            bypass: string?
+            username: string?
+            password: string?
+        storageState:
+          type: object?
+          properties:
+            cookies:
+              type: array?
+              items: SetNetworkCookie
+            origins:
+              type: array?
+              items: OriginStorage
+      returns:
+        context: BrowserContext
+
+    newBrowserCDPSession:
+      returns:
+        session: CDPSession
+
+    startTracing:
+      parameters:
+        page: Page?
+        path: string?
+        screenshots: boolean?
+        categories:
+          type: array?
+          items: string
+
+    stopTracing:
+      returns:
+        binary: binary
+
+  events:
+
+    close:
+
+
+EventTarget:
+  type: interface
+
+  commands:
+    waitForEventInfo:
+      parameters:
+        info:
+          type: object
+          properties:
+            waitId: string
+            phase:
+              type: enum
+              literals:
+              - before
+              - after
+              - log
+            event: string?
+            message: string?
+            error: string?
+      tracing:
+        snapshot: true
+
+BrowserContext:
+  type: interface
+
+  extends: EventTarget
+
+  initializer:
+    isChromium: boolean
+    fetchRequest: FetchRequest
+
+  commands:
+
+    addCookies:
+      parameters:
+        cookies:
+          type: array
+          items: SetNetworkCookie
+
+    addInitScript:
+      parameters:
+        source: string
+
+    clearCookies:
+
+    clearPermissions:
+
+    close:
+
+    cookies:
+      parameters:
+        urls:
+          type: array
+          items: string
+      returns:
+        cookies:
+          type: array
+          items: NetworkCookie
+
+    exposeBinding:
+      parameters:
+        name: string
+        needsHandle: boolean?
+
+    grantPermissions:
+      parameters:
+        permissions:
+          type: array
+          items: string
+        origin: string?
+
+    newPage:
+      returns:
+        page: Page
+
+    setDefaultNavigationTimeoutNoReply:
+      parameters:
+        timeout: number
+
+    setDefaultTimeoutNoReply:
+      parameters:
+        timeout: number
+
+    setExtraHTTPHeaders:
+      parameters:
+        headers:
+          type: array
+          items: NameValue
+
+    setGeolocation:
+      parameters:
+        geolocation:
+          type: object?
+          properties:
+            longitude: number
+            latitude: number
+            accuracy: number?
+
+    setHTTPCredentials:
+      parameters:
+        httpCredentials:
+          type: object?
+          properties:
+            username: string
+            password: string
+
+    setNetworkInterceptionEnabled:
+      parameters:
+        enabled: boolean
+
+    setOffline:
+      parameters:
+        offline: boolean
+
+    storageState:
+      returns:
+        cookies:
+          type: array
+          items: NetworkCookie
+        origins:
+          type: array
+          items: OriginStorage
+
+    pause:
+      experimental: True
+
+    recorderSupplementEnable:
+      experimental: True
+      parameters:
+        language: string?
+        startRecording: boolean?
+        pauseOnNextStatement: boolean?
+        launchOptions: json?
+        contextOptions: json?
+        device: string?
+        saveStorage: string?
+        outputFile: string?
+
+    newCDPSession:
+      parameters:
+        page: Page?
+        frame: Frame?
+      returns:
+        session: CDPSession
+
+    tracingStart:
+      parameters:
+        name: string?
+        snapshots: boolean?
+        screenshots: boolean?
+
+    tracingStartChunk:
+
+    tracingStopChunk:
+      parameters:
+        save: boolean
+      returns:
+        artifact: Artifact?
+
+    tracingStop:
+
+    harExport:
+      returns:
+        artifact: Artifact
+
+  events:
+
+    bindingCall:
+      parameters:
+        binding: BindingCall
+
+    close:
+
+    page:
+      parameters:
+        page: Page
+
+    route:
+      parameters:
+        route: Route
+        request: Request
+
+    video:
+      parameters:
+        artifact: Artifact
+
+    backgroundPage:
+      parameters:
+        page: Page
+
+    serviceWorker:
+      parameters:
+        worker: Worker
+
+    request:
+      parameters:
+        request: Request
+        page: Page?
+
+    requestFailed:
+      parameters:
+        request: Request
+        failureText: string?
+        responseEndTiming: number
+        page: Page?
+
+    requestFinished:
+      parameters:
+        request: Request
+        response: Response?
+        responseEndTiming: number
+        page: Page?
+
+    response:
+      parameters:
+        response: Response
+        page: Page?
+
+Page:
+  type: interface
+
+  extends: EventTarget
+
+  initializer:
+    mainFrame: Frame
+    viewportSize:
+      type: object?
+      properties:
+        width: number
+        height: number
+    isClosed: boolean
+    opener: Page?
+
+  commands:
+
+    setDefaultNavigationTimeoutNoReply:
+      parameters:
+        timeout: number
+
+    setDefaultTimeoutNoReply:
+      parameters:
+        timeout: number
+
+    setFileChooserInterceptedNoReply:
+      parameters:
+        intercepted: boolean
+
+    addInitScript:
+      parameters:
+        source: string
+
+    close:
+      parameters:
+        runBeforeUnload: boolean?
+
+    emulateMedia:
+      parameters:
+        media:
+          type: enum?
+          literals:
+          - screen
+          - print
+          # Reset emulated value to the system default.
+          - null
+        colorScheme:
+          type: enum?
+          literals:
+          - dark
+          - light
+          - no-preference
+          # Reset emulated value to the system default.
+          - null
+        reducedMotion:
+          type: enum?
+          literals:
+          - reduce
+          - no-preference
+          # Reset emulated value to the system default.
+          - null
+        forcedColors:
+          type: enum?
+          literals:
+          - active
+          - none
+          # Reset emulated value to the system default.
+          - null
+
+    exposeBinding:
+      parameters:
+        name: string
+        needsHandle: boolean?
+
+    goBack:
+      parameters:
+        timeout: number?
+        waitUntil:
+          type: enum?
+          literals:
+          - load
+          - domcontentloaded
+          - networkidle
+      returns:
+        response: Response?
+      tracing:
+        snapshot: true
+
+    goForward:
+      parameters:
+        timeout: number?
+        waitUntil:
+          type: enum?
+          literals:
+          - load
+          - domcontentloaded
+          - networkidle
+      returns:
+        response: Response?
+      tracing:
+        snapshot: true
+
+    reload:
+      parameters:
+        timeout: number?
+        waitUntil:
+          type: enum?
+          literals:
+          - load
+          - domcontentloaded
+          - networkidle
+      returns:
+        response: Response?
+      tracing:
+        snapshot: true
+
+    screenshot:
+      parameters:
+        timeout: number?
+        type:
+          type: enum?
+          literals:
+          - png
+          - jpeg
+        quality: number?
+        omitBackground: boolean?
+        fullPage: boolean?
+        clip: Rect?
+      returns:
+        binary: binary
+
+    setExtraHTTPHeaders:
+      parameters:
+        headers:
+          type: array
+          items: NameValue
+
+    setNetworkInterceptionEnabled:
+      parameters:
+        enabled: boolean
+
+    setViewportSize:
+      parameters:
+        viewportSize:
+          type: object
+          properties:
+            width: number
+            height: number
+      tracing:
+        snapshot: true
+
+    keyboardDown:
+      parameters:
+        key: string
+      tracing:
+        snapshot: true
+
+    keyboardUp:
+      parameters:
+        key: string
+      tracing:
+        snapshot: true
+
+    keyboardInsertText:
+      parameters:
+        text: string
+      tracing:
+        snapshot: true
+
+    keyboardType:
+      parameters:
+        text: string
+        delay: number?
+      tracing:
+        snapshot: true
+
+    keyboardPress:
+      parameters:
+        key: string
+        delay: number?
+      tracing:
+        snapshot: true
+
+    mouseMove:
+      parameters:
+        x: number
+        y: number
+        steps: number?
+      tracing:
+        snapshot: true
+
+    mouseDown:
+      parameters:
+        button:
+          type: enum?
+          literals:
+          - left
+          - right
+          - middle
+        clickCount: number?
+      tracing:
+        snapshot: true
+
+    mouseUp:
+      parameters:
+        button:
+          type: enum?
+          literals:
+          - left
+          - right
+          - middle
+        clickCount: number?
+      tracing:
+        snapshot: true
+
+    mouseClick:
+      parameters:
+        x: number
+        y: number
+        delay: number?
+        button:
+          type: enum?
+          literals:
+          - left
+          - right
+          - middle
+        clickCount: number?
+      tracing:
+        snapshot: true
+
+    mouseWheel:
+      parameters:
+        deltaX: number
+        deltaY: number
+      tracing:
+        snapshot: true
+
+    touchscreenTap:
+      parameters:
+        x: number
+        y: number
+      tracing:
+        snapshot: true
+
+    accessibilitySnapshot:
+      parameters:
+        interestingOnly: boolean?
+        root: ElementHandle?
+      returns:
+        rootAXNode: AXNode?
+
+    pdf:
+      parameters:
+        scale: number?
+        displayHeaderFooter: boolean?
+        headerTemplate: string?
+        footerTemplate: string?
+        printBackground: boolean?
+        landscape: boolean?
+        pageRanges: string?
+        format: string?
+        width: string?
+        height: string?
+        preferCSSPageSize: boolean?
+        margin:
+          type: object?
+          properties:
+            top: string?
+            bottom: string?
+            left: string?
+            right: string?
+      returns:
+        pdf: binary
+
+    startJSCoverage:
+      parameters:
+        resetOnNavigation: boolean?
+        reportAnonymousScripts: boolean?
+
+    stopJSCoverage:
+      returns:
+        entries:
+          type: array
+          items:
+            type: object
+            properties:
+              url: string
+              scriptId: string
+              source: string?
+              functions:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    functionName: string
+                    isBlockCoverage: boolean
+                    ranges:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          startOffset: number
+                          endOffset: number
+                          count: number
+
+    startCSSCoverage:
+      parameters:
+        resetOnNavigation: boolean?
+
+    stopCSSCoverage:
+      returns:
+        entries:
+          type: array
+          items:
+            type: object
+            properties:
+              url: string
+              text: string?
+              ranges:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    start: number
+                    end: number
+
+    bringToFront:
+
+  events:
+
+    bindingCall:
+      parameters:
+        binding: BindingCall
+
+    close:
+
+    console:
+      parameters:
+        message: ConsoleMessage
+
+    crash:
+
+    dialog:
+      parameters:
+        dialog: Dialog
+
+    download:
+      parameters:
+        url: string
+        suggestedFilename: string
+        artifact: Artifact
+
+    domcontentloaded:
+
+    fileChooser:
+      parameters:
+        element: ElementHandle
+        isMultiple: boolean
+
+    frameAttached:
+      parameters:
+        frame: Frame
+
+    frameDetached:
+      parameters:
+        frame: Frame
+
+    load:
+
+    pageError:
+      parameters:
+        error: SerializedError
+
+    route:
+      parameters:
+        route: Route
+        request: Request
+
+    video:
+      parameters:
+        artifact: Artifact
+
+    webSocket:
+      parameters:
+        webSocket: WebSocket
+
+    worker:
+      parameters:
+        worker: Worker
+
+
+
+Frame:
+  type: interface
+
+  initializer:
+    url: string
+    name: string
+    parentFrame: Frame?
+    loadStates:
+      type: array
+      items:
+        type: enum
+        literals:
+        - load
+        - domcontentloaded
+        - networkidle
+
+  commands:
+
+    evalOnSelector:
+      parameters:
+        selector: string
+        strict: boolean?
+        expression: string
+        isFunction: boolean?
+        arg: SerializedArgument
+      returns:
+        value: SerializedValue
+      tracing:
+        snapshot: true
+
+    evalOnSelectorAll:
+      parameters:
+        selector: string
+        expression: string
+        isFunction: boolean?
+        arg: SerializedArgument
+      returns:
+        value: SerializedValue
+      tracing:
+        snapshot: true
+
+    addScriptTag:
+      parameters:
+        url: string?
+        content: string?
+        type: string?
+      returns:
+        element: ElementHandle
+      tracing:
+        snapshot: true
+
+    addStyleTag:
+      parameters:
+        url: string?
+        content: string?
+      returns:
+        element: ElementHandle
+      tracing:
+        snapshot: true
+
+    check:
+      parameters:
+        selector: string
+        strict: boolean?
+        force: boolean?
+        noWaitAfter: boolean?
+        position: Point?
+        timeout: number?
+        trial: boolean?
+      tracing:
+        snapshot: true
+        pausesBeforeInput: true
+
+    click:
+      parameters:
+        selector: string
+        strict: boolean?
+        force: boolean?
+        noWaitAfter: boolean?
+        modifiers:
+          type: array?
+          items:
+            type: enum
+            literals:
+            - Alt
+            - Control
+            - Meta
+            - Shift
+        position: Point?
+        delay: number?
+        button:
+          type: enum?
+          literals:
+          - left
+          - right
+          - middle
+        clickCount: number?
+        timeout: number?
+        trial: boolean?
+      tracing:
+        snapshot: true
+        pausesBeforeInput: true
+
+    content:
+      returns:
+        value: string
+
+    dragAndDrop:
+      parameters:
+        source: string
+        target: string
+        force: boolean?
+        noWaitAfter: boolean?
+        timeout: number?
+        trial: boolean?
+        sourcePosition: Point?
+        targetPosition: Point?
+      tracing:
+        snapshot: true
+        pausesBeforeInput: true
+
+    dblclick:
+      parameters:
+        selector: string
+        strict: boolean?
+        force: boolean?
+        noWaitAfter: boolean?
+        modifiers:
+          type: array?
+          items:
+            type: enum
+            literals:
+            - Alt
+            - Control
+            - Meta
+            - Shift
+        position: Point?
+        delay: number?
+        button:
+          type: enum?
+          literals:
+          - left
+          - right
+          - middle
+        timeout: number?
+        trial: boolean?
+      tracing:
+        snapshot: true
+        pausesBeforeInput: true
+
+    dispatchEvent:
+      parameters:
+        selector: string
+        strict: boolean?
+        type: string
+        eventInit: SerializedArgument
+        timeout: number?
+      tracing:
+        snapshot: true
+
+    evaluateExpression:
+      parameters:
+        expression: string
+        isFunction: boolean?
+        arg: SerializedArgument
+      returns:
+        value: SerializedValue
+      tracing:
+        snapshot: true
+
+    evaluateExpressionHandle:
+      parameters:
+        expression: string
+        isFunction: boolean?
+        arg: SerializedArgument
+      returns:
+        handle: JSHandle
+      tracing:
+        snapshot: true
+
+    fill:
+      parameters:
+        selector: string
+        strict: boolean?
+        value: string
+        force: boolean?
+        timeout: number?
+        noWaitAfter: boolean?
+      tracing:
+        snapshot: true
+        pausesBeforeInput: true
+
+    focus:
+      parameters:
+        selector: string
+        strict: boolean?
+        timeout: number?
+      tracing:
+        snapshot: true
+
+    frameElement:
+      returns:
+        element: ElementHandle
+
+    getAttribute:
+      parameters:
+        selector: string
+        strict: boolean?
+        name: string
+        timeout: number?
+      returns:
+        value: string?
+      tracing:
+        snapshot: true
+
+    goto:
+      parameters:
+        url: string
+        timeout: number?
+        waitUntil:
+          type: enum?
+          literals:
+          - load
+          - domcontentloaded
+          - networkidle
+        referer: string?
+      returns:
+        response: Response?
+      tracing:
+        snapshot: true
+
+    hover:
+      parameters:
+        selector: string
+        strict: boolean?
+        force: boolean?
+        modifiers:
+          type: array?
+          items:
+            type: enum
+            literals:
+            - Alt
+            - Control
+            - Meta
+            - Shift
+        position: Point?
+        timeout: number?
+        trial: boolean?
+      tracing:
+        snapshot: true
+        pausesBeforeInput: true
+
+    innerHTML:
+      parameters:
+        selector: string
+        strict: boolean?
+        timeout: number?
+      returns:
+        value: string
+      tracing:
+        snapshot: true
+
+    innerText:
+      parameters:
+        selector: string
+        strict: boolean?
+        timeout: number?
+      returns:
+        value: string
+      tracing:
+        snapshot: true
+
+    inputValue:
+      parameters:
+        selector: string
+        strict: boolean?
+        timeout: number?
+      returns:
+        value: string
+      tracing:
+        snapshot: true
+
+    isChecked:
+      parameters:
+        selector: string
+        strict: boolean?
+        timeout: number?
+      returns:
+        value: boolean
+      tracing:
+        snapshot: true
+
+    isDisabled:
+      parameters:
+        selector: string
+        strict: boolean?
+        timeout: number?
+      returns:
+        value: boolean
+      tracing:
+        snapshot: true
+
+    isEnabled:
+      parameters:
+        selector: string
+        strict: boolean?
+        timeout: number?
+      returns:
+        value: boolean
+      tracing:
+        snapshot: true
+
+    isHidden:
+      parameters:
+        selector: string
+        strict: boolean?
+      returns:
+        value: boolean
+      tracing:
+        snapshot: true
+
+    isVisible:
+      parameters:
+        selector: string
+        strict: boolean?
+      returns:
+        value: boolean
+      tracing:
+        snapshot: true
+
+    isEditable:
+      parameters:
+        selector: string
+        strict: boolean?
+        timeout: number?
+      returns:
+        value: boolean
+      tracing:
+        snapshot: true
+
+    press:
+      parameters:
+        selector: string
+        strict: boolean?
+        key: string
+        delay: number?
+        noWaitAfter: boolean?
+        timeout: number?
+      tracing:
+        snapshot: true
+        pausesBeforeInput: true
+
+    querySelector:
+      parameters:
+        selector: string
+        strict: boolean?
+      returns:
+        element: ElementHandle?
+
+    querySelectorAll:
+      parameters:
+        selector: string
+      returns:
+        elements:
+          type: array
+          items: ElementHandle
+
+    selectOption:
+      parameters:
+        selector: string
+        strict: boolean?
+        elements:
+          type: array?
+          items: ElementHandle
+        options:
+          type: array?
+          items:
+            type: object
+            properties:
+              value: string?
+              label: string?
+              index: number?
+        force: boolean?
+        timeout: number?
+        noWaitAfter: boolean?
+      returns:
+        values:
+          type: array
+          items: string
+      tracing:
+        snapshot: true
+        pausesBeforeInput: true
+
+    setContent:
+      parameters:
+        html: string
+        timeout: number?
+        waitUntil:
+          type: enum?
+          literals:
+          - load
+          - domcontentloaded
+          - networkidle
+      tracing:
+        snapshot: true
+
+    setInputFiles:
+      parameters:
+        selector: string
+        strict: boolean?
+        files:
+          type: array
+          items:
+            type: object
+            properties:
+              name: string
+              mimeType: string?
+              buffer: binary
+        timeout: number?
+        noWaitAfter: boolean?
+      tracing:
+        snapshot: true
+        pausesBeforeInput: true
+
+    tap:
+      parameters:
+        selector: string
+        strict: boolean?
+        force: boolean?
+        noWaitAfter: boolean?
+        modifiers:
+          type: array?
+          items:
+            type: enum
+            literals:
+            - Alt
+            - Control
+            - Meta
+            - Shift
+        position: Point?
+        timeout: number?
+        trial: boolean?
+      tracing:
+        snapshot: true
+        pausesBeforeInput: true
+
+    textContent:
+      parameters:
+        selector: string
+        strict: boolean?
+        timeout: number?
+      returns:
+        value: string?
+      tracing:
+        snapshot: true
+
+    title:
+      returns:
+        value: string
+
+    type:
+      parameters:
+        selector: string
+        strict: boolean?
+        text: string
+        delay: number?
+        noWaitAfter: boolean?
+        timeout: number?
+      tracing:
+        snapshot: true
+        pausesBeforeInput: true
+
+    uncheck:
+      parameters:
+        selector: string
+        strict: boolean?
+        force: boolean?
+        noWaitAfter: boolean?
+        position: Point?
+        timeout: number?
+        trial: boolean?
+      tracing:
+        snapshot: true
+        pausesBeforeInput: true
+
+    waitForTimeout:
+      parameters:
+        timeout: number
+      tracing:
+        snapshot: true
+
+    waitForFunction:
+      parameters:
+        expression: string
+        isFunction: boolean?
+        arg: SerializedArgument
+        timeout: number?
+        # When present, polls on interval. Otherwise, polls on raf.
+        pollingInterval: number?
+      returns:
+        handle: JSHandle
+      tracing:
+        snapshot: true
+
+    waitForSelector:
+      parameters:
+        selector: string
+        strict: boolean?
+        timeout: number?
+        state:
+          type: enum?
+          literals:
+          - attached
+          - detached
+          - visible
+          - hidden
+        omitReturnValue: boolean?
+      returns:
+        element: ElementHandle?
+      tracing:
+        snapshot: true
+
+    expect:
+      parameters:
+        selector: string
+        expression: string
+        expressionArg: json?
+        expectedText:
+          type: array?
+          items: ExpectedTextValue
+        expectedNumber: number?
+        expectedValue: SerializedArgument?
+        useInnerText: boolean?
+        isNot: boolean
+        timeout: number?
+      returns:
+        matches: boolean
+        received: SerializedValue?
+        log:
+          type: array?
+          items: string
+      tracing:
+        snapshot: true
+
+  events:
+
+    loadstate:
+      parameters:
+        add:
+          type: enum?
+          literals:
+          - load
+          - domcontentloaded
+          - networkidle
+        remove:
+          type: enum?
+          literals:
+          - load
+          - domcontentloaded
+          - networkidle
+
+    navigated:
+      parameters:
+        url: string
+        name: string
+        newDocument:
+          type: object?
+          properties:
+            request: Request?
+        error: string?
+
+
+
+Worker:
+  type: interface
+
+  initializer:
+    url: string
+
+  commands:
+
+    evaluateExpression:
+      parameters:
+        expression: string
+        isFunction: boolean?
+        arg: SerializedArgument
+      returns:
+        value: SerializedValue
+
+    evaluateExpressionHandle:
+      parameters:
+        expression: string
+        isFunction: boolean?
+        arg: SerializedArgument
+      returns:
+        handle: JSHandle
+
+  events:
+
+    close:
+
+
+JSHandle:
+  type: interface
+
+  initializer:
+    preview: string
+
+  commands:
+
+    dispose:
+
+    evaluateExpression:
+      parameters:
+        expression: string
+        isFunction: boolean?
+        arg: SerializedArgument
+      returns:
+        value: SerializedValue
+      tracing:
+        snapshot: true
+
+    evaluateExpressionHandle:
+      parameters:
+        expression: string
+        isFunction: boolean?
+        arg: SerializedArgument
+      returns:
+        handle: JSHandle
+      tracing:
+        snapshot: true
+
+    getPropertyList:
+      returns:
+        properties:
+          type: array
+          items:
+            type: object
+            properties:
+              name: string
+              value: JSHandle
+
+    getProperty:
+      parameters:
+        name: string
+      returns:
+        handle: JSHandle
+
+    jsonValue:
+      returns:
+        value: SerializedValue
+
+  events:
+
+    previewUpdated:
+      parameters:
+        preview: string
+
+
+
+ElementHandle:
+  type: interface
+
+  extends: JSHandle
+
+  commands:
+
+    evalOnSelector:
+      parameters:
+        selector: string
+        strict: boolean?
+        expression: string
+        isFunction: boolean?
+        arg: SerializedArgument
+      returns:
+        value: SerializedValue
+      tracing:
+        snapshot: true
+
+    evalOnSelectorAll:
+      parameters:
+        selector: string
+        expression: string
+        isFunction: boolean?
+        arg: SerializedArgument
+      returns:
+        value: SerializedValue
+      tracing:
+        snapshot: true
+
+    boundingBox:
+      returns:
+        value: Rect?
+
+    check:
+      parameters:
+        force: boolean?
+        noWaitAfter: boolean?
+        position: Point?
+        timeout: number?
+        trial: boolean?
+      tracing:
+        snapshot: true
+        pausesBeforeInput: true
+
+    click:
+      parameters:
+        force: boolean?
+        noWaitAfter: boolean?
+        modifiers:
+          type: array?
+          items:
+            type: enum
+            literals:
+            - Alt
+            - Control
+            - Meta
+            - Shift
+        position: Point?
+        delay: number?
+        button:
+          type: enum?
+          literals:
+          - left
+          - right
+          - middle
+        clickCount: number?
+        timeout: number?
+        trial: boolean?
+      tracing:
+        snapshot: true
+        pausesBeforeInput: true
+
+    contentFrame:
+      returns:
+        frame: Frame?
+
+    dblclick:
+      parameters:
+        force: boolean?
+        noWaitAfter: boolean?
+        modifiers:
+          type: array?
+          items:
+            type: enum
+            literals:
+            - Alt
+            - Control
+            - Meta
+            - Shift
+        position: Point?
+        delay: number?
+        button:
+          type: enum?
+          literals:
+          - left
+          - right
+          - middle
+        timeout: number?
+        trial: boolean?
+      tracing:
+        snapshot: true
+        pausesBeforeInput: true
+
+    dispatchEvent:
+      parameters:
+        type: string
+        eventInit: SerializedArgument
+      tracing:
+        snapshot: true
+
+    fill:
+      parameters:
+        value: string
+        force: boolean?
+        timeout: number?
+        noWaitAfter: boolean?
+      tracing:
+        snapshot: true
+        pausesBeforeInput: true
+
+    focus:
+
+    getAttribute:
+      parameters:
+        name: string
+      returns:
+        value: string?
+
+    hover:
+      parameters:
+        force: boolean?
+        modifiers:
+          type: array?
+          items:
+            type: enum
+            literals:
+            - Alt
+            - Control
+            - Meta
+            - Shift
+        position: Point?
+        timeout: number?
+        trial: boolean?
+      tracing:
+        snapshot: true
+        pausesBeforeInput: true
+
+    innerHTML:
+      returns:
+        value: string
+      tracing:
+        snapshot: true
+
+    innerText:
+      returns:
+        value: string
+      tracing:
+        snapshot: true
+
+    inputValue:
+      returns:
+        value: string
+      tracing:
+        snapshot: true
+
+    isChecked:
+      returns:
+        value: boolean
+      tracing:
+        snapshot: true
+
+    isDisabled:
+      returns:
+        value: boolean
+      tracing:
+        snapshot: true
+
+    isEditable:
+      returns:
+        value: boolean
+      tracing:
+        snapshot: true
+
+    isEnabled:
+      returns:
+        value: boolean
+      tracing:
+        snapshot: true
+
+    isHidden:
+      returns:
+        value: boolean
+      tracing:
+        snapshot: true
+
+    isVisible:
+      returns:
+        value: boolean
+      tracing:
+        snapshot: true
+
+    ownerFrame:
+      returns:
+        frame: Frame?
+
+    press:
+      parameters:
+        key: string
+        delay: number?
+        timeout: number?
+        noWaitAfter: boolean?
+      tracing:
+        snapshot: true
+        pausesBeforeInput: true
+
+    querySelector:
+      parameters:
+        selector: string
+        strict: boolean?
+      returns:
+        element: ElementHandle?
+
+    querySelectorAll:
+      parameters:
+        selector: string
+      returns:
+        elements:
+          type: array
+          items: ElementHandle
+
+    screenshot:
+      parameters:
+        timeout: number?
+        type:
+          type: enum?
+          literals:
+          - png
+          - jpeg
+        quality: number?
+        omitBackground: boolean?
+      returns:
+        binary: binary
+
+    scrollIntoViewIfNeeded:
+      parameters:
+        timeout: number?
+      tracing:
+        snapshot: true
+
+    selectOption:
+      parameters:
+        elements:
+          type: array?
+          items: ElementHandle
+        options:
+          type: array?
+          items:
+            type: object
+            properties:
+              value: string?
+              label: string?
+              index: number?
+        force: boolean?
+        timeout: number?
+        noWaitAfter: boolean?
+      returns:
+        values:
+          type: array
+          items: string
+      tracing:
+        snapshot: true
+        pausesBeforeInput: true
+
+    selectText:
+      parameters:
+        force: boolean?
+        timeout: number?
+      tracing:
+        snapshot: true
+
+    setInputFiles:
+      parameters:
+        files:
+          type: array
+          items:
+            type: object
+            properties:
+              name: string
+              mimeType: string?
+              buffer: binary
+        timeout: number?
+        noWaitAfter: boolean?
+      tracing:
+        snapshot: true
+        pausesBeforeInput: true
+
+    tap:
+      parameters:
+        force: boolean?
+        noWaitAfter: boolean?
+        modifiers:
+          type: array?
+          items:
+            type: enum
+            literals:
+            - Alt
+            - Control
+            - Meta
+            - Shift
+        position: Point?
+        timeout: number?
+        trial: boolean?
+      tracing:
+        snapshot: true
+        pausesBeforeInput: true
+
+    textContent:
+      returns:
+        value: string?
+      tracing:
+        snapshot: true
+
+    type:
+      parameters:
+        text: string
+        delay: number?
+        noWaitAfter: boolean?
+        timeout: number?
+      tracing:
+        snapshot: true
+        pausesBeforeInput: true
+
+    uncheck:
+      parameters:
+        force: boolean?
+        noWaitAfter: boolean?
+        position: Point?
+        timeout: number?
+        trial: boolean?
+      tracing:
+        snapshot: true
+        pausesBeforeInput: true
+
+    waitForElementState:
+      parameters:
+        state:
+          type: enum
+          literals:
+          - visible
+          - hidden
+          - stable
+          - enabled
+          - disabled
+          - editable
+        timeout: number?
+      tracing:
+        snapshot: true
+
+    waitForSelector:
+      parameters:
+        selector: string
+        strict: boolean?
+        timeout: number?
+        state:
+          type: enum?
+          literals:
+          - attached
+          - detached
+          - visible
+          - hidden
+      returns:
+        element: ElementHandle?
+      tracing:
+        snapshot: true
+
+
+Request:
+  type: interface
+
+  initializer:
+    frame: Frame
+    url: string
+    resourceType: string
+    method: string
+    postData: binary?
+    headers:
+      type: array
+      items: NameValue
+    isNavigationRequest: boolean
+    redirectedFrom: Request?
+
+  commands:
+
+    response:
+      returns:
+        response: Response?
+
+    rawRequestHeaders:
+      returns:
+        headers:
+          type: array
+          items: NameValue
+
+
+Route:
+  type: interface
+
+  initializer:
+    request: Request
+
+  commands:
+
+    abort:
+      parameters:
+        errorCode: string?
+
+    continue:
+      parameters:
+        url: string?
+        method: string?
+        headers:
+          type: array?
+          items: NameValue
+        postData: binary?
+        interceptResponse: boolean?
+      returns:
+        response: InterceptedResponse?
+
+    fulfill:
+      parameters:
+        # default is 200
+        status: number?
+        headers:
+          type: array?
+          items: NameValue
+        body: string?
+        isBase64: boolean?
+        useInterceptedResponseBody: boolean?
+        fetchResponseUid: string?
+
+    responseBody:
+      returns:
+        binary: binary
+
+
+ResourceTiming:
+  type: object
+  properties:
+    startTime: number
+    domainLookupStart: number
+    domainLookupEnd: number
+    connectStart: number
+    secureConnectionStart: number
+    connectEnd: number
+    requestStart: number
+    responseStart: number
+
+Response:
+  type: interface
+
+  initializer:
+    request: Request
+    url: string
+    status: number
+    statusText: string
+    headers:
+      type: array
+      items: NameValue
+    timing: ResourceTiming
+
+
+  commands:
+
+    body:
+      returns:
+        binary: binary
+
+    securityDetails:
+      returns:
+        value: SecurityDetails?
+
+    serverAddr:
+      returns:
+        value: RemoteAddr?
+
+    rawResponseHeaders:
+      returns:
+        headers:
+          type: array
+          items: NameValue
+
+    sizes:
+      returns:
+        sizes: RequestSizes
+
+
+SecurityDetails:
+  type: object
+  properties:
+    issuer: string?
+    protocol: string?
+    subjectName: string?
+    validFrom: number?
+    validTo: number?
+
+RequestSizes:
+  type: object
+  properties:
+    requestBodySize: number
+    requestHeadersSize: number
+    responseBodySize: number
+    responseHeadersSize: number
+
+
+RemoteAddr:
+  type: object
+  properties:
+    ipAddress: string
+    port: number
+
+
+WebSocket:
+  type: interface
+
+  extends: EventTarget
+
+  initializer:
+    url: string
+
+  events:
+    open:
+
+    frameSent:
+      parameters:
+        opcode: number
+        data: string
+
+    frameReceived:
+      parameters:
+        opcode: number
+        data: string
+
+    socketError:
+      parameters:
+        error: string
+
+    close:
+
+
+ConsoleMessage:
+  type: interface
+
+  initializer:
+    type: string
+    text: string
+    args:
+      type: array
+      items: JSHandle
+    location:
+      type: object
+      properties:
+        url: string
+        lineNumber: number
+        columnNumber: number
+
+
+
+BindingCall:
+  type: interface
+
+  initializer:
+    frame: Frame
+    name: string
+    args:
+      type: array?
+      items: SerializedValue
+    handle: JSHandle?
+
+  commands:
+
+    reject:
+      parameters:
+        error: SerializedError
+
+    resolve:
+      parameters:
+        result: SerializedArgument
+
+
+
+Dialog:
+  type: interface
+
+  initializer:
+    type: string
+    message: string
+    defaultValue: string
+
+  commands:
+
+    accept:
+      parameters:
+        promptText: string?
+
+    dismiss:
+
+
+
+Artifact:
+  type: interface
+
+  initializer:
+    absolutePath: string
+
+  commands:
+
+    pathAfterFinished:
+      returns:
+        value: string?
+
+    # Blocks path/failure/delete/context.close until saved to the local |path|.
+    saveAs:
+      parameters:
+        path: string
+
+    # Blocks path/failure/delete/context.close until the stream is closed.
+    saveAsStream:
+      returns:
+        stream: Stream
+
+    failure:
+      returns:
+        error: string?
+
+    stream:
+      returns:
+        stream: Stream?
+
+    cancel:
+
+    delete:
+
+
+Stream:
+  type: interface
+
+  commands:
+
+    read:
+      parameters:
+        size: number?
+      returns:
+        binary: binary
+
+    close:
+
+
+CDPSession:
+  type: interface
+
+  commands:
+
+    send:
+      parameters:
+        method: string
+        params: json?
+      returns:
+        result: json
+
+    detach:
+
+  events:
+
+    event:
+      parameters:
+        method: string
+        params: json?
+
+
+Electron:
+  type: interface
+
+  commands:
+
+    launch:
+      parameters:
+        executablePath: string?
+        args:
+          type: array?
+          items: string
+        cwd: string?
+        env:
+          type: array?
+          items: NameValue
+        timeout: number?
+        acceptDownloads: boolean?
+        bypassCSP: boolean?
+        colorScheme:
+          type: enum?
+          literals:
+          - dark
+          - light
+          - no-preference
+        extraHTTPHeaders:
+          type: array?
+          items: NameValue
+        geolocation:
+          type: object?
+          properties:
+            longitude: number
+            latitude: number
+            accuracy: number?
+        httpCredentials:
+          type: object?
+          properties:
+            username: string
+            password: string
+        ignoreHTTPSErrors: boolean?
+        locale: string?
+        offline: boolean?
+        recordHar:
+          type: object?
+          properties:
+            omitContent: boolean?
+            path: string
+        recordVideo:
+          type: object?
+          properties:
+            dir: string
+            size:
+              type: object?
+              properties:
+                width: number
+                height: number
+        strictSelectors: boolean?
+        timezoneId: string?
+
+      returns:
+        electronApplication: ElectronApplication
+
+
+ElectronApplication:
+  type: interface
+
+  extends: EventTarget
+
+  initializer:
+    context: BrowserContext
+
+  commands:
+
+    browserWindow:
+      parameters:
+        page: Page
+      returns:
+        handle: JSHandle
+
+    evaluateExpression:
+      parameters:
+        expression: string
+        isFunction: boolean?
+        arg: SerializedArgument
+      returns:
+        value: SerializedValue
+
+    evaluateExpressionHandle:
+      parameters:
+        expression: string
+        isFunction: boolean?
+        arg: SerializedArgument
+      returns:
+        handle: JSHandle
+
+    close:
+
+  events:
+    close:
+
+
+Android:
+  type: interface
+
+  commands:
+
+    devices:
+      returns:
+        devices:
+          type: array
+          items: AndroidDevice
+
+    setDefaultTimeoutNoReply:
+      parameters:
+        timeout: number
+
+AndroidSocket:
+  type: interface
+
+  commands:
+    write:
+      parameters:
+        data: binary
+
+    close:
+
+  events:
+    data:
+      parameters:
+        data: binary
+    close:
+
+AndroidDevice:
+  type: interface
+
+  extends: EventTarget
+
+  initializer:
+    model: string
+    serial: string
+
+  commands:
+    wait:
+      parameters:
+        selector: AndroidSelector
+        state:
+          type: enum?
+          literals:
+          - gone
+        timeout: number?
+
+    fill:
+      parameters:
+        selector: AndroidSelector
+        text: string
+        timeout: number?
+
+    tap:
+      parameters:
+        selector: AndroidSelector
+        duration: number?
+        timeout: number?
+
+    drag:
+      parameters:
+        selector: AndroidSelector
+        dest: Point
+        speed: number?
+        timeout: number?
+
+    fling:
+      parameters:
+        selector: AndroidSelector
+        direction:
+          type: enum
+          literals:
+          - up
+          - down
+          - left
+          - right
+        speed: number?
+        timeout: number?
+
+    longTap:
+      parameters:
+        selector: AndroidSelector
+        timeout: number?
+
+    pinchClose:
+      parameters:
+        selector: AndroidSelector
+        percent: number
+        speed: number?
+        timeout: number?
+
+    pinchOpen:
+      parameters:
+        selector: AndroidSelector
+        percent: number
+        speed: number?
+        timeout: number?
+
+    scroll:
+      parameters:
+        selector: AndroidSelector
+        direction:
+          type: enum
+          literals:
+          - up
+          - down
+          - left
+          - right
+        percent: number
+        speed: number?
+        timeout: number?
+
+    swipe:
+      parameters:
+        selector: AndroidSelector
+        direction:
+          type: enum
+          literals:
+          - up
+          - down
+          - left
+          - right
+        percent: number
+        speed: number?
+        timeout: number?
+
+    info:
+      parameters:
+        selector: AndroidSelector
+      returns:
+        info: AndroidElementInfo
+
+    screenshot:
+      returns:
+        binary: binary
+
+    inputType:
+      parameters:
+        text: string
+
+    inputPress:
+      parameters:
+        key: string
+
+    inputTap:
+      parameters:
+        point: Point
+
+    inputSwipe:
+      parameters:
+        segments:
+          type: array
+          items: Point
+        steps: number
+
+    inputDrag:
+      parameters:
+        from: Point
+        to: Point
+        steps: number
+
+    launchBrowser:
+      parameters:
+        pkg: string?
+        ignoreHTTPSErrors: boolean?
+        javaScriptEnabled: boolean?
+        bypassCSP: boolean?
+        userAgent: string?
+        locale: string?
+        timezoneId: string?
+        geolocation:
+          type: object?
+          properties:
+            longitude: number
+            latitude: number
+            accuracy: number?
+        permissions:
+          type: array?
+          items: string
+        extraHTTPHeaders:
+          type: array?
+          items: NameValue
+        offline: boolean?
+        httpCredentials:
+          type: object?
+          properties:
+            username: string
+            password: string
+        deviceScaleFactor: number?
+        isMobile: boolean?
+        hasTouch: boolean?
+        colorScheme:
+          type: enum?
+          literals:
+          - dark
+          - light
+          - no-preference
+        reducedMotion:
+          type: enum?
+          literals:
+          - reduce
+          - no-preference
+        forcedColors:
+          type: enum?
+          literals:
+          - active
+          - none
+        acceptDownloads: boolean?
+        _debugName: string?
+        recordVideo:
+          type: object?
+          properties:
+            dir: string
+            size:
+              type: object?
+              properties:
+                width: number
+                height: number
+        recordHar:
+          type: object?
+          properties:
+            omitContent: boolean?
+            path: string
+        strictSelectors: boolean?
+        proxy:
+          type: object?
+          properties:
+            server: string
+            bypass: string?
+            username: string?
+            password: string?
+
+      returns:
+        context: BrowserContext
+
+    open:
+      parameters:
+        command: string
+      returns:
+        socket: AndroidSocket
+
+    shell:
+      parameters:
+        command: string
+      returns:
+        result: binary
+
+    installApk:
+      parameters:
+        file: binary
+        args:
+          type: array?
+          items: string
+
+    push:
+      parameters:
+        file: binary
+        path: string
+        mode: number?
+
+    setDefaultTimeoutNoReply:
+      parameters:
+        timeout: number
+
+    connectToWebView:
+      parameters:
+        pid: number
+      returns:
+        context: BrowserContext
+
+    close:
+
+  events:
+    webViewAdded:
+      parameters:
+        webView: AndroidWebView
+
+    webViewRemoved:
+      parameters:
+        pid: number
+
+
+AndroidWebView:
+  type: object
+  properties:
+    pid: number
+    pkg: string
+
+
+AndroidSelector:
+  type: object
+  properties:
+    checkable: boolean?
+    checked: boolean?
+    clazz: string?
+    clickable: boolean?
+    depth: number?
+    desc: string?
+    enabled: boolean?
+    focusable: boolean?
+    focused: boolean?
+    hasChild:
+      type: object?
+      properties:
+        selector: AndroidSelector
+    hasDescendant:
+      type: object?
+      properties:
+        selector: AndroidSelector
+        maxDepth: number?
+    longClickable: boolean?
+    pkg: string?
+    res: string?
+    scrollable: boolean?
+    selected: boolean?
+    text: string?
+
+
+AndroidElementInfo:
+  type: object
+  properties:
+    children:
+      type: array?
+      items: AndroidElementInfo
+    clazz: string
+    desc: string
+    res: string
+    pkg: string
+    text: string
+    bounds: Rect
+    checkable: boolean
+    checked: boolean
+    clickable: boolean
+    enabled: boolean
+    focusable: boolean
+    focused: boolean
+    longClickable: boolean
+    scrollable: boolean
+    selected: boolean
+
+
+JsonPipe:
+  type: interface
+
+  commands:
+    send:
+      parameters:
+        message: json
+
+    close:
+
+  events:
+
+    message:
+      parameters:
+        message: json
+
+    closed:
+        error: SerializedError?

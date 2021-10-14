@@ -26,7 +26,7 @@ type TestFixtures = {
 };
 
 type RunResult = {
-  exitCode: number,
+  exitCode: number|null,
   dir: string,
   stderr: string,
   stdout: string,

@@ -20,6 +20,7 @@ const child_process = require('child_process');
 const path = require('path');
 const chokidar = require('chokidar');
 const fs = require('fs');
+const { packages } = require('../list_packages');
 
 /**
  * @typedef {{
@@ -45,31 +46,37 @@ function filePath(relative) {
   return path.join(ROOT, ...relative.split('/'));
 }
 
-function runWatch() {
-  function runOnChanges(paths, nodeFile) {
+async function runWatch() {
+  function runOnChanges(paths, mustExist = [], nodeFile) {
     nodeFile = filePath(nodeFile);
     function callback() {
+      for (const fileMustExist of mustExist) {
+        if (!fs.existsSync(filePath(fileMustExist)))
+          return;
+      }
       child_process.spawnSync('node', [nodeFile], { stdio: 'inherit' });
     }
-    chokidar.watch([...paths, nodeFile].map(filePath)).on('all', callback);
+    chokidar.watch([...paths, ...mustExist, nodeFile].map(filePath)).on('all', callback);
     callback();
   }
 
-  const spawns = [];
-  for (const step of steps)
-    spawns.push(child_process.spawn(step.command, step.args, { stdio: 'inherit', shell: step.shell, env: {
-      ...process.env,
-      ...step.env,
-    } }));
-  process.on('exit', () => spawns.forEach(s => s.kill()));
-  for (const onChange of onChanges)
-    runOnChanges(onChange.inputs, onChange.script);
-  for (const {files, from, to, ignored} of copyFiles) {
-    const watcher = chokidar.watch([filePath(files)], {ignored});
+  for (const { files, from, to, ignored } of copyFiles) {
+    const watcher = chokidar.watch([filePath(files)], { ignored });
     watcher.on('all', (event, file) => {
       copyFile(file, from, to);
     });
   }
+  const spawns = [];
+  for (const step of steps)
+    spawns.push(child_process.spawn(step.command, step.args, {
+      stdio: 'inherit', shell: step.shell, env: {
+        ...process.env,
+        ...step.env,
+      }
+    }));
+  process.on('exit', () => spawns.forEach(s => s.kill()));
+  for (const onChange of onChanges)
+    runOnChanges(onChange.inputs, onChange.mustExist, onChange.script);
 }
 
 async function runBuild() {
@@ -77,21 +84,17 @@ async function runBuild() {
    * @param {Step} step 
    */
   function runStep(step) {
-    const out = child_process.spawnSync(step.command, step.args, { stdio: 'inherit', shell: step.shell, env: {
-      ...process.env,
-      ...step.env
-    } });
+    const out = child_process.spawnSync(step.command, step.args, {
+      stdio: 'inherit', shell: step.shell, env: {
+        ...process.env,
+        ...step.env
+      }
+    });
     if (out.status)
       process.exit(out.status);
   }
 
-  for (const step of steps)
-    runStep(step);
-  for (const onChange of onChanges) {
-    if (!onChange.committed)
-      runStep({ command: 'node', args: [filePath(onChange.script)], shell: false });
-  }
-  for (const {files, from, to, ignored} of copyFiles) {
+  for (const { files, from, to, ignored } of copyFiles) {
     const watcher = chokidar.watch([filePath(files)], {
       ignored
     });
@@ -100,6 +103,12 @@ async function runBuild() {
     });
     await new Promise(x => watcher.once('ready', x));
     watcher.close();
+  }
+  for (const step of steps)
+    runStep(step);
+  for (const onChange of onChanges) {
+    if (!onChange.committed)
+      runStep({ command: 'node', args: [filePath(onChange.script)], shell: false });
   }
 }
 
@@ -111,10 +120,11 @@ function copyFile(file, from, to) {
 
 // Build injected scripts.
 const webPackFiles = [
-  'src/server/injected/webpack.config.js',
-  'src/web/traceViewer/webpack.config.js',
-  'src/web/recorder/webpack.config.js',
-  'src/web/htmlReport/webpack.config.js',
+  'packages/playwright-core/src/server/injected/webpack.config.js',
+  'packages/playwright-core/src/web/traceViewer/webpack.config.js',
+  'packages/playwright-core/src/web/traceViewer/webpack-sw.config.js',
+  'packages/playwright-core/src/web/recorder/webpack.config.js',
+  'packages/playwright-core/src/web/htmlReport/webpack.config.js',
 ];
 for (const file of webPackFiles) {
   steps.push({
@@ -128,17 +138,28 @@ for (const file of webPackFiles) {
 }
 
 // Run Babel.
-steps.push({
-  command: 'npx',
-  args: ['babel', ...(watchMode ? ['-w', '--source-maps'] : []), '--extensions', '.ts', '--out-dir', filePath('./lib/'), filePath('./src/')],
-  shell: true,
-});
+for (const packageDir of packages) {
+  if (!fs.existsSync(path.join(packageDir, 'src')))
+    continue;
+  steps.push({
+    command: 'npx',
+    args: [
+      'babel',
+      ...(watchMode ? ['-w', '--source-maps'] : []),
+      '--extensions', '.ts',
+      '--out-dir', path.join(packageDir, 'lib'),
+      '--ignore', 'packages/playwright-core/src/server/injected/**/*',
+      path.join(packageDir, 'src')],
+    shell: true,
+  });
+}
+
 
 // Generate channels.
 onChanges.push({
   committed: false,
   inputs: [
-    'src/protocol/protocol.yml'
+    'packages/playwright-core/src/protocol/protocol.yml'
   ],
   script: 'utils/generate_channels.js',
 });
@@ -154,34 +175,45 @@ onChanges.push({
     'utils/generate_types/overrides-test.d.ts',
     'utils/generate_types/overrides-testReporter.d.ts',
     'utils/generate_types/exported.json',
-    'src/server/chromium/protocol.d.ts',
+    'packages/playwright-core/src/server/chromium/protocol.d.ts',
+  ],
+  mustExist: [
+    'packages/playwright-core/lib/server/deviceDescriptors.js',
+    'packages/playwright-core/lib/server/deviceDescriptorsSource.json',
   ],
   script: 'utils/generate_types/index.js',
 });
 
 // The recorder and trace viewer have an app_icon.png that needs to be copied.
 copyFiles.push({
-  files: 'src/server/chromium/*.png',
-  from: 'src',
-  to: 'lib',
+  files: 'packages/playwright-core/src/server/chromium/*.png',
+  from: 'packages/playwright-core/src',
+  to: 'packages/playwright-core/lib',
 });
 
 // Babel doesn't touch JS files, so copy them manually.
 // For example: diff_match_patch.js
 copyFiles.push({
-  files: 'src/**/*.js',
-  from: 'src',
-  to: 'lib',
-  ignored: ['**/.eslintrc.js', '**/*webpack.config.js', '**/injected/**/*']
+  files: 'packages/playwright-core/src/**/*.js',
+  from: 'packages/playwright-core/src',
+  to: 'packages/playwright-core/lib',
+  ignored: ['**/.eslintrc.js', '**/webpack*.config.js', '**/injected/**/*']
+});
+
+copyFiles.push({
+  files: 'packages/playwright-test/src/**/*.js',
+  from: 'packages/playwright-test/src',
+  to: 'packages/playwright-test/lib',
+  ignored: ['**/.eslintrc.js']
 });
 
 // Sometimes we require JSON files that babel ignores.
 // For example, deviceDescriptorsSource.json
 copyFiles.push({
-  files: 'src/**/*.json',
+  files: 'packages/playwright-core/src/**/*.json',
   ignored: ['**/injected/**/*'],
-  from: 'src',
-  to: 'lib',
+  from: 'packages/playwright-core/src',
+  to: 'packages/playwright-core/lib',
 });
 
 if (lintMode) {

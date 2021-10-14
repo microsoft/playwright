@@ -167,3 +167,57 @@ for (const statusCode of [200, 401, 404, 500]) {
     expect(sizes.responseBodySize).toBe(3);
   });
 }
+
+it('should have correct responseBodySize for 404 with content', async ({ page, server, browserName }) => {
+  it.fail(browserName === 'chromium');
+
+  server.setRoute('/broken-image.png', (req, resp) => {
+    resp.writeHead(404);
+    resp.end(`<p>this should have a non-negative size</p>`);
+  });
+  server.setRoute('/page-with-404-image.html', (req, resp) => {
+    resp.end(`
+    <!DOCTYPE html>
+    <html>
+      <head><title>Page with Broken Image</title></head>
+      <body>
+        <img src="/broken-image.png" />
+      </body>
+    </html>
+    `);
+  });
+
+  const [req] = await Promise.all([
+    page.waitForRequest(/broken-image\.png$/),
+    page.goto(server.PREFIX + '/page-with-404-image.html'),
+  ]);
+
+  const { responseBodySize } = await req.sizes();
+  expect(responseBodySize).toBeGreaterThanOrEqual(0);
+});
+
+
+it('should return sizes without hanging', async ({ page, server, browserName }) => {
+  it.fixme(browserName === 'chromium');
+
+  server.setRoute('/has-abandoned-fetch', (req, resp) => {
+    resp.end(`
+    <!DOCTYPE html>
+    <html>
+      <head><title>t</title></head>
+      <body>
+        <script>
+          fetch("./404");
+        </script>
+      </body>
+    </html>
+    `);
+  });
+
+  const [req] = await Promise.all([
+    page.waitForRequest(/404$/),
+    page.goto(server.PREFIX + '/has-abandoned-fetch')
+  ]);
+
+  await req.sizes();
+});

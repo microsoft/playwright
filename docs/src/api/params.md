@@ -207,17 +207,16 @@ Specify environment variables that will be visible to the browser. Defaults to `
 ## js-python-context-option-storage-state
 * langs: js, python
 - `storageState` <[path]|[Object]>
-  - `cookies` <[Array]<[Object]>> Optional cookies to set for context
+  - `cookies` <[Array]<[Object]>> cookies to set for context
     - `name` <[string]>
     - `value` <[string]>
-    - `url` <[string]> Optional either url or domain / path are required
-    - `domain` <[string]> Optional either url or domain / path are required
-    - `path` <[string]> Optional either url or domain / path are required
-    - `expires` <[float]> Optional Unix time in seconds.
-    - `httpOnly` <[boolean]> Optional httpOnly flag
-    - `secure` <[boolean]> Optional secure flag
-    - `sameSite` <[SameSiteAttribute]<"Strict"|"Lax"|"None">> Optional sameSite flag
-  - `origins` <[Array]<[Object]>> Optional localStorage to set for context
+    - `domain` <[string]> domain and path are required
+    - `path` <[string]> domain and path are required
+    - `expires` <[float]> Unix time in seconds.
+    - `httpOnly` <[boolean]>
+    - `secure` <[boolean]>
+    - `sameSite` <[SameSiteAttribute]<"Strict"|"Lax"|"None">> sameSite flag
+  - `origins` <[Array]<[Object]>> localStorage to set for context
     - `origin` <[string]>
     - `localStorage` <[Array]<[Object]>>
       - `name` <[string]>
@@ -297,6 +296,32 @@ Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Us
 
 Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the
 [`option: viewport`] is set.
+
+## fetch-param-url
+- `url` <[string]>
+
+Target URL.
+
+## fetch-option-params
+- `params` <[Object]<[string], [string]|[float]|[boolean]>>
+
+Query parameters to be send with the URL.
+
+## fetch-option-headers
+- `headers` <[Object]<[string], [string]>>
+
+Allows to set HTTP headers.
+
+## fetch-option-timeout
+- `timeout` <[float]>
+
+Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+
+## fetch-option-failonstatuscode
+- `failOnStatusCode` <[boolean]>
+
+Whether to throw on response codes other than 2xx and 3xx. By default response object is returned
+for all status codes.
 
 ## fetch-option-form
 - `form` <[Object]<[string], [string]|[float]|[boolean]>>

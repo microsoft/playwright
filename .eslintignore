@@ -1,9 +1,9 @@
 test/assets/modernizr.js
-lib/
+/packages/*/lib/
 *.js
-src/generated/*
-src/third_party/
-/types/*
+/packages/playwright-core/src/generated/*
+/packages/playwright-core/src/third_party/
+/packages/playwright-core/types/*
 /index.d.ts
 utils/generate_types/overrides.d.ts
 utils/generate_types/test/test.ts

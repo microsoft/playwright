@@ -183,7 +183,7 @@ assert html == "<p>Result</p>"
 
 ```csharp
 var html = await page.InnerHTMLAsync("div.result");
-Assert.Equals(html, "<p>Result</p>");
+Assert.Equals("<p>Result</p>", html);
 ```
 
 ### API reference

@@ -197,7 +197,7 @@ it('should include the origin header', async ({ page, server, isAndroid }) => {
 it('should fulfill with global fetch result', async ({ playwright, page, server, isElectron }) => {
   it.fixme(isElectron, 'error: Browser context management is not supported.');
   await page.route('**/*', async route => {
-    const request = await playwright._newRequest();
+    const request = await playwright.request.newContext();
     const response = await request.get(server.PREFIX + '/simple.json');
     route.fulfill({ response });
   });
@@ -209,7 +209,7 @@ it('should fulfill with global fetch result', async ({ playwright, page, server,
 it('should fulfill with fetch result', async ({ page, server, isElectron }) => {
   it.fixme(isElectron, 'error: Browser context management is not supported.');
   await page.route('**/*', async route => {
-    const response = await page._request.get(server.PREFIX + '/simple.json');
+    const response = await page.request.get(server.PREFIX + '/simple.json');
     route.fulfill({ response });
   });
   const response = await page.goto(server.EMPTY_PAGE);
@@ -220,7 +220,7 @@ it('should fulfill with fetch result', async ({ page, server, isElectron }) => {
 it('should fulfill with fetch result and overrides', async ({ page, server, isElectron }) => {
   it.fixme(isElectron, 'error: Browser context management is not supported.');
   await page.route('**/*', async route => {
-    const response = await page._request.get(server.PREFIX + '/simple.json');
+    const response = await page.request.get(server.PREFIX + '/simple.json');
     route.fulfill({
       response,
       status: 201,
@@ -239,7 +239,7 @@ it('should fulfill with fetch result and overrides', async ({ page, server, isEl
 it('should fetch original request and fulfill', async ({ page, server, isElectron }) => {
   it.fixme(isElectron, 'error: Browser context management is not supported.');
   await page.route('**/*', async route => {
-    const response = await page._request.get(route.request());
+    const response = await page.request.fetch(route.request());
     route.fulfill({
       response,
     });
@@ -247,4 +247,56 @@ it('should fetch original request and fulfill', async ({ page, server, isElectro
   const response = await page.goto(server.PREFIX + '/title.html');
   expect(response.status()).toBe(200);
   expect(await page.title()).toEqual('Woof-Woof');
+});
+
+it('should fulfill with multiple set-cookie', async ({ page, server, browserName, isElectron }) => {
+  it.fixme(isElectron, 'Electron 14+ is required');
+  const cookies = ['a=b', 'c=d'];
+  await page.route('**/empty.html', async route => {
+    route.fulfill({
+      status: 200,
+      headers: {
+        'X-Header-1': 'v1',
+        'Set-Cookie': cookies.join('\n'),
+        'X-Header-2': 'v2',
+      },
+      body: ''
+    });
+  });
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect((await page.evaluate(() => document.cookie)).split(';').map(s => s.trim()).sort()).toEqual(cookies);
+  expect(await response.headerValue('X-Header-1')).toBe('v1');
+  expect(await response.headerValue('X-Header-2')).toBe('v2');
+});
+
+it('should fulfill with fetch response that has multiple set-cookie', async ({ playwright, page, server, browserName }) => {
+  server.setRoute('/empty.html', (req, res) => {
+    res.setHeader('Set-Cookie', ['a=b', 'c=d']);
+    res.setHeader('Content-Type', 'text/html');
+    res.end();
+  });
+  await page.route('**/empty.html', async route => {
+    const request = await playwright.request.newContext();
+    const response = await request.fetch(route.request());
+    route.fulfill({ response });
+  });
+  await page.goto(server.EMPTY_PAGE);
+  const cookie = await page.evaluate(() => document.cookie);
+  expect(cookie.split(';').map(s => s.trim()).sort()).toEqual(['a=b', 'c=d']);
+});
+
+it('headerValue should return set-cookie from intercepted response', async ({ page, server, browserName }) => {
+  it.fail(browserName === 'chromium', 'Set-Cookie is missing in response after interception');
+  it.fixme(browserName === 'webkit', 'Set-Cookie with \n in intercepted response does not pass validation in WebCore, see also https://github.com/microsoft/playwright/pull/9273');
+  await page.route('**/empty.html', async route => {
+    route.fulfill({
+      status: 200,
+      headers: {
+        'Set-Cookie': 'a=b',
+      },
+      body: ''
+    });
+  });
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(await response.headerValue('Set-Cookie')).toBe('a=b');
 });

@@ -19,9 +19,10 @@ jobs:
       with:
         node-version: 12
         registry-url: 'https://registry.npmjs.org'
+    - run: npm i -g npm@7
     - run: npm ci
     - run: npm run build
-    - run: node lib/cli/cli install-deps
+    - run: npx playwright install-deps
     - run: node utils/build/update_canary_version.js --today-date
       if: contains(github.ref, 'master') && github.event_name != 'workflow_dispatch'
     - run: node utils/build/update_canary_version.js --commit-timestamp

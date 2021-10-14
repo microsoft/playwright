@@ -15,43 +15,47 @@ There are several ways of opening Playwright Inspector:
 
 - Set the `PWDEBUG` environment variable to run your scripts in debug mode. This
 configures Playwright for debugging and opens the inspector.
-  ```bash js
-  # Linux/macOS
-  PWDEBUG=1 npm run test
 
-  # Windows with cmd.exe
+  ```bash bash-flavor=bash lang=js
+  PWDEBUG=1 npm run test
+  ```
+
+  ```bash bash-flavor=batch lang=js
   set PWDEBUG=1
   npm run test
+  ```
 
-  # Windows with PowerShell
+  ```bash bash-flavor=powershell lang=js
   $env:PWDEBUG=1
   npm run test
   ```
 
-  ```bash java
-  # Linux/macOS
+  ```bash bash-flavor=bash lang=java
   PWDEBUG=1 PLAYWRIGHT_JAVA_SRC=<java src root> mvn test
+  ```
 
-  # Windows with cmd.exe
+  ```bash bash-flavor=batch lang=java
   set PLAYWRIGHT_JAVA_SRC=<java src root>
   set PWDEBUG=1
   mvn test
+  ```
 
-  # Windows with PowerShell
+  ```bash bash-flavor=powershell lang=java
   $env:PLAYWRIGHT_JAVA_SRC="<java src root>"
   $env:PWDEBUG=1
   mvn test
   ```
 
-  ```bash python
-  # Linux/macOS
+  ```bash bash-flavor=bash lang=python
   PWDEBUG=1 pytest -s
+  ```
 
-  # Windows with cmd.exe
+  ```bash bash-flavor=batch lang=python
   set PWDEBUG=1
   pytest -s
+  ```
 
-  # Windows with PowerShell
+  ```bash bash-flavor=powershell lang=python
   $env:PWDEBUG=1
   pytest -s
   ```

@@ -19,9 +19,10 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
+    - run: npm i -g npm@7
     - run: npm ci
     - run: npm run build
-    - run: node lib/cli/cli install-deps
+    - run: npx playwright install-deps
     - run: npm run lint
     - name: Verify clean tree
       run: |

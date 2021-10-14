@@ -16,10 +16,13 @@ title: "Migrating from Protractor"
 
 | Protractor                                        | Playwright Test                         |
 |---------------------------------------------------|-----------------------------------------|
-| `element(by.model('...'))`                        | `page.locator('[ng-model="..."]')`      |
+| `element(by.buttonText('...'))`                   | `page.locator('button, input[type="button"], input[type="submit"] >> text="..."')` |
 | `element(by.css('...'))`                          | `page.locator('...')`                   |
+| `element(by.cssContainingText('..1..', '..2..'))` | `page.locator('..1.. >> text=..2..')`   |
+| `element(by.id('...'))`                           | `page.locator('#...')`                  |
+| `element(by.model('...'))`                        | `page.locator('[ng-model="..."]')`      |
 | `element(by.repeater('...'))`                     | `page.locator('[ng-repeat="..."]')`     |
-| `element(by.cssContainingText('..1..', '..2..'))` | `page.locator('..1.. >> text="..2.."')` |
+| `element(by.xpath('...'))`                        | `page.locator('xpath=...')`             |
 | `element.all`                                     | `page.locator`                          |
 | `browser.get(url)`                                | `await page.goto(url)`                  |
 | `browser.getCurrentUrl()`                         | `page.url()`                            |

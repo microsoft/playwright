@@ -4,7 +4,7 @@ set +x
 set -o pipefail
 
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
-  echo "usage: $(basename "$0") [firefox-linux|firefox-win32|firefox-win64|webkit-gtk|webkit-wpe|webkit-gtk-wpe|webkit-win64|webkit-mac-10.14|webkit-mac-10.15] [-f|--force]"
+  echo "usage: $(basename "$0") [firefox-linux|firefox-win32|firefox-win64|webkit-gtk|webkit-wpe|webkit-gtk-wpe|webkit-win64|webkit-mac-10.15] [-f|--force]"
   echo
   echo "Prepares checkout under browser folder, applies patches, builds, archives, and uploads if build is missing."
   echo "Script will bail out early if the build for the browser version is already present."
@@ -58,7 +58,7 @@ elif [[ "$BUILD_FLAVOR" == "ffmpeg-mac" ]]; then
   BROWSER_NAME="ffmpeg"
   EXTRA_BUILD_ARGS="--mac"
   EXPECTED_HOST_OS="Darwin"
-  EXPECTED_HOST_OS_VERSION="10.14"
+  EXPECTED_HOST_OS_VERSION="11.6"
   BUILD_BLOB_NAME="ffmpeg-mac.zip"
 elif [[ "$BUILD_FLAVOR" == "ffmpeg-linux" ]]; then
   BROWSER_NAME="ffmpeg"
@@ -212,19 +212,20 @@ elif [[ "$BUILD_FLAVOR" == "firefox-ubuntu-20.04" ]]; then
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="20.04"
   BUILD_BLOB_NAME="firefox-ubuntu-20.04.zip"
-elif [[ "$BUILD_FLAVOR" == "firefox-mac-10.14" ]]; then
+elif [[ "$BUILD_FLAVOR" == "firefox-mac-11" ]]; then
   BROWSER_NAME="firefox"
   EXTRA_BUILD_ARGS="--full"
   EXPECTED_HOST_OS="Darwin"
-  EXPECTED_HOST_OS_VERSION="10.14"
-  BUILD_BLOB_NAME="firefox-mac-10.14.zip"
-elif [[ "$BUILD_FLAVOR" == "firefox-mac-11.0-arm64" ]]; then
+  EXPECTED_HOST_OS_VERSION="11.6"
+  EXPECTED_ARCH="x86_64"
+  BUILD_BLOB_NAME="firefox-mac-11.zip"
+elif [[ "$BUILD_FLAVOR" == "firefox-mac-11-arm64" ]]; then
   BROWSER_NAME="firefox"
   EXTRA_BUILD_ARGS="--full"
   EXPECTED_HOST_OS="Darwin"
-  EXPECTED_HOST_OS_VERSION="11.0"
+  EXPECTED_HOST_OS_VERSION="11.6"
   EXPECTED_ARCH="arm64"
-  BUILD_BLOB_NAME="firefox-mac-11.0-arm64.zip"
+  BUILD_BLOB_NAME="firefox-mac-11-arm64.zip"
 elif [[ "$BUILD_FLAVOR" == "firefox-win32" ]]; then
   BROWSER_NAME="firefox"
   EXTRA_BUILD_ARGS="--full"
@@ -252,19 +253,20 @@ elif [[ "$BUILD_FLAVOR" == "firefox-beta-ubuntu-20.04" ]]; then
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="20.04"
   BUILD_BLOB_NAME="firefox-beta-ubuntu-20.04.zip"
-elif [[ "$BUILD_FLAVOR" == "firefox-beta-mac-10.14" ]]; then
+elif [[ "$BUILD_FLAVOR" == "firefox-beta-mac-11" ]]; then
   BROWSER_NAME="firefox-beta"
   EXTRA_BUILD_ARGS="--full"
   EXPECTED_HOST_OS="Darwin"
-  EXPECTED_HOST_OS_VERSION="10.14"
-  BUILD_BLOB_NAME="firefox-beta-mac-10.14.zip"
-elif [[ "$BUILD_FLAVOR" == "firefox-beta-mac-11.0-arm64" ]]; then
+  EXPECTED_HOST_OS_VERSION="11.6"
+  EXPECTED_ARCH="x86_64"
+  BUILD_BLOB_NAME="firefox-beta-mac-11.zip"
+elif [[ "$BUILD_FLAVOR" == "firefox-beta-mac-11-arm64" ]]; then
   BROWSER_NAME="firefox-beta"
   EXTRA_BUILD_ARGS="--full"
   EXPECTED_HOST_OS="Darwin"
-  EXPECTED_HOST_OS_VERSION="11.0"
+  EXPECTED_HOST_OS_VERSION="11.6"
   EXPECTED_ARCH="arm64"
-  BUILD_BLOB_NAME="firefox-beta-mac-11.0-arm64.zip"
+  BUILD_BLOB_NAME="firefox-beta-mac-11-arm64.zip"
 elif [[ "$BUILD_FLAVOR" == "firefox-beta-win32" ]]; then
   BROWSER_NAME="firefox-beta"
   EXTRA_BUILD_ARGS="--full"
@@ -300,12 +302,12 @@ elif [[ "$BUILD_FLAVOR" == "webkit-mac-10.15" ]]; then
   EXPECTED_HOST_OS="Darwin"
   EXPECTED_HOST_OS_VERSION="10.15"
   BUILD_BLOB_NAME="webkit-mac-10.15.zip"
-elif [[ "$BUILD_FLAVOR" == "webkit-mac-11.0-arm64" ]]; then
+elif [[ "$BUILD_FLAVOR" == "webkit-mac-11-arm64" ]]; then
   BROWSER_NAME="webkit"
   EXPECTED_HOST_OS="Darwin"
-  EXPECTED_HOST_OS_VERSION="11.0"
+  EXPECTED_HOST_OS_VERSION="11.6"
   EXPECTED_ARCH="arm64"
-  BUILD_BLOB_NAME="webkit-mac-11.0-arm64.zip"
+  BUILD_BLOB_NAME="webkit-mac-11-arm64.zip"
 
 
 # ===========================

@@ -15,7 +15,7 @@
  */
 
 import { expect, contextTest as test, browserTest } from './config/browserTest';
-import yauzl from 'yauzl';
+import { ZipFileSystem } from 'playwright-core/lib/utils/vfs';
 import jpeg from 'jpeg-js';
 
 test.skip(({ trace }) => !!trace);
@@ -284,29 +284,12 @@ test('should not hang for clicks that open dialogs', async ({ context, page }) =
 });
 
 async function parseTrace(file: string): Promise<{ events: any[], resources: Map<string, Buffer> }> {
-  const entries = await new Promise<any[]>(f => {
-    const entries: Promise<any>[] = [];
-    yauzl.open(file, (err, zipFile) => {
-      zipFile.on('entry', entry => {
-        const entryPromise = new Promise(ff => {
-          zipFile.openReadStream(entry, (err, readStream) => {
-            const buffers = [];
-            if (readStream) {
-              readStream.on('data', d => buffers.push(d));
-              readStream.on('end', () => ff({ name: entry.fileName, buffer: Buffer.concat(buffers) }));
-            } else {
-              ff({ name: entry.fileName });
-            }
-          });
-        });
-        entries.push(entryPromise);
-      });
-      zipFile.on('end', () => f(entries));
-    });
-  });
+  const zipFS = new ZipFileSystem(file);
   const resources = new Map<string, Buffer>();
-  for (const { name, buffer } of await Promise.all(entries))
-    resources.set(name, buffer);
+  for (const entry of await zipFS.entries())
+    resources.set(entry, await zipFS.read(entry));
+  zipFS.close();
+
   const events = [];
   for (const line of resources.get('trace.trace').toString().split('\n')) {
     if (line)

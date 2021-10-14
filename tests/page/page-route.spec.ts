@@ -672,3 +672,41 @@ it('should support the times parameter with route matching', async ({ page, serv
   await page.goto(server.EMPTY_PAGE);
   expect(intercepted).toHaveLength(1);
 });
+
+it('should contain raw request header', async ({ page, server }) => {
+  let headers: any;
+  await page.route('**/*', async route => {
+    headers = await route.request().allHeaders();
+    route.continue();
+  });
+  await page.goto(server.PREFIX + '/empty.html');
+  expect(headers.accept).toBeTruthy();
+});
+
+it('should contain raw response header', async ({ page, server }) => {
+  let request: any;
+  await page.route('**/*', async route => {
+    request = route.request();
+    route.continue();
+  });
+  await page.goto(server.PREFIX + '/empty.html');
+  const response = await request.response();
+  const headers = await response.allHeaders();
+  expect(headers['content-type']).toBeTruthy();
+});
+
+it('should contain raw response header after fulfill', async ({ page, server }) => {
+  let request: any;
+  await page.route('**/*', async route => {
+    request = route.request();
+    await route.fulfill({
+      status: 200,
+      body: 'Hello',
+      contentType: 'text/html',
+    });
+  });
+  await page.goto(server.PREFIX + '/empty.html');
+  const response = await request.response();
+  const headers = await response.allHeaders();
+  expect(headers['content-type']).toBeTruthy();
+});

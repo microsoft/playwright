@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Config } from './test-runner';
+import type { Config } from '@playwright/test';
 import * as path from 'path';
 import { electronFixtures } from '../electron/electronTest';
 import { test as pageTest } from '../page/pageTest';

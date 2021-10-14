@@ -15,15 +15,15 @@
  */
 
 import { TestServer } from '../../utils/testserver';
-import { Fixtures, _baseTest } from './test-runner';
+import { Fixtures, _baseTest } from '@playwright/test';
 import * as path from 'path';
 import * as fs from 'fs';
 import socks from 'socksv5';
 import { installCoverageHooks } from './coverage';
 import * as childProcess from 'child_process';
-import { start } from '../../lib/outofprocess';
-import { PlaywrightClient } from '../../lib/remote/playwrightClient';
-import type { LaunchOptions } from '../../index';
+import { start } from 'playwright-core/lib/outofprocess';
+import { PlaywrightClient } from 'playwright-core/lib/remote/playwrightClient';
+import type { LaunchOptions } from 'playwright-core';
 import { TestProxy } from './proxy';
 import { commonFixtures, CommonFixtures } from './commonFixtures';
 
@@ -39,7 +39,7 @@ type BaseOptions = {
 };
 type BaseFixtures = {
   platform: 'win32' | 'darwin' | 'linux';
-  playwright: typeof import('../../index');
+  playwright: typeof import('playwright-core');
   toImpl: (rpcObject: any) => any;
   isWindows: boolean;
   isMac: boolean;
@@ -60,12 +60,12 @@ class DriverMode {
 }
 
 class ServiceMode {
-  private _client: import('../../src/remote/playwrightClient').PlaywrightClient;
+  private _client: import('playwright-core/src/remote/playwrightClient').PlaywrightClient;
   private _serviceProcess: childProcess.ChildProcess;
 
   async setup(workerIndex: number) {
     const port = 10507 + workerIndex;
-    this._serviceProcess = childProcess.fork(path.join(__dirname, '..', '..', 'lib', 'cli', 'cli.js'), ['run-server', String(port)], {
+    this._serviceProcess = childProcess.fork(path.join(__dirname, '..', '..', 'packages', 'playwright-core', 'lib', 'cli', 'cli.js'), ['run-server', String(port)], {
       stdio: 'pipe'
     });
     this._serviceProcess.stderr.pipe(process.stderr);
@@ -95,7 +95,7 @@ class ServiceMode {
 
 class DefaultMode {
   async setup(workerIndex: number) {
-    return require('../../index');
+    return require('playwright-core');
   }
 
   async teardown() {
@@ -116,7 +116,7 @@ const baseFixtures: Fixtures<{}, BaseOptions & BaseFixtures> = {
       service: new ServiceMode(),
       driver: new DriverMode(),
     }[mode];
-    require('../../lib/utils/utils').setUnderTest();
+    require('playwright-core/lib/utils/utils').setUnderTest();
     const playwright = await modeImpl.setup(workerInfo.workerIndex);
     await run(playwright);
     await modeImpl.teardown();
@@ -130,7 +130,7 @@ const baseFixtures: Fixtures<{}, BaseOptions & BaseFixtures> = {
 type ServerOptions = {
   loopback?: string;
 };
-type ServerFixtures = {
+export type ServerFixtures = {
   server: TestServer;
   httpsServer: TestServer;
   socksPort: number;
@@ -138,8 +138,8 @@ type ServerFixtures = {
   asset: (p: string) => string;
 };
 
-type ServersInternal = ServerFixtures & { socksServer: socks.SocksServer };
-const serverFixtures: Fixtures<ServerFixtures, ServerOptions & { __servers: ServersInternal }> = {
+export type ServersInternal = ServerFixtures & { socksServer: socks.SocksServer };
+export const serverFixtures: Fixtures<ServerFixtures, ServerOptions & { __servers: ServersInternal }> = {
   loopback: [ undefined, { scope: 'worker' } ],
   __servers: [ async ({ loopback }, run, workerInfo) => {
     const assetsPath = path.join(__dirname, '..', 'assets');

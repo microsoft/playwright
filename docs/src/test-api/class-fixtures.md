@@ -90,3 +90,35 @@ test('basic test', async ({ page }) => {
   // ...
 });
 ```
+
+## property: Fixtures.request
+- type: <[ApiRequestContext]>
+
+Isolated [ApiRequestContext] instance for each test.
+
+```js js-flavor=js
+const { test, expect } = require('@playwright/test');
+
+test('basic test', async ({ request }) => {
+  await request.post('/signin', {
+    data: {
+      username: 'user',
+      password: 'password'
+    }
+  });
+});
+```
+
+```js js-flavor=ts
+import { test, expect } from '@playwright/test';
+
+test('basic test', async ({ request }) => {
+  await request.post('/signin', {
+    data: {
+      username: 'user',
+      password: 'password'
+    }
+  });
+  // ...
+});
+```
