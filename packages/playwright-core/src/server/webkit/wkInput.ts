@@ -98,6 +98,16 @@ export class RawKeyboardImpl implements input.RawKeyboard {
   async sendText(text: string): Promise<void> {
     await this._session!.send('Page.insertText', { text });
   }
+
+  async imeSetComposition(text: string, selectionStart: number, selectionEnd: number, replacementStart: number | -1, replacementEnd: number | -1): Promise<void> {
+    const selectionLength = selectionEnd - selectionStart;
+    if (replacementStart === -1 && replacementEnd === -1) {
+      await this._session!.send('Page.setComposition', { text, selectionStart, selectionLength });
+    } else {
+      const replacementLength = replacementEnd - replacementStart;
+      await this._session!.send('Page.setComposition', { text, selectionStart, selectionLength, replacementStart, replacementLength });
+    }
+  }
 }
 
 export class RawMouseImpl implements input.RawMouse {

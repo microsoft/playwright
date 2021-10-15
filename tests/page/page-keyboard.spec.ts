@@ -85,6 +85,95 @@ it('insertText should only emit input event', async ({ page, server }) => {
   expect(await events.jsonValue()).toEqual(['input']);
 });
 
+it('should verify correct text values for keyboard.imeSetComposition', async ({ page, server, browserName }) => {
+  await page.goto(server.PREFIX + '/input/textarea.html');
+  await page.focus('textarea');
+  await page.keyboard.imeSetComposition('ｓ', 1, 1);
+  await page.keyboard.imeSetComposition('す', 1, 1);
+  await page.keyboard.imeSetComposition('すｓ', 2, 2);
+  await page.keyboard.imeSetComposition('すｓｈ', 3, 3);
+  await page.keyboard.imeSetComposition('すし', 2, 2);
+  expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('すし');
+  await page.keyboard.insertText('すし');
+  expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('すし');
+});
+
+it('should verify correct event sequence for keyboard.imeSetComposition', async ({ page, server, browserName }) => {
+  await page.goto(server.PREFIX + '/input/textarea.html');
+  await page.focus('textarea');
+  const events = await page.evaluateHandle(() => {
+    const events = [];
+    document.addEventListener('keydown', e => events.push(e.type));
+    document.addEventListener('keyup', e => events.push(e.type));
+    document.addEventListener('compositionstart', e => events.push(e.type));
+    document.addEventListener('input', e => events.push(e.type));
+    document.addEventListener('compositionupdate', e => events.push(e.type));
+    document.addEventListener('compositionend', e => events.push(e.type));
+    return events;
+  });
+  await page.keyboard.imeSetComposition('ｓ', 1, 1);
+  await page.keyboard.imeSetComposition('す', 1, 1);
+  await page.keyboard.insertText('す');
+  if (browserName === 'firefox') {
+    expect(await events.jsonValue()).toEqual(['compositionstart', 'compositionupdate', 'input',
+      'compositionupdate', 'input', 'compositionend', 'input']);
+  } else {
+    expect(await events.jsonValue()).toEqual(['compositionstart', 'compositionupdate', 'input',
+      'compositionupdate', 'input', 'compositionupdate', 'input', 'compositionend']);
+  }
+});
+
+it('should verify keyboard.imeSetComposition reconversion scenario', async ({ page, server, browserName }) => {
+  await page.goto(server.PREFIX + '/input/textarea.html');
+  await page.focus('textarea');
+  await page.fill('textarea', 'すしおに');
+  await page.press('textarea', 'ArrowLeft');
+  await page.press('textarea', 'ArrowLeft');
+  await page.press('textarea', 'ArrowLeft');
+  await page.keyboard.imeSetComposition('オニ', 2, 2, { replacementStart: 0, replacementEnd: 1 });
+  expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('オニしおに');
+  await page.keyboard.insertText('オニ');
+  expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('オニしおに');
+});
+
+it('should verify cancelling composition with insertText output', async ({ page, server, browserName }) => {
+  await page.goto(server.PREFIX + '/input/textarea.html');
+  await page.focus('textarea');
+  await page.keyboard.imeSetComposition('ｓ', 1, 1);
+  await page.keyboard.imeSetComposition('す', 1, 1);
+  await page.keyboard.imeSetComposition('すｓ', 2, 2);
+  await page.keyboard.imeSetComposition('すｓｈ', 3, 3);
+  await page.keyboard.imeSetComposition('すし', 2, 2);
+  await page.keyboard.insertText('');
+  expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('');
+});
+
+it('should verify cancelling composition with insertText event sequence', async ({ page, server, browserName }) => {
+  await page.goto(server.PREFIX + '/input/textarea.html');
+  await page.focus('textarea');
+  await page.fill('textarea', 'abcd');
+  const events = await page.evaluateHandle(() => {
+    const events = [];
+    document.addEventListener('compositionstart', e => events.push(e.type));
+    document.addEventListener('input', e => events.push(e.type));
+    document.addEventListener('compositionupdate', e => events.push(e.type));
+    document.addEventListener('compositionend', e => events.push(e.type));
+    document.addEventListener('keydown', e => events.push(e.type));
+    document.addEventListener('keyup', e => events.push(e.type));
+    return events;
+  });
+  await page.keyboard.imeSetComposition('e', 1, 1);
+  await page.keyboard.insertText('');
+  expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('abcd');
+  if (browserName === 'firefox') {
+    expect(await events.jsonValue()).toEqual(['compositionstart', 'compositionupdate',
+      'input', 'compositionupdate', 'compositionend', 'input']);
+  } else {
+    expect(await events.jsonValue()).toEqual(['compositionstart', 'compositionupdate',
+      'input', 'compositionupdate', 'input', 'compositionend']);
+  }
+});
+
 it('should report shiftKey', async ({ page, server, browserName, platform }) => {
   it.fail(browserName === 'firefox' && platform === 'darwin');
 
@@ -129,12 +218,12 @@ it('should send proper codes while typing', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   await page.keyboard.type('!');
   expect(await page.evaluate('getResult()')).toBe(
-      [ 'Keydown: ! Digit1 49 []',
+      ['Keydown: ! Digit1 49 []',
         'Keypress: ! Digit1 33 33 []',
         'Keyup: ! Digit1 49 []'].join('\n'));
   await page.keyboard.type('^');
   expect(await page.evaluate('getResult()')).toBe(
-      [ 'Keydown: ^ Digit6 54 []',
+      ['Keydown: ^ Digit6 54 []',
         'Keypress: ^ Digit6 94 94 []',
         'Keyup: ^ Digit6 54 []'].join('\n'));
 });
@@ -145,7 +234,7 @@ it('should send proper codes while typing with shift', async ({ page, server }) 
   await keyboard.down('Shift');
   await page.keyboard.type('~');
   expect(await page.evaluate('getResult()')).toBe(
-      [ 'Keydown: Shift ShiftLeft 16 [Shift]',
+      ['Keydown: Shift ShiftLeft 16 [Shift]',
         'Keydown: ~ Backquote 192 [Shift]', // 192 is ` keyCode
         'Keypress: ~ Backquote 126 126 [Shift]', // 126 is ~ charCode
         'Keyup: ~ Backquote 192 [Shift]'].join('\n'));
@@ -173,7 +262,7 @@ it('should press plus', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   await page.keyboard.press('+');
   expect(await page.evaluate('getResult()')).toBe(
-      [ 'Keydown: + Equal 187 []', // 192 is ` keyCode
+      ['Keydown: + Equal 187 []', // 192 is ` keyCode
         'Keypress: + Equal 43 43 []', // 126 is ~ charCode
         'Keyup: + Equal 187 []'].join('\n'));
 });
@@ -182,7 +271,7 @@ it('should press shift plus', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   await page.keyboard.press('Shift++');
   expect(await page.evaluate('getResult()')).toBe(
-      [ 'Keydown: Shift ShiftLeft 16 [Shift]',
+      ['Keydown: Shift ShiftLeft 16 [Shift]',
         'Keydown: + Equal 187 [Shift]', // 192 is ` keyCode
         'Keypress: + Equal 43 43 [Shift]', // 126 is ~ charCode
         'Keyup: + Equal 187 [Shift]',
@@ -193,7 +282,7 @@ it('should support plus-separated modifiers', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   await page.keyboard.press('Shift+~');
   expect(await page.evaluate('getResult()')).toBe(
-      [ 'Keydown: Shift ShiftLeft 16 [Shift]',
+      ['Keydown: Shift ShiftLeft 16 [Shift]',
         'Keydown: ~ Backquote 192 [Shift]', // 192 is ` keyCode
         'Keypress: ~ Backquote 126 126 [Shift]', // 126 is ~ charCode
         'Keyup: ~ Backquote 192 [Shift]',
@@ -204,7 +293,7 @@ it('should support multiple plus-separated modifiers', async ({ page, server }) 
   await page.goto(server.PREFIX + '/input/keyboard.html');
   await page.keyboard.press('Control+Shift+~');
   expect(await page.evaluate('getResult()')).toBe(
-      [ 'Keydown: Control ControlLeft 17 [Control]',
+      ['Keydown: Control ControlLeft 17 [Control]',
         'Keydown: Shift ShiftLeft 16 [Control Shift]',
         'Keydown: ~ Backquote 192 [Control Shift]', // 192 is ` keyCode
         'Keyup: ~ Backquote 192 [Control Shift]',
@@ -216,7 +305,7 @@ it('should shift raw codes', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   await page.keyboard.press('Shift+Digit3');
   expect(await page.evaluate('getResult()')).toBe(
-      [ 'Keydown: Shift ShiftLeft 16 [Shift]',
+      ['Keydown: Shift ShiftLeft 16 [Shift]',
         'Keydown: # Digit3 51 [Shift]', // 51 is # keyCode
         'Keypress: # Digit3 35 35 [Shift]', // 35 is # charCode
         'Keyup: # Digit3 51 [Shift]',

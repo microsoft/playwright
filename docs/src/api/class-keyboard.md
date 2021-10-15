@@ -172,6 +172,71 @@ Modifier keys DO influence `keyboard.down`. Holding down `Shift` will type the t
 
 Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
 
+## async method: Keyboard.imeSetComposition
+
+If there is an active composition, it will update the composition. Otherwise it will start a new one. It will dispatch either
+a `compositionstart` or a `compositionupdate`. In order to cancel a composition: `keyboard.insertText('')`, and in order to commit/end a composition:
+`keyboard.insertText(<text to insert>)`.
+
+### param: Keyboard.imeSetComposition.text
+- `text` <[string]>
+
+Sets the text in the active composition
+
+### param: Keyboard.imeSetComposition.selectionStart
+- `selectionStart` <[int]>
+
+Sets the selection start of the focused element after the composition text is inserted. This is relatvie to the active composition,
+so if the text in the focused element is `abcd` but only `d` is part of the active composition, a selection start of `1` will set the
+selection start to be after `d`, which is absolute position `4`.
+
+### param: Keyboard.imeSetComposition.selectionEnd
+- `selectionEnd` <[int]>
+
+Sets the selection end of the focused element after the composition text is inserted. This is relatvie to the active composition,
+so if the text in the focused element is `abcd` but only `d` is part of the active composition, a selection end of `1` will set the
+selection end to be after `d`, which is absolute position `4`.
+
+### option: Keyboard.imeSetComposition.replacementStart
+- `replacementStart` <[int]>
+
+Sets the start position of the absolute range that is to be replaced with the composition text.
+
+
+### option: Keyboard.imeSetComposition.replacementEnd
+- `replacementEnd` <[int]>
+
+Sets the end position of the absolute range that is to be replaced with the composition text.
+
+
+```js
+const page = await browser.newPage();
+await page.goto('https://w3c.github.io/uievents/tools/key-event-viewer-ce.html');
+await page.focus('#input');
+await page.keyboard.imeSetComposition('ｓ', 1, 1);
+await page.keyboard.imeSetComposition('す', 1, 1);
+await browser.close();
+```
+
+
+```python async
+page = await browser.new_page()
+await page.goto("https://w3c.github.io/uievents/tools/key-event-viewer-ce.html")
+await page.focus("#input");
+await page.keyboard.imeSetComposition("ｓ", 1, 1)
+await page.keyboard.imeSetComposition("す", 1, 1)
+await browser.close()
+```
+
+```python sync
+page = browser.new_page()
+page.goto("https://w3c.github.io/uievents/tools/key-event-viewer-ce.html")
+page.focus("#input");
+page.keyboard.imeSetComposition("ｓ", 1, 1)
+page.keyboard.imeSetComposition("す", 1, 1)
+browser.close()
+```
+
 ## async method: Keyboard.insertText
 
 Dispatches only `input` event, does not emit the `keydown`, `keyup` or `keypress` events.

@@ -212,6 +212,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel> imple
     await this._page.keyboard.up(params.key);
   }
 
+  async keyboardImeSetComposition(params: channels.PageKeyboardImeSetCompositionParams, metadata: CallMetadata): Promise<void> {
+    await this._page.keyboard.imeSetComposition(params.text, params.selectionStart, params.selectionEnd, params);
+  }
+
   async keyboardInsertText(params: channels.PageKeyboardInsertTextParams, metadata: CallMetadata): Promise<void> {
     await this._page.keyboard.insertText(params.text);
   }

@@ -6873,6 +6873,8 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     }
     export type insertTextReturnValue = {
     }
+    export type setCompositionReturnValue = {
+    }
     /**
      * Set the current IME composition.
      */
@@ -6882,8 +6884,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       selectionLength: number;
       replacementStart?: number;
       replacementLength?: number;
-    }
-    export type setCompositionReturnValue = {
     }
     /**
      * Serializes and returns all of the accessibility nodes of the page.

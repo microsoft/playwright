@@ -14028,6 +14028,39 @@ export interface Keyboard {
   down(key: string): Promise<void>;
 
   /**
+   * If there is an active composition, it will update the composition. Otherwise it will start a new one. It will dispatch
+   * either a `compositionstart` or a `compositionupdate`. In order to cancel a composition: `keyboard.insertText('')`, and
+   * in order to commit/end a composition: `keyboard.insertText(<text to insert>)`.
+   * @param text Sets the text in the active composition
+   * @param selectionStart Sets the selection start of the focused element after the composition text is inserted. This is relatvie to the active composition, so if the text in the focused element is `abcd` but only `d` is part of the active composition, a selection
+   * start of `1` will set the selection start to be after `d`, which is absolute position `4`.
+   * @param selectionEnd Sets the selection end of the focused element after the composition text is inserted. This is relatvie to the active composition, so if the text in the focused element is `abcd` but only `d` is part of the active composition, a selection
+   * end of `1` will set the selection end to be after `d`, which is absolute position `4`.
+   * @param options
+   */
+  imeSetComposition(text: string, selectionStart: number, selectionEnd: number, options?: {
+    /**
+     * Sets the end position of the absolute range that is to be replaced with the composition text.
+     *
+     * ```js
+     * const page = await browser.newPage();
+     * await page.goto('https://w3c.github.io/uievents/tools/key-event-viewer-ce.html');
+     * await page.focus('#input');
+     * await page.keyboard.imeSetComposition('ｓ', 1, 1);
+     * await page.keyboard.imeSetComposition('す', 1, 1);
+     * await browser.close();
+     * ```
+     *
+     */
+    replacementEnd?: number;
+
+    /**
+     * Sets the start position of the absolute range that is to be replaced with the composition text.
+     */
+    replacementStart?: number;
+  }): Promise<void>;
+
+  /**
    * Dispatches only `input` event, does not emit the `keydown`, `keyup` or `keypress` events.
    *
    * ```js

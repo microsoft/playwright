@@ -1129,6 +1129,14 @@ Page:
       tracing:
         snapshot: true
 
+    keyboardImeSetComposition:
+      parameters:
+        text: string
+        selectionStart: number
+        selectionEnd: number
+        replacementStart: number?
+        replacementEnd: number?
+
     keyboardPress:
       parameters:
         key: string
