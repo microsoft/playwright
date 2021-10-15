@@ -23,8 +23,6 @@ import type { BrowserContext, BrowserContextOptions } from 'playwright-core';
 import type { AddressInfo } from 'net';
 import type { Log } from 'playwright-core/src/server/supplements/har/har';
 
-it.skip(({ mode }) => mode === 'service');
-
 async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any, outputPath: string = 'test.har') {
   const harPath = testInfo.outputPath(outputPath);
   const context = await contextFactory({ recordHar: { path: harPath }, ignoreHTTPSErrors: true });
@@ -404,17 +402,18 @@ it('should not contain internal pages', async ({ browserName, contextFactory, se
   expect(log.pages.length).toBe(1);
 });
 
-it('should have connection details', async ({ contextFactory, server, browserName, platform }, testInfo) => {
+it('should have connection details', async ({ contextFactory, server, browserName, platform, mode }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
   const log = await getLog();
   const { serverIPAddress, _serverPort: port, _securityDetails: securityDetails } = log.entries[0];
   expect(serverIPAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
-  expect(port).toBe(server.PORT);
+  if (mode !== 'service')
+    expect(port).toBe(server.PORT);
   expect(securityDetails).toEqual({});
 });
 
-it('should have security details', async ({ contextFactory, httpsServer, browserName, platform }, testInfo) => {
+it('should have security details', async ({ contextFactory, httpsServer, browserName, platform, mode }, testInfo) => {
   it.fail(browserName === 'webkit' && platform === 'linux', 'https://github.com/microsoft/playwright/issues/6759');
   it.fail(browserName === 'webkit' && platform === 'win32');
 
@@ -423,14 +422,15 @@ it('should have security details', async ({ contextFactory, httpsServer, browser
   const log = await getLog();
   const { serverIPAddress, _serverPort: port, _securityDetails: securityDetails } = log.entries[0];
   expect(serverIPAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
-  expect(port).toBe(httpsServer.PORT);
+  if (mode !== 'service')
+    expect(port).toBe(httpsServer.PORT);
   if (browserName === 'webkit' && platform === 'darwin')
     expect(securityDetails).toEqual({ protocol: 'TLS 1.3', subjectName: 'puppeteer-tests', validFrom: 1550084863, validTo: 33086084863 });
   else
     expect(securityDetails).toEqual({ issuer: 'puppeteer-tests', protocol: 'TLS 1.3', subjectName: 'puppeteer-tests', validFrom: 1550084863, validTo: 33086084863 });
 });
 
-it('should have connection details for redirects', async ({ contextFactory, server, browserName }, testInfo) => {
+it('should have connection details for redirects', async ({ contextFactory, server, browserName, mode }, testInfo) => {
   server.setRedirect('/foo.html', '/empty.html');
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.PREFIX + '/foo.html');
@@ -444,15 +444,17 @@ it('should have connection details for redirects', async ({ contextFactory, serv
     expect(detailsFoo._serverPort).toBeUndefined();
   } else {
     expect(detailsFoo.serverIPAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
-    expect(detailsFoo._serverPort).toBe(server.PORT);
+    if (mode !== 'service')
+      expect(detailsFoo._serverPort).toBe(server.PORT);
   }
 
   const detailsEmpty = log.entries[1];
   expect(detailsEmpty.serverIPAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
-  expect(detailsEmpty._serverPort).toBe(server.PORT);
+  if (mode !== 'service')
+    expect(detailsEmpty._serverPort).toBe(server.PORT);
 });
 
-it('should have connection details for failed requests', async ({ contextFactory, server, browserName, platform }, testInfo) => {
+it('should have connection details for failed requests', async ({ contextFactory, server, browserName, platform, mode }, testInfo) => {
   server.setRoute('/one-style.css', (_, res) => {
     res.setHeader('Content-Type', 'text/css');
     res.connection.destroy();
@@ -462,14 +464,16 @@ it('should have connection details for failed requests', async ({ contextFactory
   const log = await getLog();
   const { serverIPAddress, _serverPort: port } = log.entries[0];
   expect(serverIPAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
-  expect(port).toBe(server.PORT);
+  if (mode !== 'service')
+    expect(port).toBe(server.PORT);
 });
 
-it('should return server address directly from response', async ({ page, server }) => {
+it('should return server address directly from response', async ({ page, server, mode }) => {
   const response = await page.goto(server.EMPTY_PAGE);
   const { ipAddress, port } = await response.serverAddr();
   expect(ipAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
-  expect(port).toBe(server.PORT);
+  if (mode !== 'service')
+    expect(port).toBe(server.PORT);
 });
 
 it('should return security details directly from response', async ({ contextFactory, httpsServer, browserName, platform }) => {

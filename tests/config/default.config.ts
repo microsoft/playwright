@@ -60,6 +60,11 @@ const config: Config<CommonOptions & PlaywrightOptions> = {
     [ 'json', { outputFile: path.join(outputDir, 'report.json') } ],
   ] : 'line',
   projects: [],
+  webServer: mode === 'service' ? {
+    command: 'npx playwright experimental-grid-server',
+    port: 3333,
+    reuseExistingServer: true,
+  } : undefined,
 };
 
 const browserNames = ['chromium', 'webkit', 'firefox'] as BrowserName[];
