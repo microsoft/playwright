@@ -475,7 +475,7 @@ test('should properly disconnect when connection closes from the client side', a
   await disconnectedPromise;
   expect(browser.isConnected()).toBe(false);
 
-  expect((await navigationPromise).message).toContain('has been closed');
+  expect((await navigationPromise).message).toContain('Connection closed');
   expect((await waitForNavigationPromise).message).toContain('Navigation failed because page was closed');
   expect((await page.goto(server.EMPTY_PAGE).catch(e => e)).message).toContain('has been closed');
   expect((await page.waitForNavigation().catch(e => e)).message).toContain('Navigation failed because page was closed');

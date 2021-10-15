@@ -34,9 +34,10 @@ export class GridClient {
     if (errorText)
       throw errorText;
     const connection = new Connection();
+    connection.markAsRemote();
     connection.onmessage = (message: Object) => ws.send(JSON.stringify(message));
     ws.on('message', message => connection.dispatch(JSON.parse(message.toString())));
-    ws.on('close', (code, reason) => connection.didDisconnect(reason));
+    ws.on('close', (code, reason) => connection.close(reason));
     const playwright = await connection.initializePlaywright();
     playwright._enablePortForwarding();
     return new GridClient(ws, playwright);

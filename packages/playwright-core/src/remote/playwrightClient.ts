@@ -49,9 +49,7 @@ export class PlaywrightClient {
         playwright = await connection.initializePlaywright();
         resolve(new PlaywrightClient(playwright, ws));
       });
-      ws.on('close', () => {
-        playwright?._cleanup();
-      });
+      ws.on('close', (code, reason) => connection.close(reason));
     });
     let timer: NodeJS.Timeout;
     try {

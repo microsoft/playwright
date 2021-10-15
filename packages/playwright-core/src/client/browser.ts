@@ -20,7 +20,7 @@ import { Page } from './page';
 import { ChannelOwner } from './channelOwner';
 import { Events } from './events';
 import { BrowserContextOptions } from './types';
-import { isSafeCloseError } from '../utils/errors';
+import { isSafeCloseError, kBrowserClosedError } from '../utils/errors';
 import * as api from '../../types/types';
 import { CDPSession } from './cdpSession';
 import type { BrowserType } from './browserType';
@@ -110,7 +110,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
     try {
       await this._wrapApiCall(async (channel: channels.BrowserChannel) => {
         if (this._shouldCloseConnectionOnClose)
-          this._connection.close();
+          this._connection.close(kBrowserClosedError);
         else
           await channel.close();
         await this._closedPromise;
