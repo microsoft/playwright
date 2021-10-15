@@ -31,7 +31,7 @@ async function installFirefoxPreferences(distpath) {
   if (os.platform() === 'linux')
     executablePath = path.join(distpath, 'firefox');
   else if (os.platform() === 'darwin')
-    executablePath = path.join(distpath, 'Nightly.app', 'Contents', 'MacOS', 'firefox');
+    executablePath = path.join(distpath, (process.env.FF_DEBUG_BUILD ? 'NightlyDebug.app' : 'Nightly.app'), 'Contents', 'MacOS', 'firefox');
   else if (os.platform() === 'win32')
     executablePath = path.join(distpath, 'firefox.exe');
 

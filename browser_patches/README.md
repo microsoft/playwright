@@ -85,6 +85,10 @@ Set the `DEBUG=pw:browser` environment variable to see it.
 
 ## Firefox
 
+### Debug build
+
+When compiling set the `FF_DEBUG_BUILD=1` environment variable.
+
 #### Stack trace
 
 In `//mozglue/misc/StackWalk.cpp` add
@@ -96,7 +100,9 @@ In `//mozglue/misc/StackWalk.cpp` add
 In native code use
 
 ```c++
-nsTraceRefcnt::WalkTheStack(stderr);
+#include "mozilla/StackWalk.h"
+// ...
+MozWalkTheStack(stderr);
 ```
 
 If the stack trace is still mangled `cat` it to `tools/rb/fix_linux_stack.py`
