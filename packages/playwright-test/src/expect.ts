@@ -156,7 +156,7 @@ function wrap(matcherName: string, matcher: any) {
       reportStepError(e);
     }
   };
-  result.displayName = '__PWTRAP__[expect.' + matcherName + ']';
+  Object.defineProperty(result, 'name', { value: '__PWTRAP__[expect.' + matcherName + ']' });
   return result;
 }
 
