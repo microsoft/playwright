@@ -133,8 +133,9 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
       let browser: Browser;
       const { pipe } = await channel.connect({ wsEndpoint, headers: params.headers, slowMo: params.slowMo, timeout: params.timeout });
       const closePipe = () => pipe.close().catch(() => {});
-      const connection = new Connection(closePipe);
+      const connection = new Connection();
       connection.markAsRemote();
+      connection.on('close', closePipe);
 
       const onPipeClosed = () => {
         // Emulate all pages, contexts and the browser closing upon disconnect.
@@ -144,15 +145,14 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
           context._onClose();
         }
         browser?._didClose();
-        connection.didDisconnect(kBrowserClosedError);
+        connection.close(kBrowserClosedError);
       };
       pipe.on('closed', onPipeClosed);
       connection.onmessage = message => pipe.send({ message }).catch(onPipeClosed);
 
       pipe.on('message', ({ message }) => {
         try {
-          if (!connection!.isDisconnected())
-            connection!.dispatch(message);
+          connection!.dispatch(message);
         } catch (e) {
           console.error(`Playwright: Connection dispatch error`);
           console.error(e);
@@ -176,10 +176,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
           browser._logger = logger;
           browser._shouldCloseConnectionOnClose = true;
           browser._setBrowserType((playwright as any)[browser._name]);
-          browser.on(Events.Browser.Disconnected, () => {
-            playwright._cleanup();
-            closePipe();
-          });
+          browser.on(Events.Browser.Disconnected, closePipe);
           fulfill(browser);
         } catch (e) {
           reject(e);

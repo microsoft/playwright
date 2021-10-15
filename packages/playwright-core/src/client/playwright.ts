@@ -49,7 +49,6 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel, channel
   readonly selectors: Selectors;
   readonly request: Fetch;
   readonly errors: { TimeoutError: typeof TimeoutError };
-  private _selectorsOwner: SelectorsOwner;
   private _sockets = new Map<string, net.Socket>();
   private _redirectPortForTest: number | undefined;
 
@@ -67,8 +66,13 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel, channel
     this.selectors = sharedSelectors;
     this.errors = { TimeoutError };
 
-    this._selectorsOwner = SelectorsOwner.from(initializer.selectors);
-    this.selectors._addChannel(this._selectorsOwner);
+    const selectorsOwner = SelectorsOwner.from(initializer.selectors);
+    this.selectors._addChannel(selectorsOwner);
+    this._connection.on('close', () => {
+      this.selectors._removeChannel(selectorsOwner);
+      for (const uid of this._sockets.keys())
+        this._onSocksClosed(uid);
+    });
   }
 
   _enablePortForwarding(redirectPortForTest?: number) {
@@ -115,9 +119,5 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel, channel
   private _onSocksClosed(uid: string): void {
     this._sockets.get(uid)?.destroy();
     this._sockets.delete(uid);
-  }
-
-  _cleanup() {
-    this.selectors._removeChannel(this._selectorsOwner);
   }
 }
