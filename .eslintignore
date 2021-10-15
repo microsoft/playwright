@@ -12,4 +12,4 @@ browser_patches/*/checkout/
 browser_patches/chromium/output/
 **/*.d.ts
 output/
-/test-results/
+test-results/

@@ -19,14 +19,16 @@ import fs from 'fs';
 import { prompt } from 'enquirer';
 import colors from 'ansi-colors';
 
-import { executeCommands, createFiles, determinePackageManager, executeTemplate, Command, languagetoFileExtension } from './utils';
+import { executeCommands, createFiles, determinePackageManager, executeTemplate, Command, languagetoFileExtension, readDirRecursively } from './utils';
 
 export type PromptOptions = {
   testDir: string,
   installGitHubActions: boolean,
   language: 'JavaScript' | 'TypeScript'
+  addExamples: boolean,
 };
 
+const assetsDir = path.join(__dirname, '..', 'assets');
 const PACKAGE_JSON_TEST_SCRIPT_CMD = 'test:e2e';
 
 export class Generator {
@@ -44,7 +46,7 @@ export class Generator {
     executeCommands(this.rootDir, commands);
     await createFiles(this.rootDir, files);
     this._patchGitIgnore();
-    await this._patchPackageJSON();
+    await this._patchPackageJSON(answers);
     this._printOutro(answers);
   }
 
@@ -78,6 +80,12 @@ export class Generator {
         message: 'Add a GitHub Actions workflow?',
         initial: true,
       },
+      {
+        type: 'confirm',
+        name: 'addExamples',
+        message: 'Add common examples which demonstrate Playwright\'s capabilities?',
+        initial: true,
+      },
     ]);
   }
 
@@ -99,6 +107,9 @@ export class Generator {
     }
 
     files.set(path.join(answers.testDir, `example.spec.${fileExtension}`), this._readAsset(`example.spec.${fileExtension}`));
+
+    if (answers.addExamples)
+      await this._collectExamples(answers, files);
 
     if (!fs.existsSync(path.join(this.rootDir, 'package.json'))) {
       commands.push({
@@ -132,16 +143,31 @@ export class Generator {
   }
 
   private _readAsset(asset: string): string {
-    const assetsDir = path.join(__dirname, '..', 'assets');
-    return fs.readFileSync(path.join(assetsDir, asset), 'utf-8');
+    return fs.readFileSync(path.isAbsolute(asset) ? asset : path.join(assetsDir, asset), 'utf-8');
   }
 
-  private async _patchPackageJSON() {
+  private async _collectExamples(answers: PromptOptions, files: Map<string, string>) {
+    const examples = fs.readdirSync(path.join(assetsDir, 'examples')).filter(file => file !== 'playwright.config.ts' && file !== 'server');
+    const examplesTestDir = answers.testDir + '-examples';
+    for (const example of examples)
+      files.set(path.join(examplesTestDir, example), this._readAsset(path.join('examples', example)));
+    files.set(path.join(examplesTestDir, 'playwright.config.ts'), executeTemplate(this._readAsset(path.join('examples', `playwright.config.ts`)), {
+      testDir: examplesTestDir,
+    }));
+    const assetServerPath = path.join(assetsDir, 'examples', 'server');
+    const webServerFiles = await readDirRecursively(assetServerPath);
+    for (const file of webServerFiles)
+      files.set(path.join(examplesTestDir, 'server', path.relative(assetServerPath, file)), this._readAsset(file));
+  }
+
+  private async _patchPackageJSON(answers: PromptOptions) {
     const packageJSON = JSON.parse(fs.readFileSync(path.join(this.rootDir, 'package.json'), 'utf-8'));
     if (!packageJSON.scripts)
       packageJSON.scripts = {};
     if (packageJSON.scripts['test']?.includes('no test specified'))
       delete packageJSON.scripts['test'];
+    if (answers.addExamples)
+      packageJSON.scripts['test:e2e-examples'] = `playwright test --config ${path.join(answers.testDir + '-examples', 'playwright.config.ts')}`;
     packageJSON.scripts[PACKAGE_JSON_TEST_SCRIPT_CMD] = `playwright test`;
 
     const files = new Map<string, string>();

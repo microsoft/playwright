@@ -1,0 +1,19 @@
+<object data="header.html" style="width: 100%; height: 200px;"> 
+    Your browser doesn’t support the object tag. 
+</object>
+
+<button>Load user</button>
+<p>
+    User: 
+    <span id="user-full-name"></span>
+</p>
+
+<script>
+    document.querySelector("button").addEventListener("click", () => {
+        fetch("/api/v1/users.json")
+        .then(resp => resp.json())
+        .then(user => {
+            document.querySelector("#user-full-name").innerText = user.fullName
+        })
+    })
+</script>
