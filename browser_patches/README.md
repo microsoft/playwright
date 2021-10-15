@@ -85,6 +85,10 @@ Set the `DEBUG=pw:browser` environment variable to see it.
 
 ## Firefox
 
+### Debug build
+
+When compiling set the `FF_DEBUG_BUILD=1` environment variable.
+
 #### Stack trace
 
 In `//mozglue/misc/StackWalk.cpp` add
