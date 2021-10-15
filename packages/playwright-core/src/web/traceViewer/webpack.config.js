@@ -45,6 +45,13 @@ module.exports = {
         },
       ],
     }),
+    new CopyPlugin({
+      patterns: [
+        {
+          from: path.resolve(__dirname, 'static'),
+        },
+      ],
+    }),
     new HtmlWebPackPlugin({
       title: 'Playwright Trace Viewer',
       template: path.join(__dirname, 'index.html'),
