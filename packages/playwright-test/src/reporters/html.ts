@@ -233,7 +233,7 @@ class HtmlBuilder {
       testId: test.testId,
       title: test.title,
       location: this._relativeLocation(test.location),
-      results: test.results.map(r => this._createTestResult(test, r))
+      results: test.results.map(r => this._createTestResult(r))
     };
   }
 
@@ -278,7 +278,8 @@ class HtmlBuilder {
     };
   }
 
-  private _createTestResult(test: JsonTestCase, result: JsonTestResult): TestResult {
+  private _createTestResult(result: JsonTestResult): TestResult {
+    let lastAttachment: TestAttachment | undefined;
     return {
       duration: result.duration,
       startTime: result.startTime,
@@ -303,8 +304,18 @@ class HtmlBuilder {
             body: a.body,
           };
         }
+
+        if ((a.name === 'stdout' || a.name === 'stderr') &&
+          a.contentType === 'text/plain' &&
+          lastAttachment &&
+          lastAttachment.name === a.name &&
+          lastAttachment.contentType === a.contentType) {
+          lastAttachment.body += a.body as string;
+          return null;
+        }
+        lastAttachment = a;
         return a;
-      })
+      }).filter(Boolean) as TestAttachment[]
     };
   }
 
