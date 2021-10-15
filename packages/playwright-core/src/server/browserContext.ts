@@ -75,6 +75,9 @@ export abstract class BrowserContext extends SdkObject {
     this._isPersistentContext = !browserContextId;
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
 
+    // Create instrumentation per context.
+    this.instrumentation = createInstrumentation();
+
     if (this._options.recordHar)
       this._harRecorder = new HarRecorder(this, { ...this._options.recordHar, path: path.join(this._browser.options.artifactsDir, `${createGuid()}.har`) });
 
@@ -93,9 +96,6 @@ export abstract class BrowserContext extends SdkObject {
   async _initialize() {
     if (this.attribution.isInternal)
       return;
-    // Create instrumentation per context.
-    this.instrumentation = createInstrumentation();
-
     // Debugger will pause execution upon page.pause in headed mode.
     const contextDebugger = new Debugger(this);
     this.instrumentation.addListener(contextDebugger);

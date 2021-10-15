@@ -15,10 +15,12 @@
  */
 
 import * as trace from '../../server/trace/common/traceEvents';
-import type { ResourceSnapshot } from '../../server/trace/common/snapshotTypes';
 import { BaseSnapshotStorage } from './snapshotStorage';
 
 import type zip from '@zip.js/zip.js';
+import { ContextEntry, createEmptyContext, PageEntry } from './entries';
+import type { CallMetadata } from '../../protocol/callMetadata';
+
 // @ts-ignore
 self.importScripts('zip.min.js');
 
@@ -32,14 +34,7 @@ export class TraceModel {
   private _version: number | undefined;
 
   constructor() {
-    this.contextEntry = {
-      startTime: Number.MAX_VALUE,
-      endTime: Number.MIN_VALUE,
-      browserName: '',
-      options: { },
-      pages: [],
-      resources: [],
-    };
+    this.contextEntry = createEmptyContext();
   }
 
   async load(traceURL: string) {
@@ -85,8 +80,7 @@ export class TraceModel {
   }
 
   private _build() {
-    for (const page of this.contextEntry!.pages)
-      page.actions.sort((a1, a2) => a1.metadata.startTime - a2.metadata.startTime);
+    this.contextEntry!.actions.sort((a1, a2) => a1.metadata.startTime - a2.metadata.startTime);
     this.contextEntry!.resources = this._snapshotStorage!.resources();
   }
 
@@ -94,9 +88,6 @@ export class TraceModel {
     let pageEntry = this.pageEntries.get(pageId);
     if (!pageEntry) {
       pageEntry = {
-        actions: [],
-        events: [],
-        objects: {},
         screencastFrames: [],
       };
       this.pageEntries.set(pageId, pageEntry);
@@ -120,19 +111,18 @@ export class TraceModel {
         break;
       }
       case 'action': {
-        const metadata = event.metadata;
-        const include = event.hasSnapshot;
-        if (include && metadata.pageId)
-          this._pageEntry(metadata.pageId).actions.push(event);
+        const include = !!event.metadata.apiName && !isTracing(event.metadata);
+        if (include)
+          this.contextEntry!.actions.push(event);
         break;
       }
       case 'event': {
         const metadata = event.metadata;
         if (metadata.pageId) {
           if (metadata.method === '__create__')
-            this._pageEntry(metadata.pageId).objects[metadata.params.guid] = metadata.params.initializer;
+            this.contextEntry!.objects[metadata.params.guid] = metadata.params.initializer;
           else
-            this._pageEntry(metadata.pageId).events.push(event);
+            this.contextEntry!.events.push(event);
         }
         break;
       }
@@ -161,8 +151,6 @@ export class TraceModel {
     if (event.type === 'action') {
       if (typeof event.metadata.error === 'string')
         event.metadata.error = { error: { name: 'Error', message: event.metadata.error } };
-      if (event.metadata && typeof event.hasSnapshot !== 'boolean')
-        event.hasSnapshot = commandsWithTracingSnapshots.has(event.metadata);
     }
     return event;
   }
@@ -202,27 +190,6 @@ export class TraceModel {
   }
 }
 
-export type ContextEntry = {
-  startTime: number;
-  endTime: number;
-  browserName: string;
-  options: trace.BrowserContextEventOptions;
-  pages: PageEntry[];
-  resources: ResourceSnapshot[];
-};
-
-export type PageEntry = {
-  actions: trace.ActionTraceEvent[];
-  events: trace.ActionTraceEvent[];
-  objects: { [key: string]: any };
-  screencastFrames: {
-    sha1: string,
-    timestamp: number,
-    width: number,
-    height: number,
-  }[];
-};
-
 export class PersistentSnapshotStorage extends BaseSnapshotStorage {
   private _entries: Map<string, zip.Entry>;
 
@@ -239,96 +206,6 @@ export class PersistentSnapshotStorage extends BaseSnapshotStorage {
   }
 }
 
-// Prior to version 2 we did not have a hasSnapshot bit on.
-export const commandsWithTracingSnapshots = new Set([
-  'EventTarget.waitForEventInfo',
-  'BrowserContext.waitForEventInfo',
-  'Page.waitForEventInfo',
-  'WebSocket.waitForEventInfo',
-  'ElectronApplication.waitForEventInfo',
-  'AndroidDevice.waitForEventInfo',
-  'Page.goBack',
-  'Page.goForward',
-  'Page.reload',
-  'Page.setViewportSize',
-  'Page.keyboardDown',
-  'Page.keyboardUp',
-  'Page.keyboardInsertText',
-  'Page.keyboardType',
-  'Page.keyboardPress',
-  'Page.mouseMove',
-  'Page.mouseDown',
-  'Page.mouseUp',
-  'Page.mouseClick',
-  'Page.mouseWheel',
-  'Page.touchscreenTap',
-  'Frame.evalOnSelector',
-  'Frame.evalOnSelectorAll',
-  'Frame.addScriptTag',
-  'Frame.addStyleTag',
-  'Frame.check',
-  'Frame.click',
-  'Frame.dragAndDrop',
-  'Frame.dblclick',
-  'Frame.dispatchEvent',
-  'Frame.evaluateExpression',
-  'Frame.evaluateExpressionHandle',
-  'Frame.fill',
-  'Frame.focus',
-  'Frame.getAttribute',
-  'Frame.goto',
-  'Frame.hover',
-  'Frame.innerHTML',
-  'Frame.innerText',
-  'Frame.inputValue',
-  'Frame.isChecked',
-  'Frame.isDisabled',
-  'Frame.isEnabled',
-  'Frame.isHidden',
-  'Frame.isVisible',
-  'Frame.isEditable',
-  'Frame.press',
-  'Frame.selectOption',
-  'Frame.setContent',
-  'Frame.setInputFiles',
-  'Frame.tap',
-  'Frame.textContent',
-  'Frame.type',
-  'Frame.uncheck',
-  'Frame.waitForTimeout',
-  'Frame.waitForFunction',
-  'Frame.waitForSelector',
-  'Frame.expect',
-  'JSHandle.evaluateExpression',
-  'ElementHandle.evaluateExpression',
-  'JSHandle.evaluateExpressionHandle',
-  'ElementHandle.evaluateExpressionHandle',
-  'ElementHandle.evalOnSelector',
-  'ElementHandle.evalOnSelectorAll',
-  'ElementHandle.check',
-  'ElementHandle.click',
-  'ElementHandle.dblclick',
-  'ElementHandle.dispatchEvent',
-  'ElementHandle.fill',
-  'ElementHandle.hover',
-  'ElementHandle.innerHTML',
-  'ElementHandle.innerText',
-  'ElementHandle.inputValue',
-  'ElementHandle.isChecked',
-  'ElementHandle.isDisabled',
-  'ElementHandle.isEditable',
-  'ElementHandle.isEnabled',
-  'ElementHandle.isHidden',
-  'ElementHandle.isVisible',
-  'ElementHandle.press',
-  'ElementHandle.scrollIntoViewIfNeeded',
-  'ElementHandle.selectOption',
-  'ElementHandle.selectText',
-  'ElementHandle.setInputFiles',
-  'ElementHandle.tap',
-  'ElementHandle.textContent',
-  'ElementHandle.type',
-  'ElementHandle.uncheck',
-  'ElementHandle.waitForElementState',
-  'ElementHandle.waitForSelector'
-]);
+function isTracing(metadata: CallMetadata): boolean {
+  return metadata.method.startsWith('tracing');
+}

@@ -127,7 +127,7 @@ class HtmlReporter {
     const stats = builder.build(reports);
 
     if (!stats.ok && !process.env.CI && !process.env.PWTEST_SKIP_TEST_OUTPUT) {
-      showHTMLReport(reportFolder);
+      await showHTMLReport(reportFolder);
     } else {
       console.log('');
       console.log('');
@@ -168,7 +168,6 @@ export async function showHTMLReport(reportFolder: string | undefined) {
   const url = await server.start(9323);
   console.log('');
   console.log(colors.cyan(`  Serving HTML report at ${url}. Press Ctrl+C to quit.`));
-  console.log('');
   open(url);
   process.on('SIGINT', () => process.exit(0));
   await new Promise(() => {});

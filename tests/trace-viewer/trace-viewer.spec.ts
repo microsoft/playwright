@@ -176,17 +176,19 @@ test('should show empty trace viewer', async ({ showTraceViewer }, testInfo) => 
 test('should open simple trace viewer', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await expect(traceViewer.actionTitles).toHaveText([
+    /browserContext.newPage— [\d.ms]+/,
     /page.gotodata:text\/html,<html>Hello world<\/html>— [\d.ms]+/,
     /page.setContent— [\d.ms]+/,
     /expect.toHaveTextbutton— [\d.ms]+/,
     /page.evaluate— [\d.ms]+/,
     /page.click"Click"— [\d.ms]+/,
     /page.waitForEvent— [\d.ms]+/,
+    /page.route— [\d.ms]+/,
     /page.waitForNavigation— [\d.ms]+/,
     /page.waitForTimeout— [\d.ms]+/,
     /page.gotohttp:\/\/localhost:\d+\/frames\/frame.html— [\d.ms]+/,
+    /route.continue— [\d.ms]+/,
     /page.setViewportSize— [\d.ms]+/,
-    /page.hoverbody— [\d.ms]+/,
   ]);
 });
 
@@ -256,12 +258,6 @@ test('should have correct stack trace', async ({ showTraceViewer }) => {
   await expect(traceViewer.stackFrames).toContainText([
     /doClick\s+trace-viewer.spec.ts\s+:\d+/,
     /recordTrace\s+trace-viewer.spec.ts\s+:\d+/,
-  ], { useInnerText: true });
-
-  await traceViewer.selectAction('page.hover');
-  await traceViewer.showSourceTab();
-  await expect(traceViewer.stackFrames).toContainText([
-    /BrowserType.browserType._onWillCloseContext\s+trace-viewer.spec.ts\s+:\d+/,
   ], { useInnerText: true });
 });
 

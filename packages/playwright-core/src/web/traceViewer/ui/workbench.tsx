@@ -15,7 +15,7 @@
 */
 
 import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
-import { ContextEntry } from '../traceModel';
+import { ContextEntry, createEmptyContext } from '../entries';
 import { ActionList } from './actionList';
 import { TabbedPane } from './tabbedPane';
 import { Timeline } from './timeline';
@@ -48,13 +48,6 @@ export const Workbench: React.FunctionComponent<{
       }
     })();
   }, [traceURL]);
-
-  const actions = React.useMemo(() => {
-    const actions: ActionTraceEvent[] = [];
-    for (const page of contextEntry.pages)
-      actions.push(...page.actions);
-    return actions;
-  }, [contextEntry]);
 
   const defaultSnapshotSize = contextEntry.options.viewport || { width: 1280, height: 720 };
   const boundaries = { minimum: contextEntry.startTime, maximum: contextEntry.endTime };
@@ -98,7 +91,7 @@ export const Workbench: React.FunctionComponent<{
         ]} selectedTab={selectedTab} setSelectedTab={setSelectedTab}/>
       </SplitView>
       <ActionList
-        actions={actions}
+        actions={contextEntry.actions}
         selectedAction={selectedAction}
         highlightedAction={highlightedAction}
         onSelected={action => {
@@ -111,17 +104,4 @@ export const Workbench: React.FunctionComponent<{
   </div>;
 };
 
-const now = performance.now();
-const emptyContext: ContextEntry = {
-  startTime: now,
-  endTime: now,
-  browserName: '',
-  options: {
-    deviceScaleFactor: 1,
-    isMobile: false,
-    viewport: { width: 1280, height: 800 },
-    _debugName: '<empty>',
-  },
-  pages: [],
-  resources: [],
-};
+const emptyContext = createEmptyContext();

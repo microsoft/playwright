@@ -167,6 +167,12 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
     });
   }
 
+  async _internalResponse(): Promise<Response | null> {
+    return this._wrapApiCall(async (channel: channels.RequestChannel) => {
+      return Response.fromNullable((await channel.response()).response);
+    }, undefined, true);
+  }
+
   frame(): Frame {
     return Frame.from(this._initializer.frame);
   }
@@ -386,9 +392,13 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
     await this._continue(options, false);
   }
 
-  async _continue(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer }, interceptResponse: NotInterceptResponse): Promise<null>;
-  async _continue(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer }, interceptResponse: InterceptResponse): Promise<api.Response>;
-  async _continue(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer }, interceptResponse: boolean): Promise<null|api.Response> {
+  async _internalContinue(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer } = {}) {
+    await this._continue(options, false, true).catch(() => {});
+  }
+
+  async _continue(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer }, interceptResponse: NotInterceptResponse, isInternal?: boolean): Promise<null>;
+  async _continue(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer }, interceptResponse: InterceptResponse, isInternal?: boolean): Promise<api.Response>;
+  async _continue(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer }, interceptResponse: boolean, isInternal?: boolean): Promise<null|api.Response> {
     return await this._wrapApiCall(async (channel: channels.RouteChannel) => {
       const postDataBuffer = isString(options.postData) ? Buffer.from(options.postData, 'utf8') : options.postData;
       const result = await channel.continue({
@@ -401,7 +411,7 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
       if (result.response)
         return new InterceptedResponse(this, result.response);
       return null;
-    });
+    }, undefined, isInternal);
   }
 
   async _responseBody(): Promise<Buffer> {
@@ -585,7 +595,7 @@ export class WebSocket extends ChannelOwner<channels.WebSocketChannel, channels.
     return this._wrapApiCall(async (channel: channels.WebSocketChannel) => {
       const timeout = this._page._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
       const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
-      const waiter = Waiter.createForEvent(this, event);
+      const waiter = Waiter.createForEvent(channel, event);
       waiter.rejectOnTimeout(timeout, `Timeout while waiting for event "${event}"`);
       if (event !== Events.WebSocket.Error)
         waiter.rejectOnEvent(this, Events.WebSocket.Error, new Error('Socket error'));
