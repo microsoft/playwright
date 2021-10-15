@@ -472,6 +472,8 @@ export function createLaxTextMatcher(text: string): TextMatcher {
 export function createStrictTextMatcher(text: string): TextMatcher {
   text = text.trim().replace(/\s+/g, ' ');
   return (elementText: ElementText) => {
+    if (!text && !elementText.immediate.length)
+      return true;
     return elementText.immediate.some(s => s.trim().replace(/\s+/g, ' ') === text);
   };
 }
