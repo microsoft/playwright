@@ -537,7 +537,8 @@ interface TestConfig {
    */
   repeatEach?: number;
   /**
-   * The maximum number of retry attempts given to failed tests. Learn more about [test retries](https://playwright.dev/docs/test-retries#retries).
+   * The maximum number of retry attempts given to failed tests. By default failing tests are not reried. Learn more about
+   * [test retries](https://playwright.dev/docs/test-retries#retries).
    */
   retries?: number;
   /**
