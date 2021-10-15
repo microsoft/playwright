@@ -258,6 +258,54 @@ Running 124 tests using 6 workers
 ······F·············································
 ```
 
+### HTML reporter
+
+HTML reporter produces a self-contained folder that contains report for the test run that can be served as a web page.
+It is usually used together with some terminal reporter like `dot` or `line`.
+
+```bash
+npx playwright test --reporter=html,dot
+```
+
+By default, report is written into the `playwright-report` folder in the current working directory. One can override
+that location using the `PLAYWRIGHT_HTML_REPORT` environment variable or a reporter configuration.
+
+In configuration file, pass options directly:
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  reporter: [ ['html', { outputFolder: 'my-report' }] ],
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  reporter: [ ['html', { outputFolder: 'my-report' }] ],
+};
+export default config;
+```
+
+A quick way of opening the last test run report is:
+
+```bash
+npx playwright show-report
+```
+
+Or if there is a custom folder name:
+
+```bash
+npx playwright show-report my-report
+```
+
+
 ### JSON reporter
 
 JSON reporter produces an object with all information about the test run. It is usually used together with some terminal reporter like `dot` or `line`.
