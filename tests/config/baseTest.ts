@@ -18,9 +18,8 @@ import { Fixtures, _baseTest } from '@playwright/test';
 import * as path from 'path';
 import * as fs from 'fs';
 import { installCoverageHooks } from './coverage';
-import * as childProcess from 'child_process';
 import { start } from 'playwright-core/lib/outofprocess';
-import { PlaywrightClient } from 'playwright-core/lib/remote/playwrightClient';
+import { GridClient } from 'playwright-core/src/grid/gridClient';
 import type { LaunchOptions } from 'playwright-core';
 import { commonFixtures, CommonFixtures, serverFixtures, ServerFixtures, ServerOptions } from './commonFixtures';
 
@@ -57,36 +56,15 @@ class DriverMode {
 }
 
 class ServiceMode {
-  private _client: import('playwright-core/src/remote/playwrightClient').PlaywrightClient;
-  private _serviceProcess: childProcess.ChildProcess;
+  private _gridClient: GridClient;
 
   async setup(workerIndex: number) {
-    const port = 10507 + workerIndex;
-    this._serviceProcess = childProcess.fork(path.join(__dirname, '..', '..', 'packages', 'playwright-core', 'lib', 'cli', 'cli.js'), ['run-server', String(port)], {
-      stdio: 'pipe'
-    });
-    this._serviceProcess.stderr.pipe(process.stderr);
-    await new Promise<void>(f => {
-      this._serviceProcess.stdout.on('data', data => {
-        if (data.toString().includes('Listening on'))
-          f();
-      });
-    });
-    this._serviceProcess.on('exit', this._onExit);
-    this._client = await PlaywrightClient.connect({ wsEndpoint: `ws://localhost:${port}/ws` });
-    return this._client.playwright();
+    this._gridClient = await GridClient.connect('http://localhost:3333');
+    return this._gridClient.playwright();
   }
 
   async teardown() {
-    await this._client.close();
-    this._serviceProcess.removeListener('exit', this._onExit);
-    const processExited = new Promise(f => this._serviceProcess.on('exit', f));
-    this._serviceProcess.kill();
-    await processExited;
-  }
-
-  private _onExit(exitCode: number, signal: string) {
-    throw new Error(`Server closed with exitCode=${exitCode} signal=${signal}`);
+    await this._gridClient.close();
   }
 }
 
