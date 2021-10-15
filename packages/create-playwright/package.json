@@ -15,8 +15,8 @@
   "license": "MIT",
   "scripts": {
     "prepublish": "npm run build",
-    "watch": "cd src && ncc build index.ts --watch --out ../lib && cd ..",
-    "build": "cd src && ncc build index.ts --minify --out ../lib && cd ..",
+    "watch": "cd src && ncc build cli.ts --watch --out ../lib && cd ..",
+    "build": "cd src && ncc build cli.ts --minify --out ../lib && cd ..",
     "test": "npx playwright test"
   },
   "devDependencies": {

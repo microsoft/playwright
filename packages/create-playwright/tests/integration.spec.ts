@@ -18,7 +18,7 @@ import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 
-import type { PromptOptions } from '../src';
+import type { PromptOptions } from '../src/generator';
 
 type TestFixtures = {
   packageManager: 'npm' | 'yarn';
