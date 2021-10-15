@@ -572,10 +572,9 @@ function positionForEvent(event: MouseEvent): Point |undefined {
   const targetElement = (event.target as HTMLElement);
   if (targetElement.nodeName !== 'CANVAS')
     return;
-  const rect = targetElement.getBoundingClientRect();
   return {
-    x: event.clientX - rect.left,
-    y: event.clientY - rect.top,
+    x: event.offsetX,
+    y: event.offsetY,
   };
 }
 
