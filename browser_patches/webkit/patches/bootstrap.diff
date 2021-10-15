@@ -2345,6 +2345,21 @@ index 5c773a489da19cc2085ecce713eb007b200f8852..f64d32049c71a4109071260ada20cb22
  #
  
  vpath %.in $(WEBKITADDITIONS_HEADER_SEARCH_PATHS)
+diff --git a/Source/WebCore/Modules/async-clipboard/ClipboardItemBindingsDataSource.cpp b/Source/WebCore/Modules/async-clipboard/ClipboardItemBindingsDataSource.cpp
+index 92e0d107e25a20bf8e107faa2787bff4009bd508..d0746da2da209e02325b5fa214dbee64bf9c9078 100644
+--- a/Source/WebCore/Modules/async-clipboard/ClipboardItemBindingsDataSource.cpp
++++ b/Source/WebCore/Modules/async-clipboard/ClipboardItemBindingsDataSource.cpp
+@@ -139,7 +139,9 @@ void ClipboardItemBindingsDataSource::collectDataForWriting(Clipboard& destinati
+         });
+ 
+         auto promise = typeAndItem.value;
+-        promise->whenSettled([this, protectedItem = Ref { m_item }, destination = m_writingDestination, promise, type, weakItemTypeLoader = WeakPtr { itemTypeLoader }] () mutable {
++        /* hack: gcc 8.4 will segfault if the WeakPtr is instantiated within the lambda captures */
++        auto wl = WeakPtr { itemTypeLoader };
++        promise->whenSettled([this, protectedItem = Ref { m_item }, destination = m_writingDestination, promise, type, weakItemTypeLoader = WTFMove(wl)] () mutable {
+             if (!weakItemTypeLoader)
+                 return;
+ 
 diff --git a/Source/WebCore/Modules/geolocation/Geolocation.cpp b/Source/WebCore/Modules/geolocation/Geolocation.cpp
 index e272ecdef2a7d066a121ec366a9906d4b8db14c7..f922d861134d44958c58e6332fb3d029da150921 100644
 --- a/Source/WebCore/Modules/geolocation/Geolocation.cpp
@@ -9329,7 +9344,7 @@ index daeba5d84582c506391b2eca143710d23a17de12..cd68dd1d1b7e7d952040e6546a66fbbb
      RemoveStorageAccessForFrame(WebCore::FrameIdentifier frameID, WebCore::PageIdentifier pageID);
      LogUserInteraction(WebCore::RegistrableDomain domain)
 diff --git a/Source/WebKit/NetworkProcess/NetworkProcess.cpp b/Source/WebKit/NetworkProcess/NetworkProcess.cpp
-index f95062614e9640c3cd629d7394cbeb85982b54c8..9a203eb7d62e5d0b98c73b521e3fb4434a15261e 100644
+index f95062614e9640c3cd629d7394cbeb85982b54c8..9483194f2d25e42174a72c667e73b9aafe2a67a0 100644
 --- a/Source/WebKit/NetworkProcess/NetworkProcess.cpp
 +++ b/Source/WebKit/NetworkProcess/NetworkProcess.cpp
 @@ -26,7 +26,6 @@
@@ -9400,6 +9415,17 @@ index f95062614e9640c3cd629d7394cbeb85982b54c8..9a203eb7d62e5d0b98c73b521e3fb443
  #if ENABLE(INTELLIGENT_TRACKING_PREVENTION)
  void NetworkProcess::dumpResourceLoadStatistics(PAL::SessionID sessionID, CompletionHandler<void(String)>&& completionHandler)
  {
+@@ -1940,7 +1992,9 @@ void NetworkProcess::deleteAndRestrictWebsiteDataForRegistrableDomains(PAL::Sess
+ 
+     if (websiteDataTypes.contains(WebsiteDataType::DiskCache)) {
+         forEachNetworkSession([sessionID, fetchOptions, &domainsToDeleteAllNonCookieWebsiteDataFor, &callbackAggregator](auto& session) {
+-            fetchDiskCacheEntries(session.cache(), sessionID, fetchOptions, [domainsToDeleteAllNonCookieWebsiteDataFor, callbackAggregator, session = WeakPtr { session }](auto entries) mutable {
++            /* hack: gcc 8.4 will segfault if the WeakPtr is instantiated within the lambda captures */
++            auto ws = WeakPtr { session };
++            fetchDiskCacheEntries(session.cache(), sessionID, fetchOptions, [domainsToDeleteAllNonCookieWebsiteDataFor, callbackAggregator, session = WTFMove(ws)](auto entries) mutable {
+                 if (!session)
+                     return;
+ 
 diff --git a/Source/WebKit/NetworkProcess/NetworkProcess.h b/Source/WebKit/NetworkProcess/NetworkProcess.h
 index e02cbdf780318dbd2fa0b208c8602866dfbca23f..3e33da081d06f4b2199156a34eba62b072764770 100644
 --- a/Source/WebKit/NetworkProcess/NetworkProcess.h
@@ -12672,6 +12698,18 @@ index 454c61ffdefecc476d1560c7c43f5b5d345f281d..6de7509037b7683ddd403ee247bdf284
  // FSM: Idle => Active => Completed
  class PopUpSOAuthorizationSession final : public SOAuthorizationSession {
  public:
+diff --git a/Source/WebKit/UIProcess/Cocoa/SOAuthorization/SubFrameSOAuthorizationSession.h b/Source/WebKit/UIProcess/Cocoa/SOAuthorization/SubFrameSOAuthorizationSession.h
+index 24479b46826f7a1626f0e581764746d330e3a1c2..a844efd35224414b1de612644fc352b198db48e8 100644
+--- a/Source/WebKit/UIProcess/Cocoa/SOAuthorization/SubFrameSOAuthorizationSession.h
++++ b/Source/WebKit/UIProcess/Cocoa/SOAuthorization/SubFrameSOAuthorizationSession.h
+@@ -31,6 +31,7 @@
+ #include "NavigationSOAuthorizationSession.h"
+ #include <WebCore/FrameIdentifier.h>
+ #include <wtf/Deque.h>
++#include <variant>
+ 
+ namespace WebKit {
+ 
 diff --git a/Source/WebKit/UIProcess/Cocoa/UIDelegate.h b/Source/WebKit/UIProcess/Cocoa/UIDelegate.h
 index e679695a3fe1a0aef28dd5af0248d6906f341987..7a8898483f4a22d668a54c56a840fed98a4c4a3e 100644
 --- a/Source/WebKit/UIProcess/Cocoa/UIDelegate.h
@@ -21878,7 +21916,7 @@ index 0000000000000000000000000000000000000000..dd6a53e2d57318489b7e49dd7373706d
 +    LIBVPX_LIBRARIES
 +)
 diff --git a/Source/cmake/OptionsGTK.cmake b/Source/cmake/OptionsGTK.cmake
-index 0cea3ba03a4c045e353e533a73272edaaf0d4f5b..c35e7461ff24ef0704ca3e7284282e9e33afcb99 100644
+index 0cea3ba03a4c045e353e533a73272edaaf0d4f5b..77ba22cfa44c2e74a7a00f6eb051ebf103e44775 100644
 --- a/Source/cmake/OptionsGTK.cmake
 +++ b/Source/cmake/OptionsGTK.cmake
 @@ -5,6 +5,7 @@ WEBKIT_OPTION_BEGIN()
@@ -21889,6 +21927,15 @@ index 0cea3ba03a4c045e353e533a73272edaaf0d4f5b..c35e7461ff24ef0704ca3e7284282e9e
  
  set(USER_AGENT_BRANDING "" CACHE STRING "Branding to add to user agent string")
  
+@@ -12,7 +13,7 @@ find_package(Cairo 1.14.0 REQUIRED)
+ find_package(Fontconfig 2.8.0 REQUIRED)
+ find_package(Freetype 2.4.2 REQUIRED)
+ find_package(LibGcrypt 1.6.0 REQUIRED)
+-find_package(GLIB 2.58.3 REQUIRED COMPONENTS gio gio-unix gobject gthread gmodule)
++find_package(GLIB 2.56.4 REQUIRED COMPONENTS gio gio-unix gobject gthread gmodule)
+ find_package(HarfBuzz 0.9.18 REQUIRED COMPONENTS ICU)
+ find_package(ICU 61.2 REQUIRED COMPONENTS data i18n uc)
+ find_package(JPEG REQUIRED)
 @@ -28,6 +29,10 @@ find_package(EGL)
  find_package(OpenGL)
  find_package(OpenGLES2)
@@ -21954,10 +22001,10 @@ index 0cea3ba03a4c045e353e533a73272edaaf0d4f5b..c35e7461ff24ef0704ca3e7284282e9e
  
  # Finalize the value for all options. Do not attempt to use an option before
 diff --git a/Source/cmake/OptionsWPE.cmake b/Source/cmake/OptionsWPE.cmake
-index 8933dc3eeef31c26eaff32a4ab7685d969293003..38023a9b333a670a9b3c03ee0d30d68c6f62f55e 100644
+index 8933dc3eeef31c26eaff32a4ab7685d969293003..81fe25d78c38cfa35c5b4930c16b3adcb2e2a2e8 100644
 --- a/Source/cmake/OptionsWPE.cmake
 +++ b/Source/cmake/OptionsWPE.cmake
-@@ -3,6 +3,7 @@ include(VersioningUtils)
+@@ -3,12 +3,13 @@ include(VersioningUtils)
  
  SET_PROJECT_VERSION(2 33 2)
  
@@ -21965,6 +22012,13 @@ index 8933dc3eeef31c26eaff32a4ab7685d969293003..38023a9b333a670a9b3c03ee0d30d68c
  set(USER_AGENT_BRANDING "" CACHE STRING "Branding to add to user agent string")
  
  find_package(Cairo 1.14.0 REQUIRED)
+ find_package(Fontconfig 2.8.0 REQUIRED)
+ find_package(Freetype 2.4.2 REQUIRED)
+-find_package(GLIB 2.58.3 REQUIRED COMPONENTS gio gio-unix gobject gthread gmodule)
++find_package(GLIB 2.56.4 REQUIRED COMPONENTS gio gio-unix gobject gthread gmodule)
+ find_package(HarfBuzz 0.9.18 REQUIRED COMPONENTS ICU)
+ find_package(ICU 61.2 REQUIRED COMPONENTS data i18n uc)
+ find_package(JPEG REQUIRED)
 @@ -54,7 +55,6 @@ WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_INTELLIGENT_TRACKING_PREVENTION PRIVATE
  WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_LAYOUT_FORMATTING_CONTEXT PRIVATE ${ENABLE_EXPERIMENTAL_FEATURES})
  WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_MEDIA_SESSION PRIVATE ${ENABLE_EXPERIMENTAL_FEATURES})
