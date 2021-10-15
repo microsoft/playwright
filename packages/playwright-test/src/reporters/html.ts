@@ -23,6 +23,7 @@ import { HttpServer } from 'playwright-core/src/utils/httpServer';
 import { calculateSha1, removeFolders } from 'playwright-core/src/utils/utils';
 import { toPosixPath } from './json';
 import RawReporter, { JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep, JsonAttachment } from './raw';
+import assert from 'assert';
 
 export type Stats = {
   total: number;
@@ -114,28 +115,53 @@ class HtmlReporter {
       const report = rawReporter.generateProjectReport(this.config, suite);
       return report;
     });
-    const reportFolder = path.resolve(process.cwd(), process.env[`PLAYWRIGHT_HTML_REPORT`] || 'playwright-report');
+    const reportFolder = htmlReportFolder();
     await removeFolders([reportFolder]);
-    new HtmlBuilder(reports, reportFolder, this.config.rootDir);
+    const builder = new HtmlBuilder(reportFolder, this.config.rootDir);
+    const stats = builder.build(reports);
 
-    if (!process.env.CI && !process.env.PWTEST_SKIP_TEST_OUTPUT) {
-      const server = new HttpServer();
-      server.routePrefix('/', (request, response) => {
-        let relativePath = new URL('http://localhost' + request.url).pathname;
-        if (relativePath === '/')
-          relativePath = '/index.html';
-        const absolutePath = path.join(reportFolder, ...relativePath.split('/'));
-        return server.serveFile(response, absolutePath);
-      });
-      const url = await server.start(9323);
+    if (!stats.ok && !process.env.CI && !process.env.PWTEST_SKIP_TEST_OUTPUT) {
+      showHTMLReport(reportFolder);
+    } else {
       console.log('');
-      console.log(colors.cyan(`  Serving HTML report at ${url}. Press Ctrl+C to quit.`));
       console.log('');
-      open(url);
-      process.on('SIGINT', () => process.exit(0));
-      await new Promise(() => {});
+      console.log('All tests passed. To open last HTML report run:');
+      console.log(colors.cyan(`
+  npx playwright show-report
+`));
+      console.log('');
     }
   }
+}
+
+export function htmlReportFolder(): string {
+  return path.resolve(process.cwd(), process.env[`PLAYWRIGHT_HTML_REPORT`] || 'playwright-report');
+}
+
+export async function showHTMLReport(reportFolder: string | undefined) {
+  const folder = reportFolder || htmlReportFolder();
+  try {
+    assert(fs.statSync(folder).isDirectory());
+  } catch (e) {
+    console.log(colors.red(`No report found at "${folder}"`));
+    process.exit(1);
+    return;
+  }
+  const server = new HttpServer();
+  server.routePrefix('/', (request, response) => {
+    let relativePath = new URL('http://localhost' + request.url).pathname;
+    if (relativePath === '/')
+      relativePath = '/index.html';
+    const absolutePath = path.join(folder, ...relativePath.split('/'));
+    return server.serveFile(response, absolutePath);
+  });
+  const url = await server.start(9323);
+  console.log('');
+  console.log(colors.cyan(`  Serving HTML report at ${url}. Press Ctrl+C to quit.`));
+  console.log('');
+  open(url);
+  process.on('SIGINT', () => process.exit(0));
+  await new Promise(() => {});
 }
 
 class HtmlBuilder {
@@ -144,10 +170,13 @@ class HtmlBuilder {
   private _rootDir: string;
   private _dataFolder: string;
 
-  constructor(rawReports: JsonReport[], outputDir: string, rootDir: string) {
+  constructor(outputDir: string, rootDir: string) {
     this._rootDir = rootDir;
     this._reportFolder = path.resolve(process.cwd(), outputDir);
     this._dataFolder = path.join(this._reportFolder, 'data');
+  }
+
+  build(rawReports: JsonReport[]): Stats {
     fs.mkdirSync(this._dataFolder, { recursive: true });
 
     // Copy app.
@@ -187,6 +216,7 @@ class HtmlBuilder {
       });
     }
     fs.writeFileSync(path.join(this._dataFolder, 'projects.json'), JSON.stringify(projects, undefined, 2));
+    return projects.reduce((a, p) => addStats(a, p.stats), emptyStats());
   }
 
   private _createTestCase(test: JsonTestCase): TestCase {

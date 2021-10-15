@@ -222,7 +222,6 @@ program
     }).addHelpText('afterAll', `
 Examples:
 
-  $ show-trace trace/directory
   $ show-trace https://example.com/trace.zip`);
 
 if (!process.env.PW_CLI_TARGET_LANG) {
@@ -235,6 +234,7 @@ if (!process.env.PW_CLI_TARGET_LANG) {
 
   if (playwrightTestPackagePath) {
     require(playwrightTestPackagePath).addTestCommand(program);
+    require(playwrightTestPackagePath).addShowReportCommand(program);
   } else {
     const command = program.command('test').allowUnknownOption(true);
     command.description('Run tests with Playwright Test. Available in @playwright/test package.');

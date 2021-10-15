@@ -24,6 +24,7 @@ import { Runner, builtInReporters, BuiltInReporter } from './runner';
 import { stopProfiling, startProfiling } from './profiler';
 import { FilePatternFilter } from './util';
 import { Loader } from './loader';
+import { showHTMLReport } from './reporters/html';
 
 const defaultTimeout = 30000;
 const defaultReporter: BuiltInReporter = process.env.CI ? 'dot' : 'list';
@@ -77,9 +78,22 @@ Arguments [test-filter...]:
   Pass arguments to filter test files. Each argument is treated as a regular expression.
 
 Examples:
-  $ test my.spec.ts
-  $ test --headed
-  $ test --browser=webkit`);
+  $ npx playwright test my.spec.ts
+  $ npx playwright test --headed
+  $ npx playwright test --browser=webkit`);
+}
+
+export function addShowReportCommand(program: Command) {
+  const command = program.command('show-report [report]');
+  command.description('show HTML report');
+  command.action(report => showHTMLReport(report));
+  command.addHelpText('afterAll', `
+Arguments [report]:
+  When specified, opens given report, otherwise opens last generated report.
+
+Examples:
+  $ npx playwright show-report
+  $ npx playwright show-report playwright-report`);
 }
 
 async function createLoader(opts: { [key: string]: any }): Promise<Loader> {
