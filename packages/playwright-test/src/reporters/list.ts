@@ -32,8 +32,8 @@ class ListReporter extends BaseReporter {
   private readonly _liveTerminal: string | boolean | undefined;
   private readonly _ttyWidthForTest: number;
 
-  constructor() {
-    super();
+  constructor(options: { omitFailures?: boolean } = {}) {
+    super(options);
     this._ttyWidthForTest = parseInt(process.env.PWTEST_TTY_WIDTH || '', 10);
     this._liveTerminal = process.stdout.isTTY || process.env.PWTEST_SKIP_TEST_OUTPUT || !!this._ttyWidthForTest;
   }
