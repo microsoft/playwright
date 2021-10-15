@@ -234,10 +234,17 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
       return;
     const snapshotName = `${name}@${metadata.id}`;
     metadata.snapshots.push({ title: name, snapshotName });
+    // We have |element| for input actions (page.click and handle.click)
+    // and |sdkObject| element for accessors like handle.textContent.
+    if (!element && sdkObject instanceof ElementHandle)
+      element = sdkObject;
     await this._snapshotter.captureSnapshot(sdkObject.attribution.page, snapshotName, element).catch(() => {});
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
+    // Set afterSnapshot name for all the actions that operate selectors.
+    // Elements resolved from selectors will be marked on the snapshot.
+    metadata.afterSnapshot = `after@${metadata.id}`;
     const beforeSnapshot = this._captureSnapshot('before', sdkObject, metadata);
     this._pendingCalls.set(metadata.id, { sdkObject, metadata, beforeSnapshot });
     await beforeSnapshot;

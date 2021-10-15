@@ -1281,9 +1281,10 @@ export class Frame extends SdkObject {
     return controller.run(async progress => {
       progress.log(`waiting for selector "${selector}"`);
       const rerunnableTask = new RerunnableTask(data, progress, injectedScript => {
-        return injectedScript.evaluateHandle((injected, { info, taskData, callbackText, querySelectorAll, logScale, omitAttached }) => {
+        return injectedScript.evaluateHandle((injected, { info, taskData, callbackText, querySelectorAll, logScale, omitAttached, snapshotName }) => {
           const callback = injected.eval(callbackText) as DomTaskBody<T, R, Element | undefined>;
           const poller = logScale ? injected.pollLogScale.bind(injected) : injected.pollRaf.bind(injected);
+          let markedElements = new Set<Element>();
           return poller((progress, continuePolling) => {
             let element: Element | undefined;
             let elements: Element[] = [];
@@ -1293,16 +1294,30 @@ export class Frame extends SdkObject {
               progress.logRepeating(`  selector resolved to ${elements.length} element${elements.length === 1 ? '' : 's'}`);
             } else {
               element = injected.querySelector(info.parsed, document, info.strict);
-              elements = [];
+              elements = element ? [element] : [];
               if (element)
                 progress.logRepeating(`  selector resolved to ${injected.previewNode(element)}`);
             }
 
             if (!element && !omitAttached)
               return continuePolling;
+
+            if (snapshotName) {
+              const previouslyMarkedElements = markedElements;
+              markedElements = new Set(elements);
+              for (const e of previouslyMarkedElements) {
+                if (!markedElements.has(e))
+                  e.removeAttribute('__playwright_target__');
+              }
+              for (const e of markedElements) {
+                if (!previouslyMarkedElements.has(e))
+                  e.setAttribute('__playwright_target__', snapshotName);
+              }
+            }
+
             return callback(progress, element, taskData as T, elements, continuePolling);
           });
-        }, { info, taskData, callbackText, querySelectorAll: options.querySelectorAll, logScale: options.logScale, omitAttached: options.omitAttached });
+        }, { info, taskData, callbackText, querySelectorAll: options.querySelectorAll, logScale: options.logScale, omitAttached: options.omitAttached, snapshotName: progress.metadata.afterSnapshot });
       }, true);
 
       if (this._detached)

@@ -19,7 +19,7 @@ import { createGuid } from '../utils/utils';
 import type { Browser } from './browser';
 import type { BrowserContext } from './browserContext';
 import type { BrowserType } from './browserType';
-import { ElementHandle } from './dom';
+import type { ElementHandle } from './dom';
 import type { Frame } from './frames';
 import type { Page } from './page';
 
