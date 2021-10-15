@@ -28,6 +28,11 @@ body {
   overflow: auto;
   color: #616161;
   background-color: #f3f3f3;
+  border-left: 1px solid #dfe1e5;
+}
+
+.test-case-column {
+  border-right: 1px solid #dfe1e5;
 }
 
 .tree-item-title {
@@ -44,12 +49,7 @@ body {
 }
 
 .suite-tree-column .tree-item-title.selected {
-  background-color: #0060c0;
-  color: white;
-}
-
-.suite-tree-column .tree-item-title.selected * {
-  color: white !important;
+  font-weight: bold;
 }
 
 .error-message {
@@ -89,7 +89,7 @@ body {
   flex: auto;
   display: flex;
   flex-direction: column;
-  max-width: 600px;
+  padding: 0 16px;
   overflow: auto;
 }
 
@@ -211,4 +211,9 @@ video, img {
   margin: 20px auto;
   min-width: 80%;
   min-height: 300px;
+}
+
+.columns {
+  max-width: 1280px;
+  margin: 0 auto;
 }
