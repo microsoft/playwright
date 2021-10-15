@@ -102,6 +102,12 @@ export type TestStep = {
 class HtmlReporter {
   private config!: FullConfig;
   private suite!: Suite;
+  private _outputFolder: string | undefined;
+
+  constructor(options: { outputFolder?: string } = {}) {
+    // TODO: resolve relative to config.
+    this._outputFolder = options.outputFolder;
+  }
 
   onBegin(config: FullConfig, suite: Suite) {
     this.config = config;
@@ -115,7 +121,7 @@ class HtmlReporter {
       const report = rawReporter.generateProjectReport(this.config, suite);
       return report;
     });
-    const reportFolder = htmlReportFolder();
+    const reportFolder = htmlReportFolder(this._outputFolder);
     await removeFolders([reportFolder]);
     const builder = new HtmlBuilder(reportFolder, this.config.rootDir);
     const stats = builder.build(reports);
@@ -134,8 +140,12 @@ class HtmlReporter {
   }
 }
 
-export function htmlReportFolder(): string {
-  return path.resolve(process.cwd(), process.env[`PLAYWRIGHT_HTML_REPORT`] || 'playwright-report');
+export function htmlReportFolder(outputFolder?: string): string {
+  if (process.env[`PLAYWRIGHT_HTML_REPORT`])
+    return path.resolve(process.cwd(), process.env[`PLAYWRIGHT_HTML_REPORT`]);
+  if (outputFolder)
+    return outputFolder;
+  return path.resolve(process.cwd(), 'playwright-report');
 }
 
 export async function showHTMLReport(reportFolder: string | undefined) {
