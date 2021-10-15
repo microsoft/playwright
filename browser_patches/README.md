@@ -100,7 +100,9 @@ In `//mozglue/misc/StackWalk.cpp` add
 In native code use
 
 ```c++
-nsTraceRefcnt::WalkTheStack(stderr);
+#include "mozilla/StackWalk.h"
+// ...
+MozWalkTheStack(stderr);
 ```
 
 If the stack trace is still mangled `cat` it to `tools/rb/fix_linux_stack.py`
