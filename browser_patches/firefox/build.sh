@@ -66,7 +66,7 @@ echo "mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/${OBJ_FOLDER}" >> .mozconfig
 echo "ac_add_options --disable-crashreporter" >> .mozconfig
 echo "ac_add_options --disable-backgroundtasks" >> .mozconfig
 
-if [[ $FF_DEBUG_BUILD != '' ]]; then
+if [[ -n $FF_DEBUG_BUILD ]]; then
   echo "ac_add_options --enable-debug" >> .mozconfig
 fi
 
