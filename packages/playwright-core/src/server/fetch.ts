@@ -17,6 +17,7 @@
 import * as http from 'http';
 import * as https from 'https';
 import { HttpsProxyAgent } from 'https-proxy-agent';
+import { SocksProxyAgent } from 'socks-proxy-agent';
 import { pipeline, Readable, Transform } from 'stream';
 import url from 'url';
 import zlib from 'zlib';
@@ -108,9 +109,16 @@ export abstract class FetchRequest extends SdkObject {
       if (proxy) {
         // TODO: support bypass proxy
         const proxyOpts = url.parse(proxy.server);
-        if (proxy.username)
-          proxyOpts.auth = `${proxy.username}:${proxy.password || ''}`;
-        agent = new HttpsProxyAgent(proxyOpts);
+        if (proxyOpts.protocol?.startsWith('socks')) {
+          agent = new SocksProxyAgent({
+            host: proxyOpts.hostname,
+            port: proxyOpts.port || undefined,
+          });
+        } else {
+          if (proxy.username)
+            proxyOpts.auth = `${proxy.username}:${proxy.password || ''}`;
+          agent = new HttpsProxyAgent(proxyOpts);
+        }
       }
 
       const timeout = defaults.timeoutSettings.timeout(params);
