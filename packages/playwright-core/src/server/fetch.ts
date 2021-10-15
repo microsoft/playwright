@@ -109,7 +109,7 @@ export abstract class FetchRequest extends SdkObject {
       if (proxy) {
         // TODO: support bypass proxy
         const proxyOpts = url.parse(proxy.server);
-        if (proxyOpts.protocol === 'socks5:') {
+        if (proxyOpts.protocol.startsWith('socks')) {
           agent = new SocksProxyAgent({
             host: proxyOpts.hostname,
             port: proxyOpts.port || undefined,
