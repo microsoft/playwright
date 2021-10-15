@@ -25,7 +25,7 @@ import { BrowserType } from './browserType';
 import { ChannelOwner } from './channelOwner';
 import { Electron } from './electron';
 import { Fetch } from './fetch';
-import { Selectors, SelectorsOwner, sharedSelectors } from './selectors';
+import { Selectors, SelectorsOwner } from './selectors';
 import { Size } from './types';
 const dnsLookupAsync = util.promisify(dns.lookup);
 
@@ -46,7 +46,7 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel, channel
   readonly firefox: BrowserType;
   readonly webkit: BrowserType;
   readonly devices: Devices;
-  readonly selectors: Selectors;
+  selectors: Selectors;
   readonly request: Fetch;
   readonly errors: { TimeoutError: typeof TimeoutError };
   private _sockets = new Map<string, net.Socket>();
@@ -56,14 +56,17 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel, channel
     super(parent, type, guid, initializer);
     this.request = new Fetch(this);
     this.chromium = BrowserType.from(initializer.chromium);
+    this.chromium._playwright = this;
     this.firefox = BrowserType.from(initializer.firefox);
+    this.firefox._playwright = this;
     this.webkit = BrowserType.from(initializer.webkit);
+    this.webkit._playwright = this;
     this._android = Android.from(initializer.android);
     this._electron = Electron.from(initializer.electron);
     this.devices = {};
     for (const { name, descriptor } of initializer.deviceDescriptors)
       this.devices[name] = descriptor;
-    this.selectors = sharedSelectors;
+    this.selectors = new Selectors();
     this.errors = { TimeoutError };
 
     const selectorsOwner = SelectorsOwner.from(initializer.selectors);
@@ -73,6 +76,13 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel, channel
       for (const uid of this._sockets.keys())
         this._onSocksClosed(uid);
     });
+  }
+
+  _setSelectors(selectors: Selectors) {
+    const selectorsOwner = SelectorsOwner.from(this._initializer.selectors);
+    this.selectors._removeChannel(selectorsOwner);
+    this.selectors = selectors;
+    this.selectors._addChannel(selectorsOwner);
   }
 
   _enablePortForwarding(redirectPortForTest?: number) {
