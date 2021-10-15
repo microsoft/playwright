@@ -255,7 +255,7 @@ export const AttachmentLink: React.FunctionComponent<{
     {attachment.path && <a href={href || attachment.path} target='_blank'>{attachment.name}</a>}
     {attachment.body && <span>{attachment.name}</span>}
   </div>} loadChildren={attachment.body ? () => {
-    return [<div className='attachment-body'>${attachment.body}</div>];
+    return [<div className='attachment-body'>{attachment.body}</div>];
   } : undefined} depth={0}></TreeItem>;
 };
 

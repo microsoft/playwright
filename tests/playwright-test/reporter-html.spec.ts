@@ -228,3 +228,27 @@ test('should include screenshot on failure', async ({ runInlineTest, page, showR
   const src = await page.locator('img').getAttribute('src');
   expect(src).toBeTruthy();
 });
+
+test('should include stdio', async ({ runInlineTest, page, showReport }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('fails', async ({ page }) => {
+        console.log('First line');
+        console.log('Second line');
+        console.error('Third line');
+        await expect(true).toBeFalsy();
+      });
+    `,
+  }, { reporter: 'dot,html' });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+
+  await showReport();
+  await page.click('text=a.test.js');
+  await page.click('text=fails');
+  await page.locator('text=stdout').click();
+  await expect(page.locator('.attachment-body')).toHaveText('First line\nSecond line');
+  await page.locator('text=stderr').click();
+  await expect(page.locator('.attachment-body').nth(1)).toHaveText('Third line');
+});
