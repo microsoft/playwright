@@ -34,19 +34,22 @@ export const Report: React.FC = () => {
   const [report, setReport] = React.useState<ProjectTreeItem[]>([]);
   const [fetchError, setFetchError] = React.useState<string | undefined>();
   const [testId, setTestId] = React.useState<TestId | undefined>();
+  const [filter, setFilter] = React.useState<Filter>('failing');
 
   React.useEffect(() => {
     (async () => {
       try {
         const result = await fetch('data/projects.json', { cache: 'no-cache' });
         const json = (await result.json()) as ProjectTreeItem[];
+        const hasFailures = !!json.find(p => !p.stats.ok);
+        if (!hasFailures)
+          setFilter('all');
         setReport(json);
       } catch (e) {
         setFetchError(e.message);
       }
     })();
   }, []);
-  const [filter, setFilter] = React.useState<Filter>('failing');
 
   return <div className='hbox columns'>
     <SplitView sidebarSize={300} orientation='horizontal' sidebarIsFirst={true}>
@@ -57,7 +60,7 @@ export const Report: React.FC = () => {
           <div key='failing' title='Failing tests' className={'tab-element' + ('failing' === filter ? ' selected' : '')} onClick={() => setFilter('failing')}>Failing</div>
         </div>
         {!fetchError && filter === 'all' && report?.map((project, i) => <ProjectTreeItemView key={i} project={project} setTestId={setTestId} testId={testId} failingOnly={false}></ProjectTreeItemView>)}
-        {!fetchError && filter === 'failing' && report?.map((project, i) => <ProjectTreeItemView key={i} project={project} setTestId={setTestId} testId={testId} failingOnly={true}></ProjectTreeItemView>)}
+        {!fetchError && filter === 'failing' && report?.filter(p => !p.stats.ok).map((project, i) => <ProjectTreeItemView key={i} project={project} setTestId={setTestId} testId={testId} failingOnly={true}></ProjectTreeItemView>)}
       </div>
     </SplitView>
   </div>;
