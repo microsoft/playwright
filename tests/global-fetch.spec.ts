@@ -115,6 +115,14 @@ it('should return error with wrong credentials', async ({ playwright, server }) 
   expect(response2.status()).toBe(401);
 });
 
+it('should use socks proxy', async ({ playwright, server, socksPort }) => {
+  const request = await playwright.request.newContext({ proxy: {
+    server: `socks5://localhost:${socksPort}`,
+  }});
+  const response = await request.get(server.EMPTY_PAGE);
+  expect(await response.text()).toContain('Served by the SOCKS proxy');
+});
+
 it('should pass proxy credentials', async ({ playwright, server, proxyServer }) => {
   proxyServer.forwardTo(server.PORT);
   let auth;
