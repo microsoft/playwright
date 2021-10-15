@@ -39,7 +39,6 @@ const config = {
       name: 'Desktop Chrome',
       use: {
         ...devices['Desktop Chrome'],
-
       },
     },
     {
