@@ -369,7 +369,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
       };
       const trimmedUrl = trimUrl(urlOrPredicate);
       const logLine = trimmedUrl ? `waiting for request ${trimmedUrl}` : undefined;
-      return this._waitForEvent(Events.Page.Request, { predicate, timeout: options.timeout }, logLine);
+      return this._waitForEvent(channel, Events.Page.Request, { predicate, timeout: options.timeout }, logLine);
     });
   }
 
@@ -382,18 +382,20 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
       };
       const trimmedUrl = trimUrl(urlOrPredicate);
       const logLine = trimmedUrl ? `waiting for response ${trimmedUrl}` : undefined;
-      return this._waitForEvent(Events.Page.Response, { predicate, timeout: options.timeout }, logLine);
+      return this._waitForEvent(channel, Events.Page.Response, { predicate, timeout: options.timeout }, logLine);
     });
   }
 
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
-    return this._waitForEvent(event, optionsOrPredicate, `waiting for event "${event}"`);
+    return this._wrapApiCall(async channel => {
+      return this._waitForEvent(channel, event, optionsOrPredicate, `waiting for event "${event}"`);
+    });
   }
 
-  private async _waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions, logLine?: string): Promise<any> {
+  private async _waitForEvent(channel: channels.EventTargetChannel, event: string, optionsOrPredicate: WaitForEventOptions, logLine?: string): Promise<any> {
     const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
     const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
-    const waiter = Waiter.createForEvent(this, event);
+    const waiter = Waiter.createForEvent(channel, event);
     if (logLine)
       waiter.log(logLine);
     waiter.rejectOnTimeout(timeout, `Timeout while waiting for event "${event}"`);

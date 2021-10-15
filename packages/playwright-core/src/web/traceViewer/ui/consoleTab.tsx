@@ -27,13 +27,13 @@ export const ConsoleTab: React.FunctionComponent<{
     if (!action)
       return [];
     const entries: { message?: channels.ConsoleMessageInitializer, error?: channels.SerializedError }[] = [];
-    const page = modelUtil.page(action);
+    const context = modelUtil.context(action);
     for (const event of modelUtil.eventsForAction(action)) {
       if (event.metadata.method !== 'console' && event.metadata.method !== 'pageError')
         continue;
       if (event.metadata.method === 'console') {
         const { guid } = event.metadata.params.message;
-        entries.push({ message: page.objects[guid] });
+        entries.push({ message: context.objects[guid] });
       }
       if (event.metadata.method === 'pageError')
         entries.push({ error: event.metadata.params.error });

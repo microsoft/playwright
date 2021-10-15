@@ -16,36 +16,27 @@
 
 import { ResourceSnapshot } from '../../../server/trace/common/snapshotTypes';
 import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
-import { ContextEntry, PageEntry } from '../traceModel';
+import { ContextEntry } from '../entries';
 
 const contextSymbol = Symbol('context');
-const pageSymbol = Symbol('context');
 const nextSymbol = Symbol('next');
 const eventsSymbol = Symbol('events');
 const resourcesSymbol = Symbol('resources');
 
 export function indexModel(context: ContextEntry) {
-  for (const page of context.pages) {
+  for (const page of context.pages)
     (page as any)[contextSymbol] = context;
-    for (let i = 0; i < page.actions.length; ++i) {
-      const action = page.actions[i] as any;
-      action[contextSymbol] = context;
-      action[pageSymbol] = page;
-      action[nextSymbol] = page.actions[i + 1];
-    }
-    for (const event of page.events) {
-      (event as any)[contextSymbol] = context;
-      (event as any)[pageSymbol] = page;
-    }
+  for (let i = 0; i < context.actions.length; ++i) {
+    const action = context.actions[i] as any;
+    action[contextSymbol] = context;
+    action[nextSymbol] = context.actions[i + 1];
   }
+  for (const event of context.events)
+    (event as any)[contextSymbol] = context;
 }
 
 export function context(action: ActionTraceEvent): ContextEntry {
   return (action as any)[contextSymbol];
-}
-
-export function page(action: ActionTraceEvent): PageEntry {
-  return (action as any)[pageSymbol];
 }
 
 export function next(action: ActionTraceEvent): ActionTraceEvent {
@@ -55,11 +46,11 @@ export function next(action: ActionTraceEvent): ActionTraceEvent {
 export function stats(action: ActionTraceEvent): { errors: number, warnings: number } {
   let errors = 0;
   let warnings = 0;
-  const p = page(action);
+  const c = context(action);
   for (const event of eventsForAction(action)) {
     if (event.metadata.method === 'console') {
       const { guid } = event.metadata.params.message;
-      const type = p.objects[guid]?.type;
+      const type = c.objects[guid]?.type;
       if (type === 'warning')
         ++warnings;
       else if (type === 'error')
@@ -77,7 +68,7 @@ export function eventsForAction(action: ActionTraceEvent): ActionTraceEvent[] {
     return result;
 
   const nextAction = next(action);
-  result = page(action).events.filter(event => {
+  result = context(action).events.filter(event => {
     return event.metadata.startTime >= action.metadata.startTime && (!nextAction || event.metadata.startTime < nextAction.metadata.startTime);
   });
   (action as any)[eventsSymbol] = result;

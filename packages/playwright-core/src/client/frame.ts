@@ -94,8 +94,8 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     });
   }
 
-  private _setupNavigationWaiter(options: { timeout?: number }): Waiter {
-    const waiter = new Waiter(this._page!, '');
+  private _setupNavigationWaiter(channel: channels.EventTargetChannel, options: { timeout?: number }): Waiter {
+    const waiter = new Waiter(channel, '');
     if (this._page!.isClosed())
       waiter.rejectImmediately(new Error('Navigation failed because page was closed!'));
     waiter.rejectOnEvent(this._page!, Events.Page.Close, new Error('Navigation failed because page was closed!'));
@@ -107,9 +107,9 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
   }
 
   async waitForNavigation(options: WaitForNavigationOptions = {}): Promise<network.Response | null> {
-    return this._wrapApiCall(async (channel: channels.FrameChannel) => {
+    return this._page!._wrapApiCall(async (channel: channels.PageChannel) => {
       const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
-      const waiter = this._setupNavigationWaiter(options);
+      const waiter = this._setupNavigationWaiter(channel, options);
 
       const toUrl = typeof options.url === 'string' ? ` to "${options.url}"` : '';
       waiter.log(`waiting for navigation${toUrl} until "${waitUntil}"`);
@@ -135,7 +135,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
       }
 
       const request = navigatedEvent.newDocument ? network.Request.fromNullable(navigatedEvent.newDocument.request) : null;
-      const response = request ? await waiter.waitForPromise(request._finalRequest().response()) : null;
+      const response = request ? await waiter.waitForPromise(request._finalRequest()._internalResponse()) : null;
       waiter.dispose();
       return response;
     });
@@ -145,8 +145,8 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     state = verifyLoadState('state', state);
     if (this._loadStates.has(state))
       return;
-    return this._wrapApiCall(async (channel: channels.FrameChannel) => {
-      const waiter = this._setupNavigationWaiter(options);
+    return this._page!._wrapApiCall(async (channel: channels.PageChannel) => {
+      const waiter = this._setupNavigationWaiter(channel, options);
       await waiter.waitForEvent<LifecycleEvent>(this._eventEmitter, 'loadstate', s => {
         waiter.log(`  "${s}" event fired`);
         return s === state;

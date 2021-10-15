@@ -260,21 +260,21 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
     const pendingCall = this._pendingCalls.get(metadata.id);
     if (!pendingCall || pendingCall.afterSnapshot)
       return;
-    if (!sdkObject.attribution.page) {
+    if (!sdkObject.attribution.context) {
       this._pendingCalls.delete(metadata.id);
       return;
     }
     pendingCall.afterSnapshot = this._captureSnapshot('after', sdkObject, metadata);
     await pendingCall.afterSnapshot;
-    const event: trace.ActionTraceEvent = { type: 'action', metadata, hasSnapshot: shouldCaptureSnapshot(metadata) };
+    const event: trace.ActionTraceEvent = { type: 'action', metadata };
     this._appendTraceEvent(event);
     this._pendingCalls.delete(metadata.id);
   }
 
   onEvent(sdkObject: SdkObject, metadata: CallMetadata) {
-    if (!sdkObject.attribution.page)
+    if (!sdkObject.attribution.context)
       return;
-    const event: trace.ActionTraceEvent = { type: 'event', metadata, hasSnapshot: false };
+    const event: trace.ActionTraceEvent = { type: 'event', metadata };
     this._appendTraceEvent(event);
   }
 

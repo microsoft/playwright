@@ -175,7 +175,7 @@ DEPS['src/cli/driver.ts'] = DEPS['src/inProcessFactory.ts'] = DEPS['src/browserS
 
 // Tracing is a client/server plugin, nothing should depend on it.
 DEPS['src/web/recorder/'] = ['src/common/', 'src/web/', 'src/web/components/', 'src/server/supplements/recorder/recorderTypes.ts'];
-DEPS['src/web/traceViewer/'] = ['src/common/', 'src/web/', 'src/server/trace/common/'];
+DEPS['src/web/traceViewer/'] = ['src/common/', 'src/web/', 'src/server/trace/common/', 'src/protocol/callMetadata.ts'];
 DEPS['src/web/traceViewer/ui/'] = ['src/common/', 'src/protocol/', 'src/web/traceViewer/', 'src/web/', 'src/server/trace/viewer/', 'src/server/trace/', 'src/server/trace/common/', 'src/server/snapshot/snapshotTypes.ts', 'src/protocol/channels.ts'];
 DEPS['src/web/traceViewer/inMemorySnapshotter.ts'] = ['src/**'];
 
