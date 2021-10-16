@@ -261,10 +261,9 @@ Running 124 tests using 6 workers
 ### HTML reporter
 
 HTML reporter produces a self-contained folder that contains report for the test run that can be served as a web page.
-It is usually used together with some terminal reporter like `dot` or `line`.
 
 ```bash
-npx playwright test --reporter=html,dot
+npx playwright test --reporter=html
 ```
 
 By default, report is written into the `playwright-report` folder in the current working directory. One can override

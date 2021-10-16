@@ -77,6 +77,13 @@ export class Runner {
       html: HtmlReporter,
     };
     const reporters: Reporter[] = [];
+    const reporterConfig = this._loader.fullConfig().reporter;
+    if (reporterConfig.length === 1 && reporterConfig[0][0] === 'html') {
+      // For html reporter, add a line/dot report for convenience.
+      // Important to put html last because it stalls onEnd.
+      reporterConfig.unshift([process.stdout.isTTY && !process.env.CI ? 'line' : 'dot', { omitFailures: true }]);
+    }
+
     for (const r of this._loader.fullConfig().reporter) {
       const [name, arg] = r;
       if (name in defaultReporters) {

@@ -31,29 +31,12 @@ test('print GitHub annotations for success', async ({ runInlineTest }) => {
         expect(1 + 1).toBe(2);
       });
     `
-  }, { reporter: 'github' }, { GITHUB_ACTION: 'true' });
+  }, { reporter: 'github' });
   const text = stripAscii(result.output);
   expect(text).not.toContain('::error');
-  expect(text).toContain('::notice title=🎭 Playwright Run Summary::%0A  1 passed');
+  expect(text).toContain('::notice title=🎭 Playwright Run Summary::  1 passed');
   expect(result.exitCode).toBe(0);
 });
-
-test('print GitHub annotations with newline if not in CI', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'a.test.js': `
-      const { test } = pwt;
-      test('example1', async ({}) => {
-        expect(1 + 1).toBe(2);
-      });
-    `
-  }, { reporter: 'github' }, { GITHUB_ACTION: '' });
-  const text = stripAscii(result.output);
-  expect(text).not.toContain('::error');
-  expect(text).toContain(`::notice title=🎭 Playwright Run Summary::
-  1 passed `);
-  expect(result.exitCode).toBe(0);
-});
-
 
 test('print GitHub annotations for failed tests', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
@@ -63,7 +46,7 @@ test('print GitHub annotations for failed tests', async ({ runInlineTest }, test
         expect(1 + 1).toBe(3);
       });
     `
-  }, { retries: 3, reporter: 'github' }, { GITHUB_ACTION: 'true', GITHUB_WORKSPACE: process.cwd() });
+  }, { retries: 3, reporter: 'github' }, { GITHUB_WORKSPACE: process.cwd() });
   const text = stripAscii(result.output);
   const testPath = relativeFilePath(testInfo.outputPath('a.test.js'));
   expect(text).toContain(`::error file=${testPath},title=a.test.js:6:7 › example,line=7,col=23::  1) a.test.js:6:7 › example =======================================================================%0A%0A    Retry #1`);
@@ -71,7 +54,6 @@ test('print GitHub annotations for failed tests', async ({ runInlineTest }, test
   expect(text).toContain(`::error file=${testPath},title=a.test.js:6:7 › example,line=7,col=23::  1) a.test.js:6:7 › example =======================================================================%0A%0A    Retry #3`);
   expect(result.exitCode).toBe(1);
 });
-
 
 test('print GitHub annotations for slow tests', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -86,9 +68,9 @@ test('print GitHub annotations for slow tests', async ({ runInlineTest }) => {
         await new Promise(f => setTimeout(f, 200));
       });
     `
-  }, { retries: 3, reporter: 'github' }, { GITHUB_ACTION: 'true', GITHUB_WORKSPACE: '' });
+  }, { retries: 3, reporter: 'github' }, { GITHUB_WORKSPACE: '' });
   const text = stripAscii(result.output);
   expect(text).toContain('::warning title=Slow Test,file=a.test.js::a.test.js took');
-  expect(text).toContain('::notice title=🎭 Playwright Run Summary::%0A  1 passed');
+  expect(text).toContain('::notice title=🎭 Playwright Run Summary::  1 passed');
   expect(result.exitCode).toBe(0);
 });

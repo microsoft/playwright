@@ -130,12 +130,10 @@ class HtmlReporter {
       await showHTMLReport(reportFolder);
     } else {
       console.log('');
-      console.log('');
       console.log('All tests passed. To open last HTML report run:');
       console.log(colors.cyan(`
   npx playwright show-report
 `));
-      console.log('');
     }
   }
 }
