@@ -316,7 +316,7 @@ export function formatTestTitle(config: FullConfig, test: TestCase, step?: TestS
   const [, projectName, , ...titles] = test.titlePath();
   const location = `${relativeTestPath(config, test)}:${test.location.line}:${test.location.column}`;
   const projectTitle = projectName ? `[${projectName}] › ` : '';
-  return `${projectTitle}${location} › ${titles.join(' ')}${stepSuffix(step)}`;
+  return `${projectTitle}${location} › ${titles.join(' › ')}${stepSuffix(step)}`;
 }
 
 function formatTestHeader(config: FullConfig, test: TestCase, indent: string, index?: number): string {
