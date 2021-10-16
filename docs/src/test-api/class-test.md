@@ -72,7 +72,7 @@ Hook function that takes one or two arguments: an object with fixtures and optio
 
 ## method: Test.afterEach
 
-Declares an `afterEach` hook that is executed after each test. When called in the scope of a test file, runs before each test in the file. When called inside a [`method: Test.describe`] group, runs before each test in the group.
+Declares an `afterEach` hook that is executed after each test. When called in the scope of a test file, runs after each test in the file. When called inside a [`method: Test.describe`] group, runs after each test in the group.
 
 ### param: Test.afterEach.hookFunction
 - `hookFunction` <[function]\([Fixtures], [TestInfo]\)>
