@@ -112,7 +112,6 @@ it('should set both screen and viewport options', async ({ contextFactory, brows
     viewport: { 'width': 1000, 'height': 600 },
   });
   const page = await context.newPage();
-  await page.setViewportSize({ 'width': 1000, 'height': 600 });
   const screen = await page.evaluate(() => ({ w: screen.width, h: screen.height }));
   expect(screen).toEqual({ w: 1280, h: 720 });
   const inner = await page.evaluate(() => ({ w: window.innerWidth, h: window.innerHeight }));
