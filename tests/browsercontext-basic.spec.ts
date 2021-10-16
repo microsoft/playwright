@@ -218,6 +218,14 @@ it('should be able to navigate after disabling javascript', async ({ browser, se
   await context.close();
 });
 
+it('should not hang on promises after disabling javascript', async ({ browserName, contextFactory }) => {
+  it.fixme(browserName === 'webkit' || browserName === 'firefox');
+  const context = await contextFactory({ javaScriptEnabled: false });
+  const page = await context.newPage();
+  expect(await page.evaluate(() => 1)).toBe(1);
+  expect(await page.evaluate(async () => 2)).toBe(2);
+});
+
 it('should work with offline option', async ({ browser, server }) => {
   const context = await browser.newContext({ offline: true });
   const page = await context.newPage();
