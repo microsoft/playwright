@@ -129,6 +129,20 @@ it('should work with :text', async ({ page }) => {
   expect(error2.message).toContain(`"text" engine expects a single string`);
 });
 
+it('should support empty string', async ({ page }) => {
+  await page.setContent(`<div></div><div>ya</div><div>\nHELLO   \n world  </div>`);
+  expect(await page.$eval(`div:text-is("")`, e => e.outerHTML)).toBe('<div></div>');
+  expect(await page.$$eval(`div:text-is("")`, els => els.length)).toBe(1);
+  expect(await page.$eval(`div:text("")`, e => e.outerHTML)).toBe('<div></div>');
+  expect(await page.$$eval(`div:text("")`, els => els.length)).toBe(3);
+  expect(await page.$eval(`div >> text=""`, e => e.outerHTML)).toBe('<div></div>');
+  expect(await page.$$eval(`div >> text=""`, els => els.length)).toBe(1);
+  expect(await page.$eval(`div >> text=/^$/`, e => e.outerHTML)).toBe('<div></div>');
+  expect(await page.$$eval(`div >> text=/^$/`, els => els.length)).toBe(1);
+  expect(await page.$eval(`div:text-matches("")`, e => e.outerHTML)).toBe('<div></div>');
+  expect(await page.$$eval(`div:text-matches("")`, els => els.length)).toBe(3);
+});
+
 it('should work across nodes', async ({ page }) => {
   await page.setContent(`<div id=target1>Hello<i>,</i> <span id=target2>world</span><b>!</b></div>`);
 
