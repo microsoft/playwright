@@ -59,14 +59,15 @@ test('should generate report', async ({ runInlineTest }, testInfo) => {
       });
     `,
   }, { reporter: 'dot,html', retries: 1 });
-  const report = testInfo.outputPath('playwright-report', 'data', 'projects.json');
+  const report = testInfo.outputPath('playwright-report', 'data', 'report.json');
   const reportObject = JSON.parse(fs.readFileSync(report, 'utf-8'));
-  delete reportObject[0].suites[0].duration;
-  delete reportObject[0].suites[0].location.line;
-  delete reportObject[0].suites[0].location.column;
+  const project = reportObject.projects[0];
+  delete project.suites[0].duration;
+  delete project.suites[0].location.line;
+  delete project.suites[0].location.column;
 
   const fileNames = new Set<string>();
-  for (const test of reportObject[0].suites[0].tests) {
+  for (const test of project.suites[0].tests) {
     fileNames.add(testInfo.outputPath('playwright-report', 'data', test.fileId + '.json'));
     delete test.testId;
     delete test.fileId;
@@ -74,7 +75,7 @@ test('should generate report', async ({ runInlineTest }, testInfo) => {
     delete test.location.column;
     delete test.duration;
   }
-  expect(reportObject[0]).toEqual({
+  expect(project).toEqual({
     name: 'project-name',
     suites: [
       {
