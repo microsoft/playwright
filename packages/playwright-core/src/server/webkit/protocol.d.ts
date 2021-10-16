@@ -1196,6 +1196,7 @@ export module Protocol {
      * Unique shader program identifier.
      */
     export type ProgramId = string;
+    export type ColorSpace = "srgb"|"display-p3";
     /**
      * The type of rendering context backing the canvas element.
      */
@@ -1210,6 +1211,14 @@ export module Protocol {
        * WebGL, WebGL2, ImageBitmapRenderingContext
        */
       alpha?: boolean;
+      /**
+       * 2D
+       */
+      colorSpace?: ColorSpace;
+      /**
+       * 2D
+       */
+      desynchronized?: boolean;
       /**
        * WebGL, WebGL2
        */
