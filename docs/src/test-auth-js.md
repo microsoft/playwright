@@ -158,6 +158,50 @@ If you can log in once and commit the `storageState.json` into the repository, y
 setup at all, just specify the `storageState.json` in Playwright Config as above and it'll be picked up.
 :::
 
+### Sign in via API request
+
+If your web application supports signing in via API, you can use [ApiRequestContext] to simplify sign in flow. Global setup script from the example above would change like this:
+
+```js js-flavor=js
+// global-setup.js
+const { request } = require('@playwright/test');
+
+module.exports = async () => {
+  const requestContext = await request.newContext();
+  await requestContext.post('https://github.com/login', {
+    form: {
+      'user': 'user',
+      'password': 'password'
+    }
+  });
+  // Save signed-in state to 'storageState.json'.
+  await requestContext.storageState({ path: 'storageState.json' });
+  await requestContext.dispose();
+}
+
+export default globalSetup;
+```
+
+```js js-flavor=ts
+// global-setup.ts
+import { request } from '@playwright/test';
+
+async function globalSetup() {
+  const requestContext = await request.newContext();
+  await requestContext.post('https://github.com/login', {
+    form: {
+      'user': 'user',
+      'password': 'password'
+    }
+  });
+  // Save signed-in state to 'storageState.json'.
+  await requestContext.storageState({ path: 'storageState.json' });
+  await requestContext.dispose();
+}
+
+export default globalSetup;
+```
+
 ## Multiple signed in roles
 
 Sometimes you have more than one signed-in user in your end to end tests. You can achieve that via logging in for these users multiple times in globalSetup and saving that state into different files.
