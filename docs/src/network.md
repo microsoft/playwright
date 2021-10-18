@@ -577,6 +577,41 @@ else
 
 <br/>
 
+## Modify responses
+* langs: js
+
+To modify a response use [ApiRequestContext] to get original response and then pass the response to [`method: Route.fulfill`]
+You can override individual fields on the reponse via options:
+
+```js
+await page.route('**/title.html', async route => {
+  // Fetch original response.
+  const response = await page.request.fetch(route.request());
+  // Add a prefix to the title.
+  let body = await response.text();
+  body = body.replace('<title>', '<title>My prefix:');
+  route.fulfill({
+    // Pass all fields from the response.
+    response,
+    // Override response body.
+    body,
+    // Force content type to be html.
+    headers: {
+      ...response.headers(),
+      'content-type': 'text/html'
+    }
+  });
+});
+```
+
+### API reference
+- [ApiRequestContext]
+- [`method: Page.route`]
+- [`method: BrowserContext.route`]
+- [`method: Route.fulfill`]
+
+<br/>
+
 ## WebSockets
 
 Playwright supports [WebSockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API) inspection out of the
