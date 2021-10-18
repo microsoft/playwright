@@ -154,7 +154,8 @@ export class InjectedScript {
 
     if (part.name === 'visible') {
       const visible = Boolean(part.body);
-      return roots.filter(match => visible === isVisible(match.element));
+      const filtered = roots.filter(match => visible === isVisible(match.element));
+      return this._querySelectorRecursively(filtered, selector, index + 1, queryCache);
     }
 
     const result: ElementMatch[] = [];
