@@ -38,10 +38,9 @@ export type PageEntry = {
   }[];
 };
 export function createEmptyContext(): ContextEntry {
-  const now = performance.now();
   return {
-    startTime: now,
-    endTime: now,
+    startTime: Number.MAX_SAFE_INTEGER,
+    endTime: 0,
     browserName: '',
     options: {
       deviceScaleFactor: 1,
