@@ -22,18 +22,6 @@
     rgb(0 0 0 / 10%) 0px -2px 4px,
     rgb(0 0 0 / 15%) 0px -6.1px 12px,
     rgb(0 0 0 / 25%) 0px 27px 28px;
-  --color-border-default: #d0d7de;
-  --color-border-muted: #d8dee4;
-  --color-canvas-subtle: #f6f8fa;
-  --color-danger-fg: #cf222e;
-  --color-fg-default: #24292f;
-  --color-fg-muted: #57606a;
-  --color-page-header-bg: #f6f8fa;
-  --color-primer-border-active: #fd8c73;
-  --color-success-fg: #1a7f37;
-  --color-accent-fg: #0969da;
-  --color-green: #367c39;
-  --color-yellow: #ff9207;
 }
 
 html, body {
@@ -142,18 +130,8 @@ svg {
 .attachment-body {
   white-space: pre-wrap;
   font-family: monospace;
-  background-color: #dadada;
-  border: 1px solid #ccc;
+  background-color: var(--color-canvas-subtle);
   margin-left: 24px;
-}
-
-.test-result .tree-item-title.selected {
-  background-color: #0060c0;
-  color: white;
-}
-
-.test-result .tree-item-title.selected * {
-  color: white !important;
 }
 
 .test-result > div {
@@ -165,7 +143,7 @@ svg {
   line-height: 30px;
   color: var(--color-fg-default);
   height: 48px;
-  background-color: var(--color-page-header-bg);
+  background-color: var(--color-canvas-subtle);
   min-width: 70px;
 }
 
@@ -183,16 +161,16 @@ svg {
   text-transform: uppercase;
   font-weight: bold;
   font-size: 11px;
-  color: #aaa;
+  color: var(--color-fg-default);
+}
+
+.test-case-column .tab-element:hover {
+  color: var(--color-fg-default);
 }
 
 .test-case-column .tab-strip {
   margin-top: 10px;
   background-color: inherit;
-}
-
-.test-case-column .tab-element.selected {
-  color: #555;
 }
 
 .test-case-title {
@@ -237,7 +215,7 @@ svg {
 }
 
 .stats.expected {
-  color: var(--color-green);
+  color: var(--color-success-fg);
 }
 
 .stats.unexpected {
@@ -245,7 +223,7 @@ svg {
 }
 
 .stats.flaky {
-  color: var(--color-yellow);
+  color: var(--color-attention-fg);
 }
 
 video, img {
@@ -296,7 +274,7 @@ video, img {
 }
 
 .failed-test:hover {
-  background-color: var(--color-page-header-bg);
+  background-color: var(--color-canvas-subtle);
 }
 
 a.no-decorations {
@@ -308,7 +286,7 @@ a.no-decorations {
   border: 1px solid var(--color-border-default);
   border-top-left-radius: 6px;
   border-top-right-radius: 6px;
-  background-color: var(--color-page-header-bg);
+  background-color: var(--color-canvas-subtle);
   padding: 0 10px;
   border-bottom: none;
   margin-top: 20px;
@@ -356,7 +334,7 @@ a.no-decorations {
 }
 
 .test-summary:hover {
-  background-color: var(--color-page-header-bg);
+  background-color: var(--color-canvas-subtle);
 }
 
 .test-summary-path {
@@ -384,7 +362,6 @@ a.no-decorations {
 }
 
 .color-text-warning {
-  color: var(--color-yellow) !important;
 }
 
 .color-fg-muted {
@@ -408,20 +385,90 @@ a.no-decorations {
   line-height: 18px;
   border: 1px solid transparent;
   border-radius: 2em;
-  background-color: #757575;
+  background-color: var(--color-scale-gray-4);
   color: white;
   margin-left: 10px;
   flex: none;
+  font-weight: 600;
 }
 
-.label-color-0 { background-color: #2196f3; }
-.label-color-1 { background-color: #4caf50; }
-.label-color-2 { background-color: #ff9800; }
-.label-color-3 { background-color: #ba68c8; }
-.label-color-4 { background-color: #26a69a; }
-.label-color-5 { background-color: #8d6e63; }
-.label-color-6 { background-color: #607d8b; }
-.label-color-7 { background-color: #fbc02d; }
+@media(prefers-color-scheme: light) {
+  .label-color-0 {
+    background-color: var(--color-scale-blue-4);
+    color: var(--color-scale-white);
+  }
+  .label-color-1 {
+    background-color: var(--color-scale-green-4);
+    color: var(--color-scale-white);
+  }
+  .label-color-2 {
+    background-color: var(--color-scale-yellow-4);
+    color: var(--color-scale-white);
+  }
+  .label-color-3 {
+    background-color: var(--color-scale-orange-4);
+    color: var(--color-scale-white);
+  }
+  .label-color-4 {
+    background-color: var(--color-scale-red-4);
+    color: var(--color-scale-white);
+  }
+  .label-color-5 {
+    background-color: var(--color-scale-purple-4);
+    color: var(--color-scale-white);
+  }
+  .label-color-6 {
+    background-color: var(--color-scale-pink-4);
+    color: var(--color-scale-white);
+  }
+  .label-color-7 {
+    background-color: var(--color-scale-coral-4);
+    color: var(--color-scale-white);
+  }
+}
+
+@media(prefers-color-scheme: dark) {
+  .label-color-0 {
+    background-color: var(--color-scale-blue-9);
+    color: var(--color-scale-blue-2);
+    border: 1px solid var(--color-scale-blue-4);
+  }
+  .label-color-1 {
+    background-color: var(--color-scale-green-9);
+    color: var(--color-scale-green-2);
+    border: 1px solid var(--color-scale-green-4);
+  }
+  .label-color-2 {
+    background-color: var(--color-scale-yellow-9);
+    color: var(--color-scale-yellow-2);
+    border: 1px solid var(--color-scale-yellow-4);
+  }
+  .label-color-3 {
+    background-color: var(--color-scale-orange-9);
+    color: var(--color-scale-orange-2);
+    border: 1px solid var(--color-scale-orange-4);
+  }
+  .label-color-4 {
+    background-color: var(--color-scale-red-9);
+    color: var(--color-scale-red-2);
+    border: 1px solid var(--color-scale-red-4);
+  }
+  .label-color-5 {
+    background-color: var(--color-scale-purple-9);
+    color: var(--color-scale-purple-2);
+    border: 1px solid var(--color-scale-purple-4);
+  }
+  .label-color-6 {
+    background-color: var(--color-scale-pink-9);
+    color: var(--color-scale-pink-2);
+    border: 1px solid var(--color-scale-pink-4);
+  }
+  .label-color-7 {
+    background-color: var(--color-scale-coral-9);
+    color: var(--color-scale-coral-2);
+    border: 1px solid var(--color-scale-coral-4);
+  }
+}
 
 @media only screen and (max-width: 600px) {
   .chip-header {

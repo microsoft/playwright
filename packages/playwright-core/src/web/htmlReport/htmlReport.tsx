@@ -164,7 +164,7 @@ const TestResultView: React.FC<{
   const diff = attachmentsMap.get('diff');
   return <div className='test-result'>
     {result.error && <Chip header='Errors'>
-      <ErrorMessage key='error-message' error={result.error} mode='light'></ErrorMessage>
+      <ErrorMessage key='error-message' error={result.error}></ErrorMessage>
     </Chip>}
     {!!result.steps.length && <Chip header='Test Steps'>
       {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} depth={0}></StepTreeItem>)}
@@ -220,7 +220,7 @@ const StepTreeItem: React.FC<{
   </span>} loadChildren={step.steps.length + (step.error ? 1 : 0) ? () => {
     const children = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1}></StepTreeItem>);
     if (step.error)
-      children.unshift(<ErrorMessage key={-1} error={step.error} mode='light'></ErrorMessage>);
+      children.unshift(<ErrorMessage key={-1} error={step.error}></ErrorMessage>);
     return children;
   } : undefined} depth={depth}></TreeItem>;
 };
@@ -316,17 +316,15 @@ function retryLabel(index: number) {
 
 const ErrorMessage: React.FC<{
   error: string;
-  mode: 'dark' | 'light'
-}> = ({ error, mode }) => {
+}> = ({ error }) => {
   const html = React.useMemo(() => {
     const config: any = {
-      fg: mode === 'dark' ? '#FFF' : '#252423',
-      bg: mode === 'dark' ? '#252423' : '#FFF',
+      bg: 'var(--color-canvas-subtle)',
+      fg: 'var(--color-fg-default)',
     };
-    if (mode === 'dark')
-      config.colors = ansiColors;
+    config.colors = ansiColors;
     return new ansi2html(config).toHtml(escapeHTML(error));
-  }, [error, mode]);
+  }, [error]);
   return <div className='error-message' dangerouslySetInnerHTML={{ __html: html || '' }}></div>;
 };
 
