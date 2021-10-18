@@ -64,6 +64,7 @@ test('should generate report', async ({ runInlineTest }, testInfo) => {
   delete reportObject.testIdToFileId;
   delete reportObject.files[0].fileId;
   delete reportObject.files[0].stats.duration;
+  delete reportObject.stats.duration;
 
   const fileNames = new Set<string>();
   for (const test of reportObject.files[0].tests) {
@@ -129,7 +130,15 @@ test('should generate report', async ({ runInlineTest }, testInfo) => {
     ],
     projectNames: [
       'project-name'
-    ]
+    ],
+    stats: {
+      expected: 1,
+      flaky: 1,
+      ok: false,
+      skipped: 1,
+      total: 4,
+      unexpected: 1,
+    }
   });
 });
 

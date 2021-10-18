@@ -34,6 +34,12 @@ body {
   overflow: auto;
 }
 
+.global-stats {
+  padding-left: 34px;
+  margin-top: 20px;
+  font-weight: 600;
+}
+
 .suite-tree-column {
   line-height: 18px;
   flex: auto;
@@ -47,9 +53,19 @@ body {
   margin: 20px;
 }
 
+.tree-item {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
 .tree-item-title {
-  padding: 8px 8px 8px 0;
   cursor: pointer;
+}
+
+.chip-body .tree-item {
+  max-width: 600px;
+  line-height: 38px;
 }
 
 .tree-item-body {
@@ -159,6 +175,7 @@ body {
 }
 
 .test-case-column .tab-strip {
+  margin-top: 10px;
   background-color: inherit;
 }
 
@@ -223,16 +240,19 @@ body {
 video, img {
   flex: none;
   box-shadow: var(--box-shadow-thick);
-  width: 80%;
   margin: 20px auto;
-  min-width: 80%;
-  min-height: 300px;
+  min-width: 200px;
+  max-width: 80%;
 }
 
 .flow-container {
-  max-width: 1280px;
+  max-width: 1024px;
   margin: 0 auto;
   width: 100%;
+}
+
+.file-summary-list {
+  padding-bottom: 20px;
 }
 
 .file-summary-list .chip-body a:not(:nth-child(1)) .test-summary,
@@ -274,16 +294,18 @@ a.no-decorations {
 }
 
 .chip-header {
-  display: flex;
-  align-items: center;
   border: 1px solid var(--color-border-default);
   border-top-left-radius: 6px;
   border-top-right-radius: 6px;
   background-color: var(--color-page-header-bg);
-  padding: 10px;
+  padding: 0 10px;
   border-bottom: none;
   margin-top: 20px;
   font-weight: 600;
+  line-height: 38px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .chip-header.expanded-false {
@@ -295,6 +317,11 @@ a.no-decorations {
 .chip-header.expanded-true {
   cursor: pointer;
 } 
+
+.chip-header .codicon {
+  position: relative;
+  top: 3px;
+}
 
 .chip-body {
   border: 1px solid var(--color-border-default);
@@ -331,6 +358,10 @@ a.no-decorations {
   color: var(--color-fg-muted);
 }
 
+.test-summary.outcome-skipped {
+  color: var(--color-fg-muted);
+}
+
 .octicon {
   display: inline-block;
   overflow: visible !important;
@@ -352,6 +383,10 @@ a.no-decorations {
 
 .color-fg-muted {
   color: var(--color-fg-muted) !important;
+}
+
+.color-fg-white {
+  color: white !important;
 }
 
 .octicon {
