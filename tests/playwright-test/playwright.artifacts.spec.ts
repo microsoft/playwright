@@ -317,3 +317,39 @@ test('should stop tracing with trace: on-first-retry, when not retrying', async 
     'report.json',
   ]);
 });
+
+test('should not throw with trace: on-first-retry and two retries in the same worker', async ({ runInlineTest }, testInfo) => {
+  const files = {};
+  for (let i = 0; i < 6; i++) {
+    files[`a${i}.spec.ts`] = `
+      import { test } from './helper';
+      test('flaky', async ({ myContext }, testInfo) => {
+        await new Promise(f => setTimeout(f, 200 + Math.round(Math.random() * 1000)));
+        expect(testInfo.retry).toBe(1);
+      });
+      test('passing', async ({ myContext }, testInfo) => {
+        await new Promise(f => setTimeout(f, 200 + Math.round(Math.random() * 1000)));
+      });
+    `;
+  }
+  const result = await runInlineTest({
+    ...files,
+    'playwright.config.ts': `
+      module.exports = { use: { trace: 'on-first-retry' } };
+    `,
+    'helper.ts': `
+      const { test: base } = pwt;
+      export const test = base.extend({
+        myContext: [async ({ browser }, use) => {
+          const c = await browser.newContext();
+          await use(c);
+          await c.close();
+        }, { scope: 'worker' }]
+      })
+    `,
+  }, { workers: 3, retries: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(6);
+  expect(result.flaky).toBe(6);
+});

@@ -39,7 +39,7 @@ export class Tracing implements api.Tracing {
     });
   }
 
-  async stopChunk(options: { path: string }) {
+  async stopChunk(options: { path?: string } = {}) {
     await this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
       await this._doStopChunk(channel, options.path);
     });

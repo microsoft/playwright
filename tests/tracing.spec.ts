@@ -237,6 +237,10 @@ test('should work with multiple chunks', async ({ context, page, server }, testI
   await page.hover('"Click"');
   await context.tracing.stopChunk({ path: testInfo.outputPath('trace2.zip') });
 
+  await context.tracing.startChunk();
+  await page.click('"Click"');
+  await context.tracing.stopChunk();  // Should stop without a path.
+
   const trace1 = await parseTrace(testInfo.outputPath('trace.zip'));
   expect(trace1.events[0].type).toBe('context-options');
   expect(trace1.events.find(e => e.metadata?.apiName === 'page.goto')).toBeFalsy();
