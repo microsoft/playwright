@@ -32,6 +32,7 @@ import { BrowserType } from '../client/browserType';
 import { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
 import { registry, Executable } from '../utils/registry';
+import { spawnAsync, getPlaywrightVersion } from '../utils/utils';
 import { launchGridAgent } from '../grid/gridAgent';
 import { launchGridServer } from '../grid/gridServer';
 
@@ -205,6 +206,17 @@ program
     .requiredOption('--grid-url <gridURL>', 'grid URL')
     .action(function(options) {
       launchGridAgent(options.agentId, options.gridUrl);
+    });
+
+program
+    .command('pull-docker')
+    .action(async function(options) {
+      const imageName = `mcr.microsoft.com/playwright:v${getPlaywrightVersion()}`;
+      const {code} = await spawnAsync('docker', ['pull', imageName], { stdio: 'inherit' });
+      if (code !== 0) {
+        console.log('Failed to pull docker image');
+        process.exit(1);
+      }
     });
 
 program
