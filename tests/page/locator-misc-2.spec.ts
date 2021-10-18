@@ -99,3 +99,18 @@ it('should waitFor hidden', async ({ page }) => {
   await page.$eval('div', div => div.innerHTML = '');
   await promise;
 });
+
+it('should combine visible with other selectors', async ({ page }) => {
+  page.on('console', m => console.log(m.text()));
+  await page.setContent(`<div>
+  <div class="item" style="display: none">Hidden data0</div>
+  <div class="item">visible data1</div>
+  <div class="item" style="display: none">Hidden data1</div>
+  <div class="item">visible data2</div>
+  <div class="item" style="display: none">Hidden data1</div>
+  <div class="item">visible data3</div>
+  </div>`);
+  const locator = page.locator('.item >> visible=true').nth(1);
+  await expect(locator).toHaveText('visible data2');
+  await expect(page.locator('.item >> visible=true >> text=data3')).toHaveText('visible data3');
+});
