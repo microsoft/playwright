@@ -55,7 +55,7 @@ export const Report: React.FC = () => {
         }}></AllTestFilesSummaryView>
       </Route>
       <Route params='testId'>
-        {!!report?.testIdToFileId && <TestCaseView report={report}></TestCaseView>}
+        {!!report && <TestCaseView report={report}></TestCaseView>}
       </Route>
     </div>}
   </div>;
@@ -85,17 +85,17 @@ const TestFileSummaryView: React.FC<{
     expanded={isFileExpanded(file.fileId)}
     setExpanded={(expanded => setFileExpanded(file.fileId, expanded))}
     header={<span>
+      <span style={{ float: 'right' }}>{msToString(file.stats.duration)}</span>
       {file.fileName}
       <StatsView stats={file.stats}></StatsView>
-      <span style={{ float: 'right' }}>{msToString(file.stats.duration)}</span>
     </span>}>
     {file.tests.map((test, i) => <Link key={`test-${i}`} href={`/?testId=${test.testId}`}>
       <div className={'test-summary outcome-' + test.outcome}>
+        <span style={{ float: 'right' }}>{msToString(test.duration)}</span>
         {statusIcon(test.outcome)}
         {test.title}
         <span className='test-summary-path'>— {test.path.join(' › ')}</span>
         {report.projectNames.length > 1 && !!test.projectName && <span className={'label label-color-' + (report.projectNames.indexOf(test.projectName) % 8)}>{test.projectName}</span>}
-        <span style={{ float: 'right' }}>{msToString(test.duration)}</span>
       </div>
     </Link>)}
   </Chip>;
@@ -110,7 +110,7 @@ const TestCaseView: React.FC<{
       const testId = new URL(window.location.href).searchParams.get('testId');
       if (!testId || testId === test?.testId)
         return;
-      const fileId = report.testIdToFileId[testId];
+      const fileId = testId.split('-')[0];
       if (!fileId)
         return;
       const result = await fetch(`/data/${fileId}.json`, { cache: 'no-cache' });

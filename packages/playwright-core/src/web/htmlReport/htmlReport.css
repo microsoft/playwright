@@ -14,12 +14,14 @@
   limitations under the License.
 */
 
-body {
+:root {
+  --box-shadow: rgba(0, 0, 0, 0.133) 0px 1.6px 3.6px 0px, rgba(0, 0, 0, 0.11) 0px 0.3px 0.9px 0px;
+  --monospace-font: "SF Mono", Monaco, Consolas, "Droid Sans Mono", Inconsolata, "Courier New",monospace;
   --box-shadow-thick: rgb(0 0 0 / 10%) 0px 1.8px 1.9px,
-  rgb(0 0 0 / 15%) 0px 6.1px 6.3px,
-  rgb(0 0 0 / 10%) 0px -2px 4px,
-  rgb(0 0 0 / 15%) 0px -6.1px 12px,
-  rgb(0 0 0 / 25%) 0px 27px 28px;
+    rgb(0 0 0 / 15%) 0px 6.1px 6.3px,
+    rgb(0 0 0 / 10%) 0px -2px 4px,
+    rgb(0 0 0 / 15%) 0px -6.1px 12px,
+    rgb(0 0 0 / 25%) 0px 27px 28px;
   --color-border-default: #d0d7de;
   --color-border-muted: #d8dee4;
   --color-canvas-subtle: #f6f8fa;
@@ -30,8 +32,52 @@ body {
   --color-primer-border-active: #fd8c73;
   --color-success-fg: #1a7f37;
   --color-accent-fg: #0969da;
-  color: var(--color-fg-default);
+  --color-green: #367c39;
+  --color-yellow: #ff9207;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  overscroll-behavior-x: none;
+}
+
+body {
   overflow: auto;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  color: var(--color-fg-default);
+  font-size: 14px;
+  font-family: SegoeUI-SemiBold-final,Segoe UI Semibold,SegoeUI-Regular-final,Segoe UI,"Segoe UI Web (West European)",Segoe,-apple-system,BlinkMacSystemFont,Roboto,Helvetica Neue,Tahoma,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 0;
+}
+
+svg {
+  fill: currentColor;
+}
+
+.vbox {
+  display: flex;
+  flex-direction: column;
+  flex: auto;
+  position: relative;
+}
+
+.hbox {
+  display: flex;
+  flex: auto;
+  position: relative;
 }
 
 .global-stats {
@@ -191,7 +237,7 @@ body {
 }
 
 .stats.expected {
-  color: var(--green);
+  color: var(--color-green);
 }
 
 .stats.unexpected {
@@ -199,7 +245,7 @@ body {
 }
 
 .stats.flaky {
-  color: var(--yellow);
+  color: var(--color-yellow);
 }
 
 video, img {
@@ -338,7 +384,7 @@ a.no-decorations {
 }
 
 .color-text-warning {
-  color: var(--yellow) !important;
+  color: var(--color-yellow) !important;
 }
 
 .color-fg-muted {
