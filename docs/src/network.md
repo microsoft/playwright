@@ -608,6 +608,9 @@ await page.route('**/title.html', async route => {
 - [ApiRequestContext]
 - [`method: Page.route`]
 - [`method: BrowserContext.route`]
+- [`property: Playwright.request`]
+- [`property: BrowserContext.request`]
+- [`property: Page.request`]
 - [`method: Route.fulfill`]
 
 <br/>
