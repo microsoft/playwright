@@ -17,7 +17,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import type { LaunchOptions, BrowserContextOptions, Page, BrowserContext, BrowserType } from 'playwright-core';
-import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo } from 'playwright-core/types/test';
+import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo } from '../types/test';
 import { rootTestType } from './testType';
 import { assert, createGuid, removeFolders } from 'playwright-core/src/utils/utils';
 import { GridClient } from 'playwright-core/src/grid/gridClient';

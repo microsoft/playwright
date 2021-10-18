@@ -100,7 +100,6 @@ async function lintPackage(packageName) {
   const pwInternalJSON = require(path.join(ROOT_PATH, 'package.json'));
   const currentPackageJSON = require(path.join(packagePath, 'package.json'));
   currentPackageJSON.version = pwInternalJSON.version;
-  currentPackageJSON.description = pwInternalJSON.description;
   currentPackageJSON.repository = pwInternalJSON.repository;
   currentPackageJSON.engines = pwInternalJSON.engines;
   currentPackageJSON.homepage = pwInternalJSON.homepage;

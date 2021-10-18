@@ -1,5 +1,5 @@
 ---
-id: auth
+id: api-testing
 title: "API testing"
 ---
 
@@ -7,86 +7,79 @@ Playwright can be used to get access to the [REST](https://en.wikipedia.org/wiki
 your application.
 
 Sometimes you may want to send requests to the server directly from Node.js without loading a page and running js code in it.
-A few example where it may come in handy:
+A few examples where it may come in handy:
 - Test your server API.
-- Prepare server side state before visting the web application in a test.
-- Validate server side post-conditions after running some actions in the browser
-All of that could be achived via [ApiRequestContext] methods.
+- Prepare server side state before visiting the web application in a test.
+- Validate server side post-conditions after running some actions in the browser.
+
+All of that could be achieved via [ApiRequestContext] methods.
 
 <!-- TOC -->
 
 ## Writing API Test
 
-The Playwright [ApiRequestContext] can send all kinds of HTTP(S) requests over network.
+[ApiRequestContext] can send all kinds of HTTP(S) requests over network.
 
-The following example demonstrates how to use Plawright to test programmatic creation of
-issues via [GitHub API](https://docs.github.com/en/rest). The test suite will do the following:
-- create a new repo before all tests
-- create a few issues and validate the server state
-- after all tests finish delete the repo
+The following example demonstrates how to use Playwright to test issues creation via [GitHub API](https://docs.github.com/en/rest). The test suite will do the following:
+- Create a new repository before running tests.
+- Create a few issues and validate server state.
+- Delete the repository after running tests.
 
-Creating and deleting a repo:
-```js
-const { request } = require('@playwright/test');
-...
-const context = await request.newContext();
-await context.post('https://api.github.com/user/repos', {
-  headers: {
-    'Accept': 'application/vnd.github.v3+json',
-    // Add GitHub personal access token.
-    'Authorization': `token ${process.env.API_TOKEN}`,
-  },
-  data: {
-    name: 'test-repo-1'
+### Configure
+
+GitHub API requires authorization, so we'll configure the token once for all tests. While at it, we'll also set the `baseURL` to simplify the tests. You can either put them in the configuration file, or in the test file with `test.use()`.
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  use: {
+    // All requests we send go to this API endpoint.
+    baseURL: 'https://api.github.com',
+    extraHTTPHeaders: {
+      // We set this header per GitHub guidelines.
+      'Accept': 'application/vnd.github.v3+json',
+      // Add authorization token to all requests.
+      // Assuming personal access token available in the environment.
+      'Authorization': `token ${process.env.API_TOKEN}`,
+    },
   }
-});
-const response = await request.delete(`https://api.github.com/repos/${user}/test-repo-1`{
-  headers: {
-    'Accept': 'application/vnd.github.v3+json',
-    // Add GitHub personal access token.
-    'Authorization': `token ${process.env.API_TOKEN}`,
-  }
-});
+};
+export default config;
 ```
 
-Playwright Test comes with a built in request fixture that can be used to simplify the code. Also since
-the authorizaztion token is going to be reused between tests it makes sense to configure it once for
-all tests:
-
-```js
-test.use({
-  baseURL: 'https://api.github.com',
-  extraHTTPHeaders: {
-    'Accept': 'application/vnd.github.v3+json',
-    // Add authorization token to all requests.
-    'Authorization': 'token ' + token,
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  use: {
+    // All requests we send go to this API endpoint.
+    baseURL: 'https://api.github.com',
+    extraHTTPHeaders: {
+      // We set this header per GitHub guidelines.
+      'Accept': 'application/vnd.github.v3+json',
+      // Add authorization token to all requests.
+      // Assuming personal access token available in the environment.
+      'Authorization': `token ${process.env.API_TOKEN}`,
+    },
   }
-});
-
-const repo = 'test-repo-1';
-
-// The request object will use the context parameters above.
-test.beforeAll(async ({ request }) => {
-  // Create new repository
-  const response = await request.post('/user/repos', {
-    data: {
-      name: repo
-    }
-  });
-  expect(response.ok()).toBeTruthy();
-});
-
-test.afterAll(async ({ request }) => {
-  // Delete the repository
-  const response = await request.delete(`/repos/${user}/${repo}`);
-  expect(response.ok()).toBeTruthy();
-});
+};
+module.exports = config;
 ```
 
-Now we can add a couple tests that would create new issues in the repository:
+### Write tests
+
+Playwright Test comes with the built-in `request` fixture that respects configuration options like `baseURL` or `extraHTTPHeaders` we specified and is ready to send some requests.
+
+Now we can add a few tests that will create new issues in the repository.
 ```js
-test('should create bug report', async ({ request }) => {
-  const newIssue = await request.post(`/repos/${user}/${repo}/issues`, {
+const REPO = 'test-repo-1';
+const USER = 'github-username';
+
+test('should create a bug report', async ({ request }) => {
+  const newIssue = await request.post(`/repos/${USER}/${REPO}/issues`, {
     data: {
       title: '[Bug] report 1',
       body: 'Bug description',
@@ -94,7 +87,7 @@ test('should create bug report', async ({ request }) => {
   });
   expect(newIssue.ok()).toBeTruthy();
 
-  const issues = await request.get(`/repos/${user}/${repo}/issues`);
+  const issues = await request.get(`/repos/${USER}/${REPO}/issues`);
   expect(issues.ok()).toBeTruthy();
   expect(await issues.json()).toContainEqual(expect.objectContaining({
     title: '[Bug] report 1',
@@ -102,8 +95,8 @@ test('should create bug report', async ({ request }) => {
   }));
 });
 
-test('should create feature request', async ({ request }) => {
-  const newIssue = await request.post(`/repos/${user}/${repo}/issues`, {
+test('should create a feature request', async ({ request }) => {
+  const newIssue = await request.post(`/repos/${USER}/${REPO}/issues`, {
     data: {
       title: '[Feature] request 1',
       body: 'Feature description',
@@ -111,7 +104,7 @@ test('should create feature request', async ({ request }) => {
   });
   expect(newIssue.ok()).toBeTruthy();
 
-  const issues = await request.get(`/repos/${user}/${repo}/issues`);
+  const issues = await request.get(`/repos/${USER}/${REPO}/issues`);
   expect(issues.ok()).toBeTruthy();
   expect(await issues.json()).toContainEqual(expect.objectContaining({
     title: '[Feature] request 1',
@@ -120,41 +113,101 @@ test('should create feature request', async ({ request }) => {
 });
 ```
 
-## Preparing server state via API calls
+### Setup and teardown
+
+These tests assume that repository exists. You probably want to create a new one before running tests and delete it afterwards. Use `beforeAll` and `afterAll` hooks for that.
+
+```js
+test.beforeAll(async ({ request }) => {
+  // Create a new repository
+  const response = await request.post('/user/repos', {
+    data: {
+      name: REPO
+    }
+  });
+  expect(response.ok()).toBeTruthy();
+});
+
+test.afterAll(async ({ request }) => {
+  // Delete the repository
+  const response = await request.delete(`/repos/${USER}/${REPO}`);
+  expect(response.ok()).toBeTruthy();
+});
+```
+
+### Using request context
+
+Behind the scenes, `request` fixture will actually call [`method: ApiRequest.newContext`]. You can always do that manually if you'd like more control. Below is a standalone script that does the same as `beforeAll` and `afterAll` from above.
+
+```js
+const { request } = require('@playwright/test');
+const REPO = 'test-repo-1';
+const USER = 'github-username';
+
+(async () => {
+  // Create a context that will issue http requests.
+  const context = await request.newContext({
+    baseURL: 'https://api.github.com',
+  });
+
+  // Create a repository.
+  await context.post('/user/repos', {
+    headers: {
+      'Accept': 'application/vnd.github.v3+json',
+      // Add GitHub personal access token.
+      'Authorization': `token ${process.env.API_TOKEN}`,
+    },
+    data: {
+      name: REPO
+    }
+  });
+
+  // Delete a repository.
+  await context.delete(`/repos/${USER}/${REPO}`{
+    headers: {
+      'Accept': 'application/vnd.github.v3+json',
+      // Add GitHub personal access token.
+      'Authorization': `token ${process.env.API_TOKEN}`,
+    }
+  });
+})()
+```
+
+## Prepare server state via API calls
 
 The following test creates a new issue via API and then navigates to the list of all issues in the
 project to check that it appears at the top of the list.
 
 ```js
 test('last created issue should be first in the list', async ({ page, request }) => {
-  const newIssue = await request.post(`/repos/${user}/${repo}/issues`, {
+  const newIssue = await request.post(`/repos/${USER}/${REPO}/issues`, {
     data: {
       title: '[Feature] request 1',
     }
   });
   expect(newIssue.ok()).toBeTruthy();
 
-  await page.goto(`https://github.com/${user}/${repo}/issues`);
-  const text = await page.locator(`a[data-hovercard-type='issue']`).first().textContent()
-  expect('[Feature] request 1');
+  await page.goto(`https://github.com/${USER}/${REPO}/issues`);
+  const firstIssue = page.locator(`a[data-hovercard-type='issue']`).first();
+  await expect(firstIssue).toHaveText('[Feature] request 1');
 });
 ```
 
-## Checking server state after running user actions
+## Check the server state after running user actions
 
 The following test creates a new issue via user interface in the browser and then uses checks if
-it was created by means of the server API:
+it was created via API:
 
 ```js
-test('last created issue should be on server', async ({ page, request }) => {
-  await page.goto(`https://github.com/${user}/${repo}/issues`);
+test('last created issue should be on the server', async ({ page, request }) => {
+  await page.goto(`https://github.com/${USER}/${REPO}/issues`);
   await page.click('text=New Issue');
   await page.fill('[aria-label="Title"]', 'Bug report 1');
   await page.fill('[aria-label="Comment body"]', 'Bug description');
   await page.click('text=Submit new issue');
   const issueId = page.url().substr(page.url().lastIndexOf('/'));
 
-  const newIssue = await request.get(`https://api.github.com/repos/${user}/${repo}/issues/${issueId}`);
+  const newIssue = await request.get(`https://api.github.com/repos/${USER}/${REPO}/issues/${issueId}`);
   expect(newIssue.ok()).toBeTruthy();
   expect(newIssue).toEqual(expect.objectContaining({
     title: 'Bug report 1'
@@ -175,12 +228,12 @@ test('last created issue should be on server', async ({ page, request }) => {
 ## Reuse authentication state
 
 Web apps use cookie-based or token-based authentication, where authenticated
-state is stored as [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies)
+state is stored as [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies).
 Playwright provides [`method: ApiRequestContext.storageState`] method that can be used to
-retrieve storage state from authenticated contexts and then create new contexts with prepopulated state.
+retrieve storage state from an authenticated context and then create new contexts with that state.
 
-Storage state is interchangable between [BrowserContext] and [ApiRequestContext]. You can
-use it e.g. to log in via API calls and then create a new context with retrived cookies.
+Storage state is interchangeable between [BrowserContext] and [ApiRequestContext]. You can
+use it to log in via API calls and then create a new context with cookies already there.
 The following code snippet retrieves state from an authenticated [ApiRequestContext] and
 creates a new [BrowserContext] with that state.
 

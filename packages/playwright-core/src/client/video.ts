@@ -17,15 +17,15 @@
 import { Page } from './page';
 import * as api from '../../types/types';
 import { Artifact } from './artifact';
+import { Connection } from './connection';
 
 export class Video implements api.Video {
   private _artifact: Promise<Artifact | null> | null = null;
   private _artifactCallback = (artifact: Artifact) => {};
   private _isRemote = false;
 
-  constructor(page: Page) {
-    const browser = page.context()._browser;
-    this._isRemote = !!browser && !!browser._remoteType;
+  constructor(page: Page, connection: Connection) {
+    this._isRemote = connection.isRemote();
     this._artifact = Promise.race([
       new Promise<Artifact>(f => this._artifactCallback = f),
       page._closedOrCrashedPromise.then(() => null),
@@ -33,13 +33,12 @@ export class Video implements api.Video {
   }
 
   _artifactReady(artifact: Artifact) {
-    artifact._isRemote = this._isRemote;
     this._artifactCallback(artifact);
   }
 
   async path(): Promise<string> {
     if (this._isRemote)
-      throw new Error(`Path is not available when using browserType.connect(). Use saveAs() to save a local copy.`);
+      throw new Error(`Path is not available when connecting remotely. Use saveAs() to save a local copy.`);
     const artifact = await this._artifact;
     if (!artifact)
       throw new Error('Page did not produce any video frames');

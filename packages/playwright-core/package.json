@@ -38,9 +38,10 @@
     "proper-lockfile": "^4.1.1",
     "proxy-from-env": "^1.1.0",
     "rimraf": "^3.0.2",
+    "socks-proxy-agent": "^6.1.0",
     "stack-utils": "^2.0.3",
     "ws": "^7.4.6",
-    "yazl": "^2.5.1",
-    "yauzl": "^2.10.0"
+    "yauzl": "^2.10.0",
+    "yazl": "^2.5.1"
   }
 }

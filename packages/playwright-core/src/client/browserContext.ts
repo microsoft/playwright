@@ -151,7 +151,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     }
     if (!handled) {
       // it can race with BrowserContext.close() which then throws since its closed
-      route.continue().catch(() => {});
+      route._internalContinue();
     } else {
       this._routes = this._routes.filter(route => !route.expired());
     }
@@ -293,7 +293,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     return this._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
       const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function'  ? {} : optionsOrPredicate);
       const predicate = typeof optionsOrPredicate === 'function'  ? optionsOrPredicate : optionsOrPredicate.predicate;
-      const waiter = Waiter.createForEvent(this, event);
+      const waiter = Waiter.createForEvent(channel, event);
       waiter.rejectOnTimeout(timeout, `Timeout while waiting for event "${event}"`);
       if (event !== Events.BrowserContext.Close)
         waiter.rejectOnEvent(this, Events.BrowserContext.Close, new Error('Context closed'));
@@ -346,8 +346,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
         if (this._options.recordHar)  {
           const har = await this._channel.harExport();
           const artifact = Artifact.from(har.artifact);
-          if (this.browser()?._remoteType)
-            artifact._isRemote = true;
           await artifact.saveAs(this._options.recordHar.path);
           await artifact.delete();
         }

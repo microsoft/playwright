@@ -120,6 +120,8 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
           options.modifiers = modifiers;
         if (action.clickCount > 2)
           options.clickCount = action.clickCount;
+        if (action.position)
+          options.position = action.position;
         const optionsString = formatOptions(options);
         return `${method}(${quote(action.selector)}${optionsString})`;
       }

@@ -389,7 +389,7 @@ test('should saveAs videos from remote browser', async ({ browserType, startRemo
   await page.video().saveAs(savedAsPath);
   expect(fs.existsSync(savedAsPath)).toBeTruthy();
   const error = await page.video().path().catch(e => e);
-  expect(error.message).toContain('Path is not available when using browserType.connect(). Use saveAs() to save a local copy.');
+  expect(error.message).toContain('Path is not available when connecting remotely. Use saveAs() to save a local copy.');
 });
 
 test('should be able to connect 20 times to a single server without warnings', async ({ browserType, startRemoteServer }) => {
@@ -428,7 +428,7 @@ test('should save download', async ({ server, browserType, startRemoteServer }, 
   expect(fs.existsSync(nestedPath)).toBeTruthy();
   expect(fs.readFileSync(nestedPath).toString()).toBe('Hello world');
   const error = await download.path().catch(e => e);
-  expect(error.message).toContain('Path is not available when using browserType.connect(). Use saveAs() to save a local copy.');
+  expect(error.message).toContain('Path is not available when connecting remotely. Use saveAs() to save a local copy.');
   await browser.close();
 });
 
@@ -475,7 +475,7 @@ test('should properly disconnect when connection closes from the client side', a
   await disconnectedPromise;
   expect(browser.isConnected()).toBe(false);
 
-  expect((await navigationPromise).message).toContain('has been closed');
+  expect((await navigationPromise).message).toContain('Connection closed');
   expect((await waitForNavigationPromise).message).toContain('Navigation failed because page was closed');
   expect((await page.goto(server.EMPTY_PAGE).catch(e => e)).message).toContain('has been closed');
   expect((await page.waitForNavigation().catch(e => e)).message).toContain('Navigation failed because page was closed');

@@ -218,11 +218,10 @@ program
         options.browser = 'firefox';
       if (options.browser === 'wk')
         options.browser = 'webkit';
-      showTraceViewer(trace, options.browser).catch(logErrorAndExit);
+      showTraceViewer(trace, options.browser, false, 9322).catch(logErrorAndExit);
     }).addHelpText('afterAll', `
 Examples:
 
-  $ show-trace trace/directory
   $ show-trace https://example.com/trace.zip`);
 
 if (!process.env.PW_CLI_TARGET_LANG) {
@@ -235,6 +234,7 @@ if (!process.env.PW_CLI_TARGET_LANG) {
 
   if (playwrightTestPackagePath) {
     require(playwrightTestPackagePath).addTestCommand(program);
+    require(playwrightTestPackagePath).addShowReportCommand(program);
   } else {
     const command = program.command('test').allowUnknownOption(true);
     command.description('Run tests with Playwright Test. Available in @playwright/test package.');

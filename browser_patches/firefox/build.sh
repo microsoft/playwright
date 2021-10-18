@@ -19,7 +19,7 @@ if [[ ! -z "${FF_CHECKOUT_PATH}" ]]; then
   cd "${FF_CHECKOUT_PATH}"
   echo "WARNING: checkout path from FF_CHECKOUT_PATH env: ${FF_CHECKOUT_PATH}"
 else
-  cd "../firefox/checkout"
+  cd "$HOME/firefox"
 fi
 
 rm -rf .mozconfig
@@ -32,22 +32,6 @@ if [[ "$(uname)" == "Darwin" ]]; then
   else
     echo "ERROR: ${CURRENT_HOST_OS_VERSION} is not supported"
     exit 1
-  fi
-
-  # Firefox on Mac Intel requires SDK for 10.12 to work on old versions of MacOS.
-  # Mac on Apple Silicon doesn't exist on old versions of MacOS, so this is not needed.
-  if [[ "$(uname -m)" == "x86_64" ]]; then
-    if ! [[ -d $HOME/SDK-archive/MacOSX${MACOS_SDK_VERSION}.sdk ]]; then
-      echo "As of Dec 2020, Firefox does not build on Mac ${CURRENT_HOST_OS_VERSION} without ${MACOS_SDK_VERSION} SDK."
-      echo "Download XCode ${XCODE_VERSION_WITH_REQUIRED_SDK_VERSION} from https://developer.apple.com/download/more/ and"
-      echo "extract SDK to $HOME/SDK-archive/MacOSX${MACOS_SDK_VERSION}.sdk"
-      echo ""
-      echo "More info: https://firefox-source-docs.mozilla.org/setup/macos_build.html"
-      exit 1
-    else
-      echo "-- configuting .mozconfig with ${MACOS_SDK_VERSION} SDK path"
-      echo "ac_add_options --with-macos-sdk=$HOME/SDK-archive/MacOSX${MACOS_SDK_VERSION}.sdk/" >> .mozconfig
-    fi
   fi
   echo "-- building on Mac"
 elif [[ "$(uname)" == "Linux" ]]; then
@@ -81,6 +65,10 @@ OBJ_FOLDER="obj-build-playwright"
 echo "mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/${OBJ_FOLDER}" >> .mozconfig
 echo "ac_add_options --disable-crashreporter" >> .mozconfig
 echo "ac_add_options --disable-backgroundtasks" >> .mozconfig
+
+if [[ -n $FF_DEBUG_BUILD ]]; then
+  echo "ac_add_options --enable-debug" >> .mozconfig
+fi
 
 if [[ "$(uname)" == MINGW* || "$(uname)" == "Darwin" ]]; then
   # This options is only available on win and mac.

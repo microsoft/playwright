@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { ApiRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials } from './types';
+import type { ApiRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials } from 'playwright-core';
 import type { Expect } from './testExpect';
 
 export type { Expect } from './testExpect';
@@ -565,7 +565,8 @@ interface TestConfig {
    */
   repeatEach?: number;
   /**
-   * The maximum number of retry attempts given to failed tests. Learn more about [test retries](https://playwright.dev/docs/test-retries#retries).
+   * The maximum number of retry attempts given to failed tests. By default failing tests are not retried. Learn more about
+   * [test retries](https://playwright.dev/docs/test-retries#retries).
    */
   retries?: number;
   /**
@@ -1336,7 +1337,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * @param title Test title.
    * @param testFunction Test function that takes one or two arguments: an object with fixtures and optional [TestInfo].
    */
-  skip(title: string, testFunction: (args: TestArgs, testInfo: TestInfo) => Promise<void> | void): void;
+  skip(title: string, testFunction: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
   /**
    * Unconditionally skip a test. Test is immediately aborted when you call
    * [test.skip()](https://playwright.dev/docs/api/class-test#test-skip-2).
@@ -2205,9 +2206,9 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    */
   beforeEach(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   /**
-   * Declares an `afterEach` hook that is executed after each test. When called in the scope of a test file, runs before each
+   * Declares an `afterEach` hook that is executed after each test. When called in the scope of a test file, runs after each
    * test in the file. When called inside a
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group, runs before each test
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group, runs after each test
    * in the group.
    * @param hookFunction Hook function that takes one or two arguments: an object with fixtures and optional [TestInfo].
    */
@@ -2251,7 +2252,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Specifies options or fixtures to use in a single test file or a
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group. Most useful to set an
-   * option, for example set `locale` to configure `context` fixture.
+   * option, for example set `locale` to configure `context` fixture. `test.use` can be called either in the global scope or
+   * inside `test.describe`, it's is an error to call it within `beforeEach` or `beforeAll`.
    *
    * ```ts
    * import { test, expect } from '@playwright/test';

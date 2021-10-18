@@ -19,7 +19,6 @@ import { rewriteErrorMessage } from '../utils/stackTrace';
 import { TimeoutError } from '../utils/errors';
 import { createGuid } from '../utils/utils';
 import * as channels from '../protocol/channels';
-import { ChannelOwner } from './channelOwner';
 
 export class Waiter {
   private _dispose: (() => void)[];
@@ -31,19 +30,17 @@ export class Waiter {
   private _waitId: string;
   private _error: string | undefined;
 
-  constructor(channelOwner: ChannelOwner<channels.EventTargetChannel>, event: string) {
+  constructor(channel: channels.EventTargetChannel, event: string) {
     this._waitId = createGuid();
-    this._channel = channelOwner._channel;
-    channelOwner._wrapApiCall(async (channel: channels.EventTargetChannel) => {
-      channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'before', event } }).catch(() => {});
-    });
+    this._channel = channel;
+    this._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'before', event } }).catch(() => {});
     this._dispose = [
       () => this._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'after', error: this._error } }).catch(() => {})
     ];
   }
 
-  static createForEvent(channelOwner: ChannelOwner<channels.EventTargetChannel>, event: string) {
-    return new Waiter(channelOwner, event);
+  static createForEvent(channel: channels.EventTargetChannel, event: string) {
+    return new Waiter(channel, event);
   }
 
   async waitForEvent<T = void>(emitter: EventEmitter, event: string, predicate?: (arg: T) => boolean | Promise<boolean>): Promise<T> {

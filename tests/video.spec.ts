@@ -152,6 +152,7 @@ function expectRedFrames(videoFile: string, size: { width: number, height: numbe
 
 it.describe('screencast', () => {
   it.slow();
+  it.skip(({ mode }) => mode === 'service', 'video.path() is not avaialble in remote mode');
 
   it('videoSize should require videosPath', async ({ browser }) => {
     const error = await browser.newContext({ videoSize: { width: 100, height: 100 } }).catch(e => e);
@@ -216,26 +217,6 @@ it.describe('screencast', () => {
     expect(path).toContain(videosPath);
     await context.close();
     expect(fs.existsSync(path)).toBeTruthy();
-  });
-
-  it('should saveAs video', async ({ browser }, testInfo) => {
-    const videosPath = testInfo.outputPath('');
-    const size = { width: 320, height: 240 };
-    const context = await browser.newContext({
-      recordVideo: {
-        dir: videosPath,
-        size
-      },
-      viewport: size,
-    });
-    const page = await context.newPage();
-    await page.evaluate(() => document.body.style.backgroundColor = 'red');
-    await page.waitForTimeout(1000);
-    await context.close();
-
-    const saveAsPath = testInfo.outputPath('my-video.webm');
-    await page.video().saveAs(saveAsPath);
-    expect(fs.existsSync(saveAsPath)).toBeTruthy();
   });
 
   it('saveAs should throw when no video frames', async ({ browser, browserName }, testInfo) => {
@@ -668,5 +649,26 @@ it.describe('screencast', () => {
     const files = fs.readdirSync(videoDir);
     expect(files.length).toBe(1);
   });
+});
 
+it('should saveAs video', async ({ browser }, testInfo) => {
+  it.slow();
+
+  const videosPath = testInfo.outputPath('');
+  const size = { width: 320, height: 240 };
+  const context = await browser.newContext({
+    recordVideo: {
+      dir: videosPath,
+      size
+    },
+    viewport: size,
+  });
+  const page = await context.newPage();
+  await page.evaluate(() => document.body.style.backgroundColor = 'red');
+  await page.waitForTimeout(1000);
+  await context.close();
+
+  const saveAsPath = testInfo.outputPath('my-video.webm');
+  await page.video().saveAs(saveAsPath);
+  expect(fs.existsSync(saveAsPath)).toBeTruthy();
 });

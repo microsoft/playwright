@@ -396,7 +396,6 @@ test('should accept a relative path for outputDir', async ({ runInlineTest }, te
 });
 
 test('should have output dir based on rootDir (cwd)', async ({ runInlineTest }, testInfo) => {
-  test.fixme(true, 'https://github.com/microsoft/playwright/issues/9380');
   const result = await runInlineTest({
     'playwright.config.js': `
       const path = require('path');

@@ -46,13 +46,17 @@ function filePath(relative) {
   return path.join(ROOT, ...relative.split('/'));
 }
 
-function runWatch() {
-  function runOnChanges(paths, nodeFile) {
+async function runWatch() {
+  function runOnChanges(paths, mustExist = [], nodeFile) {
     nodeFile = filePath(nodeFile);
     function callback() {
+      for (const fileMustExist of mustExist) {
+        if (!fs.existsSync(filePath(fileMustExist)))
+          return;
+      }
       child_process.spawnSync('node', [nodeFile], { stdio: 'inherit' });
     }
-    chokidar.watch([...paths, nodeFile].map(filePath)).on('all', callback);
+    chokidar.watch([...paths, ...mustExist, nodeFile].map(filePath)).on('all', callback);
     callback();
   }
 
@@ -72,7 +76,7 @@ function runWatch() {
     }));
   process.on('exit', () => spawns.forEach(s => s.kill()));
   for (const onChange of onChanges)
-    runOnChanges(onChange.inputs, onChange.script);
+    runOnChanges(onChange.inputs, onChange.mustExist, onChange.script);
 }
 
 async function runBuild() {
@@ -118,13 +122,14 @@ function copyFile(file, from, to) {
 const webPackFiles = [
   'packages/playwright-core/src/server/injected/webpack.config.js',
   'packages/playwright-core/src/web/traceViewer/webpack.config.js',
+  'packages/playwright-core/src/web/traceViewer/webpack-sw.config.js',
   'packages/playwright-core/src/web/recorder/webpack.config.js',
   'packages/playwright-core/src/web/htmlReport/webpack.config.js',
 ];
 for (const file of webPackFiles) {
   steps.push({
     command: 'npx',
-    args: ['webpack', '--config', filePath(file), ...(watchMode ? ['--watch', '--silent'] : [])],
+    args: ['webpack', '--config', filePath(file), ...(watchMode ? ['--watch', '--stats', 'none'] : [])],
     shell: true,
     env: {
       NODE_ENV: watchMode ? 'development' : 'production'
@@ -138,7 +143,13 @@ for (const packageDir of packages) {
     continue;
   steps.push({
     command: 'npx',
-    args: ['babel', ...(watchMode ? ['-w', '--source-maps'] : []), '--extensions', '.ts', '--out-dir', path.join(packageDir, 'lib'), path.join(packageDir, 'src')],
+    args: [
+      'babel',
+      ...(watchMode ? ['-w', '--source-maps'] : []),
+      '--extensions', '.ts',
+      '--out-dir', path.join(packageDir, 'lib'),
+      '--ignore', 'packages/playwright-core/src/server/injected/**/*',
+      path.join(packageDir, 'src')],
     shell: true,
   });
 }
@@ -166,6 +177,10 @@ onChanges.push({
     'utils/generate_types/exported.json',
     'packages/playwright-core/src/server/chromium/protocol.d.ts',
   ],
+  mustExist: [
+    'packages/playwright-core/lib/server/deviceDescriptors.js',
+    'packages/playwright-core/lib/server/deviceDescriptorsSource.json',
+  ],
   script: 'utils/generate_types/index.js',
 });
 
@@ -182,7 +197,14 @@ copyFiles.push({
   files: 'packages/playwright-core/src/**/*.js',
   from: 'packages/playwright-core/src',
   to: 'packages/playwright-core/lib',
-  ignored: ['**/.eslintrc.js', '**/*webpack.config.js', '**/injected/**/*']
+  ignored: ['**/.eslintrc.js', '**/webpack*.config.js', '**/injected/**/*']
+});
+
+copyFiles.push({
+  files: 'packages/playwright-test/src/**/*.js',
+  from: 'packages/playwright-test/src',
+  to: 'packages/playwright-test/lib',
+  ignored: ['**/.eslintrc.js']
 });
 
 // Sometimes we require JSON files that babel ignores.

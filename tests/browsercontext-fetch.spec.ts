@@ -904,7 +904,7 @@ it('context request should export same storage state as context', async ({ conte
   expect(pageState).toEqual(contextState);
 });
 
-it('should accept bool and numeric params', async ({ context, page, server }) => {
+it('should accept bool and numeric params', async ({ page, server }) => {
   let request;
   const url = new URL(server.EMPTY_PAGE);
   url.searchParams.set('str', 's');

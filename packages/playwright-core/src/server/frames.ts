@@ -70,7 +70,7 @@ export type NavigationEvent = {
 };
 
 export type SchedulableTask<T> = (injectedScript: js.JSHandle<InjectedScript>) => Promise<js.JSHandle<InjectedScriptPoll<T>>>;
-export type DomTaskBody<T, R, E> = (progress: InjectedScriptProgress, element: E, data: T, elements: Element[], continuePolling: any) => R;
+export type DomTaskBody<T, R, E> = (progress: InjectedScriptProgress, element: E, data: T, elements: Element[], continuePolling: symbol) => R | symbol;
 
 export class FrameManager {
   private _page: Page;
@@ -1161,25 +1161,47 @@ export class Frame extends SdkObject {
     });
   }
 
-  async expect(metadata: CallMetadata, selector: string, options: FrameExpectParams): Promise<{ pass: boolean, received?: any, log?: string[] }> {
+  async expect(metadata: CallMetadata, selector: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[] }> {
     const controller = new ProgressController(metadata, this);
     const querySelectorAll = options.expression === 'to.have.count' || options.expression.endsWith('.array');
     const mainWorld = options.expression === 'to.have.property';
-    const omitAttached = (!options.isNot && options.expression === 'to.be.hidden') || (options.isNot && options.expression === 'to.be.visible');
-
     return await this._scheduleRerunnableTaskWithController(controller, selector, (progress, element, options, elements, continuePolling) => {
-      // We don't have an element and we don't need an element => pass.
-      if (!element && options.omitAttached)
-        return { pass: !options.isNot };
-      // We don't have an element and we DO need an element => fail.
-      if (!element)
-        return { pass: !!options.isNot };
-      // We have an element.
-      return progress.injectedScript.expect(progress, element!, options, elements, continuePolling);
-    }, { omitAttached, ...options }, { strict: true, querySelectorAll, mainWorld, omitAttached, logScale: true, ...options }).catch(e => {
+      if (!element) {
+        // expect(locator).toBeHidden() passes when there is no element.
+        if (!options.isNot && options.expression === 'to.be.hidden')
+          return { matches: true };
+
+        // expect(locator).not.toBeVisible() passes when there is no element.
+        if (options.isNot && options.expression === 'to.be.visible')
+          return { matches: false };
+
+        // expect(listLocator).toHaveText([]) passes when there are no elements matching.
+        // expect(listLocator).not.toHaveText(['foo']) passes when there are no elements matching.
+        const expectsEmptyList = options.expectedText?.length === 0;
+        if (options.expression.endsWith('.array') && expectsEmptyList !== options.isNot)
+          return { matches: expectsEmptyList };
+
+        // When none of the above applies, keep waiting for the element.
+        return continuePolling;
+      }
+
+      const { matches, received } = progress.injectedScript.expect(progress, element, options, elements);
+      if (matches === options.isNot) {
+        // Keep waiting in these cases:
+        // expect(locator).conditionThatDoesNotMatch
+        // expect(locator).not.conditionThatDoesMatch
+        progress.setIntermediateResult(received);
+        if (!Array.isArray(received))
+          progress.log(`  unexpected value "${received}"`);
+        return continuePolling;
+      }
+
+      // Reached the expected state!
+      return { matches, received };
+    }, options, { strict: true, querySelectorAll, mainWorld, omitAttached: true, logScale: true, ...options }).catch(e => {
       if (js.isJavaScriptErrorInEvaluate(e))
         throw e;
-      return { received: controller.lastIntermediateResult(), pass: !!options.isNot, log: metadata.log };
+      return { received: controller.lastIntermediateResult(), matches: options.isNot, log: metadata.log };
     });
   }
 
@@ -1259,24 +1281,43 @@ export class Frame extends SdkObject {
     return controller.run(async progress => {
       progress.log(`waiting for selector "${selector}"`);
       const rerunnableTask = new RerunnableTask(data, progress, injectedScript => {
-        return injectedScript.evaluateHandle((injected, { info, taskData, callbackText, querySelectorAll, logScale, omitAttached }) => {
+        return injectedScript.evaluateHandle((injected, { info, taskData, callbackText, querySelectorAll, logScale, omitAttached, snapshotName }) => {
           const callback = injected.eval(callbackText) as DomTaskBody<T, R, Element | undefined>;
           const poller = logScale ? injected.pollLogScale.bind(injected) : injected.pollRaf.bind(injected);
+          let markedElements = new Set<Element>();
           return poller((progress, continuePolling) => {
+            let element: Element | undefined;
+            let elements: Element[] = [];
             if (querySelectorAll) {
-              const elements = injected.querySelectorAll(info.parsed, document);
+              elements = injected.querySelectorAll(info.parsed, document);
+              element = elements[0];
               progress.logRepeating(`  selector resolved to ${elements.length} element${elements.length === 1 ? '' : 's'}`);
-              return callback(progress, elements[0], taskData as T, elements, continuePolling);
+            } else {
+              element = injected.querySelector(info.parsed, document, info.strict);
+              elements = element ? [element] : [];
+              if (element)
+                progress.logRepeating(`  selector resolved to ${injected.previewNode(element)}`);
             }
 
-            const element = injected.querySelector(info.parsed, document, info.strict);
             if (!element && !omitAttached)
               return continuePolling;
-            if (element)
-              progress.logRepeating(`  selector resolved to ${injected.previewNode(element)}`);
-            return callback(progress, element, taskData as T, [], continuePolling);
+
+            if (snapshotName) {
+              const previouslyMarkedElements = markedElements;
+              markedElements = new Set(elements);
+              for (const e of previouslyMarkedElements) {
+                if (!markedElements.has(e))
+                  e.removeAttribute('__playwright_target__');
+              }
+              for (const e of markedElements) {
+                if (!previouslyMarkedElements.has(e))
+                  e.setAttribute('__playwright_target__', snapshotName);
+              }
+            }
+
+            return callback(progress, element, taskData as T, elements, continuePolling);
           });
-        }, { info, taskData, callbackText, querySelectorAll: options.querySelectorAll, logScale: options.logScale, omitAttached: options.omitAttached });
+        }, { info, taskData, callbackText, querySelectorAll: options.querySelectorAll, logScale: options.logScale, omitAttached: options.omitAttached, snapshotName: progress.metadata.afterSnapshot });
       }, true);
 
       if (this._detached)

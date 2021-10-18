@@ -2221,7 +2221,7 @@ export type FrameExpectParams = {
   expectedNumber?: number,
   expectedValue?: SerializedArgument,
   useInnerText?: boolean,
-  isNot?: boolean,
+  isNot: boolean,
   timeout?: number,
 };
 export type FrameExpectOptions = {
@@ -2230,11 +2230,10 @@ export type FrameExpectOptions = {
   expectedNumber?: number,
   expectedValue?: SerializedArgument,
   useInnerText?: boolean,
-  isNot?: boolean,
   timeout?: number,
 };
 export type FrameExpectResult = {
-  pass: boolean,
+  matches: boolean,
   received?: SerializedValue,
   log?: string[],
 };

@@ -31,7 +31,7 @@ export async function toEqual<T>(
   matcherName: string,
   receiver: any,
   receiverType: string,
-  query: (isNot: boolean, timeout: number) => Promise<{ pass: boolean, received?: any, log?: string[] }>,
+  query: (isNot: boolean, timeout: number) => Promise<{ matches: boolean, received?: any, log?: string[] }>,
   expected: T,
   options: { timeout?: number, contains?: boolean } = {},
 ) {
@@ -51,7 +51,7 @@ export async function toEqual<T>(
     defaultExpectTimeout = 5000;
   const timeout = options.timeout === 0 ? 0 : options.timeout || defaultExpectTimeout;
 
-  const { pass, received, log } = await query(this.isNot, timeout);
+  const { matches: pass, received, log } = await query(this.isNot, timeout);
 
   const message = pass
     ? () =>

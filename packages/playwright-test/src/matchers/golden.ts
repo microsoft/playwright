@@ -21,7 +21,7 @@ import fs from 'fs';
 import path from 'path';
 import jpeg from 'jpeg-js';
 import pixelmatch from 'pixelmatch';
-import { diff_match_patch, DIFF_INSERT, DIFF_DELETE, DIFF_EQUAL } from 'playwright-core/src/third_party/diff_match_patch';
+import { diff_match_patch, DIFF_INSERT, DIFF_DELETE, DIFF_EQUAL } from '../third_party/diff_match_patch';
 import { TestInfoImpl, UpdateSnapshots } from '../types';
 import { addSuffixToFilePath } from '../util';
 
@@ -37,15 +37,17 @@ const extensionToMimeType: { [key: string]: string } = {
 };
 
 const GoldenComparators: { [key: string]: any } = {
-  'application/octet-string': compareBuffers,
+  'application/octet-string': compareBuffersOrStrings,
   'image/png': compareImages,
   'image/jpeg': compareImages,
   'text/plain': compareText,
 };
 
-function compareBuffers(actualBuffer: Buffer | string, expectedBuffer: Buffer, mimeType: string): { diff?: object; errorMessage?: string; } | null {
+function compareBuffersOrStrings(actualBuffer: Buffer | string, expectedBuffer: Buffer, mimeType: string): { diff?: object; errorMessage?: string; } | null {
+  if (typeof actualBuffer === 'string')
+    return compareText(actualBuffer, expectedBuffer);
   if (!actualBuffer || !(actualBuffer instanceof Buffer))
-    return { errorMessage: 'Actual result should be Buffer.' };
+    return { errorMessage: 'Actual result should be a Buffer or a string.' };
   if (Buffer.compare(actualBuffer, expectedBuffer))
     return { errorMessage: 'Buffers differ' };
   return null;
@@ -53,7 +55,7 @@ function compareBuffers(actualBuffer: Buffer | string, expectedBuffer: Buffer, m
 
 function compareImages(actualBuffer: Buffer | string, expectedBuffer: Buffer, mimeType: string, options = {}): { diff?: object; errorMessage?: string; } | null {
   if (!actualBuffer || !(actualBuffer instanceof Buffer))
-    return { errorMessage: 'Actual result should be Buffer.' };
+    return { errorMessage: 'Actual result should be a Buffer.' };
 
   const actual = mimeType === 'image/png' ? PNG.sync.read(actualBuffer) : jpeg.decode(actualBuffer);
   const expected = mimeType === 'image/png' ? PNG.sync.read(expectedBuffer) : jpeg.decode(expectedBuffer);
@@ -69,7 +71,7 @@ function compareImages(actualBuffer: Buffer | string, expectedBuffer: Buffer, mi
 
 function compareText(actual: Buffer | string, expectedBuffer: Buffer): { diff?: object; errorMessage?: string; diffExtension?: string; } | null {
   if (typeof actual !== 'string')
-    return { errorMessage: 'Actual result should be string' };
+    return { errorMessage: 'Actual result should be a string' };
   const expected = expectedBuffer.toString('utf-8');
   if (expected === actual)
     return null;

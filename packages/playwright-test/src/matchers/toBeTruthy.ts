@@ -24,7 +24,7 @@ export async function toBeTruthy(
   matcherName: string,
   receiver: any,
   receiverType: string,
-  query: (isNot: boolean, timeout: number) => Promise<{ pass: boolean, log?: string[] }>,
+  query: (isNot: boolean, timeout: number) => Promise<{ matches: boolean, log?: string[] }>,
   options: { timeout?: number } = {},
 ) {
   const testInfo = currentTestInfo();
@@ -42,11 +42,11 @@ export async function toBeTruthy(
     defaultExpectTimeout = 5000;
   const timeout = options.timeout === 0 ? 0 : options.timeout || defaultExpectTimeout;
 
-  const { pass, log } = await query(this.isNot, timeout);
+  const { matches, log } = await query(this.isNot, timeout);
 
   const message = () => {
     return this.utils.matcherHint(matcherName, undefined, '', matcherOptions) + callLogText(log);
   };
 
-  return { message, pass };
+  return { message, pass: matches };
 }

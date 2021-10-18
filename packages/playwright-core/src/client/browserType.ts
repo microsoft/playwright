@@ -27,6 +27,7 @@ import { assert, headersObjectToArray, getUserAgent, monotonicTime } from '../ut
 import * as api from '../../types/types';
 import { kBrowserClosedError } from '../utils/errors';
 import { raceAgainstDeadline } from '../utils/async';
+import type { Playwright } from './playwright';
 
 export interface BrowserServerLauncher {
   launchServer(options?: LaunchServerOptions): Promise<api.BrowserServer>;
@@ -43,6 +44,7 @@ export interface BrowserServer extends api.BrowserServer {
 export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, channels.BrowserTypeInitializer> implements api.BrowserType {
   _serverLauncher?: BrowserServerLauncher;
   _contexts = new Set<BrowserContext>();
+  _playwright!: Playwright;
 
   // Instrumentation.
   _defaultContextOptions: BrowserContextOptions = {};
@@ -52,10 +54,6 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
 
   static from(browserType: channels.BrowserTypeChannel): BrowserType {
     return (browserType as any)._object;
-  }
-
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.BrowserTypeInitializer) {
-    super(parent, type, guid, initializer);
   }
 
   executablePath(): string {
@@ -133,7 +131,9 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
       let browser: Browser;
       const { pipe } = await channel.connect({ wsEndpoint, headers: params.headers, slowMo: params.slowMo, timeout: params.timeout });
       const closePipe = () => pipe.close().catch(() => {});
-      const connection = new Connection(closePipe);
+      const connection = new Connection();
+      connection.markAsRemote();
+      connection.on('close', closePipe);
 
       const onPipeClosed = () => {
         // Emulate all pages, contexts and the browser closing upon disconnect.
@@ -143,15 +143,14 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
           context._onClose();
         }
         browser?._didClose();
-        connection.didDisconnect(kBrowserClosedError);
+        connection.close(kBrowserClosedError);
       };
       pipe.on('closed', onPipeClosed);
       connection.onmessage = message => pipe.send({ message }).catch(onPipeClosed);
 
       pipe.on('message', ({ message }) => {
         try {
-          if (!connection!.isDisconnected())
-            connection!.dispatch(message);
+          connection!.dispatch(message);
         } catch (e) {
           console.error(`Playwright: Connection dispatch error`);
           console.error(e);
@@ -171,14 +170,12 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
             closePipe();
             return;
           }
+          playwright._setSelectors(this._playwright.selectors);
           browser = Browser.from(playwright._initializer.preLaunchedBrowser!);
           browser._logger = logger;
-          browser._remoteType = 'owns-connection';
+          browser._shouldCloseConnectionOnClose = true;
           browser._setBrowserType((playwright as any)[browser._name]);
-          browser.on(Events.Browser.Disconnected, () => {
-            playwright._cleanup();
-            closePipe();
-          });
+          browser.on(Events.Browser.Disconnected, closePipe);
           fulfill(browser);
         } catch (e) {
           reject(e);
@@ -221,7 +218,6 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
       const browser = Browser.from(result.browser);
       if (result.defaultContext)
         browser._contexts.add(BrowserContext.from(result.defaultContext));
-      browser._remoteType = 'uses-connection';
       browser._logger = logger;
       browser._setBrowserType(this);
       return browser;

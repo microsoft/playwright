@@ -19,7 +19,7 @@ import { Boundaries, Size } from '../geometry';
 import * as React from 'react';
 import { useMeasure } from './helpers';
 import { upperBound } from '../../uiUtils';
-import { ContextEntry, PageEntry } from '../../../server/trace/viewer/traceModel';
+import { ContextEntry, PageEntry } from '../entries';
 
 const tileSize = { width: 200, height: 45 };
 
@@ -61,7 +61,7 @@ export const FilmStrip: React.FunctionComponent<{
       top: measure.bottom + 5,
       left: Math.min(previewPoint!.x, measure.width - previewSize.width - 10),
     }}>
-      <img src={`/sha1/${previewImage.sha1}`} width={previewSize.width} height={previewSize.height} />
+      <img src={`sha1/${previewImage.sha1}`} width={previewSize.width} height={previewSize.height} />
     </div>
   }
   </div>;
@@ -97,7 +97,7 @@ const FilmStripLane: React.FunctionComponent<{
     frames.push(<div className='film-strip-frame' key={i} style={{
       width: frameSize.width,
       height: frameSize.height,
-      backgroundImage: `url(/sha1/${screencastFrames[index].sha1})`,
+      backgroundImage: `url(sha1/${screencastFrames[index].sha1})`,
       backgroundSize: `${frameSize.width}px ${frameSize.height}px`,
       margin: frameMargin,
       marginRight: frameMargin,
@@ -107,7 +107,7 @@ const FilmStripLane: React.FunctionComponent<{
   frames.push(<div className='film-strip-frame' key={i} style={{
     width: frameSize.width,
     height: frameSize.height,
-    backgroundImage: `url(/sha1/${screencastFrames[screencastFrames.length - 1].sha1})`,
+    backgroundImage: `url(sha1/${screencastFrames[screencastFrames.length - 1].sha1})`,
     backgroundSize: `${frameSize.width}px ${frameSize.height}px`,
     margin: frameMargin,
     marginRight: frameMargin,

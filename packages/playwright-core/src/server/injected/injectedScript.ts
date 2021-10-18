@@ -775,7 +775,7 @@ export class InjectedScript {
     return error;
   }
 
-  expect(progress: InjectedScriptProgress, element: Element, options: FrameExpectParams, elements: Element[], continuePolling: any): { pass: boolean, received?: any } {
+  expect(progress: InjectedScriptProgress, element: Element, options: FrameExpectParams, elements: Element[]): { matches: boolean, received?: any } {
     const injected = progress.injectedScript;
     const expression = options.expression;
 
@@ -808,12 +808,7 @@ export class InjectedScript {
           throw injected.createStacklessError('Element is not a checkbox');
         if (elementState === 'error:notconnected')
           throw injected.createStacklessError('Element is not connected');
-        if (elementState === options.isNot) {
-          progress.setIntermediateResult(elementState);
-          progress.log(`  unexpected value "${elementState}"`);
-          return continuePolling;
-        }
-        return { pass: !options.isNot };
+        return { received: elementState, matches: elementState };
       }
     }
 
@@ -822,12 +817,7 @@ export class InjectedScript {
       if (expression === 'to.have.count') {
         const received = elements.length;
         const matches = received === options.expectedNumber;
-        if (matches === options.isNot) {
-          progress.setIntermediateResult(received);
-          progress.log(`  unexpected value "${received}"`);
-          return continuePolling;
-        }
-        return { pass: !options.isNot, received };
+        return { received, matches };
       }
     }
 
@@ -836,12 +826,7 @@ export class InjectedScript {
       if (expression === 'to.have.property') {
         const received = (element as any)[options.expressionArg];
         const matches = deepEquals(received, options.expectedValue);
-        if (matches === options.isNot) {
-          progress.setIntermediateResult(received);
-          progress.log(`  unexpected value "${received}"`);
-          return continuePolling;
-        }
-        return { received, pass: !options.isNot };
+        return { received, matches };
       }
     }
 
@@ -870,12 +855,7 @@ export class InjectedScript {
 
       if (received !== undefined && options.expectedText) {
         const matcher = new ExpectedTextMatcher(options.expectedText[0]);
-        if (matcher.matches(received) === options.isNot) {
-          progress.setIntermediateResult(received);
-          progress.log(`  unexpected value "${received}"`);
-          return continuePolling;
-        }
-        return { received, pass: !options.isNot };
+        return { received, matches: matcher.matches(received) };
       }
     }
 
@@ -890,23 +870,23 @@ export class InjectedScript {
       if (received && options.expectedText) {
         // "To match an array" is "to contain an array" + "equal length"
         const lengthShouldMatch = expression !== 'to.contain.text.array';
-        if (received.length !== options.expectedText.length && lengthShouldMatch) {
-          progress.setIntermediateResult(received);
-          return continuePolling;
-        }
+        const matchesLength = received.length === options.expectedText.length || !lengthShouldMatch;
+        if (!matchesLength)
+          return { received, matches: false };
 
         // Each matcher should get a "received" that matches it, in order.
         let i = 0;
         const matchers = options.expectedText.map(e => new ExpectedTextMatcher(e));
+        let allMatchesFound = true;
         for (const matcher of matchers) {
-          while (i < received.length && matcher.matches(received[i]) === options.isNot)
+          while (i < received.length && !matcher.matches(received[i]))
             i++;
-          if (i === received.length) {
-            progress.setIntermediateResult(received);
-            return continuePolling;
+          if (i >= received.length) {
+            allMatchesFound = false;
+            break;
           }
         }
-        return { received, pass: !options.isNot };
+        return { received, matches: allMatchesFound };
       }
     }
     throw this.createStacklessError('Unknown expect matcher: ' + options.expression);

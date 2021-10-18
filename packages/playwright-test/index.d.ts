@@ -15,6 +15,6 @@
  */
 
 export * from 'playwright-core';
-export * from 'playwright-core/types/test';
-export { default } from 'playwright-core/types/test';
+export * from './types/test';
+export { default } from './types/test';
  

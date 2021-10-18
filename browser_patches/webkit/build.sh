@@ -40,7 +40,7 @@ if [[ ! -z "${WK_CHECKOUT_PATH}" ]]; then
   cd "${WK_CHECKOUT_PATH}"
   echo "WARNING: checkout path from WK_CHECKOUT_PATH env: ${WK_CHECKOUT_PATH}"
 else
-  cd "checkout"
+  cd "$HOME/webkit"
 fi
 
 if [[ "$(uname)" == "Darwin" ]]; then

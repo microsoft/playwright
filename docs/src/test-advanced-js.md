@@ -17,7 +17,7 @@ These options define your test suite:
 - `outputDir: string` - Output directory for files created during the test run.
 - `snapshotDir: string` - Base output directory for snapshot files.
 - `repeatEach: number` - The number of times to repeat each test, useful for debugging flaky tests.
-- `retries: number` - The maximum number of retry attempts given to failed tests.
+- `retries: number` - The maximum number of retry attempts given to failed tests. If not specified, failing tests are not retried.
 - `testDir: string` - Directory that will be recursively scanned for test files.
 - `testIgnore: string | RegExp | (string | RegExp)[]` - Files matching one of these patterns are not considered test files.
 - `testMatch: string | RegExp | (string | RegExp)[]` - Only the files matching one of these patterns are considered test files.

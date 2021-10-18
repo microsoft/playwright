@@ -1,7 +1,7 @@
 {
   "name": "playwright-chromium",
   "version": "1.16.0-next",
-  "description": "A high-level API to automate web browsers",
+  "description": "A high-level API to automate Chromium",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
   "engines": {

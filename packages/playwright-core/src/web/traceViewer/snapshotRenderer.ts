@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import { FrameSnapshot, NodeSnapshot, RenderedFrameSnapshot, ResourceSnapshot } from './snapshotTypes';
+import { FrameSnapshot, NodeSnapshot, RenderedFrameSnapshot, ResourceSnapshot } from '../../server/trace/common/snapshotTypes';
 
 export class SnapshotRenderer {
   private _snapshots: FrameSnapshot[];
   private _index: number;
   readonly snapshotName: string | undefined;
-  private _resources: ResourceSnapshot[];
+  _resources: ResourceSnapshot[];
   private _snapshot: FrameSnapshot;
 
   constructor(resources: ResourceSnapshot[], snapshots: FrameSnapshot[], index: number) {
@@ -185,7 +185,8 @@ function snapshotScript() {
           iframe.setAttribute('src', 'data:text/html,<body style="background: #ddd"></body>');
         } else {
           // Append query parameters to inherit ?name= or ?time= values from parent.
-          iframe.setAttribute('src', window.location.origin + src + window.location.search);
+          const url = new URL('/trace' + src + window.location.search, window.location.href).toString();
+          iframe.setAttribute('src', url);
         }
       }
 
@@ -219,6 +220,23 @@ function snapshotScript() {
       for (const element of scrollLefts) {
         element.scrollLeft = +element.getAttribute(scrollLeftAttribute)!;
         element.removeAttribute(scrollLeftAttribute);
+      }
+
+      const search = new URL(window.location.href).searchParams;
+      const pointX = search.get('pointX');
+      const pointY = search.get('pointY');
+      if (pointX) {
+        const pointElement = document.createElement('x-pw-pointer');
+        pointElement.style.position = 'fixed';
+        pointElement.style.backgroundColor = 'red';
+        pointElement.style.width = '20px';
+        pointElement.style.height = '20px';
+        pointElement.style.borderRadius = '10px';
+        pointElement.style.margin = '-10px 0 0 -10px';
+        pointElement.style.zIndex = '2147483647';
+        pointElement.style.left = pointX + 'px';
+        pointElement.style.top = pointY + 'px';
+        document.documentElement.appendChild(pointElement);
       }
     };
     window.addEventListener('load', onLoad);

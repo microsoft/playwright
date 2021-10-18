@@ -20,7 +20,7 @@ import fs from 'fs';
 import milliseconds from 'ms';
 import path from 'path';
 import StackUtils from 'stack-utils';
-import { FullConfig, TestCase, Suite, TestResult, TestError, Reporter, FullResult, TestStep } from 'playwright-core/types/testReporter';
+import { FullConfig, TestCase, Suite, TestResult, TestError, Reporter, FullResult, TestStep } from '../../types/testReporter';
 
 const stackUtils = new StackUtils();
 
@@ -62,6 +62,11 @@ export class BaseReporter implements Reporter  {
   fileDurations = new Map<string, number>();
   monotonicStartTime: number = 0;
   private printTestOutput = !process.env.PWTEST_SKIP_TEST_OUTPUT;
+  protected _omitFailures: boolean;
+
+  constructor(options: { omitFailures?: boolean } = {}) {
+    this._omitFailures = options.omitFailures || false;
+  }
 
   onBegin(config: FullConfig, suite: Suite) {
     this.monotonicStartTime = monotonicTime();
@@ -113,7 +118,6 @@ export class BaseReporter implements Reporter  {
 
   protected generateSummaryMessage({ skipped, expected, unexpected, flaky }: TestSummary) {
     const tokens: string[] = [];
-    tokens.push('');
     if (unexpected.length) {
       tokens.push(colors.red(`  ${unexpected.length} failed`));
       for (const test of unexpected)
@@ -169,7 +173,7 @@ export class BaseReporter implements Reporter  {
   epilogue(full: boolean) {
     const summary = this.generateSummary();
     const summaryMessage = this.generateSummaryMessage(summary);
-    if (full && summary.failuresToPrint.length)
+    if (full && summary.failuresToPrint.length && !this._omitFailures)
       this._printFailures(summary.failuresToPrint);
     this._printSlowTests();
     this._printSummary(summaryMessage);
@@ -191,9 +195,11 @@ export class BaseReporter implements Reporter  {
     });
   }
 
-  private _printSummary(summary: string){
-    console.log('');
-    console.log(summary);
+  private _printSummary(summary: string) {
+    if (summary.trim()) {
+      console.log('');
+      console.log(summary);
+    }
   }
 
   willRetry(test: TestCase): boolean {
@@ -310,7 +316,7 @@ export function formatTestTitle(config: FullConfig, test: TestCase, step?: TestS
   const [, projectName, , ...titles] = test.titlePath();
   const location = `${relativeTestPath(config, test)}:${test.location.line}:${test.location.column}`;
   const projectTitle = projectName ? `[${projectName}] › ` : '';
-  return `${projectTitle}${location} › ${titles.join(' ')}${stepSuffix(step)}`;
+  return `${projectTitle}${location} › ${titles.join(' › ')}${stepSuffix(step)}`;
 }
 
 function formatTestHeader(config: FullConfig, test: TestCase, indent: string, index?: number): string {

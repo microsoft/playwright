@@ -249,6 +249,7 @@ export class Recorder {
     this._performAction({
       name: 'click',
       selector: this._hoveredModel!.selector,
+      position: positionForEvent(event),
       signals: [],
       button: buttonForEvent(event),
       modifiers: modifiersForEvent(event),
@@ -565,6 +566,16 @@ function buttonForEvent(event: MouseEvent): 'left' | 'middle' | 'right' {
     case 3: return 'right';
   }
   return 'left';
+}
+
+function positionForEvent(event: MouseEvent): Point |undefined {
+  const targetElement = (event.target as HTMLElement);
+  if (targetElement.nodeName !== 'CANVAS')
+    return;
+  return {
+    x: event.offsetX,
+    y: event.offsetY,
+  };
 }
 
 function consumeEvent(e: Event) {

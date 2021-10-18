@@ -24,7 +24,7 @@ import * as path from 'path';
 import * as url from 'url';
 import * as fs from 'fs';
 import { ProjectImpl } from './project';
-import { Reporter } from 'playwright-core/types/testReporter';
+import { Reporter } from '../types/testReporter';
 import { BuiltInReporter, builtInReporters } from './runner';
 import { isRegExp } from 'playwright-core/src/utils/utils';
 
@@ -104,7 +104,7 @@ export class Loader {
     this._fullConfig.webServer = takeFirst(this._configOverrides.webServer, this._config.webServer, baseFullConfig.webServer);
 
     for (const project of projects)
-      this._addProject(project, this._fullConfig.rootDir);
+      this._addProject(project, this._fullConfig.rootDir, rootDir);
     this._fullConfig.projects = this._projects.map(p => p.config);
   }
 
@@ -162,16 +162,16 @@ export class Loader {
     };
   }
 
-  private _addProject(projectConfig: Project, rootDir: string) {
+  private _addProject(projectConfig: Project, rootDir: string, configDir: string) {
     let testDir = takeFirst(projectConfig.testDir, rootDir);
     if (!path.isAbsolute(testDir))
-      testDir = path.resolve(rootDir, testDir);
+      testDir = path.resolve(configDir, testDir);
     let outputDir = takeFirst(this._configOverrides.outputDir, projectConfig.outputDir, this._config.outputDir, path.resolve(process.cwd(), 'test-results'));
     if (!path.isAbsolute(outputDir))
-      outputDir = path.resolve(rootDir, outputDir);
+      outputDir = path.resolve(configDir, outputDir);
     let snapshotDir = takeFirst(this._configOverrides.snapshotDir, projectConfig.snapshotDir, this._config.snapshotDir, testDir);
     if (!path.isAbsolute(snapshotDir))
-      snapshotDir = path.resolve(testDir, snapshotDir);
+      snapshotDir = path.resolve(configDir, snapshotDir);
     const fullProject: FullProject = {
       define: takeFirst(this._configOverrides.define, projectConfig.define, this._config.define, []),
       expect: takeFirst(this._configOverrides.expect, projectConfig.expect, this._config.expect, undefined),

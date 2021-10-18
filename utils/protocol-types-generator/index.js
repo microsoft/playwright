@@ -27,7 +27,7 @@ async function generateChromiumProtocol(executablePath) {
 }
 
 async function generateWebKitProtocol(folderPath) {
-  const outputPath = path.join(__dirname, '../../src/server/webkit/protocol.d.ts');
+  const outputPath = path.join(__dirname, '../../packages/playwright-core/src/server/webkit/protocol.d.ts');
   const json = JSON.parse(await fs.promises.readFile(path.join(folderPath, '../protocol.json'), 'utf8'));
   await fs.promises.writeFile(outputPath, jsonToTS({domains: json}));
   console.log(`Wrote protocol.d.ts for WebKit to ${path.relative(process.cwd(), outputPath)}`);
@@ -124,7 +124,7 @@ function typeOfProperty(property, domain) {
 }
 
 async function generateFirefoxProtocol(executablePath) {
-  const outputPath = path.join(__dirname, '../../src/server/firefox/protocol.d.ts');
+  const outputPath = path.join(__dirname, '../../packages/playwright-core/src/server/firefox/protocol.d.ts');
   const omnija = os.platform() === 'darwin' ?
     path.join(executablePath, '../../Resources/omni.ja') :
     path.join(executablePath, '../omni.ja');

@@ -50,5 +50,3 @@ export class SelectorsOwner extends ChannelOwner<channels.SelectorsChannel, chan
     return (browser as any)._object;
   }
 }
-
-export const sharedSelectors = new Selectors();

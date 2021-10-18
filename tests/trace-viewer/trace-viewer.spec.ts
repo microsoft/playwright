@@ -15,7 +15,7 @@
  */
 
 import path from 'path';
-import type { Browser, Locator, Page } from 'playwright-core';
+import type { Browser, Frame, Locator, Page } from 'playwright-core';
 import { showTraceViewer } from 'playwright-core/lib/server/trace/viewer/traceViewer';
 import { playwrightTest, expect } from '../config/browserTest';
 
@@ -50,8 +50,8 @@ class TraceViewerPage {
     return await this.page.waitForSelector(`.action-entry:has-text("${action}") .action-icons`);
   }
 
-  async selectAction(title: string) {
-    await this.page.click(`.action-title:has-text("${title}")`);
+  async selectAction(title: string, ordinal: number = 0) {
+    await this.page.locator(`.action-title:has-text("${title}")`).nth(ordinal).click();
   }
 
   async selectSnapshot(name: string) {
@@ -81,9 +81,20 @@ class TraceViewerPage {
     const result = [...set];
     return result.sort();
   }
+
+  async snapshotFrame(actionName: string, ordinal: number = 0, hasSubframe: boolean = false): Promise<Frame> {
+    const existing = this.page.mainFrame().childFrames()[0];
+    await Promise.all([
+      existing ? existing.waitForNavigation() as any : Promise.resolve(),
+      this.selectAction(actionName, ordinal),
+    ]);
+    while (this.page.frames().length < (hasSubframe ? 3 : 2))
+      await this.page.waitForEvent('frameattached');
+    return this.page.mainFrame().childFrames()[0];
+  }
 }
 
-const test = playwrightTest.extend<{ showTraceViewer: (trace: string) => Promise<TraceViewerPage> }>({
+const test = playwrightTest.extend<{ showTraceViewer: (trace: string) => Promise<TraceViewerPage>, runAndTrace: (body: () => Promise<void>) => Promise<TraceViewerPage> }>({
   showTraceViewer: async ({ playwright, browserName, headless }, use) => {
     let browser: Browser;
     let contextImpl: any;
@@ -94,8 +105,20 @@ const test = playwrightTest.extend<{ showTraceViewer: (trace: string) => Promise
     });
     await browser.close();
     await contextImpl._browser.close();
+  },
+
+  runAndTrace: async ({ context, showTraceViewer }, use, testInfo) => {
+    await use(async (body: () => Promise<void>) => {
+      const traceFile = testInfo.outputPath('trace.zip');
+      await context.tracing.start({ snapshots: true, screenshots: true });
+      await body();
+      await context.tracing.stop({ path: traceFile });
+      return showTraceViewer(traceFile);
+    });
   }
 });
+
+test.skip(({ trace }) => trace);
 
 let traceFile: string;
 
@@ -157,17 +180,19 @@ test('should show empty trace viewer', async ({ showTraceViewer }, testInfo) => 
 test('should open simple trace viewer', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await expect(traceViewer.actionTitles).toHaveText([
+    /browserContext.newPage— [\d.ms]+/,
     /page.gotodata:text\/html,<html>Hello world<\/html>— [\d.ms]+/,
     /page.setContent— [\d.ms]+/,
     /expect.toHaveTextbutton— [\d.ms]+/,
     /page.evaluate— [\d.ms]+/,
     /page.click"Click"— [\d.ms]+/,
     /page.waitForEvent— [\d.ms]+/,
+    /page.route— [\d.ms]+/,
     /page.waitForNavigation— [\d.ms]+/,
     /page.waitForTimeout— [\d.ms]+/,
     /page.gotohttp:\/\/localhost:\d+\/frames\/frame.html— [\d.ms]+/,
+    /route.continue— [\d.ms]+/,
     /page.setViewportSize— [\d.ms]+/,
-    /page.hoverbody— [\d.ms]+/,
   ]);
 });
 
@@ -238,12 +263,6 @@ test('should have correct stack trace', async ({ showTraceViewer }) => {
     /doClick\s+trace-viewer.spec.ts\s+:\d+/,
     /recordTrace\s+trace-viewer.spec.ts\s+:\d+/,
   ], { useInnerText: true });
-
-  await traceViewer.selectAction('page.hover');
-  await traceViewer.showSourceTab();
-  await expect(traceViewer.stackFrames).toContainText([
-    /BrowserType.browserType._onWillCloseContext\s+trace-viewer.spec.ts\s+:\d+/,
-  ], { useInnerText: true });
 });
 
 test('should have network requests', async ({ showTraceViewer }) => {
@@ -255,4 +274,266 @@ test('should have network requests', async ({ showTraceViewer }) => {
     '200GETstyle.csstext/css',
     '200GETscript.jsapplication/javascript',
   ]);
+});
+
+test('should capture iframe', async ({ page, server, browserName, runAndTrace }) => {
+  test.skip(browserName === 'firefox');
+
+  await page.route('**/empty.html', route => {
+    route.fulfill({
+      body: '<iframe src="iframe.html"></iframe>',
+      contentType: 'text/html'
+    }).catch(() => {});
+  });
+  await page.route('**/iframe.html', route => {
+    route.fulfill({
+      body: '<html><button>Hello iframe</button></html>',
+      contentType: 'text/html'
+    }).catch(() => {});
+  });
+
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    if (page.frames().length < 2)
+      await page.waitForEvent('frameattached');
+    await page.frames()[1].waitForSelector('button');
+    // Force snapshot.
+    await page.evaluate('2+2');
+  });
+
+  // Render snapshot, check expectations.
+  const snapshotFrame = await traceViewer.snapshotFrame('page.evaluate', 0, true);
+  const button = await snapshotFrame.childFrames()[0].waitForSelector('button');
+  expect(await button.textContent()).toBe('Hello iframe');
+});
+
+test('should contain adopted style sheets', async ({ page, runAndTrace, browserName }) => {
+  test.skip(browserName !== 'chromium', 'Constructed stylesheets are only in Chromium.');
+
+  const traceViewer = await runAndTrace(async () => {
+    await page.setContent('<button>Hello</button>');
+    await page.evaluate(() => {
+      const sheet = new CSSStyleSheet();
+      sheet.addRule('button', 'color: red');
+      (document as any).adoptedStyleSheets = [sheet];
+
+      const sheet2 = new CSSStyleSheet();
+      sheet2.addRule(':host', 'color: blue');
+
+      for (const element of [document.createElement('div'), document.createElement('span')]) {
+        const root = element.attachShadow({
+          mode: 'open'
+        });
+        root.append('foo');
+        (root as any).adoptedStyleSheets = [sheet2];
+        document.body.appendChild(element);
+      }
+    });
+  });
+
+  const frame = await traceViewer.snapshotFrame('page.evaluate');
+  await frame.waitForSelector('button');
+  const buttonColor = await frame.$eval('button', button => {
+    return window.getComputedStyle(button).color;
+  });
+  expect(buttonColor).toBe('rgb(255, 0, 0)');
+  const divColor = await frame.$eval('div', div => {
+    return window.getComputedStyle(div).color;
+  });
+  expect(divColor).toBe('rgb(0, 0, 255)');
+  const spanColor = await frame.$eval('span', span => {
+    return window.getComputedStyle(span).color;
+  });
+  expect(spanColor).toBe('rgb(0, 0, 255)');
+});
+
+test('should work with adopted style sheets and replace/replaceSync', async ({ page, runAndTrace, browserName }) => {
+  test.skip(browserName !== 'chromium', 'Constructed stylesheets are only in Chromium.');
+
+  const traceViewer = await runAndTrace(async () => {
+    await page.setContent('<button>Hello</button>');
+    await page.evaluate(() => {
+      const sheet = new CSSStyleSheet();
+      sheet.addRule('button', 'color: red');
+      (document as any).adoptedStyleSheets = [sheet];
+    });
+    await page.evaluate(() => {
+      const [sheet] = (document as any).adoptedStyleSheets;
+      sheet.replaceSync(`button { color: blue }`);
+    });
+    await page.evaluate(() => {
+      const [sheet] = (document as any).adoptedStyleSheets;
+      sheet.replace(`button { color: #0F0 }`);
+    });
+  });
+
+  {
+    const frame = await traceViewer.snapshotFrame('page.evaluate', 0);
+    await frame.waitForSelector('button');
+    const buttonColor = await frame.$eval('button', button => {
+      return window.getComputedStyle(button).color;
+    });
+    expect(buttonColor).toBe('rgb(255, 0, 0)');
+  }
+  {
+    const frame = await traceViewer.snapshotFrame('page.evaluate', 1);
+    await frame.waitForSelector('button');
+    const buttonColor = await frame.$eval('button', button => {
+      return window.getComputedStyle(button).color;
+    });
+    expect(buttonColor).toBe('rgb(0, 0, 255)');
+  }
+  {
+    const frame = await traceViewer.snapshotFrame('page.evaluate', 2);
+    await frame.waitForSelector('button');
+    const buttonColor = await frame.$eval('button', button => {
+      return window.getComputedStyle(button).color;
+    });
+    expect(buttonColor).toBe('rgb(0, 255, 0)');
+  }
+});
+
+test('should restore scroll positions', async ({ page, runAndTrace, browserName }) => {
+  test.skip(browserName === 'firefox');
+
+  const traceViewer = await runAndTrace(async () => {
+    await page.setContent(`
+      <style>
+        li { height: 20px; margin: 0; padding: 0; }
+        div { height: 60px; overflow-x: hidden; overflow-y: scroll; background: green; padding: 0; margin: 0; }
+      </style>
+      <div>
+        <ul>
+          <li>Item 1</li>
+          <li>Item 2</li>
+          <li>Item 3</li>
+          <li>Item 4</li>
+          <li>Item 5</li>
+          <li>Item 6</li>
+          <li>Item 7</li>
+          <li>Item 8</li>
+          <li>Item 9</li>
+          <li>Item 10</li>
+        </ul>
+      </div>
+    `);
+
+    await (await page.$('text=Item 8')).scrollIntoViewIfNeeded();
+  });
+
+  // Render snapshot, check expectations.
+  const frame = await traceViewer.snapshotFrame('scrollIntoViewIfNeeded');
+  const div = await frame.waitForSelector('div');
+  expect(await div.evaluate(div => div.scrollTop)).toBe(136);
+});
+
+test('should work with meta CSP', async ({ page, runAndTrace, browserName }) => {
+  test.skip(browserName === 'firefox');
+
+  const traceViewer = await runAndTrace(async () => {
+    await page.setContent(`
+      <head>
+        <meta http-equiv="Content-Security-Policy" content="script-src 'none'">
+      </head>
+      <body>
+        <div>Hello</div>
+      </body>
+    `);
+    await page.$eval('div', div => {
+      const shadow = div.attachShadow({ mode: 'open' });
+      const span = document.createElement('span');
+      span.textContent = 'World';
+      shadow.appendChild(span);
+    });
+  });
+
+  // Render snapshot, check expectations.
+  const frame = await traceViewer.snapshotFrame('$eval');
+  await frame.waitForSelector('div');
+  // Should render shadow dom with post-processing script.
+  expect(await frame.textContent('span')).toBe('World');
+});
+
+test('should handle multiple headers', async ({ page, server, runAndTrace, browserName }) => {
+  test.skip(browserName === 'firefox');
+
+  server.setRoute('/foo.css', (req, res) => {
+    res.statusCode = 200;
+    res.setHeader('vary', ['accepts-encoding', 'accepts-encoding']);
+    res.end('body { padding: 42px }');
+  });
+
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent(`<head><link rel=stylesheet href="/foo.css"></head><body><div>Hello</div></body>`);
+  });
+
+  const frame = await traceViewer.snapshotFrame('setContent');
+  await frame.waitForSelector('div');
+  const padding = await frame.$eval('body', body => window.getComputedStyle(body).paddingLeft);
+  expect(padding).toBe('42px');
+});
+
+test('should handle src=blob', async ({ page, server, runAndTrace, browserName }) => {
+  test.skip(browserName === 'firefox');
+
+  const traceViewer = await runAndTrace(async () => {
+    await page.setViewportSize({ width: 300, height: 300 });
+    await page.goto(server.EMPTY_PAGE);
+    await page.evaluate(async () => {
+      const dataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAASCAQAAADIvofAAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAAmJLR0QA/4ePzL8AAAAHdElNRQfhBhAPKSstM+EuAAAAvUlEQVQY05WQIW4CYRgF599gEZgeoAKBWIfCNSmVvQMe3wv0ChhIViKwtTQEAYJwhgpISBA0JSxNIdlB7LIGTJ/8kpeZ7wW5TcT9o/QNBtvOrrWMrtg0sSGOFeELbHlCDsQ+ukeYiHNFJPHBDRKlQKVEbFkLUT3AiAxI6VGCXsWXAoQLBUl5E7HjUFwiyI4zf/wWoB3CFnxX5IeGdY8IGU/iwE9jcZrLy4pnEat+FL4hf/cbqREKo/Cf6W5zASVMeh234UtGAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDE3LTA2LTE2VDE1OjQxOjQzLTA3OjAwd1xNIQAAACV0RVh0ZGF0ZTptb2RpZnkAMjAxNy0wNi0xNlQxNTo0MTo0My0wNzowMAYB9Z0AAAAASUVORK5CYII=';
+      const blob = await fetch(dataUrl).then(res => res.blob());
+      const url = window.URL.createObjectURL(blob);
+      const img = document.createElement('img');
+      img.src = url;
+      const loaded = new Promise(f => img.onload = f);
+      document.body.appendChild(img);
+      await loaded;
+    });
+  });
+
+  const frame = await traceViewer.snapshotFrame('page.evaluate');
+  const img = await frame.waitForSelector('img');
+  const size = await img.evaluate(e => (e as HTMLImageElement).naturalWidth);
+  expect(size).toBe(10);
+});
+
+test('should highlight target elements', async ({ page, runAndTrace, browserName }) => {
+  test.skip(browserName === 'firefox');
+
+  const traceViewer = await runAndTrace(async () => {
+    await page.setContent(`
+      <div>hello</div>
+      <div>world</div>
+    `);
+    await page.click('text=hello');
+    await page.innerText('text=hello');
+    const handle = await page.$('text=hello');
+    await handle.click();
+    await handle.innerText();
+    await page.locator('text=hello').innerText();
+    await expect(page.locator('text=hello')).toHaveText(/hello/i);
+    await expect(page.locator('div')).toHaveText(['a', 'b'], { timeout: 1000 }).catch(() => {});
+  });
+
+  const framePageClick = await traceViewer.snapshotFrame('page.click');
+  await expect(framePageClick.locator('[__playwright_target__]')).toHaveText(['hello']);
+
+  const framePageInnerText = await traceViewer.snapshotFrame('page.innerText');
+  await expect(framePageInnerText.locator('[__playwright_target__]')).toHaveText(['hello']);
+
+  const frameHandleClick = await traceViewer.snapshotFrame('elementHandle.click');
+  await expect(frameHandleClick.locator('[__playwright_target__]')).toHaveText(['hello']);
+
+  const frameHandleInnerText = await traceViewer.snapshotFrame('elementHandle.innerText');
+  await expect(frameHandleInnerText.locator('[__playwright_target__]')).toHaveText(['hello']);
+
+  const frameLocatorInnerText = await traceViewer.snapshotFrame('locator.innerText');
+  await expect(frameLocatorInnerText.locator('[__playwright_target__]')).toHaveText(['hello']);
+
+  const frameExpect1 = await traceViewer.snapshotFrame('expect.toHaveText', 0);
+  await expect(frameExpect1.locator('[__playwright_target__]')).toHaveText(['hello']);
+
+  const frameExpect2 = await traceViewer.snapshotFrame('expect.toHaveText', 1);
+  await expect(frameExpect2.locator('[__playwright_target__]')).toHaveText(['hello', 'world']);
 });

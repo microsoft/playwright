@@ -15,7 +15,7 @@ module.exports = {
   output: {
     globalObject: 'self',
     filename: '[name].bundle.js',
-    path: path.resolve(__dirname, '../../../lib/web/recorder')
+    path: path.resolve(__dirname, '../../../lib/webpack/recorder')
   },
   module: {
     rules: [
@@ -34,10 +34,6 @@ module.exports = {
         test: /\.css$/,
         use: ['style-loader', 'css-loader']
       },
-      {
-        test: /\.ttf$/,
-        use: ['file-loader']
-      }
     ]
   },
   plugins: [

@@ -17,7 +17,7 @@
 import milliseconds from 'ms';
 import path from 'path';
 import { BaseReporter, formatFailure } from './base';
-import { TestCase, FullResult } from 'playwright-core/types/testReporter';
+import { TestCase, FullResult } from '../../types/testReporter';
 
 type GitHubLogType = 'debug' | 'notice' | 'warning' | 'error';
 
@@ -31,11 +31,9 @@ type GitHubLogOptions = Partial<{
 }>;
 
 class GitHubLogger {
-  private _isGitHubAction: boolean = !!process.env.GITHUB_ACTION;
 
   private _log(message: string, type: GitHubLogType = 'notice', options: GitHubLogOptions = {}) {
-    if (this._isGitHubAction)
-      message = message.replace(/\n/g, '%0A');
+    message = message.replace(/\n/g, '%0A');
     const configs = Object.entries(options)
         .map(([key, option]) => `${key}=${option}`)
         .join(',');

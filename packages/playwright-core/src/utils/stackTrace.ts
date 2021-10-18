@@ -38,7 +38,7 @@ export type ParsedStackTrace = {
   allFrames: StackFrame[];
   frames: StackFrame[];
   frameTexts: string[];
-  apiName: string;
+  apiName: string | undefined;
 };
 
 export function captureStackTrace(): ParsedStackTrace {

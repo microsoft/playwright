@@ -2,12 +2,8 @@
 set -e
 set +x
 
-RUST_VERSION="1.51.0"
+RUST_VERSION="1.53.0"
 CBINDGEN_VERSION="0.19.0"
-# Certain minimal SDK Version is required by firefox
-MACOS_SDK_VERSION="10.12"
-# XCode version can be determined from https://en.wikipedia.org/wiki/Xcode
-XCODE_VERSION_WITH_REQUIRED_SDK_VERSION="8.3.3"
 
 trap "cd $(pwd -P)" EXIT
 
@@ -19,7 +15,7 @@ if [[ ! -z "${FF_CHECKOUT_PATH}" ]]; then
   cd "${FF_CHECKOUT_PATH}"
   echo "WARNING: checkout path from FF_CHECKOUT_PATH env: ${FF_CHECKOUT_PATH}"
 else
-  cd "../firefox/checkout"
+  cd "$HOME/firefox"
 fi
 
 rm -rf .mozconfig
@@ -32,22 +28,6 @@ if [[ "$(uname)" == "Darwin" ]]; then
   else
     echo "ERROR: ${CURRENT_HOST_OS_VERSION} is not supported"
     exit 1
-  fi
-
-  # Firefox on Mac Intel requires SDK for 10.12 to work on old versions of MacOS.
-  # Mac on Apple Silicon doesn't exist on old versions of MacOS, so this is not needed.
-  if [[ "$(uname -m)" == "x86_64" ]]; then
-    if ! [[ -d $HOME/SDK-archive/MacOSX${MACOS_SDK_VERSION}.sdk ]]; then
-      echo "As of Dec 2020, Firefox does not build on Mac ${CURRENT_HOST_OS_VERSION} without ${MACOS_SDK_VERSION} SDK."
-      echo "Download XCode ${XCODE_VERSION_WITH_REQUIRED_SDK_VERSION} from https://developer.apple.com/download/more/ and"
-      echo "extract SDK to $HOME/SDK-archive/MacOSX${MACOS_SDK_VERSION}.sdk"
-      echo ""
-      echo "More info: https://firefox-source-docs.mozilla.org/setup/macos_build.html"
-      exit 1
-    else
-      echo "-- configuting .mozconfig with ${MACOS_SDK_VERSION} SDK path"
-      echo "ac_add_options --with-macos-sdk=$HOME/SDK-archive/MacOSX${MACOS_SDK_VERSION}.sdk/" >> .mozconfig
-    fi
   fi
   echo "-- building on Mac"
 elif [[ "$(uname)" == "Linux" ]]; then

@@ -60,13 +60,20 @@ export class Connection extends EventEmitter {
   private _lastId = 0;
   private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void, stackTrace: ParsedStackTrace }>();
   private _rootObject: Root;
-  private _disconnectedErrorMessage: string | undefined;
-  private _onClose?: () => void;
+  private _closedErrorMessage: string | undefined;
+  private _isRemote = false;
 
-  constructor(onClose?: () => void) {
+  constructor() {
     super();
     this._rootObject = new Root(this);
-    this._onClose = onClose;
+  }
+
+  markAsRemote() {
+    this._isRemote = true;
+  }
+
+  isRemote() {
+    return this._isRemote;
   }
 
   async initializePlaywright(): Promise<Playwright> {
@@ -82,6 +89,9 @@ export class Connection extends EventEmitter {
   }
 
   async sendMessageToServer(object: ChannelOwner, method: string, params: any, maybeStackTrace: ParsedStackTrace | null): Promise<any> {
+    if (this._closedErrorMessage)
+      throw new Error(this._closedErrorMessage);
+
     const guid = object._guid;
     const stackTrace: ParsedStackTrace = maybeStackTrace || { frameTexts: [], frames: [], apiName: '', allFrames: [] };
     const { frames, apiName } = stackTrace;
@@ -93,8 +103,6 @@ export class Connection extends EventEmitter {
     const metadata: channels.Metadata = { stack: frames, apiName };
     this.onmessage({ ...converted, metadata });
 
-    if (this._disconnectedErrorMessage)
-      throw new Error(this._disconnectedErrorMessage);
     return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, stackTrace }));
   }
 
@@ -103,6 +111,9 @@ export class Connection extends EventEmitter {
   }
 
   dispatch(message: object) {
+    if (this._closedErrorMessage)
+      return;
+
     const { id, guid, method, params, result, error } = message as any;
     if (id) {
       debugLogger.log('channel:response', message);
@@ -135,21 +146,12 @@ export class Connection extends EventEmitter {
     object._channel.emit(method, object._type === 'JsonPipe' ? params : this._replaceGuidsWithChannels(params));
   }
 
-  close() {
-    if (this._onClose)
-      this._onClose();
-  }
-
-  didDisconnect(errorMessage: string) {
-    this._disconnectedErrorMessage = errorMessage;
+  close(errorMessage: string = 'Connection closed') {
+    this._closedErrorMessage = errorMessage;
     for (const callback of this._callbacks.values())
       callback.reject(new Error(errorMessage));
     this._callbacks.clear();
-    this.emit('disconnect');
-  }
-
-  isDisconnected() {
-    return !!this._disconnectedErrorMessage;
+    this.emit('close');
   }
 
   private _replaceGuidsWithChannels(payload: any): any {

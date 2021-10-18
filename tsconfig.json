@@ -18,5 +18,8 @@
   },
   "compileOnSave": true,
   "include": ["packages"],
-  "exclude": ["packages/*/lib"]
+  "exclude": [
+    "packages/*/lib",
+    "packages/create-playwright/",
+  ],
 }

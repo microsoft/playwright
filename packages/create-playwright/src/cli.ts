@@ -14,4 +14,14 @@
  * limitations under the License.
  */
 
-module.exports = require('@playwright/test');
+import path from 'path';
+import { Generator } from './generator';
+
+(async () => {
+  const rootDir = path.resolve(process.cwd(), process.argv[2] || '');
+  const generator = new Generator(rootDir);
+  await generator.run();
+})().catch(error => {
+  console.error(error);
+  process.exit(1);
+});

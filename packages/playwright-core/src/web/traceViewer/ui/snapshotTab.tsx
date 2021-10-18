@@ -41,8 +41,9 @@ export const SnapshotTab: React.FunctionComponent<{
   if (action) {
     const snapshot = snapshots[snapshotIndex];
     if (snapshot && snapshot.snapshotName) {
-      snapshotUrl = `${window.location.origin}/snapshot/${action.metadata.pageId}?name=${snapshot.snapshotName}`;
-      snapshotSizeUrl = `${window.location.origin}/snapshotSize/${action.metadata.pageId}?name=${snapshot.snapshotName}`;
+      const traceUrl = new URL(window.location.href).searchParams.get('trace');
+      snapshotUrl = new URL(`snapshot/${action.metadata.pageId}?trace=${traceUrl}&name=${snapshot.snapshotName}`, window.location.href).toString();
+      snapshotSizeUrl = new URL(`snapshotSize/${action.metadata.pageId}?trace=${traceUrl}&name=${snapshot.snapshotName}`, window.location.href).toString();
       if (snapshot.snapshotName.includes('action')) {
         pointX = action.metadata.point?.x;
         pointY = action.metadata.point?.y;
@@ -66,14 +67,13 @@ export const SnapshotTab: React.FunctionComponent<{
       if (!iframeRef.current)
         return;
       try {
-        const point = pointX === undefined ? undefined : { x: pointX, y: pointY };
-        (iframeRef.current.contentWindow as any).showSnapshot(snapshotUrl, { point });
+        iframeRef.current.src = snapshotUrl + (pointX === undefined ? '' : `&pointX=${pointX}&pointY=${pointY}`);
       } catch (e) {
       }
     })();
   }, [iframeRef, snapshotUrl, snapshotSizeUrl, pointX, pointY]);
 
-  const scale = Math.min(measure.width / snapshotSize.width, measure.height / snapshotSize.height);
+  const scale = Math.min(measure.width / snapshotSize.width, measure.height / snapshotSize.height, 1);
   const scaledSize = {
     width: snapshotSize.width * scale,
     height: snapshotSize.height * scale,
@@ -102,7 +102,7 @@ export const SnapshotTab: React.FunctionComponent<{
         height: snapshotSize.height + 'px',
         transform: `translate(${-snapshotSize.width * (1 - scale) / 2 + (measure.width - scaledSize.width) / 2}px, ${-snapshotSize.height * (1 - scale) / 2  + (measure.height - scaledSize.height) / 2}px) scale(${scale})`,
       }}>
-        <iframe ref={iframeRef} id='snapshot' name='snapshot' src='/snapshot/'></iframe>
+        <iframe ref={iframeRef} id='snapshot' name='snapshot'></iframe>
       </div>
     </div>
   </div>;

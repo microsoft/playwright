@@ -146,7 +146,11 @@ export abstract class BrowserType extends SdkObject {
     const artifactsDir = await fs.promises.mkdtemp(ARTIFACTS_FOLDER);
     tempDirectories.push(artifactsDir);
 
-    if (!userDataDir) {
+    if (userDataDir) {
+      // Firefox bails if the profile directory does not exist, Chrome creates it. We ensure consistent behavior here.
+      if (!await existsAsync(userDataDir))
+        await fs.promises.mkdir(userDataDir, { recursive: true, mode: 0o700 });
+    } else {
       userDataDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), `playwright_${this._name}dev_profile-`));
       tempDirectories.push(userDataDir);
     }

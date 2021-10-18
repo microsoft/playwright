@@ -7,7 +7,7 @@ Exposes API that can be used for the Web API testing.
 * langs: js
 - returns: <[ApiRequestContext]>
 
-**experimental** Creates new instances of [ApiRequestContext].
+Creates new instances of [ApiRequestContext].
 
 ### option: ApiRequest.newContext.useragent = %%-context-option-useragent-%%
 ### option: ApiRequest.newContext.extraHTTPHeaders = %%-context-option-extrahttpheaders-%%
@@ -25,9 +25,9 @@ Maximum time in milliseconds to wait for the response. Defaults to
 ### option: ApiRequest.newContext.baseURL
 - `baseURL` <[string]>
 
-When using [`method: ApiRequestContext.get`], [`method: ApiRequestContext.post`], [`method: ApiRequestContext.fetch`] it takes the base URL in consideration by using the [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor for building the corresponding URL. Examples:
-* baseURL: `http://localhost:3000` and sending rquest to `/bar.html` results in `http://localhost:3000/bar.html`
-* baseURL: `http://localhost:3000/foo/` and sending rquest to `./bar.html` results in `http://localhost:3000/foo/bar.html`
+Methods like [`method: ApiRequestContext.get`] take the base URL into consideration by using the [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor for building the corresponding URL. Examples:
+* baseURL: `http://localhost:3000` and sending request to `/bar.html` results in `http://localhost:3000/bar.html`
+* baseURL: `http://localhost:3000/foo/` and sending request to `./bar.html` results in `http://localhost:3000/foo/bar.html`
 
 ### option: ApiRequest.newContext.storageState
 - `storageState` <[path]|[Object]>

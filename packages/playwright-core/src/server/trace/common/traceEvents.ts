@@ -14,15 +14,24 @@
  * limitations under the License.
  */
 
-import { CallMetadata } from '../../instrumentation';
-import { FrameSnapshot, ResourceSnapshot } from '../../snapshot/snapshotTypes';
-import { BrowserContextOptions } from '../../types';
+import type { Size } from '../../../common/types';
+import type { CallMetadata } from '../../instrumentation';
+import type { FrameSnapshot, ResourceSnapshot } from './snapshotTypes';
+
+export const VERSION = 3;
+
+export type BrowserContextEventOptions = {
+  viewport?: Size,
+  deviceScaleFactor?: number,
+  isMobile?: boolean,
+  _debugName?: string,
+};
 
 export type ContextCreatedTraceEvent = {
   version: number,
   type: 'context-options',
   browserName: string,
-  options: BrowserContextOptions
+  options: BrowserContextEventOptions
 };
 
 export type ScreencastFrameTraceEvent = {
@@ -36,7 +45,6 @@ export type ScreencastFrameTraceEvent = {
 
 export type ActionTraceEvent = {
   type: 'action' | 'event',
-  hasSnapshot: boolean,
   metadata: CallMetadata,
 };
 

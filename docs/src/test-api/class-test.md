@@ -72,7 +72,7 @@ Hook function that takes one or two arguments: an object with fixtures and optio
 
 ## method: Test.afterEach
 
-Declares an `afterEach` hook that is executed after each test. When called in the scope of a test file, runs before each test in the file. When called inside a [`method: Test.describe`] group, runs before each test in the group.
+Declares an `afterEach` hook that is executed after each test. When called in the scope of a test file, runs after each test in the file. When called inside a [`method: Test.describe`] group, runs after each test in the group.
 
 ### param: Test.afterEach.hookFunction
 - `hookFunction` <[function]\([Fixtures], [TestInfo]\)>
@@ -954,7 +954,7 @@ Step body.
 
 ## method: Test.use
 
-Specifies options or fixtures to use in a single test file or a [`method: Test.describe`] group. Most useful to set an option, for example set `locale` to configure `context` fixture.
+Specifies options or fixtures to use in a single test file or a [`method: Test.describe`] group. Most useful to set an option, for example set `locale` to configure `context` fixture. `test.use` can be called either in the global scope or inside `test.describe`, it's is an error to call it within `beforeEach` or `beforeAll`.
 
 ```js js-flavor=js
 const { test, expect } = require('@playwright/test');

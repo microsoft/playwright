@@ -1,7 +1,7 @@
 {
   "name": "playwright-firefox",
   "version": "1.16.0-next",
-  "description": "A high-level API to automate web browsers",
+  "description": "A high-level API to automate Firefox",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
   "engines": {

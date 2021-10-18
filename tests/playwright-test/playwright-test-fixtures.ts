@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-import { TestInfo, test as base } from './stable-test-runner';
-import { CommonFixtures, commonFixtures } from '../config/commonFixtures';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as os from 'os';
 import type { JSONReport, JSONReportSuite } from '@playwright/test/src/reporters/json';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import rimraf from 'rimraf';
 import { promisify } from 'util';
-import { serverFixtures, ServerFixtures } from '../config/baseTest';
+import { CommonFixtures, commonFixtures, serverFixtures, ServerFixtures } from '../config/commonFixtures';
+import { test as base, TestInfo } from './stable-test-runner';
 
 const removeFolderAsync = promisify(rimraf);
 
@@ -90,6 +89,8 @@ async function writeFiles(testInfo: TestInfo, files: Files) {
   return baseDir;
 }
 
+const cliEntrypoint = path.join(__dirname, '../../packages/playwright-core/cli.js');
+
 async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseDir: string, params: any, env: Env, options: RunOptions): Promise<RunResult> {
   const paramList = [];
   for (const key of Object.keys(params)) {
@@ -100,7 +101,7 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
   }
   const outputDir = path.join(baseDir, 'test-results');
   const reportFile = path.join(outputDir, 'report.json');
-  const args = ['npx', 'playwright', 'test'];
+  const args = ['node', cliEntrypoint, 'test'];
   if (!options.usesCustomOutputDir)
     args.push('--output=' + outputDir);
   args.push(

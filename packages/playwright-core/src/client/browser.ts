@@ -20,7 +20,7 @@ import { Page } from './page';
 import { ChannelOwner } from './channelOwner';
 import { Events } from './events';
 import { BrowserContextOptions } from './types';
-import { isSafeCloseError } from '../utils/errors';
+import { isSafeCloseError, kBrowserClosedError } from '../utils/errors';
 import * as api from '../../types/types';
 import { CDPSession } from './cdpSession';
 import type { BrowserType } from './browserType';
@@ -29,7 +29,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
   readonly _contexts = new Set<BrowserContext>();
   private _isConnected = true;
   private _closedPromise: Promise<void>;
-  _remoteType: 'owns-connection' | 'uses-connection' | null = null;
+  _shouldCloseConnectionOnClose = false;
   private _browserType!: BrowserType;
   readonly _name: string;
 
@@ -109,8 +109,8 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
   async close(): Promise<void> {
     try {
       await this._wrapApiCall(async (channel: channels.BrowserChannel) => {
-        if (this._remoteType === 'owns-connection')
-          this._connection.close();
+        if (this._shouldCloseConnectionOnClose)
+          this._connection.close(kBrowserClosedError);
         else
           await channel.close();
         await this._closedPromise;

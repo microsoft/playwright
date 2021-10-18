@@ -18,11 +18,12 @@ import colors from 'colors/safe';
 import fs from 'fs';
 import open from 'open';
 import path from 'path';
-import { FullConfig, Suite } from 'playwright-core/types/testReporter';
+import { FullConfig, Suite } from '../../types/testReporter';
 import { HttpServer } from 'playwright-core/src/utils/httpServer';
 import { calculateSha1, removeFolders } from 'playwright-core/src/utils/utils';
 import { toPosixPath } from './json';
 import RawReporter, { JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep, JsonAttachment } from './raw';
+import assert from 'assert';
 
 export type Stats = {
   total: number;
@@ -31,6 +32,7 @@ export type Stats = {
   flaky: number;
   skipped: number;
   ok: boolean;
+  duration: number;
 };
 
 export type Location = {
@@ -39,45 +41,42 @@ export type Location = {
   column: number;
 };
 
-export type ProjectTreeItem = {
-  name: string;
-  suites: SuiteTreeItem[];
-  stats: Stats;
+export type HTMLReport = {
+  files: TestFileSummary[];
+  testIdToFileId: { [key: string]: string };
+  projectNames: string[];
 };
-
-export type SuiteTreeItem = {
-  title: string;
-  location?: Location;
-  duration: number;
-  suites: SuiteTreeItem[];
-  tests: TestTreeItem[];
-  stats: Stats;
-};
-
-export type TestTreeItem = {
-  testId: string,
-  fileId: string,
-  title: string;
-  location: Location;
-  duration: number;
-  outcome: 'skipped' | 'expected' | 'unexpected' | 'flaky';
-  ok: boolean;
-};
-
-export type TestAttachment = JsonAttachment;
 
 export type TestFile = {
   fileId: string;
-  path: string;
+  fileName: string;
   tests: TestCase[];
 };
 
-export type TestCase = {
+export type TestFileSummary = {
+  fileId: string;
+  fileName: string;
+  tests: TestCaseSummary[];
+  stats: Stats;
+};
+
+export type TestCaseSummary = {
   testId: string,
+  fileId: string,
   title: string;
+  path: string[];
+  projectName: string;
   location: Location;
+  outcome: 'skipped' | 'expected' | 'unexpected' | 'flaky';
+  duration: number;
+  ok: boolean;
+};
+
+export type TestCase = TestCaseSummary & {
   results: TestResult[];
 };
+
+export type TestAttachment = JsonAttachment;
 
 export type TestResult = {
   retry: number;
@@ -98,9 +97,20 @@ export type TestStep = {
   steps: TestStep[];
 };
 
+type TestEntry = {
+  testCase: TestCase;
+  testCaseSummary: TestCaseSummary
+};
+
 class HtmlReporter {
   private config!: FullConfig;
   private suite!: Suite;
+  private _outputFolder: string | undefined;
+
+  constructor(options: { outputFolder?: string } = {}) {
+    // TODO: resolve relative to config.
+    this._outputFolder = options.outputFolder;
+  }
 
   onBegin(config: FullConfig, suite: Suite) {
     this.config = config;
@@ -114,120 +124,196 @@ class HtmlReporter {
       const report = rawReporter.generateProjectReport(this.config, suite);
       return report;
     });
-    const reportFolder = path.resolve(process.cwd(), process.env[`PLAYWRIGHT_HTML_REPORT`] || 'playwright-report');
+    const reportFolder = htmlReportFolder(this._outputFolder);
     await removeFolders([reportFolder]);
-    new HtmlBuilder(reports, reportFolder, this.config.rootDir);
+    const builder = new HtmlBuilder(reportFolder, this.config.rootDir);
+    const ok = builder.build(reports);
 
-    if (!process.env.CI && !process.env.PWTEST_SKIP_TEST_OUTPUT) {
-      const server = new HttpServer();
-      server.routePrefix('/', (request, response) => {
-        let relativePath = request.url!;
-        if (relativePath === '/')
-          relativePath = '/index.html';
-        const absolutePath = path.join(reportFolder, ...relativePath.split('/'));
-        return server.serveFile(response, absolutePath);
-      });
-      const url = await server.start();
-      console.log('');
-      console.log(colors.cyan(`  Serving HTML report at ${url}. Press Ctrl+C to quit.`));
-      console.log('');
-      open(url);
-      process.on('SIGINT', () => process.exit(0));
-      await new Promise(() => {});
+    if (!process.env.PWTEST_SKIP_TEST_OUTPUT) {
+      if (!ok && !process.env.CI && !process.env.PWTEST_SKIP_TEST_OUTPUT) {
+        await showHTMLReport(reportFolder);
+      } else {
+        console.log('');
+        console.log('All tests passed. To open last HTML report run:');
+        console.log(colors.cyan(`
+  npx playwright show-report
+`));
+      }
     }
   }
+}
+
+export function htmlReportFolder(outputFolder?: string): string {
+  if (process.env[`PLAYWRIGHT_HTML_REPORT`])
+    return path.resolve(process.cwd(), process.env[`PLAYWRIGHT_HTML_REPORT`]);
+  if (outputFolder)
+    return outputFolder;
+  return path.resolve(process.cwd(), 'playwright-report');
+}
+
+export async function showHTMLReport(reportFolder: string | undefined) {
+  const folder = reportFolder || htmlReportFolder();
+  try {
+    assert(fs.statSync(folder).isDirectory());
+  } catch (e) {
+    console.log(colors.red(`No report found at "${folder}"`));
+    process.exit(1);
+    return;
+  }
+  const server = new HttpServer();
+  server.routePrefix('/', (request, response) => {
+    let relativePath = new URL('http://localhost' + request.url).pathname;
+    if (relativePath === '/')
+      relativePath = '/index.html';
+    const absolutePath = path.join(folder, ...relativePath.split('/'));
+    return server.serveFile(response, absolutePath);
+  });
+  const url = await server.start(9323);
+  console.log('');
+  console.log(colors.cyan(`  Serving HTML report at ${url}. Press Ctrl+C to quit.`));
+  open(url);
+  process.on('SIGINT', () => process.exit(0));
+  await new Promise(() => {});
 }
 
 class HtmlBuilder {
   private _reportFolder: string;
   private _tests = new Map<string, JsonTestCase>();
+  private _testPath = new Map<string, string[]>();
   private _rootDir: string;
   private _dataFolder: string;
 
-  constructor(rawReports: JsonReport[], outputDir: string, rootDir: string) {
+  constructor(outputDir: string, rootDir: string) {
     this._rootDir = rootDir;
     this._reportFolder = path.resolve(process.cwd(), outputDir);
     this._dataFolder = path.join(this._reportFolder, 'data');
+  }
+
+  build(rawReports: JsonReport[]): boolean {
     fs.mkdirSync(this._dataFolder, { recursive: true });
-    const appFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'web', 'htmlReport');
+
+    // Copy app.
+    const appFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'webpack', 'htmlReport');
     for (const file of fs.readdirSync(appFolder))
       fs.copyFileSync(path.join(appFolder, file), path.join(this._reportFolder, file));
 
-    const projects: ProjectTreeItem[] = [];
+    // Copy trace viewer.
+    const traceViewerFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'webpack', 'traceViewer');
+    const traceViewerTargetFolder = path.join(this._reportFolder, 'trace');
+    fs.mkdirSync(traceViewerTargetFolder, { recursive: true });
+    for (const file of fs.readdirSync(traceViewerFolder))
+      fs.copyFileSync(path.join(traceViewerFolder, file), path.join(traceViewerTargetFolder, file));
+
+    const data = new Map<string, { testFile: TestFile, testFileSummary: TestFileSummary }>();
     for (const projectJson of rawReports) {
-      const suites: SuiteTreeItem[] = [];
       for (const file of projectJson.suites) {
-        const relativeFileName = this._relativeLocation(file.location).file;
-        const fileId = calculateSha1(projectJson.project.name + ':' + relativeFileName);
-        const tests: JsonTestCase[] = [];
-        suites.push(this._createSuiteTreeItem(file, fileId, tests));
-        const testFile: TestFile = {
-          fileId,
-          path: relativeFileName,
-          tests: tests.map(t => this._createTestCase(t))
-        };
-        fs.writeFileSync(path.join(this._dataFolder, fileId + '.json'), JSON.stringify(testFile, undefined, 2));
+        const fileName = this._relativeLocation(file.location).file;
+        const fileId = calculateSha1(fileName);
+        let fileEntry = data.get(fileId);
+        if (!fileEntry) {
+          fileEntry = {
+            testFile: { fileId, fileName, tests: [] },
+            testFileSummary: { fileId, fileName, tests: [], stats: emptyStats() },
+          };
+          data.set(fileId, fileEntry);
+        }
+        const { testFile, testFileSummary } = fileEntry;
+        const testEntries: TestEntry[] = [];
+        this._processJsonSuite(file, fileId, projectJson.project.name, [], testEntries);
+        for (const test of testEntries) {
+          testFile.tests.push(test.testCase);
+          testFileSummary.tests.push(test.testCaseSummary);
+        }
       }
-      projects.push({
-        name: projectJson.project.name,
-        suites,
-        stats: suites.reduce((a, s) => addStats(a, s.stats), emptyStats()),
+    }
+
+    let ok = true;
+    const testIdToFileId: { [key: string]: string } = {};
+    for (const [fileId, { testFile, testFileSummary }] of data) {
+      const stats = testFileSummary.stats;
+      for (const test of testFileSummary.tests) {
+        testIdToFileId[test.testId] = fileId;
+        if (test.outcome === 'expected')
+          ++stats.expected;
+        if (test.outcome === 'skipped')
+          ++stats.skipped;
+        if (test.outcome === 'unexpected')
+          ++stats.unexpected;
+        if (test.outcome === 'flaky')
+          ++stats.flaky;
+        ++stats.total;
+        stats.duration += test.duration;
+      }
+      stats.ok = stats.unexpected + stats.flaky === 0;
+      if (!stats.ok)
+        ok = false;
+
+      testFileSummary.tests.sort((t1, t2) => {
+        const w1 = (t1.outcome === 'unexpected' ? 1000 : 0) +  (t1.outcome === 'flaky' ? 1 : 0);
+        const w2 = (t2.outcome === 'unexpected' ? 1000 : 0) +  (t2.outcome === 'flaky' ? 1 : 0);
+        if (w2 - w1)
+          return w2 - w1;
+        return t1.location.line - t2.location.line;
       });
+
+      fs.writeFileSync(path.join(this._dataFolder, fileId + '.json'), JSON.stringify(testFile, undefined, 2));
     }
-    fs.writeFileSync(path.join(this._dataFolder, 'projects.json'), JSON.stringify(projects, undefined, 2));
-  }
-
-  private _createTestCase(test: JsonTestCase): TestCase {
-    return {
-      testId: test.testId,
-      title: test.title,
-      location: this._relativeLocation(test.location),
-      results: test.results.map(r => this._createTestResult(test, r))
+    const htmlReport: HTMLReport = {
+      files: [...data.values()].map(e => e.testFileSummary),
+      testIdToFileId,
+      projectNames: rawReports.map(r => r.project.name)
     };
+    htmlReport.files.sort((f1, f2) => {
+      const w1 = f1.stats.unexpected * 1000 + f1.stats.flaky;
+      const w2 = f2.stats.unexpected * 1000 + f2.stats.flaky;
+      return w2 - w1;
+    });
+    fs.writeFileSync(path.join(this._dataFolder, 'report.json'), JSON.stringify(htmlReport, undefined, 2));
+    return ok;
   }
 
-  private _createSuiteTreeItem(suite: JsonSuite, fileId: string, testCollector: JsonTestCase[]): SuiteTreeItem {
-    const suites = suite.suites.map(s => this._createSuiteTreeItem(s, fileId, testCollector));
-    const tests = suite.tests.map(t => this._createTestTreeItem(t, fileId));
-    testCollector.push(...suite.tests);
-    const stats = suites.reduce<Stats>((a, s) => addStats(a, s.stats), emptyStats());
-    for (const test of tests) {
-      if (test.outcome === 'expected')
-        ++stats.expected;
-      if (test.outcome === 'skipped')
-        ++stats.skipped;
-      if (test.outcome === 'unexpected')
-        ++stats.unexpected;
-      if (test.outcome === 'flaky')
-        ++stats.flaky;
-      ++stats.total;
-    }
-    stats.ok = stats.unexpected + stats.flaky === 0;
-    return {
-      title: suite.title,
-      location: this._relativeLocation(suite.location),
-      duration: suites.reduce((a, s) => a + s.duration, 0) + tests.reduce((a, t) => a + t.duration, 0),
-      stats,
-      suites,
-      tests
-    };
+  private _processJsonSuite(suite: JsonSuite, fileId: string, projectName: string, path: string[], out: TestEntry[]) {
+    const newPath = [...path, suite.title];
+    suite.suites.map(s => this._processJsonSuite(s, fileId, projectName, newPath, out));
+    suite.tests.forEach(t => out.push(this._createTestEntry(t, fileId, projectName, newPath)));
   }
 
-  private _createTestTreeItem(test: JsonTestCase, fileId: string): TestTreeItem {
+  private _createTestEntry(test: JsonTestCase, fileId: string, projectName: string, path: string[]): TestEntry {
     const duration = test.results.reduce((a, r) => a + r.duration, 0);
     this._tests.set(test.testId, test);
+    const location = this._relativeLocation(test.location);
+    path = [location.file + ':' + location.line,  ...path.slice(1)];
+    this._testPath.set(test.testId, path);
+
     return {
-      testId: test.testId,
-      fileId: fileId,
-      location: this._relativeLocation(test.location),
-      title: test.title,
-      duration,
-      outcome: test.outcome,
-      ok: test.ok
+      testCase: {
+        testId: test.testId,
+        fileId,
+        title: test.title,
+        projectName,
+        location,
+        duration,
+        outcome: test.outcome,
+        path,
+        results: test.results.map(r => this._createTestResult(r)),
+        ok: test.outcome === 'expected' || test.outcome === 'flaky',
+      },
+      testCaseSummary: {
+        testId: test.testId,
+        fileId,
+        title: test.title,
+        projectName,
+        location,
+        duration,
+        outcome: test.outcome,
+        path,
+        ok: test.outcome === 'expected' || test.outcome === 'flaky',
+      },
     };
   }
 
-  private _createTestResult(test: JsonTestCase, result: JsonTestResult): TestResult {
+  private _createTestResult(result: JsonTestResult): TestResult {
+    let lastAttachment: TestAttachment | undefined;
     return {
       duration: result.duration,
       startTime: result.startTime,
@@ -237,9 +323,12 @@ class HtmlBuilder {
       status: result.status,
       attachments: result.attachments.map(a => {
         if (a.path) {
-          const fileName = 'data/' + test.testId + path.extname(a.path);
+          let fileName = a.path;
           try {
-            fs.copyFileSync(a.path, path.join(this._reportFolder, fileName));
+            const buffer = fs.readFileSync(a.path);
+            const sha1 = calculateSha1(buffer) + path.extname(a.path);
+            fileName = 'data/' + sha1;
+            fs.writeFileSync(path.join(this._reportFolder, 'data', sha1), buffer);
           } catch (e) {
           }
           return {
@@ -249,8 +338,18 @@ class HtmlBuilder {
             body: a.body,
           };
         }
+
+        if ((a.name === 'stdout' || a.name === 'stderr') &&
+          a.contentType === 'text/plain' &&
+          lastAttachment &&
+          lastAttachment.name === a.name &&
+          lastAttachment.contentType === a.contentType) {
+          lastAttachment.body += a.body as string;
+          return null;
+        }
+        lastAttachment = a;
         return a;
-      })
+      }).filter(Boolean) as TestAttachment[]
     };
   }
 
@@ -283,18 +382,9 @@ const emptyStats = (): Stats => {
     unexpected: 0,
     flaky: 0,
     skipped: 0,
-    ok: true
+    ok: true,
+    duration: 0,
   };
-};
-
-const addStats = (stats: Stats, delta: Stats): Stats => {
-  stats.total += delta.total;
-  stats.skipped += delta.skipped;
-  stats.expected += delta.expected;
-  stats.unexpected += delta.unexpected;
-  stats.flaky += delta.flaky;
-  stats.ok = stats.ok && delta.ok;
-  return stats;
 };
 
 export default HtmlReporter;

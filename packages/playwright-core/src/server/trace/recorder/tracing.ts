@@ -27,18 +27,17 @@ import { CallMetadata, InstrumentationListener, SdkObject } from '../../instrume
 import { Page } from '../../page';
 import * as trace from '../common/traceEvents';
 import { commandsWithTracingSnapshots } from '../../../protocol/channels';
-import { Snapshotter, SnapshotterBlob, SnapshotterDelegate } from '../../snapshot/snapshotter';
-import { FrameSnapshot } from '../../snapshot/snapshotTypes';
+import { Snapshotter, SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
+import { FrameSnapshot } from '../common/snapshotTypes';
 import { HarTracer, HarTracerDelegate } from '../../supplements/har/harTracer';
 import * as har from '../../supplements/har/har';
+import { VERSION } from '../common/traceEvents';
 
 export type TracerOptions = {
   name?: string;
   snapshots?: boolean;
   screenshots?: boolean;
 };
-
-export const VERSION = 3;
 
 type RecordingState = {
   options: TracerOptions,
@@ -235,10 +234,17 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
       return;
     const snapshotName = `${name}@${metadata.id}`;
     metadata.snapshots.push({ title: name, snapshotName });
+    // We have |element| for input actions (page.click and handle.click)
+    // and |sdkObject| element for accessors like handle.textContent.
+    if (!element && sdkObject instanceof ElementHandle)
+      element = sdkObject;
     await this._snapshotter.captureSnapshot(sdkObject.attribution.page, snapshotName, element).catch(() => {});
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
+    // Set afterSnapshot name for all the actions that operate selectors.
+    // Elements resolved from selectors will be marked on the snapshot.
+    metadata.afterSnapshot = `after@${metadata.id}`;
     const beforeSnapshot = this._captureSnapshot('before', sdkObject, metadata);
     this._pendingCalls.set(metadata.id, { sdkObject, metadata, beforeSnapshot });
     await beforeSnapshot;
@@ -254,21 +260,21 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
     const pendingCall = this._pendingCalls.get(metadata.id);
     if (!pendingCall || pendingCall.afterSnapshot)
       return;
-    if (!sdkObject.attribution.page) {
+    if (!sdkObject.attribution.context) {
       this._pendingCalls.delete(metadata.id);
       return;
     }
     pendingCall.afterSnapshot = this._captureSnapshot('after', sdkObject, metadata);
     await pendingCall.afterSnapshot;
-    const event: trace.ActionTraceEvent = { type: 'action', metadata, hasSnapshot: shouldCaptureSnapshot(metadata) };
+    const event: trace.ActionTraceEvent = { type: 'action', metadata };
     this._appendTraceEvent(event);
     this._pendingCalls.delete(metadata.id);
   }
 
   onEvent(sdkObject: SdkObject, metadata: CallMetadata) {
-    if (!sdkObject.attribution.page)
+    if (!sdkObject.attribution.context)
       return;
-    const event: trace.ActionTraceEvent = { type: 'event', metadata, hasSnapshot: false };
+    const event: trace.ActionTraceEvent = { type: 'event', metadata };
     this._appendTraceEvent(event);
   }
 

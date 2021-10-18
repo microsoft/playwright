@@ -122,3 +122,10 @@
 .action-entry .codicon-warning {
   color: darkorange;
 }
+
+.no-actions-entry {
+  flex: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

@@ -19,7 +19,7 @@ import fs from 'fs';
 import { prompt } from 'enquirer';
 import colors from 'ansi-colors';
 
-import { executeCommands, createFiles, determinePackageManager, executeTemplate, determineRootDir, Command, languagetoFileExtension } from './utils';
+import { executeCommands, createFiles, determinePackageManager, executeTemplate, Command, languagetoFileExtension } from './utils';
 
 export type PromptOptions = {
   testDir: string,
@@ -29,7 +29,7 @@ export type PromptOptions = {
 
 const PACKAGE_JSON_TEST_SCRIPT_CMD = 'test:e2e';
 
-class Generator {
+export class Generator {
   packageManager: 'npm' | 'yarn';
   constructor(private readonly rootDir: string) {
     if (!fs.existsSync(rootDir))
@@ -188,11 +188,3 @@ export function commandToRunTests(packageManager: 'npm' | 'yarn', args?: string)
   return `npm run ${PACKAGE_JSON_TEST_SCRIPT_CMD}${args ? (' -- ' + args) : ''}`;
 }
 
-(async () => {
-  const rootDir = determineRootDir();
-  const generator = new Generator(rootDir);
-  await generator.run();
-})().catch(error => {
-  console.error(error);
-  process.exit(1);
-});

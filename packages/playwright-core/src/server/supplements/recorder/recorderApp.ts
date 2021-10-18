@@ -59,7 +59,7 @@ export class RecorderApp extends EventEmitter {
     await this._page._setServerRequestInterceptor(async route => {
       if (route.request().url().startsWith('https://playwright/')) {
         const uri = route.request().url().substring('https://playwright/'.length);
-        const file = require.resolve('../../../web/recorder/' + uri);
+        const file = require.resolve('../../../webpack/recorder/' + uri);
         const buffer = await fs.promises.readFile(file);
         await route.fulfill({
           status: 200,

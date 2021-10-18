@@ -16,7 +16,7 @@
 */
 
 import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
-import { ContextEntry } from '../../../server/trace/viewer/traceModel';
+import { ContextEntry } from '../entries';
 import './timeline.css';
 import { Boundaries } from '../geometry';
 import * as React from 'react';
@@ -56,36 +56,34 @@ export const Timeline: React.FunctionComponent<{
 
   const bars = React.useMemo(() => {
     const bars: TimelineBar[] = [];
-    for (const page of context.pages) {
-      for (const entry of page.actions) {
-        let detail = trimRight(entry.metadata.params.selector || '', 50);
-        if (entry.metadata.method === 'goto')
-          detail = trimRight(entry.metadata.params.url || '', 50);
-        bars.push({
-          action: entry,
-          leftTime: entry.metadata.startTime,
-          rightTime: entry.metadata.endTime,
-          leftPosition: timeToPosition(measure.width, boundaries, entry.metadata.startTime),
-          rightPosition: timeToPosition(measure.width, boundaries, entry.metadata.endTime),
-          label: entry.metadata.apiName + ' ' + detail,
-          type: entry.metadata.type + '.' + entry.metadata.method,
-          className: `${entry.metadata.type}_${entry.metadata.method}`.toLowerCase()
-        });
-      }
+    for (const entry of context.actions) {
+      let detail = trimRight(entry.metadata.params.selector || '', 50);
+      if (entry.metadata.method === 'goto')
+        detail = trimRight(entry.metadata.params.url || '', 50);
+      bars.push({
+        action: entry,
+        leftTime: entry.metadata.startTime,
+        rightTime: entry.metadata.endTime,
+        leftPosition: timeToPosition(measure.width, boundaries, entry.metadata.startTime),
+        rightPosition: timeToPosition(measure.width, boundaries, entry.metadata.endTime),
+        label: entry.metadata.apiName + ' ' + detail,
+        type: entry.metadata.type + '.' + entry.metadata.method,
+        className: `${entry.metadata.type}_${entry.metadata.method}`.toLowerCase()
+      });
+    }
 
-      for (const event of page.events) {
-        const startTime = event.metadata.startTime;
-        bars.push({
-          event,
-          leftTime: startTime,
-          rightTime: startTime,
-          leftPosition: timeToPosition(measure.width, boundaries, startTime),
-          rightPosition: timeToPosition(measure.width, boundaries, startTime),
-          label: event.metadata.method,
-          type: event.metadata.type + '.' + event.metadata.method,
-          className: `${event.metadata.type}_${event.metadata.method}`.toLowerCase()
-        });
-      }
+    for (const event of context.events) {
+      const startTime = event.metadata.startTime;
+      bars.push({
+        event,
+        leftTime: startTime,
+        rightTime: startTime,
+        leftPosition: timeToPosition(measure.width, boundaries, startTime),
+        rightPosition: timeToPosition(measure.width, boundaries, startTime),
+        label: event.metadata.method,
+        type: event.metadata.type + '.' + event.metadata.method,
+        className: `${event.metadata.type}_${event.metadata.method}`.toLowerCase()
+      });
     }
     return bars;
   }, [context, boundaries, measure.width]);

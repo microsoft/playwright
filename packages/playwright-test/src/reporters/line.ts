@@ -16,7 +16,7 @@
 
 import colors from 'colors/safe';
 import { BaseReporter, formatFailure, formatTestTitle } from './base';
-import { FullConfig, TestCase, Suite, TestResult, FullResult } from 'playwright-core/types/testReporter';
+import { FullConfig, TestCase, Suite, TestResult, FullResult } from '../../types/testReporter';
 
 class LineReporter extends BaseReporter {
   private _total = 0;
@@ -59,7 +59,8 @@ class LineReporter extends BaseReporter {
     const width = process.stdout.columns! - 1;
     const title = `[${++this._current}/${this._total}] ${formatTestTitle(this.config, test)}`.substring(0, width);
     process.stdout.write(`\u001B[1A\u001B[2K${title}\n`);
-    if (!this.willRetry(test) && (test.outcome() === 'flaky' || test.outcome() === 'unexpected')) {
+
+    if (!this._omitFailures && !this.willRetry(test) && (test.outcome() === 'flaky' || test.outcome() === 'unexpected')) {
       process.stdout.write(`\u001B[1A\u001B[2K`);
       console.log(formatFailure(this.config, test, {
         index: ++this._failures

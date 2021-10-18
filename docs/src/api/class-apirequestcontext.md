@@ -22,8 +22,7 @@ context cookies from the response. The method will automatically follow redirect
 
 ## async method: ApiRequestContext.dispose
 
-All responses received through [`method: ApiRequestContext.fetch`], [`method: ApiRequestContext.get`], [`method: ApiRequestContext.post`]
-and other methods are stored in the memory, so that you can later call [`method: ApiResponse.body`]. This method
+All responses returned by [`method: ApiRequestContext.get`] and similar methods are stored in the memory, so that you can later call [`method: ApiResponse.body`]. This method
 discards all stored responses, and makes [`method: ApiResponse.body`] throw "Response disposed" error.
 
 ## async method: ApiRequestContext.fetch

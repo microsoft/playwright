@@ -14,45 +14,80 @@
  * limitations under the License.
  */
 
-import * as trace from '../common/traceEvents';
-import { ResourceSnapshot } from '../../snapshot/snapshotTypes';
-import { BaseSnapshotStorage } from '../../snapshot/snapshotStorage';
-import { BrowserContextOptions } from '../../types';
-import { shouldCaptureSnapshot, VERSION } from '../recorder/tracing';
-import { VirtualFileSystem } from '../../../utils/vfs';
-export * as trace from '../common/traceEvents';
+import * as trace from '../../server/trace/common/traceEvents';
+import { BaseSnapshotStorage } from './snapshotStorage';
+
+import type zip from '@zip.js/zip.js';
+import { ContextEntry, createEmptyContext, PageEntry } from './entries';
+import type { CallMetadata } from '../../protocol/callMetadata';
+
+// @ts-ignore
+self.importScripts('zip.min.js');
+
+const zipjs = (self as any).zip;
 
 export class TraceModel {
   contextEntry: ContextEntry;
   pageEntries = new Map<string, PageEntry>();
-  private _snapshotStorage: PersistentSnapshotStorage;
+  private _snapshotStorage: PersistentSnapshotStorage | undefined;
+  private _entries = new Map<string, zip.Entry>();
   private _version: number | undefined;
 
-  constructor(snapshotStorage: PersistentSnapshotStorage) {
-    this._snapshotStorage = snapshotStorage;
-    this.contextEntry = {
-      startTime: Number.MAX_VALUE,
-      endTime: Number.MIN_VALUE,
-      browserName: '',
-      options: { },
-      pages: [],
-      resources: [],
-    };
+  constructor() {
+    this.contextEntry = createEmptyContext();
   }
 
-  build() {
-    for (const page of this.contextEntry!.pages)
-      page.actions.sort((a1, a2) => a1.metadata.startTime - a2.metadata.startTime);
-    this.contextEntry!.resources = this._snapshotStorage.resources();
+  async load(traceURL: string) {
+    const response = await fetch(traceURL, { mode: 'cors' });
+    const blob = await response.blob();
+    const zipReader = new zipjs.ZipReader(new zipjs.BlobReader(blob), { useWebWorkers: false }) as zip.ZipReader;
+    let traceEntry: zip.Entry | undefined;
+    let networkEntry: zip.Entry | undefined;
+    for (const entry of await zipReader.getEntries()) {
+      if (entry.filename.endsWith('.trace'))
+        traceEntry = entry;
+      if (entry.filename.endsWith('.network'))
+        networkEntry = entry;
+      this._entries.set(entry.filename, entry);
+    }
+    this._snapshotStorage = new PersistentSnapshotStorage(this._entries);
+
+    const traceWriter = new zipjs.TextWriter() as zip.TextWriter;
+    await traceEntry!.getData!(traceWriter);
+    for (const line of (await traceWriter.getData()).split('\n'))
+      this.appendEvent(line);
+
+    if (networkEntry) {
+      const networkWriter = new zipjs.TextWriter();
+      await networkEntry.getData!(networkWriter);
+      for (const line of (await networkWriter.getData()).split('\n'))
+        this.appendEvent(line);
+    }
+    this._build();
+  }
+
+  async resourceForSha1(sha1: string): Promise<Blob | undefined> {
+    const entry = this._entries.get('resources/' + sha1);
+    if (!entry)
+      return;
+    const blobWriter = new zipjs.BlobWriter() as zip.BlobWriter;
+    await entry!.getData!(blobWriter);
+    return await blobWriter.getData();
+  }
+
+  storage(): PersistentSnapshotStorage {
+    return this._snapshotStorage!;
+  }
+
+  private _build() {
+    this.contextEntry!.actions.sort((a1, a2) => a1.metadata.startTime - a2.metadata.startTime);
+    this.contextEntry!.resources = this._snapshotStorage!.resources();
   }
 
   private _pageEntry(pageId: string): PageEntry {
     let pageEntry = this.pageEntries.get(pageId);
     if (!pageEntry) {
       pageEntry = {
-        actions: [],
-        events: [],
-        objects: {},
         screencastFrames: [],
       };
       this.pageEntries.set(pageId, pageEntry);
@@ -62,10 +97,11 @@ export class TraceModel {
   }
 
   appendEvent(line: string) {
+    if (!line)
+      return;
     const event = this._modernize(JSON.parse(line));
     switch (event.type) {
       case 'context-options': {
-        this._version = event.version || 0;
         this.contextEntry.browserName = event.browserName;
         this.contextEntry.options = event.options;
         break;
@@ -75,27 +111,26 @@ export class TraceModel {
         break;
       }
       case 'action': {
-        const metadata = event.metadata;
-        const include = event.hasSnapshot;
-        if (include && metadata.pageId)
-          this._pageEntry(metadata.pageId).actions.push(event);
+        const include = !!event.metadata.apiName && !isTracing(event.metadata);
+        if (include)
+          this.contextEntry!.actions.push(event);
         break;
       }
       case 'event': {
         const metadata = event.metadata;
         if (metadata.pageId) {
           if (metadata.method === '__create__')
-            this._pageEntry(metadata.pageId).objects[metadata.params.guid] = metadata.params.initializer;
+            this.contextEntry!.objects[metadata.params.guid] = metadata.params.initializer;
           else
-            this._pageEntry(metadata.pageId).events.push(event);
+            this.contextEntry!.events.push(event);
         }
         break;
       }
       case 'resource-snapshot':
-        this._snapshotStorage.addResource(event.snapshot);
+        this._snapshotStorage!.addResource(event.snapshot);
         break;
       case 'frame-snapshot':
-        this._snapshotStorage.addFrameSnapshot(event.snapshot);
+        this._snapshotStorage!.addFrameSnapshot(event.snapshot);
         break;
     }
     if (event.type === 'action' || event.type === 'event') {
@@ -107,7 +142,7 @@ export class TraceModel {
   private _modernize(event: any): trace.TraceEvent {
     if (this._version === undefined)
       return event;
-    for (let version = this._version; version < VERSION; ++version)
+    for (let version = this._version; version < trace.VERSION; ++version)
       event = (this as any)[`_modernize_${version}_to_${version + 1}`].call(this, event);
     return event;
   }
@@ -116,8 +151,6 @@ export class TraceModel {
     if (event.type === 'action') {
       if (typeof event.metadata.error === 'string')
         event.metadata.error = { error: { name: 'Error', message: event.metadata.error } };
-      if (event.metadata && typeof event.hasSnapshot !== 'boolean')
-        event.hasSnapshot = shouldCaptureSnapshot(event.metadata);
     }
     return event;
   }
@@ -157,35 +190,22 @@ export class TraceModel {
   }
 }
 
-export type ContextEntry = {
-  startTime: number;
-  endTime: number;
-  browserName: string;
-  options: BrowserContextOptions;
-  pages: PageEntry[];
-  resources: ResourceSnapshot[];
-};
-
-export type PageEntry = {
-  actions: trace.ActionTraceEvent[];
-  events: trace.ActionTraceEvent[];
-  objects: { [key: string]: any };
-  screencastFrames: {
-    sha1: string,
-    timestamp: number,
-    width: number,
-    height: number,
-  }[];
-};
-
 export class PersistentSnapshotStorage extends BaseSnapshotStorage {
-  private _loader: VirtualFileSystem;
-  constructor(loader: VirtualFileSystem) {
+  private _entries: Map<string, zip.Entry>;
+
+  constructor(entries: Map<string, zip.Entry>) {
     super();
-    this._loader = loader;
+    this._entries = entries;
   }
 
-  async resourceContent(sha1: string): Promise<Buffer | undefined> {
-    return this._loader.read('resources/' + sha1);
+  async resourceContent(sha1: string): Promise<Blob | undefined> {
+    const entry = this._entries.get('resources/' + sha1)!;
+    const writer = new zipjs.BlobWriter();
+    await entry.getData!(writer);
+    return writer.getData();
   }
+}
+
+function isTracing(metadata: CallMetadata): boolean {
+  return metadata.method.startsWith('tracing');
 }

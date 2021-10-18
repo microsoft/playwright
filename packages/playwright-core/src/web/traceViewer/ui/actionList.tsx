@@ -45,7 +45,7 @@ export const ActionList: React.FC<ActionListProps> = ({
   }, [selectedAction, actionListRef]);
 
   return <div className='action-list vbox'>
-    <div className='.action-list-title tab-strip'>
+    <div className='action-list-title tab-strip'>
       <div className='tab-element'>
         <div className='tab-label'>Actions</div>
       </div>
@@ -72,6 +72,7 @@ export const ActionList: React.FC<ActionListProps> = ({
       }}
       ref={actionListRef}
     >
+      {actions.length === 0 && <div className='no-actions-entry'>No actions recorded</div>}
       {actions.map(action => {
         const { metadata } = action;
         const selectedSuffix = action === selectedAction ? ' selected' : '';

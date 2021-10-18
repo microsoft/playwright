@@ -18,7 +18,7 @@
 import colors from 'colors/safe';
 import milliseconds from 'ms';
 import { BaseReporter, formatTestTitle } from './base';
-import { FullConfig, FullResult, Suite, TestCase, TestResult, TestStep } from 'playwright-core/types/testReporter';
+import { FullConfig, FullResult, Suite, TestCase, TestResult, TestStep } from '../../types/testReporter';
 
 // Allow it in the Visual Studio Code Terminal and the new Windows Terminal
 const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
@@ -32,8 +32,8 @@ class ListReporter extends BaseReporter {
   private readonly _liveTerminal: string | boolean | undefined;
   private readonly _ttyWidthForTest: number;
 
-  constructor() {
-    super();
+  constructor(options: { omitFailures?: boolean } = {}) {
+    super(options);
     this._ttyWidthForTest = parseInt(process.env.PWTEST_TTY_WIDTH || '', 10);
     this._liveTerminal = process.stdout.isTTY || process.env.PWTEST_SKIP_TEST_OUTPUT || !!this._ttyWidthForTest;
   }
