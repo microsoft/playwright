@@ -40,14 +40,6 @@ body {
   font-weight: 600;
 }
 
-.suite-tree-column {
-  line-height: 18px;
-  flex: auto;
-  color: #616161;
-  background-color: #f3f3f3;
-  border-left: 1px solid #dfe1e5;
-}
-
 .test-case-column {
   border-radius: 6px;
   margin: 20px;
@@ -72,14 +64,6 @@ body {
   min-height: 18px;
 }
 
-.suite-tree-column .tree-item-title:not(.selected):hover {
-  background-color: #e8e8e8;
-}
-
-.suite-tree-column .tree-item-title.selected {
-  font-weight: bold;
-}
-
 .error-message {
   white-space: pre;
   font-family: monospace;
@@ -93,23 +77,6 @@ body {
 
 .status-icon {
   padding-right: 3px;
-}
-
-.codicon {
-  padding-right: 3px;
-}
-
-.codicon-clock.status-icon,
-.codicon-error.status-icon {
-  color: red;
-}
-
-.codicon-alert.status-icon {
-  color: orange;
-}
-
-.codicon-circle-filled.status-icon {
-  color: green;
 }
 
 .test-result {
@@ -165,7 +132,6 @@ body {
   border-bottom-color: var(--color-primer-border-active);
 }
 
-.suite-tree-column .tab-element,
 .test-case-column .tab-element {
   border: none;
   text-transform: uppercase;
@@ -179,7 +145,6 @@ body {
   background-color: inherit;
 }
 
-.suite-tree-column .tab-element.selected,
 .test-case-column .tab-element.selected {
   color: #555;
 }
@@ -317,11 +282,6 @@ a.no-decorations {
 .chip-header.expanded-true {
   cursor: pointer;
 } 
-
-.chip-header .codicon {
-  position: relative;
-  top: 3px;
-}
 
 .chip-body {
   border: 1px solid var(--color-border-default);

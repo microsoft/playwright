@@ -105,3 +105,5 @@ export const Workbench: React.FunctionComponent<{
 };
 
 const emptyContext = createEmptyContext();
+emptyContext.startTime = performance.now();
+emptyContext.endTime = emptyContext.startTime;

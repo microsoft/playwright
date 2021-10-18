@@ -17,7 +17,7 @@
 import './htmlReport.css';
 import * as React from 'react';
 import ansi2html from 'ansi-to-html';
-import { TreeItem } from '../components/treeItem';
+import { downArrow, rightArrow, TreeItem } from '../components/treeItem';
 import { TabbedPane } from '../traceViewer/ui/tabbedPane';
 import { msToString } from '../uiUtils';
 import type { TestCase, TestResult, TestStep, TestFile, Stats, TestAttachment, HTMLReport, TestFileSummary } from '@playwright/test/src/reporters/html';
@@ -241,11 +241,13 @@ const AttachmentLink: React.FunctionComponent<{
   attachment: TestAttachment,
   href?: string,
 }> = ({ attachment, href }) => {
-  return <TreeItem title={<div style={{ display: 'flex', alignItems: 'center', flex: 'auto' }}>
-    <span className={'codicon codicon-cloud-download'}></span>
+  return <TreeItem title={<span>
+    <svg aria-hidden='true' height='16' viewBox='0 0 16 16' version='1.1' width='16' data-view-component='true' className='octicon color-fg-muted'>
+      <path fill-rule='evenodd' d='M3.5 1.75a.25.25 0 01.25-.25h3a.75.75 0 000 1.5h.5a.75.75 0 000-1.5h2.086a.25.25 0 01.177.073l2.914 2.914a.25.25 0 01.073.177v8.586a.25.25 0 01-.25.25h-.5a.75.75 0 000 1.5h.5A1.75 1.75 0 0014 13.25V4.664c0-.464-.184-.909-.513-1.237L10.573.513A1.75 1.75 0 009.336 0H3.75A1.75 1.75 0 002 1.75v11.5c0 .649.353 1.214.874 1.515a.75.75 0 10.752-1.298.25.25 0 01-.126-.217V1.75zM8.75 3a.75.75 0 000 1.5h.5a.75.75 0 000-1.5h-.5zM6 5.25a.75.75 0 01.75-.75h.5a.75.75 0 010 1.5h-.5A.75.75 0 016 5.25zm2 1.5A.75.75 0 018.75 6h.5a.75.75 0 010 1.5h-.5A.75.75 0 018 6.75zm-1.25.75a.75.75 0 000 1.5h.5a.75.75 0 000-1.5h-.5zM8 9.75A.75.75 0 018.75 9h.5a.75.75 0 010 1.5h-.5A.75.75 0 018 9.75zm-.75.75a1.75 1.75 0 00-1.75 1.75v3c0 .414.336.75.75.75h2.5a.75.75 0 00.75-.75v-3a1.75 1.75 0 00-1.75-1.75h-.5zM7 12.25a.25.25 0 01.25-.25h.5a.25.25 0 01.25.25v2.25H7v-2.25z'></path>
+    </svg>
     {attachment.path && <a href={href || attachment.path} target='_blank'>{attachment.name}</a>}
     {attachment.body && <span>{attachment.name}</span>}
-  </div>} loadChildren={attachment.body ? () => {
+  </span>} loadChildren={attachment.body ? () => {
     return [<div className='attachment-body'>{attachment.body}</div>];
   } : undefined} depth={0}></TreeItem>;
 };
@@ -292,7 +294,9 @@ function statusIcon(status: 'failed' | 'timedOut' | 'skipped' | 'passed' | 'expe
         <path fillRule='evenodd' d='M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z'></path>
       </svg>;
     case 'timedOut':
-      return <span className={'codicon codicon-clock status-icon'}></span>;
+      return <svg aria-hidden='true' height='16' viewBox='0 0 16 16' version='1.1' width='16' data-view-component='true' className='octicon color-text-danger'>
+        <path fill-rule='evenodd' d='M5.75.75A.75.75 0 016.5 0h3a.75.75 0 010 1.5h-.75v1l-.001.041a6.718 6.718 0 013.464 1.435l.007-.006.75-.75a.75.75 0 111.06 1.06l-.75.75-.006.007a6.75 6.75 0 11-10.548 0L2.72 5.03l-.75-.75a.75.75 0 011.06-1.06l.75.75.007.006A6.718 6.718 0 017.25 2.541a.756.756 0 010-.041v-1H6.5a.75.75 0 01-.75-.75zM8 14.5A5.25 5.25 0 108 4a5.25 5.25 0 000 10.5zm.389-6.7l1.33-1.33a.75.75 0 111.061 1.06L9.45 8.861A1.502 1.502 0 018 10.75a1.5 1.5 0 11.389-2.95z'></path>
+      </svg>;
     case 'flaky':
       return <svg aria-hidden='true' height='16' viewBox='0 0 16 16' version='1.1' width='16' data-view-component='true' className='octicon color-text-warning'>
         <path fill-rule='evenodd' d='M8.22 1.754a.25.25 0 00-.44 0L1.698 13.132a.25.25 0 00.22.368h12.164a.25.25 0 00.22-.368L8.22 1.754zm-1.763-.707c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0114.082 15H1.918a1.75 1.75 0 01-1.543-2.575L6.457 1.047zM9 11a1 1 0 11-2 0 1 1 0 012 0zm-.25-5.25a.75.75 0 00-1.5 0v2.5a.75.75 0 001.5 0v-2.5z'></path>
@@ -357,9 +361,8 @@ const Chip: React.FunctionComponent<{
 }> = ({ header, expanded, setExpanded, children }) => {
   return <div className='chip'>
     <div className={'chip-header' + (setExpanded ? ' expanded-' + expanded : '')} onClick={() => setExpanded?.(!expanded)}>
-      {setExpanded && <div className={'codicon codicon-' + (expanded ? 'chevron-down' : 'chevron-right')}
-        style={{ cursor: 'pointer', color: 'var(--color)', marginRight: '4px' }}
-      />}
+      {setExpanded && !!expanded && downArrow()}
+      {setExpanded && !expanded && rightArrow()}
       {header}
     </div>
     { (!setExpanded || expanded) && <div className='chip-body'>{children}</div>}
