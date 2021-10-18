@@ -101,7 +101,6 @@ it('should waitFor hidden', async ({ page }) => {
 });
 
 it('should combine visible with other selectors', async ({ page }) => {
-  page.on('console', m => console.log(m.text()));
   await page.setContent(`<div>
   <div class="item" style="display: none">Hidden data0</div>
   <div class="item">visible data1</div>
