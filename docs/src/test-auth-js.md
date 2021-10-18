@@ -153,10 +153,49 @@ test('test', async ({ page }) => {
 });
 ```
 
-:::note
-If you can log in once and commit the `storageState.json` into the repository, you won't need the global
-setup at all, just specify the `storageState.json` in Playwright Config as above and it'll be picked up.
-:::
+### Sign in via API request
+
+If your web application supports signing in via API then instead of launchig a new browser and navigating to the login page you can use [ApiRequestContext]. Global setup script from the example above would change like this:
+
+```js js-flavor=js
+// global-setup.js
+const { request } = require('@playwright/test');
+
+module.exports = async () => {
+  const requestContext = await request.newContext();
+  await requestContext.post('https://github.com/login', {
+    form: {
+      'user': 'user',
+      'password': 'password'
+    }
+  });
+  // Save signed-in state to 'storageState.json'.
+  await requestContext.storageState({ path: 'storageState.json' });
+  await requestContext.dispose();
+}
+
+export default globalSetup;
+```
+
+```js js-flavor=ts
+// global-setup.ts
+import { request } from '@playwright/test';
+
+async function globalSetup() {
+  const requestContext = await request.newContext();
+  await requestContext.post('https://github.com/login', {
+    form: {
+      'user': 'user',
+      'password': 'password'
+    }
+  });
+  // Save signed-in state to 'storageState.json'.
+  await requestContext.storageState({ path: 'storageState.json' });
+  await requestContext.dispose();
+}
+
+export default globalSetup;
+```
 
 ## Multiple signed in roles
 
