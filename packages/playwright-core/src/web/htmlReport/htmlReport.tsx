@@ -17,138 +17,107 @@
 import './htmlReport.css';
 import * as React from 'react';
 import ansi2html from 'ansi-to-html';
-import { SplitView } from '../components/splitView';
 import { TreeItem } from '../components/treeItem';
 import { TabbedPane } from '../traceViewer/ui/tabbedPane';
 import { msToString } from '../uiUtils';
-import type { ProjectTreeItem, SuiteTreeItem, TestCase, TestResult, TestStep, TestTreeItem, Location, TestFile, Stats, TestAttachment } from '@playwright/test/src/reporters/html';
-
-type Filter = 'failing' | 'all';
-
-type TestId = {
-  fileId: string;
-  testId: string;
-};
+import type { TestCase, TestResult, TestStep, TestFile, Stats, TestAttachment, HTMLReport, TestFileSummary } from '@playwright/test/src/reporters/html';
 
 export const Report: React.FC = () => {
-  const [report, setReport] = React.useState<ProjectTreeItem[]>([]);
   const [fetchError, setFetchError] = React.useState<string | undefined>();
-  const [testId, setTestId] = React.useState<TestId | undefined>();
-  const [filter, setFilter] = React.useState<Filter>('failing');
+  const [report, setReport] = React.useState<HTMLReport | undefined>();
+  const [expandedFiles, setExpandedFiles] = React.useState<Set<string>>(new Set());
 
   React.useEffect(() => {
+    if (report)
+      return;
     (async () => {
       try {
-        const result = await fetch('data/projects.json', { cache: 'no-cache' });
-        const json = (await result.json()) as ProjectTreeItem[];
-        const hasFailures = !!json.find(p => !p.stats.ok);
-        if (!hasFailures)
-          setFilter('all');
-        setReport(json);
+        const report = await fetch('data/report.json', { cache: 'no-cache' }).then(r => r.json() as Promise<HTMLReport>);
+        if (report.files.length)
+          expandedFiles.add(report.files[0].fileId);
+        setReport(report);
       } catch (e) {
         setFetchError(e.message);
       }
     })();
-  }, []);
+  }, [report, expandedFiles]);
 
-  return <div className='hbox columns'>
-    <SplitView sidebarSize={300} orientation='horizontal' sidebarIsFirst={true}>
-      <TestCaseView key={testId?.testId} testId={testId}></TestCaseView>
-      <div className='suite-tree-column'>
-        <div className='tab-strip'>
-          <div key='all' title='All tests' className={'tab-element' + ('all' === filter ? ' selected' : '')} onClick={() => setFilter('all')}>All</div>
-          <div key='failing' title='Failing tests' className={'tab-element' + ('failing' === filter ? ' selected' : '')} onClick={() => setFilter('failing')}>Failing</div>
-        </div>
-        {!fetchError && filter === 'all' && report?.map((project, i) => <ProjectTreeItemView key={i} project={project} setTestId={setTestId} testId={testId} failingOnly={false}></ProjectTreeItemView>)}
-        {!fetchError && filter === 'failing' && report?.filter(p => !p.stats.ok).map((project, i) => <ProjectTreeItemView key={i} project={project} setTestId={setTestId} testId={testId} failingOnly={true}></ProjectTreeItemView>)}
-      </div>
-    </SplitView>
+  return <div className='vbox columns'>
+    {!fetchError && <div className='flow-container'>
+      <Route params=''>
+        <AllTestFilesSummaryView report={report} isFileExpanded={fileId => expandedFiles.has(fileId)} setFileExpanded={(fileId, expanded) => {
+          const newExpanded = new Set(expandedFiles);
+          if (expanded)
+            newExpanded.add(fileId);
+          else
+            newExpanded.delete(fileId);
+          setExpandedFiles(newExpanded);
+        }}></AllTestFilesSummaryView>
+      </Route>
+      <Route params='testId'>
+        {!!report?.testIdToFileId && <TestCaseView report={report}></TestCaseView>}
+      </Route>
+    </div>}
   </div>;
 };
 
-const ProjectTreeItemView: React.FC<{
-  project: ProjectTreeItem;
-  testId?: TestId,
-  setTestId: (id: TestId) => void;
-  failingOnly: boolean;
-}> = ({ project, testId, setTestId, failingOnly }) => {
-  const hasChildren = !(failingOnly && project.stats.ok);
-  return <TreeItem title={<div className='hbox'>
-    <div className='tree-text'>{project.name || 'Project'}</div>
-    <div style={{ flex: 'auto' }}></div>
-    <StatsView stats={project.stats}></StatsView>
-  </div>
-  } loadChildren={hasChildren ? () => {
-    return project.suites.filter(s => !(failingOnly && s.stats.ok)).map((s, i) => <SuiteTreeItemView key={i} suite={s} setTestId={setTestId} testId={testId} depth={1} failingOnly={failingOnly}></SuiteTreeItemView>) || [];
-  } : undefined} depth={0} expandByDefault={true}></TreeItem>;
+const AllTestFilesSummaryView: React.FC<{
+  report?: HTMLReport;
+  isFileExpanded: (fileId: string) => boolean;
+  setFileExpanded: (fileId: string, expanded: boolean) => void;
+}> = ({ report, isFileExpanded, setFileExpanded }) => {
+  return <div className='file-summary-list'>
+    {report && (report.files || []).map((file, i) => <TestFileSummaryView key={`file-${i}`} report={report} file={file} isFileExpanded={isFileExpanded} setFileExpanded={setFileExpanded}></TestFileSummaryView>)}
+  </div>;
 };
 
-const SuiteTreeItemView: React.FC<{
-  suite: SuiteTreeItem,
-  testId?: TestId,
-  setTestId: (id: TestId) => void;
-  failingOnly: boolean;
-  depth: number,
-}> = ({ suite, testId, setTestId, failingOnly, depth }) => {
-  return <TreeItem title={<div className='hbox'>
-    <div className='tree-text' title={suite.title}>{suite.title || '<untitled>'}</div>
-    <div style={{ flex: 'auto' }}></div>
-    <StatsView stats={suite.stats}></StatsView>
-  </div>
-  } loadChildren={() => {
-    const suiteChildren = suite.suites.filter(s => !(failingOnly && s.stats.ok)).map((s, i) => <SuiteTreeItemView key={i} suite={s} setTestId={setTestId} testId={testId} depth={depth + 1} failingOnly={failingOnly}></SuiteTreeItemView>) || [];
-    const suiteCount = suite.suites.length;
-    const testChildren = suite.tests.filter(t => !(failingOnly && t.ok)).map((t, i) => <TestTreeItemView key={i + suiteCount} test={t} setTestId={setTestId} testId={testId} depth={depth + 1}></TestTreeItemView>) || [];
-    return [...suiteChildren, ...testChildren];
-  }} depth={depth}></TreeItem>;
-};
-
-const TestTreeItemView: React.FC<{
-  test: TestTreeItem,
-  testId?: TestId,
-  setTestId: (id: TestId) => void;
-  depth: number,
-}> = ({ test, testId, setTestId, depth }) => {
-  return <TreeItem title={<div className='hbox'>
-    {statusIcon(test.outcome)}<div className='tree-text' title={test.title}>{test.title}</div>
-    <div style={{ flex: 'auto' }}></div>
-    {<div style={{ flex: 'none', padding: '0 4px', color: '#666' }}>{msToString(test.duration)}</div>}
-  </div>
-  } selected={test.testId === testId?.testId} depth={depth} onClick={() => setTestId({ testId: test.testId, fileId: test.fileId })}></TreeItem>;
+const TestFileSummaryView: React.FC<{
+  report: HTMLReport;
+  file: TestFileSummary;
+  isFileExpanded: (fileId: string) => boolean;
+  setFileExpanded: (fileId: string, expanded: boolean) => void;
+}> = ({ file, report, isFileExpanded, setFileExpanded }) => {
+  return <Chip expanded={isFileExpanded(file.fileId)} setExpanded={(expanded => setFileExpanded(file.fileId, expanded))} header={<span>{file.fileName}<StatsView stats={file.stats}></StatsView></span>}>
+    {file.tests.map((test, i) => <Link key={`test-${i}`} href={`/?testId=${test.testId}`}>
+      <div className='test-summary'>
+        <span style={{ float: 'right', marginTop: 10 }} className={'label label-color-' + (report.projectNames.indexOf(test.projectName) % 8)}>{test.projectName}</span>
+        {statusIcon(test.outcome)}
+        {test.title}
+        <span className='test-summary-path'>— {test.path.join(' › ')}</span>
+      </div>
+    </Link>)}
+  </Chip>;
 };
 
 const TestCaseView: React.FC<{
-  testId: TestId | undefined,
-}> = ({ testId }) => {
-  const [file, setFile] = React.useState<TestFile | undefined>();
-
+  report: HTMLReport,
+}> = ({ report }) => {
+  const [test, setTest] = React.useState<TestCase | undefined>();
   React.useEffect(() => {
     (async () => {
-      if (!testId || file?.fileId === testId.fileId)
+      const testId = new URL(window.location.href).searchParams.get('testId');
+      if (!testId || testId === test?.testId)
         return;
-      try {
-        const result = await fetch(`data/${testId.fileId}.json`, { cache: 'no-cache' });
-        setFile((await result.json()) as TestFile);
-      } catch (e) {
+      const fileId = report.testIdToFileId[testId];
+      if (!fileId)
+        return;
+      const result = await fetch(`/data/${fileId}.json`, { cache: 'no-cache' });
+      const file = await result.json() as TestFile;
+      for (const t of file.tests) {
+        if (t.testId === testId) {
+          setTest(t);
+          break;
+        }
       }
     })();
-  });
-
-  let test: TestCase | undefined;
-  if (file && testId) {
-    for (const t of file.tests) {
-      if (t.testId === testId.testId) {
-        test = t;
-        break;
-      }
-    }
-  }
+  }, [test, report]);
 
   const [selectedResultIndex, setSelectedResultIndex] = React.useState(0);
   return <div className='test-case-column vbox'>
-    { test && <div className='test-case-title'>{test?.title}</div> }
-    { test && <div className='test-case-location'>{renderLocation(test.location, true)}</div> }
-    { test && <TabbedPane tabs={
+    {test && <div className='test-case-title'>{test?.title}</div>}
+    {test && <div className='test-case-location'>{test.path.join(' › ')}</div>}
+    {test && <div><span className={'label label-color-' + (report.projectNames.indexOf(test.projectName) % 8)}>{test.projectName}</span></div>}
+    {test && <TabbedPane tabs={
       test.results.map((result, index) => ({
         id: String(index),
         title: <div style={{ display: 'flex', alignItems: 'center' }}>{statusIcon(result.status)} {retryLabel(index)}</div>,
@@ -182,39 +151,49 @@ const TestResultView: React.FC<{
   const actual = attachmentsMap.get('actual');
   const diff = attachmentsMap.get('diff');
   return <div className='test-result'>
-    {result.error && <ErrorMessage key='error-message' error={result.error}></ErrorMessage>}
-    {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} depth={0}></StepTreeItem>)}
+    {result.error && <Chip header='Errors'>
+      <ErrorMessage key='error-message' error={result.error} mode='light'></ErrorMessage>
+    </Chip>}
+    {!!result.steps.length && <Chip header='Test Steps'>
+      {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} depth={0}></StepTreeItem>)}
+    </Chip>}
 
     {expected && actual && <div className='vbox'>
-      <ImageDiff actual={actual} expected={expected} diff={diff}></ImageDiff>
-      <AttachmentLink key={`expected`} attachment={expected}></AttachmentLink>
-      <AttachmentLink key={`actual`} attachment={actual}></AttachmentLink>
-      {diff && <AttachmentLink key={`diff`} attachment={diff}></AttachmentLink>}
+      <Chip header='Image mismatch'>
+        <ImageDiff actual={actual} expected={expected} diff={diff}></ImageDiff>
+        <AttachmentLink key={`expected`} attachment={expected}></AttachmentLink>
+        <AttachmentLink key={`actual`} attachment={actual}></AttachmentLink>
+        {diff && <AttachmentLink key={`diff`} attachment={diff}></AttachmentLink>}
+      </Chip>
     </div>}
 
-    {!!screenshots.length && <div key='screenshots-title' className='test-overview-title'>Screenshots</div>}
-    {screenshots.map((a, i) => {
-      return <div key={`screenshot-${i}`} className='vbox'>
-        <img src={a.path} />
+    {!!screenshots.length && <Chip header='Screenshots'>
+      {screenshots.map((a, i) => {
+        return <div key={`screenshot-${i}`} className='vbox'>
+          <img src={a.path} />
+          <AttachmentLink attachment={a}></AttachmentLink>
+        </div>;
+      })}
+    </Chip>}
+
+    {!!traces.length && <Chip header='Traces'>
+      {traces.map((a, i) => <div key={`trace-${i}`} className='vbox'>
+        <AttachmentLink attachment={a} href={`trace/index.html?trace=${window.location.origin}/` + a.path}></AttachmentLink>
+      </div>)}
+    </Chip>}
+
+    {!!videos.length && <Chip header='Videos'>
+      {videos.map((a, i) => <div key={`video-${i}`} className='vbox'>
+        <video controls>
+          <source src={a.path} type={a.contentType}/>
+        </video>
         <AttachmentLink attachment={a}></AttachmentLink>
-      </div>;
-    })}
+      </div>)}
+    </Chip>}
 
-    {!!traces.length && <div key='traces-title' className='test-overview-title'>Traces</div>}
-    {traces.map((a, i) => <div key={`trace-${i}`} className='vbox'>
-      <AttachmentLink attachment={a} href={`trace/index.html?trace=${window.location.origin}/` + a.path}></AttachmentLink>
-    </div>)}
-
-    {!!videos.length && <div key='videos-title' className='test-overview-title'>Videos</div>}
-    {videos.map((a, i) => <div key={`video-${i}`} className='vbox'>
-      <video controls>
-        <source src={a.path} type={a.contentType}/>
-      </video>
-      <AttachmentLink attachment={a}></AttachmentLink>
-    </div>)}
-
-    {!!otherAttachments.length && <div key='attachments-title' className='test-overview-title'>Attachments</div>}
-    {otherAttachments.map((a, i) => <AttachmentLink key={`attachment-link-${i}`} attachment={a}></AttachmentLink>)}
+    {!!otherAttachments.length && <Chip header='Attachments'>
+      {otherAttachments.map((a, i) => <AttachmentLink key={`attachment-link-${i}`} attachment={a}></AttachmentLink>)}
+    </Chip>}
   </div>;
 };
 
@@ -230,7 +209,7 @@ const StepTreeItem: React.FC<{
   </div>} loadChildren={step.steps.length + (step.error ? 1 : 0) ? () => {
     const children = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1}></StepTreeItem>);
     if (step.error)
-      children.unshift(<ErrorMessage key={-1} error={step.error}></ErrorMessage>);
+      children.unshift(<ErrorMessage key={-1} error={step.error} mode='light'></ErrorMessage>);
     return children;
   } : undefined} depth={depth}></TreeItem>;
 };
@@ -238,15 +217,16 @@ const StepTreeItem: React.FC<{
 const StatsView: React.FC<{
   stats: Stats
 }> = ({ stats }) => {
-  return <div className='hbox' style={{ flex: 'none' }}>
-    {!!stats.expected && <div className='stats expected' title='Passed'>{stats.expected}</div>}
-    {!!stats.unexpected && <div className='stats unexpected' title='Failed'>{stats.unexpected}</div>}
-    {!!stats.flaky && <div className='stats flaky' title='Flaky'>{stats.flaky}</div>}
-    {!!stats.skipped && <div className='stats skipped' title='Skipped'>{stats.skipped}</div>}
-  </div>;
+  return <span className='stats-line'>
+    —
+    {!!stats.unexpected && <span className='stats unexpected'>{stats.unexpected} failed</span>}
+    {!!stats.flaky && <span className='stats flaky'>{stats.flaky} flaky</span>}
+    {!!stats.expected && <span className='stats expected'>{stats.expected} passed</span>}
+    {!!stats.skipped && <span className='stats skipped'>{stats.skipped} skipped</span>}
+  </span>;
 };
 
-export const AttachmentLink: React.FunctionComponent<{
+const AttachmentLink: React.FunctionComponent<{
   attachment: TestAttachment,
   href?: string,
 }> = ({ attachment, href }) => {
@@ -259,7 +239,7 @@ export const AttachmentLink: React.FunctionComponent<{
   } : undefined} depth={0}></TreeItem>;
 };
 
-export const ImageDiff: React.FunctionComponent<{
+const ImageDiff: React.FunctionComponent<{
  actual: TestAttachment,
  expected: TestAttachment,
  diff?: TestAttachment,
@@ -284,7 +264,6 @@ export const ImageDiff: React.FunctionComponent<{
     });
   }
   return <div className='vbox test-image-mismatch'>
-    <div className='test-overview-title'>Image mismatch</div>
     <TabbedPane tabs={tabs} selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
   </div>;
 };
@@ -293,23 +272,25 @@ function statusIcon(status: 'failed' | 'timedOut' | 'skipped' | 'passed' | 'expe
   switch (status) {
     case 'failed':
     case 'unexpected':
-      return <span className={'codicon codicon-error status-icon'}></span>;
+      return <svg className='octicon color-text-danger' viewBox='0 0 16 16' version='1.1' width='16' height='16' aria-hidden='true'>
+        <path fillRule='evenodd' d='M3.72 3.72a.75.75 0 011.06 0L8 6.94l3.22-3.22a.75.75 0 111.06 1.06L9.06 8l3.22 3.22a.75.75 0 11-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 01-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 010-1.06z'></path>
+      </svg>;
     case 'passed':
     case 'expected':
-      return <span className={'codicon codicon-circle-filled status-icon'}></span>;
+      return <svg aria-hidden='true' height='16' viewBox='0 0 16 16' version='1.1' width='16' data-view-component='true' className='octicon color-icon-success'>
+        <path fillRule='evenodd' d='M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z'></path>
+      </svg>;
     case 'timedOut':
       return <span className={'codicon codicon-clock status-icon'}></span>;
     case 'flaky':
-      return <span className={'codicon codicon-alert status-icon'}></span>;
+      return <svg aria-hidden='true' height='16' viewBox='0 0 16 16' version='1.1' width='16' data-view-component='true' className='octicon color-text-warning'>
+        <path fill-rule='evenodd' d='M8.22 1.754a.25.25 0 00-.44 0L1.698 13.132a.25.25 0 00.22.368h12.164a.25.25 0 00.22-.368L8.22 1.754zm-1.763-.707c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0114.082 15H1.918a1.75 1.75 0 01-1.543-2.575L6.457 1.047zM9 11a1 1 0 11-2 0 1 1 0 012 0zm-.25-5.25a.75.75 0 00-1.5 0v2.5a.75.75 0 001.5 0v-2.5z'></path>
+      </svg>;
     case 'skipped':
-      return <span className={'codicon codicon-tag status-icon'}></span>;
+      return <svg className='octicon color-fg-muted' viewBox='0 0 16 16' version='1.1' width='16' height='16' aria-hidden='true'>
+        <path fill-rule='evenodd' d='M1.5 8a6.5 6.5 0 1113 0 6.5 6.5 0 01-13 0zM8 0a8 8 0 100 16A8 8 0 008 0zm3.28 5.78a.75.75 0 00-1.06-1.06l-5.5 5.5a.75.75 0 101.06 1.06l5.5-5.5z'></path>
+      </svg>;
   }
-}
-
-function renderLocation(location: Location | undefined, showFileName: boolean) {
-  if (!location)
-    return '';
-  return (showFileName ? location.file : '') + ':' + location.line;
 }
 
 function retryLabel(index: number) {
@@ -320,10 +301,17 @@ function retryLabel(index: number) {
 
 const ErrorMessage: React.FC<{
   error: string;
-}> = ({ error }) => {
+  mode: 'dark' | 'light'
+}> = ({ error, mode }) => {
   const html = React.useMemo(() => {
-    return new ansi2html({ colors: ansiColors }).toHtml(escapeHTML(error));
-  }, [error]);
+    const config: any = {
+      fg: mode === 'dark' ? '#FFF' : '#252423',
+      bg: mode === 'dark' ? '#252423' : '#FFF',
+    };
+    if (mode === 'dark')
+      config.colors = ansiColors;
+    return new ansi2html(config).toHtml(escapeHTML(error));
+  }, [error, mode]);
   return <div className='error-message' dangerouslySetInnerHTML={{ __html: html || '' }}></div>;
 };
 
@@ -349,3 +337,53 @@ const ansiColors = {
 function escapeHTML(text: string): string {
   return text.replace(/[&"<>]/g, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]!));
 }
+
+const Chip: React.FunctionComponent<{
+  header: JSX.Element | string,
+  expanded?: boolean,
+  setExpanded?: (expanded: boolean) => void,
+  children?: any
+}> = ({ header, expanded, setExpanded, children }) => {
+  return <div className='chip'>
+    <div className={'chip-header' + (setExpanded ? ' expanded-' + expanded : '')} onClick={() => setExpanded?.(!expanded)}>
+      {setExpanded && <div className={'codicon codicon-' + (expanded ? 'chevron-down' : 'chevron-right')}
+        style={{ cursor: 'pointer', color: 'var(--color)', marginRight: '4px' }}
+      />}
+      {header}
+    </div>
+    { (!setExpanded || expanded) && <div className='chip-body'>{children}</div>}
+  </div>;
+};
+
+function navigate(href: string) {
+  window.history.pushState({}, '', href);
+  const navEvent = new PopStateEvent('popstate');
+  window.dispatchEvent(navEvent);
+}
+
+const Link: React.FunctionComponent<{
+  href: string,
+  children: any
+}> = ({ href, children }) => {
+  return <a onClick={event => {
+    event.preventDefault();
+    navigate(href);
+  }} className='no-decorations' href={href}>{children}</a>;
+};
+
+const Route: React.FunctionComponent<{
+  params: string,
+  children: any
+}> = ({ params, children }) => {
+  const initialParams = [...new URL(window.location.href).searchParams.keys()].join('&');
+  const [currentParams, setCurrentParam] = React.useState(initialParams);
+  React.useEffect(() => {
+    const listener = () => {
+      const newParams = [...new URL(window.location.href).searchParams.keys()].join('&');
+      setCurrentParam(newParams);
+    };
+    window.addEventListener('popstate', listener);
+    return () => window.removeEventListener('popstate', listener);
+  }, []);
+  return currentParams === params ? children : null;
+};

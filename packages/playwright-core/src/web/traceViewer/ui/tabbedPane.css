@@ -52,7 +52,7 @@
   align-items: center;
   justify-content: center;
   user-select: none;
-  border-bottom: 3px solid transparent;
+  border-bottom: 2px solid transparent;
   outline: none;
   height: 100%;
 }
