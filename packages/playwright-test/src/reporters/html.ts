@@ -43,6 +43,7 @@ export type Location = {
 
 export type HTMLReport = {
   files: TestFileSummary[];
+  stats: Stats;
   testIdToFileId: { [key: string]: string };
   projectNames: string[];
 };
@@ -182,6 +183,7 @@ class HtmlBuilder {
   private _testPath = new Map<string, string[]>();
   private _rootDir: string;
   private _dataFolder: string;
+  private _hasTraces = false;
 
   constructor(outputDir: string, rootDir: string) {
     this._rootDir = rootDir;
@@ -191,18 +193,6 @@ class HtmlBuilder {
 
   build(rawReports: JsonReport[]): boolean {
     fs.mkdirSync(this._dataFolder, { recursive: true });
-
-    // Copy app.
-    const appFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'webpack', 'htmlReport');
-    for (const file of fs.readdirSync(appFolder))
-      fs.copyFileSync(path.join(appFolder, file), path.join(this._reportFolder, file));
-
-    // Copy trace viewer.
-    const traceViewerFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'webpack', 'traceViewer');
-    const traceViewerTargetFolder = path.join(this._reportFolder, 'trace');
-    fs.mkdirSync(traceViewerTargetFolder, { recursive: true });
-    for (const file of fs.readdirSync(traceViewerFolder))
-      fs.copyFileSync(path.join(traceViewerFolder, file), path.join(traceViewerTargetFolder, file));
 
     const data = new Map<string, { testFile: TestFile, testFileSummary: TestFileSummary }>();
     for (const projectJson of rawReports) {
@@ -261,14 +251,37 @@ class HtmlBuilder {
     const htmlReport: HTMLReport = {
       files: [...data.values()].map(e => e.testFileSummary),
       testIdToFileId,
-      projectNames: rawReports.map(r => r.project.name)
+      projectNames: rawReports.map(r => r.project.name),
+      stats: [...data.values()].reduce((a, e) => addStats(a, e.testFileSummary.stats), emptyStats())
     };
     htmlReport.files.sort((f1, f2) => {
       const w1 = f1.stats.unexpected * 1000 + f1.stats.flaky;
       const w2 = f2.stats.unexpected * 1000 + f2.stats.flaky;
       return w2 - w1;
     });
+
     fs.writeFileSync(path.join(this._dataFolder, 'report.json'), JSON.stringify(htmlReport, undefined, 2));
+
+    // Copy app.
+    const appFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'webpack', 'htmlReport');
+    for (const file of fs.readdirSync(appFolder)) {
+      if (file.endsWith('.map'))
+        continue;
+      fs.copyFileSync(path.join(appFolder, file), path.join(this._reportFolder, file));
+    }
+
+    // Copy trace viewer.
+    if (this._hasTraces) {
+      const traceViewerFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'webpack', 'traceViewer');
+      const traceViewerTargetFolder = path.join(this._reportFolder, 'trace');
+      fs.mkdirSync(traceViewerTargetFolder, { recursive: true });
+      for (const file of fs.readdirSync(traceViewerFolder)) {
+        if (file.endsWith('.map'))
+          continue;
+        fs.copyFileSync(path.join(traceViewerFolder, file), path.join(traceViewerTargetFolder, file));
+      }
+    }
+
     return ok;
   }
 
@@ -322,6 +335,8 @@ class HtmlBuilder {
       error: result.error,
       status: result.status,
       attachments: result.attachments.map(a => {
+        if (a.name === 'trace')
+          this._hasTraces = true;
         if (a.path) {
           let fileName = a.path;
           try {
@@ -385,6 +400,17 @@ const emptyStats = (): Stats => {
     ok: true,
     duration: 0,
   };
+};
+
+const addStats = (stats: Stats, delta: Stats): Stats => {
+  stats.total += delta.total;
+  stats.skipped += delta.skipped;
+  stats.expected += delta.expected;
+  stats.unexpected += delta.unexpected;
+  stats.flaky += delta.flaky;
+  stats.ok = stats.ok && delta.ok;
+  stats.duration += delta.duration;
+  return stats;
 };
 
 export default HtmlReporter;

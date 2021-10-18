@@ -26,12 +26,18 @@ export const TreeItem: React.FunctionComponent<{
 }> = ({ title, loadChildren, onClick, expandByDefault, depth, selected }) => {
   const [expanded, setExpanded] = React.useState(expandByDefault || false);
   const className = selected ? 'tree-item-title selected' : 'tree-item-title';
-  return <div style={{ display: 'flex', flexDirection: 'column', width: '100%', flex: 'none' }}>
-    <div className={className} style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', whiteSpace: 'nowrap', paddingLeft: depth * 16 + 4 }} onClick={() => { onClick?.(); setExpanded(!expanded); }} >
-      <div className={'codicon codicon-' + (expanded ? 'chevron-down' : 'chevron-right')}
-        style={{ cursor: 'pointer', color: 'var(--color)', visibility: loadChildren ? 'visible' : 'hidden' }} />
+  return <div className={'tree-item'}>
+    <span className={className} style={{ whiteSpace: 'nowrap', paddingLeft: depth * 22 + 4 }} onClick={() => { onClick?.(); setExpanded(!expanded); }} >
+      <span className={'codicon codicon-' + (expanded ? 'chevron-down' : 'chevron-right')}
+        style={{
+          cursor: 'pointer',
+          color: 'var(--color)',
+          visibility: loadChildren ? 'visible' : 'hidden',
+          position: 'relative',
+          top: 3
+        }} />
       {title}
-    </div>
+    </span>
     {expanded && loadChildren?.()}
   </div>;
 };

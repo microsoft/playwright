@@ -67,6 +67,10 @@ const AllTestFilesSummaryView: React.FC<{
   setFileExpanded: (fileId: string, expanded: boolean) => void;
 }> = ({ report, isFileExpanded, setFileExpanded }) => {
   return <div className='file-summary-list'>
+    {report && <div className='global-stats'>
+      <span>Ran {report.stats.total} tests</span>
+      <StatsView stats={report.stats}></StatsView>
+    </div>}
     {report && (report.files || []).map((file, i) => <TestFileSummaryView key={`file-${i}`} report={report} file={file} isFileExpanded={isFileExpanded} setFileExpanded={setFileExpanded}></TestFileSummaryView>)}
   </div>;
 };
@@ -77,13 +81,21 @@ const TestFileSummaryView: React.FC<{
   isFileExpanded: (fileId: string) => boolean;
   setFileExpanded: (fileId: string, expanded: boolean) => void;
 }> = ({ file, report, isFileExpanded, setFileExpanded }) => {
-  return <Chip expanded={isFileExpanded(file.fileId)} setExpanded={(expanded => setFileExpanded(file.fileId, expanded))} header={<span>{file.fileName}<StatsView stats={file.stats}></StatsView></span>}>
+  return <Chip
+    expanded={isFileExpanded(file.fileId)}
+    setExpanded={(expanded => setFileExpanded(file.fileId, expanded))}
+    header={<span>
+      {file.fileName}
+      <StatsView stats={file.stats}></StatsView>
+      <span style={{ float: 'right' }}>{msToString(file.stats.duration)}</span>
+    </span>}>
     {file.tests.map((test, i) => <Link key={`test-${i}`} href={`/?testId=${test.testId}`}>
-      <div className='test-summary'>
-        <span style={{ float: 'right', marginTop: 10 }} className={'label label-color-' + (report.projectNames.indexOf(test.projectName) % 8)}>{test.projectName}</span>
+      <div className={'test-summary outcome-' + test.outcome}>
         {statusIcon(test.outcome)}
         {test.title}
         <span className='test-summary-path'>— {test.path.join(' › ')}</span>
+        {report.projectNames.length > 1 && !!test.projectName && <span className={'label label-color-' + (report.projectNames.indexOf(test.projectName) % 8)}>{test.projectName}</span>}
+        <span style={{ float: 'right' }}>{msToString(test.duration)}</span>
       </div>
     </Link>)}
   </Chip>;
@@ -116,7 +128,7 @@ const TestCaseView: React.FC<{
   return <div className='test-case-column vbox'>
     {test && <div className='test-case-title'>{test?.title}</div>}
     {test && <div className='test-case-location'>{test.path.join(' › ')}</div>}
-    {test && <div><span className={'label label-color-' + (report.projectNames.indexOf(test.projectName) % 8)}>{test.projectName}</span></div>}
+    {test && !!test.projectName && <div><span className={'label label-color-' + (report.projectNames.indexOf(test.projectName) % 8)}>{test.projectName}</span></div>}
     {test && <TabbedPane tabs={
       test.results.map((result, index) => ({
         id: String(index),
@@ -201,12 +213,11 @@ const StepTreeItem: React.FC<{
   step: TestStep;
   depth: number,
 }> = ({ step, depth }) => {
-  return <TreeItem title={<div style={{ display: 'flex', alignItems: 'center', flex: 'auto' }}>
+  return <TreeItem title={<span>
+    <span style={{ float: 'right' }}>{msToString(step.duration)}</span>
     {statusIcon(step.error ? 'failed' : 'passed')}
-    <span style={{ whiteSpace: 'pre' }}>{step.title}</span>
-    <div style={{ flex: 'auto' }}></div>
-    <div>{msToString(step.duration)}</div>
-  </div>} loadChildren={step.steps.length + (step.error ? 1 : 0) ? () => {
+    <span>{step.title}</span>
+  </span>} loadChildren={step.steps.length + (step.error ? 1 : 0) ? () => {
     const children = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1}></StepTreeItem>);
     if (step.error)
       children.unshift(<ErrorMessage key={-1} error={step.error} mode='light'></ErrorMessage>);
@@ -287,7 +298,7 @@ function statusIcon(status: 'failed' | 'timedOut' | 'skipped' | 'passed' | 'expe
         <path fill-rule='evenodd' d='M8.22 1.754a.25.25 0 00-.44 0L1.698 13.132a.25.25 0 00.22.368h12.164a.25.25 0 00.22-.368L8.22 1.754zm-1.763-.707c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0114.082 15H1.918a1.75 1.75 0 01-1.543-2.575L6.457 1.047zM9 11a1 1 0 11-2 0 1 1 0 012 0zm-.25-5.25a.75.75 0 00-1.5 0v2.5a.75.75 0 001.5 0v-2.5z'></path>
       </svg>;
     case 'skipped':
-      return <svg className='octicon color-fg-muted' viewBox='0 0 16 16' version='1.1' width='16' height='16' aria-hidden='true'>
+      return <svg className='octicon color-fg-white' viewBox='0 0 16 16' version='1.1' width='16' height='16' aria-hidden='true'>
         <path fill-rule='evenodd' d='M1.5 8a6.5 6.5 0 1113 0 6.5 6.5 0 01-13 0zM8 0a8 8 0 100 16A8 8 0 008 0zm3.28 5.78a.75.75 0 00-1.06-1.06l-5.5 5.5a.75.75 0 101.06 1.06l5.5-5.5z'></path>
       </svg>;
   }
