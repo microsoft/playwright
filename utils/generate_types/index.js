@@ -18,7 +18,7 @@
 const path = require('path');
 const os = require('os');
 const toKebabCase = require('lodash/kebabCase')
-const devices = require('playwright-core/lib/server/deviceDescriptors');
+const devices = require('../../packages/playwright-core/lib/server/deviceDescriptors');
 const Documentation = require('../doclint/documentation');
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 const fs = require('fs');

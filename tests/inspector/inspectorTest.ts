@@ -28,7 +28,7 @@ type CLITestArgs = {
   runCLI: (args: string[]) => CLIMock;
 };
 
-const playwrightToAutomateInspector = require('playwright-core/lib/inProcessFactory').createInProcessPlaywright();
+const playwrightToAutomateInspector = require('../../packages/playwright-core/lib/inProcessFactory').createInProcessPlaywright();
 
 export const test = contextTest.extend<CLITestArgs>({
   recorderPageGetter: async ({ context, toImpl, mode }, run, testInfo) => {

@@ -127,7 +127,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
       await use(gridClient.playwright() as any);
       await gridClient.close();
     } else {
-      await use(require('playwright-core/lib/inprocess'));
+      await use(require('playwright-core'));
     }
   }, { scope: 'worker' } ],
   headless: [ undefined, { scope: 'worker' } ],

@@ -31,7 +31,7 @@ try {
 }
 
 console.log(`Downloading browsers...`);
-const { installDefaultBrowsersForNpmInstall } = require('./packages/playwright-core/lib/utils/registry');
+const { installDefaultBrowsersForNpmInstall } = require('playwright-core/src/utils/registry');
 installDefaultBrowsersForNpmInstall().catch(e => {
   console.error(`Failed to install browsers, caused by\n${e.stack}`);
   process.exit(1);

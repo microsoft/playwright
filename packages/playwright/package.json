@@ -15,8 +15,7 @@
     ".": {
       "import": "./index.mjs",
       "require": "./index.js"
-    },
-    "./": "./"
+    }
   },
   "scripts": {
     "install": "node install.js"
