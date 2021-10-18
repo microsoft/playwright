@@ -580,7 +580,7 @@ else
 ## Modify responses
 * langs: js
 
-To modify a response use [ApiRequestContext] to get original response and then pass the response to [`method: Route.fulfill`]
+To modify a response use [ApiRequestContext] to get original response and then pass the response to [`method: Route.fulfill`].
 You can override individual fields on the reponse via options:
 
 ```js
