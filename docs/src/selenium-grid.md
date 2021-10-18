@@ -14,7 +14,7 @@ SELENIUM_REMOTE_URL=http://internal.grid:4444/wd/hub node script.js
 ```
 
 ```bash python
-# With PyTest
+# With Pytest
 SELENIUM_REMOTE_URL=http://internal.grid:4444/wd/hub pytest --browser chromium
 
 # Plain Python
@@ -34,5 +34,5 @@ You don't have to change your code, just use [`method: BrowserType.launch`] as u
 When using Selenium Grid Hub, you can [skip browser downloads](./browsers.md#skip-browser-downloads).
 
 :::note
-Internally, Playwright connects to the browser using [Chrome Developer Tools Protocol](https://chromedevtools.github.io/devtools-protocol/) websocket. This requires Selenium Grid nodes to be directly accessible from the machine that runs Playwright.
+Internally, Playwright connects to the browser using [Chrome DevTools Protocol](https://chromedevtools.github.io/devtools-protocol/) websocket. This requires Selenium Grid nodes to be directly accessible from the machine that runs Playwright.
 :::
