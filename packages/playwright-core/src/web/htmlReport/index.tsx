@@ -16,11 +16,8 @@
 
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { applyTheme } from '../theme';
-import '../common.css';
 import { Report } from './htmlReport';
 
 (async () => {
-  applyTheme();
   ReactDOM.render(<Report />, document.querySelector('#root'));
 })();

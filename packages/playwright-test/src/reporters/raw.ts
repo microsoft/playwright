@@ -21,7 +21,7 @@ import { FullConfig, Location, Suite, TestCase, TestResult, TestStatus, TestStep
 import { assert, calculateSha1 } from 'playwright-core/src/utils/utils';
 import { sanitizeForFilePath } from '../util';
 import { formatResultFailure } from './base';
-import { serializePatterns } from './json';
+import { toPosixPath, serializePatterns } from './json';
 
 export type JsonLocation = Location;
 export type JsonError = string;
@@ -48,6 +48,7 @@ export type JsonProject = {
 };
 
 export type JsonSuite = {
+  fileId: string;
   title: string;
   location?: JsonLocation;
   suites: JsonSuite[];
@@ -129,6 +130,7 @@ class RawReporter {
   }
 
   generateProjectReport(config: FullConfig, suite: Suite): JsonReport {
+    this.config = config;
     const project = (suite as any)._projectConfig as FullProject;
     assert(project, 'Internal Error: Invalid project structure');
     const report: JsonReport = {
@@ -150,20 +152,25 @@ class RawReporter {
   }
 
   private _serializeSuite(suite: Suite): JsonSuite {
+    const fileId = calculateSha1(suite.location!.file.split(path.sep).join('/'));
+    const location = this._relativeLocation(suite.location);
     return {
       title: suite.title,
-      location: suite.location,
+      fileId,
+      location,
       suites: suite.suites.map(s => this._serializeSuite(s)),
-      tests: suite.tests.map(t => this._serializeTest(t)),
+      tests: suite.tests.map(t => this._serializeTest(t, fileId, location.file)),
     };
   }
 
-  private _serializeTest(test: TestCase): JsonTestCase {
-    const testId = calculateSha1(test.titlePath().join('|'));
+  private _serializeTest(test: TestCase, fileId: string, fileName: string): JsonTestCase {
+    const [, projectName, , ...titles] = test.titlePath();
+    const testIdExpression = `project:${projectName}|path:${titles.join('>')}`;
+    const testId = fileId + '-' + calculateSha1(testIdExpression);
     return {
       testId,
       title: test.title,
-      location: test.location,
+      location: this._relativeLocation(test.location),
       expectedStatus: test.expectedStatus,
       timeout: test.timeout,
       annotations: test.annotations,
@@ -238,6 +245,17 @@ class RawReporter {
       name: type,
       contentType: 'application/octet-stream',
       body: chunk.toString('base64')
+    };
+  }
+
+  private _relativeLocation(location: Location | undefined): Location {
+    if (!location)
+      return { file: '', line: 0, column: 0 };
+    const file = toPosixPath(path.relative(this.config.rootDir, location.file));
+    return {
+      file,
+      line: location.line,
+      column: location.column,
     };
   }
 }

@@ -21,7 +21,6 @@ import path from 'path';
 import { FullConfig, Suite } from '../../types/testReporter';
 import { HttpServer } from 'playwright-core/src/utils/httpServer';
 import { calculateSha1, removeFolders } from 'playwright-core/src/utils/utils';
-import { toPosixPath } from './json';
 import RawReporter, { JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep, JsonAttachment } from './raw';
 import assert from 'assert';
 
@@ -44,7 +43,6 @@ export type Location = {
 export type HTMLReport = {
   files: TestFileSummary[];
   stats: Stats;
-  testIdToFileId: { [key: string]: string };
   projectNames: string[];
 };
 
@@ -63,7 +61,6 @@ export type TestFileSummary = {
 
 export type TestCaseSummary = {
   testId: string,
-  fileId: string,
   title: string;
   path: string[];
   projectName: string;
@@ -197,8 +194,8 @@ class HtmlBuilder {
     const data = new Map<string, { testFile: TestFile, testFileSummary: TestFileSummary }>();
     for (const projectJson of rawReports) {
       for (const file of projectJson.suites) {
-        const fileName = this._relativeLocation(file.location).file;
-        const fileId = calculateSha1(fileName);
+        const fileName = file.location!.file;
+        const fileId = file.fileId;
         let fileEntry = data.get(fileId);
         if (!fileEntry) {
           fileEntry = {
@@ -218,11 +215,9 @@ class HtmlBuilder {
     }
 
     let ok = true;
-    const testIdToFileId: { [key: string]: string } = {};
     for (const [fileId, { testFile, testFileSummary }] of data) {
       const stats = testFileSummary.stats;
       for (const test of testFileSummary.tests) {
-        testIdToFileId[test.testId] = fileId;
         if (test.outcome === 'expected')
           ++stats.expected;
         if (test.outcome === 'skipped')
@@ -250,7 +245,6 @@ class HtmlBuilder {
     }
     const htmlReport: HTMLReport = {
       files: [...data.values()].map(e => e.testFileSummary),
-      testIdToFileId,
       projectNames: rawReports.map(r => r.project.name),
       stats: [...data.values()].reduce((a, e) => addStats(a, e.testFileSummary.stats), emptyStats())
     };
@@ -294,14 +288,13 @@ class HtmlBuilder {
   private _createTestEntry(test: JsonTestCase, fileId: string, projectName: string, path: string[]): TestEntry {
     const duration = test.results.reduce((a, r) => a + r.duration, 0);
     this._tests.set(test.testId, test);
-    const location = this._relativeLocation(test.location);
+    const location = test.location;
     path = [location.file + ':' + location.line,  ...path.slice(1)];
     this._testPath.set(test.testId, path);
 
     return {
       testCase: {
         testId: test.testId,
-        fileId,
         title: test.title,
         projectName,
         location,
@@ -313,7 +306,6 @@ class HtmlBuilder {
       },
       testCaseSummary: {
         testId: test.testId,
-        fileId,
         title: test.title,
         projectName,
         location,
@@ -376,16 +368,6 @@ class HtmlBuilder {
       steps: step.steps.map(s => this._createTestStep(s)),
       log: step.log,
       error: step.error
-    };
-  }
-
-  private _relativeLocation(location: Location | undefined): Location {
-    if (!location)
-      return { file: '', line: 0, column: 0 };
-    return {
-      file: toPosixPath(path.relative(this._rootDir, location.file)),
-      line: location.line,
-      column: location.column,
     };
   }
 }
