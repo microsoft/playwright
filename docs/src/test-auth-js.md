@@ -153,6 +153,11 @@ test('test', async ({ page }) => {
 });
 ```
 
+:::note
+If you can log in once and commit the `storageState.json` into the repository, you won't need the global
+setup at all, just specify the `storageState.json` in Playwright Config as above and it'll be picked up.
+:::
+
 ### Sign in via API request
 
 If your web application supports signing in via API then instead of launchig a new browser and navigating to the login page you can use [ApiRequestContext]. Global setup script from the example above would change like this:
