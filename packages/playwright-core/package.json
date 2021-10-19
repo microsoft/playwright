@@ -20,7 +20,9 @@
       "require": "./index.js"
     },
     "./cli": "./cli.js",
+    "./src/grid/gridServer": "./lib/grid/gridServer.js",
     "./src/grid/gridClient": "./lib/grid/gridClient.js",
+    "./src/grid/dockerGridFactory": "./lib/grid/dockerGridFactory.js",
     "./src/utils/async": "./lib/utils/async.js",
     "./src/utils/httpServer": "./lib/utils/httpServer.js",
     "./src/utils/processLauncher": "./lib/utils/processLauncher.js",

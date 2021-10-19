@@ -34,7 +34,7 @@ import { spawn } from 'child_process';
 import { registry, Executable } from '../utils/registry';
 import { spawnAsync, getPlaywrightVersion } from '../utils/utils';
 import { launchGridAgent } from '../grid/gridAgent';
-import { launchGridServer } from '../grid/gridServer';
+import { GridServer, GridFactory } from '../grid/gridServer';
 
 const packageJSON = require('../../package.json');
 
@@ -570,4 +570,23 @@ function commandWithOpenOptions(command: string, description: string, options: a
       .option('--timeout <timeout>', 'timeout for Playwright actions in milliseconds', '10000')
       .option('--user-agent <ua string>', 'specify user agent string')
       .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280, 720"');
+}
+
+async function launchGridServer(factoryPathOrPackageName: string, port: number, authToken: string|undefined): Promise<void> {
+  if (!factoryPathOrPackageName)
+    factoryPathOrPackageName = path.join('..', 'grid', 'simpleGridFactory');
+  let factory;
+  try {
+    factory = require(path.resolve(factoryPathOrPackageName));
+  } catch (e) {
+    factory = require(factoryPathOrPackageName);
+  }
+  if (factory && typeof factory === 'object' && ('default' in factory))
+    factory = factory['default'];
+  if (!factory || !factory.launch || typeof factory.launch !== 'function')
+    throw new Error('factory does not export `launch` method');
+  factory.name = factory.name || factoryPathOrPackageName;
+  const gridServer = new GridServer(factory as GridFactory, authToken);
+  await gridServer.start(port);
+  console.log('Grid server is running at ' + gridServer.urlPrefix());
 }

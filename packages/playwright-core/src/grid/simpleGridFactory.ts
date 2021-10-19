@@ -15,22 +15,26 @@
  */
 
 import child_process from 'child_process';
-import { GridAgentLaunchOptions } from './gridServer';
+import { GridAgentLaunchOptions, GridFactory } from './gridServer';
 import path from 'path';
 
-export const name = 'Agents co-located with grid';
-export const capacity = Infinity;
-export const timeout = 10000;
-export function launch({ agentId, gridURL }: GridAgentLaunchOptions) {
-  child_process.spawn(process.argv[0], [
-    path.join(__dirname, '..', 'cli', 'cli.js'),
-    'experimental-grid-agent',
-    '--grid-url', gridURL,
-    '--agent-id', agentId,
-  ], {
-    cwd: __dirname,
-    shell: true,
-    stdio: 'inherit',
-  });
-}
+const simpleFactory: GridFactory = {
+  name: 'Agents co-located with grid',
+  capacity: Infinity,
+  launchTimeout: 10000,
+  retireTimeout: 10000,
+  launch: async (options: GridAgentLaunchOptions) => {
+    child_process.spawn(process.argv[0], [
+      path.join(__dirname, '..', 'cli', 'cli.js'),
+      'experimental-grid-agent',
+      '--grid-url', options.gridURL,
+      '--agent-id', options.agentId,
+    ], {
+      cwd: __dirname,
+      shell: true,
+      stdio: 'inherit',
+    });
+  },
+};
 
+export default simpleFactory;
