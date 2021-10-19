@@ -974,6 +974,12 @@ class FrameSession {
           insets = { width: 8, height: 85 };
         else if (process.platform === 'darwin')
           insets = { width: 2, height: 80 };
+        if (this._crPage._browserContext.isPersistentContext()) {
+          // FIXME: Chrome bug: OOPIF router is confused when hit target is
+          // outside browser window.
+          // Account for the infobar here to work around the bug.
+          insets.height += 46;
+        }
       }
       promises.push(this.setWindowBounds({
         width: viewportSize.width + insets.width,

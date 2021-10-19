@@ -85,6 +85,10 @@ export abstract class BrowserContext extends SdkObject {
     this.fetchRequest = new BrowserContextFetchRequest(this);
   }
 
+  isPersistentContext(): boolean {
+    return this._isPersistentContext;
+  }
+
   _setSelectors(selectors: Selectors) {
     this._selectors = selectors;
   }
