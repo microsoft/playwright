@@ -2753,7 +2753,7 @@ export interface Page {
   /**
    * API testing helper associated with this page. Requests made with this API will use page cookies.
    */
-  request: ApiRequestContext;
+  request: APIRequestContext;
 
   /**
    * Routing provides the capability to modify network requests that are made by a page.
@@ -6459,7 +6459,7 @@ export interface BrowserContext {
   /**
    * API testing helper associated with this context. Requests made with this API will use context cookies.
    */
-  request: ApiRequestContext;
+  request: APIRequestContext;
 
   /**
    * Routing provides the capability to modify network requests that are made by any page in the browser context. Once route
@@ -11596,15 +11596,15 @@ export interface AndroidWebView {
 /**
  * Exposes API that can be used for the Web API testing.
  */
-export interface ApiRequest {
+export interface APIRequest {
   /**
-   * Creates new instances of [ApiRequestContext].
+   * Creates new instances of [APIRequestContext].
    * @param options
    */
   newContext(options?: {
     /**
      * Methods like
-     * [apiRequestContext.get(url[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-get)
+     * [aPIRequestContext.get(url[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-get)
      * take the base URL into consideration by using the [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL)
      * constructor for building the corresponding URL. Examples:
      * - baseURL: `http://localhost:3000` and sending request to `/bar.html` results in `http://localhost:3000/bar.html`
@@ -11663,11 +11663,11 @@ export interface ApiRequest {
      * obtained via
      * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state)
      * or
-     * [apiRequestContext.storageState([options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-storage-state).
+     * [aPIRequestContext.storageState([options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-storage-state).
      * Either a path to the file with saved storage, or the value returned by one of
      * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state)
      * or
-     * [apiRequestContext.storageState([options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-storage-state)
+     * [aPIRequestContext.storageState([options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-storage-state)
      * methods.
      */
     storageState?: string|{
@@ -11712,7 +11712,7 @@ export interface ApiRequest {
      * Specific user agent to use in this context.
      */
     userAgent?: string;
-  }): Promise<ApiRequestContext>;
+  }): Promise<APIRequestContext>;
 }
 
 /**
@@ -11721,7 +11721,7 @@ export interface ApiRequest {
  * the cookies from the corresponding [BrowserContext]. This means that if you log in using this API, your e2e test will be
  * logged in and vice versa.
  */
-export interface ApiRequestContext {
+export interface APIRequestContext {
   /**
    * Sends HTTP(S) [DELETE](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/DELETE) request and returns its
    * response. The method will populate request cookies from the context and update context cookies from the response. The
@@ -11758,7 +11758,7 @@ export interface ApiRequestContext {
 
   /**
    * All responses returned by
-   * [apiRequestContext.get(url[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-get)
+   * [aPIRequestContext.get(url[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-get)
    * and similar methods are stored in the memory, so that you can later call
    * [apiResponse.body()](https://playwright.dev/docs/api/class-apiresponse#api-response-body). This method discards all
    * stored responses, and makes [apiResponse.body()](https://playwright.dev/docs/api/class-apiresponse#api-response-body)
@@ -12170,7 +12170,7 @@ export interface ApiRequestContext {
 
 /**
  * [ApiResponse] class represents responses returned by
- * [apiRequestContext.get(url[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-get)
+ * [aPIRequestContext.get(url[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-get)
  * and similar methods.
  */
 export interface ApiResponse {
@@ -13710,7 +13710,7 @@ export const firefox: BrowserType;
 /**
  * Exposes API that can be used for the Web API testing.
  */
-export const request: ApiRequest;
+export const request: APIRequest;
 
 /**
  * Selectors can be used to install custom selector engines. See [Working with selectors](https://playwright.dev/docs/selectors) for more

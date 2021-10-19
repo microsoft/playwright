@@ -92,9 +92,9 @@ test('basic test', async ({ page }) => {
 ```
 
 ## property: Fixtures.request
-- type: <[ApiRequestContext]>
+- type: <[APIRequestContext]>
 
-Isolated [ApiRequestContext] instance for each test.
+Isolated [APIRequestContext] instance for each test.
 
 ```js js-flavor=js
 const { test, expect } = require('@playwright/test');
