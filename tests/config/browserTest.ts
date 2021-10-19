@@ -24,7 +24,7 @@ import * as os from 'os';
 import { RemoteServer, RemoteServerOptions } from './remoteServer';
 import { baseTest, CommonWorkerFixtures } from './baseTest';
 import { CommonFixtures } from './commonFixtures';
-import { ParsedStackTrace } from 'playwright-core/src/utils/stackTrace';
+import type { ParsedStackTrace } from 'playwright-core/src/utils/stackTrace';
 
 type PlaywrightWorkerOptions = {
   executablePath: LaunchOptions['executablePath'];
