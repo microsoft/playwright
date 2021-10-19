@@ -116,7 +116,7 @@ program
           args = args.filter(arg => arg !== 'docker-image');
           if (installDockerImage) {
             const imageName = `mcr.microsoft.com/playwright:v${getPlaywrightVersion()}`;
-            const {code} = await spawnAsync('docker', ['pull', imageName], { stdio: 'inherit' });
+            const { code } = await spawnAsync('docker', ['pull', imageName], { stdio: 'inherit' });
             if (code !== 0) {
               console.log('Failed to pull docker image');
               process.exit(1);
