@@ -306,8 +306,9 @@ export class WorkerRunner extends EventEmitter {
               this.emit('stepEnd', payload);
           }
         };
-        // Sanitize location that comes from userland.
-        const location = data.location ? { file: data.location.file, line: data.location.line, column: data.location.column } : undefined;
+        const hasLocation = data.location && !data.location.file.includes('@playwright');
+        // Sanitize location that comes from user land, it might have extra properties.
+        const location = data.location && hasLocation ? { file: data.location.file, line: data.location.line, column: data.location.column } : undefined;
         const payload: StepBeginPayload = {
           testId,
           stepId,

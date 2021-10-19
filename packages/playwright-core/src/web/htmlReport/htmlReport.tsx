@@ -217,10 +217,11 @@ const StepTreeItem: React.FC<{
     <span style={{ float: 'right' }}>{msToString(step.duration)}</span>
     {statusIcon(step.error ? 'failed' : 'passed')}
     <span>{step.title}</span>
-  </span>} loadChildren={step.steps.length + (step.error ? 1 : 0) ? () => {
+    {step.location && <span className='test-summary-path'>— {step.location.file}:{step.location.line}</span>}
+  </span>} loadChildren={step.steps.length + (step.snippet ? 1 : 0) ? () => {
     const children = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1}></StepTreeItem>);
-    if (step.error)
-      children.unshift(<ErrorMessage key={-1} error={step.error}></ErrorMessage>);
+    if (step.snippet)
+      children.unshift(<ErrorMessage key='line' error={step.snippet}></ErrorMessage>);
     return children;
   } : undefined} depth={depth}></TreeItem>;
 };

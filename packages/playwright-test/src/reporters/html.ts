@@ -90,7 +90,8 @@ export type TestStep = {
   title: string;
   startTime: string;
   duration: number;
-  log?: string[];
+  location?: Location;
+  snippet?: string;
   error?: string;
   steps: TestStep[];
 };
@@ -365,8 +366,9 @@ class HtmlBuilder {
       title: step.title,
       startTime: step.startTime,
       duration: step.duration,
+      snippet: step.snippet,
       steps: step.steps.map(s => this._createTestStep(s)),
-      log: step.log,
+      location: step.location,
       error: step.error
     };
   }
