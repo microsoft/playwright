@@ -11754,7 +11754,7 @@ export interface APIRequestContext {
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
      */
     timeout?: number;
-  }): Promise<ApiResponse>;
+  }): Promise<APIResponse>;
 
   /**
    * All responses returned by
@@ -11840,7 +11840,7 @@ export interface APIRequestContext {
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
      */
     timeout?: number;
-  }): Promise<ApiResponse>;
+  }): Promise<APIResponse>;
 
   /**
    * Sends HTTP(S) [GET](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/GET) request and returns its response. The
@@ -11874,7 +11874,7 @@ export interface APIRequestContext {
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
      */
     timeout?: number;
-  }): Promise<ApiResponse>;
+  }): Promise<APIResponse>;
 
   /**
    * Sends HTTP(S) [HEAD](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/HEAD) request and returns its response.
@@ -11908,7 +11908,7 @@ export interface APIRequestContext {
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
      */
     timeout?: number;
-  }): Promise<ApiResponse>;
+  }): Promise<APIResponse>;
 
   /**
    * Sends HTTP(S) [PATCH](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PATCH) request and returns its response.
@@ -11979,7 +11979,7 @@ export interface APIRequestContext {
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
      */
     timeout?: number;
-  }): Promise<ApiResponse>;
+  }): Promise<APIResponse>;
 
   /**
    * Sends HTTP(S) [POST](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST) request and returns its response.
@@ -12050,7 +12050,7 @@ export interface APIRequestContext {
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
      */
     timeout?: number;
-  }): Promise<ApiResponse>;
+  }): Promise<APIResponse>;
 
   /**
    * Sends HTTP(S) [PUT](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PUT) request and returns its response. The
@@ -12121,7 +12121,7 @@ export interface APIRequestContext {
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
      */
     timeout?: number;
-  }): Promise<ApiResponse>;
+  }): Promise<APIResponse>;
 
   /**
    * Returns storage state for this request context, contains current cookies and local storage snapshot if it was passed to
@@ -12169,11 +12169,11 @@ export interface APIRequestContext {
 }
 
 /**
- * [ApiResponse] class represents responses returned by
+ * [APIResponse] class represents responses returned by
  * [apiRequestContext.get(url[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-get)
  * and similar methods.
  */
-export interface ApiResponse {
+export interface APIResponse {
   /**
    * Returns the buffer with response body.
    */
@@ -14234,10 +14234,10 @@ export interface Route {
     path?: string;
 
     /**
-     * [ApiResponse] to fulfill route's request with. Individual fields of the response (such as headers) can be overridden
+     * [APIResponse] to fulfill route's request with. Individual fields of the response (such as headers) can be overridden
      * using fulfill options.
      */
-    response?: ApiResponse;
+    response?: APIResponse;
 
     /**
      * Response status code, defaults to `200`.
