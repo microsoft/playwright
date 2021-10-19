@@ -234,6 +234,7 @@ function resolveReporter(id: string) {
 async function launchDockerContainer(): Promise<() => Promise<void>> {
   const gridServer = new GridServer(dockerFactory, createGuid());
   await gridServer.start();
+  // Start docker container in advance.
   await gridServer.createAgent();
   process.env.PW_GRID = gridServer.urlPrefix().substring(0, gridServer.urlPrefix().length - 1);
   return async () => await gridServer.stop();

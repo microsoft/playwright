@@ -19,7 +19,7 @@ import os from 'os';
 import { GridAgentLaunchOptions } from './gridServer';
 import * as utils from '../utils/utils';
 
-export default {
+const dockerFactory: GridFactory = {
   name: 'Agents launched inside Docker container',
   capacity: Infinity,
   launchTimeout: 30000,
@@ -30,9 +30,10 @@ export default {
     console.log(``);
     console.log(`✨ Running browsers inside docker container ✨`);
     console.log(`- look inside: ${vncUrl}`);
-    console.log(`- bash inside: docker exec -it ${containerId.substring(0, 8)} /bin/bash`);
   }
 };
+
+export default dockerFactory;
 
 async function launchDockerGridAgent(agentId: string, gridURL: string): Promise<{vncUrl: string, containerId: string}> {
   const gridPort = new URL(gridURL).port || '80';
