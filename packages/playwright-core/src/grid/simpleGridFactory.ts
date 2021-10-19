@@ -15,15 +15,15 @@
  */
 
 import child_process from 'child_process';
-import { GridAgentLaunchOptions } from './gridServer';
+import { GridAgentLaunchOptions, GridFactory } from './gridServer';
 import path from 'path';
 
-export default {
+const simpleFactory: GridFactory = {
   name: 'Agents co-located with grid',
   capacity: Infinity,
   launchTimeout: 10000,
   retireTimeout: 10000,
-  launch: (options: GridAgentLaunchOptions) => {
+  launch: async (options: GridAgentLaunchOptions) => {
     child_process.spawn(process.argv[0], [
       path.join(__dirname, '..', 'cli', 'cli.js'),
       'experimental-grid-agent',
@@ -37,3 +37,4 @@ export default {
   },
 };
 
+export default simpleFactory;
