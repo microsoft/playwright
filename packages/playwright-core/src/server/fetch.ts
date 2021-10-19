@@ -51,7 +51,6 @@ export abstract class FetchRequest extends SdkObject {
 
   readonly fetchResponses: Map<string, Buffer> = new Map();
   protected static allInstances: Set<FetchRequest> = new Set();
-  private readonly _abortController = new AbortController();
 
   static findResponseBody(guid: string): Buffer | undefined {
     for (const request of FetchRequest.allInstances) {
@@ -68,7 +67,6 @@ export abstract class FetchRequest extends SdkObject {
   }
 
   protected _disposeImpl() {
-    this._abortController.abort();
     FetchRequest.allInstances.delete(this);
     this.fetchResponses.clear();
     this.emit(FetchRequest.Events.Dispose);
@@ -299,12 +297,12 @@ export abstract class FetchRequest extends SdkObject {
       });
       request.on('error', reject);
 
-      const abortListener = () => {
+      const disposeListener = () => {
         reject(new Error('Request context disposed.'));
         request.destroy();
       };
-      this._abortController.signal.addEventListener('abort', abortListener);
-      request.on('close', () => this._abortController.signal.removeEventListener('abort', abortListener));
+      this.on(FetchRequest.Events.Dispose, disposeListener);
+      request.on('close', () => this.off(FetchRequest.Events.Dispose, disposeListener));
 
       if (debugLogger.isEnabled('api')) {
         debugLogger.log('api', `→ ${options.method} ${url.toString()}`);
