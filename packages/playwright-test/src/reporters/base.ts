@@ -98,7 +98,7 @@ export class BaseReporter implements Reporter  {
   }
 
   onError(error: TestError) {
-    console.log(formatError(error));
+    console.log(formatError(error).message);
   }
 
   async onEnd(result: FullResult) {
@@ -325,7 +325,7 @@ function formatTestHeader(config: FullConfig, test: TestCase, indent: string, in
   return pad(header, '=');
 }
 
-export function formatError(error: TestError, file?: string): ErrorDetails {
+function formatError(error: TestError, file?: string): ErrorDetails {
   const stack = error.stack;
   const tokens = [''];
   let positionInFile: PositionInFile | undefined;

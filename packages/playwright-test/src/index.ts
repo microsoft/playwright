@@ -290,9 +290,11 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
         if (!(context.tracing as any)[kTracingStarted]) {
           await context.tracing.start({ screenshots: true, snapshots: true });
           (context.tracing as any)[kTracingStarted] = true;
+        } else {
+          await context.tracing.startChunk();
         }
-        await context.tracing.startChunk();
       } else {
+        (context.tracing as any)[kTracingStarted] = false;
         await context.tracing.stop();
       }
       (context as any)._csi = {
@@ -376,6 +378,8 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
     await Promise.all(leftoverContexts.map(async context => {
       if (preserveTrace)
         await context.tracing.stopChunk({ path: addTraceAttachment() });
+      else if (captureTrace)
+        await context.tracing.stopChunk();
       if (captureScreenshots)
         await Promise.all(context.pages().map(page => page.screenshot({ timeout: 5000, path: addScreenshotAttachment() }).catch(() => {})));
     }));
