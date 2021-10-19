@@ -89,7 +89,7 @@ svg {
   cursor: pointer;
 }
 
-.chip-body .tree-item {
+.chip-body > .tree-item {
   max-width: 600px;
   line-height: 38px;
 }
@@ -107,6 +107,7 @@ svg {
   background-color: var(--color-canvas-subtle);
   border-radius: 6px;
   padding: 16px;
+  line-height: initial;
 }
 
 .status-icon {

@@ -725,7 +725,7 @@ export class InjectedScript {
     const attrs = [];
     for (let i = 0; i < element.attributes.length; i++) {
       const { name, value } = element.attributes[i];
-      if (name === 'style')
+      if (name === 'style' || name.startsWith('__playwright'))
         continue;
       if (!value && booleanAttributes.has(name))
         attrs.push(` ${name}`);
