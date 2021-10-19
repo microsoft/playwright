@@ -243,8 +243,20 @@ const locator = page.locator('list > .component');
 await expect(locator).toHaveText(['Text 1', 'Text 2', 'Text 3']);
 ```
 
+## expect(locator).toHaveValue(value)
+- `value`: <[string] | [RegExp]>
+- `options`
+  - `timeout`: <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+
+Ensures [Locator] points to an element with the given input value. You can use regular expressions for the value as well.
+
+```js
+const locator = page.locator('input[type=number]');
+await expect(locator).toHaveValue(/[0-9]/);
+```
+
 ## expect(page).toHaveTitle(title)
-- `title`: <[string] | [RegExp]>>
+- `title`: <[string] | [RegExp]>
 - `options`
   - `timeout`: <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
 
@@ -255,7 +267,7 @@ await expect(page).toHaveTitle(/.*checkout/);
 ```
 
 ## expect(page).toHaveURL(url)
-- `url`: <[string] | [RegExp]>>
+- `url`: <[string] | [RegExp]>
 - `options`
   - `timeout`: <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
 
@@ -263,16 +275,4 @@ Ensures page is navigated to a given URL.
 
 ```js
 await expect(page).toHaveURL(/.*checkout/);
-```
-
-## expect(locator).toHaveValue(value)
-- `value`: <[string] | [RegExp]>>
-- `options`
-  - `timeout`: <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
-
-Ensures [Locator] points to an element with the given input value. You can use regular expressions for the value as well.
-
-```js
-const locator = page.locator('input[type=number]');
-await expect(locator).toHaveValue(/[0-9]/);
 ```
