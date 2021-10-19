@@ -246,3 +246,20 @@ test('should include stdio', async ({ runInlineTest, page, showReport }) => {
   await page.locator('text=stderr').click();
   await expect(page.locator('.attachment-body').nth(1)).toHaveText('Third line');
 });
+
+test('should highlight error', async ({ runInlineTest, page, showReport }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('fails', async ({ page }) => {
+        await expect(true).toBeFalsy();
+      });
+    `,
+  }, { reporter: 'dot,html' });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+
+  await showReport();
+  await page.click('text=fails');
+  await expect(page.locator('.error-message span:has-text("received")').nth(1)).toHaveCSS('color', 'rgb(204, 0, 0)');
+});
