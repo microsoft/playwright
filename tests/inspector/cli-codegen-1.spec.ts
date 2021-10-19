@@ -212,7 +212,7 @@ test.describe('cli codegen', () => {
 
     // Sanity check that selector does not match our highlight.
     const divContents = await page.$eval(selector, div => div.outerHTML);
-    expect(divContents).toBe(`<div onclick="console.log('click')"> Some long text here </div>`);
+    expect(divContents.replace(/\s__playwright_target__="[^"]+"/, '')).toBe(`<div onclick="console.log('click')"> Some long text here </div>`);
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),

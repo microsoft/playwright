@@ -192,6 +192,7 @@ function distillSnapshot(snapshot) {
       .replace(/<HTML>/, '')
       .replace(/<\/HTML>/, '')
       .replace(/<HEAD>/, '')
+      .replace(/\s__playwright_target__="[^"]+"/, '')
       .replace(/<\/HEAD>/, '')
       .replace(/<BODY>/, '')
       .replace(/<\/BODY>/, '').trim();
