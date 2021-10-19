@@ -29,6 +29,16 @@ Returns the list of all test cases in this suite and its descendants, as opposit
 
 Location in the source where the suite is defined. Missing for root and project suites.
 
+## property: Suite.parent
+- type: <[void]|[Suite]>
+
+Parent suite or [void] for the root suite.
+
+## property: Suite.project
+- type: <[void]|[TestProject]>
+
+Configuration of the project this suite belongs to, or [void] for the root suite.
+
 ## property: Suite.suites
 - type: <[Array]<[Suite]>>
 

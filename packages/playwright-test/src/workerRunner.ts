@@ -319,7 +319,7 @@ export class WorkerRunner extends EventEmitter {
     };
 
     // Inherit test.setTimeout() from parent suites.
-    for (let suite = test.parent; suite; suite = suite.parent) {
+    for (let suite: Suite | undefined = test.parent; suite; suite = suite.parent) {
       if (suite._timeout !== undefined) {
         testInfo.setTimeout(suite._timeout);
         break;
@@ -416,7 +416,7 @@ export class WorkerRunner extends EventEmitter {
   private async _runBeforeHooks(test: TestCase, testInfo: TestInfoImpl) {
     try {
       const beforeEachModifiers: Modifier[] = [];
-      for (let s = test.parent; s; s = s.parent) {
+      for (let s: Suite | undefined = test.parent; s; s = s.parent) {
         const modifiers = s._modifiers.filter(modifier => !this._fixtureRunner.dependsOnWorkerFixturesOnly(modifier.fn, modifier.location));
         beforeEachModifiers.push(...modifiers.reverse());
       }

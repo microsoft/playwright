@@ -698,6 +698,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * Also available in the [command line](https://playwright.dev/docs/test-cli) with the `--max-failures` and `-x` options.
    */
   maxFailures: number;
+  version: string;
   /**
    * Whether to preserve test output in the
    * [testConfig.outputDir](https://playwright.dev/docs/api/class-testconfig#test-config-output-dir). Defaults to `'always'`.

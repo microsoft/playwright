@@ -70,9 +70,16 @@ test('should work with custom reporter', async ({ runInlineTest }) => {
         }
         onBegin(config, suite) {
           console.log('\\n%%reporter-begin-' + this.options.begin + '%%');
+          console.log('\\n%%version-' + config.version);
         }
         onTestBegin(test) {
-          console.log('\\n%%reporter-testbegin-' + test.title + '-' + test.titlePath()[1] + '%%');
+          const projectName = test.titlePath()[1];
+          console.log('\\n%%reporter-testbegin-' + test.title + '-' + projectName + '%%');
+          const suite = test.parent;
+          if (!suite.tests.includes(test))
+            console.log('\\n%%error-inconsistent-parent');
+          if (test.parent.project().name !== projectName)
+            console.log('\\n%%error-inconsistent-project-name');
         }
         onStdOut() {
           console.log('\\n%%reporter-stdout%%');
@@ -125,6 +132,7 @@ test('should work with custom reporter', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
     '%%reporter-begin-begin%%',
+    '%%version-' + require('../../packages/playwright-test/package.json').version,
     '%%reporter-testbegin-is run-foo%%',
     '%%reporter-stdout%%',
     '%%reporter-stderr%%',

@@ -229,7 +229,7 @@ export class Dispatcher {
         retryCandidates.add(failedTestId);
 
         let outermostSerialSuite: Suite | undefined;
-        for (let parent = this._testById.get(failedTestId)!.test.parent; parent; parent = parent.parent) {
+        for (let parent: Suite | undefined = this._testById.get(failedTestId)!.test.parent; parent; parent = parent.parent) {
           if (parent._parallelMode ===  'serial')
             outermostSerialSuite = parent;
         }
@@ -240,7 +240,7 @@ export class Dispatcher {
       // We have failed tests that belong to a serial suite.
       // We should skip all future tests from the same serial suite.
       remaining = remaining.filter(test => {
-        let parent = test.parent;
+        let parent: Suite | undefined = test.parent;
         while (parent && !serialSuitesWithFailures.has(parent))
           parent = parent.parent;
 

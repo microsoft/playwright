@@ -22,19 +22,11 @@ import { FullProject } from './types';
 
 class Base {
   title: string;
-  parent?: Suite;
-
   _only = false;
   _requireFile: string = '';
 
   constructor(title: string) {
     this.title = title;
-  }
-
-  titlePath(): string[] {
-    const titlePath = this.parent ? this.parent.titlePath() : [];
-    titlePath.push(this.title);
-    return titlePath;
   }
 }
 
@@ -49,6 +41,7 @@ export class Suite extends Base implements reporterTypes.Suite {
   suites: Suite[] = [];
   tests: TestCase[] = [];
   location?: Location;
+  parent?: Suite;
   _use: FixturesWithLocation[] = [];
   _isDescribe = false;
   _entries: (Suite | TestCase)[] = [];
@@ -91,6 +84,12 @@ export class Suite extends Base implements reporterTypes.Suite {
     return result;
   }
 
+  titlePath(): string[] {
+    const titlePath = this.parent ? this.parent.titlePath() : [];
+    titlePath.push(this.title);
+    return titlePath;
+  }
+
   _getOnlyItems(): (TestCase | Suite)[] {
     const items: (TestCase | Suite)[] = [];
     if (this._only)
@@ -113,7 +112,12 @@ export class Suite extends Base implements reporterTypes.Suite {
     suite._modifiers = this._modifiers.slice();
     suite._isDescribe = this._isDescribe;
     suite._parallelMode = this._parallelMode;
+    suite._projectConfig = this._projectConfig;
     return suite;
+  }
+
+  project(): FullProject | undefined {
+    return this._projectConfig || this.parent?.project();
   }
 }
 
@@ -121,11 +125,11 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   fn: Function;
   results: reporterTypes.TestResult[] = [];
   location: Location;
+  parent!: Suite;
 
   expectedStatus: reporterTypes.TestStatus = 'passed';
   timeout = 0;
   annotations: Annotations = [];
-  projectName = '';
   retries = 0;
 
   _type: 'beforeAll' | 'afterAll' | 'test';
@@ -144,6 +148,12 @@ export class TestCase extends Base implements reporterTypes.TestCase {
     this._ordinalInFile = ordinalInFile;
     this._testType = testType;
     this.location = location;
+  }
+
+  titlePath(): string[] {
+    const titlePath = this.parent ? this.parent.titlePath() : [];
+    titlePath.push(this.title);
+    return titlePath;
   }
 
   outcome(): 'skipped' | 'expected' | 'unexpected' | 'flaky' {
