@@ -216,7 +216,7 @@ This object can be used to launch or connect to Firefox, returning instances of 
 
 ## property: Playwright.request
 * langs: js
-- type: <[ApiRequest]>
+- type: <[APIRequest]>
 
 Exposes API that can be used for the Web API testing.
 

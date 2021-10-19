@@ -160,7 +160,7 @@ setup at all, just specify the `storageState.json` in Playwright Config as above
 
 ### Sign in via API request
 
-If your web application supports signing in via API, you can use [ApiRequestContext] to simplify sign in flow. Global setup script from the example above would change like this:
+If your web application supports signing in via API, you can use [APIRequestContext] to simplify sign in flow. Global setup script from the example above would change like this:
 
 ```js js-flavor=js
 // global-setup.js

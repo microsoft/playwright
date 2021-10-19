@@ -1,7 +1,7 @@
 # class: ApiResponse
 * langs: js
 
-[ApiResponse] class represents responses returned by [`method: ApiRequestContext.get`] and similar methods.
+[ApiResponse] class represents responses returned by [`method: APIRequestContext.get`] and similar methods.
 
 ## async method: ApiResponse.body
 - returns: <[Buffer]>

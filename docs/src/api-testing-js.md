@@ -12,13 +12,13 @@ A few examples where it may come in handy:
 - Prepare server side state before visiting the web application in a test.
 - Validate server side post-conditions after running some actions in the browser.
 
-All of that could be achieved via [ApiRequestContext] methods.
+All of that could be achieved via [APIRequestContext] methods.
 
 <!-- TOC -->
 
 ## Writing API Test
 
-[ApiRequestContext] can send all kinds of HTTP(S) requests over network.
+[APIRequestContext] can send all kinds of HTTP(S) requests over network.
 
 The following example demonstrates how to use Playwright to test issues creation via [GitHub API](https://docs.github.com/en/rest). The test suite will do the following:
 - Create a new repository before running tests.
@@ -137,7 +137,7 @@ test.afterAll(async ({ request }) => {
 
 ### Using request context
 
-Behind the scenes, `request` fixture will actually call [`method: ApiRequest.newContext`]. You can always do that manually if you'd like more control. Below is a standalone script that does the same as `beforeAll` and `afterAll` from above.
+Behind the scenes, `request` fixture will actually call [`method: APIRequest.newContext`]. You can always do that manually if you'd like more control. Below is a standalone script that does the same as `beforeAll` and `afterAll` from above.
 
 ```js
 const { request } = require('@playwright/test');
@@ -219,22 +219,22 @@ test('last created issue should be on the server', async ({ page, request }) => 
 - [`property: Playwright.request`]
 - [`property: BrowserContext.request`]
 - [`property: Page.request`]
-- [`method: ApiRequest.newContext`]
-- [`method: ApiRequestContext.delete`]
-- [`method: ApiRequestContext.fetch`]
-- [`method: ApiRequestContext.get`]
-- [`method: ApiRequestContext.post`]
+- [`method: APIRequest.newContext`]
+- [`method: APIRequestContext.delete`]
+- [`method: APIRequestContext.fetch`]
+- [`method: APIRequestContext.get`]
+- [`method: APIRequestContext.post`]
 
 ## Reuse authentication state
 
 Web apps use cookie-based or token-based authentication, where authenticated
 state is stored as [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies).
-Playwright provides [`method: ApiRequestContext.storageState`] method that can be used to
+Playwright provides [`method: APIRequestContext.storageState`] method that can be used to
 retrieve storage state from an authenticated context and then create new contexts with that state.
 
-Storage state is interchangeable between [BrowserContext] and [ApiRequestContext]. You can
+Storage state is interchangeable between [BrowserContext] and [APIRequestContext]. You can
 use it to log in via API calls and then create a new context with cookies already there.
-The following code snippet retrieves state from an authenticated [ApiRequestContext] and
+The following code snippet retrieves state from an authenticated [APIRequestContext] and
 creates a new [BrowserContext] with that state.
 
 ```js
@@ -254,6 +254,6 @@ const context = await browser.newContext({ storageState: 'state.json' });
 
 ### API reference
 - [`method: Browser.newContext`]
-- [`method: ApiRequestContext.storageState`]
-- [`method: ApiRequest.newContext`]
+- [`method: APIRequestContext.storageState`]
+- [`method: APIRequest.newContext`]
 

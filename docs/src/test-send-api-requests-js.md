@@ -3,7 +3,7 @@ id: test-send-api-requests
 title: "Send API requests"
 ---
 
-While running tests inside browsers you may want to make calls to the HTTP API of your application. It may be helpful if you need to prepare server state before running a test or to check some postconditions on the server after performing some actions in the browser. All of that could be achieved via [ApiRequestContext] methods.
+While running tests inside browsers you may want to make calls to the HTTP API of your application. It may be helpful if you need to prepare server state before running a test or to check some postconditions on the server after performing some actions in the browser. All of that could be achieved via [APIRequestContext] methods.
 
 <!-- TOC -->
 
@@ -196,8 +196,8 @@ test('last created issue should be on the server', async ({ page, request }) => 
 - [`property: Playwright.request`]
 - [`property: BrowserContext.request`]
 - [`property: Page.request`]
-- [`method: ApiRequest.newContext`]
-- [`method: ApiRequestContext.delete`]
-- [`method: ApiRequestContext.fetch`]
-- [`method: ApiRequestContext.get`]
-- [`method: ApiRequestContext.post`]
+- [`method: APIRequest.newContext`]
+- [`method: APIRequestContext.delete`]
+- [`method: APIRequestContext.fetch`]
+- [`method: APIRequestContext.get`]
+- [`method: APIRequestContext.post`]

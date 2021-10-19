@@ -16,11 +16,11 @@
 
 import fs from 'fs';
 import http from 'http';
-import type { ApiRequestContext } from 'playwright-core';
+import type { APIRequestContext } from 'playwright-core';
 import { expect, playwrightTest } from './config/browserTest';
 
 export type GlobalFetchFixtures = {
-   request: ApiRequestContext;
+   request: APIRequestContext;
  };
 
 const it = playwrightTest.extend<GlobalFetchFixtures>({
@@ -32,7 +32,7 @@ const it = playwrightTest.extend<GlobalFetchFixtures>({
 });
 
 type PromiseArg<T> = T extends Promise<infer R> ? R : never;
-type StorageStateType = PromiseArg<ReturnType<ApiRequestContext['storageState']>>;
+type StorageStateType = PromiseArg<ReturnType<APIRequestContext['storageState']>>;
 
 it.skip(({ mode }) => mode !== 'default');
 
