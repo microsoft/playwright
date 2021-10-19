@@ -7,7 +7,7 @@ the cookies from the corresponding [BrowserContext]. This means that if you log 
 will be logged in and vice versa.
 
 ## async method: APIRequestContext.delete
-- returns: <[ApiResponse]>
+- returns: <[APIResponse]>
 
 Sends HTTP(S) [DELETE](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/DELETE) request and returns its response.
 The method will populate request cookies from the context and update
@@ -22,11 +22,11 @@ context cookies from the response. The method will automatically follow redirect
 
 ## async method: APIRequestContext.dispose
 
-All responses returned by [`method: APIRequestContext.get`] and similar methods are stored in the memory, so that you can later call [`method: ApiResponse.body`]. This method
-discards all stored responses, and makes [`method: ApiResponse.body`] throw "Response disposed" error.
+All responses returned by [`method: APIRequestContext.get`] and similar methods are stored in the memory, so that you can later call [`method: APIResponse.body`]. This method
+discards all stored responses, and makes [`method: APIResponse.body`] throw "Response disposed" error.
 
 ## async method: APIRequestContext.fetch
-- returns: <[ApiResponse]>
+- returns: <[APIResponse]>
 
 Sends HTTP(S) request and returns its response. The method will populate request cookies from the context and update
 context cookies from the response. The method will automatically follow redirects.
@@ -53,7 +53,7 @@ If set changes the fetch method (e.g. [PUT](https://developer.mozilla.org/en-US/
 ### option: APIRequestContext.fetch.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
 
 ## async method: APIRequestContext.get
-- returns: <[ApiResponse]>
+- returns: <[APIResponse]>
 
 Sends HTTP(S) [GET](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/GET) request and returns its response.
 The method will populate request cookies from the context and update
@@ -67,7 +67,7 @@ context cookies from the response. The method will automatically follow redirect
 ### option: APIRequestContext.get.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
 
 ## async method: APIRequestContext.head
-- returns: <[ApiResponse]>
+- returns: <[APIResponse]>
 
 Sends HTTP(S) [HEAD](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/HEAD) request and returns its response.
 The method will populate request cookies from the context and update
@@ -81,7 +81,7 @@ context cookies from the response. The method will automatically follow redirect
 ### option: APIRequestContext.head.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
 
 ## async method: APIRequestContext.patch
-- returns: <[ApiResponse]>
+- returns: <[APIResponse]>
 
 Sends HTTP(S) [PATCH](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PATCH) request and returns its response.
 The method will populate request cookies from the context and update
@@ -98,7 +98,7 @@ context cookies from the response. The method will automatically follow redirect
 ### option: APIRequestContext.patch.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
 
 ## async method: APIRequestContext.post
-- returns: <[ApiResponse]>
+- returns: <[APIResponse]>
 
 Sends HTTP(S) [POST](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST) request and returns its response.
 The method will populate request cookies from the context and update
@@ -115,7 +115,7 @@ context cookies from the response. The method will automatically follow redirect
 ### option: APIRequestContext.post.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
 
 ## async method: APIRequestContext.put
-- returns: <[ApiResponse]>
+- returns: <[APIResponse]>
 
 Sends HTTP(S) [PUT](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PUT) request and returns its response.
 The method will populate request cookies from the context and update

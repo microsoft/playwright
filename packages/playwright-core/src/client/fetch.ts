@@ -202,7 +202,7 @@ export class FetchRequest extends ChannelOwner<channels.FetchRequestChannel, cha
   }
 }
 
-export class FetchResponse implements api.ApiResponse {
+export class FetchResponse implements api.APIResponse {
   private readonly _initializer: channels.FetchResponse;
   private readonly _headers: RawHeaders;
   private readonly _request: FetchRequest;

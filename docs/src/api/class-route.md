@@ -222,9 +222,9 @@ is resolved relative to the current working directory.
 
 ### option: Route.fulfill.response
 * langs: js
-- `response` <[ApiResponse]>
+- `response` <[APIResponse]>
 
-[ApiResponse] to fulfill route's request with. Individual fields of the response (such as headers) can be overridden using fulfill options.
+[APIResponse] to fulfill route's request with. Individual fields of the response (such as headers) can be overridden using fulfill options.
 
 ## method: Route.request
 - returns: <[Request]>
