@@ -82,7 +82,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
           if (validator) {
             return (params: any) => {
               if (callCookie && csi) {
-                callCookie.userObject = csi.onApiCallBegin(renderCallWithParams(stackTrace!.apiName!, params)).userObject;
+                callCookie.userObject = csi.onApiCallBegin(renderCallWithParams(stackTrace!.apiName!, params), stackTrace).userObject;
                 csi = undefined;
               }
               return this._connection.sendMessageToServer(this, prop, validator(params, ''), stackTrace);

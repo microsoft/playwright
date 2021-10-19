@@ -17,6 +17,11 @@ Step category to differentiate steps with different origin and verbosity. Built-
 
 Running time in milliseconds.
 
+## property: TestStep.location
+- type: <[void]|[Location]>
+
+Location in the source where the step is defined.
+
 ## property: TestStep.error
 - type: <[void]|[TestError]>
 

@@ -296,14 +296,16 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
         await context.tracing.stop();
       }
       (context as any)._csi = {
-        onApiCallBegin: (apiCall: string) => {
+        onApiCallBegin: (apiCall: string, stackTrace: ParsedStackTrace | null) => {
           if (apiCall.startsWith('expect.'))
             return { userObject: null };
-          const step = (testInfo as any)._addStep({
+          const testInfoImpl = testInfo as any;
+          const step = testInfoImpl._addStep({
+            location: stackTrace?.frames[0],
             category: 'pw:api',
             title: apiCall,
             canHaveChildren: false,
-            forceNoParent: false,
+            forceNoParent: false
           });
           return { userObject: step };
         },

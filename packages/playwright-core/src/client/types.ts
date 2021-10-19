@@ -17,6 +17,7 @@
 
 import * as channels from '../protocol/channels';
 import type { Size } from '../common/types';
+import { ParsedStackTrace } from '../utils/stackTrace';
 export { Size, Point, Rect, Quad, URLMatch, TimeoutOptions, HeadersArray } from '../common/types';
 
 type LoggerSeverity = 'verbose' | 'info' | 'warning' | 'error';
@@ -26,7 +27,7 @@ export interface Logger {
 }
 
 export interface ClientSideInstrumentation {
-  onApiCallBegin(apiCall: string): { userObject: any };
+  onApiCallBegin(apiCall: string, stackTrace: ParsedStackTrace | null): { userObject: any };
   onApiCallEnd(userData: { userObject: any }, error?: Error): any;
 }
 

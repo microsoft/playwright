@@ -189,6 +189,7 @@ export class TestTypeImpl {
     const step = testInfo._addStep({
       category: 'test.step',
       title,
+      location,
       canHaveChildren: true,
       forceNoParent: false
     });

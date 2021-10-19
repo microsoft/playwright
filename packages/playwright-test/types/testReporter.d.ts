@@ -231,6 +231,10 @@ export interface TestStep {
    */
   titlePath(): string[];
   /**
+   * Location in the source where the step is defined.
+   */
+  location?: Location;
+  /**
    * Parent step, if any.
    */
   parent?: TestStep;

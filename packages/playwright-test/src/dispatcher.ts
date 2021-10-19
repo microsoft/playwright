@@ -150,6 +150,7 @@ export class Dispatcher {
         startTime: new Date(params.wallTime),
         duration: 0,
         steps: [],
+        location: params.location,
         data: {},
       };
       steps.set(params.stepId, step);

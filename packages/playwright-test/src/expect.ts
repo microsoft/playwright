@@ -15,6 +15,7 @@
  */
 
 import expectLibrary from 'expect';
+import path from 'path';
 import {
   INVERTED_COLOR,
   RECEIVED_COLOR,
@@ -46,6 +47,9 @@ import type { Expect, TestError } from './types';
 import matchers from 'expect/build/matchers';
 import { currentTestInfo } from './globals';
 import { serializeError } from './util';
+import StackUtils from 'stack-utils';
+
+const stackUtils = new StackUtils();
 
 // #region
 // Mirrored from https://github.com/facebook/jest/blob/f13abff8df9a0e1148baf3584bcde6d1b479edc7/packages/expect/src/print.ts
@@ -124,7 +128,9 @@ function wrap(matcherName: string, matcher: any) {
     // at Object.throwingMatcher [as toHaveText] (...)
     // at <test function> (...)
     const stackLines = new Error().stack!.split('\n').slice(INTERNAL_STACK_LENGTH + 1);
+    const frame = stackLines[0] ? stackUtils.parseLine(stackLines[0]) : undefined;
     const step = testInfo._addStep({
+      location: frame && frame.file ? { file: path.resolve(process.cwd(), frame.file), line: frame.line || 0, column: frame.column || 0 } : undefined,
       category: 'expect',
       title: `expect${this.isNot ? '.not' : ''}.${matcherName}`,
       canHaveChildren: true,

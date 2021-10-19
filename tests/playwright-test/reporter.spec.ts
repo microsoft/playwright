@@ -46,6 +46,7 @@ class Reporter {
       duration: undefined,
       parent: undefined,
       data: undefined,
+      location: undefined,
       steps: step.steps.length ? step.steps.map(s => this.distillStep(s)) : undefined,
     };
   }

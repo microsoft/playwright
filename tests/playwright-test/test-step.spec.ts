@@ -29,6 +29,11 @@ class Reporter {
       duration: undefined,
       parent: undefined,
       data: undefined,
+      location: step.location ? {
+        file: step.location.file.substring(step.location.file.lastIndexOf(require('path').sep) + 1).replace('.js', '.ts'),
+        line: step.location.line ? typeof step.location.line : 0,
+        column: step.location.column ? typeof step.location.column : 0
+      } : undefined,
       steps: step.steps.length ? step.steps.map(s => this.distillStep(s)) : undefined,
     };
   }
@@ -83,6 +88,11 @@ test('should report api step hierarchy', async ({ runInlineTest }) => {
       steps: [
         {
           category: 'pw:api',
+          location: {
+            column: 'number',
+            file: 'index.ts',
+            line: 'number',
+          },
           title: 'browserContext.newPage',
         },
       ],
@@ -90,13 +100,28 @@ test('should report api step hierarchy', async ({ runInlineTest }) => {
     {
       category: 'test.step',
       title: 'outer step 1',
+      location: {
+        column: 'number',
+        file: 'a.test.ts',
+        line: 'number',
+      },
       steps: [
         {
           category: 'test.step',
+          location: {
+            column: 'number',
+            file: 'a.test.ts',
+            line: 'number',
+          },
           title: 'inner step 1.1',
         },
         {
           category: 'test.step',
+          location: {
+            column: 'number',
+            file: 'a.test.ts',
+            line: 'number',
+          },
           title: 'inner step 1.2',
         },
       ],
@@ -104,13 +129,28 @@ test('should report api step hierarchy', async ({ runInlineTest }) => {
     {
       category: 'test.step',
       title: 'outer step 2',
+      location: {
+        column: 'number',
+        file: 'a.test.ts',
+        line: 'number',
+      },
       steps: [
         {
           category: 'test.step',
+          location: {
+            column: 'number',
+            file: 'a.test.ts',
+            line: 'number',
+          },
           title: 'inner step 2.1',
         },
         {
           category: 'test.step',
+          location: {
+            column: 'number',
+            file: 'a.test.ts',
+            line: 'number',
+          },
           title: 'inner step 2.2',
         },
       ],
@@ -121,6 +161,11 @@ test('should report api step hierarchy', async ({ runInlineTest }) => {
       steps: [
         {
           category: 'pw:api',
+          location: {
+            column: 'number',
+            file: 'index.ts',
+            line: 'number',
+          },
           title: 'browserContext.close',
         },
       ],
@@ -156,12 +201,22 @@ test('should not report nested after hooks', async ({ runInlineTest }) => {
         {
           category: 'pw:api',
           title: 'browserContext.newPage',
+          location: {
+            column: 'number',
+            file: 'index.ts',
+            line: 'number',
+          },
         },
       ],
     },
     {
       category: 'test.step',
       title: 'my step',
+      location: {
+        column: 'number',
+        file: 'a.test.ts',
+        line: 'number',
+      },
     },
     {
       category: 'hook',
@@ -170,6 +225,11 @@ test('should not report nested after hooks', async ({ runInlineTest }) => {
         {
           category: 'pw:api',
           title: 'browserContext.close',
+          location: {
+            column: 'number',
+            file: 'index.ts',
+            line: 'number',
+          },
         },
       ],
     },
@@ -228,5 +288,66 @@ test('should report test.step from fixtures', async ({ runInlineTest }) => {
     `%% begin teardown foo`,
     `%% end teardown foo`,
     `%% end After Hooks`,
+  ]);
+});
+
+test('should report expect step locations', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepHierarchyReporter,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('pass', async ({ page }) => {
+        expect(true).toBeTruthy();
+      });
+    `
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  const objects = result.output.split('\n').filter(line => line.startsWith('%% ')).map(line => line.substring(3).trim()).filter(Boolean).map(line => JSON.parse(line));
+  expect(objects).toEqual([
+    {
+      category: 'hook',
+      title: 'Before Hooks',
+      steps: [
+        {
+          category: 'pw:api',
+          location: {
+            column: 'number',
+            file: 'index.ts',
+            line: 'number',
+          },
+          title: 'browserContext.newPage',
+        },
+      ],
+    },
+    {
+      category: 'expect',
+      title: 'expect.toBeTruthy',
+      location: {
+        column: 'number',
+        file: 'a.test.ts',
+        line: 'number',
+      },
+    },
+    {
+      category: 'hook',
+      title: 'After Hooks',
+      steps: [
+        {
+          category: 'pw:api',
+          location: {
+            column: 'number',
+            file: 'index.ts',
+            line: 'number',
+          },
+          title: 'browserContext.close',
+        },
+      ],
+    },
   ]);
 });
