@@ -25,7 +25,7 @@ const dockerFactory: GridFactory = {
   launchTimeout: 30000,
   retireTimeout: Infinity,
   launch: async (options: GridAgentLaunchOptions) => {
-    const { vncUrl, containerId } = await launchDockerGridAgent(options.agentId, options.gridURL);
+    const { vncUrl } = await launchDockerGridAgent(options.agentId, options.gridURL);
     /* eslint-disable no-console */
     console.log(``);
     console.log(`✨ Running browsers inside docker container ✨`);
@@ -35,7 +35,7 @@ const dockerFactory: GridFactory = {
 
 export default dockerFactory;
 
-async function launchDockerGridAgent(agentId: string, gridURL: string): Promise<{vncUrl: string, containerId: string}> {
+async function launchDockerGridAgent(agentId: string, gridURL: string): Promise<{vncUrl: string }> {
   const gridPort = new URL(gridURL).port || '80';
   const images = await getJSON('/images/json');
   let imageName = process.env.PWTEST_IMAGE_NAME;
@@ -94,7 +94,6 @@ async function launchDockerGridAgent(agentId: string, gridURL: string): Promise<
   const vncPort = info?.NetworkSettings?.Ports['7900/tcp'];
   return {
     vncUrl: `http://localhost:${vncPort[0].HostPort}`,
-    containerId: container.Id,
   };
 }
 
