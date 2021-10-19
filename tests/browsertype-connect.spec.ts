@@ -18,7 +18,7 @@
 import { playwrightTest as test, expect } from './config/browserTest';
 import fs from 'fs';
 import * as path from 'path';
-import { getUserAgent } from 'playwright-core/lib/utils/utils';
+import { getUserAgent } from 'playwright-core/src/utils/utils';
 import WebSocket from 'ws';
 import { suppressCertificateWarning } from './config/utils';
 

@@ -19,8 +19,12 @@
       "import": "./index.mjs",
       "require": "./index.js"
     },
-    "./src/*": "./lib/*.js",
-    "./*": "./*.js"
+    "./src/grid/gridClient": "./lib/grid/gridClient.js",
+    "./src/utils/async": "./lib/utils/async.js",
+    "./src/utils/httpServer": "./lib/utils/httpServer.js",
+    "./src/utils/processLauncher": "./lib/utils/processLauncher.js",
+    "./src/utils/registry": "./lib/utils/registry.js",
+    "./src/utils/utils": "./lib/utils/utils.js"
   },
   "types": "types/types.d.ts",
   "bin": {

@@ -15,7 +15,7 @@
  */
 
 const pwt = require('./lib/index');
-const playwright = require('playwright-core/lib/inprocess');
+const playwright = require('playwright-core');
 const combinedExports = {
   ...playwright,
   ...pwt,

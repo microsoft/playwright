@@ -15,7 +15,7 @@
  */
 
 import { expect, contextTest as test, browserTest } from './config/browserTest';
-import { ZipFileSystem } from 'playwright-core/lib/utils/vfs';
+import { ZipFileSystem } from '../packages/playwright-core/lib/utils/vfs';
 import jpeg from 'jpeg-js';
 
 test.skip(({ trace }) => !!trace);
