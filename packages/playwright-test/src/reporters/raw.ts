@@ -20,7 +20,7 @@ import { FullProject } from '../types';
 import { FullConfig, Location, Suite, TestCase, TestResult, TestStatus, TestStep } from '../../types/testReporter';
 import { assert, calculateSha1 } from 'playwright-core/src/utils/utils';
 import { sanitizeForFilePath } from '../util';
-import { formatResultFailure } from './base';
+import { formatResultFailure, generateCodeFrame } from './base';
 import { toPosixPath, serializePatterns } from './json';
 
 export type JsonLocation = Location;
@@ -93,7 +93,8 @@ export type JsonTestStep = {
   duration: number;
   error?: JsonError;
   steps: JsonTestStep[];
-  log?: string[];
+  location?: Location;
+  snippet?: string;
 };
 
 class RawReporter {
@@ -159,18 +160,18 @@ class RawReporter {
       fileId,
       location,
       suites: suite.suites.map(s => this._serializeSuite(s)),
-      tests: suite.tests.map(t => this._serializeTest(t, fileId, location.file)),
+      tests: suite.tests.map(t => this._serializeTest(t, fileId)),
     };
   }
 
-  private _serializeTest(test: TestCase, fileId: string, fileName: string): JsonTestCase {
+  private _serializeTest(test: TestCase, fileId: string): JsonTestCase {
     const [, projectName, , ...titles] = test.titlePath();
     const testIdExpression = `project:${projectName}|path:${titles.join('>')}`;
     const testId = fileId + '-' + calculateSha1(testIdExpression);
     return {
       testId,
       title: test.title,
-      location: this._relativeLocation(test.location),
+      location: this._relativeLocation(test.location)!,
       expectedStatus: test.expectedStatus,
       timeout: test.timeout,
       annotations: test.annotations,
@@ -202,8 +203,9 @@ class RawReporter {
         startTime: step.startTime.toISOString(),
         duration: step.duration,
         error: step.error?.message,
+        location: this._relativeLocation(step.location),
         steps: this._serializeSteps(test, step.steps),
-        log: step.data.log || undefined,
+        snippet: step.location ? generateCodeFrame({ highlightCode: true, linesBelow: 1, linesAbove: 1 }, step.location.file, step.location) : undefined
       };
     });
   }
@@ -248,9 +250,9 @@ class RawReporter {
     };
   }
 
-  private _relativeLocation(location: Location | undefined): Location {
+  private _relativeLocation(location: Location | undefined): Location | undefined {
     if (!location)
-      return { file: '', line: 0, column: 0 };
+      return undefined;
     const file = toPosixPath(path.relative(this.config.rootDir, location.file));
     return {
       file,

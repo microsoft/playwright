@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { codeFrameColumns } from '@babel/code-frame';
+import { BabelCodeFrameOptions, codeFrameColumns } from '@babel/code-frame';
 import colors from 'colors/safe';
 import fs from 'fs';
 import milliseconds from 'ms';
@@ -337,7 +337,7 @@ export function formatError(error: TestError, highlightCode: boolean, file?: str
     positionInFile = position;
     tokens.push(message);
 
-    const codeFrame = generateCodeFrame(highlightCode, file, position);
+    const codeFrame = generateCodeFrame({ highlightCode }, file, position);
     if (codeFrame) {
       tokens.push('');
       tokens.push(codeFrame);
@@ -365,7 +365,7 @@ function indent(lines: string, tab: string) {
   return lines.replace(/^(?=.+$)/gm, tab);
 }
 
-function generateCodeFrame(highlightCode: boolean, file?: string, position?: PositionInFile): string | undefined {
+export function generateCodeFrame(options: BabelCodeFrameOptions, file?: string, position?: PositionInFile): string | undefined {
   if (!position || !file)
     return;
 
@@ -373,7 +373,7 @@ function generateCodeFrame(highlightCode: boolean, file?: string, position?: Pos
   const codeFrame = codeFrameColumns(
       source,
       { start: position },
-      { highlightCode }
+      options
   );
 
   return codeFrame;
