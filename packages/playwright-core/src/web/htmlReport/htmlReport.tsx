@@ -170,18 +170,16 @@ const TestResultView: React.FC<{
       {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} depth={0}></StepTreeItem>)}
     </Chip>}
 
-    {expected && actual && <div className='vbox'>
-      <Chip header='Image mismatch'>
-        <ImageDiff actual={actual} expected={expected} diff={diff}></ImageDiff>
-        <AttachmentLink key={`expected`} attachment={expected}></AttachmentLink>
-        <AttachmentLink key={`actual`} attachment={actual}></AttachmentLink>
-        {diff && <AttachmentLink key={`diff`} attachment={diff}></AttachmentLink>}
-      </Chip>
-    </div>}
+    {expected && actual && <Chip header='Image mismatch'>
+      <ImageDiff actual={actual} expected={expected} diff={diff}></ImageDiff>
+      <AttachmentLink key={`expected`} attachment={expected}></AttachmentLink>
+      <AttachmentLink key={`actual`} attachment={actual}></AttachmentLink>
+      {diff && <AttachmentLink key={`diff`} attachment={diff}></AttachmentLink>}
+    </Chip>}
 
     {!!screenshots.length && <Chip header='Screenshots'>
       {screenshots.map((a, i) => {
-        return <div key={`screenshot-${i}`} className='vbox'>
+        return <div key={`screenshot-${i}`}>
           <img src={a.path} />
           <AttachmentLink attachment={a}></AttachmentLink>
         </div>;
@@ -189,13 +187,15 @@ const TestResultView: React.FC<{
     </Chip>}
 
     {!!traces.length && <Chip header='Traces'>
-      {traces.map((a, i) => <div key={`trace-${i}`} className='vbox'>
-        <AttachmentLink attachment={a} href={`trace/index.html?trace=${window.location.origin}/` + a.path}></AttachmentLink>
+      {traces.map((a, i) => <div key={`trace-${i}`}>
+        <a href={`trace/index.html?trace=${window.location.origin}/` + a.path}>
+          <img src='trace.png' style={{ width: 192, height: 117, marginLeft: 20 }} />
+        </a>
       </div>)}
     </Chip>}
 
     {!!videos.length && <Chip header='Videos'>
-      {videos.map((a, i) => <div key={`video-${i}`} className='vbox'>
+      {videos.map((a, i) => <div key={`video-${i}`}>
         <video controls>
           <source src={a.path} type={a.contentType}/>
         </video>
