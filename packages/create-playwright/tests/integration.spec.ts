@@ -79,7 +79,7 @@ for (const packageManager of ['npm', 'yarn'] as ('npm' | 'yarn')[]) {
 
       expect(fs.existsSync(path.join(dir, 'playwright.config.ts'))).toBeTruthy();
       expect(fs.existsSync(path.join(dir, 'tests-examples/playwright.config.ts'))).toBeTruthy();
-      expect(fs.existsSync(path.join(dir, 'tests-examples/server/index.js'))).toBeTruthy();
+      expect(fs.existsSync(path.join(dir, 'tests-examples/0-server/index.js'))).toBeTruthy();
       expect(fs.existsSync(path.join(dir, 'tests-examples/1-getting-started.spec.ts'))).toBeTruthy();
 
       let result;

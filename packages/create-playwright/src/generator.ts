@@ -147,17 +147,13 @@ export class Generator {
   }
 
   private async _collectExamples(answers: PromptOptions, files: Map<string, string>) {
-    const examples = fs.readdirSync(path.join(assetsDir, 'examples')).filter(file => file !== 'playwright.config.ts' && file !== 'server');
-    const examplesTestDir = answers.testDir + '-examples';
-    for (const example of examples)
-      files.set(path.join(examplesTestDir, example), this._readAsset(path.join('examples', example)));
-    files.set(path.join(examplesTestDir, 'playwright.config.ts'), executeTemplate(this._readAsset(path.join('examples', `playwright.config.ts`)), {
-      testDir: examplesTestDir,
-    }));
-    const assetServerPath = path.join(assetsDir, 'examples', 'server');
-    const webServerFiles = await readDirRecursively(assetServerPath);
-    for (const file of webServerFiles)
-      files.set(path.join(examplesTestDir, 'server', path.relative(assetServerPath, file)), this._readAsset(file));
+    const outDir = answers.testDir + '-examples';
+    const examplesDir = path.join(assetsDir, 'examples');
+
+    for (const example of await readDirRecursively(examplesDir)) {
+      const relativePath = path.relative(examplesDir, example);
+      files.set(path.join(outDir, relativePath), this._readAsset(example));
+    }
   }
 
   private async _patchPackageJSON(answers: PromptOptions) {

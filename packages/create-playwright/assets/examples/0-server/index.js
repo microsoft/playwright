@@ -31,28 +31,6 @@ class Server {
    */
   _handle(req, res) {
     switch (req.url) {
-      case '/cookies':
-        res.setHeader('Set-Cookie', 'this-is=Playwright');
-        res.end('Cookies set!');
-        break;
-
-      case '/cookies/protected':
-        /** @type{Record<string, string>} */
-        const cookies = (req.headers.cookie || '').split(';').reduce((acc, cookie) => {
-          const [name, value] = cookie.trim().split('=');
-          return {
-            ...acc,
-            [name]: value,
-          };
-        }, {});
-        if (cookies.product === 'Playwright') {
-          res.end('Access granted!');
-        } else {
-          res.writeHead(403);
-          res.end('Access denied!');
-        }
-        break;
-
       case '/api/v1/file-upload':
         const chunks = [];
         req.on('data', chunk => chunks.push(chunk));
