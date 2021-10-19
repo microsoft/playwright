@@ -17,7 +17,6 @@
 import { chromium, firefox, webkit, selectors, devices, errors, test, expect } from '@playwright/test';
 import * as playwright from '@playwright/test';
 import defaultExport from '@playwright/test';
-import errorsFile from 'playwright-core/lib/utils/errors';
 import testESM from './esm.mjs';
 
 if (defaultExport !== test) {
@@ -36,4 +35,4 @@ if (typeof expect !== 'function') {
 }
 expect(1).toBe(1);
 
-testESM({ chromium, firefox, webkit, selectors, devices, errors, playwright, errorsFile }, [chromium, firefox, webkit]);
+testESM({ chromium, firefox, webkit, selectors, devices, errors, playwright }, [chromium, firefox, webkit]);
