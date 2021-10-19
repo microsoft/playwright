@@ -27,9 +27,6 @@ export async function toBeTruthy(
   query: (isNot: boolean, timeout: number) => Promise<{ matches: boolean, log?: string[] }>,
   options: { timeout?: number } = {},
 ) {
-  const testInfo = currentTestInfo();
-  if (!testInfo)
-    throw new Error(`${matcherName} must be called during the test`);
   expectType(receiver, receiverType, matcherName);
 
   const matcherOptions = {
@@ -37,7 +34,8 @@ export async function toBeTruthy(
     promise: this.promise,
   };
 
-  let defaultExpectTimeout = testInfo.project.expect?.timeout;
+  const testInfo = currentTestInfo();
+  let defaultExpectTimeout = testInfo?.project.expect?.timeout;
   if (typeof defaultExpectTimeout === 'undefined')
     defaultExpectTimeout = 5000;
   const timeout = options.timeout === 0 ? 0 : options.timeout || defaultExpectTimeout;
