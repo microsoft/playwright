@@ -32,6 +32,7 @@ import { BrowserType } from '../client/browserType';
 import { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
 import { registry, Executable } from '../utils/registry';
+import { spawnAsync, getPlaywrightVersion } from '../utils/utils';
 import { launchGridAgent } from '../grid/gridAgent';
 import { launchGridServer } from '../grid/gridServer';
 
@@ -111,6 +112,17 @@ program
             await registry.installDeps(executables);
           await registry.install(executables);
         } else {
+          const installDockerImage = args.some(arg => arg === 'docker-image');
+          args = args.filter(arg => arg !== 'docker-image');
+          if (installDockerImage) {
+            const imageName = `mcr.microsoft.com/playwright:v${getPlaywrightVersion()}`;
+            const { code } = await spawnAsync('docker', ['pull', imageName], { stdio: 'inherit' });
+            if (code !== 0) {
+              console.log('Failed to pull docker image');
+              process.exit(1);
+            }
+          }
+
           const executables = checkBrowsersToInstall(args);
           if (options.withDeps)
             await registry.installDeps(executables);
