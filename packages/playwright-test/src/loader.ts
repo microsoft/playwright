@@ -40,7 +40,7 @@ export class Loader {
   constructor(defaultConfig: Config, configOverrides: Config) {
     this._defaultConfig = defaultConfig;
     this._configOverrides = configOverrides;
-    this._fullConfig = baseFullConfig;
+    this._fullConfig = { ...baseFullConfig };
   }
 
   static async deserialize(data: SerializedLoaderData): Promise<Loader> {
@@ -426,6 +426,7 @@ const baseFullConfig: FullConfig = {
   quiet: false,
   shard: null,
   updateSnapshots: 'missing',
+  version: require('../package.json').version,
   workers: 1,
   webServer: null,
 };

@@ -509,7 +509,7 @@ function createTestGroups(rootSuite: Suite): TestGroup[] {
       }
 
       let insideParallel = false;
-      for (let parent = test.parent; parent; parent = parent.parent)
+      for (let parent: Suite | undefined = test.parent; parent; parent = parent.parent)
         insideParallel = insideParallel || parent._parallelMode === 'parallel';
 
       if (insideParallel) {

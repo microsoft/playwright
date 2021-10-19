@@ -142,6 +142,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   grep: RegExp | RegExp[];
   grepInvert: RegExp | RegExp[] | null;
   maxFailures: number;
+  version: string;
   preserveOutput: PreserveOutput;
   projects: FullProject<TestArgs, WorkerArgs>[];
   reporter: ReporterDescription[];

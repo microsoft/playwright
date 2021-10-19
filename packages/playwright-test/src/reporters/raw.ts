@@ -16,7 +16,6 @@
 
 import fs from 'fs';
 import path from 'path';
-import { FullProject } from '../types';
 import { FullConfig, Location, Suite, TestCase, TestResult, TestStatus, TestStep } from '../../types/testReporter';
 import { assert, calculateSha1 } from 'playwright-core/src/utils/utils';
 import { sanitizeForFilePath } from '../util';
@@ -109,7 +108,7 @@ class RawReporter {
   async onEnd() {
     const projectSuites = this.suite.suites;
     for (const suite of projectSuites) {
-      const project = (suite as any)._projectConfig as FullProject;
+      const project = suite.project();
       assert(project, 'Internal Error: Invalid project structure');
       const reportFolder = path.join(project.outputDir, 'report');
       fs.mkdirSync(reportFolder, { recursive: true });
@@ -132,7 +131,7 @@ class RawReporter {
 
   generateProjectReport(config: FullConfig, suite: Suite): JsonReport {
     this.config = config;
-    const project = (suite as any)._projectConfig as FullProject;
+    const project = suite.project();
     assert(project, 'Internal Error: Invalid project structure');
     const report: JsonReport = {
       config,
