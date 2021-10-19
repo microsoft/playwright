@@ -112,6 +112,17 @@ program
             await registry.installDeps(executables);
           await registry.install(executables);
         } else {
+          const installDockerImage = args.some(arg => arg === 'docker-image');
+          args = args.filter(arg => arg !== 'docker-image');
+          if (installDockerImage) {
+            const imageName = `mcr.microsoft.com/playwright:v${getPlaywrightVersion()}`;
+            const {code} = await spawnAsync('docker', ['pull', imageName], { stdio: 'inherit' });
+            if (code !== 0) {
+              console.log('Failed to pull docker image');
+              process.exit(1);
+            }
+          }
+
           const executables = checkBrowsersToInstall(args);
           if (options.withDeps)
             await registry.installDeps(executables);
@@ -206,17 +217,6 @@ program
     .requiredOption('--grid-url <gridURL>', 'grid URL')
     .action(function(options) {
       launchGridAgent(options.agentId, options.gridUrl);
-    });
-
-program
-    .command('pull-docker')
-    .action(async function(options) {
-      const imageName = `mcr.microsoft.com/playwright:v${getPlaywrightVersion()}`;
-      const {code} = await spawnAsync('docker', ['pull', imageName], { stdio: 'inherit' });
-      if (code !== 0) {
-        console.log('Failed to pull docker image');
-        process.exit(1);
-      }
     });
 
 program
