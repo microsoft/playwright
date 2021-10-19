@@ -32,7 +32,7 @@ By default, the timeout for assertions is not set, so it'll wait forever, until 
 
 ## expect(locator).toBeChecked
 - `options`
-  - `timeout`: <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
 
 Ensures [Locator] points to the checked input.
 
@@ -43,7 +43,7 @@ await expect(locator).toBeChecked();
 
 ## expect(locator).toBeDisabled
 - `options`
-  - `timeout`: <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
 
 Ensures [Locator] points to a disabled element.
 
@@ -54,7 +54,7 @@ await expect(locator).toBeDisabled();
 
 ## expect(locator).toBeEditable
 - `options`
-  - `timeout`: <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
 
 Ensures [Locator] points to an editable element.
 
@@ -65,7 +65,7 @@ await expect(locator).toBeEditable();
 
 ## expect(locator).toBeEmpty
 - `options`
-  - `timeout`: <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
 
 Ensures [Locator] points to an empty editable element or to a DOM node that has no text.
 
@@ -76,7 +76,7 @@ await expect(locator).toBeEmpty();
 
 ## expect(locator).toBeEnabled
 - `options`
-  - `timeout`: <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
 
 Ensures [Locator] points to an enabled element.
 
@@ -87,7 +87,7 @@ await expect(locator).toBeEnabled();
 
 ## expect(locator).toBeFocused
 - `options`
-  - `timeout`: <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
 
 Ensures [Locator] points to a focused DOM node.
 
@@ -98,7 +98,7 @@ await expect(locator).toBeFocused();
 
 ## expect(locator).toBeHidden
 - `options`
-  - `timeout`: <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
 
 Ensures [Locator] points to a hidden DOM node, which is the opposite of [visible](./actionability.md#visible).
 
@@ -109,7 +109,7 @@ await expect(locator).toBeHidden();
 
 ## expect(locator).toBeVisible
 - `options`
-  - `timeout`: <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
 
 Ensures [Locator] points to a [visible](./actionability.md#visible) DOM node.
 
@@ -119,10 +119,10 @@ await expect(locator).toBeVisible();
 ```
 
 ## expect(locator).toContainText(expected, options?)
-- `expected`: <[string] | [RegExp] | [Array]<[string]|[RegExp]>>
+- `expected` <[string] | [RegExp] | [Array]<[string]|[RegExp]>>
 - `options`
-  - `timeout`: <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
-  - `useInnerText`: <[boolean]> Whether to use `element.innerText` instead of `element.textContent` when retrieving DOM node text.
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `useInnerText` <[boolean]> Whether to use `element.innerText` instead of `element.textContent` when retrieving DOM node text.
 
 Ensures [Locator] points to an element that contains the given text. You can use regular expressions for the value as well.
 
@@ -140,10 +140,10 @@ await expect(locator).toContainText(['Text 1', 'Text 4', 'Text 5']);
 ```
 
 ## expect(locator).toHaveAttribute(name, value)
-- `name`: <[string]> Attribute name
-- `value`: <[string]|[RegExp]> Attribute value
+- `name` <[string]> Attribute name
+- `value` <[string]|[RegExp]> Attribute value
 - `options`
-  - `timeout`: <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
 
 Ensures [Locator] points to an element with given attribute.
 
@@ -153,9 +153,9 @@ await expect(locator).toHaveAttribute('type', 'text');
 ```
 
 ## expect(locator).toHaveClass(expected)
-- `expected`: <[string] | [RegExp] | [Array]<[string]|[RegExp]>>
+- `expected` <[string] | [RegExp] | [Array]<[string]|[RegExp]>>
 - `options`
-  - `timeout`: <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
 
 Ensures [Locator] points to an element with given CSS class.
 
@@ -172,9 +172,9 @@ await expect(locator).toHaveClass(['component', 'component selected', 'component
 ```
 
 ## expect(locator).toHaveCount(count)
-- `count`: <[number]>
+- `count` <[number]>
 - `options`
-  - `timeout`: <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
 
 Ensures [Locator] resolves to an exact number of DOM nodes.
 
@@ -184,10 +184,10 @@ await expect(list).toHaveCount(3);
 ```
 
 ## expect(locator).toHaveCSS(name, value)
-- `name`: <[string]> CSS property name
-- `value`: <[string]|[RegExp]> CSS property value
+- `name` <[string]> CSS property name
+- `value` <[string]|[RegExp]> CSS property value
 - `options`
-  - `timeout`: <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
 
 Ensures [Locator] resolves to an element with the given computed CSS style.
 
@@ -197,9 +197,9 @@ await expect(locator).toHaveCSS('display', 'flex');
 ```
 
 ## expect(locator).toHaveId(id)
-- `id`: <[string]> Element id
+- `id` <[string]> Element id
 - `options`
-  - `timeout`: <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
 
 Ensures [Locator] points to an element with the given DOM Node ID.
 
@@ -209,10 +209,10 @@ await expect(locator).toHaveId('lastname');
 ```
 
 ## expect(locator).toHaveJSProperty(name, value)
-- `name`: <[string]> Property name
-- `value`: <[any]> Property value
+- `name` <[string]> Property name
+- `value` <[any]> Property value
 - `options`
-  - `timeout`: <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
 
 Ensures [Locator] points to an element with given JavaScript property. Note that this property can be
 of a primitive type as well as a plain serializable JavaScript object.
@@ -223,10 +223,10 @@ await expect(locator).toHaveJSProperty('loaded', true);
 ```
 
 ## expect(locator).toHaveText(expected, options)
-- `expected`: <[string] | [RegExp] | [Array]<[string]|[RegExp]>>
+- `expected` <[string] | [RegExp] | [Array]<[string]|[RegExp]>>
 - `options`
-  - `timeout`: <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
-  - `useInnerText`: <[boolean]> Whether to use `element.innerText` instead of `element.textContent` when retrieving DOM node text.
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `useInnerText` <[boolean]> Whether to use `element.innerText` instead of `element.textContent` when retrieving DOM node text.
 
 Ensures [Locator] points to an element with the given text. You can use regular expressions for the value as well.
 
@@ -243,10 +243,22 @@ const locator = page.locator('list > .component');
 await expect(locator).toHaveText(['Text 1', 'Text 2', 'Text 3']);
 ```
 
-## expect(page).toHaveTitle(title)
-- `title`: <[string] | [RegExp]>>
+## expect(locator).toHaveValue(value)
+- `value` <[string] | [RegExp]>
 - `options`
-  - `timeout`: <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+
+Ensures [Locator] points to an element with the given input value. You can use regular expressions for the value as well.
+
+```js
+const locator = page.locator('input[type=number]');
+await expect(locator).toHaveValue(/[0-9]/);
+```
+
+## expect(page).toHaveTitle(title)
+- `title` <[string] | [RegExp]>
+- `options`
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
 
 Ensures page has a given title.
 
@@ -255,24 +267,12 @@ await expect(page).toHaveTitle(/.*checkout/);
 ```
 
 ## expect(page).toHaveURL(url)
-- `url`: <[string] | [RegExp]>>
+- `url` <[string] | [RegExp]>
 - `options`
-  - `timeout`: <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
 
 Ensures page is navigated to a given URL.
 
 ```js
 await expect(page).toHaveURL(/.*checkout/);
-```
-
-## expect(locator).toHaveValue(value)
-- `value`: <[string] | [RegExp]>>
-- `options`
-  - `timeout`: <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
-
-Ensures [Locator] points to an element with the given input value. You can use regular expressions for the value as well.
-
-```js
-const locator = page.locator('input[type=number]');
-await expect(locator).toHaveValue(/[0-9]/);
 ```
