@@ -31,9 +31,6 @@ else if (process.argv[3])
 
 const playwright = require(requireName);
 
-// Requiring internals should work.
-const registry = require('playwright-core/src/utils/registry');
-
 (async () => {
   for (const browserType of success) {
     try {
