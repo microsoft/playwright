@@ -24,6 +24,7 @@ import * as os from 'os';
 import { RemoteServer, RemoteServerOptions } from './remoteServer';
 import { baseTest, CommonWorkerFixtures } from './baseTest';
 import { CommonFixtures } from './commonFixtures';
+import { ParsedStackTrace } from 'playwright-core/src/utils/stackTrace';
 
 type PlaywrightWorkerOptions = {
   executablePath: LaunchOptions['executablePath'];
@@ -147,11 +148,12 @@ export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTest
       if (trace)
         await context.tracing.start({ screenshots: true, snapshots: true });
       (context as any)._csi = {
-        onApiCallBegin: (apiCall: string) => {
+        onApiCallBegin: (apiCall: string, stackTrace: ParsedStackTrace | null) => {
           if (apiCall.startsWith('expect.'))
             return { userObject: null };
           const testInfoImpl = testInfo as any;
           const step = testInfoImpl._addStep({
+            location: stackTrace?.frames[0],
             category: 'pw:api',
             title: apiCall,
             canHaveChildren: false,

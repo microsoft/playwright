@@ -31,6 +31,7 @@ export interface TestStepInternal {
   category: string;
   canHaveChildren: boolean;
   forceNoParent: boolean;
+  location?: Location;
 }
 
 export interface TestInfoImpl extends TestInfo {

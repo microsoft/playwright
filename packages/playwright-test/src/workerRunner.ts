@@ -306,10 +306,13 @@ export class WorkerRunner extends EventEmitter {
               this.emit('stepEnd', payload);
           }
         };
+        // Sanitize location that comes from userland.
+        const location = data.location ? { file: data.location.file, line: data.location.line, column: data.location.column } : undefined;
         const payload: StepBeginPayload = {
           testId,
           stepId,
           ...data,
+          location,
           wallTime: Date.now(),
         };
         if (reportEvents)

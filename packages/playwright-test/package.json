@@ -48,6 +48,7 @@
     "pirates": "^4.0.1",
     "pixelmatch": "^5.2.1",
     "playwright-core": "=1.16.0-next",
-    "source-map-support": "^0.4.18"
+    "source-map-support": "^0.4.18",
+    "stack-utils": "^2.0.3"
   }
 }
