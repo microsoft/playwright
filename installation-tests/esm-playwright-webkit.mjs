@@ -16,7 +16,6 @@
 
 import { chromium, firefox, webkit, selectors, devices, errors } from 'playwright-webkit';
 import playwright from 'playwright-webkit';
-import errorsFile from 'playwright-core/lib/utils/errors';
 
 import testESM from './esm.mjs';
-testESM({ chromium, firefox, webkit, selectors, devices, errors, playwright, errorsFile }, [webkit]);
+testESM({ chromium, firefox, webkit, selectors, devices, errors, playwright }, [webkit]);
