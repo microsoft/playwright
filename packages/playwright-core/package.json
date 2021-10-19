@@ -19,6 +19,7 @@
       "import": "./index.mjs",
       "require": "./index.js"
     },
+    "./cli": "./cli.js",
     "./src/grid/gridClient": "./lib/grid/gridClient.js",
     "./src/utils/async": "./lib/utils/async.js",
     "./src/utils/httpServer": "./lib/utils/httpServer.js",

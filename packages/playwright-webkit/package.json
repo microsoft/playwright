@@ -18,6 +18,9 @@
     },
     "./": "./"
   },
+  "bin": {
+    "playwright": "./cli.js"
+  },
   "scripts": {
     "install": "node install.js"
   },
