@@ -17,6 +17,9 @@
       "require": "./index.js"
     }
   },
+  "bin": {
+    "playwright": "./cli.js"
+  },
   "scripts": {
     "install": "node install.js"
   },
