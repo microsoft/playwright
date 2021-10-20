@@ -215,7 +215,7 @@ export interface TestInfo {
 }
 
 interface SuiteFunction {
-  (title: string, callback: () => void): void;
+  (title: string, callback: () => void): Promise<void> | void;
 }
 
 interface TestFunction<TestArgs> {

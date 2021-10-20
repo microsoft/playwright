@@ -15,7 +15,6 @@
  */
 
 import type { TestInfoImpl } from './types';
-import { Suite } from './test';
 
 let currentTestInfoValue: TestInfoImpl | null = null;
 export function setCurrentTestInfo(testInfo: TestInfoImpl | null) {
@@ -23,12 +22,4 @@ export function setCurrentTestInfo(testInfo: TestInfoImpl | null) {
 }
 export function currentTestInfo(): TestInfoImpl | null {
   return currentTestInfoValue;
-}
-
-let currentFileSuite: Suite | undefined;
-export function setCurrentlyLoadingFileSuite(suite: Suite | undefined) {
-  currentFileSuite = suite;
-}
-export function currentlyLoadingFileSuite() {
-  return currentFileSuite;
 }

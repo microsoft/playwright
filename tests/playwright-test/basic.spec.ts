@@ -396,3 +396,73 @@ test('should report unhandled rejection during worker shutdown', async ({ runInl
   expect(result.output).toContain('Error: Unhandled');
   expect(result.output).toContain('a.test.ts:7:33');
 });
+
+test('should support async describe', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const { test } = pwt;
+
+      test('test1', () => {
+        console.log('\\n%%test1');
+      });
+
+      test.describe('suite1', async () => {
+        await new Promise(f => setTimeout(f, 100));
+
+        test('test2', () => {
+          console.log('\\n%%test2');
+        });
+
+        test.describe('inner suite', async () => {
+          test('test3', () => {
+            console.log('\\n%%test3');
+          });
+
+          await new Promise(f => setTimeout(f, 100));
+
+          test('test4', () => {
+            console.log('\\n%%test4');
+          });
+        });
+
+        test.beforeEach(() => {
+          console.log('\\n%%beforeEach');
+        });
+      });
+
+      test('test5', () => {
+        console.log('\\n%%test5');
+      });
+
+      test.describe('suite2', async () => {
+        test('test6', () => {
+          console.log('\\n%%test6');
+        });
+
+        await new Promise(f => setTimeout(f, 100));
+
+        test.skip('test7', () => {
+          console.log('\\n%%test7');
+        });
+
+        test('test8', () => {
+          console.log('\\n%%test8');
+        });
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(7);
+  expect(stripAscii(result.output).split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%test1',
+    '%%beforeEach',
+    '%%test2',
+    '%%beforeEach',
+    '%%test3',
+    '%%beforeEach',
+    '%%test4',
+    '%%test5',
+    '%%test6',
+    '%%test8',
+  ]);
+});

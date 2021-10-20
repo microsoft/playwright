@@ -15,13 +15,11 @@
  */
 
 import { expect } from './expect';
-import { currentlyLoadingFileSuite, currentTestInfo, setCurrentlyLoadingFileSuite } from './globals';
+import { currentTestInfo } from './globals';
 import { TestCase, Suite } from './test';
 import { wrapFunctionWithLocation } from './transform';
 import { Fixtures, FixturesWithLocation, Location, TestType } from './types';
 import { errorWithLocation, serializeError } from './util';
-
-const countByFile = new Map<string, number>();
 
 export class DeclaredFixtures {
   testType!: TestTypeImpl;
@@ -62,27 +60,14 @@ export class TestTypeImpl {
 
   private _createTest(type: 'default' | 'only' | 'skip', location: Location, title: string, fn: Function) {
     throwIfRunningInsideJest();
-    const suite = currentlyLoadingFileSuite();
-    if (!suite)
+    if (!SuiteBuilder.current)
       throw errorWithLocation(location, `test() can only be called in a test file`);
-
-    const ordinalInFile = countByFile.get(suite._requireFile) || 0;
-    countByFile.set(suite._requireFile, ordinalInFile + 1);
-
-    const test = new TestCase('test', title, fn, ordinalInFile, this, location);
-    test._requireFile = suite._requireFile;
-    suite._addTest(test);
-
-    if (type === 'only')
-      test._only = true;
-    if (type === 'skip')
-      test.expectedStatus = 'skipped';
+    SuiteBuilder.current.entries.push({ kind: 'test', type, location, title, fn, testType: this });
   }
 
   private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only', location: Location, title: string, fn: Function) {
     throwIfRunningInsideJest();
-    const suite = currentlyLoadingFileSuite();
-    if (!suite)
+    if (!SuiteBuilder.current)
       throw errorWithLocation(location, `describe() can only be called in a test file`);
 
     if (typeof title === 'function') {
@@ -94,33 +79,11 @@ export class TestTypeImpl {
       ].join('\n'));
     }
 
-    const child = new Suite(title);
-    child._requireFile = suite._requireFile;
-    child._isDescribe = true;
-    child.location = location;
-    suite._addSuite(child);
-
-    if (type === 'only' || type === 'serial.only' || type === 'parallel.only')
-      child._only = true;
-    if (type === 'serial' || type === 'serial.only')
-      child._parallelMode = 'serial';
-    if (type === 'parallel' || type === 'parallel.only')
-      child._parallelMode = 'parallel';
-
-    for (let parent: Suite | undefined = suite; parent; parent = parent.parent) {
-      if (parent._parallelMode === 'serial' && child._parallelMode === 'parallel')
-        throw errorWithLocation(location, 'describe.parallel cannot be nested inside describe.serial');
-      if (parent._parallelMode === 'parallel' && child._parallelMode === 'serial')
-        throw errorWithLocation(location, 'describe.serial cannot be nested inside describe.parallel');
-    }
-
-    setCurrentlyLoadingFileSuite(child);
-    fn();
-    setCurrentlyLoadingFileSuite(suite);
+    SuiteBuilder.current.entries.push({ kind: 'suite', type, location, title, fn });
   }
 
   private _hook(name: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', location: Location, fn: Function) {
-    const suite = currentlyLoadingFileSuite();
+    const suite = SuiteBuilder.current?.suite;
     if (!suite)
       throw errorWithLocation(location, `${name} hook can only be called in a test file`);
     if (name === 'beforeAll' || name === 'afterAll') {
@@ -135,7 +98,7 @@ export class TestTypeImpl {
   }
 
   private _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', location: Location, ...modifierArgs: [arg?: any | Function, description?: string]) {
-    const suite = currentlyLoadingFileSuite();
+    const suite = SuiteBuilder.current?.suite;
     if (suite) {
       if (typeof modifierArgs[0] === 'string' && typeof modifierArgs[1] === 'function') {
         // Support for test.skip('title', () => {})
@@ -163,7 +126,7 @@ export class TestTypeImpl {
   }
 
   private _setTimeout(location: Location, timeout: number) {
-    const suite = currentlyLoadingFileSuite();
+    const suite = SuiteBuilder.current?.suite;
     if (suite) {
       suite._timeout = timeout;
       return;
@@ -176,7 +139,7 @@ export class TestTypeImpl {
   }
 
   private _use(location: Location, fixtures: Fixtures) {
-    const suite = currentlyLoadingFileSuite();
+    const suite = SuiteBuilder.current?.suite;
     if (!suite)
       throw errorWithLocation(location, `test.use() can only be called in a test file and can only be nested in test.describe()`);
     suite._use.push({ fixtures, location });
@@ -227,3 +190,81 @@ function throwIfRunningInsideJest() {
 }
 
 export const rootTestType = new TestTypeImpl([]);
+
+type RecordedTest = {
+  kind: 'test';
+  type: 'default' | 'only' | 'skip';
+  location: Location;
+  title: string;
+  fn: Function;
+  testType: TestTypeImpl;
+};
+type RecordedSuite = {
+  kind: 'suite';
+  type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only';
+  location: Location;
+  title: string;
+  fn: Function;
+};
+
+export class SuiteBuilder {
+  public static current: SuiteBuilder | undefined;
+
+  readonly suite: Suite;
+  readonly entries: (RecordedTest | RecordedSuite)[] = [];
+  readonly ordinalCounter: { ordinal: number };
+
+  constructor(suite: Suite, ordinalCounter?: { ordinal: number }) {
+    this.suite = suite;
+    this.ordinalCounter = ordinalCounter || { ordinal: 0 };
+  }
+
+  async build() {
+    for (const entry of this.entries) {
+      if (entry.kind === 'test')
+        this._addTest(entry);
+      else if (entry.kind === 'suite')
+        await this._addSuite(entry);
+    }
+  }
+
+  private _addTest(entry: RecordedTest) {
+    const ordinalInFile = this.ordinalCounter.ordinal++;
+    const test = new TestCase('test', entry.title, entry.fn, ordinalInFile, entry.testType, entry.location);
+    test._requireFile = this.suite._requireFile;
+    this.suite._addTest(test);
+
+    if (entry.type === 'only')
+      test._only = true;
+    if (entry.type === 'skip')
+      test.expectedStatus = 'skipped';
+  }
+
+  private async _addSuite(entry: RecordedSuite) {
+    const child = new Suite(entry.title);
+    child._requireFile = this.suite._requireFile;
+    child._isDescribe = true;
+    child.location = entry.location;
+    this.suite._addSuite(child);
+
+    if (entry.type === 'only' || entry.type === 'serial.only' || entry.type === 'parallel.only')
+      child._only = true;
+    if (entry.type === 'serial' || entry.type === 'serial.only')
+      child._parallelMode = 'serial';
+    if (entry.type === 'parallel' || entry.type === 'parallel.only')
+      child._parallelMode = 'parallel';
+
+    for (let parent: Suite | undefined = this.suite; parent; parent = parent.parent) {
+      if (parent._parallelMode === 'serial' && child._parallelMode === 'parallel')
+        throw errorWithLocation(entry.location, 'describe.parallel cannot be nested inside describe.serial');
+      if (parent._parallelMode === 'parallel' && child._parallelMode === 'serial')
+        throw errorWithLocation(entry.location, 'describe.serial cannot be nested inside describe.parallel');
+    }
+
+    const recorder = new SuiteBuilder(child, this.ordinalCounter);
+    SuiteBuilder.current = recorder;
+    await entry.fn();
+    await recorder.build();
+    SuiteBuilder.current = this;
+  }
+}

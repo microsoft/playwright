@@ -17,7 +17,6 @@
 import { installTransform } from './transform';
 import type { FullConfig, Config, FullProject, Project, ReporterDescription, PreserveOutput } from './types';
 import { mergeObjects, errorWithFile } from './util';
-import { setCurrentlyLoadingFileSuite } from './globals';
 import { Suite } from './test';
 import { SerializedLoaderData } from './ipc';
 import * as path from 'path';
@@ -27,6 +26,7 @@ import { ProjectImpl } from './project';
 import { Reporter } from '../types/testReporter';
 import { BuiltInReporter, builtInReporters } from './runner';
 import { isRegExp } from 'playwright-core/src/utils/utils';
+import { SuiteBuilder } from './testType';
 
 export class Loader {
   private _defaultConfig: Config;
@@ -115,12 +115,14 @@ export class Loader {
       const suite = new Suite(path.relative(this._fullConfig.rootDir, file) || path.basename(file));
       suite._requireFile = file;
       suite.location = { file, line: 0, column: 0 };
-      setCurrentlyLoadingFileSuite(suite);
+      const builder = new SuiteBuilder(suite);
+      SuiteBuilder.current = builder;
       await this._requireOrImport(file);
+      await builder.build();
       this._fileSuites.set(file, suite);
       return suite;
     } finally {
-      setCurrentlyLoadingFileSuite(undefined);
+      SuiteBuilder.current = undefined;
     }
   }
 
