@@ -25,6 +25,7 @@
     "./src/grid/dockerGridFactory": "./lib/grid/dockerGridFactory.js",
     "./src/utils/async": "./lib/utils/async.js",
     "./src/utils/httpServer": "./lib/utils/httpServer.js",
+    "./src/utils/multimap": "./lib/utils/multimap.js",
     "./src/utils/processLauncher": "./lib/utils/processLauncher.js",
     "./src/utils/registry": "./lib/utils/registry.js",
     "./src/utils/utils": "./lib/utils/utils.js"

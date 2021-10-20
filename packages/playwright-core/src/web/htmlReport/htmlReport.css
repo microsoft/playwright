@@ -368,10 +368,6 @@ a.no-decorations {
   color: var(--color-fg-muted) !important;
 }
 
-.color-fg-white {
-  color: white !important;
-}
-
 .octicon {
   margin-right: 7px;
   flex: none;

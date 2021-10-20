@@ -19,8 +19,10 @@ import path from 'path';
 import { FullConfig, Location, Suite, TestCase, TestResult, TestStatus, TestStep } from '../../types/testReporter';
 import { assert, calculateSha1 } from 'playwright-core/src/utils/utils';
 import { sanitizeForFilePath } from '../util';
-import { formatResultFailure, generateCodeFrame } from './base';
+import { formatResultFailure } from './base';
 import { toPosixPath, serializePatterns } from './json';
+import { MultiMap } from 'playwright-core/src/utils/multimap';
+import { codeFrameColumns } from '@babel/code-frame';
 
 export type JsonLocation = Location;
 export type JsonError = string;
@@ -99,6 +101,7 @@ export type JsonTestStep = {
 class RawReporter {
   private config!: FullConfig;
   private suite!: Suite;
+  private stepsInFile = new MultiMap<string, JsonTestStep>();
 
   onBegin(config: FullConfig, suite: Suite) {
     this.config = config;
@@ -148,6 +151,31 @@ class RawReporter {
       },
       suites: suite.suites.map(s => this._serializeSuite(s))
     };
+    for (const file of this.stepsInFile.keys()) {
+      let source: string;
+      try {
+        source = fs.readFileSync(file, 'utf-8') + '\n//';
+      } catch (e) {
+        continue;
+      }
+      const lines = source.split('\n').length;
+      const highlighted = codeFrameColumns(source, { start: { line: lines, column: 1 } }, { highlightCode: true, linesAbove: lines, linesBelow: 0 });
+      const highlightedLines = highlighted.split('\n');
+      const lineWithArrow = highlightedLines[highlightedLines.length - 1];
+      for (const step of this.stepsInFile.get(file)) {
+        // Don't bother with snippets that have less than 3 lines.
+        if (step.location!.line < 2 || step.location!.line >= lines)
+          continue;
+        // Cut out snippet.
+        const snippetLines = highlightedLines.slice(step.location!.line - 2, step.location!.line + 1);
+        // Relocate arrow.
+        const index = lineWithArrow.indexOf('^');
+        const shiftedArrow = lineWithArrow.slice(0, index) + ' '.repeat(step.location!.column - 1) + lineWithArrow.slice(index);
+        // Insert arrow line.
+        snippetLines.splice(2, 0, shiftedArrow);
+        step.snippet = snippetLines.join('\n');
+      }
+    }
     return report;
   }
 
@@ -190,23 +218,24 @@ class RawReporter {
       status: result.status,
       error: formatResultFailure(test, result, '', true).tokens.join('').trim(),
       attachments: this._createAttachments(result),
-      steps: this._serializeSteps(test, result.steps)
+      steps: result.steps.map(step => this._serializeStep(test, step))
     };
   }
 
-  private _serializeSteps(test: TestCase, steps: TestStep[]): JsonTestStep[] {
-    return steps.map(step => {
-      return {
-        title: step.title,
-        category: step.category,
-        startTime: step.startTime.toISOString(),
-        duration: step.duration,
-        error: step.error?.message,
-        location: this._relativeLocation(step.location),
-        steps: this._serializeSteps(test, step.steps),
-        snippet: step.location ? generateCodeFrame({ highlightCode: true, linesBelow: 1, linesAbove: 1 }, step.location.file, step.location) : undefined
-      };
-    });
+  private _serializeStep(test: TestCase, step: TestStep): JsonTestStep {
+    const result: JsonTestStep = {
+      title: step.title,
+      category: step.category,
+      startTime: step.startTime.toISOString(),
+      duration: step.duration,
+      error: step.error?.message,
+      location: this._relativeLocation(step.location),
+      steps: step.steps.map(step => this._serializeStep(test, step)),
+    };
+
+    if (step.location)
+      this.stepsInFile.set(step.location.file, result);
+    return result;
   }
 
   private _createAttachments(result: TestResult): JsonAttachment[] {

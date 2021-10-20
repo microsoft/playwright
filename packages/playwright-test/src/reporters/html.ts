@@ -179,12 +179,10 @@ class HtmlBuilder {
   private _reportFolder: string;
   private _tests = new Map<string, JsonTestCase>();
   private _testPath = new Map<string, string[]>();
-  private _rootDir: string;
   private _dataFolder: string;
   private _hasTraces = false;
 
   constructor(outputDir: string, rootDir: string) {
-    this._rootDir = rootDir;
     this._reportFolder = path.resolve(process.cwd(), outputDir);
     this._dataFolder = path.join(this._reportFolder, 'data');
   }
