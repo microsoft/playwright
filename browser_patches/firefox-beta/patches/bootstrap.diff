@@ -172,7 +172,7 @@ index 040c7b124dec6bb254563bbe74fe50012cb077a3..b4e6b8132786af70e8ad0dce88b67c28
    const transportProvider = {
      setListener(upgradeListener) {
 diff --git a/docshell/base/BrowsingContext.cpp b/docshell/base/BrowsingContext.cpp
-index fc313a04b93bfebe82d8ec6b9cb4ec13a2bae38b..c9db6b5a990011e34a8b69db61fa5618541233b3 100644
+index 4964f94d31bced7e7f7fc7abe9c854526ece22df..4b157bc284f10e03eba3cc6a863331f215ba7bb7 100644
 --- a/docshell/base/BrowsingContext.cpp
 +++ b/docshell/base/BrowsingContext.cpp
 @@ -107,6 +107,20 @@ struct ParamTraits<mozilla::dom::PrefersColorSchemeOverride>
@@ -238,7 +238,7 @@ index fc313a04b93bfebe82d8ec6b9cb4ec13a2bae38b..c9db6b5a990011e34a8b69db61fa5618
                               nsString&& aOldValue) {
    MOZ_ASSERT(IsTop());
 diff --git a/docshell/base/BrowsingContext.h b/docshell/base/BrowsingContext.h
-index f5d54d363f9d4c2110071fa81830cbfdbe95585b..b18058bacf47d364298d2260058781d892f3811b 100644
+index 70d16c3e6d670bfba8cf566e760931fb32810666..0bf7094653e4970476b535f3a1c9b8ca964b02f2 100644
 --- a/docshell/base/BrowsingContext.h
 +++ b/docshell/base/BrowsingContext.h
 @@ -195,6 +195,8 @@ enum class ExplicitActiveStatus : uint8_t {
@@ -250,7 +250,7 @@ index f5d54d363f9d4c2110071fa81830cbfdbe95585b..b18058bacf47d364298d2260058781d8
    FIELD(DisplayMode, mozilla::dom::DisplayMode)                               \
    /* The number of entries added to the session history because of this       \
     * browsing context. */                                                     \
-@@ -855,6 +857,14 @@ class BrowsingContext : public nsILoadContext, public nsWrapperCache {
+@@ -856,6 +858,14 @@ class BrowsingContext : public nsILoadContext, public nsWrapperCache {
      return GetPrefersColorSchemeOverride();
    }
  
@@ -265,7 +265,7 @@ index f5d54d363f9d4c2110071fa81830cbfdbe95585b..b18058bacf47d364298d2260058781d8
    void FlushSessionStore();
  
    bool IsInBFCache() const;
-@@ -992,6 +1002,23 @@ class BrowsingContext : public nsILoadContext, public nsWrapperCache {
+@@ -993,6 +1003,23 @@ class BrowsingContext : public nsILoadContext, public nsWrapperCache {
    void DidSet(FieldIndex<IDX_PrefersColorSchemeOverride>,
                dom::PrefersColorSchemeOverride aOldValue);
  
@@ -290,7 +290,7 @@ index f5d54d363f9d4c2110071fa81830cbfdbe95585b..b18058bacf47d364298d2260058781d8
  
    bool CanSet(FieldIndex<IDX_SuspendMediaWhenInactive>, bool, ContentParent*) {
 diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
-index 726745540d23023e26000752ab8e672fc44aeb70..4d539e048b34d2307509f34f68ba1524ce1a054e 100644
+index 5deea98dd14b62cd9ce600d2d514141d5a6de4ca..d41a4361f70ab9755344f5c4d295416ffafd69ec 100644
 --- a/docshell/base/nsDocShell.cpp
 +++ b/docshell/base/nsDocShell.cpp
 @@ -15,6 +15,12 @@
@@ -602,7 +602,7 @@ index 726745540d23023e26000752ab8e672fc44aeb70..4d539e048b34d2307509f34f68ba1524
    if (RefPtr<PresShell> presShell = GetPresShell()) {
      presShell->ActivenessMaybeChanged();
    }
-@@ -8448,6 +8699,12 @@ nsresult nsDocShell::PerformRetargeting(nsDocShellLoadState* aLoadState) {
+@@ -8462,6 +8713,12 @@ nsresult nsDocShell::PerformRetargeting(nsDocShellLoadState* aLoadState) {
                       true,  // aForceNoOpener
                       getter_AddRefs(newBC));
        MOZ_ASSERT(!newBC);
@@ -615,7 +615,7 @@ index 726745540d23023e26000752ab8e672fc44aeb70..4d539e048b34d2307509f34f68ba1524
        return rv;
      }
  
-@@ -12511,6 +12768,9 @@ class OnLinkClickEvent : public Runnable {
+@@ -12527,6 +12784,9 @@ class OnLinkClickEvent : public Runnable {
        mHandler->OnLinkClickSync(mContent, mLoadState, mNoOpenerImplied,
                                  mTriggeringPrincipal);
      }
@@ -625,7 +625,7 @@ index 726745540d23023e26000752ab8e672fc44aeb70..4d539e048b34d2307509f34f68ba1524
      return NS_OK;
    }
  
-@@ -12589,6 +12849,8 @@ nsresult nsDocShell::OnLinkClick(
+@@ -12605,6 +12865,8 @@ nsresult nsDocShell::OnLinkClick(
    nsCOMPtr<nsIRunnable> ev =
        new OnLinkClickEvent(this, aContent, loadState, noOpenerImplied,
                             aIsTrusted, aTriggeringPrincipal);
@@ -635,7 +635,7 @@ index 726745540d23023e26000752ab8e672fc44aeb70..4d539e048b34d2307509f34f68ba1524
  }
  
 diff --git a/docshell/base/nsDocShell.h b/docshell/base/nsDocShell.h
-index 113106c2276864a28ebfbb4cbcb36b1fb0292035..4bd6d454159d927de687a371527e7a780d6cebbd 100644
+index caeaad3faadec1aae6ce15ab75dc2e25bb722bd9..e540f36851e5aaf43b9bf10f9206bbe3ada756e6 100644
 --- a/docshell/base/nsDocShell.h
 +++ b/docshell/base/nsDocShell.h
 @@ -16,6 +16,7 @@
@@ -670,7 +670,7 @@ index 113106c2276864a28ebfbb4cbcb36b1fb0292035..4bd6d454159d927de687a371527e7a78
    // Create a content viewer within this nsDocShell for the given
    // `WindowGlobalChild` actor.
    nsresult CreateContentViewerForActor(
-@@ -1000,6 +1011,8 @@ class nsDocShell final : public nsDocLoader,
+@@ -1001,6 +1012,8 @@ class nsDocShell final : public nsDocLoader,
  
    bool CSSErrorReportingEnabled() const { return mCSSErrorReportingEnabled; }
  
@@ -679,7 +679,7 @@ index 113106c2276864a28ebfbb4cbcb36b1fb0292035..4bd6d454159d927de687a371527e7a78
    // Handles retrieval of subframe session history for nsDocShell::LoadURI. If a
    // load is requested in a subframe of the current DocShell, the subframe
    // loadType may need to reflect the loadType of the parent document, or in
-@@ -1279,6 +1292,17 @@ class nsDocShell final : public nsDocLoader,
+@@ -1281,6 +1294,17 @@ class nsDocShell final : public nsDocLoader,
    bool mAllowDNSPrefetch : 1;
    bool mAllowWindowControl : 1;
    bool mCSSErrorReportingEnabled : 1;
@@ -1412,7 +1412,7 @@ index ed81524ff3ce803802578a38433b6b724df8ccf2..55022f28db9ca5695c0bdee8ffd9509c
    ~Geolocation();
  
 diff --git a/dom/html/HTMLInputElement.cpp b/dom/html/HTMLInputElement.cpp
-index dd2726d55666f853ddfba3d145603f8b58ffcb33..91b53bd73a9d31e82962d0fbdbe384e368bcba15 100644
+index 5629bc72c370eb1737f52a264c4b738213620693..04617175dfef1936f8a1c1bd286e24355fa4b118 100644
 --- a/dom/html/HTMLInputElement.cpp
 +++ b/dom/html/HTMLInputElement.cpp
 @@ -52,6 +52,7 @@
@@ -1423,7 +1423,7 @@ index dd2726d55666f853ddfba3d145603f8b58ffcb33..91b53bd73a9d31e82962d0fbdbe384e3
  #include "nsIFormControlFrame.h"
  #include "nsITextControlFrame.h"
  #include "nsIFrame.h"
-@@ -735,6 +736,12 @@ nsresult HTMLInputElement::InitFilePicker(FilePickerType aType) {
+@@ -744,6 +745,12 @@ nsresult HTMLInputElement::InitFilePicker(FilePickerType aType) {
      return NS_ERROR_FAILURE;
    }
  
@@ -2061,7 +2061,7 @@ index f2723e654098ff27542e1eb16a536c11ad0af617..b0b480551ff7d895dfdeb5a980087485
  
  /* Use accelerated SIMD routines. */
 diff --git a/modules/libpref/init/all.js b/modules/libpref/init/all.js
-index 098169b488038581b8c7a820257aabdafbce8386..a61c72e680a57fc149f16534aa241e193c2e94aa 100644
+index e17c1c569ed09cf29ef67d00fb072a9fa131e85c..ae452782a8329f116164f00384a71c2ad407faf1 100644
 --- a/modules/libpref/init/all.js
 +++ b/modules/libpref/init/all.js
 @@ -4580,7 +4580,9 @@ pref("devtools.experiment.f12.shortcut_disabled", false);
