@@ -28,7 +28,7 @@ text. It will be re-fetching the node and checking it over and over, until the c
 reached. You can either pass this timeout or configure it once via the [`property: TestProject.expect`] value
 in test config.
 
-By default, the timeout for assertions is not set, so it'll wait forever, until the whole test times out.
+By default, the timeout for assertions is set to 5 seconds.
 
 ## expect(locator).toBeChecked
 - `options`
