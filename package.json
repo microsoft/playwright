@@ -19,7 +19,7 @@
     "wtest": "npm run basetest -- --config=tests/config/default.config.ts --project=webkit",
     "atest": "npm run basetest -- --config=tests/config/android.config.ts",
     "etest": "npm run basetest -- --config=tests/config/electron.config.ts",
-    "ttest": "node ./tests/playwright-test/stable-test-runner/node_modules/@playwright/test/lib/cli/cli test --config=tests/playwright-test/playwright-test.config.ts",
+    "ttest": "node ./tests/playwright-test/stable-test-runner/node_modules/@playwright/test/cli test --config=tests/playwright-test/playwright-test.config.ts",
     "test": "npm run basetest -- --config=tests/config/default.config.ts",
     "eslint": "[ \"$CI\" = true ] && eslint --quiet -f codeframe --ext ts,tsx . || eslint --ext ts,tsx .",
     "tsc": "tsc -p .",
