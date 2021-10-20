@@ -188,7 +188,7 @@ const TestResultView: React.FC<{
 
     {!!traces.length && <Chip header='Traces'>
       {traces.map((a, i) => <div key={`trace-${i}`}>
-        <a href={`trace/index.html?trace=${window.location.origin}/` + a.path}>
+        <a href={`trace/index.html?trace=${new URL(a.path!, window.location.href)}`}>
           <img src='trace.png' style={{ width: 192, height: 117, marginLeft: 20 }} />
         </a>
       </div>)}
