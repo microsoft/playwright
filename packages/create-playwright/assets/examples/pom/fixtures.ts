@@ -1,5 +1,5 @@
 import { test as base } from '@playwright/test';
-import { TodoPage } from './todo.pom';
+import { TodoPage } from './todoPage.pom';
 
 /**
  * This adds a todoPage fixture which has access to the page instance

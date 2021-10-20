@@ -1,4 +1,4 @@
-import { test, expect } from './2-pom-fixtures';
+import { test, expect } from './fixtures';
 
 test.beforeEach(async ({ todoPage }) => {
   await todoPage.goto();

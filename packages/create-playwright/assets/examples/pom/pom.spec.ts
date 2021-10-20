@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { TodoPage } from './todo.pom';
+import { TodoPage } from './todoPage.pom';
 
 test.describe('ToDo App', () => {
   test('should display zero initial items', async ({ page }) => {

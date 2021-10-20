@@ -1,9 +1,9 @@
 import { test, expect } from '@playwright/test';
 
 /**
- * This text clicks on an element with the text 'Load user' and waits for a
- * specific HTTP response. This response contains in that case a JSON body
- * where we assert some properties.
+ * This test clicks on an element with the text 'Load user' and waits for a
+ * specific HTTP response. This response contains a JSON body where we assert
+ * some properties.
  */
 test('should be able to read a response body', async ({ page }) => {
   await page.goto('/network.html');
