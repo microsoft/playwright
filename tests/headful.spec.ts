@@ -183,7 +183,7 @@ it('Page.bringToFront should work', async ({ browserType, browserOptions }) => {
   await browser.close();
 });
 
-it('should click in OOPIF', async ({ browserName, browserType, browserOptions, createUserDataDir, server }) => {
+it.skip('should click in OOPIF', async ({ browserName, browserType, browserOptions, createUserDataDir, server }) => {
   it.fixme(browserName === 'chromium');
   server.setRoute('/empty.html', (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/html' });
@@ -204,7 +204,7 @@ it('should click in OOPIF', async ({ browserName, browserType, browserOptions, c
   expect(consoleLog).toContain('ok');
 });
 
-it('should click bottom row w/ infobar in OOPIF', async ({ browserType, browserOptions, createUserDataDir, server }) => {
+it.skip('should click bottom row w/ infobar in OOPIF', async ({ browserType, browserOptions, createUserDataDir, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(`
