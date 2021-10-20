@@ -29,6 +29,7 @@ playwright install
 conda config --add channels conda-forge
 conda config --add channels microsoft
 conda install playwright
+conda activate (if not already done)
 playwright install
 ```
 
