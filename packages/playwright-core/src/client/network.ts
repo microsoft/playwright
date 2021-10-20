@@ -333,7 +333,7 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
       let { status: statusOption, headers: headersOption, body: bodyOption } = options;
       if (options.response) {
         statusOption ||= options.response.status();
-        headersOption ||= options.response.headers();
+        headersOption ||= await options.response.headers();
         if (options.body === undefined && options.path === undefined) {
           if (options.response instanceof FetchResponse)
             fetchResponseUid = (options.response as FetchResponse)._fetchUid();

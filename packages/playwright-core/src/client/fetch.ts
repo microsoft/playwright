@@ -229,11 +229,11 @@ export class FetchResponse implements api.APIResponse {
     return this._initializer.statusText;
   }
 
-  headers(): Headers {
+  async headers(): Promise<Headers> {
     return this._headers.headers();
   }
 
-  headersArray(): HeadersArray {
+  async headersArray(): Promise<HeadersArray> {
     return this._headers.headersArray();
   }
 

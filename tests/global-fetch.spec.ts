@@ -47,8 +47,8 @@ for (const method of ['fetch', 'delete', 'get', 'head', 'patch', 'post', 'put'])
     expect(response.statusText()).toBe('OK');
     expect(response.ok()).toBeTruthy();
     expect(response.url()).toBe(server.PREFIX + '/simple.json');
-    expect(response.headers()['content-type']).toBe('application/json; charset=utf-8');
-    expect(response.headersArray()).toContainEqual({ name: 'Content-Type', value: 'application/json; charset=utf-8' });
+    expect((await response.headers())['content-type']).toBe('application/json; charset=utf-8');
+    expect(await response.headersArray()).toContainEqual({ name: 'Content-Type', value: 'application/json; charset=utf-8' });
     expect(await response.text()).toBe(method === 'head' ? '' : '{"foo": "bar"}\n');
   });
 
