@@ -18,11 +18,12 @@ import colors from 'colors/safe';
 import fs from 'fs';
 import open from 'open';
 import path from 'path';
-import { FullConfig, Suite } from '../../types/testReporter';
+import { FullConfig, Suite, TestError } from '../../types/testReporter';
 import { HttpServer } from 'playwright-core/src/utils/httpServer';
 import { calculateSha1, removeFolders } from 'playwright-core/src/utils/utils';
 import RawReporter, { JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep, JsonAttachment } from './raw';
 import assert from 'assert';
+import { formatError } from './base';
 
 export type Stats = {
   total: number;
@@ -139,6 +140,10 @@ class HtmlReporter {
 `));
       }
     }
+  }
+
+  onError(error: TestError) {
+    console.log(formatError(error, colors.enabled));
   }
 }
 
