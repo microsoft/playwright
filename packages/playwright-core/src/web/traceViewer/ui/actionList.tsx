@@ -90,7 +90,7 @@ export const ActionList: React.FC<ActionListProps> = ({
             <span>{metadata.apiName}</span>
             {metadata.params.selector && <div className='action-selector' title={metadata.params.selector}>{metadata.params.selector}</div>}
             {metadata.method === 'goto' && metadata.params.url && <div className='action-url' title={metadata.params.url}>{metadata.params.url}</div>}
-            <span className='action-duration'>— {msToString(metadata.endTime - metadata.startTime)}</span>
+            <span className='action-duration'>— {metadata.endTime ? msToString(metadata.endTime - metadata.startTime) : 'Timed Out'}</span>
           </div>
           <div className='action-icons' onClick={() => setSelectedTab('console')}>
             {!!errors && <div className='action-icon'><span className={'codicon codicon-error'}></span><span className="action-icon-value">{errors}</span></div>}
