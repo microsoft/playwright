@@ -153,12 +153,12 @@ it.describe('snapshots', () => {
     {
       const handle = await page.$('text=Hello');
       const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot', toImpl(handle));
-      expect(distillSnapshot(snapshot)).toBe('<BUTTON>Hello</BUTTON><BUTTON>World</BUTTON>');
+      expect(distillSnapshot(snapshot, false /* distillTarget */)).toBe('<BUTTON __playwright_target__=\"snapshot\">Hello</BUTTON><BUTTON>World</BUTTON>');
     }
     {
       const handle = await page.$('text=World');
       const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot2', toImpl(handle));
-      expect(distillSnapshot(snapshot)).toBe('<BUTTON>Hello</BUTTON><BUTTON>World</BUTTON>');
+      expect(distillSnapshot(snapshot, false /* distillTarget */)).toBe('<BUTTON __playwright_target__=\"snapshot\">Hello</BUTTON><BUTTON __playwright_target__=\"snapshot2\">World</BUTTON>');
     }
   });
 
@@ -182,8 +182,10 @@ it.describe('snapshots', () => {
   });
 });
 
-function distillSnapshot(snapshot) {
-  const { html } = snapshot.render();
+function distillSnapshot(snapshot, distillTarget = true) {
+  let { html } = snapshot.render();
+  if (distillTarget)
+    html = html.replace(/\s__playwright_target__="[^"]+"/g, '');
   return html
       .replace(/<script>[.\s\S]+<\/script>/, '')
       .replace(/<style>.*__playwright_target__.*<\/style>/, '')
@@ -192,7 +194,6 @@ function distillSnapshot(snapshot) {
       .replace(/<HTML>/, '')
       .replace(/<\/HTML>/, '')
       .replace(/<HEAD>/, '')
-      .replace(/\s__playwright_target__="[^"]+"/g, '')
       .replace(/<\/HEAD>/, '')
       .replace(/<BODY>/, '')
       .replace(/<\/BODY>/, '').trim();
