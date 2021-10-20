@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import type { ServerResponse } from '../../utils/testserver';
 import { test as it, expect } from './pageTest';
 
 it('Page.Events.Request', async ({ page, server }) => {
@@ -113,4 +114,26 @@ it('should support redirects', async ({ page, server }) => {
   expect(redirectedFrom.url()).toContain('/foo.html');
   expect(redirectedFrom.redirectedFrom()).toBe(null);
   expect(redirectedFrom.redirectedTo()).toBe(response.request());
+});
+
+it('should resolve responses after a navigation', async ({ page, server, browserName }) => {
+  it.fixme(browserName === 'chromium');
+  const responseFromServerPromise = new Promise<ServerResponse>(resolve => {
+    server.setRoute('/foo', (message, response) => {
+      resolve(response);
+    });
+  });
+  await page.goto(server.EMPTY_PAGE);
+  const requestPromise = page.waitForRequest(() => true);
+  // start a long running request and wait until it hits the server
+  await page.evaluate(url => void fetch(url), server.PREFIX + '/foo');
+  const responseFromServer = await responseFromServerPromise;
+  const request = await requestPromise;
+  const responsePromise = request.response();
+  // navigate, which should cancel the request
+  await page.goto(server.CROSS_PROCESS_PREFIX);
+  // make sure we arent stalling this request on the server
+  responseFromServer.end('done');
+  // the response should resolve to null, because the page navigated.
+  expect(await responsePromise).toBe(null);
 });
