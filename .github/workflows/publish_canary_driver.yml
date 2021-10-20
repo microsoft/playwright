@@ -1,9 +1,11 @@
 name: "devrelease:driver"
 
 on:
+  workflow_dispatch:
+  schedule:
+    - cron: "10 0 * * *"
   push:
     branches:
-      - master
       - release-*
 
 jobs:
