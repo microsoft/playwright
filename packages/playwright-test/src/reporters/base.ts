@@ -98,7 +98,7 @@ export class BaseReporter implements Reporter  {
   }
 
   onError(error: TestError) {
-    console.log(formatError(error, colors.enabled));
+    console.log(formatError(error, colors.enabled).message);
   }
 
   async onEnd(result: FullResult) {
