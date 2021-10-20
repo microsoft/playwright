@@ -89,7 +89,7 @@ const TestFileSummaryView: React.FC<{
       {file.fileName}
       <StatsView stats={file.stats}></StatsView>
     </span>}>
-    {file.tests.map((test, i) => <Link key={`test-${i}`} href={`/?testId=${test.testId}`}>
+    {file.tests.map((test, i) => <Link key={`test-${i}`} href={`?testId=${test.testId}`}>
       <div className={'test-summary outcome-' + test.outcome}>
         <span style={{ float: 'right' }}>{msToString(test.duration)}</span>
         {statusIcon(test.outcome)}
@@ -113,7 +113,7 @@ const TestCaseView: React.FC<{
       const fileId = testId.split('-')[0];
       if (!fileId)
         return;
-      const result = await fetch(`/data/${fileId}.json`, { cache: 'no-cache' });
+      const result = await fetch(`data/${fileId}.json`, { cache: 'no-cache' });
       const file = await result.json() as TestFile;
       for (const t of file.tests) {
         if (t.testId === testId) {
