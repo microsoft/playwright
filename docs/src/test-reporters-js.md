@@ -98,34 +98,6 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
-### Reporter for GitHub Actions
-
-You can use the built in `github` reporter to get automatic failure annotations when running in GitHub actions.
-
-```js js-flavor=js
-// playwright.config.js
-// @ts-check
-
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  // 'github' for GitHub Actions CI to generate annotations, default 'list' when running locally
-  reporter: process.env.CI ? 'github' : 'list',
-};
-
-module.exports = config;
-```
-
-```js js-flavor=ts
-// playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
-
-const config: PlaywrightTestConfig = {
-  // 'github' for GitHub Actions CI to generate annotations, default 'list' when running locally
-  reporter: process.env.CI ? 'github' : 'list',
-};
-export default config;
-```
-
 ## Built-in reporters
 
 All built-in reporters show detailed information about failures, and mostly differ in verbosity for successful runs.
@@ -387,6 +359,38 @@ import { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   reporter: [ ['junit', { outputFile: 'results.xml' }] ],
+};
+export default config;
+```
+
+### GitHub Actions annotations
+
+You can use the built in `github` reporter to get automatic failure annotations when running in GitHub actions. Use it with some other reporter, for example `'dot'` and/or `'json'`.
+
+Note that all other reporters work on GitHub Actions as well, but do not provide annotations.
+
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  // 'github' for GitHub Actions CI to generate annotations, plus a concise 'dot'
+  // default 'list' when running locally
+  reporter: process.env.CI ? [ ['github'], ['dot'] ] : 'list',
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  // 'github' for GitHub Actions CI to generate annotations, plus a concise 'dot'
+  // default 'list' when running locally
+  reporter: process.env.CI ? [ ['github'], ['dot'] ] : 'list',
 };
 export default config;
 ```
