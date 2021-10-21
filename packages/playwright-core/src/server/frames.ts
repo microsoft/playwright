@@ -1181,6 +1181,11 @@ export class Frame extends SdkObject {
         if (options.expression.endsWith('.array') && expectsEmptyList !== options.isNot)
           return { matches: expectsEmptyList };
 
+        // expect(listLocator).toHaveCount(0) passes when there are no elements matching.
+        // expect(listLocator).not.toHaveCount(1) passes when there are no elements matching.
+        if (options.expression === 'to.have.count')
+          return { matches: options.expectedNumber === 0, received: options.expectedNumber };
+
         // When none of the above applies, keep waiting for the element.
         return continuePolling;
       }
