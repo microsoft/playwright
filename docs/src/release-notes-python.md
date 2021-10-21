@@ -31,9 +31,7 @@ Read more about [Docker integration](./docker).
 
 ### 🎭 Playwright Trace Viewer
 
-- web-first assertions inside trace viewer
 - run trace viewer with `npx playwright show-trace` and drop trace files to the trace viewer PWA
-- API testing is integrated with trace viewer
 - better visual attribution of action targets
 
 Read more about [Trace Viewer](./trace-viewer).
