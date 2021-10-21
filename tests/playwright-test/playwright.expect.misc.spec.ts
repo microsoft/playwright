@@ -33,10 +33,41 @@ test('should support toHaveCount', async ({ runInlineTest }) => {
         await promise;
         expect(done).toBe(true);
       });
+
+      test('pass zero', async ({ page }) => {
+        await page.setContent('<div></div>');
+        const locator = page.locator('span');
+        await expect(locator).toHaveCount(0);
+        await expect(locator).not.toHaveCount(1);
+      });
+
+      test('eventually pass zero', async ({ page }) => {
+        await page.setContent('<div></div>');
+        const locator = page.locator('span');
+        setTimeout(() => page.evaluate(() => div.textContent = '').catch(() => {}), 200);
+        await expect(locator).toHaveCount(0);
+        await expect(locator).not.toHaveCount(1);
+      });
+
+      test('fail zero', async ({ page }) => {
+        await page.setContent('<div><span></span></div>');
+        const locator = page.locator('span');
+        await expect(locator).toHaveCount(0, { timeout: 500 });
+      });
+
+      test('fail zero 2', async ({ page }) => {
+        await page.setContent('<div><span></span></div>');
+        const locator = page.locator('span');
+        await expect(locator).not.toHaveCount(1, { timeout: 500 });
+      });
       `,
   }, { workers: 1 });
-  expect(result.passed).toBe(1);
-  expect(result.exitCode).toBe(0);
+  const output = stripAscii(result.output);
+  expect(result.passed).toBe(3);
+  expect(result.failed).toBe(2);
+  expect(result.exitCode).toBe(1);
+  expect(output).toContain('Expected: 0');
+  expect(output).toContain('Received: 1');
 });
 
 test('should support toHaveJSProperty', async ({ runInlineTest }) => {
