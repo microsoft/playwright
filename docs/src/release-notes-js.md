@@ -5,6 +5,136 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.16
+
+### 🎭 Playwright Test
+
+#### API Testing
+
+Playwright 1.16 introduces new [API Testing](./api/class-apirequestcontext) that lets you send requests to the server directly from Node.js!
+Now you can:
+
+- test your server API
+- prepare server side state before visiting the web application in a test
+- validate server side post-conditions after running some actions in the browser
+
+To do a request on behalf of Playwright's Page, use **new [`property: Page.request`] API**:
+
+```ts
+import { test, expect } from '@playwright/test';
+
+test('context fetch', async ({ page }) => {
+  // Do a GET request on behalf of page
+  const response = await page.request.get('http://example.com/foo.json');
+  // ...
+});
+```
+
+To do a stand-alone request from node.js to an API endpoint, use **new [`request` fixture](./api/class-fixtures#fixtures-request)**:
+
+```ts
+import { test, expect } from '@playwright/test';
+
+test('context fetch', async ({ request }) => {
+  // Do a GET request on behalf of page
+  const response = await request.get('http://example.com/foo.json');
+  // ...
+});
+```
+
+Read more about it in our [API testing guide](./test-api-testing).
+
+#### Response Interception
+
+It is now possible to do response interception by combining [API Testing](./test-api-testing) with [equest interception](./network#modify-requests).
+
+For example, we can blur all the images on the page:
+
+```ts
+import { test, expect } from '@playwright/test';
+import jimp from 'jimp'; // image processing library
+
+test('response interception', async ({ page }) => {
+  await page.route('**/*.jpeg', async route => {
+    const response = await page._request.fetch(route.request());
+    const image = await jimp.read(await response.body());
+    await image.blur(5);
+    route.fulfill({
+      response,
+      body: await image.getBufferAsync('image/jpeg'),
+    });
+  });
+  const response = await page.goto('https://playwright.dev');
+  expect(response.status()).toBe(200);
+});
+```
+
+Read more about [response interception](./network#modify-responses).
+
+#### New HTML reporter
+
+Try it out new HML reporter with either `--reporter=html` or a `reporter` entry
+in `playwright.config.ts` file:
+
+```bash
+$ npx playwright test --reporter=html
+```
+
+The HTLM reporter has all the information about tests and their failures, including surfacing
+trace and image artifacts.
+
+![html reporter](https://user-images.githubusercontent.com/746130/138324311-94e68b39-b51a-4776-a446-f60037a77f32.png)
+
+Read more about [our reporters](./test-reporters/#html-reporter).
+
+### 🎭 Playwright Library
+
+#### locator.waitFor
+
+Wait for a locator to resolve to a single element with a given state.
+Defaults to the `state: 'visible'`.
+
+Comes especially handy when working with lists:
+
+```ts
+import { test, expect } from '@playwright/test';
+
+test('context fetch', async ({ page }) => {
+  const completeness = page.locator('text=Success');
+  await completeness.waitFor();
+  expect(await page.screenshot()).toMatchSnapshot('screen.png');
+});
+```
+
+Read more about [`method: Locator.waitFor`].
+
+### Docker support for Arm64
+
+Playwright Docker image is now published for Arm64 so it can be used on Apple Silicon.
+
+Read more about [Docker integration](./docker).
+
+### 🎭 Playwright Trace Viewer
+
+- web-first assertions inside trace viewer
+- run trace viewer with `npx playwright show-trace` and drop trace files to the trace viewer PWA
+- API testing is integrated with trace viewer
+- better visual attribution of action targets
+
+Read more about [Trace Viewer](./trace-viewer).
+
+### Browser Versions
+
+- Chromium 97.0.4666.0
+- Mozilla Firefox 93.0
+- WebKit 15.4
+
+This version of Playwright was also tested against the following stable channels:
+
+- Google Chrome 94
+- Microsoft Edge 94
+
+
 ## Version 1.15
 
 ### 🎭 Playwright Library
