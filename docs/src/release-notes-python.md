@@ -5,6 +5,50 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.16
+
+### 🎭 Playwright Library
+
+#### `locator.wait_for`
+
+Wait for a locator to resolve to a single element with a given state.
+Defaults to the `state: 'visible'`.
+
+Comes especially handy when working with lists:
+
+```python
+order_sent = page.locator("#order-sent")
+order_sent.wait_for()
+```
+
+Read more about [`method: Locator.waitFor`].
+
+### Docker support for Arm64
+
+Playwright Docker image is now published for Arm64 so it can be used on Apple Silicon.
+
+Read more about [Docker integration](./docker).
+
+### 🎭 Playwright Trace Viewer
+
+- web-first assertions inside trace viewer
+- run trace viewer with `npx playwright show-trace` and drop trace files to the trace viewer PWA
+- API testing is integrated with trace viewer
+- better visual attribution of action targets
+
+Read more about [Trace Viewer](./trace-viewer).
+
+### Browser Versions
+
+- Chromium 97.0.4666.0
+- Mozilla Firefox 93.0
+- WebKit 15.4
+
+This version of Playwright was also tested against the following stable channels:
+
+- Google Chrome 94
+- Microsoft Edge 94
+
 ## Version 1.15
 
 ### 🖱️ Mouse Wheel
