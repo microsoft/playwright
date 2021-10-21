@@ -1,10 +1,12 @@
 {
   "name": "create-playwright",
-  "version": "0.1.7",
+  "version": "1.17.0-next",
   "description": "Getting started with writing end-to-end tests with Playwright.",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
-  "author": "Microsoft",
+  "author": {
+    "name": "Microsoft Corporation"
+  },
   "engines": {
     "node": ">=12"
   },
@@ -12,7 +14,7 @@
   "bin": {
     "create-playwright": "./index.js"
   },
-  "license": "MIT",
+  "license": "Apache-2.0",
   "scripts": {
     "prepublish": "npm run build",
     "watch": "cd src && ncc build cli.ts --watch --out ../lib && cd ..",
