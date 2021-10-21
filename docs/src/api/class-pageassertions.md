@@ -5,7 +5,7 @@ The [PageAssertions] class provides assertion methods that can be used to make a
 
 ## method: PageAssertions.hasTitle
 
-Ensures page has a given title.
+Ensures the page has a given title.
 
 ```java
 assertThat(page).hasTitle("Playwright");
