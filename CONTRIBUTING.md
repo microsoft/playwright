@@ -67,7 +67,7 @@ When authoring new API methods, consider the following:
 - Expose as little information as needed. When in doubt, don’t expose new information.
 - Methods are used in favor of getters/setters.
   - The only exception is namespaces, e.g. `page.keyboard` and `page.coverage`
-- All string literals must be small case. This includes event names and option values.
+- All string literals must be lowercase. This includes event names and option values.
 - Avoid adding "sugar" API (API that is trivially implementable in user-space) unless they're **very** common.
 
 ### Commit Messages
@@ -99,14 +99,14 @@ Example:
 ```
 fix(firefox): make sure session cookies work
 
-This patch fixes session cookies in firefox browser.
+This patch fixes session cookies in the firefox browser.
 
 Fixes #123, fixes #234
 ```
 
 ### Writing Documentation
 
-All API classes, methods and events should have description in [`docs/src`](https://github.com/microsoft/playwright/blob/master/docs/src). There's a [documentation linter](https://github.com/microsoft/playwright/tree/master/utils/doclint) which makes sure documentation is aligned with the codebase.
+All API classes, methods, and events should have a description in [`docs/src`](https://github.com/microsoft/playwright/blob/master/docs/src). There's a [documentation linter](https://github.com/microsoft/playwright/tree/master/utils/doclint) which makes sure documentation is aligned with the codebase.
 
 To run the documentation linter, use:
 
