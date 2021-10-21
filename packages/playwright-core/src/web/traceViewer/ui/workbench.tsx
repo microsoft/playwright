@@ -40,7 +40,7 @@ export const Workbench: React.FunctionComponent<{
   React.useEffect(() => {
     (async () => {
       if (traceURL) {
-        const contextEntry = (await fetch(`/trace/context?trace=${traceURL}`).then(response => response.json())) as ContextEntry;
+        const contextEntry = (await fetch(`context?trace=${traceURL}`).then(response => response.json())) as ContextEntry;
         modelUtil.indexModel(contextEntry);
         setContextEntry(contextEntry);
       } else {
