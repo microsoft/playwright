@@ -19,7 +19,7 @@ By default, the timeout for assertions is set to 5 seconds.
 * langs: java
 - returns: <[PageAssertions]>
 
-Creates [PageAssertions] object for given [Page].
+Creates a [PageAssertions] object for the given [Page].
 
 ```java
 PlaywrightAssertions.assertThat(page).hasTitle("News");
