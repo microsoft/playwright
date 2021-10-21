@@ -37,7 +37,7 @@ Expected substring or RegExp.
 ### option: PageAssertions.hasURL.timeout
 - `timeout` <[float]>
 
-Time to retry assertion for.
+Time to retry the assertion for.
 
 ## method: PageAssertions.not
 - returns: <[PageAssertions]>
