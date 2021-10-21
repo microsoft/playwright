@@ -15,5 +15,5 @@ test('should be able to upload files', async ({ page, context }) => {
   ]);
   await fileChooser.setFiles(fileToUpload);
   await page.click('input[type=submit]');
-  await expect(page.locator('text=file-uploads.spec.ts')).toBeVisible();
+  await expect(page.locator('text=4-file-uploads.spec.ts')).toBeVisible();
 });

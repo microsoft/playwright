@@ -1,5 +1,11 @@
 import { test, expect } from './fixtures';
 
+/**
+ * Fixtures are used here to create a TodoApp instance for every test. These are
+ * defined inside the 'fixtures.ts' file. This will reduce the amount of
+ * boilerplate created for each test and makes it more reusable.
+ * @see https://playwright.dev/docs/test-fixtures
+ */
 test.beforeEach(async ({ todoPage }) => {
   await todoPage.goto();
 });

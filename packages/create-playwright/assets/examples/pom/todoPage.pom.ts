@@ -1,10 +1,15 @@
 import { Page } from '@playwright/test';
 
 /**
- * Locators are used to reflect a element on the page with a selector.
- * @see https://playwright.dev/docs/api/class-locator
+ * This is a Page Object Model (POM) class for the application's Todo page. It
+ * provides locators and common operations that make writing tests easier.
+ * @see https://playwright.dev/docs/test-pom
  */
 export class TodoPage {
+  /**
+   * Locators are used to reflect a element on the page with a selector.
+   * @see https://playwright.dev/docs/api/class-locator
+   */
   listItems = this.page.locator('.todo-list li');
   inputBox = this.page.locator('input.new-todo');
   filterByActiveItemsButton = this.page.locator('.filters >> text=Active');

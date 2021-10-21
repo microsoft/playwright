@@ -5,32 +5,22 @@ test.beforeEach(async ({ page }) => {
 });
 
 /**
- * Locators are used to represent a selector on a page. In this example we
- * create a todo item, assert that it exists and then filter by the completed
- * items to ensure that the item is not visible anymore.
+ * Locators are used to represent a selector on a page and re-use them. They have
+ * strictMode enabled by default. This option will throw an error if the selector
+ * will resolve to multiple elements.
+ * In this example we create a todo item, assert that it exists and then filter
+ * by the completed items to ensure that the item is not visible anymore.
  * @see https://playwright.dev/docs/api/class-locator
  */
 test('basic interaction', async ({ page }) => {
-  await test.step('with locators', async () => {
-    const inputBox = page.locator('input.new-todo');
-    const todoList = page.locator('.todo-list');
+  const inputBox = page.locator('input.new-todo');
+  const todoList = page.locator('.todo-list');
 
-    await inputBox.fill('Learn Playwright');
-    await inputBox.press('Enter');
-    await expect(todoList).toHaveText('Learn Playwright');
-    await page.locator('.filters >> text=Completed').click();
-    await expect(todoList).not.toHaveText('Learn Playwright');
-  });
-
-  // Using locators gives you the ability of re-using the same selector mulitple
-  // times and they have also strictMode enabled by default. This option will
-  // throw an error if the selector will resolve to multiple elements. So above
-  // would be the same as the following:
-  await test.step('without locators', async () => {
-    await page.fill('input.new-todo', 'Learn Playwright');
-    await page.press('input.new-todo', 'Enter');
-    await page.click('text=Completed');
-  });
+  await inputBox.fill('Learn Playwright');
+  await inputBox.press('Enter');
+  await expect(todoList).toHaveText('Learn Playwright');
+  await page.locator('.filters >> text=Completed').click();
+  await expect(todoList).not.toHaveText('Learn Playwright');
 });
 
 /**
