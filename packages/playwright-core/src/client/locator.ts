@@ -36,14 +36,18 @@ export class Locator implements api.Locator {
   private async _withElement<R>(task: (handle: ElementHandle<SVGElement | HTMLElement>, timeout?: number) => Promise<R>, timeout?: number): Promise<R> {
     timeout = this._frame.page()._timeoutSettings.timeout({ timeout });
     const deadline = timeout ? monotonicTime() + timeout : 0;
-    const handle = await this.elementHandle({ timeout });
-    if (!handle)
-      throw new Error(`Could not resolve ${this._selector} to DOM Element`);
-    try {
-      return await task(handle, deadline ? deadline - monotonicTime() : 0);
-    } finally {
-      await handle.dispose();
-    }
+
+    return this._frame._wrapApiCall<R>(async (channel: channels.FrameChannel) => {
+      const result = await channel.waitForSelector({ selector: this._selector, strict: true, state: 'attached', timeout });
+      const handle = ElementHandle.fromNullable(result.element) as ElementHandle<SVGElement | HTMLElement> | null;
+      if (!handle)
+        throw new Error(`Could not resolve ${this._selector} to DOM Element`);
+      try {
+        return await task(handle, deadline ? deadline - monotonicTime() : 0);
+      } finally {
+        await handle.dispose();
+      }
+    });
   }
 
   async boundingBox(options?: TimeoutOptions): Promise<Rect | null> {
