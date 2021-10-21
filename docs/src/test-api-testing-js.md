@@ -135,6 +135,44 @@ test.afterAll(async ({ request }) => {
 });
 ```
 
+## Using request context
+
+Behind the scenes, [`request` fixture](./api/class-fixtures#fixtures-request) will actually call [`method: APIRequest.newContext`]. You can always do that manually if you'd like more control. Below is a standalone script that does the same as `beforeAll` and `afterAll` from above.
+
+```js
+const { request } = require('@playwright/test');
+const REPO = 'test-repo-1';
+const USER = 'github-username';
+
+(async () => {
+  // Create a context that will issue http requests.
+  const context = await request.newContext({
+    baseURL: 'https://api.github.com',
+  });
+
+  // Create a repository.
+  await context.post('/user/repos', {
+    headers: {
+      'Accept': 'application/vnd.github.v3+json',
+      // Add GitHub personal access token.
+      'Authorization': `token ${process.env.API_TOKEN}`,
+    },
+    data: {
+      name: REPO
+    }
+  });
+
+  // Delete a repository.
+  await context.delete(`/repos/${USER}/${REPO}`{
+    headers: {
+      'Accept': 'application/vnd.github.v3+json',
+      // Add GitHub personal access token.
+      'Authorization': `token ${process.env.API_TOKEN}`,
+    }
+  });
+})()
+```
+
 ## Sending API requests from UI tests
 
 While running tests inside browsers you may want to make calls to the HTTP API of your application. It may be helpful if you need to prepare server state before running a test or to check some postconditions on the server after performing some actions in the browser. All of that could be achieved via [APIRequestContext] methods.
@@ -321,44 +359,6 @@ test('last created issue should be on the server', async ({ page, request }) => 
     title: 'Bug report 1'
   }));
 });
-```
-
-## Using request context
-
-Behind the scenes, [`request` fixture](./api/class-fixtures#fixtures-request) will actually call [`method: APIRequest.newContext`]. You can always do that manually if you'd like more control. Below is a standalone script that does the same as `beforeAll` and `afterAll` from above.
-
-```js
-const { request } = require('@playwright/test');
-const REPO = 'test-repo-1';
-const USER = 'github-username';
-
-(async () => {
-  // Create a context that will issue http requests.
-  const context = await request.newContext({
-    baseURL: 'https://api.github.com',
-  });
-
-  // Create a repository.
-  await context.post('/user/repos', {
-    headers: {
-      'Accept': 'application/vnd.github.v3+json',
-      // Add GitHub personal access token.
-      'Authorization': `token ${process.env.API_TOKEN}`,
-    },
-    data: {
-      name: REPO
-    }
-  });
-
-  // Delete a repository.
-  await context.delete(`/repos/${USER}/${REPO}`{
-    headers: {
-      'Accept': 'application/vnd.github.v3+json',
-      // Add GitHub personal access token.
-      'Authorization': `token ${process.env.API_TOKEN}`,
-    }
-  });
-})()
 ```
 
 ## Reusing authentication state
