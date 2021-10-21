@@ -13,66 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { test as base, expect } from '@playwright/test';
-import { spawn } from 'child_process';
+import { test, expect } from './baseFixtures';
 import path from 'path';
 import fs from 'fs';
-
-import type { PromptOptions } from '../src/generator';
-
-type TestFixtures = {
-  packageManager: 'npm' | 'yarn';
-  run: (parameters: string[], options: PromptOptions) => Promise<RunResult>,
-};
-
-type RunResult = {
-  exitCode: number|null,
-  dir: string,
-  stderr: string,
-  stdout: string,
-};
-
-const test = base.extend<TestFixtures>({
-  packageManager: 'npm',
-  run: async ({ packageManager }, use, testInfo) => {
-    await use(async (parameters: string[], options: PromptOptions): Promise<RunResult> => {
-      fs.mkdirSync(testInfo.outputDir, { recursive: true });
-      const env = packageManager === 'yarn' ? {
-        'npm_config_user_agent': 'yarn'
-      } : undefined;
-      const p = spawn('node', [path.join(__dirname, '..'), ...parameters], {
-        shell: true,
-        cwd: testInfo.outputDir,
-        env: {
-          ...process.env,
-          ...env,
-          'TEST_OPTIONS': JSON.stringify(options),
-        }
-      });
-      let stdout = '';
-      let stderr = '';
-      p.stdout.on('data', data => stdout += data.toString());
-      p.stderr.on('data', data => stderr += data.toString());
-      let resolve = (result: RunResult) => { };
-      const waitUntilExit = new Promise<RunResult>(r => resolve = r);
-      p.on('exit', exitCode => {
-        resolve({ exitCode, dir: testInfo.outputDir, stdout, stderr });
-      });
-      if (process.env.DEBUG) {
-        p.stdout.on('data', chunk => process.stdout.write(chunk));
-        p.stderr.on('data', chunk => process.stderr.write(chunk));
-      }
-      return await waitUntilExit;
-    });
-  },
-});
 
 for (const packageManager of ['npm', 'yarn'] as ('npm' | 'yarn')[]) {
   test.describe(`Package manager: ${packageManager}`, () => {
     test.use({ packageManager });
 
     test('should generate a project in the current directory', async ({ run }) => {
-      const { exitCode, dir, stdout } = await run([], { installGitHubActions: true, testDir: 'e2e', language: 'TypeScript' });
+      const { exitCode, dir, stdout } = await run([], { installGitHubActions: true, testDir: 'e2e', language: 'TypeScript', addExamples: false });
       expect(exitCode).toBe(0);
       expect(fs.existsSync(path.join(dir, 'e2e/example.spec.ts'))).toBeTruthy();
       expect(fs.existsSync(path.join(dir, 'package.json'))).toBeTruthy();
@@ -96,7 +46,7 @@ for (const packageManager of ['npm', 'yarn'] as ('npm' | 'yarn')[]) {
     });
 
     test('should generate a project in a given directory', async ({ run }) => {
-      const { exitCode, dir } = await run(['foobar'], { installGitHubActions: true, testDir: 'e2e', language: 'TypeScript' });
+      const { exitCode, dir } = await run(['foobar'], { installGitHubActions: true, testDir: 'e2e', language: 'TypeScript', addExamples: false });
       expect(exitCode).toBe(0);
       expect(fs.existsSync(path.join(dir, 'foobar/e2e/example.spec.ts'))).toBeTruthy();
       expect(fs.existsSync(path.join(dir, 'foobar/package.json'))).toBeTruthy();
@@ -109,7 +59,7 @@ for (const packageManager of ['npm', 'yarn'] as ('npm' | 'yarn')[]) {
     });
 
     test('should generate a project with JavaScript and without GHA', async ({ run }) => {
-      const { exitCode, dir } = await run([], { installGitHubActions: false, testDir: 'tests', language: 'JavaScript' });
+      const { exitCode, dir } = await run([], { installGitHubActions: false, testDir: 'tests', language: 'JavaScript', addExamples: false });
       expect(exitCode).toBe(0);
       expect(fs.existsSync(path.join(dir, 'tests/example.spec.js'))).toBeTruthy();
       expect(fs.existsSync(path.join(dir, 'package.json'))).toBeTruthy();
@@ -119,6 +69,25 @@ for (const packageManager of ['npm', 'yarn'] as ('npm' | 'yarn')[]) {
         expect(fs.existsSync(path.join(dir, 'yarn.lock'))).toBeTruthy();
       expect(fs.existsSync(path.join(dir, 'playwright.config.js'))).toBeTruthy();
       expect(fs.existsSync(path.join(dir, '.github/workflows/playwright.yml'))).toBeFalsy();
+    });
+
+    test('should generate be able to run the examples successfully', async ({ run }) => {
+      const { exitCode, dir, exec } = await run([], { installGitHubActions: false, testDir: 'tests', language: 'TypeScript', addExamples: true });
+      expect(exitCode).toBe(0);
+      expect(fs.existsSync(path.join(dir, 'tests/example.spec.ts'))).toBeTruthy();
+      expect(fs.existsSync(path.join(dir, 'package.json'))).toBeTruthy();
+
+      expect(fs.existsSync(path.join(dir, 'playwright.config.ts'))).toBeTruthy();
+      expect(fs.existsSync(path.join(dir, 'tests-examples/playwright.config.ts'))).toBeTruthy();
+      expect(fs.existsSync(path.join(dir, 'tests-examples/server/index.js'))).toBeTruthy();
+      expect(fs.existsSync(path.join(dir, 'tests-examples/1-getting-started.spec.ts'))).toBeTruthy();
+
+      let result;
+      if (packageManager === 'npm')
+        result = await exec('npm', ['run', 'test:e2e-examples']);
+      else
+        result = await exec('yarn', ['test:e2e-examples']);
+      expect(result.code).toBe(0);
     });
   });
 }

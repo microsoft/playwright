@@ -72,3 +72,12 @@ export function executeTemplate(input: string, args: Record<string, string>): st
 export function languagetoFileExtension(language: 'JavaScript' | 'TypeScript'): 'js' | 'ts' {
   return language === 'JavaScript' ? 'js' : 'ts';
 }
+
+export async function readDirRecursively(dir: string): Promise<string[]> {
+  const dirents = await fs.promises.readdir(dir, { withFileTypes: true });
+  const files = await Promise.all(dirents.map(async (dirent): Promise<string[]|string> => {
+    const res = path.join(dir, dirent.name);
+    return dirent.isDirectory() ? await readDirRecursively(res) : res;
+  }));
+  return files.flat();
+}
