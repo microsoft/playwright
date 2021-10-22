@@ -14,6 +14,17 @@
   limitations under the License.
 */
 
+.drop-target {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--box-shadow);
+  flex: auto;
+  font-size: 24px;
+  color: #666;
+  font-weight: bold;
+}
+
 .workbench {
   contain: size;
   user-select: none;
