@@ -165,7 +165,7 @@ def test_visit_example(page):
 # conftest.py
 import pytest
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def browser_context_args(browser_context_args):
     return {
         **browser_context_args,
@@ -179,7 +179,7 @@ def browser_context_args(browser_context_args):
 # conftest.py
 import pytest
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def browser_context_args(browser_context_args):
     return {
         **browser_context_args,
@@ -196,7 +196,7 @@ def browser_context_args(browser_context_args):
 # conftest.py
 import pytest
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def browser_context_args(browser_context_args, playwright):
     iphone_11 = playwright.devices['iPhone 11 Pro']
     return {
