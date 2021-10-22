@@ -28,7 +28,7 @@ import { Modifier, Suite, TestCase } from './test';
 import { Annotations, TestError, TestInfo, TestInfoImpl, TestStepInternal, WorkerInfo } from './types';
 import { ProjectImpl } from './project';
 import { FixturePool, FixtureRunner } from './fixtures';
-import { DeadlineRunner, raceAgainstDeadline } from 'playwright-core/src/utils/async';
+import { DeadlineRunner, raceAgainstDeadline } from 'playwright-core/lib/utils/async';
 
 const removeFolderAsync = util.promisify(rimraf);
 

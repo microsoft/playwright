@@ -25,9 +25,9 @@ import { stopProfiling, startProfiling } from './profiler';
 import { FilePatternFilter } from './util';
 import { Loader } from './loader';
 import { showHTMLReport } from './reporters/html';
-import { GridServer } from 'playwright-core/src/grid/gridServer';
-import dockerFactory from 'playwright-core/src/grid/dockerGridFactory';
-import { createGuid } from 'playwright-core/src/utils/utils';
+import { GridServer } from 'playwright-core/lib/grid/gridServer';
+import dockerFactory from 'playwright-core/lib/grid/dockerGridFactory';
+import { createGuid } from 'playwright-core/lib/utils/utils';
 
 const defaultTimeout = 30000;
 const defaultReporter: BuiltInReporter = process.env.CI ? 'dot' : 'list';
