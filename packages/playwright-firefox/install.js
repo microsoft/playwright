@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 
-const { installBrowsersForNpmInstall } = require('playwright-core/src/utils/registry');
+const { installBrowsersForNpmInstall } = require('playwright-core/lib/utils/registry');
 
 installBrowsersForNpmInstall(['firefox']);
