@@ -19,16 +19,16 @@ import { Entry as HAREntry } from '../../supplements/har/har';
 export type ResourceSnapshot = HAREntry;
 
 export type NodeSnapshot =
-  // Text node.
-  string |
+  // Text node, either a string or an index from the string table.
+  string | number |
   // Subtree reference, "x snapshots ago, node #y". Could point to a text node.
   // Only nodes that are not references are counted, starting from zero, using post-order traversal.
   [ [number, number] ] |
   // Just node name.
   [ string ] |
   // Node name, attributes, child nodes.
-  // Unfortunately, we cannot make this type definition recursive, therefore "any".
-  [ string, { [attr: string]: string }, ...any ];
+  // Attribute value is either a string or an index from the string table.
+  [ string, { [attr: string]: (string | number) }, ...NodeSnapshot[] ];
 
 
 export type ResourceOverride = {
@@ -46,6 +46,7 @@ export type FrameSnapshot = {
   collectionTime: number,
   doctype?: string,
   html: NodeSnapshot,
+  strings?: string[],
   resourceOverrides: ResourceOverride[],
   viewport: { width: number, height: number },
   isMainFrame: boolean,

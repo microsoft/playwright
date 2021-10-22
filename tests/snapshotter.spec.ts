@@ -76,7 +76,6 @@ it.describe('snapshots', () => {
   });
 
   it('should respect node removal', async ({ page, toImpl, snapshotter }) => {
-    page.on('console', console.log);
     await page.setContent('<div><button id="button1"></button><button id="button2"></button></div>');
     const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
     expect(distillSnapshot(snapshot1)).toBe('<DIV><BUTTON id=\"button1\"></BUTTON><BUTTON id=\"button2\"></BUTTON></DIV>');
@@ -86,7 +85,6 @@ it.describe('snapshots', () => {
   });
 
   it('should respect attr removal', async ({ page, toImpl, snapshotter }) => {
-    page.on('console', console.log);
     await page.setContent('<div id="div" attr1="1" attr2="2"></div>');
     const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
     expect(distillSnapshot(snapshot1)).toBe('<DIV id=\"div\" attr1=\"1\" attr2=\"2\"></DIV>');
@@ -179,6 +177,42 @@ it.describe('snapshots', () => {
       const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot2');
       expect(distillSnapshot(snapshot)).toBe('<BUTTON data="two">Hello</BUTTON>');
     }
+  });
+
+  it('should dedupe large strings', async ({ page, toImpl, snapshotter }) => {
+    await page.setContent('<div></div>');
+    await page.$eval('div', div => {
+      let odd = '';
+      let even = '';
+      for (let i = 0; i < 1000; i++) {
+        odd += 'div { background: red; height: 10px; }\n';
+        even += 'div { background: blue; height: 10px; }\n';
+      }
+      const prefix = new Array(100).fill('longpropertyname', 0, 100).join('') + ': none;';
+      for (let i = 0; i < 1000; i++) {
+        const child = document.createElement('div');
+        div.appendChild(child);
+        const shadow = child.attachShadow({ mode: 'open' });
+        const style = document.createElement('style');
+        style.textContent = i % 2 ? odd : even;
+        shadow.appendChild(style);
+        const inner = document.createElement('div');
+        inner.setAttribute('style', prefix + (i % 2 ? 'color: blue' : 'color: red'));
+        shadow.appendChild(inner);
+      }
+    });
+
+    const renderer = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
+    const snapshot = renderer.snapshot();
+    const json = JSON.stringify(snapshot);
+    // Style tags and style attributes should be deduped.
+    expect(json.length).toBeLessThan(1000 * 1000);
+
+    const renderer2 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot2');
+    const snapshot2 = renderer2.snapshot();
+    // No extra strings from nodes that are references.
+    expect(snapshot2.html).toEqual([[1, 5004]]);
+    expect(snapshot2.strings).toEqual([]);
   });
 });
 

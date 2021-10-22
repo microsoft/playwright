@@ -124,7 +124,8 @@ export class Snapshotter {
         timestamp: monotonicTime(),
         collectionTime: data.collectionTime,
         resourceOverrides: [],
-        isMainFrame: page.mainFrame() === frame
+        isMainFrame: page.mainFrame() === frame,
+        strings: data.strings,
       };
       for (const { url, content, contentType } of data.resourceOverrides) {
         if (typeof content === 'string') {

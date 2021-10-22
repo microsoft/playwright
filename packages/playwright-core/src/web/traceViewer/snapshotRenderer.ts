@@ -41,9 +41,12 @@ export class SnapshotRenderer {
 
   render(): RenderedFrameSnapshot {
     const visit = (n: NodeSnapshot, snapshotIndex: number): string => {
+      const strings = this._snapshots[snapshotIndex].strings || [];
       // Text node.
       if (typeof n === 'string')
         return escapeText(n);
+      if (typeof n === 'number')
+        return strings[n] || '';
 
       if (!(n as any)._string) {
         if (Array.isArray(n[0])) {
@@ -59,11 +62,13 @@ export class SnapshotRenderer {
           // Element node.
           const builder: string[] = [];
           builder.push('<', n[0]);
-          for (const [attr, value] of Object.entries(n[1] || {}))
-            builder.push(' ', attr, '="', escapeAttribute(value as string), '"');
+          for (const [attr, value] of Object.entries(n[1] || {})) {
+            const s = typeof value === 'number' ? (strings[value] || '') : value;
+            builder.push(' ', attr, '="', escapeAttribute(s), '"');
+          }
           builder.push('>');
           for (let i = 2; i < n.length; i++)
-            builder.push(visit(n[i], snapshotIndex));
+            builder.push(visit(n[i] as NodeSnapshot, snapshotIndex));
           if (!autoClosing.has(n[0]))
             builder.push('</', n[0], '>');
           (n as any)._string = builder.join('');
@@ -151,13 +156,16 @@ function escapeText(s: string): string {
 
 function snapshotNodes(snapshot: FrameSnapshot): NodeSnapshot[] {
   if (!(snapshot as any)._nodes) {
+    const strings = snapshot.strings || [];
     const nodes: NodeSnapshot[] = [];
     const visit = (n: NodeSnapshot) => {
       if (typeof n === 'string') {
         nodes.push(n);
+      } else if (typeof n === 'number') {
+        nodes.push(strings[n] || '');
       } else if (typeof n[0] === 'string') {
         for (let i = 2; i < n.length; i++)
-          visit(n[i]);
+          visit(n[i] as NodeSnapshot);
         nodes.push(n);
       }
     };

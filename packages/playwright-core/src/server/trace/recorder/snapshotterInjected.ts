@@ -29,6 +29,7 @@ export type SnapshotData = {
   url: string,
   timestamp: number,
   collectionTime: number,
+  strings: string[],
 };
 
 export function frameSnapshotStreamer(snapshotStreamer: string) {
@@ -435,7 +436,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
         return checkAndReturn(result);
       };
 
-      const visitStyleSheet = (sheet: CSSStyleSheet) => {
+      const visitStyleSheet = (sheet: CSSStyleSheet): { equals: boolean, n: NodeSnapshot } => {
         const data = ensureCachedData(sheet);
         const oldCSSText = data.cssText;
         const cssText = this._updateStyleElementStyleSheetTextIfNeeded(sheet) || '';
@@ -458,6 +459,44 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
         html = ['html'];
       }
 
+      // Post-process the snapshot and replace long strings with indices in a string table.
+      //
+      // Note that we cannot produce string table while creating the snapshot because
+      // we don't know yet whether a particular node ends up as a reference.
+      // In the unlucky scenario, we'll get html=[[1,123]] with
+      // strings=<all long strings in the document> and our snapshot size will be 1000x.
+      const strings = new Map<string, number>();
+      const maybePutToStringTable = (s: string): string | number => {
+        // 50 is just some magic constant.
+        if (s.length <= 50)
+          return s;
+        let result = strings.get(s);
+        if (result === undefined) {
+          result = strings.size;
+          strings.set(s, result);
+        }
+        return result;
+      };
+      const createStringTable = (n: NodeSnapshot): NodeSnapshot => {
+        if (typeof n === 'string')
+          return maybePutToStringTable(n);
+        if (typeof n === 'number')
+          return n;
+        if (typeof n[0] === 'string') {
+          const attrs = n[1];
+          if (attrs) {
+            for (const [key, value] of Object.entries(attrs)) {
+              if (typeof value === 'string')
+                attrs[key] = maybePutToStringTable(value);
+            }
+          }
+          for (let i = 2; i < n.length; i++)
+            n[i] = createStringTable(n[i] as NodeSnapshot);
+        }
+        return n;
+      };
+      html = createStringTable(html);
+
       const result: SnapshotData = {
         html,
         doctype: document.doctype ? document.doctype.name : undefined,
@@ -469,6 +508,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
         url: location.href,
         timestamp,
         collectionTime: 0,
+        strings: Array.from(strings.keys()),
       };
 
       for (const sheet of this._staleStyleSheets) {

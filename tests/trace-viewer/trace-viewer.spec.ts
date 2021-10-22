@@ -393,9 +393,7 @@ test('should work with adopted style sheets and replace/replaceSync', async ({ p
   }
 });
 
-test('should restore scroll positions', async ({ page, runAndTrace, browserName }) => {
-  test.skip(browserName === 'firefox');
-
+test('should restore scroll positions', async ({ page, runAndTrace }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.setContent(`
       <style>
@@ -427,9 +425,7 @@ test('should restore scroll positions', async ({ page, runAndTrace, browserName 
   expect(await div.evaluate(div => div.scrollTop)).toBe(136);
 });
 
-test('should work with meta CSP', async ({ page, runAndTrace, browserName }) => {
-  test.skip(browserName === 'firefox');
-
+test('should work with meta CSP', async ({ page, runAndTrace }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.setContent(`
       <head>
@@ -454,9 +450,7 @@ test('should work with meta CSP', async ({ page, runAndTrace, browserName }) => 
   expect(await frame.textContent('span')).toBe('World');
 });
 
-test('should handle multiple headers', async ({ page, server, runAndTrace, browserName }) => {
-  test.skip(browserName === 'firefox');
-
+test('should handle multiple headers', async ({ page, server, runAndTrace }) => {
   server.setRoute('/foo.css', (req, res) => {
     res.statusCode = 200;
     res.setHeader('vary', ['accepts-encoding', 'accepts-encoding']);
@@ -498,9 +492,7 @@ test('should handle src=blob', async ({ page, server, runAndTrace, browserName }
   expect(size).toBe(10);
 });
 
-test('should highlight target elements', async ({ page, runAndTrace, browserName }) => {
-  test.skip(browserName === 'firefox');
-
+test('should highlight target elements', async ({ page, runAndTrace }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.setContent(`
       <div>hello</div>
@@ -536,4 +528,42 @@ test('should highlight target elements', async ({ page, runAndTrace, browserName
 
   const frameExpect2 = await traceViewer.snapshotFrame('expect.toHaveText', 1);
   await expect(frameExpect2.locator('[__playwright_target__]')).toHaveText(['hello', 'world']);
+});
+
+test('should render deduped strings', async ({ page, runAndTrace }) => {
+  test.slow(true, 'Very large page and snapshot');
+
+  const traceViewer = await runAndTrace(async () => {
+    await page.setContent('<div></div>');
+    await page.$eval('div', div => {
+      let odd = '';
+      let even = '';
+      for (let i = 0; i < 1000; i++) {
+        odd += 'div { background: red; height: 10px; }\n';
+        even += 'div { background: blue; height: 10px; }\n';
+      }
+      const prefix = new Array(100).fill('longpropertyname', 0, 100).join('') + ': none;';
+      for (let i = 0; i < 1000; i++) {
+        const child = document.createElement('div');
+        div.appendChild(child);
+        const shadow = child.attachShadow({ mode: 'open' });
+        const style = document.createElement('style');
+        style.textContent = i % 2 ? odd : even;
+        shadow.appendChild(style);
+        const inner = document.createElement('div');
+        inner.setAttribute('style', prefix + (i % 2 ? 'color: blue' : 'color: red'));
+        shadow.appendChild(inner);
+      }
+    });
+    await page.click('div');
+  });
+
+  const framePageClick = await traceViewer.snapshotFrame('page.click');
+  for (let i = 0; i < 50; i++) {
+    const row = framePageClick.locator('div>div>div').nth(i);
+    // Check that style tag is correct.
+    await expect(row).toHaveCSS('backgroundColor', i % 2 ? 'rgb(255, 0, 0)' : 'rgb(0, 0, 255)');
+    // Check that style attribute is correct.
+    await expect(row).toHaveCSS('color', i % 2 ? 'rgb(0, 0, 255)' : 'rgb(255, 0, 0)');
+  }
 });
