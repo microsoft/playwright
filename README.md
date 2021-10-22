@@ -122,7 +122,7 @@ const { webkit } = require('playwright');
   const page = await context.newPage();
 
   // Log and continue all network requests
-  page.route('**', route => {
+  await page.route('**', route => {
     console.log(route.request().url());
     route.continue();
   });
