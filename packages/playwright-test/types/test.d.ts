@@ -2154,12 +2154,15 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group, runs before each test
    * in the group.
    *
+   * You can access all the same [Fixtures] as the test function itself, and also the [TestInfo] object that gives a lot of
+   * useful information. For example, you can navigate the page before starting the test.
+   *
    * ```ts
    * // example.spec.ts
    * import { test, expect } from '@playwright/test';
    *
-   * test.beforeEach(async ({ page }) => {
-   *   // Go to the starting url before each test.
+   * test.beforeEach(async ({ page }, testInfo) => {
+   *   console.log(`Running ${testInfo.title}`);
    *   await page.goto('https://my.start.url/');
    * });
    *
@@ -2178,6 +2181,26 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * test in the file. When called inside a
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group, runs after each test
    * in the group.
+   *
+   * You can access all the same [Fixtures] as the test function itself, and also the [TestInfo] object that gives a lot of
+   * useful information. For example, you can check whether the test succeeded or failed.
+   *
+   * ```ts
+   * // example.spec.ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.afterEach(async ({ page }, testInfo) => {
+   *   console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
+   *
+   *   if (testInfo.status !== testInfo.expectedStatus)
+   *     console.log(`Did not run as expected, ended up at ${page.url()}`);
+   * });
+   *
+   * test('my test', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
    * @param hookFunction Hook function that takes one or two arguments: an object with fixtures and optional [TestInfo].
    */
   afterEach(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
