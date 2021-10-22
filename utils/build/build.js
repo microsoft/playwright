@@ -62,8 +62,8 @@ const lintMode = process.argv.slice(2).includes('--lint');
 const ROOT = path.join(__dirname, '..', '..');
 
 /**
- * @param {String} relative 
- * @returns {String}
+ * @param {string} relative 
+ * @returns {string}
  */
 function filePath(relative) {
   return path.join(ROOT, ...relative.split('/'));
