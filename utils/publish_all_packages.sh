@@ -80,10 +80,6 @@ echo "==================== Publishing version ${VERSION} ================"
 node ./utils/prepare_packages.js
 node -e "console.log(require('./utils/list_packages').packages.join('\\n'))" | while read package
 do
-  if [[ ${package} == *"create-playwright" ]]; then
-    echo "Skipping ${package}..."
-    continue
-  fi
   npm publish ${package} --tag="${NPM_PUBLISH_TAG}"
 done
 
