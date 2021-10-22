@@ -226,6 +226,7 @@ export abstract class FetchRequest extends SdkObject {
             postData = undefined;
             delete headers[`content-encoding`];
             delete headers[`content-language`];
+            delete headers[`content-length`];
             delete headers[`content-location`];
             delete headers[`content-type`];
           }

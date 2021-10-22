@@ -210,3 +210,21 @@ it('should abort redirected requests when context is disposed', async ({ playwri
   expect(result.message).toContain('Request context disposed');
   await connectionClosed;
 });
+
+it('should remove content-length from reidrected post requests', async ({ playwright, server }) => {
+  server.setRedirect('/redirect', '/empty.html');
+  const request = await playwright.request.newContext();
+  const [result, req1, req2] = await Promise.all([
+    request.post(server.PREFIX + '/redirect', {
+      data: {
+        'foo': 'bar'
+      }
+    }),
+    server.waitForRequest('/redirect'),
+    server.waitForRequest('/empty.html')
+  ]);
+  expect(result.status()).toBe(200);
+  expect(req1.headers['content-length']).toBe('13');
+  expect(req2.headers['content-length']).toBe(undefined);
+  await request.dispose();
+});
