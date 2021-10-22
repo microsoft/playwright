@@ -15,21 +15,6 @@ reached. You can pass this timeout as an option.
 
 By default, the timeout for assertions is set to 5 seconds.
 
-## method: PlaywrightAssertions.assertThatPage
-* langs: java
-- returns: <[PageAssertions]>
-
-Creates a [PageAssertions] object for the given [Page].
-
-```java
-PlaywrightAssertions.assertThat(page).hasTitle("News");
-```
-
-### param: PlaywrightAssertions.assertThatPage.page
-- `page` <[Page]>
-
-[Page] object to use for assertions.
-
 ## method: PlaywrightAssertions.assertThatLocator
 * langs: java
 - returns: <[LocatorAssertions]>
@@ -45,3 +30,17 @@ PlaywrightAssertions.assertThat(locator).isVisible();
 
 [Locator] object to use for assertions.
 
+## method: PlaywrightAssertions.assertThatPage
+* langs: java
+- returns: <[PageAssertions]>
+
+Creates a [PageAssertions] object for the given [Page].
+
+```java
+PlaywrightAssertions.assertThat(page).hasTitle("News");
+```
+
+### param: PlaywrightAssertions.assertThatPage.page
+- `page` <[Page]>
+
+[Page] object to use for assertions.
