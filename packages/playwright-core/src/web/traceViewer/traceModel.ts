@@ -37,13 +37,13 @@ export class TraceModel {
     this.contextEntry = createEmptyContext();
   }
 
-  async load(traceURL: string) {
-    const response = await fetch(traceURL, { mode: 'cors' });
-    const blob = await response.blob();
-    const zipReader = new zipjs.ZipReader(new zipjs.BlobReader(blob), { useWebWorkers: false }) as zip.ZipReader;
+  async load(traceURL: string, progress: (done: number, total: number) => void) {
+    const zipReader = new zipjs.ZipReader(
+        new zipjs.HttpReader(traceURL, { mode: 'cors' }),
+        { useWebWorkers: false }) as zip.ZipReader;
     let traceEntry: zip.Entry | undefined;
     let networkEntry: zip.Entry | undefined;
-    for (const entry of await zipReader.getEntries()) {
+    for (const entry of await zipReader.getEntries({ onprogress: progress })) {
       if (entry.filename.endsWith('.trace'))
         traceEntry = entry;
       if (entry.filename.endsWith('.network'))
