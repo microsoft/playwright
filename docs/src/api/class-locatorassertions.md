@@ -1,7 +1,7 @@
 # class: LocatorAssertions
 * langs: java
 
-The [LocatorAssertions] class provides assertion methods that can be used to make assertions about the [Locator] state in the tests.
+The [LocatorAssertions] class provides assertion methods that can be used to make assertions about the [Locator] state in the tests. A new instance of [LocatorAssertions] is created by calling [`method: PlaywrightAssertions.assertThat`].
 
 ## method: LocatorAssertions.containsText
 
@@ -107,7 +107,7 @@ CSS property value.
 
 ## method: LocatorAssertions.hasId
 
-Ensures the [Locator] rpoints to an element with the given DOM Node ID.
+Ensures the [Locator] points to an element with the given DOM Node ID.
 
 ```java
 assertThat(page.locator("input")).hasId("lastname");
@@ -265,7 +265,7 @@ assertThat(page.locator(".my-element")).isVisible();
 ## method: LocatorAssertions.not
 - returns: <[LocatorAssertions]>
 
-Makes the assertion check for the opposite condition. For example, this code tests that the Locator doesn"t contain text `"error"`:
+Makes the assertion check for the opposite condition. For example, this code tests that the Locator doesn't contain text `"error"`:
 
 ```java
 assertThat(locator).not().containsText("error");
