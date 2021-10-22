@@ -28,20 +28,43 @@ const { packages } = require('../list_packages');
  *   args: string[],
  *   shell: boolean,
  *   env?: NodeJS.ProcessEnv,
+ *   cwd?: string,
  * }} Step
  */
 
 /**
- * @type {Step[]}
+ * @typedef {{
+ *   files: string,
+ *   from: string,
+ *   to: string,
+ *   ignored?: string[],
+ * }} CopyFile
  */
+
+/**
+ * @typedef {{
+ *   committed: boolean,
+ *   inputs: string[],
+ *   mustExist?: string[],
+ *   script: string,
+ * }} OnChange
+ */
+
+/** @type {Step[]} */
 const steps = [];
+/** @type {OnChange[]} */
 const onChanges = [];
+/** @type {CopyFile[]} */
 const copyFiles = [];
 
 const watchMode = process.argv.slice(2).includes('--watch');
 const lintMode = process.argv.slice(2).includes('--lint');
 const ROOT = path.join(__dirname, '..', '..');
 
+/**
+ * @param {string} relative 
+ * @returns {string}
+ */
 function filePath(relative) {
   return path.join(ROOT, ...relative.split('/'));
 }
@@ -66,13 +89,17 @@ async function runWatch() {
       copyFile(file, from, to);
     });
   }
+  /** @type{import('child_process').ChildProcess[]} */
   const spawns = [];
   for (const step of steps)
     spawns.push(child_process.spawn(step.command, step.args, {
-      stdio: 'inherit', shell: step.shell, env: {
+      stdio: 'inherit',
+      shell: step.shell,
+      env: {
         ...process.env,
         ...step.env,
-      }
+      },
+      cwd: step.cwd,
     }));
   process.on('exit', () => spawns.forEach(s => s.kill()));
   for (const onChange of onChanges)
@@ -85,10 +112,13 @@ async function runBuild() {
    */
   function runStep(step) {
     const out = child_process.spawnSync(step.command, step.args, {
-      stdio: 'inherit', shell: step.shell, env: {
+      stdio: 'inherit',
+      shell: step.shell,
+      env: {
         ...process.env,
         ...step.env
-      }
+      },
+      cwd: step.cwd,
     });
     if (out.status)
       process.exit(out.status);
@@ -112,6 +142,11 @@ async function runBuild() {
   }
 }
 
+/**
+ * @param {string} file 
+ * @param {string} from 
+ * @param {string} to 
+ */
 function copyFile(file, from, to) {
   const destination = path.resolve(filePath(to), path.relative(filePath(from), file));
   fs.mkdirSync(path.dirname(destination), { recursive: true });
@@ -141,6 +176,8 @@ for (const file of webPackFiles) {
 for (const packageDir of packages) {
   if (!fs.existsSync(path.join(packageDir, 'src')))
     continue;
+  if (path.basename(packageDir) === 'create-playwright')
+    continue;
   steps.push({
     command: 'npx',
     args: [
@@ -148,7 +185,7 @@ for (const packageDir of packages) {
       ...(watchMode ? ['-w', '--source-maps'] : []),
       '--extensions', '.ts',
       '--out-dir', path.join(packageDir, 'lib'),
-      '--ignore', 'packages/playwright-core/src/server/injected/**/*',
+      '--ignore', '"packages/playwright-core/src/server/injected/**/*","packages/create-playwright/**/*"',
       path.join(packageDir, 'src')],
     shell: true,
   });
@@ -224,5 +261,13 @@ if (lintMode) {
     shell: true,
   });
 }
+
+// create-playwright package
+steps.push({
+  command: 'npx',
+  args: ['ncc', 'build', 'cli.ts', (watchMode ? '--watch' : '--minify'), '--out', '../lib'],
+  shell: true,
+  cwd: 'packages/create-playwright/src'
+});
 
 watchMode ? runWatch() : runBuild();
