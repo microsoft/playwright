@@ -39,7 +39,7 @@ type OverriddenExpectProperties =
 
 declare global {
   export namespace PlaywrightTest {
-    export interface Matchers<R> extends Omit<expect.Matchers<R>, OverriddenExpectProperties> {
+    export interface Matchers<R> extends Omit<expect.Matchers<R, unknown>, OverriddenExpectProperties> {
       /**
        * If you know how to test something, `.not` lets you test its opposite.
        */
