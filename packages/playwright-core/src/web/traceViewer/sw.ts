@@ -32,13 +32,16 @@ const scopePath = new URL(self.registration.scope).pathname;
 
 const loadedTraces = new Map<string, { traceModel: TraceModel, snapshotServer: SnapshotServer, clientId: string }>();
 
-async function loadTrace(trace: string, clientId: string): Promise<TraceModel> {
+async function loadTrace(trace: string, clientId: string, progress: (done: number, total: number) => void): Promise<TraceModel> {
   const entry = loadedTraces.get(trace);
   if (entry)
     return entry.traceModel;
   const traceModel = new TraceModel();
-  const url = trace.startsWith('http') || trace.startsWith('blob') ? trace : `/file?path=${trace}`;
-  await traceModel.load(url);
+  let url = trace.startsWith('http') || trace.startsWith('blob') ? trace : `/file?path=${trace}`;
+  // Dropbox does not support cors.
+  if (url.startsWith('https://www.dropbox.com/'))
+    url = 'https://dl.dropboxusercontent.com/' + url.substring('https://www.dropbox.com/'.length);
+  await traceModel.load(url, progress);
   const snapshotServer = new SnapshotServer(traceModel.storage());
   loadedTraces.set(trace, { traceModel, snapshotServer, clientId });
   return traceModel;
@@ -47,8 +50,8 @@ async function loadTrace(trace: string, clientId: string): Promise<TraceModel> {
 // @ts-ignore
 async function doFetch(event: FetchEvent): Promise<Response> {
   const request = event.request;
-  const snapshotUrl = request.mode === 'navigate' ?
-    request.url : (await self.clients.get(event.clientId))!.url;
+  const client = await self.clients.get(event.clientId);
+  const snapshotUrl = request.mode === 'navigate' ? request.url : client!.url;
   const traceUrl = new URL(snapshotUrl).searchParams.get('trace')!;
   const { snapshotServer } = loadedTraces.get(traceUrl) || {};
 
@@ -62,7 +65,9 @@ async function doFetch(event: FetchEvent): Promise<Response> {
     }
 
     if (relativePath === '/context') {
-      const traceModel = await loadTrace(traceUrl, event.clientId);
+      const traceModel = await loadTrace(traceUrl, event.clientId, (done: number, total: number) => {
+        client.postMessage({ method: 'progress', params: { done, total } });
+      });
       return new Response(JSON.stringify(traceModel!.contextEntry), {
         status: 200,
         headers: { 'Content-Type': 'application/json' }

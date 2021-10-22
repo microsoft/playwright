@@ -36,6 +36,7 @@ export const Workbench: React.FunctionComponent<{
   const [selectedAction, setSelectedAction] = React.useState<ActionTraceEvent | undefined>();
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEvent | undefined>();
   const [selectedTab, setSelectedTab] = React.useState<string>('logs');
+  const [progress, setProgress] = React.useState<{ done: number, total: number }>({ done: 0, total: 0 });
 
   const handleDropEvent = (event: any) => {
     event.preventDefault();
@@ -52,7 +53,15 @@ export const Workbench: React.FunctionComponent<{
   React.useEffect(() => {
     (async () => {
       if (traceURL) {
+        const swListener = (event: any) => {
+          if (event.data.method === 'progress')
+            setProgress(event.data.params);
+        };
+        navigator.serviceWorker.addEventListener('message', swListener);
+        setProgress({ done: 0, total: 1 });
         const contextEntry = (await fetch(`context?trace=${traceURL}`).then(response => response.json())) as ContextEntry;
+        navigator.serviceWorker.removeEventListener('message', swListener);
+        setProgress({ done: 0, total: 0 });
         modelUtil.indexModel(contextEntry);
         setContextEntry(contextEntry);
       } else {
@@ -64,18 +73,21 @@ export const Workbench: React.FunctionComponent<{
   const defaultSnapshotSize = contextEntry.options.viewport || { width: 1280, height: 720 };
   const boundaries = { minimum: contextEntry.startTime, maximum: contextEntry.endTime };
 
-  if (!traceURL) {
+  if (!traceURL || progress.total) {
     return <div className='vbox workbench'>
       <div className='hbox header'>
         <div className='logo'>🎭</div>
         <div className='product'>Playwright</div>
         <div className='spacer'></div>
       </div>
-      <div className='drop-target'
+      {!!progress.total && <div className='progress'>
+        <div className='inner-progress' style={{ width: (100 * progress.done / progress.total) + '%' }}></div>
+      </div>}
+      {!progress.total && <div className='drop-target'
         onDragOver={event => { event.preventDefault(); }}
         onDrop={event => handleDropEvent(event)}>
-      Drop Playwright Trace here
-      </div>
+        Drop Playwright Trace here
+      </div>}
     </div>;
   }
 

@@ -25,6 +25,19 @@
   font-weight: bold;
 }
 
+.progress {
+  position: relative;
+  margin: auto;
+  width: 400px;
+  height: 10px;
+  border: 1px solid #aaa;
+}
+
+.inner-progress {
+  background-color: #aaa;
+  height: 100%;
+}
+
 .workbench {
   contain: size;
   user-select: none;
