@@ -1,11 +1,11 @@
 # class: PageAssertions
 * langs: java
 
-The [PageAssertions] class provides assertion methods that can be used to make assertions about the [Page] state in the tests.
+The [PageAssertions] class provides assertion methods that can be used to make assertions about the [Page] state in the tests. A new instance of [LocatorAssertions] is created by calling [`method: PlaywrightAssertions.assertThatPage`].
 
 ## method: PageAssertions.hasTitle
 
-Ensures the page has a given title.
+Ensures the page has the given title.
 
 ```java
 assertThat(page).hasTitle("Playwright");
@@ -16,10 +16,7 @@ assertThat(page).hasTitle("Playwright");
 
 Expected title or RegExp.
 
-### option: PageAssertions.hasTitle.timeout
-- `timeout` <[float]>
-
-Time to retry assertion for.
+### option: PageAssertions.hasTitle.timeout = %%-assertions-timeout-%%
 
 ## method: PageAssertions.hasURL
 
@@ -34,10 +31,7 @@ assertThat(page).hasURL('.com');
 
 Expected substring or RegExp.
 
-### option: PageAssertions.hasURL.timeout
-- `timeout` <[float]>
-
-Time to retry the assertion for.
+### option: PageAssertions.hasURL.timeout = %%-assertions-timeout-%%
 
 ## method: PageAssertions.not
 - returns: <[PageAssertions]>
