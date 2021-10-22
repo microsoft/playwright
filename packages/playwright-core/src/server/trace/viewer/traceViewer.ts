@@ -77,6 +77,6 @@ export async function showTraceViewer(traceUrl: string, browserName: string, hea
   else
     page.on('close', () => process.exit());
 
-  await page.mainFrame().goto(internalCallMetadata(), urlPrefix + `/trace/index.html?trace=${traceUrl}`);
+  await page.mainFrame().goto(internalCallMetadata(), urlPrefix + `/trace/index.html${traceUrl ? '?trace=' + traceUrl : ''}`);
   return context;
 }

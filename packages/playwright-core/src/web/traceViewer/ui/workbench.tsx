@@ -62,8 +62,14 @@ export const Workbench: React.FunctionComponent<{
     onDragOver={event => { event.preventDefault(); }}
     onDrop={event => {
       event.preventDefault();
-      const url = URL.createObjectURL(event.dataTransfer.files[0]);
-      setTraceURL(url.toString());
+      const blobTraceURL = URL.createObjectURL(event.dataTransfer.files[0]);
+      const url = new URL(window.location.href);
+      url.searchParams.set('trace', blobTraceURL);
+      const href = url.toString();
+      // Snapshot loaders will inherit the trace url from the query parameters,
+      // so set it here.
+      window.history.pushState({}, '', href);
+      setTraceURL(blobTraceURL);
     }}>
     <div className='hbox header'>
       <div className='logo'>🎭</div>
