@@ -37,6 +37,18 @@ export const Workbench: React.FunctionComponent<{
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEvent | undefined>();
   const [selectedTab, setSelectedTab] = React.useState<string>('logs');
 
+  const handleDropEvent = (event: any) => {
+    event.preventDefault();
+    const blobTraceURL = URL.createObjectURL(event.dataTransfer.files[0]);
+    const url = new URL(window.location.href);
+    url.searchParams.set('trace', blobTraceURL);
+    const href = url.toString();
+    // Snapshot loaders will inherit the trace url from the query parameters,
+    // so set it here.
+    window.history.pushState({}, '', href);
+    setTraceURL(blobTraceURL);
+  };
+
   React.useEffect(() => {
     (async () => {
       if (traceURL) {
@@ -52,6 +64,21 @@ export const Workbench: React.FunctionComponent<{
   const defaultSnapshotSize = contextEntry.options.viewport || { width: 1280, height: 720 };
   const boundaries = { minimum: contextEntry.startTime, maximum: contextEntry.endTime };
 
+  if (!traceURL) {
+    return <div className='vbox workbench'>
+      <div className='hbox header'>
+        <div className='logo'>🎭</div>
+        <div className='product'>Playwright</div>
+        <div className='spacer'></div>
+      </div>
+      <div className='drop-target'
+        onDragOver={event => { event.preventDefault(); }}
+        onDrop={event => handleDropEvent(event)}>
+      Drop Playwright Trace here
+      </div>
+    </div>;
+  }
+
   // Leave some nice free space on the right hand side.
   boundaries.maximum += (boundaries.maximum - boundaries.minimum) / 20;
   const { errors, warnings } = selectedAction ? modelUtil.stats(selectedAction) : { errors: 0, warnings: 0 };
@@ -60,17 +87,7 @@ export const Workbench: React.FunctionComponent<{
 
   return <div className='vbox workbench'
     onDragOver={event => { event.preventDefault(); }}
-    onDrop={event => {
-      event.preventDefault();
-      const blobTraceURL = URL.createObjectURL(event.dataTransfer.files[0]);
-      const url = new URL(window.location.href);
-      url.searchParams.set('trace', blobTraceURL);
-      const href = url.toString();
-      // Snapshot loaders will inherit the trace url from the query parameters,
-      // so set it here.
-      window.history.pushState({}, '', href);
-      setTraceURL(blobTraceURL);
-    }}>
+    onDrop={event => handleDropEvent(event)}>
     <div className='hbox header'>
       <div className='logo'>🎭</div>
       <div className='product'>Playwright</div>
