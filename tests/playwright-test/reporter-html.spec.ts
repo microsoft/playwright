@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import { test as baseTest, expect } from './playwright-test-fixtures';
-import { HttpServer } from 'playwright-core/src/utils/httpServer';
+import { HttpServer } from 'playwright-core/lib/utils/httpServer';
 
 const test = baseTest.extend<{ showReport: () => Promise<void> }>({
   showReport: async ({ page }, use, testInfo) => {

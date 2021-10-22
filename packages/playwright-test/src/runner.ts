@@ -38,7 +38,7 @@ import { ProjectImpl } from './project';
 import { Minimatch } from 'minimatch';
 import { FullConfig } from './types';
 import { WebServer } from './webServer';
-import { raceAgainstDeadline } from 'playwright-core/src/utils/async';
+import { raceAgainstDeadline } from 'playwright-core/lib/utils/async';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);

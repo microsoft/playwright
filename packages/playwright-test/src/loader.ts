@@ -26,7 +26,7 @@ import * as fs from 'fs';
 import { ProjectImpl } from './project';
 import { Reporter } from '../types/testReporter';
 import { BuiltInReporter, builtInReporters } from './runner';
-import { isRegExp } from 'playwright-core/src/utils/utils';
+import { isRegExp } from 'playwright-core/lib/utils/utils';
 
 export class Loader {
   private _defaultConfig: Config;

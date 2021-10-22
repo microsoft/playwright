@@ -115,6 +115,7 @@ jobs:
       fail-fast: false
       matrix:
         node_version:
+        - "12.0.0"
         - "^12.0.0"
         - "^14.1.0"  # pre 14.1, zip extraction was broken (https://github.com/microsoft/playwright/issues/1988)
         - "^16.0.0"

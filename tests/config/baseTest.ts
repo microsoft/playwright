@@ -19,7 +19,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { installCoverageHooks } from './coverage';
 import { start } from '../../packages/playwright-core/lib/outofprocess';
-import { GridClient } from 'playwright-core/src/grid/gridClient';
+import { GridClient } from 'playwright-core/lib/grid/gridClient';
 import type { LaunchOptions } from 'playwright-core';
 import { commonFixtures, CommonFixtures, serverFixtures, ServerFixtures, ServerOptions } from './commonFixtures';
 
@@ -91,7 +91,7 @@ const baseFixtures: Fixtures<{}, BaseOptions & BaseFixtures> = {
       service: new ServiceMode(),
       driver: new DriverMode(),
     }[mode];
-    require('playwright-core/src/utils/utils').setUnderTest();
+    require('playwright-core/lib/utils/utils').setUnderTest();
     const playwright = await modeImpl.setup(workerInfo.workerIndex);
     await run(playwright);
     await modeImpl.teardown();
