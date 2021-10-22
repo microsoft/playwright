@@ -88,11 +88,6 @@ test('should report api step hierarchy', async ({ runInlineTest }) => {
       steps: [
         {
           category: 'pw:api',
-          location: {
-            column: 'number',
-            file: 'index.ts',
-            line: 'number',
-          },
           title: 'browserContext.newPage',
         },
       ],
@@ -161,11 +156,6 @@ test('should report api step hierarchy', async ({ runInlineTest }) => {
       steps: [
         {
           category: 'pw:api',
-          location: {
-            column: 'number',
-            file: 'index.ts',
-            line: 'number',
-          },
           title: 'browserContext.close',
         },
       ],
@@ -201,11 +191,6 @@ test('should not report nested after hooks', async ({ runInlineTest }) => {
         {
           category: 'pw:api',
           title: 'browserContext.newPage',
-          location: {
-            column: 'number',
-            file: 'index.ts',
-            line: 'number',
-          },
         },
       ],
     },
@@ -225,11 +210,6 @@ test('should not report nested after hooks', async ({ runInlineTest }) => {
         {
           category: 'pw:api',
           title: 'browserContext.close',
-          location: {
-            column: 'number',
-            file: 'index.ts',
-            line: 'number',
-          },
         },
       ],
     },
@@ -316,11 +296,6 @@ test('should report expect step locations', async ({ runInlineTest }) => {
       steps: [
         {
           category: 'pw:api',
-          location: {
-            column: 'number',
-            file: 'index.ts',
-            line: 'number',
-          },
           title: 'browserContext.newPage',
         },
       ],
@@ -340,11 +315,6 @@ test('should report expect step locations', async ({ runInlineTest }) => {
       steps: [
         {
           category: 'pw:api',
-          location: {
-            column: 'number',
-            file: 'index.ts',
-            line: 'number',
-          },
           title: 'browserContext.close',
         },
       ],
