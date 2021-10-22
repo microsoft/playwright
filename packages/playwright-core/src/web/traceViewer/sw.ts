@@ -56,8 +56,12 @@ async function doFetch(event: FetchEvent): Promise<Response> {
     const url = new URL(request.url);
 
     const relativePath = url.pathname.substring(scopePath.length - 1);
-    if (relativePath === '/context') {
+    if (relativePath === '/ping') {
       await gc();
+      return new Response(null, { status: 200 });
+    }
+
+    if (relativePath === '/context') {
       const traceModel = await loadTrace(traceUrl, event.clientId);
       return new Response(JSON.stringify(traceModel!.contextEntry), {
         status: 200,
