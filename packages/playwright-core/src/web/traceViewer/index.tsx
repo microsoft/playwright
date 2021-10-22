@@ -29,5 +29,7 @@ import '../common.css';
       navigator.serviceWorker.oncontrollerchange = () => f();
     });
   }
+  // Keep SW running.
+  setInterval(function() { fetch('ping'); }, 10000);
   ReactDOM.render(<Workbench/>, document.querySelector('#root'));
 })();
