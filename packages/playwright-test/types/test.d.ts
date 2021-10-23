@@ -120,15 +120,13 @@ interface TestProject {
    */
   name?: string;
   /**
-   * The base directory relative to
-   * [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir) for snapshot files created
-   * with `toMatchSnapshot`. Defaults `.`.
+   * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults `.`.
    *
    * The directory for each test can be accessed by
    * [testInfo.snapshotDir](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-dir) and
    * [testInfo.snapshotPath(pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-path).
    *
-   * This path with serve as the base directory for each test file snapshot directory. Setting `snapshotDir` to
+   * This path will serve as the base directory for each test file snapshot directory. Setting `snapshotDir` to
    * `'snapshots'`, the [testInfo.snapshotDir](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-dir) would
    * resolve to `snapshots/a.spec.js-snapshots`.
    */
@@ -522,15 +520,13 @@ interface TestConfig {
   metadata?: any;
   name?: string;
   /**
-   * The base directory relative to
-   * [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir) for snapshot files created
-   * with `toMatchSnapshot`. Defaults `.`.
+   * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults `.`.
    *
    * The directory for each test can be accessed by
    * [testInfo.snapshotDir](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-dir) and
    * [testInfo.snapshotPath(pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-path).
    *
-   * This path with serve as the base directory for each test file snapshot directory. Setting `snapshotDir` to
+   * This path will serve as the base directory for each test file snapshot directory. Setting `snapshotDir` to
    * `'snapshots'`, the [testInfo.snapshotDir](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-dir) would
    * resolve to `snapshots/a.spec.js-snapshots`.
    */
@@ -1126,8 +1122,8 @@ export interface TestInfo {
    */
   snapshotSuffix: string;
   /**
-   * Absolute path to the snapshot output directory for this specific test suite. Each test suite gets its own directory so
-   * they cannot conflict.
+   * Absolute path to the snapshot output directory for this specific test. Each test suite gets its own directory so they
+   * cannot conflict.
    */
   snapshotDir: string;
   /**

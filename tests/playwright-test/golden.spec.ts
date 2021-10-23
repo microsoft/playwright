@@ -518,8 +518,6 @@ test('should use snapshotDir as snapshot base directory', async ({ runInlineTest
       });
     `
   });
-  console.log(result.output);
-
   expect(result.exitCode).toBe(0);
 });
 
@@ -558,8 +556,6 @@ test('should use snapshotDir with nested test suite and path segments', async ({
       });
     `
   });
-  console.log(result.output);
-
   expect(result.exitCode).toBe(0);
 });
 

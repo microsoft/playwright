@@ -125,11 +125,11 @@ Project name is visible in the report and during test execution.
 ## property: TestProject.snapshotDir
 - type: <[string]>
 
-The base directory relative to [`property: TestConfig.testDir`] for snapshot files created with `toMatchSnapshot`. Defaults `.`.
+The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults `.`.
 
 The directory for each test can be accessed by [`property: TestInfo.snapshotDir`] and [`method: TestInfo.snapshotPath`].
 
-This path with serve as the base directory for each test file snapshot directory. Setting `snapshotDir` to `'snapshots'`, the [`property: TestInfo.snapshotDir`] would resolve to `snapshots/a.spec.js-snapshots`.
+This path will serve as the base directory for each test file snapshot directory. Setting `snapshotDir` to `'snapshots'`, the [`property: TestInfo.snapshotDir`] would resolve to `snapshots/a.spec.js-snapshots`.
 
 ## property: TestProject.outputDir
 - type: <[string]>
