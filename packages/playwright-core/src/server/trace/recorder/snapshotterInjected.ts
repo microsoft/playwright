@@ -145,14 +145,15 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
       this._staleStyleSheets.add(sheet);
     }
 
-    private _updateStyleElementStyleSheetTextIfNeeded(sheet: CSSStyleSheet): string | undefined {
+    private _updateStyleElementStyleSheetTextIfNeeded(sheet: CSSStyleSheet, forceText?: boolean): string | undefined {
       const data = ensureCachedData(sheet);
-      if (this._staleStyleSheets.has(sheet)) {
+      if (this._staleStyleSheets.has(sheet) || (forceText && data.cssText === undefined)) {
         this._staleStyleSheets.delete(sheet);
         try {
           data.cssText = this._getSheetText(sheet);
         } catch (e) {
           // Sometimes we cannot access cross-origin stylesheets.
+          data.cssText = '';
         }
       }
       return data.cssText;
@@ -438,7 +439,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
       const visitStyleSheet = (sheet: CSSStyleSheet) => {
         const data = ensureCachedData(sheet);
         const oldCSSText = data.cssText;
-        const cssText = this._updateStyleElementStyleSheetTextIfNeeded(sheet) || '';
+        const cssText = this._updateStyleElementStyleSheetTextIfNeeded(sheet, true /* forceText */)!;
         if (cssText === oldCSSText)
           return { equals: true, n: [[ snapshotNumber - data.ref![0], data.ref![1] ]] };
         data.ref = [snapshotNumber, nodeCounter++];
