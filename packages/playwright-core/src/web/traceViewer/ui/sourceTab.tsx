@@ -62,7 +62,7 @@ export const SourceTab: React.FunctionComponent<{
     } else {
       const filePath = stackInfo.frames[selectedFrame].file;
       if (!stackInfo.fileContent.has(filePath))
-        stackInfo.fileContent.set(filePath, await fetch(`/file?${filePath}`).then(response => response.text()).catch(e => `<Unable to read "${filePath}">`));
+        stackInfo.fileContent.set(filePath, await fetch(`file?path=${filePath}`).then(response => response.text()).catch(e => `<Unable to read "${filePath}">`));
       value = stackInfo.fileContent.get(filePath)!;
     }
     return value;

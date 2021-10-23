@@ -97,6 +97,15 @@ export const Workbench: React.FunctionComponent<{
   const consoleCount = errors + warnings;
   const networkCount = selectedAction ? modelUtil.resourcesForAction(selectedAction).length : 0;
 
+  const tabs = [
+    { id: 'logs', title: 'Call', count: 0, render: () => <CallTab action={selectedAction} /> },
+    { id: 'console', title: 'Console', count: consoleCount, render: () => <ConsoleTab action={selectedAction} /> },
+    { id: 'network', title: 'Network', count: networkCount, render: () => <NetworkTab action={selectedAction} /> },
+  ];
+
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    tabs.push({ id: 'source', title: 'Source', count: 0, render: () => <SourceTab action={selectedAction} /> });
+
   return <div className='vbox workbench'
     onDragOver={event => { event.preventDefault(); }}
     onDrop={event => handleDropEvent(event)}>
@@ -118,12 +127,7 @@ export const Workbench: React.FunctionComponent<{
     <SplitView sidebarSize={300} orientation='horizontal' sidebarIsFirst={true}>
       <SplitView sidebarSize={300} orientation='horizontal'>
         <SnapshotTab action={selectedAction} defaultSnapshotSize={defaultSnapshotSize} />
-        <TabbedPane tabs={[
-          { id: 'logs', title: 'Call', count: 0, render: () => <CallTab action={selectedAction} /> },
-          { id: 'console', title: 'Console', count: consoleCount, render: () => <ConsoleTab action={selectedAction} /> },
-          { id: 'network', title: 'Network', count: networkCount, render: () => <NetworkTab action={selectedAction} /> },
-          { id: 'source', title: 'Source', count: 0, render: () => <SourceTab action={selectedAction} /> },
-        ]} selectedTab={selectedTab} setSelectedTab={setSelectedTab}/>
+        <TabbedPane tabs={tabs} selectedTab={selectedTab} setSelectedTab={setSelectedTab}/>
       </SplitView>
       <ActionList
         actions={contextEntry.actions}
