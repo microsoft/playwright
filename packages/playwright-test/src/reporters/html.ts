@@ -159,20 +159,33 @@ export async function showHTMLReport(reportFolder: string | undefined) {
     process.exit(1);
     return;
   }
-  const server = new HttpServer();
-  server.routePrefix('/', (request, response) => {
-    let relativePath = new URL('http://localhost' + request.url).pathname;
-    if (relativePath === '/')
-      relativePath = '/index.html';
-    const absolutePath = path.join(folder, ...relativePath.split('/'));
-    return server.serveFile(response, absolutePath);
-  });
+  const server = startHtmlReportServer(folder);
   const url = await server.start(9323);
   console.log('');
   console.log(colors.cyan(`  Serving HTML report at ${url}. Press Ctrl+C to quit.`));
   open(url);
   process.on('SIGINT', () => process.exit(0));
   await new Promise(() => {});
+}
+
+export function startHtmlReportServer(folder: string): HttpServer {
+  const server = new HttpServer();
+  server.routePrefix('/', (request, response) => {
+    let relativePath = new URL('http://localhost' + request.url).pathname;
+    if (relativePath.startsWith('/trace/file')) {
+      const url = new URL('http://localhost' + request.url!);
+      try {
+        return server.serveFile(response, url.searchParams.get('path')!);
+      } catch (e) {
+        return false;
+      }
+    }
+    if (relativePath === '/')
+      relativePath = '/index.html';
+    const absolutePath = path.join(folder, ...relativePath.split('/'));
+    return server.serveFile(response, absolutePath);
+  });
+  return server;
 }
 
 class HtmlBuilder {
