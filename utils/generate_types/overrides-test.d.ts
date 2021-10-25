@@ -165,12 +165,14 @@ export interface TestError {
 
 export interface WorkerInfo {
   config: FullConfig;
+  parallelIndex: number;
   project: FullProject;
   workerIndex: number;
 }
 
 export interface TestInfo {
   config: FullConfig;
+  parallelIndex: number;
   project: FullProject;
   workerIndex: number;
 
