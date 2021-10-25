@@ -17,6 +17,7 @@ By default, the timeout for assertions is set to 5 seconds.
 
 ## method: PlaywrightAssertions.assertThatLocator
 * langs: java
+  - alias-java: assertThat
 - returns: <[LocatorAssertions]>
 
 Creates a [LocatorAssertions] object for the given [Locator].
@@ -32,6 +33,7 @@ PlaywrightAssertions.assertThat(locator).isVisible();
 
 ## method: PlaywrightAssertions.assertThatPage
 * langs: java
+  - alias-java: assertThat
 - returns: <[PageAssertions]>
 
 Creates a [PageAssertions] object for the given [Page].
