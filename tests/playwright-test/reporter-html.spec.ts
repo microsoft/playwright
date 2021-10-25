@@ -287,7 +287,6 @@ test('should show trace source', async ({ runInlineTest, page, showReport }) => 
 
   await expect(page.locator('.stack-trace-frame')).toContainText([
     /a.test.js:[\d]+/,
-    /fixtures.[tj]s:[\d]+/,
   ]);
   await expect(page.locator('.stack-trace-frame.selected')).toContainText('a.test.js');
 });
