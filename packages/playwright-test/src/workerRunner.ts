@@ -435,8 +435,12 @@ export class WorkerRunner extends EventEmitter {
         if (testInfo.status === 'passed')
           testInfo.status = 'skipped';
       } else {
-        testInfo.status = 'failed';
-        testInfo.error = serializeError(error);
+        if (testInfo.status === 'passed')
+          testInfo.status = 'failed';
+        // Do not overwrite any uncaught error that happened first.
+        // This is typical if you have some expect() that fails in beforeEach.
+        if (!('error' in testInfo))
+          testInfo.error = serializeError(error);
       }
       // Continue running afterEach hooks even after the failure.
     }
