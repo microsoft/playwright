@@ -33,6 +33,8 @@ export function rewriteErrorMessage<E extends Error>(e: E, newMessage: string): 
 const CORE_DIR = path.resolve(__dirname, '..', '..');
 const CLIENT_LIB = path.join(CORE_DIR, 'lib', 'client');
 const CLIENT_SRC = path.join(CORE_DIR, 'src', 'client');
+const TEST_DIR_SRC = path.resolve(CORE_DIR, '..', 'playwright-test');
+const TEST_DIR_LIB = path.resolve(CORE_DIR, '..', '@playwright', 'test');
 
 export type ParsedStackTrace = {
   allFrames: StackFrame[];
@@ -58,7 +60,11 @@ export function captureStackTrace(): ParsedStackTrace {
     const frame = stackUtils.parseLine(line);
     if (!frame || !frame.file)
       return null;
-    if (frame.file.startsWith('internal'))
+    // Node 16+ has node:internal.
+    if (frame.file.startsWith('internal') || frame.file.startsWith('node:'))
+      return null;
+    // EventEmitter.emit has 'events.js' file.
+    if (frame.file === 'events.js' && frame.function?.endsWith('.emit'))
       return null;
     const fileName = path.resolve(process.cwd(), frame.file);
     if (isTesting && fileName.includes(path.join('playwright', 'tests', 'config', 'coverage.js')))
@@ -103,6 +109,15 @@ export function captureStackTrace(): ParsedStackTrace {
       }
     }
   }
+
+  // Hide all test runner and library frames in the user stack (event handlers produce them).
+  parsedFrames = parsedFrames.filter((f, i) => {
+    if (f.frame.file.startsWith(TEST_DIR_SRC) || f.frame.file.startsWith(TEST_DIR_LIB))
+      return false;
+    if (i && f.frame.file.startsWith(CORE_DIR))
+      return false;
+    return true;
+  });
 
   return {
     allFrames: allFrames.map(p => p.frame),
