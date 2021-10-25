@@ -146,7 +146,7 @@ export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTest
       contexts.set(context, { closed: false });
       context.on('close', () => contexts.get(context).closed = true);
       if (trace)
-        await context.tracing.start({ screenshots: true, snapshots: true });
+        await context.tracing.start({ screenshots: true, snapshots: true, sources: true } as any);
       (context as any)._csi = {
         onApiCallBegin: (apiCall: string, stackTrace: ParsedStackTrace | null) => {
           if (apiCall.startsWith('expect.'))

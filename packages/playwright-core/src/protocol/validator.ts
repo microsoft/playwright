@@ -506,6 +506,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.BrowserContextTracingStartChunkParams = tOptional(tObject({}));
   scheme.BrowserContextTracingStopChunkParams = tObject({
     save: tBoolean,
+    skipCompress: tBoolean,
   });
   scheme.BrowserContextTracingStopParams = tOptional(tObject({}));
   scheme.BrowserContextHarExportParams = tOptional(tObject({}));
