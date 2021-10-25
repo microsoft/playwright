@@ -119,12 +119,11 @@ await using var browser = await BrowserType.LaunchAsync(new BrowserTypeLaunchOpt
 });
 ```
 
-When specifying proxy for each context individually, you need to give Playwright
-a hint that proxy will be set. This is done via passing a non-empty proxy server
-to the browser itself. Here is an example of a context-specific proxy:
+When specifying proxy for each context individually, **Chromium on Windows** needs a hint that proxy will be set. This is done via passing a non-empty proxy server to the browser itself. Here is an example of a context-specific proxy:
 
 ```js
 const browser = await chromium.launch({
+  // Browser proxy option is required for Chromium on Windows.
   proxy: { server: 'per-context' }
 });
 const context = await browser.newContext({
@@ -134,17 +133,20 @@ const context = await browser.newContext({
 
 ```java
 Browser browser = chromium.launch(new BrowserType.LaunchOptions()
+  // Browser proxy option is required for Chromium on Windows.
   .setProxy(new Proxy("per-context"));
 BrowserContext context = chromium.launch(new Browser.NewContextOptions()
   .setProxy(new Proxy("http://myproxy.com:3128"));
 ```
 
 ```python async
+# Browser proxy option is required for Chromium on Windows.
 browser = await chromium.launch(proxy={"server": "per-context"})
 context = await browser.new_context(proxy={"server": "http://myproxy.com:3128"})
 ```
 
 ```python sync
+# Browser proxy option is required for Chromium on Windows.
 browser = chromium.launch(proxy={"server": "per-context"})
 context = browser.new_context(proxy={"server": "http://myproxy.com:3128"})
 ```
@@ -153,6 +155,7 @@ context = browser.new_context(proxy={"server": "http://myproxy.com:3128"})
 var proxy = new Proxy { Server = "per-context" };
 await using var browser = await BrowserType.LaunchAsync(new BrowserTypeLaunchOptions
 {
+    // Browser proxy option is required for Chromium on Windows.
     Proxy = proxy
 });
 using var context = await Browser.NewContextAsync(new BrowserNewContextOptions
