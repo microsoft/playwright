@@ -3,7 +3,7 @@ id: test-assertions
 title: "Assertions"
 ---
 
-Playwright Test uses [expect](https://jestjs.io/docs/expect) library for test assertions. This library provides
+Playwright Test uses the [expect](https://jestjs.io/docs/expect) library for test assertions. This library provides
 a lot of matchers like `toEqual`, `toContain`, `toMatch`, `toMatchSnapshot` and many more:
 
 ```js
