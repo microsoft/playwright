@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import type { Fixtures } from '@playwright/test';
+import type { Fixtures, PlaywrightTestOptions, PlaywrightWorkerOptions } from '@playwright/test';
 import type { Browser, BrowserContext, BrowserContextOptions, BrowserType, LaunchOptions, Page } from 'playwright-core';
 import { removeFolders } from 'playwright-core/lib/utils/utils';
-import { ReuseBrowserContextStorage } from '@playwright/test/src/index';
+import { browserOptionsWorkerFixture, browserTypeWorkerFixture, browserWorkerFixture, ReuseBrowserContextStorage } from '@playwright/test/src/index';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -26,21 +26,16 @@ import { baseTest, CommonWorkerFixtures } from './baseTest';
 import { CommonFixtures } from './commonFixtures';
 import type { ParsedStackTrace } from 'playwright-core/lib/utils/stackTrace';
 
-type PlaywrightWorkerOptions = {
-  executablePath: LaunchOptions['executablePath'];
-  proxy: LaunchOptions['proxy'];
-  args: LaunchOptions['args'];
-};
 export type PlaywrightWorkerFixtures = {
+  _browserType: BrowserType;
+  _browserOptions: LaunchOptions;
   browserType: BrowserType;
   browserOptions: LaunchOptions;
   browser: Browser;
   browserVersion: string;
-  _reuseBrowserContext: ReuseBrowserContextStorage,
+  _reuseBrowserContext: ReuseBrowserContextStorage;
 };
-type PlaywrightTestOptions = {
-  hasTouch: BrowserContextOptions['hasTouch'];
-};
+
 type PlaywrightTestFixtures = {
   createUserDataDir: () => Promise<string>;
   launchPersistent: (options?: Parameters<BrowserType['launchPersistentContext']>[1]) => Promise<{ context: BrowserContext, page: Page }>;
@@ -50,35 +45,18 @@ type PlaywrightTestFixtures = {
   context: BrowserContext;
   page: Page;
 };
-export type PlaywrightOptions = PlaywrightWorkerOptions & PlaywrightTestOptions;
+export type PlaywrightOptionsEx = PlaywrightWorkerOptions & PlaywrightTestOptions;
 
 export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTestFixtures, PlaywrightWorkerOptions & PlaywrightWorkerFixtures, CommonFixtures, CommonWorkerFixtures> = {
-  executablePath: [ undefined, { scope: 'worker' } ],
-  proxy: [ undefined, { scope: 'worker' } ],
-  args: [ undefined, { scope: 'worker' } ],
   hasTouch: undefined,
 
-  browserType: [async ({ playwright, browserName }, run) => {
-    await run(playwright[browserName]);
-  }, { scope: 'worker' } ],
+  _browserType: [browserTypeWorkerFixture, { scope: 'worker' } ],
+  _browserOptions: [browserOptionsWorkerFixture, { scope: 'worker' } ],
 
-  browserOptions: [async ({ headless, channel, executablePath, proxy, args }, run) => {
-    await run({
-      headless,
-      channel,
-      executablePath,
-      proxy,
-      args,
-      handleSIGINT: false,
-      devtools: process.env.DEVTOOLS === '1',
-    });
-  }, { scope: 'worker' } ],
-
-  browser: [async ({ browserType, browserOptions }, run) => {
-    const browser = await browserType.launch(browserOptions);
-    await run(browser);
-    await browser.close();
-  }, { scope: 'worker' } ],
+  launchOptions: [ {}, { scope: 'worker' } ],
+  browserType: [async ({ _browserType }, use) => use(_browserType), { scope: 'worker' } ],
+  browserOptions: [async ({ _browserOptions }, use) => use(_browserOptions), { scope: 'worker' } ],
+  browser: [browserWorkerFixture, { scope: 'worker' } ],
 
   browserVersion: [async ({ browser }, run) => {
     await run(browser.version());
@@ -132,7 +110,7 @@ export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTest
   contextOptions: async ({ video, hasTouch }, run, testInfo) => {
     const debugName = path.relative(testInfo.project.outputDir, testInfo.outputDir).replace(/[\/\\]/g, '-');
     const contextOptions = {
-      recordVideo: video ? { dir: testInfo.outputPath('') } : undefined,
+      recordVideo: video === 'on' ? { dir: testInfo.outputPath('') } : undefined,
       _debugName: debugName,
       hasTouch,
     } as BrowserContextOptions;
@@ -145,7 +123,7 @@ export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTest
       const context = await browser.newContext({ ...contextOptions, ...options });
       contexts.set(context, { closed: false });
       context.on('close', () => contexts.get(context).closed = true);
-      if (trace)
+      if (trace === 'on')
         await context.tracing.start({ screenshots: true, snapshots: true, sources: true } as any);
       (context as any)._instrumentation.addListener({
         onApiCallBegin: (apiCall: string, stackTrace: ParsedStackTrace | null, userData: any) => {

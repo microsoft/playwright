@@ -16,7 +16,7 @@
 
 import { contextTest as it, expect } from '../config/browserTest';
 
-it.skip(({ trace }) => !!trace);
+it.skip(({ trace }) => trace === 'on');
 
 it('should work', async function({ page, server }) {
   await page.coverage.startJSCoverage();

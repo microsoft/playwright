@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import { Fixtures, _baseTest } from '@playwright/test';
+import { Fixtures, VideoMode, _baseTest } from '@playwright/test';
 import * as path from 'path';
 import * as fs from 'fs';
 import { installCoverageHooks } from './coverage';
 import { start } from '../../packages/playwright-core/lib/outofprocess';
 import { GridClient } from 'playwright-core/lib/grid/gridClient';
-import type { LaunchOptions } from 'playwright-core';
+import type { LaunchOptions, ViewportSize } from 'playwright-core';
 import { commonFixtures, CommonFixtures, serverFixtures, ServerFixtures, ServerOptions } from './commonFixtures';
 
 export type BrowserName = 'chromium' | 'firefox' | 'webkit';
@@ -29,8 +29,8 @@ type BaseOptions = {
   mode: Mode;
   browserName: BrowserName;
   channel: LaunchOptions['channel'];
-  video: boolean | undefined;
-  trace: boolean | undefined;
+  video: VideoMode | { mode: VideoMode, size: ViewportSize };
+  trace: 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | /** deprecated */ 'retry-with-trace';
   headless: boolean | undefined;
 };
 type BaseFixtures = {

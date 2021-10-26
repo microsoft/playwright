@@ -118,7 +118,7 @@ const test = playwrightTest.extend<{ showTraceViewer: (trace: string) => Promise
   }
 });
 
-test.skip(({ trace }) => trace);
+test.skip(({ trace }) => trace === 'on');
 
 let traceFile: string;
 
