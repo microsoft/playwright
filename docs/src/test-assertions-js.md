@@ -3,7 +3,7 @@ id: test-assertions
 title: "Assertions"
 ---
 
-Playwright Test uses the [expect](https://jestjs.io/docs/expect) library for test assertions. This library provides
+Playwright Test uses [expect](https://jestjs.io/docs/expect) library for test assertions. This library provides
 a lot of matchers like `toEqual`, `toContain`, `toMatch`, `toMatchSnapshot` and many more:
 
 ```js
@@ -11,13 +11,7 @@ expect(success).toBeTruthy();
 ```
 
 Playwright also extends it with convenience async matchers that will wait until
-the expected condition is met. In general, we can expect the opposite to be true by adding a `.not` to the front
-of the matchers:
-
-```js
-expect(value).not.toEqual(0);
-expect(locator).not.toContainText("some text");
-```
+the expected condition is met.
 
 <!-- TOC -->
 
