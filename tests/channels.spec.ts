@@ -20,7 +20,11 @@ import { playwrightTest as it, expect } from './config/browserTest';
 
 // Use something worker-scoped (e.g. launch args) to force a new worker for this file.
 // Otherwise, a browser launched for other tests in this worker will affect the expectations.
-it.use({ args: [] });
+it.use({
+  launchOptions: async ({ launchOptions }, use) => {
+    await use({ ...launchOptions, args: [] });
+  }
+});
 
 it('should scope context handles', async ({ browserType, browserOptions, server }) => {
   const browser = await browserType.launch(browserOptions);

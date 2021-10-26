@@ -18,12 +18,12 @@ import type { Config } from '@playwright/test';
 import * as path from 'path';
 import { electronFixtures } from '../electron/electronTest';
 import { test as pageTest } from '../page/pageTest';
-import { PlaywrightOptions } from './browserTest';
+import { PlaywrightOptionsEx } from './browserTest';
 import { CommonOptions } from './baseTest';
 
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');
-const config: Config<CommonOptions & PlaywrightOptions> = {
+const config: Config<CommonOptions & PlaywrightOptionsEx> = {
   testDir,
   outputDir,
   timeout: 30000,

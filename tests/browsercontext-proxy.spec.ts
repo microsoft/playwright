@@ -16,7 +16,15 @@
 
 import { browserTest as it, expect } from './config/browserTest';
 
-it.use({ proxy: { server: 'per-context' } });
+it.use({
+  launchOptions: async ({ launchOptions }, use) => {
+    await use({
+      ...launchOptions,
+      proxy: { server: 'per-context' }
+    });
+  }
+});
+
 
 it.beforeEach(({ server }) => {
   server.setRoute('/target.html', async (req, res) => {

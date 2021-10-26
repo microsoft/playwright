@@ -16,7 +16,11 @@
 
 import { contextTest as it, expect } from '../config/browserTest';
 
-it.use({ args: ['--site-per-process'] });
+it.use({
+  launchOptions: async ({ launchOptions }, use) => {
+    await use({ ...launchOptions, args: ['--site-per-process'] });
+  }
+});
 
 it('should report oopif frames', async function({ page, browser, server }) {
   await page.goto(server.PREFIX + '/dynamic-oopif.html');

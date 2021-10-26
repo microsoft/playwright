@@ -50,13 +50,13 @@ export const test = contextTest.extend<CLITestArgs>({
     });
   },
 
-  runCLI: async ({ childProcess, browserName, channel, headless, mode, executablePath }, run, testInfo) => {
+  runCLI: async ({ childProcess, browserName, channel, headless, mode, launchOptions }, run, testInfo) => {
     process.env.PWTEST_RECORDER_PORT = String(10907 + testInfo.workerIndex);
     testInfo.skip(mode === 'service');
 
     let cli: CLIMock | undefined;
     await run(cliArgs => {
-      cli = new CLIMock(childProcess, browserName, channel, headless, cliArgs, executablePath);
+      cli = new CLIMock(childProcess, browserName, channel, headless, cliArgs, launchOptions.executablePath);
       return cli;
     });
     if (cli)

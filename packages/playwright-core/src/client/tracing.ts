@@ -99,10 +99,14 @@ export class Tracing implements api.Tracing {
 
     // Add sources.
     if (sources) {
-      for (const source of sources)
-        zipFile.addFile(source, 'resources/src@' + calculateSha1(source) + '.txt');
+      for (const source of sources) {
+        try {
+          if (fs.statSync(source).isFile())
+            zipFile.addFile(source, 'resources/src@' + calculateSha1(source) + '.txt');
+        } catch (e) {
+        }
+      }
     }
-
     await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
     if (skipCompress) {
       // Local scenario, compress the entries.
@@ -120,7 +124,7 @@ export class Tracing implements api.Tracing {
     await artifact.saveAs(tmpPath);
     await artifact.delete();
 
-    yauzl.open(filePath!, (err, inZipFile) => {
+    yauzl.open(tmpPath!, (err, inZipFile) => {
       if (err) {
         promise.reject(err);
         return;
@@ -135,10 +139,11 @@ export class Tracing implements api.Tracing {
           }
           zipFile.addReadStream(readStream!, entry.fileName);
           if (--pendingEntries === 0) {
-            zipFile.end();
-            zipFile.outputStream.pipe(fs.createWriteStream(filePath)).on('close', () => {
-              fs.promises.unlink(tmpPath).then(() => {
-                promise.resolve();
+            zipFile.end(undefined, () => {
+              zipFile.outputStream.pipe(fs.createWriteStream(filePath)).on('close', () => {
+                fs.promises.unlink(tmpPath).then(() => {
+                  promise.resolve();
+                });
               });
             });
           }

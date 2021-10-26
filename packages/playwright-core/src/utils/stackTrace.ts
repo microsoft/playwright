@@ -35,6 +35,7 @@ const CLIENT_LIB = path.join(CORE_DIR, 'lib', 'client');
 const CLIENT_SRC = path.join(CORE_DIR, 'src', 'client');
 const TEST_DIR_SRC = path.resolve(CORE_DIR, '..', 'playwright-test');
 const TEST_DIR_LIB = path.resolve(CORE_DIR, '..', '@playwright', 'test');
+const WS_LIB = path.relative(process.cwd(), path.dirname(require.resolve('ws')));
 
 export type ParsedStackTrace = {
   allFrames: StackFrame[];
@@ -65,6 +66,11 @@ export function captureStackTrace(): ParsedStackTrace {
       return null;
     // EventEmitter.emit has 'events.js' file.
     if (frame.file === 'events.js' && frame.function?.endsWith('.emit'))
+      return null;
+    // Node 12
+    if (frame.file === '_stream_readable.js' || frame.file === '_stream_writable.js')
+      return null;
+    if (frame.file.startsWith(WS_LIB))
       return null;
     const fileName = path.resolve(process.cwd(), frame.file);
     if (isTesting && fileName.includes(path.join('playwright', 'tests', 'config', 'coverage.js')))

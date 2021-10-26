@@ -124,7 +124,7 @@ it.describe('Drag and drop', () => {
   it('should respect the drop effect', async ({ page, browserName, platform, trace }) => {
     it.fixme(browserName === 'webkit' && platform !== 'linux', 'WebKit doesn\'t handle the drop effect correctly outside of linux.');
     it.fixme(browserName === 'firefox');
-    it.slow(!!trace);
+    it.slow(trace === 'on');
 
     expect(await testIfDropped('copy', 'copy')).toBe(true);
     expect(await testIfDropped('copy', 'move')).toBe(false);

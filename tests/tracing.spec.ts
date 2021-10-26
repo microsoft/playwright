@@ -19,7 +19,7 @@ import { ZipFileSystem } from '../packages/playwright-core/lib/utils/vfs';
 import jpeg from 'jpeg-js';
 import path from 'path';
 
-test.skip(({ trace }) => !!trace);
+test.skip(({ trace }) => trace === 'on');
 
 test('should collect trace with resources, but no js', async ({ context, page, server }, testInfo) => {
   await context.tracing.start({ screenshots: true, snapshots: true });
@@ -151,7 +151,7 @@ for (const params of [
   }
 ]) {
   browserTest(`should produce screencast frames ${params.id}`, async ({ video, contextFactory, browserName, platform, headless }, testInfo) => {
-    browserTest.fixme(browserName === 'chromium' && video, 'Same screencast resolution conflicts');
+    browserTest.fixme(browserName === 'chromium' && video === 'on', 'Same screencast resolution conflicts');
     browserTest.fixme(browserName === 'chromium' && !headless, 'Chromium screencast on headed has a min width issue');
     browserTest.fixme(params.id === 'fit' && browserName === 'chromium' && platform === 'darwin', 'High DPI maxes image at 600x600');
     browserTest.fixme(params.id === 'fit' && browserName === 'webkit' && platform === 'linux', 'Image size is flaky');
