@@ -169,8 +169,10 @@ An example of handling `console` event:
 
 ```js
 page.on('console', async msg => {
-  for (let i = 0; i < msg.args().length; ++i)
-    console.log(`${i}: ${await msg.args()[i].jsonValue()}`);
+  const values = [];
+  for (const arg of msg.args())
+    values.push(await arg.jsonValue());
+  console.log(...values);
 });
 await page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
 ```
@@ -185,8 +187,10 @@ page.evaluate("() => console.log('hello', 5, {foo: 'bar'})");
 
 ```python async
 async def print_args(msg):
+    values = []
     for arg in msg.args:
-        print(await arg.json_value())
+        values.append(await arg.json_value())
+    print(values)
 
 page.on("console", print_args)
 await page.evaluate("console.log('hello', 5, {foo: 'bar'})")
