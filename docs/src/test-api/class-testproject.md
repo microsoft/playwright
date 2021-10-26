@@ -13,7 +13,7 @@ Here is an example configuration that runs every test in Chromium, Firefox and W
 const { devices } = require('@playwright/test');
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
-const testProject = {
+const config = {
   // Options shared for all projects.
   timeout: 30000,
   use: {
@@ -54,14 +54,14 @@ const testProject = {
   ],
 };
 
-module.exports = testProject;
+module.exports = config;
 ```
 
 ```js js-flavor=ts
 // playwright.config.ts
 import { PlaywrightTestConfig, devices } from '@playwright/test';
 
-const testProject: PlaywrightTestConfig = {
+const config: PlaywrightTestConfig = {
   // Options shared for all projects.
   timeout: 30000,
   use: {
@@ -101,7 +101,7 @@ const testProject: PlaywrightTestConfig = {
     },
   ],
 };
-export default testProject;
+export default config;
 ```
 
 ## property: TestProject.expect
@@ -173,7 +173,7 @@ Each project can use a different directory. Here is an example that runs smoke t
 // @ts-check
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
-const testProject = {
+const config = {
   projects: [
     {
       name: 'Smoke Chromium',
@@ -207,14 +207,14 @@ const testProject = {
   ],
 };
 
-module.exports = testProject;
+module.exports = config;
 ```
 
 ```js js-flavor=ts
 // playwright.config.ts
 import { PlaywrightTestConfig } from '@playwright/test';
 
-const testProject: PlaywrightTestConfig = {
+const config: PlaywrightTestConfig = {
   projects: [
     {
       name: 'Smoke Chromium',
@@ -247,7 +247,7 @@ const testProject: PlaywrightTestConfig = {
     },
   ],
 };
-export default testProject;
+export default config;
 ```
 
 
@@ -284,7 +284,7 @@ Options for all tests in this project, for example [`property: TestOptions.brows
 // @ts-check
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
-const testProject = {
+const config = {
   projects: [
     {
       name: 'Chromium',
@@ -295,14 +295,14 @@ const testProject = {
   ],
 };
 
-module.exports = testProject;
+module.exports = config;
 ```
 
 ```js js-flavor=ts
 // playwright.config.ts
 import { PlaywrightTestConfig } from '@playwright/test';
 
-const testProject: PlaywrightTestConfig = {
+const config: PlaywrightTestConfig = {
   projects: [
     {
       name: 'Chromium',
@@ -312,5 +312,5 @@ const testProject: PlaywrightTestConfig = {
     },
   ],
 };
-export default testProject;
+export default config;
 ```
