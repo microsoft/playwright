@@ -31,8 +31,6 @@ RUN apt-get update && apt-get install -y python3.8 python3-pip && \
 
 ARG NOVNC_REF="1.2.0"
 ARG WEBSOCKIFY_REF="0.10.0"
-ENV DISPLAY_NUM=99
-ENV DISPLAY=":${DISPLAY_NUM}"
 
 RUN mkdir -p /opt/bin && chmod +x /dev/shm \
   && apt-get update && apt-get install -y unzip fluxbox x11vnc \
