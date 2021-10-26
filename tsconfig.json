@@ -5,7 +5,8 @@
     "lib": ["esnext", "dom", "DOM.Iterable"],
     "baseUrl": ".",
     "paths": {
-      "*": ["./packages/*/"]
+      "*": ["./packages/*/"],
+      "playwright-core/lib/*": ["./packages/playwright-core/src/*"]
     },
     "esModuleInterop": true,
     "strict": true,
