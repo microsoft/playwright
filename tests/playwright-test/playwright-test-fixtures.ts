@@ -20,7 +20,8 @@ import * as os from 'os';
 import * as path from 'path';
 import rimraf from 'rimraf';
 import { promisify } from 'util';
-import { CommonFixtures, commonFixtures, serverFixtures, ServerFixtures } from '../config/commonFixtures';
+import { CommonFixtures, commonFixtures } from '../config/commonFixtures';
+import { serverFixtures, ServerFixtures, ServerWorkerOptions } from '../config/serverFixtures';
 import { test as base, TestInfo } from './stable-test-runner';
 
 const removeFolderAsync = promisify(rimraf);
@@ -193,7 +194,7 @@ type Fixtures = {
 };
 
 const common = base.extend<CommonFixtures>(commonFixtures as any);
-export const test = common.extend<ServerFixtures>(serverFixtures as any).extend<Fixtures>({
+export const test = common.extend<ServerFixtures, ServerWorkerOptions>(serverFixtures as any).extend<Fixtures>({
   writeFiles: async ({}, use, testInfo) => {
     await use(files => writeFiles(testInfo, files));
   },

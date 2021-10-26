@@ -22,11 +22,14 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
 import { RemoteServer, RemoteServerOptions } from './remoteServer';
-import { baseTest, CommonWorkerFixtures } from './baseTest';
+import { baseTest } from './baseTest';
 import { CommonFixtures } from './commonFixtures';
 import type { ParsedStackTrace } from 'playwright-core/lib/utils/stackTrace';
+import { DefaultTestMode, DriverTestMode, ServiceTestMode } from './testMode';
+import { TestModeWorkerFixtures } from './testModeFixtures';
 
 export type PlaywrightWorkerFixtures = {
+  playwright: typeof import('playwright-core');
   _browserType: BrowserType;
   _browserOptions: LaunchOptions;
   browserType: BrowserType;
@@ -34,6 +37,7 @@ export type PlaywrightWorkerFixtures = {
   browser: Browser;
   browserVersion: string;
   _reuseBrowserContext: ReuseBrowserContextStorage;
+  toImpl: (rpcObject: any) => any;
 };
 
 type PlaywrightTestFixtures = {
@@ -45,10 +49,23 @@ type PlaywrightTestFixtures = {
   context: BrowserContext;
   page: Page;
 };
-export type PlaywrightOptionsEx = PlaywrightWorkerOptions & PlaywrightTestOptions;
 
-export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTestFixtures, PlaywrightWorkerOptions & PlaywrightWorkerFixtures, CommonFixtures, CommonWorkerFixtures> = {
+export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTestFixtures, PlaywrightWorkerOptions & PlaywrightWorkerFixtures, CommonFixtures, TestModeWorkerFixtures> = {
   hasTouch: undefined,
+
+  playwright: [ async ({ mode }, run) => {
+    const testMode = {
+      default: new DefaultTestMode(),
+      service: new ServiceTestMode(),
+      driver: new DriverTestMode(),
+    }[mode];
+    require('playwright-core/lib/utils/utils').setUnderTest();
+    const playwright = await testMode.setup();
+    await run(playwright);
+    await testMode.teardown();
+  }, { scope: 'worker' } ],
+
+  toImpl: [ async ({ playwright }, run) => run((playwright as any)._toImpl), { scope: 'worker' } ],
 
   _browserType: [browserTypeWorkerFixture, { scope: 'worker' } ],
   _browserOptions: [browserOptionsWorkerFixture, { scope: 'worker' } ],
@@ -148,7 +165,7 @@ export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTest
     });
     await Promise.all([...contexts.keys()].map(async context => {
       const videos = context.pages().map(p => p.video()).filter(Boolean);
-      if (trace && !contexts.get(context)!.closed) {
+      if (trace === 'on' && !contexts.get(context)!.closed) {
         const tracePath = testInfo.outputPath('trace.zip');
         await context.tracing.stop({ path: tracePath });
         testInfo.attachments.push({ name: 'trace', path: tracePath, contentType: 'application/zip' });
@@ -181,6 +198,12 @@ export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTest
     }
     await run(await context.newPage());
   },
+
+  browserName: [ 'chromium' , { scope: 'worker' } ],
+  headless: [ undefined, { scope: 'worker' } ],
+  channel: [ undefined, { scope: 'worker' } ],
+  video: [ 'off', { scope: 'worker' } ],
+  trace: [ 'off', { scope: 'worker' } ],
 };
 
 const test = baseTest.extend<PlaywrightTestOptions & PlaywrightTestFixtures, PlaywrightWorkerOptions & PlaywrightWorkerFixtures>(playwrightFixtures);

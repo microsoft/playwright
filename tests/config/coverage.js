@@ -15,9 +15,6 @@
  * limitations under the License.
  */
 
-const path = require('path');
-const fs = require('fs');
-
 /**
  * @param {Map<string, boolean>} apiCoverage
  * @param {Object} events

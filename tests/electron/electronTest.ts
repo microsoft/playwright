@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import { baseTest, CommonWorkerFixtures } from '../config/baseTest';
 import { ElectronApplication, Page } from 'playwright-core';
-import type { Fixtures } from '@playwright/test';
+import type { Fixtures, PlaywrightWorkerOptions } from '@playwright/test';
 import * as path from 'path';
 import { PageTestFixtures } from '../page/pageTest';
+import { TestModeWorkerFixtures } from '../config/testModeFixtures';
+import { browserTest } from '../config/browserTest';
 export { expect } from '@playwright/test';
 
 type ElectronTestFixtures = PageTestFixtures & {
@@ -27,7 +28,7 @@ type ElectronTestFixtures = PageTestFixtures & {
 };
 
 const electronVersion = require('electron/package.json').version;
-export const electronFixtures: Fixtures<ElectronTestFixtures, {}, {}, CommonWorkerFixtures> = {
+export const electronFixtures: Fixtures<ElectronTestFixtures, {}, {}, PlaywrightWorkerOptions & TestModeWorkerFixtures> = {
   browserVersion: electronVersion,
   browserMajorVersion: Number(electronVersion.split('.')[0]),
   isAndroid: false,
@@ -66,10 +67,9 @@ export const electronFixtures: Fixtures<ElectronTestFixtures, {}, {}, CommonWork
       await window.close();
   },
 
-
   page: async ({ newWindow }, run) => {
     await run(await newWindow());
   },
 };
 
-export const electronTest = baseTest.extend<ElectronTestFixtures>(electronFixtures);
+export const electronTest = browserTest.extend<ElectronTestFixtures>(electronFixtures as any);

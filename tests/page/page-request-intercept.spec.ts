@@ -234,7 +234,7 @@ it('should give access to the intercepted response body', async ({ page, server 
   const routePromise = new Promise<Route>(f => routeCallback = f);
   await page.route('**/simple.json', routeCallback);
 
-  const evalPromise = page.evaluate(url => fetch(url), server.PREFIX + '/simple.json').catch(console.log);
+  const evalPromise = page.evaluate(url => fetch(url), server.PREFIX + '/simple.json').catch(() => {});
 
   const route = await routePromise;
   // @ts-expect-error

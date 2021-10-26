@@ -17,7 +17,7 @@
 const { start } = require('./node_modules/playwright-core/lib/outofprocess');
 
 (async () => {
-  const playwright = await start();
+  const { playwright, stop } = await start();
   console.log(`driver PID=${playwright.driverProcess.pid}`);
   for (const browserType of ['chromium', 'firefox', 'webkit']) {
     try {
@@ -33,7 +33,7 @@ const { start } = require('./node_modules/playwright-core/lib/outofprocess');
       process.exit(1);
     }
   }
-  await playwright.stop();
+  await stop();
   console.log(`driver SUCCESS`);
 })().catch(err => {
   console.error(err);

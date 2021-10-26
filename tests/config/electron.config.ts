@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-import type { Config } from '@playwright/test';
+import type { Config, PlaywrightTestOptions, PlaywrightWorkerOptions } from '@playwright/test';
 import * as path from 'path';
 import { electronFixtures } from '../electron/electronTest';
 import { test as pageTest } from '../page/pageTest';
-import { PlaywrightOptionsEx } from './browserTest';
-import { CommonOptions } from './baseTest';
+import { playwrightFixtures } from './browserTest';
+import { CoverageWorkerOptions } from './coverageFixtures';
 
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');
-const config: Config<CommonOptions & PlaywrightOptionsEx> = {
+const config: Config<CoverageWorkerOptions & PlaywrightWorkerOptions & PlaywrightTestOptions> = {
   testDir,
   outputDir,
   timeout: 30000,
@@ -51,7 +51,6 @@ const metadata = {
 config.projects.push({
   name: 'chromium',  // We use 'chromium' here to share screenshots with chromium.
   use: {
-    mode: 'default',
     browserName: 'chromium',
     coverageName: 'electron',
   },
@@ -62,12 +61,11 @@ config.projects.push({
 config.projects.push({
   name: 'chromium',  // We use 'chromium' here to share screenshots with chromium.
   use: {
-    mode: 'default',
     browserName: 'chromium',
     coverageName: 'electron',
   },
   testDir: path.join(testDir, 'page'),
-  define: { test: pageTest, fixtures: electronFixtures },
+  define: { test: pageTest, fixtures: { ...playwrightFixtures, ...electronFixtures } },
   metadata,
 });
 

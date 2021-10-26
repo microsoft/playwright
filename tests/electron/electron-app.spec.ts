@@ -17,9 +17,8 @@
 import type { BrowserWindow } from 'electron';
 import path from 'path';
 import { electronTest as test, expect } from './electronTest';
-import { baseTest } from '../config/baseTest';
 
-baseTest('should fire close event', async ({ playwright }) => {
+test('should fire close event', async ({ playwright }) => {
   const electronApp = await playwright._electron.launch({
     args: [path.join(__dirname, 'electron-app.js')],
   });
