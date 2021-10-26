@@ -2753,7 +2753,7 @@ export interface Page {
   /**
    * API testing helper associated with this page. Requests made with this API will use page cookies.
    */
-  request: ApiRequestContext;
+  request: APIRequestContext;
 
   /**
    * Routing provides the capability to modify network requests that are made by a page.
@@ -3111,6 +3111,9 @@ export interface Page {
    *
    * `page.setViewportSize` will resize the page. A lot of websites don't expect phones to change size, so you should set the
    * viewport size before navigating to the page.
+   * [page.setViewportSize(viewportSize)](https://playwright.dev/docs/api/class-page#page-set-viewport-size) will also reset
+   * `screen` size, use [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context)
+   * with `screen` and `viewport` parameters if you need better control of these properties.
    *
    * ```js
    * const page = await browser.newPage();
@@ -6456,7 +6459,7 @@ export interface BrowserContext {
   /**
    * API testing helper associated with this context. Requests made with this API will use context cookies.
    */
-  request: ApiRequestContext;
+  request: APIRequestContext;
 
   /**
    * Routing provides the capability to modify network requests that are made by any page in the browser context. Once route
@@ -11593,9 +11596,9 @@ export interface AndroidWebView {
 /**
  * Exposes API that can be used for the Web API testing.
  */
-export interface ApiRequest {
+export interface APIRequest {
   /**
-   * Creates new instances of [ApiRequestContext].
+   * Creates new instances of [APIRequestContext].
    * @param options
    */
   newContext(options?: {
@@ -11709,7 +11712,7 @@ export interface ApiRequest {
      * Specific user agent to use in this context.
      */
     userAgent?: string;
-  }): Promise<ApiRequestContext>;
+  }): Promise<APIRequestContext>;
 }
 
 /**
@@ -11718,7 +11721,7 @@ export interface ApiRequest {
  * the cookies from the corresponding [BrowserContext]. This means that if you log in using this API, your e2e test will be
  * logged in and vice versa.
  */
-export interface ApiRequestContext {
+export interface APIRequestContext {
   /**
    * Sends HTTP(S) [DELETE](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/DELETE) request and returns its
    * response. The method will populate request cookies from the context and update context cookies from the response. The
@@ -11751,7 +11754,7 @@ export interface ApiRequestContext {
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
      */
     timeout?: number;
-  }): Promise<ApiResponse>;
+  }): Promise<APIResponse>;
 
   /**
    * All responses returned by
@@ -11837,7 +11840,7 @@ export interface ApiRequestContext {
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
      */
     timeout?: number;
-  }): Promise<ApiResponse>;
+  }): Promise<APIResponse>;
 
   /**
    * Sends HTTP(S) [GET](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/GET) request and returns its response. The
@@ -11871,7 +11874,7 @@ export interface ApiRequestContext {
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
      */
     timeout?: number;
-  }): Promise<ApiResponse>;
+  }): Promise<APIResponse>;
 
   /**
    * Sends HTTP(S) [HEAD](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/HEAD) request and returns its response.
@@ -11905,7 +11908,7 @@ export interface ApiRequestContext {
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
      */
     timeout?: number;
-  }): Promise<ApiResponse>;
+  }): Promise<APIResponse>;
 
   /**
    * Sends HTTP(S) [PATCH](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PATCH) request and returns its response.
@@ -11976,7 +11979,7 @@ export interface ApiRequestContext {
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
      */
     timeout?: number;
-  }): Promise<ApiResponse>;
+  }): Promise<APIResponse>;
 
   /**
    * Sends HTTP(S) [POST](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST) request and returns its response.
@@ -12047,7 +12050,7 @@ export interface ApiRequestContext {
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
      */
     timeout?: number;
-  }): Promise<ApiResponse>;
+  }): Promise<APIResponse>;
 
   /**
    * Sends HTTP(S) [PUT](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PUT) request and returns its response. The
@@ -12118,7 +12121,7 @@ export interface ApiRequestContext {
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
      */
     timeout?: number;
-  }): Promise<ApiResponse>;
+  }): Promise<APIResponse>;
 
   /**
    * Returns storage state for this request context, contains current cookies and local storage snapshot if it was passed to
@@ -12166,11 +12169,11 @@ export interface ApiRequestContext {
 }
 
 /**
- * [ApiResponse] class represents responses returned by
+ * [APIResponse] class represents responses returned by
  * [apiRequestContext.get(url[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-get)
  * and similar methods.
  */
-export interface ApiResponse {
+export interface APIResponse {
   /**
    * Returns the buffer with response body.
    */
@@ -13707,7 +13710,7 @@ export const firefox: BrowserType;
 /**
  * Exposes API that can be used for the Web API testing.
  */
-export const request: ApiRequest;
+export const request: APIRequest;
 
 /**
  * Selectors can be used to install custom selector engines. See [Working with selectors](https://playwright.dev/docs/selectors) for more
@@ -14231,10 +14234,10 @@ export interface Route {
     path?: string;
 
     /**
-     * [ApiResponse] to fulfill route's request with. Individual fields of the response (such as headers) can be overridden
+     * [APIResponse] to fulfill route's request with. Individual fields of the response (such as headers) can be overridden
      * using fulfill options.
      */
-    response?: ApiResponse;
+    response?: APIResponse;
 
     /**
      * Response status code, defaults to `200`.

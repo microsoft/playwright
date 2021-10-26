@@ -61,8 +61,10 @@ export const SourceTab: React.FunctionComponent<{
       value = stackInfo;
     } else {
       const filePath = stackInfo.frames[selectedFrame].file;
-      if (!stackInfo.fileContent.has(filePath))
-        stackInfo.fileContent.set(filePath, await fetch(`/file?${filePath}`).then(response => response.text()).catch(e => `<Unable to read "${filePath}">`));
+      if (!stackInfo.fileContent.has(filePath)) {
+        const sha1 = await calculateSha1(filePath);
+        stackInfo.fileContent.set(filePath, await fetch(`sha1/src@${sha1}.txt`).then(response => response.text()).catch(e => `<Unable to read "${filePath}">`));
+      }
       value = stackInfo.fileContent.get(filePath)!;
     }
     return value;
@@ -83,3 +85,15 @@ export const SourceTab: React.FunctionComponent<{
     <StackTraceView action={action} selectedFrame={selectedFrame} setSelectedFrame={setSelectedFrame}></StackTraceView>
   </SplitView>;
 };
+
+export async function calculateSha1(text: string): Promise<string> {
+  const buffer = new TextEncoder().encode(text);
+  const hash = await crypto.subtle.digest('SHA-1', buffer);
+  const hexCodes = [];
+  const view = new DataView(hash);
+  for (let i = 0; i < view.byteLength; i += 1) {
+    const byte = view.getUint8(i).toString(16).padStart(2, '0');
+    hexCodes.push(byte);
+  }
+  return hexCodes.join('');
+}

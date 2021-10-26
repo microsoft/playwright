@@ -58,7 +58,6 @@ const PACKAGES = {
   'create-playwright': {
     browsers: [],
     files: [],
-    ignore: true,
   }
 };
 
@@ -85,8 +84,6 @@ const dirtyFiles = [];
 async function lintPackage(packageName) {
   const packagePath = packageNameToPath.get(packageName);
   const package = PACKAGES[packageName];
-  if (package.ignore)
-    return;
   if (!package) {
     console.log(`ERROR: unknown package ${packageName}`);
     process.exit(1);
@@ -105,7 +102,7 @@ async function lintPackage(packageName) {
   currentPackageJSON.homepage = pwInternalJSON.homepage;
   currentPackageJSON.author = pwInternalJSON.author;
   currentPackageJSON.license = pwInternalJSON.license;
-  for (const name of Object.keys(currentPackageJSON.dependencies)) {
+  for (const name of Object.keys(currentPackageJSON.dependencies || {})) {
     if (name in PACKAGES)
       currentPackageJSON.dependencies[name] = `=${pwInternalJSON.version}`;
   }

@@ -49,7 +49,7 @@ type NewContextOptions = Omit<channels.PlaywrightNewRequestOptions, 'extraHTTPHe
 type RequestWithBodyOptions = Omit<FetchOptions, 'method'>;
 type RequestWithoutBodyOptions = Omit<RequestWithBodyOptions, 'data'|'form'|'multipart'>;
 
-export class Fetch implements api.ApiRequest {
+export class Fetch implements api.APIRequest {
   private _playwright: Playwright;
   constructor(playwright: Playwright) {
     this._playwright = playwright;
@@ -69,7 +69,7 @@ export class Fetch implements api.ApiRequest {
   }
 }
 
-export class FetchRequest extends ChannelOwner<channels.FetchRequestChannel, channels.FetchRequestInitializer> implements api.ApiRequestContext {
+export class FetchRequest extends ChannelOwner<channels.FetchRequestChannel, channels.FetchRequestInitializer> implements api.APIRequestContext {
   static from(channel: channels.FetchRequestChannel): FetchRequest {
     return (channel as any)._object;
   }
@@ -202,7 +202,7 @@ export class FetchRequest extends ChannelOwner<channels.FetchRequestChannel, cha
   }
 }
 
-export class FetchResponse implements api.ApiResponse {
+export class FetchResponse implements api.APIResponse {
   private readonly _initializer: channels.FetchResponse;
   private readonly _headers: RawHeaders;
   private readonly _request: FetchRequest;

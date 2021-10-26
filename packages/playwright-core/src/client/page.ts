@@ -168,18 +168,17 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   }
 
   private _onRoute(route: Route, request: Request) {
-    let handled = false;
     for (const routeHandler of this._routes) {
       if (routeHandler.matches(request.url())) {
-        routeHandler.handle(route, request);
-        handled = true;
-        break;
+        if (routeHandler.handle(route, request)) {
+          this._routes.splice(this._routes.indexOf(routeHandler), 1);
+          if (!this._routes.length)
+            this._wrapApiCall(channel => this._disableInterception(channel), undefined, true).catch(() => {});
+        }
+        return;
       }
     }
-    if (!handled)
-      this._browserContext._onRoute(route, request);
-    else
-      this._routes = this._routes.filter(route => !route.expired());
+    this._browserContext._onRoute(route, request);
   }
 
   async _onBinding(bindingCall: BindingCall) {
@@ -467,9 +466,13 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   async unroute(url: URLMatch, handler?: RouteHandlerCallback): Promise<void> {
     return this._wrapApiCall(async (channel: channels.PageChannel) => {
       this._routes = this._routes.filter(route => route.url !== url || (handler && route.handler !== handler));
-      if (this._routes.length === 0)
-        await channel.setNetworkInterceptionEnabled({ enabled: false });
+      if (!this._routes.length)
+        await this._disableInterception(channel);
     });
+  }
+
+  private async _disableInterception(channel: channels.PageChannel) {
+    await channel.setNetworkInterceptionEnabled({ enabled: false });
   }
 
   async screenshot(options: channels.PageScreenshotOptions & { path?: string } = {}): Promise<Buffer> {

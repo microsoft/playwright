@@ -28,7 +28,7 @@ import { Modifier, Suite, TestCase } from './test';
 import { Annotations, TestError, TestInfo, TestInfoImpl, TestStepInternal, WorkerInfo } from './types';
 import { ProjectImpl } from './project';
 import { FixturePool, FixtureRunner } from './fixtures';
-import { DeadlineRunner, raceAgainstDeadline } from 'playwright-core/src/utils/async';
+import { DeadlineRunner, raceAgainstDeadline } from 'playwright-core/lib/utils/async';
 
 const removeFolderAsync = util.promisify(rimraf);
 
@@ -308,10 +308,14 @@ export class WorkerRunner extends EventEmitter {
               this.emit('stepEnd', payload);
           }
         };
+        const hasLocation = data.location && !data.location.file.includes('@playwright');
+        // Sanitize location that comes from user land, it might have extra properties.
+        const location = data.location && hasLocation ? { file: data.location.file, line: data.location.line, column: data.location.column } : undefined;
         const payload: StepBeginPayload = {
           testId,
           stepId,
           ...data,
+          location,
           wallTime: Date.now(),
         };
         if (reportEvents)
@@ -321,7 +325,7 @@ export class WorkerRunner extends EventEmitter {
     };
 
     // Inherit test.setTimeout() from parent suites.
-    for (let suite = test.parent; suite; suite = suite.parent) {
+    for (let suite: Suite | undefined = test.parent; suite; suite = suite.parent) {
       if (suite._timeout !== undefined) {
         testInfo.setTimeout(suite._timeout);
         break;
@@ -418,7 +422,7 @@ export class WorkerRunner extends EventEmitter {
   private async _runBeforeHooks(test: TestCase, testInfo: TestInfoImpl) {
     try {
       const beforeEachModifiers: Modifier[] = [];
-      for (let s = test.parent; s; s = s.parent) {
+      for (let s: Suite | undefined = test.parent; s; s = s.parent) {
         const modifiers = s._modifiers.filter(modifier => !this._fixtureRunner.dependsOnWorkerFixturesOnly(modifier.fn, modifier.location));
         beforeEachModifiers.push(...modifiers.reverse());
       }
@@ -433,8 +437,12 @@ export class WorkerRunner extends EventEmitter {
         if (testInfo.status === 'passed')
           testInfo.status = 'skipped';
       } else {
-        testInfo.status = 'failed';
-        testInfo.error = serializeError(error);
+        if (testInfo.status === 'passed')
+          testInfo.status = 'failed';
+        // Do not overwrite any uncaught error that happened first.
+        // This is typical if you have some expect() that fails in beforeEach.
+        if (!('error' in testInfo))
+          testInfo.error = serializeError(error);
       }
       // Continue running afterEach hooks even after the failure.
     }

@@ -15,22 +15,16 @@
  */
 
 import fs from 'fs';
-import path from 'path';
 import { test as baseTest, expect } from './playwright-test-fixtures';
-import { HttpServer } from 'playwright-core/src/utils/httpServer';
+import { HttpServer } from 'playwright-core/lib/utils/httpServer';
+import { startHtmlReportServer } from '../../packages/playwright-test/lib/reporters/html';
 
 const test = baseTest.extend<{ showReport: () => Promise<void> }>({
   showReport: async ({ page }, use, testInfo) => {
-    const server = new HttpServer();
+    let server: HttpServer;
     await use(async () => {
       const reportFolder = testInfo.outputPath('playwright-report');
-      server.routePrefix('/', (request, response) => {
-        let relativePath = new URL('http://localhost' + request.url).pathname;
-        if (relativePath === '/')
-          relativePath = '/index.html';
-        const absolutePath = path.join(reportFolder, ...relativePath.split('/'));
-        return server.serveFile(response, absolutePath);
-      });
+      server = startHtmlReportServer(reportFolder);
       const location = await server.start();
       await page.goto(location);
     });
@@ -64,6 +58,7 @@ test('should generate report', async ({ runInlineTest }, testInfo) => {
   delete reportObject.testIdToFileId;
   delete reportObject.files[0].fileId;
   delete reportObject.files[0].stats.duration;
+  delete reportObject.stats.duration;
 
   const fileNames = new Set<string>();
   for (const test of reportObject.files[0].tests) {
@@ -129,7 +124,15 @@ test('should generate report', async ({ runInlineTest }, testInfo) => {
     ],
     projectNames: [
       'project-name'
-    ]
+    ],
+    stats: {
+      expected: 1,
+      flaky: 1,
+      ok: false,
+      skipped: 1,
+      total: 4,
+      unexpected: 1,
+    }
   });
 });
 
@@ -236,4 +239,54 @@ test('should include stdio', async ({ runInlineTest, page, showReport }) => {
   await expect(page.locator('.attachment-body')).toHaveText('First line\nSecond line');
   await page.locator('text=stderr').click();
   await expect(page.locator('.attachment-body').nth(1)).toHaveText('Third line');
+});
+
+test('should highlight error', async ({ runInlineTest, page, showReport }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('fails', async ({ page }) => {
+        await expect(true).toBeFalsy();
+      });
+    `,
+  }, { reporter: 'dot,html' });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+
+  await showReport();
+  await page.click('text=fails');
+  await expect(page.locator('.error-message span:has-text("received")').nth(1)).toHaveCSS('color', 'rgb(204, 0, 0)');
+});
+
+test('should show trace source', async ({ runInlineTest, page, showReport }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = { use: { trace: 'on' } };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('passes', async ({ page }) => {
+        await page.evaluate('2 + 2');
+      });
+    `,
+  }, { reporter: 'dot,html' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+
+  await showReport();
+  await page.click('text=passes');
+  await page.click('img');
+  await page.click('.action-title >> text=page.evaluate');
+  await page.click('text=Source');
+
+  await expect(page.locator('.source-line')).toContainText([
+    /const.*pwt;/,
+    /page\.evaluate/
+  ]);
+  await expect(page.locator('.source-line-running')).toContainText('page.evaluate');
+
+  await expect(page.locator('.stack-trace-frame')).toContainText([
+    /a.test.js:[\d]+/,
+  ]);
+  await expect(page.locator('.stack-trace-frame.selected')).toContainText('a.test.js');
 });

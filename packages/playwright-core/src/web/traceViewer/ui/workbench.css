@@ -14,6 +14,30 @@
   limitations under the License.
 */
 
+.drop-target {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--box-shadow);
+  flex: auto;
+  font-size: 24px;
+  color: #666;
+  font-weight: bold;
+}
+
+.progress {
+  position: relative;
+  margin: auto;
+  width: 400px;
+  height: 10px;
+  border: 1px solid #aaa;
+}
+
+.inner-progress {
+  background-color: #aaa;
+  height: 100%;
+}
+
 .workbench {
   contain: size;
   user-select: none;

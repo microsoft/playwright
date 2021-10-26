@@ -167,7 +167,7 @@ Documentation.Class = class {
     this.extends = extendsName;
     this.comment =  '';
     this.index();
-    const match = name.match(/(JS|CDP|[A-Z])(.*)/);
+    const match = name.match(/(API|JS|CDP|[A-Z])(.*)/);
     this.varName = match[1].toLowerCase() + match[2];
   }
 

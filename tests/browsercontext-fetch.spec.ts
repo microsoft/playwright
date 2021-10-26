@@ -929,3 +929,20 @@ it('should accept bool and numeric params', async ({ page, server }) => {
   expect(params.get('bool')).toEqual('true');
   expect(params.get('bool2')).toEqual('false');
 });
+
+it('should abort requests when browser context closes', async ({ contextFactory, server }) => {
+  const connectionClosed = new Promise(resolve => {
+    server.setRoute('/empty.html', (req, res) => {
+      req.socket.on('close', resolve);
+    });
+  });
+  const context = await contextFactory();
+  const [ error ] = await Promise.all([
+    context.request.get(server.EMPTY_PAGE).catch(e => e),
+    context.request.post(server.EMPTY_PAGE).catch(e => e),
+    server.waitForRequest('/empty.html').then(() => context.close())
+  ]);
+  expect(error instanceof Error).toBeTruthy();
+  expect(error.message).toContain('Request context disposed');
+  await connectionClosed;
+});

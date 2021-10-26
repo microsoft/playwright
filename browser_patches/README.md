@@ -26,11 +26,11 @@ and develop from there.
 From the `playwright` repo, run the following command:
 
 ```bash
-$ ./browser_patches/prepare_checkout.sh firefox <path to checkout>
+$ ./browser_patches/prepare_checkout.sh firefox
 ```
 (you can optionally pass "webkit" for a webkit checkout)
 
-If you don't have a checkout, don't pass a path and one will be created for you in `./browser_patches/firefox/checkout`
+This will create a firefox checkout at  `$HOME/firefox`
 
 > **NOTE:** this command downloads GBs of data.
 
@@ -43,7 +43,7 @@ This command will:
 
 You want to create a new branch off the `playwright-build` branch.
 
-Assuming that you're under `./browser_patches/firefox/checkout`:
+Assuming that you're under `$HOME/firefox` checkout:
 
 ```bash
 $ git checkout -b my-new-feature playwright-build
@@ -57,7 +57,7 @@ Once you're happy with the work you did in the browser-land, you want to export 
 Assuming that you're in the root of the `playwright` repo and that your browser checkout has your feature branch checked out:
 
 ```bash
-$ ./browser_patches/export.sh firefox <path to checkout>
+$ ./browser_patches/export.sh firefox
 ```
 
 This script will:
@@ -65,7 +65,7 @@ This script will:
 - update the `./browser_patches/firefox/UPSTREAM_CONFIG.sh` if necessary
 - bump the `./browser_patches/firefox/BUILD_NUMBER` number.
 
-If you omit the path to your checkout, the script will assume one is located at `./browser_patches/firefox/checkout`
+The script will assume Firefox checkout is located at `$HOME/firefox`
 
 Send a PR to the Playwright repo to be reviewed.
 

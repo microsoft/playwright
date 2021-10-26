@@ -16,12 +16,13 @@
 
 import fs from 'fs';
 import path from 'path';
-import { FullProject } from '../types';
 import { FullConfig, Location, Suite, TestCase, TestResult, TestStatus, TestStep } from '../../types/testReporter';
-import { assert, calculateSha1 } from 'playwright-core/src/utils/utils';
+import { assert, calculateSha1 } from 'playwright-core/lib/utils/utils';
 import { sanitizeForFilePath } from '../util';
 import { formatResultFailure } from './base';
-import { serializePatterns } from './json';
+import { toPosixPath, serializePatterns } from './json';
+import { MultiMap } from 'playwright-core/lib/utils/multimap';
+import { codeFrameColumns } from '@babel/code-frame';
 
 export type JsonLocation = Location;
 export type JsonError = string;
@@ -48,6 +49,7 @@ export type JsonProject = {
 };
 
 export type JsonSuite = {
+  fileId: string;
   title: string;
   location?: JsonLocation;
   suites: JsonSuite[];
@@ -92,12 +94,14 @@ export type JsonTestStep = {
   duration: number;
   error?: JsonError;
   steps: JsonTestStep[];
-  log?: string[];
+  location?: Location;
+  snippet?: string;
 };
 
 class RawReporter {
   private config!: FullConfig;
   private suite!: Suite;
+  private stepsInFile = new MultiMap<string, JsonTestStep>();
 
   onBegin(config: FullConfig, suite: Suite) {
     this.config = config;
@@ -107,7 +111,7 @@ class RawReporter {
   async onEnd() {
     const projectSuites = this.suite.suites;
     for (const suite of projectSuites) {
-      const project = (suite as any)._projectConfig as FullProject;
+      const project = suite.project();
       assert(project, 'Internal Error: Invalid project structure');
       const reportFolder = path.join(project.outputDir, 'report');
       fs.mkdirSync(reportFolder, { recursive: true });
@@ -129,7 +133,8 @@ class RawReporter {
   }
 
   generateProjectReport(config: FullConfig, suite: Suite): JsonReport {
-    const project = (suite as any)._projectConfig as FullProject;
+    this.config = config;
+    const project = suite.project();
     assert(project, 'Internal Error: Invalid project structure');
     const report: JsonReport = {
       config,
@@ -146,24 +151,54 @@ class RawReporter {
       },
       suites: suite.suites.map(s => this._serializeSuite(s))
     };
+    for (const file of this.stepsInFile.keys()) {
+      let source: string;
+      try {
+        source = fs.readFileSync(file, 'utf-8') + '\n//';
+      } catch (e) {
+        continue;
+      }
+      const lines = source.split('\n').length;
+      const highlighted = codeFrameColumns(source, { start: { line: lines, column: 1 } }, { highlightCode: true, linesAbove: lines, linesBelow: 0 });
+      const highlightedLines = highlighted.split('\n');
+      const lineWithArrow = highlightedLines[highlightedLines.length - 1];
+      for (const step of this.stepsInFile.get(file)) {
+        // Don't bother with snippets that have less than 3 lines.
+        if (step.location!.line < 2 || step.location!.line >= lines)
+          continue;
+        // Cut out snippet.
+        const snippetLines = highlightedLines.slice(step.location!.line - 2, step.location!.line + 1);
+        // Relocate arrow.
+        const index = lineWithArrow.indexOf('^');
+        const shiftedArrow = lineWithArrow.slice(0, index) + ' '.repeat(step.location!.column - 1) + lineWithArrow.slice(index);
+        // Insert arrow line.
+        snippetLines.splice(2, 0, shiftedArrow);
+        step.snippet = snippetLines.join('\n');
+      }
+    }
     return report;
   }
 
   private _serializeSuite(suite: Suite): JsonSuite {
+    const fileId = calculateSha1(suite.location!.file.split(path.sep).join('/'));
+    const location = this._relativeLocation(suite.location);
     return {
       title: suite.title,
-      location: suite.location,
+      fileId,
+      location,
       suites: suite.suites.map(s => this._serializeSuite(s)),
-      tests: suite.tests.map(t => this._serializeTest(t)),
+      tests: suite.tests.map(t => this._serializeTest(t, fileId)),
     };
   }
 
-  private _serializeTest(test: TestCase): JsonTestCase {
-    const testId = calculateSha1(test.titlePath().join('|'));
+  private _serializeTest(test: TestCase, fileId: string): JsonTestCase {
+    const [, projectName, , ...titles] = test.titlePath();
+    const testIdExpression = `project:${projectName}|path:${titles.join('>')}`;
+    const testId = fileId + '-' + calculateSha1(testIdExpression);
     return {
       testId,
       title: test.title,
-      location: test.location,
+      location: this._relativeLocation(test.location)!,
       expectedStatus: test.expectedStatus,
       timeout: test.timeout,
       annotations: test.annotations,
@@ -181,24 +216,26 @@ class RawReporter {
       startTime: result.startTime.toISOString(),
       duration: result.duration,
       status: result.status,
-      error: formatResultFailure(test, result, '').tokens.join('').trim(),
+      error: formatResultFailure(test, result, '', true).tokens.join('').trim(),
       attachments: this._createAttachments(result),
-      steps: this._serializeSteps(test, result.steps)
+      steps: result.steps.map(step => this._serializeStep(test, step))
     };
   }
 
-  private _serializeSteps(test: TestCase, steps: TestStep[]): JsonTestStep[] {
-    return steps.map(step => {
-      return {
-        title: step.title,
-        category: step.category,
-        startTime: step.startTime.toISOString(),
-        duration: step.duration,
-        error: step.error?.message,
-        steps: this._serializeSteps(test, step.steps),
-        log: step.data.log || undefined,
-      };
-    });
+  private _serializeStep(test: TestCase, step: TestStep): JsonTestStep {
+    const result: JsonTestStep = {
+      title: step.title,
+      category: step.category,
+      startTime: step.startTime.toISOString(),
+      duration: step.duration,
+      error: step.error?.message,
+      location: this._relativeLocation(step.location),
+      steps: step.steps.map(step => this._serializeStep(test, step)),
+    };
+
+    if (step.location)
+      this.stepsInFile.set(step.location.file, result);
+    return result;
   }
 
   private _createAttachments(result: TestResult): JsonAttachment[] {
@@ -238,6 +275,17 @@ class RawReporter {
       name: type,
       contentType: 'application/octet-stream',
       body: chunk.toString('base64')
+    };
+  }
+
+  private _relativeLocation(location: Location | undefined): Location | undefined {
+    if (!location)
+      return undefined;
+    const file = toPosixPath(path.relative(this.config.rootDir, location.file));
+    return {
+      file,
+      line: location.line,
+      column: location.column,
     };
   }
 }

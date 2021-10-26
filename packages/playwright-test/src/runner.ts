@@ -38,7 +38,7 @@ import { ProjectImpl } from './project';
 import { Minimatch } from 'minimatch';
 import { FullConfig } from './types';
 import { WebServer } from './webServer';
-import { raceAgainstDeadline } from 'playwright-core/src/utils/async';
+import { raceAgainstDeadline } from 'playwright-core/lib/utils/async';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -56,10 +56,13 @@ type RunResult = {
   clashingTests: Map<string, TestCase[]>
 };
 
+type InternalGlobalSetupFunction = () => Promise<() => Promise<void>>;
+
 export class Runner {
   private _loader: Loader;
   private _reporter!: Reporter;
   private _didBegin = false;
+  private _internalGlobalSetups: Array<InternalGlobalSetupFunction> = [];
 
   constructor(loader: Loader) {
     this._loader = loader;
@@ -94,6 +97,10 @@ export class Runner {
       }
     }
     return new Multiplexer(reporters);
+  }
+
+  addInternalGlobalSetup(internalGlobalSetup: InternalGlobalSetupFunction) {
+    this._internalGlobalSetups.push(internalGlobalSetup);
   }
 
   async run(list: boolean, filePatternFilters: FilePatternFilter[], projectNames?: string[]): Promise<RunResultStatus> {
@@ -187,6 +194,11 @@ export class Runner {
       testFiles.forEach(file => allTestFiles.add(file));
     }
 
+    const internalGlobalTeardowns: (() => Promise<void>)[] = [];
+    if (!list) {
+      for (const internalGlobalSetup of this._internalGlobalSetups)
+        internalGlobalTeardowns.push(await internalGlobalSetup());
+    }
     const webServer = (!list && config.webServer) ? await WebServer.create(config.webServer) : undefined;
     let globalSetupResult: any;
     if (config.globalSetup && !list)
@@ -338,6 +350,8 @@ export class Runner {
       if (config.globalTeardown && !list)
         await (await this._loader.loadGlobalHook(config.globalTeardown, 'globalTeardown'))(this._loader.fullConfig());
       await webServer?.kill();
+      for (const internalGlobalTeardown of internalGlobalTeardowns)
+        await internalGlobalTeardown();
     }
   }
 }
@@ -509,7 +523,7 @@ function createTestGroups(rootSuite: Suite): TestGroup[] {
       }
 
       let insideParallel = false;
-      for (let parent = test.parent; parent; parent = parent.parent)
+      for (let parent: Suite | undefined = test.parent; parent; parent = parent.parent)
         insideParallel = insideParallel || parent._parallelMode === 'parallel';
 
       if (insideParallel) {

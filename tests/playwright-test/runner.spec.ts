@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import path from 'path';
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, stripAscii } from './playwright-test-fixtures';
 
 test('it should not allow multiple tests with the same name per suite', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -165,4 +165,40 @@ test('worker interrupt should report errors', async ({ runInlineTest }) => {
   expect(result.skipped).toBe(1);
   expect(result.output).toContain('%%SEND-SIGINT%%');
   expect(result.output).toContain('Error: INTERRUPT');
+});
+
+test('should not stall when workers are available', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.js': `
+      const { test } = pwt
+      test('fails-1', async () => {
+        console.log('\\n%%fails-1-started');
+        await new Promise(f => setTimeout(f, 2000));
+        console.log('\\n%%fails-1-done');
+        expect(1).toBe(2);
+      });
+      test('passes-1', async () => {
+        console.log('\\n%%passes-1');
+      });
+    `,
+    'b.spec.js': `
+      const { test } = pwt
+      test('passes-2', async () => {
+        await new Promise(f => setTimeout(f, 1000));
+        console.log('\\n%%passes-2-started');
+        await new Promise(f => setTimeout(f, 3000));
+        console.log('\\n%%passes-2-done');
+      });
+    `,
+  }, { workers: 2 });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(2);
+  expect(result.failed).toBe(1);
+  expect(stripAscii(result.output).split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%fails-1-started',
+    '%%passes-2-started',
+    '%%fails-1-done',
+    '%%passes-1',
+    '%%passes-2-done',
+  ]);
 });

@@ -19,9 +19,8 @@ import fs from 'fs';
 import open from 'open';
 import path from 'path';
 import { FullConfig, Suite } from '../../types/testReporter';
-import { HttpServer } from 'playwright-core/src/utils/httpServer';
-import { calculateSha1, removeFolders } from 'playwright-core/src/utils/utils';
-import { toPosixPath } from './json';
+import { HttpServer } from 'playwright-core/lib/utils/httpServer';
+import { calculateSha1, removeFolders } from 'playwright-core/lib/utils/utils';
 import RawReporter, { JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep, JsonAttachment } from './raw';
 import assert from 'assert';
 
@@ -43,7 +42,7 @@ export type Location = {
 
 export type HTMLReport = {
   files: TestFileSummary[];
-  testIdToFileId: { [key: string]: string };
+  stats: Stats;
   projectNames: string[];
 };
 
@@ -62,7 +61,6 @@ export type TestFileSummary = {
 
 export type TestCaseSummary = {
   testId: string,
-  fileId: string,
   title: string;
   path: string[];
   projectName: string;
@@ -92,7 +90,8 @@ export type TestStep = {
   title: string;
   startTime: string;
   duration: number;
-  log?: string[];
+  location?: Location;
+  snippet?: string;
   error?: string;
   steps: TestStep[];
 };
@@ -160,14 +159,7 @@ export async function showHTMLReport(reportFolder: string | undefined) {
     process.exit(1);
     return;
   }
-  const server = new HttpServer();
-  server.routePrefix('/', (request, response) => {
-    let relativePath = new URL('http://localhost' + request.url).pathname;
-    if (relativePath === '/')
-      relativePath = '/index.html';
-    const absolutePath = path.join(folder, ...relativePath.split('/'));
-    return server.serveFile(response, absolutePath);
-  });
+  const server = startHtmlReportServer(folder);
   const url = await server.start(9323);
   console.log('');
   console.log(colors.cyan(`  Serving HTML report at ${url}. Press Ctrl+C to quit.`));
@@ -176,15 +168,34 @@ export async function showHTMLReport(reportFolder: string | undefined) {
   await new Promise(() => {});
 }
 
+export function startHtmlReportServer(folder: string): HttpServer {
+  const server = new HttpServer();
+  server.routePrefix('/', (request, response) => {
+    let relativePath = new URL('http://localhost' + request.url).pathname;
+    if (relativePath.startsWith('/trace/file')) {
+      const url = new URL('http://localhost' + request.url!);
+      try {
+        return server.serveFile(response, url.searchParams.get('path')!);
+      } catch (e) {
+        return false;
+      }
+    }
+    if (relativePath === '/')
+      relativePath = '/index.html';
+    const absolutePath = path.join(folder, ...relativePath.split('/'));
+    return server.serveFile(response, absolutePath);
+  });
+  return server;
+}
+
 class HtmlBuilder {
   private _reportFolder: string;
   private _tests = new Map<string, JsonTestCase>();
   private _testPath = new Map<string, string[]>();
-  private _rootDir: string;
   private _dataFolder: string;
+  private _hasTraces = false;
 
   constructor(outputDir: string, rootDir: string) {
-    this._rootDir = rootDir;
     this._reportFolder = path.resolve(process.cwd(), outputDir);
     this._dataFolder = path.join(this._reportFolder, 'data');
   }
@@ -192,23 +203,11 @@ class HtmlBuilder {
   build(rawReports: JsonReport[]): boolean {
     fs.mkdirSync(this._dataFolder, { recursive: true });
 
-    // Copy app.
-    const appFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'webpack', 'htmlReport');
-    for (const file of fs.readdirSync(appFolder))
-      fs.copyFileSync(path.join(appFolder, file), path.join(this._reportFolder, file));
-
-    // Copy trace viewer.
-    const traceViewerFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'webpack', 'traceViewer');
-    const traceViewerTargetFolder = path.join(this._reportFolder, 'trace');
-    fs.mkdirSync(traceViewerTargetFolder, { recursive: true });
-    for (const file of fs.readdirSync(traceViewerFolder))
-      fs.copyFileSync(path.join(traceViewerFolder, file), path.join(traceViewerTargetFolder, file));
-
     const data = new Map<string, { testFile: TestFile, testFileSummary: TestFileSummary }>();
     for (const projectJson of rawReports) {
       for (const file of projectJson.suites) {
-        const fileName = this._relativeLocation(file.location).file;
-        const fileId = calculateSha1(fileName);
+        const fileName = file.location!.file;
+        const fileId = file.fileId;
         let fileEntry = data.get(fileId);
         if (!fileEntry) {
           fileEntry = {
@@ -228,11 +227,9 @@ class HtmlBuilder {
     }
 
     let ok = true;
-    const testIdToFileId: { [key: string]: string } = {};
     for (const [fileId, { testFile, testFileSummary }] of data) {
       const stats = testFileSummary.stats;
       for (const test of testFileSummary.tests) {
-        testIdToFileId[test.testId] = fileId;
         if (test.outcome === 'expected')
           ++stats.expected;
         if (test.outcome === 'skipped')
@@ -260,15 +257,37 @@ class HtmlBuilder {
     }
     const htmlReport: HTMLReport = {
       files: [...data.values()].map(e => e.testFileSummary),
-      testIdToFileId,
-      projectNames: rawReports.map(r => r.project.name)
+      projectNames: rawReports.map(r => r.project.name),
+      stats: [...data.values()].reduce((a, e) => addStats(a, e.testFileSummary.stats), emptyStats())
     };
     htmlReport.files.sort((f1, f2) => {
       const w1 = f1.stats.unexpected * 1000 + f1.stats.flaky;
       const w2 = f2.stats.unexpected * 1000 + f2.stats.flaky;
       return w2 - w1;
     });
+
     fs.writeFileSync(path.join(this._dataFolder, 'report.json'), JSON.stringify(htmlReport, undefined, 2));
+
+    // Copy app.
+    const appFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'webpack', 'htmlReport');
+    for (const file of fs.readdirSync(appFolder)) {
+      if (file.endsWith('.map'))
+        continue;
+      fs.copyFileSync(path.join(appFolder, file), path.join(this._reportFolder, file));
+    }
+
+    // Copy trace viewer.
+    if (this._hasTraces) {
+      const traceViewerFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'webpack', 'traceViewer');
+      const traceViewerTargetFolder = path.join(this._reportFolder, 'trace');
+      fs.mkdirSync(traceViewerTargetFolder, { recursive: true });
+      for (const file of fs.readdirSync(traceViewerFolder)) {
+        if (file.endsWith('.map'))
+          continue;
+        fs.copyFileSync(path.join(traceViewerFolder, file), path.join(traceViewerTargetFolder, file));
+      }
+    }
+
     return ok;
   }
 
@@ -281,14 +300,13 @@ class HtmlBuilder {
   private _createTestEntry(test: JsonTestCase, fileId: string, projectName: string, path: string[]): TestEntry {
     const duration = test.results.reduce((a, r) => a + r.duration, 0);
     this._tests.set(test.testId, test);
-    const location = this._relativeLocation(test.location);
+    const location = test.location;
     path = [location.file + ':' + location.line,  ...path.slice(1)];
     this._testPath.set(test.testId, path);
 
     return {
       testCase: {
         testId: test.testId,
-        fileId,
         title: test.title,
         projectName,
         location,
@@ -300,7 +318,6 @@ class HtmlBuilder {
       },
       testCaseSummary: {
         testId: test.testId,
-        fileId,
         title: test.title,
         projectName,
         location,
@@ -322,6 +339,8 @@ class HtmlBuilder {
       error: result.error,
       status: result.status,
       attachments: result.attachments.map(a => {
+        if (a.name === 'trace')
+          this._hasTraces = true;
         if (a.path) {
           let fileName = a.path;
           try {
@@ -358,19 +377,10 @@ class HtmlBuilder {
       title: step.title,
       startTime: step.startTime,
       duration: step.duration,
+      snippet: step.snippet,
       steps: step.steps.map(s => this._createTestStep(s)),
-      log: step.log,
+      location: step.location,
       error: step.error
-    };
-  }
-
-  private _relativeLocation(location: Location | undefined): Location {
-    if (!location)
-      return { file: '', line: 0, column: 0 };
-    return {
-      file: toPosixPath(path.relative(this._rootDir, location.file)),
-      line: location.line,
-      column: location.column,
     };
   }
 }
@@ -385,6 +395,17 @@ const emptyStats = (): Stats => {
     ok: true,
     duration: 0,
   };
+};
+
+const addStats = (stats: Stats, delta: Stats): Stats => {
+  stats.total += delta.total;
+  stats.skipped += delta.skipped;
+  stats.expected += delta.expected;
+  stats.unexpected += delta.unexpected;
+  stats.flaky += delta.flaky;
+  stats.ok = stats.ok && delta.ok;
+  stats.duration += delta.duration;
+  return stats;
 };
 
 export default HtmlReporter;

@@ -16,8 +16,8 @@
 
 
 import colors from 'colors/safe';
-import { ExpectedTextValue } from 'playwright-core/src/protocol/channels';
-import { isRegExp, isString } from 'playwright-core/src/utils/utils';
+import { ExpectedTextValue } from 'playwright-core/lib/protocol/channels';
+import { isRegExp, isString } from 'playwright-core/lib/utils/utils';
 import { currentTestInfo } from '../globals';
 import type { Expect } from '../types';
 import { expectType } from '../util';
@@ -35,9 +35,6 @@ export async function toMatchText(
   expected: string | RegExp,
   options: { timeout?: number, matchSubstring?: boolean } = {},
 ) {
-  const testInfo = currentTestInfo();
-  if (!testInfo)
-    throw new Error(`${matcherName} must be called during the test`);
   expectType(receiver, receiverType, matcherName);
 
   const matcherOptions = {
@@ -60,7 +57,8 @@ export async function toMatchText(
     );
   }
 
-  let defaultExpectTimeout = testInfo.project.expect?.timeout;
+  const testInfo = currentTestInfo();
+  let defaultExpectTimeout = testInfo?.project.expect?.timeout;
   if (typeof defaultExpectTimeout === 'undefined')
     defaultExpectTimeout = 5000;
   const timeout = options.timeout === 0 ? 0 : options.timeout || defaultExpectTimeout;

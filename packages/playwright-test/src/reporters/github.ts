@@ -16,7 +16,7 @@
 
 import milliseconds from 'ms';
 import path from 'path';
-import { BaseReporter, formatFailure } from './base';
+import { BaseReporter, formatFailure, stripAnsiEscapes } from './base';
 import { TestCase, FullResult } from '../../types/testReporter';
 
 type GitHubLogType = 'debug' | 'notice' | 'warning' | 'error';
@@ -31,13 +31,12 @@ type GitHubLogOptions = Partial<{
 }>;
 
 class GitHubLogger {
-
   private _log(message: string, type: GitHubLogType = 'notice', options: GitHubLogOptions = {}) {
     message = message.replace(/\n/g, '%0A');
     const configs = Object.entries(options)
         .map(([key, option]) => `${key}=${option}`)
         .join(',');
-    console.log(`::${type} ${configs}::${message}`);
+    console.log(stripAnsiEscapes(`::${type} ${configs}::${message}`));
   }
 
   debug(message: string, options?: GitHubLogOptions) {

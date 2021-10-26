@@ -54,6 +54,7 @@ export type StepBeginPayload = {
   canHaveChildren: boolean;
   forceNoParent: boolean;
   wallTime: number;  // milliseconds since unix epoch
+  location?: { file: string, line: number, column: number };
 };
 
 export type StepEndPayload = {

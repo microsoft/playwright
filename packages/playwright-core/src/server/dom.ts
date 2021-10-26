@@ -505,7 +505,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (poll === 'error:notconnected')
         return poll;
       const pollHandler = new InjectedScriptPollHandler(progress, poll);
-      const result = await pollHandler.finish();
+      const result = await pollHandler.finishMaybeNotConnected();
       await this._page._doSlowMo();
       return result;
     });
@@ -530,7 +530,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (poll === 'error:notconnected')
         return poll;
       const pollHandler = new InjectedScriptPollHandler(progress, poll);
-      const filled = await pollHandler.finish();
+      const filled = await pollHandler.finishMaybeNotConnected();
       progress.throwIfAborted();  // Avoid action that has side-effects.
       if (filled === 'error:notconnected')
         return filled;
@@ -556,7 +556,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         return injected.waitForElementStatesAndPerformAction(node, ['visible'], force, injected.selectText.bind(injected));
       }, options.force);
       const pollHandler = new InjectedScriptPollHandler(progress, throwRetargetableDOMError(poll));
-      const result = await pollHandler.finish();
+      const result = await pollHandler.finishMaybeNotConnected();
       assertDone(throwRetargetableDOMError(result));
     }, this._page._timeoutSettings.timeout(options));
   }
@@ -761,7 +761,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         return injected.waitForElementStatesAndPerformAction(node, [state], false, () => 'done' as const);
       }, state);
       const pollHandler = new InjectedScriptPollHandler(progress, throwRetargetableDOMError(poll));
-      assertDone(throwRetargetableDOMError(await pollHandler.finish()));
+      assertDone(throwRetargetableDOMError(await pollHandler.finishMaybeNotConnected()));
     }, this._page._timeoutSettings.timeout(options));
   }
 
@@ -808,7 +808,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     if (poll === 'error:notconnected')
       return poll;
     const pollHandler = new InjectedScriptPollHandler(progress, poll);
-    const result = await pollHandler.finish();
+    const result = await pollHandler.finishMaybeNotConnected();
     if (waitForEnabled)
       progress.log('  element is visible, enabled and stable');
     else
@@ -867,7 +867,17 @@ export class InjectedScriptPollHandler<T> {
     }
   }
 
-  async finish(): Promise<T | 'error:notconnected'> {
+  async finish(): Promise<T> {
+    try {
+      const result = await this._poll!.evaluate(poll => poll.run());
+      await this._finishInternal();
+      return result;
+    } finally {
+      await this.cancel();
+    }
+  }
+
+  async finishMaybeNotConnected(): Promise<T | 'error:notconnected'> {
     try {
       const result = await this._poll!.evaluate(poll => poll.run());
       await this._finishInternal();

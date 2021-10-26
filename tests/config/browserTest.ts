@@ -24,6 +24,7 @@ import * as os from 'os';
 import { RemoteServer, RemoteServerOptions } from './remoteServer';
 import { baseTest, CommonWorkerFixtures } from './baseTest';
 import { CommonFixtures } from './commonFixtures';
+import type { ParsedStackTrace } from 'playwright-core/lib/utils/stackTrace';
 
 type PlaywrightWorkerOptions = {
   executablePath: LaunchOptions['executablePath'];
@@ -145,25 +146,26 @@ export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTest
       contexts.set(context, { closed: false });
       context.on('close', () => contexts.get(context).closed = true);
       if (trace)
-        await context.tracing.start({ screenshots: true, snapshots: true });
-      (context as any)._csi = {
-        onApiCallBegin: (apiCall: string) => {
+        await context.tracing.start({ screenshots: true, snapshots: true, sources: true } as any);
+      (context as any)._instrumentation.addListener({
+        onApiCallBegin: (apiCall: string, stackTrace: ParsedStackTrace | null, userData: any) => {
           if (apiCall.startsWith('expect.'))
             return { userObject: null };
           const testInfoImpl = testInfo as any;
           const step = testInfoImpl._addStep({
+            location: stackTrace?.frames[0],
             category: 'pw:api',
             title: apiCall,
             canHaveChildren: false,
             forceNoParent: false
           });
-          return { userObject: step };
+          userData.userObject = step;
         },
-        onApiCallEnd: (data: { userObject: any }, error?: Error) => {
-          const step = data.userObject;
+        onApiCallEnd: (userData: any, error?: Error) => {
+          const step = userData.userObject;
           step?.complete(error);
         },
-      };
+      });
       return context;
     });
     await Promise.all([...contexts.keys()].map(async context => {

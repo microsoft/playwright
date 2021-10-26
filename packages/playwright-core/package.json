@@ -1,6 +1,6 @@
 {
   "name": "playwright-core",
-  "version": "1.16.0-next",
+  "version": "1.17.0-next",
   "description": "A high-level API to automate web browsers",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
@@ -19,8 +19,16 @@
       "import": "./index.mjs",
       "require": "./index.js"
     },
-    "./src/*": "./lib/*.js",
-    "./*": "./*.js"
+    "./cli": "./cli.js",
+    "./lib/grid/gridServer": "./lib/grid/gridServer.js",
+    "./lib/grid/gridClient": "./lib/grid/gridClient.js",
+    "./lib/grid/dockerGridFactory": "./lib/grid/dockerGridFactory.js",
+    "./lib/utils/async": "./lib/utils/async.js",
+    "./lib/utils/httpServer": "./lib/utils/httpServer.js",
+    "./lib/utils/multimap": "./lib/utils/multimap.js",
+    "./lib/utils/processLauncher": "./lib/utils/processLauncher.js",
+    "./lib/utils/registry": "./lib/utils/registry.js",
+    "./lib/utils/utils": "./lib/utils/utils.js"
   },
   "types": "types/types.d.ts",
   "bin": {

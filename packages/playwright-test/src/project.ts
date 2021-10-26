@@ -58,7 +58,7 @@ export class ProjectImpl {
       let pool = this.buildTestTypePool(test._testType);
 
       const parents: Suite[] = [];
-      for (let parent = test.parent; parent; parent = parent.parent)
+      for (let parent: Suite | undefined = test.parent; parent; parent = parent.parent)
         parents.push(parent);
       parents.reverse();
 
@@ -82,7 +82,6 @@ export class ProjectImpl {
   private _cloneEntries(from: Suite, to: Suite, repeatEachIndex: number, filter: (test: TestCase) => boolean): boolean {
     for (const hook of from._allHooks) {
       const clone = hook._clone();
-      clone.projectName = this.config.name;
       clone._pool = this.buildPool(hook);
       clone._projectIndex = this.index;
       to._addAllHook(clone);
@@ -98,7 +97,6 @@ export class ProjectImpl {
       } else {
         const pool = this.buildPool(entry);
         const test = entry._clone();
-        test.projectName = this.config.name;
         test.retries = this.config.retries;
         test._workerHash = `run${this.index}-${pool.digest}-repeat${repeatEachIndex}`;
         test._id = `${entry._ordinalInFile}@${entry._requireFile}#run${this.index}-repeat${repeatEachIndex}`;

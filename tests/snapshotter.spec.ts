@@ -15,7 +15,7 @@
  */
 
 import { contextTest, expect } from './config/browserTest';
-import { InMemorySnapshotter } from 'playwright-core/lib/web/traceViewer/inMemorySnapshotter';
+import { InMemorySnapshotter } from '../packages/playwright-core/lib/web/traceViewer/inMemorySnapshotter';
 
 const it = contextTest.extend<{ snapshotter: InMemorySnapshotter }>({
   snapshotter: async ({ mode, toImpl, context }, run, testInfo) => {
@@ -153,12 +153,12 @@ it.describe('snapshots', () => {
     {
       const handle = await page.$('text=Hello');
       const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot', toImpl(handle));
-      expect(distillSnapshot(snapshot)).toBe('<BUTTON __playwright_target__=\"snapshot\">Hello</BUTTON><BUTTON>World</BUTTON>');
+      expect(distillSnapshot(snapshot, false /* distillTarget */)).toBe('<BUTTON __playwright_target__=\"snapshot\">Hello</BUTTON><BUTTON>World</BUTTON>');
     }
     {
       const handle = await page.$('text=World');
       const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot2', toImpl(handle));
-      expect(distillSnapshot(snapshot)).toBe('<BUTTON __playwright_target__=\"snapshot\">Hello</BUTTON><BUTTON __playwright_target__=\"snapshot2\">World</BUTTON>');
+      expect(distillSnapshot(snapshot, false /* distillTarget */)).toBe('<BUTTON __playwright_target__=\"snapshot\">Hello</BUTTON><BUTTON __playwright_target__=\"snapshot2\">World</BUTTON>');
     }
   });
 
@@ -180,10 +180,41 @@ it.describe('snapshots', () => {
       expect(distillSnapshot(snapshot)).toBe('<BUTTON data="two">Hello</BUTTON>');
     }
   });
+
+  it('empty adopted style sheets should not prevent node refs', async ({ page, toImpl, snapshotter, browserName }) => {
+    it.skip(browserName !== 'chromium', 'Constructed stylesheets are only in Chromium.');
+
+    await page.setContent('<button>Hello</button>');
+    await page.evaluate(() => {
+      const sheet = new CSSStyleSheet();
+      (document as any).adoptedStyleSheets = [sheet];
+
+      const sheet2 = new CSSStyleSheet();
+      for (const element of [document.createElement('div'), document.createElement('span')]) {
+        const root = element.attachShadow({
+          mode: 'open'
+        });
+        root.append('foo');
+        (root as any).adoptedStyleSheets = [sheet2];
+        document.body.appendChild(element);
+      }
+    });
+
+    const renderer1 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
+    // Expect some adopted style sheets.
+    expect(distillSnapshot(renderer1)).toContain('__playwright_style_sheet_');
+
+    const renderer2 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot2');
+    const snapshot2 = renderer2.snapshot();
+    // Second snapshot should be just a copy of the first one.
+    expect(snapshot2.html).toEqual([[1, 13]]);
+  });
 });
 
-function distillSnapshot(snapshot) {
-  const { html } = snapshot.render();
+function distillSnapshot(snapshot, distillTarget = true) {
+  let { html } = snapshot.render();
+  if (distillTarget)
+    html = html.replace(/\s__playwright_target__="[^"]+"/g, '');
   return html
       .replace(/<script>[.\s\S]+<\/script>/, '')
       .replace(/<style>.*__playwright_target__.*<\/style>/, '')

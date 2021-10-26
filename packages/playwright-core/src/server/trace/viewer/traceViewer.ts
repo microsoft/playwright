@@ -27,17 +27,16 @@ import { ProgressController } from '../../progress';
 
 export async function showTraceViewer(traceUrl: string, browserName: string, headless = false, port?: number): Promise<BrowserContext | undefined> {
   const server = new HttpServer();
-  server.routePath('/file', (request, response) => {
-    try {
-      const path = new URL('http://localhost' + request.url!).searchParams.get('path')!;
-      return server.serveFile(response, path);
-    } catch (e) {
-      return false;
+  server.routePrefix('/trace', (request, response) => {
+    const url = new URL('http://localhost' + request.url!);
+    const relativePath = url.pathname.slice('/trace'.length);
+    if (relativePath.startsWith('/file')) {
+      try {
+        return server.serveFile(response, url.searchParams.get('path')!);
+      } catch (e) {
+        return false;
+      }
     }
-  });
-
-  server.routePrefix('/', (request, response) => {
-    const relativePath = new URL('http://localhost' + request.url!).pathname.slice('/trace'.length);
     const absolutePath = path.join(__dirname, '..', '..', '..', 'webpack', 'traceViewer', ...relativePath.split('/'));
     return server.serveFile(response, absolutePath);
   });
@@ -77,6 +76,6 @@ export async function showTraceViewer(traceUrl: string, browserName: string, hea
   else
     page.on('close', () => process.exit());
 
-  await page.mainFrame().goto(internalCallMetadata(), urlPrefix + `/trace/index.html?trace=${traceUrl}`);
+  await page.mainFrame().goto(internalCallMetadata(), urlPrefix + `/trace/index.html${traceUrl ? '?trace=' + traceUrl : ''}`);
   return context;
 }

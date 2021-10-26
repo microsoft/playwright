@@ -177,3 +177,54 @@ it('should return empty body', async ({ playwright, server }) => {
   const error = await response.body().catch(e => e);
   expect(error.message).toContain('Response has been disposed');
 });
+
+it('should abort requests when context is disposed', async ({ playwright, server }) => {
+  const connectionClosed = new Promise(resolve => {
+    server.setRoute('/empty.html', req => req.socket.on('close', resolve));
+  });
+  const request = await playwright.request.newContext();
+  const results = await Promise.all([
+    request.get(server.EMPTY_PAGE).catch(e => e),
+    request.post(server.EMPTY_PAGE).catch(e => e),
+    request.delete(server.EMPTY_PAGE).catch(e => e),
+    server.waitForRequest('/empty.html').then(() => request.dispose())
+  ]);
+  for (const result of results.slice(0, -1)) {
+    expect(result instanceof Error).toBeTruthy();
+    expect(result.message).toContain('Request context disposed');
+  }
+  await connectionClosed;
+});
+
+it('should abort redirected requests when context is disposed', async ({ playwright, server }) => {
+  server.setRedirect('/redirect', '/test');
+  const connectionClosed = new Promise(resolve => {
+    server.setRoute('/test', req => req.socket.on('close', resolve));
+  });
+  const request = await playwright.request.newContext();
+  const [result] = await Promise.all([
+    request.get(server.PREFIX + '/redirect').catch(e => e),
+    server.waitForRequest('/test').then(() => request.dispose())
+  ]);
+  expect(result instanceof Error).toBeTruthy();
+  expect(result.message).toContain('Request context disposed');
+  await connectionClosed;
+});
+
+it('should remove content-length from reidrected post requests', async ({ playwright, server }) => {
+  server.setRedirect('/redirect', '/empty.html');
+  const request = await playwright.request.newContext();
+  const [result, req1, req2] = await Promise.all([
+    request.post(server.PREFIX + '/redirect', {
+      data: {
+        'foo': 'bar'
+      }
+    }),
+    server.waitForRequest('/redirect'),
+    server.waitForRequest('/empty.html')
+  ]);
+  expect(result.status()).toBe(200);
+  expect(req1.headers['content-length']).toBe('13');
+  expect(req2.headers['content-length']).toBe(undefined);
+  await request.dispose();
+});

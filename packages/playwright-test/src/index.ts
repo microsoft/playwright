@@ -19,8 +19,8 @@ import * as path from 'path';
 import type { LaunchOptions, BrowserContextOptions, Page, BrowserContext, BrowserType } from 'playwright-core';
 import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo } from '../types/test';
 import { rootTestType } from './testType';
-import { assert, createGuid, removeFolders } from 'playwright-core/src/utils/utils';
-import { GridClient } from 'playwright-core/src/grid/gridClient';
+import { assert, createGuid, removeFolders } from 'playwright-core/lib/utils/utils';
+import { GridClient } from 'playwright-core/lib/grid/gridClient';
 import { Browser } from 'playwright-core';
 export { expect } from './expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
@@ -127,7 +127,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
       await use(gridClient.playwright() as any);
       await gridClient.close();
     } else {
-      await use(require('playwright-core/lib/inprocess'));
+      await use(require('playwright-core'));
     }
   }, { scope: 'worker' } ],
   headless: [ undefined, { scope: 'worker' } ],
@@ -288,30 +288,34 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
       context.setDefaultNavigationTimeout(navigationTimeout || actionTimeout || 0);
       if (captureTrace) {
         if (!(context.tracing as any)[kTracingStarted]) {
-          await context.tracing.start({ screenshots: true, snapshots: true });
+          await context.tracing.start({ screenshots: true, snapshots: true, sources: true } as any);
           (context.tracing as any)[kTracingStarted] = true;
+        } else {
+          await context.tracing.startChunk();
         }
-        await context.tracing.startChunk();
       } else {
+        (context.tracing as any)[kTracingStarted] = false;
         await context.tracing.stop();
       }
-      (context as any)._csi = {
-        onApiCallBegin: (apiCall: string) => {
+      (context as any)._instrumentation.addListener({
+        onApiCallBegin: (apiCall: string, stackTrace: ParsedStackTrace | null, userData: any) => {
           if (apiCall.startsWith('expect.'))
             return { userObject: null };
-          const step = (testInfo as any)._addStep({
+          const testInfoImpl = testInfo as any;
+          const step = testInfoImpl._addStep({
+            location: stackTrace?.frames[0],
             category: 'pw:api',
             title: apiCall,
             canHaveChildren: false,
-            forceNoParent: false,
+            forceNoParent: false
           });
-          return { userObject: step };
+          userData.userObject = step;
         },
-        onApiCallEnd: (data: { userObject: any }, error?: Error) => {
-          const step = data.userObject;
+        onApiCallEnd: (userData: any, error?: Error) => {
+          const step = userData.userObject;
           step?.complete(error);
         },
-      };
+      });
     };
 
     const onWillCloseContext = async (context: BrowserContext) => {
@@ -370,12 +374,14 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
     (_browserType as any)._onDidCreateContext = undefined;
     (_browserType as any)._onWillCloseContext = undefined;
     (_browserType as any)._defaultContextOptions = undefined;
-    leftoverContexts.forEach(context => (context as any)._csi = undefined);
+    leftoverContexts.forEach(context => (context as any)._instrumentation.removeAllListeners());
 
     // 5. Collect artifacts from any non-closed contexts.
     await Promise.all(leftoverContexts.map(async context => {
       if (preserveTrace)
         await context.tracing.stopChunk({ path: addTraceAttachment() });
+      else if (captureTrace)
+        await context.tracing.stopChunk();
       if (captureScreenshots)
         await Promise.all(context.pages().map(page => page.screenshot({ timeout: 5000, path: addScreenshotAttachment() }).catch(() => {})));
     }));

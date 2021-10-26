@@ -183,3 +183,57 @@ it('Page.bringToFront should work', async ({ browserType, browserOptions }) => {
   await browser.close();
 });
 
+it.skip('should click in OOPIF', async ({ browserName, browserType, browserOptions, createUserDataDir, server }) => {
+  it.fixme(browserName === 'chromium');
+  server.setRoute('/empty.html', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`<iframe src="${server.CROSS_PROCESS_PREFIX}/iframe.html"></iframe>`);
+  });
+  server.setRoute('/iframe.html', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`<button id="button" onclick="console.log('ok')">Submit</button>
+    <script>console.log('frame loaded')</script>`);
+  });
+
+  const context = await browserType.launchPersistentContext(await createUserDataDir(), { ...browserOptions, headless: false });
+  const [page] = context.pages();
+  const consoleLog: string[] = [];
+  page.on('console', m => consoleLog.push(m.text()));
+  await page.goto(server.EMPTY_PAGE);
+  await page.frames()[1].click('text=Submit');
+  expect(consoleLog).toContain('ok');
+});
+
+it.skip('should click bottom row w/ infobar in OOPIF', async ({ browserType, browserOptions, createUserDataDir, server }) => {
+  server.setRoute('/empty.html', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`
+      <style>
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; }
+        iframe { position: absolute; bottom: 0; }
+      </style>
+      <iframe src="${server.CROSS_PROCESS_PREFIX}/iframe.html"></iframe>
+    `);
+  });
+
+  server.setRoute('/iframe.html', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`
+      <style>
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; }
+        button { position: absolute; bottom: 0; }
+      </style>
+      <button id="button" onclick="console.log('ok')">Submit</button>`);
+  });
+
+  const browserContext = await browserType.launchPersistentContext(await createUserDataDir(), { ...browserOptions, headless: false });
+  const [page] = browserContext.pages();
+  await page.goto(server.EMPTY_PAGE);
+  // Chrome bug! Investigate what's happening in the oopif router.
+  const consoleLog: string[] = [];
+  page.on('console', m => consoleLog.push(m.text()));
+  while (!consoleLog.includes('ok')) {
+    await page.waitForTimeout(100);
+    await page.frames()[1].click('text=Submit');
+  }
+});

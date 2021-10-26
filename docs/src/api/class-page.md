@@ -2416,7 +2416,7 @@ last redirect.
 
 ## property: Page.request
 * langs: js
-- type: <[ApiRequestContext]>
+- type: <[APIRequestContext]>
 
 API testing helper associated with this page. Requests made with this API will use page cookies.
 
@@ -2804,7 +2804,7 @@ In the case of multiple pages in a single browser, each page can have its own vi
 [`method: Browser.newContext`] allows to set viewport size (and more) for all pages in the context at once.
 
 `page.setViewportSize` will resize the page. A lot of websites don't expect phones to change size, so you should set the
-viewport size before navigating to the page.
+viewport size before navigating to the page. [`method: Page.setViewportSize`] will also reset `screen` size, use [`method: Browser.newContext`] with `screen` and `viewport` parameters if you need better control of these properties.
 
 ```js
 const page = await browser.newPage();

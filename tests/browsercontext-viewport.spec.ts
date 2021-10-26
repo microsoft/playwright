@@ -105,6 +105,19 @@ browserTest('should support touch with null viewport', async ({ browser, server 
   await context.close();
 });
 
+it('should set both screen and viewport options', async ({ contextFactory, browserName }) => {
+  it.fail(browserName === 'firefox', 'Screen size is reset to viewport');
+  const context = await contextFactory({
+    screen: { 'width': 1280, 'height': 720 },
+    viewport: { 'width': 1000, 'height': 600 },
+  });
+  const page = await context.newPage();
+  const screen = await page.evaluate(() => ({ w: screen.width, h: screen.height }));
+  expect(screen).toEqual({ w: 1280, h: 720 });
+  const inner = await page.evaluate(() => ({ w: window.innerWidth, h: window.innerHeight }));
+  expect(inner).toEqual({ w: 1000, h: 600 });
+});
+
 browserTest('should report null viewportSize when given null viewport', async ({ browser, server }) => {
   const context = await browser.newContext({ viewport: null });
   const page = await context.newPage();

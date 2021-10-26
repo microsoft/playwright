@@ -58,7 +58,7 @@ const config: Config<CommonOptions & PlaywrightOptions> = {
   reporter: process.env.CI ? [
     [ 'dot' ],
     [ 'json', { outputFile: path.join(outputDir, 'report.json') } ],
-  ] : 'line',
+  ] : 'html',
   projects: [],
   webServer: mode === 'service' ? {
     command: 'npx playwright experimental-grid-server',

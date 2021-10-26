@@ -16,7 +16,7 @@
 
 import path from 'path';
 import type { Browser, Frame, Locator, Page } from 'playwright-core';
-import { showTraceViewer } from 'playwright-core/lib/server/trace/viewer/traceViewer';
+import { showTraceViewer } from '../../packages/playwright-core/lib/server/trace/viewer/traceViewer';
 import { playwrightTest, expect } from '../config/browserTest';
 
 class TraceViewerPage {
@@ -110,7 +110,7 @@ const test = playwrightTest.extend<{ showTraceViewer: (trace: string) => Promise
   runAndTrace: async ({ context, showTraceViewer }, use, testInfo) => {
     await use(async (body: () => Promise<void>) => {
       const traceFile = testInfo.outputPath('trace.zip');
-      await context.tracing.start({ snapshots: true, screenshots: true });
+      await context.tracing.start({ snapshots: true, screenshots: true, sources: true } as any);
       await body();
       await context.tracing.stop({ path: traceFile });
       return showTraceViewer(traceFile);
@@ -124,7 +124,7 @@ let traceFile: string;
 
 test.beforeAll(async function recordTrace({ browser, browserName, browserType, server }, workerInfo) {
   const context = await browser.newContext();
-  await context.tracing.start({ name: 'test', screenshots: true, snapshots: true });
+  await context.tracing.start({ name: 'test', screenshots: true, snapshots: true, sources: true } as any);
   const page = await context.newPage();
   await page.goto('data:text/html,<html>Hello world</html>');
   await page.setContent('<button>Click</button>');
@@ -277,8 +277,6 @@ test('should have network requests', async ({ showTraceViewer }) => {
 });
 
 test('should capture iframe', async ({ page, server, browserName, runAndTrace }) => {
-  test.skip(browserName === 'firefox');
-
   await page.route('**/empty.html', route => {
     route.fulfill({
       body: '<iframe src="iframe.html"></iframe>',
@@ -394,8 +392,6 @@ test('should work with adopted style sheets and replace/replaceSync', async ({ p
 });
 
 test('should restore scroll positions', async ({ page, runAndTrace, browserName }) => {
-  test.skip(browserName === 'firefox');
-
   const traceViewer = await runAndTrace(async () => {
     await page.setContent(`
       <style>
@@ -428,8 +424,6 @@ test('should restore scroll positions', async ({ page, runAndTrace, browserName 
 });
 
 test('should work with meta CSP', async ({ page, runAndTrace, browserName }) => {
-  test.skip(browserName === 'firefox');
-
   const traceViewer = await runAndTrace(async () => {
     await page.setContent(`
       <head>
@@ -455,8 +449,6 @@ test('should work with meta CSP', async ({ page, runAndTrace, browserName }) => 
 });
 
 test('should handle multiple headers', async ({ page, server, runAndTrace, browserName }) => {
-  test.skip(browserName === 'firefox');
-
   server.setRoute('/foo.css', (req, res) => {
     res.statusCode = 200;
     res.setHeader('vary', ['accepts-encoding', 'accepts-encoding']);
@@ -499,8 +491,6 @@ test('should handle src=blob', async ({ page, server, runAndTrace, browserName }
 });
 
 test('should highlight target elements', async ({ page, runAndTrace, browserName }) => {
-  test.skip(browserName === 'firefox');
-
   const traceViewer = await runAndTrace(async () => {
     await page.setContent(`
       <div>hello</div>
@@ -536,4 +526,18 @@ test('should highlight target elements', async ({ page, runAndTrace, browserName
 
   const frameExpect2 = await traceViewer.snapshotFrame('expect.toHaveText', 1);
   await expect(frameExpect2.locator('[__playwright_target__]')).toHaveText(['hello', 'world']);
+});
+
+test('should show action source', async ({ showTraceViewer }) => {
+  const traceViewer = await showTraceViewer(traceFile);
+  await traceViewer.selectAction('page.click');
+  const page = traceViewer.page;
+
+  await page.click('text=Source');
+  await expect(page.locator('.source-line')).toContainText([
+    /async.*function.*doClick/,
+    /page\.click/
+  ]);
+  await expect(page.locator('.source-line-running')).toContainText('page.click');
+  await expect(page.locator('.stack-trace-frame.selected')).toHaveText(/doClick.*trace-viewer\.spec\.ts:[\d]+/);
 });

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { codeFrameColumns } from '@babel/code-frame';
+import { BabelCodeFrameOptions, codeFrameColumns } from '@babel/code-frame';
 import colors from 'colors/safe';
 import fs from 'fs';
 import milliseconds from 'ms';
@@ -98,7 +98,7 @@ export class BaseReporter implements Reporter  {
   }
 
   onError(error: TestError) {
-    console.log(formatError(error));
+    console.log(formatError(error, colors.enabled).message);
   }
 
   async onEnd(result: FullResult) {
@@ -219,7 +219,7 @@ export function formatFailure(config: FullConfig, test: TestCase, options: {inde
   lines.push(colors.red(header));
   for (const result of test.results) {
     const resultLines: string[] = [];
-    const { tokens: resultTokens, position } = formatResultFailure(test, result, '    ');
+    const { tokens: resultTokens, position } = formatResultFailure(test, result, '    ', colors.enabled);
     if (!resultTokens.length)
       continue;
     if (result.retry) {
@@ -281,7 +281,7 @@ export function formatFailure(config: FullConfig, test: TestCase, options: {inde
   };
 }
 
-export function formatResultFailure(test: TestCase, result: TestResult, initialIndent: string): FailureDetails {
+export function formatResultFailure(test: TestCase, result: TestResult, initialIndent: string, highlightCode: boolean): FailureDetails {
   const resultTokens: string[] = [];
   if (result.status === 'timedOut') {
     resultTokens.push('');
@@ -293,7 +293,7 @@ export function formatResultFailure(test: TestCase, result: TestResult, initialI
   }
   let error: ErrorDetails | undefined = undefined;
   if (result.error !== undefined) {
-    error = formatError(result.error, test.location.file);
+    error = formatError(result.error, highlightCode, test.location.file);
     resultTokens.push(indent(error.message, initialIndent));
   }
   return {
@@ -325,7 +325,7 @@ function formatTestHeader(config: FullConfig, test: TestCase, indent: string, in
   return pad(header, '=');
 }
 
-export function formatError(error: TestError, file?: string): ErrorDetails {
+export function formatError(error: TestError, highlightCode: boolean, file?: string): ErrorDetails {
   const stack = error.stack;
   const tokens = [''];
   let positionInFile: PositionInFile | undefined;
@@ -337,7 +337,7 @@ export function formatError(error: TestError, file?: string): ErrorDetails {
     positionInFile = position;
     tokens.push(message);
 
-    const codeFrame = generateCodeFrame(file, position);
+    const codeFrame = generateCodeFrame({ highlightCode }, file, position);
     if (codeFrame) {
       tokens.push('');
       tokens.push(codeFrame);
@@ -365,7 +365,7 @@ function indent(lines: string, tab: string) {
   return lines.replace(/^(?=.+$)/gm, tab);
 }
 
-function generateCodeFrame(file?: string, position?: PositionInFile): string | undefined {
+export function generateCodeFrame(options: BabelCodeFrameOptions, file?: string, position?: PositionInFile): string | undefined {
   if (!position || !file)
     return;
 
@@ -373,7 +373,7 @@ function generateCodeFrame(file?: string, position?: PositionInFile): string | u
   const codeFrame = codeFrameColumns(
       source,
       { start: position },
-      { highlightCode: colors.enabled }
+      options
   );
 
   return codeFrame;

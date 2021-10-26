@@ -95,7 +95,6 @@ export class Connection extends EventEmitter {
     const guid = object._guid;
     const stackTrace: ParsedStackTrace = maybeStackTrace || { frameTexts: [], frames: [], apiName: '', allFrames: [] };
     const { frames, apiName } = stackTrace;
-
     const id = ++this._lastId;
     const converted = { id, guid, method, params };
     // Do not include metadata in debug logs to avoid noise.

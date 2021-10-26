@@ -37,6 +37,7 @@ import { Tracing } from './tracing';
 import type { BrowserType } from './browserType';
 import { Artifact } from './artifact';
 import { FetchRequest } from './fetch';
+import { createInstrumentation } from './clientInstrumentation';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel, channels.BrowserContextInitializer> implements api.BrowserContext {
   _pages = new Set<Page>();
@@ -64,7 +65,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   }
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.BrowserContextInitializer) {
-    super(parent, type, guid, initializer);
+    super(parent, type, guid, initializer, createInstrumentation());
     if (parent instanceof Browser)
       this._browser = parent;
     this._isChromium = this._browser?._name === 'chromium';
@@ -141,20 +142,18 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   }
 
   _onRoute(route: network.Route, request: network.Request) {
-    let handled = false;
     for (const routeHandler of this._routes) {
       if (routeHandler.matches(request.url())) {
-        routeHandler.handle(route, request);
-        handled = true;
-        break;
+        if (routeHandler.handle(route, request)) {
+          this._routes.splice(this._routes.indexOf(routeHandler), 1);
+          if (!this._routes.length)
+            this._wrapApiCall(channel => this._disableInterception(channel), undefined, true).catch(() => {});
+        }
+        return;
       }
     }
-    if (!handled) {
-      // it can race with BrowserContext.close() which then throws since its closed
-      route._internalContinue();
-    } else {
-      this._routes = this._routes.filter(route => !route.expired());
-    }
+    // it can race with BrowserContext.close() which then throws since its closed
+    route._internalContinue();
   }
 
   async _onBinding(bindingCall: BindingCall) {
@@ -284,9 +283,13 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   async unroute(url: URLMatch, handler?: network.RouteHandlerCallback): Promise<void> {
     return this._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
       this._routes = this._routes.filter(route => route.url !== url || (handler && route.handler !== handler));
-      if (this._routes.length === 0)
-        await channel.setNetworkInterceptionEnabled({ enabled: false });
+      if (!this._routes.length)
+        await this._disableInterception(channel);
     });
+  }
+
+  private async _disableInterception(channel: channels.BrowserContextChannel) {
+    await channel.setNetworkInterceptionEnabled({ enabled: false });
   }
 
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {

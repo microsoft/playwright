@@ -119,12 +119,11 @@ await using var browser = await BrowserType.LaunchAsync(new BrowserTypeLaunchOpt
 });
 ```
 
-When specifying proxy for each context individually, you need to give Playwright
-a hint that proxy will be set. This is done via passing a non-empty proxy server
-to the browser itself. Here is an example of a context-specific proxy:
+When specifying proxy for each context individually, **Chromium on Windows** needs a hint that proxy will be set. This is done via passing a non-empty proxy server to the browser itself. Here is an example of a context-specific proxy:
 
 ```js
 const browser = await chromium.launch({
+  // Browser proxy option is required for Chromium on Windows.
   proxy: { server: 'per-context' }
 });
 const context = await browser.newContext({
@@ -134,17 +133,20 @@ const context = await browser.newContext({
 
 ```java
 Browser browser = chromium.launch(new BrowserType.LaunchOptions()
+  // Browser proxy option is required for Chromium on Windows.
   .setProxy(new Proxy("per-context"));
 BrowserContext context = chromium.launch(new Browser.NewContextOptions()
   .setProxy(new Proxy("http://myproxy.com:3128"));
 ```
 
 ```python async
+# Browser proxy option is required for Chromium on Windows.
 browser = await chromium.launch(proxy={"server": "per-context"})
 context = await browser.new_context(proxy={"server": "http://myproxy.com:3128"})
 ```
 
 ```python sync
+# Browser proxy option is required for Chromium on Windows.
 browser = chromium.launch(proxy={"server": "per-context"})
 context = browser.new_context(proxy={"server": "http://myproxy.com:3128"})
 ```
@@ -153,6 +155,7 @@ context = browser.new_context(proxy={"server": "http://myproxy.com:3128"})
 var proxy = new Proxy { Server = "per-context" };
 await using var browser = await BrowserType.LaunchAsync(new BrowserTypeLaunchOptions
 {
+    // Browser proxy option is required for Chromium on Windows.
     Proxy = proxy
 });
 using var context = await Browser.NewContextAsync(new BrowserNewContextOptions
@@ -574,6 +577,44 @@ else
 - [`method: Page.route`]
 - [`method: BrowserContext.route`]
 - [`method: Route.abort`]
+
+<br/>
+
+## Modify responses
+* langs: js
+
+To modify a response use [APIRequestContext] to get original response and then pass the response to [`method: Route.fulfill`].
+You can override individual fields on the reponse via options:
+
+```js
+await page.route('**/title.html', async route => {
+  // Fetch original response.
+  const response = await page.request.fetch(route.request());
+  // Add a prefix to the title.
+  let body = await response.text();
+  body = body.replace('<title>', '<title>My prefix:');
+  route.fulfill({
+    // Pass all fields from the response.
+    response,
+    // Override response body.
+    body,
+    // Force content type to be html.
+    headers: {
+      ...response.headers(),
+      'content-type': 'text/html'
+    }
+  });
+});
+```
+
+### API reference
+- [APIRequestContext]
+- [`method: Page.route`]
+- [`method: BrowserContext.route`]
+- [`property: Playwright.request`]
+- [`property: BrowserContext.request`]
+- [`property: Page.request`]
+- [`method: Route.fulfill`]
 
 <br/>
 

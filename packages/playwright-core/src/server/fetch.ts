@@ -211,7 +211,7 @@ export abstract class FetchRequest extends SdkObject {
         if (redirectStatus.includes(response.statusCode!)) {
           if (!options.maxRedirects) {
             reject(new Error('Max redirect count exceeded'));
-            request.abort();
+            request.destroy();
             return;
           }
           const headers = { ...options.headers };
@@ -226,6 +226,7 @@ export abstract class FetchRequest extends SdkObject {
             postData = undefined;
             delete headers[`content-encoding`];
             delete headers[`content-language`];
+            delete headers[`content-length`];
             delete headers[`content-location`];
             delete headers[`content-type`];
           }
@@ -243,7 +244,7 @@ export abstract class FetchRequest extends SdkObject {
           if (response.headers.location) {
             const locationURL = new URL(response.headers.location, url);
             fulfill(this._sendRequest(locationURL, redirectOptions, postData));
-            request.abort();
+            request.destroy();
             return;
           }
         }
@@ -255,7 +256,7 @@ export abstract class FetchRequest extends SdkObject {
             const encoded = Buffer.from(`${username || ''}:${password || ''}`).toString('base64');
             options.headers!['authorization'] = `Basic ${encoded}`;
             fulfill(this._sendRequest(url, options, postData));
-            request.abort();
+            request.destroy();
             return;
           }
         }
@@ -297,6 +298,13 @@ export abstract class FetchRequest extends SdkObject {
       });
       request.on('error', reject);
 
+      const disposeListener = () => {
+        reject(new Error('Request context disposed.'));
+        request.destroy();
+      };
+      this.on(FetchRequest.Events.Dispose, disposeListener);
+      request.on('close', () => this.off(FetchRequest.Events.Dispose, disposeListener));
+
       if (debugLogger.isEnabled('api')) {
         debugLogger.log('api', `→ ${options.method} ${url.toString()}`);
         if (options.headers) {
@@ -308,7 +316,7 @@ export abstract class FetchRequest extends SdkObject {
       if (options.deadline) {
         const rejectOnTimeout = () =>  {
           reject(new Error(`Request timed out after ${options.timeout}ms`));
-          request.abort();
+          request.destroy();
         };
         const remaining = options.deadline - monotonicTime();
         if (remaining <= 0) {

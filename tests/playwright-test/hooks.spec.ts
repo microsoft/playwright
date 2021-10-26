@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, stripAscii } from './playwright-test-fixtures';
 
 test('hooks should work with fixtures', async ({ runInlineTest }) => {
   const { results } = await runInlineTest({
@@ -492,4 +492,54 @@ test('beforeAll and afterAll timeouts at the same time should be reported', asyn
     '%%afterAll',
   ]);
   expect(result.output).toContain('Timeout of 1000ms exceeded in beforeAll hook.');
+});
+
+test('afterEach should get the test status right away', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test.afterEach(({}, testInfo) => {
+        console.log('\\n%%' + testInfo.title + ': ' + testInfo.status);
+      });
+      test('failing', () => {
+        throw new Error('Oh my!');
+      });
+      test('timing out', async () => {
+        test.setTimeout(100);
+        await new Promise(() => {});
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(2);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%failing: failed',
+    '%%timing out: timedOut',
+  ]);
+});
+
+test('uncaught error in beforeEach should not be masked by another error', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const test = pwt.test.extend({
+        foo: async ({}, use) => {
+          let cb;
+          await use(new Promise((f, r) => cb = r));
+          cb(new Error('Oh my!'));
+        },
+      });
+      test.beforeEach(async ({ foo }, testInfo) => {
+        setTimeout(() => {
+          expect(1).toBe(2);
+        }, 0);
+        await foo;
+      });
+      test('passing', () => {
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(stripAscii(result.output)).toContain('Expected: 2');
+  expect(stripAscii(result.output)).toContain('Received: 1');
 });

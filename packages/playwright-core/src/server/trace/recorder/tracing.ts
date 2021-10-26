@@ -32,6 +32,8 @@ import { FrameSnapshot } from '../common/snapshotTypes';
 import { HarTracer, HarTracerDelegate } from '../../supplements/har/harTracer';
 import * as har from '../../supplements/har/har';
 import { VERSION } from '../common/traceEvents';
+import { NameValue } from '../../../common/types';
+import { ManualPromise } from '../../../utils/async';
 
 export type TracerOptions = {
   name?: string;
@@ -107,7 +109,7 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
 
   async startChunk() {
     if (this._state && this._state.recording)
-      await this.stopChunk(false);
+      await this.stopChunk(false, false);
 
     if (!this._state)
       throw new Error('Must start tracing before starting a new chunk');
@@ -163,7 +165,7 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
     await this._writeChain;
   }
 
-  async stopChunk(save: boolean): Promise<Artifact | null> {
+  async stopChunk(save: boolean, skipCompress: boolean): Promise<{ artifact: Artifact | null, entries: NameValue[] }> {
     if (this._isStopping)
       throw new Error(`Tracing is already stopping`);
     this._isStopping = true;
@@ -185,7 +187,7 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
       this._isStopping = false;
       if (save)
         throw new Error(`Must start tracing before stopping`);
-      return null;
+      return { artifact: null, entries: [] };
     }
 
     const state = this._state!;
@@ -198,31 +200,41 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
     // Chain the export operation against write operations,
     // so that neither trace files nor sha1s change during the export.
     return await this._appendTraceOperation(async () => {
-      const result = save ? this._export(state) : Promise.resolve(null);
-      return result.finally(async () => {
-        this._isStopping = false;
-        state.recording = false;
-      });
+      this._isStopping = false;
+      state.recording = false;
+
+      if (!save)
+        return { artifact: null, entries: [] };
+
+      // Har files a live, make a snapshot before returning the resulting entries.
+      const networkFile = path.join(state.networkFile, '..', createGuid());
+      await fs.promises.copyFile(state.networkFile, networkFile);
+
+      const entries: NameValue[] = [];
+      entries.push({ name: 'trace.trace', value: state.traceFile });
+      entries.push({ name: 'trace.network', value: networkFile });
+      for (const sha1 of state.sha1s)
+        entries.push({ name: path.join('resources', sha1), value: path.join(this._resourcesDir, sha1) });
+
+      const zipArtifact = skipCompress ? null : await this._exportZip(entries, state).catch(() => null);
+      return { artifact: zipArtifact, entries };
     });
   }
 
-  private async _export(state: RecordingState): Promise<Artifact> {
+  private async _exportZip(entries: NameValue[], state: RecordingState): Promise<Artifact | null> {
     const zipFile = new yazl.ZipFile();
-    const failedPromise = new Promise<Artifact>((_, reject) => (zipFile as any as EventEmitter).on('error', reject));
-    const succeededPromise = new Promise<Artifact>(fulfill => {
-      zipFile.addFile(state.traceFile, 'trace.trace');
-      zipFile.addFile(state.networkFile, 'trace.network');
-      const zipFileName = state.traceFile + '.zip';
-      for (const sha1 of state.sha1s)
-        zipFile.addFile(path.join(this._resourcesDir, sha1), path.join('resources', sha1));
-      zipFile.end();
-      zipFile.outputStream.pipe(fs.createWriteStream(zipFileName)).on('close', () => {
-        const artifact = new Artifact(this._context, zipFileName);
-        artifact.reportFinished();
-        fulfill(artifact);
-      });
+    const result = new ManualPromise<Artifact | null>();
+    (zipFile as any as EventEmitter).on('error', error => result.reject(error));
+    for (const entry of entries)
+      zipFile.addFile(entry.value, entry.name);
+    zipFile.end();
+    const zipFileName = state.traceFile + '.zip';
+    zipFile.outputStream.pipe(fs.createWriteStream(zipFileName)).on('close', () => {
+      const artifact = new Artifact(this._context, zipFileName);
+      artifact.reportFinished();
+      result.resolve(artifact);
     });
-    return Promise.race([failedPromise, succeededPromise]);
+    return result;
   }
 
   async _captureSnapshot(name: 'before' | 'after' | 'action' | 'event', sdkObject: SdkObject, metadata: CallMetadata, element?: ElementHandle) {

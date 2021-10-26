@@ -74,6 +74,40 @@ Hook function that takes one or two arguments: an object with fixtures and optio
 
 Declares an `afterEach` hook that is executed after each test. When called in the scope of a test file, runs after each test in the file. When called inside a [`method: Test.describe`] group, runs after each test in the group.
 
+You can access all the same [Fixtures] as the test function itself, and also the [TestInfo] object that gives a lot of useful information. For example, you can check whether the test succeeded or failed.
+
+```js js-flavor=js
+// example.spec.js
+const { test, expect } = require('@playwright/test');
+
+test.afterEach(async ({ page }, testInfo) => {
+  console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
+
+  if (testInfo.status !== testInfo.expectedStatus)
+    console.log(`Did not run as expected, ended up at ${page.url()}`);
+});
+
+test('my test', async ({ page }) => {
+  // ...
+});
+```
+
+```js js-flavor=ts
+// example.spec.ts
+import { test, expect } from '@playwright/test';
+
+test.afterEach(async ({ page }, testInfo) => {
+  console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
+
+  if (testInfo.status !== testInfo.expectedStatus)
+    console.log(`Did not run as expected, ended up at ${page.url()}`);
+});
+
+test('my test', async ({ page }) => {
+  // ...
+});
+```
+
 ### param: Test.afterEach.hookFunction
 - `hookFunction` <[function]\([Fixtures], [TestInfo]\)>
 
@@ -131,12 +165,14 @@ Hook function that takes one or two arguments: an object with fixtures and optio
 
 Declares a `beforeEach` hook that is executed before each test. When called in the scope of a test file, runs before each test in the file. When called inside a [`method: Test.describe`] group, runs before each test in the group.
 
+You can access all the same [Fixtures] as the test function itself, and also the [TestInfo] object that gives a lot of useful information. For example, you can navigate the page before starting the test.
+
 ```js js-flavor=js
 // example.spec.js
 const { test, expect } = require('@playwright/test');
 
-test.beforeEach(async ({ page }) => {
-  // Go to the starting url before each test.
+test.beforeEach(async ({ page }, testInfo) => {
+  console.log(`Running ${testInfo.title}`);
   await page.goto('https://my.start.url/');
 });
 
@@ -149,8 +185,8 @@ test('my test', async ({ page }) => {
 // example.spec.ts
 import { test, expect } from '@playwright/test';
 
-test.beforeEach(async ({ page }) => {
-  // Go to the starting url before each test.
+test.beforeEach(async ({ page }, testInfo) => {
+  console.log(`Running ${testInfo.title}`);
   await page.goto('https://my.start.url/');
 });
 

@@ -38,7 +38,7 @@ type ContextData = {
   contextPromise: Promise<dom.FrameExecutionContext>;
   contextResolveCallback: (c: dom.FrameExecutionContext) => void;
   context: dom.FrameExecutionContext | null;
-  rerunnableTasks: Set<RerunnableTask>;
+  rerunnableTasks: Set<RerunnableTask<any>>;
 };
 
 type DocumentInfo = {
@@ -1181,6 +1181,11 @@ export class Frame extends SdkObject {
         if (options.expression.endsWith('.array') && expectsEmptyList !== options.isNot)
           return { matches: expectsEmptyList };
 
+        // expect(listLocator).toHaveCount(0) passes when there are no elements matching.
+        // expect(listLocator).not.toHaveCount(1) passes when there are no elements matching.
+        if (options.expression === 'to.have.count')
+          return { matches: options.expectedNumber === 0, received: options.expectedNumber };
+
         // When none of the above applies, keep waiting for the element.
         return continuePolling;
       }
@@ -1201,6 +1206,8 @@ export class Frame extends SdkObject {
     }, options, { strict: true, querySelectorAll, mainWorld, omitAttached: true, logScale: true, ...options }).catch(e => {
       if (js.isJavaScriptErrorInEvaluate(e))
         throw e;
+      // Q: Why not throw upon isSessionClosedError(e) as in other places?
+      // A: We want user to receive a friendly message containing the last intermediate result.
       return { received: controller.lastIntermediateResult(), matches: options.isNot, log: metadata.log };
     });
   }
@@ -1280,7 +1287,7 @@ export class Frame extends SdkObject {
 
     return controller.run(async progress => {
       progress.log(`waiting for selector "${selector}"`);
-      const rerunnableTask = new RerunnableTask(data, progress, injectedScript => {
+      const rerunnableTask = new RerunnableTask<R>(data, progress, injectedScript => {
         return injectedScript.evaluateHandle((injected, { info, taskData, callbackText, querySelectorAll, logScale, omitAttached, snapshotName }) => {
           const callback = injected.eval(callbackText) as DomTaskBody<T, R, Element | undefined>;
           const poller = logScale ? injected.pollLogScale.bind(injected) : injected.pollRaf.bind(injected);
@@ -1324,18 +1331,18 @@ export class Frame extends SdkObject {
         rerunnableTask.terminate(new Error('Frame got detached.'));
       if (data.context)
         rerunnableTask.rerun(data.context);
-      return await rerunnableTask.promise;
+      return await rerunnableTask.promise!;
     }, this._page._timeoutSettings.timeout(options));
   }
 
   private _scheduleRerunnableHandleTask<T>(progress: Progress, world: types.World, task: dom.SchedulableTask<T>): Promise<js.SmartHandle<T>> {
     const data = this._contextData.get(world)!;
-    const rerunnableTask = new RerunnableTask(data, progress, task, false /* returnByValue */);
+    const rerunnableTask = new RerunnableTask<T>(data, progress, task, false /* returnByValue */);
     if (this._detached)
       rerunnableTask.terminate(new Error('waitForFunction failed: frame got detached.'));
     if (data.context)
       rerunnableTask.rerun(data.context);
-    return rerunnableTask.promise;
+    return rerunnableTask.handlePromise!;
   }
 
   private _setContext(world: types.World, context: dom.FrameExecutionContext | null) {
@@ -1394,30 +1401,41 @@ export class Frame extends SdkObject {
   }
 }
 
-class RerunnableTask {
-  readonly promise: Promise<any>;
-  private _task: dom.SchedulableTask<any>;
-  private _resolve: (result: any) => void = () => {};
-  private _reject: (reason: Error) => void = () => {};
+class RerunnableTask<T> {
+  readonly promise: ManualPromise<T> | undefined;
+  readonly handlePromise: ManualPromise<js.SmartHandle<T>> | undefined;
+  private _task: dom.SchedulableTask<T>;
   private _progress: Progress;
   private _returnByValue: boolean;
   private _contextData: ContextData;
 
-  constructor(data: ContextData, progress: Progress, task: dom.SchedulableTask<any>, returnByValue: boolean) {
+  constructor(data: ContextData, progress: Progress, task: dom.SchedulableTask<T>, returnByValue: boolean) {
     this._task = task;
     this._progress = progress;
     this._returnByValue = returnByValue;
+    if (returnByValue)
+      this.promise = new ManualPromise<T>();
+    else
+      this.handlePromise = new ManualPromise<js.SmartHandle<T>>();
     this._contextData = data;
     this._contextData.rerunnableTasks.add(this);
-    this.promise = new Promise<any>((resolve, reject) => {
-      // The task is either resolved with a value, or rejected with a meaningful evaluation error.
-      this._resolve = resolve;
-      this._reject = reject;
-    });
   }
 
   terminate(error: Error) {
     this._reject(error);
+  }
+  private _resolve(value: T | js.SmartHandle<T>) {
+    if (this.promise)
+      this.promise.resolve(value as T);
+    if (this.handlePromise)
+      this.handlePromise.resolve(value as js.SmartHandle<T>);
+  }
+
+  private _reject(error: Error) {
+    if (this.promise)
+      this.promise.reject(error);
+    if (this.handlePromise)
+      this.handlePromise.reject(error);
   }
 
   async rerun(context: dom.FrameExecutionContext) {

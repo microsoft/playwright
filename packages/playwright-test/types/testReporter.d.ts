@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { FullConfig, TestStatus, TestError } from './test';
+import type { FullConfig, FullProject, TestStatus, TestError } from './test';
 export type { FullConfig, TestStatus, TestError } from './test';
 
 /**
@@ -58,6 +58,10 @@ export interface Location {
  */
 export interface Suite {
   /**
+   * Parent suite or [void] for the root suite.
+   */
+  parent?: Suite;
+  /**
    * Suite title.
    * - Empty for root suite.
    * - Project name for project suite.
@@ -89,6 +93,10 @@ export interface Suite {
    * [suite.tests](https://playwright.dev/docs/api/class-suite#suite-tests).
    */
   allTests(): TestCase[];
+  /**
+   * Configuration of the project this suite belongs to, or [void] for the root suite.
+   */
+  project(): FullProject | undefined;
 }
 
 /**
@@ -98,6 +106,7 @@ export interface Suite {
  * or repeated multiple times, it will have multiple `TestCase` objects in corresponding projects' suites.
  */
 export interface TestCase {
+  parent: Suite;
   /**
    * Test title as passed to the [test.(call)(title, testFunction)](https://playwright.dev/docs/api/class-test#test-call)
    * call.
@@ -230,6 +239,10 @@ export interface TestStep {
    * Returns a list of step titles from the root step down to this step.
    */
   titlePath(): string[];
+  /**
+   * Location in the source where the step is defined.
+   */
+  location?: Location;
   /**
    * Parent step, if any.
    */

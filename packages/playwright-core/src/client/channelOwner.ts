@@ -20,11 +20,12 @@ import { createScheme, ValidationError, Validator } from '../protocol/validator'
 import { debugLogger } from '../utils/debugLogger';
 import { captureStackTrace, ParsedStackTrace } from '../utils/stackTrace';
 import { isUnderTest } from '../utils/utils';
+import { ClientInstrumentation } from './clientInstrumentation';
 import type { Connection } from './connection';
-import type { ClientSideInstrumentation, Logger } from './types';
+import type { Logger } from './types';
 
 export abstract class ChannelOwner<T extends channels.Channel = channels.Channel, Initializer = {}> extends EventEmitter {
-  protected _connection: Connection;
+  readonly _connection: Connection;
   private _parent: ChannelOwner | undefined;
   private _objects = new Map<string, ChannelOwner>();
 
@@ -33,15 +34,16 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
   readonly _channel: T;
   readonly _initializer: Initializer;
   _logger: Logger | undefined;
-  _csi: ClientSideInstrumentation | undefined;
+  _instrumentation: ClientInstrumentation | undefined;
 
-  constructor(parent: ChannelOwner | Connection, type: string, guid: string, initializer: Initializer) {
+  constructor(parent: ChannelOwner | Connection, type: string, guid: string, initializer: Initializer, instrumentation?: ClientInstrumentation) {
     super();
     this.setMaxListeners(0);
     this._connection = parent instanceof ChannelOwner ? parent._connection : parent;
     this._type = type;
     this._guid = guid;
     this._parent = parent instanceof ChannelOwner ? parent : undefined;
+    this._instrumentation = instrumentation || this._parent?._instrumentation;
 
     this._connection._objects.set(guid, this);
     if (this._parent) {
@@ -72,7 +74,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     };
   }
 
-  private _createChannel(base: Object, stackTrace: ParsedStackTrace | null, csi?: ClientSideInstrumentation, callCookie?: { userObject: any }): T {
+  private _createChannel(base: Object, stackTrace: ParsedStackTrace | null, csi?: ClientInstrumentation, callCookie?: any): T {
     const channel = new Proxy(base, {
       get: (obj: any, prop) => {
         if (prop === 'debugScopeState')
@@ -82,7 +84,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
           if (validator) {
             return (params: any) => {
               if (callCookie && csi) {
-                callCookie.userObject = csi.onApiCallBegin(renderCallWithParams(stackTrace!.apiName!, params)).userObject;
+                csi.onApiCallBegin(renderCallWithParams(stackTrace!.apiName!, params), stackTrace, callCookie);
                 csi = undefined;
               }
               return this._connection.sendMessageToServer(this, prop, validator(params, ''), stackTrace);
@@ -101,16 +103,12 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     const stackTrace = captureStackTrace();
     const { apiName, frameTexts } = stackTrace;
 
-    let ancestorWithCSI: ChannelOwner<any> = this;
-    while (!ancestorWithCSI._csi && ancestorWithCSI._parent)
-      ancestorWithCSI = ancestorWithCSI._parent;
-
     // Do not report nested async calls to _wrapApiCall.
     isInternal = isInternal || stackTrace.allFrames.filter(f => f.function?.includes('_wrapApiCall')).length > 1;
     if (isInternal)
       delete stackTrace.apiName;
-    const csi = isInternal ? undefined : ancestorWithCSI._csi;
-    const callCookie: { userObject: any } = { userObject: null };
+    const csi = isInternal ? undefined : this._instrumentation;
+    const callCookie: any = {};
 
     try {
       logApiCall(logger, `=> ${apiName} started`, isInternal);

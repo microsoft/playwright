@@ -185,8 +185,10 @@ function snapshotScript() {
           iframe.setAttribute('src', 'data:text/html,<body style="background: #ddd"></body>');
         } else {
           // Append query parameters to inherit ?name= or ?time= values from parent.
-          const url = new URL('/trace' + src + window.location.search, window.location.href).toString();
-          iframe.setAttribute('src', url);
+          const url = new URL('/trace' + src + window.location.search, window.location.href);
+          url.searchParams.delete('pointX');
+          url.searchParams.delete('pointY');
+          iframe.setAttribute('src', url.toString());
         }
       }
 

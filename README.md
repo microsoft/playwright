@@ -48,12 +48,12 @@ This code snippet navigates to whatsmyuseragent.org in Chromium, Firefox and Web
 const playwright = require('playwright');
 
 (async () => {
-  for (const browserType of ['chromium', 'firefox', 'webkit']) {
-    const browser = await playwright[browserType].launch();
+  for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit]) {
+    const browser = await browserType.launch();
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.goto('http://whatsmyuseragent.org/');
-    await page.screenshot({ path: `example-${browserType}.png` });
+    await page.screenshot({ path: `example-${browserType.name()}.png` });
     await browser.close();
   }
 })();
@@ -122,7 +122,7 @@ const { webkit } = require('playwright');
   const page = await context.newPage();
 
   // Log and continue all network requests
-  page.route('**', route => {
+  await page.route('**', route => {
     console.log(route.request().url());
     route.continue();
   });

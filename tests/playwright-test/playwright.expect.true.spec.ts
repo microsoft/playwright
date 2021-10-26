@@ -58,14 +58,25 @@ test('should support toBeChecked w/ not', async ({ runInlineTest }) => {
         const locator = page.locator('input');
         await expect(locator).not.toBeChecked({ timeout: 1000 });
       });
+
+      test('fail missing', async ({ page }) => {
+        await page.setContent('<div>no inputs here</div>');
+        const locator2 = page.locator('input2');
+        await expect(locator2).not.toBeChecked({ timeout: 1000 });
+      });
       `,
   }, { workers: 1 });
   const output = stripAscii(result.output);
+  expect(result.passed).toBe(1);
+  expect(result.failed).toBe(2);
+  expect(result.exitCode).toBe(1);
+  // fail not
   expect(output).toContain('Error: expect(received).not.toBeChecked()');
   expect(output).toContain('expect(locator).not.toBeChecked');
-  expect(result.passed).toBe(1);
-  expect(result.failed).toBe(1);
-  expect(result.exitCode).toBe(1);
+  expect(output).toContain('selector resolved to <input checked type="checkbox"/>');
+  // fail missing
+  expect(output).toContain('expect(locator2).not.toBeChecked');
+  expect(output).toContain('waiting for selector "input2"');
 });
 
 test('should support toBeEditable, toBeEnabled, toBeDisabled, toBeEmpty', async ({ runInlineTest }) => {

@@ -812,8 +812,12 @@ BrowserContext:
     tracingStopChunk:
       parameters:
         save: boolean
+        skipCompress: boolean
       returns:
         artifact: Artifact?
+        entries:
+          type: array
+          items: NameValue
 
     tracingStop:
 

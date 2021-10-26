@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const pw = require('..');
+const pw = require('playwright-core');
 
 async function browserVersion(browserType) {
   const browser = await browserType.launch();

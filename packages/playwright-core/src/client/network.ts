@@ -326,7 +326,7 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
     });
   }
 
-  async fulfill(options: { response?: api.Response | api.ApiResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}) {
+  async fulfill(options: { response?: api.Response | api.APIResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}) {
     return this._wrapApiCall(async (channel: channels.RouteChannel) => {
       let useInterceptedResponseBody;
       let fetchResponseUid;
@@ -620,29 +620,27 @@ export function validateHeaders(headers: Headers) {
 export class RouteHandler {
   private handledCount = 0;
   private readonly _baseURL: string | undefined;
-  private readonly _times: number | undefined;
+  private readonly _times: number;
   readonly url: URLMatch;
   readonly handler: RouteHandlerCallback;
 
-  constructor(baseURL: string | undefined, url: URLMatch, handler: RouteHandlerCallback, times?: number) {
+  constructor(baseURL: string | undefined, url: URLMatch, handler: RouteHandlerCallback, times: number = Number.MAX_SAFE_INTEGER) {
     this._baseURL = baseURL;
     this._times = times;
     this.url = url;
     this.handler = handler;
   }
 
-  public expired(): boolean {
-    return !!this._times && this.handledCount >= this._times;
-  }
-
   public matches(requestURL: string): boolean {
     return urlMatches(this._baseURL, requestURL, this.url);
   }
 
-  public handle(route: Route, request: Request) {
-    this.handler(route, request);
-    if (this._times)
-      this.handledCount++;
+  public handle(route: Route, request: Request): boolean {
+    try {
+      this.handler(route, request);
+    } finally {
+      return ++this.handledCount >= this._times;
+    }
   }
 }
 

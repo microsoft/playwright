@@ -25,11 +25,6 @@ export interface Logger {
   log(name: string, severity: LoggerSeverity, message: string | Error, args: any[], hints: { color?: string }): void;
 }
 
-export interface ClientSideInstrumentation {
-  onApiCallBegin(apiCall: string): { userObject: any };
-  onApiCallEnd(userData: { userObject: any }, error?: Error): any;
-}
-
 export type StrictOptions = { strict?: boolean };
 export type Headers = { [key: string]: string };
 export type Env = { [key: string]: string | number | boolean | undefined };
