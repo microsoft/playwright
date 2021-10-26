@@ -31,6 +31,12 @@ else if (process.argv[3])
 
 const playwright = require(requireName);
 
+const packageJSON = require(requireName + '/package.json');
+if (!packageJSON || !packageJSON.version) {
+  console.error('Should be able to require the package.json and get the version.')
+  process.exit(1);
+}
+
 (async () => {
   for (const browserType of success) {
     try {
