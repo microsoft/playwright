@@ -73,7 +73,7 @@
     "ansi-to-html": "^0.7.1",
     "babel-loader": "^8.2.2",
     "chokidar": "^3.5.0",
-    "chromedriver": "^94.0.0",
+    "chromedriver": "^95.0.0",
     "commonmark": "^0.29.1",
     "concurrently": "^6.2.1",
     "copy-webpack-plugin": "^9.0.1",
