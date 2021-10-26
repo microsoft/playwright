@@ -45,12 +45,15 @@ export function toMatchSnapshot(this: ReturnType<Expect['getState']>, received: 
   // sanitizes path if string
   const pathSegments = Array.isArray(options.name) ? options.name : [addSuffixToFilePath(options.name, '', undefined, true)];
   const withNegateComparison = this.isNot;
+  let updateSnapshots = testInfo.config.updateSnapshots;
+  if (updateSnapshots === 'missing' && testInfo.retry < testInfo.project.retries)
+    updateSnapshots = 'none';
   const { pass, message, expectedPath, actualPath, diffPath, mimeType } = compare(
       received,
       pathSegments,
       testInfo.snapshotPath,
       testInfo.outputPath,
-      testInfo.retry < testInfo.project.retries ? 'none' : testInfo.config.updateSnapshots,
+      updateSnapshots,
       withNegateComparison,
       options
   );
