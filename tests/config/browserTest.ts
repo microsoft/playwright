@@ -147,8 +147,8 @@ export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTest
       context.on('close', () => contexts.get(context).closed = true);
       if (trace)
         await context.tracing.start({ screenshots: true, snapshots: true, sources: true } as any);
-      (context as any)._csi = {
-        onApiCallBegin: (apiCall: string, stackTrace: ParsedStackTrace | null) => {
+      (context as any)._instrumentation.addListener({
+        onApiCallBegin: (apiCall: string, stackTrace: ParsedStackTrace | null, userData: any) => {
           if (apiCall.startsWith('expect.'))
             return { userObject: null };
           const testInfoImpl = testInfo as any;
@@ -159,13 +159,13 @@ export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTest
             canHaveChildren: false,
             forceNoParent: false
           });
-          return { userObject: step };
+          userData.userObject = step;
         },
-        onApiCallEnd: (data: { userObject: any }, error?: Error) => {
-          const step = data.userObject;
+        onApiCallEnd: (userData: any, error?: Error) => {
+          const step = userData.userObject;
           step?.complete(error);
         },
-      };
+      });
       return context;
     });
     await Promise.all([...contexts.keys()].map(async context => {

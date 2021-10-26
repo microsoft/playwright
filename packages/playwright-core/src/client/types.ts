@@ -17,18 +17,12 @@
 
 import * as channels from '../protocol/channels';
 import type { Size } from '../common/types';
-import { ParsedStackTrace } from '../utils/stackTrace';
 export { Size, Point, Rect, Quad, URLMatch, TimeoutOptions, HeadersArray } from '../common/types';
 
 type LoggerSeverity = 'verbose' | 'info' | 'warning' | 'error';
 export interface Logger {
   isEnabled(name: string, severity: LoggerSeverity): boolean;
   log(name: string, severity: LoggerSeverity, message: string | Error, args: any[], hints: { color?: string }): void;
-}
-
-export interface ClientSideInstrumentation {
-  onApiCallBegin(apiCall: string, stackTrace: ParsedStackTrace | null): { userObject: any };
-  onApiCallEnd(userData: { userObject: any }, error?: Error): any;
 }
 
 export type StrictOptions = { strict?: boolean };

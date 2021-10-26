@@ -25,18 +25,27 @@ import yazl from 'yazl';
 import { assert, calculateSha1 } from '../utils/utils';
 import { ManualPromise } from '../utils/async';
 import EventEmitter from 'events';
+import { ClientInstrumentationListener } from './clientInstrumentation';
+import { ParsedStackTrace } from '../utils/stackTrace';
 
 export class Tracing implements api.Tracing {
   private _context: BrowserContext;
-  private _sources: Set<string> | undefined;
+  private _sources = new Set<string>();
+  private _instrumentationListener: ClientInstrumentationListener;
 
   constructor(channel: BrowserContext) {
     this._context = channel;
+    this._instrumentationListener = {
+      onApiCallBegin: (apiCall: string, stackTrace: ParsedStackTrace | null) => {
+        for (const frame of stackTrace?.frames || [])
+          this._sources.add(frame.file);
+      }
+    };
   }
 
   async start(options: { name?: string, snapshots?: boolean, screenshots?: boolean, sources?: boolean } = {}) {
-    this._sources = options.sources ? new Set() : undefined;
-    this._context._connection.setSourceCollector(this._sources);
+    if (options.sources)
+      this._context._instrumentation!.addListener(this._instrumentationListener);
     await this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
       await channel.tracingStart(options);
       await channel.tracingStartChunk();
@@ -44,7 +53,7 @@ export class Tracing implements api.Tracing {
   }
 
   async startChunk() {
-    this._context._connection.setSourceCollector(this._sources);
+    this._sources = new Set();
     await this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
       await channel.tracingStartChunk();
     });
@@ -65,7 +74,8 @@ export class Tracing implements api.Tracing {
 
   private async _doStopChunk(channel: channels.BrowserContextChannel, filePath: string | undefined) {
     const sources = this._sources;
-    this._context._connection.setSourceCollector(undefined);
+    this._sources = new Set();
+    this._context._instrumentation!.removeListener(this._instrumentationListener);
     const skipCompress = !this._context._connection.isRemote();
     const result = await channel.tracingStopChunk({ save: !!filePath, skipCompress });
     if (!filePath) {

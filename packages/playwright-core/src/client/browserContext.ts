@@ -37,6 +37,7 @@ import { Tracing } from './tracing';
 import type { BrowserType } from './browserType';
 import { Artifact } from './artifact';
 import { FetchRequest } from './fetch';
+import { createInstrumentation } from './clientInstrumentation';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel, channels.BrowserContextInitializer> implements api.BrowserContext {
   _pages = new Set<Page>();
@@ -64,7 +65,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   }
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.BrowserContextInitializer) {
-    super(parent, type, guid, initializer);
+    super(parent, type, guid, initializer, createInstrumentation());
     if (parent instanceof Browser)
       this._browser = parent;
     this._isChromium = this._browser?._name === 'chromium';
