@@ -2,7 +2,7 @@
 set -e
 set +x
 
-export DISPLAY_NUM=99
+DISPLAY_NUM=99
 export DISPLAY=":${DISPLAY_NUM}"
 
 SCREEN_WIDTH=1360
