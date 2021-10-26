@@ -77,6 +77,8 @@ export class WKPage implements PageDelegate {
   private _recordingVideoFile: string | null = null;
   private _screencastGeneration: number = 0;
 
+  public hasTouch: boolean;
+
   constructor(browserContext: WKBrowserContext, pageProxySession: WKSession, opener: WKPage | null) {
     this._pageProxySession = pageProxySession;
     this._opener = opener;
@@ -89,6 +91,7 @@ export class WKPage implements PageDelegate {
     this._workers = new WKWorkers(this._page);
     this._session = undefined as any as WKSession;
     this._browserContext = browserContext;
+    this.hasTouch = !!browserContext._options.hasTouch;
     this._page.on(Page.Events.FrameDetached, (frame: frames.Frame) => this._removeContextsForFrame(frame, false));
     this._eventListeners = [
       eventsHelper.addEventListener(this._pageProxySession, 'Target.targetCreated', this._onTargetCreated.bind(this)),

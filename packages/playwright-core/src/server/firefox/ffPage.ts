@@ -53,6 +53,7 @@ export class FFPage implements PageDelegate {
   private _eventListeners: RegisteredListener[];
   private _workers = new Map<string, { frameId: string, session: FFSession }>();
   private _screencastId: string | undefined;
+  public hasTouch: boolean;
 
   constructor(session: FFSession, browserContext: FFBrowserContext, opener: FFPage | null) {
     this._session = session;
@@ -62,6 +63,7 @@ export class FFPage implements PageDelegate {
     this.rawTouchscreen = new RawTouchscreenImpl(session);
     this._contextIdToContext = new Map();
     this._browserContext = browserContext;
+    this.hasTouch = !!browserContext._options.hasTouch;
     this._page = new Page(this, browserContext);
     this.rawMouse.setPage(this._page);
     this._networkManager = new FFNetworkManager(session, this._page);

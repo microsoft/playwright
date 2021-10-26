@@ -39,6 +39,7 @@ export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
   readonly rawKeyboard: input.RawKeyboard;
   readonly rawTouchscreen: input.RawTouchscreen;
+  hasTouch: boolean;
 
   reload(): Promise<void>;
   goBack(): Promise<boolean>;
@@ -504,6 +505,10 @@ export class Page extends SdkObject {
   parseSelector(selector: string, options?: types.StrictOptions): SelectorInfo {
     const strict = typeof options?.strict === 'boolean' ? options.strict : !!this.context()._options.strictSelectors;
     return this.selectors.parseSelector(selector, strict);
+  }
+
+  hasTouch() {
+    return this._delegate.hasTouch;
   }
 }
 

@@ -61,6 +61,7 @@ export class CRPage implements PageDelegate {
   private readonly _pagePromise: Promise<Page | Error>;
   _initializedPage: Page | null = null;
   private _isBackgroundPage: boolean;
+  public hasTouch = false;
 
   // Holds window features for the next popup being opened via window.open,
   // until the popup target arrives. This could be racy if two oopifs
@@ -357,6 +358,17 @@ export class CRPage implements PageDelegate {
       throw new Error('Frame has been detached.');
     return parentSession._adoptBackendNodeId(backendNodeId, await parent._mainContext());
   }
+
+  async computeHasTouch(client: CRSession) {
+    if (this._browserContext._options.hasTouch) {
+      this.hasTouch = true;
+      return;
+    }
+    try {
+      this.hasTouch = (await client.send('Runtime.evaluate', { expression: 'window.ontouchstart === null', returnByValue: true })).result.value;
+    } catch {
+    }
+  }
 }
 
 class FrameSession {
@@ -526,6 +538,7 @@ class FrameSession {
     promises.push(this._updateOffline(true));
     promises.push(this._updateHttpCredentials(true));
     promises.push(this._updateEmulateMedia(true));
+    promises.push(this._crPage.computeHasTouch(this._client));
     for (const binding of this._crPage._page.allBindings())
       promises.push(this._initBinding(binding));
     for (const source of this._crPage._browserContext._evaluateOnNewDocumentSources)
