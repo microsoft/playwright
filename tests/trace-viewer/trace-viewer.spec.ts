@@ -110,7 +110,7 @@ const test = playwrightTest.extend<{ showTraceViewer: (trace: string) => Promise
   runAndTrace: async ({ context, showTraceViewer }, use, testInfo) => {
     await use(async (body: () => Promise<void>) => {
       const traceFile = testInfo.outputPath('trace.zip');
-      await context.tracing.start({ snapshots: true, screenshots: true });
+      await context.tracing.start({ snapshots: true, screenshots: true, sources: true } as any);
       await body();
       await context.tracing.stop({ path: traceFile });
       return showTraceViewer(traceFile);
@@ -124,7 +124,7 @@ let traceFile: string;
 
 test.beforeAll(async function recordTrace({ browser, browserName, browserType, server }, workerInfo) {
   const context = await browser.newContext();
-  await context.tracing.start({ name: 'test', screenshots: true, snapshots: true });
+  await context.tracing.start({ name: 'test', screenshots: true, snapshots: true, sources: true } as any);
   const page = await context.newPage();
   await page.goto('data:text/html,<html>Hello world</html>');
   await page.setContent('<button>Click</button>');

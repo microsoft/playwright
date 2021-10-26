@@ -62,6 +62,7 @@ export class Connection extends EventEmitter {
   private _rootObject: Root;
   private _closedErrorMessage: string | undefined;
   private _isRemote = false;
+  private _sourceCollector: Set<string> | undefined;
 
   constructor() {
     super();
@@ -88,6 +89,10 @@ export class Connection extends EventEmitter {
     return this._objects.get(guid)!;
   }
 
+  setSourceCollector(collector: Set<string> | undefined) {
+    this._sourceCollector = collector;
+  }
+
   async sendMessageToServer(object: ChannelOwner, method: string, params: any, maybeStackTrace: ParsedStackTrace | null): Promise<any> {
     if (this._closedErrorMessage)
       throw new Error(this._closedErrorMessage);
@@ -95,7 +100,8 @@ export class Connection extends EventEmitter {
     const guid = object._guid;
     const stackTrace: ParsedStackTrace = maybeStackTrace || { frameTexts: [], frames: [], apiName: '', allFrames: [] };
     const { frames, apiName } = stackTrace;
-
+    if (this._sourceCollector)
+      frames.forEach(f => this._sourceCollector!.add(f.file));
     const id = ++this._lastId;
     const converted = { id, guid, method, params };
     // Do not include metadata in debug logs to avoid noise.

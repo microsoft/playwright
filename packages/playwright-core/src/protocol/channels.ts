@@ -1116,12 +1116,14 @@ export type BrowserContextTracingStartChunkOptions = {};
 export type BrowserContextTracingStartChunkResult = void;
 export type BrowserContextTracingStopChunkParams = {
   save: boolean,
+  skipCompress: boolean,
 };
 export type BrowserContextTracingStopChunkOptions = {
 
 };
 export type BrowserContextTracingStopChunkResult = {
   artifact?: ArtifactChannel,
+  entries: NameValue[],
 };
 export type BrowserContextTracingStopParams = {};
 export type BrowserContextTracingStopOptions = {};

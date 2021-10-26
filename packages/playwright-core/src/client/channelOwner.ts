@@ -24,7 +24,7 @@ import type { Connection } from './connection';
 import type { ClientSideInstrumentation, Logger } from './types';
 
 export abstract class ChannelOwner<T extends channels.Channel = channels.Channel, Initializer = {}> extends EventEmitter {
-  protected _connection: Connection;
+  readonly _connection: Connection;
   private _parent: ChannelOwner | undefined;
   private _objects = new Map<string, ChannelOwner>();
 
