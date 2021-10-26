@@ -20,6 +20,7 @@
       "require": "./index.js"
     },
     "./cli": "./cli.js",
+    "./package.json": "./package.json",
     "./lib/grid/gridServer": "./lib/grid/gridServer.js",
     "./lib/grid/gridClient": "./lib/grid/gridClient.js",
     "./lib/grid/dockerGridFactory": "./lib/grid/dockerGridFactory.js",

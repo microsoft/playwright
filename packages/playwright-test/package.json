@@ -13,8 +13,10 @@
       "import": "./index.mjs",
       "require": "./index.js"
     },
-    "./src/*": "./lib/*.js",
-    "./*": "./*.js"
+    "./cli": "./cli.js",
+    "./package.json": "./package.json",
+    "./lib/cli": "./lib/cli.js",
+    "./reporter": "./reporter.js"
   },
   "bin": {
     "playwright": "./cli.js"
