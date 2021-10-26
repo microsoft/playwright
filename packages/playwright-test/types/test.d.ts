@@ -120,7 +120,8 @@ interface TestProject {
    */
   name?: string;
   /**
-   * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults `.`.
+   * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to
+   * [testProject.testDir](https://playwright.dev/docs/api/class-testproject#test-project-test-dir).
    *
    * The directory for each test can be accessed by
    * [testInfo.snapshotDir](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-dir) and
@@ -520,7 +521,8 @@ interface TestConfig {
   metadata?: any;
   name?: string;
   /**
-   * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults `.`.
+   * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to
+   * [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir).
    *
    * The directory for each test can be accessed by
    * [testInfo.snapshotDir](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-dir) and
