@@ -15,7 +15,9 @@
     ".": {
       "import": "./index.mjs",
       "require": "./index.js"
-    }
+    },
+    "./cli": "./cli.js",
+    "./package.json": "./package.json"
   },
   "bin": {
     "playwright": "./cli.js"
