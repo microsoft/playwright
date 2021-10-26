@@ -15,7 +15,7 @@
  */
 
 import type { AndroidDevice, BrowserContext } from 'playwright-core';
-import { CommonWorkerFixtures, baseTest } from '../config/baseTest';
+import { BaseWorkerFixtures, BaseWorkerOptions, baseTest } from '../config/baseTest';
 import type { Fixtures } from '@playwright/test';
 import { PageTestFixtures } from '../page/pageTest';
 export { expect } from '@playwright/test';
@@ -24,7 +24,7 @@ type AndroidWorkerFixtures = {
   androidDevice: AndroidDevice;
 };
 
-export const androidFixtures: Fixtures<PageTestFixtures, AndroidWorkerFixtures & { androidContext: BrowserContext }, {}, CommonWorkerFixtures> = {
+export const androidFixtures: Fixtures<PageTestFixtures, AndroidWorkerFixtures & { androidContext: BrowserContext }, {}, BaseWorkerOptions & BaseWorkerFixtures> = {
   androidDevice: [ async ({ playwright }, run) => {
     const device = (await playwright._android.devices())[0];
     await device.shell('am force-stop org.chromium.webview_shell');

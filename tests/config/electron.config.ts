@@ -19,11 +19,11 @@ import * as path from 'path';
 import { electronFixtures } from '../electron/electronTest';
 import { test as pageTest } from '../page/pageTest';
 import { PlaywrightOptionsEx } from './browserTest';
-import { CommonOptions } from './baseTest';
+import { BaseWorkerOptions } from './baseTest';
 
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');
-const config: Config<CommonOptions & PlaywrightOptionsEx> = {
+const config: Config<BaseWorkerOptions & PlaywrightOptionsEx> = {
   testDir,
   outputDir,
   timeout: 30000,

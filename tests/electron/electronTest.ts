@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { baseTest, CommonWorkerFixtures } from '../config/baseTest';
+import { BaseWorkerFixtures, BaseWorkerOptions, baseTest } from '../config/baseTest';
 import { ElectronApplication, Page } from 'playwright-core';
 import type { Fixtures } from '@playwright/test';
 import * as path from 'path';
@@ -27,7 +27,7 @@ type ElectronTestFixtures = PageTestFixtures & {
 };
 
 const electronVersion = require('electron/package.json').version;
-export const electronFixtures: Fixtures<ElectronTestFixtures, {}, {}, CommonWorkerFixtures> = {
+export const electronFixtures: Fixtures<ElectronTestFixtures, {}, {}, BaseWorkerOptions & BaseWorkerFixtures> = {
   browserVersion: electronVersion,
   browserMajorVersion: Number(electronVersion.split('.')[0]),
   isAndroid: false,

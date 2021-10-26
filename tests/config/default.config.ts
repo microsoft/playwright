@@ -18,7 +18,7 @@ import type { Config, PlaywrightTestOptions, PlaywrightWorkerOptions } from '@pl
 import * as path from 'path';
 import { playwrightFixtures } from './browserTest';
 import { test as pageTest } from '../page/pageTest';
-import { BrowserName, CommonOptions } from './baseTest';
+import { BrowserName, BaseWorkerOptions } from './baseTest';
 
 const getExecutablePath = (browserName: BrowserName) => {
   if (browserName === 'chromium' && process.env.CRPATH)
@@ -46,7 +46,7 @@ const trace = !!process.env.PWTEST_TRACE;
 
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');
-const config: Config<CommonOptions & PlaywrightWorkerOptions & PlaywrightTestOptions > = {
+const config: Config<BaseWorkerOptions & PlaywrightWorkerOptions & PlaywrightTestOptions > = {
   testDir,
   outputDir,
   timeout: video ? 60000 : 30000,

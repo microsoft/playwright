@@ -22,7 +22,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
 import { RemoteServer, RemoteServerOptions } from './remoteServer';
-import { baseTest, CommonWorkerFixtures } from './baseTest';
+import { BaseWorkerFixtures, BaseWorkerOptions, baseTest } from './baseTest';
 import { CommonFixtures } from './commonFixtures';
 import type { ParsedStackTrace } from 'playwright-core/lib/utils/stackTrace';
 
@@ -47,7 +47,7 @@ type PlaywrightTestFixtures = {
 };
 export type PlaywrightOptionsEx = PlaywrightWorkerOptions & PlaywrightTestOptions;
 
-export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTestFixtures, PlaywrightWorkerOptions & PlaywrightWorkerFixtures, CommonFixtures, CommonWorkerFixtures> = {
+export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTestFixtures, PlaywrightWorkerOptions & PlaywrightWorkerFixtures, CommonFixtures, BaseWorkerOptions & BaseWorkerFixtures> = {
   hasTouch: undefined,
 
   _browserType: [browserTypeWorkerFixture, { scope: 'worker' } ],

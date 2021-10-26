@@ -15,117 +15,51 @@
  */
 
 import { Fixtures, VideoMode, _baseTest } from '@playwright/test';
-import * as path from 'path';
-import * as fs from 'fs';
-import { installCoverageHooks } from './coverage';
-import { start } from '../../packages/playwright-core/lib/outofprocess';
-import { GridClient } from 'playwright-core/lib/grid/gridClient';
 import type { LaunchOptions, ViewportSize } from 'playwright-core';
 import { commonFixtures, CommonFixtures, serverFixtures, ServerFixtures, ServerOptions } from './commonFixtures';
+import { coverageFixtures, CoverageWorkerOptions } from './coverageFixtures';
+import { platformFixtures, PlatformWorkerFixtures } from './platformFixtures';
+import { DefaultTestMode, DriverTestMode, ServiceTestMode, TestModeName } from './testMode';
 
 export type BrowserName = 'chromium' | 'firefox' | 'webkit';
-type Mode = 'default' | 'driver' | 'service';
-type BaseOptions = {
-  mode: Mode;
+export type BaseWorkerOptions = ServerOptions & CoverageWorkerOptions & {
+  mode: TestModeName;
   browserName: BrowserName;
   channel: LaunchOptions['channel'];
   video: VideoMode | { mode: VideoMode, size: ViewportSize };
   trace: 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | /** deprecated */ 'retry-with-trace';
   headless: boolean | undefined;
 };
-type BaseFixtures = {
-  platform: 'win32' | 'darwin' | 'linux';
+
+export type BaseWorkerFixtures = {
   playwright: typeof import('playwright-core');
   toImpl: (rpcObject: any) => any;
-  isWindows: boolean;
-  isMac: boolean;
-  isLinux: boolean;
 };
 
-class DriverMode {
-  private _playwrightObject: any;
-
-  async setup(workerIndex: number) {
-    this._playwrightObject = await start();
-    return this._playwrightObject;
-  }
-
-  async teardown() {
-    await this._playwrightObject.stop();
-  }
-}
-
-class ServiceMode {
-  private _gridClient: GridClient;
-
-  async setup(workerIndex: number) {
-    this._gridClient = await GridClient.connect('http://localhost:3333');
-    return this._gridClient.playwright();
-  }
-
-  async teardown() {
-    await this._gridClient.close();
-  }
-}
-
-class DefaultMode {
-  async setup(workerIndex: number) {
-    return require('playwright-core');
-  }
-
-  async teardown() {
-  }
-}
-
-const baseFixtures: Fixtures<{}, BaseOptions & BaseFixtures> = {
+const baseFixtures: Fixtures<{}, BaseWorkerOptions & BaseWorkerFixtures> = {
   mode: [ 'default', { scope: 'worker' } ],
   browserName: [ 'chromium' , { scope: 'worker' } ],
   channel: [ undefined, { scope: 'worker' } ],
   video: [ undefined, { scope: 'worker' } ],
   trace: [ undefined, { scope: 'worker' } ],
   headless: [ undefined, { scope: 'worker' } ],
-  platform: [ process.platform as 'win32' | 'darwin' | 'linux', { scope: 'worker' } ],
-  playwright: [ async ({ mode }, run, workerInfo) => {
-    const modeImpl = {
-      default: new DefaultMode(),
-      service: new ServiceMode(),
-      driver: new DriverMode(),
+  playwright: [ async ({ mode }, run) => {
+    const testMode = {
+      default: new DefaultTestMode(),
+      service: new ServiceTestMode(),
+      driver: new DriverTestMode(),
     }[mode];
     require('playwright-core/lib/utils/utils').setUnderTest();
-    const playwright = await modeImpl.setup(workerInfo.workerIndex);
+    const playwright = await testMode.setup();
     await run(playwright);
-    await modeImpl.teardown();
+    await testMode.teardown();
   }, { scope: 'worker' } ],
   toImpl: [ async ({ playwright }, run) => run((playwright as any)._toImpl), { scope: 'worker' } ],
-  isWindows: [ process.platform === 'win32', { scope: 'worker' } ],
-  isMac: [ process.platform === 'darwin', { scope: 'worker' } ],
-  isLinux: [ process.platform === 'linux', { scope: 'worker' } ],
 };
 
-type CoverageOptions = {
-  coverageName?: string;
-};
-
-const coverageFixtures: Fixtures<{}, CoverageOptions & { __collectCoverage: void }> = {
-  coverageName: [ undefined, { scope: 'worker' } ],
-
-  __collectCoverage: [ async ({ coverageName }, run, workerInfo) => {
-    if (!coverageName) {
-      await run();
-      return;
-    }
-
-    const { coverage, uninstall } = installCoverageHooks(coverageName);
-    await run();
-    uninstall();
-    const coveragePath = path.join(__dirname, '..', 'coverage-report', workerInfo.workerIndex + '.json');
-    const coverageJSON = Array.from(coverage.keys()).filter(key => coverage.get(key));
-    await fs.promises.mkdir(path.dirname(coveragePath), { recursive: true });
-    await fs.promises.writeFile(coveragePath, JSON.stringify(coverageJSON, undefined, 2), 'utf8');
-  }, { scope: 'worker', auto: true } ],
-};
-
-export type CommonOptions = BaseOptions & ServerOptions & CoverageOptions;
-export type CommonWorkerFixtures = CommonOptions & BaseFixtures;
-
-export const baseTest = _baseTest.extend<CommonFixtures>(commonFixtures).extend<{}, CoverageOptions>(coverageFixtures).extend<ServerFixtures>(serverFixtures as any).extend<{}, BaseOptions & BaseFixtures>(baseFixtures);
+export const baseTest = _baseTest
+    .extend<{}, CoverageWorkerOptions>(coverageFixtures)
+    .extend<{}, PlatformWorkerFixtures>(platformFixtures)
+    .extend<{}, BaseWorkerOptions & BaseWorkerFixtures>(baseFixtures)
+    .extend<CommonFixtures>(commonFixtures)
+    .extend<ServerFixtures>(serverFixtures as any);

@@ -20,12 +20,11 @@ import { Playwright } from './client/playwright';
 import * as childProcess from 'child_process';
 import * as path from 'path';
 
-export async function start(env: any = {}) {
+export async function start(env: any = {}): Promise<{ playwright: Playwright, stop: () => Promise<void> }> {
   const client = new PlaywrightClient(env);
   const playwright = await client._playwright;
-  (playwright as any).stop = () => client.stop();
   (playwright as any).driverProcess = client._driverProcess;
-  return playwright;
+  return { playwright, stop: () => client.stop() };
 }
 
 class PlaywrightClient {

@@ -118,7 +118,7 @@ test('selenium grid 3.141.59 standalone chromium through driver', async ({ brows
   });
   await waitForPort(port);
 
-  const pw = await start({
+  const { playwright: pw, stop } = await start({
     SELENIUM_REMOTE_URL: `http://localhost:${port}/wd/hub`,
   });
   const browser = await pw.chromium.launch(browserOptions);
@@ -128,7 +128,7 @@ test('selenium grid 3.141.59 standalone chromium through driver', async ({ brows
   await expect(page).toHaveTitle('Hello world');
   // Note: it is important to stop the driver without explicitly closing the browser.
   // It should terminate selenium session in this case.
-  await pw.stop();
+  await stop();
 
   expect(grid.output).toContain('Starting ChromeDriver');
   expect(grid.output).toContain('Started new session');
