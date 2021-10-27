@@ -498,9 +498,9 @@ export class WKPage implements PageDelegate {
     const { type, level, text, parameters, url, line: lineNumber, column: columnNumber, source } = event.message;
     if (level === 'debug' && parameters && parameters[0].value === BINDING_CALL_MESSAGE) {
       const parsedObjectId = JSON.parse(parameters[1].objectId!);
-      const context = this._contextIdToContext.get(parsedObjectId.injectedScriptId)!;
       this.pageOrError().then(pageOrError => {
-        if (!(pageOrError instanceof Error))
+        const context = this._contextIdToContext.get(parsedObjectId.injectedScriptId);
+        if (!(pageOrError instanceof Error) && context)
           this._page._onBindingCalled(parameters[2].value, context);
       });
       return;
@@ -531,16 +531,19 @@ export class WKPage implements PageDelegate {
     else if (type === 'timing')
       derivedType = 'timeEnd';
 
-    const handles = (parameters || []).map(p => {
-      let context: dom.FrameExecutionContext | null = null;
+    const handles: JSHandle[] = [];
+    for (const p of parameters || []) {
+      let context: dom.FrameExecutionContext | undefined;
       if (p.objectId) {
         const objectId = JSON.parse(p.objectId);
-        context = this._contextIdToContext.get(objectId.injectedScriptId)!;
+        context = this._contextIdToContext.get(objectId.injectedScriptId);
       } else {
-        context = this._contextIdToContext.get(this._mainFrameContextId!)!;
+        context = this._contextIdToContext.get(this._mainFrameContextId!);
       }
-      return context.createHandle(p);
-    });
+      if (!context)
+        return;
+      handles.push(context.createHandle(p));
+    }
     this._lastConsoleMessage = {
       derivedType,
       text,
