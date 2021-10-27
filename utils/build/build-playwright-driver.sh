@@ -73,4 +73,3 @@ function build {
 build "node-v${NODE_VERSION}-darwin-x64" "mac" "tar.gz" "run-driver-posix.sh"
 build "node-v${NODE_VERSION}-linux-x64" "linux" "tar.gz" "run-driver-posix.sh"
 build "node-v${NODE_VERSION}-win-x64" "win32_x64" "zip" "run-driver-win.cmd"
-build "node-v${NODE_VERSION}-win-x86" "win32" "zip" "run-driver-win.cmd"
