@@ -231,7 +231,7 @@ export abstract class FetchRequest extends SdkObject {
             delete headers[`content-type`];
           }
 
-          const redirectOptions: http.RequestOptions & { maxRedirects: number, deadline: number } = {
+          const redirectOptions: https.RequestOptions & { maxRedirects: number, deadline: number } = {
             method,
             headers,
             agent: options.agent,
@@ -239,6 +239,9 @@ export abstract class FetchRequest extends SdkObject {
             timeout: options.timeout,
             deadline: options.deadline
           };
+          // rejectUnauthorized = undefined is treated as true in node 12.
+          if (options.rejectUnauthorized === false)
+            redirectOptions.rejectUnauthorized = false;
 
           // HTTP-redirect fetch step 4: If locationURL is null, then return response.
           if (response.headers.location) {
