@@ -432,7 +432,9 @@ if generate_and_upload_browser_build 2>&1 | ./sanitize_and_compress_log.js $LOG_
     done;
     LAST_COMMIT_MESSAGE=$(git log --format=%s -n 1 HEAD -- "./${BROWSER_NAME}/BUILD_NUMBER")
     send_telegram_message "<b>${BROWSER_DISPLAY_NAME} r${BUILD_NUMBER} COMPLETE! ✅</b> ${LAST_COMMIT_MESSAGE}"
-    create_roll_into_playwright_pr $BROWSER_NAME $BUILD_NUMBER
+    if [[ "${BROWSER_DISPLAY_NAME}" == "${BROWSER_NAME}" ]]; then
+      create_roll_into_playwright_pr $BROWSER_NAME $BUILD_NUMBER
+    fi
   )
 else
   RESULT_CODE="$?"
