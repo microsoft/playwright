@@ -4,7 +4,7 @@ set +x
 set -o pipefail
 
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
-  echo "usage: $(basename "$0") [firefox-linux|firefox-win32|firefox-win64|webkit-gtk|webkit-wpe|webkit-gtk-wpe|webkit-win64|webkit-mac-10.15] [-f|--force]"
+  echo "usage: $(basename "$0") [firefox-linux|firefox-win64|webkit-gtk|webkit-wpe|webkit-gtk-wpe|webkit-win64|webkit-mac-10.15] [-f|--force]"
   echo
   echo "Prepares checkout under browser folder, applies patches, builds, archives, and uploads if build is missing."
   echo "Script will bail out early if the build for the browser version is already present."
@@ -66,12 +66,6 @@ elif [[ "$BUILD_FLAVOR" == "ffmpeg-linux" ]]; then
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="20.04"
   BUILD_BLOB_NAME="ffmpeg-linux.zip"
-elif [[ "$BUILD_FLAVOR" == "ffmpeg-cross-compile-win32" ]]; then
-  BROWSER_NAME="ffmpeg"
-  EXTRA_BUILD_ARGS="--cross-compile-win32"
-  EXPECTED_HOST_OS="Ubuntu"
-  EXPECTED_HOST_OS_VERSION="20.04"
-  BUILD_BLOB_NAME="ffmpeg-win32.zip"
 elif [[ "$BUILD_FLAVOR" == "ffmpeg-cross-compile-win64" ]]; then
   BROWSER_NAME="ffmpeg"
   EXTRA_BUILD_ARGS="--cross-compile-win64"
@@ -82,12 +76,6 @@ elif [[ "$BUILD_FLAVOR" == "ffmpeg-cross-compile-win64" ]]; then
 # ===========================
 #    CHROMIUM COMPILATION
 # ===========================
-elif [[ "$BUILD_FLAVOR" == "chromium-win32" ]]; then
-  BROWSER_NAME="chromium"
-  EXTRA_BUILD_ARGS="--compile-win32"
-  EXTRA_ARCHIVE_ARGS="--compile-win32"
-  EXPECTED_HOST_OS="MINGW"
-  BUILD_BLOB_NAME="chromium-win32.zip"
 elif [[ "$BUILD_FLAVOR" == "chromium-win64" ]]; then
   BROWSER_NAME="chromium"
   EXTRA_BUILD_ARGS="--compile-win64"
@@ -119,14 +107,6 @@ elif [[ "$BUILD_FLAVOR" == "chromium-linux" ]]; then
 # ===========================
 #    CHROMIUM-WITH-SYMBOLS COMPILATION
 # ===========================
-elif [[ "$BUILD_FLAVOR" == "chromium-with-symbols-win32" ]]; then
-  BROWSER_NAME="chromium"
-  BROWSER_DISPLAY_NAME="chromium-with-symbols"
-  EXTRA_BUILD_ARGS="--compile-win32 --symbols"
-  EXTRA_ARCHIVE_ARGS="--compile-win32"
-  EXPECTED_HOST_OS="MINGW"
-  BUILD_BLOB_NAME="chromium-with-symbols-win32.zip"
-  BUILDS_LIST="EXPECTED_BUILDS_WITH_SYMBOLS"
 elif [[ "$BUILD_FLAVOR" == "chromium-with-symbols-win64" ]]; then
   BROWSER_NAME="chromium"
   BROWSER_DISPLAY_NAME="chromium-with-symbols"
@@ -181,13 +161,6 @@ elif [[ "$BUILD_FLAVOR" == "chromium-mac-mirror-to-cdn" ]]; then
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="18.04"
   BUILD_BLOB_NAME="chromium-mac.zip"
-elif [[ "$BUILD_FLAVOR" == "chromium-win32-mirror-to-cdn" ]]; then
-  BROWSER_NAME="chromium"
-  EXTRA_BUILD_ARGS="--mirror-win32"
-  EXTRA_ARCHIVE_ARGS="--mirror-win32"
-  EXPECTED_HOST_OS="Ubuntu"
-  EXPECTED_HOST_OS_VERSION="18.04"
-  BUILD_BLOB_NAME="chromium-win32.zip"
 elif [[ "$BUILD_FLAVOR" == "chromium-win64-mirror-to-cdn" ]]; then
   BROWSER_NAME="chromium"
   EXTRA_BUILD_ARGS="--mirror-win64"
@@ -226,14 +199,9 @@ elif [[ "$BUILD_FLAVOR" == "firefox-mac-11-arm64" ]]; then
   EXPECTED_HOST_OS_VERSION="11.6"
   EXPECTED_ARCH="arm64"
   BUILD_BLOB_NAME="firefox-mac-11-arm64.zip"
-elif [[ "$BUILD_FLAVOR" == "firefox-win32" ]]; then
-  BROWSER_NAME="firefox"
-  EXTRA_BUILD_ARGS="--full"
-  EXPECTED_HOST_OS="MINGW"
-  BUILD_BLOB_NAME="firefox-win32.zip"
 elif [[ "$BUILD_FLAVOR" == "firefox-win64" ]]; then
   BROWSER_NAME="firefox"
-  EXTRA_BUILD_ARGS="--win64 --full"
+  EXTRA_BUILD_ARGS="--full"
   EXPECTED_HOST_OS="MINGW"
   BUILD_BLOB_NAME="firefox-win64.zip"
 
@@ -267,14 +235,9 @@ elif [[ "$BUILD_FLAVOR" == "firefox-beta-mac-11-arm64" ]]; then
   EXPECTED_HOST_OS_VERSION="11.6"
   EXPECTED_ARCH="arm64"
   BUILD_BLOB_NAME="firefox-beta-mac-11-arm64.zip"
-elif [[ "$BUILD_FLAVOR" == "firefox-beta-win32" ]]; then
-  BROWSER_NAME="firefox-beta"
-  EXTRA_BUILD_ARGS="--full"
-  EXPECTED_HOST_OS="MINGW"
-  BUILD_BLOB_NAME="firefox-beta-win32.zip"
 elif [[ "$BUILD_FLAVOR" == "firefox-beta-win64" ]]; then
   BROWSER_NAME="firefox-beta"
-  EXTRA_BUILD_ARGS="--win64 --full"
+  EXTRA_BUILD_ARGS="--full"
   EXPECTED_HOST_OS="MINGW"
   BUILD_BLOB_NAME="firefox-beta-win64.zip"
 
