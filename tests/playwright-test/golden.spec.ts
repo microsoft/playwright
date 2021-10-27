@@ -655,6 +655,28 @@ test('should fail with missing expectations and retries', async ({ runInlineTest
   expect(data.toString()).toBe('Hello world');
 });
 
+test('should update expectations with retries', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    ...files,
+    'playwright.config.ts': `
+      module.exports = { retries: 1 };
+    `,
+    'a.spec.js': `
+      const { test } = require('./helper');
+      test('is a test', ({}) => {
+        expect('Hello world').toMatchSnapshot('snapshot.txt');
+      });
+    `
+  }, { 'update-snapshots': true });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  const snapshotOutputPath = testInfo.outputPath('a.spec.js-snapshots/snapshot.txt');
+  expect(result.output).toContain(`${snapshotOutputPath} is missing in snapshots, writing actual`);
+  const data = fs.readFileSync(snapshotOutputPath);
+  expect(data.toString()).toBe('Hello world');
+});
+
 test('should allow comparing text with text without file extension', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...files,
