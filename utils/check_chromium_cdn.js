@@ -19,7 +19,7 @@ const assert = require('assert');
 const https = require('https');
 const util = require('util');
 const URL = require('url');
-const SUPPORTER_PLATFORMS = ['linux', 'mac', 'win32', 'win64'];
+const SUPPORTER_PLATFORMS = ['linux', 'mac', 'win64'];
 
 const colors = {
   reset: '\x1b[0m',
@@ -97,7 +97,6 @@ async function canDownload(revision, platform) {
   const urlTemplate = new Map([
     ['linux', '%s/chromium-browser-snapshots/Linux_x64/%d/chrome-linux.zip'],
     ['mac', '%s/chromium-browser-snapshots/Mac/%d/chrome-mac.zip'],
-    ['win32', '%s/chromium-browser-snapshots/Win/%d/chrome-win.zip'],
     ['win64', '%s/chromium-browser-snapshots/Win_x64/%d/chrome-win.zip'],
   ]).get(platform);
   assert(urlTemplate, `ERROR: Playwright does not support ${platform}`);

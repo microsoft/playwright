@@ -462,7 +462,7 @@ export function constructURLBasedOnBaseURL(baseURL: string | undefined, givenURL
   }
 }
 
-export type HostPlatform = 'win32'|'win64'|'mac10.13'|'mac10.14'|'mac10.15'|'mac11'|'mac11-arm64'|'ubuntu18.04'|'ubuntu20.04';
+export type HostPlatform = 'win64'|'mac10.13'|'mac10.14'|'mac10.15'|'mac11'|'mac11-arm64'|'ubuntu18.04'|'ubuntu20.04';
 export const hostPlatform = ((): HostPlatform => {
   const platform = os.platform();
   if (platform === 'darwin') {
