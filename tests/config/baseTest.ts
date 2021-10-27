@@ -14,16 +14,24 @@
  * limitations under the License.
  */
 
-import { _baseTest } from '@playwright/test';
+import { test } from '@playwright/test';
 import { commonFixtures, CommonFixtures } from './commonFixtures';
 import { serverFixtures, ServerFixtures, ServerWorkerOptions } from './serverFixtures';
 import { coverageFixtures, CoverageWorkerOptions } from './coverageFixtures';
 import { platformFixtures, PlatformWorkerFixtures } from './platformFixtures';
 import { testModeFixtures, TestModeWorkerFixtures } from './testModeFixtures';
 
-export const baseTest = _baseTest
-    .extend<{}, CoverageWorkerOptions>(coverageFixtures)
+
+export type BaseTestWorkerFixtures = {
+  _snapshotSuffix: string;
+};
+
+export const baseTest = test
+    .extend<{}, CoverageWorkerOptions>(coverageFixtures as any)
     .extend<{}, PlatformWorkerFixtures>(platformFixtures)
-    .extend<{}, TestModeWorkerFixtures>(testModeFixtures)
+    .extend<{}, TestModeWorkerFixtures>(testModeFixtures as any)
     .extend<CommonFixtures>(commonFixtures)
-    .extend<ServerFixtures, ServerWorkerOptions>(serverFixtures as any);
+    .extend<ServerFixtures, ServerWorkerOptions>(serverFixtures as any)
+    .extend<{}, BaseTestWorkerFixtures>({
+      _snapshotSuffix: ['', { scope: 'worker' }],
+    });

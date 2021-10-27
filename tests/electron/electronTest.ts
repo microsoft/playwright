@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-import { ElectronApplication, Page } from 'playwright-core';
-import type { Fixtures, PlaywrightWorkerOptions } from '@playwright/test';
+import { baseTest } from '../config/baseTest';
 import * as path from 'path';
-import { PageTestFixtures } from '../page/pageTest';
-import { TestModeWorkerFixtures } from '../config/testModeFixtures';
-import { browserTest } from '../config/browserTest';
+import { ElectronApplication, Page } from 'playwright-core';
+import { PageTestFixtures, PageWorkerFixtures } from '../page/pageTestApi';
 export { expect } from '@playwright/test';
 
 type ElectronTestFixtures = PageTestFixtures & {
@@ -28,11 +26,12 @@ type ElectronTestFixtures = PageTestFixtures & {
 };
 
 const electronVersion = require('electron/package.json').version;
-export const electronFixtures: Fixtures<ElectronTestFixtures, {}, {}, PlaywrightWorkerOptions & TestModeWorkerFixtures> = {
-  browserVersion: electronVersion,
-  browserMajorVersion: Number(electronVersion.split('.')[0]),
-  isAndroid: false,
-  isElectron: true,
+
+export const electronTest = baseTest.extend<ElectronTestFixtures, PageWorkerFixtures>({
+  browserVersion: [electronVersion, { scope: 'worker' }],
+  browserMajorVersion: [Number(electronVersion.split('.')[0]), { scope: 'worker' }],
+  isAndroid: [false, { scope: 'worker' }],
+  isElectron: [true, { scope: 'worker' }],
 
   electronApp: async ({ playwright }, run) => {
     // This env prevents 'Electron Security Policy' console message.
@@ -70,6 +69,4 @@ export const electronFixtures: Fixtures<ElectronTestFixtures, {}, {}, Playwright
   page: async ({ newWindow }, run) => {
     await run(await newWindow());
   },
-};
-
-export const electronTest = browserTest.extend<ElectronTestFixtures>(electronFixtures as any);
+});

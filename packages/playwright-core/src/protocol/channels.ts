@@ -997,17 +997,17 @@ export type BrowserContextNewPageResult = {
   page: PageChannel,
 };
 export type BrowserContextSetDefaultNavigationTimeoutNoReplyParams = {
-  timeout: number,
+  timeout?: number,
 };
 export type BrowserContextSetDefaultNavigationTimeoutNoReplyOptions = {
-
+  timeout?: number,
 };
 export type BrowserContextSetDefaultNavigationTimeoutNoReplyResult = void;
 export type BrowserContextSetDefaultTimeoutNoReplyParams = {
-  timeout: number,
+  timeout?: number,
 };
 export type BrowserContextSetDefaultTimeoutNoReplyOptions = {
-
+  timeout?: number,
 };
 export type BrowserContextSetDefaultTimeoutNoReplyResult = void;
 export type BrowserContextSetExtraHTTPHeadersParams = {
@@ -1253,17 +1253,17 @@ export type PageWorkerEvent = {
   worker: WorkerChannel,
 };
 export type PageSetDefaultNavigationTimeoutNoReplyParams = {
-  timeout: number,
+  timeout?: number,
 };
 export type PageSetDefaultNavigationTimeoutNoReplyOptions = {
-
+  timeout?: number,
 };
 export type PageSetDefaultNavigationTimeoutNoReplyResult = void;
 export type PageSetDefaultTimeoutNoReplyParams = {
-  timeout: number,
+  timeout?: number,
 };
 export type PageSetDefaultTimeoutNoReplyOptions = {
-
+  timeout?: number,
 };
 export type PageSetDefaultTimeoutNoReplyResult = void;
 export type PageSetFileChooserInterceptedNoReplyParams = {

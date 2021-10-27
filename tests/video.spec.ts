@@ -530,12 +530,11 @@ it.describe('screencast', () => {
     }
   });
 
-  it('should emulate an iphone', async ({ contextFactory, playwright, contextOptions, browserName }, testInfo) => {
+  it('should emulate an iphone', async ({ contextFactory, playwright, browserName }, testInfo) => {
     it.skip(browserName === 'firefox', 'isMobile is not supported in Firefox');
 
     const device = playwright.devices['iPhone 6'];
     const context = await contextFactory({
-      ...contextOptions,
       ...device,
       recordVideo: {
         dir: testInfo.outputPath(''),
@@ -552,11 +551,10 @@ it.describe('screencast', () => {
     expect(videoPlayer.videoHeight).toBe(666);
   });
 
-  it('should throw on browser close', async ({ browserType, contextOptions }, testInfo) => {
+  it('should throw on browser close', async ({ browserType }, testInfo) => {
     const size = { width: 320, height: 240 };
     const browser = await browserType.launch();
     const context = await browser.newContext({
-      ...contextOptions,
       recordVideo: {
         dir: testInfo.outputPath(''),
         size,
@@ -573,12 +571,11 @@ it.describe('screencast', () => {
     expect(saveResult.message).toContain('browser has been closed');
   });
 
-  it('should throw if browser dies', async ({ browserType, contextOptions }, testInfo) => {
+  it('should throw if browser dies', async ({ browserType }, testInfo) => {
     const size = { width: 320, height: 240 };
     const browser = await browserType.launch();
 
     const context = await browser.newContext({
-      ...contextOptions,
       recordVideo: {
         dir: testInfo.outputPath(''),
         size,
@@ -595,13 +592,12 @@ it.describe('screencast', () => {
     expect(saveResult.message).toContain('rowser has been closed');
   });
 
-  it('should wait for video to finish if page was closed', async ({ browserType, contextOptions }, testInfo) => {
+  it('should wait for video to finish if page was closed', async ({ browserType }, testInfo) => {
     const size = { width: 320, height: 240 };
     const browser = await browserType.launch();
 
     const videoDir = testInfo.outputPath('');
     const context = await browser.newContext({
-      ...contextOptions,
       recordVideo: {
         dir: videoDir,
         size,
@@ -622,7 +618,7 @@ it.describe('screencast', () => {
     expect(videoPlayer.videoHeight).toBe(240);
   });
 
-  it('should not create video for internal pages', async ({ browser, browserName, contextOptions, server }, testInfo) => {
+  it('should not create video for internal pages', async ({ browser, server }, testInfo) => {
     it.fixme(true, 'https://github.com/microsoft/playwright/issues/6743');
     server.setRoute('/empty.html', (req, res) => {
       res.setHeader('Set-Cookie', 'name=value');
@@ -631,7 +627,6 @@ it.describe('screencast', () => {
 
     const videoDir = testInfo.outputPath('');
     const context = await browser.newContext({
-      ...contextOptions,
       recordVideo: {
         dir: videoDir
       }

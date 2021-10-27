@@ -733,11 +733,11 @@ BrowserContext:
 
     setDefaultNavigationTimeoutNoReply:
       parameters:
-        timeout: number
+        timeout: number?
 
     setDefaultTimeoutNoReply:
       parameters:
-        timeout: number
+        timeout: number?
 
     setExtraHTTPHeaders:
       parameters:
@@ -897,11 +897,11 @@ Page:
 
     setDefaultNavigationTimeoutNoReply:
       parameters:
-        timeout: number
+        timeout: number?
 
     setDefaultTimeoutNoReply:
       parameters:
-        timeout: number
+        timeout: number?
 
     setFileChooserInterceptedNoReply:
       parameters:

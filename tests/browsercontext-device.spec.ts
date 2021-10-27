@@ -42,9 +42,8 @@ it.describe('device', () => {
     await context.close();
   });
 
-  it('should scroll to click', async ({ browser, server, contextOptions }) => {
+  it('should scroll to click', async ({ browser, server }) => {
     const context = await browser.newContext({
-      ...contextOptions,
       viewport: {
         width: 400,
         height: 400,
@@ -60,7 +59,7 @@ it.describe('device', () => {
     await context.close();
   });
 
-  it('should scroll twice when emulated', async ({ server, contextFactory, playwright }) => {
+  it('should scroll twice when emulated', async ({ contextFactory, playwright }) => {
     const device = playwright.devices['iPhone 6'];
     const context = await contextFactory(device);
     const page = await context.newPage();
@@ -105,7 +104,7 @@ it.describe('device', () => {
     await context.close();
   });
 
-  it('should emulate viewport and screen size', async ({ server, contextFactory, playwright }) => {
+  it('should emulate viewport and screen size', async ({ contextFactory, playwright }) => {
     const device = playwright.devices['iPhone 12'];
     const context = await contextFactory(device);
     const page = await context.newPage();
@@ -124,7 +123,7 @@ it.describe('device', () => {
     await context.close();
   });
 
-  it('should emulate viewport without screen size', async ({ server, contextFactory, playwright }) => {
+  it('should emulate viewport without screen size', async ({ contextFactory, playwright }) => {
     const device = playwright.devices['iPhone 6'];
     const context = await contextFactory(device);
     const page = await context.newPage();

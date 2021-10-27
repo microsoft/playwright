@@ -22,27 +22,27 @@ const TIMEOUT = debugMode() ? 0 : DEFAULT_TIMEOUT;
 
 export class TimeoutSettings {
   private _parent: TimeoutSettings | undefined;
-  private _defaultTimeout: number | null = null;
-  private _defaultNavigationTimeout: number | null = null;
+  private _defaultTimeout: number | undefined;
+  private _defaultNavigationTimeout: number | undefined;
 
   constructor(parent?: TimeoutSettings) {
     this._parent = parent;
   }
 
-  setDefaultTimeout(timeout: number) {
+  setDefaultTimeout(timeout: number | undefined) {
     this._defaultTimeout = timeout;
   }
 
-  setDefaultNavigationTimeout(timeout: number) {
+  setDefaultNavigationTimeout(timeout: number | undefined) {
     this._defaultNavigationTimeout = timeout;
   }
 
   navigationTimeout(options: { timeout?: number }): number {
     if (typeof options.timeout === 'number')
       return options.timeout;
-    if (this._defaultNavigationTimeout !== null)
+    if (this._defaultNavigationTimeout !== undefined)
       return this._defaultNavigationTimeout;
-    if (this._defaultTimeout !== null)
+    if (this._defaultTimeout !== undefined)
       return this._defaultTimeout;
     if (this._parent)
       return this._parent.navigationTimeout(options);
@@ -52,7 +52,7 @@ export class TimeoutSettings {
   timeout(options: { timeout?: number }): number {
     if (typeof options.timeout === 'number')
       return options.timeout;
-    if (this._defaultTimeout !== null)
+    if (this._defaultTimeout !== undefined)
       return this._defaultTimeout;
     if (this._parent)
       return this._parent.timeout(options);

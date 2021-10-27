@@ -455,10 +455,10 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.BrowserContextNewPageParams = tOptional(tObject({}));
   scheme.BrowserContextSetDefaultNavigationTimeoutNoReplyParams = tObject({
-    timeout: tNumber,
+    timeout: tOptional(tNumber),
   });
   scheme.BrowserContextSetDefaultTimeoutNoReplyParams = tObject({
-    timeout: tNumber,
+    timeout: tOptional(tNumber),
   });
   scheme.BrowserContextSetExtraHTTPHeadersParams = tObject({
     headers: tArray(tType('NameValue')),
@@ -511,10 +511,10 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.BrowserContextTracingStopParams = tOptional(tObject({}));
   scheme.BrowserContextHarExportParams = tOptional(tObject({}));
   scheme.PageSetDefaultNavigationTimeoutNoReplyParams = tObject({
-    timeout: tNumber,
+    timeout: tOptional(tNumber),
   });
   scheme.PageSetDefaultTimeoutNoReplyParams = tObject({
-    timeout: tNumber,
+    timeout: tOptional(tNumber),
   });
   scheme.PageSetFileChooserInterceptedNoReplyParams = tObject({
     intercepted: tBoolean,

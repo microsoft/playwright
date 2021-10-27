@@ -16,10 +16,9 @@
 
 import type { Config, PlaywrightTestOptions, PlaywrightWorkerOptions } from '@playwright/test';
 import * as path from 'path';
-import { electronFixtures } from '../electron/electronTest';
-import { test as pageTest } from '../page/pageTest';
-import { playwrightFixtures } from './browserTest';
 import { CoverageWorkerOptions } from './coverageFixtures';
+
+process.env.PWPAGE_IMPL = 'electron';
 
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');
@@ -65,7 +64,6 @@ config.projects.push({
     coverageName: 'electron',
   },
   testDir: path.join(testDir, 'page'),
-  define: { test: pageTest, fixtures: { ...playwrightFixtures, ...electronFixtures } },
   metadata,
 });
 

@@ -16,7 +16,7 @@
 
 /* eslint-disable no-console */
 
-import { Command, Option } from 'commander';
+import { Command } from 'commander';
 import fs from 'fs';
 import path from 'path';
 import type { Config } from './types';
@@ -49,7 +49,6 @@ export function addTestCommand(program: Command) {
   command.option('--browser <browser>', `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")`);
   command.option('--headed', `Run tests in headed browsers (default: headless)`);
   command.option('--debug', `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --maxFailures=1 --headed --workers=1" options`);
-  command.addOption(new Option('--reuse-context').hideHelp());
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "${tsConfig}"/"${jsConfig}"`);
   command.option('--forbid-only', `Fail if test.only is called (default: false)`);
   command.option('-g, --grep <grep>', `Only run tests matching this regular expression (default: ".*")`);
@@ -114,17 +113,15 @@ async function createLoader(opts: { [key: string]: any }): Promise<Loader> {
   }
 
   const overrides = overridesFromOptions(opts);
-  if (opts.headed || opts.debug || opts.reuseContext)
+  if (opts.headed || opts.debug)
     overrides.use = { headless: false };
-  if (opts.debug || opts.reuseContext) {
+  if (opts.debug) {
     overrides.maxFailures = 1;
     overrides.timeout = 0;
     overrides.workers = 1;
   }
   if (opts.debug)
     process.env.PWDEBUG = '1';
-  if (opts.reuseContext)
-    process.env.PWTEST_REUSE_CONTEXT = '1';
 
   const loader = new Loader(defaultConfig, overrides);
 

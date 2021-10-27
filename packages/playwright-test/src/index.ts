@@ -16,10 +16,10 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type { LaunchOptions, BrowserContextOptions, Page, BrowserContext, BrowserType } from 'playwright-core';
+import type { LaunchOptions, BrowserContextOptions, Page, BrowserContext, BrowserType, Video } from 'playwright-core';
 import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo } from '../types/test';
 import { rootTestType } from './testType';
-import { assert, createGuid, removeFolders } from 'playwright-core/lib/utils/utils';
+import { createGuid, removeFolders } from 'playwright-core/lib/utils/utils';
 import { GridClient } from 'playwright-core/lib/grid/gridClient';
 import { Browser } from 'playwright-core';
 export { expect } from './expect';
@@ -28,96 +28,14 @@ export const _baseTest: TestType<{}, {}> = rootTestType.test;
 type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
   _combinedContextOptions: BrowserContextOptions,
   _setupContextOptionsAndArtifacts: void;
+  _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
 };
 type WorkerAndFileFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
   _browserType: BrowserType;
   _browserOptions: LaunchOptions;
-  _artifactsDir: () => string,
-  _reuseBrowserContext: ReuseBrowserContextStorage,
+  _artifactsDir: () => string;
+  _snapshotSuffix: string;
 };
-
-export class ReuseBrowserContextStorage {
-  private _browserContext?: BrowserContext;
-  private _uniqueOrigins = new Set<string>();
-  private _options?: BrowserContextOptions;
-  private _pauseNavigationEventCollection = false;
-
-  isEnabled(): boolean {
-    return !!process.env.PWTEST_REUSE_CONTEXT;
-  }
-
-  async obtainContext(browser: Browser, newContextOptions: BrowserContextOptions): Promise<BrowserContext> {
-    if (!this._browserContext)
-      return await this._createNewContext(browser);
-    return await this._refurbishExistingContext(newContextOptions);
-  }
-
-  private async _createNewContext(browser: Browser): Promise<BrowserContext> {
-    this._browserContext = await browser.newContext();
-    this._options = (this._browserContext as any)._options;
-    this._browserContext.on('page', page => {
-      page.on('framenavigated', frame => {
-        if (this._pauseNavigationEventCollection)
-          return;
-        const origin = new URL(frame.url()).origin;
-        if (origin !== 'null') // 'chrome-error://chromewebdata/'
-          this._uniqueOrigins.add(origin);
-      });
-      page.on('crash', () => {
-        this._browserContext?.close().then(() => {});
-        this._browserContext = undefined;
-      });
-    });
-    return this._browserContext;
-  }
-
-  async _refurbishExistingContext(newContextOptions: BrowserContextOptions): Promise<BrowserContext> {
-    assert(this._browserContext);
-    const page = this._browserContext.pages().length > 0 ? this._browserContext.pages()[0] : await this._browserContext.newPage();
-    this._pauseNavigationEventCollection = true;
-    try {
-      const initialOrigin = new URL(page.url()).origin;
-      await page.route('**/*', route => route.fulfill({ body: `<html></html>`, contentType: 'text/html' }));
-      while (this._uniqueOrigins.size > 0) {
-        const nextOrigin = this._uniqueOrigins.has(initialOrigin) ? initialOrigin : this._uniqueOrigins.values().next().value;
-        this._uniqueOrigins.delete(nextOrigin);
-        await page.goto(nextOrigin);
-        await page.evaluate(() => window.localStorage.clear());
-        await page.evaluate(() => window.sessionStorage.clear());
-      }
-      await page.unroute('**/*');
-      await page.goto('about:blank');
-      await Promise.all(this._browserContext.pages().slice(1).map(page => page.close()));
-      await this._browserContext.clearCookies();
-      await this._applyNewContextOptions(page, newContextOptions);
-    } finally {
-      this._pauseNavigationEventCollection = false;
-    }
-    return this._browserContext;
-  }
-
-  private async _applyNewContextOptions(page: Page, newOptions: BrowserContextOptions) {
-    assert(this._options);
-    const currentViewport = page.viewportSize();
-    const newViewport = newOptions.viewport === undefined ? { width: 1280, height: 720 } : newOptions.viewport;
-    if (
-      (
-        currentViewport?.width !== newViewport?.width ||
-        currentViewport?.height !== newViewport?.height
-      ) &&
-      (newViewport?.height && newViewport?.width)
-    )
-      await page.setViewportSize(newViewport);
-    this._options = newOptions;
-  }
-
-  async obtainPage(): Promise<Page> {
-    assert(this._browserContext);
-    if (this._browserContext.pages().length === 0)
-      return await this._browserContext.newPage();
-    return this._browserContext.pages()[0];
-  }
-}
 
 export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
   defaultBrowserType: [ 'chromium', { scope: 'worker' } ],
@@ -251,8 +169,10 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
     });
   },
 
-  _setupContextOptionsAndArtifacts: [async ({ _browserType, _combinedContextOptions, _artifactsDir, trace, screenshot, actionTimeout, navigationTimeout }, use, testInfo) => {
-    testInfo.snapshotSuffix = process.platform;
+  _snapshotSuffix: [process.platform, { scope: 'worker' }],
+
+  _setupContextOptionsAndArtifacts: [async ({ _snapshotSuffix, _browserType, _combinedContextOptions, _artifactsDir, trace, screenshot, actionTimeout, navigationTimeout }, use, testInfo) => {
+    testInfo.snapshotSuffix = _snapshotSuffix;
     if (process.env.PWDEBUG)
       testInfo.setTimeout(0);
 
@@ -381,39 +301,55 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
     }));
   }, { auto: true }],
 
-  _reuseBrowserContext: [new ReuseBrowserContextStorage(), { scope: 'worker' }],
-
-  context: async ({ browser, video, _artifactsDir, _reuseBrowserContext, _combinedContextOptions }, use, testInfo) => {
-    const hook = hookType(testInfo);
-    if (hook)
-      throw new Error(`"context" and "page" fixtures are not supported in ${hook}. Use browser.newContext() instead.`);
-    if (_reuseBrowserContext.isEnabled()) {
-      const context = await _reuseBrowserContext.obtainContext(browser, _combinedContextOptions);
-      await use(context);
-      return;
-    }
-
+  _contextFactory: async ({ browser, video, _artifactsDir }, use, testInfo) => {
     let videoMode = typeof video === 'string' ? video : video.mode;
     if (videoMode === 'retry-with-video')
       videoMode = 'on-first-retry';
 
     const captureVideo = (videoMode === 'on' || videoMode === 'retain-on-failure' || (videoMode === 'on-first-retry' && testInfo.retry === 1));
-    const videoOptions: BrowserContextOptions = captureVideo ? {
-      recordVideo: {
-        dir: _artifactsDir(),
-        size: typeof video === 'string' ? undefined : video.size,
-      }
-    } : {};
-    const context = await browser.newContext(videoOptions);
+    const contexts = new Map<BrowserContext, { pages: Page[] }>();
 
-    const allPages: Page[] = [];
-    context.on('page', page => allPages.push(page));
-
-    await use(context);
+    await use(async options => {
+      const hook = hookType(testInfo);
+      if (hook)
+        throw new Error(`"context" and "page" fixtures are not supported in ${hook}. Use browser.newContext() instead.`);
+      const videoOptions: BrowserContextOptions = captureVideo ? {
+        recordVideo: {
+          dir: _artifactsDir(),
+          size: typeof video === 'string' ? undefined : video.size,
+        }
+      } : {};
+      const context = await browser.newContext({ ...videoOptions, ...options });
+      const contextData: { pages: Page[] } = { pages: [] };
+      contexts.set(context, contextData);
+      context.on('page', page => contextData.pages.push(page));
+      return context;
+    });
 
     const prependToError = testInfo.status === 'timedOut' ?
-      formatPendingCalls((context as any)._connection.pendingProtocolCalls()) : '';
-    await context.close();
+      formatPendingCalls((browser as any)._connection.pendingProtocolCalls()) : '';
+
+    await Promise.all([...contexts.keys()].map(async context => {
+      await context.close();
+
+      const testFailed = testInfo.status !== testInfo.expectedStatus;
+      const preserveVideo = captureVideo && (videoMode === 'on' || (testFailed && videoMode === 'retain-on-failure') || (videoMode === 'on-first-retry' && testInfo.retry === 1));
+      if (preserveVideo) {
+        const { pages } = contexts.get(context)!;
+        const videos = pages.map(p => p.video()).filter(Boolean) as Video[];
+        await Promise.all(videos.map(async v => {
+          try {
+            const videoPath = await v.path();
+            const savedPath = testInfo.outputPath(path.basename(videoPath));
+            await v.saveAs(savedPath);
+            testInfo.attachments.push({ name: 'video', path: savedPath, contentType: 'video/webm' });
+          } catch (e) {
+            // Silent catch empty videos.
+          }
+        }));
+      }
+    }));
+
     if (prependToError) {
       if (!testInfo.error) {
         testInfo.error = { value: prependToError };
@@ -423,31 +359,13 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
           testInfo.error.stack = prependToError + testInfo.error.stack;
       }
     }
-
-    const testFailed = testInfo.status !== testInfo.expectedStatus;
-    const preserveVideo = captureVideo && (videoMode === 'on' || (testFailed && videoMode === 'retain-on-failure') || (videoMode === 'on-first-retry' && testInfo.retry === 1));
-    if (preserveVideo) {
-      await Promise.all(allPages.map(async page => {
-        const v = page.video();
-        if (!v)
-          return;
-        try {
-          const videoPath = await v.path();
-          const savedPath = testInfo.outputPath(path.basename(videoPath));
-          await v.saveAs(savedPath);
-          testInfo.attachments.push({ name: 'video', path: savedPath, contentType: 'video/webm' });
-        } catch (e) {
-          // Silent catch empty videos.
-        }
-      }));
-    }
   },
 
-  page: async ({ context, _reuseBrowserContext }, use) => {
-    if (_reuseBrowserContext.isEnabled()) {
-      await use(await _reuseBrowserContext.obtainPage());
-      return;
-    }
+  context: async ({ _contextFactory }, use) => {
+    await use(await _contextFactory());
+  },
+
+  page: async ({ context }, use) => {
     await use(await context.newPage());
   },
 

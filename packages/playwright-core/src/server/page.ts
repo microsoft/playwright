@@ -260,11 +260,11 @@ export class Page extends SdkObject {
     return this._frameManager.frames();
   }
 
-  setDefaultNavigationTimeout(timeout: number) {
+  setDefaultNavigationTimeout(timeout: number | undefined) {
     this._timeoutSettings.setDefaultNavigationTimeout(timeout);
   }
 
-  setDefaultTimeout(timeout: number) {
+  setDefaultTimeout(timeout: number | undefined) {
     this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
