@@ -96,6 +96,30 @@ test('should support toBeEditable, toBeEnabled, toBeDisabled, toBeEmpty', async 
         await expect(locator).toBeEnabled();
       });
 
+      test('failed', async ({ page }) => {
+        await page.setContent('<button disabled>Text</button>');
+        const locator = page.locator('button');
+        await expect(locator).toBeEnabled({ timeout: 500 });
+      });
+
+      test('eventually enabled', async ({ page }) => {
+        await page.setContent('<button disabled>Text</button>');
+        const locator = page.locator('button');
+        setTimeout(() => {
+          locator.evaluate(e => e.removeAttribute('disabled')).catch(() => {});
+        }, 500);
+        await expect(locator).toBeEnabled();
+      });
+
+      test('eventually disabled', async ({ page }) => {
+        await page.setContent('<button>Text</button>');
+        const locator = page.locator('button');
+        setTimeout(() => {
+          locator.evaluate(e => e.setAttribute('disabled', '')).catch(() => {});
+        }, 500);
+        await expect(locator).not.toBeEnabled();
+      });
+
       test('disabled', async ({ page }) => {
         await page.setContent('<button disabled>Text</button>');
         const locator = page.locator('button');
@@ -121,8 +145,11 @@ test('should support toBeEditable, toBeEnabled, toBeDisabled, toBeEmpty', async 
       });
       `,
   }, { workers: 1 });
-  expect(result.passed).toBe(6);
-  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(8);
+  expect(result.failed).toBe(1);
+  expect(result.exitCode).toBe(1);
+  const output = stripAscii(result.output);
+  expect(output).toContain('expect(locator).toBeEnabled({ timeout: 500 }');
 });
 
 test('should support toBeVisible, toBeHidden', async ({ runInlineTest }) => {
