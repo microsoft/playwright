@@ -34,11 +34,12 @@ export class RemoteServer {
   _browser: Browser;
   _wsEndpoint: string;
 
-  async _start(childProcess: CommonFixtures['childProcess'], browserType: BrowserType, browserOptions: LaunchOptions, remoteServerOptions: RemoteServerOptions = {}) {
+  async _start(childProcess: CommonFixtures['childProcess'], browserType: BrowserType, remoteServerOptions: RemoteServerOptions = {}) {
     this._output = new Map();
     this._outputCallback = new Map();
 
     this._browserType = browserType;
+    const browserOptions = (browserType as any)._defaultLaunchOptions;
     // Copy options to prevent a large JSON string when launching subprocess.
     // Otherwise, we get `Error: spawn ENAMETOOLONG` on Windows.
     const launchOptions: LaunchOptions = {

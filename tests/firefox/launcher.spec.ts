@@ -16,9 +16,8 @@
 
 import { playwrightTest as it, expect } from '../config/browserTest';
 
-it('should pass firefox user preferences', async ({ browserType, browserOptions, browserName }) => {
+it('should pass firefox user preferences', async ({ browserType }) => {
   const browser = await browserType.launch({
-    ...browserOptions,
     firefoxUserPrefs: {
       'network.proxy.type': 1,
       'network.proxy.http': '127.0.0.1',

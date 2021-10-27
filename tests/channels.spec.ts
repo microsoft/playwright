@@ -26,8 +26,8 @@ it.use({
   }
 });
 
-it('should scope context handles', async ({ browserType, browserOptions, server }) => {
-  const browser = await browserType.launch(browserOptions);
+it('should scope context handles', async ({ browserType, server }) => {
+  const browser = await browserType.launch();
   const GOLDEN_PRECONDITION = {
     _guid: '',
     objects: [
@@ -75,10 +75,10 @@ it('should scope context handles', async ({ browserType, browserOptions, server 
   await browser.close();
 });
 
-it('should scope CDPSession handles', async ({ browserType, browserOptions, browserName }) => {
+it('should scope CDPSession handles', async ({ browserType, browserName }) => {
   it.skip(browserName !== 'chromium');
 
-  const browser = await browserType.launch(browserOptions);
+  const browser = await browserType.launch();
   const GOLDEN_PRECONDITION = {
     _guid: '',
     objects: [
@@ -119,7 +119,7 @@ it('should scope CDPSession handles', async ({ browserType, browserOptions, brow
   await browser.close();
 });
 
-it('should scope browser handles', async ({ browserType, browserOptions }) => {
+it('should scope browser handles', async ({ browserType }) => {
   const GOLDEN_PRECONDITION = {
     _guid: '',
     objects: [
@@ -134,7 +134,7 @@ it('should scope browser handles', async ({ browserType, browserOptions }) => {
   };
   await expectScopeState(browserType, GOLDEN_PRECONDITION);
 
-  const browser = await browserType.launch(browserOptions);
+  const browser = await browserType.launch();
   await browser.newContext();
   await expectScopeState(browserType, {
     _guid: '',
@@ -161,13 +161,13 @@ it('should scope browser handles', async ({ browserType, browserOptions }) => {
   await expectScopeState(browserType, GOLDEN_PRECONDITION);
 });
 
-it('should work with the domain module', async ({ browserType, browserOptions, server, browserName }) => {
+it('should work with the domain module', async ({ browserType, server, browserName }) => {
   const local = domain.create();
   local.run(() => { });
   let err;
   local.on('error', e => err = e);
 
-  const browser = await browserType.launch(browserOptions);
+  const browser = await browserType.launch();
   const page = await browser.newPage();
 
   expect(await page.evaluate(() => 1 + 1)).toBe(2);

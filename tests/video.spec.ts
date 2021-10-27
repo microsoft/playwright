@@ -552,9 +552,9 @@ it.describe('screencast', () => {
     expect(videoPlayer.videoHeight).toBe(666);
   });
 
-  it('should throw on browser close', async ({ browserType, browserOptions, contextOptions }, testInfo) => {
+  it('should throw on browser close', async ({ browserType, contextOptions }, testInfo) => {
     const size = { width: 320, height: 240 };
-    const browser = await browserType.launch(browserOptions);
+    const browser = await browserType.launch();
     const context = await browser.newContext({
       ...contextOptions,
       recordVideo: {
@@ -573,9 +573,9 @@ it.describe('screencast', () => {
     expect(saveResult.message).toContain('browser has been closed');
   });
 
-  it('should throw if browser dies', async ({ browserType, browserOptions, contextOptions }, testInfo) => {
+  it('should throw if browser dies', async ({ browserType, contextOptions }, testInfo) => {
     const size = { width: 320, height: 240 };
-    const browser = await browserType.launch(browserOptions);
+    const browser = await browserType.launch();
 
     const context = await browser.newContext({
       ...contextOptions,
@@ -595,9 +595,9 @@ it.describe('screencast', () => {
     expect(saveResult.message).toContain('rowser has been closed');
   });
 
-  it('should wait for video to finish if page was closed', async ({ browserType, browserOptions, contextOptions }, testInfo) => {
+  it('should wait for video to finish if page was closed', async ({ browserType, contextOptions }, testInfo) => {
     const size = { width: 320, height: 240 };
-    const browser = await browserType.launch(browserOptions);
+    const browser = await browserType.launch();
 
     const videoDir = testInfo.outputPath('');
     const context = await browser.newContext({

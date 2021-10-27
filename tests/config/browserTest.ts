@@ -33,7 +33,6 @@ export type PlaywrightWorkerFixtures = {
   _browserType: BrowserType;
   _browserOptions: LaunchOptions;
   browserType: BrowserType;
-  browserOptions: LaunchOptions;
   browser: Browser;
   browserVersion: string;
   _reuseBrowserContext: ReuseBrowserContextStorage;
@@ -72,7 +71,6 @@ export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTest
 
   launchOptions: [ {}, { scope: 'worker' } ],
   browserType: [async ({ _browserType }, use) => use(_browserType), { scope: 'worker' } ],
-  browserOptions: [async ({ _browserOptions }, use) => use(_browserOptions), { scope: 'worker' } ],
   browser: [browserWorkerFixture, { scope: 'worker' } ],
 
   browserVersion: [async ({ browser }, run) => {
@@ -97,13 +95,13 @@ export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTest
     await removeFolders(dirs);
   },
 
-  launchPersistent: async ({ createUserDataDir, browserType, browserOptions }, run) => {
+  launchPersistent: async ({ createUserDataDir, browserType }, run) => {
     let persistentContext: BrowserContext | undefined;
     await run(async options => {
       if (persistentContext)
         throw new Error('can only launch one persitent context');
       const userDataDir = await createUserDataDir();
-      persistentContext = await browserType.launchPersistentContext(userDataDir, { ...browserOptions, ...options });
+      persistentContext = await browserType.launchPersistentContext(userDataDir, { ...options });
       const page = persistentContext.pages()[0];
       return { context: persistentContext, page };
     });
@@ -111,13 +109,13 @@ export const playwrightFixtures: Fixtures<PlaywrightTestOptions & PlaywrightTest
       await persistentContext.close();
   },
 
-  startRemoteServer: async ({ childProcess, browserType, browserOptions }, run) => {
+  startRemoteServer: async ({ childProcess, browserType }, run) => {
     let remoteServer: RemoteServer | undefined;
     await run(async options => {
       if (remoteServer)
         throw new Error('can only start one remote server');
       remoteServer = new RemoteServer();
-      await remoteServer._start(childProcess, browserType, browserOptions, options);
+      await remoteServer._start(childProcess, browserType, options);
       return remoteServer;
     });
     if (remoteServer)
