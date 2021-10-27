@@ -146,6 +146,13 @@ it('should support global ignoreHTTPSErrors option', async ({ playwright, httpsS
   expect(response.status()).toBe(200);
 });
 
+it('should propagate ignoreHTTPSErrors on redirects', async ({ playwright, httpsServer }) => {
+  httpsServer.setRedirect('/redir', '/empty.html');
+  const request = await playwright.request.newContext();
+  const response = await request.get(httpsServer.PREFIX + '/redir', { ignoreHTTPSErrors: true });
+  expect(response.status()).toBe(200);
+});
+
 it('should resolve url relative to gobal baseURL option', async ({ playwright, server }) => {
   const request = await playwright.request.newContext({ baseURL: server.PREFIX });
   const response = await request.get('/empty.html');
