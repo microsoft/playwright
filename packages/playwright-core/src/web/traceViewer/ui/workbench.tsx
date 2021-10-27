@@ -37,10 +37,10 @@ export const Workbench: React.FunctionComponent<{
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEvent | undefined>();
   const [selectedTab, setSelectedTab] = React.useState<string>('logs');
   const [progress, setProgress] = React.useState<{ done: number, total: number }>({ done: 0, total: 0 });
+  const [dragOver, setDragOver] = React.useState<boolean>(false);
 
-  const handleDropEvent = (event: any) => {
-    event.preventDefault();
-    const blobTraceURL = URL.createObjectURL(event.dataTransfer.files[0]);
+  const processTraceFile = (file: File) => {
+    const blobTraceURL = URL.createObjectURL(file);
     const url = new URL(window.location.href);
     url.searchParams.set('trace', blobTraceURL);
     const href = url.toString();
@@ -48,6 +48,19 @@ export const Workbench: React.FunctionComponent<{
     // so set it here.
     window.history.pushState({}, '', href);
     setTraceURL(blobTraceURL);
+    setDragOver(false);
+  };
+
+  const handleDropEvent = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    processTraceFile(event.dataTransfer.files[0]);
+  };
+
+  const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    event.preventDefault();
+    if (!event.target.files)
+      return;
+    processTraceFile(event.target.files[0]);
   };
 
   React.useEffect(() => {
@@ -73,23 +86,6 @@ export const Workbench: React.FunctionComponent<{
   const defaultSnapshotSize = contextEntry.options.viewport || { width: 1280, height: 720 };
   const boundaries = { minimum: contextEntry.startTime, maximum: contextEntry.endTime };
 
-  if (!traceURL || progress.total) {
-    return <div className='vbox workbench'>
-      <div className='hbox header'>
-        <div className='logo'>🎭</div>
-        <div className='product'>Playwright</div>
-        <div className='spacer'></div>
-      </div>
-      {!!progress.total && <div className='progress'>
-        <div className='inner-progress' style={{ width: (100 * progress.done / progress.total) + '%' }}></div>
-      </div>}
-      {!progress.total && <div className='drop-target'
-        onDragOver={event => { event.preventDefault(); }}
-        onDrop={event => handleDropEvent(event)}>
-        Drop Playwright Trace here
-      </div>}
-    </div>;
-  }
 
   // Leave some nice free space on the right hand side.
   boundaries.maximum += (boundaries.maximum - boundaries.minimum) / 20;
@@ -106,9 +102,7 @@ export const Workbench: React.FunctionComponent<{
   if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     tabs.push({ id: 'source', title: 'Source', count: 0, render: () => <SourceTab action={selectedAction} /> });
 
-  return <div className='vbox workbench'
-    onDragOver={event => { event.preventDefault(); }}
-    onDrop={event => handleDropEvent(event)}>
+  return <div className='vbox workbench' onDragOver={event => { event.preventDefault(); setDragOver(true); }}>
     <div className='hbox header'>
       <div className='logo'>🎭</div>
       <div className='product'>Playwright</div>
@@ -140,6 +134,18 @@ export const Workbench: React.FunctionComponent<{
         setSelectedTab={setSelectedTab}
       />
     </SplitView>
+    {!!progress.total && <div className='progress'>
+      <div className='inner-progress' style={{ width: (100 * progress.done / progress.total) + '%' }}></div>
+    </div>}
+    {!dragOver && !traceURL && <div className='drop-target'>
+      <div>Drop to upload a Playwright Trace</div>
+      <input type='file' onChange={handleFileInputChange} />
+    </div>}
+    {dragOver && <div className='drop-target'
+      onDragLeave={() => { setDragOver(false); }}
+      onDrop={event => handleDropEvent(event)}>
+      Release to analyse the Playwright Trace
+    </div>}
   </div>;
 };
 

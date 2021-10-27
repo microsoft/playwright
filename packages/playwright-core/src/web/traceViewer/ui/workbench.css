@@ -20,9 +20,21 @@
   justify-content: center;
   box-shadow: var(--box-shadow);
   flex: auto;
+  flex-direction: column;
   font-size: 24px;
   color: #666;
   font-weight: bold;
+  background-color: #fffb;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 100;
+}
+
+.drop-target input {
+  margin-top: 50px;
 }
 
 .progress {
@@ -78,7 +90,7 @@
   flex: auto;
 }
 
-tab-strip {
+.tab-strip {
   background-color: var(--light-background);
 }
 
