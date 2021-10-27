@@ -2081,10 +2081,10 @@ index b929c9d72addb6500e98e1b0ad535bd018c547cc..8141987b4c4100f00a5db487c6ce83f7
    type: bool
    humanReadableName: "Private Click Measurement"
 diff --git a/Source/WTF/Scripts/Preferences/WebPreferencesExperimental.yaml b/Source/WTF/Scripts/Preferences/WebPreferencesExperimental.yaml
-index 2c176ae23d5aae49471a340c7b2dc456c9142165..83768668fee38ffded232d0759ab35ba70f6f8ad 100644
+index 2c176ae23d5aae49471a340c7b2dc456c9142165..65c454e382400a1849c4633558fd4f06ffc6e8f3 100644
 --- a/Source/WTF/Scripts/Preferences/WebPreferencesExperimental.yaml
 +++ b/Source/WTF/Scripts/Preferences/WebPreferencesExperimental.yaml
-@@ -417,7 +417,7 @@ CrossOriginEmbedderPolicyEnabled:
+@@ -429,7 +429,7 @@ CrossOriginOpenerPolicyEnabled:
      WebKitLegacy:
        default: false
      WebKit:
