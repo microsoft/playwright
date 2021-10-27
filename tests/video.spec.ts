@@ -21,7 +21,7 @@ import { spawnSync } from 'child_process';
 import { PNG } from 'pngjs';
 import { registry } from 'playwright-core/lib/utils/registry';
 
-const ffmpeg = registry.findExecutable('ffmpeg')!.executablePath();
+const ffmpeg = registry.findExecutable('ffmpeg')!.executablePath('javascript');
 
 export class VideoPlayer {
   fileName: string;

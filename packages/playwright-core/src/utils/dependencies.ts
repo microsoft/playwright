@@ -20,6 +20,7 @@ import * as os from 'os';
 import childProcess from 'child_process';
 import { getUbuntuVersion } from './ubuntuVersion';
 import * as utils from './utils';
+import { buildPlaywrightCLICommand } from './registry';
 
 const BIN_DIRECTORY = path.join(__dirname, '..', '..', 'bin');
 
@@ -148,7 +149,7 @@ export async function validateDependenciesWindows(windowsExeAndDllDirectories: s
   }
 }
 
-export async function validateDependenciesLinux(linuxLddDirectories: string[], dlOpenLibraries: string[]) {
+export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDirectories: string[], dlOpenLibraries: string[]) {
   const directoryPaths = linuxLddDirectories;
   const lddPaths: string[] = [];
   for (const directoryPath of directoryPaths)
@@ -194,7 +195,7 @@ export async function validateDependenciesLinux(linuxLddDirectories: string[], d
       `Host system is missing a few dependencies to run browsers.`,
       `Please install them with the following command:`,
       ``,
-      `    ${maybeSudo}npx playwright install-deps`,
+      `    ${maybeSudo}${buildPlaywrightCLICommand(sdkLanguage, 'install-deps')}`,
       ``,
       `<3 Playwright Team`,
     ].join('\n'), 1));
