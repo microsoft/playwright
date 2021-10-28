@@ -49,6 +49,14 @@ main() {
 }
 
 function archive_compiled_chromium() {
+  if [[ -z "${CR_CHECKOUT_PATH}" ]]; then
+    CR_CHECKOUT_PATH="$HOME/chromium"
+  fi
+  if [[ ! -d "${CR_CHECKOUT_PATH}/src" ]]; then
+    echo "ERROR: CR_CHECKOUT_PATH does not have src/ subfolder; is this a chromium checkout?"
+    exit 1
+  fi
+
   CHROMIUM_FOLDER_NAME=""
   CHROMIUM_FILES_TO_ARCHIVE=()
 
