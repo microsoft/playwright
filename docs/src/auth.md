@@ -342,9 +342,9 @@ class Program
 
 ### Lifecycle
 
-1. Create a user data directory on disk
-2. Launch a persistent context with the user data directory and login the MFA account.
-3. Reuse user data directory to run automation scenarios.
+1. Create a user data directory on disk.
+1. Launch a persistent context with the user data directory and login the MFA account.
+1. Reuse user data directory to run automation scenarios.
 
 ### API reference
 - [BrowserContext]
