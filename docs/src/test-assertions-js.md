@@ -16,7 +16,7 @@ of the matchers:
 
 ```js
 expect(value).not.toEqual(0);
-expect(locator).not.toContainText("some text");
+await expect(locator).not.toContainText("some text");
 ```
 
 <!-- TOC -->
