@@ -21,7 +21,7 @@ trap "cd $(pwd -P)" EXIT
 cd "$(dirname $0)"
 
 if [[ ("$1" == "-h") || ("$1" == "--help") ]]; then
-  echo "usage: $(basename $0) [--mac|--linux|--cross-compile-win32|--cross-compile-win64]"
+  echo "usage: $(basename $0) [--mac|--linux|--cross-compile-win64]"
   echo
   echo "Build ffmpeg for the given platform"
   echo
@@ -63,10 +63,7 @@ elif [[ "$1" == --cross-compile-win* ]]; then
     exit 1
   fi
 
-  if [[ "$1" == "--cross-compile-win32" ]]; then
-    time docker run --init --rm -v"${PWD}":/host ${dockerflags} ubuntu:18.04 bash /host/crosscompile-from-linux-to-win.sh --win32 /host/output/ffmpeg-win32.exe
-    cd output && zip ffmpeg.zip ffmpeg-win32.exe "${LICENSE_FILE}"
-  elif [[ "$1" == "--cross-compile-win64" ]]; then
+  if [[ "$1" == "--cross-compile-win64" ]]; then
     time docker run --init --rm -v"${PWD}":/host ${dockerflags} ubuntu:18.04 bash /host/crosscompile-from-linux-to-win.sh --win64 /host/output/ffmpeg-win64.exe
     cd output && zip ffmpeg.zip ffmpeg-win64.exe "${LICENSE_FILE}"
   else

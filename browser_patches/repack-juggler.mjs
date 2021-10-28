@@ -51,7 +51,6 @@ const EXECUTABLE_PATHS = {
   'mac10.15': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
   'mac11': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
   'mac11-arm64': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
-  'win32': ['firefox', 'firefox.exe'],
   'win64': ['firefox', 'firefox.exe'],
 };
 
@@ -63,7 +62,6 @@ const DOWNLOAD_URLS = {
     'mac10.15': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-mac-11.zip',
     'mac11': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-mac-11.zip',
     'mac11-arm64': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-mac-11.0-arm64.zip',
-    'win32': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-win32.zip',
     'win64': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-win64.zip',
   },
   'firefox-beta': {
@@ -73,7 +71,6 @@ const DOWNLOAD_URLS = {
     'mac10.15': 'https://playwright.azureedge.net/builds/firefox-beta/%s/firefox-beta-mac-11.zip',
     'mac11': 'https://playwright.azureedge.net/builds/firefox-beta/%s/firefox-beta-mac-11.zip',
     'mac11-arm64': 'https://playwright.azureedge.net/builds/firefox-beta/%s/firefox-beta-mac-11.0-arm64.zip',
-    'win32': 'https://playwright.azureedge.net/builds/firefox-beta/%s/firefox-beta-win32.zip',
     'win64': 'https://playwright.azureedge.net/builds/firefox-beta/%s/firefox-beta-win64.zip',
   },
 };
@@ -299,7 +296,7 @@ function getHostPlatform() {
     return 'ubuntu20.04';
   }
   if (platform === 'win32')
-    return os.arch() === 'x64' ? 'win64' : 'win32';
+    return 'win64';
   return platform;
 }
 

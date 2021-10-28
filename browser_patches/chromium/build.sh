@@ -6,7 +6,7 @@ trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
 
 USAGE=$(cat<<EOF
-  usage: $(basename "$0") [--mirror|--mirror-linux|--mirror-win32|--mirror-win64|--mirror-mac|--compile-mac-arm64|--compile-linux|--compile-win32|--compile-win64|--compile-mac]
+  usage: $(basename "$0") [--mirror|--mirror-linux|--mirror-win64|--mirror-mac|--compile-mac-arm64|--compile-linux|--compile-win64|--compile-mac]
 
   Either compiles chromium or mirrors it from Chromium Continuous Builds CDN.
 EOF
@@ -68,8 +68,6 @@ compile_chromium() {
 
   if [[ $1 == "--compile-mac-arm64" ]]; then
     echo 'target_cpu = "arm64"' >> ./out/Default/args.gn
-  elif [[ $1 == "--compile-win32" ]]; then
-    echo 'target_cpu = "x86"' >> ./out/Default/args.gn
   fi
 
   if [[ ! -z "$USE_GOMA" ]]; then
@@ -130,9 +128,7 @@ mirror_chromium() {
   fi
 
   CRREV=$(head -1 "${SCRIPT_FOLDER}/BUILD_NUMBER")
-  if [[ "${PLATFORM}" == "--mirror-win32" ]]; then
-    CHROMIUM_URL="https://storage.googleapis.com/chromium-browser-snapshots/Win/${CRREV}/chrome-win.zip"
-  elif [[ "${PLATFORM}" == "--mirror-win64" ]]; then
+  if [[ "${PLATFORM}" == "--mirror-win64" ]]; then
     CHROMIUM_URL="https://storage.googleapis.com/chromium-browser-snapshots/Win_x64/${CRREV}/chrome-win.zip"
   elif [[ "${PLATFORM}" == "--mirror-mac" ]]; then
     CHROMIUM_URL="https://storage.googleapis.com/chromium-browser-snapshots/Mac/${CRREV}/chrome-mac.zip"

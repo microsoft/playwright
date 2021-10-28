@@ -60,10 +60,6 @@ function archive_compiled_chromium() {
     # Run python script and convert output to array.
     IFS=$'\n' CHROMIUM_FILES_TO_ARCHIVE=($(python "${SCRIPT_PATH}/compute_files_to_archive.py" 64bit "${CR_CHECKOUT_PATH}/src/chrome/tools/build/linux/FILES.cfg"))
     unset IFS
-  elif [[ $1 == "--compile-win32" ]]; then
-    CHROMIUM_FOLDER_NAME="chrome-win"
-    IFS=$'\n\r' CHROMIUM_FILES_TO_ARCHIVE=($(python "${SCRIPT_PATH}/compute_files_to_archive.py" 32bit "${CR_CHECKOUT_PATH}/src/chrome/tools/build/win/FILES.cfg"))
-    unset IFS
   elif [[ $1 == "--compile-win64" ]]; then
     CHROMIUM_FOLDER_NAME="chrome-win"
     IFS=$'\n\r' CHROMIUM_FILES_TO_ARCHIVE=($(python "${SCRIPT_PATH}/compute_files_to_archive.py" 64bit "${CR_CHECKOUT_PATH}/src/chrome/tools/build/win/FILES.cfg"))

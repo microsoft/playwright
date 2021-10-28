@@ -52,7 +52,6 @@ Prerequisites:
 Building:
 
 ```
-~/playwright$ ./browser_patches/ffmpeg/build.sh --cross-compile-win32
 ~/playwright$ ./browser_patches/ffmpeg/build.sh --cross-compile-win64
 ```
 
