@@ -21,7 +21,7 @@ import net from 'net';
 type TestChildParams = {
   command: string[],
   cwd?: string,
-  env?: { [key: string]: string | number | boolean | undefined },
+  env?: NodeJS.ProcessEnv,
   shell?: boolean,
   onOutput?: () => void;
 };
@@ -42,9 +42,13 @@ export class TestChildProcess {
       env: {
         ...process.env,
         ...params.env,
-      } as any,
+      },
       cwd: params.cwd,
       shell: params.shell,
+      // On non-windows platforms, `detached: true` makes child process a leader of a new
+      // process group, making it possible to kill child process tree with `.kill(-pid)` command.
+      // @see https://nodejs.org/api/child_process.html#child_process_options_detached
+      detached: process.platform !== 'win32',
     });
     if (process.env.PWTEST_DEBUG)
       process.stdout.write(`\n\nLaunching ${params.command.join(' ')}\n`);
@@ -63,30 +67,32 @@ export class TestChildProcess {
     this.process.stderr.on('data', appendChunk);
     this.process.stdout.on('data', appendChunk);
 
-    const onExit = () => {
-      if (!this.process.pid || this.process.killed)
-        return;
-      try {
-        if (process.platform === 'win32')
-          execSync(`taskkill /pid ${this.process.pid} /T /F /FI "MEMUSAGE gt 0"`);
-        else
-          process.kill(-this.process.pid, 'SIGKILL');
-      } catch (e) {
-        // the process might have already stopped
-      }
-    };
-    process.on('exit', onExit);
+    const killProcessGroup = this._killProcessGroup.bind(this);
+    process.on('exit', killProcessGroup);
     this.exited = new Promise(f => {
       this.process.on('exit', (exitCode, signal) => f({ exitCode, signal }));
-      process.off('exit', onExit);
+      process.off('exit', killProcessGroup);
     });
     this.exitCode = this.exited.then(r => r.exitCode);
   }
 
   async close() {
     if (!this.process.killed)
-      this.process.kill();
+      this._killProcessGroup();
     return this.exited;
+  }
+
+  private _killProcessGroup() {
+    if (!this.process.pid || this.process.killed)
+      return;
+    try {
+      if (process.platform === 'win32')
+        execSync(`taskkill /pid ${this.process.pid} /T /F /FI "MEMUSAGE gt 0"`);
+      else
+        process.kill(-this.process.pid, 'SIGKILL');
+    } catch (e) {
+      // the process might have already stopped
+    }
   }
 
   async cleanExit() {
