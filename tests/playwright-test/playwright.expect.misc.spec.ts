@@ -49,6 +49,24 @@ test('should support toHaveCount', async ({ runInlineTest }) => {
         await expect(locator).not.toHaveCount(1);
       });
 
+      test('eventually pass non-zero', async ({ page }) => {
+        await page.setContent('<ul></ul>');
+        setTimeout(async () => {
+          await page.setContent("<ul><li>one</li><li>two</li></ul>");
+        }, 500);
+        const locator = page.locator('li');
+        await expect(locator).toHaveCount(2);
+      });
+
+      test('eventually pass not non-zero', async ({ page }) => {
+        await page.setContent('<ul><li>one</li><li>two</li></ul>');
+        setTimeout(async () => {
+          await page.setContent("<ul></ul>");
+        }, 500);
+        const locator = page.locator('li');
+        await expect(locator).not.toHaveCount(2);
+      });
+
       test('fail zero', async ({ page }) => {
         await page.setContent('<div><span></span></div>');
         const locator = page.locator('span');
@@ -63,7 +81,7 @@ test('should support toHaveCount', async ({ runInlineTest }) => {
       `,
   }, { workers: 1 });
   const output = stripAscii(result.output);
-  expect(result.passed).toBe(3);
+  expect(result.passed).toBe(5);
   expect(result.failed).toBe(2);
   expect(result.exitCode).toBe(1);
   expect(output).toContain('Expected: 0');
