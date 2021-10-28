@@ -14,26 +14,21 @@
  * limitations under the License.
  */
 
-import { baseTest } from '../config/baseTest';
-import type { Page, ViewportSize } from 'playwright-core';
-import { VideoMode } from '@playwright/test';
+import { TestType } from '@playwright/test';
+import { PlatformWorkerFixtures } from '../config/platformFixtures';
+import { TestModeWorkerFixtures } from '../config/testModeFixtures';
+import { androidTest } from '../android/androidTest';
+import { browserTest } from '../config/browserTest';
+import { electronTest } from '../electron/electronTest';
+import { PageTestFixtures, PageWorkerFixtures } from './pageTestApi';
+import { ServerFixtures, ServerWorkerOptions } from '../config/serverFixtures';
 export { expect } from '@playwright/test';
 
-// Page test does not guarantee an isolated context, just a new page (because Android).
-export type PageTestFixtures = {
-  browserVersion: string;
-  browserMajorVersion: number;
-  page: Page;
-  isAndroid: boolean;
-  isElectron: boolean;
-};
+let impl: TestType<PageTestFixtures & ServerFixtures, PageWorkerFixtures & PlatformWorkerFixtures & TestModeWorkerFixtures & ServerWorkerOptions> = browserTest;
 
-export type PageWorkerFixtures = {
-  headless: boolean,
-  channel: string,
-  trace: 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | /** deprecated */ 'retry-with-trace';
-  video: VideoMode | { mode: VideoMode, size: ViewportSize };
-  browserName: 'chromium' | 'firefox' | 'webkit',
-};
+if (process.env.PWPAGE_IMPL === 'android')
+  impl = androidTest;
+if (process.env.PWPAGE_IMPL === 'electron')
+  impl = electronTest;
 
-export const test = baseTest.declare<PageTestFixtures, PageWorkerFixtures>();
+export const test = impl;

@@ -134,10 +134,7 @@ it('close() should abort waitForEvent', async ({ browser }) => {
 
 it('close() should be callable twice', async ({ browser }) => {
   const context = await browser.newContext();
-  await Promise.all([
-    context.close(),
-    context.close(),
-  ]);
+  await context.close();
   await context.close();
 });
 

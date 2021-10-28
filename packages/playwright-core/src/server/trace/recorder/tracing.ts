@@ -218,7 +218,7 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
 
       const zipArtifact = skipCompress ? null : await this._exportZip(entries, state).catch(() => null);
       return { artifact: zipArtifact, entries };
-    });
+    }) || { artifact: null, entries: [] };
   }
 
   private async _exportZip(entries: NameValue[], state: RecordingState): Promise<Artifact | null> {
@@ -360,11 +360,13 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
     });
   }
 
-  private async _appendTraceOperation<T>(cb: () => Promise<T>): Promise<T> {
+  private async _appendTraceOperation<T>(cb: () => Promise<T>): Promise<T | undefined> {
     // This method serializes all writes to the trace.
     let error: Error | undefined;
     let result: T | undefined;
     this._writeChain = this._writeChain.then(async () => {
+      if (!this._context._browser.isConnected())
+        return;
       try {
         result = await cb();
       } catch (e) {
@@ -374,7 +376,7 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
     await this._writeChain;
     if (error)
       throw error;
-    return result!;
+    return result;
   }
 }
 

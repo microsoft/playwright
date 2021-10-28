@@ -244,7 +244,8 @@ it('should work when page calls history API in beforeunload', async ({ page, ser
   expect(response.status()).toBe(200);
 });
 
-it('should fail when navigating to bad url', async ({ page, browserName }) => {
+it('should fail when navigating to bad url', async ({ mode, page, browserName }) => {
+  it.fixme(mode === 'service', 'baseURL is inherited from webServer in config');
   let error = null;
   await page.goto('asdfasdf').catch(e => error = e);
   if (browserName === 'chromium' || browserName === 'webkit')
@@ -347,6 +348,8 @@ it('should fail when exceeding default maximum timeout', async ({ page, server, 
   // Hang for request to the empty.html
   server.setRoute('/empty.html', (req, res) => { });
   let error = null;
+  // Undo what harness did.
+  page.context().setDefaultNavigationTimeout(undefined);
   page.context().setDefaultTimeout(2);
   page.setDefaultTimeout(1);
   await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
@@ -361,6 +364,8 @@ it('should fail when exceeding browser context timeout', async ({ page, server, 
   // Hang for request to the empty.html
   server.setRoute('/empty.html', (req, res) => { });
   let error = null;
+  // Undo what harness did.
+  page.context().setDefaultNavigationTimeout(undefined);
   page.context().setDefaultTimeout(2);
   await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
   expect(error.message).toContain('page.goto: Timeout 2ms exceeded.');
