@@ -11,7 +11,13 @@ expect(success).toBeTruthy();
 ```
 
 Playwright also extends it with convenience async matchers that will wait until
-the expected condition is met.
+the expected condition is met. In general, we can expect the opposite to be true by adding a `.not` to the front
+of the matchers:
+
+```js
+expect(value).not.toEqual(0);
+await expect(locator).not.toContainText("some text");
+```
 
 <!-- TOC -->
 
