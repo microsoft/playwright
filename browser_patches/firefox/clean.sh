@@ -15,3 +15,6 @@ if [[ -d $OBJ_FOLDER ]]; then
   rm -rf $OBJ_FOLDER
 fi
 
+if [[ -f "mach" ]]; then
+  ./mach clobber
+fi
