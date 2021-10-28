@@ -159,7 +159,6 @@ it('should not treat navigations as new popups', async ({ page, server }) => {
 });
 
 it('should report popup opened from iframes', async ({ page, server, browserName }) => {
-  it.fixme(browserName === 'firefox', 'attachedToTarget event comes without openerId');
   await page.goto(server.PREFIX + '/frames/two-frames.html');
   const frame = page.frame('uno');
   expect(frame).toBeTruthy();
