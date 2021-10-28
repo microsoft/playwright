@@ -159,8 +159,9 @@ class TargetRegistry {
       const openerContext = tab.linkedBrowser.browsingContext.opener;
       let openerTarget;
       if (openerContext) {
-        // Popups usually have opener context.
-        openerTarget = this._browserBrowsingContextToTarget.get(openerContext);
+        // Popups usually have opener context. Get top context for the case when opener is
+        // an iframe.
+        openerTarget = this._browserBrowsingContextToTarget.get(openerContext.top);
       } else if (tab.openerTab) {
         // Noopener popups from the same window have opener tab instead.
         openerTarget = this._browserToTarget.get(tab.openerTab.linkedBrowser);
