@@ -387,8 +387,8 @@ it.describe('download event', () => {
     expect(fs.existsSync(path2)).toBeFalsy();
   });
 
-  it('should delete downloads on browser gone', async ({ server, browserType, browserOptions }) => {
-    const browser = await browserType.launch(browserOptions);
+  it('should delete downloads on browser gone', async ({ server, browserType }) => {
+    const browser = await browserType.launch();
     const page = await browser.newPage({ acceptDownloads: true });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [ download1 ] = await Promise.all([
@@ -465,7 +465,7 @@ it.describe('download event', () => {
     ]).toContain(saveError.message);
   });
 
-  it('should throw if browser dies', async ({ server, browserType, browserName, browserOptions, platform }, testInfo) => {
+  it('should throw if browser dies', async ({ server, browserType, browserName, platform }, testInfo) => {
     it.skip(browserName === 'webkit' && platform === 'linux', 'WebKit on linux does not convert to the download immediately upon receiving headers');
     server.setRoute('/downloadStall', (req, res) => {
       res.setHeader('Content-Type', 'application/octet-stream');
@@ -475,7 +475,7 @@ it.describe('download event', () => {
       res.write(`Hello world`);
     });
 
-    const browser = await browserType.launch(browserOptions);
+    const browser = await browserType.launch();
     const page = await browser.newPage({ acceptDownloads: true });
     await page.setContent(`<a href="${server.PREFIX}/downloadStall">click me</a>`);
     const [download] = await Promise.all([

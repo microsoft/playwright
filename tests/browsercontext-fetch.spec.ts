@@ -336,13 +336,12 @@ it('should return raw headers', async ({ context, page, server }) => {
   expect(response.headers()['name-b']).toBe('v4');
 });
 
-it('should work with context level proxy', async ({ browserOptions, browserType, contextOptions, server, proxyServer }) => {
+it('should work with context level proxy', async ({ browserType, contextOptions, server, proxyServer }) => {
   server.setRoute('/target.html', async (req, res) => {
     res.end('<title>Served by the proxy</title>');
   });
 
   const browser = await browserType.launch({
-    ...browserOptions,
     proxy: { server: 'http://per-context' }
   });
 
@@ -364,7 +363,7 @@ it('should work with context level proxy', async ({ browserOptions, browserType,
   }
 });
 
-it('should pass proxy credentials', async ({ browserType, browserOptions, server, proxyServer }) => {
+it('should pass proxy credentials', async ({ browserType, server, proxyServer }) => {
   proxyServer.forwardTo(server.PORT);
   let auth;
   proxyServer.setAuthHandler(req => {
@@ -372,7 +371,6 @@ it('should pass proxy credentials', async ({ browserType, browserOptions, server
     return !!auth;
   });
   const browser = await browserType.launch({
-    ...browserOptions,
     proxy: { server: `localhost:${proxyServer.PORT}`, username: 'user', password: 'secret' }
   });
   const context = await browser.newContext();

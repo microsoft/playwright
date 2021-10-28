@@ -78,8 +78,8 @@ test('Page.route should work with intervention headers', async ({ server, page }
   expect(serverRequest.headers.intervention).toContain('feature/5718547946799104');
 });
 
-playwrightTest('should close service worker together with the context', async ({ browserType, browserOptions, server }) => {
-  const browser = await browserType.launch(browserOptions);
+playwrightTest('should close service worker together with the context', async ({ browserType, server }) => {
+  const browser = await browserType.launch();
   const context = await browser.newContext();
   const page = await context.newPage();
   const [worker] = await Promise.all([
@@ -94,10 +94,9 @@ playwrightTest('should close service worker together with the context', async ({
   await browser.close();
 });
 
-playwrightTest('should connect to an existing cdp session', async ({ browserType, browserOptions }, testInfo) => {
+playwrightTest('should connect to an existing cdp session', async ({ browserType }, testInfo) => {
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({
-    ...browserOptions,
     args: ['--remote-debugging-port=' + port]
   });
   try {
@@ -112,10 +111,9 @@ playwrightTest('should connect to an existing cdp session', async ({ browserType
   }
 });
 
-playwrightTest('should connect to an existing cdp session twice', async ({ browserType, browserOptions, server }, testInfo) => {
+playwrightTest('should connect to an existing cdp session twice', async ({ browserType, server }, testInfo) => {
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({
-    ...browserOptions,
     args: ['--remote-debugging-port=' + port]
   });
   try {
@@ -147,10 +145,9 @@ playwrightTest('should connect to an existing cdp session twice', async ({ brows
   }
 });
 
-playwrightTest('should connect to existing page with iframe and navigate', async ({ browserType, browserOptions, server }, testInfo) => {
+playwrightTest('should connect to existing page with iframe and navigate', async ({ browserType, server }, testInfo) => {
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({
-    ...browserOptions,
     args: ['--remote-debugging-port=' + port]
   });
   try {
@@ -169,10 +166,9 @@ playwrightTest('should connect to existing page with iframe and navigate', async
   }
 });
 
-playwrightTest('should connect to existing service workers', async ({ browserType, browserOptions, server }, testInfo) => {
+playwrightTest('should connect to existing service workers', async ({ browserType, server }, testInfo) => {
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({
-    ...browserOptions,
     args: ['--remote-debugging-port=' + port]
   });
   try {
@@ -199,10 +195,9 @@ playwrightTest('should connect to existing service workers', async ({ browserTyp
   }
 });
 
-playwrightTest('should connect over a ws endpoint', async ({ browserType, browserOptions, server }, testInfo) => {
+playwrightTest('should connect over a ws endpoint', async ({ browserType, server }, testInfo) => {
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({
-    ...browserOptions,
     args: ['--remote-debugging-port=' + port]
   });
   try {
@@ -232,7 +227,7 @@ playwrightTest('should connect over a ws endpoint', async ({ browserType, browse
   }
 });
 
-playwrightTest('should send extra headers with connect request', async ({ browserType, browserOptions, server }, testInfo) => {
+playwrightTest('should send extra headers with connect request', async ({ browserType, server }, testInfo) => {
   {
     const [request] = await Promise.all([
       server.waitForWebSocketConnectionRequest(),
@@ -265,7 +260,7 @@ playwrightTest('should send extra headers with connect request', async ({ browse
   }
 });
 
-playwrightTest('should send default User-Agent header with connect request', async ({ browserType, browserOptions, server }, testInfo) => {
+playwrightTest('should send default User-Agent header with connect request', async ({ browserType, server }, testInfo) => {
   {
     const [request] = await Promise.all([
       server.waitForWebSocketConnectionRequest(),
@@ -282,10 +277,9 @@ playwrightTest('should send default User-Agent header with connect request', asy
   }
 });
 
-playwrightTest('should report all pages in an existing browser', async ({ browserType, browserOptions }, testInfo) => {
+playwrightTest('should report all pages in an existing browser', async ({ browserType }, testInfo) => {
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({
-    ...browserOptions,
     args: ['--remote-debugging-port=' + port]
   });
   try {
@@ -309,11 +303,10 @@ playwrightTest('should report all pages in an existing browser', async ({ browse
   }
 });
 
-playwrightTest('should connect via https', async ({ browserType, browserOptions, httpsServer, mode }, testInfo) => {
+playwrightTest('should connect via https', async ({ browserType, httpsServer, mode }, testInfo) => {
   test.skip(mode !== 'default'); // Out of process transport does not allow us to set env vars dynamically.
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({
-    ...browserOptions,
     args: ['--remote-debugging-port=' + port]
   });
   const json = await new Promise<string>((resolve, reject) => {
@@ -344,10 +337,9 @@ playwrightTest('should connect via https', async ({ browserType, browserOptions,
   }
 });
 
-playwrightTest('should return valid browser from context.browser()', async ({ browserType, browserOptions }, testInfo) => {
+playwrightTest('should return valid browser from context.browser()', async ({ browserType }, testInfo) => {
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({
-    ...browserOptions,
     args: ['--remote-debugging-port=' + port]
   });
   try {
@@ -390,10 +382,9 @@ test('should report an expected error when the endpoint URL JSON webSocketDebugg
   })).rejects.toThrowError('browserType.connectOverCDP: Invalid URL');
 });
 
-playwrightTest('should connect to an existing cdp session when passed as a first argument', async ({ browserType, browserOptions }, testInfo) => {
+playwrightTest('should connect to an existing cdp session when passed as a first argument', async ({ browserType }, testInfo) => {
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({
-    ...browserOptions,
     args: ['--remote-debugging-port=' + port]
   });
   try {

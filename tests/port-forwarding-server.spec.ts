@@ -61,7 +61,7 @@ class OutOfProcessPlaywrightServer {
 }
 
 const it = contextTest.extend<{ pageFactory: (redirectPortForTest?: number) => Promise<Page> }>({
-  pageFactory: async ({ browserName, browserOptions }, run, testInfo) => {
+  pageFactory: async ({ browserName, browserType }, run, testInfo) => {
     const playwrightServers: OutOfProcessPlaywrightServer[] = [];
     await run(async (redirectPortForTest?: number): Promise<Page> => {
       const server = new OutOfProcessPlaywrightServer(0, 3200 + testInfo.workerIndex);
@@ -71,7 +71,7 @@ const it = contextTest.extend<{ pageFactory: (redirectPortForTest?: number) => P
       });
       const playwright = service.playwright();
       playwright._enablePortForwarding(redirectPortForTest);
-      const browser = await playwright[browserName].launch(browserOptions);
+      const browser = await playwright[browserName].launch((browserType as any)._defaultLaunchOptions);
       return await browser.newPage();
     });
     for (const playwrightServer of playwrightServers)

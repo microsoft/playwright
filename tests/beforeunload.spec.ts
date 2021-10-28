@@ -17,8 +17,8 @@
 
 import { contextTest as it, expect } from './config/browserTest';
 
-it('should close browser with beforeunload page', async ({ server, browserType, browserOptions }) => {
-  const browser = await browserType.launch(browserOptions);
+it('should close browser with beforeunload page', async ({ server, browserType }) => {
+  const browser = await browserType.launch();
   const page = await browser.newPage();
   await page.goto(server.PREFIX + '/beforeunload.html');
   // We have to interact with a page so that 'beforeunload' handlers

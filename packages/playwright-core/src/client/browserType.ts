@@ -88,6 +88,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
   async launchServer(options: LaunchServerOptions = {}): Promise<api.BrowserServer> {
     if (!this._serverLauncher)
       throw new Error('Launching server is not supported');
+    options = { ...this._defaultLaunchOptions, ...options };
     return this._serverLauncher.launchServer(options);
   }
 

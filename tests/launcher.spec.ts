@@ -26,16 +26,16 @@ it('should have a devices object', async ({ playwright }) => {
   expect(playwright.devices['iPhone 6'].defaultBrowserType).toBe('webkit');
 });
 
-it('should kill browser process on timeout after close', async ({ browserType, browserOptions, mode }) => {
+it('should kill browser process on timeout after close', async ({ browserType, mode }) => {
   it.skip(mode !== 'default', 'Test passes server hooks via options');
 
-  const launchOptions = { ...browserOptions };
+  const launchOptions: any = {};
   let stalled = false;
-  (launchOptions as any).__testHookGracefullyClose = () => {
+  launchOptions.__testHookGracefullyClose = () => {
     stalled = true;
     return new Promise(() => {});
   };
-  (launchOptions as any).__testHookBrowserCloseTimeout = 1_000;
+  launchOptions.__testHookBrowserCloseTimeout = 1_000;
   const browser = await browserType.launch(launchOptions);
   await browser.close();
   expect(stalled).toBeTruthy();

@@ -175,15 +175,15 @@ it('should isolate send cookie header', async ({ server, context, browser }) => 
   }
 });
 
-playwrightTest('should isolate cookies between launches', async ({ browserType, server, browserOptions }) => {
+playwrightTest('should isolate cookies between launches', async ({ browserType, server }) => {
   playwrightTest.slow();
 
-  const browser1 = await browserType.launch(browserOptions);
+  const browser1 = await browserType.launch();
   const context1 = await browser1.newContext();
   await context1.addCookies([{ url: server.EMPTY_PAGE, name: 'cookie-in-context-1', value: 'value', expires: Date.now() / 1000 + 10000 }]);
   await browser1.close();
 
-  const browser2 = await browserType.launch(browserOptions);
+  const browser2 = await browserType.launch();
   const context2 = await browser2.newContext();
   const cookies = await context2.cookies();
   expect(cookies.length).toBe(0);
