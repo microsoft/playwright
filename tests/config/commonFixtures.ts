@@ -71,10 +71,11 @@ export class TestChildProcess {
     this.process.stderr.on('data', appendChunk);
     this.process.stdout.on('data', appendChunk);
 
-    process.on('exit', this._killProcessGroup);
+    const killProcessGroup = this._killProcessGroup.bind(this);
+    process.on('exit', killProcessGroup);
     this.exited = new Promise(f => {
       this.process.on('exit', (exitCode, signal) => f({ exitCode, signal }));
-      process.off('exit', this._killProcessGroup);
+      process.off('exit', killProcessGroup);
     });
     this.exitCode = this.exited.then(r => r.exitCode);
   }
