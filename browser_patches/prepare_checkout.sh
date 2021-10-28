@@ -171,28 +171,34 @@ else
 fi
 
 # Check if our checkout contains BASE_REVISION.
-# If not, fetch from REMOTE_BROWSER_UPSTREAM and slowly fetch more and more commits
-# until we find $BASE_REVISION.
-# This technique allows us start with a shallow clone.
 if ! git cat-file -e "$BASE_REVISION"^{commit} 2>/dev/null; then
   # Detach git head so that we can fetch into branch.
   git checkout --detach >/dev/null 2>/dev/null
 
-  # Fetch 128 commits first, and then double the amount every iteration.
-  FETCH_DEPTH=128
-  SUCCESS="no"
-  while (( FETCH_DEPTH <= 8192 )); do
-    echo "Fetching ${FETCH_DEPTH} commits to find base revision..."
-    git fetch --depth "${FETCH_DEPTH}" $REMOTE_BROWSER_UPSTREAM "$BASE_BRANCH"
-    FETCH_DEPTH=$(( FETCH_DEPTH * 2 ));
-    if git cat-file -e "$BASE_REVISION"^{commit} >/dev/null; then
-      SUCCESS="yes"
-      break;
+  if [[ -z "$CI" ]]; then
+    # On non-CI, fetch everything.
+    git fetch "$REMOTE_BROWSER_UPSTREAM" "$BASE_BRANCH"
+  else
+    # On CI, fetch from REMOTE_BROWSER_UPSTREAM more and more commits
+    # until we find $BASE_REVISION.
+    # This technique allows us start with a shallow clone.
+
+    # Fetch 128 commits first, and then double the amount every iteration.
+    FETCH_DEPTH=128
+    SUCCESS="no"
+    while (( FETCH_DEPTH <= 8192 )); do
+      echo "Fetching ${FETCH_DEPTH} commits to find base revision..."
+      git fetch --depth "${FETCH_DEPTH}" "$REMOTE_BROWSER_UPSTREAM" "$BASE_BRANCH"
+      FETCH_DEPTH=$(( FETCH_DEPTH * 2 ));
+      if git cat-file -e "$BASE_REVISION"^{commit} >/dev/null; then
+        SUCCESS="yes"
+        break;
+      fi
+    done
+    if [[ "${SUCCESS}" == "no" ]]; then
+      echo "ERROR: $FRIENDLY_CHECKOUT_PATH/ does not include the BASE_REVISION (@$BASE_REVISION). Wrong revision number?"
+      exit 1
     fi
-  done
-  if [[ "${SUCCESS}" == "no" ]]; then
-    echo "ERROR: $FRIENDLY_CHECKOUT_PATH/ does not include the BASE_REVISION (@$BASE_REVISION). Wrong revision number?"
-    exit 1
   fi
 fi
 
