@@ -33,9 +33,7 @@ function prepare_chromium_checkout {
   source "${SCRIPT_PATH}/chromium/ensure_depot_tools.sh"
 
   if [[ -z "${CR_CHECKOUT_PATH}" ]]; then
-    echo "ERROR: chromium compilation requires CR_CHECKOUT_PATH to be set to reuse checkout."
-    echo "NOTE: we expect '\$CR_CHECKOUT_PATH/src' to exist to be a valid chromium checkout."
-    exit 1
+    CR_CHECKOUT_PATH="$HOME/chromium"
   fi
 
   # Get chromium SHA from the build revision.
@@ -47,7 +45,7 @@ function prepare_chromium_checkout {
   # Update Chromium checkout.
   #
   # This is based on https://chromium.googlesource.com/chromium/src/+/master/docs/linux/build_instructions.md#get-the-code
-  if [[ ! -d "${CR_CHECKOUT_PATH}/src" ]]; then
+  if [[ ! -d "${CR_CHECKOUT_PATH}" ]]; then
     rm -rf "${CR_CHECKOUT_PATH}"
     mkdir -p "${CR_CHECKOUT_PATH}"
     cd "${CR_CHECKOUT_PATH}"
@@ -58,6 +56,11 @@ function prepare_chromium_checkout {
     fi
     gclient runhooks
   fi
+  if [[ ! -d "${CR_CHECKOUT_PATH}/src" ]]; then
+    echo "ERROR: CR_CHECKOUT_PATH does not have src/ subfolder; is this a chromium checkout?"
+    exit 1
+  fi
+
   cd "${CR_CHECKOUT_PATH}/src"
   git checkout master
   git pull origin master

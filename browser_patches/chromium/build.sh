@@ -32,11 +32,10 @@ main() {
 
 compile_chromium() {
   if [[ -z "${CR_CHECKOUT_PATH}" ]]; then
-    echo "ERROR: chromium compilation requires CR_CHECKOUT_PATH to be set to reuse checkout."
-    exit 1
+    CR_CHECKOUT_PATH="$HOME/chromium"
   fi
 
-  if [[ -z "${CR_CHECKOUT_PATH}/src" ]]; then
+  if [[ ! -d "${CR_CHECKOUT_PATH}/src" ]]; then
     echo "ERROR: CR_CHECKOUT_PATH does not have src/ subfolder; is this a chromium checkout?"
     exit 1
   fi
