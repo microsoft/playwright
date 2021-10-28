@@ -6,7 +6,7 @@ trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
 
 USAGE=$(cat<<EOF
-  usage: $(basename "$0") [--mirror|--mirror-linux|--mirror-win64|--mirror-mac|--compile-mac-arm64|--compile-linux|--compile-win64|--compile-mac]
+  usage: $(basename "$0") [--mirror|--mirror-linux|--mirror-win64|--mirror-mac|--compile-mac-arm64|--compile-linux|--compile-linux-arm64|--compile-win64|--compile-mac]
 
   Either compiles chromium or mirrors it from Chromium Continuous Builds CDN.
 EOF
@@ -67,6 +67,8 @@ compile_chromium() {
 
   if [[ $1 == "--compile-mac-arm64" ]]; then
     echo 'target_cpu = "arm64"' >> ./out/Default/args.gn
+  elif [[ $1 == "--compile-linux-arm64" ]]; then
+    echo 'target_cpu = "arm"' >> ./out/Default/args.gn
   fi
 
   if [[ ! -z "$USE_GOMA" ]]; then
@@ -90,10 +92,14 @@ compile_chromium() {
     fi
   else
     gn gen out/Default
-    if [[ $1 == "--compile-linux" ]]; then
+    if [[ $1 == "--compile-linux"* ]]; then
       TARGETS="chrome chrome_sandbox clear_key_cdm"
     else
       TARGETS="chrome"
+    fi
+    if [[ $1 == "--compile-linux-arm64" ]]; then
+      # Install sysroot image, see https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/linux/chromium_arm.md
+      ./build/linux/sysroot_scripts/install-sysroot.py --arch=arm
     fi
     if [[ -z "$USE_GOMA" ]]; then
       autoninja -C out/Default $TARGETS

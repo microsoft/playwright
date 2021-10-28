@@ -103,6 +103,13 @@ elif [[ "$BUILD_FLAVOR" == "chromium-linux" ]]; then
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="18.04"
   BUILD_BLOB_NAME="chromium-linux.zip"
+elif [[ "$BUILD_FLAVOR" == "chromium-linux-arm64" ]]; then
+  BROWSER_NAME="chromium"
+  EXTRA_BUILD_ARGS="--compile-linux-arm64"
+  EXTRA_ARCHIVE_ARGS="--compile-linux-arm64"
+  EXPECTED_HOST_OS="Ubuntu"
+  EXPECTED_HOST_OS_VERSION="18.04"
+  BUILD_BLOB_NAME="chromium-linux-arm64.zip"
 
 # ===========================
 #    CHROMIUM-WITH-SYMBOLS COMPILATION
@@ -141,6 +148,15 @@ elif [[ "$BUILD_FLAVOR" == "chromium-with-symbols-linux" ]]; then
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="18.04"
   BUILD_BLOB_NAME="chromium-with-symbols-linux.zip"
+  BUILDS_LIST="EXPECTED_BUILDS_WITH_SYMBOLS"
+elif [[ "$BUILD_FLAVOR" == "chromium-with-symbols-linux-arm64" ]]; then
+  BROWSER_NAME="chromium"
+  BROWSER_DISPLAY_NAME="chromium-with-symbols-arm64"
+  EXTRA_BUILD_ARGS="--compile-linux-arm64 --symbols"
+  EXTRA_ARCHIVE_ARGS="--compile-linux-arm64"
+  EXPECTED_HOST_OS="Ubuntu"
+  EXPECTED_HOST_OS_VERSION="18.04"
+  BUILD_BLOB_NAME="chromium-with-symbols-linux-arm64.zip"
   BUILDS_LIST="EXPECTED_BUILDS_WITH_SYMBOLS"
 
 
