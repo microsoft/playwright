@@ -77,9 +77,11 @@ def test_my_app_is_working(fixture_name):
 
 **Session scope**: These fixtures are created when requested in a test function and destroyed when all tests end.
 
-- `browser`: Browser instance launched by Playwright.
+- `playwright`: [Playwright](https://playwright.dev/python/docs/api/class-playwright) instance.
+- `browser_type`: [BrowserType](https://playwright.dev/python/docs/api/class-browsertype) instance of the current browser.
+- `browser`: [Browser](https://playwright.dev/python/docs/api/class-browser) instance launched by Playwright.
 - `browser_name`: Browser name as string.
-- `browser_channel`: Browser Channel as string.
+- `browser_channel`: Browser channel as string.
 - `is_chromium`, `is_webkit`, `is_firefox`: Booleans for the respective browser types.
 
 **Customizing fixture options**: For `browser` and `context` fixtures, use the the following fixtures to define custom launch options.
@@ -165,7 +167,7 @@ def test_visit_example(page):
 # conftest.py
 import pytest
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def browser_context_args(browser_context_args):
     return {
         **browser_context_args,
@@ -179,7 +181,7 @@ def browser_context_args(browser_context_args):
 # conftest.py
 import pytest
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def browser_context_args(browser_context_args):
     return {
         **browser_context_args,
@@ -196,7 +198,7 @@ def browser_context_args(browser_context_args):
 # conftest.py
 import pytest
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def browser_context_args(browser_context_args, playwright):
     iphone_11 = playwright.devices['iPhone 11 Pro']
     return {
