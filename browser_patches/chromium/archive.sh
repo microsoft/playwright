@@ -63,7 +63,7 @@ function archive_compiled_chromium() {
   if [[ $1 == "--compile-mac"* ]]; then
     CHROMIUM_FOLDER_NAME="chrome-mac"
     CHROMIUM_FILES_TO_ARCHIVE=("Chromium.app")
-  elif [[ $1 == "--compile-linux" ]]; then
+  elif [[ $1 == "--compile-linux"* ]]; then
     CHROMIUM_FOLDER_NAME="chrome-linux"
     # Run python script and convert output to array.
     IFS=$'\n' CHROMIUM_FILES_TO_ARCHIVE=($(python "${SCRIPT_PATH}/compute_files_to_archive.py" 64bit "${CR_CHECKOUT_PATH}/src/chrome/tools/build/linux/FILES.cfg"))
