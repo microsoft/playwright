@@ -625,7 +625,7 @@ export class Registry {
     const isPowerShell = scriptName.endsWith('.ps1');
     const shell = isPowerShell ? 'powershell.exe' : 'bash';
     const args = [
-      ...(isPowerShell ? ['-File'] : []),
+      ...(isPowerShell ? ['-ExecutionPolicy', 'Bypass', '-File'] : []),
       path.join(BIN_PATH, scriptName),
       ...scriptArgs
     ];
