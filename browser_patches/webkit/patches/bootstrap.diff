@@ -4348,7 +4348,7 @@ index 8f6fbcc293aebf8b9d5c945d2829a1527b74bc7f..34e6726d970400c28f1812cdf5ceddb3
  
      std::unique_ptr<Inspector::NetworkFrontendDispatcher> m_frontendDispatcher;
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index c894067585eb1e3dc79276d9d0e4f7562c84d801..49b0b3af9890d3b96ff8c9da28809e8510a5f1e5 100644
+index c894067585eb1e3dc79276d9d0e4f7562c84d801..ca8f975d99068ac471f624b421afdc6f83b8c35a 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,20 +32,28 @@
@@ -4874,12 +4874,12 @@ index c894067585eb1e3dc79276d9d0e4f7562c84d801..49b0b3af9890d3b96ff8c9da28809e85
 +    if (!frame.selection().selection().isContentEditable())
 +        return { };
 +    if (replacementStart) {
-+        WebCore::CharacterRange range { *replacementStart, replacementLength ? *replacementLength : 0 };
++        WebCore::CharacterRange range { (uint64_t) *replacementStart, replacementLength ? (uint64_t) *replacementLength : 0 };
 +        auto* element = frame.selection().rootEditableElementOrDocumentElement();
 +        if (element)
 +            frame.selection().setSelection(VisibleSelection(resolveCharacterRange(makeRangeSelectingNodeContents(*element), range)));
 +    }
-+    frame.editor().setComposition(text, { }, { }, selectionStart, selectionStart + selectionLength);
++    frame.editor().setComposition(text, { }, { }, (uint64_t) selectionStart, selectionStart + selectionLength);
 +    return { };
 +}
 +
