@@ -105,10 +105,12 @@ class HtmlReporter {
   private config!: FullConfig;
   private suite!: Suite;
   private _outputFolder: string | undefined;
+  private _open: 'always' | 'never' | 'on-failure';
 
-  constructor(options: { outputFolder?: string } = {}) {
+  constructor(options: { outputFolder?: string, open?: 'always' | 'never' | 'on-failure' } = {}) {
     // TODO: resolve relative to config.
     this._outputFolder = options.outputFolder;
+    this._open = options.open || 'on-failure';
   }
 
   onBegin(config: FullConfig, suite: Suite) {
@@ -128,16 +130,18 @@ class HtmlReporter {
     const builder = new HtmlBuilder(reportFolder, this.config.rootDir);
     const ok = builder.build(reports);
 
-    if (!process.env.PWTEST_SKIP_TEST_OUTPUT) {
-      if (!ok && !process.env.CI && !process.env.PWTEST_SKIP_TEST_OUTPUT) {
-        await showHTMLReport(reportFolder);
-      } else {
-        console.log('');
-        console.log('All tests passed. To open last HTML report run:');
-        console.log(colors.cyan(`
+    if (process.env.PWTEST_SKIP_TEST_OUTPUT || process.env.CI)
+      return;
+
+    const shouldOpen = this._open === 'always' || (!ok && this._open === 'on-failure');
+    if (shouldOpen) {
+      await showHTMLReport(reportFolder);
+    } else {
+      console.log('');
+      console.log('To open last HTML report run:');
+      console.log(colors.cyan(`
   npx playwright show-report
 `));
-      }
     }
   }
 }

@@ -23,11 +23,12 @@ import { msToString } from '../uiUtils';
 import type { TestCase, TestResult, TestStep, TestFile, Stats, TestAttachment, HTMLReport, TestFileSummary, TestCaseSummary } from '@playwright/test/src/reporters/html';
 
 export const Report: React.FC = () => {
+  const searchParams = new URLSearchParams(window.location.hash.slice(1));
+
   const [fetchError, setFetchError] = React.useState<string | undefined>();
   const [report, setReport] = React.useState<HTMLReport | undefined>();
   const [expandedFiles, setExpandedFiles] = React.useState<Map<string, boolean>>(new Map());
-  const [navigationId, setNavigationId] = React.useState<number>(Date.now());
-  const [filterText, setFilterText] = React.useState(new URL(window.location.href).searchParams.get('q') || '');
+  const [filterText, setFilterText] = React.useState(searchParams.get('q') || '');
 
   React.useEffect(() => {
     if (report)
@@ -40,8 +41,8 @@ export const Report: React.FC = () => {
         setFetchError(e.message);
       }
       window.addEventListener('popstate', () => {
-        setNavigationId(Date.now());
-        setFilterText(new URL(window.location.href).searchParams.get('q') || '');
+        const params = new URLSearchParams(window.location.hash.slice(1));
+        setFilterText(params.get('q') || '');
       });
     })();
   }, [report]);
@@ -51,10 +52,10 @@ export const Report: React.FC = () => {
   return <div className='vbox columns'>
     {!fetchError && <div className='flow-container'>
       <Route params=''>
-        <AllTestFilesSummaryView report={report} filter={filter} expandedFiles={expandedFiles} setExpandedFiles={setExpandedFiles} navigationId={navigationId}></AllTestFilesSummaryView>
+        <AllTestFilesSummaryView report={report} filter={filter} expandedFiles={expandedFiles} setExpandedFiles={setExpandedFiles} filterText={filterText} setFilterText={setFilterText}></AllTestFilesSummaryView>
       </Route>
       <Route params='q'>
-        <AllTestFilesSummaryView report={report} filter={filter} expandedFiles={expandedFiles} setExpandedFiles={setExpandedFiles} navigationId={navigationId}></AllTestFilesSummaryView>
+        <AllTestFilesSummaryView report={report} filter={filter} expandedFiles={expandedFiles} setExpandedFiles={setExpandedFiles} filterText={filterText} setFilterText={setFilterText}></AllTestFilesSummaryView>
       </Route>
       <Route params='testId'>
         {!!report && <TestCaseView report={report}></TestCaseView>}
@@ -67,29 +68,43 @@ const AllTestFilesSummaryView: React.FC<{
   report?: HTMLReport,
   expandedFiles: Map<string, boolean>,
   setExpandedFiles: (value: Map<string, boolean>) => void,
-  navigationId: number,
-  filter: Filter
-}> = ({ report, filter, expandedFiles, setExpandedFiles, navigationId }) => {
-  const inputRef = React.useRef<HTMLInputElement | null>(null);
+  filter: Filter,
+  filterText: string,
+  setFilterText: (filter: string) => void,
+}> = ({ report, filter, expandedFiles, setExpandedFiles, filterText, setFilterText }) => {
+
+  const filteredFiles = React.useMemo(() => {
+    const result: { file: TestFileSummary, defaultExpanded: boolean }[] = [];
+    let visibleTests = 0;
+    for (const file of report?.files || []) {
+      const tests = file.tests.filter(t => filter.matches(t));
+      visibleTests += tests.length;
+      if (tests.length)
+        result.push({ file, defaultExpanded: visibleTests < 200 });
+    }
+    return result;
+  }, [report, filter]);
   return <div className='file-summary-list'>
     {report && <div className='d-flex'>
       <form className='subnav-search width-full' onSubmit={
         event => {
           event.preventDefault();
-          navigate(`?q=${inputRef.current?.value || ''}`);
+          navigate(`#?q=${filterText || ''}`);
         }
       }>
         <svg aria-hidden='true' height='16' viewBox='0 0 16 16' version='1.1' width='16' data-view-component='true' className='octicon subnav-search-icon'>
           <path fillRule='evenodd' d='M11.5 7a4.499 4.499 0 11-8.998 0A4.499 4.499 0 0111.5 7zm-.82 4.74a6 6 0 111.06-1.06l3.04 3.04a.75.75 0 11-1.06 1.06l-3.04-3.04z'></path>
         </svg>
         {/* Use navigationId to reset defaultValue */}
-        <input key={`filter-${navigationId}`} type='search' className='form-control subnav-search-input input-contrast width-full' defaultValue={filter.expression} ref={inputRef}></input>
+        <input type='search' spellCheck={false} className='form-control subnav-search-input input-contrast width-full' value={filterText} onChange={e => {
+          setFilterText(e.target.value);
+        }}></input>
       </form>
       <div className='ml-2 pl-2 d-flex'>
         <StatsNavView stats={report.stats}></StatsNavView>
       </div>
     </div>}
-    {report && (report.files || []).filter(f => !!f.tests.find(t => filter.matches(t))).map((file, i) => {
+    {report && filteredFiles.map(({ file, defaultExpanded }) => {
       return <TestFileSummaryView
         key={`file-${file.fileId}`}
         report={report}
@@ -97,7 +112,7 @@ const AllTestFilesSummaryView: React.FC<{
         isFileExpanded={fileId => {
           const value = expandedFiles.get(fileId);
           if (value === undefined)
-            return i === 0;
+            return defaultExpanded;
           return !!value;
         }}
         setFileExpanded={(fileId, expanded) => {
@@ -124,13 +139,12 @@ const TestFileSummaryView: React.FC<{
     header={<span>
       <span style={{ float: 'right' }}>{msToString(file.stats.duration)}</span>
       {file.fileName}
-      <StatsInlineView stats={file.stats}></StatsInlineView>
     </span>}>
     {file.tests.filter(t => filter.matches(t)).map(test =>
       <div key={`test-${test.testId}`} className={'test-summary outcome-' + test.outcome}>
         <span style={{ float: 'right' }}>{msToString(test.duration)}</span>
         {statusIcon(test.outcome)}
-        <Link href={`?testId=${test.testId}`}>
+        <Link href={`#?testId=${test.testId}`}>
           {test.title}
           <span className='test-summary-path'>— {test.path.join(' › ')}</span>
         </Link>
@@ -144,10 +158,11 @@ const TestFileSummaryView: React.FC<{
 const TestCaseView: React.FC<{
   report: HTMLReport,
 }> = ({ report }) => {
+  const searchParams = new URLSearchParams(window.location.hash.slice(1));
   const [test, setTest] = React.useState<TestCase | undefined>();
+  const testId = searchParams.get('testId');
   React.useEffect(() => {
     (async () => {
-      const testId = new URL(window.location.href).searchParams.get('testId');
       if (!testId || testId === test?.testId)
         return;
       const fileId = testId.split('-')[0];
@@ -162,7 +177,7 @@ const TestCaseView: React.FC<{
         }
       }
     })();
-  }, [test, report]);
+  }, [test, report, testId]);
 
   const [selectedResultIndex, setSelectedResultIndex] = React.useState(0);
   return <div className='test-case-column vbox'>
@@ -266,33 +281,23 @@ const StepTreeItem: React.FC<{
   } : undefined} depth={depth}></TreeItem>;
 };
 
-const StatsInlineView: React.FC<{
-  stats: Stats
-}> = ({ stats }) => {
-  return <span className='stats-line'>
-    {!!stats.expected && <span className='stats'>Passed <span className='counter' style={{ backgroundColor: 'var(--color-scale-green-1)' }}>{stats.expected}</span></span>}
-    {!!stats.unexpected && <span className='stats'>Failed <span className='counter' style={{ backgroundColor: 'var(--color-scale-red-1)' }}>{stats.unexpected}</span></span>}
-    {!!stats.flaky && <span className='stats'>Flaky <span className='counter' style={{ backgroundColor: 'var(--color-scale-yellow-1)' }}>{stats.flaky}</span></span>}
-  </span>;
-};
-
 const StatsNavView: React.FC<{
   stats: Stats
 }> = ({ stats }) => {
   return <nav className='subnav-links d-flex no-wrap'>
-    <Link className='subnav-item' href='?'>
+    <Link className='subnav-item' href='#?'>
       All <span className='d-inline counter'>{stats.total}</span>
     </Link>
-    <Link className='subnav-item' href='?q=outcome:expected'>
-      Passed <span className='d-inline counter' style={{ backgroundColor: 'var(--color-scale-green-1)' }}>{stats.expected}</span>
+    <Link className='subnav-item' href='#?q=s:passed'>
+      Passed <span className='d-inline counter'>{stats.expected}</span>
     </Link>
-    <Link className='subnav-item' href='?q=outcome:unexpected'>
-      Failed <span className='d-inline counter' style={{ backgroundColor: 'var(--color-scale-red-1)' }}>{stats.unexpected}</span>
+    <Link className='subnav-item' href='#?q=s:failed'>
+      {!!stats.unexpected && statusIcon('unexpected')} Failed <span className='d-inline counter'>{stats.unexpected}</span>
     </Link>
-    <Link className='subnav-item' href='?q=outcome:flaky'>
-      Flaky <span className='d-inline counter' style={{ backgroundColor: 'var(--color-scale-yellow-1)' }}>{stats.flaky}</span>
+    <Link className='subnav-item' href='#?q=s:flaky'>
+      {!!stats.flaky && statusIcon('flaky')} Flaky <span className='d-inline counter'>{stats.flaky}</span>
     </Link>
-    <Link className='subnav-item' href='?q=outcome:skipped'>
+    <Link className='subnav-item' href='#?q=s:skipped'>
       Skipped <span className='d-inline counter'>{stats.skipped}</span>
     </Link>
   </nav>;
@@ -436,8 +441,8 @@ const ProjectLink: React.FunctionComponent<{
   report: HTMLReport,
   projectName: string,
 }> = ({ report, projectName }) => {
-  return <Link href={`?q=project:${projectName}`}>
-    <span className={'label label-color-' + (report.projectNames.indexOf(projectName) % 8)}>
+  return <Link href={`#?q=p:${projectName}`}>
+    <span className={'label label-color-' + (report.projectNames.indexOf(projectName) % 6)}>
       {projectName}
     </span>
   </Link>;
@@ -448,22 +453,18 @@ const Link: React.FunctionComponent<{
   className?: string,
   children: any,
 }> = ({ href, className, children }) => {
-  return <a className={`no-decorations${className ? ' ' + className : ''}`} onClick={event => {
-    event.preventDefault();
-    event.stopPropagation();
-    navigate(href);
-  }} href={href}>{children}</a>;
+  return <a className={`no-decorations${className ? ' ' + className : ''}`} href={href}>{children}</a>;
 };
 
 const Route: React.FunctionComponent<{
   params: string,
   children: any
 }> = ({ params, children }) => {
-  const initialParams = [...new URL(window.location.href).searchParams.keys()].join('&');
+  const initialParams = [...new URLSearchParams(window.location.hash.slice(1)).keys()].join('&');
   const [currentParams, setCurrentParam] = React.useState(initialParams);
   React.useEffect(() => {
     const listener = () => {
-      const newParams = [...new URL(window.location.href).searchParams.keys()].join('&');
+      const newParams = [...new URLSearchParams(window.location.hash.slice(1)).keys()].join('&');
       setCurrentParam(newParams);
     };
     window.addEventListener('popstate', listener);
@@ -476,28 +477,33 @@ class Filter {
   project = new Set<string>();
   outcome = new Set<string>();
   text: string[] = [];
-  expression: string;
   private static regex = /(".*?"|[\w]+:|[^"\s:]+)(?=\s*|\s*$)/g;
 
-  private constructor(expression: string) {
-    this.expression = expression;
+  empty(): boolean {
+    return this.project.size + this.outcome.size + this.text.length === 0;
   }
 
   static parse(expression: string): Filter {
-    const filter = new Filter(expression);
+    const filter = new Filter();
     const match = (expression.match(Filter.regex) || []).map(t => {
       return t.startsWith('"') && t.endsWith('"') ?  t.substring(1, t.length - 1) : t;
     });
     for (let i = 0; i < match.length; ++i) {
-      if (match[i] === 'project:' && match[i + 1]) {
+      if (match[i] === 'p:' && match[i + 1]) {
         filter.project.add(match[++i]);
         continue;
       }
-      if (match[i] === 'outcome:' && match[i + 1]) {
-        filter.outcome.add(match[++i]);
+      if (match[i] === 's:' && match[i + 1]) {
+        const status = match[++i];
+        if (status === 'passed')
+          filter.outcome.add('expected');
+        else if (status === 'failed')
+          filter.outcome.add('unexpected');
+        else
+          filter.outcome.add(status);
         continue;
       }
-      filter.text.push(match[i]);
+      filter.text.push(match[i].toLowerCase());
     }
     return filter;
   }
@@ -508,7 +514,9 @@ class Filter {
     if (this.outcome.size && !this.outcome.has(test.outcome))
       return false;
     if (this.text.length) {
-      const fullTitle = test.path.join(' ') + test.title;
+      if (!(test as any).fullTitle)
+        (test as any).fullTitle = (test.path.join(' ') + test.title).toLowerCase();
+      const fullTitle = (test as any).fullTitle;
       const matches = !!this.text.find(t => fullTitle.includes(t));
       if (!matches)
         return false;
