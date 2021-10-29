@@ -22,8 +22,6 @@ import { getUbuntuVersion } from './ubuntuVersion';
 import * as utils from './utils';
 import { buildPlaywrightCLICommand } from './registry';
 
-const BIN_DIRECTORY = path.join(__dirname, '..', '..', 'bin');
-
 const checkExecutable = (filePath: string) => fs.promises.access(filePath, fs.constants.X_OK).then(() => true).catch(e => false);
 
 function isSupportedWindowsVersion(): boolean {
@@ -39,11 +37,35 @@ function isSupportedWindowsVersion(): boolean {
 export type DependencyGroup = 'chromium' | 'firefox' | 'webkit' | 'tools';
 
 export async function installDependenciesWindows(targets: Set<DependencyGroup>) {
-  if (targets.has('chromium')) {
-    const { code } = await utils.spawnAsync('powershell.exe', ['-File', path.join(BIN_DIRECTORY, 'install_media_pack.ps1')], { cwd: BIN_DIRECTORY, stdio: 'inherit' });
-    if (code !== 0)
-      throw new Error('Failed to install windows dependencies!');
+  if (!targets.has('chromium'))
+    return;
+  const productType = await getProductType();
+  // Only continue for Windows Server
+  if (productType !== 3)
+    return;
+  const { code } = await utils.spawnAsync('dism.exe', ['/Online', '/Enable-Feature', '/FeatureName:ServerMediaFoundation'], { stdio: 'inherit' });
+  if (code !== 0)
+    throw new Error('Failed to install windows dependencies!');
+}
+
+/**
+ * ProductType Enum:
+ * 0 = Unknown - Product type is unknown
+ * 1 = WorkStation - System is a workstation
+ * 2 = DomainController - System is a domain controller
+ * 3 = Server - System is a server
+ * @see https://docs.microsoft.com/en-us/dotnet/api/microsoft.powershell.commands.producttype?view=powershellsdk-1.1.0
+ */
+async function getProductType(): Promise<number> {
+  const { code, stdout } = await utils.spawnAsync('wmic.exe', ['path', 'Win32_OperatingSystem', 'get', 'ProductType', '/VALUE']);
+  if (code !== 0)
+    throw new Error('Failed to get product type version!');
+  for (const line of stdout.trim().split('\n')) {
+    const [key, value] = line.split('=');
+    if (key === 'ProductType')
+      return parseInt(value, 10);
   }
+  throw new Error('Failed to parse product type version!\nstdout:' + stdout);
 }
 
 export async function installDependenciesLinux(targets: Set<DependencyGroup>) {
