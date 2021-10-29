@@ -248,7 +248,7 @@ By default, HTML report is opened automatically if some of the tests failed. You
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  reporter: [ ['html', { output: 'never' }] ],
+  reporter: [ ['html', { open: 'never' }] ],
 };
 
 module.exports = config;
