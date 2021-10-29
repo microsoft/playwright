@@ -39,7 +39,7 @@ export type DependencyGroup = 'chromium' | 'firefox' | 'webkit' | 'tools';
 
 export async function installDependenciesWindows(targets: Set<DependencyGroup>) {
   if (targets.has('chromium')) {
-    const { code } = await utils.spawnAsync('powershell.exe', ['-File', path.join(BIN_DIRECTORY, 'install_media_pack.ps1')], { cwd: BIN_DIRECTORY, stdio: 'inherit' });
+    const { code } = await utils.spawnAsync('powershell.exe', ['-ExecutionPolicy', 'Bypass', '-File', path.join(BIN_DIRECTORY, 'install_media_pack.ps1')], { cwd: BIN_DIRECTORY, stdio: 'inherit' });
     if (code !== 0)
       throw new Error('Failed to install windows dependencies!');
   }
