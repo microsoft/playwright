@@ -1056,8 +1056,10 @@ function deepEquals(a: any, b: any): boolean {
     return true;
   }
 
-  // NaN
-  return isNaN(a) === isNaN(b);
+  if (typeof a === 'number' && typeof b === 'number')
+    return isNaN(a) && isNaN(b);
+
+  return false;
 }
 
 export default InjectedScript;

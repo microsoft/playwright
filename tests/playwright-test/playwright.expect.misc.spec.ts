@@ -115,6 +115,68 @@ test('should support toHaveJSProperty', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
 });
 
+
+test('should support toHaveJSProperty with builtin types', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('pass string', async ({ page }) => {
+        await page.setContent('<div></div>');
+        await page.$eval('div', e => e.foo = 'string');
+        const locator = page.locator('div');
+        await expect(locator).toHaveJSProperty('foo', 'string');
+      });
+
+      test('fail string', async ({ page }) => {
+        await page.setContent('<div></div>');
+        await page.$eval('div', e => e.foo = 'string');
+        const locator = page.locator('div');
+        await expect(locator).toHaveJSProperty('foo', 'error', {timeout: 1000});
+      });
+
+      test('pass number', async ({ page }) => {
+        await page.setContent('<div></div>');
+        await page.$eval('div', e => e.foo = 2021);
+        const locator = page.locator('div');
+        await expect(locator).toHaveJSProperty('foo', 2021);
+      });
+
+      test('fail number', async ({ page }) => {
+        await page.setContent('<div></div>');
+        await page.$eval('div', e => e.foo = 2021);
+        const locator = page.locator('div');
+        await expect(locator).toHaveJSProperty('foo', 1, {timeout: 1000});
+      });
+
+      test('pass boolean', async ({ page }) => {
+        await page.setContent('<div></div>');
+        await page.$eval('div', e => e.foo = true);
+        const locator = page.locator('div');
+        await expect(locator).toHaveJSProperty('foo', true);
+      });
+
+      test('fail boolean', async ({ page }) => {
+        await page.setContent('<div></div>');
+        await page.$eval('div', e => e.foo = false);
+        const locator = page.locator('div');
+        await expect(locator).toHaveJSProperty('foo', true, {timeout: 1000});
+      });
+      `,
+  }, { workers: 1 });
+  const output = stripAscii(result.output);
+  expect(result.passed).toBe(3);
+  expect(result.failed).toBe(3);
+  expect(result.exitCode).toBe(1);
+  expect(output).toContain('Expected: "error"');
+  expect(output).toContain('Received: "string"');
+  expect(output).toContain('Expected: 1');
+  expect(output).toContain('Received: 2021');
+  expect(output).toContain('Expected: true');
+  expect(output).toContain('Received: false');
+});
+
+
 test('should support toHaveClass', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
