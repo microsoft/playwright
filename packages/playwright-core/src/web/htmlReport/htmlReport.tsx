@@ -58,7 +58,7 @@ export const Report: React.FC = () => {
         <AllTestFilesSummaryView report={report} filter={filter} expandedFiles={expandedFiles} setExpandedFiles={setExpandedFiles} filterText={filterText} setFilterText={setFilterText}></AllTestFilesSummaryView>
       </Route>
       <Route params='testId'>
-        {!!report && <TestCaseView report={report} searchParams={searchParams}></TestCaseView>}
+        {!!report && <TestCaseView report={report}></TestCaseView>}
       </Route>
     </div>}
   </div>;
