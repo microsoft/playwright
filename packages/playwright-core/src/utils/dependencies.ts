@@ -41,7 +41,7 @@ export async function installDependenciesWindows(targets: Set<DependencyGroup>) 
     return;
   if (!await isWindowsServer())
     return;
-  const { code } = await utils.spawnAsync('dism.exe', ['/Online', '/Enable-Feature', '/FeatureName:ServerMediaFoundation'], { stdio: 'inherit' });
+  const { code } = await utils.spawnAsync('dism.exe', ['/Online', '/Enable-Feature', '/FeatureName:ServerMediaFoundation', '/Quiet'], { stdio: 'inherit' });
   if (code !== 0)
     throw new Error('Failed to install windows dependencies!');
 }
