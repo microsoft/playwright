@@ -2,10 +2,7 @@
 set -e
 set -x
 
-cd /tmp
-curl -o ./msedge_beta.pkg -k "$1"
 # Note: there's no way to uninstall previously installed MSEdge.
 # However, running PKG again seems to update installation.
-sudo installer -pkg /tmp/msedge_beta.pkg -target /
-rm -rf /tmp/msedge_beta.pkg
+sudo installer -pkg "$1" -target /
 /Applications/Microsoft\ Edge\ Beta.app/Contents/MacOS/Microsoft\ Edge\ Beta --version

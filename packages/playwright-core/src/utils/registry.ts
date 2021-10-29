@@ -21,7 +21,7 @@ import * as util from 'util';
 import * as fs from 'fs';
 import lockfile from 'proper-lockfile';
 import { getUbuntuVersion } from './ubuntuVersion';
-import { getFromENV, getAsBooleanFromENV, calculateSha1, removeFolders, existsAsync, hostPlatform, canAccessFile, spawnAsync, fetchData, wrapInASCIIBox } from './utils';
+import { getFromENV, getAsBooleanFromENV, calculateSha1, removeFolders, existsAsync, hostPlatform, canAccessFile, spawnAsync, fetchData, wrapInASCIIBox, download } from './utils';
 import { DependencyGroup, installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
 import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
 
@@ -299,7 +299,7 @@ export class Registry {
     }, () => this._installChromiumChannel('chrome', {
       'linux': 'reinstall_chrome_stable_linux.sh',
       'darwin': 'reinstall_chrome_stable_mac.sh',
-      'win32': 'reinstall_chrome_stable_win.ps1',
+      'win32': 'https://dl.google.com/tag/s/dl/chrome/install/googlechromestandaloneenterprise64.msi',
     })));
 
     this._executables.push(this._createChromiumChannel('chrome-beta', {
@@ -309,7 +309,7 @@ export class Registry {
     }, () => this._installChromiumChannel('chrome-beta', {
       'linux': 'reinstall_chrome_beta_linux.sh',
       'darwin': 'reinstall_chrome_beta_mac.sh',
-      'win32': 'reinstall_chrome_beta_win.ps1',
+      'win32': 'https://dl.google.com/tag/s/dl/chrome/install/beta/googlechromebetastandaloneenterprise64.msi',
     })));
 
     this._executables.push(this._createChromiumChannel('chrome-dev', {
@@ -331,7 +331,7 @@ export class Registry {
     }, () => this._installMSEdgeChannel('msedge', {
       'linux': '',
       'darwin': 'reinstall_msedge_stable_mac.sh',
-      'win32': 'reinstall_msedge_stable_win.ps1',
+      'win32': '',
     })));
 
     this._executables.push(this._createChromiumChannel('msedge-beta', {
@@ -341,7 +341,7 @@ export class Registry {
     }, () => this._installMSEdgeChannel('msedge-beta', {
       'darwin': 'reinstall_msedge_beta_mac.sh',
       'linux': 'reinstall_msedge_beta_linux.sh',
-      'win32': 'reinstall_msedge_beta_win.ps1',
+      'win32': '',
     })));
 
     this._executables.push(this._createChromiumChannel('msedge-dev', {
@@ -351,7 +351,7 @@ export class Registry {
     }, () => this._installMSEdgeChannel('msedge-dev', {
       'darwin': 'reinstall_msedge_dev_mac.sh',
       'linux': 'reinstall_msedge_dev_linux.sh',
-      'win32': 'reinstall_msedge_dev_win.ps1',
+      'win32': '',
     })));
 
     this._executables.push(this._createChromiumChannel('msedge-canary', {
@@ -595,41 +595,59 @@ export class Registry {
   }
 
   private async _installMSEdgeChannel(channel: 'msedge'|'msedge-beta'|'msedge-dev', scripts: Record<'linux' | 'darwin' | 'win32', string>) {
-    const scriptArgs: string[] = [];
-    if (process.platform !== 'linux') {
-      const products = JSON.parse(await fetchData({ url: 'https://edgeupdates.microsoft.com/api/products' }));
-      const productName = {
-        'msedge': 'Stable',
-        'msedge-beta': 'Beta',
-        'msedge-dev': 'Dev',
-      }[channel];
-      const product = products.find((product: any) => product.Product === productName);
-      const searchConfig = ({
-        darwin: { platform: 'MacOS', arch: 'universal', artifact: 'pkg' },
-        win32: { platform: 'Windows', arch: 'x64', artifact: 'msi' },
-      } as any)[process.platform];
-      const release = searchConfig ? product.Releases.find((release: any) => release.Platform === searchConfig.platform && release.Architecture === searchConfig.arch) : null;
-      const artifact = release ? release.Artifacts.find((artifact: any) => artifact.ArtifactName === searchConfig.artifact) : null;
-      if (artifact)
-        scriptArgs.push(artifact.Location /* url */);
-      else
-        throw new Error(`Cannot install ${channel} on ${process.platform}`);
+    if (process.platform === 'linux') {
+      await this._installChromiumChannel(channel, scripts);
+      return;
     }
-    await this._installChromiumChannel(channel, scripts, scriptArgs);
+    const products = JSON.parse(await fetchData({ url: 'https://edgeupdates.microsoft.com/api/products' }));
+    const productName = {
+      'msedge': 'Stable',
+      'msedge-beta': 'Beta',
+      'msedge-dev': 'Dev',
+    }[channel];
+    const product = products.find((product: any) => product.Product === productName);
+    const searchConfig = ({
+      darwin: { platform: 'MacOS', arch: 'universal', artifact: 'pkg' },
+      win32: { platform: 'Windows', arch: 'x64', artifact: 'msi' },
+    } as any)[process.platform];
+    const release = searchConfig ? product.Releases.find((release: any) => release.Platform === searchConfig.platform && release.Architecture === searchConfig.arch) : null;
+    const artifact = release ? release.Artifacts.find((artifact: any) => artifact.ArtifactName === searchConfig.artifact) : null;
+    if (!artifact)
+      throw new Error(`Cannot install ${channel} on ${process.platform}`);
+    const downloadURL = artifact.Location;
+    const downloadPath = path.join(os.tmpdir(), path.basename(downloadURL));
+    try {
+      await download(downloadURL, downloadPath);
+      if (process.platform === 'win32') {
+        await installMSI(downloadPath);
+      } else {
+        const { code } = await spawnAsync('bash', [
+          path.join(BIN_PATH, scripts['darwin']),
+          downloadPath
+        ], { cwd: BIN_PATH, stdio: 'inherit' });
+        if (code !== 0)
+          throw new Error(`Failed to install ${channel}`);
+      }
+    } finally {
+      await fs.promises.unlink(downloadPath);
+    }
   }
 
-  private async _installChromiumChannel(channel: string, scripts: Record<'linux' | 'darwin' | 'win32', string>, scriptArgs: string[] = []) {
+  private async _installChromiumChannel(channel: string, scripts: Record<'linux' | 'darwin' | 'win32', string>) {
     const scriptName = scripts[process.platform as 'linux' | 'darwin' | 'win32'];
     if (!scriptName)
       throw new Error(`Cannot install ${channel} on ${process.platform}`);
-    const isPowerShell = scriptName.endsWith('.ps1');
-    const shell = isPowerShell ? 'powershell.exe' : 'bash';
-    const args = [
-      ...(isPowerShell ? ['-File'] : []),
+
+    if (scriptName.startsWith('https://') && scriptName.endsWith('.msi')) {
+      const downloadPath = path.join(os.tmpdir(), path.basename(scriptName));
+      await download(scriptName, downloadPath);
+      await installMSI(downloadPath);
+      return;
+    }
+
+    const { code } = await spawnAsync('bash', [
       path.join(BIN_PATH, scriptName),
-      ...scriptArgs
-    ];
-    const { code } = await spawnAsync(shell, args, { cwd: BIN_PATH, stdio: 'inherit' });
+    ], { cwd: BIN_PATH, stdio: 'inherit' });
     if (code !== 0)
       throw new Error(`Failed to install ${channel}`);
   }
@@ -748,6 +766,12 @@ export function findChromiumChannel(sdkLanguage: string): string | undefined {
     throw new Error('\n' + wrapInASCIIBox(prettyMessage, 1));
   }
   return channel;
+}
+
+async function installMSI(msiPath: string) {
+  const { code } = await spawnAsync('msiexec.exe', ['/i', msiPath, '/quiet'], { cwd: path.dirname(msiPath), stdio: 'inherit' });
+  if (code !== 0)
+    throw new Error(`failed to install msi: ${msiPath}`);
 }
 
 export const registry = new Registry(require('../../browsers.json'));
