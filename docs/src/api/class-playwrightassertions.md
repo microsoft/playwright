@@ -6,7 +6,18 @@ The [PlaywrightAssertions] class provides convenience methods for creating asser
 Consider the following example:
 
 ```java
-assertThat(page.locator('.status')).hasText('Submitted');
+...
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+
+public class TestExample {
+  ...
+  @Test
+  void statusBecomesSubmitted() {
+    ...
+    page.click("#submit-button");
+    assertThat(page.locator(".status")).hasText("Submitted");
+  }
+}
 ```
 
 Playwright will be re-testing the node with the selector `.status` until fetched Node has the `"Submitted"`
@@ -14,6 +25,16 @@ text. It will be re-fetching the node and checking it over and over, until the c
 reached. You can pass this timeout as an option.
 
 By default, the timeout for assertions is set to 5 seconds.
+
+To use Playwright assertions add the following dependency into the `pom.xml` of your Maven project:
+
+```xml
+<dependency>
+  <groupId>com.microsoft.playwright</groupId>
+  <artifactId>assertions</artifactId>
+  <version>1.16.0</version>
+</dependency>
+```
 
 ## method: PlaywrightAssertions.assertThatLocator
 * langs: java
