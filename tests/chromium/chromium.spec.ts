@@ -18,6 +18,7 @@
 import { contextTest as test, expect } from '../config/browserTest';
 import { playwrightTest } from '../config/browserTest';
 import http from 'http';
+import fs from 'fs';
 import { getUserAgent } from 'playwright-core/lib/utils/utils';
 import { suppressCertificateWarning } from '../config/utils';
 
@@ -109,6 +110,27 @@ playwrightTest('should connect to an existing cdp session', async ({ browserType
   } finally {
     await browserServer.close();
   }
+});
+
+playwrightTest('should cleanup artifacts dir after connectOverCDP disconnects due to ws close', async ({ browserType, toImpl, mode }, testInfo) => {
+  playwrightTest.skip(mode !== 'default');
+
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    args: ['--remote-debugging-port=' + port]
+  });
+  const cdpBrowser = await browserType.connectOverCDP({
+    endpointURL: `http://localhost:${port}/`,
+  });
+  const dir = toImpl(cdpBrowser).options.artifactsDir;
+  const exists1 = fs.existsSync(dir);
+  await Promise.all([
+    new Promise(f => cdpBrowser.on('disconnected', f)),
+    browserServer.close()
+  ]);
+  const exists2 = fs.existsSync(dir);
+  expect(exists1).toBe(true);
+  expect(exists2).toBe(false);
 });
 
 playwrightTest('should connect to an existing cdp session twice', async ({ browserType, server }, testInfo) => {

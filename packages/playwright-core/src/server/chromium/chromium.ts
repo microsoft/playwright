@@ -25,7 +25,7 @@ import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { BrowserType } from '../browserType';
 import { ConnectionTransport, ProtocolRequest, WebSocketTransport } from '../transport';
 import { CRDevTools } from './crDevTools';
-import { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
+import { Browser, BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
 import * as types from '../types';
 import { debugMode, fetchData, headersArrayToObject, removeFolders, streamToString } from '../../utils/utils';
 import { RecentLogsCollector } from '../../utils/debugLogger';
@@ -36,6 +36,7 @@ import { CallMetadata } from '../instrumentation';
 import http from 'http';
 import https from 'https';
 import { registry } from '../../utils/registry';
+import { ManualPromise } from 'playwright-core/lib/utils/async';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
@@ -68,10 +69,15 @@ export class Chromium extends BrowserType {
     progress.throwIfAborted();
 
     const chromeTransport = await WebSocketTransport.connect(progress, wsEndpoint, headersMap);
-    const doClose = async () => {
+    const cleanedUp = new ManualPromise<void>();
+    const doCleanup = async () => {
       await removeFolders([ artifactsDir ]);
-      await chromeTransport.closeAndWait();
       await onClose?.();
+      cleanedUp.resolve();
+    };
+    const doClose = async () => {
+      await chromeTransport.closeAndWait();
+      await cleanedUp;
     };
     const browserProcess: BrowserProcess = { close: doClose, kill: doClose };
     const browserOptions: BrowserOptions = {
@@ -88,7 +94,9 @@ export class Chromium extends BrowserType {
       tracesDir: artifactsDir
     };
     progress.throwIfAborted();
-    return await CRBrowser.connect(chromeTransport, browserOptions);
+    const browser = await CRBrowser.connect(chromeTransport, browserOptions);
+    browser.on(Browser.Events.Disconnected, doCleanup);
+    return browser;
   }
 
   private _createDevTools() {
