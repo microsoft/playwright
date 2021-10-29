@@ -962,6 +962,7 @@ Page:
           - load
           - domcontentloaded
           - networkidle
+          - commit
       returns:
         response: Response?
       tracing:
@@ -976,6 +977,7 @@ Page:
           - load
           - domcontentloaded
           - networkidle
+          - commit
       returns:
         response: Response?
       tracing:
@@ -990,6 +992,7 @@ Page:
           - load
           - domcontentloaded
           - networkidle
+          - commit
       returns:
         response: Response?
       tracing:
@@ -1496,6 +1499,7 @@ Frame:
           - load
           - domcontentloaded
           - networkidle
+          - commit
         referer: string?
       returns:
         response: Response?
@@ -1674,6 +1678,7 @@ Frame:
           - load
           - domcontentloaded
           - networkidle
+          - commit
       tracing:
         snapshot: true
 

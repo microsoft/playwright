@@ -538,15 +538,15 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.PageGoBackParams = tObject({
     timeout: tOptional(tNumber),
-    waitUntil: tOptional(tEnum(['load', 'domcontentloaded', 'networkidle'])),
+    waitUntil: tOptional(tEnum(['load', 'domcontentloaded', 'networkidle', 'commit'])),
   });
   scheme.PageGoForwardParams = tObject({
     timeout: tOptional(tNumber),
-    waitUntil: tOptional(tEnum(['load', 'domcontentloaded', 'networkidle'])),
+    waitUntil: tOptional(tEnum(['load', 'domcontentloaded', 'networkidle', 'commit'])),
   });
   scheme.PageReloadParams = tObject({
     timeout: tOptional(tNumber),
-    waitUntil: tOptional(tEnum(['load', 'domcontentloaded', 'networkidle'])),
+    waitUntil: tOptional(tEnum(['load', 'domcontentloaded', 'networkidle', 'commit'])),
   });
   scheme.PageScreenshotParams = tObject({
     timeout: tOptional(tNumber),
@@ -753,7 +753,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.FrameGotoParams = tObject({
     url: tString,
     timeout: tOptional(tNumber),
-    waitUntil: tOptional(tEnum(['load', 'domcontentloaded', 'networkidle'])),
+    waitUntil: tOptional(tEnum(['load', 'domcontentloaded', 'networkidle', 'commit'])),
     referer: tOptional(tString),
   });
   scheme.FrameHoverParams = tObject({
@@ -839,7 +839,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.FrameSetContentParams = tObject({
     html: tString,
     timeout: tOptional(tNumber),
-    waitUntil: tOptional(tEnum(['load', 'domcontentloaded', 'networkidle'])),
+    waitUntil: tOptional(tEnum(['load', 'domcontentloaded', 'networkidle', 'commit'])),
   });
   scheme.FrameSetInputFilesParams = tObject({
     selector: tString,

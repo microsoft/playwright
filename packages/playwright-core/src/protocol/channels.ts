@@ -1311,33 +1311,33 @@ export type PageExposeBindingOptions = {
 export type PageExposeBindingResult = void;
 export type PageGoBackParams = {
   timeout?: number,
-  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle',
+  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit',
 };
 export type PageGoBackOptions = {
   timeout?: number,
-  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle',
+  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit',
 };
 export type PageGoBackResult = {
   response?: ResponseChannel,
 };
 export type PageGoForwardParams = {
   timeout?: number,
-  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle',
+  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit',
 };
 export type PageGoForwardOptions = {
   timeout?: number,
-  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle',
+  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit',
 };
 export type PageGoForwardResult = {
   response?: ResponseChannel,
 };
 export type PageReloadParams = {
   timeout?: number,
-  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle',
+  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit',
 };
 export type PageReloadOptions = {
   timeout?: number,
-  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle',
+  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit',
 };
 export type PageReloadResult = {
   response?: ResponseChannel,
@@ -1886,12 +1886,12 @@ export type FrameGetAttributeResult = {
 export type FrameGotoParams = {
   url: string,
   timeout?: number,
-  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle',
+  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit',
   referer?: string,
 };
 export type FrameGotoOptions = {
   timeout?: number,
-  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle',
+  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit',
   referer?: string,
 };
 export type FrameGotoResult = {
@@ -2084,11 +2084,11 @@ export type FrameSelectOptionResult = {
 export type FrameSetContentParams = {
   html: string,
   timeout?: number,
-  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle',
+  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit',
 };
 export type FrameSetContentOptions = {
   timeout?: number,
-  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle',
+  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit',
 };
 export type FrameSetContentResult = void;
 export type FrameSetInputFilesParams = {

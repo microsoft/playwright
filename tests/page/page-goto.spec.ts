@@ -628,3 +628,16 @@ it('should properly wait for load', async ({ page, server, browserName }) => {
     'load'
   ]);
 });
+
+it('should return when navigation is committed if no-wait is specified', async ({ page, server }) => {
+  server.setRoute('/empty.html', (req, res) => {
+    res.writeHead(200, {
+      'content-type': 'text/html',
+      'content-length': '4000'
+    });
+    // Write first byte of the body to trigge response received event.
+    res.write(' ');
+  });
+  const response = await page.goto(server.EMPTY_PAGE, { waitUntil: 'no-wait' });
+  expect(response.status()).toBe(200);
+});

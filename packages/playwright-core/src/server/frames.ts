@@ -616,7 +616,7 @@ export class Frame extends SdkObject {
         event = await sameDocument.promise;
       }
 
-      if (!this._subtreeLifecycleEvents.has(waitUntil))
+      if (waitUntil !== 'commit' && !this._subtreeLifecycleEvents.has(waitUntil))
         await helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, (e: types.LifecycleEvent) => e === waitUntil).promise;
 
       const request = event.newDocument ? event.newDocument.request : undefined;
@@ -640,16 +640,16 @@ export class Frame extends SdkObject {
     if (navigationEvent.error)
       throw navigationEvent.error;
 
-    if (!this._subtreeLifecycleEvents.has(waitUntil))
+    if (waitUntil !== 'commit' && !this._subtreeLifecycleEvents.has(waitUntil))
       await helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, (e: types.LifecycleEvent) => e === waitUntil).promise;
 
     const request = navigationEvent.newDocument ? navigationEvent.newDocument.request : undefined;
     return request ? request._finalRequest().response() : null;
   }
 
-  async _waitForLoadState(progress: Progress, state: types.LifecycleEvent): Promise<void> {
+  async _waitForLoadState(progress: Progress, state: types.WaitUntilOption): Promise<void> {
     const waitUntil = verifyLifecycle('state', state);
-    if (!this._subtreeLifecycleEvents.has(waitUntil))
+    if (waitUntil !== 'commit' && !this._subtreeLifecycleEvents.has(waitUntil))
       await helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, (e: types.LifecycleEvent) => e === waitUntil).promise;
   }
 
@@ -1496,10 +1496,10 @@ class SignalBarrier {
   }
 }
 
-function verifyLifecycle(name: string, waitUntil: types.LifecycleEvent): types.LifecycleEvent {
+function verifyLifecycle(name: string, waitUntil: types.WaitUntilOption): types.WaitUntilOption {
   if (waitUntil as unknown === 'networkidle0')
     waitUntil = 'networkidle';
-  if (!types.kLifecycleEvents.has(waitUntil))
-    throw new Error(`${name}: expected one of (load|domcontentloaded|networkidle)`);
+  if (!types.kWaitUntilOptions.has(waitUntil))
+    throw new Error(`${name}: expected one of (load|domcontentloaded|networkidle|commit)`);
   return waitUntil;
 }

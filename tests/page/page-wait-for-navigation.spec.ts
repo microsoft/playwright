@@ -60,6 +60,20 @@ it('should work with both domcontentloaded and load', async ({ page, server }) =
   await navigationPromise;
 });
 
+it('should work with no-wait', async ({ page, server }) => {
+  server.setRoute('/empty.html', (req, res) => {
+    res.writeHead(200, {
+      'content-type': 'text/html',
+      'content-length': '4000'
+    });
+    // Write first byte of the body to trigge response received event.
+    res.write(' ');
+  });
+
+  page.goto(server.EMPTY_PAGE).catch(e => {});
+  await page.waitForNavigation({ waitUntil: 'no-wait' });
+});
+
 it('should work with clicking on anchor links', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<a href='#foobar'>foobar</a>`);

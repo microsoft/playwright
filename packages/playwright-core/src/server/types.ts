@@ -30,9 +30,11 @@ export type WaitForFunctionOptions = TimeoutOptions & { pollingInterval?: number
 
 export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle';
 export const kLifecycleEvents: Set<LifecycleEvent> = new Set(['load', 'domcontentloaded', 'networkidle']);
+export type WaitUntilOption = LifecycleEvent | 'commit';
+export const kWaitUntilOptions: Set<WaitUntilOption> = new Set(['load', 'domcontentloaded', 'networkidle', 'commit']);
 
 export type NavigateOptions = TimeoutOptions & {
-  waitUntil?: LifecycleEvent,
+  waitUntil?: WaitUntilOption,
 };
 
 export type NavigatingActionWaitOptions = TimeoutOptions & StrictOptions & {
