@@ -20,12 +20,14 @@ import ansi2html from 'ansi-to-html';
 import { downArrow, rightArrow, TreeItem } from '../components/treeItem';
 import { TabbedPane } from '../traceViewer/ui/tabbedPane';
 import { msToString } from '../uiUtils';
-import type { TestCase, TestResult, TestStep, TestFile, Stats, TestAttachment, HTMLReport, TestFileSummary } from '@playwright/test/src/reporters/html';
+import type { TestCase, TestResult, TestStep, TestFile, Stats, TestAttachment, HTMLReport, TestFileSummary, TestCaseSummary } from '@playwright/test/src/reporters/html';
 
 export const Report: React.FC = () => {
   const [fetchError, setFetchError] = React.useState<string | undefined>();
   const [report, setReport] = React.useState<HTMLReport | undefined>();
-  const [expandedFiles, setExpandedFiles] = React.useState<Set<string>>(new Set());
+  const [expandedFiles, setExpandedFiles] = React.useState<Map<string, boolean>>(new Map());
+  const [navigationId, setNavigationId] = React.useState<number>(Date.now());
+  const [filterText, setFilterText] = React.useState(new URL(window.location.href).searchParams.get('q') || '');
 
   React.useEffect(() => {
     if (report)
@@ -33,26 +35,26 @@ export const Report: React.FC = () => {
     (async () => {
       try {
         const report = await fetch('data/report.json', { cache: 'no-cache' }).then(r => r.json() as Promise<HTMLReport>);
-        if (report.files.length)
-          expandedFiles.add(report.files[0].fileId);
         setReport(report);
       } catch (e) {
         setFetchError(e.message);
       }
+      window.addEventListener('popstate', () => {
+        setNavigationId(Date.now());
+        setFilterText(new URL(window.location.href).searchParams.get('q') || '');
+      });
     })();
-  }, [report, expandedFiles]);
+  }, [report]);
+
+  const filter = React.useMemo(() => Filter.parse(filterText), [filterText]);
 
   return <div className='vbox columns'>
     {!fetchError && <div className='flow-container'>
       <Route params=''>
-        <AllTestFilesSummaryView report={report} isFileExpanded={fileId => expandedFiles.has(fileId)} setFileExpanded={(fileId, expanded) => {
-          const newExpanded = new Set(expandedFiles);
-          if (expanded)
-            newExpanded.add(fileId);
-          else
-            newExpanded.delete(fileId);
-          setExpandedFiles(newExpanded);
-        }}></AllTestFilesSummaryView>
+        <AllTestFilesSummaryView report={report} filter={filter} expandedFiles={expandedFiles} setExpandedFiles={setExpandedFiles} navigationId={navigationId}></AllTestFilesSummaryView>
+      </Route>
+      <Route params='q'>
+        <AllTestFilesSummaryView report={report} filter={filter} expandedFiles={expandedFiles} setExpandedFiles={setExpandedFiles} navigationId={navigationId}></AllTestFilesSummaryView>
       </Route>
       <Route params='testId'>
         {!!report && <TestCaseView report={report}></TestCaseView>}
@@ -62,16 +64,50 @@ export const Report: React.FC = () => {
 };
 
 const AllTestFilesSummaryView: React.FC<{
-  report?: HTMLReport;
-  isFileExpanded: (fileId: string) => boolean;
-  setFileExpanded: (fileId: string, expanded: boolean) => void;
-}> = ({ report, isFileExpanded, setFileExpanded }) => {
+  report?: HTMLReport,
+  expandedFiles: Map<string, boolean>,
+  setExpandedFiles: (value: Map<string, boolean>) => void,
+  navigationId: number,
+  filter: Filter
+}> = ({ report, filter, expandedFiles, setExpandedFiles, navigationId }) => {
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
   return <div className='file-summary-list'>
-    {report && <div className='global-stats'>
-      <span>Ran {report.stats.total} tests</span>
-      <StatsView stats={report.stats}></StatsView>
+    {report && <div className='d-flex'>
+      <form className='subnav-search width-full' onSubmit={
+        event => {
+          event.preventDefault();
+          navigate(`?q=${inputRef.current?.value || ''}`);
+        }
+      }>
+        <svg aria-hidden='true' height='16' viewBox='0 0 16 16' version='1.1' width='16' data-view-component='true' className='octicon subnav-search-icon'>
+          <path fillRule='evenodd' d='M11.5 7a4.499 4.499 0 11-8.998 0A4.499 4.499 0 0111.5 7zm-.82 4.74a6 6 0 111.06-1.06l3.04 3.04a.75.75 0 11-1.06 1.06l-3.04-3.04z'></path>
+        </svg>
+        {/* Use navigationId to reset defaultValue */}
+        <input key={`filter-${navigationId}`} type='search' className='form-control subnav-search-input input-contrast width-full' defaultValue={filter.expression} ref={inputRef}></input>
+      </form>
+      <div className='ml-2 pl-2 d-flex'>
+        <StatsNavView stats={report.stats}></StatsNavView>
+      </div>
     </div>}
-    {report && (report.files || []).map((file, i) => <TestFileSummaryView key={`file-${i}`} report={report} file={file} isFileExpanded={isFileExpanded} setFileExpanded={setFileExpanded}></TestFileSummaryView>)}
+    {report && (report.files || []).filter(f => !!f.tests.find(t => filter.matches(t))).map((file, i) => {
+      return <TestFileSummaryView
+        key={`file-${file.fileId}`}
+        report={report}
+        file={file}
+        isFileExpanded={fileId => {
+          const value = expandedFiles.get(fileId);
+          if (value === undefined)
+            return i === 0;
+          return !!value;
+        }}
+        setFileExpanded={(fileId, expanded) => {
+          const newExpanded = new Map(expandedFiles);
+          newExpanded.set(fileId, expanded);
+          setExpandedFiles(newExpanded);
+        }}
+        filter={filter}>
+      </TestFileSummaryView>;
+    })}
   </div>;
 };
 
@@ -80,24 +116,28 @@ const TestFileSummaryView: React.FC<{
   file: TestFileSummary;
   isFileExpanded: (fileId: string) => boolean;
   setFileExpanded: (fileId: string, expanded: boolean) => void;
-}> = ({ file, report, isFileExpanded, setFileExpanded }) => {
+  filter: Filter;
+}> = ({ file, report, isFileExpanded, setFileExpanded, filter }) => {
   return <Chip
     expanded={isFileExpanded(file.fileId)}
     setExpanded={(expanded => setFileExpanded(file.fileId, expanded))}
     header={<span>
       <span style={{ float: 'right' }}>{msToString(file.stats.duration)}</span>
       {file.fileName}
-      <StatsView stats={file.stats}></StatsView>
+      <StatsInlineView stats={file.stats}></StatsInlineView>
     </span>}>
-    {file.tests.map((test, i) => <Link key={`test-${i}`} href={`?testId=${test.testId}`}>
-      <div className={'test-summary outcome-' + test.outcome}>
+    {file.tests.filter(t => filter.matches(t)).map(test =>
+      <div key={`test-${test.testId}`} className={'test-summary outcome-' + test.outcome}>
         <span style={{ float: 'right' }}>{msToString(test.duration)}</span>
         {statusIcon(test.outcome)}
-        {test.title}
-        <span className='test-summary-path'>— {test.path.join(' › ')}</span>
-        {report.projectNames.length > 1 && !!test.projectName && <span className={'label label-color-' + (report.projectNames.indexOf(test.projectName) % 8)}>{test.projectName}</span>}
+        <Link href={`?testId=${test.testId}`}>
+          {test.title}
+          <span className='test-summary-path'>— {test.path.join(' › ')}</span>
+        </Link>
+        {report.projectNames.length > 1 && !!test.projectName &&
+          <ProjectLink report={report} projectName={test.projectName}></ProjectLink>}
       </div>
-    </Link>)}
+    )}
   </Chip>;
 };
 
@@ -128,7 +168,7 @@ const TestCaseView: React.FC<{
   return <div className='test-case-column vbox'>
     {test && <div className='test-case-title'>{test?.title}</div>}
     {test && <div className='test-case-location'>{test.path.join(' › ')}</div>}
-    {test && !!test.projectName && <div><span className={'label label-color-' + (report.projectNames.indexOf(test.projectName) % 8)}>{test.projectName}</span></div>}
+    {test && !!test.projectName && <ProjectLink report={report} projectName={test.projectName}></ProjectLink>}
     {test && <TabbedPane tabs={
       test.results.map((result, index) => ({
         id: String(index),
@@ -226,16 +266,36 @@ const StepTreeItem: React.FC<{
   } : undefined} depth={depth}></TreeItem>;
 };
 
-const StatsView: React.FC<{
+const StatsInlineView: React.FC<{
   stats: Stats
 }> = ({ stats }) => {
   return <span className='stats-line'>
-    —
-    {!!stats.unexpected && <span className='stats unexpected'>{stats.unexpected} failed</span>}
-    {!!stats.flaky && <span className='stats flaky'>{stats.flaky} flaky</span>}
-    {!!stats.expected && <span className='stats expected'>{stats.expected} passed</span>}
-    {!!stats.skipped && <span className='stats skipped'>{stats.skipped} skipped</span>}
+    {!!stats.expected && <span className='stats'>Passed <span className='counter' style={{ backgroundColor: 'var(--color-scale-green-1)' }}>{stats.expected}</span></span>}
+    {!!stats.unexpected && <span className='stats'>Failed <span className='counter' style={{ backgroundColor: 'var(--color-scale-red-1)' }}>{stats.unexpected}</span></span>}
+    {!!stats.flaky && <span className='stats'>Flaky <span className='counter' style={{ backgroundColor: 'var(--color-scale-yellow-1)' }}>{stats.flaky}</span></span>}
   </span>;
+};
+
+const StatsNavView: React.FC<{
+  stats: Stats
+}> = ({ stats }) => {
+  return <nav className='subnav-links d-flex no-wrap'>
+    <Link className='subnav-item' href='?'>
+      All <span className='d-inline counter'>{stats.total}</span>
+    </Link>
+    <Link className='subnav-item' href='?q=outcome:expected'>
+      Passed <span className='d-inline counter' style={{ backgroundColor: 'var(--color-scale-green-1)' }}>{stats.expected}</span>
+    </Link>
+    <Link className='subnav-item' href='?q=outcome:unexpected'>
+      Failed <span className='d-inline counter' style={{ backgroundColor: 'var(--color-scale-red-1)' }}>{stats.unexpected}</span>
+    </Link>
+    <Link className='subnav-item' href='?q=outcome:flaky'>
+      Flaky <span className='d-inline counter' style={{ backgroundColor: 'var(--color-scale-yellow-1)' }}>{stats.flaky}</span>
+    </Link>
+    <Link className='subnav-item' href='?q=outcome:skipped'>
+      Skipped <span className='d-inline counter'>{stats.skipped}</span>
+    </Link>
+  </nav>;
 };
 
 const AttachmentLink: React.FunctionComponent<{
@@ -372,14 +432,27 @@ function navigate(href: string) {
   window.dispatchEvent(navEvent);
 }
 
+const ProjectLink: React.FunctionComponent<{
+  report: HTMLReport,
+  projectName: string,
+}> = ({ report, projectName }) => {
+  return <Link href={`?q=project:${projectName}`}>
+    <span className={'label label-color-' + (report.projectNames.indexOf(projectName) % 8)}>
+      {projectName}
+    </span>
+  </Link>;
+};
+
 const Link: React.FunctionComponent<{
   href: string,
-  children: any
-}> = ({ href, children }) => {
-  return <a onClick={event => {
+  className?: string,
+  children: any,
+}> = ({ href, className, children }) => {
+  return <a className={`no-decorations${className ? ' ' + className : ''}`} onClick={event => {
     event.preventDefault();
+    event.stopPropagation();
     navigate(href);
-  }} className='no-decorations' href={href}>{children}</a>;
+  }} href={href}>{children}</a>;
 };
 
 const Route: React.FunctionComponent<{
@@ -398,3 +471,48 @@ const Route: React.FunctionComponent<{
   }, []);
   return currentParams === params ? children : null;
 };
+
+class Filter {
+  project = new Set<string>();
+  outcome = new Set<string>();
+  text: string[] = [];
+  expression: string;
+  private static regex = /(".*?"|[\w]+:|[^"\s:]+)(?=\s*|\s*$)/g;
+
+  private constructor(expression: string) {
+    this.expression = expression;
+  }
+
+  static parse(expression: string): Filter {
+    const filter = new Filter(expression);
+    const match = (expression.match(Filter.regex) || []).map(t => {
+      return t.startsWith('"') && t.endsWith('"') ?  t.substring(1, t.length - 1) : t;
+    });
+    for (let i = 0; i < match.length; ++i) {
+      if (match[i] === 'project:' && match[i + 1]) {
+        filter.project.add(match[++i]);
+        continue;
+      }
+      if (match[i] === 'outcome:' && match[i + 1]) {
+        filter.outcome.add(match[++i]);
+        continue;
+      }
+      filter.text.push(match[i]);
+    }
+    return filter;
+  }
+
+  matches(test: TestCaseSummary): boolean {
+    if (this.project.size && !this.project.has(test.projectName))
+      return false;
+    if (this.outcome.size && !this.outcome.has(test.outcome))
+      return false;
+    if (this.text.length) {
+      const fullTitle = test.path.join(' ') + test.title;
+      const matches = !!this.text.find(t => fullTitle.includes(t));
+      if (!matches)
+        return false;
+    }
+    return true;
+  }
+}
