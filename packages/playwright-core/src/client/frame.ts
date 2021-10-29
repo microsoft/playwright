@@ -27,14 +27,14 @@ import { Page } from './page';
 import { EventEmitter } from 'events';
 import { Waiter } from './waiter';
 import { Events } from './events';
-import { LifecycleEvent, URLMatch, SelectOption, SelectOptionOptions, FilePayload, WaitForFunctionOptions, kWaitUntilOptions, StrictOptions, WaitUntilOption } from './types';
+import { LifecycleEvent, URLMatch, SelectOption, SelectOptionOptions, FilePayload, WaitForFunctionOptions, StrictOptions, kLifecycleEvents } from './types';
 import { urlMatches } from './clientHelper';
 import * as api from '../../types/types';
 import * as structs from '../../types/structs';
 
 export type WaitForNavigationOptions = {
   timeout?: number,
-  waitUntil?: WaitUntilOption,
+  waitUntil?: LifecycleEvent,
   url?: URLMatch,
 };
 
@@ -127,7 +127,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
         await waiter.waitForPromise(Promise.reject(e));
       }
 
-      if (waitUntil !== 'commit' && !this._loadStates.has(waitUntil)) {
+      if (!this._loadStates.has(waitUntil)) {
         await waiter.waitForEvent<LifecycleEvent>(this._eventEmitter, 'loadstate', s => {
           waiter.log(`  "${s}" event fired`);
           return s === waitUntil;
@@ -142,10 +142,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
   }
 
   async waitForLoadState(state: LifecycleEvent = 'load', options: { timeout?: number } = {}): Promise<void> {
-    const veryfiedState = verifyLoadState('state', state);
-    if (veryfiedState === 'commit')
-      return;
-    state = veryfiedState;
+    state = verifyLoadState('state', state);
     if (this._loadStates.has(state))
       return;
     return this._page!._wrapApiCall(async (channel: channels.PageChannel) => {
@@ -158,12 +155,9 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     });
   }
 
-  async waitForURL(url: URLMatch, options: { waitUntil?: WaitUntilOption, timeout?: number } = {}): Promise<void> {
-    if (urlMatches(this._page?.context()._options.baseURL, this.url(), url)) {
-      if (options.waitUntil === 'commit')
-        return;
+  async waitForURL(url: URLMatch, options: { waitUntil?: LifecycleEvent, timeout?: number } = {}): Promise<void> {
+    if (urlMatches(this._page?.context()._options.baseURL, this.url(), url))
       return await this.waitForLoadState(options.waitUntil, options);
-    }
 
     await this.waitForNavigation({ url, ...options });
   }
@@ -479,10 +473,10 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
   }
 }
 
-export function verifyLoadState(name: string, waitUntil: WaitUntilOption): WaitUntilOption {
+export function verifyLoadState(name: string, waitUntil: LifecycleEvent): LifecycleEvent {
   if (waitUntil as unknown === 'networkidle0')
     waitUntil = 'networkidle';
-  if (!kWaitUntilOptions.has(waitUntil))
+  if (!kLifecycleEvents.has(waitUntil))
     throw new Error(`${name}: expected one of (load|domcontentloaded|networkidle|commit)`);
   return waitUntil;
 }

@@ -44,10 +44,8 @@ export type SetStorageState = {
   origins?: channels.OriginStorage[]
 };
 
-export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle';
-export const kLifecycleEvents: Set<LifecycleEvent> = new Set(['load', 'domcontentloaded', 'networkidle']);
-export type WaitUntilOption = LifecycleEvent | 'commit';
-export const kWaitUntilOptions: Set<WaitUntilOption> = new Set(['load', 'domcontentloaded', 'networkidle', 'commit']);
+export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle' | 'commit';
+export const kLifecycleEvents: Set<LifecycleEvent> = new Set(['load', 'domcontentloaded', 'networkidle', 'commit']);
 
 export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'viewport' | 'noDefaultViewport' | 'extraHTTPHeaders' | 'storageState'> & {
   viewport?: Size | null,

@@ -1289,6 +1289,7 @@ Frame:
         - load
         - domcontentloaded
         - networkidle
+        - commit
 
   commands:
 
@@ -1830,12 +1831,14 @@ Frame:
           - load
           - domcontentloaded
           - networkidle
+          - commit
         remove:
           type: enum?
           literals:
           - load
           - domcontentloaded
           - networkidle
+          - commit
 
     navigated:
       parameters:

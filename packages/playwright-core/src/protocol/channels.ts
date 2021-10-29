@@ -1604,7 +1604,7 @@ export type FrameInitializer = {
   url: string,
   name: string,
   parentFrame?: FrameChannel,
-  loadStates: ('load' | 'domcontentloaded' | 'networkidle')[],
+  loadStates: ('load' | 'domcontentloaded' | 'networkidle' | 'commit')[],
 };
 export interface FrameChannel extends Channel {
   on(event: 'loadstate', callback: (params: FrameLoadstateEvent) => void): this;
@@ -1653,8 +1653,8 @@ export interface FrameChannel extends Channel {
   expect(params: FrameExpectParams, metadata?: Metadata): Promise<FrameExpectResult>;
 }
 export type FrameLoadstateEvent = {
-  add?: 'load' | 'domcontentloaded' | 'networkidle',
-  remove?: 'load' | 'domcontentloaded' | 'networkidle',
+  add?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit',
+  remove?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit',
 };
 export type FrameNavigatedEvent = {
   url: string,

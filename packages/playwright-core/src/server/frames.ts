@@ -471,6 +471,7 @@ export class Frame extends SdkObject {
     this._stopNetworkIdleTimer();
     if (this._inflightRequests.size === 0)
       this._startNetworkIdleTimer();
+    this._onLifecycleEvent('commit');
   }
 
   setPendingDocument(documentInfo: DocumentInfo | undefined) {
@@ -616,7 +617,7 @@ export class Frame extends SdkObject {
         event = await sameDocument.promise;
       }
 
-      if (waitUntil !== 'commit' && !this._subtreeLifecycleEvents.has(waitUntil))
+      if (!this._subtreeLifecycleEvents.has(waitUntil))
         await helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, (e: types.LifecycleEvent) => e === waitUntil).promise;
 
       const request = event.newDocument ? event.newDocument.request : undefined;
@@ -640,16 +641,16 @@ export class Frame extends SdkObject {
     if (navigationEvent.error)
       throw navigationEvent.error;
 
-    if (waitUntil !== 'commit' && !this._subtreeLifecycleEvents.has(waitUntil))
+    if (!this._subtreeLifecycleEvents.has(waitUntil))
       await helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, (e: types.LifecycleEvent) => e === waitUntil).promise;
 
     const request = navigationEvent.newDocument ? navigationEvent.newDocument.request : undefined;
     return request ? request._finalRequest().response() : null;
   }
 
-  async _waitForLoadState(progress: Progress, state: types.WaitUntilOption): Promise<void> {
+  async _waitForLoadState(progress: Progress, state: types.LifecycleEvent): Promise<void> {
     const waitUntil = verifyLifecycle('state', state);
-    if (waitUntil !== 'commit' && !this._subtreeLifecycleEvents.has(waitUntil))
+    if (!this._subtreeLifecycleEvents.has(waitUntil))
       await helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, (e: types.LifecycleEvent) => e === waitUntil).promise;
   }
 
@@ -1496,10 +1497,10 @@ class SignalBarrier {
   }
 }
 
-function verifyLifecycle(name: string, waitUntil: types.WaitUntilOption): types.WaitUntilOption {
+function verifyLifecycle(name: string, waitUntil: types.LifecycleEvent): types.LifecycleEvent {
   if (waitUntil as unknown === 'networkidle0')
     waitUntil = 'networkidle';
-  if (!types.kWaitUntilOptions.has(waitUntil))
+  if (!types.kLifecycleEvents.has(waitUntil))
     throw new Error(`${name}: expected one of (load|domcontentloaded|networkidle|commit)`);
   return waitUntil;
 }
