@@ -221,10 +221,9 @@ it('should give access to the intercepted response status text', async ({ page, 
   // @ts-expect-error
   const response = await route._continueToResponse();
 
+  await Promise.all([route.fulfill({ response }), evalPromise]);
   expect(response.statusText()).toBe('You are awesome');
   expect(response.url()).toBe(server.PREFIX + '/title.html');
-
-  await Promise.all([route.fulfill({ response }), evalPromise]);
 });
 
 it('should give access to the intercepted response body', async ({ page, server }) => {
