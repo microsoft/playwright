@@ -109,6 +109,9 @@ type ExpectSettings = {
 interface TestProject {
   /**
    * Configuration for the `expect` assertion library.
+   *
+   * Use [testConfig.expect](https://playwright.dev/docs/api/class-testconfig#test-config-expect) to change this option for
+   * all projects.
    */
   expect?: ExpectSettings;
   /**
@@ -142,14 +145,22 @@ interface TestProject {
    * });
    * ```
    *
+   * Use [testConfig.outputDir](https://playwright.dev/docs/api/class-testconfig#test-config-output-dir) to change this
+   * option for all projects.
    */
   outputDir?: string;
   /**
    * The number of times to repeat each test, useful for debugging flaky tests.
+   *
+   * Use [testConfig.repeatEach](https://playwright.dev/docs/api/class-testconfig#test-config-repeat-each) to change this
+   * option for all projects.
    */
   repeatEach?: number;
   /**
    * The maximum number of retry attempts given to failed tests. Learn more about [test retries](https://playwright.dev/docs/test-retries#retries).
+   *
+   * Use [testConfig.retries](https://playwright.dev/docs/api/class-testconfig#test-config-retries) to change this option for
+   * all projects.
    */
   retries?: number;
   /**
@@ -198,6 +209,8 @@ interface TestProject {
    * export default config;
    * ```
    *
+   * Use [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir) to change this option
+   * for all projects.
    */
   testDir?: string;
   /**
@@ -205,6 +218,9 @@ interface TestProject {
    * path. Strings are treated as glob patterns.
    *
    * For example, `'**\/test-assets/**'` will ignore any files in the `test-assets` directory.
+   *
+   * Use [testConfig.testIgnore](https://playwright.dev/docs/api/class-testconfig#test-config-test-ignore) to change this
+   * option for all projects.
    */
   testIgnore?: string | RegExp | (string | RegExp)[];
   /**
@@ -212,6 +228,9 @@ interface TestProject {
    * file path. Strings are treated as glob patterns.
    *
    * By default, Playwright Test looks for files matching `.*(test|spec)\.(js|ts|mjs)`.
+   *
+   * Use [testConfig.testMatch](https://playwright.dev/docs/api/class-testconfig#test-config-test-match) to change this
+   * option for all projects.
    */
   testMatch?: string | RegExp | (string | RegExp)[];
   /**
@@ -219,6 +238,9 @@ interface TestProject {
    *
    * This is a base timeout for all tests. In addition, each test can configure its own timeout with
    * [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout).
+   *
+   * Use [testConfig.timeout](https://playwright.dev/docs/api/class-testconfig#test-config-timeout) to change this option for
+   * all projects.
    */
   timeout?: number;
 }
@@ -306,6 +328,8 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
    * export default config;
    * ```
    *
+   * Use [testConfig.use](https://playwright.dev/docs/api/class-testconfig#test-config-use) to change this option for all
+   * projects.
    */
   use?: UseOptions<TestArgs, WorkerArgs>;
 }
@@ -371,6 +395,17 @@ interface TestConfig {
    * Whether to exit with an error if any tests or groups are marked as
    * [test.only(title, testFunction)](https://playwright.dev/docs/api/class-test#test-only) or
    * [test.describe.only(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-only). Useful on CI.
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   forbidOnly: !!process.env.CI,
+   * };
+   * export default config;
+   * ```
+   *
    */
   forbidOnly?: boolean;
   /**
@@ -396,11 +431,33 @@ interface TestConfig {
    * function. See also [testConfig.globalSetup](https://playwright.dev/docs/api/class-testconfig#test-config-global-setup).
    *
    * Learn more about [global setup and teardown](https://playwright.dev/docs/test-advanced#global-setup-and-teardown).
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { PlaywrightTestConfig, devices } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   globalTeardown: './global-teardown',
+   * };
+   * export default config;
+   * ```
+   *
    */
   globalTeardown?: string;
   /**
    * Maximum time in milliseconds the whole test suite can run. Zero timeout (default) disables this behavior. Useful on CI
    * to prevent broken setup from running too long and wasting resources.
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   globalTimeout: process.env.CI ? 60 * 60 * 1000 : undefined,
+   * };
+   * export default config;
+   * ```
+   *
    */
   globalTimeout?: number;
   /**
@@ -423,6 +480,17 @@ interface TestConfig {
    * with an error. Setting to zero (default) disables this behavior.
    *
    * Also available in the [command line](https://playwright.dev/docs/test-cli) with the `--max-failures` and `-x` options.
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   maxFailures: process.env.CI ? 1 : 0,
+   * };
+   * export default config;
+   * ```
+   *
    */
   maxFailures?: number;
   /**
@@ -495,11 +563,38 @@ interface TestConfig {
    *
    * Defaults to one half of the number of CPU cores. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with
    * Playwright Test.
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   workers: 3,
+   * };
+   * export default config;
+   * ```
+   *
    */
   workers?: number;
 
   /**
    * Configuration for the `expect` assertion library.
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   expect: {
+   *     timeout: 10000,
+   *     toMatchSnapshot: {
+   *       threshold: 0.3,
+   *     },
+   *   },
+   * };
+   * export default config;
+   * ```
+   *
    */
   expect?: ExpectSettings;
   /**
@@ -509,6 +604,16 @@ interface TestConfig {
   name?: string;
   /**
    * The output directory for files created during test execution. Defaults to `test-results`.
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { PlaywrightTestConfig, devices } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   outputDir: './test-results',
+   * };
+   * export default config;
+   * ```
    *
    * This directory is cleaned at the start. When running a test, a unique subdirectory inside the
    * [testConfig.outputDir](https://playwright.dev/docs/api/class-testconfig#test-config-output-dir) is created, guaranteeing
@@ -539,10 +644,32 @@ interface TestConfig {
   /**
    * The maximum number of retry attempts given to failed tests. By default failing tests are not retried. Learn more about
    * [test retries](https://playwright.dev/docs/test-retries#retries).
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   retries: 2,
+   * };
+   * export default config;
+   * ```
+   *
    */
   retries?: number;
   /**
    * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   testDir: './tests/playwright',
+   * };
+   * export default config;
+   * ```
+   *
    */
   testDir?: string;
   /**
@@ -550,6 +677,17 @@ interface TestConfig {
    * path. Strings are treated as glob patterns.
    *
    * For example, `'**\/test-assets/**'` will ignore any files in the `test-assets` directory.
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { PlaywrightTestConfig, devices } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   testIgnore: '**\/test-assets/**',
+   * };
+   * export default config;
+   * ```
+   *
    */
   testIgnore?: string | RegExp | (string | RegExp)[];
   /**
@@ -557,6 +695,17 @@ interface TestConfig {
    * file path. Strings are treated as glob patterns.
    *
    * By default, Playwright Test looks for files matching `.*(test|spec)\.(js|ts|mjs)`.
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { PlaywrightTestConfig, devices } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   testMatch: /.*\.e2e\.js/,
+   * };
+   * export default config;
+   * ```
+   *
    */
   testMatch?: string | RegExp | (string | RegExp)[];
   /**
@@ -564,6 +713,17 @@ interface TestConfig {
    *
    * This is a base timeout for all tests. In addition, each test can configure its own timeout with
    * [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout).
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   timeout: 5 * 60 * 1000,
+   * };
+   * export default config;
+   * ```
+   *
    */
   timeout?: number;
 }
@@ -644,6 +804,17 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * Whether to exit with an error if any tests or groups are marked as
    * [test.only(title, testFunction)](https://playwright.dev/docs/api/class-test#test-only) or
    * [test.describe.only(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-only). Useful on CI.
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   forbidOnly: !!process.env.CI,
+   * };
+   * export default config;
+   * ```
+   *
    */
   forbidOnly: boolean;
   /**
@@ -669,11 +840,33 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * function. See also [testConfig.globalSetup](https://playwright.dev/docs/api/class-testconfig#test-config-global-setup).
    *
    * Learn more about [global setup and teardown](https://playwright.dev/docs/test-advanced#global-setup-and-teardown).
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { PlaywrightTestConfig, devices } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   globalTeardown: './global-teardown',
+   * };
+   * export default config;
+   * ```
+   *
    */
   globalTeardown: string | null;
   /**
    * Maximum time in milliseconds the whole test suite can run. Zero timeout (default) disables this behavior. Useful on CI
    * to prevent broken setup from running too long and wasting resources.
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   globalTimeout: process.env.CI ? 60 * 60 * 1000 : undefined,
+   * };
+   * export default config;
+   * ```
+   *
    */
   globalTimeout: number;
   /**
@@ -696,6 +889,17 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * with an error. Setting to zero (default) disables this behavior.
    *
    * Also available in the [command line](https://playwright.dev/docs/test-cli) with the `--max-failures` and `-x` options.
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   maxFailures: process.env.CI ? 1 : 0,
+   * };
+   * export default config;
+   * ```
+   *
    */
   maxFailures: number;
   version: string;
@@ -769,6 +973,17 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * Defaults to one half of the number of CPU cores. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with
    * Playwright Test.
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   workers: 3,
+   * };
+   * export default config;
+   * ```
+   *
    */
   workers: number;
   webServer: WebServerConfig | null;

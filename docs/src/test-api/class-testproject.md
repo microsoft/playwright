@@ -106,11 +106,13 @@ export default config;
 
 ## property: TestProject.expect
 - type: <[Object]>
-  - `timeout` <[float]> Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
+  - `timeout` <[int]> Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
   - `toMatchSnapshot` <[Object]>
     - `threshold` <[float]> Image matching threshold between zero (strict) and one (lax).
 
 Configuration for the `expect` assertion library.
+
+Use [`property: TestConfig.expect`] to change this option for all projects.
 
 ## property: TestProject.metadata
 - type: <[Object]>
@@ -151,15 +153,21 @@ test('example test', async ({}, testInfo) => {
 });
 ```
 
+Use [`property: TestConfig.outputDir`] to change this option for all projects.
+
 ## property: TestProject.repeatEach
 - type: <[int]>
 
 The number of times to repeat each test, useful for debugging flaky tests.
 
+Use [`property: TestConfig.repeatEach`] to change this option for all projects.
+
 ## property: TestProject.retries
 - type: <[int]>
 
 The maximum number of retry attempts given to failed tests. Learn more about [test retries](./test-retries.md#retries).
+
+Use [`property: TestConfig.retries`] to change this option for all projects.
 
 ## property: TestProject.testDir
 - type: <[string]>
@@ -250,6 +258,7 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
+Use [`property: TestConfig.testDir`] to change this option for all projects.
 
 ## property: TestProject.testIgnore
 - type: <[string]|[RegExp]|[Array]<[string]>|[Array]<[RegExp]>>
@@ -258,6 +267,7 @@ Files matching one of these patterns are not executed as test files. Matching is
 
 For example, `'**/test-assets/**'` will ignore any files in the `test-assets` directory.
 
+Use [`property: TestConfig.testIgnore`] to change this option for all projects.
 
 ## property: TestProject.testMatch
 - type: <[string]|[RegExp]|[Array]<[string]>|[Array]<[RegExp]>>
@@ -266,6 +276,7 @@ Only the files matching one of these patterns are executed as test files. Matchi
 
 By default, Playwright Test looks for files matching `.*(test|spec)\.(js|ts|mjs)`.
 
+Use [`property: TestConfig.testMatch`] to change this option for all projects.
 
 ## property: TestProject.timeout
 - type: <[int]>
@@ -273,6 +284,8 @@ By default, Playwright Test looks for files matching `.*(test|spec)\.(js|ts|mjs)
 Timeout for each test in milliseconds. Defaults to 30 seconds.
 
 This is a base timeout for all tests. In addition, each test can configure its own timeout with [`method: Test.setTimeout`].
+
+Use [`property: TestConfig.timeout`] to change this option for all projects.
 
 ## property: TestProject.use
 - type: <[Fixtures]>
@@ -314,3 +327,5 @@ const config: PlaywrightTestConfig = {
 };
 export default config;
 ```
+
+Use [`property: TestConfig.use`] to change this option for all projects.

@@ -31,14 +31,14 @@ await expect(page.locator('.status')).toHaveText('Submitted');
 
 Playwright Test will be re-testing the node with the selector `.status` until fetched Node has the `"Submitted"`
 text. It will be re-fetching the node and checking it over and over, until the condition is met or until the timeout is
-reached. You can either pass this timeout or configure it once via the [`property: TestProject.expect`] value
+reached. You can either pass this timeout or configure it once via the [`property: TestConfig.expect`] value
 in test config.
 
 By default, the timeout for assertions is set to 5 seconds.
 
-## expect(locator).toBeChecked
+## expect(locator).toBeChecked([options])
 - `options`
-  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
 
 Ensures [Locator] points to the checked input.
 
@@ -47,9 +47,9 @@ const locator = page.locator('.subscribe');
 await expect(locator).toBeChecked();
 ```
 
-## expect(locator).toBeDisabled
+## expect(locator).toBeDisabled([options])
 - `options`
-  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
 
 Ensures [Locator] points to a disabled element.
 
@@ -58,9 +58,9 @@ const locator = page.locator('button.submit');
 await expect(locator).toBeDisabled();
 ```
 
-## expect(locator).toBeEditable
+## expect(locator).toBeEditable([options])
 - `options`
-  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
 
 Ensures [Locator] points to an editable element.
 
@@ -69,9 +69,9 @@ const locator = page.locator('input');
 await expect(locator).toBeEditable();
 ```
 
-## expect(locator).toBeEmpty
+## expect(locator).toBeEmpty([options])
 - `options`
-  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
 
 Ensures [Locator] points to an empty editable element or to a DOM node that has no text.
 
@@ -80,9 +80,9 @@ const locator = page.locator('div.warning');
 await expect(locator).toBeEmpty();
 ```
 
-## expect(locator).toBeEnabled
+## expect(locator).toBeEnabled([options])
 - `options`
-  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
 
 Ensures [Locator] points to an enabled element.
 
@@ -91,9 +91,9 @@ const locator = page.locator('button.submit');
 await expect(locator).toBeEnabled();
 ```
 
-## expect(locator).toBeFocused
+## expect(locator).toBeFocused([options])
 - `options`
-  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
 
 Ensures [Locator] points to a focused DOM node.
 
@@ -102,9 +102,9 @@ const locator = page.locator('input');
 await expect(locator).toBeFocused();
 ```
 
-## expect(locator).toBeHidden
+## expect(locator).toBeHidden([options])
 - `options`
-  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
 
 Ensures [Locator] points to a hidden DOM node, which is the opposite of [visible](./actionability.md#visible).
 
@@ -113,9 +113,9 @@ const locator = page.locator('.my-element');
 await expect(locator).toBeHidden();
 ```
 
-## expect(locator).toBeVisible
+## expect(locator).toBeVisible([options])
 - `options`
-  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
 
 Ensures [Locator] points to a [visible](./actionability.md#visible) DOM node.
 
@@ -124,10 +124,10 @@ const locator = page.locator('.my-element');
 await expect(locator).toBeVisible();
 ```
 
-## expect(locator).toContainText(expected, options?)
+## expect(locator).toContainText(expected[, options])
 - `expected` <[string] | [RegExp] | [Array]<[string]|[RegExp]>>
 - `options`
-  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
   - `useInnerText` <[boolean]> Whether to use `element.innerText` instead of `element.textContent` when retrieving DOM node text.
 
 Ensures [Locator] points to an element that contains the given text. You can use regular expressions for the value as well.
@@ -145,11 +145,11 @@ const locator = page.locator('list > .list-item');
 await expect(locator).toContainText(['Text 1', 'Text 4', 'Text 5']);
 ```
 
-## expect(locator).toHaveAttribute(name, value)
+## expect(locator).toHaveAttribute(name, value[, options])
 - `name` <[string]> Attribute name
 - `value` <[string]|[RegExp]> Attribute value
 - `options`
-  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
 
 Ensures [Locator] points to an element with given attribute.
 
@@ -158,10 +158,10 @@ const locator = page.locator('input');
 await expect(locator).toHaveAttribute('type', 'text');
 ```
 
-## expect(locator).toHaveClass(expected)
+## expect(locator).toHaveClass(expected[, options])
 - `expected` <[string] | [RegExp] | [Array]<[string]|[RegExp]>>
 - `options`
-  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
 
 Ensures [Locator] points to an element with given CSS class.
 
@@ -177,10 +177,10 @@ const locator = page.locator('list > .component');
 await expect(locator).toHaveClass(['component', 'component selected', 'component']);
 ```
 
-## expect(locator).toHaveCount(count)
+## expect(locator).toHaveCount(count[, options])
 - `count` <[number]>
 - `options`
-  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
 
 Ensures [Locator] resolves to an exact number of DOM nodes.
 
@@ -189,11 +189,11 @@ const list = page.locator('list > .component');
 await expect(list).toHaveCount(3);
 ```
 
-## expect(locator).toHaveCSS(name, value)
+## expect(locator).toHaveCSS(name, value[, options])
 - `name` <[string]> CSS property name
 - `value` <[string]|[RegExp]> CSS property value
 - `options`
-  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
 
 Ensures [Locator] resolves to an element with the given computed CSS style.
 
@@ -202,10 +202,10 @@ const locator = page.locator('button');
 await expect(locator).toHaveCSS('display', 'flex');
 ```
 
-## expect(locator).toHaveId(id)
+## expect(locator).toHaveId(id[, options])
 - `id` <[string]> Element id
 - `options`
-  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
 
 Ensures [Locator] points to an element with the given DOM Node ID.
 
@@ -214,11 +214,11 @@ const locator = page.locator('input');
 await expect(locator).toHaveId('lastname');
 ```
 
-## expect(locator).toHaveJSProperty(name, value)
+## expect(locator).toHaveJSProperty(name, value[, options])
 - `name` <[string]> Property name
 - `value` <[any]> Property value
 - `options`
-  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
 
 Ensures [Locator] points to an element with given JavaScript property. Note that this property can be
 of a primitive type as well as a plain serializable JavaScript object.
@@ -228,10 +228,10 @@ const locator = page.locator('.component');
 await expect(locator).toHaveJSProperty('loaded', true);
 ```
 
-## expect(locator).toHaveText(expected, options)
+## expect(locator).toHaveText(expected[, options])
 - `expected` <[string] | [RegExp] | [Array]<[string]|[RegExp]>>
 - `options`
-  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
   - `useInnerText` <[boolean]> Whether to use `element.innerText` instead of `element.textContent` when retrieving DOM node text.
 
 Ensures [Locator] points to an element with the given text. You can use regular expressions for the value as well.
@@ -249,10 +249,10 @@ const locator = page.locator('list > .component');
 await expect(locator).toHaveText(['Text 1', 'Text 2', 'Text 3']);
 ```
 
-## expect(locator).toHaveValue(value)
+## expect(locator).toHaveValue(value[, options])
 - `value` <[string] | [RegExp]>
 - `options`
-  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
 
 Ensures [Locator] points to an element with the given input value. You can use regular expressions for the value as well.
 
@@ -261,10 +261,10 @@ const locator = page.locator('input[type=number]');
 await expect(locator).toHaveValue(/[0-9]/);
 ```
 
-## expect(page).toHaveTitle(title)
+## expect(page).toHaveTitle(title[, options])
 - `title` <[string] | [RegExp]>
 - `options`
-  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
 
 Ensures page has a given title.
 
@@ -272,13 +272,34 @@ Ensures page has a given title.
 await expect(page).toHaveTitle(/.*checkout/);
 ```
 
-## expect(page).toHaveURL(url)
+## expect(page).toHaveURL(url[, options])
 - `url` <[string] | [RegExp]>
 - `options`
-  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestProject.expect`].
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
 
 Ensures page is navigated to a given URL.
 
 ```js
 await expect(page).toHaveURL(/.*checkout/);
 ```
+
+## expect(value).toMatchSnapshot(name[, options])
+- `name` <[string] | [Array]<[string]>> Snapshot name.
+- `options`
+  - `threshold` <[float]> Image matching threshold between zero (strict) and one (lax), default is configurable with [`property: TestConfig.expect`].
+
+Ensures that passed value, either a [string] or a [Buffer], matches the expected snapshot stored in the test snapshots directory.
+
+```js
+// Basic usage.
+expect(await page.screenshot()).toMatchSnapshot('landing-page.png');
+
+// Configure image matching threshold.
+expect(await page.screenshot()).toMatchSnapshot('landing-page.png', { threshold: 0.3 });
+
+// Bring some structure to your snapshot files by passing file path segments.
+expect(await page.screenshot()).toMatchSnapshot(['landing', 'step2.png']);
+expect(await page.screenshot()).toMatchSnapshot(['landing', 'step3.png']);
+```
+
+Learn more about [visual comparisons](./test-snapshots.md).
