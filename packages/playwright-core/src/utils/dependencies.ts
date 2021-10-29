@@ -39,31 +39,29 @@ export type DependencyGroup = 'chromium' | 'firefox' | 'webkit' | 'tools';
 export async function installDependenciesWindows(targets: Set<DependencyGroup>) {
   if (!targets.has('chromium'))
     return;
-  const productType = await getProductType();
-  // Only continue for Windows Server
-  if (productType !== 3)
+  if (!await isWindowsServer())
     return;
   const { code } = await utils.spawnAsync('dism.exe', ['/Online', '/Enable-Feature', '/FeatureName:ServerMediaFoundation'], { stdio: 'inherit' });
   if (code !== 0)
     throw new Error('Failed to install windows dependencies!');
 }
 
-/**
- * ProductType Enum:
- * 0 = Unknown - Product type is unknown
- * 1 = WorkStation - System is a workstation
- * 2 = DomainController - System is a domain controller
- * 3 = Server - System is a server
- * @see https://docs.microsoft.com/en-us/dotnet/api/microsoft.powershell.commands.producttype?view=powershellsdk-1.1.0
- */
-async function getProductType(): Promise<number> {
+async function isWindowsServer(): Promise<boolean> {
+  /**
+  * ProductType Enum:
+  * 0 = Unknown - Product type is unknown
+  * 1 = WorkStation - System is a workstation
+  * 2 = DomainController - System is a domain controller
+  * 3 = Server - System is a server
+  * @see https://docs.microsoft.com/en-us/dotnet/api/microsoft.powershell.commands.producttype?view=powershellsdk-1.1.0
+  */
   const { code, stdout } = await utils.spawnAsync('wmic.exe', ['path', 'Win32_OperatingSystem', 'get', 'ProductType', '/VALUE']);
   if (code !== 0)
     throw new Error('Failed to get product type version!');
   for (const line of stdout.trim().split('\n')) {
     const [key, value] = line.split('=');
     if (key === 'ProductType')
-      return parseInt(value, 10);
+      return parseInt(value, 10) === 3;
   }
   throw new Error('Failed to parse product type version!\nstdout:' + stdout);
 }
