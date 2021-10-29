@@ -49,7 +49,7 @@ it('should work with both domcontentloaded and load', async ({ page, server }) =
   await navigationPromise;
 });
 
-it('should work with no-wait', async ({ page, server }) => {
+it('should work with commit', async ({ page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.writeHead(200, {
       'content-type': 'text/html',
@@ -60,7 +60,7 @@ it('should work with no-wait', async ({ page, server }) => {
   });
 
   page.goto(server.EMPTY_PAGE).catch(e => {});
-  await page.waitForURL('**/empty.html', { waitUntil: 'no-wait' });
+  await page.waitForURL('**/empty.html', { waitUntil: 'commit' });
 });
 
 it('should work with clicking on anchor links', async ({ page, server }) => {

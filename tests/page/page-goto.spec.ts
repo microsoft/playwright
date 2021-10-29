@@ -287,7 +287,7 @@ it('should throw if networkidle2 is passed as an option', async ({ page, server 
   let error = null;
   // @ts-expect-error networkidle2 is not allowed
   await page.goto(server.EMPTY_PAGE, { waitUntil: 'networkidle2' }).catch(err => error = err);
-  expect(error.message).toContain(`waitUntil: expected one of (load|domcontentloaded|networkidle)`);
+  expect(error.message).toContain(`waitUntil: expected one of (load|domcontentloaded|networkidle|commit)`);
 });
 
 it('should fail when main resources failed to load', async ({ page, browserName, isWindows, mode }) => {
@@ -629,7 +629,7 @@ it('should properly wait for load', async ({ page, server, browserName }) => {
   ]);
 });
 
-it('should return when navigation is committed if no-wait is specified', async ({ page, server }) => {
+it('should return when navigation is committed if commit is specified', async ({ page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.writeHead(200, {
       'content-type': 'text/html',
@@ -638,6 +638,6 @@ it('should return when navigation is committed if no-wait is specified', async (
     // Write first byte of the body to trigge response received event.
     res.write(' ');
   });
-  const response = await page.goto(server.EMPTY_PAGE, { waitUntil: 'no-wait' });
+  const response = await page.goto(server.EMPTY_PAGE, { waitUntil: 'commit' });
   expect(response.status()).toBe(200);
 });
