@@ -259,7 +259,7 @@ module.exports = config;
 import { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
-  reporter: [ ['html', { output: 'never' }] ],
+  reporter: [ ['html', { open: 'never' }] ],
 };
 export default config;
 ```
