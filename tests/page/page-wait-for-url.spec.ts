@@ -63,6 +63,10 @@ it('should work with commit', async ({ page, server }) => {
   await page.waitForURL('**/empty.html', { waitUntil: 'commit' });
 });
 
+it('should work with commit and about:blank', async ({ page, server }) => {
+  await page.waitForURL('about:blank', { waitUntil: 'commit' });
+});
+
 it('should work with clicking on anchor links', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<a href='#foobar'>foobar</a>`);
