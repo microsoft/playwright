@@ -243,6 +243,7 @@ export type FetchResponse = {
   headers: NameValue[],
 };
 
+export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle' | 'commit';
 // ----------- Root -----------
 export type RootInitializer = {};
 export interface RootChannel extends Channel {
@@ -1311,33 +1312,33 @@ export type PageExposeBindingOptions = {
 export type PageExposeBindingResult = void;
 export type PageGoBackParams = {
   timeout?: number,
-  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit',
+  waitUntil?: LifecycleEvent,
 };
 export type PageGoBackOptions = {
   timeout?: number,
-  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit',
+  waitUntil?: LifecycleEvent,
 };
 export type PageGoBackResult = {
   response?: ResponseChannel,
 };
 export type PageGoForwardParams = {
   timeout?: number,
-  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit',
+  waitUntil?: LifecycleEvent,
 };
 export type PageGoForwardOptions = {
   timeout?: number,
-  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit',
+  waitUntil?: LifecycleEvent,
 };
 export type PageGoForwardResult = {
   response?: ResponseChannel,
 };
 export type PageReloadParams = {
   timeout?: number,
-  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit',
+  waitUntil?: LifecycleEvent,
 };
 export type PageReloadOptions = {
   timeout?: number,
-  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit',
+  waitUntil?: LifecycleEvent,
 };
 export type PageReloadResult = {
   response?: ResponseChannel,
@@ -1604,7 +1605,7 @@ export type FrameInitializer = {
   url: string,
   name: string,
   parentFrame?: FrameChannel,
-  loadStates: ('load' | 'domcontentloaded' | 'networkidle' | 'commit')[],
+  loadStates: LifecycleEvent[],
 };
 export interface FrameChannel extends Channel {
   on(event: 'loadstate', callback: (params: FrameLoadstateEvent) => void): this;
@@ -1653,8 +1654,8 @@ export interface FrameChannel extends Channel {
   expect(params: FrameExpectParams, metadata?: Metadata): Promise<FrameExpectResult>;
 }
 export type FrameLoadstateEvent = {
-  add?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit',
-  remove?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit',
+  add?: LifecycleEvent,
+  remove?: LifecycleEvent,
 };
 export type FrameNavigatedEvent = {
   url: string,
@@ -1886,12 +1887,12 @@ export type FrameGetAttributeResult = {
 export type FrameGotoParams = {
   url: string,
   timeout?: number,
-  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit',
+  waitUntil?: LifecycleEvent,
   referer?: string,
 };
 export type FrameGotoOptions = {
   timeout?: number,
-  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit',
+  waitUntil?: LifecycleEvent,
   referer?: string,
 };
 export type FrameGotoResult = {
@@ -2084,11 +2085,11 @@ export type FrameSelectOptionResult = {
 export type FrameSetContentParams = {
   html: string,
   timeout?: number,
-  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit',
+  waitUntil?: LifecycleEvent,
 };
 export type FrameSetContentOptions = {
   timeout?: number,
-  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit',
+  waitUntil?: LifecycleEvent,
 };
 export type FrameSetContentResult = void;
 export type FrameSetInputFilesParams = {

@@ -271,6 +271,10 @@ for (const [name, item] of Object.entries(protocol)) {
     channels_ts.push(`export type ${name} = ${inner.ts};`);
     channels_ts.push(``);
     addScheme(name, inner.scheme);
+  } else if (item.type === 'enum') {
+    const ts = item.literals.map(literal => `'${literal}'`).join(' | ');
+    channels_ts.push(`export type ${name} = ${ts};`)
+    addScheme(name, `tEnum([${item.literals.map(literal => `'${literal}'`).join(', ')}])`);
   }
 }
 
