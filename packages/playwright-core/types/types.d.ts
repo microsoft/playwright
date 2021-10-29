@@ -2146,7 +2146,7 @@ export interface Page {
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
      * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
-     * - `'commit'` - consider operation to be finished when the navigation is committed.
+     * - `'commit'` - consider operation to be finished when network response is received and the document started loading.
      */
     waitUntil?: "load"|"domcontentloaded"|"networkidle"|"commit";
   }): Promise<null|Response>;
@@ -2174,7 +2174,7 @@ export interface Page {
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
      * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
-     * - `'commit'` - consider operation to be finished when the navigation is committed.
+     * - `'commit'` - consider operation to be finished when network response is received and the document started loading.
      */
     waitUntil?: "load"|"domcontentloaded"|"networkidle"|"commit";
   }): Promise<null|Response>;
@@ -2226,7 +2226,7 @@ export interface Page {
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
      * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
-     * - `'commit'` - consider operation to be finished when the navigation is committed.
+     * - `'commit'` - consider operation to be finished when network response is received and the document started loading.
      */
     waitUntil?: "load"|"domcontentloaded"|"networkidle"|"commit";
   }): Promise<null|Response>;
@@ -2753,7 +2753,7 @@ export interface Page {
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
      * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
-     * - `'commit'` - consider operation to be finished when the navigation is committed.
+     * - `'commit'` - consider operation to be finished when network response is received and the document started loading.
      */
     waitUntil?: "load"|"domcontentloaded"|"networkidle"|"commit";
   }): Promise<null|Response>;
@@ -3004,7 +3004,7 @@ export interface Page {
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
      * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
-     * - `'commit'` - consider operation to be finished when the navigation is committed.
+     * - `'commit'` - consider operation to be finished when network response is received and the document started loading.
      */
     waitUntil?: "load"|"domcontentloaded"|"networkidle"|"commit";
   }): Promise<void>;
@@ -3653,7 +3653,7 @@ export interface Page {
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
      * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
-     * - `'commit'` - consider operation to be finished when the navigation is committed.
+     * - `'commit'` - consider operation to be finished when network response is received and the document started loading.
      */
     waitUntil?: "load"|"domcontentloaded"|"networkidle"|"commit";
   }): Promise<null|Response>;
@@ -3776,7 +3776,7 @@ export interface Page {
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
      * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
-     * - `'commit'` - consider operation to be finished when the navigation is committed.
+     * - `'commit'` - consider operation to be finished when network response is received and the document started loading.
      */
     waitUntil?: "load"|"domcontentloaded"|"networkidle"|"commit";
   }): Promise<void>;
@@ -4932,7 +4932,7 @@ export interface Frame {
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
      * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
-     * - `'commit'` - consider operation to be finished when the navigation is committed.
+     * - `'commit'` - consider operation to be finished when network response is received and the document started loading.
      */
     waitUntil?: "load"|"domcontentloaded"|"networkidle"|"commit";
   }): Promise<null|Response>;
@@ -5435,7 +5435,7 @@ export interface Frame {
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
      * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
-     * - `'commit'` - consider operation to be finished when the navigation is committed.
+     * - `'commit'` - consider operation to be finished when network response is received and the document started loading.
      */
     waitUntil?: "load"|"domcontentloaded"|"networkidle"|"commit";
   }): Promise<void>;
@@ -5778,7 +5778,7 @@ export interface Frame {
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
      * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
-     * - `'commit'` - consider operation to be finished when the navigation is committed.
+     * - `'commit'` - consider operation to be finished when network response is received and the document started loading.
      */
     waitUntil?: "load"|"domcontentloaded"|"networkidle"|"commit";
   }): Promise<null|Response>;
@@ -5820,7 +5820,7 @@ export interface Frame {
      * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
      * - `'load'` - consider operation to be finished when the `load` event is fired.
      * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
-     * - `'commit'` - consider operation to be finished when the navigation is committed.
+     * - `'commit'` - consider operation to be finished when network response is received and the document started loading.
      */
     waitUntil?: "load"|"domcontentloaded"|"networkidle"|"commit";
   }): Promise<void>;}
