@@ -182,7 +182,7 @@ export class TestTypeImpl {
     suite._use.push({ fixtures, location });
   }
 
-  private async _step(location: Location, title: string, body: () => Promise<void>): Promise<void> {
+  private async _step<T extends any = any>(location: Location, title: string, body: () => Promise<T>): Promise<T> {
     const testInfo = currentTestInfo();
     if (!testInfo)
       throw errorWithLocation(location, `test.step() can only be called from a test`);
@@ -194,8 +194,9 @@ export class TestTypeImpl {
       forceNoParent: false
     });
     try {
-      await body();
+      const result = await body();
       step.complete();
+      return result;
     } catch (e) {
       step.complete(serializeError(e));
       throw e;

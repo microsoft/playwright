@@ -2290,10 +2290,24 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
+   * The `test.step` promise resolves to the value returned in the `body`:
+   *
+   * ```ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('test', async ({ page }) => {
+   *   const result = await test.step('Log in', async () => {
+   *     // ...
+   *     return { a: true }
+   *   });
+   *   // result is { a: true }
+   * });
+   * ```
+   *
    * @param title Step name.
    * @param body Step body.
    */
-  step(title: string, body: () => Promise<any>): Promise<any>;
+  step<T extends any = any>(title: string, body: () => Promise<T>): Promise<T>;
   /**
    * `expect` function can be used to create test assertions. Read
    * [expect library documentation](https://jestjs.io/docs/expect) for more details.

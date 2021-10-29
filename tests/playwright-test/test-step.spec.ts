@@ -321,3 +321,26 @@ test('should report expect step locations', async ({ runInlineTest }) => {
     },
   ]);
 });
+
+test('should return the value returned from inside the step', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      test('value', async ({ page }) => {
+        const randomValue = Math.random();
+        const valueFromStep = await test.step('return value is correct', async () => {
+          return randomValue;
+        });
+        expect(valueFromStep).toBe(randomValue);
+      });
+      test('void', async ({ page }) => {
+        const valueFromStep = await test.step('return value is correct', async () => {});
+        expect(valueFromStep).toBe(undefined);
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+});
+

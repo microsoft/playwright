@@ -975,6 +975,32 @@ test('test', async ({ page }) => {
 });
 ```
 
+The `test.step` promise resolves to the value returned in the `body`:
+
+```js js-flavor=js
+const { test, expect } = require('@playwright/test');
+
+test('test', async ({ page }) => {
+  const result = await test.step('Log in', async () => {
+    // ...
+    return { a: true }
+  });
+  // result is { a: true }
+});
+```
+
+```js js-flavor=ts
+import { test, expect } from '@playwright/test';
+
+test('test', async ({ page }) => {
+  const result = await test.step('Log in', async () => {
+    // ...
+    return { a: true }
+  });
+  // result is { a: true }
+});
+```
+
 ### param: Test.step.title
 - `title` <[string]>
 

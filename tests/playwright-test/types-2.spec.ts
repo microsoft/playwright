@@ -107,3 +107,26 @@ test('test.declare should check types', async ({ runTSC }) => {
   });
   expect(result.exitCode).toBe(0);
 });
+
+test('test.step should have as return type the exact type resolved in the step', async ({ runTSC }) => {
+  const result = await runTSC({
+    'a.spec.ts': `
+      type IfAny<T, Y, N> = 0 extends (1 & T) ? Y : N;
+      type IsAny<T> = IfAny<T, true, false>;
+      const { test } = pwt;
+      test('pass', async () => {
+        const shouldBeVoid = await test.step('should return void', async () => {});
+        const shouldBeVoidAnyCheck: IsAny<typeof shouldBeVoid> = false;
+        const shouldBeVoidCheck: typeof shouldBeVoid = void 0;
+        
+        type T = { a: number };
+        const shouldBeT = await test.step('should return void', async () => {
+          return { a: 1 } as T;
+        });
+        const shouldBeTAnyCheck: IsAny<typeof shouldBeT> = false;
+        const shouldBeTCheck: typeof shouldBeT = {  a: 1 } as T;
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
