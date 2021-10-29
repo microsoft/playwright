@@ -238,6 +238,32 @@ HTML reporter produces a self-contained folder that contains report for the test
 npx playwright test --reporter=html
 ```
 
+By default, HTML report is opened automatically if some of the tests failed. You can control this behavior via the
+`open` property in the Playwright config. The possible values for that property are `always`, `never` and `on-failure`
+(default).
+
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  reporter: [ ['html', { output: 'never' }] ],
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  reporter: [ ['html', { output: 'never' }] ],
+};
+export default config;
+```
+
 By default, report is written into the `playwright-report` folder in the current working directory. One can override
 that location using the `PLAYWRIGHT_HTML_REPORT` environment variable or a reporter configuration.
 
