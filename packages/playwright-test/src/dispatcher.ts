@@ -63,7 +63,7 @@ export class Dispatcher {
     const job = this._queue[0];
 
     // 2. Find a worker with the same hash, or just some free worker.
-    let index = this._workerSlots.findIndex(w => !w.busy && w.worker && w.worker.hash() === job.workerHash);
+    let index = this._workerSlots.findIndex(w => !w.busy && w.worker && w.worker.hash() === job.workerHash && !w.worker.didSendStop());
     if (index === -1)
       index = this._workerSlots.findIndex(w => !w.busy);
     // No workers available, bail out.
@@ -86,8 +86,8 @@ export class Dispatcher {
   private async _startJobInWorker(index: number, job: TestGroup) {
     let worker = this._workerSlots[index].worker;
 
-    // 1. Restart the worker if it has the wrong hash.
-    if (worker && worker.hash() !== job.workerHash) {
+    // 1. Restart the worker if it has the wrong hash or is being stopped already.
+    if (worker && (worker.hash() !== job.workerHash || worker.didSendStop())) {
       await worker.stop();
       worker = undefined;
       if (this._isStopped) // Check stopped signal after async hop.
@@ -405,7 +405,7 @@ class Worker extends EventEmitter {
   private process: child_process.ChildProcess;
   private _hash: string;
   private workerIndex: number;
-  private didSendStop = false;
+  private _didSendStop = false;
   private _didFail = false;
   private didExit = false;
 
@@ -427,7 +427,7 @@ class Worker extends EventEmitter {
     });
     this.process.on('exit', () => {
       this.didExit = true;
-      this.emit('exit', this.didSendStop /* expectedly */);
+      this.emit('exit', this._didSendStop /* expectedly */);
     });
     this.process.on('error', e => {});  // do not yell at a send to dead process.
     this.process.on('message', (message: any) => {
@@ -461,6 +461,10 @@ class Worker extends EventEmitter {
     return this._didFail;
   }
 
+  didSendStop() {
+    return this._didSendStop;
+  }
+
   hash() {
     return this._hash;
   }
@@ -470,9 +474,9 @@ class Worker extends EventEmitter {
       this._didFail = true;
     if (this.didExit)
       return;
-    if (!this.didSendStop) {
+    if (!this._didSendStop) {
       this.process.send({ method: 'stop' });
-      this.didSendStop = true;
+      this._didSendStop = true;
     }
     await new Promise(f => this.once('exit', f));
   }

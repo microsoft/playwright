@@ -90,7 +90,17 @@ export class WorkerRunner extends EventEmitter {
   }
 
   unhandledError(error: Error | any) {
-    if (this._currentTest && this._currentTest.type === 'test') {
+    // Usually, we do not differentiate between errors in the control flow
+    // and unhandled errors - both lead to the test failing. This is good for regular tests,
+    // so that you can, e.g. expect() from inside an event handler. The test fails,
+    // and we restart the worker.
+    //
+    // However, for tests marked with test.fail(), this is a problem. Unhandled error
+    // could come either from the user test code (legit failure), or from a fixture or
+    // a test runner. In the latter case, the worker state could be messed up,
+    // and continuing to run tests in the same worker is problematic. Therefore,
+    // we turn this into a fatal error and restart the worker anyway.
+    if (this._currentTest && this._currentTest.type === 'test' && this._currentTest.testInfo.expectedStatus !== 'failed') {
       if (!this._currentTest.testInfo.error) {
         this._currentTest.testInfo.status = 'failed';
         this._currentTest.testInfo.error = serializeError(error);
