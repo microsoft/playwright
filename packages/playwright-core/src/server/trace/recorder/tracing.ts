@@ -254,6 +254,7 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
+    sdkObject.attribution.page?.temporarlyDisableTracingScreencastThrottling();
     // Set afterSnapshot name for all the actions that operate selectors.
     // Elements resolved from selectors will be marked on the snapshot.
     metadata.afterSnapshot = `after@${metadata.id}`;
@@ -263,12 +264,14 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
   }
 
   async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle) {
+    sdkObject.attribution.page?.temporarlyDisableTracingScreencastThrottling();
     const actionSnapshot = this._captureSnapshot('action', sdkObject, metadata, element);
     this._pendingCalls.get(metadata.id)!.actionSnapshot = actionSnapshot;
     await actionSnapshot;
   }
 
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata) {
+    sdkObject.attribution.page?.temporarlyDisableTracingScreencastThrottling();
     const pendingCall = this._pendingCalls.get(metadata.id);
     if (!pendingCall || pendingCall.afterSnapshot)
       return;

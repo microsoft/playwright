@@ -500,7 +500,10 @@ export class FFPage implements PageDelegate {
   private _onScreencastFrame(event: Protocol.Page.screencastFramePayload) {
     if (!this._screencastId)
       return;
-    this._session.send('Page.screencastFrameAck', { screencastId: this._screencastId }).catch(e => debugLogger.log('error', e));
+    const screencastId = this._screencastId;
+    this._page.throttleScreencastFrameAck(() => {
+      this._session.send('Page.screencastFrameAck', { screencastId }).catch(e => debugLogger.log('error', e));
+    });
 
     const buffer = Buffer.from(event.data, 'base64');
     this._page.emit(Page.Events.ScreencastFrame, {
