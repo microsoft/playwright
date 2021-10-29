@@ -35,15 +35,70 @@ export default config;
 
 ## property: TestConfig.expect
 - type: <[Object]>
+  - `timeout` <[int]> Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
   - `toMatchSnapshot` <[Object]>
     - `threshold` <[float]> Image matching threshold between zero (strict) and one (lax).
 
 Configuration for the `expect` assertion library.
 
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  expect: {
+    timeout: 10000,
+    toMatchSnapshot: {
+      threshold: 0.3,
+    },
+  },
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  expect: {
+    timeout: 10000,
+    toMatchSnapshot: {
+      threshold: 0.3,
+    },
+  },
+};
+export default config;
+```
+
 ## property: TestConfig.forbidOnly
 - type: <[boolean]>
 
 Whether to exit with an error if any tests or groups are marked as [`method: Test.only`] or [`method: Test.describe.only`]. Useful on CI.
+
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  forbidOnly: !!process.env.CI,
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  forbidOnly: !!process.env.CI,
+};
+export default config;
+```
 
 ## property: TestConfig.globalSetup
 - type: <[string]>
@@ -81,12 +136,54 @@ Path to the global teardown file. This file will be required and run after all t
 
 Learn more about [global setup and teardown](./test-advanced.md#global-setup-and-teardown).
 
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  globalTeardown: './global-teardown',
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig, devices } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  globalTeardown: './global-teardown',
+};
+export default config;
+```
 
 ## property: TestConfig.globalTimeout
 - type: <[int]>
 
 Maximum time in milliseconds the whole test suite can run. Zero timeout (default) disables this behavior. Useful on CI to prevent broken setup from running too long and wasting resources.
 
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  globalTimeout: process.env.CI ? 60 * 60 * 1000 : undefined,
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  globalTimeout: process.env.CI ? 60 * 60 * 1000 : undefined,
+};
+export default config;
+```
 
 ## property: TestConfig.grep
 - type: <[RegExp]|[Array]<[RegExp]>>
@@ -111,6 +208,28 @@ The maximum number of test failures for the whole test suite run. After reaching
 
 Also available in the [command line](./test-cli.md) with the `--max-failures` and `-x` options.
 
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  maxFailures: process.env.CI ? 1 : 0,
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  maxFailures: process.env.CI ? 1 : 0,
+};
+export default config;
+```
+
 ## property: TestConfig.metadata
 - type: <[Object]>
 
@@ -121,8 +240,29 @@ Any JSON-serializable metadata that will be put directly to the test report.
 
 The output directory for files created during test execution. Defaults to `test-results`.
 
-This directory is cleaned at the start. When running a test, a unique subdirectory inside the [`property: TestConfig.outputDir`] is created, guaranteeing that test running in parallel do not conflict. This directory can be accessed by [`property: TestInfo.outputDir`] and [`method: TestInfo.outputPath`].
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
 
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  outputDir: './test-results',
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig, devices } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  outputDir: './test-results',
+};
+export default config;
+```
+
+This directory is cleaned at the start. When running a test, a unique subdirectory inside the [`property: TestConfig.outputDir`] is created, guaranteeing that test running in parallel do not conflict. This directory can be accessed by [`property: TestInfo.outputDir`] and [`method: TestInfo.outputPath`].
 
 Here is an example that uses [`method: TestInfo.outputPath`] to create a temporary file.
 
@@ -221,6 +361,28 @@ Tests that took more than `threshold` milliseconds are considered slow, and the 
 
 The maximum number of retry attempts given to failed tests. By default failing tests are not retried. Learn more about [test retries](./test-retries.md#retries).
 
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  retries: 2,
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  retries: 2,
+};
+export default config;
+```
+
 ## property: TestConfig.shard
 - type: <[Object]>
   - `total` <[int]> The total number of shards.
@@ -235,12 +397,56 @@ Learn more about [parallelism and sharding](./test-parallel.md) with Playwright 
 
 Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
 
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  testDir: './tests/playwright',
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  testDir: './tests/playwright',
+};
+export default config;
+```
+
 ## property: TestConfig.testIgnore
 - type: <[string]|[RegExp]|[Array]<[string]>|[Array]<[RegExp]>>
 
 Files matching one of these patterns are not executed as test files. Matching is performed against the absolute file path. Strings are treated as glob patterns.
 
 For example, `'**/test-assets/**'` will ignore any files in the `test-assets` directory.
+
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  testIgnore: '**/test-assets/**',
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig, devices } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  testIgnore: '**/test-assets/**',
+};
+export default config;
+```
 
 ## property: TestConfig.testMatch
 - type: <[string]|[RegExp]|[Array]<[string]>|[Array]<[RegExp]>>
@@ -249,12 +455,56 @@ Only the files matching one of these patterns are executed as test files. Matchi
 
 By default, Playwright Test looks for files matching `.*(test|spec)\.(js|ts|mjs)`.
 
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  testMatch: /.*\.e2e\.js/,
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig, devices } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  testMatch: /.*\.e2e\.js/,
+};
+export default config;
+```
+
 ## property: TestConfig.timeout
 - type: <[int]>
 
 Timeout for each test in milliseconds. Defaults to 30 seconds.
 
 This is a base timeout for all tests. In addition, each test can configure its own timeout with [`method: Test.setTimeout`].
+
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  timeout: 5 * 60 * 1000,
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  timeout: 5 * 60 * 1000,
+};
+export default config;
+```
 
 ## property: TestConfig.updateSnapshots
 - type: <[UpdateSnapshots]<"all"|"none"|"missing">>
@@ -305,3 +555,25 @@ The maximum number of concurrent worker processes to use for parallelizing tests
 Playwright Test uses worker processes to run tests. There is always at least one worker process, but more can be used to speed up test execution.
 
 Defaults to one half of the number of CPU cores. Learn more about [parallelism and sharding](./test-parallel.md) with Playwright Test.
+
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  workers: 3,
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  workers: 3,
+};
+export default config;
+```

@@ -58,13 +58,13 @@ declare global {
        * Match snapshot
        */
       toMatchSnapshot(options: {
-        name: string,
+        name: string | string[],
         threshold?: number
       }): R;
       /**
        * Match snapshot
        */
-      toMatchSnapshot(name: string, options?: {
+      toMatchSnapshot(name: string | string[], options?: {
         threshold?: number
       }): R;
 
