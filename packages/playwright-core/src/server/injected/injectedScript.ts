@@ -66,10 +66,9 @@ export class InjectedScript {
   private _engines: Map<string, SelectorEngineV2>;
   _evaluator: SelectorEvaluatorImpl;
   private _stableRafCount: number;
-  private _replaceRafWithTimeout: boolean;
   private _browserName: string;
 
-  constructor(stableRafCount: number, replaceRafWithTimeout: boolean, browserName: string, customEngines: { name: string, engine: SelectorEngine}[]) {
+  constructor(stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine}[]) {
     this._evaluator = new SelectorEvaluatorImpl(new Map());
 
     this._engines = new Map();
@@ -95,7 +94,6 @@ export class InjectedScript {
       this._engines.set(name, engine);
 
     this._stableRafCount = stableRafCount;
-    this._replaceRafWithTimeout = replaceRafWithTimeout;
     this._browserName = browserName;
   }
 
@@ -404,7 +402,7 @@ export class InjectedScript {
     let samePositionCounter = 0;
     let lastTime = 0;
 
-    const predicate = (progress: InjectedScriptProgress, continuePolling: symbol) => {
+    return this.pollRaf((progress, continuePolling) => {
       if (force) {
         progress.log(`    forcing action`);
         return callback(node, progress, continuePolling);
@@ -455,12 +453,7 @@ export class InjectedScript {
       }
 
       return callback(node, progress, continuePolling);
-    };
-
-    if (this._replaceRafWithTimeout)
-      return this.pollInterval(16, predicate);
-    else
-      return this.pollRaf(predicate);
+    });
   }
 
   elementState(node: Node, state: ElementStateWithoutStable): boolean | 'error:notconnected' {
