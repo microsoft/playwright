@@ -111,9 +111,12 @@ export class TraceModel {
         break;
       }
       case 'action': {
-        const include = !!event.metadata.apiName && !isTracing(event.metadata);
-        if (include)
+        const include = !isTracing(event.metadata) && (!event.metadata.internal || event.metadata.apiName);
+        if (include) {
+          if (!event.metadata.apiName)
+            event.metadata.apiName = event.metadata.type + '.' + event.metadata.method;
           this.contextEntry!.actions.push(event);
+        }
         break;
       }
       case 'event': {

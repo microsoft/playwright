@@ -100,7 +100,7 @@ export class Connection extends EventEmitter {
     const converted = { id, guid, method, params };
     // Do not include metadata in debug logs to avoid noise.
     debugLogger.log('channel:command', converted);
-    const metadata: channels.Metadata = { stack: frames, apiName };
+    const metadata: channels.Metadata = { stack: frames, apiName, internal: !apiName };
     this.onmessage({ ...converted, metadata });
 
     return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, stackTrace }));

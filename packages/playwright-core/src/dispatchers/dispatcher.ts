@@ -224,6 +224,7 @@ export class DispatcherConnection {
       id: `call@${id}`,
       stack: validMetadata.stack,
       apiName: validMetadata.apiName,
+      internal: validMetadata.internal,
       objectId: sdkObject?.guid,
       pageId: sdkObject?.attribution?.page?.guid,
       frameId: sdkObject?.attribution?.frame?.guid,
