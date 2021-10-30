@@ -67,6 +67,7 @@ export class InjectedScript {
   _evaluator: SelectorEvaluatorImpl;
   private _stableRafCount: number;
   private _browserName: string;
+  onGlobalListenersRemoved = new Set<() => void>();
 
   constructor(stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine}[]) {
     this._evaluator = new SelectorEvaluatorImpl(new Map());
@@ -95,6 +96,8 @@ export class InjectedScript {
 
     this._stableRafCount = stableRafCount;
     this._browserName = browserName;
+
+    this._setupGlobalListenersRemovalDetection();
   }
 
   eval(expression: string): any {
@@ -767,6 +770,31 @@ export class InjectedScript {
     // Chromium/WebKit should delete the stack instead.
     delete error.stack;
     return error;
+  }
+
+  private _setupGlobalListenersRemovalDetection() {
+    const customEventName = '__playwright_global_listeners_check__';
+
+    let seenEvent = false;
+    const handleCustomEvent = () => seenEvent = true;
+    window.addEventListener(customEventName, handleCustomEvent);
+
+    new MutationObserver(entries => {
+      const newDocumentElement = entries.some(entry => Array.from(entry.addedNodes).includes(document.documentElement));
+      if (!newDocumentElement)
+        return;
+
+      // New documentElement - let's check whether listeners are still here.
+      seenEvent = false;
+      window.dispatchEvent(new CustomEvent(customEventName));
+      if (seenEvent)
+        return;
+
+      // Listener did not fire. Reattach the listener and notify.
+      window.addEventListener(customEventName, handleCustomEvent);
+      for (const callback of this.onGlobalListenersRemoved)
+        callback();
+    }).observe(document, { childList: true });
   }
 
   expect(progress: InjectedScriptProgress, element: Element, options: FrameExpectParams, elements: Element[]): { matches: boolean, received?: any } {

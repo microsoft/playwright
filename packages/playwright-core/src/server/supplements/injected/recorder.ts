@@ -116,17 +116,14 @@ export class Recorder {
     this._glassPaneShadow.appendChild(styleElement);
 
     this._refreshListenersIfNeeded();
-    setInterval(() => {
-      this._refreshListenersIfNeeded();
-      if (params.isUnderTest && !(this as any)._reportedReadyForTest) {
-        (this as any)._reportedReadyForTest = true;
-        console.error('Recorder script ready for test');
-      }
-    }, 500);
+    injectedScript.onGlobalListenersRemoved.add(() => this._refreshListenersIfNeeded());
+
     globalThis._playwrightRefreshOverlay = () => {
       this._pollRecorderMode().catch(e => console.log(e)); // eslint-disable-line no-console
     };
     globalThis._playwrightRefreshOverlay();
+    if (params.isUnderTest)
+      console.error('Recorder script ready for test');
   }
 
   private _refreshListenersIfNeeded() {
