@@ -26,6 +26,7 @@ export type CallMetadata = {
   method: string;
   params: any;
   apiName?: string;
+  internal?: boolean;
   stack?: StackFrame[];
   log: string[];
   afterSnapshot?: string;
