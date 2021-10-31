@@ -298,14 +298,14 @@ class HtmlBuilder {
   private _processJsonSuite(suite: JsonSuite, fileId: string, projectName: string, path: string[], out: TestEntry[]) {
     const newPath = [...path, suite.title];
     suite.suites.map(s => this._processJsonSuite(s, fileId, projectName, newPath, out));
-    suite.tests.forEach(t => out.push(this._createTestEntry(t, fileId, projectName, newPath)));
+    suite.tests.forEach(t => out.push(this._createTestEntry(t, projectName, newPath)));
   }
 
-  private _createTestEntry(test: JsonTestCase, fileId: string, projectName: string, path: string[]): TestEntry {
+  private _createTestEntry(test: JsonTestCase, projectName: string, path: string[]): TestEntry {
     const duration = test.results.reduce((a, r) => a + r.duration, 0);
     this._tests.set(test.testId, test);
     const location = test.location;
-    path = [location.file + ':' + location.line,  ...path.slice(1)];
+    path = [...path.slice(1)];
     this._testPath.set(test.testId, path);
 
     return {

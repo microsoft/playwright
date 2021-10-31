@@ -96,7 +96,7 @@ it('should amend method on main request', async ({ page, server }) => {
   expect((await request).method).toBe('POST');
 });
 
-it.describe('', () => {
+it.describe('post data', () => {
   it.fixme(({ isAndroid }) => isAndroid, 'Post data does not work');
 
   it('should amend post data', async ({ page, server }) => {
