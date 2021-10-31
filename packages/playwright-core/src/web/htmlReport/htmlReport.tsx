@@ -49,6 +49,14 @@ export const Report: React.FC = () => {
 
   const filter = React.useMemo(() => Filter.parse(filterText), [filterText]);
 
+  if (window.location.protocol === 'file:') {
+    return <div className='needs-server-message'>
+      Playwright report needs to be served as a web page. Consider the following options to view it locally:
+      <div className='bash-snippet'>npx node-static playwright-report</div>
+      <div className='bash-snippet'>cd playwright-report &amp;&amp; python -m SimpleHTTPServer</div>
+    </div>;
+  }
+
   return <div className='vbox columns'>
     {!fetchError && <div className='flow-container'>
       <Route params=''>

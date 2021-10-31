@@ -446,6 +446,24 @@ a.no-decorations {
   }
 }
 
+.needs-server-message {
+  max-width: 500px;
+  margin: auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.bash-snippet {
+  margin-top: 10px;
+  font-family: monospace;
+  background: var(--color-fg-default);
+  color: var(--color-canvas-default);
+  border-radius: 6px;
+  padding: 20px;
+}
+
 .d-flex {
   display: flex !important;
 }

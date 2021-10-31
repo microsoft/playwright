@@ -248,13 +248,25 @@ if (!process.env.PW_CLI_TARGET_LANG) {
     require(playwrightTestPackagePath).addTestCommand(program);
     require(playwrightTestPackagePath).addShowReportCommand(program);
   } else {
-    const command = program.command('test').allowUnknownOption(true);
-    command.description('Run tests with Playwright Test. Available in @playwright/test package.');
-    command.action(async () => {
-      console.error('Please install @playwright/test package to use Playwright Test.');
-      console.error('  npm install -D @playwright/test');
-      process.exit(1);
-    });
+    {
+      const command = program.command('test').allowUnknownOption(true);
+      command.description('Run tests with Playwright Test. Available in @playwright/test package.');
+      command.action(async () => {
+        console.error('Please install @playwright/test package to use Playwright Test.');
+        console.error('  npm install -D @playwright/test');
+        process.exit(1);
+      });
+    }
+
+    {
+      const command = program.command('show-report').allowUnknownOption(true);
+      command.description('Show Playwright Test HTML report. Available in @playwright/test package.');
+      command.action(async () => {
+        console.error('Please install @playwright/test package to use Playwright Test.');
+        console.error('  npm install -D @playwright/test');
+        process.exit(1);
+      });
+    }
   }
 }
 
