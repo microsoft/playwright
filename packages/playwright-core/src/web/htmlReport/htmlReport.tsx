@@ -86,10 +86,10 @@ const AllTestFilesSummaryView: React.FC<{
   }, [report, filter]);
   return <div className='file-summary-list'>
     {report && <div className='d-flex'>
-      <form className='subnav-search width-full' onSubmit={
+      <form className='subnav-search' onSubmit={
         event => {
           event.preventDefault();
-          navigate(`#?q=${filterText || ''}`);
+          navigate(`#?q=${filterText ? encodeURIComponent(filterText) : ''}`);
         }
       }>
         <svg aria-hidden='true' height='16' viewBox='0 0 16 16' version='1.1' width='16' data-view-component='true' className='octicon subnav-search-icon'>
@@ -441,7 +441,9 @@ const ProjectLink: React.FunctionComponent<{
   report: HTMLReport,
   projectName: string,
 }> = ({ report, projectName }) => {
-  return <Link href={`#?q=p:${projectName}`}>
+  const encoded = encodeURIComponent(projectName);
+  const value = projectName === encoded ? projectName : `"${encoded.replace(/%22/g, '%5C%22')}"`;
+  return <Link href={`#?q=p:${value}`}>
     <span className={'label label-color-' + (report.projectNames.indexOf(projectName) % 6)}>
       {projectName}
     </span>
@@ -474,53 +476,120 @@ const Route: React.FunctionComponent<{
 };
 
 class Filter {
-  project = new Set<string>();
-  outcome = new Set<string>();
+  project: string[] = [];
+  status: string[] = [];
   text: string[] = [];
-  private static regex = /(".*?"|[\w]+:|[^"\s:]+)(?=\s*|\s*$)/g;
 
   empty(): boolean {
-    return this.project.size + this.outcome.size + this.text.length === 0;
+    return this.project.length + this.status.length + this.text.length === 0;
   }
 
   static parse(expression: string): Filter {
-    const filter = new Filter();
-    const match = (expression.match(Filter.regex) || []).map(t => {
-      return t.startsWith('"') && t.endsWith('"') ?  t.substring(1, t.length - 1) : t;
-    });
-    for (let i = 0; i < match.length; ++i) {
-      if (match[i] === 'p:' && match[i + 1]) {
-        filter.project.add(match[++i]);
+    const tokens = Filter.tokenize(expression);
+    const project = new Set<string>();
+    const status = new Set<string>();
+    const text: string[] = [];
+    for (const token of tokens) {
+      if (token.startsWith('p:')) {
+        project.add(token.slice(2));
         continue;
       }
-      if (match[i] === 's:' && match[i + 1]) {
-        const status = match[++i];
-        if (status === 'passed')
-          filter.outcome.add('expected');
-        else if (status === 'failed')
-          filter.outcome.add('unexpected');
-        else
-          filter.outcome.add(status);
+      if (token.startsWith('s:')) {
+        status.add(token.slice(2));
         continue;
       }
-      filter.text.push(match[i].toLowerCase());
+      text.push(token.toLowerCase());
     }
+
+    const filter = new Filter();
+    filter.text = text;
+    filter.project = [...project];
+    filter.status = [...status];
     return filter;
   }
 
+  private static tokenize(expression: string): string[] {
+    const result: string[] = [];
+    let quote: '\'' | '"' | undefined;
+    let token: string[] = [];
+    for (let i = 0; i < expression.length; ++i) {
+      const c = expression[i];
+      if (quote && c === '\\' && expression[i + 1] === quote) {
+        token.push(quote);
+        ++i;
+        continue;
+      }
+      if (c === '"' || c === '\'') {
+        if (quote === c) {
+          result.push(token.join('').toLowerCase());
+          token = [];
+          quote = undefined;
+        } else if (quote) {
+          token.push(c);
+        } else {
+          quote = c;
+        }
+        continue;
+      }
+      if (quote) {
+        token.push(c);
+        continue;
+      }
+      if (c === ' ') {
+        if (token.length) {
+          result.push(token.join('').toLowerCase());
+          token = [];
+        }
+        continue;
+      }
+      token.push(c);
+    }
+    if (token.length)
+      result.push(token.join('').toLowerCase());
+    return result;
+  }
+
   matches(test: TestCaseSummary): boolean {
-    if (this.project.size && !this.project.has(test.projectName))
-      return false;
-    if (this.outcome.size && !this.outcome.has(test.outcome))
-      return false;
-    if (this.text.length) {
-      if (!(test as any).fullTitle)
-        (test as any).fullTitle = (test.path.join(' ') + test.title).toLowerCase();
-      const fullTitle = (test as any).fullTitle;
-      const matches = !!this.text.find(t => fullTitle.includes(t));
+    if (!(test as any).searchValues) {
+      let status = 'passed';
+      if (test.outcome === 'unexpected')
+        status = 'failed';
+      if (test.outcome === 'flaky')
+        status = 'flaky';
+      if (test.outcome === 'skipped')
+        status = 'skipped';
+      const searchValues: SearchValues = {
+        text: (status + ' ' + test.projectName + ' ' + test.path.join(' ') + test.title).toLowerCase(),
+        project: test.projectName.toLowerCase(),
+        status: status as any
+      };
+      (test as any).searchValues = searchValues;
+    }
+
+    const searchValues = (test as any).searchValues as SearchValues;
+    if (this.project.length) {
+      const matches = !!this.project.find(p => searchValues.project.includes(p));
       if (!matches)
         return false;
     }
+    if (this.status.length) {
+      const matches = !!this.status.find(s => searchValues.status.includes(s));
+      if (!matches)
+        return false;
+    }
+
+    if (this.text.length) {
+      const matches = this.text.filter(t => searchValues.text.includes(t)).length === this.text.length;
+      if (!matches)
+        return false;
+    }
+
     return true;
   }
 }
+
+type SearchValues = {
+  text: string;
+  project: string;
+  status: 'passed' | 'failed' | 'flaky' | 'skipped';
+};
