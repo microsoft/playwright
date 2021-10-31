@@ -27,6 +27,7 @@ export type ReporterDescription =
   ['github'] |
   ['junit'] | ['junit', { outputFile?: string, stripANSIControlSequences?: boolean }] |
   ['json'] | ['json', { outputFile?: string }] |
+  ['html'] | ['html', { outputFolder?: string, open?: 'always' | 'never' | 'on-failure' }] |
   ['null'] |
   [string] | [string, any];
 
@@ -530,7 +531,7 @@ interface TestConfig {
    * ```
    *
    */
-  reporter?: LiteralUnion<'list'|'dot'|'line'|'github'|'json'|'junit'|'null', string> | ReporterDescription[];
+  reporter?: LiteralUnion<'list'|'dot'|'line'|'github'|'json'|'junit'|'null'|'html', string> | ReporterDescription[];
   /**
    * Whether to report slow tests. Pass `null` to disable this feature.
    *
