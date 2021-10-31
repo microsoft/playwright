@@ -128,14 +128,14 @@ class HtmlReporter {
     const reportFolder = htmlReportFolder(this._outputFolder);
     await removeFolders([reportFolder]);
     const builder = new HtmlBuilder(reportFolder, this.config.rootDir);
-    const ok = builder.build(reports);
+    const { ok, singleTestId } = builder.build(reports);
 
     if (process.env.PWTEST_SKIP_TEST_OUTPUT || process.env.CI)
       return;
 
     const shouldOpen = this._open === 'always' || (!ok && this._open === 'on-failure');
     if (shouldOpen) {
-      await showHTMLReport(reportFolder);
+      await showHTMLReport(reportFolder, singleTestId);
     } else {
       console.log('');
       console.log('To open last HTML report run:');
@@ -154,7 +154,7 @@ export function htmlReportFolder(outputFolder?: string): string {
   return path.resolve(process.cwd(), 'playwright-report');
 }
 
-export async function showHTMLReport(reportFolder: string | undefined) {
+export async function showHTMLReport(reportFolder: string | undefined, testId?: string) {
   const folder = reportFolder || htmlReportFolder();
   try {
     assert(fs.statSync(folder).isDirectory());
@@ -164,9 +164,11 @@ export async function showHTMLReport(reportFolder: string | undefined) {
     return;
   }
   const server = startHtmlReportServer(folder);
-  const url = await server.start(9323);
+  let url = await server.start(9323);
   console.log('');
   console.log(colors.cyan(`  Serving HTML report at ${url}. Press Ctrl+C to quit.`));
+  if (testId)
+    url += `#?testId=${testId}`;
   open(url);
   process.on('SIGINT', () => process.exit(0));
   await new Promise(() => {});
@@ -204,7 +206,7 @@ class HtmlBuilder {
     this._dataFolder = path.join(this._reportFolder, 'data');
   }
 
-  build(rawReports: JsonReport[]): boolean {
+  build(rawReports: JsonReport[]): { ok: boolean, singleTestId: string | undefined } {
     fs.mkdirSync(this._dataFolder, { recursive: true });
 
     const data = new Map<string, { testFile: TestFile, testFileSummary: TestFileSummary }>();
@@ -292,7 +294,12 @@ class HtmlBuilder {
       }
     }
 
-    return ok;
+    let singleTestId: string | undefined;
+    if (htmlReport.stats.total === 1) {
+      const testFile: TestFile  = data.values().next().value.testFile;
+      singleTestId = testFile.tests[0].testId;
+    }
+    return { ok, singleTestId };
   }
 
   private _processJsonSuite(suite: JsonSuite, fileId: string, projectName: string, path: string[], out: TestEntry[]) {
