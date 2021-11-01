@@ -62,15 +62,15 @@ function archive_compiled_chromium() {
 
   if [[ $1 == "--compile-mac"* ]]; then
     CHROMIUM_FOLDER_NAME="chrome-mac"
-    CHROMIUM_FILES_TO_ARCHIVE=("Chromium.app")
+    IFS=$'\n' CHROMIUM_FILES_TO_ARCHIVE=($(node "${SCRIPT_PATH}/compute_files_to_archive.js" "${CR_CHECKOUT_PATH}/src/infra/archive_config/mac-archive-rel.json"))
+    unset IFS
   elif [[ $1 == "--compile-linux"* ]]; then
     CHROMIUM_FOLDER_NAME="chrome-linux"
-    # Run python script and convert output to array.
-    IFS=$'\n' CHROMIUM_FILES_TO_ARCHIVE=($(python "${SCRIPT_PATH}/compute_files_to_archive.py" 64bit "${CR_CHECKOUT_PATH}/src/chrome/tools/build/linux/FILES.cfg"))
+    IFS=$'\n' CHROMIUM_FILES_TO_ARCHIVE=($(node "${SCRIPT_PATH}/compute_files_to_archive.js" "${CR_CHECKOUT_PATH}/src/infra/archive_config/linux-archive-rel.json"))
     unset IFS
   elif [[ $1 == "--compile-win64" ]]; then
     CHROMIUM_FOLDER_NAME="chrome-win"
-    IFS=$'\n\r' CHROMIUM_FILES_TO_ARCHIVE=($(python "${SCRIPT_PATH}/compute_files_to_archive.py" 64bit "${CR_CHECKOUT_PATH}/src/chrome/tools/build/win/FILES.cfg"))
+    IFS=$'\n\r' CHROMIUM_FILES_TO_ARCHIVE=($(node "${SCRIPT_PATH}/compute_files_to_archive.js" "${CR_CHECKOUT_PATH}/src/infra/archive_config/win-archive-rel.json"))
     unset IFS
   else
     echo "ERROR: unknown command, use --help for details"
