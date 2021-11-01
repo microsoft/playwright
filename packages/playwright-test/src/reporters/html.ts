@@ -18,11 +18,13 @@ import colors from 'colors/safe';
 import fs from 'fs';
 import open from 'open';
 import path from 'path';
+import { Transform, TransformCallback } from 'stream';
 import { FullConfig, Suite } from '../../types/testReporter';
 import { HttpServer } from 'playwright-core/lib/utils/httpServer';
 import { calculateSha1, removeFolders } from 'playwright-core/lib/utils/utils';
 import RawReporter, { JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep, JsonAttachment } from './raw';
 import assert from 'assert';
+import yazl from 'yazl';
 
 export type Stats = {
   total: number;
@@ -127,8 +129,8 @@ class HtmlReporter {
     });
     const reportFolder = htmlReportFolder(this._outputFolder);
     await removeFolders([reportFolder]);
-    const builder = new HtmlBuilder(reportFolder, this.config.rootDir);
-    const { ok, singleTestId } = builder.build(reports);
+    const builder = new HtmlBuilder(reportFolder);
+    const { ok, singleTestId } = await builder.build(reports);
 
     if (process.env.PWTEST_SKIP_TEST_OUTPUT || process.env.CI)
       return;
@@ -198,16 +200,16 @@ class HtmlBuilder {
   private _reportFolder: string;
   private _tests = new Map<string, JsonTestCase>();
   private _testPath = new Map<string, string[]>();
-  private _dataFolder: string;
+  private _dataZipFile: yazl.ZipFile;
   private _hasTraces = false;
 
-  constructor(outputDir: string, rootDir: string) {
+  constructor(outputDir: string) {
     this._reportFolder = path.resolve(process.cwd(), outputDir);
-    this._dataFolder = path.join(this._reportFolder, 'data');
+    fs.mkdirSync(this._reportFolder, { recursive: true });
+    this._dataZipFile = new yazl.ZipFile();
   }
 
-  build(rawReports: JsonReport[]): { ok: boolean, singleTestId: string | undefined } {
-    fs.mkdirSync(this._dataFolder, { recursive: true });
+  async build(rawReports: JsonReport[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
 
     const data = new Map<string, { testFile: TestFile, testFileSummary: TestFileSummary }>();
     for (const projectJson of rawReports) {
@@ -259,7 +261,7 @@ class HtmlBuilder {
         return t1.location.line - t2.location.line;
       });
 
-      fs.writeFileSync(path.join(this._dataFolder, fileId + '.json'), JSON.stringify(testFile, undefined, 2));
+      this._addDataFile(fileId + '.json', testFile);
     }
     const htmlReport: HTMLReport = {
       files: [...data.values()].map(e => e.testFileSummary),
@@ -272,15 +274,11 @@ class HtmlBuilder {
       return w2 - w1;
     });
 
-    fs.writeFileSync(path.join(this._dataFolder, 'report.json'), JSON.stringify(htmlReport, undefined, 2));
+    this._addDataFile('report.json', htmlReport);
 
     // Copy app.
     const appFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'webpack', 'htmlReport');
-    for (const file of fs.readdirSync(appFolder)) {
-      if (file.endsWith('.map'))
-        continue;
-      fs.copyFileSync(path.join(appFolder, file), path.join(this._reportFolder, file));
-    }
+    fs.copyFileSync(path.join(appFolder, 'index.html'), path.join(this._reportFolder, 'index.html'));
 
     // Copy trace viewer.
     if (this._hasTraces) {
@@ -294,12 +292,29 @@ class HtmlBuilder {
       }
     }
 
+    // Inline report data.
+    const indexFile = path.join(this._reportFolder, 'index.html');
+    fs.appendFileSync(indexFile, '<script>\nwindow.playwrightReportBase64 = "data:application/zip;base64,');
+    await new Promise(f => {
+      this._dataZipFile!.end(undefined, () => {
+        this._dataZipFile!.outputStream
+            .pipe(new Base64Encoder())
+            .pipe(fs.createWriteStream(indexFile, { flags: 'a' })).on('close', f);
+      });
+    });
+    fs.appendFileSync(indexFile, '";</script>');
+
     let singleTestId: string | undefined;
     if (htmlReport.stats.total === 1) {
       const testFile: TestFile  = data.values().next().value.testFile;
       singleTestId = testFile.tests[0].testId;
     }
+
     return { ok, singleTestId };
+  }
+
+  private _addDataFile(fileName: string, data: any) {
+    this._dataZipFile.addBuffer(Buffer.from(JSON.stringify(data)), fileName);
   }
 
   private _processJsonSuite(suite: JsonSuite, fileId: string, projectName: string, path: string[], out: TestEntry[]) {
@@ -358,6 +373,7 @@ class HtmlBuilder {
             const buffer = fs.readFileSync(a.path);
             const sha1 = calculateSha1(buffer) + path.extname(a.path);
             fileName = 'data/' + sha1;
+            fs.mkdirSync(path.join(this._reportFolder, 'data'), { recursive: true });
             fs.writeFileSync(path.join(this._reportFolder, 'data', sha1), buffer);
           } catch (e) {
           }
@@ -418,5 +434,31 @@ const addStats = (stats: Stats, delta: Stats): Stats => {
   stats.duration += delta.duration;
   return stats;
 };
+
+class Base64Encoder extends Transform {
+  private _remainder: Buffer | undefined;
+
+  override _transform(chunk: any, encoding: BufferEncoding, callback: TransformCallback): void {
+    if (this._remainder) {
+      chunk = Buffer.concat([this._remainder, chunk]);
+      this._remainder = undefined;
+    }
+
+    const remaining = chunk.length % 3;
+    if (remaining) {
+      this._remainder = chunk.slice(chunk.length - remaining);
+      chunk = chunk.slice(0, chunk.length - remaining);
+    }
+    chunk = chunk.toString('base64');
+    this.push(Buffer.from(chunk));
+    callback();
+  }
+
+  override _flush(callback: TransformCallback): void {
+    if (this._remainder)
+      this.push(Buffer.from(this._remainder.toString('base64')));
+    callback();
+  }
+}
 
 export default HtmlReporter;

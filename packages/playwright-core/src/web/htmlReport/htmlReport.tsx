@@ -20,12 +20,22 @@ import ansi2html from 'ansi-to-html';
 import { downArrow, rightArrow, TreeItem } from '../components/treeItem';
 import { TabbedPane } from '../traceViewer/ui/tabbedPane';
 import { msToString } from '../uiUtils';
+import { traceImage } from './images';
 import type { TestCase, TestResult, TestStep, TestFile, Stats, TestAttachment, HTMLReport, TestFileSummary, TestCaseSummary } from '@playwright/test/src/reporters/html';
+import type zip from '@zip.js/zip.js';
+
+const zipjs = (self as any).zip;
+
+declare global {
+  interface Window {
+    playwrightReportBase64?: string;
+    entries: Map<string, zip.Entry>;
+  }
+}
 
 export const Report: React.FC = () => {
   const searchParams = new URLSearchParams(window.location.hash.slice(1));
 
-  const [fetchError, setFetchError] = React.useState<string | undefined>();
   const [report, setReport] = React.useState<HTMLReport | undefined>();
   const [expandedFiles, setExpandedFiles] = React.useState<Map<string, boolean>>(new Map());
   const [filterText, setFilterText] = React.useState(searchParams.get('q') || '');
@@ -34,12 +44,11 @@ export const Report: React.FC = () => {
     if (report)
       return;
     (async () => {
-      try {
-        const report = await fetch('data/report.json', { cache: 'no-cache' }).then(r => r.json() as Promise<HTMLReport>);
-        setReport(report);
-      } catch (e) {
-        setFetchError(e.message);
-      }
+      const zipReader = new zipjs.ZipReader(new zipjs.Data64URIReader(window.playwrightReportBase64), { useWebWorkers: false }) as zip.ZipReader;
+      window.entries = new Map<string, zip.Entry>();
+      for (const entry of await zipReader.getEntries())
+        window.entries.set(entry.filename, entry);
+      setReport(await readJsonEntry('report.json') as HTMLReport);
       window.addEventListener('popstate', () => {
         const params = new URLSearchParams(window.location.hash.slice(1));
         setFilterText(params.get('q') || '');
@@ -49,16 +58,8 @@ export const Report: React.FC = () => {
 
   const filter = React.useMemo(() => Filter.parse(filterText), [filterText]);
 
-  if (window.location.protocol === 'file:') {
-    return <div className='needs-server-message'>
-      Playwright report needs to be served as a web page. Consider the following options to view it locally:
-      <div className='bash-snippet'>npx node-static playwright-report</div>
-      <div className='bash-snippet'>cd playwright-report &amp;&amp; python -m SimpleHTTPServer</div>
-    </div>;
-  }
-
   return <div className='vbox columns'>
-    {!fetchError && <div className='flow-container'>
+    {<div className='flow-container'>
       <Route params=''>
         <AllTestFilesSummaryView report={report} filter={filter} expandedFiles={expandedFiles} setExpandedFiles={setExpandedFiles} filterText={filterText} setFilterText={setFilterText}></AllTestFilesSummaryView>
       </Route>
@@ -176,8 +177,7 @@ const TestCaseView: React.FC<{
       const fileId = testId.split('-')[0];
       if (!fileId)
         return;
-      const result = await fetch(`data/${fileId}.json`, { cache: 'no-cache' });
-      const file = await result.json() as TestFile;
+      const file = await readJsonEntry(`${fileId}.json`) as TestFile;
       for (const t of file.tests) {
         if (t.testId === testId) {
           setTest(t);
@@ -253,7 +253,7 @@ const TestResultView: React.FC<{
     {!!traces.length && <Chip header='Traces'>
       {traces.map((a, i) => <div key={`trace-${i}`}>
         <a href={`trace/index.html?trace=${new URL(a.path!, window.location.href)}`}>
-          <img src='trace.png' style={{ width: 192, height: 117, marginLeft: 20 }} />
+          <img src={traceImage} style={{ width: 192, height: 117, marginLeft: 20 }} />
         </a>
       </div>)}
     </Chip>}
@@ -596,6 +596,13 @@ class Filter {
 
     return true;
   }
+}
+
+async function readJsonEntry(entryName: string): Promise<any> {
+  const reportEntry = window.entries.get(entryName);
+  const writer = new zipjs.TextWriter() as zip.TextWriter;
+  await reportEntry!.getData!(writer);
+  return JSON.parse(await writer.getData());
 }
 
 type SearchValues = {
