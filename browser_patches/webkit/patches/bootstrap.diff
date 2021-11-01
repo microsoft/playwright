@@ -4874,12 +4874,12 @@ index c894067585eb1e3dc79276d9d0e4f7562c84d801..ca8f975d99068ac471f624b421afdc6f
 +    if (!frame.selection().selection().isContentEditable())
 +        return { };
 +    if (replacementStart) {
-+        WebCore::CharacterRange range { (uint64_t) *replacementStart, replacementLength ? (uint64_t) *replacementLength : 0 };
++        WebCore::CharacterRange range { static_cast<uint64_t>(*replacementStart), replacementLength ? static_cast<uint64_t>(*replacementLength) : 0 };
 +        auto* element = frame.selection().rootEditableElementOrDocumentElement();
 +        if (element)
 +            frame.selection().setSelection(VisibleSelection(resolveCharacterRange(makeRangeSelectingNodeContents(*element), range)));
 +    }
-+    frame.editor().setComposition(text, { }, { }, (uint64_t) selectionStart, selectionStart + selectionLength);
++    frame.editor().setComposition(text, { }, { }, static_cast<uint64_t>(selectionStart), selectionStart + selectionLength);
 +    return { };
 +}
 +
