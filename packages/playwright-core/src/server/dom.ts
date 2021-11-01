@@ -62,12 +62,6 @@ export class FrameExecutionContext extends js.ExecutionContext {
     return js.evaluateExpression(this, true /* returnByValue */, expression, isFunction, arg);
   }
 
-  async evaluateAndWaitForSignals<Arg, R>(pageFunction: js.Func1<Arg, R>, arg?: Arg): Promise<R> {
-    return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
-      return this.evaluate(pageFunction, arg);
-    });
-  }
-
   async evaluateExpressionAndWaitForSignals(expression: string, isFunction: boolean | undefined, arg?: any): Promise<any> {
     return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
       return this.evaluateExpression(expression, isFunction, arg);
@@ -131,11 +125,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this;
   }
 
-  private async _evaluateInMainAndWaitForSignals<R, Arg>(pageFunction: js.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], R>, arg: Arg): Promise<R> {
-    const main = await this._context.frame._mainContext();
-    return main.evaluateAndWaitForSignals(pageFunction, [await main.injectedScript(), this, arg]);
-  }
-
   async evaluateInUtility<R, Arg>(pageFunction: js.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], R>, arg: Arg): Promise<R | 'error:notconnected'> {
     try {
       const utility = await this._context.frame._utilityContext();
@@ -151,6 +140,19 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     try {
       const utility = await this._context.frame._utilityContext();
       return await utility.evaluateHandle(pageFunction, [await utility.injectedScript(), this, arg]);
+    } catch (e) {
+      if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e))
+        throw e;
+      return 'error:notconnected';
+    }
+  }
+
+  async evaluatePoll<R, Arg>(progress: Progress, pageFunction: js.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], InjectedScriptPoll<R>>, arg: Arg): Promise<R | 'error:notconnected'> {
+    try {
+      const utility = await this._context.frame._utilityContext();
+      const poll = await utility.evaluateHandle(pageFunction, [await utility.injectedScript(), this, arg]);
+      const pollHandler = new InjectedScriptPollHandler(progress, poll);
+      return await pollHandler.finish();
     } catch (e) {
       if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e))
         throw e;
@@ -225,8 +227,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async dispatchEvent(type: string, eventInit: Object = {}) {
-    await this._evaluateInMainAndWaitForSignals(([injected, node, { type, eventInit }]) =>
-      injected.dispatchEvent(node, type, eventInit), { type, eventInit });
+    const main = await this._context.frame._mainContext();
+    await this._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
+      return main.evaluate(([injected, node, { type, eventInit }]) => injected.dispatchEvent(node, type, eventInit), [await main.injectedScript(), this, { type, eventInit }] as const);
+    });
     await this._page._doSlowMo();
   }
 
@@ -498,13 +502,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
       progress.log('  selecting specified option(s)');
-      const poll = await this.evaluateHandleInUtility(([injected, node, { optionsToSelect, force }]) => {
+      const result = await this.evaluatePoll(progress, ([injected, node, { optionsToSelect, force }]) => {
         return injected.waitForElementStatesAndPerformAction(node, ['visible', 'enabled'], force, injected.selectOptions.bind(injected, optionsToSelect));
       }, { optionsToSelect, force: options.force });
-      if (poll === 'error:notconnected')
-        return poll;
-      const pollHandler = new InjectedScriptPollHandler(progress, poll);
-      const result = await pollHandler.finishMaybeNotConnected();
       await this._page._doSlowMo();
       return result;
     });
@@ -523,13 +523,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     await progress.beforeInputAction(this);
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.log('  waiting for element to be visible, enabled and editable');
-      const poll = await this.evaluateHandleInUtility(([injected, node, { value, force }]) => {
+      const filled = await this.evaluatePoll(progress, ([injected, node, { value, force }]) => {
         return injected.waitForElementStatesAndPerformAction(node, ['visible', 'enabled', 'editable'], force, injected.fill.bind(injected, value));
       }, { value, force: options.force });
-      if (poll === 'error:notconnected')
-        return poll;
-      const pollHandler = new InjectedScriptPollHandler(progress, poll);
-      const filled = await pollHandler.finishMaybeNotConnected();
       progress.throwIfAborted();  // Avoid action that has side-effects.
       if (filled === 'error:notconnected')
         return filled;
@@ -551,11 +547,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
-      const poll = await this.evaluateHandleInUtility(([injected, node, force]) => {
+      const result = await this.evaluatePoll(progress, ([injected, node, force]) => {
         return injected.waitForElementStatesAndPerformAction(node, ['visible'], force, injected.selectText.bind(injected));
       }, options.force);
-      const pollHandler = new InjectedScriptPollHandler(progress, throwRetargetableDOMError(poll));
-      const result = await pollHandler.finishMaybeNotConnected();
       assertDone(throwRetargetableDOMError(result));
     }, this._page._timeoutSettings.timeout(options));
   }
@@ -573,24 +567,23 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (!payload.mimeType)
         payload.mimeType = mime.getType(payload.name) || 'application/octet-stream';
     }
-    const retargeted = await this.evaluateHandleInUtility(([injected, node, multiple]): 'error:notconnected' | Element => {
+    const result = await this.evaluateHandleInUtility(([injected, node, multiple]): Element | undefined => {
       const element = injected.retarget(node, 'follow-label');
       if (!element)
-        return 'error:notconnected';
+        return;
       if (element.tagName !== 'INPUT')
         throw injected.createStacklessError('Node is not an HTMLInputElement');
       if (multiple && !(element as HTMLInputElement).multiple)
         throw injected.createStacklessError('Non-multiple file input can only accept single file');
       return element;
     }, files.length > 1);
-    if (retargeted === 'error:notconnected')
-      return retargeted;
-    if (!retargeted._objectId)
-      return retargeted.rawValue() as 'error:notconnected';
+    if (result === 'error:notconnected' || !result.asElement())
+      return 'error:notconnected';
+    const retargeted = result.asElement() as ElementHandle<HTMLInputElement>;
     await progress.beforeInputAction(this);
     await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
-      await this._page._delegate.setInputFiles(retargeted as ElementHandle<HTMLInputElement>, files as types.FilePayload[]);
+      await this._page._delegate.setInputFiles(retargeted, files as types.FilePayload[]);
     });
     await this._page._doSlowMo();
     return 'done';
@@ -756,11 +749,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       progress.log(`  waiting for element to be ${state}`);
-      const poll = await this.evaluateHandleInUtility(([injected, node, state]) => {
+      const result = await this.evaluatePoll(progress, ([injected, node, state]) => {
         return injected.waitForElementStatesAndPerformAction(node, [state], false, () => 'done' as const);
       }, state);
-      const pollHandler = new InjectedScriptPollHandler(progress, throwRetargetableDOMError(poll));
-      assertDone(throwRetargetableDOMError(await pollHandler.finishMaybeNotConnected()));
+      assertDone(throwRetargetableDOMError(result));
     }, this._page._timeoutSettings.timeout(options));
   }
 
@@ -800,14 +792,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       progress.log(`  waiting for element to be visible, enabled and stable`);
     else
       progress.log(`  waiting for element to be visible and stable`);
-    const poll = await this.evaluateHandleInUtility(([injected, node, { waitForEnabled, force }]) => {
+    const result = await this.evaluatePoll(progress, ([injected, node, { waitForEnabled, force }]) => {
       return injected.waitForElementStatesAndPerformAction(node,
           waitForEnabled ? ['visible', 'stable', 'enabled'] : ['visible', 'stable'], force, () => 'done' as const);
     }, { waitForEnabled, force });
-    if (poll === 'error:notconnected')
-      return poll;
-    const pollHandler = new InjectedScriptPollHandler(progress, poll);
-    const result = await pollHandler.finishMaybeNotConnected();
+    if (result === 'error:notconnected')
+      return result;
     if (waitForEnabled)
       progress.log('  element is visible, enabled and stable');
     else
@@ -871,20 +861,6 @@ export class InjectedScriptPollHandler<T> {
       const result = await this._poll!.evaluate(poll => poll.run());
       await this._finishInternal();
       return result;
-    } finally {
-      await this.cancel();
-    }
-  }
-
-  async finishMaybeNotConnected(): Promise<T | 'error:notconnected'> {
-    try {
-      const result = await this._poll!.evaluate(poll => poll.run());
-      await this._finishInternal();
-      return result;
-    } catch (e) {
-      if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e))
-        throw e;
-      return 'error:notconnected';
     } finally {
       await this.cancel();
     }
