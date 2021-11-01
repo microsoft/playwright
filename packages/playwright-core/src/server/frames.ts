@@ -453,7 +453,8 @@ export class Frame extends SdkObject {
     if (this._parentFrame)
       this._parentFrame._childFrames.add(this);
 
-    this._onLifecycleEvent('commit');
+    this._firedLifecycleEvents.add('commit');
+    this._subtreeLifecycleEvents.add('commit');
   }
 
   _onLifecycleEvent(event: types.LifecycleEvent) {
