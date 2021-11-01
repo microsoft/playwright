@@ -757,25 +757,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async waitForSelector(metadata: CallMetadata, selector: string, options: types.WaitForElementOptions = {}): Promise<ElementHandle<Element> | null> {
-    const { state = 'visible' } = options;
-    if (!['attached', 'detached', 'visible', 'hidden'].includes(state))
-      throw new Error(`state: expected one of (attached|detached|visible|hidden)`);
-    const info = this._page.parseSelector(selector, options);
-    const task = waitForSelectorTask(info, state, false, this);
-    const controller = new ProgressController(metadata, this);
-    return controller.run(async progress => {
-      progress.log(`waiting for selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);
-      const context = await this._context.frame._context(info.world);
-      const injected = await context.injectedScript();
-      const pollHandler = new InjectedScriptPollHandler(progress, await task(injected));
-      const result = await pollHandler.finishHandle();
-      if (!result.asElement()) {
-        result.dispose();
-        return null;
-      }
-      const handle = result.asElement() as ElementHandle<Element>;
-      return handle._adoptTo(await this._context.frame._mainContext());
-    }, this._page._timeoutSettings.timeout(options));
+    return this._context.frame.waitForSelector(metadata, selector, options, this);
   }
 
   async _adoptTo(context: FrameExecutionContext): Promise<ElementHandle<T>> {
@@ -924,8 +906,8 @@ function compensateHalfIntegerRoundingError(point: types.Point) {
 
 export type SchedulableTask<T> = (injectedScript: js.JSHandle<InjectedScript>) => Promise<js.JSHandle<InjectedScriptPoll<T>>>;
 
-export function waitForSelectorTask(selector: SelectorInfo, state: 'attached' | 'detached' | 'visible' | 'hidden', omitReturnValue?: boolean, root?: ElementHandle): SchedulableTask<Element | undefined> {
-  return injectedScript => injectedScript.evaluateHandle((injected, { parsed, strict, state, omitReturnValue, root }) => {
+export function waitForSelectorTask(selector: SelectorInfo, state: 'attached' | 'detached' | 'visible' | 'hidden', returnHandle: boolean, root: ElementHandle | undefined): SchedulableTask<Element | undefined> {
+  return injectedScript => injectedScript.evaluateHandle((injected, { parsed, strict, state, returnHandle, root }) => {
     let lastElement: Element | undefined;
 
     return injected.pollRaf(progress => {
@@ -948,7 +930,7 @@ export function waitForSelectorTask(selector: SelectorInfo, state: 'attached' | 
       }
 
       const hasElement = !!element;
-      if (omitReturnValue)
+      if (!returnHandle)
         element = undefined;
 
       switch (state) {
@@ -962,7 +944,7 @@ export function waitForSelectorTask(selector: SelectorInfo, state: 'attached' | 
           return !visible ? undefined : progress.continuePolling;
       }
     });
-  }, { parsed: selector.parsed, strict: selector.strict, state, omitReturnValue, root });
+  }, { parsed: selector.parsed, strict: selector.strict, state, returnHandle, root });
 }
 
 export const kUnableToAdoptErrorMessage = 'Unable to adopt element handle from a different document';
