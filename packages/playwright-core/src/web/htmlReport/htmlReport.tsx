@@ -94,7 +94,10 @@ const AllTestFilesSummaryView: React.FC<{
     return result;
   }, [report, filter]);
   return <div className='file-summary-list'>
-    {report && <div className='d-flex'>
+    {report && <div>
+      <div className='status-container ml-2 pl-2 d-flex'>
+        <StatsNavView stats={report.stats}></StatsNavView>
+      </div>
       <form className='subnav-search' onSubmit={
         event => {
           event.preventDefault();
@@ -109,9 +112,6 @@ const AllTestFilesSummaryView: React.FC<{
           setFilterText(e.target.value);
         }}></input>
       </form>
-      <div className='ml-2 pl-2 d-flex'>
-        <StatsNavView stats={report.stats}></StatsNavView>
-      </div>
     </div>}
     {report && filteredFiles.map(({ file, defaultExpanded }) => {
       return <TestFileSummaryView

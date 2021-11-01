@@ -301,7 +301,7 @@ a.no-decorations {
 .chip-header.expanded-false,
 .chip-header.expanded-true {
   cursor: pointer;
-} 
+}
 
 .chip-body {
   border: 1px solid var(--color-border-default);
@@ -340,6 +340,11 @@ a.no-decorations {
 
 .test-summary.outcome-skipped {
   color: var(--color-fg-muted);
+}
+
+
+.status-container {
+  float: right;
 }
 
 .octicon {
@@ -597,5 +602,11 @@ article, aside, details, figcaption, figure, footer, header, main, menu, nav, se
   .subnav-item {
     padding: 5px 3px;
     border: none;
+  }
+
+  .status-container {
+    float: none;
+    margin: 0 !important;
+    overflow: hidden;
   }
 }
