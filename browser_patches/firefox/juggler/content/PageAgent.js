@@ -148,6 +148,7 @@ class PageAgent {
         goBack: this._goBack.bind(this),
         goForward: this._goForward.bind(this),
         insertText: this._insertText.bind(this),
+        setComposition: this._setComposition.bind(this),
         navigate: this._navigate.bind(this),
         reload: this._reload.bind(this),
         screenshot: this._screenshot.bind(this),
@@ -784,6 +785,37 @@ class PageAgent {
   async _insertText({text}) {
     const frame = this._frameTree.mainFrame();
     frame.textInputProcessor().commitCompositionWith(text);
+  }
+
+  async _setComposition({
+    text,
+    selectionStart,
+    selectionEnd,
+    replacementStart,
+    replacementEnd,
+  }) {
+    const frame = this._frameTree.mainFrame();
+    const tip = frame.textInputProcessor();
+    if (replacementStart !== undefined && replacementEnd !== undefined) {
+      const window = frame.domWindow();
+      const document = window.document;
+      const activeElement = document.activeElement;
+      if (activeElement !== null) {
+        if (
+          activeElement.nodeName === "TEXTAREA" ||
+          activeElement.nodeName === "INPUT"
+        ) {
+          activeElement.setSelectionRange(replacementStart, replacementEnd);
+        } else {
+          const selection = window.getSelection();
+          const anchorNode = selection.anchorNode;
+          selection.setBaseAndExtent(anchorNode, replacementStart, anchorNode, replacementEnd);
+        }
+      }
+    }
+    tip.setPendingCompositionString(text);
+    tip.setCaretInPendingComposition(selectionEnd);
+    tip.flushPendingComposition();
   }
 
   async _crash() {

@@ -362,6 +362,10 @@ class PageHandler {
     return await this._contentPage.send('insertText', options);
   }
 
+  async ['Page.setComposition'](options) {
+    return await this._contentPage.send('setComposition', options);
+  }
+
   async ['Page.crash'](options) {
     return await this._contentPage.send('crash', options);
   }

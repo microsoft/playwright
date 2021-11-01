@@ -934,6 +934,15 @@ const Page = {
         text: t.String,
       }
     },
+    'setComposition': {
+      params: {
+        text: t.String,
+        selectionStart: t.Number,
+        selectionEnd: t.Number,
+        replacementStart: t.Optional(t.Number),
+        replacementEnd: t.Optional(t.Number),
+      },
+    },
     'crash': {
       params: {}
     },
