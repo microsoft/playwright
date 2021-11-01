@@ -152,9 +152,9 @@ const TestFileSummaryView: React.FC<{
       <div key={`test-${test.testId}`} className={'test-summary outcome-' + test.outcome}>
         <span style={{ float: 'right' }}>{msToString(test.duration)}</span>
         {statusIcon(test.outcome)}
-        <Link href={`#?testId=${test.testId}`}>
-          {test.title}
-          <span className='test-summary-path'>— {test.path.join(' › ')}</span>
+        <Link href={`#?testId=${test.testId}`} title={[...test.path, test.title].join(' › ')}>
+          {[...test.path, test.title].join(' › ')}
+          <span className='test-summary-path'>— {test.location.file}:{test.location.line}</span>
         </Link>
         {report.projectNames.length > 1 && !!test.projectName &&
           <ProjectLink report={report} projectName={test.projectName}></ProjectLink>}
@@ -189,8 +189,9 @@ const TestCaseView: React.FC<{
 
   const [selectedResultIndex, setSelectedResultIndex] = React.useState(0);
   return <div className='test-case-column vbox'>
+    {test && <div className='test-case-path'>{test.path.join(' › ')}</div>}
     {test && <div className='test-case-title'>{test?.title}</div>}
-    {test && <div className='test-case-location'>{test.path.join(' › ')}</div>}
+    {test && <div className='test-case-location'>{test.location.file}:{test.location.line}</div>}
     {test && !!test.projectName && <ProjectLink report={report} projectName={test.projectName}></ProjectLink>}
     {test && <TabbedPane tabs={
       test.results.map((result, index) => ({
@@ -459,9 +460,10 @@ const ProjectLink: React.FunctionComponent<{
 const Link: React.FunctionComponent<{
   href: string,
   className?: string,
+  title?: string,
   children: any,
-}> = ({ href, className, children }) => {
-  return <a className={`no-decorations${className ? ' ' + className : ''}`} href={href}>{children}</a>;
+}> = ({ href, className, children, title }) => {
+  return <a className={`no-decorations${className ? ' ' + className : ''}`} href={href} title={title}>{children}</a>;
 };
 
 const Route: React.FunctionComponent<{
