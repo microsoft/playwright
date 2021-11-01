@@ -19,6 +19,6 @@ import * as ReactDOM from 'react-dom';
 import { Report } from './htmlReport';
 import './colors.css';
 
-(async () => {
+window.onload = () => {
   ReactDOM.render(<Report />, document.querySelector('#root'));
-})();
+};

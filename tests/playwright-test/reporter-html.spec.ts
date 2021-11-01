@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
 import { test as baseTest, expect } from './playwright-test-fixtures';
 import { HttpServer } from 'playwright-core/lib/utils/httpServer';
 import { startHtmlReportServer } from '../../packages/playwright-test/lib/reporters/html';
@@ -34,7 +33,7 @@ const test = baseTest.extend<{ showReport: () => Promise<void> }>({
 
 test.use({ channel: 'chrome' });
 
-test('should generate report', async ({ runInlineTest }, testInfo) => {
+test('should generate report', async ({ runInlineTest, showReport, page }) => {
   await runInlineTest({
     'playwright.config.ts': `
       module.exports = { name: 'project-name' };
@@ -45,7 +44,7 @@ test('should generate report', async ({ runInlineTest }, testInfo) => {
       test('fails', async ({}) => {
         expect(1).toBe(2);
       });
-      test('skip', async ({}) => {
+      test('skipped', async ({}) => {
         test.skip('Does not work')
       });
       test('flaky', async ({}, testInfo) => {
@@ -53,87 +52,19 @@ test('should generate report', async ({ runInlineTest }, testInfo) => {
       });
     `,
   }, { reporter: 'dot,html', retries: 1 });
-  const report = testInfo.outputPath('playwright-report', 'data', 'report.json');
-  const reportObject = JSON.parse(fs.readFileSync(report, 'utf-8'));
-  delete reportObject.testIdToFileId;
-  delete reportObject.files[0].fileId;
-  delete reportObject.files[0].stats.duration;
-  delete reportObject.stats.duration;
 
-  const fileNames = new Set<string>();
-  for (const test of reportObject.files[0].tests) {
-    fileNames.add(testInfo.outputPath('playwright-report', 'data', test.fileId + '.json'));
-    delete test.testId;
-    delete test.fileId;
-    delete test.location.line;
-    delete test.location.column;
-    delete test.duration;
-    delete test.path;
-  }
-  expect(reportObject).toEqual({
-    files: [
-      {
-        fileName: 'a.test.js',
-        tests: [
-          {
-            title: 'fails',
-            projectName: 'project-name',
-            location: {
-              file: 'a.test.js'
-            },
-            outcome: 'unexpected',
-            ok: false
-          },
-          {
-            title: 'flaky',
-            projectName: 'project-name',
-            location: {
-              file: 'a.test.js'
-            },
-            outcome: 'flaky',
-            ok: true
-          },
-          {
-            title: 'passes',
-            projectName: 'project-name',
-            location: {
-              file: 'a.test.js'
-            },
-            outcome: 'expected',
-            ok: true
-          },
-          {
-            title: 'skip',
-            projectName: 'project-name',
-            location: {
-              file: 'a.test.js'
-            },
-            outcome: 'skipped',
-            ok: false
-          }
-        ],
-        stats: {
-          total: 4,
-          expected: 1,
-          unexpected: 1,
-          flaky: 1,
-          skipped: 1,
-          ok: false,
-        }
-      }
-    ],
-    projectNames: [
-      'project-name'
-    ],
-    stats: {
-      expected: 1,
-      flaky: 1,
-      ok: false,
-      skipped: 1,
-      total: 4,
-      unexpected: 1,
-    }
-  });
+  await showReport();
+
+  await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('4');
+  await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('1');
+  await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('1');
+  await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('1');
+  await expect(page.locator('.subnav-item:has-text("Skipped") .counter')).toHaveText('1');
+
+  await expect(page.locator('.test-summary.outcome-unexpected >> text=fails')).toBeVisible();
+  await expect(page.locator('.test-summary.outcome-flaky >> text=flaky')).toBeVisible();
+  await expect(page.locator('.test-summary.outcome-expected >> text=passes')).toBeVisible();
+  await expect(page.locator('.test-summary.outcome-skipped >> text=skipped')).toBeVisible();
 });
 
 test('should not throw when attachment is missing', async ({ runInlineTest }) => {
