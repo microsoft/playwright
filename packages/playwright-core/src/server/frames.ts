@@ -70,7 +70,7 @@ export type NavigationEvent = {
 };
 
 export type SchedulableTask<T> = (injectedScript: js.JSHandle<InjectedScript>) => Promise<js.JSHandle<InjectedScriptPoll<T>>>;
-export type DomTaskBody<T, R, E> = (progress: InjectedScriptProgress, element: E, data: T, elements: Element[], continuePolling: symbol) => R | symbol;
+export type DomTaskBody<T, R, E> = (progress: InjectedScriptProgress, element: E, data: T, elements: Element[]) => R | symbol;
 
 export class FrameManager {
   private _page: Page;
@@ -1158,7 +1158,7 @@ export class Frame extends SdkObject {
     const controller = new ProgressController(metadata, this);
     const querySelectorAll = options.expression === 'to.have.count' || options.expression.endsWith('.array');
     const mainWorld = options.expression === 'to.have.property';
-    return await this._scheduleRerunnableTaskWithController(controller, selector, (progress, element, options, elements, continuePolling) => {
+    return await this._scheduleRerunnableTaskWithController(controller, selector, (progress, element, options, elements) => {
       if (!element) {
         // expect(locator).toBeHidden() passes when there is no element.
         if (!options.isNot && options.expression === 'to.be.hidden')
@@ -1181,7 +1181,7 @@ export class Frame extends SdkObject {
           return { matches: expectsEmptyCount, received: 0 };
 
         // When none of the above applies, keep waiting for the element.
-        return continuePolling;
+        return progress.continuePolling;
       }
 
       const { matches, received } = progress.injectedScript.expect(progress, element, options, elements);
@@ -1192,7 +1192,7 @@ export class Frame extends SdkObject {
         progress.setIntermediateResult(received);
         if (!Array.isArray(received))
           progress.log(`  unexpected value "${received}"`);
-        return continuePolling;
+        return progress.continuePolling;
       }
 
       // Reached the expected state!
@@ -1226,8 +1226,8 @@ export class Frame extends SdkObject {
         return result;
       };
       if (typeof polling !== 'number')
-        return injectedScript.pollRaf((progress, continuePolling) => predicate(arg) || continuePolling);
-      return injectedScript.pollInterval(polling, (progress, continuePolling) => predicate(arg) || continuePolling);
+        return injectedScript.pollRaf(progress => predicate(arg) || progress.continuePolling);
+      return injectedScript.pollInterval(polling, progress => predicate(arg) || progress.continuePolling);
     }, { expression, isFunction, polling: options.pollingInterval, arg });
     return controller.run(
         progress => this._scheduleRerunnableHandleTask(progress, world, task),
@@ -1286,7 +1286,7 @@ export class Frame extends SdkObject {
           const callback = injected.eval(callbackText) as DomTaskBody<T, R, Element | undefined>;
           const poller = logScale ? injected.pollLogScale.bind(injected) : injected.pollRaf.bind(injected);
           let markedElements = new Set<Element>();
-          return poller((progress, continuePolling) => {
+          return poller(progress => {
             let element: Element | undefined;
             let elements: Element[] = [];
             if (querySelectorAll) {
@@ -1301,7 +1301,7 @@ export class Frame extends SdkObject {
             }
 
             if (!element && !omitAttached)
-              return continuePolling;
+              return progress.continuePolling;
 
             if (snapshotName) {
               const previouslyMarkedElements = markedElements;
@@ -1316,7 +1316,7 @@ export class Frame extends SdkObject {
               }
             }
 
-            return callback(progress, element, taskData as T, elements, continuePolling);
+            return callback(progress, element, taskData as T, elements);
           });
         }, { info, taskData, callbackText, querySelectorAll: options.querySelectorAll, logScale: options.logScale, omitAttached: options.omitAttached, snapshotName: progress.metadata.afterSnapshot });
       }, true);
