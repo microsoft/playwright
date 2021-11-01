@@ -568,6 +568,36 @@ it.describe('download event', () => {
     expect(fs.readFileSync(path).toString()).toBe('Hello world');
     await page.close();
   });
+
+  it('should emit download event from nested iframes', async ({ server, browser, browserName }, testInfo) => {
+    it.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/9922');
+    const page = await browser.newPage({ acceptDownloads: true });
+    server.setRoute('/1', (req, res) => {
+      res.setHeader('Content-Type', 'text/html');
+      res.end(`<iframe src="${server.PREFIX}/2"></iframe>`);
+    });
+    server.setRoute('/2', (req, res) => {
+      res.setHeader('Content-Type', 'text/html');
+      res.end(`<iframe src="${server.PREFIX}/3"></iframe>`);
+    });
+    server.setRoute('/3', (req, res) => {
+      res.setHeader('Content-Type', 'text/html');
+      res.end(` <a href="${server.PREFIX}/download">download</a>`);
+    });
+    await page.goto(server.PREFIX + '/1');
+
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.frame({
+        url: server.PREFIX + '/3'
+      }).click('text=download')
+    ]);
+    const userPath = testInfo.outputPath('download.txt');
+    await download.saveAs(userPath);
+    expect(fs.existsSync(userPath)).toBeTruthy();
+    expect(fs.readFileSync(userPath).toString()).toBe('Hello world');
+    await page.close();
+  });
 });
 
 it('should be able to download a PDF file', async ({ browser, server, asset }) => {
