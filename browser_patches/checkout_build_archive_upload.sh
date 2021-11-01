@@ -108,7 +108,7 @@ elif [[ "$BUILD_FLAVOR" == "chromium-linux-arm64" ]]; then
   EXTRA_BUILD_ARGS="--compile-linux-arm64"
   EXTRA_ARCHIVE_ARGS="--compile-linux-arm64"
   EXPECTED_HOST_OS="Ubuntu"
-  EXPECTED_HOST_OS_VERSION="18.04"
+  EXPECTED_HOST_OS_VERSION="20.04"
   BUILD_BLOB_NAME="chromium-linux-arm64.zip"
 
 # ===========================
