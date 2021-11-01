@@ -570,7 +570,6 @@ it.describe('download event', () => {
   });
 
   it('should emit download event from nested iframes', async ({ server, browser, browserName }, testInfo) => {
-    it.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/9922');
     const page = await browser.newPage({ acceptDownloads: true });
     server.setRoute('/1', (req, res) => {
       res.setHeader('Content-Type', 'text/html');
