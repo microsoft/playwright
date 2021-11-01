@@ -136,6 +136,8 @@ svg {
   font-family: monospace;
   background-color: var(--color-canvas-subtle);
   margin-left: 24px;
+  line-height: normal;
+  padding: 5px;
 }
 
 .test-result > div {

@@ -25,6 +25,7 @@ import { calculateSha1, removeFolders } from 'playwright-core/lib/utils/utils';
 import RawReporter, { JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep, JsonAttachment } from './raw';
 import assert from 'assert';
 import yazl from 'yazl';
+import { stripAnsiEscapes } from './base';
 
 export type Stats = {
   total: number;
@@ -385,13 +386,14 @@ class HtmlBuilder {
           };
         }
 
-        if ((a.name === 'stdout' || a.name === 'stderr') &&
-          a.contentType === 'text/plain' &&
-          lastAttachment &&
-          lastAttachment.name === a.name &&
-          lastAttachment.contentType === a.contentType) {
-          lastAttachment.body += a.body as string;
-          return null;
+        if ((a.name === 'stdout' || a.name === 'stderr') && a.contentType === 'text/plain') {
+          if (lastAttachment &&
+            lastAttachment.name === a.name &&
+            lastAttachment.contentType === a.contentType) {
+            lastAttachment.body += stripAnsiEscapes(a.body as string);
+            return null;
+          }
+          a.body = stripAnsiEscapes(a.body as string);
         }
         lastAttachment = a;
         return a;
