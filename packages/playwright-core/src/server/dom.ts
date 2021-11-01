@@ -952,7 +952,7 @@ export function waitForSelectorTask(selector: SelectorInfo, state: 'attached' | 
   return injectedScript => injectedScript.evaluateHandle((injected, { parsed, strict, state, omitReturnValue, root }) => {
     let lastElement: Element | undefined;
 
-    return injected.pollRaf((progress, continuePolling) => {
+    return injected.pollRaf(progress => {
       const elements = injected.querySelectorAll(parsed, root || document);
       let element: Element | undefined  = elements[0];
       const visible = element ? injected.isVisible(element) : false;
@@ -977,13 +977,13 @@ export function waitForSelectorTask(selector: SelectorInfo, state: 'attached' | 
 
       switch (state) {
         case 'attached':
-          return hasElement ? element : continuePolling;
+          return hasElement ? element : progress.continuePolling;
         case 'detached':
-          return !hasElement ? undefined : continuePolling;
+          return !hasElement ? undefined : progress.continuePolling;
         case 'visible':
-          return visible ? element : continuePolling;
+          return visible ? element : progress.continuePolling;
         case 'hidden':
-          return !visible ? undefined : continuePolling;
+          return !visible ? undefined : progress.continuePolling;
       }
     });
   }, { parsed: selector.parsed, strict: selector.strict, state, omitReturnValue, root });
