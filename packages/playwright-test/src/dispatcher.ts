@@ -96,7 +96,7 @@ export class Dispatcher {
 
     // 2. Start the worker if it is down.
     if (!worker) {
-      worker = this._createWorker(job.workerHash);
+      worker = this._createWorker(job.workerHash, index);
       this._workerSlots[index].worker = worker;
       worker.on('exit', () => this._workerSlots[index].worker = undefined);
       await worker.init(job, this._loader.serialize());
@@ -337,8 +337,8 @@ export class Dispatcher {
     return result;
   }
 
-  _createWorker(hash: string) {
-    const worker = new Worker(hash);
+  _createWorker(hash: string, parallelIndex: number) {
+    const worker = new Worker(hash, parallelIndex);
     worker.on('stdOut', (params: TestOutputPayload) => {
       const chunk = chunkFromParams(params);
       if (worker.didFail()) {
@@ -404,15 +404,17 @@ let lastWorkerIndex = 0;
 class Worker extends EventEmitter {
   private process: child_process.ChildProcess;
   private _hash: string;
+  private parallelIndex: number;
   private workerIndex: number;
   private _didSendStop = false;
   private _didFail = false;
   private didExit = false;
 
-  constructor(hash: string) {
+  constructor(hash: string, parallelIndex: number) {
     super();
     this.workerIndex = lastWorkerIndex++;
     this._hash = hash;
+    this.parallelIndex = parallelIndex;
 
     this.process = child_process.fork(path.join(__dirname, 'worker.js'), {
       detached: false,
@@ -420,6 +422,7 @@ class Worker extends EventEmitter {
         FORCE_COLOR: process.stdout.isTTY ? '1' : '0',
         DEBUG_COLORS: process.stdout.isTTY ? '1' : '0',
         TEST_WORKER_INDEX: String(this.workerIndex),
+        TEST_PARALLEL_INDEX: String(this.parallelIndex),
         ...process.env
       },
       // Can't pipe since piping slows down termination for some reason.
@@ -439,6 +442,7 @@ class Worker extends EventEmitter {
   async init(testGroup: TestGroup, loaderData: SerializedLoaderData) {
     const params: WorkerInitParams = {
       workerIndex: this.workerIndex,
+      parallelIndex: this.parallelIndex,
       repeatEachIndex: testGroup.repeatEachIndex,
       projectIndex: testGroup.projectIndex,
       loader: loaderData,

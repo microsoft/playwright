@@ -24,6 +24,7 @@ test('should run in parallel', async ({ runInlineTest }) => {
       const { test } = pwt;
       test('succeeds', async ({}, testInfo) => {
         expect(testInfo.workerIndex).toBe(0);
+        expect(testInfo.parallelIndex).toBe(0);
         // First test waits for the second to start to work around the race.
         while (true) {
           if (fs.existsSync(path.join(testInfo.project.outputDir, 'parallel-index.txt')))
@@ -41,6 +42,7 @@ test('should run in parallel', async ({ runInlineTest }) => {
         fs.mkdirSync(testInfo.project.outputDir, { recursive: true });
         fs.writeFileSync(path.join(testInfo.project.outputDir, 'parallel-index.txt'), 'TRUE');
         expect(testInfo.workerIndex).toBe(1);
+        expect(testInfo.parallelIndex).toBe(1);
       });
     `,
   });
@@ -54,14 +56,17 @@ test('should reuse worker for multiple tests', async ({ runInlineTest }) => {
       const { test } = pwt;
       test('succeeds 1', async ({}, testInfo) => {
         expect(testInfo.workerIndex).toBe(0);
+        expect(testInfo.parallelIndex).toBe(0);
       });
 
       test('succeeds 2', async ({}, testInfo) => {
         expect(testInfo.workerIndex).toBe(0);
+        expect(testInfo.parallelIndex).toBe(0);
       });
 
       test('succeeds 3', async ({}, testInfo) => {
         expect(testInfo.workerIndex).toBe(0);
+        expect(testInfo.parallelIndex).toBe(0);
       });
     `,
   });
@@ -75,15 +80,18 @@ test('should reuse worker after test.fixme()', async ({ runInlineTest }) => {
       const { test } = pwt;
       test('succeeds 1', async ({}, testInfo) => {
         expect(testInfo.workerIndex).toBe(0);
+        expect(testInfo.parallelIndex).toBe(0);
       });
 
       test('fixme 1', async ({}, testInfo) => {
         test.fixme();
         expect(testInfo.workerIndex).toBe(0);
+        expect(testInfo.parallelIndex).toBe(0);
       });
 
       test('succeeds 2', async ({}, testInfo) => {
         expect(testInfo.workerIndex).toBe(0);
+        expect(testInfo.parallelIndex).toBe(0);
       });
     `,
   });
@@ -98,15 +106,18 @@ test('should reuse worker after test.skip()', async ({ runInlineTest }) => {
       const { test } = pwt;
       test('succeeds 1', async ({}, testInfo) => {
         expect(testInfo.workerIndex).toBe(0);
+        expect(testInfo.parallelIndex).toBe(0);
       });
 
       test('skip 1', async ({}, testInfo) => {
         test.skip();
         expect(testInfo.workerIndex).toBe(0);
+        expect(testInfo.parallelIndex).toBe(0);
       });
 
       test('succeeds 2', async ({}, testInfo) => {
         expect(testInfo.workerIndex).toBe(0);
+        expect(testInfo.parallelIndex).toBe(0);
       });
     `,
   });
@@ -121,6 +132,7 @@ test('should not use new worker after test.fail()', async ({ runInlineTest }) =>
       const { test } = pwt;
       test('succeeds 1', async ({}, testInfo) => {
         expect(testInfo.workerIndex).toBe(0);
+        expect(testInfo.parallelIndex).toBe(0);
       });
 
       test('fail 1', async ({}, testInfo) => {
@@ -130,6 +142,7 @@ test('should not use new worker after test.fail()', async ({ runInlineTest }) =>
 
       test('succeeds 2', async ({}, testInfo) => {
         expect(testInfo.workerIndex).toBe(0);
+        expect(testInfo.parallelIndex).toBe(0);
       });
     `,
   });
@@ -144,6 +157,7 @@ test('should use new worker after test failure', async ({ runInlineTest }) => {
       const { test } = pwt;
       test('succeeds 1', async ({}, testInfo) => {
         expect(testInfo.workerIndex).toBe(0);
+        expect(testInfo.parallelIndex).toBe(0);
       });
 
       test('fail 1', async ({}, testInfo) => {
@@ -152,9 +166,10 @@ test('should use new worker after test failure', async ({ runInlineTest }) => {
 
       test('succeeds 2', async ({}, testInfo) => {
         expect(testInfo.workerIndex).toBe(1);
+        expect(testInfo.parallelIndex).toBe(0);
       });
     `,
-  });
+  }, { workers: 1 });
   expect(result.passed).toBe(2);
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
@@ -169,13 +184,38 @@ test('should not reuse worker for different suites', async ({ runInlineTest }) =
       const { test } = pwt;
       test('succeeds', async ({}, testInfo) => {
         console.log('workerIndex-' + testInfo.workerIndex);
+        console.log('parallelIndex-' + testInfo.parallelIndex);
       });
     `,
-  });
+  }, { workers: 1 });
   expect(result.passed).toBe(3);
   expect(result.exitCode).toBe(0);
   expect(result.results.map(r => r.workerIndex).sort()).toEqual([0, 1, 2]);
   expect(result.output).toContain('workerIndex-0');
   expect(result.output).toContain('workerIndex-1');
   expect(result.output).toContain('workerIndex-2');
+  expect(result.output).toContain('parallelIndex-0');
+  expect(result.output).not.toContain('parallelIndex-1');
+});
+
+test('parallelIndex should be in 0..workers-1', async ({ runInlineTest }) => {
+  const files = {};
+  for (let i = 0; i < 10; i++) {
+    files[`a${i}.test.js`] = `
+      const { test } = pwt;
+      test('passes-1', async ({}, testInfo) => {
+        await new Promise(f => setTimeout(f, 100 + 50 * ${i}));
+        expect(testInfo.parallelIndex >= 0).toBeTruthy();
+        expect(testInfo.parallelIndex < testInfo.config.workers).toBeTruthy();
+      });
+      test('passes-2', async ({}, testInfo) => {
+        await new Promise(f => setTimeout(f, 100 + 50 * ${i}));
+        expect(testInfo.parallelIndex >= 0).toBeTruthy();
+        expect(testInfo.parallelIndex < testInfo.config.workers).toBeTruthy();
+      });
+    `;
+  }
+  const result = await runInlineTest(files, { workers: 3 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(20);
 });

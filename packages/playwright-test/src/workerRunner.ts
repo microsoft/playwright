@@ -135,6 +135,7 @@ export class WorkerRunner extends EventEmitter {
 
     this._workerInfo = {
       workerIndex: this._params.workerIndex,
+      parallelIndex: this._params.parallelIndex,
       project: this._project.config,
       config: this._loader.fullConfig(),
     };
@@ -244,6 +245,7 @@ export class WorkerRunner extends EventEmitter {
     let lastStepId = 0;
     const testInfo: TestInfoImpl = {
       workerIndex: this._params.workerIndex,
+      parallelIndex: this._params.parallelIndex,
       project: this._project.config,
       config: this._loader.fullConfig(),
       title: test.title,
