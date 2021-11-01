@@ -798,7 +798,7 @@ export class InjectedScript {
     }).observe(document, { childList: true });
   }
 
-  expect(progress: InjectedScriptProgress, element: Element, options: FrameExpectParams, elements: Element[]): { matches: boolean, received?: any } {
+  expectSingleElement(progress: InjectedScriptProgress, element: Element, options: FrameExpectParams): { matches: boolean, received?: any } {
     const injected = progress.injectedScript;
     const expression = options.expression;
 
@@ -832,15 +832,6 @@ export class InjectedScript {
         if (elementState === 'error:notconnected')
           throw injected.createStacklessError('Element is not connected');
         return { received: elementState, matches: elementState };
-      }
-    }
-
-    {
-      // Single number value.
-      if (expression === 'to.have.count') {
-        const received = elements.length;
-        const matches = received === options.expectedNumber;
-        return { received, matches };
       }
     }
 
@@ -882,37 +873,47 @@ export class InjectedScript {
       }
     }
 
-    {
-      // List of values.
-      let received: string[] | undefined;
-      if (expression === 'to.have.text.array' || expression === 'to.contain.text.array')
-        received = elements.map(e => options.useInnerText ? (e as HTMLElement).innerText : e.textContent || '');
-      else if (expression === 'to.have.class.array')
-        received = elements.map(e => e.className);
+    throw this.createStacklessError('Unknown expect matcher: ' + expression);
+  }
 
-      if (received && options.expectedText) {
-        // "To match an array" is "to contain an array" + "equal length"
-        const lengthShouldMatch = expression !== 'to.contain.text.array';
-        const matchesLength = received.length === options.expectedText.length || !lengthShouldMatch;
-        if (!matchesLength)
-          return { received, matches: false };
+  expectArray(elements: Element[], options: FrameExpectParams): { matches: boolean, received?: any } {
+    const expression = options.expression;
 
-        // Each matcher should get a "received" that matches it, in order.
-        let i = 0;
-        const matchers = options.expectedText.map(e => new ExpectedTextMatcher(e));
-        let allMatchesFound = true;
-        for (const matcher of matchers) {
-          while (i < received.length && !matcher.matches(received[i]))
-            i++;
-          if (i >= received.length) {
-            allMatchesFound = false;
-            break;
-          }
-        }
-        return { received, matches: allMatchesFound };
-      }
+    if (expression === 'to.have.count') {
+      const received = elements.length;
+      const matches = received === options.expectedNumber;
+      return { received, matches };
     }
-    throw this.createStacklessError('Unknown expect matcher: ' + options.expression);
+
+    // List of values.
+    let received: string[] | undefined;
+    if (expression === 'to.have.text.array' || expression === 'to.contain.text.array')
+      received = elements.map(e => options.useInnerText ? (e as HTMLElement).innerText : e.textContent || '');
+    else if (expression === 'to.have.class.array')
+      received = elements.map(e => e.className);
+
+    if (received && options.expectedText) {
+      // "To match an array" is "to contain an array" + "equal length"
+      const lengthShouldMatch = expression !== 'to.contain.text.array';
+      const matchesLength = received.length === options.expectedText.length || !lengthShouldMatch;
+      if (!matchesLength)
+        return { received, matches: false };
+
+      // Each matcher should get a "received" that matches it, in order.
+      let i = 0;
+      const matchers = options.expectedText.map(e => new ExpectedTextMatcher(e));
+      let allMatchesFound = true;
+      for (const matcher of matchers) {
+        while (i < received.length && !matcher.matches(received[i]))
+          i++;
+        if (i >= received.length) {
+          allMatchesFound = false;
+          break;
+        }
+      }
+      return { received, matches: allMatchesFound };
+    }
+    throw this.createStacklessError('Unknown expect matcher: ' + expression);
   }
 }
 

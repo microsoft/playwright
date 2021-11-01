@@ -1156,48 +1156,40 @@ export class Frame extends SdkObject {
 
   async expect(metadata: CallMetadata, selector: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[] }> {
     const controller = new ProgressController(metadata, this);
-    const querySelectorAll = options.expression === 'to.have.count' || options.expression.endsWith('.array');
+    const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
     const mainWorld = options.expression === 'to.have.property';
     return await this._scheduleRerunnableTaskWithController(controller, selector, (progress, element, options, elements) => {
-      if (!element) {
-        // expect(locator).toBeHidden() passes when there is no element.
-        if (!options.isNot && options.expression === 'to.be.hidden')
-          return { matches: true };
+      let result: { matches: boolean, received?: any };
 
-        // expect(locator).not.toBeVisible() passes when there is no element.
-        if (options.isNot && options.expression === 'to.be.visible')
-          return { matches: false };
-
-        // expect(listLocator).toHaveText([]) passes when there are no elements matching.
-        // expect(listLocator).not.toHaveText(['foo']) passes when there are no elements matching.
-        const expectsEmptyList = options.expectedText?.length === 0;
-        if (options.expression.endsWith('.array') && expectsEmptyList !== options.isNot)
-          return { matches: expectsEmptyList };
-
-        // expect(listLocator).toHaveCount(0) passes when there are no elements matching.
-        // expect(listLocator).not.toHaveCount(1) passes when there are no elements matching.
-        const expectsEmptyCount = options.expectedNumber === 0;
-        if (options.expression === 'to.have.count' && expectsEmptyCount !== options.isNot)
-          return { matches: expectsEmptyCount, received: 0 };
-
-        // When none of the above applies, keep waiting for the element.
-        return progress.continuePolling;
+      if (options.isArray) {
+        result = progress.injectedScript.expectArray(elements, options);
+      } else {
+        if (!element) {
+          // expect(locator).toBeHidden() passes when there is no element.
+          if (!options.isNot && options.expression === 'to.be.hidden')
+            return { matches: true };
+          // expect(locator).not.toBeVisible() passes when there is no element.
+          if (options.isNot && options.expression === 'to.be.visible')
+            return { matches: false };
+          // When none of the above applies, keep waiting for the element.
+          return progress.continuePolling;
+        }
+        result = progress.injectedScript.expectSingleElement(progress, element, options);
       }
 
-      const { matches, received } = progress.injectedScript.expect(progress, element, options, elements);
-      if (matches === options.isNot) {
+      if (result.matches === options.isNot) {
         // Keep waiting in these cases:
         // expect(locator).conditionThatDoesNotMatch
         // expect(locator).not.conditionThatDoesMatch
-        progress.setIntermediateResult(received);
-        if (!Array.isArray(received))
-          progress.log(`  unexpected value "${received}"`);
+        progress.setIntermediateResult(result.received);
+        if (!Array.isArray(result.received))
+          progress.log(`  unexpected value "${result.received}"`);
         return progress.continuePolling;
       }
 
       // Reached the expected state!
-      return { matches, received };
-    }, options, { strict: true, querySelectorAll, mainWorld, omitAttached: true, logScale: true, ...options }).catch(e => {
+      return result;
+    }, { ...options, isArray }, { strict: true, querySelectorAll: isArray, mainWorld, omitAttached: true, logScale: true, ...options }).catch(e => {
       if (js.isJavaScriptErrorInEvaluate(e))
         throw e;
       // Q: Why not throw upon isSessionClosedError(e) as in other places?
