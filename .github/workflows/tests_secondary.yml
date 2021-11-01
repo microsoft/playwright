@@ -423,6 +423,30 @@ jobs:
         name: edge-stable-win-test-results
         path: test-results
 
+  edge_stable_linux:
+    name: "Edge Stable (Linux)"
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: 12
+    - run: npm i -g npm@7
+    - run: npm ci
+      env:
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - run: npm run build
+    - run: npx playwright install --with-deps msedge
+    - run: npm run ctest
+      shell: bash
+      env:
+        PWTEST_CHANNEL: msedge
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: edge-stable-linux-test-results
+        path: test-results
+
   edge_beta_mac:
     name: "Edge Beta (Mac)"
     runs-on: macos-10.15

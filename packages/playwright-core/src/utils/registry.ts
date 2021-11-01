@@ -325,11 +325,11 @@ export class Registry {
     }));
 
     this._executables.push(this._createChromiumChannel('msedge', {
-      'linux': '',
+      'linux': '/opt/microsoft/msedge/msedge',
       'darwin': '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
       'win32': `\\Microsoft\\Edge\\Application\\msedge.exe`,
     }, () => this._installMSEdgeChannel('msedge', {
-      'linux': '',
+      'linux': 'reinstall_msedge_stable_linux.sh',
       'darwin': 'reinstall_msedge_stable_mac.sh',
       'win32': 'reinstall_msedge_stable_win.ps1',
     })));
