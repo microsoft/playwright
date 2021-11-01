@@ -38,7 +38,7 @@ class DownloadInterceptor {
     if (!(request instanceof Ci.nsIChannel))
       return false;
     const channel = request.QueryInterface(Ci.nsIChannel);
-    let pageTarget = this._registry._browserBrowsingContextToTarget.get(channel.loadInfo.browsingContext);
+    let pageTarget = this._registry._browserBrowsingContextToTarget.get(channel.loadInfo.browsingContext.top);
     if (!pageTarget)
       return false;
 
