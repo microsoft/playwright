@@ -399,65 +399,64 @@ export class InjectedScript {
     return element;
   }
 
-  waitForElementStatesAndPerformAction<T>(node: Node, states: ElementState[], force: boolean | undefined,
-    callback: (node: Node, progress: InjectedScriptProgress) => T | symbol): InjectedScriptPoll<T | 'error:notconnected'> {
-    let lastRect: { x: number, y: number, width: number, height: number } | undefined;
-    let counter = 0;
-    let samePositionCounter = 0;
-    let lastTime = 0;
+  waitForElementStates(progress: InjectedScriptProgress, node: Node, states: readonly ElementState[]): 'error:notconnected' | 'done' | symbol {
+    type StableData = {
+      lastRect: { x: number, y: number, width: number, height: number } | undefined,
+      counter: number,
+      samePositionCounter: number,
+      lastTime: number,
+    };
 
-    return this.pollRaf(progress => {
-      if (force) {
-        progress.log(`    forcing action`);
-        return callback(node, progress);
-      }
-
-      for (const state of states) {
-        if (state !== 'stable') {
-          const result = this.elementState(node, state);
-          if (typeof result !== 'boolean')
-            return result;
-          if (!result) {
-            progress.logRepeating(`    element is not ${state} - waiting...`);
-            return progress.continuePolling;
-          }
-          continue;
+    for (const state of states) {
+      if (state !== 'stable') {
+        const result = this.elementState(node, state);
+        if (typeof result !== 'boolean')
+          return result;
+        if (!result) {
+          progress.logRepeating(`    element is not ${state} - waiting...`);
+          return progress.continuePolling;
         }
-
-        const element = this.retarget(node, 'no-follow-label');
-        if (!element)
-          return 'error:notconnected';
-
-        // First raf happens in the same animation frame as evaluation, so it does not produce
-        // any client rect difference compared to synchronous call. We skip the synchronous call
-        // and only force layout during actual rafs as a small optimisation.
-        if (++counter === 1)
-          return progress.continuePolling;
-
-        // Drop frames that are shorter than 16ms - WebKit Win bug.
-        const time = performance.now();
-        if (this._stableRafCount > 1 && time - lastTime < 15)
-          return progress.continuePolling;
-        lastTime = time;
-
-        const clientRect = element.getBoundingClientRect();
-        const rect = { x: clientRect.top, y: clientRect.left, width: clientRect.width, height: clientRect.height };
-        const samePosition = lastRect && rect.x === lastRect.x && rect.y === lastRect.y && rect.width === lastRect.width && rect.height === lastRect.height;
-        if (samePosition)
-          ++samePositionCounter;
-        else
-          samePositionCounter = 0;
-        const isStable = samePositionCounter >= this._stableRafCount;
-        const isStableForLogs = isStable || !lastRect;
-        lastRect = rect;
-        if (!isStableForLogs)
-          progress.logRepeating(`    element is not stable - waiting...`);
-        if (!isStable)
-          return progress.continuePolling;
+        continue;
       }
 
-      return callback(node, progress);
-    });
+      const element = this.retarget(node, 'no-follow-label');
+      if (!element)
+        return 'error:notconnected';
+
+      let stableData: StableData | undefined = (progress as any).__stableData;
+      if (!stableData) {
+        stableData = { lastRect: undefined, counter: 0, samePositionCounter: 0, lastTime: 0 };
+        (progress as any).__stableData = stableData;
+      }
+
+      // First raf happens in the same animation frame as evaluation, so it does not produce
+      // any client rect difference compared to synchronous call. We skip the synchronous call
+      // and only force layout during actual rafs as a small optimisation.
+      if (++stableData.counter === 1)
+        return progress.continuePolling;
+
+      // Drop frames that are shorter than 16ms - WebKit Win bug.
+      const time = performance.now();
+      if (this._stableRafCount > 1 && time - stableData.lastTime < 15)
+        return progress.continuePolling;
+      stableData.lastTime = time;
+
+      const clientRect = element.getBoundingClientRect();
+      const rect = { x: clientRect.top, y: clientRect.left, width: clientRect.width, height: clientRect.height };
+      const samePosition = stableData.lastRect && rect.x === stableData.lastRect.x && rect.y === stableData.lastRect.y && rect.width === stableData.lastRect.width && rect.height === stableData.lastRect.height;
+      if (samePosition)
+        ++stableData.samePositionCounter;
+      else
+        stableData.samePositionCounter = 0;
+      const isStable = stableData.samePositionCounter >= this._stableRafCount;
+      const isStableForLogs = isStable || !stableData.lastRect;
+      stableData.lastRect = rect;
+      if (!isStableForLogs)
+        progress.logRepeating(`    element is not stable - waiting...`);
+      if (!isStable)
+        return progress.continuePolling;
+    }
+    return 'done';
   }
 
   elementState(node: Node, state: ElementStateWithoutStable): boolean | 'error:notconnected' {

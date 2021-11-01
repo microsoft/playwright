@@ -503,7 +503,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       progress.throwIfAborted();  // Avoid action that has side-effects.
       progress.log('  selecting specified option(s)');
       const result = await this.evaluatePoll(progress, ([injected, node, { optionsToSelect, force }]) => {
-        return injected.waitForElementStatesAndPerformAction(node, ['visible', 'enabled'], force, injected.selectOptions.bind(injected, optionsToSelect));
+        return injected.pollRaf(progress => {
+          const result = force ? 'done' : injected.waitForElementStates(progress, node, ['visible', 'enabled']);
+          if (result !== 'done')
+            return result;
+          return injected.selectOptions(optionsToSelect, node, progress);
+        });
       }, { optionsToSelect, force: options.force });
       await this._page._doSlowMo();
       return result;
@@ -524,7 +529,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.log('  waiting for element to be visible, enabled and editable');
       const filled = await this.evaluatePoll(progress, ([injected, node, { value, force }]) => {
-        return injected.waitForElementStatesAndPerformAction(node, ['visible', 'enabled', 'editable'], force, injected.fill.bind(injected, value));
+        return injected.pollRaf(progress => {
+          const result = force ? 'done' : injected.waitForElementStates(progress, node, ['visible', 'enabled', 'editable']);
+          if (result !== 'done')
+            return result;
+          return injected.fill(value, node, progress);
+        });
       }, { value, force: options.force });
       progress.throwIfAborted();  // Avoid action that has side-effects.
       if (filled === 'error:notconnected')
@@ -548,7 +558,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return controller.run(async progress => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
       const result = await this.evaluatePoll(progress, ([injected, node, force]) => {
-        return injected.waitForElementStatesAndPerformAction(node, ['visible'], force, injected.selectText.bind(injected));
+        return injected.pollRaf(progress => {
+          const result = force ? 'done' : injected.waitForElementStates(progress, node, ['visible']);
+          if (result !== 'done')
+            return result;
+          return injected.selectText(node);
+        });
       }, options.force);
       assertDone(throwRetargetableDOMError(result));
     }, this._page._timeoutSettings.timeout(options));
@@ -750,7 +765,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return controller.run(async progress => {
       progress.log(`  waiting for element to be ${state}`);
       const result = await this.evaluatePoll(progress, ([injected, node, state]) => {
-        return injected.waitForElementStatesAndPerformAction(node, [state], false, () => 'done' as const);
+        return injected.pollRaf(progress => injected.waitForElementStates(progress, node, [state]));
       }, state);
       assertDone(throwRetargetableDOMError(result));
     }, this._page._timeoutSettings.timeout(options));
@@ -788,14 +803,18 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async _waitForDisplayedAtStablePosition(progress: Progress, force: boolean, waitForEnabled: boolean): Promise<'error:notconnected' | 'done'> {
+    if (force)
+      return 'done';
     if (waitForEnabled)
       progress.log(`  waiting for element to be visible, enabled and stable`);
     else
       progress.log(`  waiting for element to be visible and stable`);
-    const result = await this.evaluatePoll(progress, ([injected, node, { waitForEnabled, force }]) => {
-      return injected.waitForElementStatesAndPerformAction(node,
-          waitForEnabled ? ['visible', 'stable', 'enabled'] : ['visible', 'stable'], force, () => 'done' as const);
-    }, { waitForEnabled, force });
+    const result = await this.evaluatePoll(progress, ([injected, node, waitForEnabled]) => {
+      return injected.pollRaf(progress => {
+        const states = waitForEnabled ? ['visible', 'stable', 'enabled'] as const : ['visible', 'stable'] as const;
+        return injected.waitForElementStates(progress, node, states);
+      });
+    }, waitForEnabled);
     if (result === 'error:notconnected')
       return result;
     if (waitForEnabled)
