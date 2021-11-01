@@ -21,7 +21,7 @@
     rgb(0 0 0 / 15%) 0px 6.1px 6.3px,
     rgb(0 0 0 / 10%) 0px -2px 4px,
     rgb(0 0 0 / 15%) 0px -6.1px 12px,
-    rgb(0 0 0 / 25%) 0px 27px 28px;
+    rgb(0 0 0 / 25%) 0px 6px 12px;
 }
 
 html, body {
@@ -51,6 +51,8 @@ body {
 
 * {
   box-sizing: border-box;
+  min-width: 0;
+  min-height: 0;
 }
 
 svg {
@@ -153,17 +155,15 @@ svg {
   box-shadow: inset 0 -1px 0 var(--color-border-muted) !important;
 }
 
-.columns > .tab-strip .tab-element.selected {
+.test-case-column .tab-element.selected {
   font-weight: 600;
   border-bottom-color: var(--color-primer-border-active);
 }
 
 .test-case-column .tab-element {
   border: none;
-  text-transform: uppercase;
-  font-weight: bold;
-  font-size: 11px;
   color: var(--color-fg-default);
+  border-bottom: 2px solid transparent;
 }
 
 .test-case-column .tab-element:hover {
@@ -514,16 +514,14 @@ article, aside, details, figcaption, figure, footer, header, main, menu, nav, se
   background-color: var(--color-canvas-inset);
 }
 
-.width-full {
-  width: 100% !important;
-}
-
 .subnav-search {
   position: relative;
+  flex: auto;
+  display: flex;
 }
 
 .subnav-search-input {
-  width: 320px;
+  flex: auto;
   padding-left: 32px;
   color: var(--color-fg-muted);
 }
@@ -543,9 +541,10 @@ article, aside, details, figcaption, figure, footer, header, main, menu, nav, se
 }
 
 .subnav-item {
+  flex: none;
   position: relative;
   float: left;
-  padding: 5px 16px;
+  padding: 5px 10px;
   font-weight: 500;
   line-height: 20px;
   color: var(--color-fg-default);
