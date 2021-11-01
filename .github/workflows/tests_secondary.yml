@@ -425,7 +425,7 @@ jobs:
 
   edge_stable_linux:
     name: "Edge Stable (Linux)"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
@@ -437,10 +437,11 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: npx playwright install --with-deps msedge
-    - run: npm run ctest
-      shell: bash
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       env:
         PWTEST_CHANNEL: msedge
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: always()
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
