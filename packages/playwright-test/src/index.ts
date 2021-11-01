@@ -188,7 +188,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
       context.setDefaultNavigationTimeout(navigationTimeout || actionTimeout || 0);
       if (captureTrace) {
         if (!(context.tracing as any)[kTracingStarted]) {
-          await context.tracing.start({ screenshots: true, snapshots: true, sources: true } as any);
+          await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
           (context.tracing as any)[kTracingStarted] = true;
         } else {
           await context.tracing.startChunk();
