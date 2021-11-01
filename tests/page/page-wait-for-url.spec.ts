@@ -53,10 +53,11 @@ it('should work with commit', async ({ page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.writeHead(200, {
       'content-type': 'text/html',
-      'content-length': '4000'
+      'content-length': '8192'
     });
-    // Write first byte of the body to trigge response received event.
-    res.write(' ');
+    // Write enought bytes of the body to trigge response received event.
+    res.write('<title>' + 'A'.repeat(4100));
+    res.uncork();
   });
 
   page.goto(server.EMPTY_PAGE).catch(e => {});

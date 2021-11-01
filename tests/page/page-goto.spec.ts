@@ -633,10 +633,11 @@ it('should return when navigation is committed if commit is specified', async ({
   server.setRoute('/empty.html', (req, res) => {
     res.writeHead(200, {
       'content-type': 'text/html',
-      'content-length': '4000'
+      'content-length': '8192'
     });
-    // Write first byte of the body to trigge response received event.
-    res.write(' ');
+    // Write enought bytes of the body to trigge response received event.
+    res.write('<title>' + 'A'.repeat(4100));
+    res.uncork();
   });
   const response = await page.goto(server.EMPTY_PAGE, { waitUntil: 'commit' });
   expect(response.status()).toBe(200);
