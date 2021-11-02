@@ -156,4 +156,4 @@ mirror_chromium() {
   unzip chromium-upstream.zip
 }
 
-main "$1"
+main "$1" "$2" "$3"
