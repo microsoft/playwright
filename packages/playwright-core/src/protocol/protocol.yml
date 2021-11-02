@@ -301,6 +301,16 @@ FetchResponse:
       type: array
       items: NameValue
 
+
+LifecycleEvent:
+  type: enum
+  literals:
+  - load
+  - domcontentloaded
+  - networkidle
+  - commit
+
+
 LaunchOptions:
   type: mixin
   properties:
@@ -956,12 +966,7 @@ Page:
     goBack:
       parameters:
         timeout: number?
-        waitUntil:
-          type: enum?
-          literals:
-          - load
-          - domcontentloaded
-          - networkidle
+        waitUntil: LifecycleEvent?
       returns:
         response: Response?
       tracing:
@@ -970,12 +975,7 @@ Page:
     goForward:
       parameters:
         timeout: number?
-        waitUntil:
-          type: enum?
-          literals:
-          - load
-          - domcontentloaded
-          - networkidle
+        waitUntil: LifecycleEvent?
       returns:
         response: Response?
       tracing:
@@ -984,12 +984,7 @@ Page:
     reload:
       parameters:
         timeout: number?
-        waitUntil:
-          type: enum?
-          literals:
-          - load
-          - domcontentloaded
-          - networkidle
+        waitUntil: LifecycleEvent?
       returns:
         response: Response?
       tracing:
@@ -1280,12 +1275,7 @@ Frame:
     parentFrame: Frame?
     loadStates:
       type: array
-      items:
-        type: enum
-        literals:
-        - load
-        - domcontentloaded
-        - networkidle
+      items: LifecycleEvent
 
   commands:
 
@@ -1490,12 +1480,7 @@ Frame:
       parameters:
         url: string
         timeout: number?
-        waitUntil:
-          type: enum?
-          literals:
-          - load
-          - domcontentloaded
-          - networkidle
+        waitUntil: LifecycleEvent?
         referer: string?
       returns:
         response: Response?
@@ -1668,12 +1653,7 @@ Frame:
       parameters:
         html: string
         timeout: number?
-        waitUntil:
-          type: enum?
-          literals:
-          - load
-          - domcontentloaded
-          - networkidle
+        waitUntil: LifecycleEvent?
       tracing:
         snapshot: true
 
@@ -1819,18 +1799,8 @@ Frame:
 
     loadstate:
       parameters:
-        add:
-          type: enum?
-          literals:
-          - load
-          - domcontentloaded
-          - networkidle
-        remove:
-          type: enum?
-          literals:
-          - load
-          - domcontentloaded
-          - networkidle
+        add: LifecycleEvent?
+        remove: LifecycleEvent?
 
     navigated:
       parameters:

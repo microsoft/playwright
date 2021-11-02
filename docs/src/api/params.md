@@ -1,10 +1,11 @@
 ## navigation-wait-until
-- `waitUntil` <[WaitUntilState]<"load"|"domcontentloaded"|"networkidle">>
+- `waitUntil` <[WaitUntilState]<"load"|"domcontentloaded"|"networkidle"|"commit">>
 
 When to consider operation succeeded, defaults to `load`. Events can be either:
 * `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
 * `'load'` - consider operation to be finished when the `load` event is fired.
 * `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
+* `'commit'` - consider operation to be finished when network response is received and the document started loading.
 
 ## navigation-timeout
 - `timeout` <[float]>

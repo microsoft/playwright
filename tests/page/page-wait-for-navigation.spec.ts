@@ -60,6 +60,21 @@ it('should work with both domcontentloaded and load', async ({ page, server }) =
   await navigationPromise;
 });
 
+it('should work with commit', async ({ page, server }) => {
+  server.setRoute('/empty.html', (req, res) => {
+    res.writeHead(200, {
+      'content-type': 'text/html',
+      'content-length': '8192'
+    });
+    // Write enought bytes of the body to trigge response received event.
+    res.write('<title>' + 'A'.repeat(4100));
+    res.uncork();
+  });
+
+  page.goto(server.EMPTY_PAGE).catch(e => {});
+  await page.waitForNavigation({ waitUntil: 'commit' });
+});
+
 it('should work with clicking on anchor links', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<a href='#foobar'>foobar</a>`);

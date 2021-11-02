@@ -452,6 +452,9 @@ export class Frame extends SdkObject {
 
     if (this._parentFrame)
       this._parentFrame._childFrames.add(this);
+
+    this._firedLifecycleEvents.add('commit');
+    this._subtreeLifecycleEvents.add('commit');
   }
 
   _onLifecycleEvent(event: types.LifecycleEvent) {
@@ -471,6 +474,7 @@ export class Frame extends SdkObject {
     this._stopNetworkIdleTimer();
     if (this._inflightRequests.size === 0)
       this._startNetworkIdleTimer();
+    this._onLifecycleEvent('commit');
   }
 
   setPendingDocument(documentInfo: DocumentInfo | undefined) {
@@ -1492,6 +1496,6 @@ function verifyLifecycle(name: string, waitUntil: types.LifecycleEvent): types.L
   if (waitUntil as unknown === 'networkidle0')
     waitUntil = 'networkidle';
   if (!types.kLifecycleEvents.has(waitUntil))
-    throw new Error(`${name}: expected one of (load|domcontentloaded|networkidle)`);
+    throw new Error(`${name}: expected one of (load|domcontentloaded|networkidle|commit)`);
   return waitUntil;
 }

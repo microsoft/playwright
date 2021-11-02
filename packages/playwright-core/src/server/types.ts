@@ -28,8 +28,8 @@ export type WaitForElementOptions = TimeoutOptions & StrictOptions & { state?: '
 
 export type WaitForFunctionOptions = TimeoutOptions & { pollingInterval?: number };
 
-export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle';
-export const kLifecycleEvents: Set<LifecycleEvent> = new Set(['load', 'domcontentloaded', 'networkidle']);
+export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle' | 'commit';
+export const kLifecycleEvents: Set<LifecycleEvent> = new Set(['load', 'domcontentloaded', 'networkidle', 'commit']);
 
 export type NavigateOptions = TimeoutOptions & {
   waitUntil?: LifecycleEvent,

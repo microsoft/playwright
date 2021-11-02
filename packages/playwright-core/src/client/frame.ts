@@ -27,7 +27,7 @@ import { Page } from './page';
 import { EventEmitter } from 'events';
 import { Waiter } from './waiter';
 import { Events } from './events';
-import { LifecycleEvent, URLMatch, SelectOption, SelectOptionOptions, FilePayload, WaitForFunctionOptions, kLifecycleEvents, StrictOptions } from './types';
+import { LifecycleEvent, URLMatch, SelectOption, SelectOptionOptions, FilePayload, WaitForFunctionOptions, StrictOptions, kLifecycleEvents } from './types';
 import { urlMatches } from './clientHelper';
 import * as api from '../../types/types';
 import * as structs from '../../types/structs';
@@ -157,7 +157,8 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
 
   async waitForURL(url: URLMatch, options: { waitUntil?: LifecycleEvent, timeout?: number } = {}): Promise<void> {
     if (urlMatches(this._page?.context()._options.baseURL, this.url(), url))
-      return await this.waitForLoadState(options?.waitUntil, options);
+      return await this.waitForLoadState(options.waitUntil, options);
+
     await this.waitForNavigation({ url, ...options });
   }
 
@@ -476,6 +477,6 @@ export function verifyLoadState(name: string, waitUntil: LifecycleEvent): Lifecy
   if (waitUntil as unknown === 'networkidle0')
     waitUntil = 'networkidle';
   if (!kLifecycleEvents.has(waitUntil))
-    throw new Error(`${name}: expected one of (load|domcontentloaded|networkidle)`);
+    throw new Error(`${name}: expected one of (load|domcontentloaded|networkidle|commit)`);
   return waitUntil;
 }

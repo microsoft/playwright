@@ -31,6 +31,12 @@ it('should work with domcontentloaded', async ({ page, server }) => {
   expect(result).toBe(expectedOutput);
 });
 
+it('should work with commit', async ({ page }) => {
+  await page.setContent('<div>hello</div>', { waitUntil: 'commit' });
+  const result = await page.content();
+  expect(result).toBe(expectedOutput);
+});
+
 it('should work with doctype', async ({ page, server }) => {
   const doctype = '<!DOCTYPE html>';
   await page.setContent(`${doctype}<div>hello</div>`);

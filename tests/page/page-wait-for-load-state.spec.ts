@@ -48,7 +48,7 @@ it('should throw for bad state', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/one-style.html');
   // @ts-expect-error 'bad' is not a valid load state
   const error = await page.waitForLoadState('bad').catch(e => e);
-  expect(error.message).toContain(`state: expected one of (load|domcontentloaded|networkidle)`);
+  expect(error.message).toContain(`state: expected one of (load|domcontentloaded|networkidle|commit)`);
 });
 
 it('should resolve immediately if load state matches', async ({ page, server }) => {

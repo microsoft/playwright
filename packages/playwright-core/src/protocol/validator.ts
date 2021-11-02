@@ -191,6 +191,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     statusText: tString,
     headers: tArray(tType('NameValue')),
   });
+  scheme.LifecycleEvent = tEnum(['load', 'domcontentloaded', 'networkidle', 'commit']);
   scheme.RootInitializeParams = tObject({
     sdkLanguage: tString,
   });
@@ -538,15 +539,15 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.PageGoBackParams = tObject({
     timeout: tOptional(tNumber),
-    waitUntil: tOptional(tEnum(['load', 'domcontentloaded', 'networkidle'])),
+    waitUntil: tOptional(tType('LifecycleEvent')),
   });
   scheme.PageGoForwardParams = tObject({
     timeout: tOptional(tNumber),
-    waitUntil: tOptional(tEnum(['load', 'domcontentloaded', 'networkidle'])),
+    waitUntil: tOptional(tType('LifecycleEvent')),
   });
   scheme.PageReloadParams = tObject({
     timeout: tOptional(tNumber),
-    waitUntil: tOptional(tEnum(['load', 'domcontentloaded', 'networkidle'])),
+    waitUntil: tOptional(tType('LifecycleEvent')),
   });
   scheme.PageScreenshotParams = tObject({
     timeout: tOptional(tNumber),
@@ -753,7 +754,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.FrameGotoParams = tObject({
     url: tString,
     timeout: tOptional(tNumber),
-    waitUntil: tOptional(tEnum(['load', 'domcontentloaded', 'networkidle'])),
+    waitUntil: tOptional(tType('LifecycleEvent')),
     referer: tOptional(tString),
   });
   scheme.FrameHoverParams = tObject({
@@ -839,7 +840,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.FrameSetContentParams = tObject({
     html: tString,
     timeout: tOptional(tNumber),
-    waitUntil: tOptional(tEnum(['load', 'domcontentloaded', 'networkidle'])),
+    waitUntil: tOptional(tType('LifecycleEvent')),
   });
   scheme.FrameSetInputFilesParams = tObject({
     selector: tString,
