@@ -163,6 +163,11 @@ Test function as passed to `test(title, testFunction)`.
 
 Line number where the currently running test is declared.
 
+## property: TestInfo.snapshotDir
+- type: <[string]>
+
+Absolute path to the snapshot output directory for this specific test. Each test suite gets its own directory so they cannot conflict.
+
 ## property: TestInfo.outputDir
 - type: <[string]>
 

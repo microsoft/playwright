@@ -51,6 +51,7 @@ interface TestProject {
   expect?: ExpectSettings;
   metadata?: any;
   name?: string;
+  snapshotDir?: string;
   outputDir?: string;
   repeatEach?: number;
   retries?: number;
@@ -120,6 +121,7 @@ interface TestConfig {
   expect?: ExpectSettings;
   metadata?: any;
   name?: string;
+  snapshotDir?: string;
   outputDir?: string;
   repeatEach?: number;
   retries?: number;
@@ -213,6 +215,7 @@ export interface TestInfo {
   stdout: (string | Buffer)[];
   stderr: (string | Buffer)[];
   snapshotSuffix: string;
+  snapshotDir: string;
   outputDir: string;
   snapshotPath: (...pathSegments: string[]) => string;
   outputPath: (...pathSegments: string[]) => string;

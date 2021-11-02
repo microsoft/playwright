@@ -124,6 +124,15 @@ Any JSON-serializable metadata that will be put directly to the test report.
 
 Project name is visible in the report and during test execution.
 
+## property: TestProject.snapshotDir
+- type: <[string]>
+
+The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to [`property: TestProject.testDir`].
+
+The directory for each test can be accessed by [`property: TestInfo.snapshotDir`] and [`method: TestInfo.snapshotPath`].
+
+This path will serve as the base directory for each test file snapshot directory. Setting `snapshotDir` to `'snapshots'`, the [`property: TestInfo.snapshotDir`] would resolve to `snapshots/a.spec.js-snapshots`.
+
 ## property: TestProject.outputDir
 - type: <[string]>
 
