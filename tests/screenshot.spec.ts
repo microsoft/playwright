@@ -119,7 +119,7 @@ browserTest.describe('page screenshot', () => {
   });
 });
 
-browserTest.describe('element sceenshot', () => {
+browserTest.describe('element screenshot', () => {
   browserTest.skip(({ browserName, headless }) => browserName === 'firefox' && !headless);
 
   browserTest('element screenshot should work with a mobile viewport', async ({ browser, server, browserName }) => {
@@ -264,5 +264,24 @@ browserTest.describe('element sceenshot', () => {
     expect(error.message).toContain('oh my');
     await verifyViewport(page, 350, 360);
     await context.close();
+  });
+
+  browserTest('should work if the main resource hangs', async ({ browser, browserName, mode, server }) => {
+    browserTest.skip(mode !== 'default');
+    browserTest.fixme(browserName === 'chromium', 'https://github.com/microsoft/playwright/issues/9757');
+    const page = await browser.newPage();
+    server.setRoute('/slow', (req, res) => {
+      res.writeHead(200, {
+        'content-length': 4096,
+        'content-type': 'text/html',
+      });
+    });
+    try {
+      await page.goto(server.PREFIX + '/slow', { timeout: 100 }).catch(() => {});
+      const screenshot = await page.screenshot();
+      expect(screenshot).toMatchSnapshot('hanging-main-resource.png');
+    } finally {
+      await page.close();
+    }
   });
 });
