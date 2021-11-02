@@ -7,7 +7,16 @@ const fs = require('fs');
 
 const configs = JSON.parse(fs.readFileSync(process.argv[2], 'utf8')).archive_datas;
 const config = configs.find(config => config.gcs_path.includes('chrome-linux.zip') || config.gcs_path.includes('chrome-win.zip') || config.gcs_path.includes('chrome-mac.zip'));
-for (const file of config.files || [])
-  console.log(file);
-for (const dir of config.dirs || [])
-  console.log(dir);
+
+const excludeList = new Set([
+  // We do not need interactive tests in our archive.
+  'interactive_ui_tests.exe',
+]);
+
+const entries = [
+  ...(config.files || []),
+  ...(config.dirs || []),
+].filter(entry => !excludeList.has(entry));
+
+for (const entry of entries)
+  console.log(entry);
