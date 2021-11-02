@@ -14394,6 +14394,11 @@ export interface Tracing {
      * Whether to capture DOM snapshot on every action.
      */
     snapshots?: boolean;
+
+    /**
+     * Whether to include source files for trace actions.
+     */
+    sources?: boolean;
   }): Promise<void>;
 
   /**

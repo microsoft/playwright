@@ -127,7 +127,11 @@ a timeline preview.
 
 Whether to capture DOM snapshot on every action.
 
+### option: Tracing.start.sources
+* langs: js
+- `sources` <[boolean]>
 
+Whether to include source files for trace actions.
 
 ## async method: Tracing.startChunk
 
