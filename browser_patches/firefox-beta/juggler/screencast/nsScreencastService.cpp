@@ -159,6 +159,9 @@ class nsScreencastService::Session : public rtc::VideoSinkInterface<webrtc::Vide
   void OnRawFrame(uint8_t* videoFrame, size_t videoFrameStride, const webrtc::VideoCaptureCapability& frameInfo) override {
     int pageWidth = frameInfo.width - mMargin.LeftRight();
     int pageHeight = frameInfo.height - mMargin.TopBottom();
+    // Frame size is 1x1 when browser window is minimized.
+    if (pageWidth <= 1 || pageHeight <= 1)
+      return;
     // Headed Firefox brings sizes in sync slowly.
     if (mViewportWidth && pageWidth > mViewportWidth)
       pageWidth = mViewportWidth;
