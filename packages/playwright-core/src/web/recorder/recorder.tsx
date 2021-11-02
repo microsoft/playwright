@@ -121,6 +121,9 @@ export const Recorder: React.FC<RecorderProps> = ({
             setSelector(event.target.value);
             window.dispatch({ event: 'selectorUpdated', params: { selector: event.target.value } });
           }} />
+          <ToolbarButton icon='files' title='Copy' onClick={() => {
+            copy(selectorInputRef.current?.value || '');
+          }}></ToolbarButton>
         </Toolbar>
         <CallLogView log={Array.from(log.values())}/>
       </div>
