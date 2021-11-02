@@ -277,7 +277,7 @@ browserTest.describe('element screenshot', () => {
       });
     });
     try {
-      await page.goto(server.PREFIX + '/slow', { timeout: 100 }).catch(() => {});
+      await page.goto(server.PREFIX + '/slow', { timeout: 1000 }).catch(() => {});
       const screenshot = await page.screenshot();
       expect(screenshot).toMatchSnapshot('hanging-main-resource.png');
     } finally {
