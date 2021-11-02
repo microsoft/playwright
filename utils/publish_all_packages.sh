@@ -15,18 +15,18 @@ trap "cleanup; cd $(pwd -P)" EXIT
 cd "$(dirname $0)"
 
 if [[ $1 == "--help" ]]; then
-  echo "usage: $(basename $0) [--release|--tip-of-tree]"
+  echo "usage: $(basename $0) [--release|--next|--beta]"
   echo
   echo "Publishes all packages."
   echo
   echo "--release                publish @latest version of all packages"
-  echo "--tip-of-tree            publish @next version of all packages"
+  echo "--next                   publish @next version of all packages"
   echo "--beta                   publish @beta version of all packages"
   exit 1
 fi
 
 if [[ $# < 1 ]]; then
-  echo "Please specify either --release or --tip-of-tree"
+  echo "Please specify either --release, --beta or --next"
   exit 1
 fi
 
@@ -57,20 +57,13 @@ if [[ $1 == "--release" ]]; then
     exit 1
   fi
   NPM_PUBLISH_TAG="latest"
-elif [[ $1 == "--tip-of-tree" ]]; then
+elif [[ $1 == "--next" ]]; then
   # Ensure package version contains dash.
   if [[ "${VERSION}" != *-* ]]; then
-    echo "ERROR: cannot publish release version with --tip-of-tree flag"
+    echo "ERROR: cannot publish release version with --next flag"
     exit 1
   fi
 
-  # Ensure this is actually tip-of-tree.
-  UPSTREAM_SHA=$(git ls-remote https://github.com/microsoft/playwright --tags $(git rev-parse --abbrev-ref HEAD) | cut -f1)
-  CURRENT_SHA=$(git rev-parse HEAD)
-  if [[ "${UPSTREAM_SHA}" != "${CURRENT_SHA}" ]]; then
-    echo "FYI: REFUSING TO PUBLISH since this is not tip-of-tree"
-    exit 0
-  fi
   NPM_PUBLISH_TAG="next"
 elif [[ $1 == "--beta" ]]; then
   # Ensure package version contains dash.
