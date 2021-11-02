@@ -524,22 +524,23 @@ export class Registry {
     const executables = this._addRequirementsAndDedupe(executablesToInstall);
     await fs.promises.mkdir(registryDirectory, { recursive: true });
     const lockfilePath = path.join(registryDirectory, '__dirlock');
-    const releaseLock = await lockfile.lock(registryDirectory, {
-      retries: {
-        retries: 10,
-        // Retry 20 times during 10 minutes with
-        // exponential back-off.
-        // See documentation at: https://www.npmjs.com/package/retry#retrytimeoutsoptions
-        factor: 1.27579,
-      },
-      onCompromised: (err: Error) => {
-        throw new Error(`${err.message} Path: ${lockfilePath}`);
-      },
-      lockfilePath,
-    });
     const linksDir = path.join(registryDirectory, '.links');
 
+    let releaseLock;
     try {
+      releaseLock = await lockfile.lock(registryDirectory, {
+        retries: {
+          retries: 10,
+          // Retry 20 times during 10 minutes with
+          // exponential back-off.
+          // See documentation at: https://www.npmjs.com/package/retry#retrytimeoutsoptions
+          factor: 1.27579,
+        },
+        onCompromised: (err: Error) => {
+          throw new Error(`${err.message} Path: ${lockfilePath}`);
+        },
+        lockfilePath,
+      });
       // Create a link first, so that cache validation does not remove our own browsers.
       await fs.promises.mkdir(linksDir, { recursive: true });
       await fs.promises.writeFile(path.join(linksDir, calculateSha1(PACKAGE_PATH)), PACKAGE_PATH);
@@ -574,7 +575,8 @@ export class Registry {
         throw e;
       }
     } finally {
-      await releaseLock();
+      if (releaseLock)
+        await releaseLock();
     }
   }
 
