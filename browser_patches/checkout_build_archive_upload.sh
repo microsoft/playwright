@@ -66,6 +66,12 @@ elif [[ "$BUILD_FLAVOR" == "ffmpeg-linux" ]]; then
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="20.04"
   BUILD_BLOB_NAME="ffmpeg-linux.zip"
+elif [[ "$BUILD_FLAVOR" == "ffmpeg-linux-arm64" ]]; then
+  BROWSER_NAME="ffmpeg"
+  EXTRA_BUILD_ARGS="--cross-compile-linux-arm64"
+  EXPECTED_HOST_OS="Ubuntu"
+  EXPECTED_HOST_OS_VERSION="20.04"
+  BUILD_BLOB_NAME="ffmpeg-linux-arm64.zip"
 elif [[ "$BUILD_FLAVOR" == "ffmpeg-cross-compile-win64" ]]; then
   BROWSER_NAME="ffmpeg"
   EXTRA_BUILD_ARGS="--cross-compile-win64"

@@ -22,9 +22,11 @@ function die() { echo "$@"; exit 1; }
 PREFIX="${HOME}/prefix"
 TOOLCHAIN_PREFIX_32="/usr/bin/i686-w64-mingw32-"
 TOOLCHAIN_PREFIX_64="/usr/bin/x86_64-w64-mingw32-"
+TOOLCHAIN_PREFIX_ARM64="/usr/bin/aarch64-linux-gnu-"
 
 arch=""
 toolchain_prefix=""
+binary=""
 
 if [[ "$(uname)" != "Linux" ]]; then
   echo "ERROR: this script is designed to be run on Linux. Can't run on $(uname)"
@@ -34,11 +36,17 @@ fi
 if [[ "$1" == "--win32" ]]; then
   arch="win32";
   toolchain_prefix="${TOOLCHAIN_PREFIX_32}"
+  binary="ffmpeg.exe"
 elif [[ "$1" == "--win64" ]]; then
   arch="win64";
   toolchain_prefix="${TOOLCHAIN_PREFIX_64}"
+  binary="ffmpeg.exe"
+elif [[ "$1" == "--linux-arm64" ]]; then
+  arch="linux-arm64";
+  toolchain_prefix="${TOOLCHAIN_PREFIX_ARM64}"
+  binary="ffmpeg"
 elif [[ -z "$1" ]]; then
-  die "ERROR: expect --win32 or --win64 as the first argument"
+  die "ERROR: expect --win32, --win64 or --linux-arm64 as the first argument"
 else
   die "ERROR: unknown arch '$1' - expected --win32 or --win64"
 fi
@@ -81,6 +89,8 @@ function build_libvpx {
     target="x86-win32-gcc";
   elif [[ $arch == "win64" ]]; then
     target="x86_64-win64-gcc";
+  elif [[ $arch == "linux-arm64" ]]; then
+    target="arm64-linux-gcc";
   else
     die "ERROR: unsupported arch to compile libvpx - $arch"
   fi
@@ -98,16 +108,23 @@ function build_ffmpeg {
   export PKG_CONFIG_LIBDIR=
 
   local ffmpeg_arch=""
+  local ffmpeg_target_os=""
   if [[ $arch == "win32" ]]; then
     ffmpeg_arch="x86";
+    ffmpeg_target_os="mingw32"
   elif [[ $arch == "win64" ]]; then
     ffmpeg_arch="x86_64";
+    ffmpeg_target_os="mingw32"
+  elif [[ $arch == "linux-arm64" ]]; then
+    ffmpeg_arch="arm64";
+    ffmpeg_target_os="linux"
   else
     die "ERROR: unsupported arch to compile ffmpeg - $arch"
   fi
   ./configure --arch="${ffmpeg_arch}" \
-            --target-os=mingw32 \
+            --target-os="${ffmpeg_target_os}" \
             --cross-prefix="${toolchain_prefix}" \
+            --disable-doc \
             --pkg-config=pkg-config \
             --pkg-config-flags="--static" \
             --extra-cflags="-I/${PREFIX}/include" \
@@ -124,12 +141,17 @@ cd "$(dirname $0)"
 source ./CONFIG.sh
 
 apt-get update
-apt-get install -y mingw-w64 git make yasm pkg-config
+apt-get install -y git make yasm pkg-config
+if [[ "${arch}" == "linux-arm64" ]]; then
+  apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+else
+  apt-get install -y mingw-w64
+fi
 
 build_zlib
 build_libvpx
 build_ffmpeg
 
 # put resulting executable where we were asked to
-cp "${HOME}/ffmpeg/bin/ffmpeg.exe" "${output_path}"
+cp "${HOME}/ffmpeg/bin/${binary}" "${output_path}"
 ${toolchain_prefix}strip "${output_path}"
