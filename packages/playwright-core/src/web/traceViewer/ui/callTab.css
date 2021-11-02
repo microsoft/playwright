@@ -54,10 +54,7 @@
   overflow: hidden;
 }
 
-.call-duration {
-  color: var(--gray);
-}
-
+.call-line .datetime,
 .call-line .string {
   color: var(--orange);
 }
