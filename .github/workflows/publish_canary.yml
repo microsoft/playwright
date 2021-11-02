@@ -26,7 +26,7 @@ jobs:
     - name: "@next: publish with commit timestamp (triggered manually)"
       if: contains(github.ref, 'master') && github.event_name == 'workflow_dispatch'
       run: |
-        node utils/build/update_canary_version.js --today-date
+        node utils/build/update_canary_version.js --commit-timestamp
         utils/publish_all_packages.sh --next
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
