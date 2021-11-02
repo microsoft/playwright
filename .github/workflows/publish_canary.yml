@@ -1,4 +1,4 @@
-name: "devrelease:npm"
+name: "publish canary"
 
 on:
   workflow_dispatch:
@@ -9,8 +9,8 @@ on:
       - release-*
 
 jobs:
-  publish-canary-npm:
-    name: "publish to NPM"
+  publish-canary:
+    name: "publish canary NPM & Trigger canary Docker"
     runs-on: ubuntu-20.04
     if: github.repository == 'microsoft/playwright'
     steps:
@@ -44,4 +44,12 @@ jobs:
         utils/publish_all_packages.sh --beta
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    - run: |
+        # Trigger canary docker build and tag it with NPM canary version
+        VERSION=$(node -e 'console.log(require("./package.json").version)')
+        curl -X POST \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: token ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}" \
+          --data "{\"event_type\": \"build_docker_canary\", \"client_payload\": {\"ref\": \"${{ github.sha }}\", \"package_version\": \"${VERSION}\"}}" \
+          https://api.github.com/repos/microsoft/playwright-internal/dispatches
 
