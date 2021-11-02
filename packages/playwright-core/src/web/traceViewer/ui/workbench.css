@@ -52,7 +52,6 @@
 
 .workbench {
   contain: size;
-  user-select: none;
 }
 
 .workbench .header {
@@ -83,6 +82,10 @@
 
 .workbench .product {
   font-weight: 600;
+  margin-left: 16px;
+}
+
+.workbench .title {
   margin-left: 16px;
 }
 

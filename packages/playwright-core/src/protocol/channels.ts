@@ -558,7 +558,6 @@ export type BrowserTypeLaunchPersistentContextParams = {
   forcedColors?: 'active' | 'none',
   acceptDownloads?: boolean,
   baseURL?: string,
-  _debugName?: string,
   recordVideo?: {
     dir: string,
     size?: {
@@ -631,7 +630,6 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   forcedColors?: 'active' | 'none',
   acceptDownloads?: boolean,
   baseURL?: string,
-  _debugName?: string,
   recordVideo?: {
     dir: string,
     size?: {
@@ -725,7 +723,6 @@ export type BrowserNewContextParams = {
   forcedColors?: 'active' | 'none',
   acceptDownloads?: boolean,
   baseURL?: string,
-  _debugName?: string,
   recordVideo?: {
     dir: string,
     size?: {
@@ -785,7 +782,6 @@ export type BrowserNewContextOptions = {
   forcedColors?: 'active' | 'none',
   acceptDownloads?: boolean,
   baseURL?: string,
-  _debugName?: string,
   recordVideo?: {
     dir: string,
     size?: {
@@ -900,7 +896,7 @@ export interface BrowserContextChannel extends EventTargetChannel {
   recorderSupplementEnable(params: BrowserContextRecorderSupplementEnableParams, metadata?: Metadata): Promise<BrowserContextRecorderSupplementEnableResult>;
   newCDPSession(params: BrowserContextNewCDPSessionParams, metadata?: Metadata): Promise<BrowserContextNewCDPSessionResult>;
   tracingStart(params: BrowserContextTracingStartParams, metadata?: Metadata): Promise<BrowserContextTracingStartResult>;
-  tracingStartChunk(params?: BrowserContextTracingStartChunkParams, metadata?: Metadata): Promise<BrowserContextTracingStartChunkResult>;
+  tracingStartChunk(params: BrowserContextTracingStartChunkParams, metadata?: Metadata): Promise<BrowserContextTracingStartChunkResult>;
   tracingStopChunk(params: BrowserContextTracingStopChunkParams, metadata?: Metadata): Promise<BrowserContextTracingStopChunkResult>;
   tracingStop(params?: BrowserContextTracingStopParams, metadata?: Metadata): Promise<BrowserContextTracingStopResult>;
   harExport(params?: BrowserContextHarExportParams, metadata?: Metadata): Promise<BrowserContextHarExportResult>;
@@ -1113,8 +1109,12 @@ export type BrowserContextTracingStartOptions = {
   screenshots?: boolean,
 };
 export type BrowserContextTracingStartResult = void;
-export type BrowserContextTracingStartChunkParams = {};
-export type BrowserContextTracingStartChunkOptions = {};
+export type BrowserContextTracingStartChunkParams = {
+  title?: string,
+};
+export type BrowserContextTracingStartChunkOptions = {
+  title?: string,
+};
 export type BrowserContextTracingStartChunkResult = void;
 export type BrowserContextTracingStopChunkParams = {
   save: boolean,
@@ -3538,7 +3538,6 @@ export type AndroidDeviceLaunchBrowserParams = {
   reducedMotion?: 'reduce' | 'no-preference',
   forcedColors?: 'active' | 'none',
   acceptDownloads?: boolean,
-  _debugName?: string,
   recordVideo?: {
     dir: string,
     size?: {
@@ -3585,7 +3584,6 @@ export type AndroidDeviceLaunchBrowserOptions = {
   reducedMotion?: 'reduce' | 'no-preference',
   forcedColors?: 'active' | 'none',
   acceptDownloads?: boolean,
-  _debugName?: string,
   recordVideo?: {
     dir: string,
     size?: {

@@ -403,7 +403,6 @@ ContextOptions:
       - none
     acceptDownloads: boolean?
     baseURL: string?
-    _debugName: string?
     recordVideo:
       type: object?
       properties:
@@ -819,6 +818,8 @@ BrowserContext:
         screenshots: boolean?
 
     tracingStartChunk:
+      parameters:
+        title: string?
 
     tracingStopChunk:
       parameters:
@@ -2892,7 +2893,6 @@ AndroidDevice:
           - active
           - none
         acceptDownloads: boolean?
-        _debugName: string?
         recordVideo:
           type: object?
           properties:

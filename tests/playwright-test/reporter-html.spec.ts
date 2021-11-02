@@ -221,3 +221,24 @@ test('should show trace source', async ({ runInlineTest, page, showReport }) => 
   ]);
   await expect(page.locator('.stack-trace-frame.selected')).toContainText('a.test.js');
 });
+
+test('should show trace title', async ({ runInlineTest, page, showReport }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = { use: { trace: 'on' } };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('passes', async ({ page }) => {
+        await page.evaluate('2 + 2');
+      });
+    `,
+  }, { reporter: 'dot,html' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+
+  await showReport();
+  await page.click('text=passes');
+  await page.click('img');
+  await expect(page.locator('.workbench .title')).toHaveText('a.test.js:6 › passes');
+});

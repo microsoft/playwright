@@ -103,6 +103,7 @@ export class TraceModel {
     switch (event.type) {
       case 'context-options': {
         this.contextEntry.browserName = event.browserName;
+        this.contextEntry.title = event.title;
         this.contextEntry.options = event.options;
         break;
       }

@@ -428,8 +428,6 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
   if (debugMode() === 'inspector')
     options.bypassCSP = true;
   verifyGeolocation(options.geolocation);
-  if (!options._debugName)
-    options._debugName = createGuid();
 }
 
 export function verifyGeolocation(geolocation?: types.Geolocation) {

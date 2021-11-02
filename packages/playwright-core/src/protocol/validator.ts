@@ -329,7 +329,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     forcedColors: tOptional(tEnum(['active', 'none'])),
     acceptDownloads: tOptional(tBoolean),
     baseURL: tOptional(tString),
-    _debugName: tOptional(tString),
     recordVideo: tOptional(tObject({
       dir: tString,
       size: tOptional(tObject({
@@ -389,7 +388,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     forcedColors: tOptional(tEnum(['active', 'none'])),
     acceptDownloads: tOptional(tBoolean),
     baseURL: tOptional(tString),
-    _debugName: tOptional(tString),
     recordVideo: tOptional(tObject({
       dir: tString,
       size: tOptional(tObject({
@@ -505,7 +503,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     snapshots: tOptional(tBoolean),
     screenshots: tOptional(tBoolean),
   });
-  scheme.BrowserContextTracingStartChunkParams = tOptional(tObject({}));
+  scheme.BrowserContextTracingStartChunkParams = tObject({
+    title: tOptional(tString),
+  });
   scheme.BrowserContextTracingStopChunkParams = tObject({
     save: tBoolean,
     skipCompress: tBoolean,
@@ -1343,7 +1343,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     reducedMotion: tOptional(tEnum(['reduce', 'no-preference'])),
     forcedColors: tOptional(tEnum(['active', 'none'])),
     acceptDownloads: tOptional(tBoolean),
-    _debugName: tOptional(tString),
     recordVideo: tOptional(tObject({
       dir: tString,
       size: tOptional(tObject({

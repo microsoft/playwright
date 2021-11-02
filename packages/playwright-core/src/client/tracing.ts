@@ -43,19 +43,19 @@ export class Tracing implements api.Tracing {
     };
   }
 
-  async start(options: { name?: string, snapshots?: boolean, screenshots?: boolean, sources?: boolean } = {}) {
+  async start(options: { name?: string, title?: string, snapshots?: boolean, screenshots?: boolean, sources?: boolean } = {}) {
     if (options.sources)
       this._context._instrumentation!.addListener(this._instrumentationListener);
     await this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
       await channel.tracingStart(options);
-      await channel.tracingStartChunk();
+      await channel.tracingStartChunk({ title: options.title });
     });
   }
 
-  async startChunk() {
+  async startChunk(options: { title?: string } = {}) {
     this._sources = new Set();
     await this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
-      await channel.tracingStartChunk();
+      await channel.tracingStartChunk(options);
     });
   }
 

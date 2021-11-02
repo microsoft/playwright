@@ -133,10 +133,14 @@ Whether to capture DOM snapshot on every action.
 
 Whether to include source files for trace actions.
 
+### option: Tracing.start.title
+- `title` <[string]>
+
+Trace name to be shown in the Trace Viewer.
+
 ## async method: Tracing.startChunk
 
 Start a new trace chunk. If you'd like to record multiple traces on the same [BrowserContext], use [`method: Tracing.start`] once, and then create multiple trace chunks with [`method: Tracing.startChunk`] and [`method: Tracing.stopChunk`].
-
 
 ```js
 await context.tracing.start({ screenshots: true, snapshots: true });
@@ -233,6 +237,11 @@ await context.Tracing.StopChunkAsync(new TracingStopChunkOptions
   Path: "trace2.zip"
 });
 ```
+
+### option: Tracing.startChunk.title
+- `title` <[string]>
+
+Trace name to be shown in the Trace Viewer.
 
 
 ## async method: Tracing.stop

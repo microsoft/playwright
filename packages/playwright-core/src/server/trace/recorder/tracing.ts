@@ -107,7 +107,7 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
       this._harTracer.start();
   }
 
-  async startChunk() {
+  async startChunk(options: { title?: string } = {}) {
     if (this._state && this._state.recording)
       await this.stopChunk(false, false);
 
@@ -124,7 +124,7 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
 
     this._appendTraceOperation(async () => {
       await mkdirIfNeeded(state.traceFile);
-      await fs.promises.appendFile(state.traceFile, JSON.stringify(this._contextCreatedEvent) + '\n');
+      await fs.promises.appendFile(state.traceFile, JSON.stringify({ ...this._contextCreatedEvent, title: options.title }) + '\n');
     });
 
     this._context.instrumentation.addListener(this);

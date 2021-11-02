@@ -186,11 +186,12 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
       context.setDefaultTimeout(actionTimeout || 0);
       context.setDefaultNavigationTimeout(navigationTimeout || actionTimeout || 0);
       if (captureTrace) {
+        const title = [path.relative(testInfo.project.testDir, testInfo.file) + ':' + testInfo.line, ...testInfo.titlePath.slice(1)].join(' › ');
         if (!(context.tracing as any)[kTracingStarted]) {
-          await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
+          await context.tracing.start({ screenshots: true, snapshots: true, sources: true, title });
           (context.tracing as any)[kTracingStarted] = true;
         } else {
-          await context.tracing.startChunk();
+          await context.tracing.startChunk({ title });
         }
       } else {
         (context.tracing as any)[kTracingStarted] = false;
