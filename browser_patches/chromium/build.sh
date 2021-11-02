@@ -84,6 +84,11 @@ compile_chromium() {
   cat ./out/Default/args.gn
   echo "===== ======= ====="
 
+  if [[ $1 == "--compile-linux-arm64" ]]; then
+    # Install sysroot image, see https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/linux/chromium_arm.md
+    ./build/linux/sysroot_scripts/install-sysroot.py --arch=arm
+  fi
+
   if [[ $1 == "--compile-win"* ]]; then
     if [[ -z "$USE_GOMA" ]]; then
       /c/Windows/System32/cmd.exe "/c $(cygpath -w "${SCRIPT_FOLDER}"/buildwin.bat)"
@@ -96,10 +101,6 @@ compile_chromium() {
       TARGETS="chrome chrome_sandbox clear_key_cdm"
     else
       TARGETS="chrome"
-    fi
-    if [[ $1 == "--compile-linux-arm64" ]]; then
-      # Install sysroot image, see https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/linux/chromium_arm.md
-      ./build/linux/sysroot_scripts/install-sysroot.py --arch=arm
     fi
     if [[ -z "$USE_GOMA" ]]; then
       autoninja -C out/Default $TARGETS
