@@ -293,7 +293,6 @@ function renderMember(member, parent, options, out) {
     return;
   }
 
-  /** @type string */
   let type = translateType(member.type, parent, t => generateNameDefault(member, name, t, parent));
   if (member.kind === 'event') {
     if (!member.type)
@@ -301,6 +300,8 @@ function renderMember(member, parent, options, out) {
     out.push('');
     if (member.spec)
       out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
+    if (member.deprecated)
+      out.push(`[System.Obsolete]`);
     out.push(`event EventHandler<${type}> ${name};`);
     return;
   }
@@ -499,6 +500,8 @@ function renderMethod(member, parent, name, options, out) {
     if (!member.async) {
       if (member.spec && !options.nodocs)
         out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
+      if (member.deprecated)
+        out.push(`[System.Obsolete]`);
       out.push(`${type} ${name} { get; }`);
       return;
     }
