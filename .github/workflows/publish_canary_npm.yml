@@ -44,4 +44,11 @@ jobs:
         utils/publish_all_packages.sh --beta
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    - run: |
+        VERSION=$(node -e 'console.log(require("./package.json").version)')
+        curl -X POST \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: token ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}" \
+          --data "{\"event_type\": \"build_docker_canary\", \"client_payload\": {\"ref\": \"${{ github.sha }}\", \"package_version\": \"${VERSION}\"}}" \
+          https://api.github.com/repos/microsoft/playwright-internal/dispatches
 
