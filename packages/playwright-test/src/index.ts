@@ -22,7 +22,6 @@ import { rootTestType } from './testType';
 import { createGuid, removeFolders } from 'playwright-core/lib/utils/utils';
 import { GridClient } from 'playwright-core/lib/grid/gridClient';
 import { Browser } from 'playwright-core';
-import { sanitizeForFilePath } from './util';
 export { expect } from './expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
@@ -255,7 +254,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
 
     const traceAttachments: string[] = [];
     const addTraceAttachment = () => {
-      const tracePath = testInfo.outputPath(`trace-${sanitizeForFilePath(testInfo.title)}${traceAttachments.length ? '-' + traceAttachments.length : ''}.zip`);
+      const tracePath = testInfo.outputPath(`trace${traceAttachments.length ? '-' + traceAttachments.length : ''}.zip`);
       traceAttachments.push(tracePath);
       testInfo.attachments.push({ name: 'trace', path: tracePath, contentType: 'application/zip' });
       return tracePath;
