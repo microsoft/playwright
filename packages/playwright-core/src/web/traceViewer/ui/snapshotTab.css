@@ -64,6 +64,17 @@
   padding: 10px;
 }
 
+.snapshot-url {
+  background-color: var(--background);
+  margin: 10px;
+  padding: 4px;
+  border-radius: 3px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
 .snapshot-container {
   display: block;
   background: white;

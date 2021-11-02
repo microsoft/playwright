@@ -74,10 +74,10 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       });
     }
 
-    if (relativePath.startsWith('/snapshotSize/')) {
+    if (relativePath.startsWith('/snapshotInfo/')) {
       if (!snapshotServer)
         return new Response(null, { status: 404 });
-      return snapshotServer.serveSnapshotSize(relativePath, url.searchParams);
+      return snapshotServer.serveSnapshotInfo(relativePath, url.searchParams);
     }
 
     if (relativePath.startsWith('/snapshot/')) {

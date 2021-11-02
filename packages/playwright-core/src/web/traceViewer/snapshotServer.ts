@@ -39,9 +39,12 @@ export class SnapshotServer {
     return new Response(renderedSnapshot.html, { status: 200, headers: { 'Content-Type': 'text/html' } });
   }
 
-  serveSnapshotSize(pathname: string, searchParams: URLSearchParams): Response {
-    const snapshot = this._snapshot(pathname.substring('/snapshotSize'.length), searchParams);
-    return this._respondWithJson(snapshot ? snapshot.viewport() : {});
+  serveSnapshotInfo(pathname: string, searchParams: URLSearchParams): Response {
+    const snapshot = this._snapshot(pathname.substring('/snapshotInfo'.length), searchParams);
+    return this._respondWithJson(snapshot ? {
+      viewport: snapshot.viewport(),
+      url: snapshot.snapshot().frameUrl
+    } : {});
   }
 
   private _snapshot(pathname: string, params: URLSearchParams) {

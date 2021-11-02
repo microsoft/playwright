@@ -23,8 +23,8 @@ import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
 
 export const SnapshotTab: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,
-  defaultSnapshotSize: Size,
-}> = ({ action, defaultSnapshotSize }) => {
+  defaultSnapshotInfo: { viewport: Size, url: string },
+}> = ({ action, defaultSnapshotInfo }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [snapshotIndex, setSnapshotIndex] = React.useState(0);
 
@@ -35,7 +35,7 @@ export const SnapshotTab: React.FunctionComponent<{
   const snapshots = [actionSnapshot ? { ...actionSnapshot, title: 'action' } : undefined, snapshotMap.get('before'), snapshotMap.get('after')].filter(Boolean) as { title: string, snapshotName: string }[];
 
   let snapshotUrl = 'data:text/html,<body style="background: #ddd"></body>';
-  let snapshotSizeUrl: string | undefined;
+  let snapshotInfoUrl: string | undefined;
   let pointX: number | undefined;
   let pointY: number | undefined;
   if (action) {
@@ -43,7 +43,7 @@ export const SnapshotTab: React.FunctionComponent<{
     if (snapshot && snapshot.snapshotName) {
       const traceUrl = new URL(window.location.href).searchParams.get('trace');
       snapshotUrl = new URL(`snapshot/${action.metadata.pageId}?trace=${traceUrl}&name=${snapshot.snapshotName}`, window.location.href).toString();
-      snapshotSizeUrl = new URL(`snapshotSize/${action.metadata.pageId}?trace=${traceUrl}&name=${snapshot.snapshotName}`, window.location.href).toString();
+      snapshotInfoUrl = new URL(`snapshotInfo/${action.metadata.pageId}?trace=${traceUrl}&name=${snapshot.snapshotName}`, window.location.href).toString();
       if (snapshot.snapshotName.includes('action')) {
         pointX = action.metadata.point?.x;
         pointY = action.metadata.point?.y;
@@ -57,12 +57,13 @@ export const SnapshotTab: React.FunctionComponent<{
   }, [snapshotIndex, snapshots]);
 
   const iframeRef = React.useRef<HTMLIFrameElement>(null);
-  const [snapshotSize, setSnapshotSize] = React.useState(defaultSnapshotSize);
+  const [snapshotInfo, setSnapshotInfo] = React.useState(defaultSnapshotInfo);
   React.useEffect(() => {
     (async () => {
-      if (snapshotSizeUrl) {
-        const response = await fetch(snapshotSizeUrl);
-        setSnapshotSize(await response.json());
+      if (snapshotInfoUrl) {
+        const response = await fetch(snapshotInfoUrl);
+        const info = await response.json();
+        setSnapshotInfo(info);
       }
       if (!iframeRef.current)
         return;
@@ -71,8 +72,9 @@ export const SnapshotTab: React.FunctionComponent<{
       } catch (e) {
       }
     })();
-  }, [iframeRef, snapshotUrl, snapshotSizeUrl, pointX, pointY]);
+  }, [iframeRef, snapshotUrl, snapshotInfoUrl, pointX, pointY]);
 
+  const snapshotSize = snapshotInfo.viewport;
   const scale = Math.min(measure.width / snapshotSize.width, measure.height / snapshotSize.height, 1);
   const scaledSize = {
     width: snapshotSize.width * scale,
@@ -96,6 +98,7 @@ export const SnapshotTab: React.FunctionComponent<{
         </div>;
       })}
     </div>
+    <div className='snapshot-url' title={snapshotInfo.url}>{snapshotInfo.url}</div>
     <div ref={ref} className='snapshot-wrapper'>
       <div className='snapshot-container' style={{
         width: snapshotSize.width + 'px',
