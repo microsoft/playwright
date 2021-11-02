@@ -232,7 +232,10 @@ async function launchDockerContainer(): Promise<() => Promise<void>> {
   const gridServer = new GridServer(dockerFactory, createGuid());
   await gridServer.start();
   // Start docker container in advance.
-  await gridServer.createAgent();
+  const {error} = await gridServer.createAgent();
+  if (error)
+    throw error;
   process.env.PW_GRID = gridServer.urlPrefix().substring(0, gridServer.urlPrefix().length - 1);
+  process.env.PWTEST_USE_DOCKER_SNAPSHOT_SUFFIX = true;
   return async () => await gridServer.stop();
 }

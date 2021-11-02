@@ -28,8 +28,7 @@ const dockerFactory: GridFactory = {
     const { vncUrl } = await launchDockerGridAgent(options.agentId, options.gridURL);
     /* eslint-disable no-console */
     console.log(``);
-    console.log(`✨ Running browsers inside docker container ✨`);
-    console.log(`- look inside: ${vncUrl}`);
+    console.log(`✨ Running browsers inside docker container: ${vncUrl} ✨`);
   }
 };
 

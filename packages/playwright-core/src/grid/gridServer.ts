@@ -285,12 +285,12 @@ export class GridServer {
     });
   }
 
-  public async createAgent() {
+  public async createAgent(): Promise<{ error: any }> {
     const { initPromise } = this._createAgent();
-    await initPromise;
+    return await initPromise;
   }
 
-  private _createAgent(): {agent: GridAgent, initPromise: Promise<{success: boolean, error: any}>} {
+  private _createAgent(): {agent: GridAgent, initPromise: Promise<{ error: any }>} {
     const agent = new GridAgent(this._factory.capacity, this._factory.launchTimeout, this._factory.retireTimeout);
     this._agents.set(agent.agentId, agent);
     agent.on('close', () => {
@@ -303,12 +303,12 @@ export class GridServer {
           playwrightVersion: getPlaywrightVersion(),
         })).then(() => {
           this._log('created');
-          return { success: true, error: undefined };
+          return { error: undefined };
         }).catch(error => {
           this._log('failed to launch agent ' + agent.agentId);
           console.error(error);
           agent.closeAgent(WSErrors.AGENT_CREATION_FAILED);
-          return { success: false, error };
+          return { error };
         });
     return { agent, initPromise };
   }
