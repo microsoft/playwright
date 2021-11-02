@@ -723,22 +723,22 @@ export class Frame extends SdkObject {
     return controller.run(async progress => {
       progress.log(`waiting for selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);
       while (progress.isRunning()) {
-        const result = await this._scheduleRerunnableHandleTask(progress, info.world, task);
-        if (!result.asElement()) {
-          result.dispose();
-          return null;
-        }
-        if ((options as any).__testHookBeforeAdoptNode)
-          await (options as any).__testHookBeforeAdoptNode();
+        let result: js.JSHandle | undefined;
         try {
+          const result = await this.evaluateTaskHandle(progress, info.world, task);
+          if (!result.asElement()) {
+            result.dispose();
+            return null;
+          }
+          if ((options as any).__testHookBeforeAdoptNode)
+            await (options as any).__testHookBeforeAdoptNode();
           const handle = result.asElement() as dom.ElementHandle<Element>;
           const adopted = await handle._adoptTo(await this._mainContext());
           return adopted;
         } catch (e) {
-          // Navigated while trying to adopt the node.
-          if (js.isJavaScriptErrorInEvaluate(e))
+          if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e) || e.message === 'Frame was detached')
             throw e;
-          result.dispose();
+          result?.dispose();
         }
       }
       return null;
@@ -955,23 +955,25 @@ export class Frame extends SdkObject {
     strict: boolean | undefined,
     action: (handle: dom.ElementHandle<Element>) => Promise<R | 'error:notconnected'>): Promise<R> {
     const info = this._page.parseSelector(selector, { strict });
+    const task = dom.waitForSelectorTask(info, 'attached');
     while (progress.isRunning()) {
       progress.log(`waiting for selector "${selector}"`);
-      const task = dom.waitForSelectorTask(info, 'attached');
-      const handle = await this._scheduleRerunnableHandleTask(progress, info.world, task);
-      const element = handle.asElement() as dom.ElementHandle<Element>;
-      progress.cleanupWhenAborted(() => {
-        // Do not await here to avoid being blocked, either by stalled
-        // page (e.g. alert) or unresolved navigation in Chromium.
+      let element: dom.ElementHandle<Element> | undefined;
+      try {
+        const handle = await this.evaluateTaskHandle(progress, info.world, task);
+        element = handle.asElement() as dom.ElementHandle<Element>;
+        const result = await action(element);
         element.dispose();
-      });
-      const result = await action(element);
-      element.dispose();
-      if (result === 'error:notconnected') {
-        progress.log('element was detached from the DOM, retrying');
-        continue;
+        if (result === 'error:notconnected') {
+          progress.log('element was detached from the DOM, retrying');
+          continue;
+        }
+        return result;
+      } catch (e) {
+        if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e) || e.message === 'Element is not visible')
+          throw e;
+        element?.dispose();
       }
-      return result;
     }
     return undefined as any;
   }
@@ -1226,9 +1228,17 @@ export class Frame extends SdkObject {
         return injectedScript.pollRaf(progress => predicate(arg) || progress.continuePolling);
       return injectedScript.pollInterval(polling, progress => predicate(arg) || progress.continuePolling);
     }, { expression, isFunction, polling: options.pollingInterval, arg });
-    return controller.run(
-        progress => this._scheduleRerunnableHandleTask(progress, world, task),
-        this._page._timeoutSettings.timeout(options));
+    return controller.run(async progress => {
+      while (progress.isRunning()) {
+        try {
+          return await this.evaluateTaskHandle(progress, world, task);
+        } catch (e) {
+          if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e) || e.message === 'Frame was detached')
+            throw e;
+        }
+      }
+      return undefined as any;
+    }, this._page._timeoutSettings.timeout(options));
   }
 
   async waitForFunctionValueInUtility<R>(progress: Progress, pageFunction: js.Func1<any, R>) {
@@ -1320,7 +1330,7 @@ export class Frame extends SdkObject {
             return callback(progress, element, taskData as T, elements);
           });
         }, { info, taskData, callbackText, querySelectorAll: options.querySelectorAll, logScale: options.logScale, omitAttached: options.omitAttached, snapshotName: progress.metadata.afterSnapshot });
-      }, true);
+      });
 
       if (this._detached)
         rerunnableTask.terminate(new Error('Frame got detached.'));
@@ -1330,14 +1340,13 @@ export class Frame extends SdkObject {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  private _scheduleRerunnableHandleTask<T>(progress: Progress, world: types.World, task: dom.SchedulableTask<T>): Promise<js.SmartHandle<T>> {
-    const data = this._contextData.get(world)!;
-    const rerunnableTask = new RerunnableTask<T>(data, progress, task, false /* returnByValue */);
-    if (this._detached)
-      rerunnableTask.terminate(new Error('waitForFunction failed: frame got detached.'));
-    if (data.context)
-      rerunnableTask.rerun(data.context);
-    return rerunnableTask.handlePromise!;
+  async evaluateTaskHandle<T>(progress: Progress, world: types.World, task: dom.SchedulableTask<T>): Promise<js.SmartHandle<T>> {
+    const context = await this._context(world);
+    const injected = await context.injectedScript();
+    const pollHandler = new dom.InjectedScriptPollHandler(progress, await task(injected));
+    const result = await pollHandler.finishHandle();
+    progress.cleanupWhenAborted(() => result.dispose());
+    return result;
   }
 
   private _setContext(world: types.World, context: dom.FrameExecutionContext | null) {
@@ -1402,53 +1411,34 @@ export class Frame extends SdkObject {
 }
 
 class RerunnableTask<T> {
-  readonly promise: ManualPromise<T> | undefined;
-  readonly handlePromise: ManualPromise<js.SmartHandle<T>> | undefined;
+  readonly promise: ManualPromise<T>;
   private _task: dom.SchedulableTask<T>;
   private _progress: Progress;
-  private _returnByValue: boolean;
   private _contextData: ContextData;
 
-  constructor(data: ContextData, progress: Progress, task: dom.SchedulableTask<T>, returnByValue: boolean) {
+  constructor(data: ContextData, progress: Progress, task: dom.SchedulableTask<T>) {
     this._task = task;
     this._progress = progress;
-    this._returnByValue = returnByValue;
-    if (returnByValue)
-      this.promise = new ManualPromise<T>();
-    else
-      this.handlePromise = new ManualPromise<js.SmartHandle<T>>();
+    this.promise = new ManualPromise<T>();
     this._contextData = data;
     this._contextData.rerunnableTasks.add(this);
   }
 
   terminate(error: Error) {
-    this._reject(error);
-  }
-  private _resolve(value: T | js.SmartHandle<T>) {
-    if (this.promise)
-      this.promise.resolve(value as T);
-    if (this.handlePromise)
-      this.handlePromise.resolve(value as js.SmartHandle<T>);
-  }
-
-  private _reject(error: Error) {
-    if (this.promise)
-      this.promise.reject(error);
-    if (this.handlePromise)
-      this.handlePromise.reject(error);
+    this.promise.reject(error);
   }
 
   async rerun(context: dom.FrameExecutionContext) {
     try {
       const injectedScript = await context.injectedScript();
       const pollHandler = new dom.InjectedScriptPollHandler(this._progress, await this._task(injectedScript));
-      const result = this._returnByValue ? await pollHandler.finish() : await pollHandler.finishHandle();
+      const result = await pollHandler.finish();
       this._contextData.rerunnableTasks.delete(this);
-      this._resolve(result);
+      this.promise.resolve(result);
     } catch (e) {
       if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e)) {
         this._contextData.rerunnableTasks.delete(this);
-        this._reject(e);
+        this.promise.reject(e);
       }
 
       // We will try again in the new execution context.
