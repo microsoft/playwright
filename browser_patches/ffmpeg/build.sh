@@ -46,35 +46,28 @@ if [[ -t 0 ]]; then
   dockerflags="-it"
 fi
 
+function ensure_docker_or_die() {
+  if ! command -v docker >/dev/null; then
+    echo "ERROR: docker is required for the script"
+    exit 1
+  fi
+}
 
 if [[ "$1" == "--mac" ]]; then
   bash ./build-mac.sh
   cd output && zip ffmpeg.zip ffmpeg-mac "${LICENSE_FILE}"
 elif [[ "$1" == "--linux" ]]; then
-  if ! command -v docker >/dev/null; then
-    echo "ERROR: docker is required for the script"
-    exit 1
-  fi
+  ensure_docker_or_die
+
   time docker run --init --rm -v"${PWD}":/host ${dockerflags} ubuntu:18.04 bash /host/build-linux.sh /host/output/ffmpeg-linux
   cd output && zip ffmpeg.zip ffmpeg-linux "${LICENSE_FILE}"
-elif [[ "$1" == --cross-compile-win* ]]; then
-  if ! command -v docker >/dev/null; then
-    echo "ERROR: docker is required for the script"
-    exit 1
-  fi
+elif [[ "$1" == --cross-compile-win64 ]]; then
+  ensure_docker_or_die
 
-  if [[ "$1" == "--cross-compile-win64" ]]; then
-    time docker run --init --rm -v"${PWD}":/host ${dockerflags} ubuntu:18.04 bash /host/crosscompile-from-linux.sh --win64 /host/output/ffmpeg-win64.exe
-    cd output && zip ffmpeg.zip ffmpeg-win64.exe "${LICENSE_FILE}"
-  else
-    echo "ERROR: unsupported platform - $1"
-    exit 1
-  fi
+  time docker run --init --rm -v"${PWD}":/host ${dockerflags} ubuntu:18.04 bash /host/crosscompile-from-linux.sh --win64 /host/output/ffmpeg-win64.exe
+  cd output && zip ffmpeg.zip ffmpeg-win64.exe "${LICENSE_FILE}"
 elif [[ "$1" == "--cross-compile-linux-arm64" ]]; then
-  if ! command -v docker >/dev/null; then
-    echo "ERROR: docker is required for the script"
-    exit 1
-  fi
+  ensure_docker_or_die
 
   time docker run --init --rm -v"${PWD}":/host ${dockerflags} ubuntu:18.04 bash /host/crosscompile-from-linux.sh --linux-arm64 /host/output/ffmpeg-linux-arm64
   cd output && zip ffmpeg.zip ffmpeg-linux-arm64 "${LICENSE_FILE}"
