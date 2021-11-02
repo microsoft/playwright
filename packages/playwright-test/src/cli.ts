@@ -236,6 +236,5 @@ async function launchDockerContainer(): Promise<() => Promise<void>> {
   if (error)
     throw error;
   process.env.PW_GRID = gridServer.urlPrefix().substring(0, gridServer.urlPrefix().length - 1);
-  process.env.PWTEST_USE_DOCKER_SNAPSHOT_SUFFIX = true;
   return async () => await gridServer.stop();
 }
