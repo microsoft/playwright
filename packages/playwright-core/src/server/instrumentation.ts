@@ -88,6 +88,7 @@ export function createInstrumentation(): Instrumentation {
 export function internalCallMetadata(): CallMetadata {
   return {
     id: '',
+    wallTime: 0,
     startTime: 0,
     endTime: 0,
     type: 'Internal',

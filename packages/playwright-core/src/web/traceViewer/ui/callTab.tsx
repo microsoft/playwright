@@ -32,12 +32,19 @@ export const CallTab: React.FunctionComponent<{
   // Strip down the waitForEventInfo data, we never need it.
   delete params.info;
   const paramKeys = Object.keys(params);
+  const wallTime = new Date(action.metadata.wallTime).toLocaleString();
+  const duration = msToString(action.metadata.endTime - action.metadata.startTime);
   return <div className='call-tab'>
     <div className='call-error' key='error' hidden={!error}>
       <div className='codicon codicon-issues'/>
       {error}
     </div>
-    <div className='call-line'>{action.metadata.apiName} <span className='call-duration'>— {msToString(action.metadata.endTime - action.metadata.startTime)}</span></div>
+    <div className='call-line'>{action.metadata.apiName}</div>
+    {<>
+      <div className='call-section'>Time</div>
+      <div className='call-line'>wall time: <span className='datetime' title={wallTime}>{wallTime}</span></div>
+      <div className='call-line'>duration: <span className='datetime' title={duration}>{duration}</span></div>
+    </>}
     { !!paramKeys.length && <div className='call-section'>Parameters</div> }
     {
       !!paramKeys.length && paramKeys.map((name, index) => renderLine(action.metadata, name, params[name], 'param-' + index))

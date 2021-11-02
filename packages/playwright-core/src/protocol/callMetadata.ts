@@ -18,6 +18,7 @@ import { Point, StackFrame, SerializedError } from './channels';
 
 export type CallMetadata = {
   id: string;
+  wallTime: number;
   startTime: number;
   endTime: number;
   pauseStartTime?: number;

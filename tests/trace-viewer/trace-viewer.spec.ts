@@ -180,19 +180,19 @@ test('should show empty trace viewer', async ({ showTraceViewer }, testInfo) => 
 test('should open simple trace viewer', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await expect(traceViewer.actionTitles).toHaveText([
-    /browserContext.newPage— [\d.ms]+/,
-    /page.gotodata:text\/html,<html>Hello world<\/html>— [\d.ms]+/,
-    /page.setContent— [\d.ms]+/,
-    /expect.toHaveTextbutton— [\d.ms]+/,
-    /page.evaluate— [\d.ms]+/,
-    /page.click"Click"— [\d.ms]+/,
-    /page.waitForEvent— [\d.ms]+/,
-    /page.route— [\d.ms]+/,
-    /page.waitForNavigation— [\d.ms]+/,
-    /page.waitForTimeout— [\d.ms]+/,
-    /page.gotohttp:\/\/localhost:\d+\/frames\/frame.html— [\d.ms]+/,
-    /route.continue— [\d.ms]+/,
-    /page.setViewportSize— [\d.ms]+/,
+    /browserContext.newPage/,
+    /page.gotodata:text\/html,<html>Hello world<\/html>/,
+    /page.setContent/,
+    /expect.toHaveTextbutton/,
+    /page.evaluate/,
+    /page.click"Click"/,
+    /page.waitForEvent/,
+    /page.route/,
+    /page.waitForNavigation/,
+    /page.waitForTimeout/,
+    /page.gotohttp:\/\/localhost:\d+\/frames\/frame.html/,
+    /route.continue/,
+    /page.setViewportSize/,
   ]);
 });
 
@@ -235,7 +235,9 @@ test('should show params and return value', async ({ showTraceViewer, browserNam
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.selectAction('page.evaluate');
   await expect(traceViewer.callLines).toHaveText([
-    /page.evaluate — [\d.ms]+/,
+    /page.evaluate/,
+    /wall time: [0-9/:,APM ]+/,
+    /duration: [\d]+ms/,
     'expression: "({↵    a↵  }) => {↵    console.log(\'Info\');↵    console.warn(\'Warning\');↵    con…"',
     'isFunction: true',
     'arg: {"a":"paramA","b":4}',
