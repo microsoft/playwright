@@ -66,7 +66,7 @@ Declares an `afterAll` hook that is executed once after all tests. When called i
 ### param: Test.afterAll.hookFunction
 - `hookFunction` <[function]\([Fixtures], [TestInfo]\)>
 
-Hook function that takes one or two arguments: an object with fixtures and optional [TestInfo].
+Hook function that takes one or two arguments: an object with worker fixtures and optional [TestInfo].
 
 
 
@@ -157,7 +157,7 @@ You can use [`method: Test.afterAll`] to teardown any resources set up in `befor
 ### param: Test.beforeAll.hookFunction
 - `hookFunction` <[function]\([Fixtures], [TestInfo]\)>
 
-Hook function that takes one or two arguments: an object with fixtures and optional [TestInfo].
+Hook function that takes one or two arguments: an object with worker fixtures and optional [TestInfo].
 
 
 
