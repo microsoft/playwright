@@ -56,3 +56,24 @@ public class PlaywrightThread extends Thread {
   }
 }
 ```
+
+## Synchronous API and event dispatching
+
+In the synchronous Playwright API all events are dispatched only when Playwright is running its message loop.
+This happens automatically when you call any of the API methods and doesn't happen if there are no active
+Playwright calls on the stack. If you need to wait for an event the best way to do this is via one of the
+`waitFor*` methods.
+
+### Page.waitForTimeout() vs. Thread.sleep()
+
+One consequence of the synchronous API is that if you for whatever reason call `Thread.sleep()` no events will
+be fired while the thread is sleeping. If you want events from the browser to be dispatched while the program
+execution is paused use [`method: Page.waitForTimeout`] or [`method: Frame.waitForTimeout`]:
+
+```java
+page.onResponse(response -> System.out.println(response.url()));
+page.navigate("https://playwright.dev");
+System.out.println("-- did navigate --");
+// Block current thread for 60s and ensure the events are dispatched.
+page.waitForTimeout(60_000);
+```
