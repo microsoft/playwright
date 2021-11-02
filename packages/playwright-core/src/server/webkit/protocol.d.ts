@@ -6841,6 +6841,18 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     export type insertTextReturnValue = {
     }
     /**
+     * Set the current IME composition.
+     */
+    export type setCompositionParameters = {
+      text: string;
+      selectionStart: number;
+      selectionLength: number;
+      replacementStart?: number;
+      replacementLength?: number;
+    }
+    export type setCompositionReturnValue = {
+    }
+    /**
      * Serializes and returns all of the accessibility nodes of the page.
      */
     export type accessibilitySnapshotParameters = {
@@ -9068,6 +9080,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.archive": Page.archiveParameters;
     "Page.setScreenSizeOverride": Page.setScreenSizeOverrideParameters;
     "Page.insertText": Page.insertTextParameters;
+    "Page.setComposition": Page.setCompositionParameters;
     "Page.accessibilitySnapshot": Page.accessibilitySnapshotParameters;
     "Page.setInterceptFileChooserDialog": Page.setInterceptFileChooserDialogParameters;
     "Page.setDefaultBackgroundColorOverride": Page.setDefaultBackgroundColorOverrideParameters;
@@ -9369,6 +9382,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.archive": Page.archiveReturnValue;
     "Page.setScreenSizeOverride": Page.setScreenSizeOverrideReturnValue;
     "Page.insertText": Page.insertTextReturnValue;
+    "Page.setComposition": Page.setCompositionReturnValue;
     "Page.accessibilitySnapshot": Page.accessibilitySnapshotReturnValue;
     "Page.setInterceptFileChooserDialog": Page.setInterceptFileChooserDialogReturnValue;
     "Page.setDefaultBackgroundColorOverride": Page.setDefaultBackgroundColorOverrideReturnValue;
