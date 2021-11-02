@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import milliseconds from 'ms';
 import path from 'path';
-import { BaseReporter, formatFailure, stripAnsiEscapes } from './base';
-import { TestCase, FullResult } from '../../types/testReporter';
+import { formatFailure, formatSummaryMessage, stripAnsiEscapes, summaryForSuite } from './base';
+import { Reporter, TestCase, FullResult, FullConfig, Suite } from '../../types/testReporter';
+import { monotonicTime } from '../util';
 
 type GitHubLogType = 'debug' | 'notice' | 'warning' | 'error';
 
@@ -56,31 +56,25 @@ class GitHubLogger {
   }
 }
 
-export class GitHubReporter extends BaseReporter {
+export class GitHubReporter implements Reporter {
   githubLogger = new GitHubLogger();
+  config!: FullConfig;
+  suite!: Suite;
+  monotonicStartTime: number = 0;
 
-  override async onEnd(result: FullResult) {
-    super.onEnd(result);
-    this._printAnnotations();
+  onBegin(config: FullConfig, suite: Suite) {
+    this.config = config;
+    this.suite = suite;
+    this.monotonicStartTime = monotonicTime();
   }
 
-  private _printAnnotations() {
-    const summary = this.generateSummary();
-    const summaryMessage = this.generateSummaryMessage(summary);
+  async onEnd(result: FullResult) {
+    const duration = monotonicTime() - this.monotonicStartTime;
+    const summary = summaryForSuite(this.suite);
+    const summaryMessage = formatSummaryMessage(this.config, summary, duration);
     if (summary.failuresToPrint.length)
       this._printFailureAnnotations(summary.failuresToPrint);
-    this._printSlowTestAnnotations();
     this._printSummaryAnnotation(summaryMessage);
-  }
-
-  private _printSlowTestAnnotations() {
-    this.getSlowTests().forEach(([file, duration]) => {
-      const filePath = workspaceRelativePath(path.join(process.cwd(), file));
-      this.githubLogger.warning(`${filePath} took ${milliseconds(duration)}`, {
-        title: 'Slow Test',
-        file: filePath,
-      });
-    });
   }
 
   private _printSummaryAnnotation(summary: string){

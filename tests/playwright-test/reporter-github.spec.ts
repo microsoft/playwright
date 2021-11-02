@@ -54,23 +54,3 @@ test('print GitHub annotations for failed tests', async ({ runInlineTest }, test
   expect(text).toContain(`::error file=${testPath},title=a.test.js:6:7 › example,line=7,col=23::  1) a.test.js:6:7 › example =======================================================================%0A%0A    Retry #3`);
   expect(result.exitCode).toBe(1);
 });
-
-test('print GitHub annotations for slow tests', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-      module.exports = {
-        reportSlowTests: { max: 0, threshold: 100 }
-      };
-    `,
-    'a.test.js': `
-      const { test } = pwt;
-      test('slow test', async ({}) => {
-        await new Promise(f => setTimeout(f, 200));
-      });
-    `
-  }, { retries: 3, reporter: 'github' }, { GITHUB_WORKSPACE: '' });
-  const text = stripAscii(result.output);
-  expect(text).toContain('::warning title=Slow Test,file=a.test.js::a.test.js took');
-  expect(text).toContain('::notice title=🎭 Playwright Run Summary::  1 passed');
-  expect(result.exitCode).toBe(0);
-});

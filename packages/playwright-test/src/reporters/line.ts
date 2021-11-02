@@ -16,19 +16,12 @@
 
 import colors from 'colors/safe';
 import { BaseReporter, formatFailure, formatTestTitle } from './base';
-import { FullConfig, TestCase, Suite, TestResult, FullResult } from '../../types/testReporter';
+import { TestCase, TestResult, FullResult } from '../../types/testReporter';
 
 class LineReporter extends BaseReporter {
-  private _total = 0;
   private _current = 0;
   private _failures = 0;
   private _lastTest: TestCase | undefined;
-
-  override onBegin(config: FullConfig, suite: Suite) {
-    super.onBegin(config, suite);
-    this._total = suite.allTests().length;
-    console.log();
-  }
 
   override onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     super.onStdOut(chunk, test, result);
@@ -57,7 +50,7 @@ class LineReporter extends BaseReporter {
   override onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
     const width = process.stdout.columns! - 1;
-    const title = `[${++this._current}/${this._total}] ${formatTestTitle(this.config, test)}`.substring(0, width);
+    const title = `[${++this._current}/${this.totalTestCount}] ${formatTestTitle(this.config, test)}`.substring(0, width);
     process.stdout.write(`\u001B[1A\u001B[2K${title}\n`);
 
     if (!this._omitFailures && !this.willRetry(test) && (test.outcome() === 'flaky' || test.outcome() === 'unexpected')) {

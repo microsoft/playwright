@@ -58,6 +58,7 @@ export class BaseReporter implements Reporter  {
   duration = 0;
   config!: FullConfig;
   suite!: Suite;
+  totalTestCount = 0;
   result!: FullResult;
   fileDurations = new Map<string, number>();
   monotonicStartTime: number = 0;
@@ -72,6 +73,10 @@ export class BaseReporter implements Reporter  {
     this.monotonicStartTime = monotonicTime();
     this.config = config;
     this.suite = suite;
+    this.totalTestCount = suite.allTests().length;
+    const jobs = Math.min(config.workers, (config as any).__testGroupsCount);
+    const shardDetails = config.shard ? `, shard ${config.shard.current} of ${config.shard.total}` : '';
+    console.log(`\nRunning ${this.totalTestCount} test${this.totalTestCount > 1 ? 's' : ''} using ${jobs} worker${jobs > 1 ? 's' : ''}${shardDetails}\n`);
   }
 
   onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
@@ -106,7 +111,7 @@ export class BaseReporter implements Reporter  {
     this.result = result;
   }
 
-  protected getSlowTests(): [string, number][] {
+  private getSlowTests(): [string, number][] {
     if (!this.config.reportSlowTests)
       return [];
     const fileDurations = [...this.fileDurations.entries()];
@@ -116,95 +121,80 @@ export class BaseReporter implements Reporter  {
     return fileDurations.filter(([,duration]) => duration > threshold).slice(0, count);
   }
 
-  protected generateSummaryMessage({ skipped, expected, unexpected, flaky }: TestSummary) {
-    const tokens: string[] = [];
-    if (unexpected.length) {
-      tokens.push(colors.red(`  ${unexpected.length} failed`));
-      for (const test of unexpected)
-        tokens.push(colors.red(formatTestHeader(this.config, test, '    ')));
-    }
-    if (flaky.length) {
-      tokens.push(colors.yellow(`  ${flaky.length} flaky`));
-      for (const test of flaky)
-        tokens.push(colors.yellow(formatTestHeader(this.config, test, '    ')));
-    }
-    if (skipped)
-      tokens.push(colors.yellow(`  ${skipped} skipped`));
-    if (expected)
-      tokens.push(colors.green(`  ${expected} passed`) + colors.dim(` (${milliseconds(this.duration)})`));
-    if (this.result.status === 'timedout')
-      tokens.push(colors.red(`  Timed out waiting ${this.config.globalTimeout / 1000}s for the entire test run`));
-
-    return tokens.join('\n');
-  }
-
-  protected generateSummary(): TestSummary {
-    let skipped = 0;
-    let expected = 0;
-    const skippedWithError: TestCase[] = [];
-    const unexpected: TestCase[] = [];
-    const flaky: TestCase[] = [];
-
-    this.suite.allTests().forEach(test => {
-      switch (test.outcome()) {
-        case 'skipped': {
-          ++skipped;
-          if (test.results.some(result => !!result.error))
-            skippedWithError.push(test);
-          break;
-        }
-        case 'expected': ++expected; break;
-        case 'unexpected': unexpected.push(test); break;
-        case 'flaky': flaky.push(test); break;
-      }
-    });
-
-    const failuresToPrint = [...unexpected, ...flaky, ...skippedWithError];
-    return {
-      skipped,
-      expected,
-      skippedWithError,
-      unexpected,
-      flaky,
-      failuresToPrint
-    };
-  }
-
   epilogue(full: boolean) {
-    const summary = this.generateSummary();
-    const summaryMessage = this.generateSummaryMessage(summary);
-    if (full && summary.failuresToPrint.length && !this._omitFailures)
-      this._printFailures(summary.failuresToPrint);
-    this._printSlowTests();
-    this._printSummary(summaryMessage);
-  }
-
-  private _printFailures(failures: TestCase[]) {
-    console.log('');
-    failures.forEach((test, index) => {
-      console.log(formatFailure(this.config, test, {
-        index: index + 1,
-        includeStdio: this.printTestOutput
-      }).message);
-    });
-  }
-
-  private _printSlowTests() {
+    const summary = summaryForSuite(this.suite);
+    if (full && summary.failuresToPrint.length && !this._omitFailures) {
+      console.log('');
+      summary.failuresToPrint.forEach((test, index) => {
+        console.log(formatFailure(this.config, test, {
+          index: index + 1,
+          includeStdio: this.printTestOutput
+        }).message);
+      });
+    }
     this.getSlowTests().forEach(([file, duration]) => {
       console.log(colors.yellow('  Slow test: ') + file + colors.yellow(` (${milliseconds(duration)})`));
     });
-  }
-
-  private _printSummary(summary: string) {
-    if (summary.trim()) {
-      console.log('');
-      console.log(summary);
-    }
+    console.log('');
+    console.log(formatSummaryMessage(this.config, summary, this.duration));
+    if (this.result.status === 'timedout')
+      console.log(colors.red(`  Timed out waiting ${this.config.globalTimeout / 1000}s for the entire test run`));
   }
 
   willRetry(test: TestCase): boolean {
     return test.outcome() === 'unexpected' && test.results.length <= test.retries;
   }
+}
+
+export function summaryForSuite(suite: Suite): TestSummary {
+  let skipped = 0;
+  let expected = 0;
+  const skippedWithError: TestCase[] = [];
+  const unexpected: TestCase[] = [];
+  const flaky: TestCase[] = [];
+
+  suite.allTests().forEach(test => {
+    switch (test.outcome()) {
+      case 'skipped': {
+        ++skipped;
+        if (test.results.some(result => !!result.error))
+          skippedWithError.push(test);
+        break;
+      }
+      case 'expected': ++expected; break;
+      case 'unexpected': unexpected.push(test); break;
+      case 'flaky': flaky.push(test); break;
+    }
+  });
+
+  const failuresToPrint = [...unexpected, ...flaky, ...skippedWithError];
+  return {
+    skipped,
+    expected,
+    skippedWithError,
+    unexpected,
+    flaky,
+    failuresToPrint
+  };
+}
+
+export function formatSummaryMessage(config: FullConfig, summary: TestSummary, duration: number) {
+  const tokens: string[] = [];
+  if (summary.unexpected.length) {
+    tokens.push(colors.red(`  ${summary.unexpected.length} failed`));
+    for (const test of summary.unexpected)
+      tokens.push(colors.red(formatTestHeader(config, test, '    ')));
+  }
+  if (summary.flaky.length) {
+    tokens.push(colors.yellow(`  ${summary.flaky.length} flaky`));
+    for (const test of summary.flaky)
+      tokens.push(colors.yellow(formatTestHeader(config, test, '    ')));
+  }
+  if (summary.skipped)
+    tokens.push(colors.yellow(`  ${summary.skipped} skipped`));
+  if (summary.expected)
+    tokens.push(colors.green(`  ${summary.expected} passed`) + colors.dim(` (${milliseconds(duration)})`));
+  return tokens.join('\n');
 }
 
 export function formatFailure(config: FullConfig, test: TestCase, options: {index?: number, includeStdio?: boolean, includeAttachments?: boolean, filePath?: string} = {}): {
