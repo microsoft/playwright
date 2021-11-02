@@ -22,7 +22,6 @@ import * as network from '../network';
 import * as frames from '../frames';
 import * as types from '../types';
 import { Protocol } from './protocol';
-import { InterceptedResponse } from '../network';
 import { HeadersArray } from '../../server/types';
 
 export class FFNetworkManager {
@@ -212,27 +211,14 @@ class FFRouteImpl implements network.RouteDelegate {
     this._request = request;
   }
 
-  async responseBody(): Promise<Buffer> {
-    const response = await this._session.send('Network.getResponseBody', {
-      requestId: this._request._finalRequest()._id
-    });
-    return Buffer.from(response.base64body, 'base64');
-  }
-
-  async continue(request: network.Request, overrides: types.NormalizedContinueOverrides): Promise<network.InterceptedResponse|null> {
-    const result = await this._session.sendMayFail('Network.resumeInterceptedRequest', {
+  async continue(request: network.Request, overrides: types.NormalizedContinueOverrides) {
+    await this._session.sendMayFail('Network.resumeInterceptedRequest', {
       requestId: this._request._id,
       url: overrides.url,
       method: overrides.method,
       headers: overrides.headers,
       postData: overrides.postData ? Buffer.from(overrides.postData).toString('base64') : undefined,
-      interceptResponse: overrides.interceptResponse,
-    }) as any;
-    if (!overrides.interceptResponse)
-      return null;
-    if (result.error)
-      throw new Error(`Request failed: ${result.error}`);
-    return new InterceptedResponse(request, result.response.status, result.response.statusText, result.response.headers);
+    });
   }
 
   async fulfill(response: types.NormalizedFulfillResponse) {

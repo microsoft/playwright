@@ -226,7 +226,6 @@ export class Route extends SdkObject {
   private readonly _request: Request;
   private readonly _delegate: RouteDelegate;
   private _handled = false;
-  private _response: InterceptedResponse | null = null;
 
   constructor(request: Request, delegate: RouteDelegate) {
     super(request.frame(), 'route');
@@ -256,9 +255,6 @@ export class Route extends SdkObject {
         assert(buffer, 'Fetch response has been disposed');
         body = buffer.toString('base64');
         isBase64 = true;
-      } else if (this._response && overrides.useInterceptedResponseBody) {
-        body = (await this._delegate.responseBody()).toString('base64');
-        isBase64 = true;
       } else {
         body = '';
         isBase64 = false;
@@ -272,22 +268,15 @@ export class Route extends SdkObject {
     });
   }
 
-  async continue(overrides: types.NormalizedContinueOverrides = {}): Promise<InterceptedResponse|null> {
+  async continue(overrides: types.NormalizedContinueOverrides = {}) {
     assert(!this._handled, 'Route is already handled!');
-    assert(!this._response, 'Cannot call continue after response interception!');
     if (overrides.url) {
       const newUrl = new URL(overrides.url);
       const oldUrl = new URL(this._request.url());
       if (oldUrl.protocol !== newUrl.protocol)
         throw new Error('New URL must have same protocol as overridden URL');
     }
-    this._response = await this._delegate.continue(this._request, overrides);
-    return this._response;
-  }
-
-  async responseBody(): Promise<Buffer> {
-    assert(!this._handled, 'Route is already handled!');
-    return this._delegate.responseBody();
+    await this._delegate.continue(this._request, overrides);
   }
 }
 
@@ -485,37 +474,6 @@ export class Response extends SdkObject {
   }
 }
 
-export class InterceptedResponse extends SdkObject {
-  private readonly _request: Request;
-  private readonly _status: number;
-  private readonly _statusText: string;
-  private readonly _headers: types.HeadersArray;
-
-  constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray) {
-    super(request.frame(), 'interceptedResponse');
-    this._request = request._finalRequest();
-    this._status = status;
-    this._statusText = statusText;
-    this._headers = headers;
-  }
-
-  status(): number {
-    return this._status;
-  }
-
-  statusText(): string {
-    return this._statusText;
-  }
-
-  headers(): types.HeadersArray {
-    return this._headers;
-  }
-
-  request(): Request {
-    return this._request;
-  }
-}
-
 export class WebSocket extends SdkObject {
   private _url: string;
 
@@ -555,8 +513,7 @@ export class WebSocket extends SdkObject {
 export interface RouteDelegate {
   abort(errorCode: string): Promise<void>;
   fulfill(response: types.NormalizedFulfillResponse): Promise<void>;
-  continue(request: Request, overrides: types.NormalizedContinueOverrides): Promise<InterceptedResponse|null>;
-  responseBody(): Promise<Buffer>;
+  continue(request: Request, overrides: types.NormalizedContinueOverrides): Promise<void>;
 }
 
 // List taken from https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml with extra 306 and 418 codes.

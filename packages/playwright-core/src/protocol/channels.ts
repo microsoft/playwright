@@ -161,13 +161,6 @@ export type FormField = {
   },
 };
 
-export type InterceptedResponse = {
-  request: RequestChannel,
-  status: number,
-  statusText: string,
-  headers: NameValue[],
-};
-
 // ----------- FetchRequest -----------
 export type FetchRequestInitializer = {};
 export interface FetchRequestChannel extends Channel {
@@ -2797,7 +2790,6 @@ export interface RouteChannel extends Channel {
   abort(params: RouteAbortParams, metadata?: Metadata): Promise<RouteAbortResult>;
   continue(params: RouteContinueParams, metadata?: Metadata): Promise<RouteContinueResult>;
   fulfill(params: RouteFulfillParams, metadata?: Metadata): Promise<RouteFulfillResult>;
-  responseBody(params?: RouteResponseBodyParams, metadata?: Metadata): Promise<RouteResponseBodyResult>;
 }
 export type RouteAbortParams = {
   errorCode?: string,
@@ -2811,24 +2803,19 @@ export type RouteContinueParams = {
   method?: string,
   headers?: NameValue[],
   postData?: Binary,
-  interceptResponse?: boolean,
 };
 export type RouteContinueOptions = {
   url?: string,
   method?: string,
   headers?: NameValue[],
   postData?: Binary,
-  interceptResponse?: boolean,
 };
-export type RouteContinueResult = {
-  response?: InterceptedResponse,
-};
+export type RouteContinueResult = void;
 export type RouteFulfillParams = {
   status?: number,
   headers?: NameValue[],
   body?: string,
   isBase64?: boolean,
-  useInterceptedResponseBody?: boolean,
   fetchResponseUid?: string,
 };
 export type RouteFulfillOptions = {
@@ -2836,15 +2823,9 @@ export type RouteFulfillOptions = {
   headers?: NameValue[],
   body?: string,
   isBase64?: boolean,
-  useInterceptedResponseBody?: boolean,
   fetchResponseUid?: string,
 };
 export type RouteFulfillResult = void;
-export type RouteResponseBodyParams = {};
-export type RouteResponseBodyOptions = {};
-export type RouteResponseBodyResult = {
-  binary: Binary,
-};
 
 export interface RouteEvents {
 }
