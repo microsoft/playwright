@@ -6,7 +6,7 @@ trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
 
 USAGE=$(cat<<EOF
-  usage: $(basename "$0") [--mirror|--mirror-linux|--mirror-win64|--mirror-mac|--compile-mac-arm64|--compile-linux|--compile-linux-arm64|--compile-win64|--compile-mac]
+  usage: $(basename "$0") [--mirror|--mirror-linux|--mirror-win64|--mirror-mac|--compile-mac-arm64|--compile-linux|--compile-linux-arm64|--compile-win64|--compile-mac] [--symbols] [--full]
 
   Either compiles chromium or mirrors it from Chromium Continuous Builds CDN.
 EOF
@@ -22,7 +22,7 @@ main() {
   elif [[ $1 == "--mirror"* ]]; then
     mirror_chromium "$1"
   elif [[ $1 == "--compile"* ]]; then
-    compile_chromium "$1"
+    compile_chromium "$1" "$2" "$3"
   else
     echo "ERROR: unknown first argument. Use --help for details."
     exit 1
@@ -59,7 +59,7 @@ compile_chromium() {
   mkdir -p "./out/Default"
   echo "is_debug = false" > ./out/Default/args.gn
   echo "dcheck_always_on = false" >> ./out/Default/args.gn
-  if [[ $2 == "--symbols" ]]; then
+  if [[ $2 == "--symbols" || $3 == "--symbols" ]]; then
     echo "symbol_level = 1" >> ./out/Default/args.gn
   else
     echo "symbol_level = 0" >> ./out/Default/args.gn
@@ -84,9 +84,14 @@ compile_chromium() {
   cat ./out/Default/args.gn
   echo "===== ======= ====="
 
-  if [[ $1 == "--compile-linux-arm64" ]]; then
-    # Install sysroot image, see https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/linux/chromium_arm.md
-    ./build/linux/sysroot_scripts/install-sysroot.py --arch=arm
+  if [[ $2 == "--full" || $3 == "--full" ]]; then
+    if [[ $(uname) == "--compile-linux" ]]; then
+      ./build/install-build-deps.sh
+    elif [[ $1 == "--compile-linux-arm64" ]]; then
+      ./build/install-build-deps.sh --arm
+      # Install sysroot image, see https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/linux/chromium_arm.md
+      ./build/linux/sysroot_scripts/install-sysroot.py --arch=arm
+    fi
   fi
 
   if [[ $1 == "--compile-win"* ]]; then
