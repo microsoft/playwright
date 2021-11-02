@@ -199,27 +199,27 @@ test('should work with trace: on', async ({ runInlineTest }, testInfo) => {
   expect(result.failed).toBe(5);
   expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
     'artifacts-failing',
-    '  trace-failing.zip',
+    '  trace.zip',
     'artifacts-own-context-failing',
-    '  trace-own-context-failing.zip',
+    '  trace.zip',
     'artifacts-own-context-passing',
-    '  trace-own-context-passing.zip',
+    '  trace.zip',
     'artifacts-passing',
-    '  trace-passing.zip',
+    '  trace.zip',
     'artifacts-persistent-failing',
-    '  trace-persistent-failing.zip',
+    '  trace.zip',
     'artifacts-persistent-passing',
-    '  trace-persistent-passing.zip',
+    '  trace.zip',
     'artifacts-shared-shared-failing',
-    '  trace-shared-failing.zip',
+    '  trace.zip',
     'artifacts-shared-shared-passing',
-    '  trace-shared-passing.zip',
+    '  trace.zip',
     'artifacts-two-contexts',
-    '  trace-two-contexts-1.zip',
-    '  trace-two-contexts.zip',
+    '  trace-1.zip',
+    '  trace.zip',
     'artifacts-two-contexts-failing',
-    '  trace-two-contexts-failing-1.zip',
-    '  trace-two-contexts-failing.zip',
+    '  trace-1.zip',
+    '  trace.zip',
     'report.json',
   ]);
 });
@@ -237,16 +237,16 @@ test('should work with trace: retain-on-failure', async ({ runInlineTest }, test
   expect(result.failed).toBe(5);
   expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
     'artifacts-failing',
-    '  trace-failing.zip',
+    '  trace.zip',
     'artifacts-own-context-failing',
-    '  trace-own-context-failing.zip',
+    '  trace.zip',
     'artifacts-persistent-failing',
-    '  trace-persistent-failing.zip',
+    '  trace.zip',
     'artifacts-shared-shared-failing',
-    '  trace-shared-failing.zip',
+    '  trace.zip',
     'artifacts-two-contexts-failing',
-    '  trace-two-contexts-failing-1.zip',
-    '  trace-two-contexts-failing.zip',
+    '  trace-1.zip',
+    '  trace.zip',
     'report.json',
   ]);
 });
@@ -264,16 +264,16 @@ test('should work with trace: on-first-retry', async ({ runInlineTest }, testInf
   expect(result.failed).toBe(5);
   expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
     'artifacts-failing-retry1',
-    '  trace-failing.zip',
+    '  trace.zip',
     'artifacts-own-context-failing-retry1',
-    '  trace-own-context-failing.zip',
+    '  trace.zip',
     'artifacts-persistent-failing-retry1',
-    '  trace-persistent-failing.zip',
+    '  trace.zip',
     'artifacts-shared-shared-failing-retry1',
-    '  trace-shared-failing.zip',
+    '  trace.zip',
     'artifacts-two-contexts-failing-retry1',
-    '  trace-two-contexts-failing-1.zip',
-    '  trace-two-contexts-failing.zip',
+    '  trace-1.zip',
+    '  trace.zip',
     'report.json',
   ]);
 });
@@ -313,7 +313,7 @@ test('should stop tracing with trace: on-first-retry, when not retrying', async 
   expect(result.flaky).toBe(1);
   expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
     'a-shared-flaky-retry1',
-    '  trace-flaky.zip',
+    '  trace.zip',
     'report.json',
   ]);
 });
