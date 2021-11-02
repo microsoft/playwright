@@ -75,7 +75,7 @@ elif [[ $1 == "--tip-of-tree" ]]; then
 elif [[ $1 == "--beta" ]]; then
   # Ensure package version contains dash.
   if [[ "${VERSION}" != *-* ]]; then
-    echo "ERROR: cannot publish release version with --tip-of-tree flag"
+    echo "ERROR: cannot publish release version with --beta flag"
     exit 1
   fi
 
