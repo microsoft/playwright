@@ -180,9 +180,9 @@ const sessionStorage = process.env.SESSION_STORAGE;
 await context.addInitScript(storage => {
   if (window.location.hostname === 'example.com') {
     const entries = JSON.parse(storage);
-    Object.keys(entries).forEach(key => {
-      window.sessionStorage.setItem(key, entries[key]);
-    });
+    for (const [key, value] of Object.entries(entries)) {
+      window.sessionStorage.setItem(key, value);
+    }
   }
 }, sessionStorage);
 ```
@@ -197,11 +197,11 @@ String sessionStorage = System.getenv("SESSION_STORAGE");
 context.addInitScript("(storage => {\n" +
   "  if (window.location.hostname === 'example.com') {\n" +
   "    const entries = JSON.parse(storage);\n" +
-  "    Object.keys(entries).forEach(key => {\n" +
-  "      window.sessionStorage.setItem(key, entries[key]);\n" +
-  "    });\n" +
+  "     for (const [key, value] of Object.entries(entries)) {\n" +
+  "      window.sessionStorage.setItem(key, value);\n" +
+  "    };\n" +
   "  }\n" +
-  "})(" + sessionStorage + ")");
+  "})('" + sessionStorage + "')");
 ```
 
 ```python async
@@ -212,14 +212,14 @@ os.environ["SESSION_STORAGE"] = session_storage
 
 # Set session storage in a new context
 session_storage = os.environ["SESSION_STORAGE"]
-await context.add_init_script("""storage => {
-  if (window.location.hostname == 'example.com') {
-    entries = JSON.parse(storage)
-    Object.keys(entries).forEach(key => {
-      window.sessionStorage.setItem(key, entries[key])
-    })
+await context.add_init_script("""(storage => {
+  if (window.location.hostname === 'example.com') {
+    const entries = JSON.parse(storage)
+    for (const [key, value] of Object.entries(entries)) {
+      window.sessionStorage.setItem(key, key)
+    }
   }
-}""", session_storage)
+})('""" + session_storage + "')")
 ```
 
 ```python sync
@@ -230,14 +230,14 @@ os.environ["SESSION_STORAGE"] = session_storage
 
 # Set session storage in a new context
 session_storage = os.environ["SESSION_STORAGE"]
-context.add_init_script("""storage => {
-  if (window.location.hostname == 'example.com') {
-    entries = JSON.parse(storage)
-    Object.keys(entries).forEach(key => {
-      window.sessionStorage.setItem(key, entries[key])
-    })
+context.add_init_script("""(storage => {
+  if (window.location.hostname === 'example.com') {
+    const entries = JSON.parse(storage)
+    for (const [key, value] of Object.entries(entries)) {
+      window.sessionStorage.setItem(key, key)
+    }
   }
-}""", session_storage)
+})('""" + session_storage + "')")
 ```
 
 ```csharp
@@ -250,11 +250,11 @@ var loadedSessionStorage = Environment.GetEnvironmentVariable("SESSION_STORAGE")
 await context.AddInitScriptAsync(@"(storage => {
     if (window.location.hostname === 'example.com') {
       const entries = JSON.parse(storage);
-      Object.keys(entries).forEach(key => {
-        window.sessionStorage.setItem(key, entries[key]);
-      });
+      for (const [key, value] of Object.entries(entries)) {
+        window.sessionStorage.setItem(key, value);
+      }
     }
-  })(" + loadedSessionStorage + ")");
+  })('" + loadedSessionStorage + "')");
 ```
 
 ### API reference
