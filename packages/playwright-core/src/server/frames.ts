@@ -1365,6 +1365,10 @@ export class Frame extends SdkObject {
   }
 
   _contextDestroyed(context: dom.FrameExecutionContext) {
+    // Sometimes we get this after detach, in which case we should not reset
+    // our already destroyed contexts to something that will never resolve.
+    if (this._detached)
+      return;
     context.contextDestroyed(new Error('Execution context was destroyed, most likely because of a navigation'));
     for (const [world, data] of this._contextData) {
       if (data.context === context)
