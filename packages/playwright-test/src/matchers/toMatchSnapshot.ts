@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Expect } from '../types';
+import type { Expect, TestInfoImpl } from '../types';
 import { currentTestInfo } from '../globals';
 import { compare } from './golden';
 import { addSuffixToFilePath } from '../util';
@@ -36,7 +36,7 @@ export function toMatchSnapshot(this: ReturnType<Expect['getState']>, received: 
   else
     options = { ...nameOrOptions };
   if (!options.name)
-    throw new Error(`toMatchSnapshot() requires a "name" parameter`);
+    options.name = determineSnapshotName(testInfo, received);
 
   const projectThreshold = testInfo.project.expect?.toMatchSnapshot?.threshold;
   if (options.threshold === undefined && projectThreshold !== undefined)
@@ -65,4 +65,26 @@ export function toMatchSnapshot(this: ReturnType<Expect['getState']>, received: 
   if (diffPath)
     testInfo.attachments.push({ name: 'diff', contentType, path: diffPath });
   return { pass, message: () => message || '' };
+}
+
+const kToMatchSnapshotCallCounter = Symbol('__playwright_toMatchSnapshotCallCounter');
+
+function determineSnapshotName(testInfo: TestInfoImpl &  {[kToMatchSnapshotCallCounter]?: number}, received: Buffer | string): string {
+  if (!testInfo[kToMatchSnapshotCallCounter])
+    testInfo[kToMatchSnapshotCallCounter] = 0;
+  return testInfo[kToMatchSnapshotCallCounter]!++ + fileBufferToFileExtension(received);
+}
+
+function fileBufferToFileExtension(file: string | Buffer): string {
+  if (typeof file === 'string')
+    return '.txt';
+  if (compareMagicBytes(file, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+    return '.png';
+  if (compareMagicBytes(file, [0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01]))
+    return '.jpg';
+  return '.bin';
+}
+
+function compareMagicBytes(file: Buffer, magicBytes: number[]): boolean {
+  return Buffer.compare(Buffer.from(magicBytes), file.slice(0, magicBytes.length)) === 0;
 }

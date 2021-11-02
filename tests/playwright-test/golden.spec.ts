@@ -327,18 +327,29 @@ test('should use provided name', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should throw without a name', async ({ runInlineTest }) => {
+test('should allow toMatchSnapshot without a name', async ({ runInlineTest, asset }) => {
+  const exampleJPG = path.join(__dirname, '..', 'page/page-screenshot.spec.ts-snapshots/white-chromium.jpg');
+  const examplePNG = asset('pptr.png');
   const result = await runInlineTest({
     ...files,
+    'a.spec.js-snapshots/0.txt': `foo0`,
+    'a.spec.js-snapshots/1.txt': `foo1`,
+    'a.spec.js-snapshots/2.bin': Buffer.from([1,2,3,4]),
+    'a.spec.js-snapshots/3.png': fs.readFileSync(examplePNG),
+    'a.spec.js-snapshots/4.jpg': fs.readFileSync(exampleJPG),
     'a.spec.js': `
       const { test } = require('./helper');
+      const fs = require('fs');
       test('is a test', ({}) => {
-        expect('Hello world').toMatchSnapshot();
+        expect('foo0').toMatchSnapshot();
+        expect('foo1').toMatchSnapshot();
+        expect(Buffer.from([1,2,3,4])).toMatchSnapshot();
+        expect(fs.readFileSync(${JSON.stringify(examplePNG)})).toMatchSnapshot();
+        expect(fs.readFileSync(${JSON.stringify(exampleJPG)})).toMatchSnapshot();
       });
     `
   });
-  expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('toMatchSnapshot() requires a "name" parameter');
+  expect(result.exitCode).toBe(0);
 });
 
 test('should use provided name via options', async ({ runInlineTest }) => {
