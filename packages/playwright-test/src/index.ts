@@ -169,7 +169,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
     });
   },
 
-  _snapshotSuffix: [process.platform, { scope: 'worker' }],
+  _snapshotSuffix: [process.env.PLAYWRIGHT_DOCKER ? 'docker' : process.platform, { scope: 'worker' }],
 
   _setupContextOptionsAndArtifacts: [async ({ _snapshotSuffix, _browserType, _combinedContextOptions, _artifactsDir, trace, screenshot, actionTimeout, navigationTimeout }, use, testInfo) => {
     testInfo.snapshotSuffix = _snapshotSuffix;
