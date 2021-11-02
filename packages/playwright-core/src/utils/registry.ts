@@ -32,6 +32,8 @@ const EXECUTABLE_PATHS = {
   'chromium': {
     'ubuntu18.04': ['chrome-linux', 'chrome'],
     'ubuntu20.04': ['chrome-linux', 'chrome'],
+    'ubuntu18.04-arm64': ['chrome-linux', 'chrome'],
+    'ubuntu20.04-arm64': ['chrome-linux', 'chrome'],
     'mac10.13': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
     'mac10.14': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
     'mac10.15': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
@@ -42,6 +44,8 @@ const EXECUTABLE_PATHS = {
   'firefox': {
     'ubuntu18.04': ['firefox', 'firefox'],
     'ubuntu20.04': ['firefox', 'firefox'],
+    'ubuntu18.04-arm64': undefined,
+    'ubuntu20.04-arm64': undefined,
     'mac10.13': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
     'mac10.14': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
     'mac10.15': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
@@ -52,6 +56,8 @@ const EXECUTABLE_PATHS = {
   'webkit': {
     'ubuntu18.04': ['pw_run.sh'],
     'ubuntu20.04': ['pw_run.sh'],
+    'ubuntu18.04-arm64': undefined,
+    'ubuntu20.04-arm64': undefined,
     'mac10.13': undefined,
     'mac10.14': ['pw_run.sh'],
     'mac10.15': ['pw_run.sh'],
@@ -62,6 +68,8 @@ const EXECUTABLE_PATHS = {
   'ffmpeg': {
     'ubuntu18.04': ['ffmpeg-linux'],
     'ubuntu20.04': ['ffmpeg-linux'],
+    'ubuntu18.04-arm64': ['ffmpeg-linux-arm64'],
+    'ubuntu20.04-arm64': ['ffmpeg-linux-arm64'],
     'mac10.13': ['ffmpeg-mac'],
     'mac10.14': ['ffmpeg-mac'],
     'mac10.15': ['ffmpeg-mac'],
@@ -75,6 +83,8 @@ const DOWNLOAD_URLS = {
   'chromium': {
     'ubuntu18.04': '%s/builds/chromium/%s/chromium-linux.zip',
     'ubuntu20.04': '%s/builds/chromium/%s/chromium-linux.zip',
+    'ubuntu18.04-arm64': '%s/builds/chromium/%s/chromium-linux-arm64.zip',
+    'ubuntu20.04-arm64': '%s/builds/chromium/%s/chromium-linux-arm64.zip',
     'mac10.13': '%s/builds/chromium/%s/chromium-mac.zip',
     'mac10.14': '%s/builds/chromium/%s/chromium-mac.zip',
     'mac10.15': '%s/builds/chromium/%s/chromium-mac.zip',
@@ -85,6 +95,8 @@ const DOWNLOAD_URLS = {
   'chromium-with-symbols': {
     'ubuntu18.04': '%s/builds/chromium/%s/chromium-with-symbols-linux.zip',
     'ubuntu20.04': '%s/builds/chromium/%s/chromium-with-symbols-linux.zip',
+    'ubuntu18.04-arm64': '%s/builds/chromium/%s/chromium-with-symbols-linux-arm64.zip',
+    'ubuntu20.04-arm64': '%s/builds/chromium/%s/chromium-with-symbols-linux-arm64.zip',
     'mac10.13': '%s/builds/chromium/%s/chromium-with-symbols-mac.zip',
     'mac10.14': '%s/builds/chromium/%s/chromium-with-symbols-mac.zip',
     'mac10.15': '%s/builds/chromium/%s/chromium-with-symbols-mac.zip',
@@ -95,6 +107,8 @@ const DOWNLOAD_URLS = {
   'firefox': {
     'ubuntu18.04': '%s/builds/firefox/%s/firefox-ubuntu-18.04.zip',
     'ubuntu20.04': '%s/builds/firefox/%s/firefox-ubuntu-20.04.zip',
+    'ubuntu18.04-arm64': undefined,
+    'ubuntu20.04-arm64': undefined,
     'mac10.13': '%s/builds/firefox/%s/firefox-mac-11.zip',
     'mac10.14': '%s/builds/firefox/%s/firefox-mac-11.zip',
     'mac10.15': '%s/builds/firefox/%s/firefox-mac-11.zip',
@@ -105,6 +119,8 @@ const DOWNLOAD_URLS = {
   'firefox-beta': {
     'ubuntu18.04': '%s/builds/firefox-beta/%s/firefox-beta-ubuntu-18.04.zip',
     'ubuntu20.04': '%s/builds/firefox-beta/%s/firefox-beta-ubuntu-20.04.zip',
+    'ubuntu18.04-arm64': undefined,
+    'ubuntu20.04-arm64': undefined,
     'mac10.13': '%s/builds/firefox-beta/%s/firefox-beta-mac-11.zip',
     'mac10.14': '%s/builds/firefox-beta/%s/firefox-beta-mac-11.zip',
     'mac10.15': '%s/builds/firefox-beta/%s/firefox-beta-mac-11.zip',
@@ -115,6 +131,8 @@ const DOWNLOAD_URLS = {
   'webkit': {
     'ubuntu18.04': '%s/builds/webkit/%s/webkit-ubuntu-18.04.zip',
     'ubuntu20.04': '%s/builds/webkit/%s/webkit-ubuntu-20.04.zip',
+    'ubuntu18.04-arm64': undefined,
+    'ubuntu20.04-arm64': undefined,
     'mac10.13': undefined,
     'mac10.14': '%s/builds/deprecated-webkit-mac-10.14/%s/deprecated-webkit-mac-10.14.zip',
     'mac10.15': '%s/builds/webkit/%s/webkit-mac-10.15.zip',
@@ -125,6 +143,8 @@ const DOWNLOAD_URLS = {
   'ffmpeg': {
     'ubuntu18.04': '%s/builds/ffmpeg/%s/ffmpeg-linux.zip',
     'ubuntu20.04': '%s/builds/ffmpeg/%s/ffmpeg-linux.zip',
+    'ubuntu18.04-arm64': '%s/builds/ffmpeg/%s/ffmpeg-linux-arm64.zip',
+    'ubuntu20.04-arm64': '%s/builds/ffmpeg/%s/ffmpeg-linux-arm64.zip',
     'mac10.13': '%s/builds/ffmpeg/%s/ffmpeg-mac.zip',
     'mac10.14': '%s/builds/ffmpeg/%s/ffmpeg-mac.zip',
     'mac10.15': '%s/builds/ffmpeg/%s/ffmpeg-mac.zip',
