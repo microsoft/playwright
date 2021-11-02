@@ -24,6 +24,7 @@ it('should dispatch wheel events', async ({ page, server }) => {
   await page.mouse.move(50, 60);
   await listenForWheelEvents(page, 'div');
   await page.mouse.wheel(0, 100);
+  await page.waitForFunction('window.scrollY === 100');
   expect(await page.evaluate('window.lastEvent')).toEqual({
     deltaX: 0,
     deltaY: 100,
@@ -35,7 +36,6 @@ it('should dispatch wheel events', async ({ page, server }) => {
     altKey: false,
     metaKey: false,
   });
-  await page.waitForFunction('window.scrollY === 100');
 });
 
 it('should scroll when nobody is listening', async ({ page, server }) => {
