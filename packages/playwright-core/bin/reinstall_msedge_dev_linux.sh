@@ -3,6 +3,11 @@
 set -e
 set -x
 
+if [[ $(arch) == "aarch64" ]]; then
+  echo "ERROR: not supported on Linux Arm64"
+  exit 1
+fi
+
 is_user_root () { [ "${EUID:-$(id -u)}" -eq 0 ]; }
 if is_user_root; then
   maybesudo=""
