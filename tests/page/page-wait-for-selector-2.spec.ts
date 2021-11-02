@@ -236,7 +236,7 @@ it('should throw when frame is detached xpath', async ({ page, server }) => {
   await detachFrame(page, 'frame1');
   await waitPromise;
   expect(waitError).toBeTruthy();
-  expect(waitError.message).toContain('waitForFunction failed: frame got detached.');
+  expect(waitError.message).toContain('frame.waitForSelector: Frame was detached');
 });
 
 it('should return the element handle xpath', async ({ page, server }) => {

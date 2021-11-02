@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { attachFrame, detachFrame } from '../config/utils';
 import { test as it, expect } from './pageTest';
 
 it('should work', async ({ page }) => {
@@ -569,4 +570,14 @@ it('should not use toJSON in jsonValue', async ({ page }) => {
 
 it('should not expose the injected script export', async ({ page }) => {
   expect(await page.evaluate('typeof pwExport === "undefined"')).toBe(true);
+});
+
+it('should throw when frame is detached', async ({ page, server }) => {
+  await attachFrame(page, 'frame1', server.EMPTY_PAGE);
+  const frame = page.frames()[1];
+  const promise = frame.evaluate(() => new Promise<void>(() => {})).catch(e => e);
+  await detachFrame(page, 'frame1');
+  const error = await promise;
+  expect(error).toBeTruthy();
+  expect(error.message).toMatch(/frame.evaluate: (Frame was detached|Execution context was destroyed)/);
 });

@@ -192,7 +192,7 @@ export class CRBrowser extends Browser {
     const serviceWorker = this._serviceWorkers.get(targetId);
     if (serviceWorker) {
       this._serviceWorkers.delete(targetId);
-      serviceWorker.emit(Worker.Events.Close);
+      serviceWorker.didClose();
       return;
     }
   }
@@ -471,7 +471,7 @@ export class CRBrowserContext extends BrowserContext {
       // asynchronously and we get detached from them later.
       // To avoid the wrong order of notifications, we manually fire
       // "close" event here and forget about the serivce worker.
-      serviceWorker.emit(Worker.Events.Close);
+      serviceWorker.didClose();
       this._browser._serviceWorkers.delete(targetId);
     }
   }

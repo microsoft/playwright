@@ -452,7 +452,6 @@ export class WKPage implements PageDelegate {
   private _removeContextsForFrame(frame: frames.Frame, notifyFrame: boolean) {
     for (const [contextId, context] of this._contextIdToContext) {
       if (context.frame === frame) {
-        (context._delegate as WKExecutionContext)._dispose();
         this._contextIdToContext.delete(contextId);
         if (notifyFrame)
           frame._contextDestroyed(context);

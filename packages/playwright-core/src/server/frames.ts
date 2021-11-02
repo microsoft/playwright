@@ -35,8 +35,7 @@ import type { ElementStateWithoutStable, FrameExpectParams, InjectedScriptPoll, 
 import { isSessionClosedError } from './common/protocolError';
 
 type ContextData = {
-  contextPromise: Promise<dom.FrameExecutionContext>;
-  contextResolveCallback: (c: dom.FrameExecutionContext) => void;
+  contextPromise: ManualPromise<dom.FrameExecutionContext | Error>;
   context: dom.FrameExecutionContext | null;
   rerunnableTasks: Set<RerunnableTask<any>>;
 };
@@ -445,8 +444,8 @@ export class Frame extends SdkObject {
 
     this._detachedPromise = new Promise<void>(x => this._detachedCallback = x);
 
-    this._contextData.set('main', { contextPromise: new Promise(() => {}), contextResolveCallback: () => {}, context: null, rerunnableTasks: new Set() });
-    this._contextData.set('utility', { contextPromise: new Promise(() => {}), contextResolveCallback: () => {}, context: null, rerunnableTasks: new Set() });
+    this._contextData.set('main', { contextPromise: new ManualPromise(), context: null, rerunnableTasks: new Set() });
+    this._contextData.set('utility', { contextPromise: new ManualPromise(), context: null, rerunnableTasks: new Set() });
     this._setContext('main', null);
     this._setContext('utility', null);
 
@@ -662,9 +661,11 @@ export class Frame extends SdkObject {
   }
 
   _context(world: types.World): Promise<dom.FrameExecutionContext> {
-    if (this._detached)
-      throw new Error(`Execution Context is not available in detached frame "${this.url()}" (are you trying to evaluate?)`);
-    return this._contextData.get(world)!.contextPromise;
+    return this._contextData.get(world)!.contextPromise.then(contextOrError => {
+      if (contextOrError instanceof js.ExecutionContext)
+        return contextOrError;
+      throw contextOrError;
+    });
   }
 
   _mainContext(): Promise<dom.FrameExecutionContext> {
@@ -1250,9 +1251,13 @@ export class Frame extends SdkObject {
     this._stopNetworkIdleTimer();
     this._detached = true;
     this._detachedCallback();
+    const error = new Error('Frame was detached');
     for (const data of this._contextData.values()) {
+      if (data.context)
+        data.context.contextDestroyed(error);
+      data.contextPromise.resolve(error);
       for (const rerunnableTask of data.rerunnableTasks)
-        rerunnableTask.terminate(new Error('waitForFunction failed: frame got detached.'));
+        rerunnableTask.terminate(error);
     }
     if (this._parentFrame)
       this._parentFrame._childFrames.delete(this);
@@ -1339,13 +1344,11 @@ export class Frame extends SdkObject {
     const data = this._contextData.get(world)!;
     data.context = context;
     if (context) {
-      data.contextResolveCallback.call(null, context);
+      data.contextPromise.resolve(context);
       for (const rerunnableTask of data.rerunnableTasks)
         rerunnableTask.rerun(context);
     } else {
-      data.contextPromise = new Promise(fulfill => {
-        data.contextResolveCallback = fulfill;
-      });
+      data.contextPromise = new ManualPromise();
     }
   }
 
@@ -1354,12 +1357,15 @@ export class Frame extends SdkObject {
     // In case of multiple sessions to the same target, there's a race between
     // connections so we might end up creating multiple isolated worlds.
     // We can use either.
-    if (data.context)
+    if (data.context) {
+      data.context.contextDestroyed(new Error('Execution context was destroyed, most likely because of a navigation'));
       this._setContext(world, null);
+    }
     this._setContext(world, context);
   }
 
   _contextDestroyed(context: dom.FrameExecutionContext) {
+    context.contextDestroyed(new Error('Execution context was destroyed, most likely because of a navigation'));
     for (const [world, data] of this._contextData) {
       if (data.context === context)
         this._setContext(world, null);

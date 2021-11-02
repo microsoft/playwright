@@ -81,7 +81,7 @@ it('elementHandle.waitForSelector should throw on navigation', async ({ page, se
     await page.evaluate(() => 1);
   await page.goto(server.EMPTY_PAGE);
   const error = await promise;
-  expect(error.message).toContain('Execution context was destroyed, most likely because of a navigation');
+  expect(error.message).toContain('Execution context was destroyed');
 });
 
 it('should work with removed MutationObserver', async ({ page, server }) => {
@@ -242,5 +242,5 @@ it('should throw when frame is detached', async ({ page, server }) => {
   await detachFrame(page, 'frame1');
   await waitPromise;
   expect(waitError).toBeTruthy();
-  expect(waitError.message).toContain('waitForFunction failed: frame got detached.');
+  expect(waitError.message).toContain('frame.waitForSelector: Frame was detached');
 });

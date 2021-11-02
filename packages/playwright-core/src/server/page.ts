@@ -464,13 +464,13 @@ export class Page extends SdkObject {
     const worker = this._workers.get(workerId);
     if (!worker)
       return;
-    worker.emit(Worker.Events.Close, worker);
+    worker.didClose();
     this._workers.delete(workerId);
   }
 
   _clearWorkers() {
     for (const [workerId, worker] of this._workers) {
-      worker.emit(Worker.Events.Close, worker);
+      worker.didClose();
       this._workers.delete(workerId);
     }
   }
@@ -545,6 +545,12 @@ export class Worker extends SdkObject {
 
   url(): string {
     return this._url;
+  }
+
+  didClose() {
+    if (this._existingExecutionContext)
+      this._existingExecutionContext.contextDestroyed(new Error('Worker was closed'));
+    this.emit(Worker.Events.Close, this);
   }
 
   async evaluateExpression(expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {

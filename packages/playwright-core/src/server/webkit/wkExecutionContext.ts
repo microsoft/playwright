@@ -24,19 +24,10 @@ import { isSessionClosedError } from '../common/protocolError';
 export class WKExecutionContext implements js.ExecutionContextDelegate {
   private readonly _session: WKSession;
   readonly _contextId: number | undefined;
-  private _contextDestroyedCallback: () => void = () => {};
-  private readonly _executionContextDestroyedPromise: Promise<unknown>;
 
   constructor(session: WKSession, contextId: number | undefined) {
     this._session = session;
     this._contextId = contextId;
-    this._executionContextDestroyedPromise = new Promise<void>((resolve, reject) => {
-      this._contextDestroyedCallback = resolve;
-    });
-  }
-
-  _dispose() {
-    this._contextDestroyedCallback();
   }
 
   async rawEvaluateJSON(expression: string): Promise<any> {
@@ -81,21 +72,18 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
 
   async evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: js.JSHandle<any>, values: any[], objectIds: string[]): Promise<any> {
     try {
-      const response = await Promise.race([
-        this._executionContextDestroyedPromise.then(() => { throw new Error(contextDestroyedError); }),
-        this._session.send('Runtime.callFunctionOn', {
-          functionDeclaration: expression,
-          objectId: utilityScript._objectId!,
-          arguments: [
-            { objectId: utilityScript._objectId },
-            ...values.map(value => ({ value })),
-            ...objectIds.map(objectId => ({ objectId })),
-          ],
-          returnByValue,
-          emulateUserGesture: true,
-          awaitPromise: true
-        })
-      ]);
+      const response = await this._session.send('Runtime.callFunctionOn', {
+        functionDeclaration: expression,
+        objectId: utilityScript._objectId!,
+        arguments: [
+          { objectId: utilityScript._objectId },
+          ...values.map(value => ({ value })),
+          ...objectIds.map(objectId => ({ objectId })),
+        ],
+        returnByValue,
+        emulateUserGesture: true,
+        awaitPromise: true
+      });
       if (response.wasThrown)
         throw new js.JavaScriptErrorInEvaluate(response.result.description);
       if (returnByValue)
@@ -129,8 +117,6 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     await this._session.send('Runtime.releaseObject', { objectId });
   }
 }
-
-const contextDestroyedError = 'Execution context was destroyed.';
 
 function potentiallyUnserializableValue(remoteObject: Protocol.Runtime.RemoteObject): any {
   const value = remoteObject.value;
