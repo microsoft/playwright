@@ -52,7 +52,7 @@ function prepare_chromium_checkout {
     fetch --nohooks chromium
     cd src
     if [[ $(uname) == "Linux" ]]; then
-      ./build/install-build-deps.sh --arm
+      ./build/install-build-deps.sh
     fi
     gclient runhooks
   fi
