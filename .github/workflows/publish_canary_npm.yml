@@ -23,11 +23,18 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: npx playwright install-deps
-    - run: node utils/build/update_canary_version.js --today-date
+    - name: Publish to NPM (@next)
       if: contains(github.ref, 'master') && github.event_name != 'workflow_dispatch'
-    - run: node utils/build/update_canary_version.js --commit-timestamp
+      run: |
+        node utils/build/update_canary_version.js --today-date
+        utils/publish_all_packages.sh --tip-of-tree
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    - name: Publish to NPM (@beta)
       if: contains(github.ref, 'release') || github.event_name == 'workflow_dispatch'
-    - run: utils/publish_all_packages.sh --tip-of-tree
+      run: |
+        node utils/build/update_canary_version.js --commit-timestamp
+        utils/publish_all_packages.sh --beta
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 

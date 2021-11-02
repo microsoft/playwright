@@ -21,6 +21,7 @@ if [[ $1 == "--help" ]]; then
   echo
   echo "--release                publish @latest version of all packages"
   echo "--tip-of-tree            publish @next version of all packages"
+  echo "--beta                   publish @beta version of all packages"
   exit 1
 fi
 
@@ -71,6 +72,14 @@ elif [[ $1 == "--tip-of-tree" ]]; then
     exit 0
   fi
   NPM_PUBLISH_TAG="next"
+elif [[ $1 == "--beta" ]]; then
+  # Ensure package version contains dash.
+  if [[ "${VERSION}" != *-* ]]; then
+    echo "ERROR: cannot publish release version with --beta flag"
+    exit 1
+  fi
+
+  NPM_PUBLISH_TAG="beta"
 else
   echo "unknown argument - '$1'"
   exit 1
