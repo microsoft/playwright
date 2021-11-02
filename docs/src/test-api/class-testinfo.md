@@ -362,6 +362,11 @@ test.beforeEach(async ({ page }, testInfo) => {
 
 The title of the currently running test as passed to `test(title, testFunction)`.
 
+## property: TestInfo.titlePath
+- type: <[Array]<[string]>>
+
+The full title path starting with the project.
+
 ## property: TestInfo.workerIndex
 - type: <[int]>
 

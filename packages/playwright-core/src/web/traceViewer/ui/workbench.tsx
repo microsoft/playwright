@@ -106,6 +106,7 @@ export const Workbench: React.FunctionComponent<{
     <div className='hbox header'>
       <div className='logo'>🎭</div>
       <div className='product'>Playwright</div>
+      {contextEntry.title && <div className='title'>{contextEntry.title}</div>}
       <div className='spacer'></div>
     </div>
     <div style={{ background: 'white', paddingLeft: '20px', flex: 'none', borderBottom: '1px solid #ddd' }}>

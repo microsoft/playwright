@@ -272,7 +272,6 @@ export type BrowserContextOptions = {
   strictSelectors?: boolean,
   proxy?: ProxySettings,
   baseURL?: string,
-  _debugName?: string,
 };
 
 export type EnvArray = { name: string, value: string }[];

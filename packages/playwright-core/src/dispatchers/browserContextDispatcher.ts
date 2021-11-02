@@ -192,7 +192,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async tracingStartChunk(params: channels.BrowserContextTracingStartChunkParams): Promise<channels.BrowserContextTracingStartChunkResult> {
-    await this._context.tracing.startChunk();
+    await this._context.tracing.startChunk(params);
   }
 
   async tracingStopChunk(params: channels.BrowserContextTracingStopChunkParams): Promise<channels.BrowserContextTracingStopChunkResult> {

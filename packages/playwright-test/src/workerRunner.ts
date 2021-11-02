@@ -249,6 +249,7 @@ export class WorkerRunner extends EventEmitter {
       project: this._project.config,
       config: this._loader.fullConfig(),
       title: test.title,
+      titlePath: test.titlePath(),
       file: test.location.file,
       line: test.location.line,
       column: test.location.column,

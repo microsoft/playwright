@@ -178,6 +178,7 @@ export interface TestInfo {
   workerIndex: number;
 
   title: string;
+  titlePath: string[];
   file: string;
   line: number;
   column: number;

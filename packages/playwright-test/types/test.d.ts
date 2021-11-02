@@ -1102,6 +1102,10 @@ export interface TestInfo {
    */
   title: string;
   /**
+   * The full title path starting with the project.
+   */
+  titlePath: string[];
+  /**
    * Absolute path to a file where the currently running test is declared.
    */
   file: string;

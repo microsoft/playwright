@@ -24,13 +24,13 @@ export type BrowserContextEventOptions = {
   viewport?: Size,
   deviceScaleFactor?: number,
   isMobile?: boolean,
-  _debugName?: string,
 };
 
 export type ContextCreatedTraceEvent = {
   version: number,
   type: 'context-options',
   browserName: string,
+  title?: string,
   options: BrowserContextEventOptions
 };
 
