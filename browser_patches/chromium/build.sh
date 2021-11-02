@@ -68,7 +68,7 @@ compile_chromium() {
   if [[ $1 == "--compile-mac-arm64" ]]; then
     echo 'target_cpu = "arm64"' >> ./out/Default/args.gn
   elif [[ $1 == "--compile-linux-arm64" ]]; then
-    echo 'target_cpu = "arm"' >> ./out/Default/args.gn
+    echo 'target_cpu = "arm64"' >> ./out/Default/args.gn
   fi
 
   if [[ ! -z "$USE_GOMA" ]]; then
@@ -88,9 +88,9 @@ compile_chromium() {
     if [[ $(uname) == "--compile-linux" ]]; then
       ./build/install-build-deps.sh
     elif [[ $1 == "--compile-linux-arm64" ]]; then
-      ./build/install-build-deps.sh --arm
+      ./build/install-build-deps.sh
       # Install sysroot image, see https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/linux/chromium_arm.md
-      ./build/linux/sysroot_scripts/install-sysroot.py --arch=arm
+      ./build/linux/sysroot_scripts/install-sysroot.py --arch=arm64
     fi
   fi
 
