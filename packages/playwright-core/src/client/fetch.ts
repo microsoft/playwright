@@ -84,7 +84,7 @@ export class FetchRequest extends ChannelOwner<channels.FetchRequestChannel, cha
     });
   }
 
-  async delete(url: string, options?: RequestWithoutBodyOptions): Promise<FetchResponse> {
+  async delete(url: string, options?: RequestWithBodyOptions): Promise<FetchResponse> {
     return this.fetch(url, {
       ...options,
       method: 'DELETE',
