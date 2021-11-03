@@ -101,7 +101,7 @@ class GridAgent extends EventEmitter {
   private _ws: WebSocket | undefined;
   readonly _workers = new Map<string, GridWorker>();
   private _status: AgentStatus = 'none';
-  private _workersWaitingForAgentConnected: GridWorker[] = [];
+  private _workersWaitingForAgentConnected: Set<GridWorker> = new Set();
   private _retireTimeout = 30000;
   private _retireTimeoutId: NodeJS.Timeout | undefined;
   private _log: debug.Debugger;
@@ -135,7 +135,7 @@ class GridAgent extends EventEmitter {
       this._log(`send worker id: ${worker.workerId}`);
       ws.send(worker.workerId);
     }
-    this._workersWaitingForAgentConnected = [];
+    this._workersWaitingForAgentConnected.clear();
   }
 
   canCreateWorker() {
@@ -152,6 +152,7 @@ class GridAgent extends EventEmitter {
     this._workers.set(worker.workerId, worker);
     worker.on('close', () => {
       this._workers.delete(worker.workerId);
+      this._workersWaitingForAgentConnected.delete(worker);
       if (!this._workers.size) {
         this.setStatus('retiring');
         if (this._retireTimeoutId)
@@ -164,7 +165,7 @@ class GridAgent extends EventEmitter {
       this._log(`send worker id: ${worker.workerId}`);
       this._ws.send(worker.workerId);
     } else {
-      this._workersWaitingForAgentConnected.push(worker);
+      this._workersWaitingForAgentConnected.add(worker);
     }
   }
 
