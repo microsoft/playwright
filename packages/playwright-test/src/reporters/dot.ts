@@ -16,13 +16,18 @@
 
 import colors from 'colors/safe';
 import { BaseReporter } from './base';
-import { FullResult, TestCase, TestResult } from '../../types/testReporter';
+import { FullResult, TestCase, TestResult, FullConfig, Suite } from '../../types/testReporter';
 
 class DotReporter extends BaseReporter {
   private _counter = 0;
 
   printsToStdio() {
     return true;
+  }
+
+  override onBegin(config: FullConfig, suite: Suite) {
+    super.onBegin(config, suite);
+    console.log(this.generateStartingMessage());
   }
 
   override onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {

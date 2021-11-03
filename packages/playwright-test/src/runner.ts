@@ -296,13 +296,7 @@ export class Runner {
         filterSuite(rootSuite, () => false, test => shardTests.has(test));
         total = rootSuite.allTests().length;
       }
-
-      if (process.stdout.isTTY) {
-        console.log();
-        const jobs = Math.min(config.workers, testGroups.length);
-        const shardDetails = shard ? `, shard ${shard.current} of ${shard.total}` : '';
-        console.log(`Running ${total} test${total > 1 ? 's' : ''} using ${jobs} worker${jobs > 1 ? 's' : ''}${shardDetails}`);
-      }
+      (config as any).__testGroupsCount = testGroups.length;
 
       let sigint = false;
       let sigintCallback: () => void;

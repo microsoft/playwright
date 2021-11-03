@@ -58,6 +58,7 @@ export class BaseReporter implements Reporter  {
   duration = 0;
   config!: FullConfig;
   suite!: Suite;
+  totalTestCount = 0;
   result!: FullResult;
   fileDurations = new Map<string, number>();
   monotonicStartTime: number = 0;
@@ -72,6 +73,7 @@ export class BaseReporter implements Reporter  {
     this.monotonicStartTime = monotonicTime();
     this.config = config;
     this.suite = suite;
+    this.totalTestCount = suite.allTests().length;
   }
 
   onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
@@ -104,6 +106,12 @@ export class BaseReporter implements Reporter  {
   async onEnd(result: FullResult) {
     this.duration = monotonicTime() - this.monotonicStartTime;
     this.result = result;
+  }
+
+  protected generateStartingMessage() {
+    const jobs = Math.min(this.config.workers, (this.config as any).__testGroupsCount);
+    const shardDetails = this.config.shard ? `, shard ${this.config.shard.current} of ${this.config.shard.total}` : '';
+    return `\nRunning ${this.totalTestCount} test${this.totalTestCount > 1 ? 's' : ''} using ${jobs} worker${jobs > 1 ? 's' : ''}${shardDetails}`;
   }
 
   protected getSlowTests(): [string, number][] {
