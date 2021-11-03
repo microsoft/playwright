@@ -174,7 +174,7 @@ test.beforeAll(async function recordTrace({ browser, browserName, browserType, s
 
 test('should show empty trace viewer', async ({ showTraceViewer }, testInfo) => {
   const traceViewer = await showTraceViewer(testInfo.outputPath());
-  expect(await traceViewer.page.title()).toBe('Playwright Trace Viewer');
+  await expect(traceViewer.page).toHaveTitle('Playwright Trace Viewer');
 });
 
 test('should open simple trace viewer', async ({ showTraceViewer }) => {

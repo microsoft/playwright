@@ -113,7 +113,7 @@ it('should throw for detached frames', async ({ page, server }) => {
   await detachFrame(page, 'frame1');
   let error = null;
   await frame1.evaluate(() => 7 * 8).catch(e => error = e);
-  expect(error.message).toContain('Execution Context is not available in detached frame');
+  expect(error.message).toContain('frame.evaluate: Frame was detached');
 });
 
 it('should be isolated between frames', async ({ page, server }) => {

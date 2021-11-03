@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { attachFrame, detachFrame } from '../config/utils';
 import { test as it, expect } from './pageTest';
 
 it('should timeout', async ({ page }) => {
@@ -263,4 +264,14 @@ it('should not be called after finishing unsuccessfully', async ({ page, server 
   }).catch(e => null);
 
   expect(messages.join('|')).toBe('waitForFunction1|waitForFunction2|waitForFunction3');
+});
+
+it('should throw when frame is detached', async ({ page, server }) => {
+  await attachFrame(page, 'frame1', server.EMPTY_PAGE);
+  const frame = page.frames()[1];
+  const promise = frame.waitForFunction(() => false).catch(e => e);
+  await detachFrame(page, 'frame1');
+  const error = await promise;
+  expect(error).toBeTruthy();
+  expect(error.message).toMatch(/frame.waitForFunction: (Frame was detached|Execution context was destroyed)/);
 });
