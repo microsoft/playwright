@@ -44,6 +44,7 @@ class ListReporter extends BaseReporter {
 
   override onBegin(config: FullConfig, suite: Suite) {
     super.onBegin(config, suite);
+    console.log(this.generateStartingMessage());
     console.log();
   }
 
