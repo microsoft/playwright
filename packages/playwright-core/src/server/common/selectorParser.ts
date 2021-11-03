@@ -19,10 +19,10 @@ import { CSSComplexSelectorList, parseCSS } from './cssParser';
 export type ParsedSelectorPart = {
   name: string,
   body: string | CSSComplexSelectorList,
+  source: string,
 };
 
 export type ParsedSelector = {
-  selector: string,
   parts: ParsedSelectorPart[],
   capture?: number,
 };
@@ -43,16 +43,20 @@ export function parseSelector(selector: string): ParsedSelector {
       const parsedCSS = parseCSS(part.body, customCSSNames);
       return {
         name: 'css',
-        body: parsedCSS.selector
+        body: parsedCSS.selector,
+        source: part.body
       };
     }
-    return part;
+    return { ...part, source: part.body };
   });
   return {
-    selector,
     capture: result.capture,
     parts
   };
+}
+
+export function stringifySelector(selector: ParsedSelector): string {
+  return selector.parts.map((p, i) => `${i === selector.capture ? '*' : ''}${p.name}=${p.source}`).join(' >> ');
 }
 
 function parseSelectorString(selector: string): ParsedSelectorStrings {

@@ -24,7 +24,6 @@ import { createGuid } from '../utils/utils';
 export type SelectorInfo = {
   parsed: ParsedSelector,
   world: types.World,
-  selector: string,
   strict: boolean,
 };
 
@@ -141,7 +140,6 @@ export class Selectors {
     }
     return {
       parsed,
-      selector,
       world: needsMainWorld ? 'main' : 'utility',
       strict,
     };
