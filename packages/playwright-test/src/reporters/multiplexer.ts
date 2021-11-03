@@ -23,6 +23,10 @@ export class Multiplexer implements Reporter {
     this._reporters = reporters;
   }
 
+  printsToStdio() {
+    return this._reporters.some(r => r.printsToStdio ? r.printsToStdio() : true);
+  }
+
   onBegin(config: FullConfig, suite: Suite) {
     for (const reporter of this._reporters)
       reporter.onBegin?.(config, suite);

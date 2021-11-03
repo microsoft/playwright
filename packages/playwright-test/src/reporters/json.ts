@@ -97,7 +97,11 @@ class JSONReporter implements Reporter {
   private _outputFile: string | undefined;
 
   constructor(options: { outputFile?: string } = {}) {
-    this._outputFile = options.outputFile;
+    this._outputFile = options.outputFile || process.env[`PLAYWRIGHT_JSON_OUTPUT_NAME`];
+  }
+
+  printsToStdio() {
+    return !this._outputFile;
   }
 
   onBegin(config: FullConfig, suite: Suite) {
@@ -270,7 +274,6 @@ class JSONReporter implements Reporter {
 
 function outputReport(report: JSONReport, outputFile: string | undefined) {
   const reportString = JSON.stringify(report, undefined, 2);
-  outputFile = outputFile || process.env[`PLAYWRIGHT_JSON_OUTPUT_NAME`];
   if (outputFile) {
     fs.mkdirSync(path.dirname(outputFile), { recursive: true });
     fs.writeFileSync(outputFile, reportString);

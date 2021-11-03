@@ -237,3 +237,9 @@ Test that has been finished.
 - `result` <[TestResult]>
 
 Result of the test run.
+
+
+## method: Reporter.printsToStdio
+- returns: <[boolean]>
+
+Whether this reporter uses stdio for reporting. When it does not, Playwright Test could add some output to enhance user experience.

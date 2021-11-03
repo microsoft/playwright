@@ -32,8 +32,12 @@ class JUnitReporter implements Reporter {
   private stripANSIControlSequences = false;
 
   constructor(options: { outputFile?: string, stripANSIControlSequences?: boolean } = {}) {
-    this.outputFile = options.outputFile;
+    this.outputFile = options.outputFile || process.env[`PLAYWRIGHT_JUNIT_OUTPUT_NAME`];
     this.stripANSIControlSequences = options.stripANSIControlSequences || false;
+  }
+
+  printsToStdio() {
+    return !this.outputFile;
   }
 
   onBegin(config: FullConfig, suite: Suite) {
@@ -69,10 +73,9 @@ class JUnitReporter implements Reporter {
 
     serializeXML(root, tokens, this.stripANSIControlSequences);
     const reportString = tokens.join('\n');
-    const outputFile = this.outputFile || process.env[`PLAYWRIGHT_JUNIT_OUTPUT_NAME`];
-    if (outputFile) {
-      fs.mkdirSync(path.dirname(outputFile), { recursive: true });
-      fs.writeFileSync(outputFile, reportString);
+    if (this.outputFile) {
+      fs.mkdirSync(path.dirname(this.outputFile), { recursive: true });
+      fs.writeFileSync(this.outputFile, reportString);
     } else {
       console.log(reportString);
     }

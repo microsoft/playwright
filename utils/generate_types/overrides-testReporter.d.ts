@@ -89,6 +89,7 @@ export interface FullResult {
 }
 
 export interface Reporter {
+  printsToStdio?(): boolean;
   onBegin?(config: FullConfig, suite: Suite): void;
   onTestBegin?(test: TestCase, result: TestResult): void;
   onStdOut?(chunk: string | Buffer, test?: TestCase, result?: TestResult): void;

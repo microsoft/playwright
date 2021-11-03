@@ -19,7 +19,7 @@ import fs from 'fs';
 import open from 'open';
 import path from 'path';
 import { Transform, TransformCallback } from 'stream';
-import { FullConfig, Suite } from '../../types/testReporter';
+import { FullConfig, Suite, Reporter } from '../../types/testReporter';
 import { HttpServer } from 'playwright-core/lib/utils/httpServer';
 import { calculateSha1, removeFolders } from 'playwright-core/lib/utils/utils';
 import RawReporter, { JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep, JsonAttachment } from './raw';
@@ -104,7 +104,7 @@ type TestEntry = {
   testCaseSummary: TestCaseSummary
 };
 
-class HtmlReporter {
+class HtmlReporter implements Reporter {
   private config!: FullConfig;
   private suite!: Suite;
   private _outputFolder: string | undefined;
@@ -114,6 +114,10 @@ class HtmlReporter {
     // TODO: resolve relative to config.
     this._outputFolder = options.outputFolder;
     this._open = options.open || 'on-failure';
+  }
+
+  printsToStdio() {
+    return false;
   }
 
   onBegin(config: FullConfig, suite: Suite) {

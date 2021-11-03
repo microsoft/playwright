@@ -80,13 +80,6 @@ export class Runner {
       html: HtmlReporter,
     };
     const reporters: Reporter[] = [];
-    const reporterConfig = this._loader.fullConfig().reporter;
-    if (reporterConfig.length === 1 && reporterConfig[0][0] === 'html') {
-      // For html reporter, add a line/dot report for convenience.
-      // Important to put html last because it stalls onEnd.
-      reporterConfig.unshift([process.stdout.isTTY && !process.env.CI ? 'line' : 'dot', { omitFailures: true }]);
-    }
-
     for (const r of this._loader.fullConfig().reporter) {
       const [name, arg] = r;
       if (name in defaultReporters) {
@@ -95,6 +88,15 @@ export class Runner {
         const reporterConstructor = await this._loader.loadReporter(name);
         reporters.push(new reporterConstructor(arg));
       }
+    }
+    const someReporterPrintsToStdio = reporters.some(r => {
+      const prints = r.printsToStdio ? r.printsToStdio() : true;
+      return prints;
+    });
+    if (reporters.length && !someReporterPrintsToStdio) {
+      // Add a line/dot report for convenience.
+      // Important to put it first, jsut in case some other reporter stalls onEnd.
+      reporters.unshift(process.stdout.isTTY && !process.env.CI ? new LineReporter({ omitFailures: true }) : new DotReporter({ omitFailures: true }));
     }
     return new Multiplexer(reporters);
   }
