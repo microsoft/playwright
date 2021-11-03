@@ -765,7 +765,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       progress.log(`waiting for selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);
-      const result = await this._context.frame.evaluateTaskHandle(progress, info.world, task);
+      const result = await this._context.frame.pollTaskInInjectedScript(progress, info.world, task);
       if (!result.asElement()) {
         result.dispose();
         return null;

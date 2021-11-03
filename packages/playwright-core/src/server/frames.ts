@@ -32,7 +32,7 @@ import { debugLogger } from '../utils/debugLogger';
 import { CallMetadata, internalCallMetadata, SdkObject } from './instrumentation';
 import type InjectedScript from './injected/injectedScript';
 import type { ElementStateWithoutStable, FrameExpectParams, InjectedScriptPoll, InjectedScriptProgress } from './injected/injectedScript';
-import { isSessionClosedError } from './common/protocolError';
+import { isProtocolErrorButNotSessionClosed, isSessionClosedError, ProtocolError } from './common/protocolError';
 
 type ContextData = {
   contextPromise: ManualPromise<dom.FrameExecutionContext | Error>;
@@ -721,27 +721,19 @@ export class Frame extends SdkObject {
     const info = this._page.parseSelector(selector, options);
     const task = dom.waitForSelectorTask(info, state, options.omitReturnValue);
     return controller.run(async progress => {
-      progress.log(`waiting for selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);
-      while (progress.isRunning()) {
-        let result: js.JSHandle | undefined;
-        try {
-          const result = await this.evaluateTaskHandle(progress, info.world, task);
-          if (!result.asElement()) {
-            result.dispose();
-            return null;
-          }
-          if ((options as any).__testHookBeforeAdoptNode)
-            await (options as any).__testHookBeforeAdoptNode();
-          const handle = result.asElement() as dom.ElementHandle<Element>;
-          const adopted = await handle._adoptTo(await this._mainContext());
-          return adopted;
-        } catch (e) {
-          if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e) || e.message === 'Frame was detached')
-            throw e;
-          result?.dispose();
+      return await this._retryOnNavigations(progress, async () => {
+        progress.log(`waiting for selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);
+        const result = await this.pollTaskInInjectedScript(progress, info.world, task);
+        if (!result.asElement()) {
+          result.dispose();
+          return null;
         }
-      }
-      return null;
+        if ((options as any).__testHookBeforeAdoptNode)
+          await (options as any).__testHookBeforeAdoptNode();
+        const handle = result.asElement() as dom.ElementHandle<Element>;
+        const adopted = await handle._adoptTo(await this._mainContext());
+        return adopted;
+      });
     }, this._page._timeoutSettings.timeout(options));
   }
 
@@ -956,26 +948,17 @@ export class Frame extends SdkObject {
     action: (handle: dom.ElementHandle<Element>) => Promise<R | 'error:notconnected'>): Promise<R> {
     const info = this._page.parseSelector(selector, { strict });
     const task = dom.waitForSelectorTask(info, 'attached');
-    while (progress.isRunning()) {
+    const retryLog = 'element was detached from the DOM, retrying';
+    return this._retryOnNavigations(progress, async () => {
       progress.log(`waiting for selector "${selector}"`);
-      let element: dom.ElementHandle<Element> | undefined;
-      try {
-        const handle = await this.evaluateTaskHandle(progress, info.world, task);
-        element = handle.asElement() as dom.ElementHandle<Element>;
-        const result = await action(element);
-        element.dispose();
-        if (result === 'error:notconnected') {
-          progress.log('element was detached from the DOM, retrying');
-          continue;
-        }
-        return result;
-      } catch (e) {
-        if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e) || e.message === 'Element is not visible')
-          throw e;
-        element?.dispose();
-      }
-    }
-    return undefined as any;
+      const handle = await this.pollTaskInInjectedScript(progress, info.world, task);
+      const element = handle.asElement() as dom.ElementHandle<Element>;
+      const result = await action(element);
+      element.dispose();
+      if (result === 'error:notconnected')
+        throw new RetryError();
+      return result;
+    }, retryLog);
   }
 
   async click(metadata: CallMetadata, selector: string, options: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
@@ -1229,15 +1212,7 @@ export class Frame extends SdkObject {
       return injectedScript.pollInterval(polling, progress => predicate(arg) || progress.continuePolling);
     }, { expression, isFunction, polling: options.pollingInterval, arg });
     return controller.run(async progress => {
-      while (progress.isRunning()) {
-        try {
-          return await this.evaluateTaskHandle(progress, world, task);
-        } catch (e) {
-          if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e) || e.message === 'Frame was detached')
-            throw e;
-        }
-      }
-      return undefined as any;
+      return await this._retryOnNavigations(progress, () => this.pollTaskInInjectedScript(progress, world, task));
     }, this._page._timeoutSettings.timeout(options));
   }
 
@@ -1261,6 +1236,7 @@ export class Frame extends SdkObject {
     this._stopNetworkIdleTimer();
     this._detached = true;
     this._detachedCallback();
+    // !!! here
     const error = new Error('Frame was detached');
     for (const data of this._contextData.values()) {
       if (data.context)
@@ -1272,6 +1248,21 @@ export class Frame extends SdkObject {
     if (this._parentFrame)
       this._parentFrame._childFrames.delete(this);
     this._parentFrame = null;
+  }
+
+  private async _retryOnNavigations<T>(progress: Progress, callback: () => Promise<T>, retryLog?: string): Promise<T> {
+    while (progress.isRunning()) {
+      try {
+        return await callback();
+      } catch (e) {
+        const shouldRetry = isProtocolErrorButNotSessionClosed(e) || (e instanceof RetryError);
+        if (!shouldRetry)
+          throw e;
+        if (retryLog)
+          progress.log(retryLog);
+      }
+    }
+    return undefined as any;
   }
 
   private async _scheduleRerunnableTask<T, R>(metadata: CallMetadata, selector: string, body: DomTaskBody<T, R, Element>, taskData: T, options: types.TimeoutOptions & types.StrictOptions & { mainWorld?: boolean } = {}): Promise<R> {
@@ -1340,7 +1331,7 @@ export class Frame extends SdkObject {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async evaluateTaskHandle<T>(progress: Progress, world: types.World, task: dom.SchedulableTask<T>): Promise<js.SmartHandle<T>> {
+  async pollTaskInInjectedScript<T>(progress: Progress, world: types.World, task: dom.SchedulableTask<T>): Promise<js.SmartHandle<T>> {
     const context = await this._context(world);
     const injected = await context.injectedScript();
     const pollHandler = new dom.InjectedScriptPollHandler(progress, await task(injected));
@@ -1367,7 +1358,7 @@ export class Frame extends SdkObject {
     // connections so we might end up creating multiple isolated worlds.
     // We can use either.
     if (data.context) {
-      data.context.contextDestroyed(new Error('Execution context was destroyed, most likely because of a navigation'));
+      data.context.contextDestroyed(new ProtocolError(false, 'Execution context was destroyed, most likely because of a navigation'));
       this._setContext(world, null);
     }
     this._setContext(world, context);
@@ -1378,7 +1369,8 @@ export class Frame extends SdkObject {
     // our already destroyed contexts to something that will never resolve.
     if (this._detached)
       return;
-    context.contextDestroyed(new Error('Execution context was destroyed, most likely because of a navigation'));
+    // !!! vs here
+    context.contextDestroyed(new ProtocolError(false, 'Execution context was destroyed, most likely because of a navigation'));
     for (const [world, data] of this._contextData) {
       if (data.context === context)
         this._setContext(world, null);
@@ -1499,3 +1491,5 @@ function verifyLifecycle(name: string, waitUntil: types.LifecycleEvent): types.L
     throw new Error(`${name}: expected one of (load|domcontentloaded|networkidle|commit)`);
   return waitUntil;
 }
+
+class RetryError extends Error {}

@@ -26,3 +26,7 @@ export class ProtocolError extends Error {
 export function isSessionClosedError(e: Error): boolean {
   return e instanceof ProtocolError && e.sessionClosed;
 }
+
+export function isProtocolErrorButNotSessionClosed(e: Error): boolean {
+  return e instanceof ProtocolError && !e.sessionClosed;
+}
