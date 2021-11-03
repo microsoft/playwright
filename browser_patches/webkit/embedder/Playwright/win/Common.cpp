@@ -197,6 +197,8 @@ CommandLineOptions parseCommandLine()
             options.headless = true;
         else if (!wcsicmp(argv[i], L"--no-startup-window"))
             options.noStartupWindow = true;
+        else if (!wcsicmp(argv[i], L"--disable-accelerated-compositing"))
+            options.disableAcceleratedCompositing = true;
         else if (!options.requestedURL)
             options.requestedURL = argv[i];
     }

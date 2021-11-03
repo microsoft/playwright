@@ -36,6 +36,7 @@ struct CommandLineOptions {
     bool inspectorPipe { };
     bool headless { };
     bool noStartupWindow { };
+    bool disableAcceleratedCompositing { };
     _bstr_t requestedURL;
     _bstr_t userDataDir;
     _bstr_t curloptProxy;

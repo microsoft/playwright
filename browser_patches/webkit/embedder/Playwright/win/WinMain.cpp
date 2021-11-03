@@ -101,7 +101,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     if (SetProcessDpiAwarenessContextPtr())
         SetProcessDpiAwarenessContextPtr()(DPI_AWARENESS_CONTEXT_UNAWARE);
 
-    MainWindow::configure(g_options.headless, g_options.inspectorPipe);
+    MainWindow::configure(g_options.headless, g_options.inspectorPipe, g_options.disableAcceleratedCompositing);
 
     if (!g_options.noStartupWindow) {
         auto configuration = adoptWK(WKWebsiteDataStoreConfigurationCreate());
