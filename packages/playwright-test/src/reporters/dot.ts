@@ -21,6 +21,10 @@ import { FullResult, TestCase, TestResult } from '../../types/testReporter';
 class DotReporter extends BaseReporter {
   private _counter = 0;
 
+  printsToStdio() {
+    return true;
+  }
+
   override onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     super.onStdOut(chunk, test, result);
     if (!this.config.quiet)

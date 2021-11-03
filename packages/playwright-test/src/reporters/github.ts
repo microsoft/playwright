@@ -59,6 +59,10 @@ class GitHubLogger {
 export class GitHubReporter extends BaseReporter {
   githubLogger = new GitHubLogger();
 
+  printsToStdio() {
+    return false;
+  }
+
   override async onEnd(result: FullResult) {
     super.onEnd(result);
     this._printAnnotations();

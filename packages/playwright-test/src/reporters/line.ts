@@ -24,6 +24,10 @@ class LineReporter extends BaseReporter {
   private _failures = 0;
   private _lastTest: TestCase | undefined;
 
+  printsToStdio() {
+    return true;
+  }
+
   override onBegin(config: FullConfig, suite: Suite) {
     super.onBegin(config, suite);
     this._total = suite.allTests().length;

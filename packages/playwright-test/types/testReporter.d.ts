@@ -357,6 +357,11 @@ export interface FullResult {
  */
 export interface Reporter {
   /**
+   * Whether this reporter uses stdio for reporting. When it does not, Playwright Test could add some output to enhance user
+   * experience.
+   */
+  printsToStdio?(): boolean;
+  /**
    * Called once before running tests. All tests have been already discovered and put into a hierarchy of [Suite]s.
    * @param config Resolved configuration.
    * @param suite The root suite that contains all projects, files and test cases.

@@ -305,22 +305,22 @@ npx playwright show-report my-report
 
 ### JSON reporter
 
-JSON reporter produces an object with all information about the test run. It is usually used together with some terminal reporter like `dot` or `line`.
+JSON reporter produces an object with all information about the test run.
 
 Most likely you want to write the JSON to a file. When running with `--reporter=json`, use `PLAYWRIGHT_JSON_OUTPUT_NAME` environment variable:
 
 ```bash bash-flavor=bash
-PLAYWRIGHT_JSON_OUTPUT_NAME=results.json npx playwright test --reporter=json,dot
+PLAYWRIGHT_JSON_OUTPUT_NAME=results.json npx playwright test --reporter=json
 ```
 
 ```bash bash-flavor=batch
 set PLAYWRIGHT_JSON_OUTPUT_NAME=results.json
-npx playwright test --reporter=json,dot
+npx playwright test --reporter=json
 ```
 
 ```bash bash-flavor=powershell
 $env:PLAYWRIGHT_JSON_OUTPUT_NAME="results.json"
-npx playwright test --reporter=json,dot
+npx playwright test --reporter=json
 ```
 
 In configuration file, pass options directly:
@@ -348,22 +348,22 @@ export default config;
 
 ### JUnit reporter
 
-JUnit reporter produces a JUnit-style xml report. It is usually used together with some terminal reporter like `dot` or `line`.
+JUnit reporter produces a JUnit-style xml report.
 
 Most likely you want to write the report to an xml file. When running with `--reporter=junit`, use `PLAYWRIGHT_JUNIT_OUTPUT_NAME` environment variable:
 
 ```bash bash-flavor=bash
-PLAYWRIGHT_JUNIT_OUTPUT_NAME=results.xml npx playwright test --reporter=junit,line
+PLAYWRIGHT_JUNIT_OUTPUT_NAME=results.xml npx playwright test --reporter=junit
 ```
 
 ```bash bash-flavor=batch
 set PLAYWRIGHT_JUNIT_OUTPUT_NAME=results.xml
-npx playwright test --reporter=junit,line
+npx playwright test --reporter=junit
 ```
 
 ```bash bash-flavor=powershell
 $env:PLAYWRIGHT_JUNIT_OUTPUT_NAME="results.xml"
-npx playwright test --reporter=junit,line
+npx playwright test --reporter=junit
 ```
 
 In configuration file, pass options directly:
@@ -391,7 +391,7 @@ export default config;
 
 ### GitHub Actions annotations
 
-You can use the built in `github` reporter to get automatic failure annotations when running in GitHub actions. Use it with some other reporter, for example `'dot'` and/or `'json'`.
+You can use the built in `github` reporter to get automatic failure annotations when running in GitHub actions.
 
 Note that all other reporters work on GitHub Actions as well, but do not provide annotations.
 
@@ -403,7 +403,7 @@ Note that all other reporters work on GitHub Actions as well, but do not provide
 const config = {
   // 'github' for GitHub Actions CI to generate annotations, plus a concise 'dot'
   // default 'list' when running locally
-  reporter: process.env.CI ? [ ['github'], ['dot'] ] : 'list',
+  reporter: process.env.CI ? 'github' : 'list',
 };
 
 module.exports = config;
@@ -416,7 +416,7 @@ import { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   // 'github' for GitHub Actions CI to generate annotations, plus a concise 'dot'
   // default 'list' when running locally
-  reporter: process.env.CI ? [ ['github'], ['dot'] ] : 'list',
+  reporter: process.env.CI ? 'github' : 'list',
 };
 export default config;
 ```

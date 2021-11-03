@@ -15,7 +15,8 @@
  */
 
 import * as path from 'path';
-import { test, expect } from './playwright-test-fixtures';
+import * as fs from 'fs';
+import { test, expect, stripAscii } from './playwright-test-fixtures';
 
 test('should support spec.ok', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -199,4 +200,21 @@ test('should have error position in results', async ({
   expect(result.report.suites[0].specs[0].file).toBe('a.test.js');
   expect(result.report.suites[0].specs[0].tests[0].results[0].errorLocation.line).toBe(7);
   expect(result.report.suites[0].specs[0].tests[0].results[0].errorLocation.column).toBe(23);
+});
+
+test('should add dot in addition to file json', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { reporter: [['json', { outputFile: 'a.json' }]] };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('one', async ({}) => {
+        expect(1).toBe(1);
+      });
+    `,
+  }, { reporter: '' });
+  expect(result.exitCode).toBe(0);
+  expect(stripAscii(result.output)).toContain('·');
+  expect(fs.existsSync(testInfo.outputPath('a.json'))).toBeTruthy();
 });
