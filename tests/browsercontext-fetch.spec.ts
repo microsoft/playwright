@@ -413,18 +413,20 @@ it('should return error with wrong credentials', async ({ context, server }) => 
   expect(response2.status()).toBe(401);
 });
 
-it('should support post data', async ({ context, server }) => {
-  const [request, response] = await Promise.all([
-    server.waitForRequest('/simple.json'),
-    context.request.post(`${server.PREFIX}/simple.json`, {
-      data: 'My request'
-    })
-  ]);
-  expect(request.method).toBe('POST');
-  expect((await request.postBody).toString()).toBe('My request');
-  expect(response.status()).toBe(200);
-  expect(request.url).toBe('/simple.json');
-});
+for (const method of ['delete', 'patch', 'post', 'put']) {
+  it(`${method} should support post data`, async ({ context, server }) => {
+    const [request, response] = await Promise.all([
+      server.waitForRequest('/simple.json'),
+      context.request[method](`${server.PREFIX}/simple.json`, {
+        data: 'My request'
+      })
+    ]);
+    expect(request.method).toBe(method.toUpperCase());
+    expect((await request.postBody).toString()).toBe('My request');
+    expect(response.status()).toBe(200);
+    expect(request.url).toBe('/simple.json');
+  });
+}
 
 it('should add default headers', async ({ context, server, page }) => {
   const [request] = await Promise.all([
