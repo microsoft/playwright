@@ -21,7 +21,6 @@ import * as types from '../types';
 import { Protocol } from './protocol';
 import { WKSession } from './wkConnection';
 import { assert, headersObjectToArray, headersArrayToObject } from '../../utils/utils';
-import { WKPage } from './wkPage';
 import { ManualPromise } from '../../utils/async';
 
 const errorReasons: { [reason: string]: Protocol.Network.ResourceErrorType } = {
