@@ -28,6 +28,7 @@
 #include "MainWindow.h"
 #include "PlaywrightLibResource.h"
 #include "WebKitBrowserWindow.h"
+#include <WebKit/WKPreferencesRefPrivate.h>
 #include <sstream>
 
 namespace WebCore {
@@ -49,10 +50,12 @@ size_t MainWindow::s_numInstances;
 
 bool MainWindow::s_headless = false;
 bool MainWindow::s_controlledRemotely = false;
+bool MainWindow::s_disableAcceleratedCompositing = false;
 
-void MainWindow::configure(bool headless, bool controlledRemotely) {
+void MainWindow::configure(bool headless, bool controlledRemotely, bool disableAcceleratedCompositing) {
     s_headless = headless;
     s_controlledRemotely = controlledRemotely;
+    s_disableAcceleratedCompositing = disableAcceleratedCompositing;
 }
 
 static std::wstring loadString(int id)
@@ -180,6 +183,8 @@ bool MainWindow::init(HINSTANCE hInstance, WKPageConfigurationRef conf)
     WKPageConfigurationSetPreferences(conf, prefs.get());
     WKPreferencesSetMediaCapabilitiesEnabled(prefs.get(), false);
     WKPreferencesSetDeveloperExtrasEnabled(prefs.get(), true);
+    if (s_disableAcceleratedCompositing)
+      WKPreferencesSetAcceleratedCompositingEnabled(prefs.get(), false);
 
     m_configuration = conf;
 
