@@ -12,15 +12,15 @@ to wait for page navigations and loading to complete.
 
 Playwright splits the process of showing a new document in a page into **navigation** and **loading**.
 
-**Navigations** can be initiated by changing the page URL or by interacting with the page (e.g., clicking a link).
-Navigation ends when response headers have been parsed and session history is updated. The navigation intent may be
-canceled, for example, on hitting an unresolved DNS address or transformed into a file download. Only after the
-navigation succeeds (is committed), page starts **loading** the document.
+**Navigation starts** by changing the page URL or by interacting with the page (e.g., clicking a link).
+The navigation intent may be canceled, for example, on hitting an unresolved DNS address or transformed into a file download.
+
+**Navigation is committed** when the response headers have been parsed and session history is updated. Only after the
+navigation succeeds (is committed), the page starts **loading** the document.
 
 **Loading** covers getting the remaining response body over the network, parsing, executing the scripts and firing load
 events:
 - [`method: Page.url`] is set to the new url
-- when response headers are received and the session history is updated, the navigation is committed
 - document content is loaded over network and parsed
 - [`event: Page.DOMContentLoaded`] event is fired
 - page executes some scripts and loads resources like stylesheets and images
