@@ -16,6 +16,9 @@ context cookies from the response. The method will automatically follow redirect
 ### param: APIRequestContext.delete.url = %%-fetch-param-url-%%
 ### option: APIRequestContext.delete.params = %%-fetch-option-params-%%
 ### option: APIRequestContext.delete.headers = %%-fetch-option-headers-%%
+### option: APIRequestContext.delete.data = %%-fetch-option-data-%%
+### option: APIRequestContext.delete.form = %%-fetch-option-form-%%
+### option: APIRequestContext.delete.multipart = %%-fetch-option-multipart-%%
 ### option: APIRequestContext.delete.timeout = %%-fetch-option-timeout-%%
 ### option: APIRequestContext.delete.failOnStatusCode = %%-fetch-option-failonstatuscode-%%
 ### option: APIRequestContext.delete.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%

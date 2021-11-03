@@ -143,7 +143,7 @@ export abstract class FetchRequest extends SdkObject {
       }
 
       let postData;
-      if (['POST', 'PUT', 'PATCH'].includes(method))
+      if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method))
         postData = serializePostData(params, headers);
       else if (params.postData || params.jsonData || params.formData || params.multipartData)
         throw new Error(`Method ${method} does not accept post data`);
