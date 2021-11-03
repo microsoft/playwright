@@ -46,7 +46,7 @@ Read more about it in our [API testing guide](./test-api-testing).
 
 #### Response Interception
 
-It is now possible to do response interception by combining [API Testing](./test-api-testing) with [equest interception](./network#modify-requests).
+It is now possible to do response interception by combining [API Testing](./test-api-testing) with [request interception](./network#modify-requests).
 
 For example, we can blur all the images on the page:
 
@@ -73,14 +73,14 @@ Read more about [response interception](./network#modify-responses).
 
 #### New HTML reporter
 
-Try it out new HML reporter with either `--reporter=html` or a `reporter` entry
+Try it out new HTML reporter with either `--reporter=html` or a `reporter` entry
 in `playwright.config.ts` file:
 
 ```bash
 $ npx playwright test --reporter=html
 ```
 
-The HTLM reporter has all the information about tests and their failures, including surfacing
+The HTML reporter has all the information about tests and their failures, including surfacing
 trace and image artifacts.
 
 ![html reporter](https://user-images.githubusercontent.com/746130/138324311-94e68b39-b51a-4776-a446-f60037a77f32.png)
