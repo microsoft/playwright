@@ -45,7 +45,7 @@
     "@babel/preset-typescript": "^7.14.5",
     "colors": "^1.4.0",
     "commander": "^8.2.0",
-    "expect": "=27.2.5",
+    "expect": "=27.3.1",
     "jest-matcher-utils": "=27.2.5",
     "jpeg-js": "^0.4.2",
     "minimatch": "^3.0.3",

@@ -7,14 +7,15 @@
  */
 
 import type * as expect from 'expect';
+import { Locator, Page } from 'playwright-core';
 
 export declare type AsymmetricMatcher = Record<string, any>;
 
 export declare type Expect = {
-  <T = unknown>(actual: T): PlaywrightTest.Matchers<T>;
+  <T = unknown>(actual: T): PlaywrightTest.Matchers<void, T>;
 
   // Sourced from node_modules/expect/build/types.d.ts
-  assertions(arg0: number): void;
+  assertions(numberOfAssertions: number): void;
   extend(arg0: any): void;
   extractExpectedAssertionsErrors: typeof expect['extractExpectedAssertionsErrors'];
   getState(): expect.MatcherState;
@@ -29,45 +30,18 @@ export declare type Expect = {
 };
 
 type OverriddenExpectProperties =
-'not' |
-'resolves' |
-'rejects' |
-'toMatchInlineSnapshot' |
-'toThrowErrorMatchingInlineSnapshot' |
-'toMatchSnapshot' |
-'toThrowErrorMatchingSnapshot';
+  'not' |
+  'resolves' |
+  'rejects' |
+  'toMatchInlineSnapshot' |
+  'toThrowErrorMatchingInlineSnapshot' |
+  'toMatchSnapshot' |
+  'toThrowErrorMatchingSnapshot';
 
 declare global {
   export namespace PlaywrightTest {
-    export interface Matchers<R> extends Omit<expect.Matchers<R>, OverriddenExpectProperties> {
-      /**
-       * If you know how to test something, `.not` lets you test its opposite.
-       */
-      not: PlaywrightTest.Matchers<R>;
-      /**
-       * Use resolves to unwrap the value of a fulfilled promise so any other
-       * matcher can be chained. If the promise is rejected the assertion fails.
-       */
-      resolves: PlaywrightTest.Matchers<Promise<R>>;
-      /**
-      * Unwraps the reason of a rejected promise so any other matcher can be chained.
-      * If the promise is fulfilled the assertion fails.
-      */
-      rejects: PlaywrightTest.Matchers<Promise<R>>;
-      /**
-       * Match snapshot
-       */
-      toMatchSnapshot(options: {
-        name: string | string[],
-        threshold?: number
-      }): R;
-      /**
-       * Match snapshot
-       */
-      toMatchSnapshot(name: string | string[], options?: {
-        threshold?: number
-      }): R;
 
+    interface LocatorMatchers<R, T> {
       /**
        * Asserts input is checked.
        */
@@ -111,7 +85,7 @@ declare global {
       /**
        * Asserts element's text content matches given pattern or contains given substring.
        */
-      toContainText(expected: string | RegExp | (string|RegExp)[], options?: { timeout?: number, useInnerText?: boolean }): Promise<R>;
+      toContainText(expected: string | RegExp | (string | RegExp)[], options?: { timeout?: number, useInnerText?: boolean }): Promise<R>;
 
       /**
        * Asserts element's attributes `name` matches expected value.
@@ -121,7 +95,7 @@ declare global {
       /**
        * Asserts that DOM node has a given CSS class.
        */
-      toHaveClass(className: string | RegExp | (string|RegExp)[], options?: { timeout?: number }): Promise<R>;
+      toHaveClass(className: string | RegExp | (string | RegExp)[], options?: { timeout?: number }): Promise<R>;
 
       /**
        * Asserts number of DOM nodes matching given locator.
@@ -146,8 +120,15 @@ declare global {
       /**
        * Asserts element's text content.
        */
-      toHaveText(expected: string | RegExp | (string|RegExp)[], options?: { timeout?: number, useInnerText?: boolean }): Promise<R>;
+      toHaveText(expected: string | RegExp | (string | RegExp)[], options?: { timeout?: number, useInnerText?: boolean }): Promise<R>;
 
+      /**
+       * Asserts input element's value.
+       */
+      toHaveValue(expected: string | RegExp, options?: { timeout?: number }): Promise<R>;
+    }
+
+    interface PageMatchers<R, T> {
       /**
        * Asserts page's title.
        */
@@ -157,12 +138,41 @@ declare global {
        * Asserts page's URL.
        */
       toHaveURL(expected: string | RegExp, options?: { timeout?: number }): Promise<R>;
-
-       /**
-       * Asserts input element's value.
-       */
-      toHaveValue(expected: string | RegExp, options?: { timeout?: number }): Promise<R>;
     }
+
+    interface BasePlaywrightMatchers<R, T> extends Omit<expect.Matchers<R, T>, OverriddenExpectProperties> {
+      /**
+       * If you know how to test something, `.not` lets you test its opposite.
+       */
+      not: PlaywrightTest.BasePlaywrightMatchers<R, T>;
+      /**
+       * Use resolves to unwrap the value of a fulfilled promise so any other
+       * matcher can be chained. If the promise is rejected the assertion fails.
+       */
+      resolves: PlaywrightTest.BasePlaywrightMatchers<Promise<R>, T>;
+      /**
+      * Unwraps the reason of a rejected promise so any other matcher can be chained.
+      * If the promise is fulfilled the assertion fails.
+      */
+      rejects: PlaywrightTest.BasePlaywrightMatchers<Promise<R>, T>;
+      /**
+       * Match snapshot
+       */
+      toMatchSnapshot(options: {
+        name: string | string[],
+        threshold?: number
+      }): R;
+      /**
+       * Match snapshot
+       */
+      toMatchSnapshot(name: string | string[], options?: {
+        threshold?: number
+      }): R;
+    }
+
+    export type Matchers<R, T> = BasePlaywrightMatchers<R, T> &
+      T extends Locator ? LocatorMatchers<R, T> : {} & 
+      T extends Page ? PageMatchers<R, T> : {}
   }
 }
 
