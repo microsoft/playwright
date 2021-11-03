@@ -70,7 +70,6 @@ export class WKPage implements PageDelegate {
   private _lastConsoleMessage: { derivedType: string, text: string, handles: JSHandle[]; count: number, location: types.ConsoleMessageLocation; } | null = null;
 
   private readonly _requestIdToResponseReceivedPayloadEvent = new Map<string, Protocol.Network.responseReceivedPayload>();
-  _needsResponseInterception: boolean = false;
   // Holds window features for the next popup being opened via window.open,
   // until the popup page proxy arrives.
   private _nextWindowOpenPopupFeatures?: string[];
@@ -178,8 +177,6 @@ export class WKPage implements PageDelegate {
     if (this._page._needsRequestInterception()) {
       promises.push(session.send('Network.setInterceptionEnabled', { enabled: true }));
       promises.push(session.send('Network.addInterception', { url: '.*', stage: 'request', isRegex: true }));
-      if (this._needsResponseInterception)
-        promises.push(session.send('Network.addInterception', { url: '.*', stage: 'response', isRegex: true }));
     }
 
     const contextOptions = this._browserContext._options;
@@ -375,7 +372,6 @@ export class WKPage implements PageDelegate {
       eventsHelper.addEventListener(this._session, 'Page.fileChooserOpened', event => this._onFileChooserOpened(event)),
       eventsHelper.addEventListener(this._session, 'Network.requestWillBeSent', e => this._onRequestWillBeSent(this._session, e)),
       eventsHelper.addEventListener(this._session, 'Network.requestIntercepted', e => this._onRequestIntercepted(this._session, e)),
-      eventsHelper.addEventListener(this._session, 'Network.responseIntercepted', e => this._onResponseIntercepted(this._session, e)),
       eventsHelper.addEventListener(this._session, 'Network.responseReceived', e => this._onResponseReceived(e)),
       eventsHelper.addEventListener(this._session, 'Network.loadingFinished', e => this._onLoadingFinished(e)),
       eventsHelper.addEventListener(this._session, 'Network.loadingFailed', e => this._onLoadingFailed(e)),
@@ -671,22 +667,12 @@ export class WKPage implements PageDelegate {
     await Promise.all(promises);
   }
 
-  async _ensureResponseInterceptionEnabled() {
-    if (this._needsResponseInterception)
-      return;
-    this._needsResponseInterception = true;
-    await this.updateRequestInterception();
-  }
-
   async updateRequestInterception(): Promise<void> {
     const enabled = this._page._needsRequestInterception();
-    const promises = [
+    await Promise.all([
       this._updateState('Network.setInterceptionEnabled', { enabled }),
       this._updateState('Network.addInterception', { url: '.*', stage: 'request', isRegex: true }),
-    ];
-    if (this._needsResponseInterception)
-      this._updateState('Network.addInterception', { url: '.*', stage: 'response', isRegex: true });
-    await Promise.all(promises);
+    ]);
   }
 
   async updateOffline() {
@@ -970,7 +956,7 @@ export class WKPage implements PageDelegate {
     let route = null;
     // We do not support intercepting redirects.
     if (this._page._needsRequestInterception() && !redirectedFrom)
-      route = new WKRouteImpl(session, this, event.requestId);
+      route = new WKRouteImpl(session, event.requestId);
     const request = new WKInterceptableRequest(session, route, frame, event, redirectedFrom, documentId);
     this._requestIdToRequest.set(event.requestId, request);
     this._page._frameManager.requestStarted(request.request, route || undefined);
@@ -999,16 +985,6 @@ export class WKPage implements PageDelegate {
     } else {
       request._route._requestInterceptedPromise.resolve();
     }
-  }
-
-  _onResponseIntercepted(session: WKSession, event: Protocol.Network.responseInterceptedPayload) {
-    const request = this._requestIdToRequest.get(event.requestId);
-    const route = request?._routeForRedirectChain();
-    if (!route?._responseInterceptedPromise) {
-      session.sendMayFail('Network.interceptContinue', { requestId: event.requestId, stage: 'response' });
-      return;
-    }
-    route._responseInterceptedPromise.resolve({ response: event.response });
   }
 
   _onResponseReceived(event: Protocol.Network.responseReceivedPayload) {
@@ -1075,9 +1051,6 @@ export class WKPage implements PageDelegate {
     // @see https://crbug.com/750469
     if (!request)
       return;
-    const route = request._routeForRedirectChain();
-    if (route?._responseInterceptedPromise)
-      route._responseInterceptedPromise.resolve({ error: event });
     const response = request.request._existingResponse();
     if (response) {
       response._serverAddrFinished();

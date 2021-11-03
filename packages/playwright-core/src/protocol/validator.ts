@@ -157,12 +157,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       buffer: tBinary,
     })),
   });
-  scheme.InterceptedResponse = tObject({
-    request: tChannel('Request'),
-    status: tNumber,
-    statusText: tString,
-    headers: tArray(tType('NameValue')),
-  });
   scheme.FetchRequestFetchParams = tObject({
     url: tString,
     params: tOptional(tArray(tType('NameValue'))),
@@ -1108,17 +1102,14 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     method: tOptional(tString),
     headers: tOptional(tArray(tType('NameValue'))),
     postData: tOptional(tBinary),
-    interceptResponse: tOptional(tBoolean),
   });
   scheme.RouteFulfillParams = tObject({
     status: tOptional(tNumber),
     headers: tOptional(tArray(tType('NameValue'))),
     body: tOptional(tString),
     isBase64: tOptional(tBoolean),
-    useInterceptedResponseBody: tOptional(tBoolean),
     fetchResponseUid: tOptional(tString),
   });
-  scheme.RouteResponseBodyParams = tOptional(tObject({}));
   scheme.ResourceTiming = tObject({
     startTime: tNumber,
     domainLookupStart: tNumber,

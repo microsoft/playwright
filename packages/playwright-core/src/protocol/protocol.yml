@@ -227,17 +227,6 @@ FormField:
         mimeType: string
         buffer: binary
 
-InterceptedResponse:
-  type: object
-  properties:
-    request: Request
-    status: number
-    statusText: string
-    headers:
-      type: array
-      items: NameValue
-
-
 FetchRequest:
   type: interface
 
@@ -2327,9 +2316,6 @@ Route:
           type: array?
           items: NameValue
         postData: binary?
-        interceptResponse: boolean?
-      returns:
-        response: InterceptedResponse?
 
     fulfill:
       parameters:
@@ -2340,12 +2326,7 @@ Route:
           items: NameValue
         body: string?
         isBase64: boolean?
-        useInterceptedResponseBody: boolean?
         fetchResponseUid: string?
-
-    responseBody:
-      returns:
-        binary: binary
 
 
 ResourceTiming:
