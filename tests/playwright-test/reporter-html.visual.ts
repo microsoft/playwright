@@ -31,8 +31,6 @@ const test = baseTest.extend<{ showReport: () => Promise<void> }>({
   }
 });
 
-test.use({ channel: 'chrome' });
-
 test('should generate report', async ({ runInlineTest, showReport, page }) => {
   await runInlineTest({
     'playwright.config.ts': `

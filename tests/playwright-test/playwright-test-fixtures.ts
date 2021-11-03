@@ -121,6 +121,8 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
       PWTEST_CACHE_DIR: cacheDir,
       PWTEST_SKIP_TEST_OUTPUT: '1',
       ...env,
+      PLAYWRIGHT_DOCKER: undefined,
+      PW_GRID: undefined,
     },
     cwd: baseDir,
   });
