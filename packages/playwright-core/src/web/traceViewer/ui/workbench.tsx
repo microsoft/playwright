@@ -83,7 +83,7 @@ export const Workbench: React.FunctionComponent<{
     })();
   }, [traceURL]);
 
-  const defaultSnapshotSize = contextEntry.options.viewport || { width: 1280, height: 720 };
+  const defaultSnapshotInfo = { viewport: contextEntry.options.viewport || { width: 1280, height: 720 }, url: '' };
   const boundaries = { minimum: contextEntry.startTime, maximum: contextEntry.endTime };
 
 
@@ -121,7 +121,7 @@ export const Workbench: React.FunctionComponent<{
     </div>
     <SplitView sidebarSize={300} orientation='horizontal' sidebarIsFirst={true}>
       <SplitView sidebarSize={300} orientation='horizontal'>
-        <SnapshotTab action={selectedAction} defaultSnapshotSize={defaultSnapshotSize} />
+        <SnapshotTab action={selectedAction} defaultSnapshotInfo={defaultSnapshotInfo} />
         <TabbedPane tabs={tabs} selectedTab={selectedTab} setSelectedTab={setSelectedTab}/>
       </SplitView>
       <ActionList

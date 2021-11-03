@@ -278,7 +278,16 @@ test('should have network requests', async ({ showTraceViewer }) => {
   ]);
 });
 
-test('should capture iframe', async ({ page, server, browserName, runAndTrace }) => {
+test('should show snapshot URL', async ({ page, runAndTrace, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.evaluate('2+2');
+  });
+  await traceViewer.snapshotFrame('page.evaluate');
+  await expect(traceViewer.page.locator('.snapshot-url')).toHaveText(server.EMPTY_PAGE);
+});
+
+test('should capture iframe', async ({ page, server, runAndTrace }) => {
   await page.route('**/empty.html', route => {
     route.fulfill({
       body: '<iframe src="iframe.html"></iframe>',
