@@ -925,44 +925,10 @@ index 0000000000000000000000000000000000000000..b9ab57a2b5739ed997231399b4bd4042
 +    ]
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Network.json b/Source/JavaScriptCore/inspector/protocol/Network.json
-index 882a2d56befef0aba460cc8ff041969e0d2c1ed3..a8819d22ae338362b0e56681a4bb064849d40df1 100644
+index 882a2d56befef0aba460cc8ff041969e0d2c1ed3..9aecd6067741af596e5ec7fdf9c832ea1267715a 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Network.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Network.json
-@@ -192,6 +192,17 @@
-                 { "name": "base64Encoded", "type": "boolean", "description": "True, if content was sent as base64." }
-             ]
-         },
-+        {
-+            "name": "getInterceptedResponseBody",
-+            "description": "Returns content served for the given request. Will wait for the request to finish loading.",
-+            "async": true,
-+            "parameters": [
-+                { "name": "requestId", "$ref": "RequestId", "description": "Identifier of the intercepted network response's request." }
-+            ],
-+            "returns": [
-+                { "name": "body", "type": "string", "description": "Base64 encoded response body." }
-+            ]
-+        },
-         {
-             "name": "setResourceCachingDisabled",
-             "description": "Toggles whether the resource cache may be used when loading resources in the inspected page. If <code>true</code>, the resource cache will not be used when loading resources.",
-@@ -302,6 +313,15 @@
-                 { "name": "headers", "$ref": "Headers", "optional": true, "description": "HTTP response headers. Pass through original values if unmodified." }
-             ]
-         },
-+        {
-+            "name": "interceptResponseWithError",
-+            "description": "Fail response with given error type.",
-+            "targetTypes": ["page"],
-+            "parameters": [
-+                { "name": "requestId", "$ref": "RequestId", "description": "Identifier for the intercepted Network response to fail." },
-+                { "name": "errorType", "$ref": "ResourceErrorType", "description": "Deliver error reason for the request failure." }
-+            ]
-+        },
-         {
-             "name": "interceptRequestWithResponse",
-             "description": "Provide response for an intercepted request. Request completely bypasses the network in this case and is immediately fulfilled with the provided data.",
-@@ -324,6 +344,13 @@
+@@ -324,6 +324,13 @@
                  { "name": "requestId", "$ref": "RequestId", "description": "Identifier for the intercepted Network request to fail." },
                  { "name": "errorType", "$ref": "ResourceErrorType", "description": "Deliver error reason for the request failure." }
              ]
@@ -3030,7 +2996,7 @@ index 11c26ccfd836c23ec85a52082e4eb4f4a1ffde25..edf37988c97b0fd2bb7a957b56ec0284
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.cpp b/Source/WebCore/inspector/InspectorInstrumentation.cpp
-index a7ca7162d791ed7fba8cc91c21a2cf3af6e69a7e..0ce597e692a429832a29571928fc66cc365b36dc 100644
+index a7ca7162d791ed7fba8cc91c21a2cf3af6e69a7e..f43705d3dcb96c2f6fa7a359b5a3fd10a6c18e30 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.cpp
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.cpp
 @@ -569,6 +569,13 @@ void InspectorInstrumentation::applyUserAgentOverrideImpl(InstrumentingAgents& i
@@ -3110,39 +3076,7 @@ index a7ca7162d791ed7fba8cc91c21a2cf3af6e69a7e..0ce597e692a429832a29571928fc66cc
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
  void InspectorInstrumentation::defaultAppearanceDidChangeImpl(InstrumentingAgents& instrumentingAgents, bool useDarkAppearance)
  {
-@@ -850,12 +860,30 @@ void InspectorInstrumentation::interceptRequestImpl(InstrumentingAgents& instrum
-         networkAgent->interceptRequest(loader, WTFMove(handler));
- }
- 
--void InspectorInstrumentation::interceptResponseImpl(InstrumentingAgents& instrumentingAgents, const ResourceResponse& response, ResourceLoaderIdentifier identifier, CompletionHandler<void(const ResourceResponse&, RefPtr<SharedBuffer>)>&& handler)
-+void InspectorInstrumentation::interceptResponseImpl(InstrumentingAgents& instrumentingAgents, const ResourceResponse& response, ResourceLoaderIdentifier identifier, CompletionHandler<void(std::optional<ResourceError>&&, const ResourceResponse&, RefPtr<SharedBuffer>)>&& handler)
- {
-     if (auto* networkAgent = instrumentingAgents.enabledNetworkAgent())
-         networkAgent->interceptResponse(response, identifier, WTFMove(handler));
- }
- 
-+void InspectorInstrumentation::interceptDidReceiveDataImpl(InstrumentingAgents& instrumentingAgents, ResourceLoaderIdentifier identifier, const SharedBuffer& buffer)
-+{
-+    if (auto* networkAgent = instrumentingAgents.enabledNetworkAgent())
-+        networkAgent->interceptDidReceiveData(identifier, buffer);
-+}
-+
-+void InspectorInstrumentation::interceptDidFinishResourceLoadImpl(InstrumentingAgents& instrumentingAgents, ResourceLoaderIdentifier identifier)
-+{
-+    if (auto* networkAgent = instrumentingAgents.enabledNetworkAgent())
-+        networkAgent->interceptDidFinishResourceLoad(identifier);
-+}
-+
-+void InspectorInstrumentation::interceptDidFailResourceLoadImpl(InstrumentingAgents& instrumentingAgents, ResourceLoaderIdentifier identifier, const ResourceError& error)
-+{
-+    if (auto* networkAgent = instrumentingAgents.enabledNetworkAgent())
-+        networkAgent->interceptDidFailResourceLoad(identifier, error);
-+}
-+
- // JavaScriptCore InspectorDebuggerAgent should know Console MessageTypes.
- static bool isConsoleAssertMessage(MessageSource source, MessageType type)
- {
-@@ -1286,6 +1314,36 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
+@@ -1286,6 +1296,36 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
          layerTreeAgent->renderLayerDestroyed(renderLayer);
  }
  
@@ -3179,7 +3113,7 @@ index a7ca7162d791ed7fba8cc91c21a2cf3af6e69a7e..0ce597e692a429832a29571928fc66cc
  InstrumentingAgents& InspectorInstrumentation::instrumentingAgents(WorkerOrWorkletGlobalScope& globalScope)
  {
      return globalScope.inspectorController().m_instrumentingAgents;
-@@ -1297,6 +1355,13 @@ InstrumentingAgents& InspectorInstrumentation::instrumentingAgents(Page& page)
+@@ -1297,6 +1337,13 @@ InstrumentingAgents& InspectorInstrumentation::instrumentingAgents(Page& page)
      return page.inspectorController().m_instrumentingAgents.get();
  }
  
@@ -3194,7 +3128,7 @@ index a7ca7162d791ed7fba8cc91c21a2cf3af6e69a7e..0ce597e692a429832a29571928fc66cc
  {
      if (is<Document>(context))
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.h b/Source/WebCore/inspector/InspectorInstrumentation.h
-index 8e65c4eb10233521f48c7f4b120ad2c8909a07ba..c2dcc2e690366bc169d87f5d202745a5b8bc02e2 100644
+index 8e65c4eb10233521f48c7f4b120ad2c8909a07ba..089f6520bfec96d96d54f7916d7db41887e1b591 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.h
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.h
 @@ -31,6 +31,7 @@
@@ -3250,19 +3184,7 @@ index 8e65c4eb10233521f48c7f4b120ad2c8909a07ba..c2dcc2e690366bc169d87f5d202745a5
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
      static void defaultAppearanceDidChange(Page&, bool useDarkAppearance);
  #endif
-@@ -236,7 +241,10 @@ public:
-     static bool shouldInterceptRequest(const Frame&, const ResourceRequest&);
-     static bool shouldInterceptResponse(const Frame&, const ResourceResponse&);
-     static void interceptRequest(ResourceLoader&, Function<void(const ResourceRequest&)>&&);
--    static void interceptResponse(const Frame&, const ResourceResponse&, ResourceLoaderIdentifier, CompletionHandler<void(const ResourceResponse&, RefPtr<SharedBuffer>)>&&);
-+    static void interceptResponse(const Frame&, const ResourceResponse&, ResourceLoaderIdentifier, CompletionHandler<void(std::optional<ResourceError>&&, const ResourceResponse&, RefPtr<SharedBuffer>)>&&);
-+    static void interceptDidReceiveData(const Frame&, ResourceLoaderIdentifier, const SharedBuffer&);
-+    static void interceptDidFinishResourceLoad(const Frame&, ResourceLoaderIdentifier);
-+    static void interceptDidFailResourceLoad(const Frame&, ResourceLoaderIdentifier, const ResourceError& error);
- 
-     static void addMessageToConsole(Page&, std::unique_ptr<Inspector::ConsoleMessage>);
-     static void addMessageToConsole(WorkerOrWorkletGlobalScope&, std::unique_ptr<Inspector::ConsoleMessage>);
-@@ -313,6 +321,12 @@ public:
+@@ -313,6 +318,12 @@ public:
      static void layerTreeDidChange(Page*);
      static void renderLayerDestroyed(Page*, const RenderLayer&);
  
@@ -3275,7 +3197,7 @@ index 8e65c4eb10233521f48c7f4b120ad2c8909a07ba..c2dcc2e690366bc169d87f5d202745a5
      static void frontendCreated();
      static void frontendDeleted();
      static bool hasFrontends() { return InspectorInstrumentationPublic::hasFrontends(); }
-@@ -329,6 +343,8 @@ public:
+@@ -329,6 +340,8 @@ public:
      static void registerInstrumentingAgents(InstrumentingAgents&);
      static void unregisterInstrumentingAgents(InstrumentingAgents&);
  
@@ -3284,7 +3206,7 @@ index 8e65c4eb10233521f48c7f4b120ad2c8909a07ba..c2dcc2e690366bc169d87f5d202745a5
  private:
      static void didClearWindowObjectInWorldImpl(InstrumentingAgents&, Frame&, DOMWrapperWorld&);
      static bool isDebuggerPausedImpl(InstrumentingAgents&);
-@@ -406,6 +422,7 @@ private:
+@@ -406,6 +419,7 @@ private:
      static void didRecalculateStyleImpl(InstrumentingAgents&);
      static void didScheduleStyleRecalculationImpl(InstrumentingAgents&, Document&);
      static void applyUserAgentOverrideImpl(InstrumentingAgents&, String&);
@@ -3292,7 +3214,7 @@ index 8e65c4eb10233521f48c7f4b120ad2c8909a07ba..c2dcc2e690366bc169d87f5d202745a5
      static void applyEmulatedMediaImpl(InstrumentingAgents&, String&);
  
      static void willSendRequestImpl(InstrumentingAgents&, ResourceLoaderIdentifier, DocumentLoader*, ResourceRequest&, const ResourceResponse& redirectResponse, const CachedResource*);
-@@ -417,6 +434,7 @@ private:
+@@ -417,6 +431,7 @@ private:
      static void didReceiveDataImpl(InstrumentingAgents&, ResourceLoaderIdentifier, const uint8_t* data, int dataLength, int encodedDataLength);
      static void didFinishLoadingImpl(InstrumentingAgents&, ResourceLoaderIdentifier, DocumentLoader*, const NetworkLoadMetrics&, ResourceLoader*);
      static void didFailLoadingImpl(InstrumentingAgents&, ResourceLoaderIdentifier, DocumentLoader*, const ResourceError&);
@@ -3300,7 +3222,7 @@ index 8e65c4eb10233521f48c7f4b120ad2c8909a07ba..c2dcc2e690366bc169d87f5d202745a5
      static void willLoadXHRSynchronouslyImpl(InstrumentingAgents&);
      static void didLoadXHRSynchronouslyImpl(InstrumentingAgents&);
      static void scriptImportedImpl(InstrumentingAgents&, ResourceLoaderIdentifier, const String& sourceString);
-@@ -427,11 +445,11 @@ private:
+@@ -427,11 +442,11 @@ private:
      static void frameDetachedFromParentImpl(InstrumentingAgents&, Frame&);
      static void didCommitLoadImpl(InstrumentingAgents&, Frame&, DocumentLoader*);
      static void frameDocumentUpdatedImpl(InstrumentingAgents&, Frame&);
@@ -3313,18 +3235,7 @@ index 8e65c4eb10233521f48c7f4b120ad2c8909a07ba..c2dcc2e690366bc169d87f5d202745a5
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
      static void defaultAppearanceDidChangeImpl(InstrumentingAgents&, bool useDarkAppearance);
  #endif
-@@ -442,6 +460,10 @@ private:
-     static bool shouldInterceptResponseImpl(InstrumentingAgents&, const ResourceResponse&);
-     static void interceptRequestImpl(InstrumentingAgents&, ResourceLoader&, Function<void(const ResourceRequest&)>&&);
-     static void interceptResponseImpl(InstrumentingAgents&, const ResourceResponse&, ResourceLoaderIdentifier, CompletionHandler<void(const ResourceResponse&, RefPtr<SharedBuffer>)>&&);
-+    static void interceptResponseImpl(InstrumentingAgents&, const ResourceResponse&, ResourceLoaderIdentifier, CompletionHandler<void(std::optional<ResourceError>&&, const ResourceResponse&, RefPtr<SharedBuffer>)>&&);
-+    static void interceptDidReceiveDataImpl(InstrumentingAgents&, ResourceLoaderIdentifier, const SharedBuffer&);
-+    static void interceptDidFinishResourceLoadImpl(InstrumentingAgents&, ResourceLoaderIdentifier);
-+    static void interceptDidFailResourceLoadImpl(InstrumentingAgents&, ResourceLoaderIdentifier, const ResourceError& error);
- 
-     static void addMessageToConsoleImpl(InstrumentingAgents&, std::unique_ptr<Inspector::ConsoleMessage>);
- 
-@@ -513,6 +535,12 @@ private:
+@@ -513,6 +528,12 @@ private:
      static void layerTreeDidChangeImpl(InstrumentingAgents&);
      static void renderLayerDestroyedImpl(InstrumentingAgents&, const RenderLayer&);
  
@@ -3337,7 +3248,7 @@ index 8e65c4eb10233521f48c7f4b120ad2c8909a07ba..c2dcc2e690366bc169d87f5d202745a5
      static InstrumentingAgents& instrumentingAgents(Page&);
      static InstrumentingAgents& instrumentingAgents(WorkerOrWorkletGlobalScope&);
  
-@@ -1031,6 +1059,13 @@ inline void InspectorInstrumentation::applyUserAgentOverride(Frame& frame, Strin
+@@ -1031,6 +1052,13 @@ inline void InspectorInstrumentation::applyUserAgentOverride(Frame& frame, Strin
          applyUserAgentOverrideImpl(*agents, userAgent);
  }
  
@@ -3351,7 +3262,7 @@ index 8e65c4eb10233521f48c7f4b120ad2c8909a07ba..c2dcc2e690366bc169d87f5d202745a5
  inline void InspectorInstrumentation::applyEmulatedMedia(Frame& frame, String& media)
  {
      FAST_RETURN_IF_NO_FRONTENDS(void());
-@@ -1081,7 +1116,7 @@ inline void InspectorInstrumentation::didReceiveThreadableLoaderResponse(Documen
+@@ -1081,7 +1109,7 @@ inline void InspectorInstrumentation::didReceiveThreadableLoaderResponse(Documen
      if (auto* agents = instrumentingAgents(documentThreadableLoader.document()))
          didReceiveThreadableLoaderResponseImpl(*agents, documentThreadableLoader, identifier);
  }
@@ -3360,7 +3271,7 @@ index 8e65c4eb10233521f48c7f4b120ad2c8909a07ba..c2dcc2e690366bc169d87f5d202745a5
  inline void InspectorInstrumentation::didReceiveData(Frame* frame, ResourceLoaderIdentifier identifier, const uint8_t* data, int dataLength, int encodedDataLength)
  {
      FAST_RETURN_IF_NO_FRONTENDS(void());
-@@ -1119,6 +1154,13 @@ inline void InspectorInstrumentation::didFailLoading(WorkerOrWorkletGlobalScope&
+@@ -1119,6 +1147,13 @@ inline void InspectorInstrumentation::didFailLoading(WorkerOrWorkletGlobalScope&
      didFailLoadingImpl(instrumentingAgents(globalScope), identifier, nullptr, error);
  }
  
@@ -3374,7 +3285,7 @@ index 8e65c4eb10233521f48c7f4b120ad2c8909a07ba..c2dcc2e690366bc169d87f5d202745a5
  inline void InspectorInstrumentation::continueAfterXFrameOptionsDenied(Frame& frame, ResourceLoaderIdentifier identifier, DocumentLoader& loader, const ResourceResponse& response)
  {
      // Treat the same as didReceiveResponse.
-@@ -1209,13 +1251,6 @@ inline void InspectorInstrumentation::frameDocumentUpdated(Frame& frame)
+@@ -1209,13 +1244,6 @@ inline void InspectorInstrumentation::frameDocumentUpdated(Frame& frame)
          frameDocumentUpdatedImpl(*agents, frame);
  }
  
@@ -3388,7 +3299,7 @@ index 8e65c4eb10233521f48c7f4b120ad2c8909a07ba..c2dcc2e690366bc169d87f5d202745a5
  inline void InspectorInstrumentation::frameStartedLoading(Frame& frame)
  {
      FAST_RETURN_IF_NO_FRONTENDS(void());
-@@ -1244,6 +1279,13 @@ inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& fra
+@@ -1244,6 +1272,13 @@ inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& fra
          frameClearedScheduledNavigationImpl(*agents, frame);
  }
  
@@ -3402,38 +3313,7 @@ index 8e65c4eb10233521f48c7f4b120ad2c8909a07ba..c2dcc2e690366bc169d87f5d202745a5
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
  inline void InspectorInstrumentation::defaultAppearanceDidChange(Page& page, bool useDarkAppearance)
  {
-@@ -1289,13 +1331,29 @@ inline void InspectorInstrumentation::interceptRequest(ResourceLoader& loader, F
-         interceptRequestImpl(*agents, loader, WTFMove(handler));
- }
- 
--inline void InspectorInstrumentation::interceptResponse(const Frame& frame, const ResourceResponse& response, ResourceLoaderIdentifier identifier, CompletionHandler<void(const ResourceResponse&, RefPtr<SharedBuffer>)>&& handler)
-+inline void InspectorInstrumentation::interceptResponse(const Frame& frame, const ResourceResponse& response, ResourceLoaderIdentifier identifier, CompletionHandler<void(std::optional<ResourceError>&&, const ResourceResponse&, RefPtr<SharedBuffer>)>&& handler)
- {
-     ASSERT(InspectorInstrumentation::shouldInterceptResponse(frame, response));
-     if (auto* agents = instrumentingAgents(frame))
-         interceptResponseImpl(*agents, response, identifier, WTFMove(handler));
- }
- 
-+inline void InspectorInstrumentation::interceptDidReceiveData(const Frame& frame, ResourceLoaderIdentifier identifier, const SharedBuffer& buffer)
-+{
-+    if (auto* agents = instrumentingAgents(frame))
-+        interceptDidReceiveDataImpl(*agents, identifier, buffer);
-+}
-+inline void InspectorInstrumentation::interceptDidFinishResourceLoad(const Frame& frame, ResourceLoaderIdentifier identifier)
-+{
-+    if (auto* agents = instrumentingAgents(frame))
-+        interceptDidFinishResourceLoadImpl(*agents, identifier);
-+}
-+inline void InspectorInstrumentation::interceptDidFailResourceLoad(const Frame& frame, ResourceLoaderIdentifier identifier, const ResourceError& error)
-+{
-+    if (auto* agents = instrumentingAgents(frame))
-+        interceptDidFailResourceLoadImpl(*agents, identifier, error);
-+}
-+
- inline void InspectorInstrumentation::didOpenDatabase(Database& database)
- {
-     FAST_RETURN_IF_NO_FRONTENDS(void());
-@@ -1674,6 +1732,42 @@ inline void InspectorInstrumentation::renderLayerDestroyed(Page* page, const Ren
+@@ -1674,6 +1709,42 @@ inline void InspectorInstrumentation::renderLayerDestroyed(Page* page, const Ren
          renderLayerDestroyedImpl(*agents, renderLayer);
  }
  
@@ -3476,114 +3356,6 @@ index 8e65c4eb10233521f48c7f4b120ad2c8909a07ba..c2dcc2e690366bc169d87f5d202745a5
  inline InstrumentingAgents* InspectorInstrumentation::instrumentingAgents(ScriptExecutionContext* context)
  {
      return context ? instrumentingAgents(*context) : nullptr;
-diff --git a/Source/WebCore/inspector/InspectorInstrumentationWebKit.cpp b/Source/WebCore/inspector/InspectorInstrumentationWebKit.cpp
-index 61e4bc3ba019ee25e5c8bc221dff6077eddb863d..51e2be3691f10d9fe755ce919e31d8a2414c799b 100644
---- a/Source/WebCore/inspector/InspectorInstrumentationWebKit.cpp
-+++ b/Source/WebCore/inspector/InspectorInstrumentationWebKit.cpp
-@@ -45,9 +45,24 @@ void InspectorInstrumentationWebKit::interceptRequestInternal(ResourceLoader& lo
-     InspectorInstrumentation::interceptRequest(loader, WTFMove(handler));
- }
- 
--void InspectorInstrumentationWebKit::interceptResponseInternal(const Frame& frame, const ResourceResponse& response, ResourceLoaderIdentifier identifier, CompletionHandler<void(const ResourceResponse&, RefPtr<SharedBuffer>)>&& handler)
-+void InspectorInstrumentationWebKit::interceptResponseInternal(const Frame& frame, const ResourceResponse& response, ResourceLoaderIdentifier identifier, CompletionHandler<void(std::optional<ResourceError>&& error, const ResourceResponse&, RefPtr<SharedBuffer>)>&& handler)
- {
-     InspectorInstrumentation::interceptResponse(frame, response, identifier, WTFMove(handler));
- }
- 
-+void InspectorInstrumentationWebKit::interceptDidReceiveDataInternal(const Frame& frame, ResourceLoaderIdentifier identifier, const SharedBuffer& buffer)
-+{
-+    InspectorInstrumentation::interceptDidReceiveData(frame, identifier, buffer);
-+}
-+
-+void InspectorInstrumentationWebKit::interceptDidFinishResourceLoadInternal(const Frame& frame, ResourceLoaderIdentifier identifier)
-+{
-+    InspectorInstrumentation::interceptDidFinishResourceLoad(frame, identifier);
-+}
-+
-+void InspectorInstrumentationWebKit::interceptDidFailResourceLoadInternal(const Frame& frame, ResourceLoaderIdentifier identifier, const ResourceError& error)
-+{
-+    InspectorInstrumentation::interceptDidFailResourceLoad(frame, identifier, error);
-+}
-+
- } // namespace WebCore
-diff --git a/Source/WebCore/inspector/InspectorInstrumentationWebKit.h b/Source/WebCore/inspector/InspectorInstrumentationWebKit.h
-index f76114ce98f42a7ff906a48d0420b96305d36914..e3be41d7e9e5d2ae5872424df2ed6cbf0453d56d 100644
---- a/Source/WebCore/inspector/InspectorInstrumentationWebKit.h
-+++ b/Source/WebCore/inspector/InspectorInstrumentationWebKit.h
-@@ -26,6 +26,7 @@
- #pragma once
- 
- #include "InspectorInstrumentationPublic.h"
-+#include "ResourceError.h"
- #include "ResourceLoader.h"
- #include <wtf/CompletionHandler.h>
- #include <wtf/Function.h>
-@@ -33,6 +34,7 @@
- namespace WebCore {
- 
- class Frame;
-+class ResourceError;
- class ResourceLoader;
- class ResourceRequest;
- class ResourceResponse;
-@@ -43,13 +45,19 @@ public:
-     static bool shouldInterceptRequest(const Frame*, const ResourceRequest&);
-     static bool shouldInterceptResponse(const Frame*, const ResourceResponse&);
-     static void interceptRequest(ResourceLoader&, Function<void(const ResourceRequest&)>&&);
--    static void interceptResponse(const Frame*, const ResourceResponse&, ResourceLoaderIdentifier, CompletionHandler<void(const ResourceResponse&, RefPtr<SharedBuffer>)>&&);
-+    static void interceptResponse(const Frame*, const ResourceResponse&, ResourceLoaderIdentifier identifier, CompletionHandler<void(std::optional<ResourceError>&& error, const ResourceResponse&, RefPtr<SharedBuffer>)>&&);
-+    static void interceptDidReceiveData(const Frame*, ResourceLoaderIdentifier identifier, const SharedBuffer&);
-+    static void interceptDidFinishResourceLoad(const Frame*, ResourceLoaderIdentifier identifier);
-+    static void interceptDidFailResourceLoad(const Frame*, ResourceLoaderIdentifier identifier, const ResourceError& error);
- 
- private:
-     static bool shouldInterceptRequestInternal(const Frame&, const ResourceRequest&);
-     static bool shouldInterceptResponseInternal(const Frame&, const ResourceResponse&);
-     static void interceptRequestInternal(ResourceLoader&, Function<void(const ResourceRequest&)>&&);
--    static void interceptResponseInternal(const Frame&, const ResourceResponse&, ResourceLoaderIdentifier, CompletionHandler<void(const ResourceResponse&, RefPtr<SharedBuffer>)>&&);
-+    static void interceptResponseInternal(const Frame&, const ResourceResponse&, ResourceLoaderIdentifier identifier, CompletionHandler<void(std::optional<ResourceError>&& error, const ResourceResponse&, RefPtr<SharedBuffer>)>&&);
-+    static void interceptDidReceiveDataInternal(const Frame&, ResourceLoaderIdentifier identifier, const SharedBuffer&);
-+    static void interceptDidFinishResourceLoadInternal(const Frame&, ResourceLoaderIdentifier identifier);
-+    static void interceptDidFailResourceLoadInternal(const Frame&, ResourceLoaderIdentifier identifier, const ResourceError& error);
- };
- 
- inline bool InspectorInstrumentationWebKit::shouldInterceptRequest(const Frame* frame, const ResourceRequest& request)
-@@ -76,10 +84,34 @@ inline void InspectorInstrumentationWebKit::interceptRequest(ResourceLoader& loa
-     interceptRequestInternal(loader, WTFMove(handler));
- }
- 
--inline void InspectorInstrumentationWebKit::interceptResponse(const Frame* frame, const ResourceResponse& response, ResourceLoaderIdentifier identifier, CompletionHandler<void(const ResourceResponse&, RefPtr<SharedBuffer>)>&& handler)
-+inline void InspectorInstrumentationWebKit::interceptResponse(const Frame* frame, const ResourceResponse& response, ResourceLoaderIdentifier identifier, CompletionHandler<void(std::optional<ResourceError>&& error, const ResourceResponse&, RefPtr<SharedBuffer>)>&& handler)
- {
-     ASSERT(InspectorInstrumentationWebKit::shouldInterceptResponse(frame, response));
-     interceptResponseInternal(*frame, response, identifier, WTFMove(handler));
- }
- 
-+inline void InspectorInstrumentationWebKit::interceptDidReceiveData(const Frame* frame, ResourceLoaderIdentifier identifier, const SharedBuffer& buffer)
-+{
-+    if (!frame)
-+        return;
-+
-+    interceptDidReceiveDataInternal(*frame, identifier, buffer);
-+}
-+
-+inline void InspectorInstrumentationWebKit::interceptDidFinishResourceLoad(const Frame* frame, ResourceLoaderIdentifier identifier)
-+{
-+    if (!frame)
-+        return;
-+
-+    interceptDidFinishResourceLoadInternal(*frame, identifier);
-+}
-+
-+inline void InspectorInstrumentationWebKit::interceptDidFailResourceLoad(const Frame* frame, ResourceLoaderIdentifier identifier, const ResourceError& error)
-+{
-+    if (!frame)
-+        return;
-+
-+    interceptDidFailResourceLoadInternal(*frame, identifier, error);
-+}
-+
- }
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 index d2c0cb6cfd184f158c4a62d8be2efb5750192c3c..264d13c746524b7147be3ff7662b9c413e6f7af7 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
@@ -3977,7 +3749,7 @@ index 3386cb879f1178c1b9635775c9a0e864f5b94c52..d2350182f5f061855e8ca172779ad60e
  class Page;
  class SecurityOrigin;
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
-index 44e084a28842fbc562893761d71e4c74274ebb18..89328f6a4678adf7e1564c5681d80ca872ab47cf 100644
+index 44e084a28842fbc562893761d71e4c74274ebb18..ba401dc8edbe4033f372d2abe00c5c3d0236bf8d 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 @@ -45,6 +45,7 @@
@@ -3996,15 +3768,7 @@ index 44e084a28842fbc562893761d71e4c74274ebb18..89328f6a4678adf7e1564c5681d80ca8
  #include "Page.h"
  #include "PlatformStrategies.h"
  #include "ProgressTracker.h"
-@@ -91,6 +93,7 @@
- #include <wtf/text/WTFString.h>
- 
- typedef Inspector::NetworkBackendDispatcherHandler::LoadResourceCallback LoadResourceCallback;
-+using GetInterceptedResponseBodyCallback = Inspector::NetworkBackendDispatcherHandler::GetInterceptedResponseBodyCallback;
- 
- namespace WebCore {
- 
-@@ -307,8 +310,8 @@ static Ref<Protocol::Network::Request> buildObjectForResourceRequest(const Resou
+@@ -307,8 +309,8 @@ static Ref<Protocol::Network::Request> buildObjectForResourceRequest(const Resou
          .setHeaders(buildObjectForHeaders(request.httpHeaderFields()))
          .release();
      if (request.httpBody() && !request.httpBody()->isEmpty()) {
@@ -4015,7 +3779,7 @@ index 44e084a28842fbc562893761d71e4c74274ebb18..89328f6a4678adf7e1564c5681d80ca8
      }
      return requestObject;
  }
-@@ -353,6 +356,8 @@ RefPtr<Protocol::Network::Response> InspectorNetworkAgent::buildObjectForResourc
+@@ -353,6 +355,8 @@ RefPtr<Protocol::Network::Response> InspectorNetworkAgent::buildObjectForResourc
          .setSource(responseSource(response.source()))
          .release();
  
@@ -4024,7 +3788,7 @@ index 44e084a28842fbc562893761d71e4c74274ebb18..89328f6a4678adf7e1564c5681d80ca8
      if (resourceLoader) {
          auto* metrics = response.deprecatedNetworkLoadMetricsOrNull();
          responseObject->setTiming(buildObjectForTiming(metrics ? *metrics : NetworkLoadMetrics::emptyMetrics(), *resourceLoader));
-@@ -490,9 +495,15 @@ static InspectorPageAgent::ResourceType resourceTypeForLoadType(InspectorInstrum
+@@ -490,9 +494,15 @@ static InspectorPageAgent::ResourceType resourceTypeForLoadType(InspectorInstrum
  
  void InspectorNetworkAgent::willSendRequest(ResourceLoaderIdentifier identifier, DocumentLoader* loader, ResourceRequest& request, const ResourceResponse& redirectResponse, const CachedResource* cachedResource)
  {
@@ -4043,117 +3807,7 @@ index 44e084a28842fbc562893761d71e4c74274ebb18..89328f6a4678adf7e1564c5681d80ca8
  }
  
  void InspectorNetworkAgent::willSendRequestOfType(ResourceLoaderIdentifier identifier, DocumentLoader* loader, ResourceRequest& request, InspectorInstrumentation::LoadType loadType)
-@@ -952,6 +963,18 @@ Protocol::ErrorStringOr<std::tuple<String, bool /* base64Encoded */>> InspectorN
-     return makeUnexpected("Missing content of resource for given requestId"_s);
- }
- 
-+void InspectorNetworkAgent::getInterceptedResponseBody(const Inspector::Protocol::Network::RequestId& requestId, Ref<GetInterceptedResponseBodyCallback>&& callback)
-+{
-+    auto pendingInterceptResponse = m_pendingInterceptResponses.get(requestId);
-+    if (!pendingInterceptResponse) {
-+        callback->sendFailure("Missing pending intercept response for given requestId"_s);
-+        return;
-+    }
-+    pendingInterceptResponse->getReceivedData([callback = WTFMove(callback)] (const SharedBuffer& buffer) {
-+        callback->sendSuccess(base64EncodeToString(buffer.data(), buffer.size()));
-+    });
-+}
-+
- Protocol::ErrorStringOr<void> InspectorNetworkAgent::setResourceCachingDisabled(bool disabled)
- {
-     setResourceCachingDisabledInternal(disabled);
-@@ -1106,8 +1129,7 @@ bool InspectorNetworkAgent::willIntercept(const ResourceRequest& request)
-     if (!m_interceptionEnabled)
-         return false;
- 
--    return shouldIntercept(request.url(), Protocol::Network::NetworkStage::Request)
--        || shouldIntercept(request.url(), Protocol::Network::NetworkStage::Response);
-+    return shouldIntercept(request.url(), Protocol::Network::NetworkStage::Response);
- }
- 
- bool InspectorNetworkAgent::shouldInterceptRequest(const ResourceRequest& request)
-@@ -1140,7 +1162,7 @@ void InspectorNetworkAgent::interceptRequest(ResourceLoader& loader, Function<vo
-     m_frontendDispatcher->requestIntercepted(requestId, buildObjectForResourceRequest(loader.request()));
- }
- 
--void InspectorNetworkAgent::interceptResponse(const ResourceResponse& response, ResourceLoaderIdentifier identifier, CompletionHandler<void(const ResourceResponse&, RefPtr<SharedBuffer>)>&& handler)
-+void InspectorNetworkAgent::interceptResponse(const ResourceResponse& response, ResourceLoaderIdentifier identifier, CompletionHandler<void(std::optional<ResourceError>&&, const ResourceResponse&, RefPtr<SharedBuffer>)>&& handler)
- {
-     ASSERT(m_enabled);
-     ASSERT(m_interceptionEnabled);
-@@ -1148,7 +1170,7 @@ void InspectorNetworkAgent::interceptResponse(const ResourceResponse& response,
-     String requestId = IdentifiersFactory::requestId(identifier.toUInt64());
-     if (m_pendingInterceptResponses.contains(requestId)) {
-         ASSERT_NOT_REACHED();
--        handler(response, nullptr);
-+        handler({ }, response, nullptr);
-         return;
-     }
- 
-@@ -1161,6 +1183,62 @@ void InspectorNetworkAgent::interceptResponse(const ResourceResponse& response,
-     m_frontendDispatcher->responseIntercepted(requestId, resourceResponse.releaseNonNull());
- }
- 
-+Inspector::Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptResponseWithError(const Inspector::Protocol::Network::RequestId& requestId, Inspector::Protocol::Network::ResourceErrorType errorType)
-+{
-+    auto pendingResponse = m_pendingInterceptResponses.take(requestId);
-+    if (!pendingResponse)
-+        return makeUnexpected("Missing pending intercept response for given requestId"_s);
-+
-+    const auto& url = pendingResponse->originalResponse().url();
-+    switch (errorType) {
-+    case Protocol::Network::ResourceErrorType::General:
-+        pendingResponse->fail(ResourceError(errorDomainWebKitInternal, 0, url, "Request intercepted"_s, ResourceError::Type::General));
-+        return { };
-+
-+    case Protocol::Network::ResourceErrorType::AccessControl:
-+        pendingResponse->fail(ResourceError(errorDomainWebKitInternal, 0, url, "Access denied"_s, ResourceError::Type::AccessControl));
-+        return { };
-+
-+    case Protocol::Network::ResourceErrorType::Cancellation:
-+        pendingResponse->fail(ResourceError(errorDomainWebKitInternal, 0, url, "Request canceled"_s, ResourceError::Type::Cancellation));
-+        return { };
-+
-+    case Protocol::Network::ResourceErrorType::Timeout:
-+        pendingResponse->fail(ResourceError(errorDomainWebKitInternal, 0, url, "Request timed out"_s, ResourceError::Type::Timeout));
-+        return { };
-+    }
-+
-+    ASSERT_NOT_REACHED();
-+    return { };
-+}
-+
-+void InspectorNetworkAgent::interceptDidReceiveData(ResourceLoaderIdentifier identifier, const SharedBuffer& buffer)
-+{
-+    String requestId = IdentifiersFactory::requestId(identifier.toUInt64());
-+    auto* interceptedResponse = m_pendingInterceptResponses.get(requestId);
-+    if (!interceptedResponse) {
-+        ASSERT_NOT_REACHED();
-+        return;
-+    }
-+    interceptedResponse->didReceiveData(buffer);
-+}
-+
-+void InspectorNetworkAgent::interceptDidFinishResourceLoad(ResourceLoaderIdentifier identifier)
-+{
-+    String requestId = IdentifiersFactory::requestId(identifier.toUInt64());
-+    auto* interceptedResponse = m_pendingInterceptResponses.get(requestId);
-+    if (!interceptedResponse) {
-+        ASSERT_NOT_REACHED();
-+        return;
-+    }
-+    interceptedResponse->didFinishLoading();
-+}
-+
-+void InspectorNetworkAgent::interceptDidFailResourceLoad(ResourceLoaderIdentifier identifier, const ResourceError&)
-+{
-+    interceptDidFinishResourceLoad(identifier);
-+}
-+
- Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptContinue(const Protocol::Network::RequestId& requestId, Protocol::Network::NetworkStage networkStage)
- {
-     switch (networkStage) {
-@@ -1190,6 +1268,9 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptWithRequest(const
+@@ -1190,6 +1200,9 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptWithRequest(const
          return makeUnexpected("Missing pending intercept request for given requestId"_s);
  
      auto& loader = *pendingRequest->m_loader;
@@ -4163,7 +3817,7 @@ index 44e084a28842fbc562893761d71e4c74274ebb18..89328f6a4678adf7e1564c5681d80ca8
      ResourceRequest request = loader.request();
      if (!!url)
          request.setURL(URL({ }, url));
-@@ -1289,14 +1370,25 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithRespons
+@@ -1289,14 +1302,25 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithRespons
      response.setHTTPStatusCode(status);
      response.setHTTPStatusText(statusText);
      HTTPHeaderMap explicitHeaders;
@@ -4190,7 +3844,7 @@ index 44e084a28842fbc562893761d71e4c74274ebb18..89328f6a4678adf7e1564c5681d80ca8
          if (buffer->size())
              loader->didReceiveBuffer(WTFMove(buffer), buffer->size(), DataPayloadWholeResource);
          loader->didFinishLoading(NetworkLoadMetrics());
-@@ -1337,6 +1429,12 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithError(c
+@@ -1337,6 +1361,12 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithError(c
      return { };
  }
  
@@ -4203,7 +3857,7 @@ index 44e084a28842fbc562893761d71e4c74274ebb18..89328f6a4678adf7e1564c5681d80ca8
  bool InspectorNetworkAgent::shouldTreatAsText(const String& mimeType)
  {
      return startsWithLettersIgnoringASCIICase(mimeType, "text/")
-@@ -1378,6 +1476,12 @@ std::optional<String> InspectorNetworkAgent::textContentForCachedResource(Cached
+@@ -1378,6 +1408,12 @@ std::optional<String> InspectorNetworkAgent::textContentForCachedResource(Cached
      return std::nullopt;
  }
  
@@ -4217,7 +3871,7 @@ index 44e084a28842fbc562893761d71e4c74274ebb18..89328f6a4678adf7e1564c5681d80ca8
  {
      ASSERT(result);
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.h b/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
-index 8f6fbcc293aebf8b9d5c945d2829a1527b74bc7f..34e6726d970400c28f1812cdf5ceddb326534ae6 100644
+index 8f6fbcc293aebf8b9d5c945d2829a1527b74bc7f..22a97f735adb973b0aef74e54a897d15eb0591b3 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
 @@ -34,6 +34,8 @@
@@ -4237,118 +3891,16 @@ index 8f6fbcc293aebf8b9d5c945d2829a1527b74bc7f..34e6726d970400c28f1812cdf5ceddb3
  
      // InspectorAgentBase
      void didCreateFrontendAndBackend(Inspector::FrontendRouter*, Inspector::BackendDispatcher*) final;
-@@ -82,6 +85,7 @@ public:
-     Inspector::Protocol::ErrorStringOr<void> disable() final;
-     Inspector::Protocol::ErrorStringOr<void> setExtraHTTPHeaders(Ref<JSON::Object>&&) final;
-     Inspector::Protocol::ErrorStringOr<std::tuple<String, bool /* base64Encoded */>> getResponseBody(const Inspector::Protocol::Network::RequestId&) final;
-+    void getInterceptedResponseBody(const Inspector::Protocol::Network::RequestId&, Ref<GetInterceptedResponseBodyCallback>&&) final;
-     Inspector::Protocol::ErrorStringOr<void> setResourceCachingDisabled(bool) final;
-     void loadResource(const Inspector::Protocol::Network::FrameId&, const String& url, Ref<LoadResourceCallback>&&) final;
-     Inspector::Protocol::ErrorStringOr<String> getSerializedCertificate(const Inspector::Protocol::Network::RequestId&) final;
-@@ -92,8 +96,10 @@ public:
-     Inspector::Protocol::ErrorStringOr<void> interceptContinue(const Inspector::Protocol::Network::RequestId&, Inspector::Protocol::Network::NetworkStage) final;
-     Inspector::Protocol::ErrorStringOr<void> interceptWithRequest(const Inspector::Protocol::Network::RequestId&, const String& url, const String& method, RefPtr<JSON::Object>&& headers, const String& postData) final;
+@@ -94,6 +97,7 @@ public:
      Inspector::Protocol::ErrorStringOr<void> interceptWithResponse(const Inspector::Protocol::Network::RequestId&, const String& content, bool base64Encoded, const String& mimeType, std::optional<int>&& status, const String& statusText, RefPtr<JSON::Object>&& headers) final;
-+    Inspector::Protocol::ErrorStringOr<void> interceptResponseWithError(const Inspector::Protocol::Network::RequestId&, Inspector::Protocol::Network::ResourceErrorType) final;
      Inspector::Protocol::ErrorStringOr<void> interceptRequestWithResponse(const Inspector::Protocol::Network::RequestId&, const String& content, bool base64Encoded, const String& mimeType, int status, const String& statusText, Ref<JSON::Object>&& headers) final;
      Inspector::Protocol::ErrorStringOr<void> interceptRequestWithError(const Inspector::Protocol::Network::RequestId&, Inspector::Protocol::Network::ResourceErrorType) final;
 +    Inspector::Protocol::ErrorStringOr<void> setEmulateOfflineState(bool offline) final;
  
      // InspectorInstrumentation
      void willRecalculateStyle();
-@@ -123,8 +129,11 @@ public:
-     bool willIntercept(const ResourceRequest&);
-     bool shouldInterceptRequest(const ResourceRequest&);
-     bool shouldInterceptResponse(const ResourceResponse&);
--    void interceptResponse(const ResourceResponse&, ResourceLoaderIdentifier, CompletionHandler<void(const ResourceResponse&, RefPtr<SharedBuffer>)>&&);
-+    void interceptResponse(const ResourceResponse&, ResourceLoaderIdentifier, CompletionHandler<void(std::optional<ResourceError>&&, const ResourceResponse&, RefPtr<SharedBuffer>)>&&);
-     void interceptRequest(ResourceLoader&, Function<void(const ResourceRequest&)>&&);
-+    void interceptDidReceiveData(ResourceLoaderIdentifier, const SharedBuffer&);
-+    void interceptDidFinishResourceLoad(ResourceLoaderIdentifier);
-+    void interceptDidFailResourceLoad(ResourceLoaderIdentifier, const ResourceError& error);
- 
-     void searchOtherRequests(const JSC::Yarr::RegularExpression&, Ref<JSON::ArrayOf<Inspector::Protocol::Page::SearchResult>>&);
-     void searchInRequest(Inspector::Protocol::ErrorString&, const Inspector::Protocol::Network::RequestId&, const String& query, bool caseSensitive, bool isRegex, RefPtr<JSON::ArrayOf<Inspector::Protocol::GenericTypes::SearchMatch>>&);
-@@ -185,9 +194,10 @@ private:
-         WTF_MAKE_NONCOPYABLE(PendingInterceptResponse);
-         WTF_MAKE_FAST_ALLOCATED;
-     public:
--        PendingInterceptResponse(const ResourceResponse& originalResponse, CompletionHandler<void(const ResourceResponse&, RefPtr<SharedBuffer>)>&& completionHandler)
-+        PendingInterceptResponse(const ResourceResponse& originalResponse, CompletionHandler<void(std::optional<ResourceError>&&, const ResourceResponse&, RefPtr<SharedBuffer>)>&& completionHandler)
-             : m_originalResponse(originalResponse)
-             , m_completionHandler(WTFMove(completionHandler))
-+            , m_receivedData(SharedBuffer::create())
-         { }
- 
-         ~PendingInterceptResponse()
-@@ -203,6 +213,36 @@ private:
-         }
- 
-         void respond(const ResourceResponse& response, RefPtr<SharedBuffer> data)
-+        {
-+            respond({ }, response, data);
-+        }
-+
-+        void fail(const ResourceError& error)
-+        {
-+            respond({ error },  m_originalResponse, nullptr);
-+        }
-+
-+        void didReceiveData(const SharedBuffer& buffer)
-+        {
-+            m_receivedData->append(buffer);
-+        }
-+
-+        void getReceivedData(CompletionHandler<void(const SharedBuffer&)>&& completionHandler)
-+        {
-+            if (m_finishedLoading || m_responded) {
-+                completionHandler(m_receivedData.get());
-+                return;
-+            }
-+            m_receivedDataHandlers.append(WTFMove(completionHandler));
-+        }
-+
-+        void didFinishLoading() {
-+            m_finishedLoading = true;
-+            notifyDataHandlers();
-+        }
-+
-+    private:
-+        void respond(std::optional<ResourceError>&& error, const ResourceResponse& response, RefPtr<SharedBuffer> data)
-         {
-             ASSERT(!m_responded);
-             if (m_responded)
-@@ -210,13 +250,25 @@ private:
- 
-             m_responded = true;
- 
--            m_completionHandler(response, data);
-+            m_completionHandler(WTFMove(error), response, data);
-+
-+            m_receivedData->clear();
-+            notifyDataHandlers();
-+        }
-+
-+        void notifyDataHandlers()
-+        {
-+            for (auto& handler : m_receivedDataHandlers)
-+                handler(m_receivedData.get());
-+            m_receivedDataHandlers.clear();
-         }
- 
--    private:
-         ResourceResponse m_originalResponse;
--        CompletionHandler<void(const ResourceResponse&, RefPtr<SharedBuffer>)> m_completionHandler;
-+        CompletionHandler<void(std::optional<ResourceError>&&, const ResourceResponse&, RefPtr<SharedBuffer>)> m_completionHandler;
-+        Ref<SharedBuffer> m_receivedData;
-+        Vector<CompletionHandler<void(const SharedBuffer&)>> m_receivedDataHandlers;
-         bool m_responded { false };
-+        bool m_finishedLoading { false };
-     };
- 
-     std::unique_ptr<Inspector::NetworkFrontendDispatcher> m_frontendDispatcher;
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index c894067585eb1e3dc79276d9d0e4f7562c84d801..ca8f975d99068ac471f624b421afdc6f83b8c35a 100644
+index c894067585eb1e3dc79276d9d0e4f7562c84d801..02546967114fb5051df8c584971a12a7bad86619 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,20 +32,28 @@
@@ -20862,34 +20414,20 @@ index 405c73430e21012b1e1ac788965cbc9767762368..f315eec6fe4f2405883178165db3a8ea
  
  } // namespace WebKit
 diff --git a/Source/WebKit/WebProcess/Network/WebResourceLoader.cpp b/Source/WebKit/WebProcess/Network/WebResourceLoader.cpp
-index 259449423855fed3aaaab414819f8951a3b8b7ff..c97f042082096fa88990e40ac9d23d939c7b897f 100644
+index 259449423855fed3aaaab414819f8951a3b8b7ff..6ba9678f50190492ef5140d0793582a8017d97fc 100644
 --- a/Source/WebKit/WebProcess/Network/WebResourceLoader.cpp
 +++ b/Source/WebKit/WebProcess/Network/WebResourceLoader.cpp
-@@ -155,17 +155,19 @@ void WebResourceLoader::didReceiveResponse(const ResourceResponse& response, boo
-     if (InspectorInstrumentationWebKit::shouldInterceptResponse(m_coreLoader->frame(), response)) {
-         auto interceptedRequestIdentifier = m_coreLoader->identifier();
-         m_interceptController.beginInterceptingResponse(interceptedRequestIdentifier);
--        InspectorInstrumentationWebKit::interceptResponse(m_coreLoader->frame(), response, interceptedRequestIdentifier, [this, protectedThis = Ref { *this }, interceptedRequestIdentifier, policyDecisionCompletionHandler = WTFMove(policyDecisionCompletionHandler)](const ResourceResponse& inspectorResponse, RefPtr<SharedBuffer> overrideData) mutable {
-+        InspectorInstrumentationWebKit::interceptResponse(m_coreLoader->frame(), response, interceptedRequestIdentifier, [this, protectedThis = Ref { *this }, interceptedRequestIdentifier](std::optional<ResourceError>&& error, const ResourceResponse& inspectorResponse, RefPtr<SharedBuffer> overrideData) mutable {
-             if (!m_coreLoader || !m_coreLoader->identifier()) {
-                 WEBRESOURCELOADER_RELEASE_LOG("didReceiveResponse: not continuing intercept load because no coreLoader or no ID");
-                 m_interceptController.continueResponse(interceptedRequestIdentifier);
-                 return;
+@@ -163,9 +163,6 @@ void WebResourceLoader::didReceiveResponse(const ResourceResponse& response, boo
              }
  
--            m_coreLoader->didReceiveResponse(inspectorResponse, [this, protectedThis = WTFMove(protectedThis), interceptedRequestIdentifier, policyDecisionCompletionHandler = WTFMove(policyDecisionCompletionHandler), overrideData = WTFMove(overrideData)]() mutable {
+             m_coreLoader->didReceiveResponse(inspectorResponse, [this, protectedThis = WTFMove(protectedThis), interceptedRequestIdentifier, policyDecisionCompletionHandler = WTFMove(policyDecisionCompletionHandler), overrideData = WTFMove(overrideData)]() mutable {
 -                if (policyDecisionCompletionHandler)
 -                    policyDecisionCompletionHandler();
-+            if (error) {
-+                m_coreLoader->didFail(*error);
-+                return;
-+            }
- 
-+            m_coreLoader->didReceiveResponse(inspectorResponse, [this, protectedThis = WTFMove(protectedThis), interceptedRequestIdentifier, overrideData = WTFMove(overrideData)]() mutable {
+-
                  if (!m_coreLoader || !m_coreLoader->identifier()) {
                      m_interceptController.continueResponse(interceptedRequestIdentifier);
                      return;
-@@ -183,6 +185,8 @@ void WebResourceLoader::didReceiveResponse(const ResourceResponse& response, boo
+@@ -183,6 +180,8 @@ void WebResourceLoader::didReceiveResponse(const ResourceResponse& response, boo
                  }
              });
          });
@@ -20898,30 +20436,6 @@ index 259449423855fed3aaaab414819f8951a3b8b7ff..c97f042082096fa88990e40ac9d23d93
          return;
      }
  
-@@ -196,6 +200,7 @@ void WebResourceLoader::didReceiveData(const IPC::DataReference& data, int64_t e
- 
-     if (UNLIKELY(m_interceptController.isIntercepting(m_coreLoader->identifier()))) {
-         auto buffer = SharedBuffer::create(data.data(), data.size());
-+        InspectorInstrumentationWebKit::interceptDidReceiveData(m_coreLoader->frame(), m_coreLoader->identifier(), buffer.get());
-         m_interceptController.defer(m_coreLoader->identifier(), [this, protectedThis = Ref { *this }, buffer = WTFMove(buffer), encodedDataLength]() mutable {
-             if (m_coreLoader)
-                 didReceiveData({ buffer->data(), buffer->size() }, encodedDataLength);
-@@ -216,6 +221,7 @@ void WebResourceLoader::didFinishResourceLoad(const NetworkLoadMetrics& networkL
-     WEBRESOURCELOADER_RELEASE_LOG("didFinishResourceLoad: (length=%zd)", m_numBytesReceived);
- 
-     if (UNLIKELY(m_interceptController.isIntercepting(m_coreLoader->identifier()))) {
-+        InspectorInstrumentationWebKit::interceptDidFinishResourceLoad(m_coreLoader->frame(), m_coreLoader->identifier());
-         m_interceptController.defer(m_coreLoader->identifier(), [this, protectedThis = Ref { *this }, networkLoadMetrics]() mutable {
-             if (m_coreLoader)
-                 didFinishResourceLoad(networkLoadMetrics);
-@@ -259,6 +265,7 @@ void WebResourceLoader::didFailResourceLoad(const ResourceError& error)
-     WEBRESOURCELOADER_RELEASE_LOG("didFailResourceLoad:");
- 
-     if (UNLIKELY(m_interceptController.isIntercepting(m_coreLoader->identifier()))) {
-+        InspectorInstrumentationWebKit::interceptDidFailResourceLoad(m_coreLoader->frame(), m_coreLoader->identifier(), error);
-         m_interceptController.defer(m_coreLoader->identifier(), [this, protectedThis = Ref { *this }, error]() mutable {
-             if (m_coreLoader)
-                 didFailResourceLoad(error);
 diff --git a/Source/WebKit/WebProcess/WebCoreSupport/WebChromeClient.cpp b/Source/WebKit/WebProcess/WebCoreSupport/WebChromeClient.cpp
 index e3796bab64ba4ee20566223d7983dca4ff0958d6..e21230056318cdbe2a26709d2e4abfcc70fa4874 100644
 --- a/Source/WebKit/WebProcess/WebCoreSupport/WebChromeClient.cpp
