@@ -42,7 +42,7 @@ export const CallTab: React.FunctionComponent<{
     <div className='call-line'>{action.metadata.apiName}</div>
     {<>
       <div className='call-section'>Time</div>
-      <div className='call-line'>wall time: <span className='datetime' title={wallTime}>{wallTime}</span></div>
+      {action.metadata.wallTime && <div className='call-line'>wall time: <span className='datetime' title={wallTime}>{wallTime}</span></div>}
       <div className='call-line'>duration: <span className='datetime' title={duration}>{duration}</span></div>
     </>}
     { !!paramKeys.length && <div className='call-section'>Parameters</div> }
