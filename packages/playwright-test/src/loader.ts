@@ -204,6 +204,14 @@ export class Loader {
         }
       }
     } catch (error) {
+      if (error.code === 'ERR_MODULE_NOT_FOUND' && error.message.includes('Did you mean to import')) {
+        const didYouMean = /Did you mean to import (.*)\?/.exec(error.message)?.[1];
+        if (didYouMean?.endsWith('.ts'))
+          throw errorWithFile(file, 'Cannot import a typescript file from an esmodule. https://github.com/microsoft/playwright/issues/9344');
+      }
+      if (error.code === 'ERR_UNKNOWN_FILE_EXTENSION' && error.message.includes('.ts'))
+        throw errorWithFile(file, 'Cannot import a typescript file from an esmodule. https://github.com/microsoft/playwright/issues/9344');
+
       if (error instanceof SyntaxError && error.message.includes('Cannot use import statement outside a module'))
         throw errorWithFile(file, 'JavaScript files must end with .mjs to use import.');
 
