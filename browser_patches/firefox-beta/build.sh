@@ -78,6 +78,7 @@ if [[ $1 != "--juggler" ]]; then
 fi
 
 if [[ $1 == "--full" || $2 == "--full" ]]; then
+  echo "ac_add_options --enable-bootstrap" >> .mozconfig
   if [[ "$(uname)" == "Darwin" || "$(uname)" == "Linux" ]]; then
     SHELL=/bin/sh ./mach --no-interactive bootstrap --application-choice=browser
   fi
