@@ -139,6 +139,7 @@ export class Generator {
     if (!gitIgnore.includes('node_modules'))
       gitIgnore += 'node_modules/\n';
     gitIgnore += 'test-results/\n';
+    gitIgnore += 'playwright-report/\n';
     fs.writeFileSync(gitIgnorePath, gitIgnore);
   }
 
