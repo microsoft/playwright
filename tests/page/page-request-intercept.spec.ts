@@ -19,7 +19,8 @@ import os from 'os';
 import type { Route } from 'playwright-core';
 import { expect, test as it } from './pageTest';
 
-it('should fulfill intercepted response', async ({ page, server }) => {
+it('should fulfill intercepted response', async ({ page, server, isElectron }) => {
+  it.fixme(isElectron, 'error: Browser context management is not supported.');
   await page.route('**/*', async route => {
     const response = await page.request.fetch(route.request());
     await route.fulfill({
@@ -54,8 +55,8 @@ it('should fulfill response with empty body', async ({ page, server, browserName
   expect(await response.text()).toBe('');
 });
 
-it('should override with defaults when intercepted response not provided', async ({ page, server, browserName, browserMajorVersion }) => {
-  it.skip(browserName === 'chromium' && browserMajorVersion <= 91, 'Fails in Electron that uses old Chromium');
+it('should override with defaults when intercepted response not provided', async ({ page, server, browserName, isElectron }) => {
+  it.fixme(isElectron, 'error: Browser context management is not supported.');
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('foo', 'bar');
     res.end('my content');
@@ -75,8 +76,8 @@ it('should override with defaults when intercepted response not provided', async
     expect(response.headers()).toEqual({ });
 });
 
-it('should fulfill with any response', async ({ page, server, browserName, browserMajorVersion, isLinux }) => {
-  it.skip(browserName === 'chromium' && browserMajorVersion <= 91, 'Fails in Electron that uses old Chromium');
+it('should fulfill with any response', async ({ page, server, isElectron }) => {
+  it.fixme(isElectron, 'error: Browser context management is not supported.');
 
   server.setRoute('/sample', (req, res) => {
     res.setHeader('foo', 'bar');
@@ -97,7 +98,8 @@ it('should fulfill with any response', async ({ page, server, browserName, brows
   expect(response.headers()['foo']).toBe('bar');
 });
 
-it('should support fulfill after intercept', async ({ page, server }) => {
+it('should support fulfill after intercept', async ({ page, server, isElectron }) => {
+  it.fixme(isElectron, 'error: Browser context management is not supported.');
   const requestPromise = server.waitForRequest('/title.html');
   await page.route('**', async route => {
     const response = await page.request.fetch(route.request());
@@ -109,7 +111,8 @@ it('should support fulfill after intercept', async ({ page, server }) => {
   expect(await response.text()).toBe('<title>Woof-Woof</title>' + os.EOL);
 });
 
-it('should give access to the intercepted response', async ({ page, server }) => {
+it('should give access to the intercepted response', async ({ page, server, isElectron }) => {
+  it.fixme(isElectron, 'error: Browser context management is not supported.');
   await page.goto(server.EMPTY_PAGE);
 
   let routeCallback;
@@ -131,7 +134,8 @@ it('should give access to the intercepted response', async ({ page, server }) =>
   await Promise.all([route.fulfill({ response }), evalPromise]);
 });
 
-it('should give access to the intercepted response body', async ({ page, server }) => {
+it('should give access to the intercepted response body', async ({ page, server, isElectron }) => {
+  it.fixme(isElectron, 'error: Browser context management is not supported.');
   await page.goto(server.EMPTY_PAGE);
 
   let routeCallback;
