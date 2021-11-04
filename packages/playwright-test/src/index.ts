@@ -224,7 +224,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
         // after the test finishes.
         const tracePath = path.join(_artifactsDir(), createGuid() + '.zip');
         temporaryTraceFiles.push(tracePath);
-        await context.tracing.stopChunk({ path: tracePath });
+        await context.tracing.stopChunk({ path: tracePath }).catch(() => { });
       }
       if (screenshot === 'on' || screenshot === 'only-on-failure') {
         // Capture screenshot for now. We'll know whether we have to preserve them
@@ -279,9 +279,9 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
     // 5. Collect artifacts from any non-closed contexts.
     await Promise.all(leftoverContexts.map(async context => {
       if (preserveTrace)
-        await context.tracing.stopChunk({ path: addTraceAttachment() });
+        await context.tracing.stopChunk({ path: addTraceAttachment() }).catch(() => { });
       else if (captureTrace)
-        await context.tracing.stopChunk();
+        await context.tracing.stopChunk().catch(() => { });
       if (captureScreenshots)
         await Promise.all(context.pages().map(page => page.screenshot({ timeout: 5000, path: addScreenshotAttachment() }).catch(() => {})));
     }));
