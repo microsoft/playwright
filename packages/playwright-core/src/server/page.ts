@@ -34,6 +34,7 @@ import { debugLogger } from '../utils/debugLogger';
 import { SelectorInfo, Selectors } from './selectors';
 import { CallMetadata, SdkObject } from './instrumentation';
 import { Artifact } from './artifact';
+import { ParsedSelector } from './common/selectorParser';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -515,7 +516,7 @@ export class Page extends SdkObject {
     this.emit(Page.Events.PageError, error);
   }
 
-  parseSelector(selector: string, options?: types.StrictOptions): SelectorInfo {
+  parseSelector(selector: string | ParsedSelector, options?: types.StrictOptions): SelectorInfo {
     const strict = typeof options?.strict === 'boolean' ? options.strict : !!this.context()._options.strictSelectors;
     return this.selectors.parseSelector(selector, strict);
   }
