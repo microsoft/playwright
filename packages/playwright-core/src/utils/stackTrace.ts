@@ -72,7 +72,12 @@ export function captureStackTrace(): ParsedStackTrace {
       return null;
     if (frame.file.startsWith(WS_LIB))
       return null;
-    const fileName = path.resolve(process.cwd(), frame.file);
+    // Workaround for https://github.com/tapjs/stack-utils/issues/60
+    let fileName: string;
+    if (frame.file.startsWith('file://'))
+      fileName = new URL(frame.file).pathname;
+    else
+      fileName = path.resolve(process.cwd(), frame.file);
     if (isTesting && fileName.includes(path.join('playwright', 'tests', 'config', 'coverage.js')))
       return null;
     const inClient = fileName.startsWith(CLIENT_LIB) || fileName.startsWith(CLIENT_SRC);
