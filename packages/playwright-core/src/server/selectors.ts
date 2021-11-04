@@ -67,8 +67,7 @@ export class Selectors {
     this._engines.clear();
   }
 
-  async query(frame: frames.Frame, selector: string | SelectorInfo, options: { strict?: boolean }, scope?: dom.ElementHandle): Promise<dom.ElementHandle<Element> | null> {
-    const info = typeof selector === 'string' ? frame._page.parseSelector(selector, options) : selector;
+  async query(frame: frames.Frame, info: SelectorInfo, scope?: dom.ElementHandle): Promise<dom.ElementHandle<Element> | null> {
     const context = await frame._context(info.world);
     const injectedScript = await context.injectedScript();
     const handle = await injectedScript.evaluateHandle((injected, { parsed, scope, strict }) => {
@@ -83,8 +82,7 @@ export class Selectors {
     return this._adoptIfNeeded(elementHandle, mainContext);
   }
 
-  async _queryArray(frame: frames.Frame, selector: string | SelectorInfo, scope?: dom.ElementHandle): Promise<js.JSHandle<Element[]>> {
-    const info = typeof selector === 'string' ? this.parseSelector(selector, false) : selector;
+  async _queryArray(frame: frames.Frame, info: SelectorInfo, scope?: dom.ElementHandle): Promise<js.JSHandle<Element[]>> {
     const context = await frame._mainContext();
     const injectedScript = await context.injectedScript();
     const arrayHandle = await injectedScript.evaluateHandle((injected, { parsed, scope }) => {
@@ -93,7 +91,7 @@ export class Selectors {
     return arrayHandle;
   }
 
-  async _queryAll(frame: frames.Frame, selector: string | SelectorInfo, scope?: dom.ElementHandle, adoptToMain?: boolean): Promise<dom.ElementHandle<Element>[]> {
+  async _queryAll(frame: frames.Frame, selector: SelectorInfo, scope?: dom.ElementHandle, adoptToMain?: boolean): Promise<dom.ElementHandle<Element>[]> {
     const info = typeof selector === 'string' ? frame._page.parseSelector(selector) : selector;
     const context = await frame._context(info.world);
     const injectedScript = await context.injectedScript();
