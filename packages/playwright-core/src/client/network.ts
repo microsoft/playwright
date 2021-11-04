@@ -230,7 +230,8 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
 
   async abort(errorCode?: string) {
     return this._wrapApiCall(async (channel: channels.RouteChannel) => {
-      await channel.abort({ errorCode });
+      // Route often happens concurrently to page close, so we catch.
+      await channel.abort({ errorCode }).catch(() => {});
     });
   }
 
@@ -277,7 +278,7 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
         body,
         isBase64,
         fetchResponseUid
-      });
+      }).catch(() => {}); // Route often happens concurrently to page close, so we catch.
     });
   }
 
@@ -286,7 +287,7 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
   }
 
   async _internalContinue(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer } = {}) {
-    await this._continue(options, true).catch(() => {});
+    await this._continue(options, true);
   }
 
   private async _continue(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer }, isInternal?: boolean) {
@@ -297,7 +298,7 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
         method: options.method,
         headers: options.headers ? headersObjectToArray(options.headers) : undefined,
         postData: postDataBuffer ? postDataBuffer.toString('base64') : undefined,
-      });
+      }).catch(() => {}); // Route often happens concurrently to page close, so we catch.
     }, undefined, isInternal);
   }
 }

@@ -62,19 +62,38 @@ it('should override request url', async ({ page, server }) => {
   expect((await request).method).toBe('GET');
 });
 
-it('should not allow changing protocol when overriding url', async ({ page, server }) => {
-  let error: Error | undefined;
+it('should allow changing protocol when overriding url and respond with error', async ({ page, server, browserName }) => {
+  it.skip(browserName === 'firefox', 'Firefox hangs on file url');
+
   await page.route('**/*', async route => {
-    try {
-      await route.continue({ url: 'file:///tmp/foo' });
-    } catch (e) {
-      error = e;
-      await route.continue();
-    }
+    await route.continue({ url: 'file:///tmp/foo' });
   });
-  await page.goto(server.EMPTY_PAGE);
-  expect(error).toBeTruthy();
-  expect(error.message).toContain('New URL must have same protocol as overridden URL');
+  const error = await page.goto(server.EMPTY_PAGE).catch(e => e);
+  expect(error).toBeInstanceOf(Error);
+});
+
+it('should not throw when continuing while page is closing', async ({ page, server }) => {
+  let done;
+  await page.route('**/*', async route => {
+    done = Promise.all([
+      route.continue(),
+      page.close(),
+    ]);
+  });
+  const error = await page.goto(server.EMPTY_PAGE).catch(e => e);
+  await done;
+  expect(error).toBeInstanceOf(Error);
+});
+
+it('should not throw when continuing after page is closed', async ({ page, server }) => {
+  let done;
+  await page.route('**/*', async route => {
+    await page.close();
+    done = route.continue();
+  });
+  const error = await page.goto(server.EMPTY_PAGE).catch(e => e);
+  await done;
+  expect(error).toBeInstanceOf(Error);
 });
 
 it('should override method along with url', async ({ page, server }) => {
