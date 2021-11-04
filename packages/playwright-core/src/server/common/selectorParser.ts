@@ -55,7 +55,37 @@ export function parseSelector(selector: string): ParsedSelector {
   };
 }
 
-export function stringifySelector(selector: ParsedSelector): string {
+export function splitSelectorByFrame(selectorText: string): ParsedSelector[] {
+  const selector = parseSelector(selectorText);
+  const result: ParsedSelector[] = [];
+  let chunk: ParsedSelector = {
+    parts: [],
+  };
+  let chunkStartIndex = 0;
+  for (let i = 0; i < selector.parts.length; ++i) {
+    const part = selector.parts[i];
+    if (part.name === 'content-frame') {
+      result.push(chunk);
+      chunk = { parts: [] };
+      chunkStartIndex = i + 1;
+      continue;
+    }
+    if (selector.capture === i)
+      chunk.capture = i - chunkStartIndex;
+    chunk.parts.push(part);
+  }
+  if (!chunk.parts.length)
+    throw new Error(`Selector cannot end with "content-frame", while parsing selector ${selectorText}`);
+  result.push(chunk);
+  if (typeof selector.capture === 'number' && typeof result[result.length - 1].capture !== 'number')
+    throw new Error(`Can not capture the selector before diving into the frame. Only use * after the last "content-frame"`);
+  return result;
+}
+
+
+export function stringifySelector(selector: string | ParsedSelector): string {
+  if (typeof selector === 'string')
+    return selector;
   return selector.parts.map((p, i) => `${i === selector.capture ? '*' : ''}${p.name}=${p.source}`).join(' >> ');
 }
 

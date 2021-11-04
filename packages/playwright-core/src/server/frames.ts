@@ -33,6 +33,8 @@ import { CallMetadata, internalCallMetadata, SdkObject } from './instrumentation
 import type InjectedScript from './injected/injectedScript';
 import type { ElementStateWithoutStable, FrameExpectParams, InjectedScriptPoll, InjectedScriptProgress } from './injected/injectedScript';
 import { isSessionClosedError } from './common/protocolError';
+import { splitSelectorByFrame, stringifySelector } from './common/selectorParser';
+import { SelectorInfo } from './selectors';
 
 type ContextData = {
   contextPromise: ManualPromise<dom.FrameExecutionContext | Error>;
@@ -704,9 +706,15 @@ export class Frame extends SdkObject {
     return value;
   }
 
-  async querySelector(selector: string, options: types.StrictOptions): Promise<dom.ElementHandle<Element> | null> {
+  async querySelector(metadata: CallMetadata, selector: string, options: types.StrictOptions): Promise<dom.ElementHandle<Element> | null> {
     debugLogger.log('api', `    finding element using the selector "${selector}"`);
-    return this._page.selectors.query(this, selector, options);
+    const controller = new ProgressController(metadata, this);
+    return controller.run(progress => this._innerQuerySelector(progress, selector, options));
+  }
+
+  private async _innerQuerySelector(progress: Progress, selector: string, options: types.StrictOptions): Promise<dom.ElementHandle<Element> | null> {
+    const { frame, info } = await this._resolveFrame(progress, selector, options);
+    return this._page.selectors.query(frame, info, options);
   }
 
   async waitForSelector(metadata: CallMetadata, selector: string, options: types.WaitForElementOptions & { omitReturnValue?: boolean } = {}): Promise<dom.ElementHandle<Element> | null> {
@@ -718,12 +726,12 @@ export class Frame extends SdkObject {
     const { state = 'visible' } = options;
     if (!['attached', 'detached', 'visible', 'hidden'].includes(state))
       throw new Error(`state: expected one of (attached|detached|visible|hidden)`);
-    const info = this._page.parseSelector(selector, options);
-    const task = dom.waitForSelectorTask(info, state, options.omitReturnValue);
     return controller.run(async progress => {
       progress.log(`waiting for selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);
       while (progress.isRunning()) {
-        const result = await this._scheduleRerunnableHandleTask(progress, info.world, task);
+        const { frame, info } = await this._resolveFrame(progress, selector, options);
+        const task = dom.waitForSelectorTask(info, state, options.omitReturnValue);
+        const result = await frame._scheduleRerunnableHandleTask(progress, info.world, task);
         if (!result.asElement()) {
           result.dispose();
           return null;
@@ -752,24 +760,35 @@ export class Frame extends SdkObject {
     await this._page._doSlowMo();
   }
 
-  async evalOnSelectorAndWaitForSignals(selector: string, strict: boolean, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
-    const handle = await this.querySelector(selector, { strict });
-    if (!handle)
-      throw new Error(`Error: failed to find element matching selector "${selector}"`);
-    const result = await handle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
-    handle.dispose();
-    return result;
+  async evalOnSelectorAndWaitForSignals(metadata: CallMetadata, selector: string, strict: boolean, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
+    const controller = new ProgressController(metadata, this);
+    return controller.run(async progress => {
+      const handle = await this._innerQuerySelector(progress, selector, { strict });
+      if (!handle)
+        throw new Error(`Error: failed to find element matching selector "${selector}"`);
+      const result = await handle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
+      handle.dispose();
+      return result;
+    });
   }
 
-  async evalOnSelectorAllAndWaitForSignals(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
-    const arrayHandle = await this._page.selectors._queryArray(this, selector);
-    const result = await arrayHandle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
-    arrayHandle.dispose();
-    return result;
+  async evalOnSelectorAllAndWaitForSignals(metadata: CallMetadata, selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
+    const controller = new ProgressController(metadata, this);
+    return controller.run(async progress => {
+      const { frame, info } = await this._resolveFrame(progress, selector, {});
+      const arrayHandle = await this._page.selectors._queryArray(frame, info);
+      const result = await arrayHandle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
+      arrayHandle.dispose();
+      return result;
+    });
   }
 
-  async querySelectorAll(selector: string): Promise<dom.ElementHandle<Element>[]> {
-    return this._page.selectors._queryAll(this, selector, undefined, true /* adoptToMain */);
+  async querySelectorAll(metadata: CallMetadata, selector: string): Promise<dom.ElementHandle<Element>[]> {
+    const controller = new ProgressController(metadata, this);
+    return controller.run(async progress => {
+      const { frame, info } = await this._resolveFrame(progress, selector, {});
+      return this._page.selectors._queryAll(frame, info, undefined, true /* adoptToMain */);
+    });
   }
 
   async content(): Promise<string> {
@@ -954,11 +973,11 @@ export class Frame extends SdkObject {
     selector: string,
     strict: boolean | undefined,
     action: (handle: dom.ElementHandle<Element>) => Promise<R | 'error:notconnected'>): Promise<R> {
-    const info = this._page.parseSelector(selector, { strict });
     while (progress.isRunning()) {
       progress.log(`waiting for selector "${selector}"`);
+      const { frame, info } = await this._resolveFrame(progress, selector, { strict });
       const task = dom.waitForSelectorTask(info, 'attached');
-      const handle = await this._scheduleRerunnableHandleTask(progress, info.world, task);
+      const handle = await frame._scheduleRerunnableHandleTask(progress, info.world, task);
       const element = handle.asElement() as dom.ElementHandle<Element>;
       progress.cleanupWhenAborted(() => {
         // Do not await here to avoid being blocked, either by stalled
@@ -1078,7 +1097,7 @@ export class Frame extends SdkObject {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       progress.log(`  checking visibility of "${selector}"`);
-      const element = await this.querySelector(selector, options);
+      const element = await this._innerQuerySelector(progress, selector, options);
       return element ? await element.isVisible() : false;
     }, this._page._timeoutSettings.timeout({}));
   }
@@ -1276,12 +1295,35 @@ export class Frame extends SdkObject {
     taskData: T,
     options: types.TimeoutOptions & types.StrictOptions & { mainWorld?: boolean, querySelectorAll?: boolean, logScale?: boolean, omitAttached?: boolean } = {}): Promise<R> {
 
-    const info = this._page.parseSelector(selector, options);
     const callbackText = body.toString();
-    const data = this._contextData.get(options.mainWorld ? 'main' : info.world)!;
 
     return controller.run(async progress => {
-      progress.log(`waiting for selector "${selector}"`);
+      while (progress.isRunning()) {
+        progress.log(`waiting for selector "${selector}"`);
+        const { frame, info } = await this._resolveFrame(progress, selector, options);
+        try {
+          return await frame._scheduleRerunnableTaskInFrame(progress, info, callbackText, taskData, options);
+        } catch (e) {
+          if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e))
+            throw e;
+          continue;
+        }
+      }
+      return undefined as any;
+    }, this._page._timeoutSettings.timeout(options));
+  }
+
+  private async _scheduleRerunnableTaskInFrame<T, R>(
+    progress: Progress,
+    info: SelectorInfo,
+    callbackText: string,
+    taskData: T,
+    options: types.TimeoutOptions & types.StrictOptions & { mainWorld?: boolean, querySelectorAll?: boolean, logScale?: boolean, omitAttached?: boolean }): Promise<R> {
+    if (!progress.isRunning())
+      progress.throwIfAborted();
+    const data = this._contextData.get(options.mainWorld ? 'main' : info!.world)!;
+
+    {
       const rerunnableTask = new RerunnableTask<R>(data, progress, injectedScript => {
         return injectedScript.evaluateHandle((injected, { info, taskData, callbackText, querySelectorAll, logScale, omitAttached, snapshotName }) => {
           const callback = injected.eval(callbackText) as DomTaskBody<T, R, Element | undefined>;
@@ -1321,13 +1363,12 @@ export class Frame extends SdkObject {
           });
         }, { info, taskData, callbackText, querySelectorAll: options.querySelectorAll, logScale: options.logScale, omitAttached: options.omitAttached, snapshotName: progress.metadata.afterSnapshot });
       }, true);
-
       if (this._detached)
         rerunnableTask.terminate(new Error('Frame got detached.'));
       if (data.context)
         rerunnableTask.rerun(data.context);
       return await rerunnableTask.promise!;
-    }, this._page._timeoutSettings.timeout(options));
+    }
   }
 
   private _scheduleRerunnableHandleTask<T>(progress: Progress, world: types.World, task: dom.SchedulableTask<T>): Promise<js.SmartHandle<T>> {
@@ -1398,6 +1439,33 @@ export class Frame extends SdkObject {
     return injectedScriptHandle.evaluateHandle((injectedScript, { source, arg }) => {
       return injectedScript.extend(source, arg);
     }, { source, arg });
+  }
+
+  private async _resolveFrame(progress: Progress, selector: string, options: types.StrictOptions & types.TimeoutOptions): Promise<{ frame: Frame, info: SelectorInfo }> {
+    const elementPath: dom.ElementHandle<Element>[] = [];
+    progress.cleanupWhenAborted(() => {
+      // Do not await here to avoid being blocked, either by stalled
+      // page (e.g. alert) or unresolved navigation in Chromium.
+      for (const element of elementPath)
+        element.dispose();
+    });
+
+    let frame: Frame = this;
+    const frameChunks = splitSelectorByFrame(selector);
+
+    for (let i = 0; i < frameChunks.length - 1 && progress.isRunning(); ++i) {
+      const info = this._page.parseSelector(frameChunks[i], options);
+      const task = dom.waitForSelectorTask(info, 'attached');
+      const handle = await frame._scheduleRerunnableHandleTask(progress, info.world, task);
+      const element = handle.asElement() as dom.ElementHandle<Element>;
+      if (i < frameChunks.length - 1) {
+        frame = (await element.contentFrame())!;
+        element.dispose();
+        if (!frame)
+          throw new Error(`Selector "${stringifySelector(info.parsed)}" resolved to ${element.preview()}, <iframe> was expected`);
+      }
+    }
+    return { frame, info: this._page.parseSelector(frameChunks[frameChunks.length - 1], options) };
   }
 }
 
@@ -1509,3 +1577,4 @@ function verifyLifecycle(name: string, waitUntil: types.LifecycleEvent): types.L
     throw new Error(`${name}: expected one of (load|domcontentloaded|networkidle|commit)`);
   return waitUntil;
 }
+

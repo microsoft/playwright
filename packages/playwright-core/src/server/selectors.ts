@@ -18,7 +18,7 @@ import * as dom from './dom';
 import * as frames from './frames';
 import * as js from './javascript';
 import * as types from './types';
-import { ParsedSelector, parseSelector } from './common/selectorParser';
+import { ParsedSelector, parseSelector, stringifySelector } from './common/selectorParser';
 import { createGuid } from '../utils/utils';
 
 export type SelectorInfo = {
@@ -44,7 +44,7 @@ export class Selectors {
       'data-testid', 'data-testid:light',
       'data-test-id', 'data-test-id:light',
       'data-test', 'data-test:light',
-      'nth', 'visible'
+      'nth', 'visible', 'content-frame'
     ]);
     this._builtinEnginesInMainWorld = new Set([
       '_react', '_vue',
@@ -67,8 +67,8 @@ export class Selectors {
     this._engines.clear();
   }
 
-  async query(frame: frames.Frame, selector: string, options: { strict?: boolean }, scope?: dom.ElementHandle): Promise<dom.ElementHandle<Element> | null> {
-    const info = frame._page.parseSelector(selector, options);
+  async query(frame: frames.Frame, selector: string | SelectorInfo, options: { strict?: boolean }, scope?: dom.ElementHandle): Promise<dom.ElementHandle<Element> | null> {
+    const info = typeof selector === 'string' ? frame._page.parseSelector(selector, options) : selector;
     const context = await frame._context(info.world);
     const injectedScript = await context.injectedScript();
     const handle = await injectedScript.evaluateHandle((injected, { parsed, scope, strict }) => {
@@ -83,8 +83,8 @@ export class Selectors {
     return this._adoptIfNeeded(elementHandle, mainContext);
   }
 
-  async _queryArray(frame: frames.Frame, selector: string, scope?: dom.ElementHandle): Promise<js.JSHandle<Element[]>> {
-    const info = this.parseSelector(selector, false);
+  async _queryArray(frame: frames.Frame, selector: string | SelectorInfo, scope?: dom.ElementHandle): Promise<js.JSHandle<Element[]>> {
+    const info = typeof selector === 'string' ? this.parseSelector(selector, false) : selector;
     const context = await frame._mainContext();
     const injectedScript = await context.injectedScript();
     const arrayHandle = await injectedScript.evaluateHandle((injected, { parsed, scope }) => {
@@ -93,8 +93,8 @@ export class Selectors {
     return arrayHandle;
   }
 
-  async _queryAll(frame: frames.Frame, selector: string, scope?: dom.ElementHandle, adoptToMain?: boolean): Promise<dom.ElementHandle<Element>[]> {
-    const info = this.parseSelector(selector, false);
+  async _queryAll(frame: frames.Frame, selector: string | SelectorInfo, scope?: dom.ElementHandle, adoptToMain?: boolean): Promise<dom.ElementHandle<Element>[]> {
+    const info = typeof selector === 'string' ? frame._page.parseSelector(selector) : selector;
     const context = await frame._context(info.world);
     const injectedScript = await context.injectedScript();
     const arrayHandle = await injectedScript.evaluateHandle((injected, { parsed, scope }) => {
@@ -126,13 +126,13 @@ export class Selectors {
     return adopted;
   }
 
-  parseSelector(selector: string, strict: boolean): SelectorInfo {
-    const parsed = parseSelector(selector);
+  parseSelector(selector: string | ParsedSelector, strict: boolean): SelectorInfo {
+    const parsed = typeof selector === 'string' ? parseSelector(selector) : selector;
     let needsMainWorld = false;
     for (const part of parsed.parts) {
       const custom = this._engines.get(part.name);
       if (!custom && !this._builtinEngines.has(part.name))
-        throw new Error(`Unknown engine "${part.name}" while parsing selector ${selector}`);
+        throw new Error(`Unknown engine "${part.name}" while parsing selector ${stringifySelector(parsed)}`);
       if (custom && !custom.contentScript)
         needsMainWorld = true;
       if (this._builtinEnginesInMainWorld.has(part.name))
