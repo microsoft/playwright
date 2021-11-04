@@ -105,10 +105,10 @@ it('should intercept network activity from worker', async function({ page, serve
   expect(msg.text()).toBe('intercepted');
 });
 
-it('should intercept network activity from worker 2', async function({ page, server, isElectron, isAndroid, isChromium }) {
+it('should intercept network activity from worker 2', async function({ page, server, isElectron, isAndroid, browserName }) {
   it.skip(isAndroid);
   it.fixme(isElectron);
-  it.fail(isChromium, '@see https://github.com/microsoft/playwright/issues/10048');
+  it.fixme(browserName === 'chromium', '@see https://github.com/microsoft/playwright/issues/10048');
 
   const url = server.PREFIX + '/worker/worker.js';
   await page.route(url, route => {
