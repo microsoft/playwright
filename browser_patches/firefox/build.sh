@@ -2,12 +2,8 @@
 set -e
 set +x
 
-RUST_VERSION="1.51.0"
+RUST_VERSION="1.53.0"
 CBINDGEN_VERSION="0.19.0"
-# Certain minimal SDK Version is required by firefox
-MACOS_SDK_VERSION="10.12"
-# XCode version can be determined from https://en.wikipedia.org/wiki/Xcode
-XCODE_VERSION_WITH_REQUIRED_SDK_VERSION="8.3.3"
 
 trap "cd $(pwd -P)" EXIT
 
