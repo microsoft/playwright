@@ -805,6 +805,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
           // Navigated while trying to adopt the node.
           if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e))
             throw e;
+          // If error happened in detached inner frame, ignore it.
+          if (frame !== this._frame && frame.isDetached())
+            continue;
+          throw e;
         }
       }
       return null;

@@ -65,6 +65,8 @@ export function splitSelectorByFrame(selectorText: string): ParsedSelector[] {
   for (let i = 0; i < selector.parts.length; ++i) {
     const part = selector.parts[i];
     if (part.name === 'content-frame') {
+      if (!chunk.parts.length)
+        throw new Error('Selector cannot start with "content-frame", select the iframe first');
       result.push(chunk);
       chunk = { parts: [] };
       chunkStartIndex = i + 1;

@@ -458,6 +458,10 @@ export class Frame extends SdkObject {
     this._subtreeLifecycleEvents.add('commit');
   }
 
+  isDetached(): boolean {
+    return this._detached;
+  }
+
   _onLifecycleEvent(event: types.LifecycleEvent) {
     if (this._firedLifecycleEvents.has(event))
       return;
@@ -729,24 +733,32 @@ export class Frame extends SdkObject {
     return controller.run(async progress => {
       progress.log(`waiting for selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);
       while (progress.isRunning()) {
+        let result: js.JSHandle | undefined;
         const { frame, info } = await this.resolveFrameForSelector(progress, selector, options);
         const task = dom.waitForSelectorTask(info, state, options.omitReturnValue);
-        const result = await frame._scheduleRerunnableHandleTask(progress, info.world, task);
-        if (!result.asElement()) {
-          result.dispose();
-          return null;
-        }
-        if ((options as any).__testHookBeforeAdoptNode)
-          await (options as any).__testHookBeforeAdoptNode();
         try {
+          result = await frame._scheduleRerunnableHandleTask(progress, info.world, task);
+          if (!result.asElement()) {
+            result.dispose();
+            return null;
+          }
+          if ((options as any).__testHookBeforeAdoptNode)
+            await (options as any).__testHookBeforeAdoptNode();
           const handle = result.asElement() as dom.ElementHandle<Element>;
-          const adopted = await handle._adoptTo(await frame._mainContext());
-          return adopted;
+          try {
+           return await handle._adoptTo(await frame._mainContext());
+          } catch (e) {
+            continue;
+          }
         } catch (e) {
-          // Navigated while trying to adopt the node.
           if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e))
             throw e;
-          result.dispose();
+          // If error happened in detached inner frame, ignore it.
+          if (frame !== this && frame.isDetached())
+            continue;
+          throw e;
+        } finally {
+          result?.dispose();
         }
       }
       return null;
@@ -977,20 +989,31 @@ export class Frame extends SdkObject {
       progress.log(`waiting for selector "${selector}"`);
       const { frame, info } = await this.resolveFrameForSelector(progress, selector, { strict });
       const task = dom.waitForSelectorTask(info, 'attached');
-      const handle = await frame._scheduleRerunnableHandleTask(progress, info.world, task);
-      const element = handle.asElement() as dom.ElementHandle<Element>;
-      progress.cleanupWhenAborted(() => {
-        // Do not await here to avoid being blocked, either by stalled
-        // page (e.g. alert) or unresolved navigation in Chromium.
-        element.dispose();
-      });
-      const result = await action(element);
-      element.dispose();
-      if (result === 'error:notconnected') {
-        progress.log('element was detached from the DOM, retrying');
-        continue;
+      let element: dom.ElementHandle<Element> | undefined;
+      try {
+        const handle = await frame._scheduleRerunnableHandleTask(progress, info.world, task);
+        element = handle.asElement() as dom.ElementHandle<Element>;
+        progress.cleanupWhenAborted(() => {
+          // Do not await here to avoid being blocked, either by stalled
+          // page (e.g. alert) or unresolved navigation in Chromium.
+          element?.dispose();
+        });
+        const result = await action(element);
+        if (result === 'error:notconnected') {
+          progress.log('element was detached from the DOM, retrying');
+          continue;
+        }
+        return result;
+      } catch (e) {
+        if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e))
+          throw e;
+        // If error happened in detached inner frame, ignore it.
+        if (frame !== this && frame.isDetached())
+          continue;
+        throw e;
+      } finally {
+        element?.dispose();
       }
-      return result;
     }
     return undefined as any;
   }
@@ -1214,10 +1237,10 @@ export class Frame extends SdkObject {
       // Reached the expected state!
       return result;
     }, { ...options, isArray }, { strict: true, querySelectorAll: isArray, mainWorld, omitAttached: true, logScale: true, ...options }).catch(e => {
-      if (js.isJavaScriptErrorInEvaluate(e))
-        throw e;
       // Q: Why not throw upon isSessionClosedError(e) as in other places?
       // A: We want user to receive a friendly message containing the last intermediate result.
+      if (js.isJavaScriptErrorInEvaluate(e))
+        throw e;
       return { received: controller.lastIntermediateResult(), matches: options.isNot, log: metadata.log };
     });
   }
@@ -1306,7 +1329,10 @@ export class Frame extends SdkObject {
         } catch (e) {
           if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e))
             throw e;
-          continue;
+          // If error happened in detached inner frame, ignore it.
+          if (frame !== this && frame.isDetached())
+            continue;
+          throw e;
         }
       }
       return undefined as any;
@@ -1321,7 +1347,7 @@ export class Frame extends SdkObject {
     options: types.TimeoutOptions & types.StrictOptions & { mainWorld?: boolean, querySelectorAll?: boolean, logScale?: boolean, omitAttached?: boolean }): Promise<R> {
     progress.throwIfAborted();
     const data = this._contextData.get(options.mainWorld ? 'main' : info!.world)!;
-
+    // This potentially runs in a sub-frame.
     {
       const rerunnableTask = new RerunnableTask<R>(data, progress, injectedScript => {
         return injectedScript.evaluateHandle((injected, { info, taskData, callbackText, querySelectorAll, logScale, omitAttached, snapshotName }) => {
@@ -1517,6 +1543,10 @@ class RerunnableTask<T> {
         this._contextData.rerunnableTasks.delete(this);
         this._reject(e);
       }
+
+      // Unlike other places, we don't check frame for being detached since the whole scope of this
+      // evaluation is within the frame's execution context. So we only let JavaScript errors and
+      // session termination errors go through.
 
       // We will try again in the new execution context.
     }
