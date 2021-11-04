@@ -1,5 +1,5 @@
 # class: APIRequestContext
-* langs: js, python
+* langs: js, java, python
 
 This API is used for the Web API testing. You can use it to trigger API endpoints, configure micro-services, prepare
 environment or the service to your e2e test. When used on [Page] or a [BrowserContext], this API will automatically use
@@ -18,7 +18,8 @@ context cookies from the response. The method will automatically follow redirect
 ### option: APIRequestContext.delete.headers = %%-fetch-option-headers-%%
 ### option: APIRequestContext.delete.data = %%-fetch-option-data-%%
 ### option: APIRequestContext.delete.form = %%-fetch-option-form-%%
-### option: APIRequestContext.delete.multipart = %%-fetch-option-multipart-%%
+### option: APIRequestContext.delete.multipart = %%-js-pyhton-fetch-option-multipart-%%
+### option: APIRequestContext.delete.multipart = %%-java-fetch-option-multipart-%%
 ### option: APIRequestContext.delete.timeout = %%-fetch-option-timeout-%%
 ### option: APIRequestContext.delete.failOnStatusCode = %%-fetch-option-failonstatuscode-%%
 ### option: APIRequestContext.delete.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
@@ -50,7 +51,8 @@ If set changes the fetch method (e.g. [PUT](https://developer.mozilla.org/en-US/
 ### option: APIRequestContext.fetch.headers = %%-fetch-option-headers-%%
 ### option: APIRequestContext.fetch.data = %%-fetch-option-data-%%
 ### option: APIRequestContext.fetch.form = %%-fetch-option-form-%%
-### option: APIRequestContext.fetch.multipart = %%-fetch-option-multipart-%%
+### option: APIRequestContext.fetch.multipart = %%-js-pyhton-fetch-option-multipart-%%
+### option: APIRequestContext.fetch.multipart = %%-java-fetch-option-multipart-%%
 ### option: APIRequestContext.fetch.timeout = %%-fetch-option-timeout-%%
 ### option: APIRequestContext.fetch.failOnStatusCode = %%-fetch-option-failonstatuscode-%%
 ### option: APIRequestContext.fetch.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
@@ -95,7 +97,8 @@ context cookies from the response. The method will automatically follow redirect
 ### option: APIRequestContext.patch.headers = %%-fetch-option-headers-%%
 ### option: APIRequestContext.patch.data = %%-fetch-option-data-%%
 ### option: APIRequestContext.patch.form = %%-fetch-option-form-%%
-### option: APIRequestContext.patch.multipart = %%-fetch-option-multipart-%%
+### option: APIRequestContext.patch.multipart = %%-js-pyhton-fetch-option-multipart-%%
+### option: APIRequestContext.patch.multipart = %%-java-fetch-option-multipart-%%
 ### option: APIRequestContext.patch.timeout = %%-fetch-option-timeout-%%
 ### option: APIRequestContext.patch.failOnStatusCode = %%-fetch-option-failonstatuscode-%%
 ### option: APIRequestContext.patch.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
@@ -112,7 +115,8 @@ context cookies from the response. The method will automatically follow redirect
 ### option: APIRequestContext.post.headers = %%-fetch-option-headers-%%
 ### option: APIRequestContext.post.data = %%-fetch-option-data-%%
 ### option: APIRequestContext.post.form = %%-fetch-option-form-%%
-### option: APIRequestContext.post.multipart = %%-fetch-option-multipart-%%
+### option: APIRequestContext.post.multipart = %%-js-pyhton-fetch-option-multipart-%%
+### option: APIRequestContext.post.multipart = %%-java-fetch-option-multipart-%%
 ### option: APIRequestContext.post.timeout = %%-fetch-option-timeout-%%
 ### option: APIRequestContext.post.failOnStatusCode = %%-fetch-option-failonstatuscode-%%
 ### option: APIRequestContext.post.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
@@ -129,7 +133,8 @@ context cookies from the response. The method will automatically follow redirect
 ### option: APIRequestContext.put.headers = %%-fetch-option-headers-%%
 ### option: APIRequestContext.put.data = %%-fetch-option-data-%%
 ### option: APIRequestContext.put.form = %%-fetch-option-form-%%
-### option: APIRequestContext.put.multipart = %%-fetch-option-multipart-%%
+### option: APIRequestContext.put.multipart = %%-js-pyhton-fetch-option-multipart-%%
+### option: APIRequestContext.put.multipart = %%-java-fetch-option-multipart-%%
 ### option: APIRequestContext.put.timeout = %%-fetch-option-timeout-%%
 ### option: APIRequestContext.put.failOnStatusCode = %%-fetch-option-failonstatuscode-%%
 ### option: APIRequestContext.put.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
@@ -152,5 +157,9 @@ context cookies from the response. The method will automatically follow redirect
       - `value` <[string]>
 
 Returns storage state for this request context, contains current cookies and local storage snapshot if it was passed to the constructor.
+
+## async method: APIRequestContext.storageState
+* langs: java
+- returns: <[string]>
 
 ### option: APIRequestContext.storageState.path = %%-storagestate-option-path-%%
