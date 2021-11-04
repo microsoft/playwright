@@ -41,6 +41,7 @@ export async function showTraceViewer(traceUrl: string, browserName: string, hea
     return server.serveFile(response, absolutePath);
   });
 
+  process.on('exit', () => server.stop().catch(() => { }));
   const urlPrefix = await server.start(port);
 
   const traceViewerPlaywright = createPlaywright('javascript', true);

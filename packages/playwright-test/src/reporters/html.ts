@@ -171,6 +171,7 @@ export async function showHTMLReport(reportFolder: string | undefined, testId?: 
     return;
   }
   const server = startHtmlReportServer(folder);
+  process.on('exit', () => server.stop().catch(() => { }));
   let url = await server.start(9323);
   console.log('');
   console.log(colors.cyan(`  Serving HTML report at ${url}. Press Ctrl+C to quit.`));
