@@ -440,3 +440,13 @@ playwrightTest('should use proxy with connectOverCDP', async ({ browserType, ser
     await browserServer.close();
   }
 });
+
+playwrightTest('should pass args with spaces', async ({ browserType, createUserDataDir }, testInfo) => {
+  const browser = await browserType.launchPersistentContext(await createUserDataDir(), {
+    args: ['--user-agent=I am Foo']
+  });
+  const page = await browser.newPage();
+  const userAgent = await page.evaluate(() => navigator.userAgent);
+  await browser.close();
+  expect(userAgent).toBe('I am Foo');
+});
