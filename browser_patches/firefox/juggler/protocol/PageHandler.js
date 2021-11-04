@@ -259,8 +259,8 @@ class PageHandler {
       this._pageNetwork.disableRequestInterception();
   }
 
-  async ['Network.resumeInterceptedRequest']({requestId, url, method, headers, postData, interceptResponse}) {
-    return await this._pageNetwork.resumeInterceptedRequest(requestId, url, method, headers, postData, interceptResponse);
+  async ['Network.resumeInterceptedRequest']({requestId, url, method, headers, postData}) {
+    this._pageNetwork.resumeInterceptedRequest(requestId, url, method, headers, postData);
   }
 
   async ['Network.abortInterceptedRequest']({requestId, errorCode}) {
