@@ -46,7 +46,7 @@ async function routeIframe(page: Page) {
   });
 }
 
-it('should work in iframe', async ({ page, server }) => {
+it('should work for iframe', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
   const button = page.locator('iframe >> content-frame=true >> button');
@@ -56,13 +56,33 @@ it('should work in iframe', async ({ page, server }) => {
   await button.click();
 });
 
-it('should work in nested iframe', async ({ page, server }) => {
+it('should work for iframe (handle)', async ({ page, server }) => {
+  await routeIframe(page);
+  await page.goto(server.EMPTY_PAGE);
+  const body = await page.$('body');
+  const button = await body.waitForSelector('iframe >> content-frame=true >> button');
+  expect(await button.innerText()).toBe('Hello iframe');
+  expect(await button.textContent()).toBe('Hello iframe');
+  await button.click();
+});
+
+it('should work for nested iframe', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
   const button = page.locator('iframe >> content-frame=true >> iframe >> content-frame=true >> button');
   await button.waitFor();
   expect(await button.innerText()).toBe('Hello nested iframe');
   await expect(button).toHaveText('Hello nested iframe');
+  await button.click();
+});
+
+it('should work for nested iframe (handle)', async ({ page, server }) => {
+  await routeIframe(page);
+  await page.goto(server.EMPTY_PAGE);
+  const body = await page.$('body');
+  const button = await body.waitForSelector('iframe >> content-frame=true >> iframe >> content-frame=true >> button');
+  expect(await button.innerText()).toBe('Hello nested iframe');
+  expect(await button.textContent()).toBe('Hello nested iframe');
   await button.click();
 });
 
@@ -75,10 +95,28 @@ it('should work for $ and $$', async ({ page, server }) => {
   expect(elements).toHaveLength(2);
 });
 
+it('should work for $ and $$ (handle)', async ({ page, server }) => {
+  await routeIframe(page);
+  await page.goto(server.EMPTY_PAGE);
+  const body = await page.$('body');
+  const element = await body.$('iframe >> content-frame=true >> button');
+  expect(await element.textContent()).toBe('Hello iframe');
+  const elements = await body.$$('iframe >> content-frame=true >> span');
+  expect(elements).toHaveLength(2);
+});
+
 it('should work for $eval', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
   const value = await page.$eval('iframe >> content-frame=true >> button', b => b.nodeName);
+  expect(value).toBe('BUTTON');
+});
+
+it('should work for $eval (handle)', async ({ page, server }) => {
+  await routeIframe(page);
+  await page.goto(server.EMPTY_PAGE);
+  const body = await page.$('body');
+  const value = await body.$eval('iframe >> content-frame=true >> button', b => b.nodeName);
   expect(value).toBe('BUTTON');
 });
 
@@ -89,6 +127,14 @@ it('should work for $$eval', async ({ page, server }) => {
   expect(value).toEqual(['1', '2']);
 });
 
+it('should work for $$eval (handle)', async ({ page, server }) => {
+  await routeIframe(page);
+  await page.goto(server.EMPTY_PAGE);
+  const body = await page.$('body');
+  const value = await body.$$eval('iframe >> content-frame=true >> span', ss => ss.map(s => s.textContent));
+  expect(value).toEqual(['1', '2']);
+});
+
 it('should not allow dangling content-frame', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
@@ -96,6 +142,21 @@ it('should not allow dangling content-frame', async ({ page, server }) => {
   const error = await button.click().catch(e => e);
   expect(error.message).toContain('Selector cannot end with');
   expect(error.message).toContain('iframe >> content-frame=true');
+});
+
+it('should allow leading content-frame on handle', async ({ page, server }) => {
+  await routeIframe(page);
+  await page.goto(server.EMPTY_PAGE);
+  const iframe = await page.$('iframe');
+  const button = await iframe.waitForSelector('content-frame=true >> button');
+  await button.click();
+});
+
+it('should not allow leading content-frame on page', async ({ page, server }) => {
+  await routeIframe(page);
+  await page.goto(server.EMPTY_PAGE);
+  const error = await page.waitForSelector('content-frame=true >> button').catch(e => e);
+  expect(error.message).toContain('<iframe> was expected');
 });
 
 it('should not allow capturing before content-frame', async ({ page, server }) => {
