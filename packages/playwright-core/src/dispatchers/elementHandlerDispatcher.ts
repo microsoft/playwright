@@ -173,21 +173,21 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements chann
   }
 
   async querySelector(params: channels.ElementHandleQuerySelectorParams, metadata: CallMetadata): Promise<channels.ElementHandleQuerySelectorResult> {
-    const handle = await this._elementHandle.querySelector(metadata, params.selector, params);
+    const handle = await this._elementHandle.querySelector(params.selector, params);
     return { element: ElementHandleDispatcher.fromNullable(this._scope, handle) };
   }
 
   async querySelectorAll(params: channels.ElementHandleQuerySelectorAllParams, metadata: CallMetadata): Promise<channels.ElementHandleQuerySelectorAllResult> {
-    const elements = await this._elementHandle.querySelectorAll(metadata, params.selector);
+    const elements = await this._elementHandle.querySelectorAll(params.selector);
     return { elements: elements.map(e => ElementHandleDispatcher.from(this._scope, e)) };
   }
 
   async evalOnSelector(params: channels.ElementHandleEvalOnSelectorParams, metadata: CallMetadata): Promise<channels.ElementHandleEvalOnSelectorResult> {
-    return { value: serializeResult(await this._elementHandle.evalOnSelectorAndWaitForSignals(metadata, params.selector, !!params.strict, params.expression, params.isFunction, parseArgument(params.arg))) };
+    return { value: serializeResult(await this._elementHandle.evalOnSelectorAndWaitForSignals(params.selector, !!params.strict, params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 
   async evalOnSelectorAll(params: channels.ElementHandleEvalOnSelectorAllParams, metadata: CallMetadata): Promise<channels.ElementHandleEvalOnSelectorAllResult> {
-    return { value: serializeResult(await this._elementHandle.evalOnSelectorAllAndWaitForSignals(metadata, params.selector, params.expression, params.isFunction, parseArgument(params.arg))) };
+    return { value: serializeResult(await this._elementHandle.evalOnSelectorAllAndWaitForSignals(params.selector, params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 
   async waitForElementState(params: channels.ElementHandleWaitForElementStateParams, metadata: CallMetadata): Promise<void> {

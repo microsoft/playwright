@@ -144,19 +144,11 @@ it('should not allow dangling content-frame', async ({ page, server }) => {
   expect(error.message).toContain('iframe >> content-frame=true');
 });
 
-it('should allow leading content-frame on handle', async ({ page, server }) => {
-  await routeIframe(page);
-  await page.goto(server.EMPTY_PAGE);
-  const iframe = await page.$('iframe');
-  const button = await iframe.waitForSelector('content-frame=true >> button');
-  await button.click();
-});
-
-it('should not allow leading content-frame on page', async ({ page, server }) => {
+it('should not allow leading content-frame', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
   const error = await page.waitForSelector('content-frame=true >> button').catch(e => e);
-  expect(error.message).toContain('<iframe> was expected');
+  expect(error.message).toContain('Selector cannot start with');
 });
 
 it('should not allow capturing before content-frame', async ({ page, server }) => {
@@ -205,4 +197,61 @@ it('should click in lazy iframe', async ({ page, server }) => {
     expect(button).toHaveText('Hello iframe')
   ]);
   expect(text).toBe('Hello iframe');
+});
+
+it('waitFor should survive frame reattach', async ({ page, server }) => {
+  await routeIframe(page);
+  await page.goto(server.EMPTY_PAGE);
+  const button = page.locator('iframe >> content-frame=true >> button:has-text("Hello nested iframe")');
+  const promise = button.waitFor();
+  await page.locator('iframe').evaluate(e => e.remove());
+  await page.evaluate(() => {
+    const iframe = document.createElement('iframe');
+    iframe.src = 'iframe-2.html';
+    document.body.appendChild(iframe);
+  });
+  await promise;
+});
+
+it('click should survive frame reattach', async ({ page, server }) => {
+  await routeIframe(page);
+  await page.goto(server.EMPTY_PAGE);
+  const button = page.locator('iframe >> content-frame=true >> button:has-text("Hello nested iframe")');
+  const promise = button.click();
+  await page.locator('iframe').evaluate(e => e.remove());
+  await page.evaluate(() => {
+    const iframe = document.createElement('iframe');
+    iframe.src = 'iframe-2.html';
+    document.body.appendChild(iframe);
+  });
+  await promise;
+});
+
+it('click should survive iframe navigation', async ({ page, server }) => {
+  await routeIframe(page);
+  await page.goto(server.EMPTY_PAGE);
+  const button = page.locator('iframe >> content-frame=true >> button:has-text("Hello nested iframe")');
+  const promise = button.click();
+  page.locator('iframe').evaluate(e => (e as HTMLIFrameElement).src = 'iframe-2.html');
+  await promise;
+});
+
+it('click should survive navigation', async ({ page, server }) => {
+  await routeIframe(page);
+  await page.goto(server.PREFIX + '/iframe.html');
+  const promise = page.click('button:has-text("Hello nested iframe")');
+  await page.waitForTimeout(100);
+  await page.goto(server.PREFIX + '/iframe-2.html');
+  await promise;
+});
+
+it('should fail if element removed while waiting on element handle', async ({ page, server }) => {
+  it.fixme();
+  await routeIframe(page);
+  await page.goto(server.PREFIX + '/iframe.html');
+  const button = await page.$('button');
+  const promise = button.waitForSelector('something');
+  await page.waitForTimeout(100);
+  await page.evaluate(() => document.body.innerText = '');
+  await promise;
 });
