@@ -30,7 +30,7 @@ import * as api from '../../types/types';
 import { HeadersArray, URLMatch } from '../common/types';
 import { urlMatches } from './clientHelper';
 import { MultiMap } from '../utils/multimap';
-import { FetchResponse } from './fetch';
+import { APIResponse } from './fetch';
 
 export type NetworkCookie = {
   name: string,
@@ -241,8 +241,8 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
       if (options.response) {
         statusOption ||= options.response.status();
         headersOption ||= options.response.headers();
-        if (options.body === undefined && options.path === undefined && options.response instanceof FetchResponse)
-          fetchResponseUid = (options.response as FetchResponse)._fetchUid();
+        if (options.body === undefined && options.path === undefined && options.response instanceof APIResponse)
+          fetchResponseUid = (options.response as APIResponse)._fetchUid();
       }
 
       let isBase64 = false;

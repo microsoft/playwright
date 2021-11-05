@@ -34,7 +34,7 @@ export { Frame } from './frame';
 export { Keyboard, Mouse, Touchscreen } from './input';
 export { JSHandle } from './jsHandle';
 export { Request, Response, Route, WebSocket } from './network';
-export { Fetch as APIRequest, FetchRequest as APIRequestContext, FetchResponse as APIResponse } from './fetch';
+export { APIRequest, APIRequestContext, APIResponse } from './fetch';
 export { Page } from './page';
 export { Selectors } from './selectors';
 export { Tracing } from './tracing';

@@ -157,7 +157,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       buffer: tBinary,
     })),
   });
-  scheme.FetchRequestFetchParams = tObject({
+  scheme.APIRequestContextFetchParams = tObject({
     url: tString,
     params: tOptional(tArray(tType('NameValue'))),
     method: tOptional(tString),
@@ -170,15 +170,15 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     failOnStatusCode: tOptional(tBoolean),
     ignoreHTTPSErrors: tOptional(tBoolean),
   });
-  scheme.FetchRequestFetchResponseBodyParams = tObject({
+  scheme.APIRequestContextFetchResponseBodyParams = tObject({
     fetchUid: tString,
   });
-  scheme.FetchRequestStorageStateParams = tOptional(tObject({}));
-  scheme.FetchRequestDisposeFetchResponseParams = tObject({
+  scheme.APIRequestContextStorageStateParams = tOptional(tObject({}));
+  scheme.APIRequestContextDisposeAPIResponseParams = tObject({
     fetchUid: tString,
   });
-  scheme.FetchRequestDisposeParams = tOptional(tObject({}));
-  scheme.FetchResponse = tObject({
+  scheme.APIRequestContextDisposeParams = tOptional(tObject({}));
+  scheme.APIResponse = tObject({
     fetchUid: tString,
     url: tString,
     status: tNumber,

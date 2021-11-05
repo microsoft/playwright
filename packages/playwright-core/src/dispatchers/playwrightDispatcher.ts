@@ -16,7 +16,7 @@
 
 import net, { AddressInfo } from 'net';
 import * as channels from '../protocol/channels';
-import { GlobalFetchRequest } from '../server/fetch';
+import { GlobalAPIRequestContext } from '../server/fetch';
 import { Playwright } from '../server/playwright';
 import * as types from '../server/types';
 import { debugLogger } from '../utils/debugLogger';
@@ -26,7 +26,7 @@ import { AndroidDispatcher } from './androidDispatcher';
 import { BrowserTypeDispatcher } from './browserTypeDispatcher';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { ElectronDispatcher } from './electronDispatcher';
-import { FetchRequestDispatcher } from './networkDispatchers';
+import { APIRequestContextDispatcher } from './networkDispatchers';
 import { SelectorsDispatcher } from './selectorsDispatcher';
 
 export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.PlaywrightInitializer, channels.PlaywrightEvents> implements channels.PlaywrightChannel {
@@ -75,8 +75,8 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
   }
 
   async newRequest(params: channels.PlaywrightNewRequestParams, metadata?: channels.Metadata): Promise<channels.PlaywrightNewRequestResult> {
-    const request = new GlobalFetchRequest(this._object, params);
-    return { request: FetchRequestDispatcher.from(this._scope, request) };
+    const request = new GlobalAPIRequestContext(this._object, params);
+    return { request: APIRequestContextDispatcher.from(this._scope, request) };
   }
 }
 

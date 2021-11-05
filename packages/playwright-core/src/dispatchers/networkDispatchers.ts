@@ -15,7 +15,7 @@
  */
 
 import * as channels from '../protocol/channels';
-import { FetchRequest } from '../server/fetch';
+import { APIRequestContext } from '../server/fetch';
 import { CallMetadata } from '../server/instrumentation';
 import { Request, Response, Route, WebSocket } from '../server/network';
 import { Dispatcher, DispatcherScope, existingDispatcher, lookupNullableDispatcher } from './dispatcher';
@@ -143,33 +143,33 @@ export class WebSocketDispatcher extends Dispatcher<WebSocket, channels.WebSocke
   }
 }
 
-export class FetchRequestDispatcher extends Dispatcher<FetchRequest, channels.FetchRequestInitializer, channels.FetchRequestEvents> implements channels.FetchRequestChannel {
-  static from(scope: DispatcherScope, request: FetchRequest): FetchRequestDispatcher {
-    const result = existingDispatcher<FetchRequestDispatcher>(request);
-    return result || new FetchRequestDispatcher(scope, request);
+export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, channels.APIRequestContextInitializer, channels.APIRequestContextEvents> implements channels.APIRequestContextChannel {
+  static from(scope: DispatcherScope, request: APIRequestContext): APIRequestContextDispatcher {
+    const result = existingDispatcher<APIRequestContextDispatcher>(request);
+    return result || new APIRequestContextDispatcher(scope, request);
   }
 
-  static fromNullable(scope: DispatcherScope, request: FetchRequest | null): FetchRequestDispatcher | undefined {
-    return request ? FetchRequestDispatcher.from(scope, request) : undefined;
+  static fromNullable(scope: DispatcherScope, request: APIRequestContext | null): APIRequestContextDispatcher | undefined {
+    return request ? APIRequestContextDispatcher.from(scope, request) : undefined;
   }
 
-  private constructor(scope: DispatcherScope, request: FetchRequest) {
-    super(scope, request, 'FetchRequest', {}, true);
-    request.once(FetchRequest.Events.Dispose, () => {
+  private constructor(scope: DispatcherScope, request: APIRequestContext) {
+    super(scope, request, 'APIRequestContext', {}, true);
+    request.once(APIRequestContext.Events.Dispose, () => {
       if (!this._disposed)
         super._dispose();
     });
   }
 
-  async storageState(params?: channels.FetchRequestStorageStateParams): Promise<channels.FetchRequestStorageStateResult> {
+  async storageState(params?: channels.APIRequestContextStorageStateParams): Promise<channels.APIRequestContextStorageStateResult> {
     return this._object.storageState();
   }
 
-  async dispose(params?: channels.FetchRequestDisposeParams): Promise<void> {
+  async dispose(params?: channels.APIRequestContextDisposeParams): Promise<void> {
     this._object.dispose();
   }
 
-  async fetch(params: channels.FetchRequestFetchParams, metadata?: channels.Metadata): Promise<channels.FetchRequestFetchResult> {
+  async fetch(params: channels.APIRequestContextFetchParams, metadata?: channels.Metadata): Promise<channels.APIRequestContextFetchResult> {
     const { fetchResponse, error } = await this._object.fetch(params);
     let response;
     if (fetchResponse) {
@@ -184,12 +184,12 @@ export class FetchRequestDispatcher extends Dispatcher<FetchRequest, channels.Fe
     return { response, error };
   }
 
-  async fetchResponseBody(params: channels.FetchRequestFetchResponseBodyParams, metadata?: channels.Metadata): Promise<channels.FetchRequestFetchResponseBodyResult> {
+  async fetchResponseBody(params: channels.APIRequestContextFetchResponseBodyParams, metadata?: channels.Metadata): Promise<channels.APIRequestContextFetchResponseBodyResult> {
     const buffer = this._object.fetchResponses.get(params.fetchUid);
     return { binary: buffer ? buffer.toString('base64') : undefined };
   }
 
-  async disposeFetchResponse(params: channels.FetchRequestDisposeFetchResponseParams, metadata?: channels.Metadata): Promise<void> {
+  async disposeAPIResponse(params: channels.APIRequestContextDisposeAPIResponseParams, metadata?: channels.Metadata): Promise<void> {
     this._object.fetchResponses.delete(params.fetchUid);
   }
 }

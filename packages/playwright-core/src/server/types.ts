@@ -370,7 +370,7 @@ export type SetStorageState = {
   origins?: OriginStorage[]
 };
 
-export type FetchResponse = {
+export type APIResponse = {
   url: string,
   status: number,
   statusText: string,

@@ -39,7 +39,7 @@ import { ParsedStackTrace } from '../utils/stackTrace';
 import { Artifact } from './artifact';
 import { EventEmitter } from 'events';
 import { JsonPipe } from './jsonPipe';
-import { FetchRequest } from './fetch';
+import { APIRequestContext } from './fetch';
 
 class Root extends ChannelOwner<channels.RootChannel, {}> {
   constructor(connection: Connection) {
@@ -185,6 +185,9 @@ export class Connection extends EventEmitter {
       case 'AndroidDevice':
         result = new AndroidDevice(parent, type, guid, initializer);
         break;
+      case 'APIRequestContext':
+        result = new APIRequestContext(parent, type, guid, initializer);
+        break;
       case 'Artifact':
         result = new Artifact(parent, type, guid, initializer);
         break;
@@ -217,9 +220,6 @@ export class Connection extends EventEmitter {
         break;
       case 'ElementHandle':
         result = new ElementHandle(parent, type, guid, initializer);
-        break;
-      case 'FetchRequest':
-        result = new FetchRequest(parent, type, guid, initializer);
         break;
       case 'Frame':
         result = new Frame(parent, type, guid, initializer);
