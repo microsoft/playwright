@@ -91,7 +91,9 @@ export class Chromium extends BrowserType {
       browserLogsCollector: new RecentLogsCollector(),
       artifactsDir,
       downloadsPath: artifactsDir,
-      tracesDir: artifactsDir
+      tracesDir: artifactsDir,
+      // Chromium on Windows global proxy workaround
+      proxy: { server: 'per-context' },
     };
     progress.throwIfAborted();
     const browser = await CRBrowser.connect(chromeTransport, browserOptions);

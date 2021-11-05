@@ -418,3 +418,25 @@ playwrightTest('should connect to an existing cdp session when passed as a first
     await browserServer.close();
   }
 });
+
+playwrightTest('should use proxy with connectOverCDP', async ({ browserType, server }, testInfo) => {
+  server.setRoute('/target.html', async (req, res) => {
+    res.end('<html><title>Served by the proxy</title></html>');
+  });
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    args: ['--remote-debugging-port=' + port]
+  });
+  try {
+    const cdpBrowser = await browserType.connectOverCDP(`http://localhost:${port}/`);
+    const context = await cdpBrowser.newContext({
+      proxy: { server: `localhost:${server.PORT}` }
+    });
+    const page = await context.newPage();
+    await page.goto('http://non-existent.com/target.html');
+    expect(await page.title()).toBe('Served by the proxy');
+    await cdpBrowser.close();
+  } finally {
+    await browserServer.close();
+  }
+});
