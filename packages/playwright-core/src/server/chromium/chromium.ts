@@ -92,7 +92,11 @@ export class Chromium extends BrowserType {
       artifactsDir,
       downloadsPath: artifactsDir,
       tracesDir: artifactsDir,
-      // Chromium on Windows global proxy workaround
+      // On Windows context level proxies only work, if there isn't a global proxy
+      // set. This is currently a bug in the CR/Windows networking stack. By
+      // passing an arbitrary value we disable the check in PW land which warns
+      // users in normal (launch/launchServer) mode since otherwise connectOverCDP
+      // does not work at all with proxies on Windows.
       proxy: { server: 'per-context' },
     };
     progress.throwIfAborted();
