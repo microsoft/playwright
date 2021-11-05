@@ -118,13 +118,11 @@ createZipForMac() {
   # copy all relevant files
   ditto {./WebKitBuild/Release,"$tmpdir"}/com.apple.WebKit.GPU.xpc
   ditto {./WebKitBuild/Release,"$tmpdir"}/com.apple.WebKit.Networking.xpc
-  ditto {./WebKitBuild/Release,"$tmpdir"}/com.apple.WebKit.Plugin.64.xpc
   ditto {./WebKitBuild/Release,"$tmpdir"}/com.apple.WebKit.WebContent.xpc
   ditto {./WebKitBuild/Release,"$tmpdir"}/JavaScriptCore.framework
   ditto {./WebKitBuild/Release,"$tmpdir"}/libANGLE-shared.dylib
   ditto {./WebKitBuild/Release,"$tmpdir"}/libwebrtc.dylib
   ditto {./WebKitBuild/Release,"$tmpdir"}/Playwright.app
-  ditto {./WebKitBuild/Release,"$tmpdir"}/PluginProcessShim.dylib
   ditto {./WebKitBuild/Release,"$tmpdir"}/WebCore.framework
   ditto {./WebKitBuild/Release,"$tmpdir"}/WebInspectorUI.framework
   ditto {./WebKitBuild/Release,"$tmpdir"}/WebKit.framework
