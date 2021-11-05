@@ -218,7 +218,10 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
       });
     };
 
+    const startedCollectingArtifacts = Symbol('startedCollectingArtifacts');
+
     const onWillCloseContext = async (context: BrowserContext) => {
+      (context as any)[startedCollectingArtifacts] = true;
       if (captureTrace) {
         // Export trace for now. We'll know whether we have to preserve it
         // after the test finishes.
@@ -278,6 +281,12 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
 
     // 5. Collect artifacts from any non-closed contexts.
     await Promise.all(leftoverContexts.map(async context => {
+      // When we timeout during context.close(), we might end up with context still alive
+      // but artifacts being already collected. In this case, do not collect artifacts
+      // for the second time.
+      if ((context as any)[startedCollectingArtifacts])
+        return;
+
       if (preserveTrace)
         await context.tracing.stopChunk({ path: addTraceAttachment() });
       else if (captureTrace)
