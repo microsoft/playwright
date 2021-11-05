@@ -161,16 +161,16 @@ export type FormField = {
   },
 };
 
-// ----------- FetchRequest -----------
-export type FetchRequestInitializer = {};
-export interface FetchRequestChannel extends Channel {
-  fetch(params: FetchRequestFetchParams, metadata?: Metadata): Promise<FetchRequestFetchResult>;
-  fetchResponseBody(params: FetchRequestFetchResponseBodyParams, metadata?: Metadata): Promise<FetchRequestFetchResponseBodyResult>;
-  storageState(params?: FetchRequestStorageStateParams, metadata?: Metadata): Promise<FetchRequestStorageStateResult>;
-  disposeFetchResponse(params: FetchRequestDisposeFetchResponseParams, metadata?: Metadata): Promise<FetchRequestDisposeFetchResponseResult>;
-  dispose(params?: FetchRequestDisposeParams, metadata?: Metadata): Promise<FetchRequestDisposeResult>;
+// ----------- APIRequestContext -----------
+export type APIRequestContextInitializer = {};
+export interface APIRequestContextChannel extends Channel {
+  fetch(params: APIRequestContextFetchParams, metadata?: Metadata): Promise<APIRequestContextFetchResult>;
+  fetchResponseBody(params: APIRequestContextFetchResponseBodyParams, metadata?: Metadata): Promise<APIRequestContextFetchResponseBodyResult>;
+  storageState(params?: APIRequestContextStorageStateParams, metadata?: Metadata): Promise<APIRequestContextStorageStateResult>;
+  disposeAPIResponse(params: APIRequestContextDisposeAPIResponseParams, metadata?: Metadata): Promise<APIRequestContextDisposeAPIResponseResult>;
+  dispose(params?: APIRequestContextDisposeParams, metadata?: Metadata): Promise<APIRequestContextDisposeResult>;
 }
-export type FetchRequestFetchParams = {
+export type APIRequestContextFetchParams = {
   url: string,
   params?: NameValue[],
   method?: string,
@@ -183,7 +183,7 @@ export type FetchRequestFetchParams = {
   failOnStatusCode?: boolean,
   ignoreHTTPSErrors?: boolean,
 };
-export type FetchRequestFetchOptions = {
+export type APIRequestContextFetchOptions = {
   params?: NameValue[],
   method?: string,
   headers?: NameValue[],
@@ -195,40 +195,40 @@ export type FetchRequestFetchOptions = {
   failOnStatusCode?: boolean,
   ignoreHTTPSErrors?: boolean,
 };
-export type FetchRequestFetchResult = {
-  response?: FetchResponse,
+export type APIRequestContextFetchResult = {
+  response?: APIResponse,
   error?: string,
 };
-export type FetchRequestFetchResponseBodyParams = {
+export type APIRequestContextFetchResponseBodyParams = {
   fetchUid: string,
 };
-export type FetchRequestFetchResponseBodyOptions = {
+export type APIRequestContextFetchResponseBodyOptions = {
 
 };
-export type FetchRequestFetchResponseBodyResult = {
+export type APIRequestContextFetchResponseBodyResult = {
   binary?: Binary,
 };
-export type FetchRequestStorageStateParams = {};
-export type FetchRequestStorageStateOptions = {};
-export type FetchRequestStorageStateResult = {
+export type APIRequestContextStorageStateParams = {};
+export type APIRequestContextStorageStateOptions = {};
+export type APIRequestContextStorageStateResult = {
   cookies: NetworkCookie[],
   origins: OriginStorage[],
 };
-export type FetchRequestDisposeFetchResponseParams = {
+export type APIRequestContextDisposeAPIResponseParams = {
   fetchUid: string,
 };
-export type FetchRequestDisposeFetchResponseOptions = {
+export type APIRequestContextDisposeAPIResponseOptions = {
 
 };
-export type FetchRequestDisposeFetchResponseResult = void;
-export type FetchRequestDisposeParams = {};
-export type FetchRequestDisposeOptions = {};
-export type FetchRequestDisposeResult = void;
+export type APIRequestContextDisposeAPIResponseResult = void;
+export type APIRequestContextDisposeParams = {};
+export type APIRequestContextDisposeOptions = {};
+export type APIRequestContextDisposeResult = void;
 
-export interface FetchRequestEvents {
+export interface APIRequestContextEvents {
 }
 
-export type FetchResponse = {
+export type APIResponse = {
   fetchUid: string,
   url: string,
   status: number,
@@ -389,7 +389,7 @@ export type PlaywrightNewRequestOptions = {
   },
 };
 export type PlaywrightNewRequestResult = {
-  request: FetchRequestChannel,
+  request: APIRequestContextChannel,
 };
 
 export interface PlaywrightEvents {
@@ -854,7 +854,7 @@ export interface EventTargetEvents {
 // ----------- BrowserContext -----------
 export type BrowserContextInitializer = {
   isChromium: boolean,
-  fetchRequest: FetchRequestChannel,
+  APIRequestContext: APIRequestContextChannel,
 };
 export interface BrowserContextChannel extends EventTargetChannel {
   on(event: 'bindingCall', callback: (params: BrowserContextBindingCallEvent) => void): this;

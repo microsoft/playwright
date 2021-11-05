@@ -47,7 +47,7 @@ import { isString, isRegExp, isObject, mkdirIfNeeded, headersObjectToArray } fro
 import { isSafeCloseError } from '../utils/errors';
 import { Video } from './video';
 import { Artifact } from './artifact';
-import { FetchRequest } from './fetch';
+import { APIRequestContext } from './fetch';
 
 type PDFOptions = Omit<channels.PagePdfParams, 'width' | 'height' | 'margin'> & {
   width?: string | number,
@@ -78,7 +78,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   readonly coverage: Coverage;
   readonly keyboard: Keyboard;
   readonly mouse: Mouse;
-  readonly request: FetchRequest;
+  readonly request: APIRequestContext;
   readonly touchscreen: Touchscreen;
 
   readonly _bindings = new Map<string, (source: structs.BindingSource, ...args: any[]) => any>();

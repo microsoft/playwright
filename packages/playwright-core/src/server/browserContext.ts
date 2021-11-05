@@ -34,7 +34,7 @@ import { Tracing } from './trace/recorder/tracing';
 import { HarRecorder } from './supplements/har/harRecorder';
 import { RecorderSupplement } from './supplements/recorderSupplement';
 import * as consoleApiSource from '../generated/consoleApiSource';
-import { BrowserContextFetchRequest } from './fetch';
+import { BrowserContextAPIRequestContext } from './fetch';
 
 export abstract class BrowserContext extends SdkObject {
   static Events = {
@@ -64,7 +64,7 @@ export abstract class BrowserContext extends SdkObject {
   private _origins = new Set<string>();
   readonly _harRecorder: HarRecorder | undefined;
   readonly tracing: Tracing;
-  readonly fetchRequest: BrowserContextFetchRequest;
+  readonly fetchRequest: BrowserContextAPIRequestContext;
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super(browser, 'browser-context');
@@ -82,7 +82,7 @@ export abstract class BrowserContext extends SdkObject {
       this._harRecorder = new HarRecorder(this, { ...this._options.recordHar, path: path.join(this._browser.options.artifactsDir, `${createGuid()}.har`) });
 
     this.tracing = new Tracing(this);
-    this.fetchRequest = new BrowserContextFetchRequest(this);
+    this.fetchRequest = new BrowserContextAPIRequestContext(this);
   }
 
   isPersistentContext(): boolean {

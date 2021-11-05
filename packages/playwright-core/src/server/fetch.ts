@@ -44,16 +44,16 @@ type FetchRequestOptions = {
   baseURL?: string;
 };
 
-export abstract class FetchRequest extends SdkObject {
+export abstract class APIRequestContext extends SdkObject {
   static Events = {
     Dispose: 'dispose',
   };
 
   readonly fetchResponses: Map<string, Buffer> = new Map();
-  protected static allInstances: Set<FetchRequest> = new Set();
+  protected static allInstances: Set<APIRequestContext> = new Set();
 
   static findResponseBody(guid: string): Buffer | undefined {
-    for (const request of FetchRequest.allInstances) {
+    for (const request of APIRequestContext.allInstances) {
       const body = request.fetchResponses.get(guid);
       if (body)
         return body;
@@ -63,13 +63,13 @@ export abstract class FetchRequest extends SdkObject {
 
   constructor(parent: SdkObject) {
     super(parent, 'fetchRequest');
-    FetchRequest.allInstances.add(this);
+    APIRequestContext.allInstances.add(this);
   }
 
   protected _disposeImpl() {
-    FetchRequest.allInstances.delete(this);
+    APIRequestContext.allInstances.delete(this);
     this.fetchResponses.clear();
-    this.emit(FetchRequest.Events.Dispose);
+    this.emit(APIRequestContext.Events.Dispose);
   }
 
   abstract dispose(): void;
@@ -77,7 +77,7 @@ export abstract class FetchRequest extends SdkObject {
   abstract _defaultOptions(): FetchRequestOptions;
   abstract _addCookies(cookies: types.NetworkCookie[]): Promise<void>;
   abstract _cookies(url: URL): Promise<types.NetworkCookie[]>;
-  abstract storageState(): Promise<channels.FetchRequestStorageStateResult>;
+  abstract storageState(): Promise<channels.APIRequestContextStorageStateResult>;
 
   private _storeResponseBody(body: Buffer): string {
     const uid = createGuid();
@@ -85,7 +85,7 @@ export abstract class FetchRequest extends SdkObject {
     return uid;
   }
 
-  async fetch(params: channels.FetchRequestFetchParams): Promise<{fetchResponse?: Omit<types.FetchResponse, 'body'> & { fetchUid: string }, error?: string}> {
+  async fetch(params: channels.APIRequestContextFetchParams): Promise<{fetchResponse?: Omit<types.APIResponse, 'body'> & { fetchUid: string }, error?: string}> {
     try {
       const headers: { [name: string]: string } = {};
       const defaults = this._defaultOptions();
@@ -195,9 +195,9 @@ export abstract class FetchRequest extends SdkObject {
     }
   }
 
-  private async _sendRequest(url: URL, options: https.RequestOptions & { maxRedirects: number, deadline: number }, postData?: Buffer): Promise<types.FetchResponse>{
+  private async _sendRequest(url: URL, options: https.RequestOptions & { maxRedirects: number, deadline: number }, postData?: Buffer): Promise<types.APIResponse>{
     await this._updateRequestCookieHeader(url, options);
-    return new Promise<types.FetchResponse>((fulfill, reject) => {
+    return new Promise<types.APIResponse>((fulfill, reject) => {
       const requestConstructor: ((url: URL, options: http.RequestOptions, callback?: (res: http.IncomingMessage) => void) => http.ClientRequest)
         = (url.protocol === 'https:' ? https : http).request;
       const request = requestConstructor(url, options, async response => {
@@ -305,8 +305,8 @@ export abstract class FetchRequest extends SdkObject {
         reject(new Error('Request context disposed.'));
         request.destroy();
       };
-      this.on(FetchRequest.Events.Dispose, disposeListener);
-      request.on('close', () => this.off(FetchRequest.Events.Dispose, disposeListener));
+      this.on(APIRequestContext.Events.Dispose, disposeListener);
+      request.on('close', () => this.off(APIRequestContext.Events.Dispose, disposeListener));
 
       if (debugLogger.isEnabled('api')) {
         debugLogger.log('api', `→ ${options.method} ${url.toString()}`);
@@ -336,7 +336,7 @@ export abstract class FetchRequest extends SdkObject {
   }
 }
 
-export class BrowserContextFetchRequest extends FetchRequest {
+export class BrowserContextAPIRequestContext extends APIRequestContext {
   private readonly _context: BrowserContext;
 
   constructor(context: BrowserContext) {
@@ -369,13 +369,13 @@ export class BrowserContextFetchRequest extends FetchRequest {
     return await this._context.cookies(url.toString());
   }
 
-  override async storageState(): Promise<channels.FetchRequestStorageStateResult> {
+  override async storageState(): Promise<channels.APIRequestContextStorageStateResult> {
     return this._context.storageState();
   }
 }
 
 
-export class GlobalFetchRequest extends FetchRequest {
+export class GlobalAPIRequestContext extends APIRequestContext {
   private readonly _cookieStore: CookieStore = new CookieStore();
   private readonly _options: FetchRequestOptions;
   private readonly _origins: channels.OriginStorage[] | undefined;
@@ -424,7 +424,7 @@ export class GlobalFetchRequest extends FetchRequest {
     return this._cookieStore.cookies(url);
   }
 
-  override async storageState(): Promise<channels.FetchRequestStorageStateResult> {
+  override async storageState(): Promise<channels.APIRequestContextStorageStateResult> {
     return {
       cookies: this._cookieStore.allCookies(),
       origins: this._origins || []
@@ -488,7 +488,7 @@ function parseCookie(header: string): types.NetworkCookie | null {
   return cookie;
 }
 
-function serializePostData(params: channels.FetchRequestFetchParams, headers: { [name: string]: string }): Buffer | undefined {
+function serializePostData(params: channels.APIRequestContextFetchParams, headers: { [name: string]: string }): Buffer | undefined {
   assert((params.postData ? 1 : 0) + (params.jsonData ? 1 : 0) + (params.formData ? 1 : 0) + (params.multipartData ? 1 : 0) <= 1, `Only one of 'data', 'form' or 'multipart' can be specified`);
   if (params.jsonData) {
     const json = JSON.stringify(params.jsonData);

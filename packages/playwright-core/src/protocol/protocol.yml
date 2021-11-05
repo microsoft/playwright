@@ -227,7 +227,7 @@ FormField:
         mimeType: string
         buffer: binary
 
-FetchRequest:
+APIRequestContext:
   type: interface
 
   commands:
@@ -254,7 +254,7 @@ FetchRequest:
         failOnStatusCode: boolean?
         ignoreHTTPSErrors: boolean?
       returns:
-        response: FetchResponse?
+        response: APIResponse?
         error: string?
 
     fetchResponseBody:
@@ -272,14 +272,14 @@ FetchRequest:
           type: array
           items: OriginStorage
 
-    disposeFetchResponse:
+    disposeAPIResponse:
       parameters:
         fetchUid: string
 
     dispose:
 
 
-FetchResponse:
+APIResponse:
   type: object
   properties:
     fetchUid: string
@@ -520,7 +520,7 @@ Playwright:
               items: OriginStorage
 
       returns:
-        request: FetchRequest
+        request: APIRequestContext
 
   events:
     socksRequested:
@@ -684,7 +684,7 @@ BrowserContext:
 
   initializer:
     isChromium: boolean
-    fetchRequest: FetchRequest
+    APIRequestContext: APIRequestContext
 
   commands:
 

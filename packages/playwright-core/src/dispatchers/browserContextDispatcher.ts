@@ -19,7 +19,7 @@ import { Dispatcher, DispatcherScope, lookupDispatcher } from './dispatcher';
 import { PageDispatcher, BindingCallDispatcher, WorkerDispatcher } from './pageDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 import * as channels from '../protocol/channels';
-import { RouteDispatcher, RequestDispatcher, ResponseDispatcher, FetchRequestDispatcher } from './networkDispatchers';
+import { RouteDispatcher, RequestDispatcher, ResponseDispatcher, APIRequestContextDispatcher } from './networkDispatchers';
 import { CRBrowserContext } from '../server/chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { RecorderSupplement } from '../server/supplements/recorderSupplement';
@@ -34,7 +34,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   constructor(scope: DispatcherScope, context: BrowserContext) {
     super(scope, context, 'BrowserContext', {
       isChromium: context._browser.options.isChromium,
-      fetchRequest: FetchRequestDispatcher.from(scope, context.fetchRequest),
+      APIRequestContext: APIRequestContextDispatcher.from(scope, context.fetchRequest),
     }, true);
     this._context = context;
     // Note: when launching persistent context, dispatcher is created very late,
