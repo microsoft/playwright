@@ -159,7 +159,8 @@ it.describe('screencast', () => {
     expect(error.message).toContain('"videoSize" option requires "videosPath" to be specified');
   });
 
-  it('should work with old options', async ({ browser }, testInfo) => {
+  it('should work with old options', async ({ browser, browserName }, testInfo) => {
+    it.fixme(browserName === 'firefox' && process.env.PWTEST_TRACE, 'https://github.com/microsoft/playwright/issues/10060');
     const videosPath = testInfo.outputPath('');
     const size = { width: 450, height: 240 };
     const context = await browser.newContext({
@@ -182,7 +183,8 @@ it.describe('screencast', () => {
     expect(error.message).toContain('recordVideo.dir: expected string, got undefined');
   });
 
-  it('should capture static page', async ({ browser }, testInfo) => {
+  it('should capture static page', async ({ browser, browserName }, testInfo) => {
+    it.fixme(browserName === 'firefox' && process.env.PWTEST_TRACE, 'https://github.com/microsoft/playwright/issues/10060');
     const size = { width: 450, height: 240 };
     const context = await browser.newContext({
       recordVideo: {
@@ -307,7 +309,8 @@ it.describe('screencast', () => {
     expect(fs.existsSync(path)).toBeTruthy();
   });
 
-  it('should capture navigation', async ({ browser, server }, testInfo) => {
+  it('should capture navigation', async ({ browser, browserName, server }, testInfo) => {
+    it.fixme(browserName === 'firefox' && process.env.PWTEST_TRACE, 'https://github.com/microsoft/playwright/issues/10060');
     const context = await browser.newContext({
       recordVideo: {
         dir: testInfo.outputPath(''),
@@ -341,6 +344,7 @@ it.describe('screencast', () => {
   it('should capture css transformation', async ({ browser, server, headless, browserName, platform }, testInfo) => {
     it.fixme(!headless, 'Fails on headed');
     it.fixme(browserName === 'webkit' && platform === 'win32');
+    it.fixme(browserName === 'firefox' && process.env.PWTEST_TRACE, 'https://github.com/microsoft/playwright/issues/10060');
 
     const size = { width: 320, height: 240 };
     // Set viewport equal to screencast frame size to avoid scaling.
@@ -368,7 +372,8 @@ it.describe('screencast', () => {
     }
   });
 
-  it('should work for popups', async ({ browser, server }, testInfo) => {
+  it('should work for popups', async ({ browser, server, browserName }, testInfo) => {
+    it.fixme(browserName === 'firefox' && process.env.PWTEST_TRACE, 'https://github.com/microsoft/playwright/issues/10060');
     const videosPath = testInfo.outputPath('');
     const size = { width: 450, height: 240 };
     const context = await browser.newContext({
@@ -398,8 +403,9 @@ it.describe('screencast', () => {
     expect(videoFiles.length).toBe(2);
   });
 
-  it('should scale frames down to the requested size ', async ({ browser, server, headless }, testInfo) => {
+  it('should scale frames down to the requested size ', async ({ browser, browserName, server, headless }, testInfo) => {
     it.fixme(!headless, 'Fails on headed');
+    it.fixme(browserName === 'firefox' && process.env.PWTEST_TRACE, 'https://github.com/microsoft/playwright/issues/10060');
 
     const context = await browser.newContext({
       recordVideo: {
@@ -502,7 +508,8 @@ it.describe('screencast', () => {
     expect(videoPlayer.videoHeight).toBe(600);
   });
 
-  it('should capture static page in persistent context', async ({ launchPersistent }, testInfo) => {
+  it('should capture static page in persistent context', async ({ launchPersistent, browserName }, testInfo) => {
+    it.fixme(browserName === 'firefox' && process.env.PWTEST_TRACE, 'https://github.com/microsoft/playwright/issues/10060');
     const size = { width: 320, height: 240 };
     const { context, page } = await launchPersistent({
       recordVideo: {
