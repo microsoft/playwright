@@ -5416,10 +5416,19 @@ index 4fbfd7120199d27cfa87bdd596737106bce08db0..4f769e266eb4d33ca9c8fa553a4d763a
      DocumentWriter& writer() const { return m_writer; }
  
 diff --git a/Source/WebCore/loader/FrameLoader.cpp b/Source/WebCore/loader/FrameLoader.cpp
-index 95ef5ca85ce06d1bc82c7f5ee7d55dc77ec48b0e..e1f813ba74d91949bbbc52223f4a0fc0f6b14499 100644
+index 95ef5ca85ce06d1bc82c7f5ee7d55dc77ec48b0e..ac119bbdbd94418dec6b83589d62d2b4c830bb95 100644
 --- a/Source/WebCore/loader/FrameLoader.cpp
 +++ b/Source/WebCore/loader/FrameLoader.cpp
-@@ -1154,6 +1154,7 @@ void FrameLoader::loadInSameDocument(const URL& url, SerializedScriptValue* stat
+@@ -529,6 +529,8 @@ void FrameLoader::stopLoading(UnloadEventPolicy unloadEventPolicy)
+ 
+     // FIXME: This will cancel redirection timer, which really needs to be restarted when restoring the frame from b/f cache.
+     m_frame.navigationScheduler().cancel();
++
++    InspectorInstrumentation::frameStoppedLoading(m_frame);
+ }
+ 
+ void FrameLoader::stop()
+@@ -1154,6 +1156,7 @@ void FrameLoader::loadInSameDocument(const URL& url, SerializedScriptValue* stat
      }
  
      m_client->dispatchDidNavigateWithinPage();
@@ -5427,7 +5436,7 @@ index 95ef5ca85ce06d1bc82c7f5ee7d55dc77ec48b0e..e1f813ba74d91949bbbc52223f4a0fc0
  
      m_frame.document()->statePopped(stateObject ? Ref<SerializedScriptValue> { *stateObject } : SerializedScriptValue::nullValue());
      m_client->dispatchDidPopStateWithinPage();
-@@ -1481,6 +1482,7 @@ void FrameLoader::load(FrameLoadRequest&& request)
+@@ -1481,6 +1484,7 @@ void FrameLoader::load(FrameLoadRequest&& request)
  
  void FrameLoader::loadWithNavigationAction(const ResourceRequest& request, NavigationAction&& action, FrameLoadType type, RefPtr<FormState>&& formState, AllowNavigationToInvalidURL allowNavigationToInvalidURL, CompletionHandler<void()>&& completionHandler)
  {
@@ -5435,7 +5444,7 @@ index 95ef5ca85ce06d1bc82c7f5ee7d55dc77ec48b0e..e1f813ba74d91949bbbc52223f4a0fc0
      FRAMELOADER_RELEASE_LOG(ResourceLoading, "loadWithNavigationAction: frame load started");
  
      if (request.url().protocolIsJavaScript()) {
-@@ -1590,6 +1592,8 @@ void FrameLoader::loadWithDocumentLoader(DocumentLoader* loader, FrameLoadType t
+@@ -1590,6 +1594,8 @@ void FrameLoader::loadWithDocumentLoader(DocumentLoader* loader, FrameLoadType t
      const String& httpMethod = loader->request().httpMethod();
  
      if (shouldPerformFragmentNavigation(isFormSubmission, httpMethod, policyChecker().loadType(), newURL)) {
@@ -5444,7 +5453,7 @@ index 95ef5ca85ce06d1bc82c7f5ee7d55dc77ec48b0e..e1f813ba74d91949bbbc52223f4a0fc0
          RefPtr<DocumentLoader> oldDocumentLoader = m_documentLoader;
          NavigationAction action { *m_frame.document(), loader->request(), InitiatedByMainFrame::Unknown, policyChecker().loadType(), isFormSubmission };
  
-@@ -2792,12 +2796,17 @@ String FrameLoader::userAgent(const URL& url) const
+@@ -2792,12 +2798,17 @@ String FrameLoader::userAgent(const URL& url) const
  
  String FrameLoader::navigatorPlatform() const
  {
@@ -5464,7 +5473,7 @@ index 95ef5ca85ce06d1bc82c7f5ee7d55dc77ec48b0e..e1f813ba74d91949bbbc52223f4a0fc0
  }
  
  void FrameLoader::dispatchOnloadEvents()
-@@ -3195,6 +3204,8 @@ void FrameLoader::receivedMainResourceError(const ResourceError& error)
+@@ -3195,6 +3206,8 @@ void FrameLoader::receivedMainResourceError(const ResourceError& error)
      checkCompleted();
      if (m_frame.page())
          checkLoadComplete();
@@ -5473,7 +5482,7 @@ index 95ef5ca85ce06d1bc82c7f5ee7d55dc77ec48b0e..e1f813ba74d91949bbbc52223f4a0fc0
  }
  
  void FrameLoader::continueFragmentScrollAfterNavigationPolicy(const ResourceRequest& request, bool shouldContinue)
-@@ -3962,9 +3973,6 @@ String FrameLoader::referrer() const
+@@ -3962,9 +3975,6 @@ String FrameLoader::referrer() const
  
  void FrameLoader::dispatchDidClearWindowObjectsInAllWorlds()
  {
@@ -5483,7 +5492,7 @@ index 95ef5ca85ce06d1bc82c7f5ee7d55dc77ec48b0e..e1f813ba74d91949bbbc52223f4a0fc0
      Vector<Ref<DOMWrapperWorld>> worlds;
      ScriptController::getAllWorlds(worlds);
      for (auto& world : worlds)
-@@ -3973,13 +3981,13 @@ void FrameLoader::dispatchDidClearWindowObjectsInAllWorlds()
+@@ -3973,13 +3983,13 @@ void FrameLoader::dispatchDidClearWindowObjectsInAllWorlds()
  
  void FrameLoader::dispatchDidClearWindowObjectInWorld(DOMWrapperWorld& world)
  {
@@ -5562,19 +5571,10 @@ index d0805795af21d39fc6858d4ac0168745f011fec4..34db61fe02ea27453f2e4646415a97bf
              return;
          }
 diff --git a/Source/WebCore/loader/ProgressTracker.cpp b/Source/WebCore/loader/ProgressTracker.cpp
-index fa84c366c63175f9fb4730eb85c4677fc3d6368f..ecf5b8dc97e35910baf493424e673155cfa7d7a4 100644
+index fa84c366c63175f9fb4730eb85c4677fc3d6368f..e6ef79f4ab1a223d42f0d5570a549d5467e81641 100644
 --- a/Source/WebCore/loader/ProgressTracker.cpp
 +++ b/Source/WebCore/loader/ProgressTracker.cpp
-@@ -152,6 +152,8 @@ void ProgressTracker::progressCompleted(Frame& frame)
-     if (!m_numProgressTrackedFrames || m_originatingProgressFrame == &frame)
-         finalProgressComplete();
- 
-+    InspectorInstrumentation::frameStoppedLoading(frame);
-+
-     m_client->didChangeEstimatedProgress();
- }
- 
-@@ -177,8 +179,6 @@ void ProgressTracker::finalProgressComplete()
+@@ -177,8 +177,6 @@ void ProgressTracker::finalProgressComplete()
      frame->loader().client().setMainFrameDocumentReady(true);
      m_client->progressFinished(*frame);
      frame->loader().loadProgressingStatusChanged();
