@@ -207,6 +207,13 @@ elif [[ "$BUILD_FLAVOR" == "firefox-ubuntu-20.04" ]]; then
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="20.04"
   BUILD_BLOB_NAME="firefox-ubuntu-20.04.zip"
+elif [[ "$BUILD_FLAVOR" == "firefox-ubuntu-20.04-arm64" ]]; then
+  BROWSER_NAME="firefox"
+  EXTRA_BUILD_ARGS="--full --linux-arm64"
+  EXTRA_ARCHIVE_ARGS="--linux-arm64"
+  EXPECTED_HOST_OS="Ubuntu"
+  EXPECTED_HOST_OS_VERSION="20.04"
+  BUILD_BLOB_NAME="firefox-ubuntu-20.04-arm64.zip"
 elif [[ "$BUILD_FLAVOR" == "firefox-mac-11" ]]; then
   BROWSER_NAME="firefox"
   EXTRA_BUILD_ARGS="--full"
