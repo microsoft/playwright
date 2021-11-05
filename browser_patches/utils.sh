@@ -31,3 +31,14 @@ function selectXcodeVersionOrDie() {
   export DEVELOPER_DIR="${XCODE_DIRECTORY}/Contents/Developer"
   echo "-- using ${XCODE_DIRECTORY}"
 }
+
+# see https://docs.microsoft.com/en-us/visualstudio/install/tools-for-managing-visual-studio-instances?view=vs-2019
+function printMSVCRedistDir() {
+  local dll_file=$("C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -find '**\Redist\MSVC\*\x64\**\vcruntime140.dll')
+  local redist_dir=$(dirname "$dll_file")
+  if ! [[ -d $redist_dir ]]; then
+    echo "ERROR: cannot find MS VS C++ redistributable $redist_dir"
+    exit 1;
+  fi
+  echo "$redist_dir"
+}
