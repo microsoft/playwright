@@ -629,6 +629,11 @@ it('should properly wait for load', async ({ page, server, browserName }) => {
   ]);
 });
 
+it('should properly report window.stop()', async ({ page, server, browserName }) => {
+  server.setRoute('/module.js', async (req, res) => void 0);
+  await page.goto(server.PREFIX + '/window-stop.html');
+});
+
 it('should return when navigation is committed if commit is specified', async ({ page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.writeHead(200, {
