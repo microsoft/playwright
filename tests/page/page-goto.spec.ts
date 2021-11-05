@@ -629,6 +629,25 @@ it('should properly wait for load', async ({ page, server, browserName }) => {
   ]);
 });
 
+it('should properly report window.stop()', async ({ page, server, browserName }) => {
+  server.setRoute('/module.js', async (req, res) => void 0);
+  await page.goto(server.PREFIX + '/window-stop.html');
+});
+
+it('should return from goto if new navigation is started', async ({ page, server, browserName }) => {
+  it.fixme(browserName === 'webkit', 'WebKit has a bug where Page.frameStoppedLoading is sent too early.');
+  server.setRoute('/slow.js', async (req, res) => void 0);
+  let finished = false;
+  const navigation = page.goto(server.PREFIX + '/load-event/load-event.html').then(r => {
+    finished = true;
+    return r;
+  });
+  await new Promise(r => setTimeout(r, 500));
+  expect(finished).toBeFalsy();
+  await page.goto(server.EMPTY_PAGE);
+  expect((await navigation).status()).toBe(200);
+});
+
 it('should return when navigation is committed if commit is specified', async ({ page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.writeHead(200, {
