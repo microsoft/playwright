@@ -85,8 +85,8 @@ jobs:
       env:
         DEBUG: pw:install
     - run: npm run build
-    - run: npx playwright install --with-deps
-    - run: cd tests/playwright-test/stable-test-runner && npx playwright install docker-image
+    - run: npx playwright install docker-image
+      working-directory: tests/playwright-test/stable-test-runner/
     - run: npm run vtest
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
