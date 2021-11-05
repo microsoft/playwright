@@ -27,7 +27,7 @@ import { ConnectionTransport, ProtocolRequest, WebSocketTransport } from '../tra
 import { CRDevTools } from './crDevTools';
 import { Browser, BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
 import * as types from '../types';
-import { debugMode, fetchData, headersArrayToObject, removeFolders, streamToString } from '../../utils/utils';
+import { debugMode, fetchData, headersArrayToObject, HTTPRequestParams, removeFolders, streamToString } from '../../utils/utils';
 import { RecentLogsCollector } from '../../utils/debugLogger';
 import { Progress, ProgressController } from '../progress';
 import { TimeoutSettings } from '../../utils/timeoutSettings';
@@ -65,7 +65,7 @@ export class Chromium extends BrowserType {
 
     const artifactsDir = await fs.promises.mkdtemp(ARTIFACTS_FOLDER);
 
-    const wsEndpoint = await urlToWSEndpoint(endpointURL);
+    const wsEndpoint = await urlToWSEndpoint(progress, endpointURL);
     progress.throwIfAborted();
 
     const chromeTransport = await WebSocketTransport.connect(progress, wsEndpoint, headersMap);
@@ -153,7 +153,7 @@ export class Chromium extends BrowserType {
     args.push('--remote-debugging-port=0');
     const desiredCapabilities = { 'browserName': 'chrome', 'goog:chromeOptions': { args } };
 
-    progress.log(`<connecting to selenium> ${hubUrl}`);
+    progress.log(`<selenium> connecting to ${hubUrl}`);
     const response = await fetchData({
       url: hubUrl + 'session',
       method: 'POST',
@@ -162,41 +162,59 @@ export class Chromium extends BrowserType {
         capabilities: { alwaysMatch: desiredCapabilities }
       }),
       timeout: progress.timeUntilDeadline(),
-    }, async response => {
-      const body = await streamToString(response);
-      let message = '';
-      try {
-        const json = JSON.parse(body);
-        message = json.value.localizedMessage || json.value.message;
-      } catch (e) {
-      }
-      return new Error(`Error connecting to Selenium at ${hubUrl}: ${message}`);
-    });
+    }, seleniumErrorHandler);
     const value = JSON.parse(response).value;
     const sessionId = value.sessionId;
-    progress.log(`<connected to selenium> sessionId=${sessionId}`);
+    progress.log(`<selenium> connected to sessionId=${sessionId}`);
 
     const disconnectFromSelenium = async () => {
-      progress.log(`<disconnecting from selenium> sessionId=${sessionId}`);
+      progress.log(`<selenium> disconnecting from sessionId=${sessionId}`);
       await fetchData({
         url: hubUrl + 'session/' + sessionId,
         method: 'DELETE',
       }).catch(error => progress.log(`<error disconnecting from selenium>: ${error}`));
-      progress.log(`<disconnected from selenium> sessionId=${sessionId}`);
+      progress.log(`<selenium> disconnected from sessionId=${sessionId}`);
       gracefullyCloseSet.delete(disconnectFromSelenium);
     };
     gracefullyCloseSet.add(disconnectFromSelenium);
 
     try {
       const capabilities = value.capabilities;
-      const maybeChromeOptions = capabilities['goog:chromeOptions'];
-      const chromeOptions = maybeChromeOptions && typeof maybeChromeOptions === 'object' ? maybeChromeOptions : undefined;
-      const debuggerAddress = chromeOptions && typeof chromeOptions.debuggerAddress === 'string' ? chromeOptions.debuggerAddress : undefined;
-      const chromeOptionsURL = typeof maybeChromeOptions === 'string' ? maybeChromeOptions : undefined;
-      let endpointURL = capabilities['se:cdp'] || debuggerAddress || chromeOptionsURL;
-      if (!['ws://', 'wss://', 'http://', 'https://'].some(protocol => endpointURL.startsWith(protocol)))
-        endpointURL = 'http://' + endpointURL;
-      return this._connectOverCDPInternal(progress, endpointURL, { slowMo: options.slowMo }, disconnectFromSelenium);
+      let endpointURL: URL;
+
+      if (capabilities['se:cdp']) {
+        // Selenium 4 - use built-in CDP websocket proxy.
+        const endpointURLString = addProtocol(capabilities['se:cdp']);
+        endpointURL = new URL(endpointURLString);
+        endpointURL.hostname = new URL(hubUrl).hostname;
+        progress.log(`<selenium> retrieved endpoint ${endpointURL.toString()} for sessionId=${sessionId}`);
+      } else {
+        // Selenium 3 - resolve target node IP to use instead of localhost ws url.
+        const maybeChromeOptions = capabilities['goog:chromeOptions'];
+        const chromeOptions = maybeChromeOptions && typeof maybeChromeOptions === 'object' ? maybeChromeOptions : undefined;
+        const debuggerAddress = chromeOptions && typeof chromeOptions.debuggerAddress === 'string' ? chromeOptions.debuggerAddress : undefined;
+        const chromeOptionsURL = typeof maybeChromeOptions === 'string' ? maybeChromeOptions : undefined;
+        const endpointURLString = addProtocol(debuggerAddress || chromeOptionsURL);
+        progress.log(`<selenium> retrieved endpoint ${endpointURLString} for sessionId=${sessionId}`);
+        endpointURL = new URL(endpointURLString);
+        if (endpointURL.hostname === 'localhost' || endpointURL.hostname === '127.0.0.1') {
+          const sessionInfoUrl = new URL(hubUrl).origin + '/grid/api/testsession?session=' + sessionId;
+          try {
+            const sessionResponse = await fetchData({
+              url: sessionInfoUrl,
+              method: 'GET',
+              timeout: progress.timeUntilDeadline(),
+            }, seleniumErrorHandler);
+            const proxyId = JSON.parse(sessionResponse).proxyId;
+            endpointURL.hostname = new URL(proxyId).hostname;
+            progress.log(`<selenium> resolved endpoint ip ${endpointURL.toString()} for sessionId=${sessionId}`);
+          } catch (e) {
+            progress.log(`<selenium> unable to resolve endpoint ip for sessionId=${sessionId}, running in standalone?`);
+          }
+        }
+      }
+
+      return await this._connectOverCDPInternal(progress, endpointURL.toString(), { slowMo: options.slowMo }, disconnectFromSelenium);
     } catch (e) {
       await disconnectFromSelenium();
       throw e;
@@ -296,9 +314,10 @@ const DEFAULT_ARGS = [
   '--no-service-autorun',
 ];
 
-async function urlToWSEndpoint(endpointURL: string) {
+async function urlToWSEndpoint(progress: Progress, endpointURL: string) {
   if (endpointURL.startsWith('ws'))
     return endpointURL;
+  progress.log(`<ws preparing> retrieving websocket url from ${endpointURL}`);
   const httpURL = endpointURL.endsWith('/') ? `${endpointURL}json/version/` : `${endpointURL}/json/version/`;
   const request = endpointURL.startsWith('https') ? https : http;
   const json = await new Promise<string>((resolve, reject) => {
@@ -313,4 +332,21 @@ async function urlToWSEndpoint(endpointURL: string) {
     }).on('error', reject);
   });
   return JSON.parse(json).webSocketDebuggerUrl;
+}
+
+async function seleniumErrorHandler(params: HTTPRequestParams, response: http.IncomingMessage) {
+  const body = await streamToString(response);
+  let message = body;
+  try {
+    const json = JSON.parse(body);
+    message = json.value.localizedMessage || json.value.message;
+  } catch (e) {
+  }
+  return new Error(`Error connecting to Selenium at ${params.url}: ${message}`);
+}
+
+function addProtocol(url: string) {
+  if (!['ws://', 'wss://', 'http://', 'https://'].some(protocol => url.startsWith(protocol)))
+    return 'http://' + url;
+  return url;
 }
