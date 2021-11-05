@@ -2123,6 +2123,19 @@ index 35526ca3a37327b324166dd42e450d108667a643..a2c70b2b432b2a714a928a1c08f520b0
    nsresult rv = NS_OK;
    nsCOMPtr<nsIContentSecurityPolicy> preloadCsp = mDocument->GetPreloadCsp();
    if (!preloadCsp) {
+diff --git a/python/mozbuild/mozpack/executables.py b/python/mozbuild/mozpack/executables.py
+index 0130e089e5ea3fd59b76b7ca6151460d0ea8aded..d8f04e345957bc5d02f2cfe1c80aa30ad052ae58 100644
+--- a/python/mozbuild/mozpack/executables.py
++++ b/python/mozbuild/mozpack/executables.py
+@@ -101,7 +101,7 @@ def strip(path):
+     """
+     from buildconfig import substs
+ 
+-    strip = substs["STRIP"]
++    strip = os.getenv("CMD_STRIP") or substs["STRIP"]
+     flags = substs.get("STRIP_FLAGS", [])
+     cmd = [strip] + flags + [path]
+     if subprocess.call(cmd) != 0:
 diff --git a/security/manager/ssl/nsCertOverrideService.cpp b/security/manager/ssl/nsCertOverrideService.cpp
 index e108f50ef6d3e9b7b2fd6dbdf5742bcba2e65571..6d34e51fc2f63626014ec8c13ff85c5f63e4cdd1 100644
 --- a/security/manager/ssl/nsCertOverrideService.cpp

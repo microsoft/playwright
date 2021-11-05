@@ -41,7 +41,11 @@ fi
 
 OBJ_FOLDER="obj-build-playwright"
 
-./mach package
+if [[ "$2" == "--linux-arm64" ]]; then
+  CMD_STRIP=/usr/bin/aarch64-linux-gnu-strip ./mach package
+else
+  ./mach package
+fi
 node "${SCRIPT_FOLDER}"/install-preferences.js "$PWD"/$OBJ_FOLDER/dist/firefox
 
 if ! [[ -d $OBJ_FOLDER/dist/firefox ]]; then
