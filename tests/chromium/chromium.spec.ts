@@ -425,7 +425,7 @@ playwrightTest('should use proxy with connectOverCDP', async ({ browserType, ser
   });
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({
-    args: ['--remote-debugging-port=' + port]
+    args: ['--remote-debugging-port=' + port, ...(process.platform === 'win32' ? ['--proxy-server=some-value'] : [])]
   });
   try {
     const cdpBrowser = await browserType.connectOverCDP(`http://localhost:${port}/`);
