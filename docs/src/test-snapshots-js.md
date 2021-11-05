@@ -3,7 +3,7 @@ id: test-snapshots
 title: "Visual comparisons"
 ---
 
-Playwright Test includes the ability to produce and visually compare screenshots using `expect(value).toMatchSnapshot(snapshotName)`. On first execution, Playwright test will generate reference screenshots. Subsequent runs will compare against the reference.
+Playwright Test includes the ability to produce and visually compare screenshots using `expect(page).toHaveScreenshot(snapshotName)`. On first execution, Playwright test will generate reference screenshots. Subsequent runs will compare against the reference.
 
 ```js js-flavor=js
 // example.spec.js
@@ -11,7 +11,8 @@ const { test, expect } = require('@playwright/test');
 
 test('example test', async ({ page }) => {
   await page.goto('https://playwright.dev');
-  expect(await page.screenshot()).toMatchSnapshot('landing.png');
+  await expect(page).toHaveScreenshot('landing.png');
+  await expect(page.locator('.box')).toHaveScreenshot('box-element.png');
 });
 ```
 
@@ -21,7 +22,8 @@ import { test, expect } from '@playwright/test';
 
 test('example test', async ({ page }) => {
   await page.goto('https://playwright.dev');
-  expect(await page.screenshot()).toMatchSnapshot('landing.png');
+  await expect(page).toHaveScreenshot('landing.png');
+  await expect(page.locator('.box')).toHaveScreenshot('box-element.png');
 });
 ```
 
@@ -55,7 +57,7 @@ Sometimes you need to update the reference screenshot, for example when the page
 npx playwright test --update-snapshots
 ```
 
-> Note that `snapshotName` also accepts an array of path segments to the snapshot file such as `expect(value).toMatchSnapshot(['relative', 'path', 'to', 'snapshot.png'])`.
+> Note that `snapshotName` also accepts an array of path segments to the snapshot file such as `expect(page).toHaveScreenshot(['relative', 'path', 'to', 'snapshot.png'])`.
 > However, this path must stay within the snapshots directory for each test file (i.e. `a.spec.js-snapshots`), otherwise it will throw.
 
 Playwright Test uses the [pixelmatch](https://github.com/mapbox/pixelmatch) library. You can pass comparison `threshold` as an option.
@@ -66,7 +68,7 @@ const { test, expect } = require('@playwright/test');
 
 test('example test', async ({ page }) => {
   await page.goto('https://playwright.dev');
-  expect(await page.screenshot()).toMatchSnapshot('home.png', { threshold: 0.2 });
+  await expect(page).toHaveScreenshot('home.png', { threshold: 0.2 });
 });
 ```
 
@@ -76,7 +78,7 @@ import { test, expect } from '@playwright/test';
 
 test('example test', async ({ page }) => {
   await page.goto('https://playwright.dev');
-  expect(await page.screenshot()).toMatchSnapshot('home.png', { threshold: 0.2 });
+  await expect(page).toHaveScreenshot('home.png', { threshold: 0.2 });
 });
 ```
 

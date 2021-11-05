@@ -4,7 +4,7 @@ title: "Assertions"
 ---
 
 Playwright Test uses [expect](https://jestjs.io/docs/expect) library for test assertions. This library provides
-a lot of matchers like `toEqual`, `toContain`, `toMatch`, `toMatchSnapshot` and many more:
+a lot of matchers like `toEqual`, `toContain`, `toMatch`, `toHaveScreenshot` and many more:
 
 ```js
 expect(success).toBeTruthy();
@@ -282,6 +282,38 @@ Ensures page is navigated to a given URL.
 ```js
 await expect(page).toHaveURL(/.*checkout/);
 ```
+
+## expect(value).toHaveScreenshot(name[, options])
+- `name` <[string] | [Array]<[string]>> Snapshot name.
+- `options`
+  - `threshold` <[float]> Image matching threshold between zero (strict) and one (lax), default is configurable with [`property: TestConfig.expect`].
+  - `type` <[string]> Image type, defaults to `png`.
+  - `quality` <[int]> The quality of the image, between 0-100. Not applicable to `png` images.
+  - `fullPage` <[boolean]> When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to `false`.
+  - `clip` <[Object]> An object which specifies clipping of the resulting image. Should have the following fields:
+    - `x` <[float]> x-coordinate of top-left corner of clip area
+    - `y` <[float]> y-coordinate of top-left corner of clip area
+    - `width` <[float]> width of clipping area
+    - `height` <[float]> height of clipping area
+  - `omitBackground` <[boolean]> Ensures that passed page's screenshot, matches the expected snapshot stored in the test snapshots directory.
+  - `timeout` <[float]>
+
+```js
+// Basic usage.
+await expect(page).toHaveScreenshot('landing-page.png');
+
+// Configure image matching threshold.
+await expect(page).toHaveScreenshot('landing-page.png', { threshold: 0.3 });
+
+// Bring some structure to your snapshot files by passing file path segments.
+await expect(page).toHaveScreenshot(['landing', 'step2.png']);
+await expect(page).toHaveScreenshot(['landing', 'step3.png']);
+
+// You can also make screenshots of individual elements via Locators:
+await expect(page.locator('.box')).toHaveScreenshot('grid-first-box.png');
+```
+
+Learn more about [visual comparisons](./test-snapshots.md).
 
 ## expect(value).toMatchSnapshot(name[, options])
 - `name` <[string] | [Array]<[string]>> Snapshot name.

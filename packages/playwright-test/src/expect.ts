@@ -40,7 +40,8 @@ import {
   toHaveText,
   toHaveTitle,
   toHaveURL,
-  toHaveValue
+  toHaveValue,
+  toHaveScreenshot,
 } from './matchers/matchers';
 import { toMatchSnapshot } from './matchers/toMatchSnapshot';
 import type { Expect, TestError } from './types';
@@ -113,6 +114,7 @@ const customMatchers = {
   toHaveTitle,
   toHaveURL,
   toHaveValue,
+  toHaveScreenshot,
   toMatchSnapshot,
 };
 

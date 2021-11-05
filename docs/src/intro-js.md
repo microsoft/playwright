@@ -113,7 +113,7 @@ test('my test', async ({ page }) => {
   await expect(page.locator('text=System requirements').first()).toBeVisible();
 
   // Compare screenshot with a stored reference.
-  expect(await page.screenshot()).toMatchSnapshot('get-started.png');
+  await expect(page).toHaveScreenshot('get-started.png');
 });
 ```
 
@@ -138,7 +138,7 @@ test('my test', async ({ page }) => {
   await expect(page.locator('text=System requirements').first()).toBeVisible();
 
   // Compare screenshot with a stored reference.
-  expect(await page.screenshot()).toMatchSnapshot('get-started.png');
+  await expect(page).toHaveScreenshot('get-started.png');
 });
 ```
 

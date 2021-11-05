@@ -617,7 +617,8 @@ interface TestConfig {
   metadata?: any;
   name?: string;
   /**
-   * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to
+   * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot` or
+   * `toHaveScreenshot`. Defaults to
    * [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir).
    *
    * The directory for each test can be accessed by
@@ -1364,8 +1365,8 @@ export interface TestInfo {
   /**
    * Suffix used to differentiate snapshots between multiple test configurations. For example, if snapshots depend on the
    * platform, you can set `testInfo.snapshotSuffix` equal to `process.platform`. In this case
-   * `expect(value).toMatchSnapshot(snapshotName)` will use different snapshots depending on the platform. Learn more about
-   * [snapshots](https://playwright.dev/docs/test-snapshots).
+   * `expect(value).toMatchSnapshot(snapshotName)` and `expect(page).toHaveScreenshot(snapshotName)` will use different
+   * snapshots depending on the platform. Learn more about [snapshots](https://playwright.dev/docs/test-snapshots).
    */
   snapshotSuffix: string;
   /**

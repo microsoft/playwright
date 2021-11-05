@@ -25,12 +25,22 @@ type SyncExpectationResult = {
   message: () => string;
 };
 
+type ToMatchSnapshotOptions = {
+  name: NameOrSegments;
+  threshold?: number;
+};
+
 type NameOrSegments = string | string[];
-export function toMatchSnapshot(this: ReturnType<Expect['getState']>, received: Buffer | string, nameOrOptions: NameOrSegments | { name: NameOrSegments, threshold?: number }, optOptions: { threshold?: number } = {}): SyncExpectationResult {
-  let options: { name: NameOrSegments, threshold?: number };
+export function toMatchSnapshot(
+  this: ReturnType<Expect['getState']>,
+  received: Buffer | string,
+  nameOrOptions: NameOrSegments | ToMatchSnapshotOptions,
+  optOptions: Omit<ToMatchSnapshotOptions, 'name'> = {}
+): SyncExpectationResult {
   const testInfo = currentTestInfo();
   if (!testInfo)
     throw new Error(`toMatchSnapshot() must be called during the test`);
+  let options: ToMatchSnapshotOptions;
   if (Array.isArray(nameOrOptions) || typeof nameOrOptions === 'string')
     options = { name: nameOrOptions, ...optOptions };
   else

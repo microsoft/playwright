@@ -7,6 +7,7 @@
  */
 
 import type * as expect from 'expect';
+import { PageScreenshotOptions } from 'playwright-core';
 
 export declare type AsymmetricMatcher = Record<string, any>;
 
@@ -55,18 +56,32 @@ declare global {
       */
       rejects: PlaywrightTest.Matchers<Promise<R>>;
       /**
-       * Match snapshot
+       * Match snapshot against a given variable.
        */
       toMatchSnapshot(options: {
         name: string | string[],
         threshold?: number
       }): R;
       /**
-       * Match snapshot
+       * Match snapshot against a given variable.
        */
       toMatchSnapshot(name: string | string[], options?: {
         threshold?: number
       }): R;
+
+      /**
+       * Compare the page to a screenshot.
+       */
+      toHaveScreenshot(options: {
+        name: string | string[],
+        threshold?: number
+      } & PageScreenshotOptions): R;
+      /**
+       * Compare the page to a screenshot.
+       */
+      toHaveScreenshot(name: string | string[], options?: {
+        threshold?: number
+      } & PageScreenshotOptions): R;
 
       /**
        * Asserts input is checked.

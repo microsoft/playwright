@@ -779,3 +779,32 @@ test('should allow comparing text with text without file extension', async ({ ru
   });
   expect(result.exitCode).toBe(0);
 });
+
+test('should work with toHaveScreenshot', async ({ runInlineTest, server }) => {
+  const result = await runInlineTest({
+    ...files,
+    'a.spec.js-snapshots/grid-500-x-500.png': fs.readFileSync(path.join(__dirname, 'assets', 'grid-500-x-500.png')),
+    'a.spec.js-snapshots/grid-500-x-500.jpg': fs.readFileSync(path.join(__dirname, 'assets', 'grid-500-x-500.jpg')),
+    'a.spec.js-snapshots/grid-500-x-500.jpeg': fs.readFileSync(path.join(__dirname, 'assets', 'grid-500-x-500.jpg')),
+    'a.spec.js-snapshots/grid-full-page.png': fs.readFileSync(path.join(__dirname, 'assets', 'grid-full-page.png')),
+    'a.spec.js-snapshots/grid-first-box.png': fs.readFileSync(path.join(__dirname, 'assets', 'grid-first-box.png')),
+    'a.spec.js-snapshots/grid-first-box.jpg': fs.readFileSync(path.join(__dirname, 'assets', 'grid-first-box.jpg')),
+    'a.spec.js': `
+      const { test } = require('./helper');
+      test('is a test', async ({ page }) => {
+        await page.setViewportSize({ width: 500, height: 500 });
+        await page.goto('${server.PREFIX + '/grid.html'}');
+        await expect(page).toHaveScreenshot('grid-500-x-500.png');
+        await expect(page).toHaveScreenshot('grid-500-x-500.jpg');
+        await expect(page).toHaveScreenshot('grid-500-x-500.jpeg');
+        await expect(page).toHaveScreenshot('grid-full-page.png', { fullPage: true });
+        await expect(page.locator('.box').first()).toHaveScreenshot('grid-first-box.png');
+        await expect(page.locator('.box').first()).toHaveScreenshot(['grid-first-box.png']);
+        await expect(page.locator('.box').first()).toHaveScreenshot('grid-first-box.jpg');
+        await expect(page.locator('.box').first()).toHaveScreenshot(['grid-first-box.jpg']);
+        await expect(expect(page.locator('.box').first()).toHaveScreenshot()).rejects.toThrow('toHaveScreenshot() requires a "name" parameter');
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});

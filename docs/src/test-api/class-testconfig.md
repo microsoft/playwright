@@ -289,7 +289,7 @@ test('example test', async ({}, testInfo) => {
 ## property: TestConfig.snapshotDir
 - type: <[string]>
 
-The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to [`property: TestConfig.testDir`].
+The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot` or `toHaveScreenshot`. Defaults to [`property: TestConfig.testDir`].
 
 The directory for each test can be accessed by [`property: TestInfo.snapshotDir`] and [`method: TestInfo.snapshotPath`].
 

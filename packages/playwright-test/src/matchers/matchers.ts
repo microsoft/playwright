@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-import { Locator, Page } from 'playwright-core';
+import { Locator, Page, PageScreenshotOptions } from 'playwright-core';
 import { FrameExpectOptions } from 'playwright-core/lib/client/types';
 import { constructURLBasedOnBaseURL } from 'playwright-core/lib/utils/utils';
 import type { Expect } from '../types';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
+import { toMatchSnapshot } from './toMatchSnapshot';
 import { toExpectedTextValues, toMatchText } from './toMatchText';
 
 interface LocatorEx extends Locator {
@@ -224,6 +225,18 @@ export function toHaveText(
   }
 }
 
+export function toHaveValue(
+  this: ReturnType<Expect['getState']>,
+  locator: LocatorEx,
+  expected: string | RegExp,
+  options?: { timeout?: number },
+) {
+  return toMatchText.call(this, 'toHaveValue', locator, 'Locator', async (isNot, timeout) => {
+    const expectedText = toExpectedTextValues([expected]);
+    return await locator._expect('to.have.value', { expectedText, isNot, timeout });
+  }, expected, options);
+}
+
 export function toHaveTitle(
   this: ReturnType<Expect['getState']>,
   page: Page,
@@ -252,14 +265,25 @@ export function toHaveURL(
   }, expected, options);
 }
 
-export function toHaveValue(
+export async function toHaveScreenshot(
   this: ReturnType<Expect['getState']>,
-  locator: LocatorEx,
-  expected: string | RegExp,
-  options?: { timeout?: number },
+  pageOrLocator: Page | LocatorEx,
+  nameOrOptions: Parameters<typeof toMatchSnapshot>[1] & PageScreenshotOptions,
+  optOptions: Parameters<typeof toMatchSnapshot>[2] & PageScreenshotOptions,
 ) {
-  return toMatchText.call(this, 'toHaveValue', locator, 'Locator', async (isNot, timeout) => {
-    const expectedText = toExpectedTextValues([expected]);
-    return await locator._expect('to.have.value', { expectedText, isNot, timeout });
-  }, expected, options);
+  if (!nameOrOptions)
+    throw new Error(`toHaveScreenshot() requires a "name" parameter`);
+  const screenshotOptions = {
+    ...(typeof nameOrOptions === 'object' ? nameOrOptions : {}),
+    ...optOptions,
+  };
+  const determineScreenshotType = (fileName: string): 'png' | 'jpeg' => fileName.endsWith('.png') ? 'png' : 'jpeg';
+  if (typeof nameOrOptions === 'string')
+    screenshotOptions.type = determineScreenshotType(nameOrOptions);
+  else if (Array.isArray(nameOrOptions))
+    screenshotOptions.type = determineScreenshotType(nameOrOptions[nameOrOptions.length - 1]);
+
+  const screenshot = await pageOrLocator.screenshot(screenshotOptions);
+
+  return toMatchSnapshot.call(this, screenshot, nameOrOptions, optOptions);
 }
