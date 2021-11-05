@@ -20378,6 +20378,19 @@ index 259449423855fed3aaaab414819f8951a3b8b7ff..6ba9678f50190492ef5140d0793582a8
          return;
      }
  
+diff --git a/Source/WebKit/WebProcess/Notifications/NotificationPermissionRequestManager.cpp b/Source/WebKit/WebProcess/Notifications/NotificationPermissionRequestManager.cpp
+index 5edd887612819d7d25ce86713434dd0bd4aff78c..1a9e2fbe665a408ba230313f220f948462212d0d 100644
+--- a/Source/WebKit/WebProcess/Notifications/NotificationPermissionRequestManager.cpp
++++ b/Source/WebKit/WebProcess/Notifications/NotificationPermissionRequestManager.cpp
+@@ -83,7 +83,7 @@ void NotificationPermissionRequestManager::startRequest(const SecurityOriginData
+ 
+     m_page->sendWithAsyncReply(Messages::WebPageProxy::RequestNotificationPermission(securityOrigin.toString()), [this, protectedThis = Ref { *this }, securityOrigin, permissionHandler = WTFMove(permissionHandler)](bool allowed) mutable {
+ 
+-        auto innerPermissionHandler = [this, protectedThis = Ref { *this }, securityOrigin, permissionHandler = WTFMove(permissionHandler)] (bool allowed) mutable {
++        auto innerPermissionHandler = [this, protectedThis, securityOrigin, permissionHandler = WTFMove(permissionHandler)] (bool allowed) mutable {
+             WebProcess::singleton().supplement<WebNotificationManager>()->didUpdateNotificationDecision(securityOrigin.toString(), allowed);
+ 
+             auto permissionHandlers = m_requestsPerOrigin.take(securityOrigin);
 diff --git a/Source/WebKit/WebProcess/WebCoreSupport/WebChromeClient.cpp b/Source/WebKit/WebProcess/WebCoreSupport/WebChromeClient.cpp
 index 0c8da665770bd473aeaabab3f16af60160b2750f..064cec74ddedea795f2ebf6d9d921cf7d0209562 100644
 --- a/Source/WebKit/WebProcess/WebCoreSupport/WebChromeClient.cpp
