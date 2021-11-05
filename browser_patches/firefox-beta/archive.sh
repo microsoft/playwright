@@ -31,6 +31,7 @@ fi
 trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
 SCRIPT_FOLDER="$(pwd -P)"
+source "${SCRIPT_FOLDER}/../utils.sh"
 
 if [[ ! -z "${FF_CHECKOUT_PATH}" ]]; then
   cd "${FF_CHECKOUT_PATH}"
@@ -53,6 +54,10 @@ fi
 # TODO(aslushnikov): this won't be needed with official builds.
 if [[ "$(uname)" == "Linux" ]]; then
   cp /usr/lib/x86_64-linux-gnu/libstdc++.so.6 $OBJ_FOLDER/dist/firefox/libstdc++.so.6
+elif [[ "$(uname)" == MINGW* ]]; then
+  # Bundle vcruntime14_1.dll - see https://github.com/microsoft/playwright/issues/9974
+  cd "$(printMSVCRedistDir)"
+  cp -t "${OBJ_FOLDER}/dist/firefox" vcruntime140_1.dll
 fi
 
 # tar resulting directory and cleanup TMP.
