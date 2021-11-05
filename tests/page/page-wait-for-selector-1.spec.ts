@@ -81,7 +81,8 @@ it('elementHandle.waitForSelector should throw on navigation', async ({ page, se
     await page.evaluate(() => 1);
   await page.goto(server.EMPTY_PAGE);
   const error = await promise;
-  expect(error.message).toContain('Execution context was destroyed');
+  expect(error.message).toContain('Error: frame navigated while waiting for selector');
+  expect(error.message).toContain('span');
 });
 
 it('should work with removed MutationObserver', async ({ page, server }) => {

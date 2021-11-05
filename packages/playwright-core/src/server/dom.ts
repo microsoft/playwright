@@ -177,8 +177,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return null;
   }
 
+  async isIframeElement(): Promise<boolean | 'error:notconnected'> {
+    return this.evaluateInUtility(([injected, node]) => node && (node.nodeName === 'IFRAME' || node.nodeName === 'FRAME'), {});
+  }
+
   async contentFrame(): Promise<frames.Frame | null> {
-    const isFrameElement = throwRetargetableDOMError(await this.evaluateInUtility(([injected, node]) => node && (node.nodeName === 'IFRAME' || node.nodeName === 'FRAME'), {}));
+    const isFrameElement = throwRetargetableDOMError(await this.isIframeElement());
     if (!isFrameElement)
       return null;
     return this._page._delegate.getContentFrame(this);
@@ -692,21 +696,27 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async querySelector(selector: string, options: types.StrictOptions): Promise<ElementHandle | null> {
-    const { frame, info } = await this._frame.resolveFrameForSelectorNoWait(selector, options, this);
+    const pair = await this._frame.resolveFrameForSelectorNoWait(selector, options, this);
+    if (!pair)
+      return null;
+    const { frame, info } = pair;
     // If we end up in the same frame => use the scope again, line above was noop.
     return this._page.selectors.query(frame, info, this._frame === frame ? this : undefined);
   }
 
   async querySelectorAll(selector: string): Promise<ElementHandle<Element>[]> {
-    const { frame, info } = await this._frame.resolveFrameForSelectorNoWait(selector, {}, this);
+    const pair = await this._frame.resolveFrameForSelectorNoWait(selector, {}, this);
+    if (!pair)
+      return [];
+    const { frame, info } = pair;
     // If we end up in the same frame => use the scope again, line above was noop.
     return this._page.selectors._queryAll(frame, info, this._frame === frame ? this : undefined, true /* adoptToMain */);
   }
 
   async evalOnSelectorAndWaitForSignals(selector: string, strict: boolean, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
-    const { frame, info } = await this._frame.resolveFrameForSelectorNoWait(selector, { strict }, this);
+    const pair = await this._frame.resolveFrameForSelectorNoWait(selector, { strict }, this);
     // If we end up in the same frame => use the scope again, line above was noop.
-    const handle = await this._page.selectors.query(frame, info, this._frame === frame ? this : undefined);
+    const handle = pair ? await this._page.selectors.query(pair.frame, pair.info, this._frame === pair.frame ? this : undefined) : null;
     if (!handle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
     const result = await handle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
@@ -715,7 +725,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async evalOnSelectorAllAndWaitForSignals(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
-    const { frame, info } = await this._frame.resolveFrameForSelectorNoWait(selector, {}, this);
+    const pair = await this._frame.resolveFrameForSelectorNoWait(selector, {}, this);
+    if (!pair)
+      throw new Error(`Error: failed to find frame for selector "${selector}"`);
+    const { frame, info } = pair;
     // If we end up in the same frame => use the scope again, line above was noop.
     const arrayHandle = await this._page.selectors._queryArray(frame, info, this._frame === frame ? this : undefined);
     const result = await arrayHandle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
@@ -767,31 +780,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async waitForSelector(metadata: CallMetadata, selector: string, options: types.WaitForElementOptions = {}): Promise<ElementHandle<Element> | null> {
-    const { state = 'visible' } = options;
-    if (!['attached', 'detached', 'visible', 'hidden'].includes(state))
-      throw new Error(`state: expected one of (attached|detached|visible|hidden)`);
-    const controller = new ProgressController(metadata, this);
-    return controller.run(async progress => {
-      progress.log(`waiting for selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);
-      return this._frame.retryWithProgress(progress, selector, options, async (frame, info, continuePolling) => {
-        // If we end up in the same frame => use the scope again, line above was noop.
-        const task = waitForSelectorTask(info, state, false, frame === this._frame ? this : undefined);
-        const context = await frame._context(info.world);
-        const injected = await context.injectedScript();
-        const pollHandler = new InjectedScriptPollHandler(progress, await task(injected));
-        const result = await pollHandler.finishHandle();
-        if (!result.asElement()) {
-          result.dispose();
-          return null;
-        }
-        const handle = result.asElement() as ElementHandle<Element>;
-        try {
-          return await handle._adoptTo(await frame._mainContext());
-        } catch (e) {
-          return continuePolling;
-        }
-      }, this);
-    }, this._page._timeoutSettings.timeout(options));
+    return this._frame.waitForSelector(metadata, selector, options, this);
   }
 
   async _adoptTo(context: FrameExecutionContext): Promise<ElementHandle<T>> {

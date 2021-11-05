@@ -95,6 +95,46 @@ it('should work for $ and $$', async ({ page, server }) => {
   expect(elements).toHaveLength(2);
 });
 
+it('$ should not wait for frame', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  expect(await page.$('iframe >> content-frame=true >> canvas')).toBeFalsy();
+  const body = await page.$('body');
+  expect(await body.$('iframe >> content-frame=true >> canvas')).toBeFalsy();
+});
+
+it('$$ should not wait for frame', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  expect(await page.$$('iframe >> content-frame=true >> canvas')).toHaveLength(0);
+  const body = await page.$('body');
+  expect(await body.$$('iframe >> content-frame=true >> canvas')).toHaveLength(0);
+});
+
+it('$eval should throw for missing frame', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  {
+    const error = await page.$eval('iframe >> content-frame=true >> canvas', e => 1).catch(e => e);
+    expect(error.message).toContain('Error: failed to find element matching selector');
+  }
+  {
+    const body = await page.$('body');
+    const error = await body.$eval('iframe >> content-frame=true >> canvas', e => 1).catch(e => e);
+    expect(error.message).toContain('Error: failed to find element matching selector');
+  }
+});
+
+it('$$eval should throw for missing frame', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  {
+    const error = await page.$$eval('iframe >> content-frame=true >> canvas', e => 1).catch(e => e);
+    expect(error.message).toContain('Error: failed to find frame for selector');
+  }
+  {
+    const body = await page.$('body');
+    const error = await body.$$eval('iframe >> content-frame=true >> canvas', e => 1).catch(e => e);
+    expect(error.message).toContain('Error: failed to find frame for selector');
+  }
+});
+
 it('should work for $ and $$ (handle)', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
@@ -213,6 +253,29 @@ it('waitFor should survive frame reattach', async ({ page, server }) => {
   await promise;
 });
 
+it('waitForSelector should survive frame reattach (handle)', async ({ page, server }) => {
+  await routeIframe(page);
+  await page.goto(server.EMPTY_PAGE);
+  const body = await page.$('body');
+  const promise = body.waitForSelector('iframe >> content-frame=true >> button:has-text("Hello nested iframe")');
+  await page.locator('iframe').evaluate(e => e.remove());
+  await page.evaluate(() => {
+    const iframe = document.createElement('iframe');
+    iframe.src = 'iframe-2.html';
+    document.body.appendChild(iframe);
+  });
+  await promise;
+});
+
+it('waitForSelector should survive iframe navigation (handle)', async ({ page, server }) => {
+  await routeIframe(page);
+  await page.goto(server.EMPTY_PAGE);
+  const body = await page.$('body');
+  const promise = body.waitForSelector('iframe >> content-frame=true >> button:has-text("Hello nested iframe")');
+  page.locator('iframe').evaluate(e => (e as HTMLIFrameElement).src = 'iframe-2.html');
+  await promise;
+});
+
 it('click should survive frame reattach', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
@@ -254,4 +317,13 @@ it('should fail if element removed while waiting on element handle', async ({ pa
   await page.waitForTimeout(100);
   await page.evaluate(() => document.body.innerText = '');
   await promise;
+});
+
+it('should non work for non-frame', async ({ page, server }) => {
+  await routeIframe(page);
+  await page.setContent('<div></div>');
+  const button = page.locator('div >> content-frame=true >> button');
+  const error = await button.waitFor().catch(e => e);
+  expect(error.message).toContain('<div></div>');
+  expect(error.message).toContain('<iframe> was expected');
 });
