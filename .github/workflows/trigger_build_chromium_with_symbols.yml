@@ -12,7 +12,6 @@ on:
     types: [published]
   push:
     branches:
-      - master
       - release-*
     paths:
       - browser_patches/chromium/BUILD_NUMBER
