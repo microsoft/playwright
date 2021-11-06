@@ -48,7 +48,8 @@ it('trial run should not tap', async ({ page }) => {
   await page.tap('#a');
   const eventsHandle = await trackEvents(await page.$('#b'));
   await page.tap('#b', { trial: true });
-  expect(await eventsHandle.jsonValue()).toEqual([]);
+  const expected = process.env.PLAYWRIGHT_NO_LAYOUT_SHIFT_CHECK ? [] : ['pointerover', 'pointerenter', 'pointerout', 'pointerleave'];
+  expect(await eventsHandle.jsonValue()).toEqual(expected);
 });
 
 it('should not send mouse events touchstart is canceled', async ({ page }) => {

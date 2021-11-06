@@ -57,6 +57,23 @@ it('should timeout waiting for hit target', async ({ page, server }) => {
   expect(error.message).toContain('waiting 500ms');
 });
 
+it('should still click when force but hit target is obscured', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/input/button.html');
+  const button = await page.$('button');
+  await page.evaluate(() => {
+    document.body.style.position = 'relative';
+    const blocker = document.createElement('div');
+    blocker.id = 'blocker';
+    blocker.style.position = 'absolute';
+    blocker.style.width = '400px';
+    blocker.style.height = '200px';
+    blocker.style.left = '0';
+    blocker.style.top = '0';
+    document.body.appendChild(blocker);
+  });
+  await button.click({ force: true });
+});
+
 it('should report wrong hit target subtree', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   const button = await page.$('button');

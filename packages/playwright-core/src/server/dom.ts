@@ -19,7 +19,7 @@ import * as injectedScriptSource from '../generated/injectedScriptSource';
 import * as channels from '../protocol/channels';
 import { isSessionClosedError } from './common/protocolError';
 import * as frames from './frames';
-import type { InjectedScript, InjectedScriptPoll, LogEntry } from './injected/injectedScript';
+import type { InjectedScript, InjectedScriptPoll, LogEntry, HitTargetInterceptionResult } from './injected/injectedScript';
 import { CallMetadata } from './instrumentation';
 import * as js from './javascript';
 import { Page } from './page';
@@ -367,8 +367,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         continue;
       }
       if (typeof result === 'object' && 'hitTargetDescription' in result) {
-        if (options.force)
-          throw new Error(`Element does not receive pointer events, ${result.hitTargetDescription} intercepts them`);
         progress.log(`  ${result.hitTargetDescription} intercepts pointer events`);
         continue;
       }
@@ -407,8 +405,16 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     if (typeof maybePoint === 'string')
       return maybePoint;
     const point = roundPoint(maybePoint);
+    progress.metadata.point = point;
 
-    if (!force) {
+    if (process.env.PLAYWRIGHT_NO_LAYOUT_SHIFT_CHECK)
+      return this._finishPointerAction(progress, actionName, point, options, action);
+    else
+      return this._finishPointerActionDetectLayoutShift(progress, actionName, point, options, action);
+  }
+
+  private async _finishPointerAction(progress: Progress, actionName: string, point: types.Point, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions, action: (point: types.Point) => Promise<void>) {
+    if (!options.force) {
       if ((options as any).__testHookBeforeHitTarget)
         await (options as any).__testHookBeforeHitTarget();
       progress.log(`  checking that element receives pointer events at (${point.x},${point.y})`);
@@ -418,7 +424,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       progress.log(`  element does receive pointer events`);
     }
 
-    progress.metadata.point = point;
     if (options.trial)  {
       progress.log(`  trial ${actionName} has finished`);
       return 'done';
@@ -443,6 +448,61 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, 'input');
     progress.log('  navigations have finished');
 
+    return 'done';
+  }
+
+  private async _finishPointerActionDetectLayoutShift(progress: Progress, actionName: string, point: types.Point, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions, action: (point: types.Point) => Promise<void>) {
+    await progress.beforeInputAction(this);
+
+    let hitTargetInterceptionHandle: js.JSHandle<HitTargetInterceptionResult> | undefined;
+    if (!options.force) {
+      if ((options as any).__testHookBeforeHitTarget)
+        await (options as any).__testHookBeforeHitTarget();
+
+      const actionType = (actionName === 'hover' || actionName === 'tap') ? actionName : 'mouse';
+      const handle = await this.evaluateHandleInUtility(([injected, node, { actionType, trial }]) => injected.setupHitTargetInterceptor(node, actionType, trial), { actionType, trial: !!options.trial } as const);
+      if (handle === 'error:notconnected')
+        return handle;
+      if (!handle._objectId)
+        return handle.rawValue() as 'error:notconnected';
+      hitTargetInterceptionHandle = handle as any;
+      progress.cleanupWhenAborted(() => {
+        // Do not await here, just in case the renderer is stuck (e.g. on alert)
+        // and we won't be able to cleanup.
+        hitTargetInterceptionHandle!.evaluate(h => h.stop()).catch(e => {});
+      });
+    }
+
+    const actionResult = await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
+      if ((options as any).__testHookBeforePointerAction)
+        await (options as any).__testHookBeforePointerAction();
+      progress.throwIfAborted();  // Avoid action that has side-effects.
+      let restoreModifiers: types.KeyboardModifier[] | undefined;
+      if (options && options.modifiers)
+        restoreModifiers = await this._page.keyboard._ensureModifiers(options.modifiers);
+      progress.log(`  performing ${actionName} action`);
+      await action(point);
+      if (restoreModifiers)
+        await this._page.keyboard._ensureModifiers(restoreModifiers);
+      if (hitTargetInterceptionHandle) {
+        const stopHitTargetInterception = hitTargetInterceptionHandle.evaluate(h => h.stop()).catch(e => 'done' as const);
+        if (!options.noWaitAfter) {
+          // When noWaitAfter is passed, we do not want to accidentally stall on
+          // non-committed navigation blocking the evaluate.
+          const hitTargetResult = await stopHitTargetInterception;
+          if (hitTargetResult !== 'done')
+            return hitTargetResult;
+        }
+      }
+      progress.log(`  ${options.trial ? 'trial ' : ''}${actionName} action done`);
+      progress.log('  waiting for scheduled navigations to finish');
+      if ((options as any).__testHookAfterPointerAction)
+        await (options as any).__testHookAfterPointerAction();
+      return 'done';
+    }, 'input');
+    if (actionResult !== 'done')
+      return actionResult;
+    progress.log('  navigations have finished');
     return 'done';
   }
 
