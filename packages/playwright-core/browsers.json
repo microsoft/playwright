@@ -13,7 +13,7 @@
     },
     {
       "name": "firefox",
-      "revision": "1302",
+      "revision": "1304",
       "installByDefault": true
     },
     {
