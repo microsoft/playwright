@@ -161,7 +161,7 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     const formatter = new JavaScriptFormatter();
     const useText = formatContextOptions(options.contextOptions, options.deviceName);
     formatter.add(`
-      const { test, expect${options.deviceName ? ', devices' : ''} } = require('@playwright/test');
+      import { test, expect${options.deviceName ? ', devices' : ''} } from '@playwright/test';
 ${useText ? '\ntest.use(' + useText + ');\n' : ''}
       test('test', async ({ page }) => {`);
     return formatter.format();
