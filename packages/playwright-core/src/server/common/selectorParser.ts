@@ -64,9 +64,9 @@ export function splitSelectorByFrame(selectorText: string): ParsedSelector[] {
   let chunkStartIndex = 0;
   for (let i = 0; i < selector.parts.length; ++i) {
     const part = selector.parts[i];
-    if (part.name === 'content-frame') {
+    if (part.name === 'control' && part.body === 'enter-frame') {
       if (!chunk.parts.length)
-        throw new Error('Selector cannot start with "content-frame", select the iframe first');
+        throw new Error('Selector cannot start with entering frame, select the iframe first');
       result.push(chunk);
       chunk = { parts: [] };
       chunkStartIndex = i + 1;
@@ -77,18 +77,20 @@ export function splitSelectorByFrame(selectorText: string): ParsedSelector[] {
     chunk.parts.push(part);
   }
   if (!chunk.parts.length)
-    throw new Error(`Selector cannot end with "content-frame", while parsing selector ${selectorText}`);
+    throw new Error(`Selector cannot end with entering frame, while parsing selector ${selectorText}`);
   result.push(chunk);
   if (typeof selector.capture === 'number' && typeof result[result.length - 1].capture !== 'number')
-    throw new Error(`Can not capture the selector before diving into the frame. Only use * after the last "content-frame"`);
+    throw new Error(`Can not capture the selector before diving into the frame. Only use * after the last frame has been selected`);
   return result;
 }
-
 
 export function stringifySelector(selector: string | ParsedSelector): string {
   if (typeof selector === 'string')
     return selector;
-  return selector.parts.map((p, i) => `${i === selector.capture ? '*' : ''}${p.name}=${p.source}`).join(' >> ');
+  return selector.parts.map((p, i) => {
+    const prefix = p.name === 'css' ? '' : p.name + '=';
+    return `${i === selector.capture ? '*' : ''}${prefix}${p.source}`;
+  }).join(' >> ');
 }
 
 function parseSelectorString(selector: string): ParsedSelectorStrings {

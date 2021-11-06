@@ -754,6 +754,42 @@ var contentFrame = await frameElement.ContentFrameAsync();
 Console.WriteLine(frame == contentFrame); // -> True
 ```
 
+
+## method: Frame.frameLocator
+- returns: <[FrameLocator]>
+
+When working with iframes, you can create a frame locator that will enter the iframe and allow selecting elements
+in that iframe. Following snippet locates element with text "Submit" in the iframe with id `my-frame`,
+like `<iframe id="my-frame">`:
+
+```js
+const locator = frame.frameLocator('#my-iframe').locator('text=Submit');
+await locator.click();
+```
+
+```java
+Locator locator = frame.frameLocator("#my-iframe").locator("text=Submit");
+locator.click();
+```
+
+```python async
+locator = frame.frame_locator("#my-iframe").locator("text=Submit")
+await locator.click()
+```
+
+```python sync
+locator = frame.frame_locator("#my-iframe").locator("text=Submit")
+locator.click()
+```
+
+```csharp
+var locator = frame.FrameLocator("#my-iframe").Locator("text=Submit");
+await locator.ClickAsync();
+```
+
+### param: Frame.frameLocator.selector = %%-find-selector-%%
+
+
 ## async method: Frame.getAttribute
 - returns: <[null]|[string]>
 
