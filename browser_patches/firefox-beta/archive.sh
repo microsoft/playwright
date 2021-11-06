@@ -33,27 +33,29 @@ cd "$(dirname "$0")"
 SCRIPT_FOLDER="$(pwd -P)"
 source "${SCRIPT_FOLDER}/../utils.sh"
 
-if [[ ! -z "${FF_CHECKOUT_PATH}" ]]; then
-  cd "${FF_CHECKOUT_PATH}"
-  echo "WARNING: checkout path from FF_CHECKOUT_PATH env: ${FF_CHECKOUT_PATH}"
-else
-  cd "$HOME/firefox"
+if [[ -z "${FF_CHECKOUT_PATH}" ]]; then
+  FF_CHECKOUT_PATH="$HOME/firefox"
 fi
+OBJ_FOLDER="${FF_CHECKOUT_PATH}/obj-build-playwright"
 
-OBJ_FOLDER="obj-build-playwright"
+cd "${FF_CHECKOUT_PATH}"
 
-./mach package
-node "${SCRIPT_FOLDER}"/install-preferences.js "$PWD"/$OBJ_FOLDER/dist/firefox
+if [[ "$2" == "--linux-arm64" ]]; then
+  CMD_STRIP=/usr/bin/aarch64-linux-gnu-strip ./mach package
+else
+  ./mach package
+fi
+node "${SCRIPT_FOLDER}/install-preferences.js" "${OBJ_FOLDER}/dist/firefox"
 
-if ! [[ -d $OBJ_FOLDER/dist/firefox ]]; then
-  echo "ERROR: cannot find $OBJ_FOLDER/dist/firefox folder in the checkout/. Did you build?"
+if ! [[ -d "$OBJ_FOLDER/dist/firefox" ]]; then
+  echo "ERROR: cannot find $OBJ_FOLDER/dist/firefox folder in the firefox checkout. Did you build?"
   exit 1;
 fi
 
 # Copy the libstdc++ version we linked against.
 # TODO(aslushnikov): this won't be needed with official builds.
 if [[ "$(uname)" == "Linux" ]]; then
-  cp /usr/lib/x86_64-linux-gnu/libstdc++.so.6 $OBJ_FOLDER/dist/firefox/libstdc++.so.6
+  cp /usr/lib/x86_64-linux-gnu/libstdc++.so.6 "${OBJ_FOLDER}/dist/firefox/libstdc++.so.6"
 elif [[ "$(uname)" == MINGW* ]]; then
   # Bundle vcruntime14_1.dll - see https://github.com/microsoft/playwright/issues/9974
   cd "$(printMSVCRedistDir)"
@@ -61,5 +63,5 @@ elif [[ "$(uname)" == MINGW* ]]; then
 fi
 
 # tar resulting directory and cleanup TMP.
-cd $OBJ_FOLDER/dist
+cd "${OBJ_FOLDER}/dist"
 zip -r "$ZIP_PATH" firefox
