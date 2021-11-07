@@ -798,11 +798,30 @@ instead of "limited-quirks".
       frameId?: Page.FrameId;
     }
     /**
+     * This issue tracks information needed to print a deprecation message.
+The formatting is inherited from the old console.log version, see more at:
+https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/deprecation.cc
+TODO(crbug.com/1264960): Re-work format to add i18n support per:
+https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/public/devtools_protocol/README.md
+     */
+    export interface DeprecationIssueDetails {
+      affectedFrame?: AffectedFrame;
+      sourceCodeLocation: SourceCodeLocation;
+      /**
+       * The content of the deprecation issue (this won't be translated),
+e.g. "window.inefficientLegacyStorageMethod will be removed in M97,
+around January 2022. Please use Web Storage or Indexed Database
+instead. This standard was abandoned in January, 1970. See
+https://www.chromestatus.com/feature/5684870116278272 for more details."
+       */
+      message?: string;
+    }
+    /**
      * A unique identifier for the type of issue. Each type may use one of the
 optional fields in InspectorIssueDetails to convey more specific
 information about the kind of issue.
      */
-    export type InspectorIssueCode = "SameSiteCookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"TrustedWebActivityIssue"|"LowTextContrastIssue"|"CorsIssue"|"AttributionReportingIssue"|"QuirksModeIssue"|"NavigatorUserAgentIssue"|"WasmCrossOriginModuleSharingIssue"|"GenericIssue";
+    export type InspectorIssueCode = "SameSiteCookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"TrustedWebActivityIssue"|"LowTextContrastIssue"|"CorsIssue"|"AttributionReportingIssue"|"QuirksModeIssue"|"NavigatorUserAgentIssue"|"WasmCrossOriginModuleSharingIssue"|"GenericIssue"|"DeprecationIssue";
     /**
      * This struct holds a list of optional fields with additional information
 specific to the kind of issue. When adding a new issue code, please also
@@ -823,6 +842,7 @@ add a new optional field to this type.
       navigatorUserAgentIssueDetails?: NavigatorUserAgentIssueDetails;
       wasmCrossOriginModuleSharingIssue?: WasmCrossOriginModuleSharingIssueDetails;
       genericIssueDetails?: GenericIssueDetails;
+      deprecationIssueDetails?: DeprecationIssueDetails;
     }
     /**
      * A unique id for a DevTools inspector issue. Allows other entities (e.g.
@@ -4127,6 +4147,39 @@ EventTarget.
   }
   
   /**
+   * EventBreakpoints permits setting breakpoints on particular operations and
+events in targets that run JavaScript but do not have a DOM.
+JavaScript execution will stop on these operations as if there was a regular
+breakpoint set.
+   */
+  export module EventBreakpoints {
+    
+    
+    /**
+     * Sets breakpoint on particular native event.
+     */
+    export type setInstrumentationBreakpointParameters = {
+      /**
+       * Instrumentation name to stop on.
+       */
+      eventName: string;
+    }
+    export type setInstrumentationBreakpointReturnValue = {
+    }
+    /**
+     * Removes breakpoint on particular native event.
+     */
+    export type removeInstrumentationBreakpointParameters = {
+      /**
+       * Instrumentation name to stop on.
+       */
+      eventName: string;
+    }
+    export type removeInstrumentationBreakpointReturnValue = {
+    }
+  }
+  
+  /**
    * This domain facilitates obtaining document snapshots with DOM, layout, and style information.
    */
   export module DOMSnapshot {
@@ -7116,9 +7169,10 @@ request correspondinfg to the main frame.
        */
       logId: string;
       /**
-       * Issuance date.
+       * Issuance date. Unlike TimeSinceEpoch, this contains the number of
+milliseconds since January 1, 1970, UTC, not the number of seconds.
        */
-      timestamp: TimeSinceEpoch;
+      timestamp: number;
       /**
        * Hash algorithm.
        */
@@ -11560,6 +11614,15 @@ cross-process navigation.
     export type clearCompilationCacheReturnValue = {
     }
     /**
+     * Sets the Secure Payment Confirmation transaction mode.
+https://w3c.github.io/secure-payment-confirmation/#sctn-automation-set-spc-transaction-mode
+     */
+    export type setSPCTransactionModeParameters = {
+      mode: "none"|"autoaccept"|"autoreject";
+    }
+    export type setSPCTransactionModeReturnValue = {
+    }
+    /**
      * Generates a report for testing.
      */
     export type generateTestReportParameters = {
@@ -11999,8 +12062,8 @@ certificate errors at the same time.
        */
       schemeIsCryptographic: boolean;
       /**
-       * List of explanations for the security state. If the overall security state is `insecure` or
-`warning`, at least one corresponding explanation should be included.
+       * Previously a list of explanations for the security state. Now always
+empty.
        */
       explanations: SecurityStateExplanation[];
       /**
@@ -12008,7 +12071,7 @@ certificate errors at the same time.
        */
       insecureContentStatus: InsecureContentStatus;
       /**
-       * Overrides user-visible description of the state.
+       * Overrides user-visible description of the state. Always omitted.
        */
       summary?: string;
     }
@@ -16978,6 +17041,8 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "DOMDebugger.setEventListenerBreakpoint": DOMDebugger.setEventListenerBreakpointParameters;
     "DOMDebugger.setInstrumentationBreakpoint": DOMDebugger.setInstrumentationBreakpointParameters;
     "DOMDebugger.setXHRBreakpoint": DOMDebugger.setXHRBreakpointParameters;
+    "EventBreakpoints.setInstrumentationBreakpoint": EventBreakpoints.setInstrumentationBreakpointParameters;
+    "EventBreakpoints.removeInstrumentationBreakpoint": EventBreakpoints.removeInstrumentationBreakpointParameters;
     "DOMSnapshot.disable": DOMSnapshot.disableParameters;
     "DOMSnapshot.enable": DOMSnapshot.enableParameters;
     "DOMSnapshot.getSnapshot": DOMSnapshot.getSnapshotParameters;
@@ -17189,6 +17254,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Page.produceCompilationCache": Page.produceCompilationCacheParameters;
     "Page.addCompilationCache": Page.addCompilationCacheParameters;
     "Page.clearCompilationCache": Page.clearCompilationCacheParameters;
+    "Page.setSPCTransactionMode": Page.setSPCTransactionModeParameters;
     "Page.generateTestReport": Page.generateTestReportParameters;
     "Page.waitForDebugger": Page.waitForDebuggerParameters;
     "Page.setInterceptFileChooserDialog": Page.setInterceptFileChooserDialogParameters;
@@ -17495,6 +17561,8 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "DOMDebugger.setEventListenerBreakpoint": DOMDebugger.setEventListenerBreakpointReturnValue;
     "DOMDebugger.setInstrumentationBreakpoint": DOMDebugger.setInstrumentationBreakpointReturnValue;
     "DOMDebugger.setXHRBreakpoint": DOMDebugger.setXHRBreakpointReturnValue;
+    "EventBreakpoints.setInstrumentationBreakpoint": EventBreakpoints.setInstrumentationBreakpointReturnValue;
+    "EventBreakpoints.removeInstrumentationBreakpoint": EventBreakpoints.removeInstrumentationBreakpointReturnValue;
     "DOMSnapshot.disable": DOMSnapshot.disableReturnValue;
     "DOMSnapshot.enable": DOMSnapshot.enableReturnValue;
     "DOMSnapshot.getSnapshot": DOMSnapshot.getSnapshotReturnValue;
@@ -17706,6 +17774,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Page.produceCompilationCache": Page.produceCompilationCacheReturnValue;
     "Page.addCompilationCache": Page.addCompilationCacheReturnValue;
     "Page.clearCompilationCache": Page.clearCompilationCacheReturnValue;
+    "Page.setSPCTransactionMode": Page.setSPCTransactionModeReturnValue;
     "Page.generateTestReport": Page.generateTestReportReturnValue;
     "Page.waitForDebugger": Page.waitForDebuggerReturnValue;
     "Page.setInterceptFileChooserDialog": Page.setInterceptFileChooserDialogReturnValue;
