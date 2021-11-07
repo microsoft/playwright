@@ -49,6 +49,7 @@ steps:
   - uses: actions/setup-node@v2
     with:
       node-version: '14'
+      cache: npm
   - name: Install operating system dependencies
     run: npx playwright install-deps
   - name: Run your tests
@@ -95,6 +96,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: '14.x'
+        cache: npm
     - name: Install dependencies
       run: npm ci
     - name: Install Playwright

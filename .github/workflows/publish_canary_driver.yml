@@ -19,6 +19,7 @@ jobs:
       with:
         node-version: 12
         registry-url: 'https://registry.npmjs.org'
+        cache: npm
     - run: npm i -g npm@7
     - run: npm ci
     - run: npm run build

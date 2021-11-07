@@ -24,6 +24,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
+        cache: npm
     - run: npm i -g npm@7
     - run: npm ci
       env:
@@ -54,6 +55,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 14
+        cache: npm
     - run: npm i -g npm@7
     - run: npm ci
       env:
