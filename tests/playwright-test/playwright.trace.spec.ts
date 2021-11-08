@@ -15,6 +15,7 @@
  */
 
 import { test, expect, stripAscii } from './playwright-test-fixtures';
+import { ZipFileSystem } from '../../packages/playwright-core/lib/utils/vfs';
 import fs from 'fs';
 
 test('should stop tracing with trace: on-first-retry, when not retrying', async ({ runInlineTest }, testInfo) => {
@@ -92,7 +93,7 @@ test('should not throw with trace: on-first-retry and two retries in the same wo
 test('should not throw with trace and timeouts', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { timeout: 2000, repeatEach: 20, use: { trace: 'on' } };
+      module.exports = { timeout: 2000, repeatEach: 10, use: { trace: 'on' } };
     `,
     'a.spec.ts': `
       const { test } = pwt;
@@ -110,3 +111,57 @@ test('should not throw with trace and timeouts', async ({ runInlineTest }, testI
   expect(stripAscii(result.output)).not.toContain('tracing.stopChunk:');
   expect(stripAscii(result.output)).not.toContain('tracing.stop:');
 });
+
+test('should save sources when requested', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        use: {
+          trace: 'on',
+        }
+      };
+    `,
+    'a.spec.ts': `
+      const { test } = pwt;
+      test('pass', async ({ page }) => {
+        await page.evaluate(2 + 2);
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toEqual(0);
+  const resources = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
+  expect([...resources.keys()].filter(f => f.includes('src@'))).toHaveLength(1);
+});
+
+test('should not save sources when not requested', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        use: {
+          trace: {
+            mode: 'on',
+            sources: false,
+          }
+        }
+      };
+    `,
+    'a.spec.ts': `
+      const { test } = pwt;
+      test('pass', async ({ page }) => {
+        await page.evaluate(2 + 2);
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toEqual(0);
+  const resources = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
+  expect([...resources.keys()].filter(f => f.includes('src@'))).toHaveLength(0);
+});
+
+async function parseTrace(file: string): Promise<Map<string, Buffer>> {
+  const zipFS = new ZipFileSystem(file);
+  const resources = new Map<string, Buffer>();
+  for (const entry of await zipFS.entries())
+    resources.set(entry, await zipFS.read(entry));
+  zipFS.close();
+  return resources;
+}
