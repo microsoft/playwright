@@ -23,7 +23,7 @@ Expected title or RegExp.
 Ensures the page is navigated to the given URL.
 
 ```java
-assertThat(page).hasURL('.com');
+assertThat(page).hasURL(".com");
 ```
 
 ### param: PageAssertions.hasURL.urlOrRegExp
@@ -39,5 +39,5 @@ Expected substring or RegExp.
 Makes the assertion check for the opposite condition. For example, this code tests that the page URL doesn't contain `"error"`:
 
 ```java
-assertThat(page).not().hasURL('error');
+assertThat(page).not().hasURL("error");
 ```
