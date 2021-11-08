@@ -5,14 +5,14 @@ title: "Browsers"
 
 Each version of Playwright needs specific versions of browser binaries to operate. Depending on the language you use, Playwright will either download these browsers at package install time for you, or you will need to use [Playwright CLI](./cli.md) to install these browsers.
 
-With every release, Playwright updates the versions of the browsers it supports, so that the latest Playwright would support the latest browsers at any moment. It means that every time you update playwright, you might need to re-run the `install` CLI command.
+With every release, Playwright updates the versions of the browsers it supports, so that the latest Playwright would support the latest browsers at any moment. It means that every time you update Playwright, you might need to re-run the `install` CLI command.
 
 <!-- TOC -->
 
 ## Chromium
 
 For Google Chrome, Microsoft Edge and other Chromium-based browsers, by default, Playwright uses open source Chromium builds.
-Since Chromium project is ahead of the branded browsers, when the world is on Google Chrome N, Playwright already supports
+Since the Chromium project is ahead of the branded browsers, when the world is on Google Chrome N, Playwright already supports
 Chromium N+1 that will be released in Google Chrome and Microsoft Edge in a few weeks.
 
 There is also a way to opt into using Google Chrome's or Microsoft Edge's branded builds for testing. For details
@@ -106,27 +106,27 @@ class Program
 
 ### When to use Google Chrome & Microsoft Edge and when not to?
 
-**Defaults**
+#### Defaults
 
 Using default Playwright configuration with the latest Chromium is a good idea most of the time.
 Since Playwright is ahead of Stable channels for the browsers, it gives peace of mind that the
 upcoming Google Chrome or Microsoft Edge releases won't break your site. You catch breakage
 early and have a lot of time to fix it before the official Chrome update.
 
-**Regression testing**
+#### Regression testing
 
 Having said that, testing policies often require regression testing to be performed against
 the current publicly available browsers. In this case, you can opt into one of the stable channels,
 `"chrome"` or `"msedge"`.
 
-**Media codecs**
+#### Media codecs
 
 Another reason for testing using official binaries is to test functionality related to media codecs.
 Chromium does not have all the codecs that Google Chrome or Microsoft Edge are bundling due to
 various licensing considerations and agreements. If your site relies on this kind of codecs (which is
 rarely the case), you also want to use official channel.
 
-**Enterprise policy**
+#### Enterprise policy
 
 Google Chrome and Microsoft Edge respect enterprise policies, which include limitations to the capabilities,
 network proxy, mandatory extensions that stand in the way of testing. So if you are a part of the
@@ -168,9 +168,9 @@ playwright install --help
 
 Playwright downloads Chromium, WebKit and Firefox browsers into the OS-specific cache folders:
 
-- `%USERPROFILE%\AppData\Local\ms-playwright` on Windows
-- `~/Library/Caches/ms-playwright` on MacOS
-- `~/.cache/ms-playwright` on Linux
+* `%USERPROFILE%\AppData\Local\ms-playwright` on Windows
+* `~/Library/Caches/ms-playwright` on MacOS
+* `~/.cache/ms-playwright` on Linux
 
 These browsers will take a few hundred megabytes of disk space when installed:
 
@@ -335,7 +335,7 @@ npx playwright install
 
 By default, Playwright downloads browsers from Microsoft CDN.
 
-Sometimes companies maintain an internal proxy that blocks direct access to the public
+Sometimes companies maintain an internal proxy that blocks direct access to public
 resources. In this case, Playwright can be configured to download browsers via a proxy server.
 
 ```bash bash-flavor=bash lang=js
@@ -642,7 +642,7 @@ playwright install firefox
 
 ## Stale browser removal
 
-Playwright keeps track of the clients that use its browsers. When there are no more clients that require particular
+Playwright keeps track of the clients that use its browsers. When there are no more clients that require a particular
 version of the browser, that version is deleted from the system. That way you can safely use Playwright instances of
 different versions and at the same time, you don't waste disk space for the browsers that are no longer in use.
 

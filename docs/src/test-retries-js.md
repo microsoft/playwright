@@ -32,12 +32,14 @@ test.describe('suite', () => {
 ```
 
 When **all tests pass**, they will run in order in the same worker process.
+
 * Worker process starts
   * `first good` passes
   * `second flaky` passes
   * `third good` passes
 
 Should **any test fail**, Playwright Test will discard the entire worker process along with the browser and will start a new one. Testing will continue in the new worker process starting with the next test.
+
 * Worker process #1 starts
   * `first good` passes
   * `second flaky` fails
@@ -45,6 +47,7 @@ Should **any test fail**, Playwright Test will discard the entire worker process
   * `third good` passes
 
 If you **enable [retries](#retries)**, second worker process will start by retrying the failed test and continue from there.
+
 * Worker process #1 starts
   * `first good` passes
   * `second flaky` fails
@@ -88,9 +91,10 @@ export default config;
 ```
 
 Playwright Test will categorize tests as follows:
-- "passed" - tests that passed on the first run;
-- "flaky" - tests that failed on the first run, but passed when retried;
-- "failed" - tests that failed on the first run and failed all retries.
+
+* "passed" - tests that passed on the first run;
+* "flaky" - tests that failed on the first run, but passed when retried;
+* "failed" - tests that failed on the first run and failed all retries.
 
 ```bash
 Running 3 tests using 1 worker
@@ -132,12 +136,14 @@ test.describe.serial('suite', () => {
 ```
 
 When running without [retries](#retries), all tests after the failure are skipped:
+
 * Worker process #1:
   * `first good` passes
   * `second flaky` fails
   * `third good` is skipped entirely
 
 When running with [retries](#retries), all tests are retried together:
+
 * Worker process #1:
   * `first good` passes
   * `second flaky` fails

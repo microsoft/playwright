@@ -12,6 +12,7 @@ Configuration file exports a single object.
 ### Test suite options
 
 These options define your test suite:
+
 - `metadata: any` - Any JSON-serializable metadata that will be put directly to the test report.
 - `name: string` - Project name, useful when defining multiple [test projects](#projects).
 - `outputDir: string` - Output directory for files created during the test run.
@@ -27,6 +28,7 @@ These options define your test suite:
 ### Test run options
 
 These options would be typically different between local development and CI operation:
+
 - `forbidOnly: boolean` - Whether to exit with an error if any tests are marked as `test.only`. Useful on CI.
 - `globalSetup: string` - Path to the [global setup](#global-setup-and-teardown) file. This file will be required and run before all the tests. It must export a single function.
 - `globalTeardown: string` - Path to the [global teardown](#global-setup-and-teardown) file. This file will be required and run after all the tests. It must export a single function.
@@ -53,6 +55,7 @@ Note that each [test project](#projects) can provide its own test suite options,
 Depending on the configuration and failures, Playwright Test might use different number of worker processes to run all the tests. For example, Playwright Test will always start a new worker process after a failing test.
 
 Worker-scoped fixtures and `beforeAll` and `afterAll` hooks receive `workerInfo` parameter. The following information is accessible from the `workerInfo`:
+
 - `config` - [Configuration object](#configuration-object).
 - `project` - Specific [project](#projects) configuration for this worker. Different projects are always run in separate processes.
 - `workerIndex: number` - A unique sequential index assigned to the worker process.
@@ -110,6 +113,7 @@ export const test = base.extend<{}, { server: http.Server }>({
 Test fixtures and `beforeEach` and `afterEach` hooks receive `testInfo` parameter. It is also available to the test function as a second parameter.
 
 In addition to everything from the [`workerInfo`](#workerinfo), the following information is accessible before and during the test:
+
 - `title: string` - Test title.
 - `file: string` - Full path to the test file.
 - `line: number` - Line number of the test declaration.
@@ -126,6 +130,7 @@ In addition to everything from the [`workerInfo`](#workerinfo), the following in
 - `outputPath(...pathSegments: string[])` - Function that returns the full path to a particular output artifact for the test.
 
 The following information is accessible after the test body has finished, in fixture teardown:
+
 - `duration: number` - test running time in milliseconds.
 - `status: 'passed' | 'failed' | 'timedOut'` - the actual test result.
 - `error` - any error thrown by the test body.
@@ -133,6 +138,7 @@ The following information is accessible after the test body has finished, in fix
 - `stderr: (string | Buffer)[]` - array of stderr chunks collected during the test run.
 
 Here is an example test that saves some information:
+
 ```js js-flavor=js
 // example.spec.js
 const { test } = require('@playwright/test');
@@ -158,6 +164,7 @@ test('my test needs a file', async ({ table }, testInfo) => {
 ```
 
 Here is an example fixture that automatically saves debug logs when the test fails:
+
 ```js js-flavor=js
 // my-test.js
 const debug = require('debug');
@@ -411,6 +418,7 @@ export const test = base.extend<TestOptions>({
 ```
 
 We can use our fixtures in the test.
+
 ```js js-flavor=js
 // example.spec.js
 const { test } = require('./my-test');
@@ -446,6 +454,7 @@ test('test 2', async ({ version, page, backendURL }) => {
 ```
 
 Now, we can run test in multiple configurations by using projects.
+
 ```js js-flavor=js
 // playwright.config.js
 // @ts-check
@@ -492,6 +501,7 @@ export default config;
 Each project can be configured separately, and run different set of tests with different parameters. See [test suite options](#test-suite-options) for the list of options available to each project.
 
 You can run all projects or just a single one:
+
 ```bash
 # Run both projects - each test will be run twice
 npx playwright test
@@ -505,6 +515,7 @@ npx playwright test --project=v2
 Playwright Test uses [`expect` library](https://jestjs.io/docs/expect) under the hood which has the functionality to extend it with [custom matchers](https://jestjs.io/docs/expect#expectextendmatchers).
 
 In this example we add a custom `toBeWithinRange` function in the configuration file.
+
 ```js js-flavor=js
 // playwright.config.js
 const { expect } = require('@playwright/test');
@@ -555,6 +566,7 @@ export default config;
 ```
 
 Now we can use `toBeWithinRange` in the test.
+
 ```js js-flavor=js
 // example.spec.js
 const { test, expect } = require('@playwright/test');

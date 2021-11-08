@@ -97,7 +97,6 @@ annotation to make JUnit create one instance of a class for all test methods wit
 for each test method). Store [Playwright] and [Browser] objects in instance fields. They will be shared between tests. Each instace of the class will use its
 own copy of Playwright.
 
-
 ```java
 // Subclasses will inherit PER_CLASS behavior.
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -174,7 +173,6 @@ class Test2 extends TestFixtures {
   }
 }
 ```
-
 
 Configure JUnit to run tests in each class sequentially and run multiple classes on parallel threads (with max
 number of thread equal to 1/2 of the number of CPU cores):

@@ -37,6 +37,7 @@ in test config.
 By default, the timeout for assertions is set to 5 seconds.
 
 ## expect(locator).toBeChecked([options])
+
 - `options`
   - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
 
@@ -48,6 +49,7 @@ await expect(locator).toBeChecked();
 ```
 
 ## expect(locator).toBeDisabled([options])
+
 - `options`
   - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
 
@@ -59,6 +61,7 @@ await expect(locator).toBeDisabled();
 ```
 
 ## expect(locator).toBeEditable([options])
+
 - `options`
   - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
 
@@ -70,6 +73,7 @@ await expect(locator).toBeEditable();
 ```
 
 ## expect(locator).toBeEmpty([options])
+
 - `options`
   - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
 
@@ -81,6 +85,7 @@ await expect(locator).toBeEmpty();
 ```
 
 ## expect(locator).toBeEnabled([options])
+
 - `options`
   - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
 
@@ -92,6 +97,7 @@ await expect(locator).toBeEnabled();
 ```
 
 ## expect(locator).toBeFocused([options])
+
 - `options`
   - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
 
@@ -103,6 +109,7 @@ await expect(locator).toBeFocused();
 ```
 
 ## expect(locator).toBeHidden([options])
+
 - `options`
   - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
 
@@ -114,6 +121,7 @@ await expect(locator).toBeHidden();
 ```
 
 ## expect(locator).toBeVisible([options])
+
 - `options`
   - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
 
@@ -125,6 +133,7 @@ await expect(locator).toBeVisible();
 ```
 
 ## expect(locator).toContainText(expected[, options])
+
 - `expected` <[string] | [RegExp] | [Array]<[string]|[RegExp]>>
 - `options`
   - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
@@ -146,6 +155,7 @@ await expect(locator).toContainText(['Text 1', 'Text 4', 'Text 5']);
 ```
 
 ## expect(locator).toHaveAttribute(name, value[, options])
+
 - `name` <[string]> Attribute name
 - `value` <[string]|[RegExp]> Attribute value
 - `options`
@@ -159,6 +169,7 @@ await expect(locator).toHaveAttribute('type', 'text');
 ```
 
 ## expect(locator).toHaveClass(expected[, options])
+
 - `expected` <[string] | [RegExp] | [Array]<[string]|[RegExp]>>
 - `options`
   - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
@@ -178,6 +189,7 @@ await expect(locator).toHaveClass(['component', 'component selected', 'component
 ```
 
 ## expect(locator).toHaveCount(count[, options])
+
 - `count` <[number]>
 - `options`
   - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
@@ -190,6 +202,7 @@ await expect(list).toHaveCount(3);
 ```
 
 ## expect(locator).toHaveCSS(name, value[, options])
+
 - `name` <[string]> CSS property name
 - `value` <[string]|[RegExp]> CSS property value
 - `options`
@@ -203,6 +216,7 @@ await expect(locator).toHaveCSS('display', 'flex');
 ```
 
 ## expect(locator).toHaveId(id[, options])
+
 - `id` <[string]> Element id
 - `options`
   - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
@@ -215,6 +229,7 @@ await expect(locator).toHaveId('lastname');
 ```
 
 ## expect(locator).toHaveJSProperty(name, value[, options])
+
 - `name` <[string]> Property name
 - `value` <[any]> Property value
 - `options`
@@ -229,6 +244,7 @@ await expect(locator).toHaveJSProperty('loaded', true);
 ```
 
 ## expect(locator).toHaveText(expected[, options])
+
 - `expected` <[string] | [RegExp] | [Array]<[string]|[RegExp]>>
 - `options`
   - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
@@ -250,6 +266,7 @@ await expect(locator).toHaveText(['Text 1', 'Text 2', 'Text 3']);
 ```
 
 ## expect(locator).toHaveValue(value[, options])
+
 - `value` <[string] | [RegExp]>
 - `options`
   - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
@@ -262,6 +279,7 @@ await expect(locator).toHaveValue(/[0-9]/);
 ```
 
 ## expect(page).toHaveTitle(title[, options])
+
 - `title` <[string] | [RegExp]>
 - `options`
   - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
@@ -273,6 +291,7 @@ await expect(page).toHaveTitle(/.*checkout/);
 ```
 
 ## expect(page).toHaveURL(url[, options])
+
 - `url` <[string] | [RegExp]>
 - `options`
   - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
@@ -284,6 +303,7 @@ await expect(page).toHaveURL(/.*checkout/);
 ```
 
 ## expect(value).toMatchSnapshot(name[, options])
+
 - `name` <[string] | [Array]<[string]>> Snapshot name.
 - `options`
   - `threshold` <[float]> Image matching threshold between zero (strict) and one (lax), default is configurable with [`property: TestConfig.expect`].

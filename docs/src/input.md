@@ -568,7 +568,6 @@ ArrowUp, F1 - F12, Digit0 - Digit9, KeyA - KeyZ, etc.
 
 Simple version produces a single character. This character is case-sensitive, so `"a"` and `"A"` will produce different results.
 
-
 ```js
 // <input id=name>
 await page.press('#name', 'Shift+A');
@@ -612,7 +611,6 @@ await page.PressAsync("#name", "Shift+ArrowLeft");
 Shortcuts such as `"Control+o"` or `"Control+Shift+T"` are supported as well. When specified with the modifier, modifier is pressed and being held while the subsequent key is being pressed.
 
 Note that you still need to specify the capital `A` in `Shift-A` to produce the capital character. `Shift-a` produces a lower-case one as if you had the `CapsLock` toggled.
-
 
 ### API reference
 
@@ -758,6 +756,7 @@ await fileChooser.SetFilesAsync("myfile.pdf");
 ```
 
 ### API reference
+
 - [FileChooser]
 - [`method: Page.setInputFiles`]
 - [`method: Frame.setInputFiles`]

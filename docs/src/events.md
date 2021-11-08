@@ -196,7 +196,7 @@ page.evaluate("prompt('Enter a number:')")
 
 ### API reference
 
-- [Browser]
-- [BrowserContext]
-- [Page]
-- [Worker]
+* [Browser]
+* [BrowserContext]
+* [Page]
+* [Worker]

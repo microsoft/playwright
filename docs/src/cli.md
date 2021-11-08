@@ -3,7 +3,7 @@ id: cli
 title: "Command line tools"
 ---
 
-Playwright comes with the command line tools.
+Playwright comes with command line tools.
 
 <!-- TOC -->
 
@@ -324,6 +324,7 @@ playwright wk example.com
 ```
 
 ### Emulate devices
+
 `open` can emulate mobile and tablet devices from the [`playwright.devices`](https://playwright.dev/docs/api/class-playwright#playwrightdevices) list.
 
 ```bash js
@@ -395,6 +396,7 @@ playwright open --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --l
 ```
 
 ## Inspect selectors
+
 During `open` or `codegen`, you can use following API inside the developer tools console of any browser.
 
 <img src="https://user-images.githubusercontent.com/284612/92536317-37dd9380-f1ee-11ea-875d-daf1b206dd56.png"></img>

@@ -73,7 +73,6 @@ image = Image.open(io.BytesIO(screenshot_bytes))
 var bytes = await page.ScreenshotAsync();
 ```
 
-
 ## Element screenshot
 
 Sometimes it is useful to take a screenshot of a single element.
@@ -104,5 +103,6 @@ await elementHandle.ScreenshotAsync(new ElementHandleScreenshotOptions { Path = 
 ```
 
 ### API reference
+
 - [`method: Page.screenshot`]
 - [`method: ElementHandle.screenshot`]

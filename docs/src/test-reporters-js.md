@@ -9,7 +9,6 @@ title: "Reporters"
 
 Playwright Test comes with a few built-in reporters for different needs and ability to provide custom reporters. The easiest way to try out built-in reporters is to pass `--reporter` [command line option](./test-cli.md).
 
-
 ```bash
 npx playwright test --reporter=line
 ```
@@ -133,6 +132,7 @@ export default config;
 ```
 
 Here is an example output in the middle of a test run. Failures will be listed at the end.
+
 ```bash
 npx playwright test --reporter=list
 Running 124 tests using 6 workers
@@ -180,6 +180,7 @@ export default config;
 ```
 
 Here is an example output in the middle of a test run. Failures are reported inline.
+
 ```bash
 npx playwright test --reporter=line
 Running 124 tests using 6 workers
@@ -224,6 +225,7 @@ export default config;
 ```
 
 Here is an example output in the middle of a test run. Failures will be listed at the end.
+
 ```bash
 npx playwright test --reporter=dot
 Running 124 tests using 6 workers
@@ -268,6 +270,7 @@ By default, report is written into the `playwright-report` folder in the current
 that location using the `PLAYWRIGHT_HTML_REPORT` environment variable or a reporter configuration.
 
 In configuration file, pass options directly:
+
 ```js js-flavor=js
 // playwright.config.js
 // @ts-check
@@ -302,7 +305,6 @@ Or if there is a custom folder name:
 npx playwright show-report my-report
 ```
 
-
 ### JSON reporter
 
 JSON reporter produces an object with all information about the test run.
@@ -324,6 +326,7 @@ npx playwright test --reporter=json
 ```
 
 In configuration file, pass options directly:
+
 ```js js-flavor=js
 // playwright.config.js
 // @ts-check
@@ -367,6 +370,7 @@ npx playwright test --reporter=junit
 ```
 
 In configuration file, pass options directly:
+
 ```js js-flavor=js
 // playwright.config.js
 // @ts-check
@@ -498,7 +502,6 @@ const config: PlaywrightTestConfig = {
 };
 export default config;
 ```
-
 
 ## Third party showcase
 

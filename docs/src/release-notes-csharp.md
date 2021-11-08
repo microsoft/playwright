@@ -39,7 +39,6 @@ This version of Playwright was also tested against the following stable channels
 - Google Chrome 94
 - Microsoft Edge 94
 
-
 ## Version 1.15
 
 ### 🖱️ Mouse Wheel
@@ -71,7 +70,8 @@ Its now possible to emulate the `forced-colors` CSS media feature by passing it 
 - [Tracing.StopChunkAsync()](https://playwright.dev/dotnet/docs/next/api/class-tracing#tracing-stop-chunk) - Stops a new trace chunk.
 
 ### Important ⚠
-* ⬆ .NET Core Apps 2.1 are **no longer** supported for our CLI tooling. As of August 31st, 2021, .NET Core 2.1 is no [longer supported](https://devblogs.microsoft.com/dotnet/net-core-2-1-will-reach-end-of-support-on-august-21-2021/) and will not receive any security updates. We've decided to move the CLI forward and require .NET Core 3.1 as a minimum. 
+
+- ⬆ .NET Core Apps 2.1 are **no longer** supported for our CLI tooling. As of August 31st, 2021, .NET Core 2.1 is no [longer supported](https://devblogs.microsoft.com/dotnet/net-core-2-1-will-reach-end-of-support-on-august-21-2021/) and will not receive any security updates. We've decided to move the CLI forward and require .NET Core 3.1 as a minimum.
 
 ### Browser Versions
 
@@ -140,7 +140,6 @@ await button.ClickAsync("button >> visible=true");
 - Mozilla Firefox 91.0
 - WebKit 15.0
 
-
 ## Version 1.13
 
 #### Playwright
@@ -190,5 +189,3 @@ This version of Playwright was also tested against the following stable channels
 
 - Google Chrome 91
 - Microsoft Edge 91
-
-

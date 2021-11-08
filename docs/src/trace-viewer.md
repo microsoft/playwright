@@ -56,10 +56,11 @@ await context.tracing.stop({ path: 'trace.zip' });
 You can also use `trace: 'retain-on-failure'` if you do not enable retries but still want traces for failed tests.
 
 Available options to record a trace:
-- `'off'` - Do not record a trace.
-- `'on'` - Record a trace for each test.
-- `'retain-on-failure'` - Record a trace for each test, but remove it from successful test runs.
-- `'on-first-retry'` - Record a trace only when retrying a test for the first time.
+
+* `'off'` - Do not record a trace.
+* `'on'` - Record a trace for each test.
+* `'retain-on-failure'` - Record a trace for each test, but remove it from successful test runs.
+* `'on-first-retry'` - Record a trace only when retrying a test for the first time.
 
 If you are not using Playwright Test, use the [`property: BrowserContext.tracing`] API instead.
 
@@ -161,10 +162,11 @@ Once trace is opened, you will see the list of actions Playwright performed on t
 <img width="301" alt="Actions" src="https://user-images.githubusercontent.com/883973/120588303-d39dd800-c3eb-11eb-9e8b-bfea8b775354.png"></img>
 
 Selecting each action reveals:
-- action snapshots,
-- action log,
-- source code location,
-- network log for this action
+
+* action snapshots,
+* action log,
+* source code location,
+* network log for this action
 
 in the properties pane. You will also see rendered DOM snapshots associated with each action.
 
@@ -198,7 +200,6 @@ Here is what the typical Action snapshot looks like:
 </img>
 
 Notice how it highlights both, the DOM Node as well as the exact click position.
-
 
 ## Viewing remote Traces
 

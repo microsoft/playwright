@@ -26,7 +26,8 @@ test('example test', async ({ page }) => {
 ```
 
 When you run above for the first time, test runner will say:
-```
+
+```bash
 Error: example.spec.ts-snapshots/landing-chromium-darwin.png is missing in snapshots, writing actual.
 ```
 

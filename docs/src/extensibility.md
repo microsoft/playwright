@@ -10,6 +10,7 @@ title: "Extensibility"
 Playwright supports custom selector engines, registered with [`method: Selectors.register`].
 
 Selector engine should have the following properties:
+
 - `create` function to create a relative selector from `root` (root is either a `Document`, `ShadowRoot` or `Element`)
   to a `target` element.
 - `query` function to query first element matching `selector` relative to the `root`.

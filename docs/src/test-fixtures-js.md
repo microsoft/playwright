@@ -8,6 +8,7 @@ title: "Advanced: fixtures"
 ## Introduction to fixtures
 
 Playwright Test is based on the concept of the test fixtures. Test fixtures are used to establish environment for each test, giving the test everything it needs and nothing else. Test fixtures are isolated between tests, which gives Playwright Test following benefits:
+
 - Playwright Test runs tests in parallel by default, making your test suite much faster.
 - Playwright Test can efficiently retry the flaky failures, instead of re-running the whole suite.
 - You can group tests based on their meaning, instead of their common setup.
@@ -204,6 +205,7 @@ With fixtures, test organization becomes flexible - you can put tests that make 
 Playwright Test uses worker processes to run test files. You can specify the maximum number of workers using `--workers` command line option. Similarly to how test fixtures are set up for individual test runs, worker fixtures are set up for each worker process. That's where you can set up services, run servers, etc. Playwright Test will reuse the worker process for as many test files as it can, provided their worker fixtures match and hence environments are identical.
 
 Here is how the test looks:
+
 ```js js-flavor=js
 // express.spec.js
 const test = require('./express-test');
@@ -237,6 +239,7 @@ test('fetch 2', async ({ port }) => {
 ```
 
 And here is how fixtures are declared and defined:
+
 ```js js-flavor=js
 // express-test.js
 const base = require('@playwright/test');

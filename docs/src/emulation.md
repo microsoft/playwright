@@ -4,6 +4,7 @@ title: "Emulation"
 ---
 
 Playwright allows overriding various parameters of the device where the browser is running:
+
 - viewport size, device scale factor, touch support
 - locale, timezone
 - color scheme
@@ -85,6 +86,7 @@ class Program
 All pages created in the context above will share the same device parameters.
 
 ### API reference
+
 - [`property: Playwright.devices`]
 - [`method: Browser.newContext`]
 
@@ -122,6 +124,7 @@ var context = await browser.NewContextAsync(new BrowserNewContextOptions { UserA
 ```
 
 ### API reference
+
 - [`method: Browser.newContext`]
 
 <br/>
@@ -210,6 +213,7 @@ await using var context = await browser.NewContextAsync(new BrowserNewContextOpt
 ```
 
 ### API reference
+
 - [`method: Browser.newContext`]
 - [`method: Page.setViewportSize`]
 
@@ -257,6 +261,7 @@ await using var context = await browser.NewContextAsync(new BrowserNewContextOpt
 ```
 
 ### API reference
+
 - [`method: Browser.newContext`]
 
 <br/>
@@ -356,6 +361,7 @@ await context.ClearPermissionsAsync();
 ```
 
 ### API reference
+
 - [`method: Browser.newContext`]
 - [`method: BrowserContext.grantPermissions`]
 - [`method: BrowserContext.clearPermissions`]
@@ -426,6 +432,7 @@ await context.SetGeolocationAsync(new Geolocation() { Longitude = 48.858455f, La
 **Note** you can only change geolocation for all pages in the context.
 
 ### API reference
+
 - [`method: Browser.newContext`]
 - [`method: BrowserContext.setGeolocation`]
 
@@ -532,5 +539,6 @@ await page.EmulateMediaAsync(new PageEmulateMediaOptions
 ```
 
 ### API reference
+
 - [`method: Browser.newContext`]
 - [`method: Page.emulateMedia`]

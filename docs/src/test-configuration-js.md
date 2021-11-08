@@ -642,6 +642,7 @@ Running 1 test using 1 worker
 ```
 
 There are many more things you can do with projects:
+
 - Run a subset of test by specifying different `testDir` for each project.
 - Run tests in multiple configurations, for example with desktop Chromium and emulating Chrome for Android.
 - Run "core" tests without retries to ensure stability of the core functionality, and use `retries` for other tests.

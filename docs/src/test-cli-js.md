@@ -10,61 +10,73 @@ title: "Command line"
 Here are the most common options available in the command line.
 
 - Run all the tests
+
   ```bash
   npx playwright test
   ```
 
 - Run a single test file
+
   ```bash
   npx playwright test tests/todo-page.spec.ts
   ```
 
 - Run a set of test files
+
   ```bash
   npx playwright test tests/todo-page/ tests/landing-page/
   ```
 
 - Run files that have `my-spec` or `my-spec-2` in the file name
+
   ```bash
   npx playwright test my-spec my-spec-2
   ```
 
 - Run the test with the title
+
   ```bash
   npx playwright test -g "add a todo item"
   ```
 
 - Run tests in headed browsers
+
   ```bash
   npx playwright test --headed
   ```
 
 - Run tests in a particular browser (config-less mode)
+
   ```bash
   npx playwright test --browser=webkit
   ```
 
 - Run tests in all browsers (config-less mode)
+
   ```bash
   npx playwright test --browser=all
   ```
 
 - Disable [parallelization](./test-parallel.md)
+
   ```bash
   npx playwright test --workers=1
   ```
 
 - Choose a [reporter](./test-reporters.md)
+
   ```bash
   npx playwright test --reporter=dot
   ```
 
 - Run in debug mode with [Playwright Inspector](./inspector.md)
+
   ```bash
   npx playwright test --debug
   ```
 
 - Ask for help
+
   ```bash
   npx playwright test --help
   ```

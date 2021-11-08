@@ -82,7 +82,6 @@ docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_prof
 Using `--ipc=host` is recommended when using Chrome ([Docker docs](https://docs.docker.com/engine/reference/run/#ipc-settings---ipc)). Chrome can run out of memory without this flag.
 :::
 
-
 ### Using on CI
 
 See our [Continuous Integration guides](./ci.md) for sample configs.
@@ -93,6 +92,7 @@ See [all available image tags].
 
 Docker images are published automatically by GitHub Actions. We currently publish images with the
 following tags (`v1.15.0` in this case is an example:):
+
 - `:next` - tip-of-tree image version based on Ubuntu 20.04 LTS (Focal Fossa).
 - `:next-focal` - tip-of-tree image version based on Ubuntu 20.04 LTS (Focal Fossa).
 - `:focal` - last Playwright release docker image based on Ubuntu 20.04 LTS (Focal Fossa).
@@ -106,6 +106,7 @@ Status of push to MCR can be [verified here](https://mcrflow-status-ui.azurewebs
 ### Base images
 
 We currently publish images based on the following [Ubuntu](https://hub.docker.com/_/ubuntu) versions:
+
 - **Ubuntu 20.04 LTS** (Focal Fossa), image tags include `focal`
 - **Ubuntu 18.04 LTS** (Bionic Beaver), image tags include `bionic` (not published for Java)
 

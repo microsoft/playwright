@@ -61,6 +61,7 @@ export const test = base.extend<TestOptions>({
 ```
 
 We can use our fixtures in the test.
+
 ```js js-flavor=js
 // example.spec.js
 const { test } = require('./my-test');
@@ -84,6 +85,7 @@ test('test 1', async ({ page, person }) => {
 ```
 
 Now, we can run test in multiple configurations by using projects.
+
 ```js js-flavor=js
 // playwright.config.js
 // @ts-check

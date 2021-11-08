@@ -12,209 +12,273 @@ methods accept [`param: selector`] as their first argument.
 ## Quick guide
 
 - Text selector
+
   ```js
   await page.click('text=Log in');
   ```
+
   ```java
   page.click("text=Log in");
   ```
+
   ```python async
   await page.click("text=Log in")
   ```
+
   ```python sync
   page.click("text=Log in")
   ```
+
   ```csharp
   await page.ClickAsync("text=Log in");
   ```
+
   Learn more about [text selector][text].
 - CSS selector
+
   ```js
   await page.click('button');
   await page.click('#nav-bar .contact-us-item');
   ```
+
   ```java
   page.click("button");
   page.click("#nav-bar .contact-us-item");
   ```
+
   ```python async
   await page.click("button")
   await page.click("#nav-bar .contact-us-item")
   ```
+
   ```python sync
   page.click("button")
   page.click("#nav-bar .contact-us-item")
   ```
+
   ```csharp
   await page.ClickAsync("button");
   await page.ClickAsync("#nav-bar .contact-us-item");
   ```
+
   Learn more about [css selector][css].
 - Select by attribute, with css selector
+
   ```js
   await page.click('[data-test=login-button]');
   await page.click('[aria-label="Sign in"]');
   ```
+
   ```java
   page.click("[data-test=login-button]");
   page.click("[aria-label='Sign in']");
   ```
+
   ```python async
   await page.click("[data-test=login-button]")
   await page.click("[aria-label='Sign in']")
   ```
+
   ```python sync
   page.click("[data-test=login-button]")
   page.click("[aria-label='Sign in']")
   ```
+
   ```csharp
   await page.ClickAsync("[data-test=login-button]");
   await page.ClickAsync("[aria-label='Sign in']");
   ```
+
   Learn more about [css selector][css].
 - Combine css and text selectors
+
   ```js
   await page.click('article:has-text("Playwright")');
   await page.click('#nav-bar >> text=Contact Us');
   ```
+
   ```java
   page.click("article:has-text(\"Playwright\")");
   page.click("#nav-bar :text(\"Contact us\")");
   ```
+
   ```python async
   await page.click("article:has-text('Playwright')")
   await page.click("#nav-bar :text('Contact us')")
   ```
+
   ```python sync
   page.click("article:has-text('Playwright')")
   page.click("#nav-bar :text('Contact us')")
   ```
+
   ```csharp
   await page.ClickAsync("article:has-text(\"Playwright\")");
   await page.ClickAsync("#nav-bar :text(\"Contact us\")");
   ```
+
   Learn more about [`:has-text()` and `:text()` pseudo classes][text].
 - Element that contains another, with css selector
+
   ```js
   await page.click('.item-description:has(.item-promo-banner)');
   ```
+
   ```java
   page.click(".item-description:has(.item-promo-banner)");
   ```
+
   ```python async
   await page.click(".item-description:has(.item-promo-banner)")
   ```
+
   ```python sync
   page.click(".item-description:has(.item-promo-banner)")
   ```
+
   ```csharp
   await page.ClickAsync(".item-description:has(.item-promo-banner)");
   ```
+
   Learn more about [`:has()` pseudo class](#selecting-elements-that-contain-other-elements).
 - Selecting based on layout, with css selector
+
   ```js
   await page.click('input:right-of(:text("Username"))');
   ```
+
   ```java
   page.click("input:right-of(:text(\"Username\"))");
   ```
+
   ```python async
   await page.click("input:right-of(:text('Username'))")
   ```
+
   ```python sync
   page.click("input:right-of(:text('Username'))")
   ```
+
   ```csharp
   await page.ClickAsync("input:right-of(:text(\"Username\"))");
   ```
+
   Learn more about [layout selectors](#selecting-elements-based-on-layout).
 - Only visible elements, with css selector
+
   ```js
   await page.click('.login-button:visible');
   ```
+
   ```java
   page.click(".login-button:visible");
   ```
+
   ```python async
   await page.click(".login-button:visible")
   ```
+
   ```python sync
   page.click(".login-button:visible")
   ```
+
   ```csharp
   await page.ClickAsync(".login-button:visible");
   ```
+
   Learn more about [selecting visible elements](#selecting-visible-elements).
 - Pick n-th match
+
   ```js
   await page.click(':nth-match(:text("Buy"), 3)');
   ```
+
   ```java
   page.click(":nth-match(:text('Buy'), 3)");
   ```
+
   ```python async
   await page.click(":nth-match(:text('Buy'), 3)")
   ```
+
   ```python sync
   page.click(":nth-match(:text('Buy'), 3)")
   ```
+
   ```csharp
   await page.ClickAsync(":nth-match(:text('Buy'), 3)");
   ```
+
   Learn more about [`:nth-match()` pseudo-class](#pick-n-th-match-from-the-query-result).
 - XPath selector
+
   ```js
   await page.click('xpath=//button');
   ```
+
   ```java
   page.click("xpath=//button");
   ```
+
   ```python async
   await page.click("xpath=//button")
   ```
+
   ```python sync
   page.click("xpath=//button")
   ```
+
   ```csharp
   await page.ClickAsync("xpath=//button");
   ```
+
   Learn more about [XPath selector][xpath].
 - React selector (experimental)
+
   ```js
   await page.click('_react=ListItem[text *= "milk" i]');
   ```
+
   ```java
   page.click("_react=ListItem[text *= 'milk' i]");
   ```
+
   ```python async
   await page.click("_react=ListItem[text *= 'milk' i]")
   ```
+
   ```python sync
   page.click("_react=ListItem[text *= 'milk' i]")
   ```
+
   ```csharp
   await page.ClickAsync("_react=ListItem[text *= 'milk' i]");
   ```
+
   Learn more about [React selectors][react].
 - Vue selector (experimental)
+
   ```js
   await page.click('_vue=list-item[text *= "milk" i]');
   ```
+
   ```java
   page.click("_vue=list-item[text *= 'milk' i]");
   ```
+
   ```python async
   await page.click("_vue=list-item[text *= "milk" i]")
   ```
+
   ```python sync
   page.click("_vue=list-item[text *= 'milk' i]")
   ```
+
   ```csharp
   await page.ClickAsync("_vue=list-item[text *= 'milk' i]");
   ```
+
   Learn more about [Vue selectors][vue].
-
-
 
 ## Text selector
 
@@ -223,15 +287,19 @@ Text selector locates elements that contain passed text.
 ```js
 await page.click('text=Log in');
 ```
+
 ```java
 page.click("text=Log in");
 ```
+
 ```python async
 await page.click("text=Log in")
 ```
+
 ```python sync
 page.click("text=Log in")
 ```
+
 ```csharp
 await page.ClickAsync("text=Log in");
 ```
@@ -243,15 +311,19 @@ Text selector has a few variations:
   ```js
   await page.click('text=Log in');
   ```
+
   ```java
   page.click("text=Log in");
   ```
+
   ```python async
   await page.click("text=Log in")
   ```
+
   ```python sync
   page.click("text=Log in")
   ```
+
   ```csharp
   await page.ClickAsync("text=Log in");
   ```
@@ -263,15 +335,19 @@ Text selector has a few variations:
   ```js
   await page.click('text="Log in"');
   ```
+
   ```java
   page.click("text='Log in'");
   ```
+
   ```python async
   await page.click("text='Log in'")
   ```
+
   ```python sync
   page.click("text='Log in'")
   ```
+
   ```csharp
   await page.ClickAsync("text='Log in'");
   ```
@@ -281,15 +357,19 @@ Text selector has a few variations:
   ```js
   await page.click('"Log in"');
   ```
+
   ```java
   page.click("'Log in'");
   ```
+
   ```python async
   await page.click("'Log in'")
   ```
+
   ```python sync
   page.click("'Log in'")
   ```
+
   ```csharp
   await page.ClickAsync("'Log in'");
   ```
@@ -299,15 +379,19 @@ Text selector has a few variations:
   ```js
   await page.click('text=/Log\\s*in/i');
   ```
+
   ```java
   page.click("text=/Log\\s*in/i");
   ```
+
   ```python async
   await page.click("text=/Log\s*in/i")
   ```
+
   ```python sync
   page.click("text=/Log\s*in/i")
   ```
+
   ```csharp
   await page.ClickAsync("text=/Log\\s*in/i");
   ```
@@ -315,6 +399,7 @@ Text selector has a few variations:
 - `article:has-text("Playwright")` - the `:has-text()` pseudo-class can be used inside a [css] selector. It matches any element containing specified text somewhere inside, possibly in a child or a descendant element. For example, `article:has-text("Playwright")` matches `<article><div>Playwright</div></article>`.
 
   Note that `:has-text()` should be used together with other `css` specifiers, otherwise it will match all the elements containing specified text, including the `<body>`.
+
   ```js
   // Wrong, will match many elements including <body>
   await page.click(':has-text("Playwright")');
@@ -335,6 +420,7 @@ Text selector has a few variations:
   # Correct, only matches the <article> element
   await page.click('article:has-text("Playwright")')
   ```
+
   ```python sync
   # Wrong, will match many elements including <body>
   page.click(':has-text("Playwright")')
@@ -354,22 +440,26 @@ Text selector has a few variations:
   ```js
   await page.click('#nav-bar :text("Home")');
   ```
+
   ```java
   page.click("#nav-bar :text('Home')");
   ```
+
   ```python async
   await page.click("#nav-bar :text('Home')")
   ```
+
   ```python sync
   page.click("#nav-bar :text('Home')")
   ```
+
   ```csharp
   await page.ClickAsync("#nav-bar :text('Home')");
   ```
 
 - `#nav-bar :text-is("Home")` - the `:text-is()` pseudo-class can be used inside a [css] selector, for strict text node match. This example is equivalent to `text="Home"` (note quotes), but inside the `#nav-bar` element.
 
-* `#nav-bar :text-matches("reg?ex", "i")` - the `:text-matches()` pseudo-class can be used inside a [css] selector, for regex-based match. This example is equivalent to `text=/reg?ex/i`, but inside the `#nav-bar` element.
+- `#nav-bar :text-matches("reg?ex", "i")` - the `:text-matches()` pseudo-class can be used inside a [css] selector, for regex-based match. This example is equivalent to `text=/reg?ex/i`, but inside the `#nav-bar` element.
 
 :::note
 Matching always normalizes whitespace, for example it turns multiple spaces into one, turns line breaks into spaces and ignores leading and trailing whitespace.
@@ -382,8 +472,8 @@ Input elements of the type `button` and `submit` are matched by their `value` in
 ## CSS selector
 
 Playwright augments standard CSS selectors in two ways:
-* `css` engine pierces open shadow DOM by default.
-* Playwright adds custom pseudo-classes like `:visible`, `:text` and more.
+- `css` engine pierces open shadow DOM by default.
+- Playwright adds custom pseudo-classes like `:visible`, `:text` and more.
 
 ```js
 await page.click('button');
@@ -408,6 +498,7 @@ await page.ClickAsync("button");
 ## Selecting visible elements
 
 There are two ways of selecting only [visible](./actionability.md#visible) elements with Playwright:
+
 - `:visible` pseudo-class in CSS selectors
 - `visible=` selector engine
 
@@ -429,7 +520,7 @@ Consider a page with two buttons, first invisible and second visible.
 <button>Visible</button>
 ```
 
-* This will find the first button, because it is the first one in DOM order. Then it will wait for the button to become visible before clicking, or timeout while waiting:
+- This will find the first button, because it is the first one in DOM order. Then it will wait for the button to become visible before clicking, or timeout while waiting:
 
   ```js
   await page.click('button');
@@ -451,24 +542,28 @@ Consider a page with two buttons, first invisible and second visible.
   await page.ClickAsync("button");
   ```
 
-* These will find a second button, because it is visible, and then click it.
+- These will find a second button, because it is visible, and then click it.
 
   ```js
   await page.click('button:visible');
   await page.click('button >> visible=true');
   ```
+
   ```java
   page.click("button:visible");
   page.click("button >> visible=true");
   ```
+
   ```python async
   await page.click("button:visible")
   await page.click("button >> visible=true")
   ```
+
   ```python sync
   page.click("button:visible")
   page.click("button >> visible=true")
   ```
+
   ```csharp
   await page.ClickAsync("button:visible");
   await page.ClickAsync("button >> visible=true");
@@ -536,6 +631,7 @@ await page.ClickAsync(":is(button:has-text(\"Log in\"), button:has-text(\"Sign i
 ## Selecting elements in Shadow DOM
 
 Our `css` and `text` engines pierce the [Shadow DOM](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_shadow_DOM) by default:
+
 - First they search for the elements in the light DOM in the iteration order, and
 - Then they search recursively inside open shadow roots in the iteration order.
 
@@ -606,11 +702,11 @@ element could be matched when layout changes by one pixel.
 
 Layout selectors use [bounding client rect](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect)
 to compute distance and relative position of the elements.
-* `:right-of(inner > selector)` - Matches elements that are to the right of any element matching the inner selector.
-* `:left-of(inner > selector)` - Matches elements that are to the left of any element matching the inner selector.
-* `:above(inner > selector)` - Matches elements that are above any of the elements matching the inner selector.
-* `:below(inner > selector)` - Matches elements that are below any of the elements matching the inner selector.
-* `:near(inner > selector)` - Matches elements that are near (within 50 CSS pixels) any of the elements matching the inner selector.
+- `:right-of(inner > selector)` - Matches elements that are to the right of any element matching the inner selector.
+- `:left-of(inner > selector)` - Matches elements that are to the left of any element matching the inner selector.
+- `:above(inner > selector)` - Matches elements that are above any of the elements matching the inner selector.
+- `:below(inner > selector)` - Matches elements that are below any of the elements matching the inner selector.
+- `:near(inner > selector)` - Matches elements that are near (within 50 CSS pixels) any of the elements matching the inner selector.
 
 ```js
 // Fill an input to the right of "Username".
@@ -734,10 +830,7 @@ Selector examples:
 - match by component and property value **prefix**: `_react=BookItem[author ^= "Steven"]`
 - match by component and property value **suffix**: `_react=BookItem[author $= "Steven"]`
 
-
-
 To find React element names in a tree use [React DevTools](https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi).
-
 
 :::note
 React selectors support React 15 and above.
@@ -779,7 +872,6 @@ Vue selectors support Vue2 and above.
 :::note
 Vue selectors, as well as [Vue DevTools](https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi), only work against **unminified** application builds.
 :::
-
 
 ## id, data-testid, data-test-id, data-test selectors
 
@@ -838,7 +930,6 @@ Attribute selectors are not CSS selectors, so anything CSS-specific like `:enabl
 :::note
 Attribute selectors pierce shadow DOM. To opt-out from this behavior, use `:light` suffix after attribute, for example `page.click('data-test-id:light=submit')
 :::
-
 
 ## Pick n-th match from the query result
 
@@ -918,10 +1009,13 @@ prefer using [text] or [css] selectors over the `:nth-match()`.
 Selectors defined as `engine=body` or in short-form can be combined with the `>>` token, e.g. `selector1 >> selector2 >> selectors3`. When selectors are chained, next one is queried relative to the previous one's result.
 
 For example,
+
 ```
 css=article >> css=.bar > .baz >> css=span[attr=value]
 ```
+
 is equivalent to
+
 ```js
 document
   .querySelector('article')
@@ -942,6 +1036,7 @@ For example, `css=article >> text=Hello` captures the element with the text `Hel
 The choice of selectors determines the resiliency of automation scripts. To reduce the maintenance burden, we recommend prioritizing user-facing attributes and explicit contracts.
 
 ### Prioritize user-facing attributes
+
 Attributes like text content, input placeholder, accessibility roles and labels are user-facing attributes that change rarely. These attributes are not impacted by DOM structure changes.
 
 The following examples use the built-in [text] and [css] selector engines.

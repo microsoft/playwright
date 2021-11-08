@@ -77,7 +77,7 @@ Try it out new HTML reporter with either `--reporter=html` or a `reporter` entry
 in `playwright.config.ts` file:
 
 ```bash
-$ npx playwright test --reporter=html
+npx playwright test --reporter=html
 ```
 
 The HTML reporter has all the information about tests and their failures, including surfacing
@@ -133,7 +133,6 @@ This version of Playwright was also tested against the following stable channels
 
 - Google Chrome 94
 - Microsoft Edge 94
-
 
 ## Version 1.15
 
@@ -345,15 +344,12 @@ Learn more in the [documentation](./test-advanced#launching-a-development-web-se
 - Mozilla Firefox 91.0
 - WebKit 15.0
 
-
 ## Version 1.13
-
 
 #### Playwright Test
 
 - **⚡️ Introducing [Reporter API](https://github.com/microsoft/playwright/blob/master/types/testReporter.d.ts)** which is already used to create an [Allure Playwright reporter](https://github.com/allure-framework/allure-js/pull/297).
 - **⛺️ New [`baseURL` fixture](./test-configuration#basic-options)** to support relative paths in tests.
-
 
 #### Playwright
 
@@ -403,6 +399,7 @@ Learn more in the [documentation](./test-advanced#launching-a-development-web-se
 - Integrate your POMs as extensible fixtures.
 
 Installation:
+
 ```bash
 npm i -D @playwright/test
 ```
@@ -430,6 +427,7 @@ npx playwright test
 #### 🧟‍♂️ Introducing Playwright Trace Viewer
 
 [Playwright Trace Viewer](./trace-viewer.md) is a new GUI tool that helps exploring recorded Playwright traces after the script ran. Playwright traces let you examine:
+
 - page DOM before and after each Playwright action
 - page rendering before and after each Playwright action
 - browser network during script execution
@@ -452,7 +450,6 @@ await context.tracing.stop({ path: 'trace.zip' });
 
 Traces are examined later with the Playwright CLI:
 
-
 ```sh
 npx playwright show-trace trace.zip
 ```
@@ -462,7 +459,6 @@ That will open the following GUI:
 ![image](https://user-images.githubusercontent.com/746130/121109654-d66c4480-c7c0-11eb-8d4d-eb70d2b03811.png)
 
 👉 Read more in [trace viewer documentation](./trace-viewer.md).
-
 
 #### Browser Versions
 
@@ -489,6 +485,7 @@ This version of Playwright was also tested against the following stable channels
 ## Version 1.11
 
 🎥  New video: [Playwright: A New Test Automation Framework for the Modern Web](https://youtu.be/_Jla6DyuEu4) ([slides](https://docs.google.com/presentation/d/1xFhZIJrdHkVe2CuMKOrni92HoG2SWslo0DhJJQMR1DI/edit?usp=sharing))
+
 - We talked about Playwright
 - Showed engineering work behind the scenes
 - Did live demos with new features ✨
@@ -505,12 +502,12 @@ This version of Playwright was also tested against the following stable channels
 - support for **async predicates** across the API in methods such as [`method: Page.waitForRequest`] and others
 - new **emulation devices**: Galaxy S8, Galaxy S9+, Galaxy Tab S4, Pixel 3, Pixel 4
 - new methods:
-    * [`method: Page.waitForURL`] to await navigations to URL
-    * [`method: Video.delete`] and [`method: Video.saveAs`] to manage screen recording
+  - [`method: Page.waitForURL`] to await navigations to URL
+  - [`method: Video.delete`] and [`method: Video.saveAs`] to manage screen recording
 - new options:
-    * `screen` option in the [`method: Browser.newContext`] method to emulate `window.screen` dimensions
-    * `position` option in [`method: Page.check`] and [`method: Page.uncheck`] methods
-    * `trial` option to dry-run actions in [`method: Page.check`], [`method: Page.uncheck`], [`method: Page.click`], [`method: Page.dblclick`], [`method: Page.hover`] and [`method: Page.tap`]
+  - `screen` option in the [`method: Browser.newContext`] method to emulate `window.screen` dimensions
+  - `position` option in [`method: Page.check`] and [`method: Page.uncheck`] methods
+  - `trial` option to dry-run actions in [`method: Page.check`], [`method: Page.uncheck`], [`method: Page.click`], [`method: Page.dblclick`], [`method: Page.hover`] and [`method: Page.tap`]
 
 ## Version 1.10
 
@@ -532,7 +529,6 @@ This version of Playwright was also tested against the following stable channels
 #### New APIs
 
 - [`browserType.launch()`](./api/class-browsertype#browsertypelaunchoptions) now accepts the new `'channel'` option. Read more in [our documentation](./browsers).
-
 
 ## Version 1.9
 
@@ -557,19 +553,22 @@ This version of Playwright was also tested against the following stable channels
 - WebKit 14.1
 
 #### New APIs
-- [`method: Page.pause`].
 
+- [`method: Page.pause`].
 
 ## Version 1.8
 
 - [Selecting elements based on layout](./selectors.md#selecting-elements-based-on-layout) with `:left-of()`, `:right-of()`, `:above()` and `:below()`.
 - Playwright now includes [command line interface](./cli.md), former playwright-cli.
+
   ```bash js
   npx playwright --help
   ```
+
   ```bash python
   playwright --help
   ```
+
 - [`method: Page.selectOption`] now waits for the options to be present.
 - New methods to [assert element state](./actionability#assertions) like [`method: Page.isEditable`].
 

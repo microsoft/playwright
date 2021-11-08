@@ -160,8 +160,9 @@ implement **login once and run multiple scenarios**. The lifecycle looks like:
 This approach will also **work in CI environments**, since it does not rely on any external state.
 
 ### API reference
-- [`method: BrowserContext.storageState`]
-- [`method: Browser.newContext`]
+
+* [`method: BrowserContext.storageState`]
+* [`method: Browser.newContext`]
 
 ## Session storage
 
@@ -258,10 +259,11 @@ await context.AddInitScriptAsync(@"(storage => {
 ```
 
 ### API reference
-- [`method: BrowserContext.storageState`]
-- [`method: Browser.newContext`]
-- [`method: Page.evaluate`]
-- [`method: BrowserContext.addInitScript`]
+
+* [`method: BrowserContext.storageState`]
+* [`method: Browser.newContext`]
+* [`method: Page.evaluate`]
+* [`method: BrowserContext.addInitScript`]
 
 ## Multi-factor authentication
 
@@ -347,5 +349,7 @@ class Program
 1. Reuse user data directory to run automation scenarios.
 
 ### API reference
-- [BrowserContext]
-- [`method: BrowserType.launchPersistentContext`]
+
+* [BrowserContext]
+
+* [`method: BrowserType.launchPersistentContext`]

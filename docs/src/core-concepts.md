@@ -7,7 +7,7 @@ Playwright provides a set of APIs to automate Chromium, Firefox and WebKit
 browsers. By using the Playwright API, you can write scripts to create
 new browser pages, navigate to URLs and then interact with elements on a page.
 
-Along with a test runner Playwright can be used to automate user interactions to
+Along with a test runner, Playwright can be used to automate user interactions to
 validate and test web applications. The Playwright API enables this through
 the following primitives.
 
@@ -628,13 +628,13 @@ var sectionText = await page.EvalOnSelectorAsync<string>("*css=section >> text=S
 
 Actions like [`method: Page.click`] and [`method: Page.fill`] auto-wait for the element to be visible
 and [actionable](./actionability.md). For example, click will:
+
 - wait for an element with the given selector to appear in the DOM
 - wait for it to become visible: have non-empty bounding box and no `visibility:hidden`
 - wait for it to stop moving: for example, wait until css transition finishes
 - scroll the element into view
 - wait for it to receive pointer events at the action point: for example, wait until element becomes non-obscured by other elements
 - retry if the element is detached during any of the above checks
-
 
 ```js
 // Playwright waits for #search element to be in the DOM

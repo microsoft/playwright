@@ -61,6 +61,7 @@ await page.GotoAsync("https://example.com");
 ```
 
 ### API reference
+
 - [`method: Browser.newContext`]
 
 ## HTTP Proxy
@@ -163,7 +164,6 @@ using var context = await Browser.NewContextAsync(new BrowserNewContextOptions
     Proxy = new Proxy { Server = "http://myproxy.com:3128" })
 });
 ```
-
 
 ## Network events
 
@@ -363,6 +363,7 @@ var response = await waitForResponseTask;
 ```
 
 ### API reference
+
 - [Request]
 - [Response]
 - [`event: Page.request`]
@@ -451,6 +452,7 @@ await page.GotoAsync("https://example.com");
 ```
 
 ### API reference
+
 - [`method: BrowserContext.route`]
 - [`method: BrowserContext.unroute`]
 - [`method: Page.route`]
@@ -574,6 +576,7 @@ else
 ```
 
 ### API reference
+
 - [`method: Page.route`]
 - [`method: BrowserContext.route`]
 - [`method: Route.abort`]
@@ -608,6 +611,7 @@ await page.route('**/title.html', async route => {
 ```
 
 ### API reference
+
 - [APIRequestContext]
 - [`method: Page.route`]
 - [`method: BrowserContext.route`]
@@ -663,6 +667,7 @@ page.WebSocket += (_, ws) =>
 ```
 
 ### API reference
+
 - [WebSocket]
 - [`event: Page.webSocket`]
 - [`event: WebSocket.frameSent`]

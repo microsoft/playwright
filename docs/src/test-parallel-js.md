@@ -26,11 +26,13 @@ Workers are always shutdown after a [test failure](./test-retries.md#failures) t
 You can control the maximum number of parallel worker processes via [command line](./test-cli.md) or in the [configuration file](./test-configuration.md).
 
 From the command line:
+
 ```bash
 npx playwright test --workers 4
 ```
 
 In the configuration file:
+
 ```js js-flavor=js
 // playwright.config.js
 // @ts-check
@@ -106,11 +108,13 @@ You can limit the number of failed tests in the whole test suite by setting `max
 When running with "max failures" set, Playwright Test will stop after reaching this number of failed tests and skip any tests that were not executed yet. This is useful to avoid wasting resources on broken test suites.
 
 Passing command line option:
+
 ```bash
 npx playwright test --max-failures=10
 ```
 
 Setting in the configuration file:
+
 ```js js-flavor=js
 // playwright.config.js
 // @ts-check

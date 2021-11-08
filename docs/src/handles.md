@@ -6,6 +6,7 @@ title: "Handles"
 Playwright can create handles to the page DOM elements or any other objects inside the
 page. These handles live in the Playwright process, whereas the actual objects live
 in the browser. There are two types of handles:
+
 - [JSHandle] to reference any JavaScript objects in the page
 - [ElementHandle] to reference DOM elements in the page, it has extra methods that allow
 performing actions on the elements and asserting their properties.
@@ -18,6 +19,7 @@ on a handle, get handle properties, pass handle as an evaluation parameter, seri
 object into JSON etc. See the [JSHandle] class API for these and methods.
 
 ### API reference
+
 - [JSHandle]
 - [ElementHandle]
 
@@ -255,7 +257,6 @@ await page.EvaluateAsync("arg => arg.myArray.add(arg.newElement)",
 await myArrayHandle.DisposeAsync();
 ```
 
-
 ## Handle Lifecycle
 
 Handles can be acquired using the page methods such as [`method: Page.evaluateHandle`],
@@ -265,8 +266,8 @@ created, handles will retain object from
 [garbage collection](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Memory_Management)
 unless page navigates or the handle is manually disposed via the [`method: JSHandle.dispose`] method.
 
-
 ### API reference
+
 - [JSHandle]
 - [ElementHandle]
 - [`method: ElementHandle.boundingBox`]

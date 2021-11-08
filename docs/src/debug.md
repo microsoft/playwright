@@ -15,7 +15,6 @@ for browser automation.
 
 <img width="712" alt="Playwright Inspector" src="https://user-images.githubusercontent.com/883973/108614092-8c478a80-73ac-11eb-9597-67dfce110e00.png"></img>
 
-
 ## Playwright Trace Viewer
 
 [Playwright Trace Viewer](./trace-viewer.md) is a GUI tool that helps troubleshooting test runs in a post-mortem manner.
@@ -72,6 +71,7 @@ Using a [`method: Page.pause`] method is an easy way to pause the Playwright scr
 and inspect the page in Developer tools. It will also open [Playwright Inspector](./inspector.md) to help with debugging.
 
 **For Chromium**: you can also open developer tools through a launch option.
+
 ```js
 await chromium.launch({ devtools: true });
 ```
@@ -105,6 +105,7 @@ await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeL
 Set the `PWDEBUG` environment variable to run your scripts in debug mode. Using `PWDEBUG=1` will open [Playwright Inspector](./inspector.md).
 
 Using `PWDEBUG=console` will configure the browser for debugging in Developer tools console:
+
 * **Runs headed**: Browsers always launch in headed mode
 * **Disables timeout**: Sets default timeout to 0 (= no timeout)
 * **Console helper**: Configures a `playwright` object in the browser to generate and highlight

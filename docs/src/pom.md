@@ -180,4 +180,5 @@ await page.Search("search query");
 ```
 
 ### API reference
+
 - [Page]

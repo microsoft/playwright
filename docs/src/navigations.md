@@ -20,6 +20,7 @@ navigation succeeds (is committed), the page starts **loading** the document.
 
 **Loading** covers getting the remaining response body over the network, parsing, executing the scripts and firing load
 events:
+
 - [`method: Page.url`] is set to the new url
 - document content is loaded over network and parsed
 - [`event: Page.DOMContentLoaded`] event is fired
@@ -61,7 +62,6 @@ page.goto("https://example.com")
 // Navigate the page
 await page.GotoAsync("https://example.com");
 ```
-
 
 ### Custom wait
 
@@ -154,6 +154,7 @@ await page.ClickAsync("text=Example Domain");
 ```
 
 ### API reference
+
 - [`method: Page.goto`]
 - [`method: Page.reload`]
 - [`method: Page.goBack`]
@@ -306,8 +307,8 @@ await page.FillAsync("#username", "John Doe");
 
 Clicking an element could trigger asynchronous processing before initiating the navigation. In these cases, it is
 recommended to explicitly call [`method: Page.waitForNavigation`]. For example:
-* Navigation is triggered from a `setTimeout`
-* Page waits for network requests before navigation
+- Navigation is triggered from a `setTimeout`
+- Page waits for network requests before navigation
 
 ```js
 // Note that Promise.all prevents a race condition
@@ -356,8 +357,8 @@ await page.RunAndWaitForNavigationAsync(async () =>
 
 Clicking an element could trigger multiple navigations. In these cases, it is recommended to explicitly
 [`method: Page.waitForNavigation`] to a specific url. For example:
-* Client-side redirects issued after the `load` event
-* Multiple pushes to history state
+- Client-side redirects issued after the `load` event
+- Multiple pushes to history state
 
 ```js
 // Note that Promise.all prevents a race condition
@@ -448,6 +449,7 @@ popup.WaitForLoadStateAsync(LoadState.Load);
 ```
 
 ### API reference
+
 - [`method: Page.click`]
 - [`method: Page.waitForLoadState`]
 - [`method: Page.waitForSelector`]
@@ -495,4 +497,5 @@ await page.ScreenshotAsync();
 ```
 
 ### API reference
+
 - [`method: Page.waitForFunction`]

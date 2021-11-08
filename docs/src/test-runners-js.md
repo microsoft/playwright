@@ -91,6 +91,7 @@ it('should work', async () => {
   assert.equal(await page.title(), 'Example Domain');
 });
 ```
+
 ## Multiple Browsers
 
 These simple examples can be extended to support multiple browsers using an environment variable.
@@ -105,4 +106,3 @@ beforeAll(async() => {
 ```
 
 Then set `BROWSER=firefox` to run your tests with firefox, or any other browser.
-

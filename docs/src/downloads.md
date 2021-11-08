@@ -100,5 +100,6 @@ Note that handling the event forks the control flow and makes script harder to f
 are downloading a file since your main control flow is not awaiting for this operation to resolve.
 
 ### API reference
+
 - [Download]
 - [`event: Page.download`]

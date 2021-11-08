@@ -3,7 +3,7 @@ id: assertions
 title: "Assertions"
 ---
 
-Playwright provides convenience APIs for common tasks, like reading the
+Playwright provides convenient APIs for common tasks, like reading the
 text content of an element. These APIs can be used in your test assertions.
 
 <!-- TOC -->
@@ -36,6 +36,7 @@ Assert.Equals("home", content);
 ```
 
 ### API reference
+
 - [`method: Page.textContent`]
 - [`method: ElementHandle.textContent`]
 
@@ -67,6 +68,7 @@ Assert.Equals("value", content);
 ```
 
 ### API reference
+
 - [`method: Page.innerText`]
 - [`method: ElementHandle.innerText`]
 
@@ -125,6 +127,7 @@ Assert.True(checked);
 ```
 
 ### API reference
+
 - [`method: Page.isChecked`]
 - [`method: ElementHandle.isChecked`]
 
@@ -156,6 +159,7 @@ Assert.Equals("home", content);
 ```
 
 ### API reference
+
 - [`method: Page.evalOnSelector`]
 - [`method: JSHandle.evaluate`]
 
@@ -187,6 +191,7 @@ Assert.Equals("<p>Result</p>", html);
 ```
 
 ### API reference
+
 - [`method: Page.innerHTML`]
 - [`method: ElementHandle.innerHTML`]
 
@@ -218,6 +223,7 @@ Assert.True(visibility);
 ```
 
 ### API reference
+
 - [`method: Page.isVisible`]
 - [`method: ElementHandle.isVisible`]
 
@@ -249,6 +255,7 @@ Assert.True(enabled);
 ```
 
 ### API reference
+
 - [`method: Page.isEnabled`]
 - [`method: ElementHandle.isEnabled`]
 
@@ -354,6 +361,7 @@ Assert.Equals(3, length);
 ```
 
 ### API reference
+
 - [`method: Page.evaluate`]
 - [`method: Page.evalOnSelector`]
 - [`method: Page.evalOnSelectorAll`]

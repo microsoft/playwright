@@ -8,6 +8,7 @@ your application.
 
 Sometimes you may want to send requests to the server directly from Node.js without loading a page and running js code in it.
 A few examples where it may come in handy:
+
 - Test your server API.
 - Prepare server side state before visiting the web application in a test.
 - Validate server side post-conditions after running some actions in the browser.
@@ -21,6 +22,7 @@ All of that could be achieved via [APIRequestContext] methods.
 [APIRequestContext] can send all kinds of HTTP(S) requests over network.
 
 The following example demonstrates how to use Playwright to test issues creation via [GitHub API](https://docs.github.com/en/rest). The test suite will do the following:
+
 - Create a new repository before running tests.
 - Create a few issues and validate server state.
 - Delete the repository after running tests.
@@ -74,6 +76,7 @@ module.exports = config;
 Playwright Test comes with the built-in `request` fixture that respects configuration options like `baseURL` or `extraHTTPHeaders` we specified and is ready to send some requests.
 
 Now we can add a few tests that will create new issues in the repository.
+
 ```js
 const REPO = 'test-repo-1';
 const USER = 'github-username';

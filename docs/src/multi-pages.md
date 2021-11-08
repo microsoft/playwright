@@ -102,6 +102,7 @@ class Program
 ```
 
 ### API reference
+
 - [BrowserContext]
 - [`method: Browser.newContext`]
 - [`method: BrowserContext.addCookies`]
@@ -109,8 +110,9 @@ class Program
 ## Multiple pages
 
 Each browser context can host multiple pages (tabs).
-* Each page behaves like a focused, active page. Bringing the page to front is not required.
-* Pages inside a context respect context-level emulation, like viewport sizes, custom network routes or browser
+
+- Each page behaves like a focused, active page. Bringing the page to front is not required.
+- Pages inside a context respect context-level emulation, like viewport sizes, custom network routes or browser
   locale.
 
 ```js
@@ -159,6 +161,7 @@ var allPages = context.Pages;
 ```
 
 ### API reference
+
 - [Page]
 - [`method: BrowserContext.newPage`]
 - [`method: BrowserContext.pages`]
@@ -262,6 +265,7 @@ context.Page += async  (_, page) => {
 ```
 
 ### API reference
+
 - [`event: BrowserContext.page`]
 
 ## Handling popups
@@ -364,4 +368,5 @@ page.Popup += async  (_, popup) => {
 ```
 
 ### API reference
+
 - [`event: Page.popup`]

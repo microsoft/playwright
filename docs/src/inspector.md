@@ -91,8 +91,8 @@ configures Playwright for debugging and opens the inspector.
   await page.PauseAsync();
   ```
 
-
 - Use `open` or `codegen` commands in the Playwright [CLI](./cli.md):
+
   ```bash js
   npx playwright codegen wikipedia.org
   ```
@@ -134,9 +134,9 @@ You can step over each action using the "Step over" action or resume script with
 You can use browser developer tools in Chromium, Firefox and WebKit while running
 a Playwright script, with or without Playwright inspector. Developer tools help to:
 
-* Inspect the DOM tree
-* **See console logs** during execution (or learn how to [read logs via API](./verification.md#console-logs))
-* Check **network activity** and other developer tools features
+- Inspect the DOM tree
+- **See console logs** during execution (or learn how to [read logs via API](./verification.md#console-logs))
+- Check **network activity** and other developer tools features
 
 :::note
 **For WebKit**: launching WebKit Inspector during the execution will

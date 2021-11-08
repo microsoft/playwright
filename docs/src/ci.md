@@ -15,6 +15,7 @@ configurations for common CI providers.
 1. **Ensure CI agent can run browsers**: Use [our Docker image](./docker.md)
    in Linux agents or install your dependencies using the [CLI](./cli.md#install-system-dependencies). Windows and macOS agents do not require any additional dependencies.
 1. **Install Playwright**:
+
    ```bash js
    # Install NPM packages
    npm ci
@@ -30,6 +31,7 @@ configurations for common CI providers.
    ```
 
 1. **Run your tests**:
+
    ```bash js
    npm test
    ```
@@ -111,6 +113,7 @@ jobs:
 We have a [pre-built Docker image](./docker.md) which can either be used directly, or as a reference to update your existing Docker definitions.
 
 Suggested configuration
+
 1. By default, Docker runs a container with a `/dev/shm` shared memory space 64MB.
    This is [typically too small](https://github.com/c0b/chrome-in-docker/issues/1) for Chromium
    and will cause Chromium to crash when rendering large pages. To fix, run the container with
@@ -162,7 +165,7 @@ Suggested configuration
 
 For Windows or macOS agents, no additional configuration required, just install Playwright and run your tests.
 
-For Linux agents, you can use [our Docker container](./docker.md) with Azure Pipelines support for [running containerized jobs](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/container-phases?view=azure-devops). Alternatively, you can refer to the [Dockerfile](./docker.md) to see additional dependencies that need to be installed on a Ubuntu agent.
+For Linux agents, you can use [our Docker container](./docker.md) with Azure Pipelines support for [running containerized jobs](https://docs.microsoft.com/azure/devops/pipelines/process/container-phases?view=azure-devops). Alternatively, you can refer to the [Dockerfile](./docker.md) to see additional dependencies that need to be installed on a Ubuntu agent.
 
 ```yml
 pool:
@@ -177,11 +180,12 @@ steps:
 ### Travis CI
 
 Suggested configuration
+
 1. [User namespace cloning](http://man7.org/linux/man-pages/man7/user_namespaces.7.html)
    should be enabled to support proper sandboxing
-1. [xvfb](https://en.wikipedia.org/wiki/Xvfb) should be launched in order to run
+2. [xvfb](https://en.wikipedia.org/wiki/Xvfb) should be launched in order to run
    Chromium in non-headless mode (e.g. to test Chrome Extensions)
-1. If your project does not have `package-lock.json`, Travis would be auto-caching
+3. If your project does not have `package-lock.json`, Travis would be auto-caching
    `node_modules` directory. If you run `npm install` (instead of `npm ci`), it is
    possible that the browser binaries are not downloaded. Fix this with [these steps](#exception-node_modules-are-cached) outlined below.
 
@@ -243,7 +247,7 @@ Running Playwright on CircleCI requires the following steps:
 
 1. If you’re using Playwright through Jest, then you may encounter an error spawning child processes:
 
-   ```
+   ```bash
    [00:00.0]  jest args: --e2e --spec --max-workers=36
    Error: spawn ENOMEM
       at ChildProcess.spawn (internal/child_process.js:394:11)
@@ -347,7 +351,7 @@ binaries. This behavior can be [customized with environment variables](./browser
 Caching browsers on CI is **strictly optional**: The `postinstall` hooks should
 execute and download the browser binaries on every run.
 
-#### Exception: `node_modules` are cached (Node-specific)
+### Exception: `node_modules` are cached (Node-specific)
 
 Most CI providers cache the [npm-cache](https://docs.npmjs.com/cli-commands/cache.html)
 directory (located at `$HOME/.npm`). If your CI pipelines caches the `node_modules`
@@ -359,6 +363,7 @@ package on disk and not execute the `postinstall` step.
   `package-lock.json` file.
 
 This behavior can be fixed with one of the following approaches:
+
 1. Move to caching `$HOME/.npm` or the npm-cache directory. (This is the default
    behavior in most CI providers.)
 1. Set `PLAYWRIGHT_BROWSERS_PATH=0` as the environment variable before running
@@ -457,6 +462,7 @@ On Linux agents, headed execution requires [Xvfb](https://en.wikipedia.org/wiki/
 ```bash js
 xvfb-run node index.js
 ```
+
 ```bash python
 xvfb-run python test.py
 ```
