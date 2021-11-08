@@ -11,14 +11,10 @@ Playwright Test was created specifically to accommodate the needs of end-to-end 
 - Execute tests in parallel.
 - Enjoy context isolation out of the box.
 - Capture videos, screenshots, and other artifacts on failure.
-- Integrate your POMs as extensible fixtures.
-
-<br/>
+- Integrate your POMs as extensible fixtures.  
 
 <!-- TOC -->
-- [Release notes](./release-notes.md)
-
-<br/>
+- [Release notes](./release-notes.md)  
 
 ## Installation
 
@@ -82,7 +78,6 @@ npx playwright test --browser=all
 
 Refer to [configuration](./test-configuration.md) section for configuring test runs in different modes with different browsers.
 
-
 ## Writing assertions
 
 Playwright Test uses [expect](https://jestjs.io/docs/expect) library for test assertions. It extends it with the Playwright-specific matchers to achieve greater testing ergonomics.
@@ -90,7 +85,6 @@ Playwright Test uses [expect](https://jestjs.io/docs/expect) library for test as
 Learn more about [test assertions here](./test-assertions.md).
 
 Here is a quick example of using them:
-
 
 ```js js-flavor=js
 // example.spec.js
@@ -144,7 +138,7 @@ test('my test', async ({ page }) => {
 
 Notice how running this test is saying:
 
-```
+```bash
 Error: example.spec.ts-snapshots/get-started-chromium-darwin.png is missing in snapshots, writing actual.
 ```
 
@@ -227,67 +221,78 @@ test.describe('feature foo', () => {
 });
 ```
 
-
 ## Command line
 
 The following are the usual command line patterns. Learn more about the [command line](./test-cli.md).
 
 - Run all the tests
+
   ```bash
   npx playwright test
   ```
 
 - Run a single test file
+
   ```bash
   npx playwright test tests/todo-page.spec.ts
   ```
 
 - Run a set of test files
+
   ```bash
   npx playwright test tests/todo-page/ tests/landing-page/
   ```
 
 - Run files that have `my-spec` or `my-spec-2` in the file name
+
   ```bash
   npx playwright test my-spec my-spec-2
   ```
 
 - Run the test with the title
+
   ```bash
   npx playwright test -g "add a todo item"
   ```
 
 - Run tests in headed browsers
+
   ```bash
   npx playwright test --headed
   ```
 
 - Run tests in a particular browser (config-less mode)
+
   ```bash
   npx playwright test --browser=webkit
   ```
 
 - Run tests in all browsers (config-less mode)
+
   ```bash
   npx playwright test --browser=all
   ```
 
 - Disable [parallelization](./test-parallel.md)
+
   ```bash
   npx playwright test --workers=1
   ```
 
 - Choose a [reporter](./test-reporters.md)
+
   ```bash
   npx playwright test --reporter=dot
   ```
 
 - Run in debug mode with [Playwright Inspector](./inspector.md)
+
   ```bash
   npx playwright test --debug
   ```
 
 - Ask for help
+
   ```bash
   npx playwright test --help
   ```
