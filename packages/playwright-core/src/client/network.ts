@@ -228,9 +228,20 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
     return Request.from(this._initializer.request);
   }
 
+  private _raceWithPageClose(promise: Promise<any>): Promise<void> {
+    const page = this.request().frame()._page;
+    // When page closes or crashes, we catch any potential rejects from this Route.
+    // Note that page could be missing when routing popup's initial request that
+    // does not have a Page initialized just yet.
+    return Promise.race([
+      promise,
+      page ? page._closedOrCrashedPromise : Promise.resolve(),
+    ]);
+  }
+
   async abort(errorCode?: string) {
     return this._wrapApiCall(async (channel: channels.RouteChannel) => {
-      await channel.abort({ errorCode });
+      await this._raceWithPageClose(channel.abort({ errorCode }));
     });
   }
 
@@ -271,13 +282,13 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
       if (length && !('content-length' in headers))
         headers['content-length'] = String(length);
 
-      await channel.fulfill({
+      await this._raceWithPageClose(channel.fulfill({
         status: statusOption || 200,
         headers: headersObjectToArray(headers),
         body,
         isBase64,
         fetchResponseUid
-      });
+      }));
     });
   }
 
@@ -292,12 +303,12 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
   private async _continue(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer }, isInternal?: boolean) {
     return await this._wrapApiCall(async (channel: channels.RouteChannel) => {
       const postDataBuffer = isString(options.postData) ? Buffer.from(options.postData, 'utf8') : options.postData;
-      await channel.continue({
+      await this._raceWithPageClose(channel.continue({
         url: options.url,
         method: options.method,
         headers: options.headers ? headersObjectToArray(options.headers) : undefined,
         postData: postDataBuffer ? postDataBuffer.toString('base64') : undefined,
-      });
+      }));
     }, undefined, isInternal);
   }
 }
