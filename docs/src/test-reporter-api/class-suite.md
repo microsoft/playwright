@@ -34,8 +34,8 @@ Location in the source where the suite is defined. Missing for root and project 
 
 Parent suite or [void] for the root suite.
 
-## property: Suite.project
-- type: <[void]|[TestProject]>
+## method: Suite.project
+- returns: <[void]|[TestProject]>
 
 Configuration of the project this suite belongs to, or [void] for the root suite.
 
