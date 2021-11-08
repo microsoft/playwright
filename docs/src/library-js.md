@@ -74,6 +74,7 @@ npx playwright codegen wikipedia.org
 Playwright includes built-in support for TypeScript. Type definitions will be imported automatically. It is recommended to use type-checking to improve the IDE experience.
 
 ### In JavaScript
+
 Add the following to the top of your JavaScript file to get type-checking in VS Code or WebStorm.
 
 ```js
@@ -89,6 +90,7 @@ let page;
 ```
 
 ### In TypeScript
+
 TypeScript support will work out-of-the-box. Types can also be imported explicitly.
 
 ```js
