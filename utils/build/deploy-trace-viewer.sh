@@ -55,6 +55,8 @@ else
   echo "ERROR: unknown environment - ${ENVIRONMENT}"
   exit 1
 fi
+# CNAME needs to be located inside the served docs/ folder for GitHub Pages
+cp playwright-trace/CNAME playwright-trace/docs/CNAME
 
 # 4. Commit and push the changes
 cd playwright-trace/
