@@ -19,7 +19,7 @@ Playwright is distributed as a set of [Maven](https://maven.apache.org/what-is-m
     {label: 'pom.xml', value: 'pom'}
   ]
 }>
-<TabItem value="java">
+s"java">
 
 ```java
 package org.example;

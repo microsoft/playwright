@@ -183,7 +183,6 @@ It is recommended to only bundle the browsers you use.
 
 You should use `page.wait_for_timeout(5000)` instead of `time.sleep(5)` and it is better to not wait for a timeout at all, but sometimes it is useful for debugging. In these cases, use our wait method instead of the `time` module. This is because we internally rely on asynchronous operations and when using `time.sleep(5)` they can't get processed correctly.
 
-
 ### incompatible with `SelectorEventLoop` of `asyncio` on Windows
 
 Playwright runs the driver in a subprocess, so it requires `ProactorEventLoop` of `asyncio` on Windows because `SelectorEventLoop` does not supports async subprocesses.
@@ -193,7 +192,6 @@ On Windows Python 3.7, Playwright sets the default event loop to `ProactorEventL
 ### Threading
 
 Playwright's API is not thread-safe. If you are using Playwright in a multi-threaded environment, you should create a playwright instance per thread. See [threading issue](https://github.com/microsoft/playwright-python/issues/623) for more details.
-
 
 ## System requirements
 
