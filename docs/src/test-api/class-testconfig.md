@@ -559,7 +559,8 @@ export default config;
 ## property: TestConfig.webServer
 - type: <[Object]>
   - `command` <[string]> Command which gets executed
-  - `port` <[int]> Port to wait on for the web server
+  - `port` <[int]> Port to wait on for the web server (exactly one of `port` or `url` is required)
+  - `url` <[string]> URL to wait on for the web server (exactly one of `port` or `url` is required)
   - `timeout` <[int]> Maximum duration to wait on until the web server is ready
   - `reuseExistingServer` <[boolean]> If true, reuse the existing server if it is already running, otherwise it will fail
   - `cwd` <[boolean]> Working directory to run the command in
@@ -567,11 +568,10 @@ export default config;
 
 Launch a development web server during the tests.
 
-The server will wait for it to be available on `127.0.0.1` or `::1` before running the tests. For continuous integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an existing server on the CI. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable.
+If the port is specified, the server will wait for it to be available on `127.0.0.1` or `::1`, before running the tests. If the url is specified, the server will wait for the URL to return a 2xx status code before running the tests. For continuous integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an existing server on the CI. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable.
 
-The port gets then passed over to Playwright as a `baseURL` when creating the context [`method: Browser.newContext`].
-For example `8080` ends up in `baseURL` to be `http://localhost:8080`. If you want to use `https://` you need to manually specify
-the `baseURL` inside `use`.
+The port or url gets then passed over to Playwright as a `baseURL` when creating the context [`method: Browser.newContext`].
+For example port `8080` ends up in `baseURL` to be `http://localhost:8080`. If you want to instead use `https://` you need to manually specify the `baseURL` inside `use` or use a url instead of a port in the `webServer` configuration. The url ends up in `baseURL` without any change.
 
 ```js js-flavor=ts
 // playwright.config.ts
