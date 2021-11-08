@@ -73,6 +73,11 @@ export type NavigationEvent = {
 export type SchedulableTask<T> = (injectedScript: js.JSHandle<InjectedScript>) => Promise<js.JSHandle<InjectedScriptPoll<T>>>;
 export type DomTaskBody<T, R, E> = (progress: InjectedScriptProgress, element: E, data: T, elements: Element[]) => R | symbol;
 
+type SelectorInFrame = {
+  frame: Frame;
+  info: SelectorInfo;
+};
+
 export class FrameManager {
   private _page: Page;
   private _frames = new Map<string, Frame>();
@@ -729,8 +734,10 @@ export class Frame extends SdkObject {
       throw new Error(`state: expected one of (attached|detached|visible|hidden)`);
     return controller.run(async progress => {
       progress.log(`waiting for selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);
-      return this.retryWithProgress(progress, selector, options, async (frame, info, continuePolling) => {
+      return this.retryWithProgress(progress, selector, options, async (selectorInFrame, continuePolling) => {
         // Be careful, |this| can be different from |frame|.
+        // We did not pass omitAttached, so it is non-null.
+        const { frame, info } = selectorInFrame!;
         const actualScope = this === frame ? scope : undefined;
         const task = dom.waitForSelectorTask(info, state, options.omitReturnValue, actualScope);
         const result = actualScope ? await frame._runWaitForSelectorTaskOnce(progress, stringifySelector(info.parsed), info.world, task)
@@ -965,20 +972,24 @@ export class Frame extends SdkObject {
   async retryWithProgress<R>(
     progress: Progress,
     selector: string,
-    options: types.StrictOptions & types.TimeoutOptions,
-    action: (frame: Frame, info: SelectorInfo, continuePolling: symbol) => Promise<R | symbol>,
+    options: types.StrictOptions & types.TimeoutOptions & { omitAttached?: boolean },
+    action: (selector: SelectorInFrame | null, continuePolling: symbol) => Promise<R | symbol>,
     scope?: dom.ElementHandle): Promise<R> {
     const continuePolling = Symbol('continuePolling');
     while (progress.isRunning()) {
-      const pair = await this._resolveFrameForSelector(progress, selector, options, scope);
-      if (!pair) {
-        // Missing content frame.
-        await new Promise(f => setTimeout(f, 100));
-        continue;
+      let selectorInFrame: SelectorInFrame | null;
+      if (options.omitAttached) {
+        selectorInFrame = await this.resolveFrameForSelectorNoWait(selector, options, scope);
+      } else {
+        selectorInFrame = await this._resolveFrameForSelector(progress, selector, options, scope);
+        if (!selectorInFrame) {
+          // Missing content frame.
+          await new Promise(f => setTimeout(f, 100));
+          continue;
+        }
       }
-      const { frame, info } = pair;
       try {
-        const result = await action(frame, info, continuePolling);
+        const result = await action(selectorInFrame, continuePolling);
         if (result === continuePolling)
           continue;
         return result as R;
@@ -987,7 +998,7 @@ export class Frame extends SdkObject {
         if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e))
           throw e;
         // If error has happened in the detached inner frame, ignore it, keep polling.
-        if (frame !== this && frame.isDetached())
+        if (selectorInFrame?.frame !== this && selectorInFrame?.frame.isDetached())
           continue;
         throw e;
       }
@@ -1001,10 +1012,12 @@ export class Frame extends SdkObject {
     selector: string,
     strict: boolean | undefined,
     action: (handle: dom.ElementHandle<Element>) => Promise<R | 'error:notconnected'>): Promise<R> {
-    return this.retryWithProgress(progress, selector, { strict }, async (frame, info, continuePolling) => {
+    return this.retryWithProgress(progress, selector, { strict }, async (selectorInFrame, continuePolling) => {
+      // We did not pass omitAttached, so selectorInFrame is not null.
+      const { frame, info } = selectorInFrame!;
       // Be careful, |this| can be different from |frame|.
-      progress.log(`waiting for selector "${selector}"`);
       const task = dom.waitForSelectorTask(info, 'attached');
+      progress.log(`waiting for selector "${selector}"`);
       const handle = await frame._scheduleRerunnableHandleTask(progress, info.world, task);
       const element = handle.asElement() as dom.ElementHandle<Element>;
       try {
@@ -1210,6 +1223,22 @@ export class Frame extends SdkObject {
     const controller = new ProgressController(metadata, this);
     const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
     const mainWorld = options.expression === 'to.have.property';
+
+    // List all combinations that are satisfied with the detached node(s).
+    let omitAttached = false;
+    if (!options.isNot && options.expression === 'to.be.hidden')
+      omitAttached = true;
+    else if (options.isNot && options.expression === 'to.be.visible')
+      omitAttached = true;
+    else if (!options.isNot && options.expression === 'to.have.count' && options.expectedNumber === 0)
+      omitAttached = true;
+    else if (options.isNot && options.expression === 'to.have.count' && options.expectedNumber !== 0)
+      omitAttached = true;
+    else if (!options.isNot && options.expression.endsWith('.array') && options.expectedText!.length === 0)
+      omitAttached = true;
+    else if (options.isNot && options.expression.endsWith('.array') && options.expectedText!.length > 0)
+      omitAttached = true;
+
     return await this._scheduleRerunnableTaskWithController(controller, selector, (progress, element, options, elements) => {
       let result: { matches: boolean, received?: any };
 
@@ -1241,7 +1270,7 @@ export class Frame extends SdkObject {
 
       // Reached the expected state!
       return result;
-    }, { ...options, isArray }, { strict: true, querySelectorAll: isArray, mainWorld, omitAttached: true, logScale: true, ...options }).catch(e => {
+    }, { ...options, isArray }, { strict: true, querySelectorAll: isArray, mainWorld, omitAttached, logScale: true, ...options }).catch(e => {
       // Q: Why not throw upon isSessionClosedError(e) as in other places?
       // A: We want user to receive a friendly message containing the last intermediate result.
       if (js.isJavaScriptErrorInEvaluate(e))
@@ -1326,9 +1355,10 @@ export class Frame extends SdkObject {
     const callbackText = body.toString();
 
     return controller.run(async progress => {
-      return this.retryWithProgress(progress, selector, options, async (frame, info) => {
+      return this.retryWithProgress(progress, selector, options, async selectorInFrame => {
         // Be careful, |this| can be different from |frame|.
         progress.log(`waiting for selector "${selector}"`);
+        const { frame, info } = selectorInFrame || { frame: this, info: { parsed: { parts: [{ name: 'control', body: 'return-empty', source: 'control=return-empty' }] }, world: 'utility', strict: !!options.strict } };
         return await frame._scheduleRerunnableTaskInFrame(progress, info, callbackText, taskData, options);
       });
     }, this._page._timeoutSettings.timeout(options));
@@ -1461,7 +1491,7 @@ export class Frame extends SdkObject {
     }, { source, arg });
   }
 
-  private async _resolveFrameForSelector(progress: Progress, selector: string, options: types.StrictOptions & types.TimeoutOptions, scope?: dom.ElementHandle): Promise<{ frame: Frame, info: SelectorInfo } | null> {
+  private async _resolveFrameForSelector(progress: Progress, selector: string, options: types.StrictOptions & types.TimeoutOptions, scope?: dom.ElementHandle): Promise<SelectorInFrame | null> {
     const elementPath: dom.ElementHandle<Element>[] = [];
     progress.cleanupWhenAborted(() => {
       // Do not await here to avoid being blocked, either by stalled
@@ -1476,6 +1506,7 @@ export class Frame extends SdkObject {
     for (let i = 0; i < frameChunks.length - 1 && progress.isRunning(); ++i) {
       const info = this._page.parseSelector(frameChunks[i], options);
       const task = dom.waitForSelectorTask(info, 'attached', false, i === 0 ? scope : undefined);
+      progress.log(`  waiting for frame "${stringifySelector(frameChunks[i])}"`);
       const handle = i === 0 && scope ? await frame._runWaitForSelectorTaskOnce(progress, stringifySelector(info.parsed), info.world, task)
         : await frame._scheduleRerunnableHandleTask(progress, info.world, task);
       const element = handle.asElement() as dom.ElementHandle<Element>;
@@ -1492,7 +1523,7 @@ export class Frame extends SdkObject {
     return { frame, info: this._page.parseSelector(frameChunks[frameChunks.length - 1], options) };
   }
 
-  async resolveFrameForSelectorNoWait(selector: string, options: types.StrictOptions & types.TimeoutOptions, scope?: dom.ElementHandle): Promise<{ frame: Frame, info: SelectorInfo } | null> {
+  async resolveFrameForSelectorNoWait(selector: string, options: types.StrictOptions & types.TimeoutOptions, scope?: dom.ElementHandle): Promise<SelectorInFrame | null> {
     let frame: Frame | null = this;
     const frameChunks = splitSelectorByFrame(selector);
 

@@ -96,6 +96,7 @@ export class InjectedScript {
     this._engines.set('css', this._createCSSEngine());
     this._engines.set('nth', { queryAll: () => [] });
     this._engines.set('visible', { queryAll: () => [] });
+    this._engines.set('control', this._createControlEngine());
 
     for (const { name, engine } of customEngines)
       this._engines.set(name, engine);
@@ -259,6 +260,18 @@ export class InjectedScript {
     return {
       queryAll: (root: SelectorRoot, selector: string): Element[] => {
         return queryList(root, selector);
+      }
+    };
+  }
+
+  private _createControlEngine(): SelectorEngineV2 {
+    return {
+      queryAll(root: SelectorRoot, body: any) {
+        if (body === 'enter-frame')
+          return [];
+        if (body === 'return-empty')
+          return [];
+        throw new Error(`Internal error, unknown control selector ${body}`);
       }
     };
   }

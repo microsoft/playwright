@@ -533,6 +533,41 @@ Calls [focus](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus
 
 ### option: Locator.focus.timeout = %%-input-timeout-%%
 
+
+## method: Locator.frameLocator
+- returns: <[FrameLocator]>
+
+When working with iframes, you can create a frame locator that will enter the iframe and allow selecting elements
+in that iframe:
+
+```js
+const locator = page.frameLocator('iframe').locator('text=Submit');
+await locator.click();
+```
+
+```java
+Locator locator = page.frameLocator("iframe").locator("text=Submit");
+locator.click();
+```
+
+```python async
+locator = page.frame_locator("iframe").locator("text=Submit")
+await locator.click()
+```
+
+```python sync
+locator = page.frame_locator("text=Submit").locator("text=Submit")
+locator.click()
+```
+
+```csharp
+var locator = page.FrameLocator("iframe").Locator("text=Submit");
+await locator.ClickAsync();
+```
+
+### param: Locator.frameLocator.selector = %%-find-selector-%%
+
+
 ## async method: Locator.getAttribute
 - returns: <[null]|[string]>
 
@@ -641,8 +676,7 @@ Returns locator to the last matching element.
 ## method: Locator.locator
 - returns: <[Locator]>
 
-The method finds an element matching the specified selector in the `Locator`'s subtree. See
-[Working with selectors](./selectors.md) for more details.
+The method finds an element matching the specified selector in the `Locator`'s subtree.
 
 ### param: Locator.locator.selector = %%-find-selector-%%
 

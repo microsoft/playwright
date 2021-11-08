@@ -90,6 +90,10 @@ export class Locator implements api.Locator {
     return new Locator(this._frame, this._selector + ' >> ' + selector);
   }
 
+  frameLocator(selector: string): FrameLocator {
+    return new FrameLocator(this._frame, this._selector + ' >> ' + selector);
+  }
+
   async elementHandle(options?: TimeoutOptions): Promise<ElementHandle<SVGElement | HTMLElement>> {
     return await this._frame.waitForSelector(this._selector, { strict: true, state: 'attached', ...options })!;
   }
@@ -243,5 +247,23 @@ export class Locator implements api.Locator {
 
   toString() {
     return `Locator@${this._selector}`;
+  }
+}
+
+export class FrameLocator implements api.FrameLocator {
+  private _frame: Frame;
+  private _selector: string;
+
+  constructor(frame: Frame, selector: string) {
+    this._frame = frame;
+    this._selector = selector + ' >> control=enter-frame';
+  }
+
+  locator(selector: string): Locator {
+    return new Locator(this._frame, this._selector + ' >> ' + selector);
+  }
+
+  frameLocator(selector: string): FrameLocator {
+    return new FrameLocator(this._frame, this._selector + ' >> ' + selector);
   }
 }

@@ -18,7 +18,7 @@
 import { assert } from '../utils/utils';
 import * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
-import { Locator } from './locator';
+import { FrameLocator, Locator } from './locator';
 import { ElementHandle, convertSelectOptionValues, convertInputFiles } from './elementHandle';
 import { assertMaxArguments, JSHandle, serializeArgument, parseResult } from './jsHandle';
 import fs from 'fs';
@@ -320,6 +320,10 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
 
   locator(selector: string): Locator {
     return new Locator(this, selector);
+  }
+
+  frameLocator(selector: string): FrameLocator {
+    return new FrameLocator(this, selector);
   }
 
   async focus(selector: string, options: channels.FrameFocusOptions = {}) {

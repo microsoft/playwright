@@ -44,7 +44,7 @@ export class Selectors {
       'data-testid', 'data-testid:light',
       'data-test-id', 'data-test-id:light',
       'data-test', 'data-test:light',
-      'nth', 'visible', 'content-frame'
+      'nth', 'visible', 'control'
     ]);
     this._builtinEnginesInMainWorld = new Set([
       '_react', '_vue',

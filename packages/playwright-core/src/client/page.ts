@@ -27,7 +27,7 @@ import { ConsoleMessage } from './consoleMessage';
 import { Dialog } from './dialog';
 import { Download } from './download';
 import { ElementHandle, determineScreenshotType } from './elementHandle';
-import { Locator } from './locator';
+import { Locator, FrameLocator } from './locator';
 import { Worker } from './worker';
 import { Frame, verifyLoadState, WaitForNavigationOptions } from './frame';
 import { Keyboard, Mouse, Touchscreen } from './input';
@@ -541,6 +541,10 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
 
   locator(selector: string): Locator {
     return this.mainFrame().locator(selector);
+  }
+
+  frameLocator(selector: string): FrameLocator {
+    return this.mainFrame().frameLocator(selector);
   }
 
   async focus(selector: string, options?: channels.FrameFocusOptions) {

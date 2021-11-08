@@ -1843,6 +1843,42 @@ Returns frame with matching URL.
 
 A glob pattern, regex pattern or predicate receiving frame's `url` as a [URL] object.
 
+
+## method: Page.frameLocator
+- returns: <[FrameLocator]>
+
+When working with iframes, you can create a frame locator that will enter the iframe and allow selecting elements
+in that iframe. Following snippet locates element with text "Submit" in the iframe with id `my-frame`,
+like `<iframe id="my-frame">`:
+
+```js
+const locator = page.frameLocator('#my-iframe').locator('text=Submit');
+await locator.click();
+```
+
+```java
+Locator locator = page.frameLocator("#my-iframe").locator("text=Submit");
+locator.click();
+```
+
+```python async
+locator = page.frame_locator("#my-iframe").locator("text=Submit")
+await locator.click()
+```
+
+```python sync
+locator = page.frame_locator("#my-iframe").locator("text=Submit")
+locator.click()
+```
+
+```csharp
+var locator = page.FrameLocator("#my-iframe").Locator("text=Submit");
+await locator.ClickAsync();
+```
+
+### param: Page.frameLocator.selector = %%-find-selector-%%
+
+
 ## method: Page.frames
 - returns: <[Array]<[Frame]>>
 

@@ -2097,6 +2097,20 @@ export interface Page {
   }): null|Frame;
 
   /**
+   * When working with iframes, you can create a frame locator that will enter the iframe and allow selecting elements in
+   * that iframe. Following snippet locates element with text "Submit" in the iframe with id `my-frame`, like `<iframe
+   * id="my-frame">`:
+   *
+   * ```js
+   * const locator = page.frameLocator('#my-iframe').locator('text=Submit');
+   * await locator.click();
+   * ```
+   *
+   * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   */
+  frameLocator(selector: string): FrameLocator;
+
+  /**
    * An array of all frames attached to the page.
    */
   frames(): Array<Frame>;
@@ -4865,6 +4879,20 @@ export interface Frame {
    *
    */
   frameElement(): Promise<ElementHandle>;
+
+  /**
+   * When working with iframes, you can create a frame locator that will enter the iframe and allow selecting elements in
+   * that iframe. Following snippet locates element with text "Submit" in the iframe with id `my-frame`, like `<iframe
+   * id="my-frame">`:
+   *
+   * ```js
+   * const locator = frame.frameLocator('#my-iframe').locator('text=Submit');
+   * await locator.click();
+   * ```
+   *
+   * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   */
+  frameLocator(selector: string): FrameLocator;
 
   /**
    * Returns element attribute value.
@@ -8884,6 +8912,19 @@ export interface Locator {
   }): Promise<void>;
 
   /**
+   * When working with iframes, you can create a frame locator that will enter the iframe and allow selecting elements in
+   * that iframe:
+   *
+   * ```js
+   * const locator = page.frameLocator('iframe').locator('text=Submit');
+   * await locator.click();
+   * ```
+   *
+   * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   */
+  frameLocator(selector: string): FrameLocator;
+
+  /**
    * Returns element attribute value.
    * @param name Attribute name to get the value for.
    * @param options
@@ -9081,8 +9122,7 @@ export interface Locator {
   last(): Locator;
 
   /**
-   * The method finds an element matching the specified selector in the `Locator`'s subtree. See
-   * [Working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * The method finds an element matching the specified selector in the `Locator`'s subtree.
    * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    */
   locator(selector: string): Locator;
@@ -13428,6 +13468,33 @@ export interface FileChooser {
      */
     timeout?: number;
   }): Promise<void>;
+}
+
+/**
+ * FrameLocator represents a view to the `iframe` on the page. It captures the logic sufficient to retrieve the `iframe`
+ * and locate elements in that iframe. FrameLocator can be created with either
+ * [page.frameLocator(selector)](https://playwright.dev/docs/api/class-page#page-frame-locator) or
+ * [locator.frameLocator(selector)](https://playwright.dev/docs/api/class-locator#locator-frame-locator) method.
+ *
+ * ```js
+ * const locator = page.frameLocator('#my-frame').locator('text=Submit');
+ * await locator.click();
+ * ```
+ *
+ */
+export interface FrameLocator {
+  /**
+   * When working with iframes, you can create a frame locator that will enter the iframe and allow selecting elements in
+   * that iframe.
+   * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   */
+  frameLocator(selector: string): FrameLocator;
+
+  /**
+   * The method finds an element matching the specified selector in the FrameLocator's subtree.
+   * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   */
+  locator(selector: string): Locator;
 }
 
 /**
