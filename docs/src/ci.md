@@ -183,9 +183,9 @@ Suggested configuration
 
 1. [User namespace cloning](http://man7.org/linux/man-pages/man7/user_namespaces.7.html)
    should be enabled to support proper sandboxing
-2. [xvfb](https://en.wikipedia.org/wiki/Xvfb) should be launched in order to run
+1. [xvfb](https://en.wikipedia.org/wiki/Xvfb) should be launched in order to run
    Chromium in non-headless mode (e.g. to test Chrome Extensions)
-3. If your project does not have `package-lock.json`, Travis would be auto-caching
+1. If your project does not have `package-lock.json`, Travis would be auto-caching
    `node_modules` directory. If you run `npm install` (instead of `npm ci`), it is
    possible that the browser binaries are not downloaded. Fix this with [these steps](#exception-node_modules-are-cached) outlined below.
 
