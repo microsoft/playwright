@@ -489,7 +489,7 @@ const config: PlaywrightTestConfig<TestOptions> = {
 export default config;
 ```
 
-Each project can be configured separately, and run different set of tests with different parameters. See [test suite options](#test-suite-options) for the list of options available to each project.
+Each project can be configured separately, and run different set of tests with different parameters. See [project options][TestProject] for the list of options available to each project.
 
 You can run all projects or just a single one:
 ```bash
@@ -499,6 +499,12 @@ npx playwright test
 # Run a single project - each test will be run once
 npx playwright test --project=v2
 ```
+
+There are many more things you can do with projects:
+- Run a subset of test by specifying different `testDir` for each project.
+- Run tests in multiple configurations, for example with desktop Chromium and emulating Chrome for Android.
+- Run "core" tests without retries to ensure stability of the core functionality, and use `retries` for other tests.
+- And much more! See [project options][TestProject] for the list of options available to each project.
 
 ## Add custom matchers using expect.extend
 

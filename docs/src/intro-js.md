@@ -34,7 +34,7 @@ You can optionally install only selected browsers, see [installing browsers](./b
 
 ## First test
 
-Create `tests/foo.spec.js` (or `tests/foo.spec.ts` for TypeScript) to define your test.
+Create `tests/example.spec.js` (or `tests/example.spec.ts` for TypeScript) to define your test.
 
 ```js js-flavor=js
 const { test, expect } = require('@playwright/test');
@@ -68,20 +68,91 @@ Playwright Test just ran a test using Chromium browser, in a headless manner. Le
 npx playwright test --headed
 ```
 
-What about other browsers? Let's run the same test using Firefox:
+## Configuration file
 
-```bash
-npx playwright test --browser=firefox
+To enjoy all the features that Playwright Test has to offer, you would want to create a configuration file `playwright.config.ts` (or `playwright.config.js`). It allows you to run tests in multiple browsers configured as you'd like.
+
+Here is an example configuration that runs every test in Chromium, Firefox and WebKit, by creating a "project" for each browser configuration. It also specifies [two retries](./test-retries.md) and [tracing](./trace-viewer.md) options.
+
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  retries: 2,
+  use: {
+    trace: 'on-first-retry',
+  },
+  projects: [
+    {
+      name: 'chromium',
+      use: { browserName: 'chromium' },
+    },
+    {
+      name: 'firefox',
+      use: { browserName: 'firefox' },
+    },
+    {
+      name: 'webkit',
+      use: { browserName: 'webkit' },
+    },
+  ],
+};
+
+module.exports = config;
 ```
 
-And finally, on all three browsers:
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
 
-```bash
-npx playwright test --browser=all
+const config: PlaywrightTestConfig = {
+  retries: 2,
+  use: {
+    trace: 'on-first-retry',
+  },
+  projects: [
+    {
+      name: 'chromium',
+      use: { browserName: 'chromium' },
+    },
+    {
+      name: 'firefox',
+      use: { browserName: 'firefox' },
+    },
+    {
+      name: 'webkit',
+      use: { browserName: 'webkit' },
+    },
+  ],
+};
+export default config;
 ```
 
-Refer to [configuration](./test-configuration.md) section for configuring test runs in different modes with different browsers.
+Look for more options in the [configuration section](./test-configuration.md).
 
+Now you can run tests in multiple browsers by default.
+
+```bash
+npx playwright test
+
+Running 5 tests using 5 workers
+
+  ✓ [chromium] › example.spec.ts:3:1 › basic test (2s)
+  ✓ [firefox] › example.spec.ts:3:1 › basic test (2s)
+  ✓ [webkit] › example.spec.ts:3:1 › basic test (2s)
+```
+
+Use `--project` command line option to run a single project.
+
+```bash
+npx playwright test --project=firefox
+
+Running 1 test using 1 worker
+
+  ✓ [firefox] › example.spec.ts:3:1 › basic test (2s)
+```
 
 ## Writing assertions
 
@@ -110,10 +181,7 @@ test('my test', async ({ page }) => {
 
   await page.click('text=Get Started');
   // Expect some text to be visible on the page.
-  await expect(page.locator('text=System requirements').first()).toBeVisible();
-
-  // Compare screenshot with a stored reference.
-  expect(await page.screenshot()).toMatchSnapshot('get-started.png');
+  await expect(page.locator('text=Introduction').first()).toBeVisible();
 });
 ```
 
@@ -135,34 +203,9 @@ test('my test', async ({ page }) => {
 
   await page.click('text=Get Started');
   // Expect some text to be visible on the page.
-  await expect(page.locator('text=System requirements').first()).toBeVisible();
-
-  // Compare screenshot with a stored reference.
-  expect(await page.screenshot()).toMatchSnapshot('get-started.png');
+  await expect(page.locator('text=Introduction').first()).toBeVisible();
 });
 ```
-
-Notice how running this test is saying:
-
-```
-Error: example.spec.ts-snapshots/get-started-chromium-darwin.png is missing in snapshots, writing actual.
-```
-
-That's because there was no golden file for your `get-started.png` snapshot. It is now created and is ready to be added to the repository. The name of the folder with the golden expectations starts with the name of your test file:
-
-```bash
-drwxr-xr-x  5 user  group  160 Jun  4 11:46 .
-drwxr-xr-x  6 user  group  192 Jun  4 11:45 ..
--rw-r--r--  1 user  group  231 Jun  4 11:16 example.spec.ts
-drwxr-xr-x  3 user  group   96 Jun  4 11:46 example.spec.ts-snapshots
-```
-
-To update your golden files, you can use the `--update-snapshots` parameter.
-
-```bash
-npx playwright test --update-snapshots
-```
-
 
 ## Using test fixtures
 
@@ -201,12 +244,12 @@ const { test, expect } = require('@playwright/test');
 test.describe('feature foo', () => {
   test.beforeEach(async ({ page }) => {
     // Go to the starting url before each test.
-    await page.goto('https://my.start.url/');
+    await page.goto('https://playwright.dev/');
   });
 
   test('my test', async ({ page }) => {
     // Assertions use the expect API.
-    await expect(page).toHaveURL('https://my.start.url/');
+    await expect(page).toHaveURL('https://playwright.dev/');
   });
 });
 ```
@@ -218,12 +261,12 @@ import { test, expect } from '@playwright/test';
 test.describe('feature foo', () => {
   test.beforeEach(async ({ page }) => {
     // Go to the starting url before each test.
-    await page.goto('https://my.start.url/');
+    await page.goto('https://playwright.dev/');
   });
 
   test('my test', async ({ page }) => {
     // Assertions use the expect API.
-    await expect(page).toHaveURL('https://my.start.url/');
+    await expect(page).toHaveURL('https://playwright.dev/');
   });
 });
 ```
@@ -263,14 +306,9 @@ Following are the usual command line patterns. Learn more about the [command lin
   npx playwright test --headed
   ```
 
-- Run tests in a particular browser (config-less mode)
+- Run tests in a particular configuration (project)
   ```bash
-  npx playwright test --browser=webkit
-  ```
-
-- Run tests in all browsers (config-less mode)
-  ```bash
-  npx playwright test --browser=all
+  npx playwright test --project=firefox
   ```
 
 - Disable [parallelization](./test-parallel.md)
@@ -293,100 +331,9 @@ Following are the usual command line patterns. Learn more about the [command lin
   npx playwright test --help
   ```
 
-## Creating a configuration file
+## Configure NPM scripts
 
-So far, we've looked at the zero-config operation of Playwright Test. For a real world application, it is likely that you would want to use a config.
-
-Create `playwright.config.ts` (or `playwright.config.js`) to configure your tests. You can specify browser launch options, run tests in multiple browsers and much more with the config. Here is an example configuration that runs every test in Chromium, Firefox and WebKit, both Desktop and Mobile versions. Look for more options in the [configuration section](./test-configuration.md).
-
-```js js-flavor=js
-// playwright.config.js
-// @ts-check
-const { devices } = require('@playwright/test');
-
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  projects: [
-    {
-      name: 'Desktop Chromium',
-      use: {
-        browserName: 'chromium',
-        // Test against Chrome Beta channel.
-        channel: 'chrome-beta',
-      },
-    },
-    {
-      name: 'Desktop Safari',
-      use: {
-        browserName: 'webkit',
-        viewport: { width: 1200, height: 750 },
-      }
-    },
-    // Test against mobile viewports.
-    {
-      name: 'Mobile Chrome',
-      use: devices['Pixel 5'],
-    },
-    {
-      name: 'Mobile Safari',
-      use: devices['iPhone 12'],
-    },
-    {
-      name: 'Desktop Firefox',
-      use: {
-        browserName: 'firefox',
-        viewport: { width: 800, height: 600 },
-      }
-    },
-  ],
-};
-
-module.exports = config;
-```
-
-```js js-flavor=ts
-// playwright.config.ts
-import { PlaywrightTestConfig, devices } from '@playwright/test';
-
-const config: PlaywrightTestConfig = {
-  projects: [
-    {
-      name: 'Chrome Stable',
-      use: {
-        browserName: 'chromium',
-        // Test against Chrome Stable channel.
-        channel: 'chrome',
-      },
-    },
-    {
-      name: 'Desktop Safari',
-      use: {
-        browserName: 'webkit',
-        viewport: { width: 1200, height: 750 },
-      }
-    },
-    // Test against mobile viewports.
-    {
-      name: 'Mobile Chrome',
-      use: devices['Pixel 5'],
-    },
-    {
-      name: 'Mobile Safari',
-      use: devices['iPhone 12'],
-    },
-    {
-      name: 'Desktop Firefox',
-      use: {
-        browserName: 'firefox',
-        viewport: { width: 800, height: 600 },
-      }
-    },
-  ],
-};
-export default config;
-```
-
-Configure NPM script to run tests. Playwright Test will automatically pick up `playwright.config.js` or `playwright.config.ts`.
+Playwright Test will automatically pick up `playwright.config.js` or `playwright.config.ts`.
 
 ```json
 {
@@ -405,3 +352,7 @@ If you put your configuration file in a different place, pass it with `--config`
   }
 }
 ```
+
+:::note
+  To pass options through npm script, use double dashes: ```npm run test -- --headed```.
+:::
