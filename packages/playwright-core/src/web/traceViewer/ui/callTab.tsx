@@ -33,7 +33,7 @@ export const CallTab: React.FunctionComponent<{
   delete params.info;
   const paramKeys = Object.keys(params);
   const wallTime = new Date(action.metadata.wallTime).toLocaleString();
-  const duration = msToString(action.metadata.endTime - action.metadata.startTime);
+  const duration = action.metadata.endTime ? msToString(action.metadata.endTime - action.metadata.startTime) : 'Timed Out';
   return <div className='call-tab'>
     <div className='call-error' key='error' hidden={!error}>
       <div className='codicon codicon-issues'/>
