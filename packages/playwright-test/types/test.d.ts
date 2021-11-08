@@ -1298,8 +1298,19 @@ export interface TestInfo {
    */
   annotations: { type: string, description?: string }[];
   /**
-   * The list of files or buffers attached to the current test. Some reporters show test attachments. For example, you can
-   * attach a screenshot to the test.
+   * The list of files or buffers attached to the current test. Some reporters show test attachments.
+   *
+   * To safely add a file from disk as an attachment, please use
+   * [testInfo.attach(path[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach-1) instead of
+   * directly pushing onto this array. For inline attachments, use
+   * [testInfo.attach(path[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach-1).
+   */
+  attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
+  /**
+   * Attach a file from disk to the current test. Some reporters show test attachments. The `name` and `contentType` will be
+   * inferred by default from the `path`, but you can optionally override either of these.
+   *
+   * For example, you can attach a screenshot to the test:
    *
    * ```ts
    * import { test, expect } from '@playwright/test';
@@ -1310,12 +1321,41 @@ export interface TestInfo {
    *   // Capture a screenshot and attach it.
    *   const path = testInfo.outputPath('screenshot.png');
    *   await page.screenshot({ path });
-   *   testInfo.attachments.push({ name: 'screenshot', path, contentType: 'image/png' });
+   *   await testInfo.attach(path);
+   *   // optionally override the name
+   *   await testInfo.attach(path, { name: 'example.png' });
+   *   // optionally override the contentType
+   *   await testInfo.attach(path, { name: 'example.custom-file', contentType: 'x-custom-content-type' });
    * });
    * ```
    *
+   * Or you can attach files returned by your APIs:
+   *
+   * ```ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('basic test', async ({}, testInfo) => {
+   *   const { download } = require('./my-custom-helpers');
+   *   const tmpPath = await download('a');
+   *   await testInfo.attach(tmpPath, { name: 'example.json' });
+   * });
+   * ```
+   *
+   * > NOTE: [testInfo.attach(path[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach-1)
+   * automatically takes care of copying attachments to a location that is accessible to reporters, even if you were to
+   * delete the attachment after awaiting the attach call.
+   * @param path
+   * @param options
    */
-  attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
+  attach(path: string, options?: { contentType?: string, name?: string}): Promise<void>;
+  /**
+   * Similar to [testInfo.attach(path[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach-1) but
+   * attaches inline `strings` or `Buffers` instead of files from disk.
+   * @param body
+   * @param name
+   * @param contentType
+   */
+  attach(body: string | Buffer, name: string, contentType?: string): Promise<void>;
   /**
    * Specifies a unique repeat index when running in "repeat each" mode. This mode is enabled by passing `--repeat-each` to
    * the [command line](https://playwright.dev/docs/test-cli).

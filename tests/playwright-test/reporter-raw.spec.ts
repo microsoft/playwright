@@ -110,6 +110,151 @@ test('should save attachments', async ({ runInlineTest }, testInfo) => {
   expect(path2).toBe('dummy-path');
 });
 
+for (const { description, apiCall, expected } of [
+  {
+    description: 'infer contentType from path',
+    apiCall: `attach(tmpPath)`,
+    expected: {
+      contentType: 'application/json',
+      name: 'example.json',
+    },
+  },
+  {
+    description: 'infer contentType from name (over extension)',
+    apiCall: `attach(tmpPath, { name: 'example.png' })`,
+    expected: {
+      contentType: 'image/png',
+      name: 'example.png',
+    },
+  },
+  {
+    description: 'explicit contentType (over extension)',
+    apiCall: `attach(tmpPath, { contentType: 'image/png' })`,
+    expected: {
+      contentType: 'image/png',
+      name: 'example.json',
+    },
+  },
+  {
+    description: 'explicit contentType (over extension and name)',
+    apiCall: `attach(tmpPath, { name: 'example.png', contentType: 'x-playwright/custom' })`,
+    expected: {
+      contentType: 'x-playwright/custom',
+      name: 'example.png',
+    },
+  },
+  {
+    description: 'fallback contentType',
+    apiCall: `attach(tmpPath, { name: 'example.this-extension-better-not-map-to-an-actual-mimetype' })`,
+    expected: {
+      contentType: 'application/octet-stream',
+      name: 'example.this-extension-better-not-map-to-an-actual-mimetype',
+    },
+  },
+]) {
+  test(`testInfo.attach should save attachments via path - ${description}`, async ({ runInlineTest }, testInfo) => {
+    await runInlineTest({
+      'a.test.js': `
+      const path = require('path');
+      const fs = require('fs');
+      const { test } = pwt;
+      test('passes', async ({}, testInfo) => {
+        const tmpPath = testInfo.outputPath('example.json');
+        await fs.promises.writeFile(tmpPath, 'We <3 Playwright!');
+        await testInfo.${apiCall};
+        // Forcibly remove the tmp file to ensure attach is actually automagically copying it
+        await fs.promises.unlink(tmpPath);
+      });
+    `,
+    }, { reporter: 'dot,' + kRawReporterPath }, {}, { usesCustomOutputDir: true });
+    const json = JSON.parse(fs.readFileSync(testInfo.outputPath('test-results', 'report', 'project.report'), 'utf-8'));
+    const result = json.suites[0].tests[0].results[0];
+    expect(result.attachments[0].name).toBe(expected.name);
+    expect(result.attachments[0].contentType).toBe(expected.contentType);
+    const p = result.attachments[0].path;
+    expect(p).toMatch(/[/\\]attachments[/\\]01a5667d100fac2200bf40cf43083fae0580c58e\.json$/);
+    const contents = fs.readFileSync(p);
+    expect(contents.toString()).toBe('We <3 Playwright!');
+  });
+}
+
+for (const { description, apiCall, expected } of [
+  {
+    description: 'infer contentType - string',
+    apiCall: `attach('We <3 Playwright!', 'example.json')`,
+    expected: {
+      contentType: 'application/json',
+      name: 'example.json',
+    },
+  },
+  {
+    description: 'infer contentType - Buffer',
+    apiCall: `attach(Buffer.from('We <3 Playwright!'), 'example.json')`,
+    expected: {
+      contentType: 'application/json',
+      name: 'example.json',
+    },
+  },
+  {
+    description: 'fallback contentType - string',
+    apiCall: `attach('We <3 Playwright!', 'example.this-extension-better-not-map-to-an-actual-mimetype')`,
+    expected: {
+      contentType: 'text/plain',
+      name: 'example.this-extension-better-not-map-to-an-actual-mimetype',
+    },
+  },
+  {
+    description: 'fallback contentType - Buffer',
+    apiCall: `attach(Buffer.from('We <3 Playwright!'), 'example.this-extension-better-not-map-to-an-actual-mimetype')`,
+    expected: {
+      contentType: 'application/octet-stream',
+      name: 'example.this-extension-better-not-map-to-an-actual-mimetype',
+    },
+  },
+  {
+    description: 'fallback contentType - no extension',
+    apiCall: `attach('We <3 Playwright!', 'example')`,
+    expected: {
+      contentType: 'text/plain',
+      name: 'example',
+    },
+  },
+  {
+    description: 'explicit contentType - string',
+    apiCall: `attach('We <3 Playwright!', 'example.json', 'x-playwright/custom')`,
+    expected: {
+      contentType: 'x-playwright/custom',
+      name: 'example.json',
+    },
+  },
+  {
+    description: 'explicit contentType - Buffer',
+    apiCall: `attach(Buffer.from('We <3 Playwright!'), 'example.json', 'x-playwright/custom')`,
+    expected: {
+      contentType: 'x-playwright/custom',
+      name: 'example.json',
+    },
+  },
+]) {
+  test(`testInfo.attach should save attachments via inline attachment - ${description}`, async ({ runInlineTest }, testInfo) => {
+    await runInlineTest({
+      'a.test.js': `
+      const path = require('path');
+      const fs = require('fs');
+      const { test } = pwt;
+      test('passes', async ({}, testInfo) => {
+        await testInfo.${apiCall};
+      });
+    `,
+    }, { reporter: 'dot,' + kRawReporterPath }, {}, { usesCustomOutputDir: true });
+    const json = JSON.parse(fs.readFileSync(testInfo.outputPath('test-results', 'report', 'project.report'), 'utf-8'));
+    const result = json.suites[0].tests[0].results[0];
+    expect(result.attachments[0].name).toBe(expected.name);
+    expect(result.attachments[0].contentType).toBe(expected.contentType);
+    expect(Buffer.from(result.attachments[0].body, 'base64')).toEqual(Buffer.from('We <3 Playwright!'));
+  });
+}
+
 test('dupe project names', async ({ runInlineTest }, testInfo) => {
   await runInlineTest({
     'playwright.config.ts': `

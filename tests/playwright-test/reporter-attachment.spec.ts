@@ -79,3 +79,36 @@ test('render trace attachment', async ({ runInlineTest }) => {
   expect(text).toContain('    ------------------------------------------------------------------------------------------------');
   expect(result.exitCode).toBe(1);
 });
+
+for (const { description, apiCall } of [
+  {
+    description: 'all options specified',
+    apiCall: `attach('non-existent-path', { contentType: 'text/plain', name: 'foo.txt'})`,
+  },
+  {
+    description: 'no options specified',
+    apiCall: `attach('non-existent-path')`,
+  },
+  {
+    description: 'partial options - contentType',
+    apiCall: `attach('non-existent-path', { contentType: 'text/plain'})`,
+  },
+  {
+    description: 'partial options - name',
+    apiCall: `attach('non-existent-path', { name: 'foo.txt'})`,
+  },
+]) {
+  test(`testInfo.attach throws an error when attaching a non-existent - ${description}`, async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.test.js': `
+        const { test } = pwt;
+        test('one', async ({}, testInfo) => {
+          await testInfo.${apiCall};
+        });
+      `,
+    }, { reporter: 'line' });
+    const text = stripAscii(result.output).replace(/\\/g, '/');
+    expect(text).toMatch(/Error: ENOENT: no such file or directory, open '.*non-existent-path.*'/);
+    expect(result.exitCode).toBe(1);
+  });
+}

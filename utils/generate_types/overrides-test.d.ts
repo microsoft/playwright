@@ -207,6 +207,8 @@ export interface TestInfo {
   timeout: number;
   annotations: { type: string, description?: string }[];
   attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
+  attach(path: string, options?: { contentType?: string, name?: string}): Promise<void>;
+  attach(body: string | Buffer, name: string, contentType?: string): Promise<void>;
   repeatEachIndex: number;
   retry: number;
   duration: number;
