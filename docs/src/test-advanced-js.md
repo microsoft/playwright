@@ -40,7 +40,7 @@ These options would be typically different between local development and CI oper
 - `projects: Project[]` - Multiple [projects](#projects) configuration.
 - `quiet: boolean` - Whether to suppress stdout and stderr from the tests.
 - `reporter: 'list' | 'line' | 'dot' | 'json' | 'junit' | 'github' | 'html' | 'null'` - The reporter to use. See [reporters](./test-reporters.md) for details.
-- `reportSlowTests: { max: number, threshold: number } | null` - Whether to report slow tests. When `null`, slow tests are not reported. Otherwise, tests that took more than `threshold` milliseconds are reported as slow, but no more than `max` number of them. Passing zero as `max` reports all slow tests that exceed the threshold.
+- `reportSlowTests: { max: number, threshold: number } | null` - Whether to report slow test files. When `null`, slow test files are not reported. Otherwise, test files that took more than `threshold` milliseconds are reported as slow, but no more than `max` number of them. Passing zero as `max` reports all test files that exceed the threshold.
 - `shard: { total: number, current: number } | null` - [Shard](./test-parallel.md#shard-tests-between-multiple-machines) information.
 - `updateSnapshots: boolean` - Whether to update expected snapshots with the actual results produced by the test run.
 - `workers: number` - The maximum number of concurrent worker processes to use for parallelizing tests.

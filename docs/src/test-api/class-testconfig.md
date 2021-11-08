@@ -358,12 +358,12 @@ export default config;
 
 ## property: TestConfig.reportSlowTests
 - type: <[Object]>
-  - `max` <[int]> The maximum number of slow tests to report. Defaults to `5`.
+  - `max` <[int]> The maximum number of slow test files to report. Defaults to `5`.
   - `threshold` <[float]> Test duration in milliseconds that is considered slow. Defaults to 15 seconds.
 
-Whether to report slow tests. Pass `null` to disable this feature.
+Whether to report slow test files. Pass `null` to disable this feature.
 
-Tests that took more than `threshold` milliseconds are considered slow, and the slowest ones are reported, no more than `max` number of them. Passing zero as `max` reports all slow tests that exceed the threshold.
+Test files that took more than `threshold` milliseconds are considered slow, and the slowest ones are reported, no more than `max` number of them. Passing zero as `max` reports all test files that exceed the threshold.
 
 ## property: TestConfig.retries
 - type: <[int]>

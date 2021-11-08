@@ -546,10 +546,10 @@ interface TestConfig {
    */
   reporter?: LiteralUnion<'list'|'dot'|'line'|'github'|'json'|'junit'|'null'|'html', string> | ReporterDescription[];
   /**
-   * Whether to report slow tests. Pass `null` to disable this feature.
+   * Whether to report slow test files. Pass `null` to disable this feature.
    *
-   * Tests that took more than `threshold` milliseconds are considered slow, and the slowest ones are reported, no more than
-   * `max` number of them. Passing zero as `max` reports all slow tests that exceed the threshold.
+   * Test files that took more than `threshold` milliseconds are considered slow, and the slowest ones are reported, no more
+   * than `max` number of them. Passing zero as `max` reports all test files that exceed the threshold.
    */
   reportSlowTests?: ReportSlowTests;
   /**
@@ -965,10 +965,10 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    */
   reporter: ReporterDescription[];
   /**
-   * Whether to report slow tests. Pass `null` to disable this feature.
+   * Whether to report slow test files. Pass `null` to disable this feature.
    *
-   * Tests that took more than `threshold` milliseconds are considered slow, and the slowest ones are reported, no more than
-   * `max` number of them. Passing zero as `max` reports all slow tests that exceed the threshold.
+   * Test files that took more than `threshold` milliseconds are considered slow, and the slowest ones are reported, no more
+   * than `max` number of them. Passing zero as `max` reports all test files that exceed the threshold.
    */
   reportSlowTests: ReportSlowTests;
   rootDir: string;
