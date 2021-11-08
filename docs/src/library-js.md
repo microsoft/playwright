@@ -3,7 +3,7 @@ id: library
 title: "Overview"
 ---
 
-Playwright can either be used as a part of the Playwright Test test runner (this guide), or as a [Playwright Library](./library.md). If you are working on an application that utilizes Playwright capabilities or you are using Playwright with another test runner, read on.
+Playwright can either be used as a part of the Playwright Test test runner, or as a [Playwright Library](./library.md) (this guide). If you are working on an application that utilizes Playwright capabilities or you are using Playwright with another test runner, read on.
 
 <!-- TOC -->
 - [Release notes](./release-notes.md)
