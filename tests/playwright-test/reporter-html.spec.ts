@@ -31,6 +31,8 @@ const test = baseTest.extend<{ showReport: () => Promise<void> }>({
   }
 });
 
+test.use({ channel: 'chrome' });
+
 test('should generate report', async ({ runInlineTest, showReport, page }) => {
   await runInlineTest({
     'playwright.config.ts': `
@@ -239,4 +241,30 @@ test('should show trace title', async ({ runInlineTest, page, showReport }) => {
   await page.click('text=passes');
   await page.click('img');
   await expect(page.locator('.workbench .title')).toHaveText('a.test.js:6 › passes');
+});
+
+test('hide chatty steps in report and in trace', async ({ runInlineTest, page, showReport, server }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = { use: { trace: 'on' } };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('passes', async ({ page }) => {
+        await page.route('**/*', route => {
+          route.continue();
+        });
+        await page.goto('${server.EMPTY_PAGE}');
+      });
+    `,
+  }, { reporter: 'dot,html' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+
+  await showReport();
+  await page.click('text=passes');
+  await expect(page.locator('text=route.continue')).toHaveCount(0);
+  await page.click('img');
+  await expect(page.locator('.workbench .title')).toHaveText('a.test.js:6 › passes');
+  await expect(page.locator('text=route.continue')).toHaveCount(0);
 });

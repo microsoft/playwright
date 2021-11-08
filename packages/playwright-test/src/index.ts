@@ -202,6 +202,8 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
           if (apiCall.startsWith('expect.'))
             return { userObject: null };
           const testInfoImpl = testInfo as any;
+          if (chattyApiCalls.has(apiCall))
+            return { userObject: null };
           const step = testInfoImpl._addStep({
             location: stackTrace?.frames[0],
             category: 'pw:api',
@@ -471,5 +473,6 @@ type ParsedStackTrace = {
 };
 
 const kTracingStarted = Symbol('kTracingStarted');
+const chattyApiCalls = new Set(['route.continue']);
 
 export default test;

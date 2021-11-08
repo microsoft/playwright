@@ -112,7 +112,7 @@ export class TraceModel {
         break;
       }
       case 'action': {
-        const include = !isTracing(event.metadata) && (!event.metadata.internal || event.metadata.apiName);
+        const include = !isChatty(event.metadata) && !isTracing(event.metadata) && (!event.metadata.internal || event.metadata.apiName);
         if (include) {
           if (!event.metadata.apiName)
             event.metadata.apiName = event.metadata.type + '.' + event.metadata.method;
@@ -212,4 +212,8 @@ export class PersistentSnapshotStorage extends BaseSnapshotStorage {
 
 function isTracing(metadata: CallMetadata): boolean {
   return metadata.method.startsWith('tracing');
+}
+
+function isChatty(metadata: CallMetadata): boolean {
+  return metadata.type === 'Route' && metadata.method === 'continue';
 }
