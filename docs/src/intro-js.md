@@ -5,12 +5,12 @@ title: "Getting started"
 
 Playwright can either be used as a part of the Playwright Test test runner (this guide), or as a [Playwright Library](./library.md).
 
-Playwright Test was created specifically to accommodate the needs of the end-to-end testing. It does everything you would expect from the regular test runner, and more. Playwright test allows to:
+Playwright Test was created specifically to accommodate the needs of end-to-end testing. It does everything you would expect from a regular test runner, and more. Playwright Test allow you to:
 
 - Run tests across all browsers.
 - Execute tests in parallel.
 - Enjoy context isolation out of the box.
-- Capture videos, screenshots and other artifacts on failure.
+- Capture videos, screenshots, and other artifacts on failure.
 - Integrate your POMs as extensible fixtures.
 
 <br/>
@@ -163,10 +163,9 @@ To update your golden files, you can use the `--update-snapshots` parameter.
 npx playwright test --update-snapshots
 ```
 
-
 ## Using test fixtures
 
-You noticed an argument `{ page }` that the test above has access to:
+You will notice an argument `{ page }` that the test above has access to:
 
 ```js js-flavor=js
 test('basic test', async ({ page }) => {
@@ -178,7 +177,7 @@ test('basic test', async ({ page }) => {
   ...
 ```
 
-We call these arguments `fixtures`. Fixtures are objects that are created for each test run. Playwright Test comes loaded with those fixtures, and you can add your own fixtures as well. When running tests, Playwright Test looks at each test declaration, analyses the set of fixtures the test needs and prepares those fixtures specifically for the test.
+We call these arguments `fixtures`. Fixtures are objects that are created for each test run. Playwright Test comes loaded with those fixtures, and you can add your own fixtures as well. When running tests, Playwright Test looks at each test declaration, analyses the set of fixtures the test needs, and prepares those fixtures specifically for the test.
 
 Here is a list of the pre-defined fixtures that you are likely to use most of the time:
 
@@ -231,7 +230,7 @@ test.describe('feature foo', () => {
 
 ## Command line
 
-Following are the usual command line patterns. Learn more about the [command line](./test-cli.md).
+The following are the usual command line patterns. Learn more about the [command line](./test-cli.md).
 
 - Run all the tests
   ```bash
@@ -295,7 +294,7 @@ Following are the usual command line patterns. Learn more about the [command lin
 
 ## Creating a configuration file
 
-So far, we've looked at the zero-config operation of Playwright Test. For a real world application, it is likely that you would want to use a config.
+So far, we've looked at the zero-config operation of Playwright Test. For a real-world application, it is likely that you would want to use a config.
 
 Create `playwright.config.ts` (or `playwright.config.js`) to configure your tests. You can specify browser launch options, run tests in multiple browsers and much more with the config. Here is an example configuration that runs every test in Chromium, Firefox and WebKit, both Desktop and Mobile versions. Look for more options in the [configuration section](./test-configuration.md).
 
