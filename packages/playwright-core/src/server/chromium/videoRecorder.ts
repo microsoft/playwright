@@ -129,6 +129,10 @@ export class VideoRecorder {
     assert(this._process);
     if (this._isStopped)
       return;
+    if (timestamp - this._lastFrameTimestamp < 1 / fps) {
+      this._lastFrameBuffer = frame;
+      return;
+    }
     this._progress.log(`writing frame ` + timestamp);
 
     if (this._lastFrameBuffer) {
