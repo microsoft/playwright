@@ -50,10 +50,11 @@ jobs:
     if: github.repository == 'microsoft/playwright'
     steps:
     - run: |
+        VERSION=$(node -e 'console.log(require("./package.json").version)')
         curl -X POST \
           -H "Accept: application/vnd.github.v3+json" \
           -H "Authorization: token ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}" \
-          --data "{\"event_type\": \"build_docker_production\", \"client_payload\": {\"ref\": \"${{ github.sha }}\"}}" \
+          --data "{\"event_type\": \"publish_docker\", \"client_payload\": {\"ref\": \"${{ github.sha }}\", \"package_version\": \"${VERSION}\"}}" \
           https://api.github.com/repos/microsoft/playwright-internal/dispatches
 
   publish-trace-viewer:

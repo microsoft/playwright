@@ -45,12 +45,15 @@ jobs:
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
     - run: |
-        # Trigger canary docker build and tag it with NPM canary version
         VERSION=$(node -e 'console.log(require("./package.json").version)')
+        if [[ "${VERSION}" != *-* ]]; then
+          echo "ERROR: canary version must have dash inside, received '${VERSION}' instead"
+          exit 1
+        fi
         curl -X POST \
           -H "Accept: application/vnd.github.v3+json" \
           -H "Authorization: token ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}" \
-          --data "{\"event_type\": \"build_docker_canary\", \"client_payload\": {\"ref\": \"${{ github.sha }}\", \"package_version\": \"${VERSION}\"}}" \
+          --data "{\"event_type\": \"publish_docker\", \"client_payload\": {\"ref\": \"${{ github.sha }}\", \"package_version\": \"${VERSION}\"}}" \
           https://api.github.com/repos/microsoft/playwright-internal/dispatches
 
   publish-trace-viewer:
