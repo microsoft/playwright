@@ -59,7 +59,7 @@ jobs:
         curl -X POST \
           -H "Accept: application/vnd.github.v3+json" \
           -H "Authorization: token ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}" \
-          --data "{\"event_type\": \"publish_docker\", \"client_payload\": {\"ref\": \"${{ github.sha }}\", \"package_version\": \"${VERSION}\", \"is_release\": \"true\"}}" \
+          --data "{\"event_type\": \"publish_docker\", \"client_payload\": {\"ref\": \"${{ github.sha }}\", \"package_version\": \"${VERSION}\", \"release_channel\": \"stable\"}}" \
           https://api.github.com/repos/microsoft/playwright-internal/dispatches
 
   publish-trace-viewer:
