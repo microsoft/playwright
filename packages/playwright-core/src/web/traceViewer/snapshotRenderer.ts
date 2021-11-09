@@ -80,9 +80,10 @@ export class SnapshotRenderer {
     if (!html)
       return { html: '', pageId: snapshot.pageId, frameId: snapshot.frameId, index: this._index };
 
-    if (snapshot.doctype)
-      html = `<!DOCTYPE ${snapshot.doctype}>` + html;
-    html += `
+    // Hide the document in order to prevent flickering. We will unhide once script has processed shadow.
+    const hideAllStyle = '<style>*,*::before,*::after { visibility: hidden }</style>';
+    const prefix = snapshot.doctype ? `<!DOCTYPE ${snapshot.doctype}>` + hideAllStyle : hideAllStyle;
+    html = prefix + html + `
       <style>*[__playwright_target__="${this.snapshotName}"] { background-color: #6fa8dc7f; }</style>
       <script>${snapshotScript()}</script>
     `;
@@ -240,6 +241,7 @@ function snapshotScript() {
         pointElement.style.top = pointY + 'px';
         document.documentElement.appendChild(pointElement);
       }
+      document.styleSheets[0].disabled = true;
     };
     window.addEventListener('load', onLoad);
   }

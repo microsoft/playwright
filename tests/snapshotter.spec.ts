@@ -216,6 +216,7 @@ function distillSnapshot(snapshot, distillTarget = true) {
   if (distillTarget)
     html = html.replace(/\s__playwright_target__="[^"]+"/g, '');
   return html
+      .replace(/<style>\*,\*::before,\*::after { visibility: hidden }<\/style>/, '')
       .replace(/<script>[.\s\S]+<\/script>/, '')
       .replace(/<style>.*__playwright_target__.*<\/style>/, '')
       .replace(/<BASE href="about:blank">/, '')

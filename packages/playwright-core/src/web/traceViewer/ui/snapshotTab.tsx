@@ -63,7 +63,8 @@ export const SnapshotTab: React.FunctionComponent<{
       if (snapshotInfoUrl) {
         const response = await fetch(snapshotInfoUrl);
         const info = await response.json();
-        setSnapshotInfo(info);
+        if (!info.error)
+          setSnapshotInfo(info);
       }
       if (!iframeRef.current)
         return;
