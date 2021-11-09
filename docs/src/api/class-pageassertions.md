@@ -1,7 +1,22 @@
 # class: PageAssertions
 * langs: java
 
-The [PageAssertions] class provides assertion methods that can be used to make assertions about the [Page] state in the tests. A new instance of [LocatorAssertions] is created by calling [`method: PlaywrightAssertions.assertThatPage`].
+The [PageAssertions] class provides assertion methods that can be used to make assertions about the [Page] state in the tests. A new instance of [LocatorAssertions] is created by calling [`method: PlaywrightAssertions.assertThatPage`]:
+
+```java
+...
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+
+public class TestPage {
+  ...
+  @Test
+  void navigatesToLoginPage() {
+    ...
+    page.click("#login");
+    assertThat(page).hasURL(Pattern.compile(".*/login"));
+  }
+}
+```
 
 ## method: PageAssertions.hasTitle
 

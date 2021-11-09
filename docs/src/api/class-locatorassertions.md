@@ -1,7 +1,22 @@
 # class: LocatorAssertions
 * langs: java
 
-The [LocatorAssertions] class provides assertion methods that can be used to make assertions about the [Locator] state in the tests. A new instance of [LocatorAssertions] is created by calling [`method: PlaywrightAssertions.assertThatLocator`].
+The [LocatorAssertions] class provides assertion methods that can be used to make assertions about the [Locator] state in the tests. A new instance of [LocatorAssertions] is created by calling [`method: PlaywrightAssertions.assertThatLocator`]:
+
+```java
+...
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+
+public class TestLocator {
+  ...
+  @Test
+  void statusBecomesSubmitted() {
+    ...
+    page.click("#submit-button");
+    assertThat(page.locator(".status")).hasText("Submitted");
+  }
+}
+```
 
 ## method: LocatorAssertions.containsText
 
