@@ -77,6 +77,7 @@ Here is an example configuration that runs every test in Chromium, Firefox and W
 ```js js-flavor=js
 // playwright.config.js
 // @ts-check
+const { devices } = require('@playwright/test');
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
@@ -87,15 +88,15 @@ const config = {
   projects: [
     {
       name: 'chromium',
-      use: { browserName: 'chromium' },
+      use: { ...devices['Desktop Chrome'] },
     },
     {
       name: 'firefox',
-      use: { browserName: 'firefox' },
+      use: { ...devices['Desktop Firefox'] },
     },
     {
       name: 'webkit',
-      use: { browserName: 'webkit' },
+      use: { ...devices['Desktop Safari'] },
     },
   ],
 };
@@ -105,7 +106,7 @@ module.exports = config;
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import { PlaywrightTestConfig, devices } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   retries: 2,
@@ -115,15 +116,15 @@ const config: PlaywrightTestConfig = {
   projects: [
     {
       name: 'chromium',
-      use: { browserName: 'chromium' },
+      use: { ...devices['Desktop Chrome'] },
     },
     {
       name: 'firefox',
-      use: { browserName: 'firefox' },
+      use: { ...devices['Desktop Firefox'] },
     },
     {
       name: 'webkit',
-      use: { browserName: 'webkit' },
+      use: { ...devices['Desktop Safari'] },
     },
   ],
 };
