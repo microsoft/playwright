@@ -306,7 +306,7 @@ Target URL.
 ## fetch-option-params
 - `params` <[Object]<[string], [string]|[float]|[boolean]>>
 
-Query parameters to be send with the URL.
+Query parameters to be sent with the URL.
 
 ## fetch-option-headers
 - `headers` <[Object]<[string], [string]>>
