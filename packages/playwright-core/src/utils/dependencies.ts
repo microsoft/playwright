@@ -20,7 +20,7 @@ import * as os from 'os';
 import childProcess from 'child_process';
 import * as utils from './utils';
 import { buildPlaywrightCLICommand } from './registry';
-import { deps } from '../nativeDeps';
+import { deps } from './nativeDeps';
 
 const BIN_DIRECTORY = path.join(__dirname, '..', '..', 'bin');
 
