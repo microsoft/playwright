@@ -1,5 +1,5 @@
 # class: APIResponse
-* langs: js
+* langs: js, python
 
 [APIResponse] class represents responses returned by [`method: APIRequestContext.get`] and similar methods.
 
