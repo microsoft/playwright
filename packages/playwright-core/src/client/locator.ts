@@ -252,18 +252,30 @@ export class Locator implements api.Locator {
 
 export class FrameLocator implements api.FrameLocator {
   private _frame: Frame;
-  private _selector: string;
+  private _frameSelector: string;
 
   constructor(frame: Frame, selector: string) {
     this._frame = frame;
-    this._selector = selector + ' >> control=enter-frame';
+    this._frameSelector = selector;
   }
 
   locator(selector: string): Locator {
-    return new Locator(this._frame, this._selector + ' >> ' + selector);
+    return new Locator(this._frame, this._frameSelector + ' >> control=enter-frame >> ' + selector);
   }
 
   frameLocator(selector: string): FrameLocator {
-    return new FrameLocator(this._frame, this._selector + ' >> ' + selector);
+    return new FrameLocator(this._frame, this._frameSelector + ' >> control=enter-frame >> ' + selector);
+  }
+
+  first(): FrameLocator {
+    return new FrameLocator(this._frame, this._frameSelector + ' >> nth=0');
+  }
+
+  last(): FrameLocator {
+    return new FrameLocator(this._frame, this._frameSelector + ` >> nth=-1`);
+  }
+
+  nth(index: number): FrameLocator {
+    return new FrameLocator(this._frame, this._frameSelector + ` >> nth=${index}`);
   }
 }

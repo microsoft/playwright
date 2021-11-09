@@ -47,6 +47,24 @@ async function routeIframe(page: Page) {
   });
 }
 
+async function routeAmbiguous(page: Page) {
+  await page.route('**/empty.html', route => {
+    route.fulfill({
+      body: `<iframe src="iframe-1.html"></iframe>
+             <iframe src="iframe-2.html"></iframe>
+             <iframe src="iframe-3.html"></iframe>`,
+      contentType: 'text/html'
+    }).catch(() => {});
+  });
+  await page.route('**/iframe-*', route => {
+    const path = new URL(route.request().url()).pathname.slice(1);
+    route.fulfill({
+      body: `<html><button>Hello from ${path}</button></html>`,
+      contentType: 'text/html'
+    }).catch(() => {});
+  });
+}
+
 it('should work for iframe', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
@@ -197,4 +215,23 @@ it('locator.frameLocator should work for iframe', async ({ page, server }) => {
   expect(await button.innerText()).toBe('Hello iframe');
   await expect(button).toHaveText('Hello iframe');
   await button.click();
+});
+
+it('locator.frameLocator should throw on ambiguity', async ({ page, server }) => {
+  await routeAmbiguous(page);
+  await page.goto(server.EMPTY_PAGE);
+  const button = page.locator('body').frameLocator('iframe').locator('button');
+  const error = await button.waitFor().catch(e => e);
+  expect(error.message).toContain('Error: strict mode violation: "body >> iframe" resolved to 3 elements');
+});
+
+it('locator.frameLocator should not throw on first/last/nth', async ({ page, server }) => {
+  await routeAmbiguous(page);
+  await page.goto(server.EMPTY_PAGE);
+  const button1 = page.locator('body').frameLocator('iframe').first().locator('button');
+  await expect(button1).toHaveText('Hello from iframe-1.html');
+  const button2 = page.locator('body').frameLocator('iframe').nth(1).locator('button');
+  await expect(button2).toHaveText('Hello from iframe-2.html');
+  const button3 = page.locator('body').frameLocator('iframe').last().locator('button');
+  await expect(button3).toHaveText('Hello from iframe-3.html');
 });

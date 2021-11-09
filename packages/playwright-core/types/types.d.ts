@@ -13481,8 +13481,26 @@ export interface FileChooser {
  * await locator.click();
  * ```
  *
+ * **Strictness**
+ *
+ * Frame locators are strict. This means that all operations on frame locators will throw if more than one element matches
+ * given selector.
+ *
+ * ```js
+ * // Throws if there are several frames in DOM:
+ * await page.frameLocator('.result-frame').locator('button').click();
+ *
+ * // Works because we explicitly tell locator to pick the first frame:
+ * await page.frameLocator('.result-frame').first().locator('button').click();
+ * ```
+ *
  */
 export interface FrameLocator {
+  /**
+   * Returns locator to the first matching frame.
+   */
+  first(): FrameLocator;
+
   /**
    * When working with iframes, you can create a frame locator that will enter the iframe and allow selecting elements in
    * that iframe.
@@ -13491,10 +13509,21 @@ export interface FrameLocator {
   frameLocator(selector: string): FrameLocator;
 
   /**
+   * Returns locator to the last matching frame.
+   */
+  last(): FrameLocator;
+
+  /**
    * The method finds an element matching the specified selector in the FrameLocator's subtree.
    * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    */
   locator(selector: string): Locator;
+
+  /**
+   * Returns locator to the n-th matching frame.
+   * @param index
+   */
+  nth(index: number): FrameLocator;
 }
 
 /**
