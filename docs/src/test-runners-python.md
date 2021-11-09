@@ -72,8 +72,8 @@ def test_my_app_is_working(fixture_name):
 
 **Function scope**: These fixtures are created when requested in a test function and destroyed when the test ends.
 
-- `context`: New [browser context](https://playwright.dev/python/docs/core-concepts#browser-contexts) for a test.
-- `page`: New [browser page](https://playwright.dev/python/docs/core-concepts#pages-and-frames) for a test.
+- `context`: New [browser context](https://playwright.dev/python/docs/browser-contexts) for a test.
+- `page`: New [browser page](https://playwright.dev/python/docs/pages) for a test.
 
 **Session scope**: These fixtures are created when requested in a test function and destroyed when all tests end.
 

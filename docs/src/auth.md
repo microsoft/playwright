@@ -6,7 +6,7 @@ title: "Authentication"
 Playwright can be used to automate scenarios that require authentication.
 
 Tests written with Playwright execute in isolated clean-slate environments called
-[browser contexts](./core-concepts.md#browser-contexts). This isolation model
+[browser contexts](./browser-contexts.md). This isolation model
 improves reproducibility and prevents cascading test failures. New browser
 contexts can load existing authentication state. This eliminates the need to
 login in every context and speeds up test execution.

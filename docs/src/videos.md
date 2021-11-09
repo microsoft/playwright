@@ -5,7 +5,7 @@ title: "Videos"
 
 <!-- TOC -->
 
-Playwright can record videos for all pages in a [browser context](./core-concepts.md#browser-contexts). Videos are saved
+Playwright can record videos for all pages in a [browser context](./browser-contexts.md). Videos are saved
 upon context closure, so make sure to await [`method: BrowserContext.close`].
 
 ```js
