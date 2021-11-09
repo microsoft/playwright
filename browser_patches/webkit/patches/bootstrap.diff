@@ -10101,24 +10101,26 @@ index 26ad3e0b3fcbc818f99fcb7ae06eb75e95e1a2d1..989137fd39ca671a449517120f4ec01e
      GtkSettingsState gtkSettings;
  #endif
 diff --git a/Source/WebKit/Shared/WebPreferencesDefaultValues.cpp b/Source/WebKit/Shared/WebPreferencesDefaultValues.cpp
-index 2d1c6dc88b16b7be6b9b14e8806d758ca176a7a8..a10088a42873a6e06822730c89b9a6559c17989c 100644
+index 2d1c6dc88b16b7be6b9b14e8806d758ca176a7a8..c226107217233063822cb4d0c356f6333edabd2a 100644
 --- a/Source/WebKit/Shared/WebPreferencesDefaultValues.cpp
 +++ b/Source/WebKit/Shared/WebPreferencesDefaultValues.cpp
-@@ -163,7 +163,7 @@ bool defaultOfflineWebApplicationCacheEnabled()
+@@ -162,7 +162,9 @@ bool defaultOfflineWebApplicationCacheEnabled()
+ 
  bool defaultUseGPUProcessForCanvasRenderingEnabled()
  {
- #if ENABLE(GPU_PROCESS_BY_DEFAULT) || PLATFORM(WIN)
--    bool defaultValue = true;
-+    bool defaultValue = false; // Playwright: force false
+-#if ENABLE(GPU_PROCESS_BY_DEFAULT) || PLATFORM(WIN)
++#if PLATFORM(WIN)
++    bool defaultValue = false; // Playwright: force-disable on Windows
++#elif ENABLE(GPU_PROCESS_BY_DEFAULT)
+     bool defaultValue = true;
  #else
      bool defaultValue = false;
- #endif
-@@ -190,7 +190,7 @@ bool defaultUseGPUProcessForMediaEnabled()
+@@ -190,7 +192,7 @@ bool defaultUseGPUProcessForMediaEnabled()
  bool defaultUseGPUProcessForWebGLEnabled()
  {
  #if PLATFORM(WIN)
 -    bool defaultValue = true;
-+    bool defaultValue = false; // Playwright: force false
++    bool defaultValue = false; // Playwright: force disable on Windows
  #else
      bool defaultValue = false;
  #endif
