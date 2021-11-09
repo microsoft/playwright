@@ -51,18 +51,17 @@ async function loadTrace(trace: string, clientId: string, progress: (done: numbe
 async function doFetch(event: FetchEvent): Promise<Response> {
   const request = event.request;
   const client = await self.clients.get(event.clientId);
-  const snapshotUrl = request.mode === 'navigate' ? request.url : client!.url;
-  const traceUrl = new URL(snapshotUrl).searchParams.get('trace')!;
-  const { snapshotServer } = loadedTraces.get(traceUrl) || {};
 
   if (request.url.startsWith(self.registration.scope)) {
     const url = new URL(request.url);
-
     const relativePath = url.pathname.substring(scopePath.length - 1);
     if (relativePath === '/ping') {
       await gc();
       return new Response(null, { status: 200 });
     }
+
+    const traceUrl = new URL(url).searchParams.get('trace')!;
+    const { snapshotServer } = loadedTraces.get(traceUrl) || {};
 
     if (relativePath === '/context') {
       const traceModel = await loadTrace(traceUrl, event.clientId, (done: number, total: number) => {
@@ -83,7 +82,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
     if (relativePath.startsWith('/snapshot/')) {
       if (!snapshotServer)
         return new Response(null, { status: 404 });
-      return snapshotServer.serveSnapshot(relativePath, url.searchParams, snapshotUrl);
+      return snapshotServer.serveSnapshot(relativePath, url.searchParams, request.url);
     }
 
     if (relativePath.startsWith('/sha1/')) {
@@ -100,6 +99,9 @@ async function doFetch(event: FetchEvent): Promise<Response> {
     return fetch(event.request);
   }
 
+  const snapshotUrl = client!.url;
+  const traceUrl = new URL(snapshotUrl).searchParams.get('trace')!;
+  const { snapshotServer } = loadedTraces.get(traceUrl) || {};
   if (!snapshotServer)
     return new Response(null, { status: 404 });
   return snapshotServer.serveResource(request.url, snapshotUrl);
