@@ -21,9 +21,6 @@
   box-shadow: var(--box-shadow);
   flex: auto;
   flex-direction: column;
-  font-size: 24px;
-  color: #666;
-  font-weight: bold;
   background-color: #fffb;
   position: absolute;
   top: 0;
@@ -33,8 +30,23 @@
   z-index: 100;
 }
 
+.drop-target .title {
+  font-size: 24px;
+  color: #666;
+  font-weight: bold;
+}
+
 .drop-target input {
   margin-top: 50px;
+}
+
+.drop-target button {
+  color: rgb(255, 255, 255);
+  background-color: rgb(0, 122, 204);
+  padding: 6px 4px;
+  border: none;
+  margin: 40px 0;
+  cursor: pointer;
 }
 
 .progress {
@@ -85,7 +97,7 @@
   margin-left: 16px;
 }
 
-.workbench .title {
+.workbench .header .title {
   margin-left: 16px;
 }
 
