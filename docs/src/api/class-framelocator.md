@@ -27,6 +27,57 @@ var locator = page.FrameLocator("#my-frame").Locator("text=Submit");
 await locator.ClickAsync();
 ```
 
+**Strictness**
+
+Frame locators are strict. This means that all operations on frame locators will throw if more than one element matches given selector.
+
+```js
+// Throws if there are several frames in DOM:
+await page.frameLocator('.result-frame').locator('button').click();
+
+// Works because we explicitly tell locator to pick the first frame:
+await page.frameLocator('.result-frame').first().locator('button').click();
+```
+
+```python async
+# Throws if there are several frames in DOM:
+await page.frame_locator('.result-frame').locator('button')..click()
+
+# Works because we explicitly tell locator to pick the first frame:
+await page.frame_locator('.result-frame').first.locator('button')..click()
+```
+
+```python sync
+# Throws if there are several frames in DOM:
+page.frame_locator('.result-frame').locator('button').click()
+
+# Works because we explicitly tell locator to pick the first frame:
+page.frame_locator('.result-frame').first.locator('button').click()
+```
+
+```java
+// Throws if there are several frames in DOM:
+page.frame_locator(".result-frame").locator("button").click();
+
+// Works because we explicitly tell locator to pick the first frame:
+page.frame_locator(".result-frame").first().locator("button").click();
+```
+
+```csharp
+// Throws if there are several frames in DOM:
+await page.FrameLocator(".result-frame").Locator("button").ClickAsync();
+
+// Works because we explicitly tell locator to pick the first frame:
+await page.FrameLocator(".result-frame").First.Locator("button").ClickAsync();
+```
+
+
+## method: FrameLocator.first
+- returns: <[FrameLocator]>
+
+Returns locator to the first matching frame.
+
+
 ## method: FrameLocator.frameLocator
 - returns: <[FrameLocator]>
 
@@ -36,9 +87,24 @@ in that iframe.
 ### param: FrameLocator.frameLocator.selector = %%-find-selector-%%
 
 
+## method: FrameLocator.last
+- returns: <[FrameLocator]>
+
+Returns locator to the last matching frame.
+
+
 ## method: FrameLocator.locator
 - returns: <[Locator]>
 
 The method finds an element matching the specified selector in the FrameLocator's subtree.
 
 ### param: FrameLocator.locator.selector = %%-find-selector-%%
+
+
+## method: FrameLocator.nth
+- returns: <[FrameLocator]>
+
+Returns locator to the n-th matching frame.
+
+### param: FrameLocator.nth.index
+- `index` <[int]>
