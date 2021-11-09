@@ -198,9 +198,12 @@ export class BaseReporter implements Reporter  {
   }
 
   private _printSlowTests() {
-    this.getSlowTests().forEach(([file, duration]) => {
-      console.log(colors.yellow('  Slow test: ') + file + colors.yellow(` (${milliseconds(duration)})`));
+    const slowTests = this.getSlowTests();
+    slowTests.forEach(([file, duration]) => {
+      console.log(colors.yellow('  Slow test file: ') + file + colors.yellow(` (${milliseconds(duration)})`));
     });
+    if (slowTests.length)
+      console.log(colors.yellow('  Consider splitting slow test files to speed up parallel execution'));
   }
 
   private _printSummary(summary: string) {

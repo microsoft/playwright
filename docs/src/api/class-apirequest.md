@@ -1,10 +1,10 @@
 # class: APIRequest
-* langs: js
+* langs: js, python
 
 Exposes API that can be used for the Web API testing.
 
 ## async method: APIRequest.newContext
-* langs: js
+* langs: js, python
 - returns: <[APIRequestContext]>
 
 Creates new instances of [APIRequestContext].

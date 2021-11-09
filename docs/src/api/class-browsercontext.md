@@ -850,7 +850,7 @@ Creates a new page in the browser context.
 Returns all open pages in the context.
 
 ## property: BrowserContext.request
-* langs: js
+* langs: js, python
 - type: <[APIRequestContext]>
 
 API testing helper associated with this context. Requests made with this API will use context cookies.

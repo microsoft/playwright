@@ -19,7 +19,7 @@ jobs:
       with:
         node-version: 12
         registry-url: 'https://registry.npmjs.org'
-    - run: npm i -g npm@7
+    - run: npm i -g npm@8
     - run: npm ci
     - run: npm run build
     - run: npx playwright install-deps
@@ -53,3 +53,17 @@ jobs:
           --data "{\"event_type\": \"build_docker_canary\", \"client_payload\": {\"ref\": \"${{ github.sha }}\", \"package_version\": \"${VERSION}\"}}" \
           https://api.github.com/repos/microsoft/playwright-internal/dispatches
 
+  publish-trace-viewer:
+    name: "publish Trace Viewer to trace.playwright.dev"
+    runs-on: ubuntu-20.04
+    if: github.repository == 'microsoft/playwright'
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: 16
+    - run: npm i -g npm@7
+    - name: Deploy
+      run: bash utils/build/deploy-trace-viewer.sh canary
+      env: 
+        GH_SERVICE_ACCOUNT_TOKEN: ${{ secrets.GH_SERVICE_ACCOUNT_TOKEN }}

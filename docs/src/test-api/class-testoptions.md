@@ -166,13 +166,17 @@ Learn more about [automatic screenshots](./test-configuration.md#automatic-scree
 ## property: TestOptions.timezoneId = %%-context-option-timezoneid-%%
 
 ## property: TestOptions.trace
-- type: <[Screenshot]<"off"|"on"|"retain-on-failure"|"on-first-retry">>
+- type: <[Object]|[TraceMode]<"off"|"on"|"retain-on-failure"|"on-first-retry">>
+  - `mode` <[TraceMode]<"off"|"on"|"retain-on-failure"|"on-first-retry">> Trace recording mode.
+  - `screenshots` <[boolean]> Whether to capture screenshots during tracing. Screenshots are used to build a timeline preview. Defaults to true. Optional.
+  - `snapshots` <[boolean]> Whether to capture DOM snapshot on every action. Defaults to true. Optional.
+  - `sources` <[boolean]> Whether to include source files for trace actions. Defaults to true. Optional.
 
-Whether to record a trace for each test. Defaults to `'off'`.
-* `'off'`: Do not record a trace.
-* `'on'`: Record a trace for each test.
-* `'retain-on-failure'`: Record a trace for each test, but remove it from successful test runs.
-* `'on-first-retry'`: Record a trace only when retrying a test for the first time.
+Whether to record trace for each test. Defaults to `'off'`.
+* `'off'`: Do not record trace.
+* `'on'`: Record trace for each test.
+* `'retain-on-failure'`: Record trace for each test, but remove all traces from successful test runs.
+* `'on-first-retry'`: Record trace only when retrying a test for the first time.
 
 Learn more about [recording trace](./test-configuration.md#record-test-trace).
 
@@ -181,7 +185,7 @@ Learn more about [recording trace](./test-configuration.md#record-test-trace).
 ## property: TestOptions.video
 - type: <[Object]|[VideoMode]<"off"|"on"|"retain-on-failure"|"on-first-retry">>
   - `mode` <[VideoMode]<"off"|"on"|"retain-on-failure"|"on-first-retry">> Video recording mode.
-  - `size` <[Object]> Size of the recorded video.
+  - `size` <[Object]> Size of the recorded video. Optional.
     - `width` <[int]>
     - `height` <[int]>
 

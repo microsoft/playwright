@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
 import path from 'path';
 import type { Browser, Frame, Locator, Page } from 'playwright-core';
 import { showTraceViewer } from '../../packages/playwright-core/lib/server/trace/viewer/traceViewer';
@@ -551,4 +552,30 @@ test('should show action source', async ({ showTraceViewer }) => {
   ]);
   await expect(page.locator('.source-line-running')).toContainText('page.click');
   await expect(page.locator('.stack-trace-frame.selected')).toHaveText(/doClick.*trace-viewer\.spec\.ts:[\d]+/);
+});
+
+test('should follow redirects', async ({ page, runAndTrace, server, asset }) => {
+  server.setRoute('/empty.html', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`<div><img id=img src="image.png"></img></div>`);
+  });
+  server.setRoute('/image.png', (req, res) => {
+    res.writeHead(301, { location: '/image-301.png' });
+    res.end();
+  });
+  server.setRoute('/image-301.png', (req, res) => {
+    res.writeHead(302, { location: '/image-302.png' });
+    res.end();
+  });
+  server.setRoute('/image-302.png', (req, res) => {
+    res.writeHead(200, { 'content-type': 'image/png' });
+    res.end(fs.readFileSync(asset('digits/0.png')));
+  });
+
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    expect(await page.evaluate(() => (window as any).img.naturalWidth)).toBe(10);
+  });
+  const snapshotFrame = await traceViewer.snapshotFrame('page.evaluate');
+  await expect(snapshotFrame.locator('img')).toHaveJSProperty('naturalWidth', 10);
 });

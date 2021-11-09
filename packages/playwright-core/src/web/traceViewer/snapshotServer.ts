@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import type { ResourceSnapshot } from '../../server/trace/common/snapshotTypes';
 import { SnapshotStorage } from './snapshotStorage';
 import type { Point } from '../../common/types';
 import { URLSearchParams } from 'url';
@@ -44,7 +43,9 @@ export class SnapshotServer {
     return this._respondWithJson(snapshot ? {
       viewport: snapshot.viewport(),
       url: snapshot.snapshot().frameUrl
-    } : {});
+    } : {
+      error: 'No snapshot found'
+    });
   }
 
   private _snapshot(pathname: string, params: URLSearchParams) {
@@ -70,15 +71,7 @@ export class SnapshotServer {
       return new Response(null, { status: 404 });
 
     const sha1 = resource.response.content._sha1;
-    if (!sha1)
-      return new Response(null, { status: 404 });
-    return this._innerServeResource(sha1, resource);
-  }
-
-  private async _innerServeResource(sha1: string, resource: ResourceSnapshot): Promise<Response> {
-    const content = await this._snapshotStorage.resourceContent(sha1);
-    if (!content)
-      return new Response(null, { status: 404 });
+    const content = sha1 ? await this._snapshotStorage.resourceContent(sha1) || new Blob([]) : new Blob([]);
 
     let contentType = resource.response.content.mimeType;
     const isTextEncoding = /^text\/|^application\/(javascript|json)/.test(contentType);
@@ -95,7 +88,11 @@ export class SnapshotServer {
     headers.delete('Content-Length');
     headers.set('Content-Length', String(content.size));
     headers.set('Cache-Control', 'public, max-age=31536000');
-    return new Response(content, { headers });
+    return new Response(content, {
+      headers,
+      status: resource.response.status,
+      statusText: resource.response.statusText,
+    });
   }
 }
 

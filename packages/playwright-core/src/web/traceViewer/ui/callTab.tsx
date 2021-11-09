@@ -33,7 +33,7 @@ export const CallTab: React.FunctionComponent<{
   delete params.info;
   const paramKeys = Object.keys(params);
   const wallTime = new Date(action.metadata.wallTime).toLocaleString();
-  const duration = msToString(action.metadata.endTime - action.metadata.startTime);
+  const duration = action.metadata.endTime ? msToString(action.metadata.endTime - action.metadata.startTime) : 'Timed Out';
   return <div className='call-tab'>
     <div className='call-error' key='error' hidden={!error}>
       <div className='codicon codicon-issues'/>
@@ -42,7 +42,7 @@ export const CallTab: React.FunctionComponent<{
     <div className='call-line'>{action.metadata.apiName}</div>
     {<>
       <div className='call-section'>Time</div>
-      <div className='call-line'>wall time: <span className='datetime' title={wallTime}>{wallTime}</span></div>
+      {action.metadata.wallTime && <div className='call-line'>wall time: <span className='datetime' title={wallTime}>{wallTime}</span></div>}
       <div className='call-line'>duration: <span className='datetime' title={duration}>{duration}</span></div>
     </>}
     { !!paramKeys.length && <div className='call-section'>Parameters</div> }
