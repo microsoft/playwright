@@ -56,7 +56,7 @@ export const Workbench: React.FunctionComponent<{
     processTraceFile(event.dataTransfer.files[0]);
   };
 
-  const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInputChange = (event: any) => {
     event.preventDefault();
     if (!event.target.files)
       return;
@@ -139,8 +139,15 @@ export const Workbench: React.FunctionComponent<{
       <div className='inner-progress' style={{ width: (100 * progress.done / progress.total) + '%' }}></div>
     </div>}
     {!dragOver && !traceURL && <div className='drop-target'>
-      <div>Drop to upload a Playwright Trace</div>
-      <input type='file' onChange={handleFileInputChange} />
+      <div className='title'>Drop Playwright Trace to load</div>
+      <button onClick={() => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.click();
+        input.addEventListener('change', e => handleFileInputChange(e));
+      }}>...or select file</button>
+      <div>Playwright Trace Viewer is a progressive web app, it does not send your trace anywhere,
+        it opens it locally instead.</div>
     </div>}
     {dragOver && <div className='drop-target'
       onDragLeave={() => { setDragOver(false); }}
