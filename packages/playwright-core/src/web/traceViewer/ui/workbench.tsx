@@ -152,7 +152,7 @@ export const Workbench: React.FunctionComponent<{
     {dragOver && <div className='drop-target'
       onDragLeave={() => { setDragOver(false); }}
       onDrop={event => handleDropEvent(event)}>
-      Release to analyse the Playwright Trace
+      <div className='title'>Release to analyse the Playwright Trace</div>
     </div>}
   </div>;
 };
