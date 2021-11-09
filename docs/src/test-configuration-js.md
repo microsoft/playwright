@@ -156,6 +156,82 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
+## Multiple browsers
+
+Playwright Test supports multiple "projects" that can run your tests in multiple browsers and configurations. Here is an example that runs every test in Chromium, Firefox and WebKit, by creating a project for each.
+
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  projects: [
+    {
+      name: 'chromium',
+      use: { browserName: 'chromium' },
+    },
+    {
+      name: 'firefox',
+      use: { browserName: 'firefox' }
+    },
+    {
+      name: 'webkit',
+      use: { browserName: 'webkit' }
+    },
+  ],
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  projects: [
+    {
+      name: 'chromium',
+      use: { browserName: 'chromium' },
+    },
+    {
+      name: 'firefox',
+      use: { browserName: 'firefox' },
+    },
+    {
+      name: 'webkit',
+      use: { browserName: 'webkit' },
+    },
+  ],
+};
+export default config;
+```
+
+You can specify [different options][TestProject] for each project, for example set specific command-line arguments for Chromium.
+
+Playwright Test will run all projects by default.
+
+```bash
+npx playwright test
+
+Running 5 tests using 5 workers
+
+  ✓ [chromium] › example.spec.ts:3:1 › basic test (2s)
+  ✓ [firefox] › example.spec.ts:3:1 › basic test (2s)
+  ✓ [webkit] › example.spec.ts:3:1 › basic test (2s)
+```
+
+Use `--project` command line option to run a single project.
+
+```bash
+npx playwright test --project=firefox
+
+Running 1 test using 1 worker
+
+  ✓ [firefox] › example.spec.ts:3:1 › basic test (2s)
+```
+
 ## Emulation
 
 Playwright can [emulate different environments](./emulation.md) like mobile device, locale or timezone.
@@ -540,113 +616,3 @@ const config: PlaywrightTestConfig = {
 };
 export default config;
 ```
-
-## Different options for each browser
-
-To specify different options per browser, for example command line arguments for Chromium, create multiple projects in your configuration file. Below is an example that runs all tests in three browsers, with different options.
-
-```js js-flavor=js
-// playwright.config.js
-// @ts-check
-
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  // Put any shared options on the top level.
-  use: {
-    headless: true,
-  },
-
-  projects: [
-    {
-      name: 'Chromium',
-      use: {
-        // Configure the browser to use.
-        browserName: 'chromium',
-
-        // Any Chromium-specific options.
-        viewport: { width: 600, height: 800 },
-      },
-    },
-
-    {
-      name: 'Firefox',
-      use: { browserName: 'firefox' },
-    },
-
-    {
-      name: 'WebKit',
-      use: { browserName: 'webkit' },
-    },
-  ],
-};
-
-module.exports = config;
-```
-
-```js js-flavor=ts
-// playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
-
-const config: PlaywrightTestConfig = {
-  // Put any shared options on the top level.
-  use: {
-    headless: true,
-  },
-
-  projects: [
-    {
-      name: 'Chromium',
-      use: {
-        // Configure the browser to use.
-        browserName: 'chromium',
-
-        // Any Chromium-specific options.
-        viewport: { width: 600, height: 800 },
-      },
-    },
-
-    {
-      name: 'Firefox',
-      use: { browserName: 'firefox' },
-    },
-
-    {
-      name: 'WebKit',
-      use: { browserName: 'webkit' },
-    },
-  ],
-};
-export default config;
-```
-
-Playwright Test will run all projects by default.
-
-```bash
-$ npx playwright test
-
-Running 3 tests using 3 workers
-
-  ✓ example.spec.ts:3:1 › [Chromium] should work (2s)
-  ✓ example.spec.ts:3:1 › [Firefox] should work (2s)
-  ✓ example.spec.ts:3:1 › [WebKit] should work (2s)
-```
-
-Use `--project` command line option to run a single project.
-
-```bash
-$ npx playwright test --project=webkit
-
-Running 1 test using 1 worker
-
-  ✓ example.spec.ts:3:1 › [WebKit] should work (2s)
-```
-
-There are many more things you can do with projects:
-- Run a subset of test by specifying different `testDir` for each project.
-- Run tests in multiple configurations, for example with desktop Chromium and emulating Chrome for Android.
-- Run "core" tests without retries to ensure stability of the core functionality, and use `retries` for other tests.
-- And much more! See [advanced configuration](./test-advanced.md) for more details.
-
-:::note
-`--browser` command line option is not compatible with projects. Specify `browserName` in each project instead.
-:::
