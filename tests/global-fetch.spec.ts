@@ -38,7 +38,7 @@ it.afterAll(() => {
   http.globalAgent = prevAgent;
 });
 
-for (const method of ['fetch', 'delete', 'get', 'head', 'patch', 'post', 'put']) {
+for (const method of ['fetch', 'delete', 'get', 'head', 'patch', 'post', 'put'] as const) {
   it(`${method} should work`, async ({ playwright, server }) => {
     const request = await playwright.request.newContext();
     const response = await request[method](server.PREFIX + '/simple.json');
@@ -46,21 +46,20 @@ for (const method of ['fetch', 'delete', 'get', 'head', 'patch', 'post', 'put'])
     expect(response.status()).toBe(200);
     expect(response.statusText()).toBe('OK');
     expect(response.ok()).toBeTruthy();
-    expect(response.url()).toBe(server.PREFIX + '/simple.json');
     expect(response.headers()['content-type']).toBe('application/json; charset=utf-8');
     expect(response.headersArray()).toContainEqual({ name: 'Content-Type', value: 'application/json; charset=utf-8' });
     expect(await response.text()).toBe(method === 'head' ? '' : '{"foo": "bar"}\n');
   });
-
-  it(`should dispose global ${method} request`, async function({ playwright, context, server }) {
-    const request = await playwright.request.newContext();
-    const response = await request.get(server.PREFIX + '/simple.json');
-    expect(await response.json()).toEqual({ foo: 'bar' });
-    await request.dispose();
-    const error = await response.body().catch(e => e);
-    expect(error.message).toContain('Response has been disposed');
-  });
 }
+
+it(`should dispose global request`, async function({ playwright, server }) {
+  const request = await playwright.request.newContext();
+  const response = await request.get(server.PREFIX + '/simple.json');
+  expect(await response.json()).toEqual({ foo: 'bar' });
+  await request.dispose();
+  const error = await response.body().catch(e => e);
+  expect(error.message).toContain('Response has been disposed');
+});
 
 it('should support global userAgent option', async ({ playwright, server }) => {
   const request = await playwright.request.newContext({ userAgent: 'My Agent' });
@@ -111,8 +110,8 @@ it('should support global httpCredentials option', async ({ playwright, server }
 it('should return error with wrong credentials', async ({ playwright, server }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const request = await playwright.request.newContext({ httpCredentials: { username: 'user', password: 'wrong' } });
-  const response2 = await request.get(server.EMPTY_PAGE);
-  expect(response2.status()).toBe(401);
+  const response = await request.get(server.EMPTY_PAGE);
+  expect(response.status()).toBe(401);
 });
 
 it('should use socks proxy', async ({ playwright, server, socksPort }) => {

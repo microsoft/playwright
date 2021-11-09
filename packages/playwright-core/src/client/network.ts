@@ -360,6 +360,7 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
   }
 
   ok(): boolean {
+    // Status 0 is for file:// URLs
     return this._initializer.status === 0 || (this._initializer.status >= 200 && this._initializer.status <= 299);
   }
 
