@@ -155,7 +155,7 @@ export abstract class APIRequestContext extends SdkObject {
         return { error: `${fetchResponse.status} ${fetchResponse.statusText}` };
       return { fetchResponse: { ...fetchResponse, fetchUid } };
     } catch (e) {
-      return { error: String(e) };
+      return { error: e instanceof Error ? e.message : String(e) };
     }
   }
 

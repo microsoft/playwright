@@ -48,7 +48,6 @@ it('get should work', async ({ context, server }) => {
   expect(response.status()).toBe(200);
   expect(response.statusText()).toBe('OK');
   expect(response.ok()).toBeTruthy();
-  expect(response.url()).toBe(server.PREFIX + '/simple.json');
   expect(response.headers()['content-type']).toBe('application/json; charset=utf-8');
   expect(response.headersArray()).toContainEqual({ name: 'Content-Type', value: 'application/json; charset=utf-8' });
   expect(await response.text()).toBe('{"foo": "bar"}\n');
@@ -60,7 +59,6 @@ it('fetch should work', async ({ context, server }) => {
   expect(response.status()).toBe(200);
   expect(response.statusText()).toBe('OK');
   expect(response.ok()).toBeTruthy();
-  expect(response.url()).toBe(server.PREFIX + '/simple.json');
   expect(response.headers()['content-type']).toBe('application/json; charset=utf-8');
   expect(response.headersArray()).toContainEqual({ name: 'Content-Type', value: 'application/json; charset=utf-8' });
   expect(await response.text()).toBe('{"foo": "bar"}\n');
@@ -94,7 +92,7 @@ it('should throw on network error when sending body', async ({ context, server }
     req.socket.destroy();
   });
   const error = await context.request.get(server.PREFIX + '/test').catch(e => e);
-  expect(error.message).toContain('Error: aborted');
+  expect(error.message).toContain(': aborted');
 });
 
 it('should throw on network error when sending body after redirect', async ({ context, server }) => {
@@ -109,7 +107,7 @@ it('should throw on network error when sending body after redirect', async ({ co
     req.socket.destroy();
   });
   const error = await context.request.get(server.PREFIX + '/redirect').catch(e => e);
-  expect(error.message).toContain('Error: aborted');
+  expect(error.message).toContain(': aborted');
 });
 
 it('should add session cookies to request', async ({ context, server }) => {
@@ -130,22 +128,20 @@ it('should add session cookies to request', async ({ context, server }) => {
   expect(req.headers.cookie).toEqual('username=John Doe');
 });
 
-for (const method of ['fetch', 'delete', 'get', 'head', 'patch', 'post', 'put']) {
+for (const method of ['fetch', 'delete', 'get', 'head', 'patch', 'post', 'put'] as const) {
   it(`${method} should support queryParams`, async ({ context, server }) => {
-    let request;
     const url = new URL(server.EMPTY_PAGE);
     url.searchParams.set('p1', 'v1');
     url.searchParams.set('парам2', 'знач2');
-    server.setRoute(url.pathname + url.search, (req, res) => {
-      request = req;
-      server.serveFile(req, res);
-    });
-    await context.request[method](server.EMPTY_PAGE + '?p1=foo', {
-      params: {
-        'p1': 'v1',
-        'парам2': 'знач2',
-      }
-    });
+    const [request] = await Promise.all([
+      server.waitForRequest(url.pathname + url.search),
+      context.request[method](server.EMPTY_PAGE + '?p1=foo', {
+        params: {
+          'p1': 'v1',
+          'парам2': 'знач2',
+        }
+      }),
+    ]);
     const params = new URLSearchParams(request.url.substr(request.url.indexOf('?')));
     expect(params.get('p1')).toEqual('v1');
     expect(params.get('парам2')).toEqual('знач2');

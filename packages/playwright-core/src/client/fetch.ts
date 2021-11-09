@@ -214,7 +214,7 @@ export class APIResponse implements api.APIResponse {
   }
 
   ok(): boolean {
-    return this._initializer.status === 0 || (this._initializer.status >= 200 && this._initializer.status <= 299);
+    return this._initializer.status >= 200 && this._initializer.status <= 299;
   }
 
   url(): string {

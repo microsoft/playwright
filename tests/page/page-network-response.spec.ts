@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import url from 'url';
 import { test as it, expect } from './pageTest';
 import fs from 'fs';
 
@@ -267,3 +268,12 @@ it('should behave the same way for headers and allHeaders', async ({ page, serve
   expect(allHeaders['name-b']).toEqual('v4');
 });
 
+it('should provide a Response with a file URL', async ({ page, asset, isAndroid, browserName }) => {
+  it.skip(isAndroid, 'No files on Android');
+  it.fixme(browserName === 'firefox', 'Firefox does return null for file:// URLs');
+
+  const fileurl = url.pathToFileURL(asset('frames/two-frames.html')).href;
+  const response = await page.goto(fileurl);
+  expect(response.status()).toBe(0);
+  expect(response.ok()).toBe(true);
+});
