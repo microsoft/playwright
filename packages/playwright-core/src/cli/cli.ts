@@ -292,6 +292,7 @@ type Options = {
   lang?: string;
   loadStorage?: string;
   proxyServer?: string;
+  proxyBypass?: string;
   saveStorage?: string;
   saveTrace?: string;
   timeout: string;
@@ -340,6 +341,8 @@ async function launchContext(options: Options, headless: boolean, executablePath
     launchOptions.proxy = {
       server: options.proxyServer
     };
+    if (options.proxyBypass)
+      launchOptions.proxy.bypass = options.proxyBypass;
   }
 
   const browser = await browserType.launch(launchOptions);
@@ -576,6 +579,7 @@ function commandWithOpenOptions(command: string, description: string, options: a
       .option('--load-storage <filename>', 'load context storage state from the file, previously saved with --save-storage')
       .option('--lang <language>', 'specify language / locale, for example "en-GB"')
       .option('--proxy-server <proxy>', 'specify proxy server, for example "http://myproxy:3128" or "socks5://myproxy:8080"')
+      .option('--proxy-bypass <bypass>', 'comma-separated domains to bypass proxy, for example ".com,chromium.org,.domain.com"')
       .option('--save-storage <filename>', 'save context storage state at the end, for later use with --load-storage')
       .option('--save-trace <filename>', 'record a trace for the session and save it to a file')
       .option('--timezone <time zone>', 'time zone to emulate, for example "Europe/Rome"')
