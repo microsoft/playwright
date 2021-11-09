@@ -163,21 +163,22 @@ Playwright Test supports multiple "projects" that can run your tests in multiple
 ```js js-flavor=js
 // playwright.config.js
 // @ts-check
+const { devices } = require('@playwright/test');
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
   projects: [
     {
       name: 'chromium',
-      use: { browserName: 'chromium' },
+      use: { ...devices['Desktop Chrome'] },
     },
     {
       name: 'firefox',
-      use: { browserName: 'firefox' }
+      use: { ...devices['Desktop Firefox'] },
     },
     {
       name: 'webkit',
-      use: { browserName: 'webkit' }
+      use: { ...devices['Desktop Safari'] },
     },
   ],
 };
@@ -187,21 +188,21 @@ module.exports = config;
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import { PlaywrightTestConfig, devices } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   projects: [
     {
       name: 'chromium',
-      use: { browserName: 'chromium' },
+      use: { ...devices['Desktop Chrome'] },
     },
     {
       name: 'firefox',
-      use: { browserName: 'firefox' },
+      use: { ...devices['Desktop Firefox'] },
     },
     {
       name: 'webkit',
-      use: { browserName: 'webkit' },
+      use: { ...devices['Desktop Safari'] },
     },
   ],
 };
