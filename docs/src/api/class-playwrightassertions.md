@@ -32,7 +32,7 @@ To use Playwright assertions add the following dependency into the `pom.xml` of 
 <dependency>
   <groupId>com.microsoft.playwright</groupId>
   <artifactId>assertions</artifactId>
-  <version>1.16.0</version>
+  <version>1.17.0</version>
 </dependency>
 ```
 
