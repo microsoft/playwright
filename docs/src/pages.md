@@ -1,110 +1,87 @@
 ---
-id: multi-pages
-title: "Multi-page scenarios"
+id: pages
+title: "Pages"
 ---
-
-Playwright can automate scenarios that span multiple browser contexts or multiple tabs in a browser window.
 
 <!-- TOC -->
 
-## Multiple contexts
+## Pages
 
-[Browser contexts](./core-concepts.md#browser-contexts) are isolated environments on a single browser instance.
-Playwright can create multiple browser contexts within a single scenario. This is useful when you want to test for
-multi-user functionality, like chat.
+Each [BrowserContext] can have multiple pages. A [Page] refers to a single tab or a popup window within a browser
+context. It should be used to navigate to URLs and interact with the page content.
 
 ```js
-const { chromium } = require('playwright');
+// Create a page.
+const page = await context.newPage();
 
-// Create a Chromium browser instance
-const browser = await chromium.launch();
+// Navigate explicitly, similar to entering a URL in the browser.
+await page.goto('http://example.com');
+// Fill an input.
+await page.locator('#search').fill('query');
 
-// Create two isolated browser contexts
-const userContext = await browser.newContext();
-const adminContext = await browser.newContext();
-
-// Create pages and interact with contexts independently
+// Navigate implicitly by clicking a link.
+await page.locator('#submit').click();
+// Expect a new url.
+console.log(page.url());
 ```
 
 ```java
-import com.microsoft.playwright.*;
+// Create a page.
+Page page = context.newPage();
 
-public class Example {
-  public static void main(String[] args) {
-    try (Playwright playwright = Playwright.create()) {
-      BrowserType chromium = playwright.chromium();
-      // Create a Chromium browser instance
-      Browser browser = chromium.launch();
-      // Create two isolated browser contexts
-      BrowserContext userContext = browser.newContext();
-      BrowserContext adminContext = browser.newContext();
-      // Create pages and interact with contexts independently
-    }
-  }
-}
+// Navigate explicitly, similar to entering a URL in the browser.
+page.navigate("http://example.com");
+// Fill an input.
+page.locator("#search").fill("query");
+
+// Navigate implicitly by clicking a link.
+page.locator("#submit").click();
+// Expect a new url.
+System.out.println(page.url());
 ```
 
 ```python async
-import asyncio
-from playwright.async_api import async_playwright
+page = await context.new_page()
 
-async def run(playwright):
-    # create a chromium browser instance
-    chromium = playwright.chromium
-    browser = await chromium.launch()
+# Navigate explicitly, similar to entering a URL in the browser.
+await page.goto('http://example.com')
+# Fill an input.
+await page.locator('#search').fill('query')
 
-    # create two isolated browser contexts
-    user_context = await browser.new_context()
-    admin_context = await browser.new_context()
-
-    # create pages and interact with contexts independently
-
-async def main():
-    async with async_playwright() as playwright:
-        await run(playwright)
-asyncio.run(main())
+# Navigate implicitly by clicking a link.
+await page.locator('#submit').click()
+# Expect a new url.
+print(page.url)
 ```
 
 ```python sync
-from playwright.sync_api import sync_playwright
+page = context.new_page()
 
-def run(playwright):
-    # create a chromium browser instance
-    chromium = playwright.chromium
-    browser = chromium.launch()
+# Navigate explicitly, similar to entering a URL in the browser.
+page.goto('http://example.com')
+# Fill an input.
+page.locator('#search').fill('query')
 
-    # create two isolated browser contexts
-    user_context = browser.new_context()
-    admin_context = browser.new_context()
-
-    # create pages and interact with contexts independently
-
-with sync_playwright() as playwright:
-    run(playwright)
+# Navigate implicitly by clicking a link.
+page.locator('#submit').click()
+# Expect a new url.
+print(page.url)
 ```
 
 ```csharp
-using Microsoft.Playwright;
-using System.Threading.Tasks;
+// Create a page.
+var page = await context.NewPageAsync();
 
-class Program
-{
-    public static async Task Main()
-    {
-        using var playwright = await Playwright.CreateAsync();
-        // Create a Chromium browser instance
-        await using var browser = await playwright.Chromium.LaunchAsync();
-        await using var userContext = await browser.NewContextAsync();
-        await using var adminContext = await browser.NewContextAsync();
-        // Create pages and interact with contexts independently.
-    }
-}
+// Navigate explicitly, similar to entering a URL in the browser.
+await page.GotoAsync("http://example.com");
+// Fill an input.
+await page.Locator("#search").FillAsync("query");
+
+// Navigate implicitly by clicking a link.
+await page.Locator("#submit").ClickAsync();
+// Expect a new url.
+Console.WriteLine(page.Url);
 ```
-
-### API reference
-- [BrowserContext]
-- [`method: Browser.newContext`]
-- [`method: BrowserContext.addCookies`]
 
 ## Multiple pages
 
@@ -157,11 +134,6 @@ var pageTwo = await context.NewPageAsync();
 // Get pages of a browser context
 var allPages = context.Pages;
 ```
-
-### API reference
-- [Page]
-- [`method: BrowserContext.newPage`]
-- [`method: BrowserContext.pages`]
 
 ## Handling new pages
 
@@ -261,8 +233,6 @@ context.Page += async  (_, page) => {
 };
 ```
 
-### API reference
-- [`event: BrowserContext.page`]
 
 ## Handling popups
 
@@ -362,6 +332,3 @@ page.Popup += async  (_, popup) => {
     Console.WriteLine(await page.TitleAsync());
 };
 ```
-
-### API reference
-- [`event: Page.popup`]

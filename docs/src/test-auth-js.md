@@ -4,7 +4,7 @@ title: "Authentication"
 ---
 
 Tests written with Playwright execute in isolated clean-slate environments called
-[browser contexts](./core-concepts.md#browser-contexts). Each test gets a brand
+[browser contexts](./browser-contexts.md). Each test gets a brand
 new page created in a brand new context. This isolation model improves reproducibility
 and prevents cascading test failures.
 
