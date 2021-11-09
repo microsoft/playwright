@@ -49,11 +49,17 @@ jobs:
     runs-on: ubuntu-20.04
     if: github.repository == 'microsoft/playwright'
     steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: 12
+        registry-url: 'https://registry.npmjs.org'
     - run: |
+        VERSION=$(node -e 'console.log(require("./package.json").version)')
         curl -X POST \
           -H "Accept: application/vnd.github.v3+json" \
           -H "Authorization: token ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}" \
-          --data "{\"event_type\": \"build_docker_production\", \"client_payload\": {\"ref\": \"${{ github.sha }}\"}}" \
+          --data "{\"event_type\": \"publish_docker\", \"client_payload\": {\"ref\": \"${{ github.sha }}\", \"package_version\": \"${VERSION}\", \"release_channel\": \"stable\"}}" \
           https://api.github.com/repos/microsoft/playwright-internal/dispatches
 
   publish-trace-viewer:
