@@ -40,7 +40,7 @@ const ProxyAgent = require('https-proxy-agent');
 
 export const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => fs.stat(path, err => resolve(!err)));
 
-type HTTPRequestParams = {
+export type HTTPRequestParams = {
   url: string,
   method?: string,
   headers?: http.OutgoingHttpHeaders,
@@ -97,11 +97,11 @@ function httpRequest(params: HTTPRequestParams, onResponse: (r: http.IncomingMes
   request.end(params.data);
 }
 
-export function fetchData(params: HTTPRequestParams, onError?: (response: http.IncomingMessage) => Promise<Error>): Promise<string> {
+export function fetchData(params: HTTPRequestParams, onError?: (params: HTTPRequestParams, response: http.IncomingMessage) => Promise<Error>): Promise<string> {
   return new Promise((resolve, reject) => {
     httpRequest(params, async response => {
       if (response.statusCode !== 200) {
-        const error = onError ? await onError(response) : new Error(`fetch failed: server returned code ${response.statusCode}. URL: ${params.url}`);
+        const error = onError ? await onError(params, response) : new Error(`fetch failed: server returned code ${response.statusCode}. URL: ${params.url}`);
         reject(error);
         return;
       }
