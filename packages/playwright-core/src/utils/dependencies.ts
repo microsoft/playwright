@@ -18,9 +18,9 @@ import fs from 'fs';
 import path from 'path';
 import * as os from 'os';
 import childProcess from 'child_process';
-import { getUbuntuVersion } from './ubuntuVersion';
 import * as utils from './utils';
 import { buildPlaywrightCLICommand } from './registry';
+import { deps } from './nativeDeps';
 
 const BIN_DIRECTORY = path.join(__dirname, '..', '..', 'bin');
 
@@ -47,21 +47,14 @@ export async function installDependenciesWindows(targets: Set<DependencyGroup>) 
 }
 
 export async function installDependenciesLinux(targets: Set<DependencyGroup>) {
-  const ubuntuVersion = await getUbuntuVersion();
-  if (ubuntuVersion !== '18.04' && ubuntuVersion !== '20.04' && ubuntuVersion !== '21.04') {
-    console.warn('Cannot install dependencies for this linux distribution!');  // eslint-disable-line no-console
-    return;
-  }
-
   const libraries: string[] = [];
-  const { deps } = require('../nativeDeps');
   for (const target of targets) {
-    if (ubuntuVersion === '18.04')
-      libraries.push(...deps['bionic'][target]);
-    else if (ubuntuVersion === '20.04')
-      libraries.push(...deps['focal'][target]);
-    else if (ubuntuVersion === '21.04')
-      libraries.push(...deps['hirsute'][target]);
+    const info = deps[utils.hostPlatform];
+    if (!info) {
+      console.warn('Cannot install dependencies for this linux distribution!');  // eslint-disable-line no-console
+      return;
+    }
+    libraries.push(...info[target]);
   }
   const uniqueLibraries = Array.from(new Set(libraries));
   console.log('Installing Ubuntu dependencies...');  // eslint-disable-line no-console
@@ -167,23 +160,16 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
   // Check Ubuntu version.
   const missingPackages = new Set();
 
-  const ubuntuVersion = await getUbuntuVersion();
-  let libraryToPackageNameMapping = null;
-  if (ubuntuVersion === '18.04')
-    libraryToPackageNameMapping = LIBRARY_TO_PACKAGE_NAME_UBUNTU_18_04;
-  else if (ubuntuVersion === '20.04')
-    libraryToPackageNameMapping = LIBRARY_TO_PACKAGE_NAME_UBUNTU_20_04;
-  else if (ubuntuVersion === '21.04')
-    libraryToPackageNameMapping = LIBRARY_TO_PACKAGE_NAME_UBUNTU_21_04;
-  libraryToPackageNameMapping = Object.assign({}, libraryToPackageNameMapping, MANUAL_LIBRARY_TO_PACKAGE_NAME_UBUNTU);
-  if (libraryToPackageNameMapping) {
-    // Translate missing dependencies to package names to install with apt.
-    for (const missingDep of missingDeps) {
-      const packageName = libraryToPackageNameMapping[missingDep];
-      if (packageName) {
-        missingPackages.add(packageName);
-        missingDeps.delete(missingDep);
-      }
+  const libraryToPackageNameMapping = {
+    ...(deps[utils.hostPlatform]?.lib2package || {}),
+    ...MANUAL_LIBRARY_TO_PACKAGE_NAME_UBUNTU,
+  };
+  // Translate missing dependencies to package names to install with apt.
+  for (const missingDep of missingDeps) {
+    const packageName = libraryToPackageNameMapping[missingDep];
+    if (packageName) {
+      missingPackages.add(packageName);
+      missingDeps.delete(missingDep);
     }
   }
 
@@ -299,272 +285,6 @@ async function missingDLOPENLibraries(libraries: string[]): Promise<string[]> {
   const isLibraryAvailable = (library: string) => stdout.toLowerCase().includes(library.toLowerCase());
   return libraries.filter(library => !isLibraryAvailable(library));
 }
-
-// This list is generted with the following program:
-// ./utils/linux-browser-dependencies/run.sh ubuntu:18.04
-const LIBRARY_TO_PACKAGE_NAME_UBUNTU_18_04: { [s: string]: string} = {
-  'libasound.so.2': 'libasound2',
-  'libatk-1.0.so.0': 'libatk1.0-0',
-  'libatk-bridge-2.0.so.0': 'libatk-bridge2.0-0',
-  'libatspi.so.0': 'libatspi2.0-0',
-  'libbrotlidec.so.1': 'libbrotli1',
-  'libcairo-gobject.so.2': 'libcairo-gobject2',
-  'libcairo.so.2': 'libcairo2',
-  'libcups.so.2': 'libcups2',
-  'libdbus-1.so.3': 'libdbus-1-3',
-  'libdbus-glib-1.so.2': 'libdbus-glib-1-2',
-  'libdrm.so.2': 'libdrm2',
-  'libEGL.so.1': 'libegl1',
-  'libenchant.so.1': 'libenchant1c2a',
-  'libepoxy.so.0': 'libepoxy0',
-  'libevent-2.1.so.6': 'libevent-2.1-6',
-  'libevdev.so.2': 'libevdev2',
-  'libfontconfig.so.1': 'libfontconfig1',
-  'libfreetype.so.6': 'libfreetype6',
-  'libgbm.so.1': 'libgbm1',
-  'libgdk_pixbuf-2.0.so.0': 'libgdk-pixbuf2.0-0',
-  'libgdk-3.so.0': 'libgtk-3-0',
-  'libgdk-x11-2.0.so.0': 'libgtk2.0-0',
-  'libgio-2.0.so.0': 'libglib2.0-0',
-  'libGL.so.1': 'libgl1',
-  'libGLESv2.so.2': 'libgles2',
-  'libglib-2.0.so.0': 'libglib2.0-0',
-  'libgmodule-2.0.so.0': 'libglib2.0-0',
-  'libgobject-2.0.so.0': 'libglib2.0-0',
-  'libgstapp-1.0.so.0': 'gstreamer1.0-plugins-base',
-  'libgstaudio-1.0.so.0': 'gstreamer1.0-plugins-base',
-  'libgstbase-1.0.so.0': 'libgstreamer1.0-0',
-  'libgstcodecparsers-1.0.so.0': 'gstreamer1.0-plugins-bad',
-  'libgstfft-1.0.so.0': 'gstreamer1.0-plugins-base',
-  'libgstgl-1.0.so.0': 'libgstreamer-gl1.0-0',
-  'libgstpbutils-1.0.so.0': 'gstreamer1.0-plugins-base',
-  'libgstreamer-1.0.so.0': 'libgstreamer1.0-0',
-  'libgsttag-1.0.so.0': 'gstreamer1.0-plugins-base',
-  'libgstvideo-1.0.so.0': 'gstreamer1.0-plugins-base',
-  'libgthread-2.0.so.0': 'libglib2.0-0',
-  'libgtk-3.so.0': 'libgtk-3-0',
-  'libgtk-x11-2.0.so.0': 'libgtk2.0-0',
-  'libharfbuzz-icu.so.0': 'libharfbuzz-icu0',
-  'libharfbuzz.so.0': 'libharfbuzz0b',
-  'libhyphen.so.0': 'libhyphen0',
-  'libicudata.so.60': 'libicu60',
-  'libicui18n.so.60': 'libicu60',
-  'libicuuc.so.60': 'libicu60',
-  'libjpeg.so.8': 'libjpeg-turbo8',
-  'libnotify.so.4': 'libnotify4',
-  'libnspr4.so': 'libnspr4',
-  'libnss3.so': 'libnss3',
-  'libnssutil3.so': 'libnss3',
-  'libopenjp2.so.7': 'libopenjp2-7',
-  'libopus.so.0': 'libopus0',
-  'libpango-1.0.so.0': 'libpango-1.0-0',
-  'libpangocairo-1.0.so.0': 'libpangocairo-1.0-0',
-  'libpangoft2-1.0.so.0': 'libpangoft2-1.0-0',
-  'libpng16.so.16': 'libpng16-16',
-  'libsecret-1.so.0': 'libsecret-1-0',
-  'libsmime3.so': 'libnss3',
-  'libvpx.so.5': 'libvpx5',
-  'libwayland-client.so.0': 'libwayland-client0',
-  'libwayland-egl.so.1': 'libwayland-egl1',
-  'libwayland-server.so.0': 'libwayland-server0',
-  'libwebp.so.6': 'libwebp6',
-  'libwebpdemux.so.2': 'libwebpdemux2',
-  'libwoff2dec.so.1.0.2': 'libwoff1',
-  'libX11-xcb.so.1': 'libx11-xcb1',
-  'libX11.so.6': 'libx11-6',
-  'libxcb-dri3.so.0': 'libxcb-dri3-0',
-  'libxcb-shm.so.0': 'libxcb-shm0',
-  'libxcb.so.1': 'libxcb1',
-  'libXcomposite.so.1': 'libxcomposite1',
-  'libXcursor.so.1': 'libxcursor1',
-  'libXdamage.so.1': 'libxdamage1',
-  'libXext.so.6': 'libxext6',
-  'libXfixes.so.3': 'libxfixes3',
-  'libXi.so.6': 'libxi6',
-  'libxkbcommon.so.0': 'libxkbcommon0',
-  'libxml2.so.2': 'libxml2',
-  'libXrandr.so.2': 'libxrandr2',
-  'libXrender.so.1': 'libxrender1',
-  'libxslt.so.1': 'libxslt1.1',
-  'libXt.so.6': 'libxt6',
-  'libXtst.so.6': 'libxtst6',
-};
-
-// This list is generted with the following program:
-// ./utils/linux-browser-dependencies/run.sh ubuntu:20.04
-const LIBRARY_TO_PACKAGE_NAME_UBUNTU_20_04: { [s: string]: string} = {
-  'libasound.so.2': 'libasound2',
-  'libatk-1.0.so.0': 'libatk1.0-0',
-  'libatk-bridge-2.0.so.0': 'libatk-bridge2.0-0',
-  'libatspi.so.0': 'libatspi2.0-0',
-  'libcairo-gobject.so.2': 'libcairo-gobject2',
-  'libcairo.so.2': 'libcairo2',
-  'libcups.so.2': 'libcups2',
-  'libdbus-1.so.3': 'libdbus-1-3',
-  'libdbus-glib-1.so.2': 'libdbus-glib-1-2',
-  'libdrm.so.2': 'libdrm2',
-  'libEGL.so.1': 'libegl1',
-  'libenchant.so.1': 'libenchant1c2a',
-  'libevdev.so.2': 'libevdev2',
-  'libepoxy.so.0': 'libepoxy0',
-  'libfontconfig.so.1': 'libfontconfig1',
-  'libfreetype.so.6': 'libfreetype6',
-  'libgbm.so.1': 'libgbm1',
-  'libgdk_pixbuf-2.0.so.0': 'libgdk-pixbuf2.0-0',
-  'libgdk-3.so.0': 'libgtk-3-0',
-  'libgdk-x11-2.0.so.0': 'libgtk2.0-0',
-  'libgio-2.0.so.0': 'libglib2.0-0',
-  'libGL.so.1': 'libgl1',
-  'libGLESv2.so.2': 'libgles2',
-  'libglib-2.0.so.0': 'libglib2.0-0',
-  'libgmodule-2.0.so.0': 'libglib2.0-0',
-  'libgobject-2.0.so.0': 'libglib2.0-0',
-  'libgstapp-1.0.so.0': 'gstreamer1.0-plugins-base',
-  'libgstaudio-1.0.so.0': 'gstreamer1.0-plugins-base',
-  'libgstbase-1.0.so.0': 'libgstreamer1.0-0',
-  'libgstcodecparsers-1.0.so.0': 'gstreamer1.0-plugins-bad',
-  'libgstfft-1.0.so.0': 'gstreamer1.0-plugins-base',
-  'libgstgl-1.0.so.0': 'libgstreamer-gl1.0-0',
-  'libgstpbutils-1.0.so.0': 'gstreamer1.0-plugins-base',
-  'libgstreamer-1.0.so.0': 'libgstreamer1.0-0',
-  'libgsttag-1.0.so.0': 'gstreamer1.0-plugins-base',
-  'libgstvideo-1.0.so.0': 'gstreamer1.0-plugins-base',
-  'libgthread-2.0.so.0': 'libglib2.0-0',
-  'libgtk-3.so.0': 'libgtk-3-0',
-  'libgtk-x11-2.0.so.0': 'libgtk2.0-0',
-  'libharfbuzz-icu.so.0': 'libharfbuzz-icu0',
-  'libharfbuzz.so.0': 'libharfbuzz0b',
-  'libhyphen.so.0': 'libhyphen0',
-  'libicui18n.so.66': 'libicu66',
-  'libicuuc.so.66': 'libicu66',
-  'libjpeg.so.8': 'libjpeg-turbo8',
-  'libnotify.so.4': 'libnotify4',
-  'libnspr4.so': 'libnspr4',
-  'libnss3.so': 'libnss3',
-  'libnssutil3.so': 'libnss3',
-  'libopenjp2.so.7': 'libopenjp2-7',
-  'libopus.so.0': 'libopus0',
-  'libpango-1.0.so.0': 'libpango-1.0-0',
-  'libpangocairo-1.0.so.0': 'libpangocairo-1.0-0',
-  'libpangoft2-1.0.so.0': 'libpangoft2-1.0-0',
-  'libpng16.so.16': 'libpng16-16',
-  'libsecret-1.so.0': 'libsecret-1-0',
-  'libsmime3.so': 'libnss3',
-  'libsoup-2.4.so.1': 'libsoup2.4-1',
-  'libvpx.so.6': 'libvpx6',
-  'libwayland-client.so.0': 'libwayland-client0',
-  'libwayland-egl.so.1': 'libwayland-egl1',
-  'libwayland-server.so.0': 'libwayland-server0',
-  'libwebp.so.6': 'libwebp6',
-  'libwebpdemux.so.2': 'libwebpdemux2',
-  'libwoff2dec.so.1.0.2': 'libwoff1',
-  'libX11-xcb.so.1': 'libx11-xcb1',
-  'libX11.so.6': 'libx11-6',
-  'libxcb-dri3.so.0': 'libxcb-dri3-0',
-  'libxcb-shm.so.0': 'libxcb-shm0',
-  'libxcb.so.1': 'libxcb1',
-  'libXcomposite.so.1': 'libxcomposite1',
-  'libXcursor.so.1': 'libxcursor1',
-  'libXdamage.so.1': 'libxdamage1',
-  'libXext.so.6': 'libxext6',
-  'libXfixes.so.3': 'libxfixes3',
-  'libXi.so.6': 'libxi6',
-  'libxkbcommon.so.0': 'libxkbcommon0',
-  'libxml2.so.2': 'libxml2',
-  'libXrandr.so.2': 'libxrandr2',
-  'libXrender.so.1': 'libxrender1',
-  'libxslt.so.1': 'libxslt1.1',
-  'libXt.so.6': 'libxt6',
-  'libXtst.so.6': 'libxtst6',
-  'libxshmfence.so.1': 'libxshmfence1',
-};
-
-const LIBRARY_TO_PACKAGE_NAME_UBUNTU_21_04: { [s: string]: string} = {
-  'libasound.so.2': 'libasound2',
-  'libatk-1.0.so.0': 'libatk1.0-0',
-  'libatk-bridge-2.0.so.0': 'libatk-bridge2.0-0',
-  'libatspi.so.0': 'libatspi2.0-0',
-  'libcairo-gobject.so.2': 'libcairo-gobject2',
-  'libcairo.so.2': 'libcairo2',
-  'libcups.so.2': 'libcups2',
-  'libdbus-1.so.3': 'libdbus-1-3',
-  'libdbus-glib-1.so.2': 'libdbus-glib-1-2',
-  'libdrm.so.2': 'libdrm2',
-  'libEGL.so.1': 'libegl1',
-  'libepoxy.so.0': 'libepoxy0',
-  'libfontconfig.so.1': 'libfontconfig1',
-  'libfreetype.so.6': 'libfreetype6',
-  'libgbm.so.1': 'libgbm1',
-  'libgdk_pixbuf-2.0.so.0': 'libgdk-pixbuf-2.0-0',
-  'libgdk-3.so.0': 'libgtk-3-0',
-  'libgdk-x11-2.0.so.0': 'libgtk2.0-0',
-  'libgio-2.0.so.0': 'libglib2.0-0',
-  'libGL.so.1': 'libgl1',
-  'libGLESv2.so.2': 'libgles2',
-  'libglib-2.0.so.0': 'libglib2.0-0',
-  'libgmodule-2.0.so.0': 'libglib2.0-0',
-  'libgobject-2.0.so.0': 'libglib2.0-0',
-  'libgstapp-1.0.so.0': 'libgstreamer-plugins-base1.0-0',
-  'libgstaudio-1.0.so.0': 'libgstreamer-plugins-base1.0-0',
-  'libgstbase-1.0.so.0': 'libgstreamer1.0-0',
-  'libgstcodecparsers-1.0.so.0': 'libgstreamer-plugins-bad1.0-0',
-  'libgstfft-1.0.so.0': 'libgstreamer-plugins-base1.0-0',
-  'libgstgl-1.0.so.0': 'libgstreamer-gl1.0-0',
-  'libgstpbutils-1.0.so.0': 'libgstreamer-plugins-base1.0-0',
-  'libgstreamer-1.0.so.0': 'libgstreamer1.0-0',
-  'libgsttag-1.0.so.0': 'libgstreamer-plugins-base1.0-0',
-  'libgstvideo-1.0.so.0': 'libgstreamer-plugins-base1.0-0',
-  'libgthread-2.0.so.0': 'libglib2.0-0',
-  'libgtk-3.so.0': 'libgtk-3-0',
-  'libgtk-x11-2.0.so.0': 'libgtk2.0-0',
-  'libharfbuzz-icu.so.0': 'libharfbuzz-icu0',
-  'libharfbuzz.so.0': 'libharfbuzz0b',
-  'libhyphen.so.0': 'libhyphen0',
-  'libjavascriptcoregtk-4.0.so.18': 'libjavascriptcoregtk-4.0-18',
-  'libjpeg.so.8': 'libjpeg-turbo8',
-  'liblcms2.so.2': 'liblcms2-2',
-  'libnotify.so.4': 'libnotify4',
-  'libnspr4.so': 'libnspr4',
-  'libnss3.so': 'libnss3',
-  'libnssutil3.so': 'libnss3',
-  'libopenjp2.so.7': 'libopenjp2-7',
-  'libopus.so.0': 'libopus0',
-  'libpango-1.0.so.0': 'libpango-1.0-0',
-  'libpangocairo-1.0.so.0': 'libpangocairo-1.0-0',
-  'libpangoft2-1.0.so.0': 'libpangoft2-1.0-0',
-  'libpng16.so.16': 'libpng16-16',
-  'libsecret-1.so.0': 'libsecret-1-0',
-  'libsmime3.so': 'libnss3',
-  'libsoup-2.4.so.1': 'libsoup2.4-1',
-  'libvpx.so.6': 'libvpx6',
-  'libwayland-client.so.0': 'libwayland-client0',
-  'libwayland-egl.so.1': 'libwayland-egl1',
-  'libwayland-server.so.0': 'libwayland-server0',
-  'libwebkit2gtk-4.0.so.37': 'libwebkit2gtk-4.0-37',
-  'libwebp.so.6': 'libwebp6',
-  'libwebpdemux.so.2': 'libwebpdemux2',
-  'libwoff2dec.so.1.0.2': 'libwoff1',
-  'libwpe-1.0.so.1': 'libwpe-1.0-1',
-  'libWPEBackend-fdo-1.0.so.1': 'libwpebackend-fdo-1.0-1',
-  'libWPEWebKit-1.0.so.3': 'libwpewebkit-1.0-3',
-  'libX11-xcb.so.1': 'libx11-xcb1',
-  'libX11.so.6': 'libx11-6',
-  'libxcb-shm.so.0': 'libxcb-shm0',
-  'libxcb.so.1': 'libxcb1',
-  'libXcomposite.so.1': 'libxcomposite1',
-  'libXcursor.so.1': 'libxcursor1',
-  'libXdamage.so.1': 'libxdamage1',
-  'libXext.so.6': 'libxext6',
-  'libXfixes.so.3': 'libxfixes3',
-  'libXi.so.6': 'libxi6',
-  'libxkbcommon.so.0': 'libxkbcommon0',
-  'libxml2.so.2': 'libxml2',
-  'libXrandr.so.2': 'libxrandr2',
-  'libXrender.so.1': 'libxrender1',
-  'libxshmfence.so.1': 'libxshmfence1',
-  'libxslt.so.1': 'libxslt1.1',
-  'libXt.so.6': 'libxt6',
-};
 
 const MANUAL_LIBRARY_TO_PACKAGE_NAME_UBUNTU: { [s: string]: string} = {
   // libgstlibav.so (the only actual library provided by gstreamer1.0-libav) is not
