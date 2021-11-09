@@ -11840,7 +11840,7 @@ export interface APIRequestContext {
     }; };
 
     /**
-     * Query parameters to be send with the URL.
+     * Query parameters to be sent with the URL.
      */
     params?: { [key: string]: string|number|boolean; };
 
@@ -11926,7 +11926,7 @@ export interface APIRequestContext {
     }; };
 
     /**
-     * Query parameters to be send with the URL.
+     * Query parameters to be sent with the URL.
      */
     params?: { [key: string]: string|number|boolean; };
 
@@ -11960,7 +11960,7 @@ export interface APIRequestContext {
     ignoreHTTPSErrors?: boolean;
 
     /**
-     * Query parameters to be send with the URL.
+     * Query parameters to be sent with the URL.
      */
     params?: { [key: string]: string|number|boolean; };
 
@@ -11994,7 +11994,7 @@ export interface APIRequestContext {
     ignoreHTTPSErrors?: boolean;
 
     /**
-     * Query parameters to be send with the URL.
+     * Query parameters to be sent with the URL.
      */
     params?: { [key: string]: string|number|boolean; };
 
@@ -12065,7 +12065,7 @@ export interface APIRequestContext {
     }; };
 
     /**
-     * Query parameters to be send with the URL.
+     * Query parameters to be sent with the URL.
      */
     params?: { [key: string]: string|number|boolean; };
 
@@ -12136,7 +12136,7 @@ export interface APIRequestContext {
     }; };
 
     /**
-     * Query parameters to be send with the URL.
+     * Query parameters to be sent with the URL.
      */
     params?: { [key: string]: string|number|boolean; };
 
@@ -12207,7 +12207,7 @@ export interface APIRequestContext {
     }; };
 
     /**
-     * Query parameters to be send with the URL.
+     * Query parameters to be sent with the URL.
      */
     params?: { [key: string]: string|number|boolean; };
 
