@@ -10100,6 +10100,28 @@ index 26ad3e0b3fcbc818f99fcb7ae06eb75e95e1a2d1..989137fd39ca671a449517120f4ec01e
  #if PLATFORM(GTK)
      GtkSettingsState gtkSettings;
  #endif
+diff --git a/Source/WebKit/Shared/WebPreferencesDefaultValues.cpp b/Source/WebKit/Shared/WebPreferencesDefaultValues.cpp
+index 2d1c6dc88b16b7be6b9b14e8806d758ca176a7a8..a10088a42873a6e06822730c89b9a6559c17989c 100644
+--- a/Source/WebKit/Shared/WebPreferencesDefaultValues.cpp
++++ b/Source/WebKit/Shared/WebPreferencesDefaultValues.cpp
+@@ -163,7 +163,7 @@ bool defaultOfflineWebApplicationCacheEnabled()
+ bool defaultUseGPUProcessForCanvasRenderingEnabled()
+ {
+ #if ENABLE(GPU_PROCESS_BY_DEFAULT) || PLATFORM(WIN)
+-    bool defaultValue = true;
++    bool defaultValue = false; // Playwright: force false
+ #else
+     bool defaultValue = false;
+ #endif
+@@ -190,7 +190,7 @@ bool defaultUseGPUProcessForMediaEnabled()
+ bool defaultUseGPUProcessForWebGLEnabled()
+ {
+ #if PLATFORM(WIN)
+-    bool defaultValue = true;
++    bool defaultValue = false; // Playwright: force false
+ #else
+     bool defaultValue = false;
+ #endif
 diff --git a/Source/WebKit/Shared/gtk/NativeWebKeyboardEventGtk.cpp b/Source/WebKit/Shared/gtk/NativeWebKeyboardEventGtk.cpp
 index c204637774ee803eac42a34cde79aa556f143b82..345f5b08179e3dd239725bed06e48b46bc718336 100644
 --- a/Source/WebKit/Shared/gtk/NativeWebKeyboardEventGtk.cpp
