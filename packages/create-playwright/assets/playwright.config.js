@@ -8,13 +8,16 @@ const path = require('path');
  */
 const config = {
   // Timeout per test
-  timeout: 30 * 1000,
+  //timeout: 30 * 1000,
+
   // Test directory
   testDir: path.join(__dirname, '{{testDir}}'),
+
   // If a test fails on CI, retry it additional 2 times
-  retries: process.env.CI ? 2 : 0,
+  // retries: process.env.CI ? 2 : 0,
+
   // Artifacts folder where screenshots, videos, and traces are stored.
-  outputDir: 'test-results/',
+  // outputDir: 'test-results/',
 
   // Run your local dev server before starting the tests:
   // https://playwright.dev/docs/test-advanced#launching-a-development-web-server-during-the-tests
@@ -36,34 +39,34 @@ const config = {
 
   projects: [
     {
-      name: 'Desktop Chrome',
+      name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
       },
     },
     {
-      name: 'Desktop Firefox',
+      name: 'firefox',
       use: {
         ...devices['Desktop Firefox'],
       },
     },
     {
-      name: 'Desktop Safari',
+      name: 'webkit',
       use: {
         ...devices['Desktop Safari'],
       },
     },
     // Test against mobile viewports.
-    {
-      name: 'Mobile Chrome',
-      use: {
-        ...devices['Pixel 5'],
-      },
-    },
-    {
-      name: 'Mobile Safari',
-      use: devices['iPhone 12'],
-    },
+    // {
+    //   name: 'Mobile Chrome',
+    //   use: {
+    //     ...devices['Pixel 5'],
+    //   },
+    // },
+    // {
+    //   name: 'Mobile Safari',
+    //   use: devices['iPhone 12'],
+    // },
   ],
 };
 module.exports = config;
