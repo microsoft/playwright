@@ -42,13 +42,14 @@ const createTagNameEngine = () => ({
 await selectors.register('tag', createTagNameEngine);
 
 // Now we can use 'tag=' selectors.
-const button = await page.$('tag=button');
+const button = page.locator('tag=button');
+await button.click();
 
 // We can combine it with other selector engines using `>>` combinator.
 await page.click('tag=div >> span >> "Click me"');
 
 // We can use it in any methods supporting selectors.
-const buttonCount = await page.$$eval('tag=button', buttons => buttons.length);
+const buttonCount = await page.locator('tag=button').count();
 ```
 
 ```java
@@ -69,13 +70,14 @@ String createTagNameEngine = "{\n" +
 playwright.selectors().register("tag", createTagNameEngine);
 
 // Now we can use "tag=" selectors.
-ElementHandle button = page.querySelector("tag=button");
+Locator button = page.locator("tag=button");
+button.click();
 
 // We can combine it with other selector engines using ">>" combinator.
 page.click("tag=div >> span >> \"Click me\"");
 
 // We can use it in any methods supporting selectors.
-int buttonCount = (int) page.evalOnSelectorAll("tag=button", "buttons => buttons.length");
+int buttonCount = (int) page.locator("tag=button").count();
 ```
 
 ```python async
@@ -97,13 +99,14 @@ tag_selector = """
 await playwright.selectors.register("tag", tag_selector)
 
 # now we can use "tag=" selectors.
-button = await page.query_selector("tag=button")
+button = page.locator("tag=button")
+await button.click()
 
 # we can combine it with other selector engines using `>>` combinator.
 await page.click("tag=div >> span >> "click me"")
 
 # we can use it in any methods supporting selectors.
-button_count = await page.eval_on_selector_all("tag=button", buttons => buttons.length)
+button_count = await page.locator("tag=button").count()
 ```
 
 ```python sync
@@ -125,11 +128,12 @@ tag_selector = """
 playwright.selectors.register("tag", tag_selector)
 
 # now we can use "tag=" selectors.
-button = page.query_selector("tag=button")
+button = page.locator("tag=button")
+button.click()
 
 # we can combine it with other selector engines using `>>` combinator.
 page.click("tag=div >> span >> "click me"")
 
 # we can use it in any methods supporting selectors.
-button_count = page.eval_on_selector_all("tag=button", buttons => buttons.length)
+button_count = page.locator("tag=button").count()
 ```

@@ -55,10 +55,6 @@ const frame = page.frame('frame-login');
 // Get frame using frame's URL
 const frame = page.frame({ url: /.*domain.*/ });
 
-// Get frame using any other selector
-const frameElementHandle = await page.$('.frame-class');
-const frame = await frameElementHandle.contentFrame();
-
 // Interact with the frame
 await frame.fill('#username-input', 'John');
 ```
@@ -69,10 +65,6 @@ Frame frame = page.frame("frame-login");
 
 // Get frame using frame"s URL
 Frame frame = page.frameByUrl(Pattern.compile(".*domain.*"));
-
-// Get frame using any other selector
-ElementHandle frameElementHandle = page.querySelector(".frame-class");
-Frame frame = frameElementHandle.contentFrame();
 
 // Interact with the frame
 frame.fill("#username-input", "John");
@@ -85,10 +77,6 @@ frame = page.frame('frame-login')
 # Get frame using frame's URL
 frame = page.frame(url=r'.*domain.*')
 
-# Get frame using any other selector
-frame_element_handle = await page.query_selector('.frame-class')
-frame = await frame_element_handle.content_frame()
-
 # Interact with the frame
 await frame.fill('#username-input', 'John')
 ```
@@ -99,10 +87,6 @@ frame = page.frame('frame-login')
 
 # Get frame using frame's URL
 frame = page.frame(url=r'.*domain.*')
-
-# Get frame using any other selector
-frame_element_handle = page.query_selector('.frame-class')
-frame = frame_element_handle.content_frame()
 
 # Interact with the frame
 frame.fill('#username-input', 'John')
@@ -119,7 +103,7 @@ var frame = page.Frame("frame-login");
 var frame = page.FrameByUrl("*domain.");
 
 // Get frame using any other selector
-var frameElementHandle = await page.QuerySelectorAsync(".frame-class");
+var frameElementHandle = await page.EvaluateAsync("window.frames[1]");
 var frame = await frameElementHandle.ContentFrameAsync();
 
 // Interact with the frame

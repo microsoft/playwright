@@ -131,27 +131,27 @@ Assert.True(checked);
 ## JS expression
 
 ```js
-const content = await page.$eval('nav:first-child', e => e.textContent);
+const content = await page.locator('nav:first-child').textContent();
 expect(content).toBe('home');
 ```
 
 ```java
-Object content = page.evalOnSelector("nav:first-child", "e => e.textContent");
+Object content = page.locator("nav:first-child").textContent();
 assertEquals("home", content);
 ```
 
 ```python async
-content = await page.eval_on_selector("nav:first-child", "e => e.textContent")
+content = await page.locator("nav:first-child").text_content()
 assert content == "home"
 ```
 
 ```python sync
-content = page.eval_on_selector("nav:first-child", "e => e.textContent")
+content = page.locator("nav:first-child").text_content()
 assert content == "home"
 ```
 
 ```csharp
-var content = await page.EvalOnSelectorAsync("nav:first-child", "e => e.textContent");
+var content = await page.locator("nav:first-child").TextContentAsync();
 Assert.Equals("home", content);
 ```
 
@@ -264,16 +264,15 @@ const userId = page.evaluate(() => window.localStorage.getItem('userId'));
 expect(userId).toBeTruthy();
 
 // Assert value for input element
-await page.waitForSelector('#search');
-const value = await page.inputValue('#search');
+const value = await page.locator('#search').inputValue();
 expect(value === 'query').toBeTruthy();
 
 // Assert computed style
-const fontSize = await page.$eval('div', el => window.getComputedStyle(el).fontSize);
+const fontSize = await page.locator('div').evaluate(el => window.getComputedStyle(el).fontSize);
 expect(fontSize === '16px').toBeTruthy();
 
 // Assert list length
-const length = await page.$$eval('li.selected', (items) => items.length);
+const length = await page.locator('li.selected').count();
 expect(length === 3).toBeTruthy();
 ```
 
@@ -283,16 +282,15 @@ Object userId = page.evaluate("() => window.localStorage.getItem('userId')");
 assertNotNull(userId);
 
 // Assert value for input element
-page.waitForSelector("#search");
-Object value = page.evalOnSelector("#search", "el => el.value");
+Object value = page.locator("#search").inputValue();
 assertEquals("query", value);
 
 // Assert computed style
-Object fontSize = page.evalOnSelector("div", "el => window.getComputedStyle(el).fontSize");
+Object fontSize = page.locator("div").evaluate("el => window.getComputedStyle(el).fontSize");
 assertEquals("16px", fontSize);
 
 // Assert list length
-Object length = page.evalOnSelectorAll("li.selected",  "items => items.length");
+Object length = page.locator("li.selected").count();
 assertEquals(3, length);
 ```
 
@@ -302,16 +300,15 @@ user_id = page.evaluate("() => window.localStorage.getItem('user_id')")
 assert user_id
 
 # Assert value for input element
-await page.wait_for_selector('#search')
-value = await page.eval_on_selector('#search', 'el => el.value')
+value = await page.locator('#search').input_value()
 assert value == 'query'
 
 # Assert computed style
-font_size = await page.eval_on_selector('div', 'el => window.getComputedStyle(el).fontSize')
+font_size = await page.locator('div').evaluate('el => window.getComputedStyle(el).fontSize')
 assert font_size == '16px'
 
 # Assert list length
-length = await page.eval_on_selector_all('li.selected', '(items) => items.length')
+length = await page.locator('li.selected').count()
 assert length == 3
 ```
 
@@ -321,16 +318,15 @@ user_id = page.evaluate("() => window.localStorage.getItem('user_id')")
 assert user_id
 
 # Assert value for input element
-page.wait_for_selector('#search')
-value = page.eval_on_selector('#search', 'el => el.value')
+value = page.locator('#search').input_value()
 assert value == 'query'
 
 # Assert computed style
-font_size = page.eval_on_selector('div', 'el => window.getComputedStyle(el).fontSize')
+font_size = page.locator('div').evaluate('el => window.getComputedStyle(el).fontSize')
 assert font_size == '16px'
 
 # Assert list length
-length = page.eval_on_selector_all('li.selected', '(items) => items.length')
+length = page.locator('li.selected').count()
 assert length == 3
 ```
 
@@ -340,26 +336,14 @@ var userId = await page.EvaluateAsync<string>("() => window.localStorage.getItem
 Assert.NotNull(userId);
 
 // Assert value for input element
-await page.WaitForSelectorAsync("#search");
-var value = await page.EvalOnSelectorAsync("#search", "el => el.value");
+var value = await page.Locator("#search").InputValueAsync();
 Assert.Equals("query", value);
 
 // Assert computed style
-var fontSize = await page.EvalOnSelectorAsync<string>("div", "el => window.getComputedStyle(el).fontSize");
+var fontSize = await page.Locator("div").EvalOnSelectorAsync<string>("el => window.getComputedStyle(el).fontSize");
 Assert.Equals("16px", fontSize);
 
 // Assert list length
-var length = await page.EvalOnSelectorAllAsync<int>("li.selected", "items => items.length");
+var length = await page.Locator("li.selected").CountAsync();
 Assert.Equals(3, length);
 ```
-
-### API reference
-- [`method: Page.evaluate`]
-- [`method: Page.evalOnSelector`]
-- [`method: Page.evalOnSelectorAll`]
-- [`method: Frame.evaluate`]
-- [`method: Frame.evalOnSelector`]
-- [`method: Frame.evalOnSelectorAll`]
-- [`method: ElementHandle.evalOnSelector`]
-- [`method: ElementHandle.evalOnSelectorAll`]
-- [EvaluationArgument]
