@@ -3,6 +3,10 @@
 
 ElementHandle represents an in-page DOM element. ElementHandles can be created with the [`method: Page.querySelector`] method.
 
+:::caution Discouraged
+The use of ElementHandle is discouraged, use [Locator] objects and web-first assertions instead.
+:::
+
 ```js
 const hrefElement = await page.$('a');
 await hrefElement.click();
@@ -32,11 +36,6 @@ ElementHandle prevents DOM element from garbage collection unless the handle is 
 [`method: JSHandle.dispose`]. ElementHandles are auto-disposed when their origin frame gets navigated.
 
 ElementHandle instances can be used as an argument in [`method: Page.evalOnSelector`] and [`method: Page.evaluate`] methods.
-
-:::note
-In most cases, you would want to use the [Locator] object instead. You should only use [ElementHandle] if you want to retain
-a handle to a particular DOM Node that you intend to pass into [`method: Page.evaluate`] as an argument.
-:::
 
 The difference between the [Locator] and ElementHandle is that the ElementHandle points to a particular element, while [Locator] captures the logic of how to retrieve an element.
 

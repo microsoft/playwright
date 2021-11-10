@@ -81,15 +81,15 @@ await page.evaluate(array => array.length, [1, 2, 3]);
 await page.evaluate(object => object.foo, { foo: 'bar' });
 
 // A single handle.
-const button = await page.$('button');
+const button = await page.evaluate('window.button');
 await page.evaluate(button => button.textContent, button);
 
 // Alternative notation using elementHandle.evaluate.
 await button.evaluate((button, from) => button.textContent.substring(from), 5);
 
 // Object with multiple handles.
-const button1 = await page.$('.button1');
-const button2 = await page.$('.button2');
+const button1 = await page.evaluate('window.button1');
+const button2 = await page.evaluate('window.button2');
 await page.evaluate(
     o => o.button1.textContent + o.button2.textContent,
     { button1, button2 });
@@ -126,15 +126,15 @@ obj.put("foo", "bar");
 page.evaluate("object => object.foo", obj);
 
 // A single handle.
-ElementHandle button = page.querySelector("button");
+ElementHandle button = page.evaluate("window.button");
 page.evaluate("button => button.textContent", button);
 
 // Alternative notation using elementHandle.evaluate.
 button.evaluate("(button, from) => button.textContent.substring(from)", 5);
 
 // Object with multiple handles.
-ElementHandle button1 = page.querySelector(".button1");
-ElementHandle button2 = page.querySelector(".button2");
+ElementHandle button1 = page.evaluate("window.button1");
+ElementHandle button2 = page.evaluate("window.button2");
 Map<String, ElementHandle> arg = new HashMap<>();
 arg.put("button1", button1);
 arg.put("button2", button2);
@@ -175,15 +175,15 @@ await page.evaluate('array => array.length', [1, 2, 3])
 await page.evaluate('object => object.foo', { 'foo': 'bar' })
 
 # A single handle.
-button = await page.query_selctor('button')
+button = await page.evaluate('button')
 await page.evaluate('button => button.textContent', button)
 
 # Alternative notation using elementHandle.evaluate.
 await button.evaluate('(button, from) => button.textContent.substring(from)', 5)
 
 # Object with multiple handles.
-button1 = await page.query_selector('.button1')
-button2 = await page.query_selector('.button2')
+button1 = await page.query_selector('window.button1')
+button2 = await page.query_selector('window.button2')
 await page.evaluate("""
     o => o.button1.textContent + o.button2.textContent""",
     { 'button1': button1, 'button2': button2 })
@@ -218,15 +218,15 @@ page.evaluate('array => array.length', [1, 2, 3])
 page.evaluate('object => object.foo', { 'foo': 'bar' })
 
 # A single handle.
-button = page.query_selector('button')
+button = page.evaluate('window.button')
 page.evaluate('button => button.textContent', button)
 
 # Alternative notation using elementHandle.evaluate.
 button.evaluate('(button, from) => button.textContent.substring(from)', 5)
 
 # Object with multiple handles.
-button1 = page.query_selector('.button1')
-button2 = page.query_selector('.button2')
+button1 = page.evaluate('window.button1')
+button2 = page.evaluate('.button2')
 page.evaluate("""o => o.button1.textContent + o.button2.textContent""",
     { 'button1': button1, 'button2': button2 })
 
@@ -260,15 +260,15 @@ await page.EvaluateAsync<int[]>("array => array.length", new[] { 1, 2, 3 });
 await page.EvaluateAsync<object>("object => object.foo", new { foo = "bar" });
 
 // A single handle.
-var button = await page.QuerySelectorAsync("button");
+var button = await page.EvaluateAsync("window.button");
 await page.EvaluateAsync<IJSHandle>("button => button.textContent", button);
 
 // Alternative notation using elementHandle.EvaluateAsync.
 await button.EvaluateAsync<string>("(button, from) => button.textContent.substring(from)", 5);
 
 // Object with multiple handles.
-var button1 = await page.QuerySelectorAsync(".button1");
-var button2 = await page.QuerySelectorAsync(".button2");
+var button1 = await page.EvaluateAsync("window.button1");
+var button2 = await page.EvaluateAsync("window.button2");
 await page.EvaluateAsync("o => o.button1.textContent + o.button2.textContent", new { button1, button2 });
 
 // Object destructuring works. Note that property names must match

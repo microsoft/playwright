@@ -109,7 +109,7 @@ export interface Page {
    * [page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate):
    *
    * ```js
-   * const bodyHandle = await page.$('body');
+   * const bodyHandle = await page.evaluate('document.body');
    * const html = await page.evaluate(([body, suffix]) => body.innerHTML + suffix, [bodyHandle, 'hello']);
    * await bodyHandle.dispose();
    * ```
@@ -156,7 +156,7 @@ export interface Page {
    * [page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate):
    *
    * ```js
-   * const bodyHandle = await page.$('body');
+   * const bodyHandle = await page.evaluate('document.body');
    * const html = await page.evaluate(([body, suffix]) => body.innerHTML + suffix, [bodyHandle, 'hello']);
    * await bodyHandle.dispose();
    * ```
@@ -250,9 +250,11 @@ export interface Page {
   evaluateHandle<R>(pageFunction: PageFunction<void, R>, arg?: any): Promise<SmartHandle<R>>;
 
   /**
+   * > NOTE: The use of [ElementHandle] is discouraged, use [Locator] objects and web-first assertions instead.
+   *
    * The method finds an element matching the specified selector within the page. If no elements match the selector, the
    * return value resolves to `null`. To wait for an element on the page, use
-   * [page.waitForSelector(selector[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-selector).
+   * [locator.waitFor([options])](https://playwright.dev/docs/api/class-locator#locator-wait-for).
    *
    * Shortcut for main frame's
    * [frame.$(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-query-selector).
@@ -261,9 +263,11 @@ export interface Page {
    */
   $<K extends keyof HTMLElementTagNameMap>(selector: K, options?: { strict: boolean }): Promise<ElementHandleForTag<K> | null>;
   /**
+   * > NOTE: The use of [ElementHandle] is discouraged, use [Locator] objects and web-first assertions instead.
+   *
    * The method finds an element matching the specified selector within the page. If no elements match the selector, the
    * return value resolves to `null`. To wait for an element on the page, use
-   * [page.waitForSelector(selector[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-selector).
+   * [locator.waitFor([options])](https://playwright.dev/docs/api/class-locator#locator-wait-for).
    *
    * Shortcut for main frame's
    * [frame.$(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-query-selector).
@@ -273,6 +277,8 @@ export interface Page {
   $(selector: string, options?: { strict: boolean }): Promise<ElementHandle<SVGElement | HTMLElement> | null>;
 
   /**
+   * > NOTE: The use of [ElementHandle] is discouraged, use [Locator] objects and web-first assertions instead.
+   *
    * The method finds all elements matching the specified selector within the page. If no elements match the selector, the
    * return value resolves to `[]`.
    *
@@ -281,6 +287,8 @@ export interface Page {
    */
   $$<K extends keyof HTMLElementTagNameMap>(selector: K): Promise<ElementHandleForTag<K>[]>;
   /**
+   * > NOTE: The use of [ElementHandle] is discouraged, use [Locator] objects and web-first assertions instead.
+   *
    * The method finds all elements matching the specified selector within the page. If no elements match the selector, the
    * return value resolves to `[]`.
    *
@@ -290,6 +298,11 @@ export interface Page {
   $$(selector: string): Promise<ElementHandle<SVGElement | HTMLElement>[]>;
 
   /**
+   * > NOTE: This method does not wait for the element to pass actionability checks and therefore can lead to the flaky
+   * tests. Use
+   * [locator.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate), other
+   * [Locator] helper methods or web-first assertions instead.
+   *
    * The method finds an element matching the specified selector within the page and passes it as a first argument to
    * `pageFunction`. If no elements match the selector, the method throws an error. Returns the value of `pageFunction`.
    *
@@ -316,6 +329,11 @@ export interface Page {
    */
   $eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], Arg, R>, arg: Arg): Promise<R>;
   /**
+   * > NOTE: This method does not wait for the element to pass actionability checks and therefore can lead to the flaky
+   * tests. Use
+   * [locator.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate), other
+   * [Locator] helper methods or web-first assertions instead.
+   *
    * The method finds an element matching the specified selector within the page and passes it as a first argument to
    * `pageFunction`. If no elements match the selector, the method throws an error. Returns the value of `pageFunction`.
    *
@@ -342,6 +360,11 @@ export interface Page {
    */
   $eval<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E, Arg, R>, arg: Arg): Promise<R>;
   /**
+   * > NOTE: This method does not wait for the element to pass actionability checks and therefore can lead to the flaky
+   * tests. Use
+   * [locator.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate), other
+   * [Locator] helper methods or web-first assertions instead.
+   *
    * The method finds an element matching the specified selector within the page and passes it as a first argument to
    * `pageFunction`. If no elements match the selector, the method throws an error. Returns the value of `pageFunction`.
    *
@@ -368,6 +391,11 @@ export interface Page {
    */
   $eval<K extends keyof HTMLElementTagNameMap, R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], void, R>, arg?: any): Promise<R>;
   /**
+   * > NOTE: This method does not wait for the element to pass actionability checks and therefore can lead to the flaky
+   * tests. Use
+   * [locator.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate), other
+   * [Locator] helper methods or web-first assertions instead.
+   *
    * The method finds an element matching the specified selector within the page and passes it as a first argument to
    * `pageFunction`. If no elements match the selector, the method throws an error. Returns the value of `pageFunction`.
    *
@@ -395,6 +423,10 @@ export interface Page {
   $eval<R, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E, void, R>, arg?: any): Promise<R>;
 
   /**
+   * > NOTE: In most cases,
+   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all), other
+   * [Locator] helper methods and web-first assertions do a better job.
+   *
    * The method finds all elements matching the specified selector within the page and passes an array of matched elements as
    * a first argument to `pageFunction`. Returns the result of `pageFunction` invocation.
    *
@@ -414,6 +446,10 @@ export interface Page {
    */
   $$eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], Arg, R>, arg: Arg): Promise<R>;
   /**
+   * > NOTE: In most cases,
+   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all), other
+   * [Locator] helper methods and web-first assertions do a better job.
+   *
    * The method finds all elements matching the specified selector within the page and passes an array of matched elements as
    * a first argument to `pageFunction`. Returns the result of `pageFunction` invocation.
    *
@@ -433,6 +469,10 @@ export interface Page {
    */
   $$eval<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E[], Arg, R>, arg: Arg): Promise<R>;
   /**
+   * > NOTE: In most cases,
+   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all), other
+   * [Locator] helper methods and web-first assertions do a better job.
+   *
    * The method finds all elements matching the specified selector within the page and passes an array of matched elements as
    * a first argument to `pageFunction`. Returns the result of `pageFunction` invocation.
    *
@@ -452,6 +492,10 @@ export interface Page {
    */
   $$eval<K extends keyof HTMLElementTagNameMap, R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], void, R>, arg?: any): Promise<R>;
   /**
+   * > NOTE: In most cases,
+   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all), other
+   * [Locator] helper methods and web-first assertions do a better job.
+   *
    * The method finds all elements matching the specified selector within the page and passes an array of matched elements as
    * a first argument to `pageFunction`. Returns the result of `pageFunction` invocation.
    *
@@ -548,6 +592,9 @@ export interface Page {
    * Returns when element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or
    * `detached`.
    *
+   * > NOTE: Playwright automatically waits for element to be ready before performing an action. Using [Locator] objects and
+   * web-first assertions make the code wait-for-selector-free.
+   *
    * Wait for the `selector` to satisfy `state` option (either appear/disappear from dom, or become visible/hidden). If at
    * the moment of calling the method `selector` already satisfies the condition, the method will return immediately. If the
    * selector doesn't satisfy the condition for the `timeout` milliseconds, the function will throw.
@@ -576,6 +623,9 @@ export interface Page {
   /**
    * Returns when element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or
    * `detached`.
+   *
+   * > NOTE: Playwright automatically waits for element to be ready before performing an action. Using [Locator] objects and
+   * web-first assertions make the code wait-for-selector-free.
    *
    * Wait for the `selector` to satisfy `state` option (either appear/disappear from dom, or become visible/hidden). If at
    * the moment of calling the method `selector` already satisfies the condition, the method will return immediately. If the
@@ -606,6 +656,9 @@ export interface Page {
    * Returns when element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or
    * `detached`.
    *
+   * > NOTE: Playwright automatically waits for element to be ready before performing an action. Using [Locator] objects and
+   * web-first assertions make the code wait-for-selector-free.
+   *
    * Wait for the `selector` to satisfy `state` option (either appear/disappear from dom, or become visible/hidden). If at
    * the moment of calling the method `selector` already satisfies the condition, the method will return immediately. If the
    * selector doesn't satisfy the condition for the `timeout` milliseconds, the function will throw.
@@ -634,6 +687,9 @@ export interface Page {
   /**
    * Returns when element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or
    * `detached`.
+   *
+   * > NOTE: Playwright automatically waits for element to be ready before performing an action. Using [Locator] objects and
+   * web-first assertions make the code wait-for-selector-free.
    *
    * Wait for the `selector` to satisfy `state` option (either appear/disappear from dom, or become visible/hidden). If at
    * the moment of calling the method `selector` already satisfies the condition, the method will return immediately. If the
@@ -3871,7 +3927,7 @@ export interface Frame {
    * [frame.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate):
    *
    * ```js
-   * const bodyHandle = await frame.$('body');
+   * const bodyHandle = await frame.evaluate('document.body');
    * const html = await frame.evaluate(([body, suffix]) => body.innerHTML + suffix, [bodyHandle, 'hello']);
    * await bodyHandle.dispose();
    * ```
@@ -3912,7 +3968,7 @@ export interface Frame {
    * [frame.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate):
    *
    * ```js
-   * const bodyHandle = await frame.$('body');
+   * const bodyHandle = await frame.evaluate('document.body');
    * const html = await frame.evaluate(([body, suffix]) => body.innerHTML + suffix, [bodyHandle, 'hello']);
    * await bodyHandle.dispose();
    * ```
@@ -4006,6 +4062,8 @@ export interface Frame {
   /**
    * Returns the ElementHandle pointing to the frame element.
    *
+   * > NOTE: The use of [ElementHandle] is discouraged, use [Locator] objects and web-first assertions instead.
+   *
    * The method finds an element matching the specified selector within the frame. See
    * [Working with selectors](https://playwright.dev/docs/selectors) for more details. If no elements match the selector, returns `null`.
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
@@ -4014,6 +4072,8 @@ export interface Frame {
   $<K extends keyof HTMLElementTagNameMap>(selector: K, options?: { strict: boolean }): Promise<ElementHandleForTag<K> | null>;
   /**
    * Returns the ElementHandle pointing to the frame element.
+   *
+   * > NOTE: The use of [ElementHandle] is discouraged, use [Locator] objects and web-first assertions instead.
    *
    * The method finds an element matching the specified selector within the frame. See
    * [Working with selectors](https://playwright.dev/docs/selectors) for more details. If no elements match the selector, returns `null`.
@@ -4025,6 +4085,8 @@ export interface Frame {
   /**
    * Returns the ElementHandles pointing to the frame elements.
    *
+   * > NOTE: The use of [ElementHandle] is discouraged, use [Locator] objects instead.
+   *
    * The method finds all elements matching the specified selector within the frame. See
    * [Working with selectors](https://playwright.dev/docs/selectors) for more details. If no elements match the selector, returns empty array.
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
@@ -4032,6 +4094,8 @@ export interface Frame {
   $$<K extends keyof HTMLElementTagNameMap>(selector: K): Promise<ElementHandleForTag<K>[]>;
   /**
    * Returns the ElementHandles pointing to the frame elements.
+   *
+   * > NOTE: The use of [ElementHandle] is discouraged, use [Locator] objects instead.
    *
    * The method finds all elements matching the specified selector within the frame. See
    * [Working with selectors](https://playwright.dev/docs/selectors) for more details. If no elements match the selector, returns empty array.
@@ -4041,6 +4105,11 @@ export interface Frame {
 
   /**
    * Returns the return value of `pageFunction`.
+   *
+   * > NOTE: This method does not wait for the element to pass actionability checks and therefore can lead to the flaky
+   * tests. Use
+   * [locator.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate), other
+   * [Locator] helper methods or web-first assertions instead.
    *
    * The method finds an element matching the specified selector within the frame and passes it as a first argument to
    * `pageFunction`. See [Working with selectors](https://playwright.dev/docs/selectors) for more details. If no elements match the selector, the
@@ -4067,6 +4136,11 @@ export interface Frame {
   /**
    * Returns the return value of `pageFunction`.
    *
+   * > NOTE: This method does not wait for the element to pass actionability checks and therefore can lead to the flaky
+   * tests. Use
+   * [locator.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate), other
+   * [Locator] helper methods or web-first assertions instead.
+   *
    * The method finds an element matching the specified selector within the frame and passes it as a first argument to
    * `pageFunction`. See [Working with selectors](https://playwright.dev/docs/selectors) for more details. If no elements match the selector, the
    * method throws an error.
@@ -4092,6 +4166,11 @@ export interface Frame {
   /**
    * Returns the return value of `pageFunction`.
    *
+   * > NOTE: This method does not wait for the element to pass actionability checks and therefore can lead to the flaky
+   * tests. Use
+   * [locator.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate), other
+   * [Locator] helper methods or web-first assertions instead.
+   *
    * The method finds an element matching the specified selector within the frame and passes it as a first argument to
    * `pageFunction`. See [Working with selectors](https://playwright.dev/docs/selectors) for more details. If no elements match the selector, the
    * method throws an error.
@@ -4116,6 +4195,11 @@ export interface Frame {
   $eval<K extends keyof HTMLElementTagNameMap, R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], void, R>, arg?: any): Promise<R>;
   /**
    * Returns the return value of `pageFunction`.
+   *
+   * > NOTE: This method does not wait for the element to pass actionability checks and therefore can lead to the flaky
+   * tests. Use
+   * [locator.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate), other
+   * [Locator] helper methods or web-first assertions instead.
    *
    * The method finds an element matching the specified selector within the frame and passes it as a first argument to
    * `pageFunction`. See [Working with selectors](https://playwright.dev/docs/selectors) for more details. If no elements match the selector, the
@@ -4143,6 +4227,10 @@ export interface Frame {
   /**
    * Returns the return value of `pageFunction`.
    *
+   * > NOTE: In most cases,
+   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all), other
+   * [Locator] helper methods and web-first assertions do a better job.
+   *
    * The method finds all elements matching the specified selector within the frame and passes an array of matched elements
    * as a first argument to `pageFunction`. See [Working with selectors](https://playwright.dev/docs/selectors) for more details.
    *
@@ -4163,6 +4251,10 @@ export interface Frame {
   $$eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], Arg, R>, arg: Arg): Promise<R>;
   /**
    * Returns the return value of `pageFunction`.
+   *
+   * > NOTE: In most cases,
+   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all), other
+   * [Locator] helper methods and web-first assertions do a better job.
    *
    * The method finds all elements matching the specified selector within the frame and passes an array of matched elements
    * as a first argument to `pageFunction`. See [Working with selectors](https://playwright.dev/docs/selectors) for more details.
@@ -4185,6 +4277,10 @@ export interface Frame {
   /**
    * Returns the return value of `pageFunction`.
    *
+   * > NOTE: In most cases,
+   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all), other
+   * [Locator] helper methods and web-first assertions do a better job.
+   *
    * The method finds all elements matching the specified selector within the frame and passes an array of matched elements
    * as a first argument to `pageFunction`. See [Working with selectors](https://playwright.dev/docs/selectors) for more details.
    *
@@ -4205,6 +4301,10 @@ export interface Frame {
   $$eval<K extends keyof HTMLElementTagNameMap, R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], void, R>, arg?: any): Promise<R>;
   /**
    * Returns the return value of `pageFunction`.
+   *
+   * > NOTE: In most cases,
+   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all), other
+   * [Locator] helper methods and web-first assertions do a better job.
    *
    * The method finds all elements matching the specified selector within the frame and passes an array of matched elements
    * as a first argument to `pageFunction`. See [Working with selectors](https://playwright.dev/docs/selectors) for more details.
@@ -4294,6 +4394,9 @@ export interface Frame {
    * Returns when element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or
    * `detached`.
    *
+   * > NOTE: Playwright automatically waits for element to be ready before performing an action. Using [Locator] objects and
+   * web-first assertions make the code wait-for-selector-free.
+   *
    * Wait for the `selector` to satisfy `state` option (either appear/disappear from dom, or become visible/hidden). If at
    * the moment of calling the method `selector` already satisfies the condition, the method will return immediately. If the
    * selector doesn't satisfy the condition for the `timeout` milliseconds, the function will throw.
@@ -4322,6 +4425,9 @@ export interface Frame {
   /**
    * Returns when element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or
    * `detached`.
+   *
+   * > NOTE: Playwright automatically waits for element to be ready before performing an action. Using [Locator] objects and
+   * web-first assertions make the code wait-for-selector-free.
    *
    * Wait for the `selector` to satisfy `state` option (either appear/disappear from dom, or become visible/hidden). If at
    * the moment of calling the method `selector` already satisfies the condition, the method will return immediately. If the
@@ -4352,6 +4458,9 @@ export interface Frame {
    * Returns when element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or
    * `detached`.
    *
+   * > NOTE: Playwright automatically waits for element to be ready before performing an action. Using [Locator] objects and
+   * web-first assertions make the code wait-for-selector-free.
+   *
    * Wait for the `selector` to satisfy `state` option (either appear/disappear from dom, or become visible/hidden). If at
    * the moment of calling the method `selector` already satisfies the condition, the method will return immediately. If the
    * selector doesn't satisfy the condition for the `timeout` milliseconds, the function will throw.
@@ -4380,6 +4489,9 @@ export interface Frame {
   /**
    * Returns when element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or
    * `detached`.
+   *
+   * > NOTE: Playwright automatically waits for element to be ready before performing an action. Using [Locator] objects and
+   * web-first assertions make the code wait-for-selector-free.
    *
    * Wait for the `selector` to satisfy `state` option (either appear/disappear from dom, or become visible/hidden). If at
    * the moment of calling the method `selector` already satisfies the condition, the method will return immediately. If the
@@ -7057,6 +7169,8 @@ export interface JSHandle<T = any> {
  * ElementHandle represents an in-page DOM element. ElementHandles can be created with the
  * [page.$(selector[, options])](https://playwright.dev/docs/api/class-page#page-query-selector) method.
  *
+ * > NOTE: The use of ElementHandle is discouraged, use [Locator] objects and web-first assertions instead.
+ *
  * ```js
  * const hrefElement = await page.$('a');
  * await hrefElement.click();
@@ -7069,10 +7183,6 @@ export interface JSHandle<T = any> {
  * ElementHandle instances can be used as an argument in
  * [page.$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-eval-on-selector)
  * and [page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate) methods.
- *
- * > NOTE: In most cases, you would want to use the [Locator] object instead. You should only use [ElementHandle] if you
- * want to retain a handle to a particular DOM Node that you intend to pass into
- * [page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate) as an argument.
  *
  * The difference between the [Locator] and ElementHandle is that the ElementHandle points to a particular element, while
  * [Locator] captures the logic of how to retrieve an element.
@@ -10338,7 +10448,7 @@ export namespace errors {
  * - extends: [Error]
  *
  * TimeoutError is emitted whenever certain operations are terminated due to timeout, e.g.
- * [page.waitForSelector(selector[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-selector) or
+ * [locator.waitFor([options])](https://playwright.dev/docs/api/class-locator#locator-wait-for) or
  * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch).
  *
  * ```js
@@ -14434,11 +14544,11 @@ export interface Selectors {
    *   await page.setContent(`<div><button>Click me</button></div>`);
    *
    *   // Use the selector prefixed with its name.
-   *   const button = await page.$('tag=button');
+   *   const button = page.locator('tag=button');
    *   // Combine it with other selector engines.
    *   await page.click('tag=div >> text="Click me"');
    *   // Can use it in any methods supporting selectors.
-   *   const buttonCount = await page.$$eval('tag=button', buttons => buttons.length);
+   *   const buttonCount = await page.locator('tag=button').count();
    *
    *   await browser.close();
    * })();

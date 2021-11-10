@@ -79,30 +79,21 @@ var bytes = await page.ScreenshotAsync();
 Sometimes it is useful to take a screenshot of a single element.
 
 ```js
-const elementHandle = await page.$('.header');
-await elementHandle.screenshot({ path: 'screenshot.png' });
+await page.locator('.header').screenshot({ path: 'screenshot.png' });
 ```
 
 ```java
-ElementHandle elementHandle = page.querySelector(".header");
-elementHandle.screenshot(new ElementHandle.ScreenshotOptions().setPath(Paths.get("screenshot.png")));
+page.locator(".header").screenshot(new ElementHandle.ScreenshotOptions().setPath(Paths.get("screenshot.png")));
 ```
 
 ```python async
-element_handle = await page.query_selector(".header")
-await element_handle.screenshot(path="screenshot.png")
+await page.locator(".header").screenshot(path="screenshot.png")
 ```
 
 ```python sync
-element_handle = page.query_selector(".header")
-element_handle.screenshot(path="screenshot.png")
+page.locator(".header").screenshot(path="screenshot.png")
 ```
 
 ```csharp
-var elementHandle = await page.QuerySelectorAsync(".header")
-await elementHandle.ScreenshotAsync(new ElementHandleScreenshotOptions { Path = "screenshot.png" });
+await page.Locator(".header").ScreenshotAsync(new ElementHandleScreenshotOptions { Path = "screenshot.png" });
 ```
-
-### API reference
-- [`method: Page.screenshot`]
-- [`method: ElementHandle.screenshot`]
