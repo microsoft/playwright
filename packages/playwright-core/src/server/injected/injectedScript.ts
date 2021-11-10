@@ -64,7 +64,7 @@ export type ElementMatch = {
 };
 
 export type HitTargetInterceptionResult = {
-  stop: () => 'done' | { hitTargetDescription: string };
+  stop: () => 'done' | 'error:doesnotmatch' | { hitTargetDescription: string } | { strictModeViolation: string };
 };
 
 export class InjectedScript {
@@ -418,8 +418,8 @@ export class InjectedScript {
     return element;
   }
 
-  waitForElementStatesAndPerformAction<T>(node: Node, states: ElementState[], force: boolean | undefined,
-    callback: (node: Node, progress: InjectedScriptProgress) => T | symbol): InjectedScriptPoll<T | 'error:notconnected'> {
+  waitForElementStatesAndPerformAction<T>(node: Node, states: ElementState[], force: boolean | undefined, selector: ParsedSelector | undefined, strict: boolean,
+    callback: (node: Node, progress: InjectedScriptProgress) => T | symbol): InjectedScriptPoll<T | 'error:notconnected' | 'error:doesnotmatch'> {
     let lastRect: { x: number, y: number, width: number, height: number } | undefined;
     let counter = 0;
     let samePositionCounter = 0;
@@ -430,6 +430,17 @@ export class InjectedScript {
         progress.log(`    forcing action`);
         return callback(node, progress);
       }
+
+      let targetNode: Node | undefined = node;
+      if (selector) {
+        const elements = this.querySelectorAll(selector, document);
+        if (strict && elements.length > 1)
+          throw this.strictModeViolationError(selector, elements);
+        targetNode = elements[0];
+      }
+
+      if (targetNode !== node)
+        return 'error:doesnotmatch';
 
       for (const state of states) {
         if (state !== 'stable') {
@@ -669,12 +680,18 @@ export class InjectedScript {
   }
 
   checkHitTargetAt(node: Node, point: { x: number, y: number }): 'error:notconnected' | 'done' | { hitTargetDescription: string } {
-    let element: Element | null | undefined = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
-    if (!element || !element.isConnected)
+    const element = this._toElementOrButton(node);
+    if (!element)
       return 'error:notconnected';
-    element = element.closest('button, [role=button]') || element;
     const hitElement = this.deepElementFromPoint(document, point.x, point.y);
     return this._expectHitTargetParent(hitElement, element);
+  }
+
+  private _toElementOrButton(node: Node): Element | undefined {
+    const element: Element | null | undefined = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+    if (!element || !element.isConnected)
+      return;
+    return element.closest('button, [role=button]') || element;
   }
 
   private _expectHitTargetParent(hitElement: Element | undefined, targetElement: Element) {
@@ -705,18 +722,16 @@ export class InjectedScript {
     return { hitTargetDescription };
   }
 
-  setupHitTargetInterceptor(node: Node, action: 'hover' | 'tap' | 'mouse', blockAllEvents: boolean): HitTargetInterceptionResult | 'error:notconnected' {
-    const maybeElement: Element | null | undefined = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
-    if (!maybeElement || !maybeElement.isConnected)
+  setupHitTargetInterceptor(node: Node, action: 'hover' | 'tap' | 'mouse', blockAllEvents: boolean, selector: ParsedSelector | undefined, strict: boolean): HitTargetInterceptionResult | 'error:notconnected' {
+    if (!this._toElementOrButton(node))
       return 'error:notconnected';
-    const element = maybeElement.closest('button, [role=button]') || maybeElement;
 
     const events = {
       'hover': kHoverHitTargetInterceptorEvents,
       'tap': kTapHitTargetInterceptorEvents,
       'mouse': kMouseHitTargetInterceptorEvents,
     }[action];
-    let result: 'done' | { hitTargetDescription: string } | undefined;
+    let result: 'done' | 'error:doesnotmatch' | { hitTargetDescription: string } | { strictModeViolation: string } | undefined;
 
     const listener = (event: PointerEvent | MouseEvent | TouchEvent) => {
       // Ignore events that we do not expect to intercept.
@@ -728,9 +743,22 @@ export class InjectedScript {
       if (!event.isTrusted)
         return;
 
+      let targetNode: Node | undefined = node;
+      if (selector) {
+        const elements = this.querySelectorAll(selector, document);
+        if (strict && elements.length > 1)
+          result = { strictModeViolation: this._strictModeViolationErrorMessage(selector, elements) };
+        targetNode = elements[0];
+      }
+
+      if (targetNode && targetNode !== node)
+        result = 'error:doesnotmatch';
+
+      const element = targetNode ? this._toElementOrButton(targetNode) : undefined;
+
       // Element was detached during the action, for example in some event handler.
       // If events before that were correctly pointing to it, consider this a valid scenario.
-      if (!element.isConnected)
+      if (!element || !element.isConnected)
         return;
 
       // Determine the event point. Note that Firefox does not always have window.TouchEvent.
@@ -831,7 +859,7 @@ export class InjectedScript {
     return oneLine(`<${element.nodeName.toLowerCase()}${attrText}>${text}</${element.nodeName.toLowerCase()}>`);
   }
 
-  strictModeViolationError(selector: ParsedSelector, matches: Element[]): Error {
+  private _strictModeViolationErrorMessage(selector: ParsedSelector, matches: Element[]): string {
     const infos = matches.slice(0, 10).map(m => ({
       preview: this.previewNode(m),
       selector: generateSelector(this, m).selector
@@ -839,7 +867,11 @@ export class InjectedScript {
     const lines = infos.map((info, i) => `\n    ${i + 1}) ${info.preview} aka playwright.$("${info.selector}")`);
     if (infos.length < matches.length)
       lines.push('\n    ...');
-    return this.createStacklessError(`strict mode violation: "${stringifySelector(selector)}" resolved to ${matches.length} elements:${lines.join('')}\n`);
+    return `strict mode violation: "${stringifySelector(selector)}" resolved to ${matches.length} elements:${lines.join('')}\n`;
+  }
+
+  strictModeViolationError(selector: ParsedSelector, matches: Element[]): Error {
+    return this.createStacklessError(this._strictModeViolationErrorMessage(selector, matches));
   }
 
   createStacklessError(message: string): Error {

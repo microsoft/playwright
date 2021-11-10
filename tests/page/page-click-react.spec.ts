@@ -21,8 +21,8 @@ declare const renderComponent;
 declare const e;
 declare const MyButton;
 
-it('should report that selector does not match anymore', async ({ page, server }) => {
-  it.fixme();
+it('should report that selector does not match anymore', async ({ page, server, mode }) => {
+  it.skip(mode !== 'default');
 
   await page.goto(server.PREFIX + '/react.html');
   await page.evaluate(() => {
@@ -42,8 +42,8 @@ it('should report that selector does not match anymore', async ({ page, server }
   expect(error.message).toContain('element does not match the selector anymore');
 });
 
-it('should not retarget the handle when element is recycled', async ({ page, server }) => {
-  it.fixme();
+it('should not retarget the handle when element is recycled', async ({ page, server, mode }) => {
+  it.skip(mode !== 'default');
 
   await page.goto(server.PREFIX + '/react.html');
   await page.evaluate(() => {
@@ -59,7 +59,7 @@ it('should not retarget the handle when element is recycled', async ({ page, ser
   expect(await page.evaluate('window.button1')).toBe(undefined);
   expect(await page.evaluate('window.button2')).toBe(undefined);
   expect(error.message).toContain('elementHandle.click: Timeout 3000ms exceeded.');
-  expect(error.message).toContain('element is disabled - waiting');
+  expect(error.message).toContain('element is not enabled - waiting');
 });
 
 it('should timeout when click opens alert', async ({ page, server }) => {
@@ -71,8 +71,8 @@ it('should timeout when click opens alert', async ({ page, server }) => {
   await dialog.dismiss();
 });
 
-it('should retarget when element is recycled during hit testing', async ({ page, server }) => {
-  it.fixme();
+it('should retarget when element is recycled during hit testing', async ({ page, server, mode }) => {
+  it.skip(mode !== 'default');
 
   await page.goto(server.PREFIX + '/react.html');
   await page.evaluate(() => {
@@ -88,8 +88,8 @@ it('should retarget when element is recycled during hit testing', async ({ page,
   expect(await page.evaluate('window.button2')).toBe(undefined);
 });
 
-it('should retarget when element is recycled before enabled check', async ({ page, server }) => {
-  it.fixme();
+it('should retarget when element is recycled before enabled check', async ({ page, server, mode }) => {
+  it.skip(mode !== 'default');
 
   await page.goto(server.PREFIX + '/react.html');
   await page.evaluate(() => {
@@ -105,7 +105,7 @@ it('should retarget when element is recycled before enabled check', async ({ pag
   expect(await page.evaluate('window.button2')).toBe(undefined);
 });
 
-it('should not retarget when element changes on hover', async ({ page, server }) => {
+it('should not retarget when element disappears on hover', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/react.html');
   await page.evaluate(() => {
     renderComponent(e('div', {}, [e(MyButton, { name: 'button1', renameOnHover: true }), e(MyButton, { name: 'button2' })]));
@@ -115,7 +115,7 @@ it('should not retarget when element changes on hover', async ({ page, server })
   expect(await page.evaluate('window.button2')).toBe(undefined);
 });
 
-it('should not retarget when element is recycled on hover', async ({ page, server }) => {
+it('should retarget when element is recycled on hover', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/react.html');
   await page.evaluate(() => {
     function shuffle() {
@@ -124,6 +124,38 @@ it('should not retarget when element is recycled on hover', async ({ page, serve
     renderComponent(e('div', {}, [e(MyButton, { name: 'button1', onHover: shuffle }), e(MyButton, { name: 'button2' })]));
   });
   await page.click('text=button1');
+  expect(await page.evaluate('window.button1')).toBe(true);
+  expect(await page.evaluate('window.button2')).toBe(undefined);
+});
+
+it('should throw when strict is violated on hover', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/react.html');
+  await page.evaluate(() => {
+    function shuffle() {
+      renderComponent(e('div', {}, [e(MyButton, { name: 'button1' }), e(MyButton, { name: 'button1' })]));
+    }
+    renderComponent(e('div', {}, [e(MyButton, { name: 'button1', onHover: shuffle }), e(MyButton, { name: 'button2' })]));
+  });
+  const error = await page.click('text=button1', { strict: true }).catch(e => e);
   expect(await page.evaluate('window.button1')).toBe(undefined);
-  expect(await page.evaluate('window.button2')).toBe(true);
+  expect(await page.evaluate('window.button2')).toBe(undefined);
+  expect(error.message).toContain('strict mode violation: "text=button1" resolved to 2 elements');
+});
+
+it('should throw when strict is violated during stable check', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/react.html');
+  await page.evaluate(() => {
+    renderComponent(e('div', {}, [e(MyButton, { name: 'button1' }), e(MyButton, { name: 'button2' })]));
+  });
+
+  const __testHookBeforeStable = () => page.evaluate(() => {
+    window['counter'] = (window['counter'] || 0) + 1;
+    if (window['counter'] === 1)
+      renderComponent(e('div', {}, [e(MyButton, { name: 'button1' }), e(MyButton, { name: 'button1' })]));
+  });
+
+  const error = await page.click('text=button1', { strict: true, __testHookBeforeStable } as any).catch(e => e);
+  expect(await page.evaluate('window.button1')).toBe(undefined);
+  expect(await page.evaluate('window.button2')).toBe(undefined);
+  expect(error.message).toContain('strict mode violation: "text=button1" resolved to 2 elements');
 });
