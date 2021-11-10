@@ -4,7 +4,7 @@ set -x
 
 trap "cd $(pwd -P)" EXIT
 SCRIPT_PATH="$(cd "$(dirname "$0")" ; pwd -P)"
-NODE_VERSION="14.17.6"
+NODE_VERSION="16.13.0"
 
 cd "$(dirname "$0")"
 PACKAGE_VERSION=$(node -p "require('../../package.json').version")
@@ -71,5 +71,7 @@ function build {
 }
 
 build "node-v${NODE_VERSION}-darwin-x64" "mac" "tar.gz" "run-driver-posix.sh"
+build "node-v${NODE_VERSION}-darwin-arm64" "mac-arm64" "tar.gz" "run-driver-posix.sh"
 build "node-v${NODE_VERSION}-linux-x64" "linux" "tar.gz" "run-driver-posix.sh"
+build "node-v${NODE_VERSION}-linux-arm64" "linux-arm64" "tar.gz" "run-driver-posix.sh"
 build "node-v${NODE_VERSION}-win-x64" "win32_x64" "zip" "run-driver-win.cmd"
