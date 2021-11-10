@@ -1329,6 +1329,7 @@ export interface TestInfo {
   retry: number;
   /**
    * The number of milliseconds the test took to finish. Always zero before the test finishes, either successfully or not.
+   * Can be used in [test.afterEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-each) hook.
    */
   duration: number;
   /**

@@ -246,7 +246,6 @@ export class WorkerRunner extends EventEmitter {
       return path.join(this._project.config.snapshotDir, relativeTestFilePath + '-snapshots');
     })();
 
-    let testFinishedCallback = () => {};
     let lastStepId = 0;
     const testInfo: TestInfoImpl = {
       workerIndex: this._params.workerIndex,
@@ -299,7 +298,6 @@ export class WorkerRunner extends EventEmitter {
         if (deadlineRunner)
           deadlineRunner.updateDeadline(deadline());
       },
-      _testFinished: new Promise(f => testFinishedCallback = f),
       _addStep: data => {
         const stepId = `${data.category}@${data.title}@${++lastStepId}`;
         let callbackHandled = false;
@@ -389,7 +387,7 @@ export class WorkerRunner extends EventEmitter {
     // Do not overwrite test failure upon hook timeout.
     if (result.timedOut && testInfo.status === 'passed')
       testInfo.status = 'timedOut';
-    testFinishedCallback();
+    testInfo.duration = monotonicTime() - startTime;
 
     if (!result.timedOut) {
       this._currentDeadlineRunner = deadlineRunner = new DeadlineRunner(this._runAfterHooks(test, testInfo), deadline());

@@ -81,7 +81,7 @@ Processed configuration from the [configuration file](./test-configuration.md).
 ## property: TestInfo.duration
 - type: <[int]>
 
-The number of milliseconds the test took to finish. Always zero before the test finishes, either successfully or not.
+The number of milliseconds the test took to finish. Always zero before the test finishes, either successfully or not. Can be used in [`method: Test.afterEach`] hook.
 
 
 ## property: TestInfo.error

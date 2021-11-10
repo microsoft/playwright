@@ -35,6 +35,5 @@ export interface TestStepInternal {
 }
 
 export interface TestInfoImpl extends TestInfo {
-  _testFinished: Promise<void>;
   _addStep: (data: Omit<TestStepInternal, 'complete'>) => TestStepInternal;
 }
