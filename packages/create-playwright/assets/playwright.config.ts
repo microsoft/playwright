@@ -3,32 +3,19 @@ import path from 'path';
 
 // Reference: https://playwright.dev/docs/test-configuration
 const config: PlaywrightTestConfig = {
-  /* Test directory */
-  testDir: path.join(__dirname, '{{testDir}}'),
+  testDir: path.join(__dirname, '{{testDir}}'), /* Test directory */
+  // timeout: 30 * 1000,                        /* Timeout per test */
+  // retries: process.env.CI ? 2 : 0,           /* If a test fails on CI, retry it additional 2 times */
+  // outputDir: 'test-results/',                /* Artifacts folder where screenshots, videos, and traces are stored. */
 
-  /* Timeout per test */
-  // timeout: 30 * 1000,
-
-  /* If a test fails on CI, retry it additional 2 times */
-  // retries: process.env.CI ? 2 : 0,
-
-  /* Artifacts folder where screenshots, videos, and traces are stored. */
-  // outputDir: 'test-results/',
-
-  /* Run your local dev server before starting the tests: */
-  /* https://playwright.dev/docs/test-advanced#launching-a-development-web-server-during-the-tests */
-  // webServer: {
-  //   command: 'npm run start',
+  // webServer: {                               /* Run your local dev server before starting the tests: */
+  //   command: 'npm run start',                /* https://playwright.dev/docs/test-advanced#launching-a-development-web-server-during-the-tests */
   //   port: 3000,
   // },
 
   use: {
-    /* Retry a test if its failing with enabled tracing. This allows you to analyse the DOM, console logs, network traffic etc. */
-    /* More information: https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
-
-    /* All available context options: https://playwright.dev/docs/api/class-browser#browser-new-context */
-    contextOptions: {
+    trace: 'on-first-retry',                    /* Retry a test if its failing with enabled tracing (analyse the DOM, console logs, network traffic): https://playwright.dev/docs/trace-viewer */
+    contextOptions: {                           /* All available context options: https://playwright.dev/docs/api/class-browser#browser-new-context */
       ignoreHTTPSErrors: true,
     },
   },
