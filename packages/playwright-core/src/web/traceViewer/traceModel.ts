@@ -104,6 +104,8 @@ export class TraceModel {
       case 'context-options': {
         this.contextEntry.browserName = event.browserName;
         this.contextEntry.title = event.title;
+        this.contextEntry.platform = event.platform;
+        this.contextEntry.wallTime = event.wallTime;
         this.contextEntry.options = event.options;
         break;
       }

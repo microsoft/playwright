@@ -34,6 +34,7 @@
   font-size: 24px;
   color: #666;
   font-weight: bold;
+  margin-bottom: 30px;
 }
 
 .drop-target input {
@@ -45,7 +46,7 @@
   background-color: rgb(0, 122, 204);
   padding: 6px 4px;
   border: none;
-  margin: 40px 0;
+  margin: 30px 0;
   cursor: pointer;
 }
 
