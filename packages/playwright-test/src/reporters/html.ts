@@ -147,7 +147,7 @@ class HtmlReporter implements Reporter {
       console.log('');
       console.log('To open last HTML report run:');
       console.log(colors.cyan(`
-  npx playwright show-report
+  npx playwright show-report ${this._outputFolder || ''}
 `));
     }
   }
