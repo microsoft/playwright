@@ -20470,10 +20470,19 @@ index 2eb0886f13ed035a53b8eaa60605de4dfe53fbe3..c46393209cb4f80704bbc9268fad4371
  {
  }
 diff --git a/Source/WebKit/WebProcess/WebCoreSupport/WebFrameLoaderClient.cpp b/Source/WebKit/WebProcess/WebCoreSupport/WebFrameLoaderClient.cpp
-index e48a68dff1efeda9ba9239c2aef2fb9d47d1f317..6ca275cb733c05a06c838a62c2747232c0ff59fd 100644
+index e48a68dff1efeda9ba9239c2aef2fb9d47d1f317..2225c064b5102ea1254e2440c1309a08d2997bd8 100644
 --- a/Source/WebKit/WebProcess/WebCoreSupport/WebFrameLoaderClient.cpp
 +++ b/Source/WebKit/WebProcess/WebCoreSupport/WebFrameLoaderClient.cpp
-@@ -1574,13 +1574,6 @@ void WebFrameLoaderClient::transitionToCommittedForNewPage()
+@@ -1519,8 +1519,6 @@ void WebFrameLoaderClient::transitionToCommittedForNewPage()
+ #if USE(COORDINATED_GRAPHICS)
+     if (m_frame->coreFrame()->view())
+         fixedVisibleContentRect = m_frame->coreFrame()->view()->fixedVisibleContentRect();
+-    if (shouldUseFixedLayout)
+-        shouldHideScrollbars = true;
+ #endif
+ 
+     m_frameHasCustomContentProvider = isMainFrame
+@@ -1574,13 +1572,6 @@ void WebFrameLoaderClient::transitionToCommittedForNewPage()
      if (webPage->scrollPinningBehavior() != DoNotPin)
          view->setScrollPinningBehavior(webPage->scrollPinningBehavior());
  
