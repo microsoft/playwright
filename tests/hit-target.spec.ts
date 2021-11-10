@@ -68,6 +68,19 @@ it('should block click when mousedown succeeds but mouseup fails', async ({ page
   ]);
 });
 
+it('should click when element detaches in mousedown', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/input/button.html');
+  await page.$eval('button', button => {
+    button.addEventListener('mousedown', () => {
+      (window as any).result = 'Mousedown';
+      button.remove();
+    });
+  });
+
+  await page.click('button', { timeout: 1000 });
+  expect(await page.evaluate('result')).toBe('Mousedown');
+});
+
 it('should not block programmatic events', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.$eval('button', button => {
