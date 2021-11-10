@@ -3,7 +3,7 @@
 set -e
 
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
-  echo "usage: $(basename $0) {canary,production}"
+  echo "usage: $(basename $0) {--stable,--beta,--canary}"
   echo
   echo "Build the Trace Viewer and push it to the GitHub repository."
   echo
@@ -20,7 +20,7 @@ if [[ -z "${GH_SERVICE_ACCOUNT_TOKEN}" ]]; then
   exit 1
 fi
 
-ENVIRONMENT="$1"
+RELEASE_CHANNEL="$1"
 
 # 1. Install dependencies and build the Trace Viewer
 npm ci
@@ -32,31 +32,31 @@ git config --global user.email 41898282+github-actions[bot]@users.noreply.github
 git clone "https://${GH_SERVICE_ACCOUNT_TOKEN}@github.com/microsoft/playwright-trace.git" playwright-trace
 
 # 3. Copy the built Trace Viewer to the repository
-if [[ "${ENVIRONMENT}" == "production" ]]; then
-  # 3.1 make a copy of the current next/ folder
-  if [[ -d "playwright-trace/docs/next" ]]; then
-    cp -r playwright-trace/docs/next .next-previous
-  fi
-  # 3.2 Clean it
+if [[ "${RELEASE_CHANNEL}" == "--stable" ]]; then
   rm -rf playwright-trace/docs/
   mkdir playwright-trace/docs/
-  # 3.3 Copy the old next/ back into the folder
-  if [[ -d ".next-previous/" ]]; then
-    mv .next-previous/ playwright-trace/docs/next/
-  fi
-  # 3.4 Copy the new production over
   cp -r packages/playwright-core/lib/webpack/traceViewer/* playwright-trace/docs/
-  echo "Updated production version"
-elif [[ "${ENVIRONMENT}" == "canary" ]]; then
+
+  # Restore CNAME, beta/ & next/ branches.
+  cd playwright-trace/
+  git checkout docs/beta
+  git checkout docs/next
+  git checkout docs/CNAME
+  cd -
+
+  echo "Updated stable version"
+elif [[ "${RELEASE_CHANNEL}" == "--canary" ]]; then
   rm -rf playwright-trace/docs/next/
   cp -r packages/playwright-core/lib/webpack/traceViewer/ playwright-trace/docs/next/
   echo "Updated canary version"
+elif [[ "${RELEASE_CHANNEL}" == "--beta" ]]; then
+  rm -rf playwright-trace/docs/beta/
+  cp -r packages/playwright-core/lib/webpack/traceViewer/ playwright-trace/docs/beta/
+  echo "Updated beta version"
 else
-  echo "ERROR: unknown environment - ${ENVIRONMENT}"
+  echo "ERROR: unknown environment - ${RELEASE_CHANNEL}"
   exit 1
 fi
-# CNAME needs to be located inside the served docs/ folder for GitHub Pages
-cp playwright-trace/CNAME playwright-trace/docs/CNAME
 
 # 4. Commit and push the changes
 cd playwright-trace/

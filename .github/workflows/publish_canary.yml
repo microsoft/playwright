@@ -66,7 +66,13 @@ jobs:
       with:
         node-version: 16
     - run: npm i -g npm@7
-    - name: Deploy
-      run: bash utils/build/deploy-trace-viewer.sh canary
-      env: 
+    - name: Deploy Canary
+      run: bash utils/build/deploy-trace-viewer.sh --canary
+      if: contains(github.ref, 'master')
+      env:
+        GH_SERVICE_ACCOUNT_TOKEN: ${{ secrets.GH_SERVICE_ACCOUNT_TOKEN }}
+    - name: Deploy BETA
+      run: bash utils/build/deploy-trace-viewer.sh --beta
+      if: contains(github.ref, 'release')
+      env:
         GH_SERVICE_ACCOUNT_TOKEN: ${{ secrets.GH_SERVICE_ACCOUNT_TOKEN }}
