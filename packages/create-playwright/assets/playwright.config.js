@@ -7,31 +7,31 @@ const path = require('path');
  * @type {import('@playwright/test').PlaywrightTestConfig}
  */
 const config = {
-  // Timeout per test
-  //timeout: 30 * 1000,
-
-  // Test directory
+  /* Test directory */
   testDir: path.join(__dirname, '{{testDir}}'),
 
-  // If a test fails on CI, retry it additional 2 times
-  // retries: process.env.CI ? 2 : 0,
+  /* Timeout per test */
+  // timeout: 30 * 1000, 
 
-  // Artifacts folder where screenshots, videos, and traces are stored.
+  /* If a test fails on CI, retry it additional 2 times */
+  // retries: process.env.CI ? 2 : 0, 
+
+  /* Artifacts folder where screenshots, videos, and traces are stored. */
   // outputDir: 'test-results/',
 
-  // Run your local dev server before starting the tests:
-  // https://playwright.dev/docs/test-advanced#launching-a-development-web-server-during-the-tests
+  /* Run your local dev server before starting the tests: */
+  /* https://playwright.dev/docs/test-advanced#launching-a-development-web-server-during-the-tests */
   // webServer: {
   //   command: 'npm run start',
   //   port: 3000,
   // },
 
   use: {
-    // Retry a test if its failing with enabled tracing. This allows you to analyse the DOM, console logs, network traffic etc.
-    // More information: https://playwright.dev/docs/trace-viewer
+    /* Retry a test if its failing with enabled tracing. This allows you to analyse the DOM, console logs, network traffic etc. */
+    /* More information: https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
 
-    // All available context options: https://playwright.dev/docs/api/class-browser#browser-new-context
+    /* All available context options: https://playwright.dev/docs/api/class-browser#browser-new-context */
     contextOptions: {
       ignoreHTTPSErrors: true,
     },
@@ -56,7 +56,7 @@ const config = {
         ...devices['Desktop Safari'],
       },
     },
-    // Test against mobile viewports.
+    /* Test against mobile viewports. */
     // {
     //   name: 'Mobile Chrome',
     //   use: {

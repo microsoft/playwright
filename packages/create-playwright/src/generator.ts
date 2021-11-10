@@ -84,7 +84,7 @@ export class Generator {
       {
         type: 'confirm',
         name: 'installPlaywrightDependencies',
-        message: 'Install Playwright operating system dependencies (requires sudo / root)?',
+        message: 'Install Playwright operating system dependencies (requires sudo / root - can be done manually via \sudo npx playwright install-deps\')?',
         initial: true,
       },
       // Avoid installing dependencies on Windows (vast majority does not run create-playwright on Windows)
