@@ -21,6 +21,8 @@ export type ContextEntry = {
   startTime: number;
   endTime: number;
   browserName: string;
+  platform?: string;
+  wallTime?: number;
   title?: string;
   options: trace.BrowserContextEventOptions;
   pages: PageEntry[];
