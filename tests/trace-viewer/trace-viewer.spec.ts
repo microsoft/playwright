@@ -579,3 +579,18 @@ test('should follow redirects', async ({ page, runAndTrace, server, asset }) => 
   const snapshotFrame = await traceViewer.snapshotFrame('page.evaluate');
   await expect(snapshotFrame.locator('img')).toHaveJSProperty('naturalWidth', 10);
 });
+
+test('should include metainfo', async ({ showTraceViewer, browserName }) => {
+  const traceViewer = await showTraceViewer(traceFile);
+  await traceViewer.page.locator('text=Metadata').click();
+  const callLine = traceViewer.page.locator('.call-line');
+  await expect(callLine.locator('text=start time')).toHaveText(/start time: [\d/,: ]+/);
+  await expect(callLine.locator('text=duration')).toHaveText(/duration: [\dms]+/);
+  await expect(callLine.locator('text=engine')).toHaveText(/engine: [\w]+/);
+  await expect(callLine.locator('text=platform')).toHaveText(/platform: [\w]+/);
+  await expect(callLine.locator('text=width')).toHaveText(/width: [\d]+/);
+  await expect(callLine.locator('text=height')).toHaveText(/height: [\d]+/);
+  await expect(callLine.locator('text=pages')).toHaveText(/pages: 1/);
+  await expect(callLine.locator('text=actions')).toHaveText(/actions: [\d]+/);
+  await expect(callLine.locator('text=events')).toHaveText(/events: [\d]+/);
+});

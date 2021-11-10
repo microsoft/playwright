@@ -28,6 +28,7 @@ import { CallTab } from './callTab';
 import { SplitView } from '../../components/splitView';
 import { ConsoleTab } from './consoleTab';
 import * as modelUtil from './modelUtil';
+import { msToString } from '../../uiUtils';
 
 export const Workbench: React.FunctionComponent<{
 }> = () => {
@@ -35,7 +36,8 @@ export const Workbench: React.FunctionComponent<{
   const [contextEntry, setContextEntry] = React.useState<ContextEntry>(emptyContext);
   const [selectedAction, setSelectedAction] = React.useState<ActionTraceEvent | undefined>();
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEvent | undefined>();
-  const [selectedTab, setSelectedTab] = React.useState<string>('logs');
+  const [selectedNavigatorTab, setSelectedNavigatorTab] = React.useState<string>('actions');
+  const [selectedPropertiesTab, setSelectedPropertiesTab] = React.useState<string>('logs');
   const [progress, setProgress] = React.useState<{ done: number, total: number }>({ done: 0, total: 0 });
   const [dragOver, setDragOver] = React.useState<boolean>(false);
 
@@ -122,32 +124,55 @@ export const Workbench: React.FunctionComponent<{
     <SplitView sidebarSize={300} orientation='horizontal' sidebarIsFirst={true}>
       <SplitView sidebarSize={300} orientation='horizontal'>
         <SnapshotTab action={selectedAction} defaultSnapshotInfo={defaultSnapshotInfo} />
-        <TabbedPane tabs={tabs} selectedTab={selectedTab} setSelectedTab={setSelectedTab}/>
+        <TabbedPane tabs={tabs} selectedTab={selectedPropertiesTab} setSelectedTab={setSelectedPropertiesTab}/>
       </SplitView>
-      <ActionList
-        actions={contextEntry.actions}
-        selectedAction={selectedAction}
-        highlightedAction={highlightedAction}
-        onSelected={action => {
-          setSelectedAction(action);
-        }}
-        onHighlighted={action => setHighlightedAction(action)}
-        setSelectedTab={setSelectedTab}
-      />
+      <TabbedPane tabs={
+        [
+          { id: 'actions', title: 'Actions', count: 0, render: () => <ActionList
+            actions={contextEntry.actions}
+            selectedAction={selectedAction}
+            highlightedAction={highlightedAction}
+            onSelected={action => {
+              setSelectedAction(action);
+            }}
+            onHighlighted={action => setHighlightedAction(action)}
+            setSelectedTab={setSelectedPropertiesTab}
+          /> },
+          { id: 'metadata', title: 'Metadata', count: 0, render: () => <div className='vbox'>
+            <div className='call-section' style={{ paddingTop: 2 }}>Time</div>
+            {contextEntry.wallTime && <div className='call-line'>start time: <span className='datetime' title={new Date(contextEntry.wallTime).toLocaleString()}>{new Date(contextEntry.wallTime).toLocaleString()}</span></div>}
+            <div className='call-line'>duration: <span className='number' title={msToString(contextEntry.endTime - contextEntry.startTime)}>{msToString(contextEntry.endTime - contextEntry.startTime)}</span></div>
+            <div className='call-section'>Browser</div>
+            <div className='call-line'>engine: <span className='string' title={contextEntry.browserName}>{contextEntry.browserName}</span></div>
+            {contextEntry.platform && <div className='call-line'>platform: <span className='string' title={contextEntry.platform}>{contextEntry.platform}</span></div>}
+            {contextEntry.options.userAgent && <div className='call-line'>user agent: <span className='datetime' title={contextEntry.options.userAgent}>{contextEntry.options.userAgent}</span></div>}
+            <div className='call-section'>Viewport</div>
+            {contextEntry.options.viewport && <div className='call-line'>width: <span className='number' title={String(!!contextEntry.options.viewport?.width)}>{contextEntry.options.viewport.width}</span></div>}
+            {contextEntry.options.viewport && <div className='call-line'>height: <span className='number' title={String(!!contextEntry.options.viewport?.height)}>{contextEntry.options.viewport.height}</span></div>}
+            <div className='call-line'>is mobile: <span className='boolean' title={String(!!contextEntry.options.isMobile)}>{String(!!contextEntry.options.isMobile)}</span></div>
+            {contextEntry.options.deviceScaleFactor && <div className='call-line'>device scale: <span className='number' title={String(contextEntry.options.deviceScaleFactor)}>{String(contextEntry.options.deviceScaleFactor)}</span></div>}
+            <div className='call-section'>Counts</div>
+            <div className='call-line'>pages: <span className='number'>{contextEntry.pages.length}</span></div>
+            <div className='call-line'>actions: <span className='number'>{contextEntry.actions.length}</span></div>
+            <div className='call-line'>events: <span className='number'>{contextEntry.events.length}</span></div>
+          </div> },
+        ]
+      } selectedTab={selectedNavigatorTab} setSelectedTab={setSelectedNavigatorTab}/>
     </SplitView>
     {!!progress.total && <div className='progress'>
       <div className='inner-progress' style={{ width: (100 * progress.done / progress.total) + '%' }}></div>
     </div>}
     {!dragOver && !traceURL && <div className='drop-target'>
       <div className='title'>Drop Playwright Trace to load</div>
+      <div>or</div>
       <button onClick={() => {
         const input = document.createElement('input');
         input.type = 'file';
         input.click();
         input.addEventListener('change', e => handleFileInputChange(e));
-      }}>...or select file</button>
-      <div>Playwright Trace Viewer is a progressive web app, it does not send your trace anywhere,
-        it opens it locally instead.</div>
+      }}>Select file</button>
+      <div style={{ maxWidth: 400 }}>Playwright Trace Viewer is a Progressive Web App, it does not send your trace anywhere,
+        it opens it locally.</div>
     </div>}
     {dragOver && <div className='drop-target'
       onDragLeave={() => { setDragOver(false); }}

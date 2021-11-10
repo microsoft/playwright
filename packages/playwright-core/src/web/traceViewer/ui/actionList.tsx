@@ -45,11 +45,6 @@ export const ActionList: React.FC<ActionListProps> = ({
   }, [selectedAction, actionListRef]);
 
   return <div className='action-list vbox'>
-    <div className='action-list-title tab-strip'>
-      <div className='tab-element'>
-        <div className='tab-label'>Actions</div>
-      </div>
-    </div>
     <div
       className='action-list-content'
       tabIndex={0}
