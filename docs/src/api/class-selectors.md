@@ -32,11 +32,11 @@ const { selectors, firefox } = require('playwright');  // Or 'chromium' or 'webk
   await page.setContent(`<div><button>Click me</button></div>`);
 
   // Use the selector prefixed with its name.
-  const button = await page.$('tag=button');
+  const button = page.locator('tag=button');
   // Combine it with other selector engines.
   await page.click('tag=div >> text="Click me"');
   // Can use it in any methods supporting selectors.
-  const buttonCount = await page.$$eval('tag=button', buttons => buttons.length);
+  const buttonCount = await page.locator('tag=button').count();
 
   await browser.close();
 })();
@@ -60,11 +60,11 @@ Browser browser = playwright.firefox().launch();
 Page page = browser.newPage();
 page.setContent("<div><button>Click me</button></div>");
 // Use the selector prefixed with its name.
-ElementHandle button = page.querySelector("tag=button");
+Locator button = page.locator("tag=button");
 // Combine it with other selector engines.
 page.click("tag=div >> text=\"Click me\"");
 // Can use it in any methods supporting selectors.
-int buttonCount = (int) page.evalOnSelectorAll("tag=button", "buttons => buttons.length");
+int buttonCount = (int) page.locator("tag=button").count();
 browser.close();
 ```
 
@@ -96,7 +96,7 @@ async def run(playwright):
     # Combine it with other selector engines.
     await page.click('tag=div >> text="Click me"')
     # Can use it in any methods supporting selectors.
-    button_count = await page.eval_on_selector_all('tag=button', 'buttons => buttons.length')
+    button_count = await page.locator('tag=button').count()
     print(button_count)
     await browser.close()
 
@@ -130,11 +130,11 @@ def run(playwright):
     page.set_content('<div><button>Click me</button></div>')
 
     # Use the selector prefixed with its name.
-    button = page.query_selector('tag=button')
+    button = page.locator('tag=button')
     # Combine it with other selector engines.
     page.click('tag=div >> text="Click me"')
     # Can use it in any methods supporting selectors.
-    button_count = page.eval_on_selector_all('tag=button', 'buttons => buttons.length')
+    button_count = page.locator('tag=button').count()
     print(button_count)
     browser.close()
 
@@ -160,11 +160,11 @@ await using var browser = await playwright.Chromium.LaunchAsync();
 var page = await browser.NewPageAsync();
 await page.SetContentAsync("<div><button>Click me</button></div>");
 // Use the selector prefixed with its name.
-var button = await page.QuerySelectorAsync("tag=button");
+var button = page.Locator("tag=button");
 // Combine it with other selector engines.
 await page.ClickAsync("tag=div >> text=\"Click me\"");
 // Can use it in any methods supporting selectors.
-int buttonCount = await page.EvalOnSelectorAllAsync<int>("tag=button", "buttons => buttons.length");
+int buttonCount = await page.Locator("tag=button").CountAsync();
 ```
 
 ### param: Selectors.register.name

@@ -877,31 +877,31 @@ page.click(":nth-match(:text('Buy'), 3)"
 await page.ClickAsync(":nth-match(:text('Buy'), 3)");
 ```
 
-`:nth-match()` is also useful to wait until a specified number of elements appear, using [`method: Page.waitForSelector`].
+`:nth-match()` is also useful to wait until a specified number of elements appear, using [`method: Locator.waitFor`].
 
 ```js
 // Wait until all three buttons are visible
-await page.waitForSelector(':nth-match(:text("Buy"), 3)');
+await page.locator(':nth-match(:text("Buy"), 3)').waitFor();
 ```
 
 ```java
 // Wait until all three buttons are visible
-page.waitForSelector(":nth-match(:text('Buy'), 3)");
+page.locator(":nth-match(:text('Buy'), 3)").waitFor();
 ```
 
 ```python async
 # Wait until all three buttons are visible
-await page.wait_for_selector(":nth-match(:text('Buy'), 3)")
+await page.locator(":nth-match(:text('Buy'), 3)").wait_for()
 ```
 
 ```python sync
 # Wait until all three buttons are visible
-page.wait_for_selector(":nth-match(:text('Buy'), 3)")
+page.locator(":nth-match(:text('Buy'), 3)").wait_for()
 ```
 
 ```csharp
 // Wait until all three buttons are visible
-await page.WaitForSelectorAsync(":nth-match(:text('Buy'), 3)");
+await page.Locator(":nth-match(:text('Buy'), 3)").WaitForAsync();
 ```
 
 :::note
