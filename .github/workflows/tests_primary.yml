@@ -72,24 +72,3 @@ jobs:
     - run: xvfb-run npm run ttest
       if: matrix.os == 'ubuntu-latest'
 
-  test_runner_vrt:
-    name: Test Runner Visual Regression Testing
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
-      with:
-        node-version: 12
-    - run: npm i -g npm@8
-    - run: npm ci
-      env:
-        DEBUG: pw:install
-    - run: npm run build
-    - run: npx playwright install docker-image
-      working-directory: tests/playwright-test/stable-test-runner/
-    - run: npm run vtest
-    - uses: actions/upload-artifact@v1
-      if: ${{ always() }}
-      with:
-        name: visual-regression-testing
-        path: test-results
