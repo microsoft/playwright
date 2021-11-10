@@ -728,6 +728,11 @@ export class InjectedScript {
       if (!event.isTrusted)
         return;
 
+      // Element was detached during the action, for example in some event handler.
+      // If events before that were correctly pointing to it, consider this a valid scenario.
+      if (!element.isConnected)
+        return;
+
       // Determine the event point. Note that Firefox does not always have window.TouchEvent.
       const point = (!!window.TouchEvent && (event instanceof window.TouchEvent)) ? event.touches[0] : (event as MouseEvent | PointerEvent);
       if (!!point && (result === undefined || result === 'done')) {
@@ -745,7 +750,11 @@ export class InjectedScript {
     const stop = () => {
       if (this._hitTargetInterceptor === listener)
         this._hitTargetInterceptor = undefined;
-      return result!;
+      // If we did not get any events, consider things working. Possible causes:
+      // - JavaScript is disabled (webkit-only).
+      // - Some <iframe> overlays the element from another frame.
+      // - Hovering a disabled control prevents any events from firing.
+      return result || 'done';
     };
 
     // Note: this removes previous listener, just in case there are two concurrent clicks
