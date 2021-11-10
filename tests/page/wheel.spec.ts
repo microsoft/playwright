@@ -15,6 +15,8 @@
  */
 import type { Page } from 'playwright-core';
 import { test as it, expect } from './pageTest';
+import { contextTest } from '../config/browserTest';
+
 it.skip(({ isElectron, browserMajorVersion }) => {
   // Old Electron has flaky wheel events.
   return isElectron && browserMajorVersion <= 11;
@@ -106,6 +108,20 @@ it('should work when the event is canceled', async ({ page }) => {
   await page.waitForTimeout(100);
   // ensure that it did not.
   expect(await page.evaluate('window.scrollY')).toBe(0);
+});
+
+contextTest('should scroll when emulating a mobile viewport', async ({ contextFactory, server, browserName }) => {
+  contextTest.skip(browserName === 'firefox');
+  contextTest.fixme(browserName === 'webkit');
+  const context = await contextFactory({
+    viewport: { 'width': 1000, 'height': 600 },
+    isMobile: true,
+  });
+  const page = await context.newPage();
+  await page.goto(server.PREFIX + '/input/scrollable.html');
+  await page.mouse.move(50, 60);
+  await page.mouse.wheel(0, 100);
+  await page.waitForFunction('window.scrollY === 100');
 });
 
 async function listenForWheelEvents(page: Page, selector: string) {
