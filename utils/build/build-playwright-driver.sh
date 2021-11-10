@@ -53,7 +53,7 @@ function build {
   cp ./output/api.json ./output/playwright-${SUFFIX}/package/
   cp ./output/protocol.yml ./output/playwright-${SUFFIX}/package/
   cd ./output/playwright-${SUFFIX}/package
-  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 node "../../${NODE_DIR}/${NPM_PATH}" install --production
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 node "../../${NODE_DIR}/${NPM_PATH}" install --production --ignore-scripts
   rm package-lock.json
 
   cd ..
