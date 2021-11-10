@@ -413,7 +413,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       return this._finishPointerActionDetectLayoutShift(progress, actionName, point, options, action);
   }
 
-  private async _finishPointerAction(progress: Progress, actionName: string, point: types.Point, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions, action: (point: types.Point) => Promise<void>) {
+  private async _finishPointerAction(progress: Progress, actionName: string, point: types.Point, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions, action: (point: types.Point) => Promise<void>): Promise<'error:notconnected' | { hitTargetDescription: string } | 'done'> {
     if (!options.force) {
       if ((options as any).__testHookBeforeHitTarget)
         await (options as any).__testHookBeforeHitTarget();
@@ -451,7 +451,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return 'done';
   }
 
-  private async _finishPointerActionDetectLayoutShift(progress: Progress, actionName: string, point: types.Point, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions, action: (point: types.Point) => Promise<void>) {
+  private async _finishPointerActionDetectLayoutShift(progress: Progress, actionName: string, point: types.Point, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions, action: (point: types.Point) => Promise<void>): Promise<'error:notconnected' | { hitTargetDescription: string } | 'done'> {
     await progress.beforeInputAction(this);
 
     let hitTargetInterceptionHandle: js.JSHandle<HitTargetInterceptionResult> | undefined;
