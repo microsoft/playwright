@@ -60,17 +60,29 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       return new Response(null, { status: 200 });
     }
 
-    const traceUrl = new URL(url).searchParams.get('trace')!;
+    const traceUrl = url.searchParams.get('trace')!;
     const { snapshotServer } = loadedTraces.get(traceUrl) || {};
 
     if (relativePath === '/context') {
-      const traceModel = await loadTrace(traceUrl, event.clientId, (done: number, total: number) => {
-        client.postMessage({ method: 'progress', params: { done, total } });
-      });
-      return new Response(JSON.stringify(traceModel!.contextEntry), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      try {
+        const traceModel = await loadTrace(traceUrl, event.clientId, (done: number, total: number) => {
+          client.postMessage({ method: 'progress', params: { done, total } });
+        });
+        return new Response(JSON.stringify(traceModel!.contextEntry), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (error: unknown) {
+        console.error(error);
+        const traceFileName = url.searchParams.get('traceFileName')!;
+        return new Response(JSON.stringify({
+          error: traceFileName ? `Could not load trace from ${traceFileName}. Make sure to upload a valid Playwright trace.` :
+            `Could not load trace from ${traceUrl}. Make sure a valid Playwright Trace is accessible over this url.`,
+        }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
     }
 
     if (relativePath.startsWith('/snapshotInfo/')) {

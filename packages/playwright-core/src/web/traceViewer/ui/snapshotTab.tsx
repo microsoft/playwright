@@ -65,6 +65,9 @@ export const SnapshotTab: React.FunctionComponent<{
         const info = await response.json();
         if (!info.error)
           setSnapshotInfo(info);
+      } else {
+        // Reset to default if snapshotInfoUrl was removed
+        setSnapshotInfo(defaultSnapshotInfo);
       }
       if (!iframeRef.current)
         return;
@@ -73,7 +76,7 @@ export const SnapshotTab: React.FunctionComponent<{
       } catch (e) {
       }
     })();
-  }, [iframeRef, snapshotUrl, snapshotInfoUrl, pointX, pointY]);
+  }, [iframeRef, snapshotUrl, snapshotInfoUrl, pointX, pointY, defaultSnapshotInfo]);
 
   const snapshotSize = snapshotInfo.viewport;
   const scale = Math.min(measure.width / snapshotSize.width, measure.height / snapshotSize.height, 1);
