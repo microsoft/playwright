@@ -69,7 +69,7 @@ it('should throw on network error', async ({ context, server }) => {
     req.socket.destroy();
   });
   const error = await context.request.get(server.PREFIX + '/test').catch(e => e);
-  expect(error.message).toContain('socket hang up');
+  expect(error.message).toBe('apiRequestContext.get: socket hang up');
 });
 
 it('should throw on network error after redirect', async ({ context, server }) => {
@@ -78,7 +78,7 @@ it('should throw on network error after redirect', async ({ context, server }) =
     req.socket.destroy();
   });
   const error = await context.request.get(server.PREFIX + '/redirect').catch(e => e);
-  expect(error.message).toContain('socket hang up');
+  expect(error.message).toBe('apiRequestContext.get: socket hang up');
 });
 
 it('should throw on network error when sending body', async ({ context, server }) => {
@@ -92,7 +92,7 @@ it('should throw on network error when sending body', async ({ context, server }
     req.socket.destroy();
   });
   const error = await context.request.get(server.PREFIX + '/test').catch(e => e);
-  expect(error.message).toContain(': aborted');
+  expect(error.message).toBe('apiRequestContext.get: aborted');
 });
 
 it('should throw on network error when sending body after redirect', async ({ context, server }) => {
@@ -107,7 +107,7 @@ it('should throw on network error when sending body after redirect', async ({ co
     req.socket.destroy();
   });
   const error = await context.request.get(server.PREFIX + '/redirect').catch(e => e);
-  expect(error.message).toContain(': aborted');
+  expect(error.message).toBe('apiRequestContext.get: aborted');
 });
 
 it('should add session cookies to request', async ({ context, server }) => {

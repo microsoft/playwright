@@ -114,11 +114,20 @@ export function captureStackTrace(): ParsedStackTrace {
     for (let i = 0; i < parsedFrames.length - 1; i++) {
       if (parsedFrames[i].inClient && !parsedFrames[i + 1].inClient) {
         const frame = parsedFrames[i].frame;
-        apiName = frame.function ? frame.function[0].toLowerCase() + frame.function.slice(1) : '';
+        apiName = normalizeAPIName(frame.function);
         parsedFrames = parsedFrames.slice(i + 1);
         break;
       }
     }
+  }
+
+  function normalizeAPIName(name?: string): string {
+    if (!name)
+      return '';
+    const match = name.match(/(API|JS|CDP|[A-Z])(.*)/);
+    if (!match)
+      return name;
+    return match[1].toLowerCase() + match[2];
   }
 
   // Hide all test runner and library frames in the user stack (event handlers produce them).
