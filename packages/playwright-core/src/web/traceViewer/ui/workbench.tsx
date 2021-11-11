@@ -32,7 +32,8 @@ import { msToString } from '../../uiUtils';
 
 export const Workbench: React.FunctionComponent<{
 }> = () => {
-  const [traceURL, setTraceURL] = React.useState<string>(new URL(window.location.href).searchParams.get('trace')!);
+  const [traceURL, setTraceURL] = React.useState<string>('');
+  const [uploadedTraceName, setUploadedTraceName] = React.useState<string|null>(null);
   const [contextEntry, setContextEntry] = React.useState<ContextEntry>(emptyContext);
   const [selectedAction, setSelectedAction] = React.useState<ActionTraceEvent | undefined>();
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEvent | undefined>();
@@ -40,17 +41,22 @@ export const Workbench: React.FunctionComponent<{
   const [selectedPropertiesTab, setSelectedPropertiesTab] = React.useState<string>('logs');
   const [progress, setProgress] = React.useState<{ done: number, total: number }>({ done: 0, total: 0 });
   const [dragOver, setDragOver] = React.useState<boolean>(false);
+  const [processingErrorMessage, setProcessingErrorMessage] = React.useState<string|null>(null);
 
   const processTraceFile = (file: File) => {
     const blobTraceURL = URL.createObjectURL(file);
     const url = new URL(window.location.href);
     url.searchParams.set('trace', blobTraceURL);
+    url.searchParams.set('traceFileName', file.name);
     const href = url.toString();
     // Snapshot loaders will inherit the trace url from the query parameters,
     // so set it here.
     window.history.pushState({}, '', href);
     setTraceURL(blobTraceURL);
+    setUploadedTraceName(file.name);
+    setSelectedAction(undefined);
     setDragOver(false);
+    setProcessingErrorMessage(null);
   };
 
   const handleDropEvent = (event: React.DragEvent<HTMLDivElement>) => {
@@ -66,6 +72,13 @@ export const Workbench: React.FunctionComponent<{
   };
 
   React.useEffect(() => {
+    const newTraceURL = new URL(window.location.href).searchParams.get('trace');
+    // Don't re-use blob file URLs on page load (results in Fetch error)
+    if (newTraceURL && !newTraceURL.startsWith('blob:'))
+      setTraceURL(newTraceURL);
+  }, [setTraceURL]);
+
+  React.useEffect(() => {
     (async () => {
       if (traceURL) {
         const swListener = (event: any) => {
@@ -74,7 +87,17 @@ export const Workbench: React.FunctionComponent<{
         };
         navigator.serviceWorker.addEventListener('message', swListener);
         setProgress({ done: 0, total: 1 });
-        const contextEntry = (await fetch(`context?trace=${traceURL}`).then(response => response.json())) as ContextEntry;
+        const params = new URLSearchParams();
+        params.set('trace', traceURL);
+        if (uploadedTraceName)
+          params.set('traceFileName', uploadedTraceName);
+        const response = await fetch(`context?${params.toString()}`);
+        if (!response.ok) {
+          setTraceURL('');
+          setProcessingErrorMessage((await response.json()).error);
+          return;
+        }
+        const contextEntry = await response.json() as ContextEntry;
         navigator.serviceWorker.removeEventListener('message', swListener);
         setProgress({ done: 0, total: 0 });
         modelUtil.indexModel(contextEntry);
@@ -162,7 +185,8 @@ export const Workbench: React.FunctionComponent<{
     {!!progress.total && <div className='progress'>
       <div className='inner-progress' style={{ width: (100 * progress.done / progress.total) + '%' }}></div>
     </div>}
-    {!dragOver && !traceURL && <div className='drop-target'>
+    {!dragOver && (!traceURL || processingErrorMessage) && <div className='drop-target'>
+      <div className='processing-error'>{processingErrorMessage}</div>
       <div className='title'>Drop Playwright Trace to load</div>
       <div>or</div>
       <button onClick={() => {
