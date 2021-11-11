@@ -5,41 +5,27 @@ ARG TZ=America/Los_Angeles
 
 # === INSTALL Node.js ===
 
-# Install node16
-RUN apt-get update && apt-get install -y curl && \
+RUN apt-get update && \
+    # Install node16
+    apt-get install -y curl && \
     curl -sL https://deb.nodesource.com/setup_16.x | bash - && \
-    apt-get install -y nodejs
+    apt-get install -y nodejs && \
 
-# Feature-parity with node.js base images.
-RUN apt-get update && apt-get install -y --no-install-recommends git ssh && \
-    npm install -g yarn
+    # Feature-parity with node.js base images.
+    apt-get install -y --no-install-recommends git ssh && \
+    npm install -g yarn && \
+
+    # Install Python 3.8
+    apt-get install -y python3.8 python3-pip && \
+    update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1 && \
+    update-alternatives --install /usr/bin/python python /usr/bin/python3 1 && \
+    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1 && \
+
+    # clean apt cache
+    rm -rf /var/lib/apt/lists/*
 
 # Create the pwuser (we internally create a symlink for the pwuser and the root user)
 RUN adduser pwuser
-
-# Install Python 3.8
-
-RUN apt-get update && apt-get install -y python3.8 python3-pip && \
-    update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1 && \
-    update-alternatives --install /usr/bin/python python /usr/bin/python3 1 && \
-    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1
-
-# Install VNC & noVNC
-
-ARG NOVNC_REF="1.2.0"
-ARG WEBSOCKIFY_REF="0.10.0"
-
-RUN mkdir -p /opt/bin && chmod +x /dev/shm \
-  && apt-get update && apt-get install -y unzip fluxbox x11vnc \
-  && curl -L -o noVNC.zip "https://github.com/novnc/noVNC/archive/v${NOVNC_REF}.zip" \
-  && unzip -x noVNC.zip \
-  && mv noVNC-${NOVNC_REF} /opt/bin/noVNC \
-  && cp /opt/bin/noVNC/vnc.html /opt/bin/noVNC/index.html \
-  && rm noVNC.zip \
-  && curl -L -o websockify.zip "https://github.com/novnc/websockify/archive/v${WEBSOCKIFY_REF}.zip" \
-  && unzip -x websockify.zip \
-  && rm websockify.zip \
-  && mv websockify-${WEBSOCKIFY_REF} /opt/bin/noVNC/utils/websockify
 
 # === BAKE BROWSERS INTO IMAGE ===
 
@@ -49,7 +35,7 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 #    The package should be built beforehand from tip-of-tree Playwright.
 COPY ./playwright-core.tar.gz /tmp/playwright-core.tar.gz
 
-# 2. Install playwright agent.
+# 2. Bake in browsers & deps.
 #    Browsers will be downloaded in `/ms-playwright`.
 #    Note: make sure to set 777 to the registry so that any user can access
 #    registry.
@@ -57,8 +43,7 @@ RUN mkdir /ms-playwright && \
     mkdir /ms-playwright-agent && \
     cd /ms-playwright-agent && npm init -y && \
     npm i /tmp/playwright-core.tar.gz && \
-    npx playwright install --with-deps && \
+    npx playwright install --with-deps && rm -rf /var/lib/apt/lists/* && \
     rm /tmp/playwright-core.tar.gz && \
+    rm -rf /ms-playwright-agent && \
     chmod -R 777 /ms-playwright
-
-COPY start_agent.sh /ms-playwright-agent/start_agent.sh
