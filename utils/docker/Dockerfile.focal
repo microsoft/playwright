@@ -12,7 +12,7 @@ RUN apt-get update && \
     apt-get install -y nodejs && \
 
     # Feature-parity with node.js base images.
-    apt-get install -y --no-install-recommends git ssh && \
+    apt-get install -y --no-install-recommends git openssh-client && \
     npm install -g yarn && \
 
     # Install Python 3.8
