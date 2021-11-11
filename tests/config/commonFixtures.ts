@@ -87,7 +87,7 @@ export class TestChildProcess {
       return;
     try {
       if (process.platform === 'win32')
-        execSync(`taskkill /pid ${this.process.pid} /T /F /FI "MEMUSAGE gt 0"`);
+        execSync(`taskkill /pid ${this.process.pid} /T /F /FI "MEMUSAGE gt 0"`, { stdio: 'ignore' });
       else
         process.kill(-this.process.pid, 'SIGKILL');
     } catch (e) {
