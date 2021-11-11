@@ -37,6 +37,13 @@
   margin-bottom: 30px;
 }
 
+.drop-target .processing-error {
+  font-size: 24px;
+  color: #e74c3c;
+  font-weight: bold;
+  margin-bottom: 50px;
+}
+
 .drop-target input {
   margin-top: 50px;
 }

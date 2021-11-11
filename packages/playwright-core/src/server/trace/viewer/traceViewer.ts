@@ -15,6 +15,7 @@
  */
 
 import path from 'path';
+import fs from 'fs';
 import * as consoleApiSource from '../../../generated/consoleApiSource';
 import { HttpServer } from '../../../utils/httpServer';
 import { findChromiumChannel } from '../../../utils/registry';
@@ -26,6 +27,10 @@ import { createPlaywright } from '../../playwright';
 import { ProgressController } from '../../progress';
 
 export async function showTraceViewer(traceUrl: string, browserName: string, headless = false, port?: number): Promise<BrowserContext | undefined> {
+  if (traceUrl && !traceUrl.startsWith('http://') && !traceUrl.startsWith('https:') && !fs.existsSync(traceUrl)) {
+    console.error(`Trace file ${traceUrl} does not exist!`);
+    process.exit(1);
+  }
   const server = new HttpServer();
   server.routePrefix('/trace', (request, response) => {
     const url = new URL('http://localhost' + request.url!);
