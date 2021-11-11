@@ -186,9 +186,15 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   const result = await runner.run(!!opts.list, filePatternFilters, opts.project || undefined);
   await stopProfiling(undefined);
 
-  if (result === 'sigint')
+  // Calling process.exit() might truncate large stdout/stderr output.
+  // See https://github.com/nodejs/node/issues/6456.
+  // See https://github.com/nodejs/node/issues/12921
+  await new Promise<void>(resolve => process.stdout.write('', () => resolve()));
+  await new Promise<void>(resolve => process.stderr.write('', () => resolve()));
+
+  if (result.status === 'interrupted')
     process.exit(130);
-  process.exit(result === 'passed' ? 0 : 1);
+  process.exit(result.status === 'passed' ? 0 : 1);
 }
 
 function forceRegExp(pattern: string): RegExp {
