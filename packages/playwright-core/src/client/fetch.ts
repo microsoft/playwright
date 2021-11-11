@@ -309,7 +309,7 @@ async function readStreamToJson(stream: fs.ReadStream): Promise<ServerFilePayloa
 function isJsonContentType(headers?: HeadersArray): boolean {
   if (!headers)
     return false;
-  for (const {name, value} of headers) {
+  for (const { name, value } of headers) {
     if (name.toLocaleLowerCase() === 'content-type')
       return value === 'application/json';
   }

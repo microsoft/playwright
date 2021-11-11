@@ -237,7 +237,8 @@ it('should remove content-length from reidrected post requests', async ({ playwr
 
 
 const serialization = [
-  ['object', {'foo': 'bar'}],
+  ['object', { 'foo': 'bar' }],
+  ['array', ['foo', 'bar', 2021]],
   ['string', 'foo'],
   ['bool', true],
   ['number', 2021],
@@ -279,7 +280,7 @@ for (const [type, value] of serialization) {
 
 it(`should accept already serialized data as Buffer when content-type is application/json`, async ({ playwright, server }) => {
   const request = await playwright.request.newContext();
-  const value = JSON.stringify(JSON.stringify({'foo':'bar'}));
+  const value = JSON.stringify(JSON.stringify({ 'foo': 'bar' }));
   const [req] = await Promise.all([
     server.waitForRequest('/empty.html'),
     request.post(server.EMPTY_PAGE, {

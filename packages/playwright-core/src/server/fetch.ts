@@ -494,7 +494,7 @@ function isJsonParsable(value: any) {
   try {
     JSON.parse(value);
     return true;
-  } catch(e) {
+  } catch (e) {
     if (e instanceof SyntaxError)
       return false;
     else
