@@ -22,10 +22,10 @@ RUN apt-get update && \
     update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1 && \
 
     # clean apt cache
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
 
-# Create the pwuser (we internally create a symlink for the pwuser and the root user)
-RUN adduser pwuser
+    # Create the pwuser (we internally create a symlink for the pwuser and the root user)
+    adduser pwuser
 
 # === BAKE BROWSERS INTO IMAGE ===
 
