@@ -83,16 +83,16 @@ export class Generator {
       },
       {
         type: 'confirm',
-        name: 'installPlaywrightDependencies',
-        message: 'Install Playwright operating system dependencies (requires sudo / root - can be done manually via \sudo npx playwright install-deps\')?',
+        name: 'addExamples',
+        message: 'Add common examples which demonstrate Playwright\'s capabilities?',
         initial: true,
       },
       // Avoid installing dependencies on Windows (vast majority does not run create-playwright on Windows)
       // Avoid installing dependencies on Mac (there are no dependencies)
       ...(process.platform === 'linux' ? [{
         type: 'confirm',
-        name: 'addExamples',
-        message: 'Add common examples which demonstrate Playwright\'s capabilities?',
+        name: 'installPlaywrightDependencies',
+        message: 'Install Playwright operating system dependencies (requires sudo / root - can be done manually via \sudo npx playwright install-deps\')?',
         initial: true,
       }] : []),
     ]);
