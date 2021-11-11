@@ -94,9 +94,12 @@ export class Runner {
       return prints;
     });
     if (reporters.length && !someReporterPrintsToStdio) {
-      // Add a line/dot report for convenience.
+      // Add a line/dot/list-mode reporter for convenience.
       // Important to put it first, jsut in case some other reporter stalls onEnd.
-      reporters.unshift(process.stdout.isTTY && !process.env.CI ? new LineReporter({ omitFailures: true }) : new DotReporter({ omitFailures: true }));
+      if (list)
+        reporters.unshift(new ListModeReporter());
+      else
+        reporters.unshift(process.stdout.isTTY && !process.env.CI ? new LineReporter({ omitFailures: true }) : new DotReporter({ omitFailures: true }));
     }
     return new Multiplexer(reporters);
   }

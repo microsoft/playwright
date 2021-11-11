@@ -42,7 +42,7 @@ test('should list tests', async ({ runInlineTest }) => {
   ].join('\n'));
 });
 
-test('should not list tests to stdout when JSON reporter is used', async ({ runInlineTest }) => {
+test('should list tests to stdout when JSON reporter outputs to a file', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { projects: [{ name: 'foo' }, {}] };
@@ -58,7 +58,7 @@ test('should not list tests to stdout when JSON reporter is used', async ({ runI
     `
   }, { 'list': true, 'reporter': 'json' });
   expect(result.exitCode).toBe(0);
-  expect(result.output).not.toContain('Listing tests');
+  expect(result.output).toContain('Listing tests');
   expect(result.report.config.projects.length).toBe(2);
   expect(result.report.suites.length).toBe(1);
   expect(result.report.suites[0].specs.length).toBe(2);
