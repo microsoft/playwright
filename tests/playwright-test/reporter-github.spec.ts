@@ -74,3 +74,21 @@ test('print GitHub annotations for slow tests', async ({ runInlineTest }) => {
   expect(text).toContain('::notice title=🎭 Playwright Run Summary::  1 passed');
   expect(result.exitCode).toBe(0);
 });
+
+test('print GitHub annotations for global error', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const test = pwt.test.extend({
+        w: [async ({}, use) => {
+          await use();
+          throw new Error('Oh my!');
+        }, { scope: 'worker' }],
+      });
+      test('passes but...', ({w}) => {
+      });
+    `,
+  }, { reporter: 'github' });
+  const text = stripAscii(result.output);
+  expect(text).toContain('::error ::%0AError: Oh my!%0A%0A');
+  expect(result.exitCode).toBe(1);
+});
