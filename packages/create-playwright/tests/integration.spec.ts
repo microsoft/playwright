@@ -22,9 +22,9 @@ for (const packageManager of ['npm', 'yarn'] as ('npm' | 'yarn')[]) {
     test.use({ packageManager });
 
     test('should generate a project in the current directory', async ({ run }) => {
-      const { exitCode, dir, stdout } = await run([], { installGitHubActions: true, testDir: 'e2e', language: 'TypeScript', addExamples: false });
+      const { exitCode, dir, stdout } = await run([], { installGitHubActions: true, testDir: 'tests', language: 'TypeScript', addExamples: false, installPlaywrightDependencies: true });
       expect(exitCode).toBe(0);
-      expect(fs.existsSync(path.join(dir, 'e2e/example.spec.ts'))).toBeTruthy();
+      expect(fs.existsSync(path.join(dir, 'tests/example.spec.ts'))).toBeTruthy();
       expect(fs.existsSync(path.join(dir, 'package.json'))).toBeTruthy();
       if (packageManager === 'npm')
         expect(fs.existsSync(path.join(dir, 'package-lock.json'))).toBeTruthy();
@@ -32,7 +32,7 @@ for (const packageManager of ['npm', 'yarn'] as ('npm' | 'yarn')[]) {
         expect(fs.existsSync(path.join(dir, 'yarn.lock'))).toBeTruthy();
       expect(fs.existsSync(path.join(dir, 'playwright.config.ts'))).toBeTruthy();
       const playwrightConfigContent = fs.readFileSync(path.join(dir, 'playwright.config.ts'), 'utf8');
-      expect(playwrightConfigContent).toContain('e2e');
+      expect(playwrightConfigContent).toContain('tests');
       expect(fs.existsSync(path.join(dir, '.github/workflows/playwright.yml'))).toBeTruthy();
       expect(fs.existsSync(path.join(dir, '.gitignore'))).toBeTruthy();
       if (packageManager === 'npm') {
@@ -42,13 +42,13 @@ for (const packageManager of ['npm', 'yarn'] as ('npm' | 'yarn')[]) {
         expect(stdout).toContain('Initializing Yarn project (yarn init -y)…');
         expect(stdout).toContain('Installing Playwright Test (yarn add --dev @playwright/test)…');
       }
-      expect(stdout).toContain('npx playwright install --with-deps');
+      expect(stdout).toContain('npx playwright install' + process.platform === 'linux' ? ' --with-deps' : '');
     });
 
     test('should generate a project in a given directory', async ({ run }) => {
-      const { exitCode, dir } = await run(['foobar'], { installGitHubActions: true, testDir: 'e2e', language: 'TypeScript', addExamples: false });
+      const { exitCode, dir } = await run(['foobar'], { installGitHubActions: true, testDir: 'tests', language: 'TypeScript', addExamples: false, installPlaywrightDependencies: true });
       expect(exitCode).toBe(0);
-      expect(fs.existsSync(path.join(dir, 'foobar/e2e/example.spec.ts'))).toBeTruthy();
+      expect(fs.existsSync(path.join(dir, 'foobar/tests/example.spec.ts'))).toBeTruthy();
       expect(fs.existsSync(path.join(dir, 'foobar/package.json'))).toBeTruthy();
       if (packageManager === 'npm')
         expect(fs.existsSync(path.join(dir, 'foobar/package-lock.json'))).toBeTruthy();
@@ -59,7 +59,7 @@ for (const packageManager of ['npm', 'yarn'] as ('npm' | 'yarn')[]) {
     });
 
     test('should generate a project with JavaScript and without GHA', async ({ run }) => {
-      const { exitCode, dir } = await run([], { installGitHubActions: false, testDir: 'tests', language: 'JavaScript', addExamples: false });
+      const { exitCode, dir } = await run([], { installGitHubActions: false, testDir: 'tests', language: 'JavaScript', addExamples: false, installPlaywrightDependencies: true });
       expect(exitCode).toBe(0);
       expect(fs.existsSync(path.join(dir, 'tests/example.spec.js'))).toBeTruthy();
       expect(fs.existsSync(path.join(dir, 'package.json'))).toBeTruthy();
@@ -72,7 +72,7 @@ for (const packageManager of ['npm', 'yarn'] as ('npm' | 'yarn')[]) {
     });
 
     test('should generate be able to run the examples successfully', async ({ run }) => {
-      const { exitCode, dir, exec } = await run([], { installGitHubActions: false, testDir: 'tests', language: 'TypeScript', addExamples: true });
+      const { exitCode, dir, exec } = await run([], { installGitHubActions: false, testDir: 'tests', language: 'TypeScript', addExamples: true, installPlaywrightDependencies: true });
       expect(exitCode).toBe(0);
       expect(fs.existsSync(path.join(dir, 'tests/example.spec.ts'))).toBeTruthy();
       expect(fs.existsSync(path.join(dir, 'package.json'))).toBeTruthy();
