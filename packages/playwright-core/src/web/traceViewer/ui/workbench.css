@@ -41,7 +41,8 @@
   font-size: 24px;
   color: #e74c3c;
   font-weight: bold;
-  margin-bottom: 50px;
+  text-align: center;
+  margin: 30px;
 }
 
 .drop-target input {

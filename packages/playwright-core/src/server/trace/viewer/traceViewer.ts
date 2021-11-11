@@ -27,7 +27,7 @@ import { createPlaywright } from '../../playwright';
 import { ProgressController } from '../../progress';
 
 export async function showTraceViewer(traceUrl: string, browserName: string, headless = false, port?: number): Promise<BrowserContext | undefined> {
-  if (traceUrl && !traceUrl.startsWith('http://') && !traceUrl.startsWith('https:') && !fs.existsSync(traceUrl)) {
+  if (traceUrl && !traceUrl.startsWith('http://') && !traceUrl.startsWith('https://') && !fs.existsSync(traceUrl)) {
     console.error(`Trace file ${traceUrl} does not exist!`);
     process.exit(1);
   }

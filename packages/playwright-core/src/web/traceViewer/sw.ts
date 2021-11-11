@@ -77,7 +77,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
         const traceFileName = url.searchParams.get('traceFileName')!;
         return new Response(JSON.stringify({
           error: traceFileName ? `Could not load trace from ${traceFileName}. Make sure to upload a valid Playwright trace.` :
-            `Could not load trace from ${traceUrl}. Make sure valid Playwright Trace is accessible over this url.`,
+            `Could not load trace from ${traceUrl}. Make sure a valid Playwright Trace is accessible over this url.`,
         }), {
           status: 500,
           headers: { 'Content-Type': 'application/json' }
