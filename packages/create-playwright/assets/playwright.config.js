@@ -8,8 +8,9 @@ const path = require('path');
  */
 const config = {
   testDir: path.join(__dirname, '{{testDir}}'), /* Test directory */
+  forbidOnly: !!process.env.CI,                 /* Whether to exit with an error if any tests or groups are marked as test.only() or test.describe.only(). Useful on CI. */
+  retries: process.env.CI ? 2 : 0,              /* If a test fails on CI, retry it additional 2 times */
   // timeout: 30 * 1000,                        /* Timeout per test */
-  // retries: process.env.CI ? 2 : 0,           /* If a test fails on CI, retry it additional 2 times */ 
   // outputDir: 'test-results/',                /* Artifacts folder where screenshots, videos, and traces are stored. */
 
   // webServer: {                               /* Run your local dev server before starting the tests: */
@@ -19,9 +20,9 @@ const config = {
 
   use: {
     trace: 'on-first-retry',                    /* Retry a test if its failing with enabled tracing. This allows you to analyse the DOM, console logs, network traffic etc. */
-    contextOptions: {                           /* All available context options: https://playwright.dev/docs/api/class-browser#browser-new-context */
-      ignoreHTTPSErrors: true,
-    },
+    // contextOptions: {                        /* All available context options: https://playwright.dev/docs/api/class-browser#browser-new-context */
+    //   ignoreHTTPSErrors: true,
+    // },
   },
 
   projects: [
