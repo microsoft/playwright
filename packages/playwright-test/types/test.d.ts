@@ -1172,21 +1172,21 @@ export interface TestInfo {
 
   /**
    * Marks the currently running test as "fixme". The test will be skipped, but the intention is to fix it. This is similar
-   * to [test.fixme([condition, description])](https://playwright.dev/docs/api/class-test#test-fixme).
+   * to [test.fixme()](https://playwright.dev/docs/api/class-test#test-fixme-2).
    * @param condition Optional condition - the test is marked as "fixme" when the condition is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
   fixme(): void;
   /**
    * Marks the currently running test as "fixme". The test will be skipped, but the intention is to fix it. This is similar
-   * to [test.fixme([condition, description])](https://playwright.dev/docs/api/class-test#test-fixme).
+   * to [test.fixme()](https://playwright.dev/docs/api/class-test#test-fixme-2).
    * @param condition Optional condition - the test is marked as "fixme" when the condition is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
   fixme(condition: boolean): void;
   /**
    * Marks the currently running test as "fixme". The test will be skipped, but the intention is to fix it. This is similar
-   * to [test.fixme([condition, description])](https://playwright.dev/docs/api/class-test#test-fixme).
+   * to [test.fixme()](https://playwright.dev/docs/api/class-test#test-fixme-2).
    * @param condition Optional condition - the test is marked as "fixme" when the condition is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
@@ -1662,285 +1662,89 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    */
   skip(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
   /**
-   * Marks a test or a group of tests as "fixme". These tests will not be run, but the intention is to fix them.
-   *
-   * Unconditional fixme:
+   * Declares a test to be fixed, similarly to
+   * [test.(call)(title, testFunction)](https://playwright.dev/docs/api/class-test#test-call). This test will not be run.
    *
    * ```ts
    * import { test, expect } from '@playwright/test';
    *
-   * test('not yet ready', async ({ page }) => {
+   * test.fixme('test to be fixed', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * @param title Test title.
+   * @param testFunction Test function that takes one or two arguments: an object with fixtures and optional [TestInfo].
+   */
+  fixme(title: string, testFunction: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
+  /**
+   * Mark a test as "fixme", with the intention to fix it. Test is immediately aborted when you call
+   * [test.fixme()](https://playwright.dev/docs/api/class-test#test-fixme-2).
+   *
+   * ```ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('test to be fixed', async ({ page }) => {
    *   test.fixme();
    *   // ...
    * });
    * ```
    *
-   * Conditional fixme a test with an optional description:
+   * Mark all tests in a file or [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe)
+   * group as "fixme".
    *
    * ```ts
    * import { test, expect } from '@playwright/test';
    *
-   * test('fixme in WebKit', async ({ page, browserName }) => {
-   *   test.fixme(browserName === 'webkit', 'This feature is not implemented for Mac yet');
+   * test.fixme();
+   *
+   * test('test to be fixed 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('test to be fixed 2', async ({ page }) => {
    *   // ...
    * });
    * ```
    *
-   * Conditional fixme for all tests in a file or
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.fixme(({ browserName }) => browserName === 'webkit');
-   *
-   * test('fixme in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('fixme in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * `fixme` from a hook:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.beforeEach(async ({ page }) => {
-   *   test.fixme(process.env.APP_VERSION === 'v2', 'No settings in v2 yet');
-   *   await page.goto('/settings');
-   * });
-   * ```
-   *
-   * @param condition Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "fixme" when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
    */
   fixme(): void;
   /**
-   * Marks a test or a group of tests as "fixme". These tests will not be run, but the intention is to fix them.
-   *
-   * Unconditional fixme:
+   * Conditionally mark a test as "fixme" with an optional description.
    *
    * ```ts
    * import { test, expect } from '@playwright/test';
    *
-   * test('not yet ready', async ({ page }) => {
-   *   test.fixme();
+   * test('broken in WebKit', async ({ page, browserName }) => {
+   *   test.fixme(browserName === 'webkit', 'This feature is not implemented on Mac yet');
    *   // ...
    * });
    * ```
    *
-   * Conditional fixme a test with an optional description:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('fixme in WebKit', async ({ page, browserName }) => {
-   *   test.fixme(browserName === 'webkit', 'This feature is not implemented for Mac yet');
-   *   // ...
-   * });
-   * ```
-   *
-   * Conditional fixme for all tests in a file or
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.fixme(({ browserName }) => browserName === 'webkit');
-   *
-   * test('fixme in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('fixme in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * `fixme` from a hook:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.beforeEach(async ({ page }) => {
-   *   test.fixme(process.env.APP_VERSION === 'v2', 'No settings in v2 yet');
-   *   await page.goto('/settings');
-   * });
-   * ```
-   *
-   * @param condition Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "fixme" when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
+   * @param condition Test or tests are marked as "fixme" when the condition is `true`.
+   * @param description An optional description that will be reflected in a test report.
    */
-  fixme(condition: boolean): void;
+  fixme(condition: boolean, description?: string): void;
   /**
-   * Marks a test or a group of tests as "fixme". These tests will not be run, but the intention is to fix them.
-   *
-   * Unconditional fixme:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('not yet ready', async ({ page }) => {
-   *   test.fixme();
-   *   // ...
-   * });
-   * ```
-   *
-   * Conditional fixme a test with an optional description:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('fixme in WebKit', async ({ page, browserName }) => {
-   *   test.fixme(browserName === 'webkit', 'This feature is not implemented for Mac yet');
-   *   // ...
-   * });
-   * ```
-   *
-   * Conditional fixme for all tests in a file or
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
+   * Conditionally mark all tests in a file or
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group as "fixme".
    *
    * ```ts
    * import { test, expect } from '@playwright/test';
    *
    * test.fixme(({ browserName }) => browserName === 'webkit');
    *
-   * test('fixme in WebKit 1', async ({ page }) => {
+   * test('broken in WebKit 1', async ({ page }) => {
    *   // ...
    * });
-   * test('fixme in WebKit 2', async ({ page }) => {
+   * test('broken in WebKit 2', async ({ page }) => {
    *   // ...
    * });
    * ```
    *
-   * `fixme` from a hook:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.beforeEach(async ({ page }) => {
-   *   test.fixme(process.env.APP_VERSION === 'v2', 'No settings in v2 yet');
-   *   await page.goto('/settings');
-   * });
-   * ```
-   *
-   * @param condition Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "fixme" when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
+   * @param callback A function that returns whether to mark as "fixme", based on test fixtures. Test or tests are marked as "fixme" when the return value is `true`.
+   * @param description An optional description that will be reflected in a test report.
    */
-  fixme(condition: boolean, description: string): void;
-  /**
-   * Marks a test or a group of tests as "fixme". These tests will not be run, but the intention is to fix them.
-   *
-   * Unconditional fixme:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('not yet ready', async ({ page }) => {
-   *   test.fixme();
-   *   // ...
-   * });
-   * ```
-   *
-   * Conditional fixme a test with an optional description:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('fixme in WebKit', async ({ page, browserName }) => {
-   *   test.fixme(browserName === 'webkit', 'This feature is not implemented for Mac yet');
-   *   // ...
-   * });
-   * ```
-   *
-   * Conditional fixme for all tests in a file or
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.fixme(({ browserName }) => browserName === 'webkit');
-   *
-   * test('fixme in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('fixme in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * `fixme` from a hook:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.beforeEach(async ({ page }) => {
-   *   test.fixme(process.env.APP_VERSION === 'v2', 'No settings in v2 yet');
-   *   await page.goto('/settings');
-   * });
-   * ```
-   *
-   * @param condition Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "fixme" when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
-   */
-  fixme(callback: (args: TestArgs & WorkerArgs) => boolean): void;
-  /**
-   * Marks a test or a group of tests as "fixme". These tests will not be run, but the intention is to fix them.
-   *
-   * Unconditional fixme:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('not yet ready', async ({ page }) => {
-   *   test.fixme();
-   *   // ...
-   * });
-   * ```
-   *
-   * Conditional fixme a test with an optional description:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('fixme in WebKit', async ({ page, browserName }) => {
-   *   test.fixme(browserName === 'webkit', 'This feature is not implemented for Mac yet');
-   *   // ...
-   * });
-   * ```
-   *
-   * Conditional fixme for all tests in a file or
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.fixme(({ browserName }) => browserName === 'webkit');
-   *
-   * test('fixme in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('fixme in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * `fixme` from a hook:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.beforeEach(async ({ page }) => {
-   *   test.fixme(process.env.APP_VERSION === 'v2', 'No settings in v2 yet');
-   *   await page.goto('/settings');
-   * });
-   * ```
-   *
-   * @param condition Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "fixme" when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
-   */
-  fixme(callback: (args: TestArgs & WorkerArgs) => boolean, description: string): void;
+  fixme(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
   /**
    * Marks a test or a group of tests as "should fail". Playwright Test runs these tests and ensures that they are actually
    * failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is fixed.

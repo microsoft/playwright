@@ -503,16 +503,46 @@ Optional description that will be reflected in a test report.
 
 
 
-## method: Test.fixme
+## method: Test.fixme#1
 
-Marks a test or a group of tests as "fixme". These tests will not be run, but the intention is to fix them.
-
-Unconditional fixme:
+Declares a test to be fixed, similarly to [`method: Test.(call)`]. This test will not be run.
 
 ```js js-flavor=js
 const { test, expect } = require('@playwright/test');
 
-test('not yet ready', async ({ page }) => {
+test.fixme('test to be fixed', async ({ page }) => {
+  // ...
+});
+```
+
+```js js-flavor=ts
+import { test, expect } from '@playwright/test';
+
+test.fixme('test to be fixed', async ({ page }) => {
+  // ...
+});
+```
+
+### param: Test.fixme#1.title
+- `title` <[string]>
+
+Test title.
+
+### param: Test.fixme#1.testFunction
+- `testFunction` <[function]\([Fixtures], [TestInfo]\)>
+
+Test function that takes one or two arguments: an object with fixtures and optional [TestInfo].
+
+
+
+## method: Test.fixme#2
+
+Mark a test as "fixme", with the intention to fix it. Test is immediately aborted when you call [`method: Test.fixme#2`].
+
+```js js-flavor=js
+const { test, expect } = require('@playwright/test');
+
+test('test to be fixed', async ({ page }) => {
   test.fixme();
   // ...
 });
@@ -521,19 +551,23 @@ test('not yet ready', async ({ page }) => {
 ```js js-flavor=ts
 import { test, expect } from '@playwright/test';
 
-test('not yet ready', async ({ page }) => {
+test('test to be fixed', async ({ page }) => {
   test.fixme();
   // ...
 });
 ```
 
-Conditional fixme a test with an optional description:
+Mark all tests in a file or [`method: Test.describe`] group as "fixme".
 
 ```js js-flavor=js
 const { test, expect } = require('@playwright/test');
 
-test('fixme in WebKit', async ({ page, browserName }) => {
-  test.fixme(browserName === 'webkit', 'This feature is not implemented for Mac yet');
+test.fixme();
+
+test('test to be fixed 1', async ({ page }) => {
+  // ...
+});
+test('test to be fixed 2', async ({ page }) => {
   // ...
 });
 ```
@@ -541,23 +575,26 @@ test('fixme in WebKit', async ({ page, browserName }) => {
 ```js js-flavor=ts
 import { test, expect } from '@playwright/test';
 
-test('fixme in WebKit', async ({ page, browserName }) => {
-  test.fixme(browserName === 'webkit', 'This feature is not implemented for Mac yet');
+test.fixme();
+
+test('test to be fixed 1', async ({ page }) => {
+  // ...
+});
+test('test to be fixed 2', async ({ page }) => {
   // ...
 });
 ```
 
-Conditional fixme for all tests in a file or [`method: Test.describe`] group:
+
+## method: Test.fixme#3
+
+Conditionally mark a test as "fixme" with an optional description.
 
 ```js js-flavor=js
 const { test, expect } = require('@playwright/test');
 
-test.fixme(({ browserName }) => browserName === 'webkit');
-
-test('fixme in WebKit 1', async ({ page }) => {
-  // ...
-});
-test('fixme in WebKit 2', async ({ page }) => {
+test('broken in WebKit', async ({ page, browserName }) => {
+  test.fixme(browserName === 'webkit', 'This feature is not implemented on Mac yet');
   // ...
 });
 ```
@@ -565,45 +602,66 @@ test('fixme in WebKit 2', async ({ page }) => {
 ```js js-flavor=ts
 import { test, expect } from '@playwright/test';
 
-test.fixme(({ browserName }) => browserName === 'webkit');
-
-test('fixme in WebKit 1', async ({ page }) => {
-  // ...
-});
-test('fixme in WebKit 2', async ({ page }) => {
+test('broken in WebKit', async ({ page, browserName }) => {
+  test.fixme(browserName === 'webkit', 'This feature is not implemented on Mac yet');
   // ...
 });
 ```
 
-`fixme` from a hook:
 
-```js js-flavor=js
-const { test, expect } = require('@playwright/test');
+### param: Test.fixme#3.condition
+- `condition` <[boolean]>
 
-test.beforeEach(async ({ page }) => {
-  test.fixme(process.env.APP_VERSION === 'v2', 'No settings in v2 yet');
-  await page.goto('/settings');
-});
-```
+Test or tests are marked as "fixme" when the condition is `true`.
 
-```js js-flavor=ts
-import { test, expect } from '@playwright/test';
-
-test.beforeEach(async ({ page }) => {
-  test.fixme(process.env.APP_VERSION === 'v2', 'No settings in v2 yet');
-  await page.goto('/settings');
-});
-```
-
-### param: Test.fixme.condition
-- `condition` <[void]|[boolean]|[function]\([Fixtures]\):[boolean]>
-
-Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "fixme" when the condition is `true`.
-
-### param: Test.fixme.description
+### param: Test.fixme#3.description
 - `description` <[void]|[string]>
 
-Optional description that will be reflected in a test report.
+An optional description that will be reflected in a test report.
+
+
+
+
+## method: Test.fixme#4
+
+Conditionally mark all tests in a file or [`method: Test.describe`] group as "fixme".
+
+```js js-flavor=js
+const { test, expect } = require('@playwright/test');
+
+test.fixme(({ browserName }) => browserName === 'webkit');
+
+test('broken in WebKit 1', async ({ page }) => {
+  // ...
+});
+test('broken in WebKit 2', async ({ page }) => {
+  // ...
+});
+```
+
+```js js-flavor=ts
+import { test, expect } from '@playwright/test';
+
+test.fixme(({ browserName }) => browserName === 'webkit');
+
+test('broken in WebKit 1', async ({ page }) => {
+  // ...
+});
+test('broken in WebKit 2', async ({ page }) => {
+  // ...
+});
+```
+
+
+### param: Test.fixme#4.condition
+- `callback` <[function]\([Fixtures]\):[boolean]>
+
+A function that returns whether to mark as "fixme", based on test fixtures. Test or tests are marked as "fixme" when the return value is `true`.
+
+### param: Test.fixme#4.description
+- `description` <[void]|[string]>
+
+An optional description that will be reflected in a test report.
 
 
 

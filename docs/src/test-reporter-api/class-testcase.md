@@ -18,7 +18,7 @@ Learn more about [test annotations](./test-annotations.md).
 - type: <[TestStatus]<"passed"|"failed"|"timedOut"|"skipped">>
 
 Expected test status.
-* Tests marked as [`method: Test.skip#1`] or [`method: Test.fixme`] are expected to be `'skipped'`.
+* Tests marked as [`method: Test.skip#1`] or [`method: Test.fixme#1`] are expected to be `'skipped'`.
 * Tests marked as [`method: Test.fail`] are expected to be `'failed'`.
 * Other tests are expected to be `'passed'`.
 

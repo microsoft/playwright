@@ -60,7 +60,7 @@ export class TestTypeImpl {
     this.test = test;
   }
 
-  private _createTest(type: 'default' | 'only' | 'skip', location: Location, title: string, fn: Function) {
+  private _createTest(type: 'default' | 'only' | 'skip' | 'fixme', location: Location, title: string, fn: Function) {
     throwIfRunningInsideJest();
     const suite = currentlyLoadingFileSuite();
     if (!suite)
@@ -75,7 +75,7 @@ export class TestTypeImpl {
 
     if (type === 'only')
       test._only = true;
-    if (type === 'skip')
+    if (type === 'skip' || type === 'fixme')
       test.expectedStatus = 'skipped';
   }
 
@@ -137,9 +137,9 @@ export class TestTypeImpl {
   private _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', location: Location, ...modifierArgs: [arg?: any | Function, description?: string]) {
     const suite = currentlyLoadingFileSuite();
     if (suite) {
-      if (typeof modifierArgs[0] === 'string' && typeof modifierArgs[1] === 'function') {
-        // Support for test.skip('title', () => {})
-        this._createTest('skip', location, modifierArgs[0], modifierArgs[1]);
+      if (typeof modifierArgs[0] === 'string' && typeof modifierArgs[1] === 'function' && (type === 'skip' || type === 'fixme')) {
+        // Support for test.{skip,fixme}('title', () => {})
+        this._createTest(type, location, modifierArgs[0], modifierArgs[1]);
         return;
       }
 
