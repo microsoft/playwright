@@ -26,6 +26,7 @@ export type PromptOptions = {
   installGitHubActions: boolean,
   language: 'JavaScript' | 'TypeScript'
   addExamples: boolean,
+  installPlaywrightDependencies: boolean,
 };
 
 const assetsDir = path.join(__dirname, '..', 'assets');
@@ -72,7 +73,7 @@ export class Generator {
         type: 'text',
         name: 'testDir',
         message: 'Where to put your end-to-end tests?',
-        initial: 'e2e'
+        initial: fs.existsSync(path.join(this.rootDir, 'tests')) ? 'e2e' : 'tests',
       },
       {
         type: 'confirm',
@@ -82,10 +83,18 @@ export class Generator {
       },
       {
         type: 'confirm',
+        name: 'installPlaywrightDependencies',
+        message: 'Install Playwright operating system dependencies (requires sudo / root - can be done manually via \sudo npx playwright install-deps\')?',
+        initial: true,
+      },
+      // Avoid installing dependencies on Windows (vast majority does not run create-playwright on Windows)
+      // Avoid installing dependencies on Mac (there are no dependencies)
+      ...(process.platform === 'linux' ? [{
+        type: 'confirm',
         name: 'addExamples',
         message: 'Add common examples which demonstrate Playwright\'s capabilities?',
         initial: true,
-      },
+      }] : []),
     ]);
   }
 
@@ -125,7 +134,7 @@ export class Generator {
 
     commands.push({
       name: 'Downloading browsers',
-      command: 'npx playwright install --with-deps',
+      command: 'npx playwright install' + (answers.installPlaywrightDependencies ? ' --with-deps' : ''),
     });
 
     return { files, commands };
