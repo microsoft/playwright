@@ -522,8 +522,8 @@ class Frame {
   textInputProcessor() {
     if (!this._textInputProcessor) {
       this._textInputProcessor = Cc["@mozilla.org/text-input-processor;1"].createInstance(Ci.nsITextInputProcessor);
-      this._textInputProcessor.beginInputTransactionForTests(this._docShell.DOMWindow);
     }
+    this._textInputProcessor.beginInputTransactionForTests(this._docShell.DOMWindow);
     return this._textInputProcessor;
   }
 
