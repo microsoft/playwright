@@ -234,3 +234,63 @@ it('should remove content-length from reidrected post requests', async ({ playwr
   expect(req2.headers['content-length']).toBe(undefined);
   await request.dispose();
 });
+
+
+const serialization = [
+  ['object', { 'foo': 'bar' }],
+  ['array', ['foo', 'bar', 2021]],
+  ['string', 'foo'],
+  ['bool', true],
+  ['number', 2021],
+];
+for (const [type, value] of serialization) {
+  const stringifiedValue = JSON.stringify(value);
+  it(`should json stringify ${type} body when content-type is application/json`, async ({ playwright, server }) => {
+    const request = await playwright.request.newContext();
+    const [req] = await Promise.all([
+      server.waitForRequest('/empty.html'),
+      request.post(server.EMPTY_PAGE, {
+        headers: {
+          'content-type': 'application/json'
+        },
+        data: value
+      })
+    ]);
+    const body = await req.postBody;
+    expect(body.toString()).toEqual(stringifiedValue);
+    await request.dispose();
+  });
+
+  it(`should not double stringify ${type} body when content-type is application/json`, async ({ playwright, server }) => {
+    const request = await playwright.request.newContext();
+    const [req] = await Promise.all([
+      server.waitForRequest('/empty.html'),
+      request.post(server.EMPTY_PAGE, {
+        headers: {
+          'content-type': 'application/json'
+        },
+        data: stringifiedValue
+      })
+    ]);
+    const body = await req.postBody;
+    expect(body.toString()).toEqual(stringifiedValue);
+    await request.dispose();
+  });
+}
+
+it(`should accept already serialized data as Buffer when content-type is application/json`, async ({ playwright, server }) => {
+  const request = await playwright.request.newContext();
+  const value = JSON.stringify(JSON.stringify({ 'foo': 'bar' }));
+  const [req] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    request.post(server.EMPTY_PAGE, {
+      headers: {
+        'content-type': 'application/json'
+      },
+      data: Buffer.from(value, 'utf8')
+    })
+  ]);
+  const body = await req.postBody;
+  expect(body.toString()).toEqual(value);
+  await request.dispose();
+});
