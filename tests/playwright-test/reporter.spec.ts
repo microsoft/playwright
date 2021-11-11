@@ -26,7 +26,9 @@ class Reporter {
   onStdErr() {}
   onTestEnd(test, result) {}
   onTimeout() {}
-  onError() {}
+  onError(error) {
+    console.log('\\n%%got error: ' + error.message);
+  }
   onEnd() {
     console.log('\\n%%end');
   }
@@ -403,6 +405,77 @@ test('should show nice stacks for locators', async ({ runInlineTest }) => {
     `%% end {"title":"browserContext.close","category":"pw:api"}`,
     `%% end {"title":"After Hooks","category":"hook","steps":[{"title":"browserContext.close","category":"pw:api"}]}`,
   ]);
+});
+
+test('should report forbid-only error to reporter', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': smallReporterJS,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.test.ts': `
+      pwt.test.only('pass', () => {});
+    `
+  }, { 'reporter': '', 'forbid-only': true });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`%%got error: =====================================\n --forbid-only found a focused test.`);
+});
+
+test('should report no-tests error to reporter', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': smallReporterJS,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `
+  }, { 'reporter': '' });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`%%got error: =================\n no tests found.`);
+});
+
+test('should report require error to reporter', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': smallReporterJS,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.spec.js': `
+      throw new Error('Oh my!');
+    `,
+  }, { 'reporter': '' });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`%%got error: Oh my!`);
+});
+
+test('should report global setup error to reporter', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': smallReporterJS,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+        globalSetup: './globalSetup',
+      };
+    `,
+    'globalSetup.ts': `
+      module.exports = () => {
+        throw new Error('Oh my!');
+      };
+    `,
+    'a.spec.js': `
+      pwt.test('test', () => {});
+    `,
+  }, { 'reporter': '' });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`%%got error: Oh my!`);
 });
 
 function stripEscapedAscii(str: string) {
