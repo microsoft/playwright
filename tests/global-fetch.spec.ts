@@ -276,3 +276,20 @@ for (const [type, value] of serialization) {
     await request.dispose();
   });
 }
+
+it(`should accept already serialized data as Buffer when content-type is application/json`, async ({ playwright, server }) => {
+  const request = await playwright.request.newContext();
+  const value = JSON.stringify(JSON.stringify({'foo':'bar'}));
+  const [req] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    request.post(server.EMPTY_PAGE, {
+      headers: {
+        'content-type': 'application/json'
+      },
+      data: Buffer.from(value, 'utf8')
+    })
+  ]);
+  const body = await req.postBody;
+  expect(body.toString()).toEqual(value);
+  await request.dispose();
+});
