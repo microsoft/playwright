@@ -142,14 +142,18 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
       let multipartData: channels.FormField[] | undefined;
       let postDataBuffer: Buffer | undefined;
       if (options.data !== undefined) {
-        if (isString(options.data))
-          postDataBuffer = Buffer.from(options.data, 'utf8');
-        else if (Buffer.isBuffer(options.data))
+        if (isString(options.data)) {
+          if (isJsonContentType(headers))
+            jsonData = options.data;
+          else
+            postDataBuffer = Buffer.from(options.data, 'utf8');
+        } else if (Buffer.isBuffer(options.data)) {
           postDataBuffer = options.data;
-        else if (typeof options.data === 'object')
+        } else if (typeof options.data === 'object' || typeof options.data === 'number' || typeof options.data === 'boolean') {
           jsonData = options.data;
-        else
+        } else {
           throw new Error(`Unexpected 'data' type`);
+        }
       } else if (options.form) {
         formData = objectToArray(options.form);
       } else if (options.multipart) {
@@ -300,4 +304,14 @@ async function readStreamToJson(stream: fs.ReadStream): Promise<ServerFilePayloa
     mimeType: mime.getType(streamPath) || 'application/octet-stream',
     buffer: buffer.toString('base64'),
   };
+}
+
+function isJsonContentType(headers?: HeadersArray): boolean {
+  if (!headers)
+    return false;
+  for (const {name, value} of headers) {
+    if (name.toLocaleLowerCase() === 'content-type')
+      return value === 'application/json';
+  }
+  return false;
 }
