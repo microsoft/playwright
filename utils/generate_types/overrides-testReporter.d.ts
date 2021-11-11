@@ -84,8 +84,15 @@ export interface FullResult {
    *   - 'failed' - any test has failed.
    *   - 'timedout' - the global time has been reached.
    *   - 'interrupted' - interrupted by the user.
+   *   - 'forbid-only' - exclusive tests encountered, while forbidden in config.
+   *   - 'no-tests' - no tests have been found.
+   *   - 'duplicate-titles' - found tests with duplicate titles.
    */
-  status: 'passed' | 'failed' | 'timedout' | 'interrupted';
+  status: 'passed' | 'failed' | 'timedout' | 'interrupted' | 'forbid-only' | 'no-tests' | 'duplicate-titles';
+  /**
+   * Optional error message, present for 'forbid-only', 'no-tests' and 'duplicate-titles'.
+   */
+  errorMessage?: string;
 }
 
 export interface Reporter {

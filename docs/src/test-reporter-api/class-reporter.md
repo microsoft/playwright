@@ -111,13 +111,17 @@ Called after all tests has been run, or testing has been interrupted. Note that 
 
 ### param: Reporter.onEnd.result
 - `result` <[Object]>
-  - `status` <[FullStatus]<"passed"|"failed"|"timedout"|"interrupted">>
+  - `status` <[FullStatus]<"passed"|"failed"|"timedout"|"interrupted"|"forbid-only"|"no-tests"|"duplicate-titles">>
+  - `errorMessage` <[string]> Error message, present for `'forbid-only'`, `'no-tests'` and `'duplicate-titles'`. Optional.
 
 Result of the full test run.
 * `'passed'` - Everything went as expected.
 * `'failed'` - Any test has failed.
 * `'timedout'` - The [`property: TestConfig.globalTimeout`] has been reached.
 * `'interrupted'` - Interrupted by the user.
+* `'forbid-only'` - Exclusive tests encountered when [`property: TestConfig.forbidOnly`] is set. This result also contains `errorMessage`.
+* `'no-tests'` - No tests have been found. This result also contains `errorMessage`.
+* `'duplicate-titles'` - Found tests with duplicate titles. This result also contains `errorMessage`.
 
 
 

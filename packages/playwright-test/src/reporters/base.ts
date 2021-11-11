@@ -179,6 +179,10 @@ export class BaseReporter implements Reporter  {
   }
 
   epilogue(full: boolean) {
+    if (this.result.errorMessage) {
+      process.stdout.write(this.result.errorMessage + '\n');
+      return;
+    }
     const summary = this.generateSummary();
     const summaryMessage = this.generateSummaryMessage(summary);
     if (full && summary.failuresToPrint.length && !this._omitFailures)

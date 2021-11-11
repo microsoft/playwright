@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-/* eslint-disable no-console */
 import rimraf from 'rimraf';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -24,7 +23,7 @@ import { Dispatcher, TestGroup } from './dispatcher';
 import { createFileMatcher, createTitleMatcher, FilePatternFilter, monotonicTime } from './util';
 import { TestCase, Suite } from './test';
 import { Loader } from './loader';
-import { Reporter } from '../types/testReporter';
+import { Reporter, FullResult } from '../types/testReporter';
 import { Multiplexer } from './reporters/multiplexer';
 import DotReporter from './reporters/dot';
 import GitHubReporter from './reporters/github';
@@ -43,18 +42,6 @@ import { raceAgainstDeadline } from 'playwright-core/lib/utils/async';
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
 const readFileAsync = promisify(fs.readFile);
-
-type RunResultStatus = 'passed' | 'failed' | 'sigint' | 'forbid-only' | 'clashing-test-titles' | 'no-tests' | 'timedout';
-
-type RunResult = {
-  status: Exclude<RunResultStatus, 'forbid-only' | 'clashing-test-titles'>;
-} | {
-  status: 'forbid-only',
-  locations: string[]
-} | {
-  status: 'clashing-test-titles',
-  clashingTests: Map<string, TestCase[]>
-};
 
 type InternalGlobalSetupFunction = () => Promise<() => Promise<void>>;
 
@@ -94,9 +81,12 @@ export class Runner {
       return prints;
     });
     if (reporters.length && !someReporterPrintsToStdio) {
-      // Add a line/dot report for convenience.
+      // Add a line/dot/list-mode reporter for convenience.
       // Important to put it first, jsut in case some other reporter stalls onEnd.
-      reporters.unshift(process.stdout.isTTY && !process.env.CI ? new LineReporter({ omitFailures: true }) : new DotReporter({ omitFailures: true }));
+      if (list)
+        reporters.unshift(new ListModeReporter());
+      else
+        reporters.unshift(process.stdout.isTTY && !process.env.CI ? new LineReporter({ omitFailures: true }) : new DotReporter({ omitFailures: true }));
     }
     return new Multiplexer(reporters);
   }
@@ -105,51 +95,19 @@ export class Runner {
     this._internalGlobalSetups.push(internalGlobalSetup);
   }
 
-  async run(list: boolean, filePatternFilters: FilePatternFilter[], projectNames?: string[]): Promise<RunResultStatus> {
+  async run(list: boolean, filePatternFilters: FilePatternFilter[], projectNames?: string[]): Promise<FullResult> {
     this._reporter = await this._createReporter(list);
     const config = this._loader.fullConfig();
     const globalDeadline = config.globalTimeout ? config.globalTimeout + monotonicTime() : 0;
-    const { result, timedOut } = await raceAgainstDeadline(this._run(list, filePatternFilters, projectNames), globalDeadline);
-    if (timedOut) {
-      if (!this._didBegin)
-        this._reporter.onBegin?.(config, new Suite(''));
-      await this._reporter.onEnd?.({ status: 'timedout' });
-      await this._flushOutput();
-      return 'failed';
-    }
-    if (result?.status === 'forbid-only') {
-      console.error('=====================================');
-      console.error(' --forbid-only found a focused test.');
-      for (const location of result?.locations)
-        console.error(` - ${location}`);
-      console.error('=====================================');
-    } else if (result!.status === 'no-tests') {
-      console.error('=================');
-      console.error(' no tests found.');
-      console.error('=================');
-    } else if (result?.status === 'clashing-test-titles') {
-      console.error('=================');
-      console.error(' duplicate test titles are not allowed.');
-      for (const [title, tests] of result?.clashingTests.entries()) {
-        console.error(` - title: ${title}`);
-        for (const test of tests)
-          console.error(`   - ${buildItemLocation(config.rootDir, test)}`);
-        console.error('=================');
-      }
-    }
-    await this._flushOutput();
-    return result!.status!;
+    const result = await raceAgainstDeadline(this._run(list, filePatternFilters, projectNames), globalDeadline);
+    const fullResult: FullResult = result.timedOut ? { status: 'timedout' } : result.result!;
+    if (!this._didBegin)
+      this._reporter.onBegin?.(config, new Suite(''));
+    await this._reporter.onEnd?.(fullResult);
+    return fullResult;
   }
 
-  async _flushOutput() {
-    // Calling process.exit() might truncate large stdout/stderr output.
-    // See https://github.com/nodejs/node/issues/6456.
-    // See https://github.com/nodejs/node/issues/12921
-    await new Promise<void>(resolve => process.stdout.write('', () => resolve()));
-    await new Promise<void>(resolve => process.stderr.write('', () => resolve()));
-  }
-
-  async _run(list: boolean, testFileReFilters: FilePatternFilter[], projectNames?: string[]): Promise<RunResult> {
+  async _run(list: boolean, testFileReFilters: FilePatternFilter[], projectNames?: string[]): Promise<FullResult> {
     const testFileFilter = testFileReFilters.length ? createFileMatcher(testFileReFilters.map(e => e.re)) : () => true;
     const config = this._loader.fullConfig();
 
@@ -214,18 +172,12 @@ export class Runner {
         preprocessRoot._addSuite(fileSuite);
       if (config.forbidOnly) {
         const onlyTestsAndSuites = preprocessRoot._getOnlyItems();
-        if (onlyTestsAndSuites.length > 0) {
-          const locations = onlyTestsAndSuites.map(testOrSuite => {
-            // Skip root and file.
-            const title = testOrSuite.titlePath().slice(2).join(' ');
-            return `${buildItemLocation(config.rootDir, testOrSuite)} > ${title}`;
-          });
-          return { status: 'forbid-only', locations };
-        }
+        if (onlyTestsAndSuites.length > 0)
+          return createForbidOnlyResult(config, onlyTestsAndSuites);
       }
       const clashingTests = getClashingTestsPerSuite(preprocessRoot);
       if (clashingTests.size > 0)
-        return { status: 'clashing-test-titles', clashingTests: clashingTests };
+        return createDuplicateTitlesResult(config, clashingTests);
       filterOnly(preprocessRoot);
       filterByFocusedLine(preprocessRoot, testFileReFilters);
 
@@ -261,7 +213,7 @@ export class Runner {
 
       let total = rootSuite.allTests().length;
       if (!total)
-        return { status: 'no-tests' };
+        return { status: 'no-tests', errorMessage: `=================\n no tests found.\n=================` };
 
       await Promise.all(Array.from(outputDirs).map(outputDir => removeFolderAsync(outputDir).catch(e => {})));
 
@@ -332,13 +284,10 @@ export class Runner {
         hasWorkerErrors = dispatcher.hasWorkerErrors();
       }
 
-      if (sigint) {
-        await this._reporter.onEnd?.({ status: 'interrupted' });
-        return { status: 'sigint' };
-      }
+      if (sigint)
+        return { status: 'interrupted' };
 
       const failed = hasWorkerErrors || rootSuite.allTests().some(test => !test.ok());
-      await this._reporter.onEnd?.({ status: failed ? 'failed' : 'passed' });
       return { status: failed ? 'failed' : 'passed' };
     } finally {
       if (globalSetupResult && typeof globalSetupResult === 'function')
@@ -545,6 +494,7 @@ function createTestGroups(rootSuite: Suite): TestGroup[] {
 
 class ListModeReporter implements Reporter {
   onBegin(config: FullConfig, suite: Suite): void {
+    // eslint-disable-next-line no-console
     console.log(`Listing tests:`);
     const tests = suite.allTests();
     const files = new Set<string>();
@@ -553,11 +503,41 @@ class ListModeReporter implements Reporter {
       const [, projectName, , ...titles] = test.titlePath();
       const location = `${path.relative(config.rootDir, test.location.file)}:${test.location.line}:${test.location.column}`;
       const projectTitle = projectName ? `[${projectName}] › ` : '';
+      // eslint-disable-next-line no-console
       console.log(`  ${projectTitle}${location} › ${titles.join(' ')}`);
       files.add(test.location.file);
     }
+    // eslint-disable-next-line no-console
     console.log(`Total: ${tests.length} ${tests.length === 1 ? 'test' : 'tests'} in ${files.size} ${files.size === 1 ? 'file' : 'files'}`);
   }
+}
+
+function createForbidOnlyResult(config: FullConfig, onlyTestsAndSuites: (TestCase | Suite)[]): FullResult {
+  const errorMessage = [
+    '=====================================',
+    ' --forbid-only found a focused test.',
+  ];
+  for (const testOrSuite of onlyTestsAndSuites) {
+    // Skip root and file.
+    const title = testOrSuite.titlePath().slice(2).join(' ');
+    errorMessage.push(` - ${buildItemLocation(config.rootDir, testOrSuite)} > ${title}`);
+  }
+  errorMessage.push('=====================================');
+  return { status: 'forbid-only', errorMessage: errorMessage.join('\n') };
+}
+
+function createDuplicateTitlesResult(config: FullConfig, clashingTests: Map<string, TestCase[]>): FullResult {
+  const errorMessage = [
+    '=================',
+    ' duplicate test titles are not allowed.',
+  ];
+  for (const [title, tests] of clashingTests.entries()) {
+    errorMessage.push(` - title: ${title}`);
+    for (const test of tests)
+      errorMessage.push(`   - ${buildItemLocation(config.rootDir, test)}`);
+    errorMessage.push('=================');
+  }
+  return { status: 'duplicate-titles', errorMessage: errorMessage.join('\n') };
 }
 
 export const builtInReporters = ['list', 'line', 'dot', 'json', 'junit', 'null', 'github', 'html'] as const;

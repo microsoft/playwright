@@ -69,6 +69,10 @@ export class GitHubReporter extends BaseReporter {
   }
 
   private _printAnnotations() {
+    if (this.result.errorMessage) {
+      this._printSummaryAnnotation(this.result.errorMessage + '\n');
+      return;
+    }
     const summary = this.generateSummary();
     const summaryMessage = this.generateSummaryMessage(summary);
     if (summary.failuresToPrint.length)
@@ -87,7 +91,7 @@ export class GitHubReporter extends BaseReporter {
     });
   }
 
-  private _printSummaryAnnotation(summary: string){
+  private _printSummaryAnnotation(summary: string) {
     this.githubLogger.notice(summary, {
       title: '🎭 Playwright Run Summary'
     });
