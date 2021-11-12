@@ -1766,6 +1766,7 @@ export type FrameDragAndDropParams = {
   trial?: boolean,
   sourcePosition?: Point,
   targetPosition?: Point,
+  strict?: boolean,
 };
 export type FrameDragAndDropOptions = {
   force?: boolean,
@@ -1774,6 +1775,7 @@ export type FrameDragAndDropOptions = {
   trial?: boolean,
   sourcePosition?: Point,
   targetPosition?: Point,
+  strict?: boolean,
 };
 export type FrameDragAndDropResult = void;
 export type FrameDblclickParams = {

@@ -270,6 +270,12 @@ it.describe('Drag and drop', () => {
     ]);
   });
 
+  it('should work with locators', async ({ page, server }) => {
+    await page.goto(server.PREFIX + '/drag-n-drop.html');
+    await page.locator('#source').dragTo(page.locator('#target'));
+    expect(await page.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true); // could not find source in target
+  });
+
   async function trackEvents(target: ElementHandle) {
     const eventsHandle = await target.evaluateHandle(target => {
       const events: string[] = [];
