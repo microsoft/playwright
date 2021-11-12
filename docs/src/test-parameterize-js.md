@@ -88,7 +88,7 @@ Now, we can run test in multiple configurations by using projects.
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig<{ version: string }>} */
+/** @type {import('@playwright/test').PlaywrightTestConfig<{ person: string }>} */
 const config = {
   projects: [
     {
