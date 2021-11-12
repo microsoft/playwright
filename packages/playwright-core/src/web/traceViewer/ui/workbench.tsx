@@ -106,7 +106,7 @@ export const Workbench: React.FunctionComponent<{
         setContextEntry(emptyContext);
       }
     })();
-  }, [traceURL]);
+  }, [traceURL, uploadedTraceName]);
 
   const defaultSnapshotInfo = { viewport: contextEntry.options.viewport || { width: 1280, height: 720 }, url: '' };
   const boundaries = { minimum: contextEntry.startTime, maximum: contextEntry.endTime };
