@@ -328,6 +328,11 @@ export class Runner {
       if (!list) {
         const dispatcher = new Dispatcher(this._loader, testGroups, this._reporter);
         await Promise.race([dispatcher.run(), sigIntPromise]);
+        if (!sigint) {
+          // We know for sure there was no Ctrl+C, so we remove custom SIGINT handler
+          // as soon as we can.
+          process.off('SIGINT', sigintHandler);
+        }
         await dispatcher.stop();
         hasWorkerErrors = dispatcher.hasWorkerErrors();
       }

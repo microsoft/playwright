@@ -177,7 +177,6 @@ export async function showHTMLReport(reportFolder: string | undefined, testId?: 
   if (testId)
     url += `#?testId=${testId}`;
   open(url);
-  process.on('SIGINT', () => process.exit(0));
   await new Promise(() => {});
 }
 
