@@ -19,6 +19,7 @@ import type { TestInfo } from '@playwright/test';
 import path from 'path';
 import fs from 'fs';
 import { start } from '../packages/playwright-core/lib/outofprocess';
+import { spawnSync } from 'child_process';
 
 const chromeDriver = require('chromedriver').path;
 const brokenDriver = path.join(__dirname, 'assets', 'selenium-grid', 'broken-selenium-driver.js');
@@ -34,7 +35,11 @@ function writeSeleniumConfig(testInfo: TestInfo, port: number) {
 }
 
 test.skip(({ mode }) => mode !== 'default', 'Using test hooks');
-test.skip(() => !!process.env.INSIDE_DOCKER, 'Docker image does not have Java');
+test.skip(() => {
+  // Skip if Java is not installed.
+  const { status, error } = spawnSync('java', ['-version']);
+  return !!error || status !== 0;
+});
 test.slow();
 
 test('selenium grid 3.141.59 standalone chromium', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
