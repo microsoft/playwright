@@ -38,7 +38,7 @@ test.skip(({ mode }) => mode !== 'default', 'Using test hooks');
 test.skip(() => {
   // Skip if Java is not installed.
   const { status, error } = spawnSync('java', ['-version']);
-  return error || status !== 0;
+  return !!error || status !== 0;
 });
 test.slow();
 
