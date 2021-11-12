@@ -46,7 +46,7 @@ compile_chromium() {
     # As of Jan, 2021 Chromium mac compilation requires Xcode12.2
     selectXcodeVersionOrDie "12.2"
     # As of Jan, 2021 Chromium mac compilation is only possible on Intel macbooks.
-    # See https://chromium.googlesource.com/chromium/src.git/+/master/docs/mac_arm64.md
+    # See https://chromium.googlesource.com/chromium/src.git/+/main/docs/mac_arm64.md
     if [[ $1 == "--compile-mac-arm64" && $(uname -m) != "x86_64" ]]; then
       echo "ERROR: chromium mac arm64 compilation is (ironically) only supported on Intel Macbooks"
       exit 1
