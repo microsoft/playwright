@@ -321,7 +321,7 @@ Whether to suppress stdio and stderr output from the tests.
 The number of times to repeat each test, useful for debugging flaky tests.
 
 ## property: TestConfig.reporter
-- type: <[string]|[Array]<[Object]>|[BuiltInReporter]<"list"|"dot"|"line"|"json"|"junit"|"null">>
+- type: <[string]|[Array]<[Object]>|[BuiltInReporter]<"list"|"dot"|"line"|"github"|"json"|"junit"|"null"|"html">>
   - `0` <[string]> Reporter name or module or file path
   - `1` <[Object]> An object with reporter options if any
 

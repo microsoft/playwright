@@ -12,7 +12,7 @@ You can either parameterize tests on a test level or on a project level.
 ```js js-flavor=js
 // example.spec.js
 const people = ['Alice', 'Bob'];
-for (const name in people) {
+for (const name of people) {
   test(`testing with ${name}`, async () => {
     // ...
   });
@@ -23,7 +23,7 @@ for (const name in people) {
 ```js js-flavor=ts
 // example.spec.ts
 const people = ['Alice', 'Bob'];
-for (const name in people) {
+for (const name of people) {
   test(`testing with ${name}`, async () => {
     // ...
   });
@@ -88,7 +88,7 @@ Now, we can run test in multiple configurations by using projects.
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig<{ version: string }>} */
+/** @type {import('@playwright/test').PlaywrightTestConfig<{ person: string }>} */
 const config = {
   projects: [
     {

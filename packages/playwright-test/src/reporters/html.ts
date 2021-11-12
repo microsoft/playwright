@@ -144,10 +144,11 @@ class HtmlReporter implements Reporter {
     if (shouldOpen) {
       await showHTMLReport(reportFolder, singleTestId);
     } else {
+      const outputFolderPath = htmlReportFolder(this._outputFolder) === defaultReportFolder() ? '' : ' ' + path.relative(process.cwd(), htmlReportFolder(this._outputFolder));
       console.log('');
       console.log('To open last HTML report run:');
       console.log(colors.cyan(`
-  npx playwright show-report
+  npx playwright show-report${outputFolderPath}
 `));
     }
   }
@@ -158,6 +159,10 @@ export function htmlReportFolder(outputFolder?: string): string {
     return path.resolve(process.cwd(), process.env[`PLAYWRIGHT_HTML_REPORT`]);
   if (outputFolder)
     return outputFolder;
+  return defaultReportFolder();
+}
+
+function defaultReportFolder(): string {
   return path.resolve(process.cwd(), 'playwright-report');
 }
 
@@ -177,7 +182,6 @@ export async function showHTMLReport(reportFolder: string | undefined, testId?: 
   if (testId)
     url += `#?testId=${testId}`;
   open(url);
-  process.on('SIGINT', () => process.exit(0));
   await new Promise(() => {});
 }
 
