@@ -56,7 +56,7 @@ export class CRNetworkManager {
       eventsHelper.addEventListener(session, 'Network.responseReceived', this._onResponseReceived.bind(this)),
       eventsHelper.addEventListener(session, 'Network.responseReceivedExtraInfo', this._onResponseReceivedExtraInfo.bind(this)),
       eventsHelper.addEventListener(session, 'Network.loadingFinished', this._onLoadingFinished.bind(this)),
-      eventsHelper.addEventListener(session, 'Network.loadingFailed', this._onLoadingFailed.bind(this)),
+      eventsHelper.addEventListener(session, 'Network.loadingFailed', this._onLoadingFailed.bind(this, workerFrame)),
       eventsHelper.addEventListener(session, 'Network.webSocketCreated', e => this._page._frameManager.onWebSocketCreated(e.requestId, e.url)),
       eventsHelper.addEventListener(session, 'Network.webSocketWillSendHandshakeRequest', e => this._page._frameManager.onWebSocketRequest(e.requestId)),
       eventsHelper.addEventListener(session, 'Network.webSocketHandshakeResponseReceived', e => this._page._frameManager.onWebSocketResponse(e.requestId, e.response.status, e.response.statusText)),
@@ -368,12 +368,25 @@ export class CRNetworkManager {
     this._page._frameManager.reportRequestFinished(request.request, response);
   }
 
-  _onLoadingFailed(event: Protocol.Network.loadingFailedPayload) {
+  _onLoadingFailed(workerFrame: frames.Frame | undefined, event: Protocol.Network.loadingFailedPayload) {
     this._responseExtraInfoTracker.loadingFailed(event);
 
     let request = this._requestIdToRequest.get(event.requestId);
     if (!request)
       request = this._maybeAdoptMainRequest(event.requestId);
+
+    if (!request) {
+      const requestWillBeSentEvent = this._requestIdToRequestWillBeSentEvent.get(event.requestId);
+      if (requestWillBeSentEvent) {
+        // This is a case where request has failed before we had a chance to intercept it.
+        // We stop waiting for Fetch.requestPaused (it might never come), and dispatch request event
+        // right away, followed by requestfailed event.
+        this._requestIdToRequestWillBeSentEvent.delete(event.requestId);
+        this._onRequest(workerFrame, requestWillBeSentEvent, null);
+        request = this._requestIdToRequest.get(event.requestId);
+      }
+    }
+
     // For certain requestIds we never receive requestWillBeSent event.
     // @see https://crbug.com/750469
     if (!request)
