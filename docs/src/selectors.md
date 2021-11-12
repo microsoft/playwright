@@ -506,8 +506,7 @@ await page.TextContentAsync("article:has(div.promo)");
 ### CSS selector list
 
 Comma separated list of CSS selectors will match all elements that can be selected by
-one of the selectors in that list. This is useful for writing large selectors in a
-more compact form.
+one of the selectors in that list.
 
 ```js
 // Clicks a <button> that has either a "Log in" or "Sign in" text.
@@ -535,7 +534,7 @@ await page.ClickAsync("button:has-text(\"Log in\"), button:has-text(\"Sign in\")
 ```
 
 The `:is()` pseudo-class is an [experimental CSS pseudo-class](https://developer.mozilla.org/en-US/docs/Web/CSS/:is) that
-may be useful for speifying list of extra conditions on an element.
+may be useful for specifying a list of extra conditions on an element.
 
 ### XPath union
 
