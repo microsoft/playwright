@@ -270,12 +270,13 @@ it('should behave the same way for headers and allHeaders', async ({ page, serve
 
 it('should provide a Response with a file URL', async ({ page, asset, isAndroid, isElectron, isWindows, browserName }) => {
   it.skip(isAndroid, 'No files on Android');
-  it.skip(isElectron, 'Electron returns status 200');
-  it.skip(browserName === 'webkit' && isWindows, 'Webkit on windows returns status 200');
   it.fixme(browserName === 'firefox', 'Firefox does return null for file:// URLs');
 
   const fileurl = url.pathToFileURL(asset('frames/two-frames.html')).href;
   const response = await page.goto(fileurl);
-  expect(response.status()).toBe(0);
+  if (isElectron || (browserName === 'webkit' && isWindows))
+    expect(response.status()).toBe(200);
+  else
+    expect(response.status()).toBe(0);
   expect(response.ok()).toBe(true);
 });
