@@ -144,11 +144,11 @@ class HtmlReporter implements Reporter {
     if (shouldOpen) {
       await showHTMLReport(reportFolder, singleTestId);
     } else {
-      const outputFolderPath = htmlReportFolder(this._outputFolder) === defaultReportFolder() ? '' : path.relative(process.cwd(), htmlReportFolder(this._outputFolder));
+      const outputFolderPath = htmlReportFolder(this._outputFolder) === defaultReportFolder() ? '' : ' ' + path.relative(process.cwd(), htmlReportFolder(this._outputFolder));
       console.log('');
       console.log('To open last HTML report run:');
       console.log(colors.cyan(`
-  npx playwright show-report ${outputFolderPath}
+  npx playwright show-report${outputFolderPath}
 `));
     }
   }
