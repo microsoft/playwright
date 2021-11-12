@@ -374,10 +374,10 @@ To make use of this feature, we will declare an "option fixture" for the backend
 const base = require('@playwright/test');
 const { startBackend } = require('./my-backend');
 
-exports.test = base.test.extend({
+exports.test = base.test.declare({
   // Default value for the version.
   version: '1.0',
-
+}).extend({
   // Use version when starting the backend.
   backendURL: async ({ version }, use) => {
     const app = await startBackend(version);
@@ -392,15 +392,12 @@ exports.test = base.test.extend({
 import { test as base } from '@playwright/test';
 import { startBackend } from './my-backend';
 
-export type TestOptions = {
-  version: string;
-  backendURL: string;
-};
+export type TestOptions = { version: string };
 
-export const test = base.extend<TestOptions>({
+export const test = base.declare<TestOptions>({
   // Default value for the version.
   version: '1.0',
-
+}).extend<{ backendURL: string }>({
   // Use version when starting the backend.
   backendURL: async ({ version }, use) => {
     const app = await startBackend(version);

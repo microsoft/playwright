@@ -103,6 +103,10 @@ class Fixture {
   }
 }
 
+export function isFixtureTuple(value: any): value is [any, any] {
+  return Array.isArray(value) && typeof value[1] === 'object' && ('scope' in value[1] || 'auto' in value[1]);
+}
+
 export class FixturePool {
   readonly digest: string;
   readonly registrations: Map<string, FixtureRegistration>;
@@ -115,7 +119,7 @@ export class FixturePool {
         const name = entry[0];
         let value = entry[1];
         let options: { auto: boolean, scope: FixtureScope } | undefined;
-        if (Array.isArray(value) && typeof value[1] === 'object' && ('scope' in value[1] || 'auto' in value[1])) {
+        if (isFixtureTuple(value)) {
           options = {
             auto: !!value[1].auto,
             scope: value[1].scope || 'test'

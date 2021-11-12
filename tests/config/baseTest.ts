@@ -16,22 +16,25 @@
 
 import { test } from '@playwright/test';
 import { commonFixtures, CommonFixtures } from './commonFixtures';
-import { serverFixtures, ServerFixtures, ServerWorkerOptions } from './serverFixtures';
-import { coverageFixtures, CoverageWorkerOptions } from './coverageFixtures';
+import { serverFixtures, ServerFixtures, serverOptions, ServerWorkerOptions } from './serverFixtures';
+import { coverageFixtures, coverageOptions, CoverageWorkerOptions } from './coverageFixtures';
 import { platformFixtures, PlatformWorkerFixtures } from './platformFixtures';
-import { testModeFixtures, TestModeWorkerFixtures } from './testModeFixtures';
+import { testModeFixtures, testModeOptions, TestModeWorkerOptions, TestModeWorkerFixtures } from './testModeFixtures';
 
 
-export type BaseTestWorkerFixtures = {
+type BaseTestWorkerParams = {
   _snapshotSuffix: string;
 };
 
 export const baseTest = test
-    .extend<{}, CoverageWorkerOptions>(coverageFixtures as any)
+    .declare<{}, CoverageWorkerOptions>(coverageOptions)
+    .extend(coverageFixtures)
     .extend<{}, PlatformWorkerFixtures>(platformFixtures)
+    .declare<{}, TestModeWorkerOptions>(testModeOptions)
     .extend<{}, TestModeWorkerFixtures>(testModeFixtures as any)
     .extend<CommonFixtures>(commonFixtures)
-    .extend<ServerFixtures, ServerWorkerOptions>(serverFixtures as any)
-    .extend<{}, BaseTestWorkerFixtures>({
+    .declare<{}, ServerWorkerOptions>(serverOptions)
+    .extend<ServerFixtures>(serverFixtures as any)
+    .declare<{}, BaseTestWorkerParams>({
       _snapshotSuffix: ['', { scope: 'worker' }],
     });

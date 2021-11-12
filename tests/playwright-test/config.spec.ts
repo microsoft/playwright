@@ -361,7 +361,7 @@ test('should inerhit use options in projects', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      const test = pwt.test.declare({ foo: '', bar: '' });
       test('pass', async ({ foo, bar  }, testInfo) => {
         test.expect(foo).toBe('config');
         test.expect(bar).toBe('project');

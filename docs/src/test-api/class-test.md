@@ -204,6 +204,112 @@ Hook function that takes one or two arguments: an object with fixtures and optio
 
 
 
+## method: Test.declare
+- returns: <[Test]>
+
+Extends the `test` object by declaring test parameters. These parameters may be specified in the configuration file, or with [`method: Test.use`] method. Useful for running tests in multiple configurations. Learn more about [parametrizing tests](./test-parameterize.md).
+
+First declare a parameter.
+
+```js js-flavor=js
+// my-test.js
+const base = require('@playwright/test');
+
+exports.test = base.test.declare({
+  // Default value - you can override it in the config.
+  person: 'John',
+});
+```
+
+```js js-flavor=ts
+// my-test.ts
+import { test as base } from '@playwright/test';
+
+export type TestOptions = {
+  person: string;
+};
+
+export const test = base.declare<TestOptions>({
+  // Default value - you can override it in the config.
+  person: 'John',
+});
+```
+
+Then use the parameter in the test.
+
+```js js-flavor=js
+// example.spec.js
+const { test } = require('./my-test');
+
+test('test 1', async ({ page, person }) => {
+  await page.goto(`/index.html`);
+  await expect(page.locator('#node')).toContainText(person);
+  // ...
+});
+```
+
+```js js-flavor=ts
+// example.spec.ts
+import { test } from './my-test';
+
+test('test 1', async ({ page, person }) => {
+  await page.goto(`/index.html`);
+  await expect(page.locator('#node')).toContainText(person);
+  // ...
+});
+```
+
+Finally, set parameter value in the configuration file.
+
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig<{ person: string }>} */
+const config = {
+  projects: [
+    {
+      name: 'alice',
+      use: { person: 'Alice' },
+    },
+    {
+      name: 'bob',
+      use: { person: 'Bob' },
+    },
+  ]
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+import { TestOptions } from './my-test';
+
+const config: PlaywrightTestConfig<TestOptions> = {
+  projects: [
+    {
+      name: 'alice',
+      use: { person: 'Alice' },
+    },
+    {
+      name: 'bob',
+      use: { person: 'Bob' },
+    },
+  ]
+};
+export default config;
+```
+
+### param: Test.declare.parameters
+- `parameters` <[Object]>
+
+An object containing default values of declared parameters.
+
+
+
+
 ## method: Test.describe
 
 Declares a group of tests.
@@ -414,6 +520,81 @@ A callback that is run immediately when calling [`method: Test.describe.serial.o
 - type: <[Object]>
 
 `expect` function can be used to create test assertions. Read [expect library documentation](https://jestjs.io/docs/expect) for more details.
+
+
+
+
+
+## method: Test.extend
+- returns: <[Test]>
+
+Extends the `test` object by defining fixtures that can be used in the tests. Learn more about [fixtures](./test-fixtures.md).
+
+First define a fixture.
+
+```js js-flavor=js
+// my-test.js
+const base = require('@playwright/test');
+const { TodoPage } = require('./todo-page');
+
+// Extend basic test by providing a "todoPage" fixture.
+exports.test = base.test.extend({
+  todoPage: async ({ page }, use) => {
+    const todoPage = new TodoPage(page);
+    await todoPage.goto();
+    await todoPage.addToDo('item1');
+    await todoPage.addToDo('item2');
+    await use(todoPage);
+    await todoPage.removeAll();
+  },
+});
+```
+
+```js js-flavor=ts
+import { test as base } from '@playwright/test';
+import { TodoPage } from './todo-page';
+
+// Extend basic test by providing a "todoPage" fixture.
+export const test = base.extend<{ todoPage: TodoPage }>({
+  todoPage: async ({ page }, use) => {
+    const todoPage = new TodoPage(page);
+    await todoPage.goto();
+    await todoPage.addToDo('item1');
+    await todoPage.addToDo('item2');
+    await use(todoPage);
+    await todoPage.removeAll();
+  },
+});
+```
+
+Then use the fixture in the test.
+
+```js js-flavor=js
+// example.spec.js
+const { test } = require('./my-test');
+
+test('test 1', async ({ todoPage }) => {
+  await todoPage.addToDo('my todo');
+  // ...
+});
+```
+
+```js js-flavor=ts
+// example.spec.ts
+import { test } from './my-test';
+
+test('test 1', async ({ todoPage }) => {
+  await todoPage.addToDo('my todo');
+  // ...
+});
+```
+
+
+### param: Test.extend.fixtures
+- `fixtures` <[Object]>
+
+An object containing fixture definitions.
+
 
 
 

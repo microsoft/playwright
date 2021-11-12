@@ -36,7 +36,6 @@ export type ReportSlowTests = { max: number, threshold: number } | null;
 export type PreserveOutput = 'always' | 'never' | 'failures-only';
 export type UpdateSnapshots = 'all' | 'none' | 'missing';
 
-type FixtureDefine<TestArgs extends KeyValue = {}, WorkerArgs extends KeyValue = {}> = { test: TestType<TestArgs, WorkerArgs>, fixtures: Fixtures<{}, {}, TestArgs, WorkerArgs> };
 type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K] } & { [K in keyof TestArgs]?: TestArgs[K] };
 
 type ExpectSettings = {
@@ -319,7 +318,6 @@ interface TestProject {
  *
  */
 export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
-  define?: FixtureDefine | FixtureDefine[];
   /**
    * Options for all tests in this project, for example
    * [testOptions.browserName](https://playwright.dev/docs/api/class-testoptions#test-options-browser-name). Learn more about
@@ -782,7 +780,6 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
    * Playwright Test supports running multiple test projects at the same time. See [TestProject] for more information.
    */
   projects?: Project<TestArgs, WorkerArgs>[];
-  define?: FixtureDefine | FixtureDefine[];
   /**
    * Global options for all tests, for example
    * [testOptions.browserName](https://playwright.dev/docs/api/class-testoptions#test-options-browser-name). Learn more about
@@ -2575,7 +2572,102 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * [expect library documentation](https://jestjs.io/docs/expect) for more details.
    */
   expect: Expect;
-  declare<T extends KeyValue = {}, W extends KeyValue = {}>(): TestType<TestArgs & T, WorkerArgs & W>;
+  /**
+   * Extends the `test` object by declaring test parameters. These parameters may be specified in the configuration file, or
+   * with [test.use(options)](https://playwright.dev/docs/api/class-test#test-use) method. Useful for running tests in
+   * multiple configurations. Learn more about [parametrizing tests](https://playwright.dev/docs/test-parameterize).
+   *
+   * First declare a parameter.
+   *
+   * ```ts
+   * // my-test.ts
+   * import { test as base } from '@playwright/test';
+   *
+   * export type TestOptions = {
+   *   person: string;
+   * };
+   *
+   * export const test = base.declare<TestOptions>({
+   *   // Default value - you can override it in the config.
+   *   person: 'John',
+   * });
+   * ```
+   *
+   * Then use the parameter in the test.
+   *
+   * ```ts
+   * // example.spec.ts
+   * import { test } from './my-test';
+   *
+   * test('test 1', async ({ page, person }) => {
+   *   await page.goto(`/index.html`);
+   *   await expect(page.locator('#node')).toContainText(person);
+   *   // ...
+   * });
+   * ```
+   *
+   * Finally, set parameter value in the configuration file.
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import { TestOptions } from './my-test';
+   *
+   * const config: PlaywrightTestConfig<TestOptions> = {
+   *   projects: [
+   *     {
+   *       name: 'alice',
+   *       use: { person: 'Alice' },
+   *     },
+   *     {
+   *       name: 'bob',
+   *       use: { person: 'Bob' },
+   *     },
+   *   ]
+   * };
+   * export default config;
+   * ```
+   *
+   * @param parameters An object containing default values of declared parameters.
+   */
+  declare<T, W extends KeyValue = {}>(parameters: Fixtures<T, W, TestArgs, WorkerArgs>): TestType<TestArgs & T, WorkerArgs & W>;
+  /**
+   * Extends the `test` object by defining fixtures that can be used in the tests. Learn more about
+   * [fixtures](https://playwright.dev/docs/test-fixtures).
+   *
+   * First define a fixture.
+   *
+   * ```ts
+   * import { test as base } from '@playwright/test';
+   * import { TodoPage } from './todo-page';
+   *
+   * // Extend basic test by providing a "todoPage" fixture.
+   * export const test = base.extend<{ todoPage: TodoPage }>({
+   *   todoPage: async ({ page }, use) => {
+   *     const todoPage = new TodoPage(page);
+   *     await todoPage.goto();
+   *     await todoPage.addToDo('item1');
+   *     await todoPage.addToDo('item2');
+   *     await use(todoPage);
+   *     await todoPage.removeAll();
+   *   },
+   * });
+   * ```
+   *
+   * Then use the fixture in the test.
+   *
+   * ```ts
+   * // example.spec.ts
+   * import { test } from './my-test';
+   *
+   * test('test 1', async ({ todoPage }) => {
+   *   await todoPage.addToDo('my todo');
+   *   // ...
+   * });
+   * ```
+   *
+   * @param fixtures An object containing fixture definitions.
+   */
   extend<T, W extends KeyValue = {}>(fixtures: Fixtures<T, W, TestArgs, WorkerArgs>): TestType<TestArgs & T, WorkerArgs & W>;
 }
 

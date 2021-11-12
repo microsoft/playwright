@@ -33,8 +33,11 @@ export type ServerFixtures = {
 };
 
 export type ServersInternal = ServerFixtures & { socksServer: socks.SocksServer };
-export const serverFixtures: Fixtures<ServerFixtures, ServerWorkerOptions & { __servers: ServersInternal }> = {
+export const serverOptions: Fixtures<{}, ServerWorkerOptions> = {
   loopback: [ undefined, { scope: 'worker' } ],
+};
+
+export const serverFixtures: Fixtures<ServerFixtures, { __servers: ServersInternal }, {}, ServerWorkerOptions> = {
   __servers: [ async ({ loopback }, run, workerInfo) => {
     const assetsPath = path.join(__dirname, '..', 'assets');
     const cachedPath = path.join(__dirname, '..', 'assets', 'cached');

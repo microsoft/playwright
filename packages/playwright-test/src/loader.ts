@@ -173,7 +173,6 @@ export class Loader {
     if (!path.isAbsolute(snapshotDir))
       snapshotDir = path.resolve(configDir, snapshotDir);
     const fullProject: FullProject = {
-      define: takeFirst(this._configOverrides.define, projectConfig.define, this._config.define, []),
       expect: takeFirst(this._configOverrides.expect, projectConfig.expect, this._config.expect, undefined),
       outputDir,
       repeatEach: takeFirst(this._configOverrides.repeatEach, projectConfig.repeatEach, this._config.repeatEach, 1),
@@ -357,16 +356,6 @@ function validateProject(file: string, project: Project, title: string) {
   if (typeof project !== 'object' || !project)
     throw errorWithFile(file, `${title} must be an object`);
 
-  if ('define' in project && project.define !== undefined) {
-    if (Array.isArray(project.define)) {
-      project.define.forEach((item, index) => {
-        validateDefine(file, item, `${title}.define[${index}]`);
-      });
-    } else {
-      validateDefine(file, project.define, `${title}.define`);
-    }
-  }
-
   if ('name' in project && project.name !== undefined) {
     if (typeof project.name !== 'string')
       throw errorWithFile(file, `${title}.name must be a string`);
@@ -415,11 +404,6 @@ function validateProject(file: string, project: Project, title: string) {
     if (!project.use || typeof project.use !== 'object')
       throw errorWithFile(file, `${title}.use must be an object`);
   }
-}
-
-function validateDefine(file: string, define: any, title: string) {
-  if (!define || typeof define !== 'object' || !define.test || !define.fixtures)
-    throw errorWithFile(file, `${title} must be an object with "test" and "fixtures" properties`);
 }
 
 const baseFullConfig: FullConfig = {

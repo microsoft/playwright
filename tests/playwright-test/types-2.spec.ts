@@ -66,8 +66,13 @@ test('can return anything from hooks', async ({ runTSC }) => {
 test('test.declare should check types', async ({ runTSC }) => {
   const result = await runTSC({
     'helper.ts': `
+      export type Params = { foo: string };
       export const test = pwt.test;
-      export const test1 = test.declare<{ foo: string }>();
+      export const test1 = test.declare<Params>({ foo: 'foo' });
+      export const testerror = test.declare<{ foo: string }>({
+        // @ts-expect-error
+        foo: 123
+      });
       export const test2 = test1.extend<{ bar: number }>({
         bar: async ({ foo }, run) => { await run(parseInt(foo)); }
       });
@@ -77,19 +82,23 @@ test('test.declare should check types', async ({ runTSC }) => {
       });
     `,
     'playwright.config.ts': `
-      import { test1 } from './helper';
-      const configs: pwt.Config[] = [];
+      import { Params } from './helper';
+      const configs: pwt.Config<Params>[] = [];
+
       configs.push({});
+
       configs.push({
-        define: {
-          test: test1,
-          fixtures: { foo: 'foo' }
-        },
+        use: { foo: 'bar' },
       });
 
       configs.push({
         // @ts-expect-error
-        define: { test: {}, fixtures: {} },
+        use: { foo: true },
+      });
+
+      configs.push({
+        // @ts-expect-error
+        use: { unknown: true },
       });
       module.exports = configs;
     `,

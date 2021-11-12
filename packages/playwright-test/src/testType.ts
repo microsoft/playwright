@@ -23,16 +23,13 @@ import { errorWithLocation, serializeError } from './util';
 
 const countByFile = new Map<string, number>();
 
-export class DeclaredFixtures {
-  testType!: TestTypeImpl;
-  location!: Location;
-}
+type TestTypeFixtures = FixturesWithLocation & { type: 'extend' | 'declare' };
 
 export class TestTypeImpl {
-  readonly fixtures: (FixturesWithLocation | DeclaredFixtures)[];
+  readonly fixtures: TestTypeFixtures[];
   readonly test: TestType<any, any>;
 
-  constructor(fixtures: (FixturesWithLocation | DeclaredFixtures)[]) {
+  constructor(fixtures: TestTypeFixtures[]) {
     this.fixtures = fixtures;
 
     const test: any = wrapFunctionWithLocation(this._createTest.bind(this, 'default'));
@@ -203,16 +200,13 @@ export class TestTypeImpl {
   }
 
   private _extend(location: Location, fixtures: Fixtures) {
-    const fixturesWithLocation = { fixtures, location };
+    const fixturesWithLocation: TestTypeFixtures = { fixtures, location, type: 'extend' };
     return new TestTypeImpl([...this.fixtures, fixturesWithLocation]).test;
   }
 
-  private _declare(location: Location) {
-    const declared = new DeclaredFixtures();
-    declared.location = location;
-    const child = new TestTypeImpl([...this.fixtures, declared]);
-    declared.testType = child;
-    return child.test;
+  private _declare(location: Location, fixtures: Fixtures) {
+    const fixturesWithLocation: TestTypeFixtures = { fixtures, location, type: 'declare' };
+    return new TestTypeImpl([...this.fixtures, fixturesWithLocation]).test;
   }
 }
 

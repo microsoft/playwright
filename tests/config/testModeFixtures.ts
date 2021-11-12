@@ -14,18 +14,23 @@
  * limitations under the License.
  */
 
-import type { Fixtures } from '@playwright/test';
+import type { Fixtures, PlaywrightWorkerArgs } from '@playwright/test';
 import { DefaultTestMode, DriverTestMode, ServiceTestMode, TestModeName } from './testMode';
 
-export type TestModeWorkerFixtures = {
+export type TestModeWorkerOptions = {
   mode: TestModeName;
-  playwright: typeof import('playwright-core');
+};
+
+export type TestModeWorkerFixtures = {
+  playwright: typeof import('@playwright/test');
   toImpl: (rpcObject: any) => any;
 };
 
-export const testModeFixtures: Fixtures<{}, TestModeWorkerFixtures> = {
+export const testModeOptions: Fixtures<{}, TestModeWorkerOptions> = {
   mode: [ 'default', { scope: 'worker' } ],
+};
 
+export const testModeFixtures: Fixtures<{}, TestModeWorkerFixtures, {}, TestModeWorkerOptions & PlaywrightWorkerArgs> = {
   playwright: [ async ({ mode }, run) => {
     const testMode = {
       default: new DefaultTestMode(),

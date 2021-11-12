@@ -25,53 +25,27 @@ import { Browser } from 'playwright-core';
 export { expect } from './expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
-type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
+type TestFixtures = PlaywrightTestArgs & {
   _combinedContextOptions: BrowserContextOptions,
   _setupContextOptionsAndArtifacts: void;
   _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
 };
-type WorkerAndFileFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
+type WorkerFixtures = PlaywrightWorkerArgs & {
   _browserType: BrowserType;
   _browserOptions: LaunchOptions;
   _artifactsDir: () => string;
   _snapshotSuffix: string;
 };
 
-export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
+export const test = _baseTest.declare<PlaywrightTestOptions, PlaywrightWorkerOptions>({
   defaultBrowserType: [ 'chromium', { scope: 'worker' } ],
   browserName: [ ({ defaultBrowserType }, use) => use(defaultBrowserType), { scope: 'worker' } ],
-  playwright: [async ({}, use, workerInfo) => {
-    if (process.env.PW_GRID) {
-      const gridClient = await GridClient.connect(process.env.PW_GRID);
-      await use(gridClient.playwright() as any);
-      await gridClient.close();
-    } else {
-      await use(require('playwright-core'));
-    }
-  }, { scope: 'worker' } ],
   headless: [ undefined, { scope: 'worker' } ],
   channel: [ undefined, { scope: 'worker' } ],
   launchOptions: [ {}, { scope: 'worker' } ],
   screenshot: [ 'off', { scope: 'worker' } ],
   video: [ 'off', { scope: 'worker' } ],
   trace: [ 'off', { scope: 'worker' } ],
-
-  _artifactsDir: [async ({}, use, workerInfo) => {
-    let dir: string | undefined;
-    await use(() => {
-      if (!dir) {
-        dir = path.join(workerInfo.project.outputDir, '.playwright-artifacts-' + workerInfo.workerIndex);
-        fs.mkdirSync(dir, { recursive: true });
-      }
-      return dir;
-    });
-    if (dir)
-      await removeFolders([dir]);
-  }, { scope: 'worker' }],
-
-  _browserOptions: [browserOptionsWorkerFixture, { scope: 'worker' }],
-  _browserType: [browserTypeWorkerFixture, { scope: 'worker' }],
-  browser: [browserWorkerFixture, { scope: 'worker' } ],
 
   acceptDownloads: undefined,
   bypassCSP: undefined,
@@ -98,6 +72,33 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
     await use(process.env.PLAYWRIGHT_TEST_BASE_URL);
   },
   contextOptions: {},
+}).extend<TestFixtures, WorkerFixtures>({
+  playwright: [async ({}, use, workerInfo) => {
+    if (process.env.PW_GRID) {
+      const gridClient = await GridClient.connect(process.env.PW_GRID);
+      await use(gridClient.playwright() as any);
+      await gridClient.close();
+    } else {
+      await use(require('playwright-core'));
+    }
+  }, { scope: 'worker' } ],
+
+  _artifactsDir: [async ({}, use, workerInfo) => {
+    let dir: string | undefined;
+    await use(() => {
+      if (!dir) {
+        dir = path.join(workerInfo.project.outputDir, '.playwright-artifacts-' + workerInfo.workerIndex);
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      return dir;
+    });
+    if (dir)
+      await removeFolders([dir]);
+  }, { scope: 'worker' }],
+
+  _browserOptions: [browserOptionsWorkerFixture, { scope: 'worker' }],
+  _browserType: [browserTypeWorkerFixture, { scope: 'worker' }],
+  browser: [browserWorkerFixture, { scope: 'worker' } ],
 
   _combinedContextOptions: async ({
     acceptDownloads,

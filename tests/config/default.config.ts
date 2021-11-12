@@ -16,7 +16,7 @@
 
 import type { Config, PlaywrightTestOptions, PlaywrightWorkerOptions } from '@playwright/test';
 import * as path from 'path';
-import { TestModeWorkerFixtures } from './testModeFixtures';
+import { TestModeWorkerOptions } from './testModeFixtures';
 import { CoverageWorkerOptions } from './coverageFixtures';
 
 type BrowserName = 'chromium' | 'firefox' | 'webkit';
@@ -38,7 +38,7 @@ const trace = !!process.env.PWTEST_TRACE;
 
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');
-const config: Config<CoverageWorkerOptions & PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeWorkerFixtures> = {
+const config: Config<CoverageWorkerOptions & PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeWorkerOptions> = {
   testDir,
   outputDir,
   timeout: video ? 60000 : 30000,

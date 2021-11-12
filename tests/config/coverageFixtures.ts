@@ -23,9 +23,11 @@ export type CoverageWorkerOptions = {
   coverageName?: string;
 };
 
-export const coverageFixtures: Fixtures<{}, CoverageWorkerOptions & { __collectCoverage: void }> = {
+export const coverageOptions: Fixtures<{}, CoverageWorkerOptions> = {
   coverageName: [ undefined, { scope: 'worker' } ],
+};
 
+export const coverageFixtures: Fixtures<{}, { __collectCoverage: void }, {}, CoverageWorkerOptions> = {
   __collectCoverage: [ async ({ coverageName }, run, workerInfo) => {
     if (!coverageName) {
       await run();

@@ -39,34 +39,30 @@ test('test.extend should work', async ({ runInlineTest }) => {
         };
       }
 
-      export const base = pwt.test.declare();
+      export const base = pwt.test.declare({
+        suffix: ['', { scope: 'worker' } ],
+      }).extend({
+        baseWorker: [async ({ suffix }, run) => {
+          global.logs.push('beforeAll-' + suffix);
+          await run();
+          global.logs.push('afterAll-' + suffix);
+          if (suffix.includes('base'))
+            console.log(global.logs.join('\\n'));
+        }, { scope: 'worker' }],
+
+        baseTest: async ({ suffix, derivedWorker }, run) => {
+          global.logs.push('beforeEach-' + suffix);
+          await run();
+          global.logs.push('afterEach-' + suffix);
+        },
+      });
       export const test1 = base.extend(createDerivedFixtures('e1'));
       export const test2 = base.extend(createDerivedFixtures('e2'));
     `,
     'playwright.config.ts': `
-      import { base } from './helper';
-
-      function createBaseFixtures(suffix) {
-        return {
-          baseWorker: [async ({}, run) => {
-            global.logs.push('beforeAll-' + suffix);
-            await run();
-            global.logs.push('afterAll-' + suffix);
-            if (suffix.includes('base'))
-              console.log(global.logs.join('\\n'));
-          }, { scope: 'worker' }],
-
-          baseTest: async ({ derivedWorker }, run) => {
-            global.logs.push('beforeEach-' + suffix);
-            await run();
-            global.logs.push('afterEach-' + suffix);
-          },
-        };
-      }
-
       module.exports = { projects: [
-        { define: { test: base, fixtures: createBaseFixtures('base1') } },
-        { define: { test: base, fixtures: createBaseFixtures('base2') } },
+        { use: { suffix: 'base1' } },
+        { use: { suffix: 'base2' } },
       ] };
     `,
     'a.test.ts': `
@@ -126,53 +122,39 @@ test('test.extend should work', async ({ runInlineTest }) => {
   ].join('\n'));
 });
 
-test('test.declare should be inserted at the right place', async ({ runInlineTest }) => {
-  const { output, passed } = await runInlineTest({
-    'helper.ts': `
-      const test1 = pwt.test.extend({
-        foo: async ({}, run) => {
-          console.log('before-foo');
-          await run('foo');
-          console.log('after-foo');
-        },
-      });
-      export const test2 = test1.declare<{ bar: string }>();
-      export const test3 = test2.extend({
-        baz: async ({ bar }, run) => {
-          console.log('before-baz');
-          await run(bar + 'baz');
-          console.log('after-baz');
-        },
-      });
-    `,
+test('config should override test.declare but not test.extend', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
     'playwright.config.ts': `
-      import { test2 } from './helper';
-      const fixtures = {
-        bar: async ({ foo }, run) => {
-          console.log('before-bar');
-          await run(foo + 'bar');
-          console.log('after-bar');
-        },
-      };
       module.exports = {
-        define: { test: test2, fixtures },
+        use: { param: 'config' },
       };
     `,
     'a.test.js': `
-      const { test3 } = require('./helper');
-      test3('should work', async ({baz}) => {
-        console.log('test-' + baz);
+      const test1 = pwt.test.declare({ param: 'default' });
+      test1('default', async ({ param }) => {
+        console.log('default-' + param);
+      });
+
+      const test2 = test1.extend({
+        param: 'extend',
+      });
+      test2('extend', async ({ param }) => {
+        console.log('extend-' + param);
+      });
+
+      const test3 = test1.extend({
+        param: async ({ param }, use) => {
+          await use(param + '-fixture');
+        },
+      });
+      test3('fixture', async ({ param }) => {
+        console.log('fixture-' + param);
       });
     `,
   });
-  expect(passed).toBe(1);
-  expect(output).toContain([
-    'before-foo',
-    'before-bar',
-    'before-baz',
-    'test-foobarbaz',
-    'after-baz',
-    'after-bar',
-    'after-foo',
-  ].join('\n'));
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+  expect(result.output).toContain('default-config');
+  expect(result.output).toContain('extend-extend');
+  expect(result.output).toContain('fixture-config-fixture');
 });

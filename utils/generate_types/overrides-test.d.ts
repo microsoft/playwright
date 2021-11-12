@@ -35,7 +35,6 @@ export type ReportSlowTests = { max: number, threshold: number } | null;
 export type PreserveOutput = 'always' | 'never' | 'failures-only';
 export type UpdateSnapshots = 'all' | 'none' | 'missing';
 
-type FixtureDefine<TestArgs extends KeyValue = {}, WorkerArgs extends KeyValue = {}> = { test: TestType<TestArgs, WorkerArgs>, fixtures: Fixtures<{}, {}, TestArgs, WorkerArgs> };
 type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K] } & { [K in keyof TestArgs]?: TestArgs[K] };
 
 type ExpectSettings = {
@@ -62,7 +61,6 @@ interface TestProject {
 }
 
 export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
-  define?: FixtureDefine | FixtureDefine[];
   use?: UseOptions<TestArgs, WorkerArgs>;
 }
 
@@ -133,7 +131,6 @@ interface TestConfig {
 
 export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
   projects?: Project<TestArgs, WorkerArgs>[];
-  define?: FixtureDefine | FixtureDefine[];
   use?: UseOptions<TestArgs, WorkerArgs>;
 }
 
@@ -267,7 +264,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   use(fixtures: Fixtures<{}, {}, TestArgs, WorkerArgs>): void;
   step(title: string, body: () => Promise<any>): Promise<any>;
   expect: Expect;
-  declare<T extends KeyValue = {}, W extends KeyValue = {}>(): TestType<TestArgs & T, WorkerArgs & W>;
+  declare<T, W extends KeyValue = {}>(parameters: Fixtures<T, W, TestArgs, WorkerArgs>): TestType<TestArgs & T, WorkerArgs & W>;
   extend<T, W extends KeyValue = {}>(fixtures: Fixtures<T, W, TestArgs, WorkerArgs>): TestType<TestArgs & T, WorkerArgs & W>;
 }
 
