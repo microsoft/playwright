@@ -20,7 +20,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
 import { Dispatcher, TestGroup } from './dispatcher';
-import { createFileMatcher, createTitleMatcher, FilePatternFilter, monotonicTime } from './util';
+import { createFileMatcher, createTitleMatcher, FilePatternFilter, monotonicTime, serializeError } from './util';
 import { TestCase, Suite } from './test';
 import { Loader } from './loader';
 import { FullResult, Reporter, TestError } from '../types/testReporter';
@@ -97,18 +97,27 @@ export class Runner {
 
   async run(list: boolean, filePatternFilters: FilePatternFilter[], projectNames?: string[]): Promise<FullResult> {
     this._reporter = await this._createReporter(list);
-    const config = this._loader.fullConfig();
-    const globalDeadline = config.globalTimeout ? config.globalTimeout + monotonicTime() : 0;
-    const { result, timedOut } = await raceAgainstDeadline(this._run(list, filePatternFilters, projectNames), globalDeadline);
-    if (timedOut) {
-      const actualResult: FullResult = { status: 'timedout' };
-      if (this._didBegin)
-        await this._reporter.onEnd?.(actualResult);
-      else
-        this._reporter.onError?.(createStacklessError(`Timed out waiting ${config.globalTimeout / 1000}s for the entire test run`));
-      return actualResult;
+    try {
+      const config = this._loader.fullConfig();
+      const globalDeadline = config.globalTimeout ? config.globalTimeout + monotonicTime() : 0;
+      const { result, timedOut } = await raceAgainstDeadline(this._run(list, filePatternFilters, projectNames), globalDeadline);
+      if (timedOut) {
+        const actualResult: FullResult = { status: 'timedout' };
+        if (this._didBegin)
+          await this._reporter.onEnd?.(actualResult);
+        else
+          this._reporter.onError?.(createStacklessError(`Timed out waiting ${config.globalTimeout / 1000}s for the entire test run`));
+        return actualResult;
+      }
+      return result!;
+    } catch (e) {
+      const result: FullResult = { status: 'failed' };
+      try {
+        this._reporter.onError?.(serializeError(e));
+      } catch (ignored) {
+      }
+      return result;
     }
-    return result!;
   }
 
   async _run(list: boolean, testFileReFilters: FilePatternFilter[], projectNames?: string[]): Promise<FullResult> {
