@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import os from 'os';
 import type { Route } from 'playwright-core';
 import { expect, test as it } from './pageTest';
 
