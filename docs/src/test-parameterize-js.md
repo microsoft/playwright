@@ -12,7 +12,7 @@ You can either parameterize tests on a test level or on a project level.
 ```js js-flavor=js
 // example.spec.js
 const people = ['Alice', 'Bob'];
-for (const name in people) {
+for (const name of people) {
   test(`testing with ${name}`, async () => {
     // ...
   });
@@ -23,7 +23,7 @@ for (const name in people) {
 ```js js-flavor=ts
 // example.spec.ts
 const people = ['Alice', 'Bob'];
-for (const name in people) {
+for (const name of people) {
   test(`testing with ${name}`, async () => {
     // ...
   });
