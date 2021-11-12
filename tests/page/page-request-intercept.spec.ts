@@ -108,7 +108,7 @@ it('should support fulfill after intercept', async ({ page, server, isElectron }
   const response = await page.goto(server.PREFIX + '/title.html');
   const request = await requestPromise;
   expect(request.url).toBe('/title.html');
-  expect(await response.text()).toBe('<title>Woof-Woof</title>' + os.EOL);
+  expect(await response.text()).toBe('<title>Woof-Woof</title>\n');
 });
 
 it('should give access to the intercepted response', async ({ page, server, isElectron }) => {
