@@ -55,6 +55,8 @@ export class WebKit extends BrowserType {
     if (args.find(arg => !arg.startsWith('-')))
       throw new Error('Arguments can not specify page to be opened');
     const webkitArguments = ['--inspector-pipe'];
+    if (process.platform === 'win32')
+      webkitArguments.push('--disable-accelerated-compositing');
     if (headless)
       webkitArguments.push('--headless');
     if (isPersistent)
