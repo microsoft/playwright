@@ -44,7 +44,7 @@ function prepare_chromium_checkout {
 
   # Update Chromium checkout.
   #
-  # This is based on https://chromium.googlesource.com/chromium/src/+/master/docs/linux/build_instructions.md#get-the-code
+  # This is based on https://chromium.googlesource.com/chromium/src/+/main/docs/linux/build_instructions.md#get-the-code
   if [[ ! -d "${CR_CHECKOUT_PATH}" ]]; then
     rm -rf "${CR_CHECKOUT_PATH}"
     mkdir -p "${CR_CHECKOUT_PATH}"
@@ -62,8 +62,8 @@ function prepare_chromium_checkout {
   fi
 
   cd "${CR_CHECKOUT_PATH}/src"
-  git checkout master
-  git pull origin master
+  git checkout main
+  git pull origin main
   git checkout "${CRSHA}"
   gclient sync -D
 }

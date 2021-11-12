@@ -51,7 +51,7 @@ function build_libvpx {
   cd libvpx
   git checkout "${LIBVPX_VERSION}"
   # Cross-compiling libvpx according to the docs:
-  # - https://chromium.googlesource.com/webm/libvpx/+/master/README
+  # - https://chromium.googlesource.com/webm/libvpx/+/main/README
   ./configure --prefix="${PREFIX}" ${LIBVPX_CONFIG}
   make && make install
 }

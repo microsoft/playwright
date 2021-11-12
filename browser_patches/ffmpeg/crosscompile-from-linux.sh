@@ -78,7 +78,7 @@ function build_libvpx {
   cd libvpx
   git checkout "${LIBVPX_VERSION}"
   # Cross-compiling libvpx according to the docs:
-  # - https://chromium.googlesource.com/webm/libvpx/+/master/README
+  # - https://chromium.googlesource.com/webm/libvpx/+/main/README
   local target=""
   if [[ $arch == "win64" ]]; then
     target="x86_64-win64-gcc";
