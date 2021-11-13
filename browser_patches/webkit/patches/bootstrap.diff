@@ -8357,6 +8357,20 @@ index c5445385a77ac12c09ef24866473d62cb679455a..392b3825d81e53f020ef7276ec7681a4
 +}
 +
  } // namespace WebCore
+diff --git a/Source/WebCore/platform/win/ScrollbarThemeWin.cpp b/Source/WebCore/platform/win/ScrollbarThemeWin.cpp
+index e89ec9d83d8abc141938716f24eaba061a085af3..6005d02b9bf20ef2cbf9382fdf50c863952c8db5 100644
+--- a/Source/WebCore/platform/win/ScrollbarThemeWin.cpp
++++ b/Source/WebCore/platform/win/ScrollbarThemeWin.cpp
+@@ -114,8 +114,7 @@ static int scrollbarThicknessInPixels()
+ 
+ int ScrollbarThemeWin::scrollbarThickness(ScrollbarControlSize, ScrollbarExpansionState)
+ {
+-    float inverseScaleFactor = 1.0f / deviceScaleFactorForWindow(0);
+-    return clampTo<int>(inverseScaleFactor * scrollbarThicknessInPixels());
++    return 0;
+ }
+ 
+ void ScrollbarThemeWin::themeChanged()
 diff --git a/Source/WebCore/platform/wpe/DragDataWPE.cpp b/Source/WebCore/platform/wpe/DragDataWPE.cpp
 new file mode 100644
 index 0000000000000000000000000000000000000000..07fb260a5203167fdf94a552949394bb73ca8c61
