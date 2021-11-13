@@ -69,3 +69,56 @@ it('should return response body when Cross-Origin-Opener-Policy is set', async (
   expect(response.request().failure()).toBeNull();
   expect(await response.text()).toBe('Hello there!');
 });
+
+it('should fire requestfailed when intercepting race', async ({ page, server, browserName }) => {
+  const promsie = new Promise<void>(resolve => {
+    let counter = 0;
+    const failures = new Set();
+    const alive = new Set();
+    page.on('request', request => {
+      expect(alive.has(request)).toBe(false);
+      expect(failures.has(request)).toBe(false);
+      alive.add(request);
+    });
+    page.on('requestfailed', request => {
+      expect(failures.has(request)).toBe(false);
+      expect(alive.has(request)).toBe(true);
+      alive.delete(request);
+      failures.add(request);
+      if (++counter === 10)
+        resolve();
+    });
+  });
+
+  // Stall requests to make sure we don't get requestfinished.
+  await page.route('**', route => {});
+
+  const runFunc = {
+    chromium: 'abortAll()',  // Fast in chromium to expose the race.
+    webkit: 'setTimeout(abortAll, 0)', // Async in webkit to let it issue requests.
+    firefox: 'setTimeout(abortAll, 1000)', // Slow in firefox to give it enough time to issue requests.
+  }[browserName];
+
+  await page.setContent(`
+    <iframe src="${server.EMPTY_PAGE}"></iframe>
+    <iframe src="${server.EMPTY_PAGE}"></iframe>
+    <iframe src="${server.EMPTY_PAGE}"></iframe>
+    <iframe src="${server.EMPTY_PAGE}"></iframe>
+    <iframe src="${server.EMPTY_PAGE}"></iframe>
+    <iframe src="${server.EMPTY_PAGE}"></iframe>
+    <iframe src="${server.EMPTY_PAGE}"></iframe>
+    <iframe src="${server.EMPTY_PAGE}"></iframe>
+    <iframe src="${server.EMPTY_PAGE}"></iframe>
+    <iframe src="${server.EMPTY_PAGE}"></iframe>
+    <script>
+      function abortAll() {
+        const frames = document.querySelectorAll("iframe");
+        for (const frame of frames)
+          frame.src = "about:blank";
+      }
+      ${runFunc}
+    </script>
+  `);
+
+  await promsie;
+});
