@@ -21,7 +21,7 @@
     "ttest": "node ./tests/playwright-test/stable-test-runner/node_modules/@playwright/test/cli test --config=tests/playwright-test/playwright-test.config.ts",
     "vtest": "cross-env PLAYWRIGHT_DOCKER=1 node ./tests/playwright-test/stable-test-runner/node_modules/@playwright/test/cli test --config=tests/playwright-test/playwright-test.config.ts",
     "test": "playwright test --config=tests/config/default.config.ts",
-    "eslint": "[ \"$CI\" = true ] && eslint --quiet -f codeframe --ext ts,tsx . || eslint --ext ts,tsx .",
+    "eslint": "eslint -f codeframe --ext ts,tsx .",
     "tsc": "tsc -p .",
     "build-installer": "babel -s --extensions \".ts\" --out-dir packages/playwright-core/lib/utils/ packages/playwright-core/src/utils",
     "doc": "node utils/doclint/cli.js",

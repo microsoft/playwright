@@ -17,6 +17,8 @@
 
 import type { Route } from 'playwright-core';
 import { expect, test as it } from './pageTest';
+import fs from 'fs';
+import path from 'path';
 
 it('should fulfill intercepted response', async ({ page, server, isElectron }) => {
   it.fixme(isElectron, 'error: Browser context management is not supported.');
@@ -107,7 +109,8 @@ it('should support fulfill after intercept', async ({ page, server, isElectron }
   const response = await page.goto(server.PREFIX + '/title.html');
   const request = await requestPromise;
   expect(request.url).toBe('/title.html');
-  expect(await response.text()).toBe('<title>Woof-Woof</title>\n');
+  const original = await fs.promises.readFile(path.join(__dirname, '..', 'assets', 'title.html'), 'utf8');
+  expect(await response.text()).toBe(original);
 });
 
 it('should give access to the intercepted response', async ({ page, server, isElectron }) => {
