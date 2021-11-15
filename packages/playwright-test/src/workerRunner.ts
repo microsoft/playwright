@@ -27,7 +27,7 @@ import { Loader } from './loader';
 import { Modifier, Suite, TestCase } from './test';
 import { Annotations, TestError, TestInfo, TestInfoImpl, TestStepInternal, WorkerInfo } from './types';
 import { ProjectImpl } from './project';
-import { FixturePool, FixtureRunner } from './fixtures';
+import { FixtureRunner } from './fixtures';
 import { DeadlineRunner, raceAgainstDeadline } from 'playwright-core/lib/utils/async';
 
 const removeFolderAsync = util.promisify(rimraf);
@@ -148,15 +148,14 @@ export class WorkerRunner extends EventEmitter {
       this._entries = new Map(runPayload.entries.map(e => [ e.testId, e ]));
       await this._loadIfNeeded();
       const fileSuite = await this._loader.loadTestFile(runPayload.file);
-      let anyPool: FixturePool | undefined;
       const suite = this._project.cloneFileSuite(fileSuite, this._params.repeatEachIndex, test => {
         if (!this._entries.has(test._id))
           return false;
-        anyPool = test._pool;
         return true;
       });
-      if (suite && anyPool) {
-        this._fixtureRunner.setPool(anyPool);
+      if (suite) {
+        const firstPool = suite.allTests()[0]._pool!;
+        this._fixtureRunner.setPool(firstPool);
         await this._runSuite(suite, []);
       }
       if (this._failedTest)

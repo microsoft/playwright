@@ -80,12 +80,6 @@ export class ProjectImpl {
   }
 
   private _cloneEntries(from: Suite, to: Suite, repeatEachIndex: number, filter: (test: TestCase) => boolean): boolean {
-    for (const hook of from._allHooks) {
-      const clone = hook._clone();
-      clone._pool = this.buildPool(hook);
-      clone._projectIndex = this.index;
-      to._addAllHook(clone);
-    }
     for (const entry of from._entries) {
       if (entry instanceof Suite) {
         const suite = entry._clone();
@@ -95,22 +89,31 @@ export class ProjectImpl {
           to.suites.pop();
         }
       } else {
-        const pool = this.buildPool(entry);
         const test = entry._clone();
         test.retries = this.config.retries;
-        test._workerHash = `run${this.index}-${pool.digest}-repeat${repeatEachIndex}`;
         test._id = `${entry._ordinalInFile}@${entry._requireFile}#run${this.index}-repeat${repeatEachIndex}`;
-        test._pool = pool;
         test._repeatEachIndex = repeatEachIndex;
         test._projectIndex = this.index;
         to._addTest(test);
         if (!filter(test)) {
           to._entries.pop();
-          to.suites.pop();
+          to.tests.pop();
+        } else {
+          const pool = this.buildPool(entry);
+          test._workerHash = `run${this.index}-${pool.digest}-repeat${repeatEachIndex}`;
+          test._pool = pool;
         }
       }
     }
-    return to._entries.length > 0;
+    if (!to._entries.length)
+      return false;
+    for (const hook of from._allHooks) {
+      const clone = hook._clone();
+      clone._pool = this.buildPool(hook);
+      clone._projectIndex = this.index;
+      to._addAllHook(clone);
+    }
+    return true;
   }
 
   cloneFileSuite(suite: Suite, repeatEachIndex: number, filter: (test: TestCase) => boolean): Suite | undefined {

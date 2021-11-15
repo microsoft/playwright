@@ -699,3 +699,30 @@ test('worker teardown errors reflected in timed-out tests', async ({ runInlineTe
   expect(result.output).toContain('Timeout of 1000ms exceeded.');
   expect(result.output).toContain('Rejecting!');
 });
+
+test('should not complain about fixtures of non-focused tests', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test.only('works', () => {});
+      test('unknown fixture', ({ foo }) => {});
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should not complain about fixtures of unused hooks', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test.only('works', () => {});
+      test.describe('unused suite', () => {
+        test.beforeAll(({ foo }) => {});
+        test('unused test', () => {});
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
