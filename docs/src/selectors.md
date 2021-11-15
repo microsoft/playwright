@@ -503,34 +503,67 @@ await page.TextContentAsync("article:has(div.promo)");
 
 ## Selecting elements matching one of the conditions
 
-The `:is()` pseudo-class is an [experimental CSS pseudo-class](https://developer.mozilla.org/en-US/docs/Web/CSS/:is).
-It is a function that takes a selector list as its argument, and selects any element that
-can be selected by one of the selectors in that list. This is useful for writing large
-selectors in a more compact form.
+### CSS selector list
+
+Comma separated list of CSS selectors will match all elements that can be selected by
+one of the selectors in that list.
 
 ```js
 // Clicks a <button> that has either a "Log in" or "Sign in" text.
-await page.click(':is(button:has-text("Log in"), button:has-text("Sign in"))');
+await page.click('button:has-text("Log in"), button:has-text("Sign in")');
 ```
 
 ```java
 // Clicks a <button> that has either a "Log in" or "Sign in" text.
-page.click(":is(button:has-text(\"Log in\"), button:has-text(\"Sign in\"))");
+page.click("button:has-text(\"Log in\"), button:has-text(\"Sign in\")");
 ```
 
 ```python async
 # Clicks a <button> that has either a "Log in" or "Sign in" text.
-await page.click(':is(button:has-text("Log in"), button:has-text("Sign in"))')
+await page.click('button:has-text("Log in"), button:has-text("Sign in")')
 ```
 
 ```python sync
 # Clicks a <button> that has either a "Log in" or "Sign in" text.
-page.click(':is(button:has-text("Log in"), button:has-text("Sign in"))')
+page.click('button:has-text("Log in"), button:has-text("Sign in")')
 ```
 
 ```csharp
 // Clicks a <button> that has either a "Log in" or "Sign in" text.
-await page.ClickAsync(":is(button:has-text(\"Log in\"), button:has-text(\"Sign in\"))");
+await page.ClickAsync("button:has-text(\"Log in\"), button:has-text(\"Sign in\")");
+```
+
+The `:is()` pseudo-class is an [experimental CSS pseudo-class](https://developer.mozilla.org/en-US/docs/Web/CSS/:is) that
+may be useful for specifying a list of extra conditions on an element.
+
+### XPath union
+
+Pipe operator (`|`) can be used to specify multiple selectors in XPath. It will match all
+elements that can be selected by one of the selectors in that list.
+
+```js
+// Waits for either confirmation dialog or load spinner.
+await page.waitForSelector(`//span[contains(@class, 'spinner__loading')]|//div[@id='confirmation']`);
+```
+
+```java
+// Waits for either confirmation dialog or load spinner.
+page.waitForSelector("//span[contains(@class, 'spinner__loading')]|//div[@id='confirmation']");
+```
+
+```python async
+# Waits for either confirmation dialog or load spinner.
+await page.click("//span[contains(@class, 'spinner__loading')]|//div[@id='confirmation']")
+```
+
+```python sync
+# Waits for either confirmation dialog or load spinner.
+page.click("//span[contains(@class, 'spinner__loading')]|//div[@id='confirmation']")
+```
+
+```csharp
+// Waits for either confirmation dialog or load spinner.
+await page.ClickAsync("//span[contains(@class, 'spinner__loading')]|//div[@id='confirmation']");
 ```
 
 ## Selecting elements in Shadow DOM
