@@ -1,10 +1,10 @@
 # class: APIRequest
-* langs: js, python
+* langs: js, java, python
 
 Exposes API that can be used for the Web API testing.
 
 ## async method: APIRequest.newContext
-* langs: js, python
+* langs: js, java, python
 - returns: <[APIRequestContext]>
 
 Creates new instances of [APIRequestContext].
@@ -30,6 +30,7 @@ Methods like [`method: APIRequestContext.get`] take the base URL into considerat
 * baseURL: `http://localhost:3000/foo/` and sending request to `./bar.html` results in `http://localhost:3000/foo/bar.html`
 
 ### option: APIRequest.newContext.storageState
+* langs: js, python
 - `storageState` <[path]|[Object]>
   - `cookies` <[Array]<[Object]>>
     - `name` <[string]>
@@ -51,3 +52,13 @@ obtained via [`method: BrowserContext.storageState`] or [`method: APIRequestCont
 file with saved storage, or the value returned by one of [`method: BrowserContext.storageState`] or
 [`method: APIRequestContext.storageState`] methods.
 
+### option: APIRequest.newContext.storageState
+* langs: java
+- `storageState` <[string]>
+
+Populates context with given storage state. This option can be used to initialize context with logged-in information
+obtained via [`method: BrowserContext.storageState`] or [`method: APIRequestContext.storageState`]. Either a path to the
+file with saved storage, or the value returned by one of [`method: BrowserContext.storageState`] or
+[`method: APIRequestContext.storageState`] methods.
+
+### option: APIRequest.newContext.storageStatePath = %%-csharp-java-context-option-storage-state-path-%%

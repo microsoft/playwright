@@ -2473,7 +2473,7 @@ last redirect.
 ### option: Page.reload.timeout = %%-navigation-timeout-%%
 
 ## property: Page.request
-* langs: js
+* langs: js, java, python
 - type: <[APIRequestContext]>
 
 API testing helper associated with this page. Requests made with this API will use page cookies.
