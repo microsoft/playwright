@@ -294,8 +294,6 @@ validator_ts.push(`
 let hasChanges = false;
 
 function writeFile(filePath, content) {
-  if (os.platform() === 'win32')
-    content = content.replace(/\r\n/g, '\n').replace(/\n/g, '\r\n');
   const existing = fs.readFileSync(filePath, 'utf8');
   if (existing === content)
     return;
