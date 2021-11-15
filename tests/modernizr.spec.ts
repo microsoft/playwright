@@ -55,7 +55,6 @@ it('safari-14-1', async ({ browser, browserName, platform, server, headless }) =
     expected.datalistelem = false;
     expected.fileinputdirectory = false;
     expected.getusermedia = false;
-    expected.hiddenscroll = false;
     expected.peerconnection = false;
     expected.speechrecognition = false;
     expected.speechsynthesis = false;
@@ -106,7 +105,6 @@ it('mobile-safari-14-1', async ({ playwright, browser, browserName, platform, se
     expected.datalistelem = false;
     expected.fileinputdirectory = false;
     expected.getusermedia = false;
-    expected.hiddenscroll = false;
     expected.peerconnection = false;
     expected.speechrecognition = false;
     expected.speechsynthesis = false;
