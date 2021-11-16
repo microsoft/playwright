@@ -47,7 +47,7 @@ export class ConsoleMessage extends ChannelOwner<channels.ConsoleMessageChannel,
     return this._initializer.location;
   }
 
-  [(util.inspect as any).custom]() {
+  [util.inspect.custom]() {
     return this.text();
   }
 }

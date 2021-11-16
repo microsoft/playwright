@@ -15,6 +15,7 @@
  */
 
 import http from 'http';
+import * as util from 'util';
 import { getPlaywrightVersion } from 'playwright-core/lib/utils/utils';
 import { expect, playwrightTest as it } from './config/browserTest';
 
@@ -292,5 +293,20 @@ it(`should accept already serialized data as Buffer when content-type is applica
   ]);
   const body = await req.postBody;
   expect(body.toString()).toEqual(value);
+  await request.dispose();
+});
+
+it(`should have nice toString`, async ({ playwright, server }) => {
+  const request = await playwright.request.newContext();
+  const response = await request.post(server.EMPTY_PAGE, {
+    headers: {
+      'content-type': 'application/json'
+    },
+    data: 'My post data'
+  });
+  const str = response[util.inspect.custom]();
+  expect(str).toContain('APIResponse: 200 OK');
+  for (const { name, value } of response.headersArray())
+    expect(str).toContain(`  ${name}: ${value}`);
   await request.dispose();
 });
