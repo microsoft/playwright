@@ -299,7 +299,7 @@ it('should work on a menu', async ({ page, browserName }) => {
     [ { role: 'menuitem', name: 'First Item' },
       { role: 'menuitem', name: 'Second Item' },
       { role: 'menuitem', name: 'Third Item' } ],
-    orientation: browserName === 'webkit' ? 'vertical' : undefined
+    orientation: browserName !== 'firefox' ? 'vertical' : undefined
   });
 });
 
