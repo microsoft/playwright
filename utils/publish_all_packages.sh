@@ -62,8 +62,8 @@ elif [[ "$1" == "--release-candidate" ]]; then
     echo "ERROR: git status is dirty; some uncommitted changes or untracked files"
     exit 1
   fi
-  # Ensure package version does contain dash.
-  if [[ "${VERSION}" != *-* ]]; then
+  # Ensure package version is properly formatted.
+  if [[ "${VERSION}" != *-rc* ]]; then
     echo "ERROR: release candidate version must have a dash"
     exit 1
   fi
