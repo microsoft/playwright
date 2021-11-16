@@ -19,7 +19,12 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: npx playwright install-deps
+    - run: utils/publish_all_packages.sh --release-candidate
+      if: "github.event.release.prerelease"
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
     - run: utils/publish_all_packages.sh --release
+      if: "!github.event.release.prerelease"
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -74,5 +79,5 @@ jobs:
     - run: npm i -g npm@7
     - name: Deploy Stable
       run: bash utils/build/deploy-trace-viewer.sh --stable
-      env: 
+      env:
         GH_SERVICE_ACCOUNT_TOKEN: ${{ secrets.GH_SERVICE_ACCOUNT_TOKEN }}

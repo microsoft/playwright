@@ -46,7 +46,7 @@ NPM_PUBLISH_TAG="next"
 
 VERSION=$(node -e 'console.log(require("./package.json").version)')
 
-if [[ $1 == "--release" ]]; then
+if [[ "$1" == "--release" ]]; then
   if [[ -n $(git status -s) ]]; then
     echo "ERROR: git status is dirty; some uncommitted changes or untracked files"
     exit 1
@@ -57,7 +57,18 @@ if [[ $1 == "--release" ]]; then
     exit 1
   fi
   NPM_PUBLISH_TAG="latest"
-elif [[ $1 == "--next" ]]; then
+elif [[ "$1" == "--release-candidate" ]]; then
+  if [[ -n $(git status -s) ]]; then
+    echo "ERROR: git status is dirty; some uncommitted changes or untracked files"
+    exit 1
+  fi
+  # Ensure package version is properly formatted.
+  if [[ "${VERSION}" != *-rc* ]]; then
+    echo "ERROR: release candidate version must have a dash"
+    exit 1
+  fi
+  NPM_PUBLISH_TAG="rc"
+elif [[ "$1" == "--next" ]]; then
   # Ensure package version contains dash.
   if [[ "${VERSION}" != *-* ]]; then
     echo "ERROR: cannot publish release version with --next flag"
@@ -65,7 +76,7 @@ elif [[ $1 == "--next" ]]; then
   fi
 
   NPM_PUBLISH_TAG="next"
-elif [[ $1 == "--beta" ]]; then
+elif [[ "$1" == "--beta" ]]; then
   # Ensure package version contains dash.
   if [[ "${VERSION}" != *-* ]]; then
     echo "ERROR: cannot publish release version with --beta flag"
