@@ -21,7 +21,6 @@ import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWor
 import { rootTestType } from './testType';
 import { createGuid, removeFolders } from 'playwright-core/lib/utils/utils';
 import { GridClient } from 'playwright-core/lib/grid/gridClient';
-import { Browser } from 'playwright-core';
 export { expect } from './expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
@@ -69,9 +68,33 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
       await removeFolders([dir]);
   }, { scope: 'worker' }],
 
-  _browserOptions: [browserOptionsWorkerFixture, { scope: 'worker' }],
-  _browserType: [browserTypeWorkerFixture, { scope: 'worker' }],
-  browser: [browserWorkerFixture, { scope: 'worker' } ],
+  _browserOptions: [async ({ headless, channel, launchOptions }, use) => {
+    const options: LaunchOptions = {
+      handleSIGINT: false,
+      timeout: 0,
+      ...launchOptions,
+    };
+    if (headless !== undefined)
+      options.headless = headless;
+    if (channel !== undefined)
+      options.channel = channel;
+    await use(options);
+  }, { scope: 'worker' }],
+
+  _browserType: [async ({ playwright, browserName, _browserOptions }, use) => {
+    if (!['chromium', 'firefox', 'webkit'].includes(browserName))
+      throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
+    const browserType = playwright[browserName];
+    (browserType as any)._defaultLaunchOptions = _browserOptions;
+    await use(browserType);
+    (browserType as any)._defaultLaunchOptions = undefined;
+  }, { scope: 'worker' }],
+
+  browser: [async ({ _browserType }, use) => {
+    const browser = await _browserType.launch();
+    await use(browser);
+    await browser.close();
+  }, { scope: 'worker' }],
 
   acceptDownloads: undefined,
   bypassCSP: undefined,
@@ -390,55 +413,6 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
   }
 
 });
-
-export async function browserOptionsWorkerFixture(
-  {
-    headless,
-    channel,
-    launchOptions
-  }: {
-    headless: boolean | undefined,
-    channel: string | undefined,
-    launchOptions: LaunchOptions
-  }, use: (options: LaunchOptions) => Promise<void>) {
-  const options: LaunchOptions = {
-    handleSIGINT: false,
-    timeout: 0,
-    ...launchOptions,
-  };
-  if (headless !== undefined)
-    options.headless = headless;
-  if (channel !== undefined)
-    options.channel = channel;
-  await use(options);
-}
-
-export async function browserTypeWorkerFixture(
-  {
-    playwright,
-    browserName,
-    _browserOptions
-  }: {
-    playwright: any,
-    browserName: string,
-    _browserOptions: LaunchOptions
-  }, use: (browserType: BrowserType) => Promise<void>) {
-  if (!['chromium', 'firefox', 'webkit'].includes(browserName))
-    throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
-  const browserType = playwright[browserName];
-  (browserType as any)._defaultLaunchOptions = _browserOptions;
-  await use(browserType);
-  (browserType as any)._defaultLaunchOptions = undefined;
-}
-
-export async function browserWorkerFixture(
-  { _browserType }: { _browserType: BrowserType },
-  use: (browser: Browser) => Promise<void>) {
-  const browser = await _browserType.launch();
-  await use(browser);
-  await browser.close();
-}
-
 
 function formatPendingCalls(calls: ParsedStackTrace[]) {
   if (!calls.length)
