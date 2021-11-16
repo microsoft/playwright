@@ -48,6 +48,8 @@ export class TraceModel {
         traceEntry = entry;
       if (entry.filename.endsWith('.network'))
         networkEntry = entry;
+      if (entry.filename.includes('src@'))
+        this.contextEntry.hasSource = true;
       this._entries.set(entry.filename, entry);
     }
     this._snapshotStorage = new PersistentSnapshotStorage(this._entries);

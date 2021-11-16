@@ -30,6 +30,7 @@ export type ContextEntry = {
   actions: trace.ActionTraceEvent[];
   events: trace.ActionTraceEvent[];
   objects: { [key: string]: any };
+  hasSource: boolean;
 };
 
 export type PageEntry = {
@@ -55,5 +56,6 @@ export function createEmptyContext(): ContextEntry {
     actions: [],
     events: [],
     objects: {},
+    hasSource: false
   };
 }

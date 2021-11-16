@@ -101,7 +101,7 @@ export const Workbench: React.FunctionComponent<{
     { id: 'network', title: 'Network', count: networkCount, render: () => <NetworkTab action={selectedAction} /> },
   ];
 
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  if (contextEntry.hasSource)
     tabs.push({ id: 'source', title: 'Source', count: 0, render: () => <SourceTab action={selectedAction} /> });
 
   return <div className='vbox workbench' onDragOver={event => { event.preventDefault(); setDragOver(true); }}>
