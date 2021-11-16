@@ -241,7 +241,7 @@ export class Locator implements api.Locator {
     });
   }
 
-  [(util.inspect as any).custom]() {
+  [util.inspect.custom]() {
     return this.toString();
   }
 

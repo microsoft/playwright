@@ -17,6 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import * as mime from 'mime';
+import * as util from 'util';
 import { Serializable } from '../../types/structs';
 import * as api from '../../types/types';
 import { HeadersArray } from '../common/types';
@@ -270,6 +271,11 @@ export class APIResponse implements api.APIResponse {
     return this._request._wrapApiCall(async (channel: channels.APIRequestContextChannel) => {
       await channel.disposeAPIResponse({ fetchUid: this._fetchUid() });
     });
+  }
+
+  [util.inspect.custom]() {
+    const headers = this.headersArray().map(({ name, value }) => `  ${name}: ${value}`);
+    return `APIResponse: ${this.status()} ${this.statusText()}\n${headers.join('\n')}`;
   }
 
   _fetchUid(): string {
