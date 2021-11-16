@@ -550,10 +550,10 @@ export class Registry {
     try {
       releaseLock = await lockfile.lock(registryDirectory, {
         retries: {
-          retries: 10,
           // Retry 20 times during 10 minutes with
           // exponential back-off.
           // See documentation at: https://www.npmjs.com/package/retry#retrytimeoutsoptions
+          retries: 20,
           factor: 1.27579,
         },
         onCompromised: (err: Error) => {
