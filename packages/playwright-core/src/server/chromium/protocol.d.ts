@@ -150,6 +150,10 @@ export module Protocol {
        */
       properties?: AXProperty[];
       /**
+       * ID for this node's parent.
+       */
+      parentId?: AXNodeId;
+      /**
        * IDs for each of this node's child nodes.
        */
       childIds?: AXNodeId[];
@@ -157,6 +161,10 @@ export module Protocol {
        * The backend ID for the associated DOM node, if any.
        */
       backendDOMNodeId?: DOM.BackendNodeId;
+      /**
+       * The frame ID for the frame associated with this nodes document.
+       */
+      frameId?: Page.FrameId;
     }
     
     
@@ -223,6 +231,41 @@ If omited, the root frame is used.
       frameId?: Page.FrameId;
     }
     export type getFullAXTreeReturnValue = {
+      nodes: AXNode[];
+    }
+    /**
+     * Fetches the root node.
+Requires `enable()` to have been called previously.
+     */
+    export type getRootAXNodeParameters = {
+      /**
+       * The frame in whose document the node resides.
+If omitted, the root frame is used.
+       */
+      frameId?: Page.FrameId;
+    }
+    export type getRootAXNodeReturnValue = {
+      node: AXNode;
+    }
+    /**
+     * Fetches a node and all ancestors up to and including the root.
+Requires `enable()` to have been called previously.
+     */
+    export type getAXNodeAndAncestorsParameters = {
+      /**
+       * Identifier of the node to get.
+       */
+      nodeId?: DOM.NodeId;
+      /**
+       * Identifier of the backend node to get.
+       */
+      backendNodeId?: DOM.BackendNodeId;
+      /**
+       * JavaScript object id of the node wrapper to get.
+       */
+      objectId?: Runtime.RemoteObjectId;
+    }
+    export type getAXNodeAndAncestorsReturnValue = {
       nodes: AXNode[];
     }
     /**
@@ -4957,6 +5000,7 @@ Missing optional values will be filled in by the target with what it would norma
      */
     export interface UserAgentMetadata {
       brands?: UserAgentBrandVersion[];
+      fullVersionList?: UserAgentBrandVersion[];
       fullVersion?: string;
       platform: string;
       platformVersion: string;
@@ -9939,7 +9983,7 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
      * All Permissions Policy features. This enum should match the one defined
 in third_party/blink/renderer/core/permissions_policy/permissions_policy_features.json5.
      */
-    export type PermissionsPolicyFeature = "accelerometer"|"ambient-light-sensor"|"attribution-reporting"|"autoplay"|"camera"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-rtt"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-full-version"|"ch-ua-platform-version"|"ch-ua-reduced"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"cross-origin-isolated"|"direct-sockets"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"idle-detection"|"interest-cohort"|"join-ad-interest-group"|"keyboard-map"|"magnetometer"|"microphone"|"midi"|"otp-credentials"|"payment"|"picture-in-picture"|"publickey-credentials-get"|"run-ad-auction"|"screen-wake-lock"|"serial"|"shared-autofill"|"storage-access-api"|"sync-xhr"|"trust-token-redemption"|"usb"|"vertical-scroll"|"web-share"|"window-placement"|"xr-spatial-tracking";
+    export type PermissionsPolicyFeature = "accelerometer"|"ambient-light-sensor"|"attribution-reporting"|"autoplay"|"camera"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-rtt"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-full-version"|"ch-ua-full-version-list"|"ch-ua-platform-version"|"ch-ua-reduced"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"cross-origin-isolated"|"direct-sockets"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"idle-detection"|"interest-cohort"|"join-ad-interest-group"|"keyboard-map"|"magnetometer"|"microphone"|"midi"|"otp-credentials"|"payment"|"picture-in-picture"|"publickey-credentials-get"|"run-ad-auction"|"screen-wake-lock"|"serial"|"shared-autofill"|"storage-access-api"|"sync-xhr"|"trust-token-redemption"|"usb"|"vertical-scroll"|"web-share"|"window-placement"|"xr-spatial-tracking";
     /**
      * Reason for a permissions policy feature to be disabled.
      */
@@ -12050,7 +12094,7 @@ certificate errors at the same time.
       visibleSecurityState: VisibleSecurityState;
     }
     /**
-     * The security state of the page changed.
+     * The security state of the page changed. No longer being sent.
      */
     export type securityStateChangedPayload = {
       /**
@@ -16910,6 +16954,8 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Accessibility.enable": Accessibility.enableParameters;
     "Accessibility.getPartialAXTree": Accessibility.getPartialAXTreeParameters;
     "Accessibility.getFullAXTree": Accessibility.getFullAXTreeParameters;
+    "Accessibility.getRootAXNode": Accessibility.getRootAXNodeParameters;
+    "Accessibility.getAXNodeAndAncestors": Accessibility.getAXNodeAndAncestorsParameters;
     "Accessibility.getChildAXNodes": Accessibility.getChildAXNodesParameters;
     "Accessibility.queryAXTree": Accessibility.queryAXTreeParameters;
     "Animation.disable": Animation.disableParameters;
@@ -17430,6 +17476,8 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Accessibility.enable": Accessibility.enableReturnValue;
     "Accessibility.getPartialAXTree": Accessibility.getPartialAXTreeReturnValue;
     "Accessibility.getFullAXTree": Accessibility.getFullAXTreeReturnValue;
+    "Accessibility.getRootAXNode": Accessibility.getRootAXNodeReturnValue;
+    "Accessibility.getAXNodeAndAncestors": Accessibility.getAXNodeAndAncestorsReturnValue;
     "Accessibility.getChildAXNodes": Accessibility.getChildAXNodesReturnValue;
     "Accessibility.queryAXTree": Accessibility.queryAXTreeReturnValue;
     "Animation.disable": Animation.disableReturnValue;
