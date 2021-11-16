@@ -15,18 +15,19 @@ trap "cleanup; cd $(pwd -P)" EXIT
 cd "$(dirname $0)"
 
 if [[ $1 == "--help" ]]; then
-  echo "usage: $(basename $0) [--release|--next|--beta]"
+  echo "usage: $(basename $0) [--release|--release-candidate|--alpha|--beta]"
   echo
   echo "Publishes all packages."
   echo
   echo "--release                publish @latest version of all packages"
-  echo "--next                   publish @next version of all packages"
+  echo "--release-candidate      publish @rc version of all packages"
+  echo "--alpha                  publish @next version of all packages"
   echo "--beta                   publish @beta version of all packages"
   exit 1
 fi
 
 if [[ $# < 1 ]]; then
-  echo "Please specify either --release, --beta or --next"
+  echo "Please specify either --release, --beta or --alpha or --release-candidate"
   exit 1
 fi
 
@@ -68,17 +69,17 @@ elif [[ "$1" == "--release-candidate" ]]; then
     exit 1
   fi
   NPM_PUBLISH_TAG="rc"
-elif [[ "$1" == "--next" ]]; then
-  # Ensure package version contains dash.
-  if [[ "${VERSION}" != *-* ]]; then
-    echo "ERROR: cannot publish release version with --next flag"
+elif [[ "$1" == "--alpha" ]]; then
+  # Ensure package version contains alpha and does not contain rc
+  if [[ "${VERSION}" != *-alpha* || "${VERSION}" == *-rc* ]]; then
+    echo "ERROR: cannot publish release version with --alpha flag"
     exit 1
   fi
 
   NPM_PUBLISH_TAG="next"
 elif [[ "$1" == "--beta" ]]; then
   # Ensure package version contains dash.
-  if [[ "${VERSION}" != *-* ]]; then
+  if [[ "${VERSION}" != *-beta* || "${VERSION}" == *-rc* ]]; then
     echo "ERROR: cannot publish release version with --beta flag"
     exit 1
   fi
