@@ -82,7 +82,7 @@ test('should remove an item', async ({ todoPage }) => {
 import { test as base } from '@playwright/test';
 import { TodoPage } from './todo-page';
 
-// Extend basic test by providing a "table" fixture.
+// Extend basic test by providing a "todoPage" fixture.
 const test = base.extend<{ todoPage: TodoPage }>({
   todoPage: async ({ page }, use) => {
     const todoPage = new TodoPage(page);
