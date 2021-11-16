@@ -709,5 +709,4 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: npx playwright install-deps
-    - run: node utils/build/update_canary_version.js --today-date
     - run: utils/build/build-playwright-driver.sh

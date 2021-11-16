@@ -20,17 +20,28 @@ const path = require('path');
 const { execSync } = require('child_process');
 
 const packageJSON = require('../../package.json');
-if (process.argv[2] === '--today-date') {
+const baseVersion = packageJSON.version.split('-')[0];
+
+let prefix = '';
+if (process.argv[2] === '--alpha') {
+  prefix = 'alpha';
+} else if (process.argv[2] === '--beta') {
+  prefix = 'beta';
+} else {
+  throw new Error('only --alpha or --beta prefixes are allowed');
+}
+
+if (process.argv[3] === '--today-date') {
   const date = new Date();
   const month = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'][date.getMonth()];
   const day = date.getDate();
   const year = date.getFullYear();
-  packageJSON.version = `${packageJSON.version}-alpha-${month}-${day}-${year}`;
-} else if (process.argv[2] === '--commit-timestamp') {
+  packageJSON.version = `${baseVersion}-${prefix}-${month}-${day}-${year}`;
+} else if (process.argv[3] === '--commit-timestamp') {
   const timestamp = execSync('git show -s --format=%ct HEAD', {
     stdio: ['ignore', 'pipe', 'ignore']
   }).toString('utf8').trim();
-  packageJSON.version = `${packageJSON.version}-${timestamp}000`;
+  packageJSON.version = `${baseVersion}-${prefix}-${timestamp}000`;
 } else {
   throw new Error('This script must be run with either --commit-timestamp or --today-date parameter');
 }

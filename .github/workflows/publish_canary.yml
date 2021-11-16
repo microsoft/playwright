@@ -26,25 +26,34 @@ jobs:
     - name: "@next: publish with commit timestamp (triggered manually)"
       if: contains(github.ref, 'master') && github.event_name == 'workflow_dispatch'
       run: |
-        node utils/build/update_canary_version.js --commit-timestamp
-        utils/publish_all_packages.sh --next
+        node utils/build/update_canary_version.js --alpha --commit-timestamp
+        utils/publish_all_packages.sh --alpha
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
     - name: "@next: publish with today's date (triggered automatically)"
       if: contains(github.ref, 'master') && github.event_name != 'workflow_dispatch'
       run: |
-        node utils/build/update_canary_version.js --today-date
-        utils/publish_all_packages.sh --next
+        node utils/build/update_canary_version.js --alpha --today-date
+        utils/publish_all_packages.sh --alpha
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
     - name: "@beta: publish with commit timestamp (triggered automatically)"
       if: contains(github.ref, 'release') && github.event_name != 'workflow_dispatch'
       run: |
-        node utils/build/update_canary_version.js --commit-timestamp
+        node utils/build/update_canary_version.js --beta --commit-timestamp
         utils/publish_all_packages.sh --beta
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-    - run: |
+    - name: build & publish driver
+      env:
+        AZ_UPLOAD_FOLDER: driver/next
+        AZ_ACCOUNT_KEY: ${{ secrets.AZ_ACCOUNT_KEY }}
+        AZ_ACCOUNT_NAME: ${{ secrets.AZ_ACCOUNT_NAME }}
+      run: |
+        utils/build/build-playwright-driver.sh
+        utils/build/upload-playwright-driver.sh
+    - name: trigger docker build
+      run: |
         VERSION=$(node -e 'console.log(require("./package.json").version)')
         if [[ "${VERSION}" != *-* ]]; then
           echo "ERROR: canary version must have dash inside, received '${VERSION}' instead"
