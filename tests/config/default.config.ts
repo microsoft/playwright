@@ -41,6 +41,9 @@ const testDir = path.join(__dirname, '..');
 const config: Config<CoverageWorkerOptions & PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeWorkerFixtures> = {
   testDir,
   outputDir,
+  expect: {
+    timeout: 10000,
+  },
   timeout: video ? 60000 : 30000,
   globalTimeout: 5400000,
   workers: process.env.CI ? 1 : undefined,
