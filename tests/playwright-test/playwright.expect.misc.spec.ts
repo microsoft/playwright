@@ -86,6 +86,7 @@ test('should support toHaveCount', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(output).toContain('Expected: 0');
   expect(output).toContain('Received: 1');
+  expect(output).toContain('Call log after 500ms:');
 });
 
 test('should support toHaveJSProperty', async ({ runInlineTest }) => {
@@ -311,7 +312,7 @@ test('should support toHaveURL with baseURL from webServer', async ({ runInlineT
   expect(result.exitCode).toBe(1);
 });
 
-test('should support respect expect.timeout', async ({ runInlineTest }) => {
+test('should respect expect.timeout', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.js': `module.exports = { expect: { timeout: 1000 } }`,
     'a.test.ts': `
@@ -328,6 +329,7 @@ test('should support respect expect.timeout', async ({ runInlineTest }) => {
   }, { workers: 1 });
   const output = stripAscii(result.output);
   expect(output).toContain('expect(received).toHaveURL(expected)');
+  expect(output).toContain('Call log after 1000ms:');
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
 });
