@@ -39,9 +39,8 @@ test('test.extend should work', async ({ runInlineTest }) => {
         };
       }
 
-      export const base = pwt.test.declare({
-        suffix: ['', { scope: 'worker' } ],
-      }).extend({
+      export const base = pwt.test.extend({
+        suffix: ['', { scope: 'worker', option: true } ],
         baseWorker: [async ({ suffix }, run) => {
           global.logs.push('beforeAll-' + suffix);
           await run();
@@ -122,7 +121,7 @@ test('test.extend should work', async ({ runInlineTest }) => {
   ].join('\n'));
 });
 
-test('config should override test.declare but not test.extend', async ({ runInlineTest }) => {
+test('config should override options but not fixtures', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
@@ -130,7 +129,7 @@ test('config should override test.declare but not test.extend', async ({ runInli
       };
     `,
     'a.test.js': `
-      const test1 = pwt.test.declare({ param: 'default' });
+      const test1 = pwt.test.extend({ param: [ 'default', { option: true } ] });
       test1('default', async ({ param }) => {
         console.log('default-' + param);
       });
@@ -157,4 +156,72 @@ test('config should override test.declare but not test.extend', async ({ runInli
   expect(result.output).toContain('default-config');
   expect(result.output).toContain('extend-extend');
   expect(result.output).toContain('fixture-config-fixture');
+});
+
+test('test.extend should be able to merge', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        use: { param: 'from-config' },
+      };
+    `,
+    'a.test.js': `
+      const base = pwt.test.extend({
+        myFixture: 'abc',
+      });
+
+      const test1 = base
+          .extend({
+            param: [ 'default', { option: true } ],
+            fixture1: ({ param }, use) => use(param + '+fixture1'),
+            myFixture: 'override',
+          });
+
+      const test2 = base.extend({
+        fixture2: ({}, use) => use('fixture2'),
+      });
+
+      const test3 = test1.extendTest(test2);
+
+      test3('merged', async ({ param, fixture1, myFixture, fixture2 }) => {
+        console.log('param-' + param);
+        console.log('fixture1-' + fixture1);
+        console.log('myFixture-' + myFixture);
+        console.log('fixture2-' + fixture2);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('param-from-config');
+  expect(result.output).toContain('fixture1-from-config+fixture1');
+  expect(result.output).toContain('myFixture-override');
+  expect(result.output).toContain('fixture2-fixture2');
+});
+
+test('test.extend should print nice message when used as extendTest', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const test1 = pwt.test.extend({});
+      const test2 = pwt.test.extend({});
+      const test3 = test1.extend(test2);
+
+      test3('test', () => {});
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.output).toContain('Did you mean to call test.extendTest()?');
+});
+
+test('test.extendTest should print nice message when used as extend', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const test3 = pwt.test.extendTest({});
+      test3('test', () => {});
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.output).toContain('Did you mean to call test.extend() with fixtures instead?');
 });

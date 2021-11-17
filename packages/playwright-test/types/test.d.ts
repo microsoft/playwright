@@ -2573,81 +2573,28 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    */
   expect: Expect;
   /**
-   * Extends the `test` object by declaring test parameters. These parameters may be specified in the configuration file, or
-   * with [test.use(options)](https://playwright.dev/docs/api/class-test#test-use) method. Useful for running tests in
-   * multiple configurations. Learn more about [parametrizing tests](https://playwright.dev/docs/test-parameterize).
+   * Extends the `test` object by defining fixtures and/or options that can be used in the tests.
    *
-   * First declare a parameter.
-   *
-   * ```ts
-   * // my-test.ts
-   * import { test as base } from '@playwright/test';
-   *
-   * export type TestOptions = {
-   *   person: string;
-   * };
-   *
-   * export const test = base.declare<TestOptions>({
-   *   // Default value - you can override it in the config.
-   *   person: 'John',
-   * });
-   * ```
-   *
-   * Then use the parameter in the test.
-   *
-   * ```ts
-   * // example.spec.ts
-   * import { test } from './my-test';
-   *
-   * test('test 1', async ({ page, person }) => {
-   *   await page.goto(`/index.html`);
-   *   await expect(page.locator('#node')).toContainText(person);
-   *   // ...
-   * });
-   * ```
-   *
-   * Finally, set parameter value in the configuration file.
-   *
-   * ```ts
-   * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
-   * import { TestOptions } from './my-test';
-   *
-   * const config: PlaywrightTestConfig<TestOptions> = {
-   *   projects: [
-   *     {
-   *       name: 'alice',
-   *       use: { person: 'Alice' },
-   *     },
-   *     {
-   *       name: 'bob',
-   *       use: { person: 'Bob' },
-   *     },
-   *   ]
-   * };
-   * export default config;
-   * ```
-   *
-   * @param parameters An object containing default values of declared parameters.
-   */
-  declare<T, W extends KeyValue = {}>(parameters: Fixtures<T, W, TestArgs, WorkerArgs>): TestType<TestArgs & T, WorkerArgs & W>;
-  /**
-   * Extends the `test` object by defining fixtures that can be used in the tests. Learn more about
-   * [fixtures](https://playwright.dev/docs/test-fixtures).
-   *
-   * First define a fixture.
+   * First define a fixture and/or an option.
    *
    * ```ts
    * import { test as base } from '@playwright/test';
    * import { TodoPage } from './todo-page';
    *
-   * // Extend basic test by providing a "todoPage" fixture.
-   * export const test = base.extend<{ todoPage: TodoPage }>({
-   *   todoPage: async ({ page }, use) => {
+   * export type Options = { defaultItem: string };
+   *
+   * // Extend basic test by providing a "defaultItem" option and a "todoPage" fixture.
+   * export const test = base.extend<Options & { todoPage: TodoPage }>({
+   *   // Define an option and provide a default value.
+   *   // We can later override it in the config.
+   *   defaultItem: ['Do stuff', { option: true }],
+   *
+   *   // Define a fixture. Note that it can use built-in fixture "page"
+   *   // and a new option "defaultItem".
+   *   todoPage: async ({ page, defaultItem }, use) => {
    *     const todoPage = new TodoPage(page);
    *     await todoPage.goto();
-   *     await todoPage.addToDo('item1');
-   *     await todoPage.addToDo('item2');
+   *     await todoPage.addToDo(defaultItem);
    *     await use(todoPage);
    *     await todoPage.removeAll();
    *   },
@@ -2666,9 +2613,33 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * @param fixtures An object containing fixture definitions.
+   * Configure the option in config file.
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import { Options } from './my-test';
+   *
+   * const config: PlaywrightTestConfig<Options> = {
+   *   projects: [
+   *     {
+   *       name: 'shopping',
+   *       use: { defaultItem: 'Buy milk' },
+   *     },
+   *     {
+   *       name: 'wellbeing',
+   *       use: { defaultItem: 'Exercise!' },
+   *     },
+   *   ]
+   * };
+   * export default config;
+   * ```
+   *
+   * Learn more about [fixtures](https://playwright.dev/docs/test-fixtures) and [parametrizing tests](https://playwright.dev/docs/test-parameterize).
+   * @param fixtures An object containing fixtures and/or options. Learn more about [fixtures format](https://playwright.dev/docs/test-fixtures).
    */
   extend<T, W extends KeyValue = {}>(fixtures: Fixtures<T, W, TestArgs, WorkerArgs>): TestType<TestArgs & T, WorkerArgs & W>;
+  extendTest<T, W>(other: TestType<T, W>): TestType<TestArgs & T, WorkerArgs & W>;
 }
 
 type KeyValue = { [key: string]: any };
@@ -2681,9 +2652,9 @@ export type Fixtures<T extends KeyValue = {}, W extends KeyValue = {}, PT extend
 } & {
   [K in keyof PT]?: TestFixtureValue<PT[K], T & W & PT & PW> | [TestFixtureValue<PT[K], T & W & PT & PW>, { scope: 'test' }];
 } & {
-  [K in keyof W]?: [WorkerFixtureValue<W[K], W & PW>, { scope: 'worker', auto?: boolean }];
+  [K in keyof W]?: [WorkerFixtureValue<W[K], W & PW>, { scope: 'worker', auto?: boolean, option?: boolean }];
 } & {
-  [K in keyof T]?: TestFixtureValue<T[K], T & W & PT & PW> | [TestFixtureValue<T[K], T & W & PT & PW>, { scope?: 'test', auto?: boolean }];
+  [K in keyof T]?: TestFixtureValue<T[K], T & W & PT & PW> | [TestFixtureValue<T[K], T & W & PT & PW>, { scope?: 'test', auto?: boolean, option?: boolean }];
 };
 
 type BrowserName = 'chromium' | 'firefox' | 'webkit';

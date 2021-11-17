@@ -22,17 +22,17 @@ import { Fixtures, FixturesWithLocation, Location, TestType } from './types';
 import { errorWithLocation, serializeError } from './util';
 
 const countByFile = new Map<string, number>();
-
-type TestTypeFixtures = FixturesWithLocation & { type: 'extend' | 'declare' };
+const testTypeSymbol = Symbol('testType');
 
 export class TestTypeImpl {
-  readonly fixtures: TestTypeFixtures[];
+  readonly fixtures: FixturesWithLocation[];
   readonly test: TestType<any, any>;
 
-  constructor(fixtures: TestTypeFixtures[]) {
+  constructor(fixtures: FixturesWithLocation[]) {
     this.fixtures = fixtures;
 
     const test: any = wrapFunctionWithLocation(this._createTest.bind(this, 'default'));
+    test[testTypeSymbol] = this;
     test.expect = expect;
     test.only = wrapFunctionWithLocation(this._createTest.bind(this, 'only'));
     test.describe = wrapFunctionWithLocation(this._describe.bind(this, 'default'));
@@ -53,7 +53,7 @@ export class TestTypeImpl {
     test.step = wrapFunctionWithLocation(this._step.bind(this));
     test.use = wrapFunctionWithLocation(this._use.bind(this));
     test.extend = wrapFunctionWithLocation(this._extend.bind(this));
-    test.declare = wrapFunctionWithLocation(this._declare.bind(this));
+    test.extendTest = wrapFunctionWithLocation(this._extendTest.bind(this));
     this.test = test;
   }
 
@@ -200,13 +200,19 @@ export class TestTypeImpl {
   }
 
   private _extend(location: Location, fixtures: Fixtures) {
-    const fixturesWithLocation: TestTypeFixtures = { fixtures, location, type: 'extend' };
+    if ((fixtures as any)[testTypeSymbol])
+      throw new Error(`test.extend() accepts fixtures object, not a test object.\nDid you mean to call test.extendTest()?`);
+    const fixturesWithLocation: FixturesWithLocation = { fixtures, location };
     return new TestTypeImpl([...this.fixtures, fixturesWithLocation]).test;
   }
 
-  private _declare(location: Location, fixtures: Fixtures) {
-    const fixturesWithLocation: TestTypeFixtures = { fixtures, location, type: 'declare' };
-    return new TestTypeImpl([...this.fixtures, fixturesWithLocation]).test;
+  private _extendTest(location: Location, test: TestType<any, any>) {
+    const testTypeImpl = (test as any)[testTypeSymbol] as TestTypeImpl;
+    if (!testTypeImpl)
+      throw new Error(`test.extendTest() accepts a single "test" parameter.\nDid you mean to call test.extend() with fixtures instead?`);
+    // Filter out common ancestor fixtures.
+    const newFixtures = testTypeImpl.fixtures.filter(theirs => !this.fixtures.find(ours => ours.fixtures === theirs.fixtures));
+    return new TestTypeImpl([...this.fixtures, ...newFixtures]).test;
   }
 }
 

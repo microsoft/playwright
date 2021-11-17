@@ -141,16 +141,19 @@ test('hello world', ({ helloWorld }) => {
 
 It uses an option `hello` and a fixture `helloWorld` that are set up by the framework for each test run.
 
-Here is how test fixtures are declared and defined. Fixtures can use other fixtures and/or options - note how `helloWorld` uses `hello`.
+Here is how test fixtures are defined. Fixtures can use other fixtures and/or options - note how `helloWorld` uses `hello`.
 
 ```js js-flavor=js
 // hello.js
 const base = require('@playwright/test');
 
 // Extend base test with our options and fixtures.
-const test =  base.test.declare({
-  hello: 'Hello', // provide default value
-}).extend({
+const test =  base.test.extend({
+  // Define an option and provide a default value.
+  // We can later override it in the config.
+  hello: ['Hello', { option: true }],
+
+  // Define a fixture.
   helloWorld: async ({ hello }, use) => {
     // Set up the fixture.
     const value = hello + ', world!';
@@ -178,9 +181,12 @@ type TestFixtures = {
 };
 
 // Extend base test with our options and fixtures.
-const test = base.declare<TestOptions>({
-  hello: 'Hello', // provide default value
-}).extend<TestFixtures>({
+const test = base.extend<TestOptions & TestFixtures>({
+  // Define an option and provide a default value.
+  // We can later override it in the config.
+  hello: ['Hello', { option: true }],
+
+  // Define a fixture.
   helloWorld: async ({ hello }, use) => {
     // Set up the fixture.
     const value = hello + ', world!';

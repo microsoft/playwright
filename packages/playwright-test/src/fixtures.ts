@@ -103,8 +103,12 @@ class Fixture {
   }
 }
 
-export function isFixtureTuple(value: any): value is [any, any] {
-  return Array.isArray(value) && typeof value[1] === 'object' && ('scope' in value[1] || 'auto' in value[1]);
+function isFixtureTuple(value: any): value is [any, any] {
+  return Array.isArray(value) && typeof value[1] === 'object' && ('scope' in value[1] || 'auto' in value[1] || 'option' in value[1]);
+}
+
+export function isFixtureOption(value: any): value is [any, any] {
+  return isFixtureTuple(value) && !!value[1].option;
 }
 
 export class FixturePool {

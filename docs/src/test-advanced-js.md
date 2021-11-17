@@ -367,17 +367,18 @@ test('test', async ({ page }) => {
 
 Playwright Test supports running multiple test projects at the same time. This is useful for running the same tests in multiple configurations. For example, consider running tests against multiple versions of some REST backend.
 
-To make use of this feature, we will declare an "option fixture" for the backend version, and use it in the tests.
+In the following example, we will declare an option for the backend version, and a fixture that uses the option, and we'll be configuring two projects that test against different versions.
 
 ```js js-flavor=js
 // my-test.js
 const base = require('@playwright/test');
 const { startBackend } = require('./my-backend');
 
-exports.test = base.test.declare({
-  // Default value for the version.
-  version: '1.0',
-}).extend({
+exports.test = base.test.extend({
+  // Define an option and provide a default value.
+  // We can later override it in the config.
+  version: ['1.0', { option: true }],
+
   // Use version when starting the backend.
   backendURL: async ({ version }, use) => {
     const app = await startBackend(version);
@@ -393,11 +394,13 @@ import { test as base } from '@playwright/test';
 import { startBackend } from './my-backend';
 
 export type TestOptions = { version: string };
+type TestFixtures = { backendURL: string };
 
-export const test = base.declare<TestOptions>({
-  // Default value for the version.
-  version: '1.0',
-}).extend<{ backendURL: string }>({
+export const test = base.extend<TestOptions & TestFixtures>({
+  // Define an option and provide a default value.
+  // We can later override it in the config.
+  version: ['1.0', { option: true }],
+
   // Use version when starting the backend.
   backendURL: async ({ version }, use) => {
     const app = await startBackend(version);
@@ -407,7 +410,7 @@ export const test = base.declare<TestOptions>({
 });
 ```
 
-We can use our fixtures in the test.
+We can use our fixture and/or option in the test.
 ```js js-flavor=js
 // example.spec.js
 const { test } = require('./my-test');
@@ -442,14 +445,13 @@ test('test 2', async ({ version, page, backendURL }) => {
 });
 ```
 
-Now, we can run test in multiple configurations by using projects.
+Now, we can run tests in multiple configurations by using projects.
 ```js js-flavor=js
 // playwright.config.js
 // @ts-check
 
 /** @type {import('@playwright/test').PlaywrightTestConfig<{ version: string }>} */
 const config = {
-  timeout: 20000,
   projects: [
     {
       name: 'v1',
@@ -471,7 +473,6 @@ import { PlaywrightTestConfig } from '@playwright/test';
 import { TestOptions } from './my-test';
 
 const config: PlaywrightTestConfig<TestOptions> = {
-  timeout: 20000,
   projects: [
     {
       name: 'v1',
@@ -486,7 +487,7 @@ const config: PlaywrightTestConfig<TestOptions> = {
 export default config;
 ```
 
-Each project can be configured separately, and run different set of tests with different parameters. See [project options][TestProject] for the list of options available to each project.
+Each project can be configured separately, and run different set of tests with different of [built-in][TestProject] and custom options.
 
 You can run all projects or just a single one:
 ```bash

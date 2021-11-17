@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Fixtures } from '@playwright/test';
+import { test, Fixtures } from '@playwright/test';
 import path from 'path';
 import socks from 'socksv5';
 import { TestServer } from '../../utils/testserver';
@@ -33,11 +33,8 @@ export type ServerFixtures = {
 };
 
 export type ServersInternal = ServerFixtures & { socksServer: socks.SocksServer };
-export const serverOptions: Fixtures<{}, ServerWorkerOptions> = {
-  loopback: [ undefined, { scope: 'worker' } ],
-};
-
-export const serverFixtures: Fixtures<ServerFixtures, { __servers: ServersInternal }, {}, ServerWorkerOptions> = {
+export const serverFixtures: Fixtures<ServerFixtures, { __servers: ServersInternal } & ServerWorkerOptions> = {
+  loopback: [ undefined, { scope: 'worker', option: true } ],
   __servers: [ async ({ loopback }, run, workerInfo) => {
     const assetsPath = path.join(__dirname, '..', 'assets');
     const cachedPath = path.join(__dirname, '..', 'assets', 'cached');
@@ -113,3 +110,5 @@ export const serverFixtures: Fixtures<ServerFixtures, { __servers: ServersIntern
     await run(__servers.asset);
   },
 };
+
+export const serverTest = test.extend<ServerFixtures, ServerWorkerOptions & { __servers: ServersInternal }>(serverFixtures);

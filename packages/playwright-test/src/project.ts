@@ -16,7 +16,7 @@
 
 import type { FullProject, Fixtures, FixturesWithLocation } from './types';
 import { Suite, TestCase } from './test';
-import { FixturePool, isFixtureTuple } from './fixtures';
+import { FixturePool, isFixtureOption } from './fixtures';
 import { TestTypeImpl } from './testType';
 
 export class ProjectImpl {
@@ -110,19 +110,14 @@ export class ProjectImpl {
 
   private resolveFixtures(testType: TestTypeImpl, configUse: Fixtures): FixturesWithLocation[] {
     return testType.fixtures.map(f => {
-      if (f.type !== 'declare')
-        return f;
-
-      // Apply config overrides.
-      const resolved = { ...f.fixtures };
       const configKeys = new Set(Object.keys(configUse || {}));
+      const resolved = { ...f.fixtures };
       for (const [key, value] of Object.entries(resolved)) {
-        if (configKeys.has(key)) {
-          let override = (configUse as any)[key];
-          if (isFixtureTuple(value))
-            override = [override, value[1]];
-          (resolved as any)[key] = override;
-        }
+        if (!isFixtureOption(value) || !configKeys.has(key))
+          continue;
+        // Apply override from config file.
+        const override = (configUse as any)[key];
+        (resolved as any)[key] = [override, value[1]];
       }
       return { fixtures: resolved, location: f.location };
     });

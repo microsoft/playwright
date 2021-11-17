@@ -33,17 +33,18 @@ for (const name of people) {
 
 ## Parametrized Projects
 
-Playwright Test supports running multiple test projects at the same time. In the following example, we'll run two projects with different parameters.
+Playwright Test supports running multiple test projects at the same time. In the following example, we'll run two projects with different options.
 
-We declare the parameter and set the value in the config. The first project runs with the value `Alice` and the second with the value `Bob`.
+We declare the option `person` and set the value in the config. The first project runs with the value `Alice` and the second with the value `Bob`.
 
 ```js js-flavor=js
 // my-test.js
 const base = require('@playwright/test');
 
-exports.test = base.test.declare({
-  // Default value - you can override it in the config.
-  person: 'John',
+exports.test = base.test.extend({
+  // Define an option and provide a default value.
+  // We can later override it in the config.
+  person: ['John', { option: true }],
 });
 ```
 
@@ -55,13 +56,14 @@ export type TestOptions = {
   person: string;
 };
 
-export const test = base.declare<TestOptions>({
-  // Default value - you can override it in the config.
-  person: 'John',
+export const test = base.extend<TestOptions>({
+  // Define an option and provide a default value.
+  // We can later override it in the config.
+  person: ['John', { option: true }],
 });
 ```
 
-We can use the parameter in the test.
+We can use this option in the test, similarly to [fixtures](./test-fixtures.md).
 
 ```js js-flavor=js
 // example.spec.js
@@ -128,16 +130,17 @@ const config: PlaywrightTestConfig<TestOptions> = {
 export default config;
 ```
 
-We can also use the parameter in a fixture. Learn more about [fixtures](./test-fixtures.md).
+We can also use the option in a fixture. Learn more about [fixtures](./test-fixtures.md).
 
 ```js js-flavor=js
 // my-test.js
 const base = require('@playwright/test');
 
-exports.test = base.test.declare({
-  // Default value - you can override it in the config.
-  person: 'John',
-}).extend({
+exports.test = base.test.extend({
+  // Define an option and provide a default value.
+  // We can later override it in the config.
+  person: ['John', { option: true }],
+
   // Override default "page" fixture.
   page: async ({ page, person }, use) => {
     await page.goto('/chat');
@@ -158,10 +161,11 @@ export type TestOptions = {
   person: string;
 };
 
-export const test = base.test.declare<TestOptions>({
-  // Default value - you can override it in the config.
-  person: 'John',
-}).extend({
+export const test = base.test.extend<TestOptions>({
+  // Define an option and provide a default value.
+  // We can later override it in the config.
+  person: ['John', { option: true }],
+
   // Override default "page" fixture.
   page: async ({ page, person }, use) => {
     await page.goto('/chat');

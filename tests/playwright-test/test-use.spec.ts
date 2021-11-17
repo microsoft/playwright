@@ -138,8 +138,8 @@ test('should run tests with different worker options', async ({ runInlineTest })
 test('should use options from the config', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
-      export const test = pwt.test.declare({
-        foo: 'foo',
+      export const test = pwt.test.extend({
+        foo: [ 'foo', { option: true } ],
       });
     `,
     'playwright.config.ts': `

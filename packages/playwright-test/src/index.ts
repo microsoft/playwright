@@ -25,54 +25,21 @@ import { Browser } from 'playwright-core';
 export { expect } from './expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
-type TestFixtures = PlaywrightTestArgs & {
+type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
   _combinedContextOptions: BrowserContextOptions,
   _setupContextOptionsAndArtifacts: void;
   _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
 };
-type WorkerFixtures = PlaywrightWorkerArgs & {
+type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
   _browserType: BrowserType;
   _browserOptions: LaunchOptions;
   _artifactsDir: () => string;
   _snapshotSuffix: string;
 };
 
-export const test = _baseTest.declare<PlaywrightTestOptions, PlaywrightWorkerOptions>({
-  defaultBrowserType: [ 'chromium', { scope: 'worker' } ],
-  browserName: [ ({ defaultBrowserType }, use) => use(defaultBrowserType), { scope: 'worker' } ],
-  headless: [ undefined, { scope: 'worker' } ],
-  channel: [ undefined, { scope: 'worker' } ],
-  launchOptions: [ {}, { scope: 'worker' } ],
-  screenshot: [ 'off', { scope: 'worker' } ],
-  video: [ 'off', { scope: 'worker' } ],
-  trace: [ 'off', { scope: 'worker' } ],
-
-  acceptDownloads: undefined,
-  bypassCSP: undefined,
-  colorScheme: undefined,
-  deviceScaleFactor: undefined,
-  extraHTTPHeaders: undefined,
-  geolocation: undefined,
-  hasTouch: undefined,
-  httpCredentials: undefined,
-  ignoreHTTPSErrors: undefined,
-  isMobile: undefined,
-  javaScriptEnabled: undefined,
-  locale: undefined,
-  offline: undefined,
-  permissions: undefined,
-  proxy: undefined,
-  storageState: undefined,
-  timezoneId: undefined,
-  userAgent: undefined,
-  viewport: undefined,
-  actionTimeout: undefined,
-  navigationTimeout: undefined,
-  baseURL: async ({ }, use) => {
-    await use(process.env.PLAYWRIGHT_TEST_BASE_URL);
-  },
-  contextOptions: {},
-}).extend<TestFixtures, WorkerFixtures>({
+export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
+  defaultBrowserType: [ 'chromium', { scope: 'worker', option: true } ],
+  browserName: [ ({ defaultBrowserType }, use) => use(defaultBrowserType), { scope: 'worker', option: true } ],
   playwright: [async ({}, use, workerInfo) => {
     if (process.env.PW_GRID) {
       const gridClient = await GridClient.connect(process.env.PW_GRID);
@@ -82,6 +49,12 @@ export const test = _baseTest.declare<PlaywrightTestOptions, PlaywrightWorkerOpt
       await use(require('playwright-core'));
     }
   }, { scope: 'worker' } ],
+  headless: [ undefined, { scope: 'worker', option: true } ],
+  channel: [ undefined, { scope: 'worker', option: true } ],
+  launchOptions: [ {}, { scope: 'worker', option: true } ],
+  screenshot: [ 'off', { scope: 'worker', option: true } ],
+  video: [ 'off', { scope: 'worker', option: true } ],
+  trace: [ 'off', { scope: 'worker', option: true } ],
 
   _artifactsDir: [async ({}, use, workerInfo) => {
     let dir: string | undefined;
@@ -99,6 +72,32 @@ export const test = _baseTest.declare<PlaywrightTestOptions, PlaywrightWorkerOpt
   _browserOptions: [browserOptionsWorkerFixture, { scope: 'worker' }],
   _browserType: [browserTypeWorkerFixture, { scope: 'worker' }],
   browser: [browserWorkerFixture, { scope: 'worker' } ],
+
+  acceptDownloads: [ undefined, { option: true } ],
+  bypassCSP: [ undefined, { option: true } ],
+  colorScheme: [ undefined, { option: true } ],
+  deviceScaleFactor: [ undefined, { option: true } ],
+  extraHTTPHeaders: [ undefined, { option: true } ],
+  geolocation: [ undefined, { option: true } ],
+  hasTouch: [ undefined, { option: true } ],
+  httpCredentials: [ undefined, { option: true } ],
+  ignoreHTTPSErrors: [ undefined, { option: true } ],
+  isMobile: [ undefined, { option: true } ],
+  javaScriptEnabled: [ undefined, { option: true } ],
+  locale: [ undefined, { option: true } ],
+  offline: [ undefined, { option: true } ],
+  permissions: [ undefined, { option: true } ],
+  proxy: [ undefined, { option: true } ],
+  storageState: [ undefined, { option: true } ],
+  timezoneId: [ undefined, { option: true } ],
+  userAgent: [ undefined, { option: true } ],
+  viewport: [ undefined, { option: true } ],
+  actionTimeout: [ undefined, { option: true } ],
+  navigationTimeout: [ undefined, { option: true } ],
+  baseURL: [ async ({ }, use) => {
+    await use(process.env.PLAYWRIGHT_TEST_BASE_URL);
+  }, { option: true } ],
+  contextOptions: [ {}, { option: true } ],
 
   _combinedContextOptions: async ({
     acceptDownloads,

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Fixtures, PlaywrightWorkerArgs } from '@playwright/test';
+import { test } from '@playwright/test';
 import { DefaultTestMode, DriverTestMode, ServiceTestMode, TestModeName } from './testMode';
 
 export type TestModeWorkerOptions = {
@@ -26,11 +26,8 @@ export type TestModeWorkerFixtures = {
   toImpl: (rpcObject: any) => any;
 };
 
-export const testModeOptions: Fixtures<{}, TestModeWorkerOptions> = {
-  mode: [ 'default', { scope: 'worker' } ],
-};
-
-export const testModeFixtures: Fixtures<{}, TestModeWorkerFixtures, {}, TestModeWorkerOptions & PlaywrightWorkerArgs> = {
+export const testModeTest = test.extend<{}, TestModeWorkerOptions & TestModeWorkerFixtures>({
+  mode: [ 'default', { scope: 'worker', option: true } ],
   playwright: [ async ({ mode }, run) => {
     const testMode = {
       default: new DefaultTestMode(),
@@ -44,4 +41,4 @@ export const testModeFixtures: Fixtures<{}, TestModeWorkerFixtures, {}, TestMode
   }, { scope: 'worker' } ],
 
   toImpl: [ async ({ playwright }, run) => run((playwright as any)._toImpl), { scope: 'worker' } ],
-};
+});

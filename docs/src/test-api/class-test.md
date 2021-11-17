@@ -204,111 +204,6 @@ Hook function that takes one or two arguments: an object with fixtures and optio
 
 
 
-## method: Test.declare
-- returns: <[Test]>
-
-Extends the `test` object by declaring test parameters. These parameters may be specified in the configuration file, or with [`method: Test.use`] method. Useful for running tests in multiple configurations. Learn more about [parametrizing tests](./test-parameterize.md).
-
-First declare a parameter.
-
-```js js-flavor=js
-// my-test.js
-const base = require('@playwright/test');
-
-exports.test = base.test.declare({
-  // Default value - you can override it in the config.
-  person: 'John',
-});
-```
-
-```js js-flavor=ts
-// my-test.ts
-import { test as base } from '@playwright/test';
-
-export type TestOptions = {
-  person: string;
-};
-
-export const test = base.declare<TestOptions>({
-  // Default value - you can override it in the config.
-  person: 'John',
-});
-```
-
-Then use the parameter in the test.
-
-```js js-flavor=js
-// example.spec.js
-const { test } = require('./my-test');
-
-test('test 1', async ({ page, person }) => {
-  await page.goto(`/index.html`);
-  await expect(page.locator('#node')).toContainText(person);
-  // ...
-});
-```
-
-```js js-flavor=ts
-// example.spec.ts
-import { test } from './my-test';
-
-test('test 1', async ({ page, person }) => {
-  await page.goto(`/index.html`);
-  await expect(page.locator('#node')).toContainText(person);
-  // ...
-});
-```
-
-Finally, set parameter value in the configuration file.
-
-```js js-flavor=js
-// playwright.config.js
-// @ts-check
-
-/** @type {import('@playwright/test').PlaywrightTestConfig<{ person: string }>} */
-const config = {
-  projects: [
-    {
-      name: 'alice',
-      use: { person: 'Alice' },
-    },
-    {
-      name: 'bob',
-      use: { person: 'Bob' },
-    },
-  ]
-};
-
-module.exports = config;
-```
-
-```js js-flavor=ts
-// playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
-import { TestOptions } from './my-test';
-
-const config: PlaywrightTestConfig<TestOptions> = {
-  projects: [
-    {
-      name: 'alice',
-      use: { person: 'Alice' },
-    },
-    {
-      name: 'bob',
-      use: { person: 'Bob' },
-    },
-  ]
-};
-export default config;
-```
-
-### param: Test.declare.parameters
-- `parameters` <[Object]>
-
-An object containing default values of declared parameters.
-
-
-
 
 ## method: Test.describe
 
@@ -528,22 +423,27 @@ A callback that is run immediately when calling [`method: Test.describe.serial.o
 ## method: Test.extend
 - returns: <[Test]>
 
-Extends the `test` object by defining fixtures that can be used in the tests. Learn more about [fixtures](./test-fixtures.md).
+Extends the `test` object by defining fixtures and/or options that can be used in the tests.
 
-First define a fixture.
+First define a fixture and/or an option.
 
 ```js js-flavor=js
 // my-test.js
 const base = require('@playwright/test');
 const { TodoPage } = require('./todo-page');
 
-// Extend basic test by providing a "todoPage" fixture.
+// Extend basic test by providing a "defaultItem" option and a "todoPage" fixture.
 exports.test = base.test.extend({
-  todoPage: async ({ page }, use) => {
+  // Define an option and provide a default value.
+  // We can later override it in the config.
+  defaultItem: ['Do stuff', { option: true }],
+
+  // Define a fixture. Note that it can use built-in fixture "page"
+  // and a new option "defaultItem".
+  todoPage: async ({ page, defaultItem }, use) => {
     const todoPage = new TodoPage(page);
     await todoPage.goto();
-    await todoPage.addToDo('item1');
-    await todoPage.addToDo('item2');
+    await todoPage.addToDo(defaultItem);
     await use(todoPage);
     await todoPage.removeAll();
   },
@@ -554,13 +454,20 @@ exports.test = base.test.extend({
 import { test as base } from '@playwright/test';
 import { TodoPage } from './todo-page';
 
-// Extend basic test by providing a "todoPage" fixture.
-export const test = base.extend<{ todoPage: TodoPage }>({
-  todoPage: async ({ page }, use) => {
+export type Options = { defaultItem: string };
+
+// Extend basic test by providing a "defaultItem" option and a "todoPage" fixture.
+export const test = base.extend<Options & { todoPage: TodoPage }>({
+  // Define an option and provide a default value.
+  // We can later override it in the config.
+  defaultItem: ['Do stuff', { option: true }],
+
+  // Define a fixture. Note that it can use built-in fixture "page"
+  // and a new option "defaultItem".
+  todoPage: async ({ page, defaultItem }, use) => {
     const todoPage = new TodoPage(page);
     await todoPage.goto();
-    await todoPage.addToDo('item1');
-    await todoPage.addToDo('item2');
+    await todoPage.addToDo(defaultItem);
     await use(todoPage);
     await todoPage.removeAll();
   },
@@ -589,11 +496,55 @@ test('test 1', async ({ todoPage }) => {
 });
 ```
 
+Configure the option in config file.
+
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig<{ defaultItem: string }>} */
+const config = {
+  projects: [
+    {
+      name: 'shopping',
+      use: { defaultItem: 'Buy milk' },
+    },
+    {
+      name: 'wellbeing',
+      use: { defaultItem: 'Exercise!' },
+    },
+  ]
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+import { Options } from './my-test';
+
+const config: PlaywrightTestConfig<Options> = {
+  projects: [
+    {
+      name: 'shopping',
+      use: { defaultItem: 'Buy milk' },
+    },
+    {
+      name: 'wellbeing',
+      use: { defaultItem: 'Exercise!' },
+    },
+  ]
+};
+export default config;
+```
+
+Learn more about [fixtures](./test-fixtures.md) and [parametrizing tests](./test-parameterize.md).
 
 ### param: Test.extend.fixtures
 - `fixtures` <[Object]>
 
-An object containing fixture definitions.
+An object containing fixtures and/or options. Learn more about [fixtures format](./test-fixtures.md).
 
 
 

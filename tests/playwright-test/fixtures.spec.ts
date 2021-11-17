@@ -491,8 +491,8 @@ test('should work with overrides calling base', async ({ runInlineTest }) => {
 test('should understand worker fixture params in overrides calling base', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const test1 = pwt.test.declare({
-        param: [ 'param', { scope: 'worker' }],
+      const test1 = pwt.test.extend({
+        param: [ 'param', { scope: 'worker', option: true }],
       }).extend({
         foo: async ({}, test) => await test('foo'),
         bar: async ({foo}, test) => await test(foo + '-bar'),

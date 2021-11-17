@@ -14,20 +14,17 @@
  * limitations under the License.
  */
 
-import { Fixtures } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 import { installCoverageHooks } from './coverage';
+import { test } from '@playwright/test';
 
 export type CoverageWorkerOptions = {
   coverageName?: string;
 };
 
-export const coverageOptions: Fixtures<{}, CoverageWorkerOptions> = {
-  coverageName: [ undefined, { scope: 'worker' } ],
-};
-
-export const coverageFixtures: Fixtures<{}, { __collectCoverage: void }, {}, CoverageWorkerOptions> = {
+export const coverageTest = test.extend<{}, { __collectCoverage: void } & CoverageWorkerOptions>({
+  coverageName: [ undefined, { scope: 'worker', option: true  } ],
   __collectCoverage: [ async ({ coverageName }, run, workerInfo) => {
     if (!coverageName) {
       await run();
@@ -42,4 +39,4 @@ export const coverageFixtures: Fixtures<{}, { __collectCoverage: void }, {}, Cov
     await fs.promises.mkdir(path.dirname(coveragePath), { recursive: true });
     await fs.promises.writeFile(coveragePath, JSON.stringify(coverageJSON, undefined, 2), 'utf8');
   }, { scope: 'worker', auto: true } ],
-};
+});
