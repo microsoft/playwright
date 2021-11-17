@@ -7,7 +7,7 @@ You can either parameterize tests on a test level or on a project level.
 
 <!-- TOC -->
 
-## Parametrized Tests
+## Parameterized Tests
 
 ```js js-flavor=js
 // example.spec.js
@@ -31,7 +31,7 @@ for (const name of people) {
 }
 ```
 
-## Parametrized Projects
+## Parameterized Projects
 
 Playwright Test supports running multiple test projects at the same time. In the following example, we'll run two projects with different parameters.
 A parameter itself is represented as a [`fixture`](./api/class-fixtures), where the value gets set from the config. The first project runs with the value `Alice` and the second with the value `Bob`.
