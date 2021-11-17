@@ -22,7 +22,8 @@ import { parseArgument, serializeResult } from './jsHandleDispatcher';
 import { ResponseDispatcher, RequestDispatcher } from './networkDispatchers';
 import { CallMetadata } from '../server/instrumentation';
 
-export class FrameDispatcher extends Dispatcher<Frame, channels.FrameInitializer, channels.FrameEvents> implements channels.FrameChannel {
+export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel> implements channels.FrameChannel {
+  _type_Frame = true;
   private _frame: Frame;
 
   static from(scope: DispatcherScope, frame: Frame): FrameDispatcher {

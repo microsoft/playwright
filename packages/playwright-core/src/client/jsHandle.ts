@@ -20,7 +20,7 @@ import { parseSerializedValue, serializeValue } from '../protocol/serializers';
 import * as api from '../../types/types';
 import * as structs from '../../types/structs';
 
-export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel, channels.JSHandleInitializer> implements api.JSHandle {
+export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel> implements api.JSHandle {
   private _preview: string;
 
   static from(handle: channels.JSHandleChannel): JSHandle {

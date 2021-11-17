@@ -41,7 +41,7 @@ export interface BrowserServer extends api.BrowserServer {
   kill(): Promise<void>;
 }
 
-export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, channels.BrowserTypeInitializer> implements api.BrowserType {
+export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> implements api.BrowserType {
   _serverLauncher?: BrowserServerLauncher;
   _contexts = new Set<BrowserContext>();
   _playwright!: Playwright;

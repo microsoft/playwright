@@ -39,7 +39,7 @@ type DeviceDescriptor = {
 };
 type Devices = { [name: string]: DeviceDescriptor };
 
-export class Playwright extends ChannelOwner<channels.PlaywrightChannel, channels.PlaywrightInitializer> {
+export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   readonly _android: Android;
   readonly _electron: Electron;
   readonly chromium: BrowserType;

@@ -21,7 +21,8 @@ import { Request, Response, Route, WebSocket } from '../server/network';
 import { Dispatcher, DispatcherScope, existingDispatcher, lookupNullableDispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 
-export class RequestDispatcher extends Dispatcher<Request, channels.RequestInitializer, channels.RequestEvents> implements channels.RequestChannel {
+export class RequestDispatcher extends Dispatcher<Request, channels.RequestChannel> implements channels.RequestChannel {
+  _type_Request: boolean;
 
   static from(scope: DispatcherScope, request: Request): RequestDispatcher {
     const result = existingDispatcher<RequestDispatcher>(request);
@@ -44,6 +45,7 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestIniti
       isNavigationRequest: request.isNavigationRequest(),
       redirectedFrom: RequestDispatcher.fromNullable(scope, request.redirectedFrom()),
     });
+    this._type_Request = true;
   }
 
   async rawRequestHeaders(params?: channels.RequestRawRequestHeadersParams): Promise<channels.RequestRawRequestHeadersResult> {
@@ -55,7 +57,8 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestIniti
   }
 }
 
-export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseInitializer, channels.ResponseEvents> implements channels.ResponseChannel {
+export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseChannel> implements channels.ResponseChannel {
+  _type_Response = true;
 
   static from(scope: DispatcherScope, response: Response): ResponseDispatcher {
     const result = existingDispatcher<ResponseDispatcher>(response);
@@ -99,7 +102,8 @@ export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseIn
   }
 }
 
-export class RouteDispatcher extends Dispatcher<Route, channels.RouteInitializer, channels.RouteEvents> implements channels.RouteChannel {
+export class RouteDispatcher extends Dispatcher<Route, channels.RouteChannel> implements channels.RouteChannel {
+  _type_Route = true;
 
   static from(scope: DispatcherScope, route: Route): RouteDispatcher {
     const result = existingDispatcher<RouteDispatcher>(route);
@@ -131,7 +135,10 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteInitializer
   }
 }
 
-export class WebSocketDispatcher extends Dispatcher<WebSocket, channels.WebSocketInitializer, channels.WebSocketEvents> implements channels.WebSocketChannel {
+export class WebSocketDispatcher extends Dispatcher<WebSocket, channels.WebSocketChannel> implements channels.WebSocketChannel {
+  _type_EventTarget = true;
+  _type_WebSocket = true;
+
   constructor(scope: DispatcherScope, webSocket: WebSocket) {
     super(scope, webSocket, 'WebSocket', {
       url: webSocket.url(),
@@ -143,7 +150,9 @@ export class WebSocketDispatcher extends Dispatcher<WebSocket, channels.WebSocke
   }
 }
 
-export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, channels.APIRequestContextInitializer, channels.APIRequestContextEvents> implements channels.APIRequestContextChannel {
+export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, channels.APIRequestContextChannel> implements channels.APIRequestContextChannel {
+  _type_APIRequestContext = true;
+
   static from(scope: DispatcherScope, request: APIRequestContext): APIRequestContextDispatcher {
     const result = existingDispatcher<APIRequestContextDispatcher>(request);
     return result || new APIRequestContextDispatcher(scope, request);

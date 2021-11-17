@@ -20,7 +20,8 @@ import { Dispatcher, DispatcherScope } from './dispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { parseSerializedValue, serializeValue } from '../protocol/serializers';
 
-export class JSHandleDispatcher extends Dispatcher<js.JSHandle, channels.JSHandleInitializer, channels.JSHandleEvents> implements channels.JSHandleChannel {
+export class JSHandleDispatcher extends Dispatcher<js.JSHandle, channels.JSHandleChannel> implements channels.JSHandleChannel {
+  _type_JSHandle = true;
 
   protected constructor(scope: DispatcherScope, jsHandle: js.JSHandle) {
     // Do not call this directly, use createHandle() instead.

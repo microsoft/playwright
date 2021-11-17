@@ -25,7 +25,8 @@ import { JsonPipeDispatcher } from '../dispatchers/jsonPipeDispatcher';
 import { getUserAgent, makeWaitForNextTask } from '../utils/utils';
 import { ManualPromise } from '../utils/async';
 
-export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.BrowserTypeInitializer, channels.BrowserTypeEvents> implements channels.BrowserTypeChannel {
+export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.BrowserTypeChannel> implements channels.BrowserTypeChannel {
+  _type_BrowserType = true;
   constructor(scope: DispatcherScope, browserType: BrowserType) {
     super(scope, browserType, 'BrowserType', {
       executablePath: browserType.executablePath(),

@@ -29,7 +29,8 @@ import { ElectronDispatcher } from './electronDispatcher';
 import { APIRequestContextDispatcher } from './networkDispatchers';
 import { SelectorsDispatcher } from './selectorsDispatcher';
 
-export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.PlaywrightInitializer, channels.PlaywrightEvents> implements channels.PlaywrightChannel {
+export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.PlaywrightChannel> implements channels.PlaywrightChannel {
+  _type_Playwright;
   private _socksProxy: SocksProxy | undefined;
 
   constructor(scope: DispatcherScope, playwright: Playwright, customSelectors?: channels.SelectorsChannel, preLaunchedBrowser?: channels.BrowserChannel) {
@@ -46,6 +47,7 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
       selectors: customSelectors || new SelectorsDispatcher(scope, playwright.selectors),
       preLaunchedBrowser,
     }, false);
+    this._type_Playwright = true;
   }
 
   async enableSocksProxy() {

@@ -17,7 +17,7 @@
 import * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 
-export class JsonPipe extends ChannelOwner<channels.JsonPipeChannel, channels.JsonPipeInitializer> {
+export class JsonPipe extends ChannelOwner<channels.JsonPipeChannel> {
   static from(jsonPipe: channels.JsonPipeChannel): JsonPipe {
     return (jsonPipe as any)._object;
   }

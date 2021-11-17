@@ -18,7 +18,8 @@ import { Dialog } from '../server/dialog';
 import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 
-export class DialogDispatcher extends Dispatcher<Dialog, channels.DialogInitializer, channels.DialogEvents> implements channels.DialogChannel {
+export class DialogDispatcher extends Dispatcher<Dialog, channels.DialogChannel> implements channels.DialogChannel {
+  _type_Dialog = true;
   constructor(scope: DispatcherScope, dialog: Dialog) {
     super(scope, dialog, 'Dialog', {
       type: dialog.type(),

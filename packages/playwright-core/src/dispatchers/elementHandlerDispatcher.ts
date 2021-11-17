@@ -23,6 +23,8 @@ import { FrameDispatcher } from './frameDispatcher';
 import { CallMetadata } from '../server/instrumentation';
 
 export class ElementHandleDispatcher extends JSHandleDispatcher implements channels.ElementHandleChannel {
+  _type_ElementHandle = true;
+
   readonly _elementHandle: ElementHandle;
 
   static from(scope: DispatcherScope, handle: ElementHandle): ElementHandleDispatcher {

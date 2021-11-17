@@ -70,7 +70,7 @@ export class APIRequest implements api.APIRequest {
   }
 }
 
-export class APIRequestContext extends ChannelOwner<channels.APIRequestContextChannel, channels.APIRequestContextInitializer> implements api.APIRequestContext {
+export class APIRequestContext extends ChannelOwner<channels.APIRequestContextChannel> implements api.APIRequestContext {
   static from(channel: channels.APIRequestContextChannel): APIRequestContext {
     return (channel as any)._object;
   }

@@ -45,7 +45,7 @@ export class Selectors implements api.Selectors {
   }
 }
 
-export class SelectorsOwner extends ChannelOwner<channels.SelectorsChannel, channels.SelectorsInitializer> {
+export class SelectorsOwner extends ChannelOwner<channels.SelectorsChannel> {
   static from(browser: channels.SelectorsChannel): SelectorsOwner {
     return (browser as any)._object;
   }

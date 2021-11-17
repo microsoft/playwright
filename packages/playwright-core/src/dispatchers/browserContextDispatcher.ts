@@ -28,7 +28,9 @@ import { ArtifactDispatcher } from './artifactDispatcher';
 import { Artifact } from '../server/artifact';
 import { Request, Response } from '../server/network';
 
-export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextInitializer, channels.BrowserContextEvents> implements channels.BrowserContextChannel {
+export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextChannel> implements channels.BrowserContextChannel {
+  _type_EventTarget = true;
+  _type_BrowserContext = true;
   private _context: BrowserContext;
 
   constructor(scope: DispatcherScope, context: BrowserContext) {
