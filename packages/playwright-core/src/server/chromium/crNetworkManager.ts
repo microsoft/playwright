@@ -161,11 +161,6 @@ export class CRNetworkManager {
         this._responseExtraInfoTracker.requestPaused(request.request, event);
     }
 
-    if (!this._userRequestInterceptionEnabled && this._protocolRequestInterceptionEnabled) {
-      this._client._sendMayFail('Fetch.continueRequest', {
-        requestId: event.requestId
-      });
-    }
     if (!event.networkId) {
       // Fetch without networkId means that request was not recongnized by inspector, and
       // it will never receive Network.requestWillBeSent. Most likely, this is an internal request
@@ -249,7 +244,7 @@ export class CRNetworkManager {
     let route = null;
     if (requestPausedEvent) {
       // We do not support intercepting redirects.
-      if (redirectedFrom)
+      if (redirectedFrom || (!this._userRequestInterceptionEnabled && this._protocolRequestInterceptionEnabled))
         this._client._sendMayFail('Fetch.continueRequest', { requestId: requestPausedEvent.requestId });
       else
         route = new RouteImpl(this._client, requestPausedEvent.requestId);
