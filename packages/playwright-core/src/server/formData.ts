@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import * as types from './types';
+import mime from 'mime';
+import * as channels from '../protocol/channels';
 
 export class MultipartFormData {
   private readonly _boundary: string;
@@ -35,10 +36,10 @@ export class MultipartFormData {
     this._finishMultiPartField();
   }
 
-  addFileField(name: string, value: types.FilePayload) {
+  addFileField(name: string, value: NonNullable<channels.FormField['file']>) {
     this._beginMultiPartHeader(name);
     this._chunks.push(Buffer.from(`; filename="${value.name}"`));
-    this._chunks.push(Buffer.from(`\r\ncontent-type: ${value.mimeType || 'application/octet-stream'}`));
+    this._chunks.push(Buffer.from(`\r\ncontent-type: ${value.mimeType || mime.getType(value.name) || 'application/octet-stream'}`));
     this._finishMultiPartHeader();
     this._chunks.push(Buffer.from(value.buffer, 'base64'));
     this._finishMultiPartField();

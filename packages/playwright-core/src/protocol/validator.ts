@@ -153,7 +153,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     value: tOptional(tString),
     file: tOptional(tObject({
       name: tString,
-      mimeType: tString,
+      mimeType: tOptional(tString),
       buffer: tBinary,
     })),
   });
