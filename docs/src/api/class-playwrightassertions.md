@@ -1,5 +1,5 @@
 # class: PlaywrightAssertions
-* langs: java
+* langs: java, python
 
 The [PlaywrightAssertions] class provides convenience methods for creating assertions that will wait until the expected condition is met.
 
@@ -37,8 +37,9 @@ To use Playwright assertions add the following dependency into the `pom.xml` of 
 ```
 
 ## method: PlaywrightAssertions.assertThatLocator
-* langs: java
+* langs: java, python
   - alias-java: assertThat
+  - alias-python: expect
 - returns: <[LocatorAssertions]>
 
 Creates a [LocatorAssertions] object for the given [Locator].
@@ -53,8 +54,9 @@ PlaywrightAssertions.assertThat(locator).isVisible();
 [Locator] object to use for assertions.
 
 ## method: PlaywrightAssertions.assertThatPage
-* langs: java
+* langs: java, python
   - alias-java: assertThat
+  - alias-python: expect
 - returns: <[PageAssertions]>
 
 Creates a [PageAssertions] object for the given [Page].

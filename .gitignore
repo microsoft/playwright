@@ -23,3 +23,4 @@ playwright-report
 /packages/*/LICENSE
 /packages/*/NOTICE
 /packages/playwright/README.md
+/packages/playwright-core/api.json
