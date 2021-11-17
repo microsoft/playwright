@@ -20,8 +20,8 @@ public class TestPage {
 
 
 ## method: PageAssertions.not
-- returns: <[PageAssertions]>
 * langs: java
+- returns: <[PageAssertions]>
 
 Makes the assertion check for the opposite condition. For example, this code tests that the page URL doesn't contain `"error"`:
 

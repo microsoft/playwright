@@ -19,8 +19,8 @@ public class TestLocator {
 ```
 
 ## method: LocatorAssertions.not
-- returns: <[LocatorAssertions]>
 * langs: java
+- returns: <[LocatorAssertions]>
 
 Makes the assertion check for the opposite condition. For example, this code tests that the Locator doesn't contain text `"error"`:
 
