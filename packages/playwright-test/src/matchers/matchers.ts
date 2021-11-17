@@ -224,6 +224,18 @@ export function toHaveText(
   }
 }
 
+export function toHaveValue(
+  this: ReturnType<Expect['getState']>,
+  locator: LocatorEx,
+  expected: string | RegExp,
+  options?: { timeout?: number },
+) {
+  return toMatchText.call(this, 'toHaveValue', locator, 'Locator', async (isNot, timeout) => {
+    const expectedText = toExpectedTextValues([expected]);
+    return await locator._expect('to.have.value', { expectedText, isNot, timeout });
+  }, expected, options);
+}
+
 export function toHaveTitle(
   this: ReturnType<Expect['getState']>,
   page: Page,
@@ -249,17 +261,5 @@ export function toHaveURL(
   return toMatchText.call(this, 'toHaveURL', locator, 'Locator', async (isNot, timeout) => {
     const expectedText = toExpectedTextValues([expected]);
     return await locator._expect('to.have.url', { expectedText, isNot, timeout });
-  }, expected, options);
-}
-
-export function toHaveValue(
-  this: ReturnType<Expect['getState']>,
-  locator: LocatorEx,
-  expected: string | RegExp,
-  options?: { timeout?: number },
-) {
-  return toMatchText.call(this, 'toHaveValue', locator, 'Locator', async (isNot, timeout) => {
-    const expectedText = toExpectedTextValues([expected]);
-    return await locator._expect('to.have.value', { expectedText, isNot, timeout });
   }, expected, options);
 }
