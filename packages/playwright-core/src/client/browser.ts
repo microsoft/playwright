@@ -25,7 +25,7 @@ import * as api from '../../types/types';
 import { CDPSession } from './cdpSession';
 import type { BrowserType } from './browserType';
 
-export class Browser extends ChannelOwner<channels.BrowserChannel, channels.BrowserInitializer> implements api.Browser {
+export class Browser extends ChannelOwner<channels.BrowserChannel> implements api.Browser {
   readonly _contexts = new Set<BrowserContext>();
   private _isConnected = true;
   private _closedPromise: Promise<void>;

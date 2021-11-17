@@ -24,7 +24,7 @@ import { ClientInstrumentation } from './clientInstrumentation';
 import type { Connection } from './connection';
 import type { Logger } from './types';
 
-export abstract class ChannelOwner<T extends channels.Channel = channels.Channel, Initializer = {}> extends EventEmitter {
+export abstract class ChannelOwner<T extends channels.Channel = channels.Channel> extends EventEmitter {
   readonly _connection: Connection;
   private _parent: ChannelOwner | undefined;
   private _objects = new Map<string, ChannelOwner>();
@@ -32,11 +32,11 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
   readonly _type: string;
   readonly _guid: string;
   readonly _channel: T;
-  readonly _initializer: Initializer;
+  readonly _initializer: channels.InitializerTraits<T>;
   _logger: Logger | undefined;
   _instrumentation: ClientInstrumentation | undefined;
 
-  constructor(parent: ChannelOwner | Connection, type: string, guid: string, initializer: Initializer, instrumentation?: ClientInstrumentation) {
+  constructor(parent: ChannelOwner | Connection, type: string, guid: string, initializer: channels.InitializerTraits<T>, instrumentation?: ClientInstrumentation) {
     super();
     this.setMaxListeners(0);
     this._connection = parent instanceof ChannelOwner ? parent._connection : parent;

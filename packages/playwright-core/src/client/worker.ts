@@ -23,7 +23,7 @@ import { BrowserContext } from './browserContext';
 import * as api from '../../types/types';
 import * as structs from '../../types/structs';
 
-export class Worker extends ChannelOwner<channels.WorkerChannel, channels.WorkerInitializer> implements api.Worker {
+export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.Worker {
   _page: Page | undefined;  // Set for web workers.
   _context: BrowserContext | undefined;  // Set for service workers.
 

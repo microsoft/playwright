@@ -55,7 +55,7 @@ export type SetNetworkCookieParam = {
   sameSite?: 'Strict' | 'Lax' | 'None'
 };
 
-export class Request extends ChannelOwner<channels.RequestChannel, channels.RequestInitializer> implements api.Request {
+export class Request extends ChannelOwner<channels.RequestChannel> implements api.Request {
   private _redirectedFrom: Request | null = null;
   private _redirectedTo: Request | null = null;
   _failureText: string | null = null;
@@ -215,7 +215,7 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
   }
 }
 
-export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteInitializer> implements api.Route {
+export class Route extends ChannelOwner<channels.RouteChannel> implements api.Route {
   static from(route: channels.RouteChannel): Route {
     return (route as any)._object;
   }
@@ -334,7 +334,7 @@ export type RequestSizes = {
   responseHeadersSize: number;
 };
 
-export class Response extends ChannelOwner<channels.ResponseChannel, channels.ResponseInitializer> implements api.Response {
+export class Response extends ChannelOwner<channels.ResponseChannel> implements api.Response {
   private _provisionalHeaders: RawHeaders;
   private _actualHeadersPromise: Promise<RawHeaders> | undefined;
   private _request: Request;
@@ -445,7 +445,7 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
   }
 }
 
-export class WebSocket extends ChannelOwner<channels.WebSocketChannel, channels.WebSocketInitializer> implements api.WebSocket {
+export class WebSocket extends ChannelOwner<channels.WebSocketChannel> implements api.WebSocket {
   private _page: Page;
   private _isClosed: boolean;
 

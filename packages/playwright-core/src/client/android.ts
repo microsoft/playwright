@@ -30,7 +30,7 @@ import { EventEmitter } from 'events';
 type Direction = 'down' | 'up' | 'left' | 'right';
 type SpeedOptions = { speed?: number };
 
-export class Android extends ChannelOwner<channels.AndroidChannel, channels.AndroidInitializer> implements api.Android {
+export class Android extends ChannelOwner<channels.AndroidChannel> implements api.Android {
   readonly _timeoutSettings: TimeoutSettings;
 
   static from(android: channels.AndroidChannel): Android {
@@ -55,7 +55,7 @@ export class Android extends ChannelOwner<channels.AndroidChannel, channels.Andr
   }
 }
 
-export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel, channels.AndroidDeviceInitializer> implements api.AndroidDevice {
+export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> implements api.AndroidDevice {
   readonly _timeoutSettings: TimeoutSettings;
   private _webViews = new Map<number, AndroidWebView>();
 
@@ -249,7 +249,7 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel, c
   }
 }
 
-export class AndroidSocket extends ChannelOwner<channels.AndroidSocketChannel, channels.AndroidSocketInitializer> implements api.AndroidSocket {
+export class AndroidSocket extends ChannelOwner<channels.AndroidSocketChannel> implements api.AndroidSocket {
   static from(androidDevice: channels.AndroidSocketChannel): AndroidSocket {
     return (androidDevice as any)._object;
   }

@@ -21,7 +21,7 @@ import { mkdirIfNeeded } from '../utils/utils';
 import { ChannelOwner } from './channelOwner';
 import { Readable } from 'stream';
 
-export class Artifact extends ChannelOwner<channels.ArtifactChannel, channels.ArtifactInitializer> {
+export class Artifact extends ChannelOwner<channels.ArtifactChannel> {
   static from(channel: channels.ArtifactChannel): Artifact {
     return (channel as any)._object;
   }

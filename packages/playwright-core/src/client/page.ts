@@ -62,7 +62,7 @@ type PDFOptions = Omit<channels.PagePdfParams, 'width' | 'height' | 'margin'> & 
 };
 type Listener = (...args: any[]) => void;
 
-export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitializer> implements api.Page {
+export class Page extends ChannelOwner<channels.PageChannel> implements api.Page {
   private _browserContext: BrowserContext;
   _ownedContext: BrowserContext | undefined;
 
@@ -96,7 +96,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.PageInitializer) {
     super(parent, type, guid, initializer);
-    this._browserContext = parent as BrowserContext;
+    this._browserContext = parent as unknown as BrowserContext;
     this._timeoutSettings = new TimeoutSettings(this._browserContext._timeoutSettings);
 
     this.accessibility = new Accessibility(this._channel);
@@ -698,7 +698,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   }
 }
 
-export class BindingCall extends ChannelOwner<channels.BindingCallChannel, channels.BindingCallInitializer> {
+export class BindingCall extends ChannelOwner<channels.BindingCallChannel> {
   static from(channel: channels.BindingCallChannel): BindingCall {
     return (channel as any)._object;
   }

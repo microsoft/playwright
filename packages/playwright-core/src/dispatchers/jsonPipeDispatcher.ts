@@ -19,7 +19,8 @@ import { Dispatcher, DispatcherScope } from './dispatcher';
 import { createGuid } from '../utils/utils';
 import { serializeError } from '../protocol/serializers';
 
-export class JsonPipeDispatcher extends Dispatcher<{ guid: string }, channels.JsonPipeInitializer, channels.JsonPipeEvents> implements channels.JsonPipeChannel {
+export class JsonPipeDispatcher extends Dispatcher<{ guid: string }, channels.JsonPipeChannel> implements channels.JsonPipeChannel {
+  _type_JsonPipe = true;
   constructor(scope: DispatcherScope) {
     super(scope, { guid: 'jsonPipe@' + createGuid() }, 'JsonPipe', {});
   }

@@ -38,7 +38,7 @@ export type WaitForNavigationOptions = {
   url?: URLMatch,
 };
 
-export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameInitializer> implements api.Frame {
+export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Frame {
   _eventEmitter: EventEmitter;
   _loadStates: Set<LifecycleEvent>;
   _parentFrame: Frame | null = null;

@@ -41,7 +41,7 @@ import { EventEmitter } from 'events';
 import { JsonPipe } from './jsonPipe';
 import { APIRequestContext } from './fetch';
 
-class Root extends ChannelOwner<channels.RootChannel, {}> {
+class Root extends ChannelOwner<channels.RootChannel> {
   constructor(connection: Connection) {
     super(connection, 'Root', '', {});
   }
@@ -142,7 +142,7 @@ export class Connection extends EventEmitter {
     const object = this._objects.get(guid);
     if (!object)
       throw new Error(`Cannot find object to emit "${method}": ${guid}`);
-    object._channel.emit(method, object._type === 'JsonPipe' ? params : this._replaceGuidsWithChannels(params));
+    (object._channel as any).emit(method, object._type === 'JsonPipe' ? params : this._replaceGuidsWithChannels(params));
   }
 
   close(errorMessage: string = 'Connection closed') {
@@ -173,7 +173,7 @@ export class Connection extends EventEmitter {
     const parent = this._objects.get(parentGuid);
     if (!parent)
       throw new Error(`Cannot find parent object ${parentGuid} to create ${guid}`);
-    let result: ChannelOwner<any, any>;
+    let result: ChannelOwner<any>;
     initializer = this._replaceGuidsWithChannels(initializer);
     switch (type) {
       case 'Android':

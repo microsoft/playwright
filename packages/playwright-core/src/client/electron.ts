@@ -36,7 +36,7 @@ type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'|'extraHTTPHead
 
 type ElectronAppType = typeof import('electron');
 
-export class Electron extends ChannelOwner<channels.ElectronChannel, channels.ElectronInitializer> implements api.Electron {
+export class Electron extends ChannelOwner<channels.ElectronChannel> implements api.Electron {
   static from(electron: channels.ElectronChannel): Electron {
     return (electron as any)._object;
   }
@@ -57,7 +57,7 @@ export class Electron extends ChannelOwner<channels.ElectronChannel, channels.El
   }
 }
 
-export class ElectronApplication extends ChannelOwner<channels.ElectronApplicationChannel, channels.ElectronApplicationInitializer> implements api.ElectronApplication {
+export class ElectronApplication extends ChannelOwner<channels.ElectronApplicationChannel> implements api.ElectronApplication {
   private _context: BrowserContext;
   private _windows = new Set<Page>();
   private _timeoutSettings = new TimeoutSettings();
