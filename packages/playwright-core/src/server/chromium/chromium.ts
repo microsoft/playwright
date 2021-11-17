@@ -296,7 +296,7 @@ const DEFAULT_ARGS = [
   '--disable-default-apps',
   '--disable-dev-shm-usage',
   '--disable-extensions',
-  '--disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter',
+  '--disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,AcceptCHFrame',
   '--allow-pre-commit-input',
   '--disable-hang-monitor',
   '--disable-ipc-flooding-protection',
