@@ -1349,8 +1349,7 @@ export interface TestInfo {
    */
   attach(path: string, options?: { contentType?: string, name?: string}): Promise<void>;
   /**
-   * Similar to [testInfo.attach(path[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach-1) but
-   * attaches inline `strings` or `Buffers` instead of files from disk.
+   * Attach data to the current test, either a `string` or a `Buffer`. Some reporters show test attachments.
    * @param body
    * @param name
    * @param contentType

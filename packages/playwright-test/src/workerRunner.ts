@@ -15,7 +15,7 @@
  */
 
 import fs from 'fs';
-import path, { basename } from 'path';
+import path from 'path';
 import rimraf from 'rimraf';
 import * as mime from 'mime';
 import util from 'util';
@@ -31,7 +31,6 @@ import { ProjectImpl } from './project';
 import { FixturePool, FixtureRunner } from './fixtures';
 import { DeadlineRunner, raceAgainstDeadline } from 'playwright-core/lib/utils/async';
 import { calculateFileSha1 } from 'playwright-core/lib/utils/utils';
-// import { calculateFileSha1 } from 'playwright-core/lib/utils/utils';
 
 const removeFolderAsync = util.promisify(rimraf);
 
@@ -281,11 +280,11 @@ export class WorkerRunner extends EventEmitter {
           };
         } else { // path based attachment
           const options = nameOrOptions;
-          const path = pathOrBody as string;
-          const name = options?.name ?? basename(path);
+          const thePath = pathOrBody as string;
+          const name = options?.name ?? path.basename(thePath);
           attachment = {
             name,
-            path,
+            path: thePath,
             contentType: options?.contentType ?? (mime.getType(name) || 'application/octet-stream')
           };
         }
