@@ -100,6 +100,7 @@ function archive_compiled_chromium() {
 
   if [[ $1 == "--compile-win"* ]]; then
     $COPY_COMMAND "${CR_CHECKOUT_PATH}/src/out/Default/"*.manifest "output/${CHROMIUM_FOLDER_NAME}/"
+    $COPY_COMMAND "${CR_CHECKOUT_PATH}/src/out/Default/locales/"*.pak "output/${CHROMIUM_FOLDER_NAME}/locales/"
   fi
 
   cd output
