@@ -165,33 +165,6 @@ elif [[ "$BUILD_FLAVOR" == "chromium-with-symbols-linux-arm64" ]]; then
   BUILD_BLOB_NAME="chromium-with-symbols-linux-arm64.zip"
   BUILDS_LIST="EXPECTED_BUILDS_WITH_SYMBOLS"
 
-
-# ===========================
-#    CHROMIUM MIRRORING
-# ===========================
-elif [[ "$BUILD_FLAVOR" == "chromium-linux-mirror-to-cdn" ]]; then
-  BROWSER_NAME="chromium"
-  EXTRA_BUILD_ARGS="--mirror-linux"
-  EXTRA_ARCHIVE_ARGS="--mirror-linux"
-  EXPECTED_HOST_OS="Ubuntu"
-  EXPECTED_HOST_OS_VERSION="18.04"
-  BUILD_BLOB_NAME="chromium-linux.zip"
-elif [[ "$BUILD_FLAVOR" == "chromium-mac-mirror-to-cdn" ]]; then
-  BROWSER_NAME="chromium"
-  EXTRA_BUILD_ARGS="--mirror-mac"
-  EXTRA_ARCHIVE_ARGS="--mirror-mac"
-  EXPECTED_HOST_OS="Ubuntu"
-  EXPECTED_HOST_OS_VERSION="18.04"
-  BUILD_BLOB_NAME="chromium-mac.zip"
-elif [[ "$BUILD_FLAVOR" == "chromium-win64-mirror-to-cdn" ]]; then
-  BROWSER_NAME="chromium"
-  EXTRA_BUILD_ARGS="--mirror-win64"
-  EXTRA_ARCHIVE_ARGS="--mirror-win64"
-  EXPECTED_HOST_OS="Ubuntu"
-  EXPECTED_HOST_OS_VERSION="18.04"
-  BUILD_BLOB_NAME="chromium-win64.zip"
-
-
 # ===========================
 #    FIREFOX COMPILATION
 # ===========================
