@@ -5,6 +5,57 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.17
+
+### Frame Locators
+
+Playwright 1.17 introduces [frame locators](./api/class-framelocator) - a locator to the iframe on the page. Frame locators capture the logic sufficient to retrieve the `iframe` and then locate elements in that iframe. Frame locators are strict by default, will wait for `iframe` to appear and can be used in Web-First assertions.
+
+![Graphics](https://user-images.githubusercontent.com/746130/142082759-2170db38-370d-43ec-8d41-5f9941f57d83.png)
+
+Frame locators can be created with either [`method: Page.frameLocator`] or [`method: Locator.frameLocator`] method.
+
+```java
+Locator locator = page.frameLocator("#my-frame").locator("text=Submit");
+locator.click();
+```
+
+Read more at [our documentation](./api/class-framelocator).
+
+### Trace Viewer Update
+
+Playwright Trace Viewer is now **available online** at https://trace.playwright.dev! Just drag-and-drop your `trace.zip` file to inspect its contents.
+
+> **NOTE**: trace files are not uploaded anywhere; [trace.playwright.dev](https://trace.playwright.dev) is a [progressive web application](https://web.dev/progressive-web-apps/) that processes traces locally.
+
+- Playwright Test traces now include sources by default (these could be turned off with tracing option)
+- Trace Viewer now shows test name
+- New trace metadata tab with browser details
+- Snapshots now have URL bar
+
+![image](https://user-images.githubusercontent.com/746130/141877831-29e37cd1-e574-4bd9-aab5-b13a463bb4ae.png)
+
+### HTML Report Update
+
+- HTML report now supports dynamic filtering
+- Report is now a **single static HTML file** that could be sent by e-mail or as a slack attachment.
+
+![image](https://user-images.githubusercontent.com/746130/141877402-e486643d-72c7-4db3-8844-ed2072c5d676.png)
+
+### Ubuntu ARM64 support + more
+
+- Playwright now supports **Ubuntu 20.04 ARM64**. You can now run Playwright tests inside Docker on Apple M1 and on Raspberry Pi.
+- You can now use Playwright to install stable version of Edge on Linux:
+    ```bash
+    npx playwright install msedge
+    ```
+
+
+### New APIs
+
+- Tracing now supports a [`'title'`](./api/class-tracing#tracing-start-option-title) option
+- Page navigations support a new [`'commit'`](./api/class-page#page-goto) waiting option
+
 ## Version 1.16
 
 ### 🎭 Playwright Library
