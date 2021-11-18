@@ -33,7 +33,7 @@ mirror_chromium() {
   CHROMIUM_URL=""
 
   PLATFORM="$1"
-  if [[ -n "${PLATFORM}" ]]; then
+  if [[ -z "${PLATFORM}" ]]; then
     CURRENT_HOST_OS="$(uname)"
     if [[ "${CURRENT_HOST_OS}" == "Darwin" ]]; then
       PLATFORM="--mac"

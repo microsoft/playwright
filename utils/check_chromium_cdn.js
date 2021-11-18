@@ -82,7 +82,7 @@ async function checkOmahaProxyAvailability() {
  * @param {boolean} stopWhenAllAvailable
  */
 async function checkRangeAvailability(fromRevision, toRevision, stopWhenAllAvailable) {
-  const table = new Table([15, 7, 7, 7, 7]);
+  const table = new Table([15, 7, 7, 7]);
   table.drawRow([''].concat(SUPPORTER_PLATFORMS));
   const inc = fromRevision < toRevision ? 1 : -1;
   for (let revision = fromRevision; revision !== toRevision; revision += inc) {
