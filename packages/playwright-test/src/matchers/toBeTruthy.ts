@@ -17,7 +17,7 @@
 import { currentTestInfo } from '../globals';
 import type { Expect } from '../types';
 import { expectType } from '../util';
-import { matchErrorDetails } from './toMatchText';
+import { callLogText } from './toMatchText';
 
 export async function toBeTruthy(
   this: ReturnType<Expect['getState']>,
@@ -43,7 +43,7 @@ export async function toBeTruthy(
   const { matches, log } = await query(this.isNot, timeout);
 
   const message = () => {
-    return this.utils.matcherHint(matcherName, undefined, '', matcherOptions) + matchErrorDetails(log, timeout);
+    return this.utils.matcherHint(matcherName, undefined, '', matcherOptions) + callLogText(log);
   };
 
   return { message, pass: matches };

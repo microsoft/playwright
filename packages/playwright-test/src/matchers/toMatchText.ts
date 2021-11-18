@@ -76,7 +76,7 @@ export async function toMatchText(
             receivedString,
             receivedString.indexOf(expected),
             expected.length,
-        )}` + matchErrorDetails(log, timeout)
+        )}` + callLogText(log)
         : this.utils.matcherHint(matcherName, undefined, undefined, matcherOptions) +
         '\n\n' +
         `Expected pattern: not ${this.utils.printExpected(expected)}\n` +
@@ -85,7 +85,7 @@ export async function toMatchText(
             typeof expected.exec === 'function'
               ? expected.exec(receivedString)
               : null,
-        )}` + matchErrorDetails(log, timeout)
+        )}` + callLogText(log)
     : () => {
       const labelExpected = `Expected ${typeof expected === 'string' ? stringSubstring : 'pattern'
       }`;
@@ -100,7 +100,7 @@ export async function toMatchText(
             labelExpected,
             labelReceived,
             this.expand !== false,
-        )) + matchErrorDetails(log, timeout);
+        )) + callLogText(log);
     };
 
   return { message, pass };
@@ -116,12 +116,11 @@ export function toExpectedTextValues(items: (string | RegExp)[], options: { matc
   }));
 }
 
-export function matchErrorDetails(log: string[] | undefined, timeout: number): string {
+export function callLogText(log: string[] | undefined): string {
   if (!log)
-    return timeout ? `\nTimed out after ${timeout}ms` : '';
+    return '';
   return `
-
-Call log${timeout ? ` after ${timeout}ms` : ''}:
+Call log:
   ${colors.dim('- ' + (log || []).join('\n  - '))}
 `;
 }

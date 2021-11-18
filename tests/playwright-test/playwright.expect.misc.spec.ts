@@ -86,7 +86,7 @@ test('should support toHaveCount', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(output).toContain('Expected: 0');
   expect(output).toContain('Received: 1');
-  expect(output).toContain('Call log after 500ms:');
+  expect(output).toContain('expect.toHaveCount with timeout 500ms');
 });
 
 test('should support toHaveJSProperty', async ({ runInlineTest }) => {
@@ -329,7 +329,7 @@ test('should respect expect.timeout', async ({ runInlineTest }) => {
   }, { workers: 1 });
   const output = stripAscii(result.output);
   expect(output).toContain('expect(received).toHaveURL(expected)');
-  expect(output).toContain('Call log after 1000ms:');
+  expect(output).toContain('expect.toHaveURL with timeout 1000ms');
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
 });
