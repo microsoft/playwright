@@ -14,39 +14,26 @@
  * limitations under the License.
  */
 
-import type { TestType, FullProject, Fixtures, FixturesWithLocation } from './types';
+import type { FullProject, Fixtures, FixturesWithLocation } from './types';
 import { Suite, TestCase } from './test';
-import { FixturePool } from './fixtures';
-import { DeclaredFixtures, TestTypeImpl } from './testType';
+import { FixturePool, isFixtureOption } from './fixtures';
+import { TestTypeImpl } from './testType';
 
 export class ProjectImpl {
   config: FullProject;
   private index: number;
-  private defines = new Map<TestType<any, any>, Fixtures>();
   private testTypePools = new Map<TestTypeImpl, FixturePool>();
   private testPools = new Map<TestCase, FixturePool>();
 
   constructor(project: FullProject, index: number) {
     this.config = project;
     this.index = index;
-    this.defines = new Map();
-    for (const { test, fixtures } of Array.isArray(project.define) ? project.define : [project.define])
-      this.defines.set(test, fixtures);
   }
 
   private buildTestTypePool(testType: TestTypeImpl): FixturePool {
     if (!this.testTypePools.has(testType)) {
-      const fixtures = this.resolveFixtures(testType);
-      const overrides: Fixtures = this.config.use;
-      const overridesWithLocation = {
-        fixtures: overrides,
-        location: {
-          file: `<configuration file>`,
-          line: 1,
-          column: 1,
-        }
-      };
-      const pool = new FixturePool([...fixtures, overridesWithLocation]);
+      const fixtures = this.resolveFixtures(testType, this.config.use);
+      const pool = new FixturePool(fixtures);
       this.testTypePools.set(testType, pool);
     }
     return this.testTypePools.get(testType)!;
@@ -121,13 +108,18 @@ export class ProjectImpl {
     return this._cloneEntries(suite, result, repeatEachIndex, filter) ? result : undefined;
   }
 
-  private resolveFixtures(testType: TestTypeImpl): FixturesWithLocation[] {
+  private resolveFixtures(testType: TestTypeImpl, configUse: Fixtures): FixturesWithLocation[] {
     return testType.fixtures.map(f => {
-      if (f instanceof DeclaredFixtures) {
-        const fixtures = this.defines.get(f.testType.test) || {};
-        return { fixtures, location: f.location };
+      const configKeys = new Set(Object.keys(configUse || {}));
+      const resolved = { ...f.fixtures };
+      for (const [key, value] of Object.entries(resolved)) {
+        if (!isFixtureOption(value) || !configKeys.has(key))
+          continue;
+        // Apply override from config file.
+        const override = (configUse as any)[key];
+        (resolved as any)[key] = [override, value[1]];
       }
-      return f;
+      return { fixtures: resolved, location: f.location };
     });
   }
 }

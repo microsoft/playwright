@@ -82,7 +82,7 @@ test('should remove an item', async ({ todoPage }) => {
 import { test as base } from '@playwright/test';
 import { TodoPage } from './todo-page';
 
-// Extend basic test by providing a "table" fixture.
+// Extend basic test by providing a "todoPage" fixture.
 const test = base.extend<{ todoPage: TodoPage }>({
   todoPage: async ({ page }, use) => {
     const todoPage = new TodoPage(page);
@@ -139,21 +139,21 @@ test('hello world', ({ helloWorld }) => {
 });
 ```
 
-It uses fixtures `hello` and `helloWorld` that are set up by the framework for each test run.
+It uses an option `hello` and a fixture `helloWorld` that are set up by the framework for each test run.
 
-Here is how test fixtures are declared and defined. Fixtures can use other fixtures - note how `helloWorld` uses `hello`.
+Here is how test fixtures are defined. Fixtures can use other fixtures and/or options - note how `helloWorld` uses `hello`.
 
 ```js js-flavor=js
 // hello.js
 const base = require('@playwright/test');
 
-// Extend base test with fixtures "hello" and "helloWorld".
-// This new "test" can be used in multiple test files, and each of them will get the fixtures.
-module.exports = base.test.extend({
-  // This fixture is a constant, so we can just provide the value.
-  hello: 'Hello',
+// Extend base test with our options and fixtures.
+const test =  base.test.extend({
+  // Define an option and provide a default value.
+  // We can later override it in the config.
+  hello: ['Hello', { option: true }],
 
-  // This fixture has some complex logic and is defined with a function.
+  // Define a fixture.
   helloWorld: async ({ hello }, use) => {
     // Set up the fixture.
     const value = hello + ', world!';
@@ -164,24 +164,29 @@ module.exports = base.test.extend({
     // Clean up the fixture. Nothing to cleanup in this example.
   },
 });
+
+// This new "test" can be used in multiple test files, and each of them will get the fixtures.
+module.exports = test;
 ```
 
 ```js js-flavor=ts
 // hello.ts
 import { test as base } from '@playwright/test';
 
-// Define test fixtures "hello" and "helloWorld".
-type TestFixtures = {
+type TestOptions = {
   hello: string;
+};
+type TestFixtures = {
   helloWorld: string;
 };
 
-// Extend base test with our fixtures.
-const test = base.extend<TestFixtures>({
-  // This fixture is a constant, so we can just provide the value.
-  hello: 'Hello',
+// Extend base test with our options and fixtures.
+const test = base.extend<TestOptions & TestFixtures>({
+  // Define an option and provide a default value.
+  // We can later override it in the config.
+  hello: ['Hello', { option: true }],
 
-  // This fixture has some complex logic and is defined with a function.
+  // Define a fixture.
   helloWorld: async ({ hello }, use) => {
     // Set up the fixture.
     const value = hello + ', world!';

@@ -16,22 +16,17 @@
 
 import { test } from '@playwright/test';
 import { commonFixtures, CommonFixtures } from './commonFixtures';
-import { serverFixtures, ServerFixtures, ServerWorkerOptions } from './serverFixtures';
-import { coverageFixtures, CoverageWorkerOptions } from './coverageFixtures';
-import { platformFixtures, PlatformWorkerFixtures } from './platformFixtures';
-import { testModeFixtures, TestModeWorkerFixtures } from './testModeFixtures';
-
-
-export type BaseTestWorkerFixtures = {
-  _snapshotSuffix: string;
-};
+import { serverTest } from './serverFixtures';
+import { coverageTest } from './coverageFixtures';
+import { platformTest } from './platformFixtures';
+import { testModeTest } from './testModeFixtures';
 
 export const baseTest = test
-    .extend<{}, CoverageWorkerOptions>(coverageFixtures as any)
-    .extend<{}, PlatformWorkerFixtures>(platformFixtures)
-    .extend<{}, TestModeWorkerFixtures>(testModeFixtures as any)
+    .extendTest(coverageTest)
+    .extendTest(platformTest)
+    .extendTest(testModeTest)
     .extend<CommonFixtures>(commonFixtures)
-    .extend<ServerFixtures, ServerWorkerOptions>(serverFixtures as any)
-    .extend<{}, BaseTestWorkerFixtures>({
+    .extendTest(serverTest)
+    .extend<{}, { _snapshotSuffix: string }>({
       _snapshotSuffix: ['', { scope: 'worker' }],
     });

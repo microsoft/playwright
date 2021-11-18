@@ -63,11 +63,17 @@ test('can return anything from hooks', async ({ runTSC }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('test.declare should check types', async ({ runTSC }) => {
+test('test.extend options should check types', async ({ runTSC }) => {
   const result = await runTSC({
     'helper.ts': `
+      export type Params = { foo: string };
       export const test = pwt.test;
-      export const test1 = test.declare<{ foo: string }>();
+      export const test1 = test.extend<Params>({ foo: [ 'foo', { option: true } ] });
+      export const test1b = test.extend<{ bar: string }>({ bar: [ 'bar', { option: true } ] });
+      export const testerror = test.extend<{ foo: string }>({
+        // @ts-expect-error
+        foo: 123
+      });
       export const test2 = test1.extend<{ bar: number }>({
         bar: async ({ foo }, run) => { await run(parseInt(foo)); }
       });
@@ -75,26 +81,31 @@ test('test.declare should check types', async ({ runTSC }) => {
         // @ts-expect-error
         bar: async ({ baz }, run) => { await run(42); }
       });
+      export const test4 = test1.extendTest(test1b);
     `,
     'playwright.config.ts': `
-      import { test1 } from './helper';
-      const configs: pwt.Config[] = [];
+      import { Params } from './helper';
+      const configs: pwt.Config<Params>[] = [];
+
       configs.push({});
+
       configs.push({
-        define: {
-          test: test1,
-          fixtures: { foo: 'foo' }
-        },
+        use: { foo: 'bar' },
       });
 
       configs.push({
         // @ts-expect-error
-        define: { test: {}, fixtures: {} },
+        use: { foo: true },
+      });
+
+      configs.push({
+        // @ts-expect-error
+        use: { unknown: true },
       });
       module.exports = configs;
     `,
     'a.spec.ts': `
-      import { test, test1, test2, test3 } from './helper';
+      import { test, test1, test2, test3, test4 } from './helper';
       // @ts-expect-error
       test('my test', async ({ foo }) => {});
       test1('my test', async ({ foo }) => {});
@@ -103,6 +114,7 @@ test('test.declare should check types', async ({ runTSC }) => {
       test2('my test', async ({ foo, bar }) => {});
       // @ts-expect-error
       test2('my test', async ({ foo, baz }) => {});
+      test4('my test', async ({ foo, bar }) => {});
     `
   });
   expect(result.exitCode).toBe(0);

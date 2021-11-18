@@ -36,7 +36,6 @@ export type ReportSlowTests = { max: number, threshold: number } | null;
 export type PreserveOutput = 'always' | 'never' | 'failures-only';
 export type UpdateSnapshots = 'all' | 'none' | 'missing';
 
-type FixtureDefine<TestArgs extends KeyValue = {}, WorkerArgs extends KeyValue = {}> = { test: TestType<TestArgs, WorkerArgs>, fixtures: Fixtures<{}, {}, TestArgs, WorkerArgs> };
 type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K] } & { [K in keyof TestArgs]?: TestArgs[K] };
 
 type ExpectSettings = {
@@ -319,7 +318,6 @@ interface TestProject {
  *
  */
 export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
-  define?: FixtureDefine | FixtureDefine[];
   /**
    * Options for all tests in this project, for example
    * [testOptions.browserName](https://playwright.dev/docs/api/class-testoptions#test-options-browser-name). Learn more about
@@ -782,7 +780,6 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
    * Playwright Test supports running multiple test projects at the same time. See [TestProject] for more information.
    */
   projects?: Project<TestArgs, WorkerArgs>[];
-  define?: FixtureDefine | FixtureDefine[];
   /**
    * Global options for all tests, for example
    * [testOptions.browserName](https://playwright.dev/docs/api/class-testoptions#test-options-browser-name). Learn more about
@@ -2575,8 +2572,74 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * [expect library documentation](https://jestjs.io/docs/expect) for more details.
    */
   expect: Expect;
-  declare<T extends KeyValue = {}, W extends KeyValue = {}>(): TestType<TestArgs & T, WorkerArgs & W>;
+  /**
+   * Extends the `test` object by defining fixtures and/or options that can be used in the tests.
+   *
+   * First define a fixture and/or an option.
+   *
+   * ```ts
+   * import { test as base } from '@playwright/test';
+   * import { TodoPage } from './todo-page';
+   *
+   * export type Options = { defaultItem: string };
+   *
+   * // Extend basic test by providing a "defaultItem" option and a "todoPage" fixture.
+   * export const test = base.extend<Options & { todoPage: TodoPage }>({
+   *   // Define an option and provide a default value.
+   *   // We can later override it in the config.
+   *   defaultItem: ['Do stuff', { option: true }],
+   *
+   *   // Define a fixture. Note that it can use built-in fixture "page"
+   *   // and a new option "defaultItem".
+   *   todoPage: async ({ page, defaultItem }, use) => {
+   *     const todoPage = new TodoPage(page);
+   *     await todoPage.goto();
+   *     await todoPage.addToDo(defaultItem);
+   *     await use(todoPage);
+   *     await todoPage.removeAll();
+   *   },
+   * });
+   * ```
+   *
+   * Then use the fixture in the test.
+   *
+   * ```ts
+   * // example.spec.ts
+   * import { test } from './my-test';
+   *
+   * test('test 1', async ({ todoPage }) => {
+   *   await todoPage.addToDo('my todo');
+   *   // ...
+   * });
+   * ```
+   *
+   * Configure the option in config file.
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import { Options } from './my-test';
+   *
+   * const config: PlaywrightTestConfig<Options> = {
+   *   projects: [
+   *     {
+   *       name: 'shopping',
+   *       use: { defaultItem: 'Buy milk' },
+   *     },
+   *     {
+   *       name: 'wellbeing',
+   *       use: { defaultItem: 'Exercise!' },
+   *     },
+   *   ]
+   * };
+   * export default config;
+   * ```
+   *
+   * Learn more about [fixtures](https://playwright.dev/docs/test-fixtures) and [parametrizing tests](https://playwright.dev/docs/test-parameterize).
+   * @param fixtures An object containing fixtures and/or options. Learn more about [fixtures format](https://playwright.dev/docs/test-fixtures).
+   */
   extend<T, W extends KeyValue = {}>(fixtures: Fixtures<T, W, TestArgs, WorkerArgs>): TestType<TestArgs & T, WorkerArgs & W>;
+  extendTest<T, W>(other: TestType<T, W>): TestType<TestArgs & T, WorkerArgs & W>;
 }
 
 type KeyValue = { [key: string]: any };
@@ -2589,9 +2652,9 @@ export type Fixtures<T extends KeyValue = {}, W extends KeyValue = {}, PT extend
 } & {
   [K in keyof PT]?: TestFixtureValue<PT[K], T & W & PT & PW> | [TestFixtureValue<PT[K], T & W & PT & PW>, { scope: 'test' }];
 } & {
-  [K in keyof W]?: [WorkerFixtureValue<W[K], W & PW>, { scope: 'worker', auto?: boolean }];
+  [K in keyof W]?: [WorkerFixtureValue<W[K], W & PW>, { scope: 'worker', auto?: boolean, option?: boolean }];
 } & {
-  [K in keyof T]?: TestFixtureValue<T[K], T & W & PT & PW> | [TestFixtureValue<T[K], T & W & PT & PW>, { scope?: 'test', auto?: boolean }];
+  [K in keyof T]?: TestFixtureValue<T[K], T & W & PT & PW> | [TestFixtureValue<T[K], T & W & PT & PW>, { scope?: 'test', auto?: boolean, option?: boolean }];
 };
 
 type BrowserName = 'chromium' | 'firefox' | 'webkit';

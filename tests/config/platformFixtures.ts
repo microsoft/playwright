@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Fixtures } from '@playwright/test';
+import { test } from '@playwright/test';
 
 export type PlatformWorkerFixtures = {
   platform: 'win32' | 'darwin' | 'linux';
@@ -23,9 +23,9 @@ export type PlatformWorkerFixtures = {
   isLinux: boolean;
 };
 
-export const platformFixtures: Fixtures<{}, PlatformWorkerFixtures> = {
+export const platformTest = test.extend<{}, PlatformWorkerFixtures>({
   platform: [ process.platform as 'win32' | 'darwin' | 'linux', { scope: 'worker' } ],
   isWindows: [ process.platform === 'win32', { scope: 'worker' } ],
   isMac: [ process.platform === 'darwin', { scope: 'worker' } ],
   isLinux: [ process.platform === 'linux', { scope: 'worker' } ],
-};
+});

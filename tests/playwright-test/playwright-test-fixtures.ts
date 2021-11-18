@@ -21,7 +21,7 @@ import * as path from 'path';
 import rimraf from 'rimraf';
 import { promisify } from 'util';
 import { CommonFixtures, commonFixtures } from '../config/commonFixtures';
-import { serverFixtures, ServerFixtures, ServerWorkerOptions } from '../config/serverFixtures';
+import { serverFixtures, serverOptions, ServerFixtures, ServerWorkerOptions } from '../config/serverFixtures';
 import { test as base, TestInfo } from './stable-test-runner';
 
 const removeFolderAsync = promisify(rimraf);
@@ -195,32 +195,35 @@ type Fixtures = {
   runTSC: (files: Files) => Promise<TSCResult>;
 };
 
-const common = base.extend<CommonFixtures>(commonFixtures as any);
-export const test = common.extend<ServerFixtures, ServerWorkerOptions>(serverFixtures as any).extend<Fixtures>({
-  writeFiles: async ({}, use, testInfo) => {
-    await use(files => writeFiles(testInfo, files));
-  },
+export const test = base
+    .extend<CommonFixtures>(commonFixtures as any)
+    // TODO: this is a hack until we roll the stable test runner.
+    .extend<ServerFixtures, ServerWorkerOptions>({ ...serverOptions, ...serverFixtures } as any)
+    .extend<Fixtures>({
+      writeFiles: async ({}, use, testInfo) => {
+        await use(files => writeFiles(testInfo, files));
+      },
 
-  runInlineTest: async ({ childProcess }, use, testInfo: TestInfo) => {
-    await use(async (files: Files, params: Params = {}, env: Env = {}, options: RunOptions = {}) => {
-      const baseDir = await writeFiles(testInfo, files);
-      return await runPlaywrightTest(childProcess, baseDir, params, env, options);
-    });
-  },
+      runInlineTest: async ({ childProcess }, use, testInfo: TestInfo) => {
+        await use(async (files: Files, params: Params = {}, env: Env = {}, options: RunOptions = {}) => {
+          const baseDir = await writeFiles(testInfo, files);
+          return await runPlaywrightTest(childProcess, baseDir, params, env, options);
+        });
+      },
 
-  runTSC: async ({ childProcess }, use, testInfo) => {
-    await use(async files => {
-      const baseDir = await writeFiles(testInfo, { 'tsconfig.json': JSON.stringify(TSCONFIG), ...files });
-      const tsc = childProcess({
-        command: ['npx', 'tsc', '-p', baseDir],
-        cwd: baseDir,
-        shell: true,
-      });
-      const { exitCode } = await tsc.exited;
-      return { exitCode, output: tsc.output };
+      runTSC: async ({ childProcess }, use, testInfo) => {
+        await use(async files => {
+          const baseDir = await writeFiles(testInfo, { 'tsconfig.json': JSON.stringify(TSCONFIG), ...files });
+          const tsc = childProcess({
+            command: ['npx', 'tsc', '-p', baseDir],
+            cwd: baseDir,
+            shell: true,
+          });
+          const { exitCode } = await tsc.exited;
+          return { exitCode, output: tsc.output };
+        });
+      },
     });
-  },
-});
 
 const TSCONFIG = {
   'compilerOptions': {

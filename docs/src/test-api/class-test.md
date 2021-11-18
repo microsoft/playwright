@@ -204,6 +204,7 @@ Hook function that takes one or two arguments: an object with fixtures and optio
 
 
 
+
 ## method: Test.describe
 
 Declares a group of tests.
@@ -414,6 +415,137 @@ A callback that is run immediately when calling [`method: Test.describe.serial.o
 - type: <[Object]>
 
 `expect` function can be used to create test assertions. Read [expect library documentation](https://jestjs.io/docs/expect) for more details.
+
+
+
+
+
+## method: Test.extend
+- returns: <[Test]>
+
+Extends the `test` object by defining fixtures and/or options that can be used in the tests.
+
+First define a fixture and/or an option.
+
+```js js-flavor=js
+// my-test.js
+const base = require('@playwright/test');
+const { TodoPage } = require('./todo-page');
+
+// Extend basic test by providing a "defaultItem" option and a "todoPage" fixture.
+exports.test = base.test.extend({
+  // Define an option and provide a default value.
+  // We can later override it in the config.
+  defaultItem: ['Do stuff', { option: true }],
+
+  // Define a fixture. Note that it can use built-in fixture "page"
+  // and a new option "defaultItem".
+  todoPage: async ({ page, defaultItem }, use) => {
+    const todoPage = new TodoPage(page);
+    await todoPage.goto();
+    await todoPage.addToDo(defaultItem);
+    await use(todoPage);
+    await todoPage.removeAll();
+  },
+});
+```
+
+```js js-flavor=ts
+import { test as base } from '@playwright/test';
+import { TodoPage } from './todo-page';
+
+export type Options = { defaultItem: string };
+
+// Extend basic test by providing a "defaultItem" option and a "todoPage" fixture.
+export const test = base.extend<Options & { todoPage: TodoPage }>({
+  // Define an option and provide a default value.
+  // We can later override it in the config.
+  defaultItem: ['Do stuff', { option: true }],
+
+  // Define a fixture. Note that it can use built-in fixture "page"
+  // and a new option "defaultItem".
+  todoPage: async ({ page, defaultItem }, use) => {
+    const todoPage = new TodoPage(page);
+    await todoPage.goto();
+    await todoPage.addToDo(defaultItem);
+    await use(todoPage);
+    await todoPage.removeAll();
+  },
+});
+```
+
+Then use the fixture in the test.
+
+```js js-flavor=js
+// example.spec.js
+const { test } = require('./my-test');
+
+test('test 1', async ({ todoPage }) => {
+  await todoPage.addToDo('my todo');
+  // ...
+});
+```
+
+```js js-flavor=ts
+// example.spec.ts
+import { test } from './my-test';
+
+test('test 1', async ({ todoPage }) => {
+  await todoPage.addToDo('my todo');
+  // ...
+});
+```
+
+Configure the option in config file.
+
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig<{ defaultItem: string }>} */
+const config = {
+  projects: [
+    {
+      name: 'shopping',
+      use: { defaultItem: 'Buy milk' },
+    },
+    {
+      name: 'wellbeing',
+      use: { defaultItem: 'Exercise!' },
+    },
+  ]
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+import { Options } from './my-test';
+
+const config: PlaywrightTestConfig<Options> = {
+  projects: [
+    {
+      name: 'shopping',
+      use: { defaultItem: 'Buy milk' },
+    },
+    {
+      name: 'wellbeing',
+      use: { defaultItem: 'Exercise!' },
+    },
+  ]
+};
+export default config;
+```
+
+Learn more about [fixtures](./test-fixtures.md) and [parametrizing tests](./test-parameterize.md).
+
+### param: Test.extend.fixtures
+- `fixtures` <[Object]>
+
+An object containing fixtures and/or options. Learn more about [fixtures format](./test-fixtures.md).
+
 
 
 
