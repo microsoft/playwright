@@ -6,9 +6,9 @@ trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
 
 USAGE=$(cat<<EOF
-  usage: $(basename "$0") [--mirror|--mirror-linux|--mirror-win64|--mirror-mac|--compile-mac-arm64|--compile-linux|--compile-linux-arm64|--compile-win64|--compile-mac] [--symbols] [--full]
+  usage: $(basename "$0") [--compile-mac-arm64|--compile-linux|--compile-linux-arm64|--compile-win64|--compile-mac] [--symbols] [--full]
 
-  Either compiles chromium or mirrors it from Chromium Continuous Builds CDN.
+  Compiles chromium.
 EOF
 )
 
@@ -19,8 +19,6 @@ main() {
   if [[ $1 == "--help" || $1 == "-h" ]]; then
     echo "$USAGE"
     exit 0
-  elif [[ $1 == "--mirror"* ]]; then
-    mirror_chromium "$1"
   elif [[ $1 == "--compile"* ]]; then
     compile_chromium "$1" "$2" "$3"
   else
@@ -113,47 +111,6 @@ compile_chromium() {
       ninja -j 200 -C out/Default $TARGETS
     fi
   fi
-}
-
-mirror_chromium() {
-  cd "$SCRIPT_FOLDER"
-  rm -rf output
-  mkdir -p output
-  cd output
-
-  CHROMIUM_URL=""
-
-  PLATFORM="$1"
-  if [[ "${PLATFORM}" == "--mirror" ]]; then
-    CURRENT_HOST_OS="$(uname)"
-    if [[ "${CURRENT_HOST_OS}" == "Darwin" ]]; then
-      PLATFORM="--mirror-mac"
-    elif [[ "${CURRENT_HOST_OS}" == "Linux" ]]; then
-      PLATFORM="--mirror-linux"
-    elif [[ "${CURRENT_HOST_OS}" == MINGW* ]]; then
-      PLATFORM="--mirror-win64"
-    else
-      echo "ERROR: unsupported host platform - ${CURRENT_HOST_OS}"
-      exit 1
-    fi
-  fi
-
-  CRREV=$(head -1 "${SCRIPT_FOLDER}/BUILD_NUMBER")
-  if [[ "${PLATFORM}" == "--mirror-win64" ]]; then
-    CHROMIUM_URL="https://storage.googleapis.com/chromium-browser-snapshots/Win_x64/${CRREV}/chrome-win.zip"
-  elif [[ "${PLATFORM}" == "--mirror-mac" ]]; then
-    CHROMIUM_URL="https://storage.googleapis.com/chromium-browser-snapshots/Mac/${CRREV}/chrome-mac.zip"
-  elif [[ "${PLATFORM}" == "--mirror-linux" ]]; then
-    CHROMIUM_URL="https://storage.googleapis.com/chromium-browser-snapshots/Linux_x64/${CRREV}/chrome-linux.zip"
-  else
-    echo "ERROR: unknown platform to build: $1"
-    exit 1
-  fi
-
-  echo "--> Pulling Chromium ${CRREV} for ${PLATFORM#--}"
-
-  curl --output chromium-upstream.zip "${CHROMIUM_URL}"
-  unzip chromium-upstream.zip
 }
 
 main "$1" "$2" "$3"
