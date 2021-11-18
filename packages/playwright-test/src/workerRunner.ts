@@ -20,7 +20,7 @@ import rimraf from 'rimraf';
 import util from 'util';
 import colors from 'colors/safe';
 import { EventEmitter } from 'events';
-import { monotonicTime, serializeError, sanitizeForFilePath, getContainedPath, addSuffixToFilePath } from './util';
+import { monotonicTime, serializeError, sanitizeForFilePath, getContainedPath, addSuffixToFilePath, prependToTestError } from './util';
 import { TestBeginPayload, TestEndPayload, RunPayload, TestEntry, DonePayload, WorkerInitParams, StepBeginPayload, StepEndPayload } from './ipc';
 import { setCurrentTestInfo } from './globals';
 import { Loader } from './loader';
@@ -412,11 +412,12 @@ export class WorkerRunner extends EventEmitter {
       if (test._type === 'test') {
         // Delay reporting testEnd result until after teardownScopes is done.
         this._failedTest = testData;
-      } else if (!this._fatalError) {
-        if (testInfo.status === 'timedOut')
-          this._fatalError = { message: colors.red(`Timeout of ${testInfo.timeout}ms exceeded in ${test._type} hook.`) };
-        else
+      } else {
+        if (!this._fatalError)
           this._fatalError = testInfo.error;
+        // Keep any error we have, and add "timeout" message.
+        if (testInfo.status === 'timedOut')
+          this._fatalError = prependToTestError(this._fatalError, colors.red(`Timeout of ${testInfo.timeout}ms exceeded in ${test._type} hook.\n`));
       }
       this.stop();
     } else if (reportEvents) {
