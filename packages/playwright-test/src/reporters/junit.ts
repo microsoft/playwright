@@ -158,8 +158,11 @@ class JUnitReporter implements Reporter {
         if (!attachment.path)
           continue;
         try {
+          const attachmentPath = path.relative(this.config.rootDir, attachment.path);
           if (fs.existsSync(attachment.path))
-            systemOut.push(`\n[[ATTACHMENT|${path.relative(this.config.rootDir, attachment.path)}]]\n`);
+            systemOut.push(`\n[[ATTACHMENT|${attachmentPath}]]\n`);
+          else
+            systemErr.push(`\nWarning: attachment ${attachmentPath} is missing`);
         } catch (e) {
         }
       }

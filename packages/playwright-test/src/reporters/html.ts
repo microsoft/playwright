@@ -385,6 +385,11 @@ class HtmlBuilder {
             fs.mkdirSync(path.join(this._reportFolder, 'data'), { recursive: true });
             fs.writeFileSync(path.join(this._reportFolder, 'data', sha1), buffer);
           } catch (e) {
+            return {
+              name: `Missing attachment "${a.name}"`,
+              contentType: 'x-playwright/missing',
+              body: `Attachment file ${fileName} is missing`,
+            };
           }
           return {
             name: a.name,

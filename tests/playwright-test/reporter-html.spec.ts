@@ -67,7 +67,7 @@ test('should generate report', async ({ runInlineTest, showReport, page }) => {
   await expect(page.locator('.test-summary.outcome-skipped >> text=skipped')).toBeVisible();
 });
 
-test('should not throw when attachment is missing', async ({ runInlineTest }) => {
+test('should not throw when attachment is missing', async ({ runInlineTest, page, showReport }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { preserveOutput: 'failures-only' };
@@ -83,6 +83,12 @@ test('should not throw when attachment is missing', async ({ runInlineTest }) =>
   }, { reporter: 'dot,html' });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
+
+  await showReport();
+  await page.click('text=passes');
+  await page.locator('text=Missing attachment "screenshot"').click();
+  const screenshotFile = testInfo.outputPath('test-results' , 'a-passes', 'screenshot.png');
+  await expect(page.locator('.attachment-body')).toHaveText(`Attachment file ${screenshotFile} is missing`);
 });
 
 test('should include image diff', async ({ runInlineTest, page, showReport }) => {
