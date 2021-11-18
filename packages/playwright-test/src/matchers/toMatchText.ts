@@ -120,8 +120,7 @@ export function callLogText(log: string[] | undefined): string {
   if (!log)
     return '';
   return `
-
 Call log:
-  - ${colors.dim((log || []).join('\n  - '))}
+  ${colors.dim('- ' + (log || []).join('\n  - '))}
 `;
 }
