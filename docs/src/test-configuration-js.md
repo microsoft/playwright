@@ -92,11 +92,11 @@ The same works inside describe.
 // example.spec.js
 const { test, expect } = require('@playwright/test');
 
-test.describe('headed block', () => {
-  // Run tests in this describe block in headed mode.
-  test.use({ headless: false });
+test.describe('locale block', () => {
+  // Run tests in this describe block with specified locale.
+  test.use({ locale: 'en-US' });
 
-  test('my headed test', async ({ page }) => {
+  test('my locale test', async ({ page }) => {
     // ...
   });
 });
@@ -106,11 +106,11 @@ test.describe('headed block', () => {
 // example.spec.ts
 import { test, expect } from '@playwright/test';
 
-test.describe('headed block', () => {
-  // Run tests in this describe block in headed mode.
-  test.use({ headless: false });
+test.describe('locale block', () => {
+  // Run tests in this describe block with specified locale.
+  test.use({ locale: 'en-US' });
 
-  test('my headed test', async ({ page }) => {
+  test('my locale test', async ({ page }) => {
     // ...
   });
 });
