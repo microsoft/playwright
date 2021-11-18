@@ -22,6 +22,7 @@ import { rootTestType } from './testType';
 import { createGuid, removeFolders } from 'playwright-core/lib/utils/utils';
 import { GridClient } from 'playwright-core/lib/grid/gridClient';
 import { Browser } from 'playwright-core';
+import { prependToTestError } from './util';
 export { expect } from './expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
@@ -185,8 +186,10 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
     const captureTrace = (traceMode === 'on' || traceMode === 'retain-on-failure' || (traceMode === 'on-first-retry' && testInfo.retry === 1));
     const temporaryTraceFiles: string[] = [];
     const temporaryScreenshots: string[] = [];
+    const createdContexts = new Set<BrowserContext>();
 
     const onDidCreateContext = async (context: BrowserContext) => {
+      createdContexts.add(context);
       context.setDefaultTimeout(actionTimeout || 0);
       context.setDefaultNavigationTimeout(navigationTimeout || actionTimeout || 0);
       if (captureTrace) {
@@ -313,6 +316,14 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
       else
         await fs.promises.unlink(file).catch(() => {});
     }));
+
+    // 7. Cleanup created contexts when we know it's safe - this will produce nice error message.
+    if (hookType(testInfo) === 'beforeAll' && testInfo.status === 'timedOut') {
+      const anyContext = leftoverContexts[0];
+      const pendingCalls = anyContext ? formatPendingCalls((anyContext as any)._connection.pendingProtocolCalls()) : '';
+      await Promise.all(leftoverContexts.filter(c => createdContexts.has(c)).map(c => c.close()));
+      testInfo.error = prependToTestError(testInfo.error, pendingCalls);
+    }
   }, { auto: true }],
 
   _contextFactory: async ({ browser, video, _artifactsDir }, use, testInfo) => {
@@ -364,15 +375,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerAndFileFixtures>({
       }
     }));
 
-    if (prependToError) {
-      if (!testInfo.error) {
-        testInfo.error = { value: prependToError };
-      } else if (testInfo.error.message) {
-        testInfo.error.message = prependToError + testInfo.error.message;
-        if (testInfo.error.stack)
-          testInfo.error.stack = prependToError + testInfo.error.stack;
-      }
-    }
+    testInfo.error = prependToTestError(testInfo.error, prependToError);
   },
 
   context: async ({ _contextFactory }, use) => {

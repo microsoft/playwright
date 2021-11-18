@@ -296,6 +296,33 @@ test('should report error on timeout with shared page', async ({ runInlineTest }
   expect(stripAscii(result.output)).toContain(`14 |         await page.click('text=Missing');`);
 });
 
+test('should report error and pending operations from beforeAll timeout', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      test.beforeAll(async ({ browser }) => {
+        const page = await browser.newPage();
+        await page.setContent('<div>Click me</div>');
+        await Promise.all([
+          page.click('text=Missing'),
+          page.textContent('text=More missing'),
+        ]);
+      });
+      test('ignored', () => {});
+    `,
+  }, { workers: 1, timeout: 2000 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Timeout of 2000ms exceeded in beforeAll hook.');
+  expect(result.output).toContain('Pending operations:');
+  expect(result.output).toContain('- page.click at a.test.ts:10:16');
+  expect(result.output).toContain('- page.textContent at a.test.ts:11:16');
+  expect(result.output).toContain('waiting for selector');
+  expect(stripAscii(result.output)).toContain(`11 |           page.textContent('text=More missing'),`);
+});
+
 test('should not report waitForEventInfo as pending', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'a.test.ts': `
