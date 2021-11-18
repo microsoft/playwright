@@ -211,20 +211,14 @@ const TestResultView: React.FC<{
     const attachmentsMap = new Map<string, TestAttachment>();
     const attachments = result?.attachments || [];
     const otherAttachments: TestAttachment[] = [];
-    const screenshots: TestAttachment[] = [];
-    const videos: TestAttachment[] = [];
-    const traces: TestAttachment[] = [];
+    const screenshots = attachments.filter(a => a.name === 'screenshot');
+    const videos = attachments.filter(a => a.name === 'video');
+    const traces = attachments.filter(a => a.name === 'trace');
     const knownNames = new Set(['screenshot', 'image', 'expected', 'actual', 'diff', 'video', 'trace']);
     for (const a of attachments) {
-      if (!knownNames.has(a.name) || a.contentType === kMissingContentType)
-        otherAttachments.push(a);
-      else if (a.name === 'screenshot')
-        screenshots.push(a);
-      else if (a.name === 'video')
-        videos.push(a);
-      else if (a.name === 'trace')
-        traces.push(a);
       attachmentsMap.set(a.name, a);
+      if (!knownNames.has(a.name))
+        otherAttachments.push(a);
     }
     return { attachmentsMap, screenshots, videos, otherAttachments, traces };
   }, [ result ]);

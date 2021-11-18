@@ -104,6 +104,8 @@ type TestEntry = {
   testCaseSummary: TestCaseSummary
 };
 
+const kMissingContentType = 'x-playwright/missing';
+
 class HtmlReporter implements Reporter {
   private config!: FullConfig;
   private suite!: Suite;
@@ -387,7 +389,7 @@ class HtmlBuilder {
           } catch (e) {
             return {
               name: `Missing attachment "${a.name}"`,
-              contentType: 'x-playwright/missing',
+              contentType: kMissingContentType,
               body: `Attachment file ${fileName} is missing`,
             };
           }
