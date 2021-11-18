@@ -121,7 +121,7 @@ after awaiting the attach call.
 
 ## method: TestInfo.attach#2
 
-Similar to [`method: TestInfo.attach#1`] but attaches inline `strings` or `Buffers` instead of files from disk.
+Attach data to the current test, either a `string` or a `Buffer`. Some reporters show test attachments.
 
 ### param: TestInfo.attach#2.body
 - `body` <[string]|[Buffer]> Attachment body.
