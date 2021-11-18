@@ -113,7 +113,7 @@ after awaiting the attach call.
 - `path` <[string]> Path on the filesystem to the attached file.
 
 ### option: TestInfo.attach#1.name
-- `name` <[void]|[string]> Optional attachment name. If omitted, this will be inferred from the [`param: name`] (if specified) or [`param: path`].
+- `name` <[void]|[string]> Optional attachment name. If omitted, this will be inferred from [`param: path`].
 
 ### option: TestInfo.attach#1.contentType
 - `contentType` <[void]|[string]> Optional content type of this attachment to properly present in the report, for example `'application/json'` or `'image/png'`. If omitted, this falls back to an inferred type based on the [`param: name`] (if set) or [`param: path`]'s extension; it will be set to `application/octet-stream` if the type cannot be inferred from the file extension.
