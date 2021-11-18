@@ -16,7 +16,6 @@
 
 import fs from 'fs';
 import path from 'path';
-import * as mime from 'mime';
 import * as util from 'util';
 import { Serializable } from '../../types/structs';
 import * as api from '../../types/types';
@@ -283,11 +282,7 @@ export class APIResponse implements api.APIResponse {
   }
 }
 
-type ServerFilePayload = {
-  name: string,
-  mimeType: string,
-  buffer: string,
-};
+type ServerFilePayload = NonNullable<channels.FormField['file']>;
 
 function filePayloadToJson(payload: FilePayload): ServerFilePayload {
   return {
@@ -307,7 +302,6 @@ async function readStreamToJson(stream: fs.ReadStream): Promise<ServerFilePayloa
   const streamPath: string = Buffer.isBuffer(stream.path) ? stream.path.toString('utf8') : stream.path;
   return {
     name: path.basename(streamPath),
-    mimeType: mime.getType(streamPath) || 'application/octet-stream',
     buffer: buffer.toString('base64'),
   };
 }

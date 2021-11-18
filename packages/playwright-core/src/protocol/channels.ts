@@ -253,7 +253,7 @@ export type FormField = {
   value?: string,
   file?: {
     name: string,
-    mimeType: string,
+    mimeType?: string,
     buffer: Binary,
   },
 };

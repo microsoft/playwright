@@ -224,7 +224,7 @@ FormField:
       type: object?
       properties:
         name: string
-        mimeType: string
+        mimeType: string?
         buffer: binary
 
 APIRequestContext:
