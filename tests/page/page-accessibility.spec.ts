@@ -16,6 +16,7 @@
  */
 
 import { test as it, expect } from './pageTest';
+import { chromiumVersionLessThan } from '../config/utils';
 
 it('should work', async ({ page, browserName }) => {
   await page.setContent(`
@@ -282,7 +283,7 @@ it('should work an input', async ({ page }) => {
   });
 });
 
-it('should work on a menu', async ({ page, browserName }) => {
+it('should work on a menu', async ({ page, browserName, browserVersion }) => {
   await page.setContent(`
     <div role="menu" title="My Menu">
       <div role="menuitem">First Item</div>
@@ -299,7 +300,7 @@ it('should work on a menu', async ({ page, browserName }) => {
     [ { role: 'menuitem', name: 'First Item' },
       { role: 'menuitem', name: 'Second Item' },
       { role: 'menuitem', name: 'Third Item' } ],
-    orientation: browserName === 'webkit' ? 'vertical' : undefined
+    orientation: (browserName === 'webkit' || (browserName === 'chromium' && !chromiumVersionLessThan(browserVersion, '98.0.4696.0'))) ? 'vertical' : undefined
   });
 });
 
