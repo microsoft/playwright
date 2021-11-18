@@ -19,9 +19,8 @@ import type { TestInfo } from '@playwright/test';
 import path from 'path';
 import fs from 'fs';
 import { start } from '../packages/playwright-core/lib/outofprocess';
-import { spawnSync } from 'child_process';
 
-const chromeDriver = require('chromedriver').path;
+const chromeDriver = process.env.PWTEST_CHROMEDRIVER;
 const brokenDriver = path.join(__dirname, 'assets', 'selenium-grid', 'broken-selenium-driver.js');
 const standalone_3_141_59 = path.join(__dirname, 'assets', 'selenium-grid', 'selenium-server-standalone-3.141.59.jar');
 const selenium_4_0_0_rc1 = path.join(__dirname, 'assets', 'selenium-grid', 'selenium-server-4.0.0-rc-1.jar');
@@ -35,11 +34,7 @@ function writeSeleniumConfig(testInfo: TestInfo, port: number) {
 }
 
 test.skip(({ mode }) => mode !== 'default', 'Using test hooks');
-test.skip(() => {
-  // Skip if Java is not installed.
-  const { status, error } = spawnSync('java', ['-version']);
-  return !!error || status !== 0;
-});
+test.skip(!chromeDriver);
 test.slow();
 
 test('selenium grid 3.141.59 standalone chromium', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {

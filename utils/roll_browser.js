@@ -88,15 +88,6 @@ Example:
       process.stdout.write(execSync('npm run --silent doc'));
     } catch (e) {
     }
-
-    if (browserName === 'chromium') {
-      // 5. Update chromedriver.
-      console.log('\nUpdating chromedriver...');
-      try {
-        process.stdout.write(execSync('npm install --save-dev chromedriver@latest'));
-      } catch (e) {
-      }
-    }
   }
   console.log(`\nRolled ${browserName} to ${revision}`);
 })().catch(err => {
