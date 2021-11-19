@@ -15,6 +15,7 @@ Consider the following snippet:
 const { test } = require('@playwright/test');
 
 test.describe('suite', () => {
+  test.beforeAll(async () => { /* ... */ });
   test('first good', async ({ page }) => { /* ... */ });
   test('second flaky', async ({ page }) => { /* ... */ });
   test('third good', async ({ page }) => { /* ... */ });
@@ -25,6 +26,7 @@ test.describe('suite', () => {
 import { test } from '@playwright/test';
 
 test.describe('suite', () => {
+  test.beforeAll(async () => { /* ... */ });
   test('first good', async ({ page }) => { /* ... */ });
   test('second flaky', async ({ page }) => { /* ... */ });
   test('third good', async ({ page }) => { /* ... */ });
@@ -33,22 +35,27 @@ test.describe('suite', () => {
 
 When **all tests pass**, they will run in order in the same worker process.
 * Worker process starts
+  * `beforeAll` hook runs
   * `first good` passes
   * `second flaky` passes
   * `third good` passes
 
 Should **any test fail**, Playwright Test will discard the entire worker process along with the browser and will start a new one. Testing will continue in the new worker process starting with the next test.
 * Worker process #1 starts
+  * `beforeAll` hook runs
   * `first good` passes
   * `second flaky` fails
 * Worker process #2 starts
+  * `beforeAll` hook runs again
   * `third good` passes
 
 If you **enable [retries](#retries)**, second worker process will start by retrying the failed test and continue from there.
 * Worker process #1 starts
+  * `beforeAll` hook runs
   * `first good` passes
   * `second flaky` fails
 * Worker process #2 starts
+  * `beforeAll` hook runs again
   * `second flaky` is retried and passes
   * `third good` passes
 
@@ -115,6 +122,7 @@ Consider the following snippet that uses `test.describe.serial`:
 const { test } = require('@playwright/test');
 
 test.describe.serial('suite', () => {
+  test.beforeAll(async () => { /* ... */ });
   test('first good', async ({ page }) => { /* ... */ });
   test('second flaky', async ({ page }) => { /* ... */ });
   test('third good', async ({ page }) => { /* ... */ });
@@ -125,6 +133,7 @@ test.describe.serial('suite', () => {
 import { test } from '@playwright/test';
 
 test.describe.serial('suite', () => {
+  test.beforeAll(async () => { /* ... */ });
   test('first good', async ({ page }) => { /* ... */ });
   test('second flaky', async ({ page }) => { /* ... */ });
   test('third good', async ({ page }) => { /* ... */ });
@@ -133,16 +142,19 @@ test.describe.serial('suite', () => {
 
 When running without [retries](#retries), all tests after the failure are skipped:
 * Worker process #1:
+  * `beforeAll` hook runs
   * `first good` passes
   * `second flaky` fails
   * `third good` is skipped entirely
 
 When running with [retries](#retries), all tests are retried together:
 * Worker process #1:
+  * `beforeAll` hook runs
   * `first good` passes
   * `second flaky` fails
   * `third good` is skipped
 * Worker process #2:
+  * `beforeAll` hook runs again
   * `first good` passes again
   * `second flaky` passes
   * `third good` passes
