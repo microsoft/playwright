@@ -123,7 +123,7 @@ export interface TestCase {
   /**
    * Expected test status.
    * - Tests marked as [test.skip(title, testFunction)](https://playwright.dev/docs/api/class-test#test-skip-1) or
-   *   [test.fixme([condition, description])](https://playwright.dev/docs/api/class-test#test-fixme) are expected to be
+   *   [test.fixme(title, testFunction)](https://playwright.dev/docs/api/class-test#test-fixme-1) are expected to be
    *   `'skipped'`.
    * - Tests marked as [test.fail([condition, description])](https://playwright.dev/docs/api/class-test#test-fail) are
    *   expected to be `'failed'`.

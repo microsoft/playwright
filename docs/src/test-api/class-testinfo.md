@@ -141,7 +141,7 @@ Absolute path to a file where the currently running test is declared.
 
 ## method: TestInfo.fixme
 
-Marks the currently running test as "fixme". The test will be skipped, but the intention is to fix it. This is similar to [`method: Test.fixme`].
+Marks the currently running test as "fixme". The test will be skipped, but the intention is to fix it. This is similar to [`method: Test.fixme#2`].
 
 ### param: TestInfo.fixme.condition
 - `condition` <[void]|[boolean]>

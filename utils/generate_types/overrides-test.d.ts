@@ -241,11 +241,10 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   skip(): void;
   skip(condition: boolean, description?: string): void;
   skip(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
+  fixme(title: string, testFunction: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
   fixme(): void;
-  fixme(condition: boolean): void;
-  fixme(condition: boolean, description: string): void;
-  fixme(callback: (args: TestArgs & WorkerArgs) => boolean): void;
-  fixme(callback: (args: TestArgs & WorkerArgs) => boolean, description: string): void;
+  fixme(condition: boolean, description?: string): void;
+  fixme(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
   fail(): void;
   fail(condition: boolean): void;
   fail(condition: boolean, description: string): void;
