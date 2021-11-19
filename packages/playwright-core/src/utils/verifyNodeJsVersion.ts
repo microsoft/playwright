@@ -28,3 +28,5 @@ if (major < 12) {
   );
   process.exit(1);
 }
+
+export {};
