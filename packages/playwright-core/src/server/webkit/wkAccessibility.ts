@@ -54,216 +54,216 @@ const WKUnhelpfulRoleDescriptions = new Map(Object.entries({
 }));
 
 class WKAXNode implements accessibility.AXNode {
-    private _payload: Protocol.Page.AXNode;
-    private _children: WKAXNode[];
+  private _payload: Protocol.Page.AXNode;
+  private _children: WKAXNode[];
 
-    constructor(payload: Protocol.Page.AXNode) {
-      this._payload = payload;
+  constructor(payload: Protocol.Page.AXNode) {
+    this._payload = payload;
 
-      this._children = [];
-      for (const payload of this._payload.children || [])
-        this._children.push(new WKAXNode(payload));
+    this._children = [];
+    for (const payload of this._payload.children || [])
+      this._children.push(new WKAXNode(payload));
+  }
+
+  children() {
+    return this._children;
+  }
+
+  _findNeedle(): WKAXNode | null {
+    if (this._payload.found)
+      return this;
+    for (const child of this._children) {
+      const found = child._findNeedle();
+      if (found)
+        return found;
     }
+    return null;
+  }
 
-    children() {
-      return this._children;
+  isControl(): boolean {
+    switch (this._payload.role) {
+      case 'button':
+      case 'checkbox':
+      case 'ColorWell':
+      case 'combobox':
+      case 'DisclosureTriangle':
+      case 'listbox':
+      case 'menu':
+      case 'menubar':
+      case 'menuitem':
+      case 'menuitemcheckbox':
+      case 'menuitemradio':
+      case 'radio':
+      case 'scrollbar':
+      case 'searchbox':
+      case 'slider':
+      case 'spinbutton':
+      case 'switch':
+      case 'tab':
+      case 'textbox':
+      case 'TextField':
+      case 'tree':
+        return true;
+      default:
+        return false;
     }
+  }
 
-    _findNeedle(): WKAXNode | null {
-      if (this._payload.found)
-        return this;
-      for (const child of this._children) {
-        const found = child._findNeedle();
-        if (found)
-          return found;
-      }
-      return null;
+  _isTextControl(): boolean {
+    switch (this._payload.role) {
+      case 'combobox':
+      case 'searchfield':
+      case 'textbox':
+      case 'TextField':
+        return true;
     }
+    return false;
+  }
 
-    isControl(): boolean {
-      switch (this._payload.role) {
-        case 'button':
-        case 'checkbox':
-        case 'ColorWell':
-        case 'combobox':
-        case 'DisclosureTriangle':
-        case 'listbox':
-        case 'menu':
-        case 'menubar':
-        case 'menuitem':
-        case 'menuitemcheckbox':
-        case 'menuitemradio':
-        case 'radio':
-        case 'scrollbar':
-        case 'searchbox':
-        case 'slider':
-        case 'spinbutton':
-        case 'switch':
-        case 'tab':
-        case 'textbox':
-        case 'TextField':
-        case 'tree':
-          return true;
-        default:
-          return false;
-      }
-    }
+  _name(): string {
+    if (this._payload.role === 'text')
+      return this._payload.value || '';
+    return this._payload.name || '';
+  }
 
-    _isTextControl(): boolean {
-      switch (this._payload.role) {
-        case 'combobox':
-        case 'searchfield':
-        case 'textbox':
-        case 'TextField':
-          return true;
-      }
+  isInteresting(insideControl: boolean): boolean {
+    const { role, focusable } = this._payload;
+    const name = this._name();
+    if (role === 'ScrollArea')
       return false;
-    }
+    if (role === 'WebArea')
+      return true;
 
-    _name(): string {
-      if (this._payload.role === 'text')
-        return this._payload.value || '';
-      return this._payload.name || '';
-    }
+    if (focusable || role === 'MenuListOption')
+      return true;
 
-    isInteresting(insideControl: boolean): boolean {
-      const { role, focusable } = this._payload;
-      const name = this._name();
-      if (role === 'ScrollArea')
-        return false;
-      if (role === 'WebArea')
-        return true;
+    // If it's not focusable but has a control role, then it's interesting.
+    if (this.isControl())
+      return true;
 
-      if (focusable || role === 'MenuListOption')
-        return true;
+    // A non focusable child of a control is not interesting
+    if (insideControl)
+      return false;
 
-      // If it's not focusable but has a control role, then it's interesting.
-      if (this.isControl())
-        return true;
+    return this.isLeafNode() && !!name;
+  }
 
-      // A non focusable child of a control is not interesting
-      if (insideControl)
-        return false;
+  _hasRendundantTextChild() {
+    if (this._children.length !== 1)
+      return false;
+    const child = this._children[0];
+    return child._payload.role === 'text' && this._payload.name === child._payload.value;
+  }
 
-      return this.isLeafNode() && !!name;
-    }
-
-    _hasRendundantTextChild() {
-      if (this._children.length !== 1)
-        return false;
-      const child = this._children[0];
-      return child._payload.role === 'text' && this._payload.name === child._payload.value;
-    }
-
-    isLeafNode(): boolean {
-      if (!this._children.length)
-        return true;
+  isLeafNode(): boolean {
+    if (!this._children.length)
+      return true;
       // WebKit on Linux ignores everything inside text controls, normalize this behavior
-      if (this._isTextControl())
-        return true;
+    if (this._isTextControl())
+      return true;
       // WebKit for mac has text nodes inside heading, li, menuitem, a, and p nodes
-      if (this._hasRendundantTextChild())
-        return true;
-      return false;
+    if (this._hasRendundantTextChild())
+      return true;
+    return false;
+  }
+
+  serialize(): types.SerializedAXNode {
+    const node: types.SerializedAXNode = {
+      role: WKRoleToARIARole.get(this._payload.role) || this._payload.role,
+      name: this._name(),
+    };
+
+    if ('description' in this._payload && this._payload.description !== node.name)
+      node.description = this._payload.description;
+
+    if ('roledescription' in this._payload) {
+      const roledescription = this._payload.roledescription;
+      if (roledescription !== this._payload.role && WKUnhelpfulRoleDescriptions.get(this._payload.role) !== roledescription)
+        node.roledescription = roledescription;
     }
 
-    serialize(): types.SerializedAXNode {
-      const node: types.SerializedAXNode = {
-        role: WKRoleToARIARole.get(this._payload.role) || this._payload.role,
-        name: this._name(),
-      };
-
-      if ('description' in this._payload && this._payload.description !== node.name)
-        node.description = this._payload.description;
-
-      if ('roledescription' in this._payload) {
-        const roledescription = this._payload.roledescription;
-        if (roledescription !== this._payload.role && WKUnhelpfulRoleDescriptions.get(this._payload.role) !== roledescription)
-          node.roledescription = roledescription;
-      }
-
-      if ('value' in this._payload && this._payload.role !== 'text') {
-        if (typeof this._payload.value === 'string')
-          node.valueString = this._payload.value;
-        else if (typeof this._payload.value === 'number')
-          node.valueNumber = this._payload.value;
-      }
-
-      if ('checked' in this._payload)
-        node.checked = this._payload.checked === 'true' ? 'checked' : this._payload.checked === 'false' ? 'unchecked' : 'mixed';
-
-      if ('pressed' in this._payload)
-        node.pressed = this._payload.pressed === 'true' ? 'pressed' : this._payload.pressed === 'false' ? 'released' : 'mixed';
-
-      const userStringProperties: Array<keyof types.SerializedAXNode & keyof Protocol.Page.AXNode> = [
-        'keyshortcuts',
-        'valuetext'
-      ];
-      for (const userStringProperty of userStringProperties) {
-        if (!(userStringProperty in this._payload))
-          continue;
-        (node as any)[userStringProperty] = this._payload[userStringProperty];
-      }
-
-      const booleanProperties: Array<keyof types.SerializedAXNode & keyof Protocol.Page.AXNode> = [
-        'disabled',
-        'expanded',
-        'focused',
-        'modal',
-        'multiline',
-        'multiselectable',
-        'readonly',
-        'required',
-        'selected',
-      ];
-      for (const booleanProperty of booleanProperties) {
-        // WebArea and ScorllArea treat focus differently than other nodes. They report whether their frame  has focus,
-        // not whether focus is specifically on the root node.
-        if (booleanProperty === 'focused' && (this._payload.role === 'WebArea' || this._payload.role === 'ScrollArea'))
-          continue;
-        const value = this._payload[booleanProperty];
-        if (!value)
-          continue;
-        (node as any)[booleanProperty] = value;
-      }
-
-      const numericalProperties: Array<keyof types.SerializedAXNode & keyof Protocol.Page.AXNode> = [
-        'level',
-        'valuemax',
-        'valuemin',
-      ];
-      for (const numericalProperty of numericalProperties) {
-        if (!(numericalProperty in this._payload))
-          continue;
-        (node as any)[numericalProperty] = (this._payload as any)[numericalProperty];
-      }
-      const tokenProperties: Array<keyof types.SerializedAXNode & keyof Protocol.Page.AXNode> = [
-        'autocomplete',
-        'haspopup',
-        'invalid',
-      ];
-      for (const tokenProperty of tokenProperties) {
-        const value = (this._payload as any)[tokenProperty];
-        if (!value || value === 'false')
-          continue;
-        (node as any)[tokenProperty] = value;
-      }
-
-      const orientationIsApplicable = new Set([
-        'ScrollArea',
-        'scrollbar',
-        'listbox',
-        'combobox',
-        'menu',
-        'tree',
-        'separator',
-        'slider',
-        'tablist',
-        'toolbar',
-      ]);
-      if (this._payload.orientation && orientationIsApplicable.has(this._payload.role))
-        node.orientation = this._payload.orientation;
-
-      return node;
+    if ('value' in this._payload && this._payload.role !== 'text') {
+      if (typeof this._payload.value === 'string')
+        node.valueString = this._payload.value;
+      else if (typeof this._payload.value === 'number')
+        node.valueNumber = this._payload.value;
     }
+
+    if ('checked' in this._payload)
+      node.checked = this._payload.checked === 'true' ? 'checked' : this._payload.checked === 'false' ? 'unchecked' : 'mixed';
+
+    if ('pressed' in this._payload)
+      node.pressed = this._payload.pressed === 'true' ? 'pressed' : this._payload.pressed === 'false' ? 'released' : 'mixed';
+
+    const userStringProperties: Array<keyof types.SerializedAXNode & keyof Protocol.Page.AXNode> = [
+      'keyshortcuts',
+      'valuetext'
+    ];
+    for (const userStringProperty of userStringProperties) {
+      if (!(userStringProperty in this._payload))
+        continue;
+      (node as any)[userStringProperty] = this._payload[userStringProperty];
+    }
+
+    const booleanProperties: Array<keyof types.SerializedAXNode & keyof Protocol.Page.AXNode> = [
+      'disabled',
+      'expanded',
+      'focused',
+      'modal',
+      'multiline',
+      'multiselectable',
+      'readonly',
+      'required',
+      'selected',
+    ];
+    for (const booleanProperty of booleanProperties) {
+      // WebArea and ScorllArea treat focus differently than other nodes. They report whether their frame  has focus,
+      // not whether focus is specifically on the root node.
+      if (booleanProperty === 'focused' && (this._payload.role === 'WebArea' || this._payload.role === 'ScrollArea'))
+        continue;
+      const value = this._payload[booleanProperty];
+      if (!value)
+        continue;
+      (node as any)[booleanProperty] = value;
+    }
+
+    const numericalProperties: Array<keyof types.SerializedAXNode & keyof Protocol.Page.AXNode> = [
+      'level',
+      'valuemax',
+      'valuemin',
+    ];
+    for (const numericalProperty of numericalProperties) {
+      if (!(numericalProperty in this._payload))
+        continue;
+      (node as any)[numericalProperty] = (this._payload as any)[numericalProperty];
+    }
+    const tokenProperties: Array<keyof types.SerializedAXNode & keyof Protocol.Page.AXNode> = [
+      'autocomplete',
+      'haspopup',
+      'invalid',
+    ];
+    for (const tokenProperty of tokenProperties) {
+      const value = (this._payload as any)[tokenProperty];
+      if (!value || value === 'false')
+        continue;
+      (node as any)[tokenProperty] = value;
+    }
+
+    const orientationIsApplicable = new Set([
+      'ScrollArea',
+      'scrollbar',
+      'listbox',
+      'combobox',
+      'menu',
+      'tree',
+      'separator',
+      'slider',
+      'tablist',
+      'toolbar',
+    ]);
+    if (this._payload.orientation && orientationIsApplicable.has(this._payload.role))
+      node.orientation = this._payload.orientation;
+
+    return node;
+  }
 }
