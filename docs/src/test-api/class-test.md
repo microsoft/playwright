@@ -770,7 +770,7 @@ Test function that takes one or two arguments: an object with fixtures and optio
 
 ## method: Test.setTimeout
 
-Changes the timeout for the test.
+Changes the timeout for the test. Learn more about [various timeouts](./test-timeouts.md).
 
 ```js js-flavor=js
 const { test, expect } = require('@playwright/test');

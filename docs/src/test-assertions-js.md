@@ -34,7 +34,7 @@ text. It will be re-fetching the node and checking it over and over, until the c
 reached. You can either pass this timeout or configure it once via the [`property: TestConfig.expect`] value
 in test config.
 
-By default, the timeout for assertions is set to 5 seconds.
+By default, the timeout for assertions is set to 5 seconds. Learn more about [various timeouts](./test-timeouts.md).
 
 ## expect(locator).toBeChecked([options])
 - `options`

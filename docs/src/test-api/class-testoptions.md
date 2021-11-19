@@ -102,6 +102,8 @@ Default timeout for each Playwright action in milliseconds, defaults to 0 (no ti
 
 This is a default timeout for all Playwright actions, same as configured via [`method: Page.setDefaultTimeout`].
 
+Learn more about [various timeouts](./test-timeouts.md).
+
 ## property: TestOptions.bypassCSP = %%-context-option-bypasscsp-%%
 
 ## property: TestOptions.channel = %%-browser-option-channel-%%
@@ -144,6 +146,8 @@ Options used to launch the browser, as passed to [`method: BrowserType.launch`].
 Timeout for each navigation action in milliseconds. Defaults to 0 (no timeout).
 
 This is a default navigation timeout, same as configured via [`method: Page.setDefaultNavigationTimeout`].
+
+Learn more about [various timeouts](./test-timeouts.md).
 
 ## property: TestOptions.offline = %%-context-option-offline-%%
 

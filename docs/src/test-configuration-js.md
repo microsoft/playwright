@@ -120,7 +120,7 @@ test.describe('locale block', () => {
 
 These are commonly used options for various scenarios. You usually set them globally in [configuration file](#global-configuration).
 
-- `actionTimeout` - Timeout for each Playwright action in milliseconds. Defaults to `0` (no timeout).
+- `actionTimeout` - Timeout for each Playwright action in milliseconds. Defaults to `0` (no timeout). Learn more about [various timeouts](./test-timeouts.md).
 - `baseURL` - Base URL used for all pages in the context. Allows navigating by using just the path, for example `page.goto('/settings')`.
 - `browserName` - Name of the browser that will run the tests, one of `chromium`, `firefox`, or `webkit`.
 - `bypassCSP` - Toggles bypassing Content-Security-Policy. Useful when CSP includes the production origin.
@@ -556,7 +556,7 @@ In addition to configuring [Browser] or [BrowserContext], videos or screenshots,
 - `testDir`: Directory with the test files.
 - `testIgnore`: Glob patterns or regular expressions that should be ignored when looking for the test files. For example, `'**/test-assets'`.
 - `testMatch`: Glob patterns or regular expressions that match test files. For example, `'**/todo-tests/*.spec.ts'`. By default, Playwright Test runs `.*(test|spec)\.(js|ts|mjs)` files.
-- `timeout`: Time in milliseconds given to each test.
+- `timeout`: Time in milliseconds given to each test. Learn more about [various timeouts](./test-timeouts.md).
 - `webServer: { command: string, port: number, timeout?: number, reuseExistingServer?: boolean, cwd?: string, env?: object }` - Launch a process and wait that it's ready before the tests will start. See [launch web server](./test-advanced.md#launching-a-development-web-server-during-the-tests) configuration for examples.
 - `workers`: The maximum number of concurrent worker processes to use for parallelizing tests.
 

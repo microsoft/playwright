@@ -39,7 +39,7 @@ export default config;
   - `toMatchSnapshot` <[Object]>
     - `threshold` <[float]> Image matching threshold between zero (strict) and one (lax).
 
-Configuration for the `expect` assertion library.
+Configuration for the `expect` assertion library. Learn more about [various timeouts](./test-timeouts.md).
 
 ```js js-flavor=js
 // playwright.config.js
@@ -161,7 +161,7 @@ export default config;
 ## property: TestConfig.globalTimeout
 - type: <[int]>
 
-Maximum time in milliseconds the whole test suite can run. Zero timeout (default) disables this behavior. Useful on CI to prevent broken setup from running too long and wasting resources.
+Maximum time in milliseconds the whole test suite can run. Zero timeout (default) disables this behavior. Useful on CI to prevent broken setup from running too long and wasting resources. Learn more about [various timeouts](./test-timeouts.md).
 
 ```js js-flavor=js
 // playwright.config.js
@@ -491,7 +491,7 @@ export default config;
 
 Timeout for each test in milliseconds. Defaults to 30 seconds.
 
-This is a base timeout for all tests. In addition, each test can configure its own timeout with [`method: Test.setTimeout`].
+This is a base timeout for all tests. In addition, each test can configure its own timeout with [`method: Test.setTimeout`]. Learn more about [various timeouts](./test-timeouts.md).
 
 ```js js-flavor=js
 // playwright.config.js

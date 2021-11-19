@@ -231,7 +231,7 @@ Specifies the retry number when the test is retried after a failure. The first t
 
 ## method: TestInfo.setTimeout
 
-Changes the timeout for the currently running test. Zero means no timeout.
+Changes the timeout for the currently running test. Zero means no timeout. Learn more about [various timeouts](./test-timeouts.md).
 
 Timeout is usually specified in the [configuration file](./test-configuration.md), but it could be useful to change the timeout in certain scenarios:
 
@@ -342,7 +342,9 @@ Output written to `process.stdout` or `console.log` during the test execution.
 ## property: TestInfo.timeout
 - type: <[int]>
 
-Timeout in milliseconds for the currently running test. Zero means no timeout. Timeout is usually specified in the [configuration file](./test-configuration.md)
+Timeout in milliseconds for the currently running test. Zero means no timeout. Learn more about [various timeouts](./test-timeouts.md).
+
+Timeout is usually specified in the [configuration file](./test-configuration.md)
 
 ```js js-flavor=js
 const { test, expect } = require('@playwright/test');
