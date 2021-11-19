@@ -194,7 +194,7 @@ export function startHtmlReportServer(folder: string): HttpServer {
     if (relativePath.startsWith('/trace/file')) {
       const url = new URL('http://localhost' + request.url!);
       try {
-        return server.serveFile(response, url.searchParams.get('path')!);
+        return server.serveFile(request, response, url.searchParams.get('path')!);
       } catch (e) {
         return false;
       }
@@ -202,7 +202,7 @@ export function startHtmlReportServer(folder: string): HttpServer {
     if (relativePath === '/')
       relativePath = '/index.html';
     const absolutePath = path.join(folder, ...relativePath.split('/'));
-    return server.serveFile(response, absolutePath);
+    return server.serveFile(request, response, absolutePath);
   });
   return server;
 }

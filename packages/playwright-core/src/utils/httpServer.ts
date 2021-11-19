@@ -80,20 +80,65 @@ export class HttpServer {
     return this._urlPrefix;
   }
 
-  serveFile(response: http.ServerResponse, absoluteFilePath: string, headers?: { [name: string]: string }): boolean {
+  serveFile(request: http.IncomingMessage, response: http.ServerResponse, absoluteFilePath: string, headers?: { [name: string]: string }): boolean {
     try {
-      const content = fs.readFileSync(absoluteFilePath);
-      response.statusCode = 200;
-      const contentType = mime.getType(path.extname(absoluteFilePath)) || 'application/octet-stream';
-      response.setHeader('Content-Type', contentType);
-      response.setHeader('Content-Length', content.byteLength);
       for (const [name, value] of Object.entries(headers || {}))
         response.setHeader(name, value);
-      response.end(content);
+      if (request.headers.range)
+        this._serveRangeFile(request, response, absoluteFilePath);
+      else
+        this._serveFile(response, absoluteFilePath);
       return true;
     } catch (e) {
       return false;
     }
+  }
+
+  _serveFile(response: http.ServerResponse, absoluteFilePath: string) {
+    const content = fs.readFileSync(absoluteFilePath);
+    response.statusCode = 200;
+    const contentType = mime.getType(path.extname(absoluteFilePath)) || 'application/octet-stream';
+    response.setHeader('Content-Type', contentType);
+    response.setHeader('Content-Length', content.byteLength);
+    response.end(content);
+  }
+
+  _serveRangeFile(request: http.IncomingMessage, response: http.ServerResponse, absoluteFilePath: string) {
+    const range = request.headers.range!;
+    const size = fs.statSync(absoluteFilePath).size;
+    // Extracting Start and End value from Range Header
+    const [startStr, endStr] = range.replace(/bytes=/, '').split('-');
+    let start = parseInt(startStr, 10);
+    let end = endStr ? parseInt(endStr, 10) : size - 1;
+
+    if (!isNaN(start) && isNaN(end)) {
+      start = start;
+      end = size - 1;
+    }
+    if (isNaN(start) && !isNaN(end)) {
+      start = size - end;
+      end = size - 1;
+    }
+
+    // Handle unavailable range request
+    if (start >= size || end >= size) {
+      // Return the 416 Range Not Satisfiable.
+      response.writeHead(416, {
+        'Content-Range': `bytes */${size}`
+      });
+      response.end();
+    }
+
+    // Sending Partial Content With HTTP Code 206
+    response.writeHead(206, {
+      'Content-Range': `bytes ${start}-${end}/${size}`,
+      'Accept-Ranges': 'bytes',
+      'Content-Length': end - start + 1,
+      'Content-Type': mime.getType(path.extname(absoluteFilePath))!,
+    });
+
+    const readable = fs.createReadStream(absoluteFilePath, { start, end });
+    readable.pipe(response);
   }
 
   async serveVirtualFile(response: http.ServerResponse, vfs: VirtualFileSystem, entry: string, headers?: { [name: string]: string }) {

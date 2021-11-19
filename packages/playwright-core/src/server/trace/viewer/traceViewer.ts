@@ -37,13 +37,13 @@ export async function showTraceViewer(traceUrl: string, browserName: string, hea
     const relativePath = url.pathname.slice('/trace'.length);
     if (relativePath.startsWith('/file')) {
       try {
-        return server.serveFile(response, url.searchParams.get('path')!);
+        return server.serveFile(request, response, url.searchParams.get('path')!);
       } catch (e) {
         return false;
       }
     }
     const absolutePath = path.join(__dirname, '..', '..', '..', 'webpack', 'traceViewer', ...relativePath.split('/'));
-    return server.serveFile(response, absolutePath);
+    return server.serveFile(request, response, absolutePath);
   });
 
   const urlPrefix = await server.start(port);
