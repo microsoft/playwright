@@ -46,29 +46,25 @@ export class Tracing implements api.Tracing {
   async start(options: { name?: string, title?: string, snapshots?: boolean, screenshots?: boolean, sources?: boolean } = {}) {
     if (options.sources)
       this._context._instrumentation!.addListener(this._instrumentationListener);
-    await this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
-      await channel.tracingStart(options);
-      await channel.tracingStartChunk({ title: options.title });
+    await this._context._wrapApiCall(async () => {
+      await this._context._channel.tracingStart(options);
+      await this._context._channel.tracingStartChunk({ title: options.title });
     });
   }
 
   async startChunk(options: { title?: string } = {}) {
     this._sources = new Set();
-    await this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
-      await channel.tracingStartChunk(options);
-    });
+    await this._context._channel.tracingStartChunk(options);
   }
 
   async stopChunk(options: { path?: string } = {}) {
-    await this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
-      await this._doStopChunk(channel, options.path);
-    });
+    await this._doStopChunk(this._context._channel, options.path);
   }
 
   async stop(options: { path?: string } = {}) {
-    await this._context._wrapApiCall(async (channel: channels.BrowserContextChannel) => {
-      await this._doStopChunk(channel, options.path);
-      await channel.tracingStop();
+    await this._context._wrapApiCall(async () => {
+      await this._doStopChunk(this._context._channel, options.path);
+      await this._context._channel.tracingStop();
     });
   }
 

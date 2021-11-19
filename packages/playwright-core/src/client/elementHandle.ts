@@ -47,174 +47,118 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
   }
 
   async ownerFrame(): Promise<Frame | null> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      return Frame.fromNullable((await channel.ownerFrame()).frame);
-    });
+    return Frame.fromNullable((await this._elementChannel.ownerFrame()).frame);
   }
 
   async contentFrame(): Promise<Frame | null> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      return Frame.fromNullable((await channel.contentFrame()).frame);
-    });
+    return Frame.fromNullable((await this._elementChannel.contentFrame()).frame);
   }
 
   async getAttribute(name: string): Promise<string | null> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      const value = (await channel.getAttribute({ name })).value;
-      return value === undefined ? null : value;
-    });
+    const value = (await this._elementChannel.getAttribute({ name })).value;
+    return value === undefined ? null : value;
   }
 
   async inputValue(): Promise<string> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      return (await channel.inputValue()).value;
-    });
+    return (await this._elementChannel.inputValue()).value;
   }
 
   async textContent(): Promise<string | null> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      const value = (await channel.textContent()).value;
-      return value === undefined ? null : value;
-    });
+    const value = (await this._elementChannel.textContent()).value;
+    return value === undefined ? null : value;
   }
 
   async innerText(): Promise<string> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      return (await channel.innerText()).value;
-    });
+    return (await this._elementChannel.innerText()).value;
   }
 
   async innerHTML(): Promise<string> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      return (await channel.innerHTML()).value;
-    });
+    return (await this._elementChannel.innerHTML()).value;
   }
 
   async isChecked(): Promise<boolean> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      return (await channel.isChecked()).value;
-    });
+    return (await this._elementChannel.isChecked()).value;
   }
 
   async isDisabled(): Promise<boolean> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      return (await channel.isDisabled()).value;
-    });
+    return (await this._elementChannel.isDisabled()).value;
   }
 
   async isEditable(): Promise<boolean> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      return (await channel.isEditable()).value;
-    });
+    return (await this._elementChannel.isEditable()).value;
   }
 
   async isEnabled(): Promise<boolean> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      return (await channel.isEnabled()).value;
-    });
+    return (await this._elementChannel.isEnabled()).value;
   }
 
   async isHidden(): Promise<boolean> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      return (await channel.isHidden()).value;
-    });
+    return (await this._elementChannel.isHidden()).value;
   }
 
   async isVisible(): Promise<boolean> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      return (await channel.isVisible()).value;
-    });
+    return (await this._elementChannel.isVisible()).value;
   }
 
   async dispatchEvent(type: string, eventInit: Object = {}) {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      await channel.dispatchEvent({ type, eventInit: serializeArgument(eventInit) });
-    });
+    await this._elementChannel.dispatchEvent({ type, eventInit: serializeArgument(eventInit) });
   }
 
   async scrollIntoViewIfNeeded(options: channels.ElementHandleScrollIntoViewIfNeededOptions = {}) {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      await channel.scrollIntoViewIfNeeded(options);
-    });
+    await this._elementChannel.scrollIntoViewIfNeeded(options);
   }
 
   async hover(options: channels.ElementHandleHoverOptions = {}): Promise<void> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      await channel.hover(options);
-    });
+    await this._elementChannel.hover(options);
   }
 
   async click(options: channels.ElementHandleClickOptions = {}): Promise<void> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      return await channel.click(options);
-    });
+    return await this._elementChannel.click(options);
   }
 
   async dblclick(options: channels.ElementHandleDblclickOptions = {}): Promise<void> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      return await channel.dblclick(options);
-    });
+    return await this._elementChannel.dblclick(options);
   }
 
   async tap(options: channels.ElementHandleTapOptions = {}): Promise<void> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      return await channel.tap(options);
-    });
+    return await this._elementChannel.tap(options);
   }
 
   async selectOption(values: string | api.ElementHandle | SelectOption | string[] | api.ElementHandle[] | SelectOption[] | null, options: SelectOptionOptions = {}): Promise<string[]> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      const result = await channel.selectOption({ ...convertSelectOptionValues(values), ...options });
-      return result.values;
-    });
+    const result = await this._elementChannel.selectOption({ ...convertSelectOptionValues(values), ...options });
+    return result.values;
   }
 
   async fill(value: string, options: channels.ElementHandleFillOptions = {}): Promise<void> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      return await channel.fill({ value, ...options });
-    });
+    return await this._elementChannel.fill({ value, ...options });
   }
 
   async selectText(options: channels.ElementHandleSelectTextOptions = {}): Promise<void> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      await channel.selectText(options);
-    });
+    await this._elementChannel.selectText(options);
   }
 
   async setInputFiles(files: string | FilePayload | string[] | FilePayload[], options: channels.ElementHandleSetInputFilesOptions = {}) {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      await channel.setInputFiles({ files: await convertInputFiles(files), ...options });
-    });
+    await this._elementChannel.setInputFiles({ files: await convertInputFiles(files), ...options });
   }
 
   async focus(): Promise<void> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      await channel.focus();
-    });
+    await this._elementChannel.focus();
   }
 
   async type(text: string, options: channels.ElementHandleTypeOptions = {}): Promise<void> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      await channel.type({ text, ...options });
-    });
+    await this._elementChannel.type({ text, ...options });
   }
 
   async press(key: string, options: channels.ElementHandlePressOptions = {}): Promise<void> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      await channel.press({ key, ...options });
-    });
+    await this._elementChannel.press({ key, ...options });
   }
 
   async check(options: channels.ElementHandleCheckOptions = {}) {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      return await channel.check(options);
-    });
+    return await this._elementChannel.check(options);
   }
 
   async uncheck(options: channels.ElementHandleUncheckOptions = {}) {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      return await channel.uncheck(options);
-    });
+    return await this._elementChannel.uncheck(options);
   }
 
   async setChecked(checked: boolean, options?: channels.ElementHandleCheckOptions) {
@@ -225,67 +169,51 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
   }
 
   async boundingBox(): Promise<Rect | null> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      const value = (await channel.boundingBox()).value;
-      return value === undefined ? null : value;
-    });
+    const value = (await this._elementChannel.boundingBox()).value;
+    return value === undefined ? null : value;
   }
 
   async screenshot(options: channels.ElementHandleScreenshotOptions & { path?: string } = {}): Promise<Buffer> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      const copy = { ...options };
-      if (!copy.type)
-        copy.type = determineScreenshotType(options);
-      const result = await channel.screenshot(copy);
-      const buffer = Buffer.from(result.binary, 'base64');
-      if (options.path) {
-        await mkdirIfNeeded(options.path);
-        await fs.promises.writeFile(options.path, buffer);
-      }
-      return buffer;
-    });
+    const copy = { ...options };
+    if (!copy.type)
+      copy.type = determineScreenshotType(options);
+    const result = await this._elementChannel.screenshot(copy);
+    const buffer = Buffer.from(result.binary, 'base64');
+    if (options.path) {
+      await mkdirIfNeeded(options.path);
+      await fs.promises.writeFile(options.path, buffer);
+    }
+    return buffer;
   }
 
   async $(selector: string): Promise<ElementHandle<SVGElement | HTMLElement> | null> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      return ElementHandle.fromNullable((await channel.querySelector({ selector })).element) as ElementHandle<SVGElement | HTMLElement> | null;
-    });
+    return ElementHandle.fromNullable((await this._elementChannel.querySelector({ selector })).element) as ElementHandle<SVGElement | HTMLElement> | null;
   }
 
   async $$(selector: string): Promise<ElementHandle<SVGElement | HTMLElement>[]> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      const result = await channel.querySelectorAll({ selector });
-      return result.elements.map(h => ElementHandle.from(h) as ElementHandle<SVGElement | HTMLElement>);
-    });
+    const result = await this._elementChannel.querySelectorAll({ selector });
+    return result.elements.map(h => ElementHandle.from(h) as ElementHandle<SVGElement | HTMLElement>);
   }
 
   async $eval<R, Arg>(selector: string, pageFunction: structs.PageFunctionOn<Element, Arg, R>, arg?: Arg): Promise<R> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      const result = await channel.evalOnSelector({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
-      return parseResult(result.value);
-    });
+    const result = await this._elementChannel.evalOnSelector({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
+    return parseResult(result.value);
   }
 
   async $$eval<R, Arg>(selector: string, pageFunction: structs.PageFunctionOn<Element[], Arg, R>, arg?: Arg): Promise<R> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      const result = await channel.evalOnSelectorAll({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
-      return parseResult(result.value);
-    });
+    const result = await this._elementChannel.evalOnSelectorAll({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
+    return parseResult(result.value);
   }
 
   async waitForElementState(state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled', options: channels.ElementHandleWaitForElementStateOptions = {}): Promise<void> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      return await channel.waitForElementState({ state, ...options });
-    });
+    return await this._elementChannel.waitForElementState({ state, ...options });
   }
 
   waitForSelector(selector: string, options: channels.ElementHandleWaitForSelectorOptions & { state: 'attached' | 'visible' }): Promise<ElementHandle<SVGElement | HTMLElement>>;
   waitForSelector(selector: string, options?: channels.ElementHandleWaitForSelectorOptions): Promise<ElementHandle<SVGElement | HTMLElement> | null>;
   async waitForSelector(selector: string, options: channels.ElementHandleWaitForSelectorOptions = {}): Promise<ElementHandle<SVGElement | HTMLElement> | null> {
-    return this._wrapApiCall(async (channel: channels.ElementHandleChannel) => {
-      const result = await channel.waitForSelector({ selector, ...options });
-      return ElementHandle.fromNullable(result.element) as ElementHandle<SVGElement | HTMLElement> | null;
-    });
+    const result = await this._elementChannel.waitForSelector({ selector, ...options });
+    return ElementHandle.fromNullable(result.element) as ElementHandle<SVGElement | HTMLElement> | null;
   }
 }
 

@@ -173,7 +173,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
         if (routeHandler.handle(route, request)) {
           this._routes.splice(this._routes.indexOf(routeHandler), 1);
           if (!this._routes.length)
-            this._wrapApiCall(channel => this._disableInterception(channel), true).catch(() => {});
+            this._wrapApiCall(() => this._disableInterception(), true).catch(() => {});
         }
         return;
       }
@@ -440,11 +440,11 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   async unroute(url: URLMatch, handler?: RouteHandlerCallback): Promise<void> {
     this._routes = this._routes.filter(route => route.url !== url || (handler && route.handler !== handler));
     if (!this._routes.length)
-      await this._disableInterception(this._channel);
+      await this._disableInterception();
   }
 
-  private async _disableInterception(channel: channels.PageChannel) {
-    await channel.setNetworkInterceptionEnabled({ enabled: false });
+  private async _disableInterception() {
+    await this._channel.setNetworkInterceptionEnabled({ enabled: false });
   }
 
   async screenshot(options: channels.PageScreenshotOptions & { path?: string } = {}): Promise<Buffer> {
@@ -470,12 +470,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   async close(options: { runBeforeUnload?: boolean } = { runBeforeUnload: undefined }) {
     try {
-      await this._wrapApiCall(async (channel: channels.PageChannel) => {
-        if (this._ownedContext)
-          await this._ownedContext.close();
-        else
-          await channel.close(options);
-      });
+      if (this._ownedContext)
+        await this._ownedContext.close();
+      else
+        await this._channel.close(options);
     } catch (e) {
       if (isSafeCloseError(e))
         return;

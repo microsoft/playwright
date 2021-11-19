@@ -40,14 +40,10 @@ export class Dialog extends ChannelOwner<channels.DialogChannel> implements api.
   }
 
   async accept(promptText: string | undefined) {
-    return this._wrapApiCall(async (channel: channels.DialogChannel) => {
-      await channel.accept({ promptText });
-    });
+    await this._channel.accept({ promptText });
   }
 
   async dismiss() {
-    return this._wrapApiCall(async (channel: channels.DialogChannel) => {
-      await channel.dismiss();
-    });
+    await this._channel.dismiss();
   }
 }
