@@ -58,7 +58,7 @@ export class Connection extends EventEmitter {
   private _waitingForObject = new Map<string, any>();
   onmessage = (message: object): void => {};
   private _lastId = 0;
-  private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void, stackTrace: ParsedStackTrace }>();
+  private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void, stackTrace: ParsedStackTrace | null }>();
   private _rootObject: Root;
   private _closedErrorMessage: string | undefined;
   private _isRemote = false;
@@ -81,20 +81,19 @@ export class Connection extends EventEmitter {
   }
 
   pendingProtocolCalls(): ParsedStackTrace[] {
-    return Array.from(this._callbacks.values()).map(callback => callback.stackTrace);
+    return Array.from(this._callbacks.values()).map(callback => callback.stackTrace).filter(Boolean) as ParsedStackTrace[];
   }
 
   getObjectWithKnownName(guid: string): any {
     return this._objects.get(guid)!;
   }
 
-  async sendMessageToServer(object: ChannelOwner, method: string, params: any, maybeStackTrace: ParsedStackTrace | null): Promise<any> {
+  async sendMessageToServer(object: ChannelOwner, method: string, params: any, stackTrace: ParsedStackTrace | null): Promise<any> {
     if (this._closedErrorMessage)
       throw new Error(this._closedErrorMessage);
 
+    const { apiName, frames } = stackTrace || { apiName: '', frames: [] };
     const guid = object._guid;
-    const stackTrace: ParsedStackTrace = maybeStackTrace || { frameTexts: [], frames: [], apiName: '', allFrames: [] };
-    const { frames, apiName } = stackTrace;
     const id = ++this._lastId;
     const converted = { id, guid, method, params };
     // Do not include metadata in debug logs to avoid noise.

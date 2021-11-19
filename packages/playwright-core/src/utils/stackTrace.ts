@@ -33,6 +33,8 @@ export function rewriteErrorMessage<E extends Error>(e: E, newMessage: string): 
 const CORE_DIR = path.resolve(__dirname, '..', '..');
 const CLIENT_LIB = path.join(CORE_DIR, 'lib', 'client');
 const CLIENT_SRC = path.join(CORE_DIR, 'src', 'client');
+const UTIL_LIB = path.join(CORE_DIR, 'lib', 'util');
+const UTIL_SRC = path.join(CORE_DIR, 'src', 'util');
 const TEST_DIR_SRC = path.resolve(CORE_DIR, '..', 'playwright-test');
 const TEST_DIR_LIB = path.resolve(CORE_DIR, '..', '@playwright', 'test');
 const WS_LIB = path.relative(process.cwd(), path.dirname(require.resolve('ws')));
@@ -44,12 +46,17 @@ export type ParsedStackTrace = {
   apiName: string | undefined;
 };
 
-export function captureStackTrace(): ParsedStackTrace {
+export function captureRawStack(): string {
   const stackTraceLimit = Error.stackTraceLimit;
   Error.stackTraceLimit = 30;
   const error = new Error();
   const stack = error.stack!;
   Error.stackTraceLimit = stackTraceLimit;
+  return stack;
+}
+
+export function captureStackTrace(rawStack?: string): ParsedStackTrace {
+  const stack = rawStack || captureRawStack();
 
   const isTesting = isUnderTest();
   type ParsedFrame = {
@@ -80,7 +87,7 @@ export function captureStackTrace(): ParsedStackTrace {
       fileName = path.resolve(process.cwd(), frame.file);
     if (isTesting && fileName.includes(path.join('playwright', 'tests', 'config', 'coverage.js')))
       return null;
-    const inClient = fileName.startsWith(CLIENT_LIB) || fileName.startsWith(CLIENT_SRC);
+    const inClient = fileName.startsWith(CLIENT_LIB) || fileName.startsWith(CLIENT_SRC) || fileName.startsWith(UTIL_LIB) || fileName.startsWith(UTIL_SRC);
     const parsed: ParsedFrame = {
       frame: {
         file: fileName,

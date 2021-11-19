@@ -147,7 +147,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
         if (routeHandler.handle(route, request)) {
           this._routes.splice(this._routes.indexOf(routeHandler), 1);
           if (!this._routes.length)
-            this._wrapApiCall(channel => this._disableInterception(channel), undefined, true).catch(() => {});
+            this._wrapApiCall(channel => this._disableInterception(channel), true).catch(() => {});
         }
         return;
       }

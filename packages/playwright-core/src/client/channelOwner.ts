@@ -18,8 +18,9 @@ import { EventEmitter } from 'events';
 import * as channels from '../protocol/channels';
 import { createScheme, ValidationError, Validator } from '../protocol/validator';
 import { debugLogger } from '../utils/debugLogger';
-import { captureStackTrace, ParsedStackTrace } from '../utils/stackTrace';
+import { captureRawStack, captureStackTrace, ParsedStackTrace } from '../utils/stackTrace';
 import { isUnderTest } from '../utils/utils';
+import { zones } from '../utils/zones';
 import { ClientInstrumentation } from './clientInstrumentation';
 import type { Connection } from './connection';
 import type { Logger } from './types';
@@ -51,7 +52,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
       this._logger = this._parent._logger;
     }
 
-    this._channel = this._createChannel(new EventEmitter(), null);
+    this._channel = this._createChannel(new EventEmitter());
     this._initializer = initializer;
   }
 
@@ -74,20 +75,22 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     };
   }
 
-  private _createChannel(base: Object, stackTrace: ParsedStackTrace | null, csi?: ClientInstrumentation, callCookie?: any): T {
+  private _createChannel(base: Object): T {
     const channel = new Proxy(base, {
       get: (obj: any, prop) => {
         if (prop === 'debugScopeState')
-          return (params: any) => this._connection.sendMessageToServer(this, prop, params, stackTrace);
+          return (params: any) => this._connection.sendMessageToServer(this, prop, params, null);
         if (typeof prop === 'string') {
           const validator = scheme[paramsName(this._type, prop)];
           if (validator) {
             return (params: any) => {
-              if (callCookie && csi) {
-                csi.onApiCallBegin(renderCallWithParams(stackTrace!.apiName!, params), stackTrace, callCookie);
-                csi = undefined;
-              }
-              return this._connection.sendMessageToServer(this, prop, validator(params, ''), stackTrace);
+              return this._wrapApiCall((channel, apiZone) => {
+                const { stackTrace, csi, callCookie } = apiZone.reported ? { csi: undefined, callCookie: undefined, stackTrace: null } : apiZone;
+                apiZone.reported = true;
+                if (csi && stackTrace && stackTrace.apiName)
+                  csi.onApiCallBegin(renderCallWithParams(stackTrace.apiName, params), stackTrace, callCookie);
+                return this._connection.sendMessageToServer(this, prop, validator(params, ''), stackTrace);
+              });
             };
           }
         }
@@ -98,22 +101,27 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     return channel;
   }
 
-  async _wrapApiCall<R, C extends channels.Channel = T>(func: (channel: C, stackTrace: ParsedStackTrace) => Promise<R>, logger?: Logger, isInternal?: boolean): Promise<R> {
-    logger = logger || this._logger;
-    const stackTrace = captureStackTrace();
-    const { apiName, frameTexts } = stackTrace;
+  async _wrapApiCall<R, C extends channels.Channel = T>(func: (channel: C, apiZone: ApiZone) => Promise<R>, isInternal = false): Promise<R> {
+    const logger = this._logger;
+    const stack = captureRawStack();
+    const apiZone = zones.zoneData<ApiZone>('apiZone', stack);
+    if (apiZone)
+      return func(this._channel as any, apiZone);
 
-    // Do not report nested async calls to _wrapApiCall.
-    isInternal = isInternal || stackTrace.allFrames.filter(f => f.function?.includes('_wrapApiCall')).length > 1;
+    const stackTrace = captureStackTrace(stack);
     if (isInternal)
       delete stackTrace.apiName;
     const csi = isInternal ? undefined : this._instrumentation;
     const callCookie: any = {};
 
+    const { apiName, frameTexts } = stackTrace;
+
     try {
       logApiCall(logger, `=> ${apiName} started`, isInternal);
-      const channel = this._createChannel({}, stackTrace, csi, callCookie);
-      const result = await func(channel as any, stackTrace);
+      const apiZone = { stackTrace, isInternal, reported: false, csi, callCookie };
+      const result = await zones.run<ApiZone, R>('apiZone', apiZone, async () => {
+        return await func(this._channel as any, apiZone);
+      });
       csi?.onApiCallEnd(callCookie);
       logApiCall(logger, `<= ${apiName} succeeded`, isInternal);
       return result;
@@ -173,3 +181,11 @@ const tChannel = (name: string): Validator => {
 };
 
 const scheme = createScheme(tChannel);
+
+type ApiZone = {
+  stackTrace: ParsedStackTrace;
+  isInternal: boolean;
+  reported: boolean;
+  csi: ClientInstrumentation | undefined;
+  callCookie: any;
+};

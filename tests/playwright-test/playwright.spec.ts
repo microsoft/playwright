@@ -234,12 +234,12 @@ test('should call logger from launchOptions config', async ({ runInlineTest }, t
         }
       });
 
-      test('should support config logger', async ({browser}) => {
+      test('should support config logger', async ({browser, context}) => {
         expect(browser.version()).toBeTruthy();
         expect(log.length > 0).toBeTruthy();
         expect(log.filter(item => item.severity === 'info').length > 0).toBeTruthy();
-        expect(log.filter(item => item.message.includes('browserType.launch started')).length > 0).toBeTruthy();
-        expect(log.filter(item => item.message.includes('browserType.launch succeeded')).length > 0).toBeTruthy();
+        expect(log.filter(item => item.message.includes('browser.newContext started')).length > 0).toBeTruthy();
+        expect(log.filter(item => item.message.includes('browser.newContext succeeded')).length > 0).toBeTruthy();
       });
       `,
   }, { workers: 1 });

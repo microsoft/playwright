@@ -107,17 +107,17 @@ it('should handle errors', async ({ playwright, browser }) => {
   });
 
   error = await playwright.selectors.register('$', createDummySelector).catch(e => e);
-  expect(error.message).toBe('Selector engine name may only contain [a-zA-Z0-9_] characters');
+  expect(error.message).toBe('selectors.register: Selector engine name may only contain [a-zA-Z0-9_] characters');
 
   // Selector names are case-sensitive.
   await playwright.selectors.register('dummy', createDummySelector);
   await playwright.selectors.register('duMMy', createDummySelector);
 
   error = await playwright.selectors.register('dummy', createDummySelector).catch(e => e);
-  expect(error.message).toBe('"dummy" selector engine has been already registered');
+  expect(error.message).toBe('selectors.register: "dummy" selector engine has been already registered');
 
   error = await playwright.selectors.register('css', createDummySelector).catch(e => e);
-  expect(error.message).toBe('"css" is a predefined selector engine');
+  expect(error.message).toBe('selectors.register: "css" is a predefined selector engine');
   await page.close();
 });
 

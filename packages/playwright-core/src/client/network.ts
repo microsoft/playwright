@@ -170,7 +170,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   async _internalResponse(): Promise<Response | null> {
     return this._wrapApiCall(async (channel: channels.RequestChannel) => {
       return Response.fromNullable((await channel.response()).response);
-    }, undefined, true);
+    }, true);
   }
 
   frame(): Frame {
@@ -309,7 +309,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
         headers: options.headers ? headersObjectToArray(options.headers) : undefined,
         postData: postDataBuffer ? postDataBuffer.toString('base64') : undefined,
       }));
-    }, undefined, isInternal);
+    }, isInternal);
   }
 }
 
