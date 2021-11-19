@@ -14,15 +14,15 @@ The method will populate request cookies from the context and update
 context cookies from the response. The method will automatically follow redirects.
 
 ### param: APIRequestContext.delete.url = %%-fetch-param-url-%%
-### option: APIRequestContext.delete.params = %%-fetch-option-params-%%
-### option: APIRequestContext.delete.headers = %%-fetch-option-headers-%%
-### option: APIRequestContext.delete.data = %%-fetch-option-data-%%
-### option: APIRequestContext.delete.form = %%-fetch-option-form-%%
+### param: APIRequestContext.delete.params = %%-java-fetch-params-%%
+### option: APIRequestContext.delete.params = %%-js-python-fetch-option-params-%%
+### option: APIRequestContext.delete.headers = %%-js-python-fetch-option-headers-%%
+### option: APIRequestContext.delete.data = %%-js-python-fetch-option-data-%%
+### option: APIRequestContext.delete.form = %%-js-python-fetch-option-form-%%
 ### option: APIRequestContext.delete.multipart = %%-js-pyhton-fetch-option-multipart-%%
-### option: APIRequestContext.delete.multipart = %%-java-fetch-option-multipart-%%
-### option: APIRequestContext.delete.timeout = %%-fetch-option-timeout-%%
-### option: APIRequestContext.delete.failOnStatusCode = %%-fetch-option-failonstatuscode-%%
-### option: APIRequestContext.delete.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
+### option: APIRequestContext.delete.timeout = %%-js-python-fetch-option-timeout-%%
+### option: APIRequestContext.delete.failOnStatusCode = %%-js-python-fetch-option-failonstatuscode-%%
+### option: APIRequestContext.delete.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
 
 ## async method: APIRequestContext.dispose
 
@@ -40,22 +40,23 @@ context cookies from the response. The method will automatically follow redirect
 
 Target URL or Request to get all parameters from.
 
-### option: APIRequestContext.fetch.params = %%-fetch-option-params-%%
+### param: APIRequestContext.fetch.params = %%-java-fetch-params-%%
+### option: APIRequestContext.fetch.params = %%-js-python-fetch-option-params-%%
 
 ### option: APIRequestContext.fetch.method
+* langs: js, python
 - `method` <[string]>
 
 If set changes the fetch method (e.g. [PUT](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PUT) or
 [POST](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST)). If not specified, GET method is used.
 
-### option: APIRequestContext.fetch.headers = %%-fetch-option-headers-%%
-### option: APIRequestContext.fetch.data = %%-fetch-option-data-%%
-### option: APIRequestContext.fetch.form = %%-fetch-option-form-%%
+### option: APIRequestContext.fetch.headers = %%-js-python-fetch-option-headers-%%
+### option: APIRequestContext.fetch.data = %%-js-python-fetch-option-data-%%
+### option: APIRequestContext.fetch.form = %%-js-python-fetch-option-form-%%
 ### option: APIRequestContext.fetch.multipart = %%-js-pyhton-fetch-option-multipart-%%
-### option: APIRequestContext.fetch.multipart = %%-java-fetch-option-multipart-%%
-### option: APIRequestContext.fetch.timeout = %%-fetch-option-timeout-%%
-### option: APIRequestContext.fetch.failOnStatusCode = %%-fetch-option-failonstatuscode-%%
-### option: APIRequestContext.fetch.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
+### option: APIRequestContext.fetch.timeout = %%-js-python-fetch-option-timeout-%%
+### option: APIRequestContext.fetch.failOnStatusCode = %%-js-python-fetch-option-failonstatuscode-%%
+### option: APIRequestContext.fetch.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
 
 ## async method: APIRequestContext.get
 - returns: <[APIResponse]>
@@ -65,11 +66,12 @@ The method will populate request cookies from the context and update
 context cookies from the response. The method will automatically follow redirects.
 
 ### param: APIRequestContext.get.url = %%-fetch-param-url-%%
-### option: APIRequestContext.get.params = %%-fetch-option-params-%%
-### option: APIRequestContext.get.headers = %%-fetch-option-headers-%%
-### option: APIRequestContext.get.timeout = %%-fetch-option-timeout-%%
-### option: APIRequestContext.get.failOnStatusCode = %%-fetch-option-failonstatuscode-%%
-### option: APIRequestContext.get.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
+### param: APIRequestContext.get.params = %%-java-fetch-params-%%
+### option: APIRequestContext.get.params = %%-js-python-fetch-option-params-%%
+### option: APIRequestContext.get.headers = %%-js-python-fetch-option-headers-%%
+### option: APIRequestContext.get.timeout = %%-js-python-fetch-option-timeout-%%
+### option: APIRequestContext.get.failOnStatusCode = %%-js-python-fetch-option-failonstatuscode-%%
+### option: APIRequestContext.get.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
 
 ## async method: APIRequestContext.head
 - returns: <[APIResponse]>
@@ -79,11 +81,12 @@ The method will populate request cookies from the context and update
 context cookies from the response. The method will automatically follow redirects.
 
 ### param: APIRequestContext.head.url = %%-fetch-param-url-%%
-### option: APIRequestContext.head.params = %%-fetch-option-params-%%
-### option: APIRequestContext.head.headers = %%-fetch-option-headers-%%
-### option: APIRequestContext.head.timeout = %%-fetch-option-timeout-%%
-### option: APIRequestContext.head.failOnStatusCode = %%-fetch-option-failonstatuscode-%%
-### option: APIRequestContext.head.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
+### param: APIRequestContext.head.params = %%-java-fetch-params-%%
+### option: APIRequestContext.head.params = %%-js-python-fetch-option-params-%%
+### option: APIRequestContext.head.headers = %%-js-python-fetch-option-headers-%%
+### option: APIRequestContext.head.timeout = %%-js-python-fetch-option-timeout-%%
+### option: APIRequestContext.head.failOnStatusCode = %%-js-python-fetch-option-failonstatuscode-%%
+### option: APIRequestContext.head.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
 
 ## async method: APIRequestContext.patch
 - returns: <[APIResponse]>
@@ -93,15 +96,15 @@ The method will populate request cookies from the context and update
 context cookies from the response. The method will automatically follow redirects.
 
 ### param: APIRequestContext.patch.url = %%-fetch-param-url-%%
-### option: APIRequestContext.patch.params = %%-fetch-option-params-%%
-### option: APIRequestContext.patch.headers = %%-fetch-option-headers-%%
-### option: APIRequestContext.patch.data = %%-fetch-option-data-%%
-### option: APIRequestContext.patch.form = %%-fetch-option-form-%%
+### param: APIRequestContext.patch.params = %%-java-fetch-params-%%
+### option: APIRequestContext.patch.params = %%-js-python-fetch-option-params-%%
+### option: APIRequestContext.patch.headers = %%-js-python-fetch-option-headers-%%
+### option: APIRequestContext.patch.data = %%-js-python-fetch-option-data-%%
+### option: APIRequestContext.patch.form = %%-js-python-fetch-option-form-%%
 ### option: APIRequestContext.patch.multipart = %%-js-pyhton-fetch-option-multipart-%%
-### option: APIRequestContext.patch.multipart = %%-java-fetch-option-multipart-%%
-### option: APIRequestContext.patch.timeout = %%-fetch-option-timeout-%%
-### option: APIRequestContext.patch.failOnStatusCode = %%-fetch-option-failonstatuscode-%%
-### option: APIRequestContext.patch.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
+### option: APIRequestContext.patch.timeout = %%-js-python-fetch-option-timeout-%%
+### option: APIRequestContext.patch.failOnStatusCode = %%-js-python-fetch-option-failonstatuscode-%%
+### option: APIRequestContext.patch.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
 
 ## async method: APIRequestContext.post
 - returns: <[APIResponse]>
@@ -111,15 +114,15 @@ The method will populate request cookies from the context and update
 context cookies from the response. The method will automatically follow redirects.
 
 ### param: APIRequestContext.post.url = %%-fetch-param-url-%%
-### option: APIRequestContext.post.params = %%-fetch-option-params-%%
-### option: APIRequestContext.post.headers = %%-fetch-option-headers-%%
-### option: APIRequestContext.post.data = %%-fetch-option-data-%%
-### option: APIRequestContext.post.form = %%-fetch-option-form-%%
+### param: APIRequestContext.post.params = %%-java-fetch-params-%%
+### option: APIRequestContext.post.params = %%-js-python-fetch-option-params-%%
+### option: APIRequestContext.post.headers = %%-js-python-fetch-option-headers-%%
+### option: APIRequestContext.post.data = %%-js-python-fetch-option-data-%%
+### option: APIRequestContext.post.form = %%-js-python-fetch-option-form-%%
 ### option: APIRequestContext.post.multipart = %%-js-pyhton-fetch-option-multipart-%%
-### option: APIRequestContext.post.multipart = %%-java-fetch-option-multipart-%%
-### option: APIRequestContext.post.timeout = %%-fetch-option-timeout-%%
-### option: APIRequestContext.post.failOnStatusCode = %%-fetch-option-failonstatuscode-%%
-### option: APIRequestContext.post.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
+### option: APIRequestContext.post.timeout = %%-js-python-fetch-option-timeout-%%
+### option: APIRequestContext.post.failOnStatusCode = %%-js-python-fetch-option-failonstatuscode-%%
+### option: APIRequestContext.post.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
 
 ## async method: APIRequestContext.put
 - returns: <[APIResponse]>
@@ -129,15 +132,15 @@ The method will populate request cookies from the context and update
 context cookies from the response. The method will automatically follow redirects.
 
 ### param: APIRequestContext.put.url = %%-fetch-param-url-%%
-### option: APIRequestContext.put.params = %%-fetch-option-params-%%
-### option: APIRequestContext.put.headers = %%-fetch-option-headers-%%
-### option: APIRequestContext.put.data = %%-fetch-option-data-%%
-### option: APIRequestContext.put.form = %%-fetch-option-form-%%
+### param: APIRequestContext.put.params = %%-java-fetch-params-%%
+### option: APIRequestContext.put.params = %%-js-python-fetch-option-params-%%
+### option: APIRequestContext.put.headers = %%-js-python-fetch-option-headers-%%
+### option: APIRequestContext.put.data = %%-js-python-fetch-option-data-%%
+### option: APIRequestContext.put.form = %%-js-python-fetch-option-form-%%
 ### option: APIRequestContext.put.multipart = %%-js-pyhton-fetch-option-multipart-%%
-### option: APIRequestContext.put.multipart = %%-java-fetch-option-multipart-%%
-### option: APIRequestContext.put.timeout = %%-fetch-option-timeout-%%
-### option: APIRequestContext.put.failOnStatusCode = %%-fetch-option-failonstatuscode-%%
-### option: APIRequestContext.put.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
+### option: APIRequestContext.put.timeout = %%-js-python-fetch-option-timeout-%%
+### option: APIRequestContext.put.failOnStatusCode = %%-js-python-fetch-option-failonstatuscode-%%
+### option: APIRequestContext.put.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
 
 ## async method: APIRequestContext.storageState
 - returns: <[Object]>

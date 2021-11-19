@@ -303,28 +303,39 @@ Emulates consistent window screen size available inside web page via `window.scr
 
 Target URL.
 
-## fetch-option-params
+## js-python-fetch-option-params
+* langs: js, python
 - `params` <[Object]<[string], [string]|[float]|[boolean]>>
 
 Query parameters to be sent with the URL.
 
-## fetch-option-headers
+## java-fetch-params
+* langs: java
+- `options` <[RequestOptions]>
+
+Optional request parameters.
+
+## js-python-fetch-option-headers
+* langs: js, python
 - `headers` <[Object]<[string], [string]>>
 
 Allows to set HTTP headers.
 
-## fetch-option-timeout
+## js-python-fetch-option-timeout
+* langs: js, python
 - `timeout` <[float]>
 
 Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
 
-## fetch-option-failonstatuscode
+## js-python-fetch-option-failonstatuscode
+* langs: js, python
 - `failOnStatusCode` <[boolean]>
 
 Whether to throw on response codes other than 2xx and 3xx. By default response object is returned
 for all status codes.
 
-## fetch-option-form
+## js-python-fetch-option-form
+* langs: js, python
 - `form` <[Object]<[string], [string]|[float]|[boolean]>>
 
 Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent as
@@ -343,22 +354,19 @@ this request body. If this parameter is specified `content-type` header will be 
 unless explicitly provided. File values can be passed either as [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream)
 or as file-like object containing file name, mime-type and its content.
 
-## java-fetch-option-multipart
-* langs: java
-- `multipart` <[Object]<[string], [any]>>
-
-Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as
-this request body. If this parameter is specified `content-type` header will be set to `multipart/form-data`
-unless explicitly provided. File values can be passed either as [File] or as file-like object [FilePayload]
-containing file name, mime-type and its content.
-
-## fetch-option-data
+## js-python-fetch-option-data
+* langs: js, python
 - `data` <[string]|[Buffer]|[Serializable]>
 
 Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
 and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type` header will be
 set to `application/octet-stream` if not explicitly set.
 
+## js-python-fetch-option-ignorehttpserrors
+* langs: js, python
+- `ignoreHTTPSErrors` <[boolean]>
+
+Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
 
 ## evaluate-expression
 - `expression` <[string]>
