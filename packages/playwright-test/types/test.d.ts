@@ -2478,8 +2478,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    */
   afterEach(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   /**
-   * Declares a `beforeAll` hook that is executed once before all tests. When called in the scope of a test file, runs before
-   * all tests in the file. When called inside a
+   * Declares a `beforeAll` hook that is executed once per worker process before all tests. When called in the scope of a
+   * test file, runs before all tests in the file. When called inside a
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group, runs before all tests
    * in the group.
    *
@@ -2500,16 +2500,22 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
+   * Note that worker process is restarted on test failures, and `beforeAll` hook runs again in the new worker. Learn more
+   * about [workers and failures](https://playwright.dev/docs/test-retries).
+   *
    * You can use [test.afterAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-all) to teardown any
    * resources set up in `beforeAll`.
    * @param hookFunction Hook function that takes one or two arguments: an object with worker fixtures and optional [TestInfo].
    */
   beforeAll(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   /**
-   * Declares an `afterAll` hook that is executed once after all tests. When called in the scope of a test file, runs after
-   * all tests in the file. When called inside a
+   * Declares an `afterAll` hook that is executed once per worker after all tests. When called in the scope of a test file,
+   * runs after all tests in the file. When called inside a
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group, runs after all tests
    * in the group.
+   *
+   * Note that worker process is restarted on test failures, and `afterAll` hook runs again in the new worker. Learn more
+   * about [workers and failures](https://playwright.dev/docs/test-retries).
    * @param hookFunction Hook function that takes one or two arguments: an object with worker fixtures and optional [TestInfo].
    */
   afterAll(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;

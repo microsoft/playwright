@@ -61,7 +61,9 @@ Test function that takes one or two arguments: an object with fixtures and optio
 
 ## method: Test.afterAll
 
-Declares an `afterAll` hook that is executed once after all tests. When called in the scope of a test file, runs after all tests in the file. When called inside a [`method: Test.describe`] group, runs after all tests in the group.
+Declares an `afterAll` hook that is executed once per worker after all tests. When called in the scope of a test file, runs after all tests in the file. When called inside a [`method: Test.describe`] group, runs after all tests in the group.
+
+Note that worker process is restarted on test failures, and `afterAll` hook runs again in the new worker. Learn more about [workers and failures](./test-retries.md).
 
 ### param: Test.afterAll.hookFunction
 - `hookFunction` <[function]\([Fixtures], [TestInfo]\)>
@@ -116,7 +118,7 @@ Hook function that takes one or two arguments: an object with fixtures and optio
 
 ## method: Test.beforeAll
 
-Declares a `beforeAll` hook that is executed once before all tests. When called in the scope of a test file, runs before all tests in the file. When called inside a [`method: Test.describe`] group, runs before all tests in the group.
+Declares a `beforeAll` hook that is executed once per worker process before all tests. When called in the scope of a test file, runs before all tests in the file. When called inside a [`method: Test.describe`] group, runs before all tests in the group.
 
 ```js js-flavor=js
 // example.spec.js
@@ -151,6 +153,8 @@ test('my test', async ({ page }) => {
   // ...
 });
 ```
+
+Note that worker process is restarted on test failures, and `beforeAll` hook runs again in the new worker. Learn more about [workers and failures](./test-retries.md).
 
 You can use [`method: Test.afterAll`] to teardown any resources set up in `beforeAll`.
 
