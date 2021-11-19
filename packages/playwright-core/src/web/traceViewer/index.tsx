@@ -23,13 +23,17 @@ import '../common.css';
 
 (async () => {
   applyTheme();
-  navigator.serviceWorker.register('sw.bundle.js');
-  if (!navigator.serviceWorker.controller) {
-    await new Promise<void>(f => {
-      navigator.serviceWorker.oncontrollerchange = () => f();
-    });
+  if (window.location.protocol !== 'file:') {
+    navigator.serviceWorker.register('sw.bundle.js');
+    if (!navigator.serviceWorker.controller) {
+      await new Promise<void>(f => {
+        navigator.serviceWorker.oncontrollerchange = () => f();
+      });
+    }
+
+    // Keep SW running.
+    setInterval(function() { fetch('ping'); }, 10000);
   }
-  // Keep SW running.
-  setInterval(function() { fetch('ping'); }, 10000);
+
   ReactDOM.render(<Workbench/>, document.querySelector('#root'));
 })();
