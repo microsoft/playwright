@@ -708,6 +708,13 @@ Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeou
 using the [`method: AndroidDevice.setDefaultTimeout`] method.
 
 ## assertions-timeout
+* langs: js
+- `timeout` <[float]>
+
+Time to retry the assertion for. Defaults to `timeout` in [`property: TestConfig.expect`].
+
+## assertions-timeout
+* langs: java, python
 - `timeout` <[float]>
 
 Time to retry the assertion for.
