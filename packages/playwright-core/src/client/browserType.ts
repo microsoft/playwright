@@ -82,7 +82,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       browser._logger = logger;
       browser._setBrowserType(this);
       return browser;
-    }, logger);
+    });
   }
 
   async launchServer(options: LaunchServerOptions = {}): Promise<api.BrowserServer> {
@@ -113,7 +113,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       context._setBrowserType(this);
       await this._onDidCreateContext?.(context);
       return context;
-    }, logger);
+    });
   }
 
   connect(options: api.ConnectOptions & { wsEndpoint?: string }): Promise<api.Browser>;
@@ -190,7 +190,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
         closePipe();
         throw new Error(`Timeout ${params.timeout}ms exceeded`);
       }
-    }, logger);
+    });
   }
 
   connectOverCDP(options: api.ConnectOverCDPOptions  & { wsEndpoint?: string }): Promise<api.Browser>;
@@ -222,6 +222,6 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       browser._logger = logger;
       browser._setBrowserType(this);
       return browser;
-    }, logger);
+    });
   }
 }

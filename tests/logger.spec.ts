@@ -26,8 +26,8 @@ it('should log', async ({ browserType }) => {
   await browser.close();
   expect(log.length > 0).toBeTruthy();
   expect(log.filter(item => item.severity === 'info').length > 0).toBeTruthy();
-  expect(log.filter(item => item.message.includes('browserType.launch started')).length > 0).toBeTruthy();
-  expect(log.filter(item => item.message.includes('browserType.launch succeeded')).length > 0).toBeTruthy();
+  expect(log.filter(item => item.message.includes('browser.newContext started')).length > 0).toBeTruthy();
+  expect(log.filter(item => item.message.includes('browser.newContext succeeded')).length > 0).toBeTruthy();
 });
 
 it('should log context-level', async ({ browserType }) => {
