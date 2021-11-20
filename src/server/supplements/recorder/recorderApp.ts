@@ -97,11 +97,12 @@ export class RecorderApp extends EventEmitter {
     const recorderPlaywright = require('../../playwright').createPlaywright(true) as import('../../playwright').Playwright;
     const args = [
       '--app=data:text/html,',
-      '--window-size=600,600',
-      '--window-position=1280,10',
+      '--window-size=600,600'
     ];
     if (process.env.PWTEST_RECORDER_PORT)
       args.push(`--remote-debugging-port=${process.env.PWTEST_RECORDER_PORT}`);
+    if (process.env.PWTEST_RECORDER_WINDOW_POSITION)
+      args.push(`--window-position=${process.env.PWTEST_RECORDER_WINDOW_POSITION}`);
     let channel: types.BrowserChannel | undefined;
     let executablePath: string | undefined;
     if (inspectedContext._browser.options.isChromium) {
