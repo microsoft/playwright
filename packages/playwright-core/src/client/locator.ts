@@ -37,8 +37,8 @@ export class Locator implements api.Locator {
     timeout = this._frame.page()._timeoutSettings.timeout({ timeout });
     const deadline = timeout ? monotonicTime() + timeout : 0;
 
-    return this._frame._wrapApiCall<R>(async (channel: channels.FrameChannel) => {
-      const result = await channel.waitForSelector({ selector: this._selector, strict: true, state: 'attached', timeout });
+    return this._frame._wrapApiCall<R>(async () => {
+      const result = await this._frame._channel.waitForSelector({ selector: this._selector, strict: true, state: 'attached', timeout });
       const handle = ElementHandle.fromNullable(result.element) as ElementHandle<SVGElement | HTMLElement> | null;
       if (!handle)
         throw new Error(`Could not resolve ${this._selector} to DOM Element`);
@@ -224,21 +224,17 @@ export class Locator implements api.Locator {
   waitFor(options: channels.FrameWaitForSelectorOptions & { state: 'attached' | 'visible' }): Promise<void>;
   waitFor(options?: channels.FrameWaitForSelectorOptions): Promise<void>;
   async waitFor(options?: channels.FrameWaitForSelectorOptions): Promise<void> {
-    return this._frame._wrapApiCall(async (channel: channels.FrameChannel) => {
-      await channel.waitForSelector({ selector: this._selector, strict: true, omitReturnValue: true, ...options });
-    });
+    await this._frame._channel.waitForSelector({ selector: this._selector, strict: true, omitReturnValue: true, ...options });
   }
 
   async _expect(expression: string, options: FrameExpectOptions): Promise<{ matches: boolean, received?: any, log?: string[] }> {
-    return this._frame._wrapApiCall(async (channel: channels.FrameChannel) => {
-      const params: channels.FrameExpectParams = { selector: this._selector, expression, ...options, isNot: !!options.isNot };
-      if (options.expectedValue)
-        params.expectedValue = serializeArgument(options.expectedValue);
-      const result = (await channel.expect(params));
-      if (result.received !== undefined)
-        result.received = parseResult(result.received);
-      return result;
-    });
+    const params: channels.FrameExpectParams = { selector: this._selector, expression, ...options, isNot: !!options.isNot };
+    if (options.expectedValue)
+      params.expectedValue = serializeArgument(options.expectedValue);
+    const result = (await this._frame._channel.expect(params));
+    if (result.received !== undefined)
+      result.received = parseResult(result.received);
+    return result;
   }
 
   [util.inspect.custom]() {

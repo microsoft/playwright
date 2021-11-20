@@ -84,7 +84,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
           const validator = scheme[paramsName(this._type, prop)];
           if (validator) {
             return (params: any) => {
-              return this._wrapApiCall((channel, apiZone) => {
+              return this._wrapApiCall(apiZone => {
                 const { stackTrace, csi, callCookie } = apiZone.reported ? { csi: undefined, callCookie: undefined, stackTrace: null } : apiZone;
                 apiZone.reported = true;
                 if (csi && stackTrace && stackTrace.apiName)
@@ -101,12 +101,12 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     return channel;
   }
 
-  async _wrapApiCall<R, C extends channels.Channel = T>(func: (channel: C, apiZone: ApiZone) => Promise<R>, isInternal = false): Promise<R> {
+  async _wrapApiCall<R>(func: (apiZone: ApiZone) => Promise<R>, isInternal = false): Promise<R> {
     const logger = this._logger;
     const stack = captureRawStack();
     const apiZone = zones.zoneData<ApiZone>('apiZone', stack);
     if (apiZone)
-      return func(this._channel as any, apiZone);
+      return func(apiZone);
 
     const stackTrace = captureStackTrace(stack);
     if (isInternal)
@@ -120,7 +120,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
       logApiCall(logger, `=> ${apiName} started`, isInternal);
       const apiZone = { stackTrace, isInternal, reported: false, csi, callCookie };
       const result = await zones.run<ApiZone, R>('apiZone', apiZone, async () => {
-        return await func(this._channel as any, apiZone);
+        return await func(apiZone);
       });
       csi?.onApiCallEnd(callCookie);
       logApiCall(logger, `<= ${apiName} succeeded`, isInternal);

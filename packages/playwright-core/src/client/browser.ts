@@ -55,17 +55,15 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   }
 
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
-    return this._wrapApiCall(async (channel: channels.BrowserChannel) => {
-      options = { ...this._browserType._defaultContextOptions, ...options };
-      const contextOptions = await prepareBrowserContextParams(options);
-      const context = BrowserContext.from((await channel.newContext(contextOptions)).context);
-      context._options = contextOptions;
-      this._contexts.add(context);
-      context._logger = options.logger || this._logger;
-      context._setBrowserType(this._browserType);
-      await this._browserType._onDidCreateContext?.(context);
-      return context;
-    });
+    options = { ...this._browserType._defaultContextOptions, ...options };
+    const contextOptions = await prepareBrowserContextParams(options);
+    const context = BrowserContext.from((await this._channel.newContext(contextOptions)).context);
+    context._options = contextOptions;
+    this._contexts.add(context);
+    context._logger = options.logger || this._logger;
+    context._setBrowserType(this._browserType);
+    await this._browserType._onDidCreateContext?.(context);
+    return context;
   }
 
   contexts(): BrowserContext[] {
@@ -89,32 +87,24 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   }
 
   async newBrowserCDPSession(): Promise<api.CDPSession> {
-    return this._wrapApiCall(async (channel: channels.BrowserChannel) => {
-      return CDPSession.from((await channel.newBrowserCDPSession()).session);
-    });
+    return CDPSession.from((await this._channel.newBrowserCDPSession()).session);
   }
 
   async startTracing(page?: Page, options: { path?: string; screenshots?: boolean; categories?: string[]; } = {}) {
-    return this._wrapApiCall(async (channel: channels.BrowserChannel) => {
-      await channel.startTracing({ ...options, page: page ? page._channel : undefined });
-    });
+    await this._channel.startTracing({ ...options, page: page ? page._channel : undefined });
   }
 
   async stopTracing(): Promise<Buffer> {
-    return this._wrapApiCall(async (channel: channels.BrowserChannel) => {
-      return Buffer.from((await channel.stopTracing()).binary, 'base64');
-    });
+    return Buffer.from((await this._channel.stopTracing()).binary, 'base64');
   }
 
   async close(): Promise<void> {
     try {
-      await this._wrapApiCall(async (channel: channels.BrowserChannel) => {
-        if (this._shouldCloseConnectionOnClose)
-          this._connection.close(kBrowserClosedError);
-        else
-          await channel.close();
-        await this._closedPromise;
-      });
+      if (this._shouldCloseConnectionOnClose)
+        this._connection.close(kBrowserClosedError);
+      else
+        await this._channel.close();
+      await this._closedPromise;
     } catch (e) {
       if (isSafeCloseError(e))
         return;
