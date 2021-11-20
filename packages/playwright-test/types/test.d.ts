@@ -458,7 +458,8 @@ interface TestConfig {
   globalTeardown?: string;
   /**
    * Maximum time in milliseconds the whole test suite can run. Zero timeout (default) disables this behavior. Useful on CI
-   * to prevent broken setup from running too long and wasting resources.
+   * to prevent broken setup from running too long and wasting resources. Learn more about
+   * [various timeouts](https://playwright.dev/docs/test-timeouts).
    *
    * ```ts
    * // playwright.config.ts
@@ -590,7 +591,7 @@ interface TestConfig {
   workers?: number;
 
   /**
-   * Configuration for the `expect` assertion library.
+   * Configuration for the `expect` assertion library. Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).
    *
    * ```ts
    * // playwright.config.ts
@@ -737,7 +738,8 @@ interface TestConfig {
    * Timeout for each test in milliseconds. Defaults to 30 seconds.
    *
    * This is a base timeout for all tests. In addition, each test can configure its own timeout with
-   * [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout).
+   * [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout). Learn more about
+   * [various timeouts](https://playwright.dev/docs/test-timeouts).
    *
    * ```ts
    * // playwright.config.ts
@@ -879,7 +881,8 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   globalTeardown: string | null;
   /**
    * Maximum time in milliseconds the whole test suite can run. Zero timeout (default) disables this behavior. Useful on CI
-   * to prevent broken setup from running too long and wasting resources.
+   * to prevent broken setup from running too long and wasting resources. Learn more about
+   * [various timeouts](https://playwright.dev/docs/test-timeouts).
    *
    * ```ts
    * // playwright.config.ts
@@ -1234,7 +1237,8 @@ export interface TestInfo {
   slow(condition: boolean, description: string): void;
 
   /**
-   * Changes the timeout for the currently running test. Zero means no timeout.
+   * Changes the timeout for the currently running test. Zero means no timeout. Learn more about
+   * [various timeouts](https://playwright.dev/docs/test-timeouts).
    *
    * Timeout is usually specified in the [configuration file](https://playwright.dev/docs/test-configuration), but it could be useful to change the
    * timeout in certain scenarios:
@@ -1272,8 +1276,10 @@ export interface TestInfo {
    */
   expectedStatus: TestStatus;
   /**
-   * Timeout in milliseconds for the currently running test. Zero means no timeout. Timeout is usually specified in the
-   * [configuration file](https://playwright.dev/docs/test-configuration)
+   * Timeout in milliseconds for the currently running test. Zero means no timeout. Learn more about
+   * [various timeouts](https://playwright.dev/docs/test-timeouts).
+   *
+   * Timeout is usually specified in the [configuration file](https://playwright.dev/docs/test-configuration)
    *
    * ```ts
    * import { test, expect } from '@playwright/test';
@@ -2198,7 +2204,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    */
   slow(callback: (args: TestArgs & WorkerArgs) => boolean, description: string): void;
   /**
-   * Changes the timeout for the test.
+   * Changes the timeout for the test. Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).
    *
    * ```ts
    * import { test, expect } from '@playwright/test';
@@ -2729,6 +2735,8 @@ export interface PlaywrightTestOptions {
    *
    * This is a default timeout for all Playwright actions, same as configured via
    * [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout).
+   *
+   * Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).
    */
   actionTimeout: number | undefined;
   /**
@@ -2736,6 +2744,8 @@ export interface PlaywrightTestOptions {
    *
    * This is a default navigation timeout, same as configured via
    * [page.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-navigation-timeout).
+   *
+   * Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).
    */
   navigationTimeout: number | undefined;
 }
