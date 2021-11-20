@@ -18,16 +18,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--box-shadow);
   flex: auto;
   flex-direction: column;
-  background-color: #fffb;
+  background-color: white;
   position: absolute;
   top: 0;
   right: 0;
   bottom: 0;
   left: 0;
   z-index: 100;
+  line-height: 24px;
 }
 
 .drop-target .title {
@@ -52,7 +52,7 @@
 .drop-target button {
   color: rgb(255, 255, 255);
   background-color: rgb(0, 122, 204);
-  padding: 6px 4px;
+  padding: 8px 12px;
   border: none;
   margin: 30px 0;
   cursor: pointer;

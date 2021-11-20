@@ -41,7 +41,8 @@ export const Workbench: React.FunctionComponent<{
   const [selectedPropertiesTab, setSelectedPropertiesTab] = React.useState<string>('logs');
   const [progress, setProgress] = React.useState<{ done: number, total: number }>({ done: 0, total: 0 });
   const [dragOver, setDragOver] = React.useState<boolean>(false);
-  const [processingErrorMessage, setProcessingErrorMessage] = React.useState<string|null>(null);
+  const [processingErrorMessage, setProcessingErrorMessage] = React.useState<string | null>(null);
+  const [fileForLocalModeError, setFileForLocalModeError] = React.useState<string | null>(null);
 
   const processTraceFile = (file: File) => {
     const blobTraceURL = URL.createObjectURL(file);
@@ -73,6 +74,12 @@ export const Workbench: React.FunctionComponent<{
 
   React.useEffect(() => {
     const newTraceURL = new URL(window.location.href).searchParams.get('trace');
+    // Don't accept file:// URLs - this means we re opened locally.
+    if (newTraceURL?.startsWith('file:')) {
+      setFileForLocalModeError(newTraceURL);
+      return;
+    }
+
     // Don't re-use blob file URLs on page load (results in Fetch error)
     if (newTraceURL && !newTraceURL.startsWith('blob:'))
       setTraceURL(newTraceURL);
@@ -185,7 +192,15 @@ export const Workbench: React.FunctionComponent<{
     {!!progress.total && <div className='progress'>
       <div className='inner-progress' style={{ width: (100 * progress.done / progress.total) + '%' }}></div>
     </div>}
-    {!dragOver && (!traceURL || processingErrorMessage) && <div className='drop-target'>
+    {fileForLocalModeError && <div className='drop-target'>
+      <div>Trace Viewer uses Service Workers to show traces. To view trace:</div>
+      <div style={{ paddingTop: 20 }}>
+        <div>1. Click <a href={fileForLocalModeError}>here</a> to put your trace into the download shelf</div>
+        <div>2. Go to <a href='https://trace.playwright.dev'>trace.playwright.dev</a></div>
+        <div>3. Drop the trace from the download shelf into the page</div>
+      </div>
+    </div>}
+    {!dragOver && !fileForLocalModeError && (!traceURL || processingErrorMessage) && <div className='drop-target'>
       <div className='processing-error'>{processingErrorMessage}</div>
       <div className='title'>Drop Playwright Trace to load</div>
       <div>or</div>
