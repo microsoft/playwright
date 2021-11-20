@@ -28,6 +28,15 @@ Allows to set post data of the request. If the data parameter is an object, it w
 and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type` header will be
 set to `application/octet-stream` if not explicitly set.
 
+## method: RequestOptions.setFailOnStatusCode
+- returns: <[RequestOptions]>
+
+### param: RequestOptions.setFailOnStatusCode.failOnStatusCode
+- `failOnStatusCode` <[boolean]>
+
+Whether to throw on response codes other than 2xx and 3xx. By default response object is returned
+for all status codes.
+
 ## method: RequestOptions.setForm
 - returns: <[RequestOptions]>
 
@@ -55,6 +64,14 @@ Header name.
 - `value` <[string]>
 
 Header value.
+
+## method: RequestOptions.setIgnoreHTTPSErrors
+- returns: <[RequestOptions]>
+
+### param: RequestOptions.setIgnoreHTTPSErrors.ignoreHTTPSErrors
+- `ignoreHTTPSErrors` <[boolean]>
+
+Whether to ignore HTTPS errors when sending network requests.
 
 ## method: RequestOptions.setMethod
 - returns: <[RequestOptions]>
@@ -104,20 +121,3 @@ Sets request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0`
 - `timeout` <[float]>
 
 Request timeout in milliseconds.
-
-## method: RequestOptions.setFailOnStatusCode
-- returns: <[RequestOptions]>
-
-### param: RequestOptions.setFailOnStatusCode.failOnStatusCode
-- `failOnStatusCode` <[boolean]>
-
-Whether to throw on response codes other than 2xx and 3xx. By default response object is returned
-for all status codes.
-
-## method: RequestOptions.setIgnoreHTTPSErrors
-- returns: <[RequestOptions]>
-
-### param: RequestOptions.setIgnoreHTTPSErrors.ignoreHTTPSErrors
-- `ignoreHTTPSErrors` <[boolean]>
-
-Whether to ignore HTTPS errors when sending network requests.
