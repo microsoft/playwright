@@ -85,78 +85,74 @@ export abstract class APIRequestContext extends SdkObject {
     return uid;
   }
 
-  async fetch(params: channels.APIRequestContextFetchParams): Promise<{fetchResponse?: Omit<types.APIResponse, 'body'> & { fetchUid: string }, error?: string}> {
-    try {
-      const headers: { [name: string]: string } = {};
-      const defaults = this._defaultOptions();
-      headers['user-agent'] = defaults.userAgent;
-      headers['accept'] = '*/*';
-      headers['accept-encoding'] = 'gzip,deflate,br';
+  async fetch(params: channels.APIRequestContextFetchParams): Promise<Omit<types.APIResponse, 'body'> & { fetchUid: string }> {
+    const headers: { [name: string]: string } = {};
+    const defaults = this._defaultOptions();
+    headers['user-agent'] = defaults.userAgent;
+    headers['accept'] = '*/*';
+    headers['accept-encoding'] = 'gzip,deflate,br';
 
-      if (defaults.extraHTTPHeaders) {
-        for (const { name, value } of defaults.extraHTTPHeaders)
-          headers[name.toLowerCase()] = value;
-      }
-
-      if (params.headers) {
-        for (const { name, value } of params.headers)
-          headers[name.toLowerCase()] = value;
-      }
-
-      const method = params.method?.toUpperCase() || 'GET';
-      const proxy = defaults.proxy;
-      let agent;
-      if (proxy) {
-        // TODO: support bypass proxy
-        const proxyOpts = url.parse(proxy.server);
-        if (proxyOpts.protocol?.startsWith('socks')) {
-          agent = new SocksProxyAgent({
-            host: proxyOpts.hostname,
-            port: proxyOpts.port || undefined,
-          });
-        } else {
-          if (proxy.username)
-            proxyOpts.auth = `${proxy.username}:${proxy.password || ''}`;
-          agent = new HttpsProxyAgent(proxyOpts);
-        }
-      }
-
-      const timeout = defaults.timeoutSettings.timeout(params);
-      const deadline = timeout && (monotonicTime() + timeout);
-
-      const options: https.RequestOptions & { maxRedirects: number, deadline: number } = {
-        method,
-        headers,
-        agent,
-        maxRedirects: 20,
-        timeout,
-        deadline
-      };
-      // rejectUnauthorized = undefined is treated as true in node 12.
-      if (params.ignoreHTTPSErrors || defaults.ignoreHTTPSErrors)
-        options.rejectUnauthorized = false;
-
-      const requestUrl = new URL(params.url, defaults.baseURL);
-      if (params.params) {
-        for (const { name, value } of params.params)
-          requestUrl.searchParams.set(name, value);
-      }
-
-      let postData;
-      if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method))
-        postData = serializePostData(params, headers);
-      else if (params.postData || params.jsonData || params.formData || params.multipartData)
-        throw new Error(`Method ${method} does not accept post data`);
-      if (postData)
-        headers['content-length'] = String(postData.byteLength);
-      const fetchResponse = await this._sendRequest(requestUrl, options, postData);
-      const fetchUid = this._storeResponseBody(fetchResponse.body);
-      if (params.failOnStatusCode && (fetchResponse.status < 200 || fetchResponse.status >= 400))
-        return { error: `${fetchResponse.status} ${fetchResponse.statusText}` };
-      return { fetchResponse: { ...fetchResponse, fetchUid } };
-    } catch (e) {
-      return { error: e instanceof Error ? e.message : String(e) };
+    if (defaults.extraHTTPHeaders) {
+      for (const { name, value } of defaults.extraHTTPHeaders)
+        headers[name.toLowerCase()] = value;
     }
+
+    if (params.headers) {
+      for (const { name, value } of params.headers)
+        headers[name.toLowerCase()] = value;
+    }
+
+    const method = params.method?.toUpperCase() || 'GET';
+    const proxy = defaults.proxy;
+    let agent;
+    if (proxy) {
+      // TODO: support bypass proxy
+      const proxyOpts = url.parse(proxy.server);
+      if (proxyOpts.protocol?.startsWith('socks')) {
+        agent = new SocksProxyAgent({
+          host: proxyOpts.hostname,
+          port: proxyOpts.port || undefined,
+        });
+      } else {
+        if (proxy.username)
+          proxyOpts.auth = `${proxy.username}:${proxy.password || ''}`;
+        agent = new HttpsProxyAgent(proxyOpts);
+      }
+    }
+
+    const timeout = defaults.timeoutSettings.timeout(params);
+    const deadline = timeout && (monotonicTime() + timeout);
+
+    const options: https.RequestOptions & { maxRedirects: number, deadline: number } = {
+      method,
+      headers,
+      agent,
+      maxRedirects: 20,
+      timeout,
+      deadline
+    };
+    // rejectUnauthorized = undefined is treated as true in node 12.
+    if (params.ignoreHTTPSErrors || defaults.ignoreHTTPSErrors)
+      options.rejectUnauthorized = false;
+
+    const requestUrl = new URL(params.url, defaults.baseURL);
+    if (params.params) {
+      for (const { name, value } of params.params)
+        requestUrl.searchParams.set(name, value);
+    }
+
+    let postData;
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method))
+      postData = serializePostData(params, headers);
+    else if (params.postData || params.jsonData || params.formData || params.multipartData)
+      throw new Error(`Method ${method} does not accept post data`);
+    if (postData)
+      headers['content-length'] = String(postData.byteLength);
+    const fetchResponse = await this._sendRequest(requestUrl, options, postData);
+    const fetchUid = this._storeResponseBody(fetchResponse.body);
+    if (params.failOnStatusCode && (fetchResponse.status < 200 || fetchResponse.status >= 400))
+      throw new Error(`${fetchResponse.status} ${fetchResponse.statusText}`);
+    return { ...fetchResponse, fetchUid };
   }
 
   private async _updateCookiesFromHeader(responseUrl: string, setCookie: string[]) {

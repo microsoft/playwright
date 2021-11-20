@@ -179,18 +179,16 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
   }
 
   async fetch(params: channels.APIRequestContextFetchParams, metadata?: channels.Metadata): Promise<channels.APIRequestContextFetchResult> {
-    const { fetchResponse, error } = await this._object.fetch(params);
-    let response;
-    if (fetchResponse) {
-      response = {
+    const fetchResponse = await this._object.fetch(params);
+    return {
+      response: {
         url: fetchResponse.url,
         status: fetchResponse.status,
         statusText: fetchResponse.statusText,
         headers: fetchResponse.headers,
         fetchUid: fetchResponse.fetchUid
-      };
-    }
-    return { response, error };
+      }
+    };
   }
 
   async fetchResponseBody(params: channels.APIRequestContextFetchResponseBodyParams, metadata?: channels.Metadata): Promise<channels.APIRequestContextFetchResponseBodyResult> {

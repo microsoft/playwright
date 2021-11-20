@@ -254,8 +254,7 @@ APIRequestContext:
         failOnStatusCode: boolean?
         ignoreHTTPSErrors: boolean?
       returns:
-        response: APIResponse?
-        error: string?
+        response: APIResponse
 
     fetchResponseBody:
       parameters:

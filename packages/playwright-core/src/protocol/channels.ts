@@ -296,8 +296,7 @@ export type APIRequestContextFetchOptions = {
   ignoreHTTPSErrors?: boolean,
 };
 export type APIRequestContextFetchResult = {
-  response?: APIResponse,
-  error?: string,
+  response: APIResponse,
 };
 export type APIRequestContextFetchResponseBodyParams = {
   fetchUid: string,

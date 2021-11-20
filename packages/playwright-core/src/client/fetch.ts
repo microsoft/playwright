@@ -184,9 +184,7 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
         failOnStatusCode: options.failOnStatusCode,
         ignoreHTTPSErrors: options.ignoreHTTPSErrors,
       });
-      if (result.error)
-        throw new Error(result.error);
-      return new APIResponse(this, result.response!);
+      return new APIResponse(this, result.response);
     });
   }
 
