@@ -167,6 +167,25 @@ export module Protocol {
       frameId?: Page.FrameId;
     }
     
+    /**
+     * The loadComplete event mirrors the load complete event sent by the browser to assistive
+technology when the web page has finished loading.
+     */
+    export type loadCompletePayload = {
+      /**
+       * New document root node.
+       */
+      root: AXNode;
+    }
+    /**
+     * The nodesUpdated event is sent every time a previously requested node has changed the in tree.
+     */
+    export type nodesUpdatedPayload = {
+      /**
+       * Updated node data.
+       */
+      nodes: AXNode[];
+    }
     
     /**
      * Disables the accessibility domain.
@@ -7594,6 +7613,15 @@ An unspecified port value allows protocol clients to emulate legacy cookie scope
 This is a temporary ability and it will be removed in the future.
        */
       sourcePort: number;
+      /**
+       * Cookie partition key. The site of the top-level URL the browser was visiting at the start
+of the request to the endpoint that set the cookie.
+       */
+      partitionKey?: string;
+      /**
+       * True if cookie partition key is opaque.
+       */
+      partitionKeyOpaque?: boolean;
     }
     /**
      * Types of reasons why a cookie may not be stored from a response.
@@ -7695,6 +7723,12 @@ An unspecified port value allows protocol clients to emulate legacy cookie scope
 This is a temporary ability and it will be removed in the future.
        */
       sourcePort?: number;
+      /**
+       * Cookie partition key. The site of the top-level URL the browser was visiting at the start
+of the request to the endpoint that set the cookie.
+If not set, the cookie will be set as not partitioned.
+       */
+      partitionKey?: string;
     }
     /**
      * Authorization challenge for HTTP status code 401 or 407.
@@ -9032,6 +9066,12 @@ An unspecified port value allows protocol clients to emulate legacy cookie scope
 This is a temporary ability and it will be removed in the future.
        */
       sourcePort?: number;
+      /**
+       * Cookie partition key. The site of the top-level URL the browser was visiting at the start
+of the request to the endpoint that set the cookie.
+If not set, the cookie will be set as not partitioned.
+       */
+      partitionKey?: string;
     }
     export type setCookieReturnValue = {
       /**
@@ -16781,6 +16821,8 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
   }
   
   export interface Events {
+    "Accessibility.loadComplete": Accessibility.loadCompletePayload;
+    "Accessibility.nodesUpdated": Accessibility.nodesUpdatedPayload;
     "Animation.animationCanceled": Animation.animationCanceledPayload;
     "Animation.animationCreated": Animation.animationCreatedPayload;
     "Animation.animationStarted": Animation.animationStartedPayload;
