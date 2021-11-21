@@ -106,30 +106,32 @@ export class HttpServer {
   _serveRangeFile(request: http.IncomingMessage, response: http.ServerResponse, absoluteFilePath: string) {
     const range = request.headers.range!;
     const size = fs.statSync(absoluteFilePath).size;
-    // Extracting Start and End value from Range Header
+    // Parse the range header: https://datatracker.ietf.org/doc/html/rfc7233#section-2.1
     const [startStr, endStr] = range.replace(/bytes=/, '').split('-');
     let start = parseInt(startStr, 10);
-    let end = endStr ? parseInt(endStr, 10) : size - 1;
+    let end = parseInt(endStr, 10);
 
+    // No end specified: use the whole file
     if (!isNaN(start) && isNaN(end)) {
       start = start;
       end = size - 1;
     }
+    // No start specified: calculate start manually
     if (isNaN(start) && !isNaN(end)) {
       start = size - end;
       end = size - 1;
     }
 
     // Handle unavailable range request
-    if (start >= size || end >= size) {
-      // Return the 416 Range Not Satisfiable.
+    if (start >= size || end >= size || start > end) {
+      // Return the 416 Range Not Satisfiable: https://datatracker.ietf.org/doc/html/rfc7233#section-4.4
       response.writeHead(416, {
         'Content-Range': `bytes */${size}`
       });
-      response.end();
+      return response.end();
     }
 
-    // Sending Partial Content With HTTP Code 206
+    // Sending Partial Content: https://datatracker.ietf.org/doc/html/rfc7233#section-4.1
     response.writeHead(206, {
       'Content-Range': `bytes ${start}-${end}/${size}`,
       'Accept-Ranges': 'bytes',
