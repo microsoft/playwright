@@ -492,7 +492,7 @@ export class InjectedScript {
     if (state === 'hidden')
       return !this.isVisible(element);
 
-    const disabled = ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'].includes(element.nodeName) && element.hasAttribute('disabled');
+    const disabled = isElementDisabled(element);
     if (state === 'disabled')
       return disabled;
     if (state === 'enabled')
@@ -1181,5 +1181,36 @@ function deepEquals(a: any, b: any): boolean {
 
   return false;
 }
+
+function isElementDisabled(element: Element): boolean {
+  const isRealFormControl = ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'].includes(element.nodeName);
+  if (isRealFormControl && element.hasAttribute('disabled'))
+    return true;
+  if (isRealFormControl && hasDisabledFieldSet(element))
+    return true;
+  if (hasAriaDisabled(element))
+    return true;
+  return false;
+}
+
+function hasDisabledFieldSet(element: Element|null): boolean {
+  if (!element)
+    return false;
+  if (element.tagName === 'FIELDSET' && element.hasAttribute('disabled'))
+    return true;
+  // fieldset does not work across shadow boundaries
+  return hasDisabledFieldSet(element.parentElement);
+}
+function hasAriaDisabled(element: Element|undefined): boolean {
+  if (!element)
+    return false;
+  const attribute = (element.getAttribute('aria-disabled') || '').toLowerCase();
+  if (attribute === 'true')
+    return true;
+  if (attribute === 'false')
+    return false;
+  return hasAriaDisabled(parentElementOrShadowHost(element));
+}
+
 
 export default InjectedScript;
