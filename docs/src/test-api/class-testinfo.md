@@ -229,6 +229,40 @@ Specifies a unique repeat index when running in "repeat each" mode. This mode is
 
 Specifies the retry number when the test is retried after a failure. The first test run has [`property: TestInfo.retry`] equal to zero, the first retry has it equal to one, and so on. Learn more about [retries](./test-retries.md#retries).
 
+```js js-flavor=js
+const { test, expect } = require('@playwright/test');
+
+test.beforeEach(async ({}, testInfo) => {
+  // You can access testInfo.retry in any hook or fixture.
+  if (testInfo.retry > 0)
+    console.log(`Retrying!`);
+});
+
+test('my test', async ({ page }, testInfo) => {
+  // Here we clear some server-side state when retrying.
+  if (testInfo.retry)
+    await cleanSomeCachesOnTheServer();
+  // ...
+});
+```
+
+```js js-flavor=ts
+import { test, expect } from '@playwright/test';
+
+test.beforeEach(async ({}, testInfo) => {
+  // You can access testInfo.retry in any hook or fixture.
+  if (testInfo.retry > 0)
+    console.log(`Retrying!`);
+});
+
+test('my test', async ({ page }, testInfo) => {
+  // Here we clear some server-side state when retrying.
+  if (testInfo.retry)
+    await cleanSomeCachesOnTheServer();
+  // ...
+});
+```
+
 ## method: TestInfo.setTimeout
 
 Changes the timeout for the currently running test. Zero means no timeout. Learn more about [various timeouts](./test-timeouts.md).
