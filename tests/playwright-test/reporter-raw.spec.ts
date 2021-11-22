@@ -232,11 +232,11 @@ test(`testInfo.attach should save attachments via inline attachment`, async ({ r
       });
 
       test('explicit contentType - string', async ({}, testInfo) => {
-        await testInfo.attach('We <3 Playwright!', 'example.json', 'x-playwright/custom');
+        await testInfo.attach('We <3 Playwright!', 'example.json', { contentType: 'x-playwright/custom' });
       });
 
       test('explicit contentType - Buffer', async ({}, testInfo) => {
-        await testInfo.attach(Buffer.from('We <3 Playwright!'), 'example.json', 'x-playwright/custom');
+        await testInfo.attach(Buffer.from('We <3 Playwright!'), 'example.json', { contentType: 'x-playwright/custom' });
       });
   `,
   }, { reporter: 'dot,' + kRawReporterPath, workers: 1 }, {}, { usesCustomOutputDir: true });

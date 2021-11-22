@@ -129,7 +129,7 @@ Attach data to the current test, either a `string` or a `Buffer`. Some reporters
 ### param: TestInfo.attach#2.name
 - `name` <[string]> Attachment name.
 
-### param: TestInfo.attach#2.contentType
+### option: TestInfo.attach#2.contentType
 - `contentType` <[void]|[string]> Optional content type of this attachment to properly present in the report, for example `'application/json'` or `'application/xml'`. If omitted, this falls back to an inferred type based on the [`param: name`]'s extension; if the type cannot be inferred from the name's extension, it will be set to `text/plain` (if [`param: body`] is a `string`) or `application/octet-stream` (if [`param: body`] is a `Buffer`).
 
 ## property: TestInfo.column

@@ -267,19 +267,19 @@ export class WorkerRunner extends EventEmitter {
       annotations: [],
       attachments: [],
       attach: async (...args) => {
-        const [ pathOrBody, nameOrOptions, contentType ] = args as [string | Buffer, string | { contentType?: string, name?: string} | undefined, string | undefined ];
+        const [ pathOrBody, nameOrFileOptions, inlineOptions ] = args as [string | Buffer, string | { contentType?: string, name?: string} | undefined, { contentType?: string } | undefined];
         let attachment: { name: string, contentType: string, body?: Buffer, path?: string } | undefined;
-        if (typeof nameOrOptions === 'string') { // inline attachment
+        if (typeof nameOrFileOptions === 'string') { // inline attachment
           const body = pathOrBody;
-          const name = nameOrOptions;
+          const name = nameOrFileOptions;
 
           attachment = {
             name,
-            contentType: contentType ?? (mime.getType(name) || (typeof body === 'string' ? 'text/plain' : 'application/octet-stream')),
+            contentType: inlineOptions?.contentType ?? (mime.getType(name) || (typeof body === 'string' ? 'text/plain' : 'application/octet-stream')),
             body: typeof body === 'string' ? Buffer.from(body) : body,
           };
         } else { // path based attachment
-          const options = nameOrOptions;
+          const options = nameOrFileOptions;
           const thePath = pathOrBody as string;
           const name = options?.name ?? path.basename(thePath);
           attachment = {

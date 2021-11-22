@@ -1322,9 +1322,9 @@ export interface TestInfo {
    *   const path = testInfo.outputPath('screenshot.png');
    *   await page.screenshot({ path });
    *   await testInfo.attach(path);
-   *   // optionally override the name
+   *   // Optionally override the name.
    *   await testInfo.attach(path, { name: 'example.png' });
-   *   // optionally override the contentType
+   *   // Optionally override the contentType.
    *   await testInfo.attach(path, { name: 'example.custom-file', contentType: 'x-custom-content-type' });
    * });
    * ```
@@ -1352,9 +1352,9 @@ export interface TestInfo {
    * Attach data to the current test, either a `string` or a `Buffer`. Some reporters show test attachments.
    * @param body
    * @param name
-   * @param contentType
+   * @param options
    */
-  attach(body: string | Buffer, name: string, contentType?: string): Promise<void>;
+  attach(body: string | Buffer, name: string, options?: { contentType?: string }): Promise<void>;
   /**
    * Specifies a unique repeat index when running in "repeat each" mode. This mode is enabled by passing `--repeat-each` to
    * the [command line](https://playwright.dev/docs/test-cli).
