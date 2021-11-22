@@ -172,6 +172,18 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
       throw new Error(`Tracing is already stopping`);
     this._isStopping = true;
 
+    if (!this._state || !this._state.recording) {
+      this._isStopping = false;
+      if (save)
+        throw new Error(`Must start tracing before stopping`);
+      return { artifact: null, entries: [] };
+    }
+
+    const state = this._state!;
+    this._context.instrumentation.removeListener(this);
+    if (this._state?.options.screenshots)
+      this._stopScreencast();
+
     for (const { sdkObject, metadata, beforeSnapshot, actionSnapshot, afterSnapshot } of this._pendingCalls.values()) {
       await Promise.all([beforeSnapshot, actionSnapshot, afterSnapshot]);
       let callMetadata = metadata;
@@ -185,17 +197,6 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
       await this.onAfterCall(sdkObject, callMetadata);
     }
 
-    if (!this._state || !this._state.recording) {
-      this._isStopping = false;
-      if (save)
-        throw new Error(`Must start tracing before stopping`);
-      return { artifact: null, entries: [] };
-    }
-
-    const state = this._state!;
-    this._context.instrumentation.removeListener(this);
-    if (state.options.screenshots)
-      this._stopScreencast();
     if (state.options.snapshots)
       await this._snapshotter.stop();
 
