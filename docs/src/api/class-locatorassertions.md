@@ -91,7 +91,7 @@ The opposite of [`method: LocatorAssertions.toBeVisible`].
 The opposite of [`method: LocatorAssertions.toContainText`].
 
 ### param: LocatorAssertions.NotToContainText.expected
-- `expected` <[string]|[RegExp]|[Array]<[string]>|[Array]<[RegExp]>>
+- `expected` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
 
 Expected substring or RegExp or a list of those.
 
@@ -125,7 +125,7 @@ Expected attribute value.
 The opposite of [`method: LocatorAssertions.toHaveClass`].
 
 ### param: LocatorAssertions.NotToHaveClass.expected
-- `expected` <[string]|[RegExp]|[Array]<[string]>|[Array]<[RegExp]>>
+- `expected` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
 
 Expected class or RegExp or a list of those.
 
@@ -195,7 +195,7 @@ Property value.
 The opposite of [`method: LocatorAssertions.toHaveText`].
 
 ### param: LocatorAssertions.NotToHaveText.expected
-- `expected` <[string]|[RegExp]|[Array]<[string]>|[Array]<[RegExp]>>
+- `expected` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
 
 Expected substring or RegExp or a list of those.
 
@@ -340,6 +340,13 @@ assertThat(page.locator("list > .list-item")).containsText(new String[] {"Text 1
 ```
 
 ### param: LocatorAssertions.toContainText.expected
+* langs: python
+- `expected` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
+
+Expected substring or RegExp or a list of those.
+
+### param: LocatorAssertions.toContainText.expected
+* langs: java
 - `expected` <[string]|[RegExp]|[Array]<[string]>|[Array]<[RegExp]>>
 
 Expected substring or RegExp or a list of those.
@@ -391,6 +398,13 @@ assertThat(page.locator("list > .component")).hasClass(new String[] {"component"
 ```
 
 ### param: LocatorAssertions.toHaveClass.expected
+* langs: python
+- `expected` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
+
+Expected class or RegExp or a list of those.
+
+### param: LocatorAssertions.toHaveClass.expected
+* langs: java
 - `expected` <[string]|[RegExp]|[Array]<[string]>|[Array]<[RegExp]>>
 
 Expected class or RegExp or a list of those.
@@ -495,6 +509,13 @@ assertThat(page.locator("list > .component")).hasText(new String[] {"Text 1", "T
 ```
 
 ### param: LocatorAssertions.toHaveText.expected
+* langs: python
+- `expected` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
+
+Expected substring or RegExp or a list of those.
+
+### param: LocatorAssertions.toHaveText.expected
+* langs: java
 - `expected` <[string]|[RegExp]|[Array]<[string]>|[Array]<[RegExp]>>
 
 Expected substring or RegExp or a list of those.
