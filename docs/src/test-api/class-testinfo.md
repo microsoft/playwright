@@ -57,7 +57,7 @@ test('basic test', async ({ page }, testInfo) => {
   const path = testInfo.outputPath('screenshot.png');
   await page.screenshot({ path });
   await testInfo.attach(path);
-  // optionally override the name
+  // Optionally override the name.
   await testInfo.attach(path, { name: 'example.png' });
   // optionally override the contentType
   await testInfo.attach(path, { name: 'example.custom-file', contentType: 'x-custom-content-type' });
