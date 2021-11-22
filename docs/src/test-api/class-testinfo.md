@@ -59,7 +59,7 @@ test('basic test', async ({ page }, testInfo) => {
   await testInfo.attach(path);
   // Optionally override the name.
   await testInfo.attach(path, { name: 'example.png' });
-  // optionally override the contentType
+  // Optionally override the contentType.
   await testInfo.attach(path, { name: 'example.custom-file', contentType: 'x-custom-content-type' });
 });
 ```
