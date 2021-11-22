@@ -1100,7 +1100,7 @@ function hasDisabledFieldSet(element: Element|null): boolean {
   if (element.tagName === 'FIELDSET' && element.hasAttribute('disabled'))
     return true;
   // fieldset does not work across shadow boundaries
-  return hasDisabledFieldSet(element.parentElement)
+  return hasDisabledFieldSet(element.parentElement);
 }
 function hasAriaDisabled(element: Element|undefined): boolean {
   if (!element)
@@ -1110,7 +1110,7 @@ function hasAriaDisabled(element: Element|undefined): boolean {
     return true;
   if (attribute === 'false')
     return false;
-  return hasAriaDisabled(parentElementOrShadowHost(element))
+  return hasAriaDisabled(parentElementOrShadowHost(element));
 }
 
 
