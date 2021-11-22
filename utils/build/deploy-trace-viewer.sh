@@ -8,7 +8,7 @@ if [[ ($1 == '--help') || ($1 == '-h') ]]; then
   echo "Build the Trace Viewer and push it to the GitHub repository."
   echo
   echo "NOTE: the following env variables are required:"
-  echo "  GH_SERVICE_ACCOUNT_TOKEN     GitHub token with access to the microsoft/playwright-trace repository"
+  echo "  GH_SERVICE_ACCOUNT_TOKEN     GitHub token with access to the microsoft/trace.playwright.dev repository"
   echo "  GITHUB_SHA                   GitHub commit SHA - injected via GitHub Actions"
   echo
   echo "This script is designed to get executed via GitHub Actions"
@@ -29,16 +29,16 @@ npm run build
 # 2. Configure Git and clone the Trace Viewer repository
 git config --global user.name github-actions
 git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
-git clone "https://${GH_SERVICE_ACCOUNT_TOKEN}@github.com/microsoft/playwright-trace.git" playwright-trace
+git clone "https://${GH_SERVICE_ACCOUNT_TOKEN}@github.com/microsoft/trace.playwright.dev.git" trace.playwright.dev
 
 # 3. Copy the built Trace Viewer to the repository
 if [[ "${RELEASE_CHANNEL}" == "--stable" ]]; then
-  rm -rf playwright-trace/docs/
-  mkdir playwright-trace/docs/
-  cp -r packages/playwright-core/lib/webpack/traceViewer/* playwright-trace/docs/
+  rm -rf trace.playwright.dev/docs/
+  mkdir trace.playwright.dev/docs/
+  cp -r packages/playwright-core/lib/webpack/traceViewer/* trace.playwright.dev/docs/
 
   # Restore CNAME, beta/ & next/ branches.
-  cd playwright-trace/
+  cd trace.playwright.dev/
   git checkout docs/beta
   git checkout docs/next
   git checkout docs/CNAME
@@ -46,12 +46,12 @@ if [[ "${RELEASE_CHANNEL}" == "--stable" ]]; then
 
   echo "Updated stable version"
 elif [[ "${RELEASE_CHANNEL}" == "--canary" ]]; then
-  rm -rf playwright-trace/docs/next/
-  cp -r packages/playwright-core/lib/webpack/traceViewer/ playwright-trace/docs/next/
+  rm -rf trace.playwright.dev/docs/next/
+  cp -r packages/playwright-core/lib/webpack/traceViewer/ trace.playwright.dev/docs/next/
   echo "Updated canary version"
 elif [[ "${RELEASE_CHANNEL}" == "--beta" ]]; then
-  rm -rf playwright-trace/docs/beta/
-  cp -r packages/playwright-core/lib/webpack/traceViewer/ playwright-trace/docs/beta/
+  rm -rf trace.playwright.dev/docs/beta/
+  cp -r packages/playwright-core/lib/webpack/traceViewer/ trace.playwright.dev/docs/beta/
   echo "Updated beta version"
 else
   echo "ERROR: unknown environment - ${RELEASE_CHANNEL}"
@@ -59,7 +59,7 @@ else
 fi
 
 # 4. Commit and push the changes
-cd playwright-trace/
+cd trace.playwright.dev/
 git add .
 if [[ "$(git status --porcelain)" == "" ]]; then
     echo "there are no changes";
