@@ -164,3 +164,13 @@ it('should tween mouse movement', async ({ page, browserName, isAndroid }) => {
     [200, 300]
   ]);
 });
+
+it('should always round down', async ({ page, browserName, isAndroid }) => {
+  await page.evaluate(() => {
+    document.addEventListener('mousedown', event => {
+      window['result'] = [event.clientX, event.clientY];
+    });
+  });
+  await page.mouse.click(50.1, 50.9);
+  expect(await page.evaluate('result')).toEqual([50, 50]);
+});
