@@ -104,26 +104,34 @@ export class HttpServer {
   }
 
   _serveRangeFile(request: http.IncomingMessage, response: http.ServerResponse, absoluteFilePath: string) {
-    const range = request.headers.range!;
-    const size = fs.statSync(absoluteFilePath).size;
+    const range = request.headers.range;
+    if (!range || !range.startsWith('bytes=') || range.includes(', ')) {
+      response.statusCode = 400;
+      return response.end('Bad request');
+    }
+
     // Parse the range header: https://datatracker.ietf.org/doc/html/rfc7233#section-2.1
     const [startStr, endStr] = range.replace(/bytes=/, '').split('-');
-    let start = parseInt(startStr, 10);
-    let end = parseInt(endStr, 10);
 
-    // No end specified: use the whole file
-    if (!isNaN(start) && isNaN(end)) {
-      start = start;
+    // Both start and end (when passing to fs.createReadStream) and the range header are inclusive and start counting at 0.
+    let start: number;
+    let end: number;
+    const size = fs.statSync(absoluteFilePath).size;
+    if (startStr !== '' && endStr === '') {
+      // No end specified: use the whole file
+      start = +startStr;
       end = size - 1;
-    }
-    // No start specified: calculate start manually
-    if (isNaN(start) && !isNaN(end)) {
-      start = size - end;
+    } else if (startStr === '' && endStr !== '') {
+      // No start specified: calculate start manually
+      start = size - +endStr;
       end = size - 1;
+    } else {
+      start = +startStr;
+      end = +endStr;
     }
 
     // Handle unavailable range request
-    if (start >= size || end >= size || start > end) {
+    if (Number.isNaN(start) || Number.isNaN(end) || start >= size || end >= size || start > end) {
       // Return the 416 Range Not Satisfiable: https://datatracker.ietf.org/doc/html/rfc7233#section-4.4
       response.writeHead(416, {
         'Content-Range': `bytes */${size}`
