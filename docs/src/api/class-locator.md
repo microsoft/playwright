@@ -380,6 +380,19 @@ Optional event-specific initialization properties.
 
 ### option: Locator.dispatchEvent.timeout = %%-input-timeout-%%
 
+## async method: Locator.dragTo
+### param: Locator.dragTo.target
+- `target` <[Locator]>
+
+Locator of the element to drag to.
+
+### option: Locator.dragTo.force = %%-input-force-%%
+### option: Locator.dragTo.noWaitAfter = %%-input-no-wait-after-%%
+### option: Locator.dragTo.timeout = %%-input-timeout-%%
+### option: Locator.dragTo.trial = %%-input-trial-%%
+### option: Locator.dragTo.sourcePosition = %%-input-source-position-%%
+### option: Locator.dragTo.targetPosition = %%-input-target-position-%%
+
 ## async method: Locator.elementHandle
 - returns: <[ElementHandle]>
 

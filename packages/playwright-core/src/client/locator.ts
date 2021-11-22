@@ -70,6 +70,13 @@ export class Locator implements api.Locator {
     return this._frame.dispatchEvent(this._selector, type, eventInit, { strict: true, ...options });
   }
 
+  async dragTo(target: Locator, options: channels.FrameDragAndDropOptions = {}) {
+    return this._frame.dragAndDrop(this._selector, target._selector, {
+      ...options,
+      strict: true,
+    });
+  }
+
   async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<SVGElement | HTMLElement, Arg, R>, arg?: Arg, options?: TimeoutOptions): Promise<R> {
     return this._withElement(h => h.evaluate(pageFunction, arg), options?.timeout);
   }

@@ -1367,6 +1367,7 @@ Frame:
         trial: boolean?
         sourcePosition: Point?
         targetPosition: Point?
+        strict: boolean?
       tracing:
         snapshot: true
         pausesBeforeInput: true
