@@ -40,7 +40,7 @@ const packageJSON = require('../../package.json');
 
 program
     .version('Version ' + packageJSON.version)
-    .name(process.env.PW_CLI_NAME || 'npx playwright');
+    .name(buildBasePlaywrightCLICommand(process.env.PW_CLI_TARGET_LANG));
 
 commandWithOpenOptions('open [url]', 'open page in browser specified via -b, --browser', [])
     .action(function(url, options) {
@@ -605,4 +605,17 @@ async function launchGridServer(factoryPathOrPackageName: string, port: number, 
   const gridServer = new GridServer(factory as GridFactory, authToken);
   await gridServer.start(port);
   console.log('Grid server is running at ' + gridServer.urlPrefix());
+}
+
+function buildBasePlaywrightCLICommand(cliTargetLang: string | undefined): string {
+  switch (cliTargetLang) {
+    case 'python':
+      return `playwright`;
+    case 'java':
+      return `mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="...options.."`;
+    case 'csharp':
+      return `playwright`;
+    default:
+      return `npx playwright`;
+  }
 }
