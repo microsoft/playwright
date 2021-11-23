@@ -70,9 +70,11 @@
   padding: 4px;
   border-radius: 3px;
   height: 28px;
-  display: flex;
-  align-items: center;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   overflow: hidden;
+  display: block;
+  flex: none;
 }
 
 .snapshot-container {
