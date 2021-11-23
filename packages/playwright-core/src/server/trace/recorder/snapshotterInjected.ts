@@ -265,6 +265,12 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
           return;
         if (nodeName === 'SCRIPT')
           return;
+        // Don't preload resources.
+        if (nodeName === 'LINK' && nodeType === Node.ELEMENT_NODE) {
+          const rel = (node as Element).getAttribute('rel')?.toLowerCase();
+          if (rel === 'preload' || rel === 'prefetch')
+            return;
+        }
         if (this._removeNoScript && nodeName === 'NOSCRIPT')
           return;
         if (nodeName === 'META' && (node as HTMLMetaElement).httpEquiv.toLowerCase() === 'content-security-policy')

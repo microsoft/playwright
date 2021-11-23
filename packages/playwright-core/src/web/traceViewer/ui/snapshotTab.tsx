@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { Size } from '../geometry';
 import './snapshotTab.css';
 import './tabbedPane.css';
 import * as React from 'react';
@@ -23,8 +22,7 @@ import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
 
 export const SnapshotTab: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,
-  defaultSnapshotInfo: { viewport: Size, url: string },
-}> = ({ action, defaultSnapshotInfo }) => {
+}> = ({ action }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [snapshotIndex, setSnapshotIndex] = React.useState(0);
 
@@ -57,7 +55,7 @@ export const SnapshotTab: React.FunctionComponent<{
   }, [snapshotIndex, snapshots]);
 
   const iframeRef = React.useRef<HTMLIFrameElement>(null);
-  const [snapshotInfo, setSnapshotInfo] = React.useState(defaultSnapshotInfo);
+  const [snapshotInfo, setSnapshotInfo] = React.useState({ viewport: kDefaultViewport, url: '' });
   React.useEffect(() => {
     (async () => {
       if (snapshotInfoUrl) {
@@ -66,8 +64,7 @@ export const SnapshotTab: React.FunctionComponent<{
         if (!info.error)
           setSnapshotInfo(info);
       } else {
-        // Reset to default if snapshotInfoUrl was removed
-        setSnapshotInfo(defaultSnapshotInfo);
+        setSnapshotInfo({ viewport: kDefaultViewport, url: '' });
       }
       if (!iframeRef.current)
         return;
@@ -76,7 +73,7 @@ export const SnapshotTab: React.FunctionComponent<{
       } catch (e) {
       }
     })();
-  }, [iframeRef, snapshotUrl, snapshotInfoUrl, pointX, pointY, defaultSnapshotInfo]);
+  }, [iframeRef, snapshotUrl, snapshotInfoUrl, pointX, pointY]);
 
   const snapshotSize = snapshotInfo.viewport;
   const scale = Math.min(measure.width / snapshotSize.width, measure.height / snapshotSize.height, 1);
@@ -124,3 +121,5 @@ function renderTitle(snapshotTitle: string): string {
     return 'Action';
   return snapshotTitle;
 }
+
+const kDefaultViewport = { width: 1280, height: 720 };
