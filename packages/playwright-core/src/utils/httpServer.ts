@@ -105,7 +105,7 @@ export class HttpServer {
 
   _serveRangeFile(request: http.IncomingMessage, response: http.ServerResponse, absoluteFilePath: string) {
     const range = request.headers.range;
-    if (!range || !range.startsWith('bytes=') || range.includes(', ')) {
+    if (!range || !range.startsWith('bytes=') || range.includes(', ') || [...range].filter(char => char === '-').length !== 1) {
       response.statusCode = 400;
       return response.end('Bad request');
     }
