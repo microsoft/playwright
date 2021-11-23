@@ -22,6 +22,8 @@ const path = require('path');
 
 /** @typedef {import('../../markdown').MarkdownNode} MarkdownNode */
 
+const IGNORE_CLASSES = ['PlaywrightAssertions', 'LocatorAssertions', 'PageAssertions'];
+
 module.exports = function lint(documentation, jsSources, apiFileName) {
   const errors = [];
   documentation.copyDocsFromSuperclasses(errors);
@@ -46,6 +48,8 @@ module.exports = function lint(documentation, jsSources, apiFileName) {
     }
   }
   for (const cls of documentation.classesArray) {
+    if (IGNORE_CLASSES.includes(cls.name))
+      continue;
     const methods = apiMethods.get(cls.name);
     if (!methods) {
       errors.push(`Documented "${cls.name}" not found in sources`);
@@ -114,10 +118,6 @@ function listMethods(rootNames, apiFileName) {
    * @param {string} methodName
    */
   function shouldSkipMethodByName(className, methodName) {
-    if (methodName === '_request' && (className === 'BrowserContext' || className === 'Page'))
-      return false;
-    if (methodName === '_newRequest' && className === 'Playwright')
-      return false;
     if (methodName.startsWith('_') || methodName === 'T' || methodName === 'toString')
       return true;
     if (/** @type {any} */(EventEmitter).prototype.hasOwnProperty(methodName))
