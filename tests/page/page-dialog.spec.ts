@@ -116,3 +116,13 @@ it('should auto-dismiss the alert without listeners', async ({ page }) => {
   await page.click('div');
   expect(await page.evaluate('window._clicked')).toBe(true);
 });
+
+it('should reset dialog counter on navigation', async ({ page, server, toImpl }) => {
+  await Promise.all([
+    page.waitForEvent('dialog'),
+    page.evaluate('setTimeout(() => window.alert(123), 0)'),
+  ]);
+  await page.goto(server.EMPTY_PAGE);
+  const result = await toImpl(page.mainFrame()).nonStallingRawEvaluateInExistingMainContext('2+2');
+  expect(result).toBe(4);
+});

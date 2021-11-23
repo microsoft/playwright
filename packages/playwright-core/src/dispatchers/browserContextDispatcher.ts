@@ -212,4 +212,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       throw new Error('No HAR artifact. Ensure record.harPath is set.');
     return { artifact: new ArtifactDispatcher(this._scope, artifact) };
   }
+
+  async resetForReuse(params: channels.BrowserContextResetForReuseParams, metadata: CallMetadata) {
+    await this._context.resetForReuse(metadata);
+  }
 }

@@ -23,7 +23,7 @@ import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { debugLogger, RecentLogsCollector } from '../../utils/debugLogger';
 import { ProtocolLogger } from '../types';
 import { helper } from '../helper';
-import { ProtocolError } from '../common/protocolError';
+import { ProtocolError, targetClosedMessage } from '../common/protocolError';
 
 export const ConnectionEvents = {
   Disconnected: Symbol('Disconnected'),
@@ -191,7 +191,7 @@ export class FFSession extends EventEmitter {
       throw new ProtocolError(true, 'Target crashed');
     this._connection._checkClosed(method);
     if (this._disposed)
-      throw new ProtocolError(true, 'Target closed');
+      throw new ProtocolError(true, targetClosedMessage);
     const id = this._connection.nextMessageId();
     this._rawSend({ method, params, id });
     return new Promise((resolve, reject) => {
@@ -220,7 +220,7 @@ export class FFSession extends EventEmitter {
   dispose() {
     for (const callback of this._callbacks.values()) {
       callback.error.sessionClosed = true;
-      callback.reject(rewriteErrorMessage(callback.error, 'Target closed'));
+      callback.reject(rewriteErrorMessage(callback.error, targetClosedMessage));
     }
     this._callbacks.clear();
     this._disposed = true;

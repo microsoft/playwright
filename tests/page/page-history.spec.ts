@@ -18,6 +18,8 @@
 import { test as it, expect } from './pageTest';
 import url from 'url';
 
+it.skip(!!process.env.REUSE);
+
 it('page.goBack should work', async ({ page, server }) => {
   expect(await page.goBack()).toBe(null);
 

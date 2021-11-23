@@ -16,13 +16,13 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type { LaunchOptions, BrowserContextOptions, Page, BrowserContext, BrowserType, Video } from 'playwright-core';
+import type { LaunchOptions, BrowserContextOptions, Page, BrowserContext, BrowserType, Video, Browser } from 'playwright-core';
 import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo } from '../types/test';
 import { rootTestType } from './testType';
 import { createGuid, removeFolders } from 'playwright-core/lib/utils/utils';
 import { GridClient } from 'playwright-core/lib/grid/gridClient';
-import { Browser } from 'playwright-core';
 import { prependToTestError } from './util';
+import { deepEquals } from 'playwright-core/lib/utils/deepEquals';
 export { expect } from './expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
@@ -30,6 +30,8 @@ type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
   _combinedContextOptions: BrowserContextOptions,
   _setupContextOptionsAndArtifacts: void;
   _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
+  _reusableContext: () => Promise<BrowserContext>;
+  _reusablePage: () => Promise<Page>;
 };
 type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
   _browserType: BrowserType;
@@ -70,9 +72,33 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       await removeFolders([dir]);
   }, { scope: 'worker' }],
 
-  _browserOptions: [browserOptionsWorkerFixture, { scope: 'worker' }],
-  _browserType: [browserTypeWorkerFixture, { scope: 'worker' }],
-  browser: [browserWorkerFixture, { scope: 'worker' } ],
+  _browserOptions: [async ({ headless, channel, launchOptions }, use) => {
+    const options: LaunchOptions = {
+      handleSIGINT: false,
+      timeout: 0,
+      ...launchOptions,
+    };
+    if (headless !== undefined)
+      options.headless = headless;
+    if (channel !== undefined)
+      options.channel = channel;
+    await use(options);
+  }, { scope: 'worker' }],
+
+  _browserType: [async ({ playwright, browserName, _browserOptions }, use) => {
+    if (!['chromium', 'firefox', 'webkit'].includes(browserName))
+      throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
+    const browserType = playwright[browserName];
+    (browserType as any)._defaultLaunchOptions = _browserOptions;
+    await use(browserType);
+    (browserType as any)._defaultLaunchOptions = undefined;
+  }, { scope: 'worker' }],
+
+  browser: [async ({ _browserType }, use) => {
+    const browser = await _browserType.launch();
+    await use(browser);
+    await browser.close();
+  }, { scope: 'worker' }],
 
   acceptDownloads: [ undefined, { option: true } ],
   bypassCSP: [ undefined, { option: true } ],
@@ -173,6 +199,10 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
   _snapshotSuffix: [process.env.PLAYWRIGHT_DOCKER ? 'docker' : process.platform, { scope: 'worker' }],
 
   _setupContextOptionsAndArtifacts: [async ({ _snapshotSuffix, _browserType, _combinedContextOptions, _artifactsDir, trace, screenshot, actionTimeout, navigationTimeout }, use, testInfo) => {
+    if (process.env.REUSE) {
+      await use();
+      return;
+    }
     testInfo.snapshotSuffix = _snapshotSuffix;
     if (process.env.PWDEBUG)
       testInfo.setTimeout(0);
@@ -378,12 +408,56 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     testInfo.error = prependToTestError(testInfo.error, prependToError);
   },
 
-  context: async ({ _contextFactory }, use) => {
+  context: async ({ _contextFactory, _reusableContext }, use) => {
+    if (process.env.REUSE) {
+      await use(await _reusableContext());
+      return;
+    }
     await use(await _contextFactory());
   },
 
-  page: async ({ context }, use) => {
+  page: async ({ context, _reusablePage }, use) => {
+    if (process.env.REUSE) {
+      await use(await _reusablePage());
+      return;
+    }
     await use(await context.newPage());
+  },
+
+  _reusableContext: async ({ browser, _combinedContextOptions }, use) => {
+    await use(async () => {
+      const contexts = browser.contexts();
+      let contextForReuse: BrowserContext | undefined;
+      for (const context of contexts) {
+        const options = (context as any)[kOptionsSymbol];
+        if (!options)
+          continue;
+
+        // Context was created for reuse.
+        if (!deepEquals(options, _combinedContextOptions)) {
+          await context.close();
+        } else {
+          await (context as any)._resetForReuse();
+          contextForReuse = context;
+        }
+      }
+
+      if (!contextForReuse) {
+        contextForReuse = await browser.newContext();
+        (contextForReuse as any)[kOptionsSymbol] = _combinedContextOptions;
+      }
+      return contextForReuse;
+    });
+  },
+
+  _reusablePage: async ({ _reusableContext, _combinedContextOptions }, use) => {
+    await use(async () => {
+      const context = await _reusableContext();
+      let [page] = context.pages();
+      if (!page)
+        page = await context.newPage();
+      return page;
+    });
   },
 
   request: async ({ playwright, _combinedContextOptions }, use) => {
@@ -393,55 +467,6 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
   }
 
 });
-
-export async function browserOptionsWorkerFixture(
-  {
-    headless,
-    channel,
-    launchOptions
-  }: {
-    headless: boolean | undefined,
-    channel: string | undefined,
-    launchOptions: LaunchOptions
-  }, use: (options: LaunchOptions) => Promise<void>) {
-  const options: LaunchOptions = {
-    handleSIGINT: false,
-    timeout: 0,
-    ...launchOptions,
-  };
-  if (headless !== undefined)
-    options.headless = headless;
-  if (channel !== undefined)
-    options.channel = channel;
-  await use(options);
-}
-
-export async function browserTypeWorkerFixture(
-  {
-    playwright,
-    browserName,
-    _browserOptions
-  }: {
-    playwright: any,
-    browserName: string,
-    _browserOptions: LaunchOptions
-  }, use: (browserType: BrowserType) => Promise<void>) {
-  if (!['chromium', 'firefox', 'webkit'].includes(browserName))
-    throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
-  const browserType = playwright[browserName];
-  (browserType as any)._defaultLaunchOptions = _browserOptions;
-  await use(browserType);
-  (browserType as any)._defaultLaunchOptions = undefined;
-}
-
-export async function browserWorkerFixture(
-  { _browserType }: { _browserType: BrowserType },
-  use: (browser: Browser) => Promise<void>) {
-  const browser = await _browserType.launch();
-  await use(browser);
-  await browser.close();
-}
-
 
 function formatPendingCalls(calls: ParsedStackTrace[]) {
   if (!calls.length)
@@ -478,5 +503,6 @@ type ParsedStackTrace = {
 };
 
 const kTracingStarted = Symbol('kTracingStarted');
+const kOptionsSymbol = Symbol('kOptionsSymbol');
 
 export default test;

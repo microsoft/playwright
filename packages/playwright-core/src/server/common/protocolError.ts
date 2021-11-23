@@ -26,3 +26,5 @@ export class ProtocolError extends Error {
 export function isSessionClosedError(e: Error): boolean {
   return e instanceof ProtocolError && e.sessionClosed;
 }
+
+export const targetClosedMessage = 'Target closed';

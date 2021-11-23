@@ -24,7 +24,7 @@ import { debugLogger, RecentLogsCollector } from '../../utils/debugLogger';
 import { ProtocolLogger } from '../types';
 import { helper } from '../helper';
 import { kBrowserClosedError } from '../../utils/errors';
-import { ProtocolError } from '../common/protocolError';
+import { ProtocolError, targetClosedMessage } from '../common/protocolError';
 
 // WKPlaywright uses this special id to issue Browser.close command which we
 // should ignore.
@@ -133,7 +133,7 @@ export class WKSession extends EventEmitter {
     if (this._crashed)
       throw new ProtocolError(true, 'Target crashed');
     if (this._disposed)
-      throw new ProtocolError(true, `Target closed`);
+      throw new ProtocolError(true, targetClosedMessage);
     const id = this.connection.nextMessageId();
     const messageObj = { id, method, params };
     this._rawSend(messageObj);

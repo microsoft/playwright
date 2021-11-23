@@ -387,6 +387,19 @@ export abstract class BrowserContext extends SdkObject {
     this.on(BrowserContext.Events.Page, installInPage);
     return Promise.all(this.pages().map(installInPage));
   }
+
+  async resetForReuse(metadata: CallMetadata): Promise<void> {
+    this.setDefaultTimeout(undefined);
+    this.setDefaultNavigationTimeout(undefined);
+    await this._setRequestInterceptor(undefined);
+    this._pageBindings.clear();
+    const [page, ...tail] = this.pages();
+    for (const page of tail)
+      await page.close(metadata);
+    if (page)
+      await page.resetForReuse(metadata);
+    await this.setExtraHTTPHeaders([]);
+  }
 }
 
 export function assertBrowserContextIsNotOwned(context: BrowserContext) {
@@ -402,7 +415,7 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
   if (options.noDefaultViewport && options.isMobile !== undefined)
     throw new Error(`"isMobile" option is not supported with null "viewport"`);
   if (!options.viewport && !options.noDefaultViewport)
-    options.viewport = { width: 1280, height: 720 };
+    options.viewport = DEFAULT_VIEWPORT;
   if (options.recordVideo) {
     if (!options.recordVideo.size) {
       if (options.noDefaultViewport) {
@@ -465,3 +478,5 @@ export function normalizeProxySettings(proxy: types.ProxySettings): types.ProxyS
     bypass = bypass.split(',').map(t => t.trim()).join(',');
   return { ...proxy, server, bypass };
 }
+
+export const DEFAULT_VIEWPORT = { width: 1280, height: 720 };

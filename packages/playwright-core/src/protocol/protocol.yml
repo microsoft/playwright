@@ -825,6 +825,8 @@ BrowserContext:
       returns:
         artifact: Artifact
 
+    resetForReuse:
+
   events:
 
     bindingCall:

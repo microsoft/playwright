@@ -236,12 +236,12 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return [...this._frames];
   }
 
-  setDefaultNavigationTimeout(timeout: number) {
+  setDefaultNavigationTimeout(timeout: number | undefined) {
     this._timeoutSettings.setDefaultNavigationTimeout(timeout);
     this._channel.setDefaultNavigationTimeoutNoReply({ timeout });
   }
 
-  setDefaultTimeout(timeout: number) {
+  setDefaultTimeout(timeout: number | undefined) {
     this._timeoutSettings.setDefaultTimeout(timeout);
     this._channel.setDefaultTimeoutNoReply({ timeout });
   }
@@ -657,6 +657,14 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       await fs.promises.writeFile(options.path, buffer);
     }
     return buffer;
+  }
+
+  _resetForReuse() {
+    this.removeAllListeners();
+    this._bindings.clear();
+    this._routes = [];
+    this.setDefaultTimeout(undefined);
+    this.setDefaultNavigationTimeout(undefined);
   }
 }
 

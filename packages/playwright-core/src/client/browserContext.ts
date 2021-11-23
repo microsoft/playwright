@@ -38,6 +38,7 @@ import type { BrowserType } from './browserType';
 import { Artifact } from './artifact';
 import { APIRequestContext } from './fetch';
 import { createInstrumentation } from './clientInstrumentation';
+import { ManualPromise } from '../utils/async';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
   _pages = new Set<Page>();
@@ -47,7 +48,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   readonly _bindings = new Map<string, (source: structs.BindingSource, ...args: any[]) => any>();
   _timeoutSettings = new TimeoutSettings();
   _ownerPage: Page | undefined;
-  private _closedPromise: Promise<void>;
+  private _closedPromise = new ManualPromise<void>();
   _options: channels.BrowserNewContextParams = { };
 
   readonly request: APIRequestContext;
@@ -91,7 +92,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._channel.on('requestFailed', ({ request, failureText, responseEndTiming, page }) => this._onRequestFailed(network.Request.from(request), responseEndTiming, failureText, Page.fromNullable(page)));
     this._channel.on('requestFinished', params => this._onRequestFinished(params));
     this._channel.on('response', ({ response, page }) => this._onResponse(network.Response.from(response), Page.fromNullable(page)));
-    this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
   }
 
   _setBrowserType(browserType: BrowserType) {
@@ -163,12 +163,12 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await bindingCall.call(func);
   }
 
-  setDefaultNavigationTimeout(timeout: number) {
+  setDefaultNavigationTimeout(timeout: number | undefined) {
     this._timeoutSettings.setDefaultNavigationTimeout(timeout);
     this._channel.setDefaultNavigationTimeoutNoReply({ timeout });
   }
 
-  setDefaultTimeout(timeout: number) {
+  setDefaultTimeout(timeout: number | undefined) {
     this._timeoutSettings.setDefaultTimeout(timeout);
     this._channel.setDefaultTimeoutNoReply({ timeout });
   }
@@ -305,6 +305,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     if (this._browser)
       this._browser._contexts.delete(this);
     this._browserType?._contexts?.delete(this);
+    this._closedPromise.resolve();
     this.emit(Events.BrowserContext.Close, this);
   }
 
@@ -338,6 +339,19 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       outputFile?: string
   }) {
     await this._channel.recorderSupplementEnable(params);
+  }
+
+  async _resetForReuse() {
+    this.removeAllListeners();
+    this._bindings.clear();
+    this._routes = [];
+    this.setDefaultTimeout(undefined);
+    this.setDefaultNavigationTimeout(undefined);
+    await this._wrapApiCall(async () => {
+      await this._channel.resetForReuse();
+    }, true);
+    for (const page of this.pages())
+      page._resetForReuse();
   }
 }
 

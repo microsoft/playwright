@@ -154,6 +154,11 @@ export class Keyboard {
   _modifiers(): Set<types.KeyboardModifier> {
     return this._pressedModifiers;
   }
+
+  resetPressedState() {
+    this._pressedKeys.clear();
+    this._pressedModifiers.clear();
+  }
 }
 
 export interface RawMouse {
@@ -237,6 +242,11 @@ export class Mouse {
   async wheel(deltaX: number, deltaY: number) {
     await this._raw.wheel(this._x, this._y, this._buttons, this._keyboard._modifiers(), deltaX, deltaY);
     await this._page._doSlowMo();
+  }
+
+  resetPressedState() {
+    this._buttons.clear();
+    this._lastButton = 'none';
   }
 }
 

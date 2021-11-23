@@ -41,6 +41,7 @@ import { VideoRecorder } from './videoRecorder';
 import { Progress } from '../progress';
 import { DragManager } from './crDragDrop';
 import { registry } from '../../utils/registry';
+import { targetClosedMessage } from '../common/protocolError';
 
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
@@ -129,7 +130,7 @@ export class CRPage implements PageDelegate {
         return cb(frameSession);
       return cb(frameSession).catch(e => {
         // Broadcasting a message to the closed iframe shoule be a noop.
-        if (e.message && (e.message.includes('Target closed.') || e.message.includes('Session closed.')))
+        if (e.message && (e.message.includes(targetClosedMessage) || e.message.includes('Session closed')))
           return;
         throw e;
       });

@@ -1013,6 +1013,7 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   tracingStopChunk(params: BrowserContextTracingStopChunkParams, metadata?: Metadata): Promise<BrowserContextTracingStopChunkResult>;
   tracingStop(params?: BrowserContextTracingStopParams, metadata?: Metadata): Promise<BrowserContextTracingStopResult>;
   harExport(params?: BrowserContextHarExportParams, metadata?: Metadata): Promise<BrowserContextHarExportResult>;
+  resetForReuse(params?: BrowserContextResetForReuseParams, metadata?: Metadata): Promise<BrowserContextResetForReuseResult>;
 }
 export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
@@ -1248,6 +1249,9 @@ export type BrowserContextHarExportOptions = {};
 export type BrowserContextHarExportResult = {
   artifact: ArtifactChannel,
 };
+export type BrowserContextResetForReuseParams = {};
+export type BrowserContextResetForReuseOptions = {};
+export type BrowserContextResetForReuseResult = void;
 
 export interface BrowserContextEvents {
   'bindingCall': BrowserContextBindingCallEvent;

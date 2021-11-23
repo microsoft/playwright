@@ -25,6 +25,7 @@
     "./lib/grid/gridClient": "./lib/grid/gridClient.js",
     "./lib/grid/dockerGridFactory": "./lib/grid/dockerGridFactory.js",
     "./lib/utils/async": "./lib/utils/async.js",
+    "./lib/utils/deepEquals": "./lib/utils/deepEquals.js",
     "./lib/utils/httpServer": "./lib/utils/httpServer.js",
     "./lib/utils/multimap": "./lib/utils/multimap.js",
     "./lib/utils/processLauncher": "./lib/utils/processLauncher.js",

@@ -488,6 +488,7 @@ export class Frame extends SdkObject {
   }
 
   setPendingDocument(documentInfo: DocumentInfo | undefined) {
+    this._page._frameManager._dialogCounter = 0;
     this._pendingDocument = documentInfo;
     if (documentInfo)
       this._invalidateNonStallingEvaluations('Navigation interrupted the evaluation');
@@ -622,7 +623,9 @@ export class Frame extends SdkObject {
         if (event.newDocument!.documentId !== navigateResult.newDocumentId) {
           // This is just a sanity check. In practice, new navigation should
           // cancel the previous one and report "request cancelled"-like error.
-          throw new Error('Navigation interrupted by another one');
+          const forgivingPageReuse = url === 'about:blank' && event.url === 'about:blank';
+          if (!forgivingPageReuse)
+            throw new Error('Navigation interrupted by another one');
         }
         if (event.error)
           throw event.error;

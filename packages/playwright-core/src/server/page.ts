@@ -23,7 +23,7 @@ import * as network from './network';
 import { Screenshotter } from './screenshotter';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import * as types from './types';
-import { BrowserContext } from './browserContext';
+import { BrowserContext, DEFAULT_VIEWPORT } from './browserContext';
 import { ConsoleMessage } from './console';
 import * as accessibility from './accessibility';
 import { FileChooser } from './fileChooser';
@@ -35,6 +35,8 @@ import { SelectorInfo, Selectors } from './selectors';
 import { CallMetadata, SdkObject } from './instrumentation';
 import { Artifact } from './artifact';
 import { ParsedSelector } from './common/selectorParser';
+import { targetClosedMessage } from './common/protocolError';
+import { deepEquals } from '../utils/deepEquals';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -359,15 +361,23 @@ export class Page extends SdkObject {
     }), this._timeoutSettings.navigationTimeout(options));
   }
 
-  async emulateMedia(options: { media?: types.MediaType | null, colorScheme?: types.ColorScheme | null, reducedMotion?: types.ReducedMotion | null, forcedColors?: types.ForcedColors | null }) {
-    if (options.media !== undefined)
-      this._state.mediaType = options.media;
-    if (options.colorScheme !== undefined)
-      this._state.colorScheme = options.colorScheme;
-    if (options.reducedMotion !== undefined)
-      this._state.reducedMotion = options.reducedMotion;
-    if (options.forcedColors !== undefined)
-      this._state.forcedColors = options.forcedColors;
+  async emulateMedia(options: { media?: types.MediaType | null, colorScheme?: types.ColorScheme | null, reducedMotion?: types.ReducedMotion | null, forcedColors?: types.ForcedColors | null } | null) {
+    if (options === null) {
+      // hard reset.
+      this._state.mediaType = null;
+      this._state.colorScheme = null;
+      this._state.reducedMotion = null;
+      this._state.forcedColors = null;
+    } else {
+      if (options.media !== undefined)
+        this._state.mediaType = options.media;
+      if (options.colorScheme !== undefined)
+        this._state.colorScheme = options.colorScheme;
+      if (options.reducedMotion !== undefined)
+        this._state.reducedMotion = options.reducedMotion;
+      if (options.forcedColors !== undefined)
+        this._state.forcedColors = options.forcedColors;
+    }
     await this._delegate.updateEmulateMedia();
     await this._doSlowMo();
   }
@@ -435,7 +445,7 @@ export class Page extends SdkObject {
     const runBeforeUnload = !!options && !!options.runBeforeUnload;
     if (this._closedState !== 'closing') {
       this._closedState = 'closing';
-      assert(!this._disconnected, 'Target closed');
+      assert(!this._disconnected, targetClosedMessage);
       // This might throw if the browser context containing the page closes
       // while we are trying to close the page.
       await this._delegate.closePage(runBeforeUnload).catch(e => debugLogger.log('error', e));
@@ -519,6 +529,50 @@ export class Page extends SdkObject {
   parseSelector(selector: string | ParsedSelector, options?: types.StrictOptions): SelectorInfo {
     const strict = typeof options?.strict === 'boolean' ? options.strict : !!this.context()._options.strictSelectors;
     return this.selectors.parseSelector(selector, strict);
+  }
+
+  async resetForReuse(metadata: CallMetadata): Promise<void> {
+    // Close the crashed page.
+    if (this._crashedPromise.isDone()) {
+      await this.close(metadata);
+      return;
+    }
+
+    try {
+      // Firsts run synchronous stuff so that calls don't make it into clients.
+      this.setDefaultTimeout(undefined);
+      this.setDefaultNavigationTimeout(undefined);
+      this._pageBindings.clear();
+      this._evaluateOnNewDocumentSources.splice(0, this._evaluateOnNewDocumentSources.length);
+      this.keyboard.resetPressedState();
+      this.mouse.resetPressedState();
+
+      // Then navigate to about:blank to kick stalled navigations.
+      await this.mainFrame().goto(metadata, 'about:blank');
+
+      // Then talk over protocol freely.
+      await this._setClientRequestInterceptor(undefined);
+      await this.emulateMedia(null)
+      await this.setExtraHTTPHeaders([]);
+
+      // Restore viewport.
+      const defaultViewport = this._browserContext._options.noDefaultViewport ? null : { viewport: this._browserContext._options.viewport || DEFAULT_VIEWPORT, screen: this._browserContext._options.screen || this._browserContext._options.viewport || DEFAULT_VIEWPORT };
+      if (!deepEquals(this._state.emulatedSize, defaultViewport)) {
+        this._state.emulatedSize = defaultViewport;
+        if (defaultViewport)
+          await this._delegate.setEmulatedSize(defaultViewport);
+        else
+          await this._delegate.resetViewport();
+      }
+
+      // TODO: remove bindings here.
+
+      // Finalize with the navigation to clean up bindings.
+      await this.mainFrame().goto(metadata, 'about:blank');
+    } catch (e) {
+      // Something went wont, don't bother.
+      await this.close(metadata).catch(e);
+    }
   }
 }
 

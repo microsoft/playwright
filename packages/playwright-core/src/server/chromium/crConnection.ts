@@ -23,7 +23,7 @@ import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { debugLogger, RecentLogsCollector } from '../../utils/debugLogger';
 import { ProtocolLogger } from '../types';
 import { helper } from '../helper';
-import { ProtocolError } from '../common/protocolError';
+import { ProtocolError, targetClosedMessage } from '../common/protocolError';
 
 export const ConnectionEvents = {
   Disconnected: Symbol('ConnectionEvents.Disconnected')
@@ -169,7 +169,7 @@ export class CRSession extends EventEmitter {
     if (this._browserDisconnectedLogs !== undefined)
       throw new ProtocolError(true, `Browser closed.` + this._browserDisconnectedLogs);
     if (!this._connection)
-      throw new ProtocolError(true, `Target closed`);
+      throw new ProtocolError(true, targetClosedMessage);
     const id = this._connection._rawSend(this._sessionId, method, params);
     return new Promise((resolve, reject) => {
       this._callbacks.set(id, { resolve, reject, error: new ProtocolError(false), method });
@@ -209,7 +209,7 @@ export class CRSession extends EventEmitter {
 
   _onClosed(browserDisconnectedLogs: string | undefined) {
     this._browserDisconnectedLogs = browserDisconnectedLogs;
-    const errorMessage = browserDisconnectedLogs !== undefined ? 'Browser closed.' + browserDisconnectedLogs : 'Target closed';
+    const errorMessage = browserDisconnectedLogs !== undefined ? 'Browser closed.' + browserDisconnectedLogs : targetClosedMessage;
     for (const callback of this._callbacks.values()) {
       callback.error.sessionClosed = true;
       callback.reject(rewriteErrorMessage(callback.error, errorMessage));
