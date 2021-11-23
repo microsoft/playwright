@@ -34,21 +34,58 @@ const dockerFactory: GridFactory = {
 
 export default dockerFactory;
 
+interface DockerImage {
+  Containers: number;
+  Created: number;
+  Id: string;
+  Labels: null | Record<string, string>;
+  ParentId: string;
+  RepoDigests: null | string[];
+  RepoTags: null | string[];
+  SharedSize: number;
+  Size: number;
+  VirtualSize: number;
+}
+
 async function launchDockerGridAgent(agentId: string, gridURL: string): Promise<{vncUrl: string }> {
   const gridPort = new URL(gridURL).port || '80';
-  const images = await getJSON('/images/json');
-  let imageName = process.env.PWTEST_IMAGE_NAME;
-  if (!imageName) {
-    const packageJson = require('../../package.json');
-    imageName = `mcr.microsoft.com/playwright:v${packageJson.version}-focal`;
+  const images: DockerImage[] | null = await getJSON('/images/json');
+
+  if (!images) {
+    throw new Error(`\n` + utils.wrapInASCIIBox([
+      `Failed to list docker images`,
+      `Please ensure docker is running.`,
+      ``,
+      `<3 Playwright Team`,
+    ].join('\n'), 1));
   }
-  const pwImage = images.find((image: any) => image.RepoTags.includes(imageName));
+
+  const imageName = process.env.PWTEST_IMAGE_NAME ?? `mcr.microsoft.com/playwright:v${require('../../package.json').version}-focal`;
+  const pwImage = images.find(image => image.RepoTags?.includes(imageName));
+
   if (!pwImage) {
+    const pwImages = images
+        .map(image => image.RepoTags?.find(tag => tag.startsWith('mcr.microsoft.com/playwright:')))
+        .filter((tag): tag is string => typeof tag === 'string');
+
+    const usage = pwImages.length > 0 ? [
+      ``,
+      `Available images:`,
+      ...pwImages.map(image => `- ${image}`),
+      ``,
+      `Use available images via PWTEST_IMAGE_NAME environment variable:`,
+      `    PWTEST_IMAGE_NAME=${pwImages[0]} playwright test`,
+      ``
+    ] : [];
+
+    const pullPrefix = pwImages.length > 0 ? 'Alternatively, please' : 'Please';
+
     throw new Error(`\n` + utils.wrapInASCIIBox([
       `Failed to find ${imageName} docker image.`,
-      `Please pull docker image with the following command:`,
+      ...usage,
+      `${pullPrefix} pull docker image with the following command:`,
       ``,
-      `    npx playwight install docker-image`,
+      `    npx playwright install docker-image`,
       ``,
       `<3 Playwright Team`,
     ].join('\n'), 1));
