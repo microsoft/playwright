@@ -88,7 +88,9 @@ export class SnapshotServer {
     headers.delete('Content-Length');
     headers.set('Content-Length', String(content.size));
     headers.set('Cache-Control', 'public, max-age=31536000');
-    return new Response(content, {
+    const { status } = resource.response;
+    const isNullBodyStatus = status === 101 || status === 204 || status === 205 || status === 304;
+    return new Response(isNullBodyStatus ? null : content, {
       headers,
       status: resource.response.status,
       statusText: resource.response.statusText,

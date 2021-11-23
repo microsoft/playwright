@@ -142,7 +142,7 @@ it.describe('snapshots', () => {
     for (; ; ++counter) {
       snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot' + counter);
       const text = distillSnapshot(snapshot).replace(/frame@[^"]+["]/, '<id>"');
-      if (text === '<IFRAME src=\"/snapshot/<id>\"></IFRAME>')
+      if (text === '<IFRAME __playwright_src__=\"/snapshot/<id>\"></IFRAME>')
         break;
       await page.waitForTimeout(250);
     }
