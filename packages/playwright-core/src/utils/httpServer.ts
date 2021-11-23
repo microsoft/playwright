@@ -80,20 +80,75 @@ export class HttpServer {
     return this._urlPrefix;
   }
 
-  serveFile(response: http.ServerResponse, absoluteFilePath: string, headers?: { [name: string]: string }): boolean {
+  serveFile(request: http.IncomingMessage, response: http.ServerResponse, absoluteFilePath: string, headers?: { [name: string]: string }): boolean {
     try {
-      const content = fs.readFileSync(absoluteFilePath);
-      response.statusCode = 200;
-      const contentType = mime.getType(path.extname(absoluteFilePath)) || 'application/octet-stream';
-      response.setHeader('Content-Type', contentType);
-      response.setHeader('Content-Length', content.byteLength);
       for (const [name, value] of Object.entries(headers || {}))
         response.setHeader(name, value);
-      response.end(content);
+      if (request.headers.range)
+        this._serveRangeFile(request, response, absoluteFilePath);
+      else
+        this._serveFile(response, absoluteFilePath);
       return true;
     } catch (e) {
       return false;
     }
+  }
+
+  _serveFile(response: http.ServerResponse, absoluteFilePath: string) {
+    const content = fs.readFileSync(absoluteFilePath);
+    response.statusCode = 200;
+    const contentType = mime.getType(path.extname(absoluteFilePath)) || 'application/octet-stream';
+    response.setHeader('Content-Type', contentType);
+    response.setHeader('Content-Length', content.byteLength);
+    response.end(content);
+  }
+
+  _serveRangeFile(request: http.IncomingMessage, response: http.ServerResponse, absoluteFilePath: string) {
+    const range = request.headers.range;
+    if (!range || !range.startsWith('bytes=') || range.includes(', ') || [...range].filter(char => char === '-').length !== 1) {
+      response.statusCode = 400;
+      return response.end('Bad request');
+    }
+
+    // Parse the range header: https://datatracker.ietf.org/doc/html/rfc7233#section-2.1
+    const [startStr, endStr] = range.replace(/bytes=/, '').split('-');
+
+    // Both start and end (when passing to fs.createReadStream) and the range header are inclusive and start counting at 0.
+    let start: number;
+    let end: number;
+    const size = fs.statSync(absoluteFilePath).size;
+    if (startStr !== '' && endStr === '') {
+      // No end specified: use the whole file
+      start = +startStr;
+      end = size - 1;
+    } else if (startStr === '' && endStr !== '') {
+      // No start specified: calculate start manually
+      start = size - +endStr;
+      end = size - 1;
+    } else {
+      start = +startStr;
+      end = +endStr;
+    }
+
+    // Handle unavailable range request
+    if (Number.isNaN(start) || Number.isNaN(end) || start >= size || end >= size || start > end) {
+      // Return the 416 Range Not Satisfiable: https://datatracker.ietf.org/doc/html/rfc7233#section-4.4
+      response.writeHead(416, {
+        'Content-Range': `bytes */${size}`
+      });
+      return response.end();
+    }
+
+    // Sending Partial Content: https://datatracker.ietf.org/doc/html/rfc7233#section-4.1
+    response.writeHead(206, {
+      'Content-Range': `bytes ${start}-${end}/${size}`,
+      'Accept-Ranges': 'bytes',
+      'Content-Length': end - start + 1,
+      'Content-Type': mime.getType(path.extname(absoluteFilePath))!,
+    });
+
+    const readable = fs.createReadStream(absoluteFilePath, { start, end });
+    readable.pipe(response);
   }
 
   async serveVirtualFile(response: http.ServerResponse, vfs: VirtualFileSystem, entry: string, headers?: { [name: string]: string }) {
