@@ -38,7 +38,14 @@ Learn more about [test annotations](./test-annotations.md).
   - `path` <[void]|[string]> Optional path on the filesystem to the attached file.
   - `body` <[void]|[Buffer]> Optional attachment body used instead of a file.
 
-The list of files or buffers attached to the current test. Some reporters show test attachments. For example, you can attach a screenshot to the test.
+The list of files or buffers attached to the current test. Some reporters show test attachments.
+
+To safely add a file from disk as an attachment, please use [`method: TestInfo.attach#1`] instead of directly pushing onto this array. For inline attachments, use [`method: TestInfo.attach#1`].
+
+## method: TestInfo.attach#1
+Attach a file from disk to the current test. Some reporters show test attachments. The [`option: name`] and [`option: contentType`] will be inferred by default from the [`param: path`], but you can optionally override either of these.
+
+For example, you can attach a screenshot to the test:
 
 ```js js-flavor=js
 const { test, expect } = require('@playwright/test');
@@ -49,7 +56,11 @@ test('basic test', async ({ page }, testInfo) => {
   // Capture a screenshot and attach it.
   const path = testInfo.outputPath('screenshot.png');
   await page.screenshot({ path });
-  testInfo.attachments.push({ name: 'screenshot', path, contentType: 'image/png' });
+  await testInfo.attach(path);
+  // Optionally override the name.
+  await testInfo.attach(path, { name: 'example.png' });
+  // Optionally override the contentType.
+  await testInfo.attach(path, { name: 'example.custom-file', contentType: 'x-custom-content-type' });
 });
 ```
 
@@ -62,9 +73,64 @@ test('basic test', async ({ page }, testInfo) => {
   // Capture a screenshot and attach it.
   const path = testInfo.outputPath('screenshot.png');
   await page.screenshot({ path });
-  testInfo.attachments.push({ name: 'screenshot', path, contentType: 'image/png' });
+  await testInfo.attach(path);
+  // Optionally override the name.
+  await testInfo.attach(path, { name: 'example.png' });
+  // Optionally override the contentType.
+  await testInfo.attach(path, { name: 'example.custom-file', contentType: 'x-custom-content-type' });
 });
 ```
+
+Or you can attach files returned by your APIs:
+
+```js js-flavor=js
+const { test, expect } = require('@playwright/test');
+
+test('basic test', async ({}, testInfo) => {
+  const { download } = require('./my-custom-helpers');
+  const tmpPath = await download('a');
+  await testInfo.attach(tmpPath, { name: 'example.json' });
+});
+```
+
+```js js-flavor=ts
+import { test, expect } from '@playwright/test';
+
+test('basic test', async ({}, testInfo) => {
+  const { download } = require('./my-custom-helpers');
+  const tmpPath = await download('a');
+  await testInfo.attach(tmpPath, { name: 'example.json' });
+});
+```
+
+:::note
+[`method: TestInfo.attach#1`] automatically takes care of copying attachments to a
+location that is accessible to reporters, even if you were to delete the attachment
+after awaiting the attach call.
+:::
+
+### param: TestInfo.attach#1.path
+- `path` <[string]> Path on the filesystem to the attached file.
+
+### option: TestInfo.attach#1.name
+- `name` <[void]|[string]> Optional attachment name. If omitted, this will be inferred from [`param: path`].
+
+### option: TestInfo.attach#1.contentType
+- `contentType` <[void]|[string]> Optional content type of this attachment to properly present in the report, for example `'application/json'` or `'image/png'`. If omitted, this falls back to an inferred type based on the [`param: name`] (if set) or [`param: path`]'s extension; it will be set to `application/octet-stream` if the type cannot be inferred from the file extension.
+
+
+## method: TestInfo.attach#2
+
+Attach data to the current test, either a `string` or a `Buffer`. Some reporters show test attachments.
+
+### param: TestInfo.attach#2.body
+- `body` <[string]|[Buffer]> Attachment body.
+
+### param: TestInfo.attach#2.name
+- `name` <[string]> Attachment name.
+
+### option: TestInfo.attach#2.contentType
+- `contentType` <[void]|[string]> Optional content type of this attachment to properly present in the report, for example `'application/json'` or `'application/xml'`. If omitted, this falls back to an inferred type based on the [`param: name`]'s extension; if the type cannot be inferred from the name's extension, it will be set to `text/plain` (if [`param: body`] is a `string`) or `application/octet-stream` (if [`param: body`] is a `Buffer`).
 
 ## property: TestInfo.column
 - type: <[int]>

@@ -17,6 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import rimraf from 'rimraf';
+import * as mime from 'mime';
 import util from 'util';
 import colors from 'colors/safe';
 import { EventEmitter } from 'events';
@@ -29,6 +30,7 @@ import { Annotations, TestError, TestInfo, TestInfoImpl, TestStepInternal, Worke
 import { ProjectImpl } from './project';
 import { FixtureRunner } from './fixtures';
 import { DeadlineRunner, raceAgainstDeadline } from 'playwright-core/lib/utils/async';
+import { calculateFileSha1 } from 'playwright-core/lib/utils/utils';
 
 const removeFolderAsync = util.promisify(rimraf);
 
@@ -262,6 +264,40 @@ export class WorkerRunner extends EventEmitter {
       expectedStatus: test.expectedStatus,
       annotations: [],
       attachments: [],
+      attach: async (...args) => {
+        const [ pathOrBody, nameOrFileOptions, inlineOptions ] = args as [string | Buffer, string | { contentType?: string, name?: string} | undefined, { contentType?: string } | undefined];
+        let attachment: { name: string, contentType: string, body?: Buffer, path?: string } | undefined;
+        if (typeof nameOrFileOptions === 'string') { // inline attachment
+          const body = pathOrBody;
+          const name = nameOrFileOptions;
+
+          attachment = {
+            name,
+            contentType: inlineOptions?.contentType ?? (mime.getType(name) || (typeof body === 'string' ? 'text/plain' : 'application/octet-stream')),
+            body: typeof body === 'string' ? Buffer.from(body) : body,
+          };
+        } else { // path based attachment
+          const options = nameOrFileOptions;
+          const thePath = pathOrBody as string;
+          const name = options?.name ?? path.basename(thePath);
+          attachment = {
+            name,
+            path: thePath,
+            contentType: options?.contentType ?? (mime.getType(name) || 'application/octet-stream')
+          };
+        }
+
+        const tmpAttachment = { ...attachment };
+        if (attachment.path) {
+          const hash = await calculateFileSha1(attachment.path);
+          const dest = testInfo.outputPath('attachments', hash + path.extname(attachment.path));
+          await fs.promises.mkdir(path.dirname(dest), { recursive: true });
+          await fs.promises.copyFile(attachment.path, dest);
+          tmpAttachment.path = dest;
+        }
+
+        testInfo.attachments.push(tmpAttachment);
+      },
       duration: 0,
       status: 'passed',
       stdout: [],
