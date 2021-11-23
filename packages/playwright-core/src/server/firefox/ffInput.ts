@@ -113,8 +113,8 @@ export class RawMouseImpl implements input.RawMouse {
       type: 'mousemove',
       button: 0,
       buttons: toButtonsMask(buttons),
-      x,
-      y,
+      x: Math.floor(x),
+      y: Math.floor(y),
       modifiers: toModifiersMask(modifiers)
     });
   }
@@ -124,8 +124,8 @@ export class RawMouseImpl implements input.RawMouse {
       type: 'mousedown',
       button: toButtonNumber(button),
       buttons: toButtonsMask(buttons),
-      x,
-      y,
+      x: Math.floor(x),
+      y: Math.floor(y),
       modifiers: toModifiersMask(modifiers),
       clickCount
     });
@@ -136,8 +136,8 @@ export class RawMouseImpl implements input.RawMouse {
       type: 'mouseup',
       button: toButtonNumber(button),
       buttons: toButtonsMask(buttons),
-      x,
-      y,
+      x: Math.floor(x),
+      y: Math.floor(y),
       modifiers: toModifiersMask(modifiers),
       clickCount
     });
@@ -149,8 +149,8 @@ export class RawMouseImpl implements input.RawMouse {
     await this._client.send('Page.dispatchWheelEvent', {
       deltaX,
       deltaY,
-      x,
-      y,
+      x: Math.floor(x),
+      y: Math.floor(y),
       deltaZ: 0,
       modifiers: toModifiersMask(modifiers)
     });
