@@ -319,10 +319,9 @@ export class FrameManager {
   }
 
   removeChildFramesRecursively(frame: Frame) {
-    if(frame){
-      for (const child of frame.childFrames()){
+    if (frame){
+      for (const child of frame.childFrames())
         this._removeFramesRecursively(child);
-      }
     }
   }
 
