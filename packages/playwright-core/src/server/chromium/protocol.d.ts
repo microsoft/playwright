@@ -7979,6 +7979,16 @@ the same request (but not for redirected requests).
       body: { [key: string]: string };
       status: ReportStatus;
     }
+    export interface ReportingApiEndpoint {
+      /**
+       * The URL of the endpoint to which reports may be delivered.
+       */
+      url: string;
+      /**
+       * Name of the endpoint group.
+       */
+      groupName: string;
+    }
     /**
      * An object providing the result of a network resource load.
      */
@@ -8637,6 +8647,13 @@ And after 'enableReportingApi' for all existing reports.
     }
     export type reportingApiReportUpdatedPayload = {
       report: ReportingApiReport;
+    }
+    export type reportingApiEndpointsChangedForOriginPayload = {
+      /**
+       * Origin of the document(s) which configured the endpoints.
+       */
+      origin: string;
+      endpoints: ReportingApiEndpoint[];
     }
     
     /**
@@ -12999,6 +13016,10 @@ one.
        * Proxy bypass list, similar to the one passed to --proxy-bypass-list
        */
       proxyBypassList?: string;
+      /**
+       * An optional list of origins to grant unlimited cross-origin access to.
+       */
+      originsWithUniversalNetworkAccess?: string[];
     }
     export type createBrowserContextReturnValue = {
       /**
@@ -16895,6 +16916,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Network.subresourceWebBundleInnerResponseError": Network.subresourceWebBundleInnerResponseErrorPayload;
     "Network.reportingApiReportAdded": Network.reportingApiReportAddedPayload;
     "Network.reportingApiReportUpdated": Network.reportingApiReportUpdatedPayload;
+    "Network.reportingApiEndpointsChangedForOrigin": Network.reportingApiEndpointsChangedForOriginPayload;
     "Overlay.inspectNodeRequested": Overlay.inspectNodeRequestedPayload;
     "Overlay.nodeHighlightRequested": Overlay.nodeHighlightRequestedPayload;
     "Overlay.screenshotRequested": Overlay.screenshotRequestedPayload;
