@@ -1,7 +1,7 @@
 # class: PageAssertions
 * langs: java, python, js
 
-The [PageAssertions] class provides assertion methods that can be used to make assertions about the [Page] state in the tests. A new instance of [LocatorAssertions] is created by calling [`method: PlaywrightAssertions.assertThatPage`]:
+The [PageAssertions] class provides assertion methods that can be used to make assertions about the [Page] state in the tests. A new instance of [LocatorAssertions] is created by calling [`method: PlaywrightAssertions.expectPage`]:
 
 ```java
 ...

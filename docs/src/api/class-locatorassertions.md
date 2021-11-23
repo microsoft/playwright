@@ -1,7 +1,7 @@
 # class: LocatorAssertions
 * langs: java, python, js
 
-The [LocatorAssertions] class provides assertion methods that can be used to make assertions about the [Locator] state in the tests. A new instance of [LocatorAssertions] is created by calling [`method: PlaywrightAssertions.assertThatLocator`]:
+The [LocatorAssertions] class provides assertion methods that can be used to make assertions about the [Locator] state in the tests. A new instance of [LocatorAssertions] is created by calling [`method: PlaywrightAssertions.expectLocator`]:
 
 ```java
 ...
@@ -391,7 +391,7 @@ assertThat(page.locator("list > .list-item")).containsText(new String[] {"Text 1
 ```
 
 ### param: LocatorAssertions.toContainText.expected
-* langs: python
+* langs: python, js
 - `expected` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
 
 Expected substring or RegExp or a list of those.
@@ -464,7 +464,7 @@ assertThat(page.locator("list > .component")).hasClass(new String[] {"component"
 ```
 
 ### param: LocatorAssertions.toHaveClass.expected
-* langs: python
+* langs: python, js
 - `expected` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
 
 Expected class or RegExp or a list of those.
@@ -607,7 +607,7 @@ assertThat(page.locator("list > .component")).hasText(new String[] {"Text 1", "T
 ```
 
 ### param: LocatorAssertions.toHaveText.expected
-* langs: python
+* langs: python, js
 - `expected` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
 
 Expected substring or RegExp or a list of those.

@@ -193,6 +193,11 @@ function buildTree(lines) {
       else
         node.liType = 'default';
     }
+    const match = node.text.match(/\*\*langs: (.*)\*\*(.*)/);
+    if (match) {
+      node.codeLang = match[1];
+      node.text = match[2];
+    }
     appendNode(indent, node);
   }
   return root.children;

@@ -5,6 +5,32 @@ The [PlaywrightAssertions] class provides convenience methods for creating asser
 
 Consider the following example:
 
+```js
+import { test, expect } from '@playwright/test';
+
+test('status becomes submitted', async ({ page }) => {
+  // ...
+  await page.click('#submit-button')
+  await expect(page.locator('.status')).toHaveText('Submitted');
+});
+```
+
+```python async
+from playwright.async_api import Page, expect
+
+async def test_assertions_page_to_have_title(page: Page) -> None:
+    await page.click('#submit-button')
+    await expect(page.locator('.status')).to_have_text('Submitted')
+```
+
+```python sync
+from playwright.sync_api import Page, expect
+
+def test_assertions_page_to_have_title(page: Page) -> None:
+    page.click('#submit-button')
+    expect(page.locator('.status')).to_have_text('Submitted')
+```
+
 ```java
 ...
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
@@ -26,9 +52,9 @@ reached. You can pass this timeout as an option.
 
 By default, the timeout for assertions is set to 5 seconds.
 
-To use Playwright assertions add the following dependency into the `pom.xml` of your Maven project:
+**langs: java**To use Playwright assertions add the following dependency into the `pom.xml` of your Maven project:
 
-```xml
+```xml java
 <dependency>
   <groupId>com.microsoft.playwright</groupId>
   <artifactId>assertions</artifactId>
@@ -36,7 +62,7 @@ To use Playwright assertions add the following dependency into the `pom.xml` of 
 </dependency>
 ```
 
-## method: PlaywrightAssertions.assertThatLocator
+## method: PlaywrightAssertions.expectLocator
 * langs: java, python, js
   - alias-java: assertThat
   - alias-python: expect
@@ -49,12 +75,12 @@ Creates a [LocatorAssertions] object for the given [Locator].
 PlaywrightAssertions.assertThat(locator).isVisible();
 ```
 
-### param: PlaywrightAssertions.assertThatLocator.locator
+### param: PlaywrightAssertions.expectLocator.locator
 - `locator` <[Locator]>
 
 [Locator] object to use for assertions.
 
-## method: PlaywrightAssertions.assertThatPage
+## method: PlaywrightAssertions.expectPage
 * langs: java, python, js
   - alias-java: assertThat
   - alias-python: expect
@@ -67,7 +93,7 @@ Creates a [PageAssertions] object for the given [Page].
 PlaywrightAssertions.assertThat(page).hasTitle("News");
 ```
 
-### param: PlaywrightAssertions.assertThatPage.page
+### param: PlaywrightAssertions.expectPage.page
 - `page` <[Page]>
 
 [Page] object to use for assertions.
