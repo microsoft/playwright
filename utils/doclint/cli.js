@@ -79,7 +79,7 @@ async function run() {
           devicesDescriptors[deviceName].userAgent = devicesDescriptors[deviceName].userAgent.replace(
             /^(.*Firefox\/)(.*?)( .*?)?$/,
             `$1${versions.firefox}$3`
-          ).replace(/(.*rv:)(.*)\)(.*?)/, `$1${versions.firefox}$3`)
+          ).replace(/^(.*rv:)(.*)(\).*?)$/, `$1${versions.firefox}$3`)
           break;
         case 'webkit':
           devicesDescriptors[deviceName].userAgent = devicesDescriptors[deviceName].userAgent.replace(
