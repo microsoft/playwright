@@ -260,7 +260,7 @@ test('should import esm from ts when package.json has type module in experimenta
       export const foo: string = 'foo';
     `
   }, {}, {
-    NODE_OPTIONS: `--experimental-loader=${require.resolve('../../packages/playwright-test/lib/experimentalLoader.js')}`
+    PW_EXPERIMENTAL_TS_ESM: true
   });
 
   expect(result.exitCode).toBe(0);
