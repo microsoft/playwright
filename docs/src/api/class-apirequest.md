@@ -1,7 +1,10 @@
 # class: APIRequest
 * langs: js, java, python
 
-Exposes API that can be used for the Web API testing.
+Exposes API that can be used for the Web API testing. Each Playwright browser context
+has a APIRequestContext instance attached which shares cookies with the page context.
+Its also possible to create a new APIRequestContext instance manually. For more information
+see [here](./class-apirequestcontext).
 
 ## async method: APIRequest.newContext
 * langs: js, java, python

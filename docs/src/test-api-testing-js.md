@@ -163,7 +163,7 @@ const USER = 'github-username';
   });
 
   // Delete a repository.
-  await context.delete(`/repos/${USER}/${REPO}`{
+  await context.delete(`/repos/${USER}/${REPO}`, {
     headers: {
       'Accept': 'application/vnd.github.v3+json',
       // Add GitHub personal access token.

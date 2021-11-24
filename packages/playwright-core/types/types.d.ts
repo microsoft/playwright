@@ -11813,7 +11813,9 @@ export interface AndroidWebView {
 }
 
 /**
- * Exposes API that can be used for the Web API testing.
+ * Exposes API that can be used for the Web API testing. Each Playwright browser context has a APIRequestContext instance
+ * attached which shares cookies with the page context. Its also possible to create a new APIRequestContext instance
+ * manually. For more information see [here](https://playwright.dev/docs/class-apirequestcontext).
  */
 export interface APIRequest {
   /**
@@ -11939,6 +11941,7 @@ export interface APIRequest {
  * environment or the service to your e2e test. When used on [Page] or a [BrowserContext], this API will automatically use
  * the cookies from the corresponding [BrowserContext]. This means that if you log in using this API, your e2e test will be
  * logged in and vice versa.
+ *
  */
 export interface APIRequestContext {
   /**
@@ -12428,6 +12431,7 @@ export interface APIRequestContext {
  * [APIResponse] class represents responses returned by
  * [apiRequestContext.get(url[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-get)
  * and similar methods.
+ *
  */
 export interface APIResponse {
   /**
