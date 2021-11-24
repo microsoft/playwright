@@ -16,6 +16,7 @@
     "./cli": "./cli.js",
     "./package.json": "./package.json",
     "./lib/cli": "./lib/cli.js",
+    "./lib/experimentalLoader": "./lib/experimentalLoader.js",
     "./reporter": "./reporter.js"
   },
   "bin": {
