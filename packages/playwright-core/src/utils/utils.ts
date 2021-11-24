@@ -520,3 +520,11 @@ export function streamToString(stream: stream.Readable): Promise<string> {
     stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
   });
 }
+
+export function determinePackageManager(rootDir: string): 'yarn' | 'npm' {
+  if (fs.existsSync(path.join(rootDir, 'yarn.lock')))
+    return 'yarn';
+  if (process.env.npm_config_user_agent)
+    return process.env.npm_config_user_agent.includes('yarn') ? 'yarn' : 'npm';
+  return 'npm';
+}

@@ -21,7 +21,7 @@ import * as util from 'util';
 import * as fs from 'fs';
 import lockfile from 'proper-lockfile';
 import { getUbuntuVersion } from './ubuntuVersion';
-import { getFromENV, getAsBooleanFromENV, calculateSha1, removeFolders, existsAsync, hostPlatform, canAccessFile, spawnAsync, fetchData, wrapInASCIIBox } from './utils';
+import { getFromENV, getAsBooleanFromENV, calculateSha1, removeFolders, existsAsync, hostPlatform, canAccessFile, spawnAsync, fetchData, wrapInASCIIBox, determinePackageManager } from './utils';
 import { DependencyGroup, installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
 import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
 
@@ -718,7 +718,10 @@ export function buildPlaywrightCLICommand(sdkLanguage: string, parameters: strin
     case 'csharp':
       return `playwright ${parameters}`;
     default:
-      return `npx playwright ${parameters}`;
+      if (determinePackageManager(process.cwd()) === 'yarn')
+        return `yarn playwright ${parameters}`;
+      else
+        return `npx playwright ${parameters}`;
   }
 }
 
