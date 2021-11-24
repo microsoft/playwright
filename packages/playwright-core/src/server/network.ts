@@ -476,6 +476,7 @@ export class Response extends SdkObject {
 
 export class WebSocket extends SdkObject {
   private _url: string;
+  private _notified = false;
 
   static Events = {
     Close: 'close',
@@ -487,6 +488,16 @@ export class WebSocket extends SdkObject {
   constructor(parent: SdkObject, url: string) {
     super(parent, 'ws');
     this._url = url;
+  }
+
+  markAsNotified() {
+    // Sometimes we get "onWebSocketRequest" twice, at least in Chromium.
+    // Perhaps websocket is restarted because of chrome.webRequest extensions api?
+    // Or maybe the handshake response was a redirect?
+    if (this._notified)
+      return false;
+    this._notified = true;
+    return true;
   }
 
   url(): string {

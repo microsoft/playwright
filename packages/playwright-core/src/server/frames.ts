@@ -377,7 +377,7 @@ export class FrameManager {
 
   onWebSocketRequest(requestId: string) {
     const ws = this._webSockets.get(requestId);
-    if (ws)
+    if (ws && ws.markAsNotified())
       this._page.emit(Page.Events.WebSocket, ws);
   }
 
