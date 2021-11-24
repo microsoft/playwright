@@ -107,7 +107,7 @@ program
         if (!args.length) {
           const executables = registry.defaultExecutables();
           if (options.withDeps)
-            await registry.installDeps(executables);
+            await registry.installDeps(executables, false);
           await registry.install(executables);
         } else {
           const installDockerImage = args.some(arg => arg === 'docker-image');
@@ -123,7 +123,7 @@ program
 
           const executables = checkBrowsersToInstall(args);
           if (options.withDeps)
-            await registry.installDeps(executables);
+            await registry.installDeps(executables, false);
           await registry.install(executables);
         }
       } catch (e) {
@@ -143,12 +143,13 @@ Examples:
 program
     .command('install-deps [browser...]')
     .description('install dependencies necessary to run browsers (will ask for sudo permissions)')
-    .action(async function(args: string[]) {
+    .option('--dry-run', 'Do not execute installation commands, only print them')
+    .action(async function(args: string[], options: { dryRun?: boolean }) {
       try {
         if (!args.length)
-          await registry.installDeps(registry.defaultExecutables());
+          await registry.installDeps(registry.defaultExecutables(), !!options.dryRun);
         else
-          await registry.installDeps(checkBrowsersToInstall(args));
+          await registry.installDeps(checkBrowsersToInstall(args), !!options.dryRun);
       } catch (e) {
         console.log(`Failed to install browser dependencies\n${e}`);
         process.exit(1);

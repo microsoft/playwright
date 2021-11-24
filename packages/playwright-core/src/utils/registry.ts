@@ -526,7 +526,7 @@ export class Registry {
       return await validateDependenciesWindows(windowsExeAndDllDirectories.map(d => path.join(browserDirectory, d)));
   }
 
-  async installDeps(executablesToInstallDeps: Executable[]) {
+  async installDeps(executablesToInstallDeps: Executable[], dryRun: boolean) {
     const executables = this._addRequirementsAndDedupe(executablesToInstallDeps);
     const targets = new Set<DependencyGroup>();
     for (const executable of executables) {
@@ -535,9 +535,9 @@ export class Registry {
     }
     targets.add('tools');
     if (os.platform() === 'win32')
-      return await installDependenciesWindows(targets);
+      return await installDependenciesWindows(targets, dryRun);
     if (os.platform() === 'linux')
-      return await installDependenciesLinux(targets);
+      return await installDependenciesLinux(targets, dryRun);
   }
 
   async install(executablesToInstall: Executable[]) {

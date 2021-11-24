@@ -38,15 +38,21 @@ function isSupportedWindowsVersion(): boolean {
 
 export type DependencyGroup = 'chromium' | 'firefox' | 'webkit' | 'tools';
 
-export async function installDependenciesWindows(targets: Set<DependencyGroup>) {
+export async function installDependenciesWindows(targets: Set<DependencyGroup>, dryRun: boolean): Promise<void> {
   if (targets.has('chromium')) {
-    const { code } = await utils.spawnAsync('powershell.exe', ['-ExecutionPolicy', 'Bypass', '-File', path.join(BIN_DIRECTORY, 'install_media_pack.ps1')], { cwd: BIN_DIRECTORY, stdio: 'inherit' });
+    const command = 'powershell.exe';
+    const args = ['-ExecutionPolicy', 'Bypass', '-File', path.join(BIN_DIRECTORY, 'install_media_pack.ps1')];
+    if (dryRun) {
+      console.log(`${command} ${quoteProcessArgs(args).join(' ')}`); // eslint-disable-line no-console
+      return;
+    }
+    const { code } = await utils.spawnAsync(command, args, { cwd: BIN_DIRECTORY, stdio: 'inherit' });
     if (code !== 0)
       throw new Error('Failed to install windows dependencies!');
   }
 }
 
-export async function installDependenciesLinux(targets: Set<DependencyGroup>) {
+export async function installDependenciesLinux(targets: Set<DependencyGroup>, dryRun: boolean) {
   const libraries: string[] = [];
   for (const target of targets) {
     const info = deps[utils.hostPlatform];
@@ -57,13 +63,18 @@ export async function installDependenciesLinux(targets: Set<DependencyGroup>) {
     libraries.push(...info[target]);
   }
   const uniqueLibraries = Array.from(new Set(libraries));
-  console.log('Installing Ubuntu dependencies...');  // eslint-disable-line no-console
+  if (!dryRun)
+    console.log('Installing Ubuntu dependencies...');  // eslint-disable-line no-console
   const commands: string[] = [];
   commands.push('apt-get update');
   commands.push(['apt-get', 'install', '-y', '--no-install-recommends',
     ...uniqueLibraries,
   ].join(' '));
   const [command, args] = await buildAptProcessArgs(commands);
+  if (dryRun) {
+    console.log(`${command} ${quoteProcessArgs(args).join(' ')}`); // eslint-disable-line no-console
+    return;
+  }
   const child = childProcess.spawn(command, args, { stdio: 'inherit' });
   await new Promise((resolve, reject) => {
     child.on('exit', resolve);
@@ -293,3 +304,11 @@ const MANUAL_LIBRARY_TO_PACKAGE_NAME_UBUNTU: { [s: string]: string} = {
   // gstreamer1.0-libav -> libavcodec57 -> libx264-152
   'libx264.so': 'gstreamer1.0-libav',
 };
+
+function quoteProcessArgs(args: string[]): string[] {
+  return args.map(arg => {
+    if (arg.includes(' '))
+      return `"${arg}"`;
+    return arg;
+  });
+}
