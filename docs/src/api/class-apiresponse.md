@@ -3,6 +3,40 @@
 
 [APIResponse] class represents responses returned by [`method: APIRequestContext.get`] and similar methods.
 
+```python async
+import asyncio
+from playwright.async_api import async_playwright, Playwright
+
+async def run(playwright: Playwright):
+    context = await playwright.request.new_context()
+    response = await context.get("https://example.com/user/repos")
+    assert response.ok
+    assert response.status == 200
+    assert response.headers["content-type"] == "application/json; charset=utf-8"
+    assert response.json()["name"] == "foobar"
+    assert await response.body() == '{"status": "ok"}'
+
+
+async def main():
+    async with async_playwright() as playwright:
+        await run(playwright)
+
+asyncio.run(main())
+```
+
+```python sync
+from playwright.sync_api import sync_playwright
+
+with sync_playwright() as p:
+    context = playwright.request.new_context()
+    response = context.get("https://example.com/user/repos")
+    assert response.ok
+    assert response.status == 200
+    assert response.headers["content-type"] == "application/json; charset=utf-8"
+    assert response.json()["name"] == "foobar"
+    assert response.body() == '{"status": "ok"}'
+```
+
 ## async method: APIResponse.body
 - returns: <[Buffer]>
 
