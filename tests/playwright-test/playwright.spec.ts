@@ -213,11 +213,20 @@ test('should respect context options in various contexts', async ({ runInlineTes
         await context.close();
         rimraf.sync(dir);
       });
+
+      test('another browser', async ({ playwright, browserName }) => {
+        const browser = await playwright.webkit.launch();
+        const page = await browser.newPage();
+
+        expect(await page.evaluate(() => navigator.language)).toBe('fr-CH');
+
+        await browser.close();
+      });
     `,
   }, { workers: 1 });
 
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(4);
+  expect(result.passed).toBe(5);
 });
 
 test('should call logger from launchOptions config', async ({ runInlineTest }, testInfo) => {
