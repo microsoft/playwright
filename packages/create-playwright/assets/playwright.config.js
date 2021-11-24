@@ -53,7 +53,22 @@ const config = {
     // },
     // {
     //   name: 'Mobile Safari',
-    //   use: devices['iPhone 12'],
+    //   use: {
+    //     ...devices['iPhone 12'],
+    //   },
+    // },
+    /* Test against stable browsers. */
+    // {
+    //   name: 'Microsoft Edge',
+    //   use: {
+    //     channel: 'msedge',
+    //   },
+    // },
+    // {
+    //   name: 'Google Chrome',
+    //   use: {
+    //     channel: 'chrome',
+    //   },
     // },
   ],
 };
