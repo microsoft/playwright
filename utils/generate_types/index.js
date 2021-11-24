@@ -109,7 +109,8 @@ class TypesGenerator {
       return (!docsOnlyClassMapping && docClass) ? this.classBody(docClass) : '';
     });
 
-    const classes = this.documentation.classesArray.filter(cls => !handledClasses.has(cls.name));
+    const IGNORED_CLASSES = ['PlaywrightAssertions', 'LocatorAssertions', 'PageAssertions'];
+    const classes = this.documentation.classesArray.filter(cls => !IGNORED_CLASSES.includes(cls.name)).filter(cls => !handledClasses.has(cls.name));
     {
       const playwright = this.documentation.classesArray.find(c => c.name === 'Playwright');
       playwright.membersArray = playwright.membersArray.filter(member => !['errors', 'devices'].includes(member.name));

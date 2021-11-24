@@ -1,7 +1,7 @@
 # class: LocatorAssertions
-* langs: java, python
+* langs: java, python, js
 
-The [LocatorAssertions] class provides assertion methods that can be used to make assertions about the [Locator] state in the tests. A new instance of [LocatorAssertions] is created by calling [`method: PlaywrightAssertions.assertThatLocator`]:
+The [LocatorAssertions] class provides assertion methods that can be used to make assertions about the [Locator] state in the tests. A new instance of [LocatorAssertions] is created by calling [`method: PlaywrightAssertions.expectLocator`]:
 
 ```java
 ...
@@ -19,7 +19,7 @@ public class TestLocator {
 ```
 
 ## method: LocatorAssertions.not
-* langs: java
+* langs: java, js
 - returns: <[LocatorAssertions]>
 
 Makes the assertion check for the opposite condition. For example, this code tests that the Locator doesn't contain text `"error"`:
@@ -225,6 +225,11 @@ Expected value.
 
 Ensures the [Locator] points to a checked input.
 
+```js
+const locator = page.locator('.subscribe');
+await expect(locator).toBeChecked();
+```
+
 ```java
 assertThat(page.locator(".subscribe")).isChecked();
 ```
@@ -239,6 +244,11 @@ assertThat(page.locator(".subscribe")).isChecked();
 
 Ensures the [Locator] points to a disabled element.
 
+```js
+const locator = page.locator('button.submit');
+await expect(locator).toBeDisabled();
+```
+
 ```java
 assertThat(page.locator("button.submit")).isDisabled();
 ```
@@ -251,6 +261,11 @@ assertThat(page.locator("button.submit")).isDisabled();
   - alias-java: isEditable
 
 Ensures the [Locator] points to an editable element.
+
+```js
+const locator = page.locator('input');
+await expect(locator).toBeEditable();
+```
 
 ```java
 assertThat(page.locator("input")).isEditable();
@@ -265,6 +280,11 @@ assertThat(page.locator("input")).isEditable();
 
 Ensures the [Locator] points to an empty editable element or to a DOM node that has no text.
 
+```js
+const locator = page.locator('div.warning');
+await expect(locator).toBeEmpty();
+```
+
 ```java
 assertThat(page.locator("div.warning")).isEmpty();
 ```
@@ -277,6 +297,11 @@ assertThat(page.locator("div.warning")).isEmpty();
   - alias-java: isEnabled
 
 Ensures the [Locator] points to an enabled element.
+
+```js
+const locator = page.locator('button.submit');
+await expect(locator).toBeEnabled();
+```
 
 ```java
 assertThat(page.locator("button.submit")).isEnabled();
@@ -291,6 +316,11 @@ assertThat(page.locator("button.submit")).isEnabled();
 
 Ensures the [Locator] points to a focused DOM node.
 
+```js
+const locator = page.locator('input');
+await expect(locator).toBeFocused();
+```
+
 ```java
 assertThat(page.locator("input")).isFocused();
 ```
@@ -303,6 +333,11 @@ assertThat(page.locator("input")).isFocused();
   - alias-java: isHidden
 
 Ensures the [Locator] points to a hidden DOM node, which is the opposite of [visible](./actionability.md#visible).
+
+```js
+const locator = page.locator('.my-element');
+await expect(locator).toBeHidden();
+```
 
 ```java
 assertThat(page.locator(".my-element")).isHidden();
@@ -317,6 +352,11 @@ assertThat(page.locator(".my-element")).isHidden();
 
 Ensures the [Locator] points to a [visible](./actionability.md#visible) DOM node.
 
+```js
+const locator = page.locator('.my-element');
+await expect(locator).toBeVisible();
+```
+
 ```java
 assertThat(page.locator(".my-element")).toBeVisible();
 ```
@@ -329,18 +369,29 @@ assertThat(page.locator(".my-element")).toBeVisible();
 
 Ensures the [Locator] points to an element that contains the given text. You can use regular expressions for the value as well.
 
+```js
+const locator = page.locator('.title');
+await expect(locator).toContainText('substring');
+await expect(locator).toContainText(/\d messages/);
+```
+
 ```java
 assertThat(page.locator(".title")).containsText("substring");
 ```
 
 Note that if array is passed as an expected value, entire lists can be asserted:
 
+```js
+const locator = page.locator('list > .list-item');
+await expect(locator).toContainText(['Text 1', 'Text 4', 'Text 5']);
+```
+
 ```java
 assertThat(page.locator("list > .list-item")).containsText(new String[] {"Text 1", "Text 4", "Text 5"});
 ```
 
 ### param: LocatorAssertions.toContainText.expected
-* langs: python
+* langs: python, js
 - `expected` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
 
 Expected substring or RegExp or a list of those.
@@ -365,6 +416,11 @@ Whether to use `element.innerText` instead of `element.textContent` when retriev
 
 Ensures the [Locator] points to an element with given attribute.
 
+```js
+const locator = page.locator('input');
+await expect(locator).toHaveAttribute('type', 'text');
+```
+
 ```java
 assertThat(page.locator("input")).hasAttribute("type", "text");
 ```
@@ -387,18 +443,28 @@ Expected attribute value.
 
 Ensures the [Locator] points to an element with given CSS class.
 
+```js
+const locator = page.locator('#component');
+await expect(locator).toHaveClass(/selected/);
+```
+
 ```java
 assertThat(page.locator("#component")).hasClass(Pattern.compile("selected"));
 ```
 
 Note that if array is passed as an expected value, entire lists can be asserted:
 
+```js
+const locator = page.locator('list > .component');
+await expect(locator).toHaveClass(['component', 'component selected', 'component']);
+```
+
 ```java
 assertThat(page.locator("list > .component")).hasClass(new String[] {"component", "component selected", "component"});
 ```
 
 ### param: LocatorAssertions.toHaveClass.expected
-* langs: python
+* langs: python, js
 - `expected` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
 
 Expected class or RegExp or a list of those.
@@ -418,6 +484,11 @@ Expected class or RegExp or a list of those.
 
 Ensures the [Locator] resolves to an exact number of DOM nodes.
 
+```js
+const list = page.locator('list > .component');
+await expect(list).toHaveCount(3);
+```
+
 ```java
 assertThat(page.locator("list > .component")).hasCount(3);
 ```
@@ -434,6 +505,11 @@ Expected count.
   - alias-java: hasCSS
 
 Ensures the [Locator] resolves to an element with the given computed CSS style.
+
+```js
+const locator = page.locator('button');
+await expect(locator).toHaveCSS('display', 'flex');
+```
 
 ```java
 assertThat(page.locator("button")).hasCSS("display", "flex");
@@ -457,6 +533,11 @@ CSS property value.
 
 Ensures the [Locator] points to an element with the given DOM Node ID.
 
+```js
+const locator = page.locator('input');
+await expect(locator).toHaveId('lastname');
+```
+
 ```java
 assertThat(page.locator("input")).hasId("lastname");
 ```
@@ -473,7 +554,13 @@ Element id.
 * langs:
   - alias-java: hasJSProperty
 
-Ensures the [Locator] points to an element with given JavaScript property. Note that this property can be of a primitive type as well as a plain serializable JavaScript object.
+Ensures the [Locator] points to an element with given JavaScript property. Note that this property can be
+of a primitive type as well as a plain serializable JavaScript object.
+
+```js
+const locator = page.locator('.component');
+await expect(locator).toHaveJSProperty('loaded', true);
+```
 
 ```java
 assertThat(page.locator("input")).hasJSProperty("type", "text");
@@ -497,6 +584,12 @@ Property value.
 
 Ensures the [Locator] points to an element with the given text. You can use regular expressions for the value as well.
 
+```js
+const locator = page.locator('.title');
+await expect(locator).toHaveText(/Welcome, Test User/);
+await expect(locator).toHaveText(/Welcome, .*/);
+```
+
 ```java
 assertThat(page.locator(".title")).hasText("Welcome, Test User");
 assertThat(page.locator(".title")).hasText(Pattern.compile("Welcome, .*"));
@@ -504,12 +597,17 @@ assertThat(page.locator(".title")).hasText(Pattern.compile("Welcome, .*"));
 
 Note that if array is passed as an expected value, entire lists can be asserted:
 
+```js
+const locator = page.locator('list > .component');
+await expect(locator).toHaveText(['Text 1', 'Text 2', 'Text 3']);
+```
+
 ```java
 assertThat(page.locator("list > .component")).hasText(new String[] {"Text 1", "Text 2", "Text 3"});
 ```
 
 ### param: LocatorAssertions.toHaveText.expected
-* langs: python
+* langs: python, js
 - `expected` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
 
 Expected substring or RegExp or a list of those.
@@ -532,6 +630,11 @@ Whether to use `element.innerText` instead of `element.textContent` when retriev
   - alias-java: hasValue
 
 Ensures the [Locator] points to an element with the given input value. You can use regular expressions for the value as well.
+
+```js
+const locator = page.locator('input[type=number]');
+await expect(locator).toHaveValue(/[0-9]/);
+```
 
 ```java
 assertThat(page.locator("input[type=number]")).hasValue(Pattern.compile("[0-9]"));

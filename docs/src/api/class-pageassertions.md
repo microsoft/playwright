@@ -1,7 +1,7 @@
 # class: PageAssertions
-* langs: java, python
+* langs: java, python, js
 
-The [PageAssertions] class provides assertion methods that can be used to make assertions about the [Page] state in the tests. A new instance of [LocatorAssertions] is created by calling [`method: PlaywrightAssertions.assertThatPage`]:
+The [PageAssertions] class provides assertion methods that can be used to make assertions about the [Page] state in the tests. A new instance of [LocatorAssertions] is created by calling [`method: PlaywrightAssertions.expectPage`]:
 
 ```java
 ...
@@ -20,7 +20,7 @@ public class TestPage {
 
 
 ## method: PageAssertions.not
-* langs: java
+* langs: java, js
 - returns: <[PageAssertions]>
 
 Makes the assertion check for the opposite condition. For example, this code tests that the page URL doesn't contain `"error"`:
@@ -61,6 +61,10 @@ Expected substring or RegExp.
 
 Ensures the page has the given title.
 
+```js
+await expect(page).toHaveTitle(/.*checkout/);
+```
+
 ```java
 assertThat(page).hasTitle("Playwright");
 ```
@@ -77,6 +81,10 @@ Expected title or RegExp.
   - alias-java: hasURL
 
 Ensures the page is navigated to the given URL.
+
+```js
+await expect(page).toHaveURL(/.*checkout/);
+```
 
 ```java
 assertThat(page).hasURL(".com");
