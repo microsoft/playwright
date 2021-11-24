@@ -55,7 +55,7 @@ async function writeFiles(testInfo: TestInfo, files: Files) {
   const headerTS = `
     import * as pwt from '@playwright/test';
   `;
-  const headerMJS = `
+  const headerESM = `
     import * as pwt from '@playwright/test';
   `;
 
@@ -73,8 +73,8 @@ async function writeFiles(testInfo: TestInfo, files: Files) {
     const fullName = path.join(baseDir, name);
     await fs.promises.mkdir(path.dirname(fullName), { recursive: true });
     const isTypeScriptSourceFile = name.endsWith('.ts') && !name.endsWith('.d.ts');
-    const isJSModule = name.endsWith('.mjs');
-    const header = isTypeScriptSourceFile ? headerTS : (isJSModule ? headerMJS : headerJS);
+    const isJSModule = name.endsWith('.mjs') || name.includes('esm');
+    const header = isTypeScriptSourceFile ? headerTS : (isJSModule ? headerESM : headerJS);
     if (typeof files[name] === 'string' && files[name].includes('//@no-header')) {
       await fs.promises.writeFile(fullName, files[name]);
     } else if (/(spec|test)\.(js|ts|mjs)$/.test(name)) {
