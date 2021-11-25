@@ -18,7 +18,7 @@ import { EventEmitter } from 'events';
 import * as channels from '../protocol/channels';
 import { serializeError } from '../protocol/serializers';
 import { createScheme, Validator, ValidationError } from '../protocol/validator';
-import { assert, debugAssert, isUnderTest, monotonicTime } from '../utils/utils';
+import { assert, debugAssert, getPlaywrightVersion, isUnderTest, monotonicTime } from '../utils/utils';
 import { tOptional } from '../protocol/validatorPrimitives';
 import { kBrowserOrContextClosedError } from '../utils/errors';
 import { CallMetadata, SdkObject } from '../server/instrumentation';
@@ -132,6 +132,8 @@ export class Root extends Dispatcher<{ guid: '' }, any> {
   async initialize(params: channels.RootInitializeParams): Promise<channels.RootInitializeResult> {
     assert(this.createPlaywright);
     assert(!this._initialized);
+    const expectedPlaywrightVersion = getPlaywrightVersion();
+    assert(params.version === expectedPlaywrightVersion, `Server (${expectedPlaywrightVersion}) does not match with client version (${params.version}).`);
     this._initialized = true;
     return {
       playwright: await this.createPlaywright(this, params),

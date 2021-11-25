@@ -346,6 +346,7 @@ export interface RootChannel extends RootEventTarget, Channel {
 }
 export type RootInitializeParams = {
   sdkLanguage: string,
+  version: string,
 };
 export type RootInitializeOptions = {
 
