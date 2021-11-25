@@ -21,7 +21,7 @@ import * as mime from 'mime';
 import util from 'util';
 import colors from 'colors/safe';
 import { EventEmitter } from 'events';
-import { monotonicTime, serializeError, sanitizeForFilePath, getContainedPath, addSuffixToFilePath, prependToTestError } from './util';
+import { monotonicTime, serializeError, sanitizeForFilePath, getContainedPath, addSuffixToFilePath, prependToTestError, trimLongString } from './util';
 import { TestBeginPayload, TestEndPayload, RunPayload, TestEntry, DonePayload, WorkerInitParams, StepBeginPayload, StepEndPayload } from './ipc';
 import { setCurrentTestInfo } from './globals';
 import { Loader } from './loader';
@@ -232,7 +232,8 @@ export class WorkerRunner extends EventEmitter {
       const relativeTestFilePath = path.relative(this._project.config.testDir, test._requireFile.replace(/\.(spec|test)\.(js|ts|mjs)$/, ''));
       const sanitizedRelativePath = relativeTestFilePath.replace(process.platform === 'win32' ? new RegExp('\\\\', 'g') : new RegExp('/', 'g'), '-');
       const fullTitleWithoutSpec = test.titlePath().slice(1).join(' ') + (test._type === 'test' ? '' : '-worker' + this._params.workerIndex);
-      let testOutputDir = sanitizedRelativePath + '-' + sanitizeForFilePath(fullTitleWithoutSpec);
+
+      let testOutputDir = sanitizedRelativePath + '-' + sanitizeForFilePath(trimLongString(fullTitleWithoutSpec));
       if (this._uniqueProjectNamePathSegment)
         testOutputDir += '-' + this._uniqueProjectNamePathSegment;
       if (retry)

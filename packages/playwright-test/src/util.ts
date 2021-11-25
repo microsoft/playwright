@@ -20,7 +20,7 @@ import url from 'url';
 import type { TestError, Location } from './types';
 import { default as minimatch } from 'minimatch';
 import debug from 'debug';
-import { isRegExp } from 'playwright-core/lib/utils/utils';
+import { calculateSha1, isRegExp } from 'playwright-core/lib/utils/utils';
 
 export function serializeError(error: Error | any): TestError {
   if (error instanceof Error) {
@@ -142,6 +142,16 @@ export function expectType(receiver: any, type: string, matcherName: string) {
 
 export function sanitizeForFilePath(s: string) {
   return s.replace(/[\x00-\x2C\x2E-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F]+/g, '-');
+}
+
+export function trimLongString(s: string, length = 100) {
+  if (s.length <= length)
+    return s;
+  const hash = calculateSha1(s);
+  const middle = `-${hash.substring(5)}-`;
+  const start = Math.floor((length - middle.length) / 2);
+  const end = length - middle.length - start;
+  return s.substring(0, start) + middle + s.slice(-end);
 }
 
 export function addSuffixToFilePath(filePath: string, suffix: string, customExtension?: string, sanitize = false): string {
