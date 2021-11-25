@@ -41,6 +41,7 @@ const defaultConfig: Config = {
   timeout: defaultTimeout,
   updateSnapshots: 'missing',
   workers: Math.ceil(require('os').cpus().length / 2),
+  reuseWorkers: true,
 };
 
 export function addTestCommand(program: Command) {
@@ -56,6 +57,7 @@ export function addTestCommand(program: Command) {
   command.option('--global-timeout <timeout>', `Maximum time this test suite can run in milliseconds (default: unlimited)`);
   command.option('-j, --workers <workers>', `Number of concurrent workers, use 1 to run in a single worker (default: number of CPU cores / 2)`);
   command.option('--list', `Collect all the tests and report them, but do not run`);
+  command.option('--no-reuse-workers', `Respawn workers for each spec (default: reuse enabled)`);
   command.option('--max-failures <N>', `Stop after the first N failures`);
   command.option('--output <dir>', `Folder for output artifacts (default: "test-results")`);
   command.option('--quiet', `Suppress stdio`);
@@ -222,6 +224,7 @@ function overridesFromOptions(options: { [key: string]: any }): Config {
     timeout: isDebuggerAttached ? 0 : (options.timeout ? parseInt(options.timeout, 10) : undefined),
     updateSnapshots: options.updateSnapshots ? 'all' as const : undefined,
     workers: options.workers ? parseInt(options.workers, 10) : undefined,
+    reuseWorkers: options.reuseWorkers === false ? false : undefined,
   };
 }
 

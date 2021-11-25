@@ -1013,6 +1013,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    */
   workers: number;
+  reuseWorkers: boolean;
   webServer: WebServerConfig | null;
 }
 

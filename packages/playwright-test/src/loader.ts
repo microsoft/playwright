@@ -102,6 +102,7 @@ export class Loader {
     this._fullConfig.shard = takeFirst(this._configOverrides.shard, this._config.shard, baseFullConfig.shard);
     this._fullConfig.updateSnapshots = takeFirst(this._configOverrides.updateSnapshots, this._config.updateSnapshots, baseFullConfig.updateSnapshots);
     this._fullConfig.workers = takeFirst(this._configOverrides.workers, this._config.workers, baseFullConfig.workers);
+    this._fullConfig.reuseWorkers = takeFirst(this._configOverrides.reuseWorkers, this._config.reuseWorkers, baseFullConfig.reuseWorkers);
     this._fullConfig.webServer = takeFirst(this._configOverrides.webServer, this._config.webServer, baseFullConfig.webServer);
 
     for (const project of projects)
@@ -442,6 +443,7 @@ const baseFullConfig: FullConfig = {
   updateSnapshots: 'missing',
   version: require('../package.json').version,
   workers: 1,
+  reuseWorkers: true,
   webServer: null,
 };
 

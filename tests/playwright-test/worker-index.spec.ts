@@ -219,3 +219,22 @@ test('parallelIndex should be in 0..workers-1', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(20);
 });
+
+test('should not reuse workers when reuseWorkers used as false', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    '1.test.js': `
+      const { test } = pwt;
+      test('succeeds 1', async ({}, testInfo) => {
+        expect(testInfo.workerIndex).toBe(0);
+      });
+    `,
+    '2.spec.ts': `
+      const { test } = pwt;
+      test('succeeds 1', async ({}, testInfo) => {
+        expect(testInfo.workerIndex).toBe(1);
+      });`
+  }, { workers: 1}, {}, { additionalArgs: ["--no-reuse-workers"] });
+  expect(result.passed).toBe(2);
+  expect(result.failed).toBe(0);
+  expect(result.exitCode).toBe(0);
+});

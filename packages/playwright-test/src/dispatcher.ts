@@ -231,7 +231,7 @@ export class Dispatcher {
       // - there are no remaining
       // - we are here not because something failed
       // - no unrecoverable worker error
-      if (!remaining.length && !failedTestIds.size && !params.fatalError) {
+      if (!remaining.length && !failedTestIds.size && !params.fatalError && this._loader.fullConfig().reuseWorkers) {
         doneWithJob();
         return;
       }
