@@ -69,7 +69,7 @@ export class Screenshotter {
         let documentRect = { x: 0, y: 0, width: fullPageSize.width, height: fullPageSize.height };
         let overriddenViewportSize: types.Size | null = null;
         const fitsViewport = fullPageSize.width <= viewportSize.width && fullPageSize.height <= viewportSize.height;
-        if (!this._page._delegate.canScreenshotOutsideViewport() && !fitsViewport) {
+        if (!this._page._delegate.canScreenshotOutsideViewport() && !fitsViewport && !options.captureBeyondViewport) {
           overriddenViewportSize = fullPageSize;
           progress.throwIfAborted(); // Avoid side effects.
           await this._page.setViewportSize(overriddenViewportSize);
@@ -104,7 +104,7 @@ export class Screenshotter {
 
       let overriddenViewportSize: types.Size | null = null;
       const fitsViewport = boundingBox.width <= viewportSize.width && boundingBox.height <= viewportSize.height;
-      if (!this._page._delegate.canScreenshotOutsideViewport() && !fitsViewport) {
+      if (!this._page._delegate.canScreenshotOutsideViewport() && !fitsViewport && !options.captureBeyondViewport) {
         overriddenViewportSize = helper.enclosingIntSize({
           width: Math.max(viewportSize.width, boundingBox.width),
           height: Math.max(viewportSize.height, boundingBox.height),
@@ -144,7 +144,7 @@ export class Screenshotter {
       progress.cleanupWhenAborted(() => this._page._delegate.setBackgroundColor());
     }
     progress.throwIfAborted(); // Avoid extra work.
-    const buffer = await this._page._delegate.takeScreenshot(progress, format, documentRect, viewportRect, options.quality);
+    const buffer = await this._page._delegate.takeScreenshot(progress, format, documentRect, viewportRect, options.quality, options.captureBeyondViewport);
     progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
     if (shouldSetDefaultBackground)
       await this._page._delegate.setBackgroundColor();

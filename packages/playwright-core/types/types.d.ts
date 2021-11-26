@@ -8028,6 +8028,14 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    */
   screenshot(options?: {
     /**
+     * In chromium, Playwright will temporarily resize the viewport when taking screenshots of content that is outside the
+     * current viewport. This can cause issues if you are using `vh` and `vw` units. By setting `captureBeyondViewport` to
+     * true, we avoid the viewport workaround and instead instructs chromium to use the experimental `captureBeyondViewport`
+     * option when capturing the screenshot. Default is `false`.
+     */
+    captureBeyondViewport?: boolean;
+
+    /**
      * Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
      * Defaults to `false`.
      */
@@ -15615,6 +15623,14 @@ interface PageWaitForFunctionOptions {
 }
 
 export interface PageScreenshotOptions {
+  /**
+   * In chromium, Playwright will temporarily resize the viewport when taking screenshots of content that is outside the
+   * current viewport. This can cause issues if you are using `vh` and `vw` units. By setting `captureBeyondViewport` to
+   * true, we avoid the viewport workaround and instead instructs chromium to use the experimental `captureBeyondViewport`
+   * option when capturing the screenshot. Default is `false`.
+   */
+  captureBeyondViewport?: boolean;
+
   /**
    * An object which specifies clipping of the resulting image. Should have the following fields:
    */

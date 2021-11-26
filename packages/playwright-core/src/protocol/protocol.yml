@@ -991,6 +991,7 @@ Page:
         omitBackground: boolean?
         fullPage: boolean?
         clip: Rect?
+        captureBeyondViewport: boolean?
       returns:
         binary: binary
 
@@ -2132,6 +2133,7 @@ ElementHandle:
           - jpeg
         quality: number?
         omitBackground: boolean?
+        captureBeyondViewport: boolean?
       returns:
         binary: binary
 

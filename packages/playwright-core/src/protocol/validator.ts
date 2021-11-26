@@ -550,6 +550,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     omitBackground: tOptional(tBoolean),
     fullPage: tOptional(tBoolean),
     clip: tOptional(tType('Rect')),
+    captureBeyondViewport: tOptional(tBoolean),
   });
   scheme.PageSetExtraHTTPHeadersParams = tObject({
     headers: tArray(tType('NameValue')),
@@ -1033,6 +1034,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     type: tOptional(tEnum(['png', 'jpeg'])),
     quality: tOptional(tNumber),
     omitBackground: tOptional(tBoolean),
+    captureBeyondViewport: tOptional(tBoolean),
   });
   scheme.ElementHandleScrollIntoViewIfNeededParams = tObject({
     timeout: tOptional(tNumber),

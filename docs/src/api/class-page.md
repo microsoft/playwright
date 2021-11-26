@@ -2686,6 +2686,16 @@ Defaults to `false`.
 
 ### option: Page.screenshot.timeout = %%-input-timeout-%%
 
+### option: Page.screenshot.captureBeyondViewport
+- `captureBeyondViewport` <[boolean]>
+
+In chromium, Playwright will temporarily resize the viewport when taking
+screenshots of content that is outside the current viewport. This can cause
+issues if you are using `vh` and `vw` units. By setting `captureBeyondViewport`
+to true, we avoid the viewport workaround and instead instructs chromium to use
+the experimental `captureBeyondViewport` option when capturing the screenshot.
+Default is `false`.
+
 ## async method: Page.selectOption
 - returns: <[Array]<[string]>>
 

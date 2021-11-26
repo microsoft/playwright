@@ -117,6 +117,53 @@ browserTest.describe('page screenshot', () => {
     expect(pixel(0, 8339).r).toBeLessThan(128);
     expect(pixel(0, 8339).b).toBeGreaterThan(128);
   });
+
+  browserTest('should handle vh units', async ({ browserName, contextFactory }) => {
+    const context = await contextFactory();
+    const page = await context.newPage();
+
+    await page.setViewportSize({ width: 500, height: 500 });
+    await page.evaluate(() => {
+      document.body.style.margin = '0';
+      document.body.style.padding = '0';
+      document.documentElement.style.margin = '0';
+      document.documentElement.style.padding = '0';
+      const div = document.createElement('div');
+      div.style.borderTop = '100vh solid red';
+      div.style.borderBottom = '100vh solid blue';
+      document.body.appendChild(div);
+    });
+    const buffer = await page.screenshot({ fullPage: true });
+    let decoded = PNG.sync.read(buffer);
+
+    const pixel = (x: number, y: number) => {
+      const dst = new PNG({ width: 1, height: 1 });
+      PNG.bitblt(decoded, dst, x, y, 1, 1);
+      const pixels = dst.data;
+      return { r: pixels[0], g: pixels[1], b: pixels[2], a: pixels[3] };
+    };
+
+    expect(pixel(0, 0).r).toBeGreaterThan(128);
+    expect(pixel(0, 0).b).toBeLessThan(128);
+    expect(pixel(0, 499).r).toBeGreaterThan(128);
+    expect(pixel(0, 499).b).toBeLessThan(128);
+
+    if (browserName === 'chromium') {
+      // In chrome, the viewport is temporarily changed when taking the
+      // screenshot resulting in the red part filling the entire screenshot.
+      expect(pixel(0, 999).r).toBeGreaterThan(128);
+      expect(pixel(0, 999).b).toBeLessThan(128);
+
+      // Take another screenshot, this time with the captureBeyondViewport
+      // option set to true.
+      decoded = PNG.sync.read(await page.screenshot({ fullPage: true, captureBeyondViewport: true }));
+    }
+
+    expect(pixel(0, 500).r).toBeLessThan(128);
+    expect(pixel(0, 500).b).toBeGreaterThan(128);
+    expect(pixel(0, 999).r).toBeLessThan(128);
+    expect(pixel(0, 999).b).toBeGreaterThan(128);
+  });
 });
 
 browserTest.describe('element screenshot', () => {
@@ -264,6 +311,50 @@ browserTest.describe('element screenshot', () => {
     expect(error.message).toContain('oh my');
     await verifyViewport(page, 350, 360);
     await context.close();
+  });
+
+  browserTest('should handle vh units', async ({ browserName, contextFactory }) => {
+    const context = await contextFactory();
+    const page = await context.newPage();
+
+    await page.setViewportSize({ width: 500, height: 500 });
+    await page.evaluate(() => {
+      const div = document.createElement('div');
+      div.style.borderTop = '100vh solid red';
+      div.style.borderBottom = '100vh solid blue';
+      document.body.appendChild(div);
+    });
+    const elementHandle = await page.$('div');
+    const buffer = await elementHandle.screenshot();
+    let decoded = PNG.sync.read(buffer);
+
+    const pixel = (x: number, y: number) => {
+      const dst = new PNG({ width: 1, height: 1 });
+      PNG.bitblt(decoded, dst, x, y, 1, 1);
+      const pixels = dst.data;
+      return { r: pixels[0], g: pixels[1], b: pixels[2], a: pixels[3] };
+    };
+
+    expect(pixel(0, 0).r).toBeGreaterThan(128);
+    expect(pixel(0, 0).b).toBeLessThan(128);
+    expect(pixel(0, 499).r).toBeGreaterThan(128);
+    expect(pixel(0, 499).b).toBeLessThan(128);
+
+    if (browserName === 'chromium') {
+      // In chrome, the viewport is temporarily changed when taking the
+      // screenshot resulting in the red part filling the entire screenshot.
+      expect(pixel(0, 999).r).toBeGreaterThan(128);
+      expect(pixel(0, 999).b).toBeLessThan(128);
+
+      // Take another screenshot, this time with the captureBeyondViewport
+      // option set to true.
+      decoded = PNG.sync.read(await elementHandle.screenshot({ captureBeyondViewport: true }));
+    }
+
+    expect(pixel(0, 500).r).toBeLessThan(128);
+    expect(pixel(0, 500).b).toBeGreaterThan(128);
+    expect(pixel(0, 999).r).toBeLessThan(128);
+    expect(pixel(0, 999).b).toBeGreaterThan(128);
   });
 
   browserTest('should work if the main resource hangs', async ({ browser, browserName, mode, server }) => {

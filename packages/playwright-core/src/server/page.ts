@@ -61,7 +61,7 @@ export interface PageDelegate {
   canScreenshotOutsideViewport(): boolean;
   resetViewport(): Promise<void>; // Only called if canScreenshotOutsideViewport() returns false.
   setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void>;
-  takeScreenshot(progress: Progress, format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<Buffer>;
+  takeScreenshot(progress: Progress, format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, captureBeyondViewport: boolean | undefined): Promise<Buffer>;
 
   isElementHandle(remoteObject: any): boolean;
   adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>>;

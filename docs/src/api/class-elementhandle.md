@@ -642,6 +642,16 @@ The quality of the image, between 0-100. Not applicable to `png` images.
 Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
 Defaults to `false`.
 
+### option: ElementHandle.screenshot.captureBeyondViewport
+- `captureBeyondViewport` <[boolean]>
+
+In chromium, Playwright will temporarily resize the viewport when taking
+screenshots of content that is outside the current viewport. This can cause
+issues if you are using `vh` and `vw` units. By setting `captureBeyondViewport`
+to true, we avoid the viewport workaround and instead instructs chromium to use
+the experimental `captureBeyondViewport` option when capturing the screenshot.
+Default is `false`.
+
 ### option: ElementHandle.screenshot.timeout = %%-input-timeout-%%
 
 ## async method: ElementHandle.scrollIntoViewIfNeeded

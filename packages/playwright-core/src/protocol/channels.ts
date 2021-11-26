@@ -1466,6 +1466,7 @@ export type PageScreenshotParams = {
   omitBackground?: boolean,
   fullPage?: boolean,
   clip?: Rect,
+  captureBeyondViewport?: boolean,
 };
 export type PageScreenshotOptions = {
   timeout?: number,
@@ -1474,6 +1475,7 @@ export type PageScreenshotOptions = {
   omitBackground?: boolean,
   fullPage?: boolean,
   clip?: Rect,
+  captureBeyondViewport?: boolean,
 };
 export type PageScreenshotResult = {
   binary: Binary,
@@ -2750,12 +2752,14 @@ export type ElementHandleScreenshotParams = {
   type?: 'png' | 'jpeg',
   quality?: number,
   omitBackground?: boolean,
+  captureBeyondViewport?: boolean,
 };
 export type ElementHandleScreenshotOptions = {
   timeout?: number,
   type?: 'png' | 'jpeg',
   quality?: number,
   omitBackground?: boolean,
+  captureBeyondViewport?: boolean,
 };
 export type ElementHandleScreenshotResult = {
   binary: Binary,

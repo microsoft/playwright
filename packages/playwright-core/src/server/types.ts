@@ -51,6 +51,7 @@ export type ElementScreenshotOptions = TimeoutOptions & {
   type?: 'png' | 'jpeg',
   quality?: number,
   omitBackground?: boolean,
+  captureBeyondViewport?: boolean,
 };
 
 export type ScreenshotOptions = ElementScreenshotOptions & {
