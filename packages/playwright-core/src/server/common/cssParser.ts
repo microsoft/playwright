@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { InvalidSelectorError } from './selectorErrors';
 import * as css from './cssTokenizer';
 
 // Note: '>=' is used internally for text engine to preserve backwards compatibility.
@@ -61,13 +62,13 @@ export function parseCSS(selector: string, customNames: Set<string>): { selector
       (token instanceof css.PercentageToken);
   });
   if (unsupportedToken)
-    throw new Error(`Unsupported token "${unsupportedToken.toSource()}" while parsing selector "${selector}"`);
+    throw new InvalidSelectorError(`Unsupported token "${unsupportedToken.toSource()}" while parsing selector "${selector}"`);
 
   let pos = 0;
   const names = new Set<string>();
 
   function unexpected() {
-    return new Error(`Unexpected token "${tokens[pos].toSource()}" while parsing selector "${selector}"`);
+    return new InvalidSelectorError(`Unexpected token "${tokens[pos].toSource()}" while parsing selector "${selector}"`);
   }
 
   function skipWhitespace() {
@@ -221,9 +222,9 @@ export function parseCSS(selector: string, customNames: Set<string>): { selector
 
   const result = consumeFunctionArguments();
   if (!isEOF())
-    throw new Error(`Error while parsing selector "${selector}"`);
+    throw new InvalidSelectorError(`Error while parsing selector "${selector}"`);
   if (result.some(arg => typeof arg !== 'object' || !('simples' in arg)))
-    throw new Error(`Error while parsing selector "${selector}"`);
+    throw new InvalidSelectorError(`Error while parsing selector "${selector}"`);
   return { selector: result as CSSComplexSelector[], names: Array.from(names) };
 }
 

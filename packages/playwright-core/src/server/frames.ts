@@ -35,6 +35,7 @@ import type { ElementStateWithoutStable, FrameExpectParams, InjectedScriptPoll, 
 import { isSessionClosedError } from './common/protocolError';
 import { splitSelectorByFrame, stringifySelector } from './common/selectorParser';
 import { SelectorInfo } from './selectors';
+import { isInvalidSelectorError } from './common/selectorErrors';
 
 type ContextData = {
   contextPromise: ManualPromise<dom.FrameExecutionContext | Error>;
@@ -1277,7 +1278,7 @@ export class Frame extends SdkObject {
     }, timeout).catch(e => {
       // Q: Why not throw upon isSessionClosedError(e) as in other places?
       // A: We want user to receive a friendly message containing the last intermediate result.
-      if (js.isJavaScriptErrorInEvaluate(e))
+      if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
         throw e;
       return { received: controller.lastIntermediateResult(), matches: options.isNot, log: metadata.log };
     });

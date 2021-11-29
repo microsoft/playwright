@@ -19,6 +19,7 @@ import * as frames from './frames';
 import * as js from './javascript';
 import * as types from './types';
 import { ParsedSelector, parseSelector, stringifySelector } from './common/selectorParser';
+import { InvalidSelectorError } from './common/selectorErrors';
 import { createGuid } from '../utils/utils';
 
 export type SelectorInfo = {
@@ -130,7 +131,7 @@ export class Selectors {
     for (const part of parsed.parts) {
       const custom = this._engines.get(part.name);
       if (!custom && !this._builtinEngines.has(part.name))
-        throw new Error(`Unknown engine "${part.name}" while parsing selector ${stringifySelector(parsed)}`);
+        throw new InvalidSelectorError(`Unknown engine "${part.name}" while parsing selector ${stringifySelector(parsed)}`);
       if (custom && !custom.contentScript)
         needsMainWorld = true;
       if (this._builtinEnginesInMainWorld.has(part.name))
