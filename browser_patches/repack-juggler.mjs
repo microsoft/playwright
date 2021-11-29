@@ -1,4 +1,19 @@
 #!/usr/bin/env node
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 import * as path from 'path';
 import * as URL from 'url';
@@ -84,7 +99,7 @@ async function ensureFirefoxBuild(browserName, buildNumber, buildPlatform) {
 
   if (currentBuildInfo.buildPlatform === buildPlatform && currentBuildInfo.buildNumber === buildNumber && currentBuildInfo.browserName === browserName)
     return currentBuildInfo;
-  await fs.promises.rmdir(BUILD_DIRECTORY, { recursive: true }).catch(e => {});
+  await fs.promises.rm(BUILD_DIRECTORY, { recursive: true }).catch(e => {});
   await fs.promises.mkdir(BUILD_DIRECTORY);
   const buildZipPath = path.join(BUILD_DIRECTORY, 'firefox.zip');
 
@@ -94,24 +109,24 @@ async function ensureFirefoxBuild(browserName, buildNumber, buildPlatform) {
   const url = util.format(urlTemplate, buildNumber);
   console.log(`Downloading ${browserName} r${buildNumber} for ${buildPlatform} - it might take a few minutes`);
   await downloadFile(url, buildZipPath);
-  await spawnAsync('unzip', [ buildZipPath ], {cwd: BUILD_DIRECTORY});
+  await spawnAsync('unzip', [ buildZipPath ], { cwd: BUILD_DIRECTORY });
   const buildInfo = { buildNumber, buildPlatform, browserName };
   await fs.promises.writeFile(BUILD_INFO_PATH, JSON.stringify(buildInfo), 'utf8');
   return buildInfo;
 }
 
 async function repackageJuggler(browserName, buildInfo) {
-  const {buildNumber, buildPlatform} = buildInfo;
+  const { buildNumber, buildPlatform } = buildInfo;
 
   // Find all omni.ja files in the Firefox build.
   const omniPaths = await spawnAsync('find', ['.', '-name', 'omni.ja'], {
     cwd: BUILD_DIRECTORY,
-  }).then(({stdout}) => stdout.trim().split('\n').map(aPath => path.join(BUILD_DIRECTORY, aPath)));
+  }).then(({ stdout }) => stdout.trim().split('\n').map(aPath => path.join(BUILD_DIRECTORY, aPath)));
 
   // Iterate over all omni.ja files and find one that has juggler inside.
   const omniWithJugglerPath = await (async () => {
     for (const omniPath of omniPaths) {
-      const {stdout} = await spawnAsync('unzip', ['-Z1', omniPath], {cwd: BUILD_DIRECTORY});
+      const { stdout } = await spawnAsync('unzip', ['-Z1', omniPath], { cwd: BUILD_DIRECTORY });
       if (stdout.includes('chrome/juggler'))
         return omniPath;
     }
@@ -127,12 +142,12 @@ async function repackageJuggler(browserName, buildInfo) {
   }
 
   // Let's repackage omni folder!
-  await fs.promises.rmdir(OMNI_EXTRACT_DIR, { recursive: true }).catch(e => {});
+  await fs.promises.rm(OMNI_EXTRACT_DIR, { recursive: true }).catch(e => {});
   await fs.promises.mkdir(OMNI_EXTRACT_DIR);
 
-  await spawnAsync('unzip', [OMNI_BACKUP_PATH], {cwd: OMNI_EXTRACT_DIR });
+  await spawnAsync('unzip', [OMNI_BACKUP_PATH], { cwd: OMNI_EXTRACT_DIR });
   // Remove current juggler directory
-  await fs.promises.rmdir(OMNI_JUGGLER_DIR, { recursive: true });
+  await fs.promises.rm(OMNI_JUGGLER_DIR, { recursive: true });
   // Repopulate with tip-of-tree juggler files
   const jarmn = await fs.promises.readFile(JARMN_PATH, 'utf8');
   const jarLines = jarmn.split('\n').map(line => line.trim()).filter(line => line.startsWith('content/') && line.endsWith(')'));
@@ -140,12 +155,12 @@ async function repackageJuggler(browserName, buildInfo) {
     const tokens = line.split(/\s+/);
     const toPath = path.join(OMNI_JUGGLER_DIR, tokens[0]);
     const fromPath = path.join(__dirname, browserName, 'juggler', tokens[1].slice(1, -1));
-    await fs.promises.mkdir(path.dirname(toPath), { recursive: true});
+    await fs.promises.mkdir(path.dirname(toPath), { recursive: true });
     await fs.promises.copyFile(fromPath, toPath);
   }
 
   await fs.promises.unlink(omniWithJugglerPath);
-  await spawnAsync('zip', ['-0', '-qr9XD', omniWithJugglerPath, '.'], {cwd: OMNI_EXTRACT_DIR, stdio: 'inherit'});
+  await spawnAsync('zip', ['-0', '-qr9XD', omniWithJugglerPath, '.'], { cwd: OMNI_EXTRACT_DIR, stdio: 'inherit' });
 
   const module = await import(path.join(__dirname, browserName, 'install-preferences.js'));
   await module.default.installFirefoxPreferences(path.join(BUILD_DIRECTORY, 'firefox'));
@@ -161,7 +176,7 @@ async function repackageJuggler(browserName, buildInfo) {
 
 
 function httpRequest(url, method, response) {
-  let options = URL.parse(url);
+  const options = URL.parse(url);
   options.method = method;
 
   const requestCallback = res => {
@@ -178,7 +193,7 @@ function httpRequest(url, method, response) {
 }
 
 function downloadFile(url, destinationPath, progressCallback) {
-  let fulfill = ({error}) => {};
+  let fulfill = ({ error }) => {};
   let downloadedBytes = 0;
   let totalBytes = 0;
 
@@ -189,18 +204,18 @@ function downloadFile(url, destinationPath, progressCallback) {
       const error = new Error(`Download failed: server returned code ${response.statusCode}. URL: ${url}`);
       // consume response data to free up memory
       response.resume();
-      fulfill({error});
+      fulfill({ error });
       return;
     }
     const file = fs.createWriteStream(destinationPath);
-    file.on('finish', () => fulfill({error: null}));
-    file.on('error', error => fulfill({error}));
+    file.on('finish', () => fulfill({ error: null }));
+    file.on('error', error => fulfill({ error }));
     response.pipe(file);
     totalBytes = parseInt(response.headers['content-length'], 10);
     if (progressCallback)
       response.on('data', onData);
   });
-  request.on('error', error => fulfill({error}));
+  request.on('error', error => fulfill({ error }));
   return promise;
 
   function onData(chunk) {
@@ -220,8 +235,8 @@ function spawnAsync(cmd, args, options) {
       process.stdout.on('data', data => stdout += data);
     if (process.stderr)
       process.stderr.on('data', data => stderr += data);
-    process.on('close', code => resolve({stdout, stderr, code}));
-    process.on('error', error => resolve({stdout, stderr, code: 0, error}));
+    process.on('close', code => resolve({ stdout, stderr, code }));
+    process.on('error', error => resolve({ stdout, stderr, code: 0, error }));
   });
 }
 
@@ -237,8 +252,7 @@ function getUbuntuVersionSync() {
     if (!osReleaseText)
       return '';
     return getUbuntuVersionInternal(osReleaseText);
-  }
-  catch (e) {
+  } catch (e) {
     return '';
   }
 }
