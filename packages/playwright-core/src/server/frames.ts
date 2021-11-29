@@ -978,15 +978,20 @@ export class Frame extends SdkObject {
     const continuePolling = Symbol('continuePolling');
     while (progress.isRunning()) {
       let selectorInFrame: SelectorInFrame | null;
-      if (options.omitAttached) {
-        selectorInFrame = await this.resolveFrameForSelectorNoWait(selector, options, scope);
-      } else {
-        selectorInFrame = await this._resolveFrameForSelector(progress, selector, options, scope);
-        if (!selectorInFrame) {
-          // Missing content frame.
-          await new Promise(f => setTimeout(f, 100));
-          continue;
+      try {
+        if (options.omitAttached) {
+          selectorInFrame = await this.resolveFrameForSelectorNoWait(selector, options, scope);
+        } else {
+          selectorInFrame = await this._resolveFrameForSelector(progress, selector, options, scope);
+          if (!selectorInFrame) {
+            // Missing content frame.
+            await new Promise(f => setTimeout(f, 100));
+            continue;
+          }
         }
+      } catch (e) {
+        progress.log('' + e);
+        throw e;
       }
       try {
         const result = await action(selectorInFrame, continuePolling);
@@ -1279,8 +1284,6 @@ export class Frame extends SdkObject {
       // A: We want user to receive a friendly message containing the last intermediate result.
       if (js.isJavaScriptErrorInEvaluate(e))
         throw e;
-      if (!isSessionClosedError(e))
-        metadata.log.push('' + e);
       return { received: controller.lastIntermediateResult(), matches: options.isNot, log: metadata.log };
     });
   }
