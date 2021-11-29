@@ -64,10 +64,12 @@ it('should work for different console API calls', async ({ page }) => {
     console.dir('calling console.dir');
     console.warn('calling console.warn');
     console.error('calling console.error');
+    console.info('calling console.info');
+    console.debug('calling console.debug');
     console.log(Promise.resolve('should not wait until resolved!'));
   });
   expect(messages.map(msg => msg.type())).toEqual([
-    'timeEnd', 'trace', 'dir', 'warning', 'error', 'log'
+    'timeEnd', 'trace', 'dir', 'warning', 'error', 'info', 'debug', 'log'
   ]);
   expect(messages[0].text()).toContain('calling console.time');
   expect(messages.slice(1).map(msg => msg.text())).toEqual([
@@ -75,6 +77,8 @@ it('should work for different console API calls', async ({ page }) => {
     'calling console.dir',
     'calling console.warn',
     'calling console.error',
+    'calling console.info',
+    'calling console.debug',
     'Promise',
   ]);
 });
