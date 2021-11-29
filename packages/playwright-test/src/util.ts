@@ -83,7 +83,7 @@ export function createFileMatcher(patterns: string | RegExp | (string | RegExp)[
   };
 }
 
-export function createTitleMatcher(patterns:  RegExp | RegExp[]): Matcher {
+export function createTitleMatcher(patterns: RegExp | RegExp[]): Matcher {
   const reList = Array.isArray(patterns) ? patterns : [patterns];
   return (value: string) => {
     for (const re of reList) {
@@ -148,7 +148,7 @@ export function trimLongString(s: string, length = 100) {
   if (s.length <= length)
     return s;
   const hash = calculateSha1(s);
-  const middle = `-${hash.substring(5)}-`;
+  const middle = `-${hash.substring(0, 5)}-`;
   const start = Math.floor((length - middle.length) / 2);
   const end = length - middle.length - start;
   return s.substring(0, start) + middle + s.slice(-end);

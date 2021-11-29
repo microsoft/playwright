@@ -429,7 +429,7 @@ test('should allow nonAscii characters in the output dir', async ({ runInlineTes
   expect(outputDir).toBe(path.join(testInfo.outputDir, 'test-results', 'my-test-こんにちは世界'));
 });
 
-test.only('should allow shorten long output dirs characters in the output dir', async ({ runInlineTest }, testInfo) => {
+test('should allow shorten long output dirs characters in the output dir', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'my-test.spec.js': `
       const { test } = pwt;
@@ -441,7 +441,7 @@ test.only('should allow shorten long output dirs characters in the output dir', 
     `,
   });
   const outputDir = result.output.split('\n').filter(x => x.startsWith('%%'))[0].slice('%%'.length);
-  expect(outputDir).toBe(path.join(testInfo.outputDir, 'test-results', 'my-test-this-is-a-really-long-descripti-f9015f78f2853e47676ac0890dcea2f2b85-d-going-and-we-should-shorten-it'));
+  expect(outputDir).toBe(path.join(testInfo.outputDir, 'test-results', 'my-test-this-is-a-really-long-description-that-would-b-6d724--keeps-going-and-going-and-we-should-shorten-it'));
 });
 
 test('should not mangle double dashes', async ({ runInlineTest }, testInfo) => {
