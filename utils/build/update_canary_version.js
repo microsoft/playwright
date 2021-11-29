@@ -31,19 +31,20 @@ if (process.argv[2] === '--alpha') {
   throw new Error('only --alpha or --beta prefixes are allowed');
 }
 
+let newVersion;
 if (process.argv[3] === '--today-date') {
   const date = new Date();
   const month = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'][date.getMonth()];
   const day = date.getDate();
   const year = date.getFullYear();
-  packageJSON.version = `${baseVersion}-${prefix}-${month}-${day}-${year}`;
+  newVersion = `${baseVersion}-${prefix}-${month}-${day}-${year}`;
 } else if (process.argv[3] === '--commit-timestamp') {
   const timestamp = execSync('git show -s --format=%ct HEAD', {
     stdio: ['ignore', 'pipe', 'ignore']
   }).toString('utf8').trim();
-  packageJSON.version = `${baseVersion}-${prefix}-${timestamp}000`;
+  newVersion = `${baseVersion}-${prefix}-${timestamp}000`;
 } else {
   throw new Error('This script must be run with either --commit-timestamp or --today-date parameter');
 }
-console.log('Setting version to ' + packageJSON.version);
-fs.writeFileSync(path.join(__dirname, '..', '..', 'package.json'), JSON.stringify(packageJSON, undefined, 2) + '\n');
+console.log('Setting version to ' + newVersion);
+execSync(`node utils/bump_package_versions.js ${newVersion}`, { stdio: 'inherit' });
