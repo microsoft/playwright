@@ -567,6 +567,46 @@ interface TestConfig {
    * Learn more about [snapshots](https://playwright.dev/docs/test-snapshots).
    */
   updateSnapshots?: UpdateSnapshots;
+  /**
+   * Launch a development web server during the tests.
+   *
+   * The server will wait for it to be available before running the tests. For continuous integration, you may want to use
+   * the `reuseExistingServer: !process.env.CI` option which does not use an existing server on the CI.
+   *
+   * The port gets then passed over to Playwright as a `baseURL` when creating the context
+   * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context).
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { PlaywrightTestConfig } from '@playwright/test';
+   * const config: PlaywrightTestConfig = {
+   *   webServer: {
+   *     command: 'npm run start',
+   *     port: 3000,
+   *     timeout: 120 * 1000,
+   *     reuseExistingServer: !process.env.CI,
+   *   },
+   * };
+   * export default config;
+   * ```
+   *
+   * Now you can use a relative path when navigating the page, or use `baseURL` fixture:
+   *
+   * ```ts
+   * // test.spec.ts
+   * import { test } from '@playwright/test';
+   * test('test', async ({ page, baseURL }) => {
+   *   // baseURL is taken directly from your web server,
+   *   // e.g. http://localhost:3000
+   *   await page.goto(baseURL + '/bar');
+   *   // Alternatively, just use relative path, because baseURL is already
+   *   // set for the default context and page.
+   *   // For example, this will result in http://localhost:3000/foo
+   *   await page.goto('/foo');
+   * });
+   * ```
+   *
+   */
   webServer?: WebServerConfig;
   /**
    * The maximum number of concurrent worker processes to use for parallelizing tests.
@@ -1013,6 +1053,46 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    */
   workers: number;
+  /**
+   * Launch a development web server during the tests.
+   *
+   * The server will wait for it to be available before running the tests. For continuous integration, you may want to use
+   * the `reuseExistingServer: !process.env.CI` option which does not use an existing server on the CI.
+   *
+   * The port gets then passed over to Playwright as a `baseURL` when creating the context
+   * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context).
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { PlaywrightTestConfig } from '@playwright/test';
+   * const config: PlaywrightTestConfig = {
+   *   webServer: {
+   *     command: 'npm run start',
+   *     port: 3000,
+   *     timeout: 120 * 1000,
+   *     reuseExistingServer: !process.env.CI,
+   *   },
+   * };
+   * export default config;
+   * ```
+   *
+   * Now you can use a relative path when navigating the page, or use `baseURL` fixture:
+   *
+   * ```ts
+   * // test.spec.ts
+   * import { test } from '@playwright/test';
+   * test('test', async ({ page, baseURL }) => {
+   *   // baseURL is taken directly from your web server,
+   *   // e.g. http://localhost:3000
+   *   await page.goto(baseURL + '/bar');
+   *   // Alternatively, just use relative path, because baseURL is already
+   *   // set for the default context and page.
+   *   // For example, this will result in http://localhost:3000/foo
+   *   await page.goto('/foo');
+   * });
+   * ```
+   *
+   */
   webServer: WebServerConfig | null;
 }
 

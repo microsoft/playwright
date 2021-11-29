@@ -556,6 +556,80 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
+## property: TestConfig.webServer
+- type: <[Object]>
+  - `command` <[string]> Command which gets executed
+  - `port` <[int]> Port to wait on for the web server
+  - `timeout` <[int]> Maximum duration to wait on until the web server is ready
+  - `reuseExistingServer` <[boolean]> If true, reuse the existing server if it is already running, otherwise it will fail
+  - `cwd` <[boolean]> Working directory to run the command in
+  - `env` <[Object]<[string], [string]>> Environment variables to set for the command
+
+Launch a development web server during the tests.
+
+The server will wait for it to be available before running the tests. For continuous integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an existing server on the CI.
+
+The port gets then passed over to Playwright as a `baseURL` when creating the context [`method: Browser.newContext`].
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+const config: PlaywrightTestConfig = {
+  webServer: {
+    command: 'npm run start',
+    port: 3000,
+    timeout: 120 * 1000,
+    reuseExistingServer: !process.env.CI,
+  },
+};
+export default config;
+```
+
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  webServer: {
+    command: 'npm run start',
+    port: 3000,
+    timeout: 120 * 1000,
+    reuseExistingServer: !process.env.CI,
+  },
+};
+module.exports = config;
+```
+
+Now you can use a relative path when navigating the page, or use `baseURL` fixture:
+
+```js js-flavor=ts
+// test.spec.ts
+import { test } from '@playwright/test';
+test('test', async ({ page, baseURL }) => {
+  // baseURL is taken directly from your web server,
+  // e.g. http://localhost:3000
+  await page.goto(baseURL + '/bar');
+  // Alternatively, just use relative path, because baseURL is already
+  // set for the default context and page.
+  // For example, this will result in http://localhost:3000/foo
+  await page.goto('/foo');
+});
+```
+
+```js js-flavor=js
+// test.spec.js
+const { test } = require('@playwright/test');
+test('test', async ({ page, baseURL }) => {
+  // baseURL is taken directly from your web server,
+  // e.g. http://localhost:3000
+  await page.goto(baseURL + '/bar');
+  // Alternatively, just use relative path, because baseURL is already
+  // set for the default context and page.
+  // For example, this will result in http://localhost:3000/foo
+  await page.goto('/foo');
+});
+```
+
 ## property: TestConfig.workers
 - type: <[int]>
 
