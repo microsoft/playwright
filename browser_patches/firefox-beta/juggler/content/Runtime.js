@@ -129,7 +129,7 @@ class Runtime {
 
       observe: message => {
         if (!(message instanceof Ci.nsIScriptError) || !message.outerWindowID ||
-            !message.category || disallowedMessageCategories.has(message.category)) {
+            !message.category || disallowedMessageCategories.has(message.category) || message.hasException) {
           return;
         }
         const errorWindow = Services.wm.getOuterWindowWithId(message.outerWindowID);
