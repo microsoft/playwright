@@ -39,6 +39,8 @@ const EXECUTABLE_PATHS = {
     'mac10.15': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
     'mac11': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
     'mac11-arm64': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
+    'mac12': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
+    'mac12-arm64': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
     'win64': ['chrome-win', 'chrome.exe'],
   },
   'firefox': {
@@ -51,6 +53,8 @@ const EXECUTABLE_PATHS = {
     'mac10.15': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
     'mac11': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
     'mac11-arm64': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
+    'mac12': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
+    'mac12-arm64': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
     'win64': ['firefox', 'firefox.exe'],
   },
   'webkit': {
@@ -63,6 +67,8 @@ const EXECUTABLE_PATHS = {
     'mac10.15': ['pw_run.sh'],
     'mac11': ['pw_run.sh'],
     'mac11-arm64': ['pw_run.sh'],
+    'mac12': ['pw_run.sh'],
+    'mac12-arm64': ['pw_run.sh'],
     'win64': ['Playwright.exe'],
   },
   'ffmpeg': {
@@ -75,6 +81,8 @@ const EXECUTABLE_PATHS = {
     'mac10.15': ['ffmpeg-mac'],
     'mac11': ['ffmpeg-mac'],
     'mac11-arm64': ['ffmpeg-mac'],
+    'mac12': ['ffmpeg-mac'],
+    'mac12-arm64': ['ffmpeg-mac'],
     'win64': ['ffmpeg-win64.exe'],
   },
 };
@@ -90,6 +98,8 @@ const DOWNLOAD_PATHS = {
     'mac10.15': 'builds/chromium/%s/chromium-mac.zip',
     'mac11': 'builds/chromium/%s/chromium-mac.zip',
     'mac11-arm64': 'builds/chromium/%s/chromium-mac-arm64.zip',
+    'mac12': 'builds/chromium/%s/chromium-mac.zip',
+    'mac12-arm64': 'builds/chromium/%s/chromium-mac-arm64.zip',
     'win64': 'builds/chromium/%s/chromium-win64.zip',
   },
   'chromium-with-symbols': {
@@ -102,6 +112,8 @@ const DOWNLOAD_PATHS = {
     'mac10.15': 'builds/chromium/%s/chromium-with-symbols-mac.zip',
     'mac11': 'builds/chromium/%s/chromium-with-symbols-mac.zip',
     'mac11-arm64': 'builds/chromium/%s/chromium-with-symbols-mac-arm64.zip',
+    'mac12': 'builds/chromium/%s/chromium-with-symbols-mac.zip',
+    'mac12-arm64': 'builds/chromium/%s/chromium-with-symbols-mac-arm64.zip',
     'win64': 'builds/chromium/%s/chromium-with-symbols-win64.zip',
   },
   'firefox': {
@@ -114,6 +126,8 @@ const DOWNLOAD_PATHS = {
     'mac10.15': 'builds/firefox/%s/firefox-mac-11.zip',
     'mac11': 'builds/firefox/%s/firefox-mac-11.zip',
     'mac11-arm64': 'builds/firefox/%s/firefox-mac-11-arm64.zip',
+    'mac12': 'builds/firefox/%s/firefox-mac-11.zip',
+    'mac12-arm64': 'builds/firefox/%s/firefox-mac-11-arm64.zip',
     'win64': 'builds/firefox/%s/firefox-win64.zip',
   },
   'firefox-beta': {
@@ -126,6 +140,8 @@ const DOWNLOAD_PATHS = {
     'mac10.15': 'builds/firefox-beta/%s/firefox-beta-mac-11.zip',
     'mac11': 'builds/firefox-beta/%s/firefox-beta-mac-11.zip',
     'mac11-arm64': 'builds/firefox-beta/%s/firefox-beta-mac-11-arm64.zip',
+    'mac12': 'builds/firefox-beta/%s/firefox-beta-mac-11.zip',
+    'mac12-arm64': 'builds/firefox-beta/%s/firefox-beta-mac-11-arm64.zip',
     'win64': 'builds/firefox-beta/%s/firefox-beta-win64.zip',
   },
   'webkit': {
@@ -138,6 +154,8 @@ const DOWNLOAD_PATHS = {
     'mac10.15': 'builds/webkit/%s/webkit-mac-10.15.zip',
     'mac11': 'builds/webkit/%s/webkit-mac-10.15.zip',
     'mac11-arm64': 'builds/webkit/%s/webkit-mac-11-arm64.zip',
+    'mac12': 'builds/webkit/%s/webkit-mac-10.15.zip',
+    'mac12-arm64': 'builds/webkit/%s/webkit-mac-11-arm64.zip',
     'win64': 'builds/webkit/%s/webkit-win64.zip',
   },
   'ffmpeg': {
@@ -150,6 +168,8 @@ const DOWNLOAD_PATHS = {
     'mac10.15': 'builds/ffmpeg/%s/ffmpeg-mac.zip',
     'mac11': 'builds/ffmpeg/%s/ffmpeg-mac.zip',
     'mac11-arm64': 'builds/ffmpeg/%s/ffmpeg-mac.zip',
+    'mac12': 'builds/ffmpeg/%s/ffmpeg-mac.zip',
+    'mac12-arm64': 'builds/ffmpeg/%s/ffmpeg-mac.zip',
     'win64': 'builds/ffmpeg/%s/ffmpeg-win64.zip',
   },
 };

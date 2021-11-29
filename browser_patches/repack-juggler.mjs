@@ -66,6 +66,8 @@ const EXECUTABLE_PATHS = {
   'mac10.15': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
   'mac11': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
   'mac11-arm64': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
+  'mac12': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
+  'mac12-arm64': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
   'win64': ['firefox', 'firefox.exe'],
 };
 
@@ -77,6 +79,8 @@ const DOWNLOAD_URLS = {
     'mac10.15': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-mac-11.zip',
     'mac11': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-mac-11.zip',
     'mac11-arm64': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-mac-11.0-arm64.zip',
+    'mac12': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-mac-11.zip',
+    'mac12-arm64': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-mac-11.0-arm64.zip',
     'win64': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-win64.zip',
   },
   'firefox-beta': {
@@ -86,6 +90,8 @@ const DOWNLOAD_URLS = {
     'mac10.15': 'https://playwright.azureedge.net/builds/firefox-beta/%s/firefox-beta-mac-11.zip',
     'mac11': 'https://playwright.azureedge.net/builds/firefox-beta/%s/firefox-beta-mac-11.zip',
     'mac11-arm64': 'https://playwright.azureedge.net/builds/firefox-beta/%s/firefox-beta-mac-11.0-arm64.zip',
+    'mac12': 'https://playwright.azureedge.net/builds/firefox-beta/%s/firefox-beta-mac-11.zip',
+    'mac12-arm64': 'https://playwright.azureedge.net/builds/firefox-beta/%s/firefox-beta-mac-11.0-arm64.zip',
     'win64': 'https://playwright.azureedge.net/builds/firefox-beta/%s/firefox-beta-win64.zip',
   },
 };
