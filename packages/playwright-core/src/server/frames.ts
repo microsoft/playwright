@@ -1279,6 +1279,8 @@ export class Frame extends SdkObject {
       // A: We want user to receive a friendly message containing the last intermediate result.
       if (js.isJavaScriptErrorInEvaluate(e))
         throw e;
+      if (!isSessionClosedError(e))
+        metadata.log.push('' + e);
       return { received: controller.lastIntermediateResult(), matches: options.isNot, log: metadata.log };
     });
   }

@@ -294,3 +294,33 @@ test('should support toBeFocused', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
   expect(result.exitCode).toBe(0);
 });
+
+test('should print uknown engine error', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('focused', async ({ page }) => {
+        await expect(page.locator('row="row"]')).toBeVisible();
+      });
+      `,
+  }, { workers: 1 });
+  expect(result.passed).toBe(0);
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`Error: Unknown engine "row" while parsing selector row="row"]`);
+});
+
+test('should print syntax error', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('focused', async ({ page }) => {
+        await expect(page.locator('row]')).toBeVisible();
+      });
+      `,
+  }, { workers: 1 });
+  expect(result.passed).toBe(0);
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`Error: Unexpected token "]" while parsing selector "row]"`);
+});
