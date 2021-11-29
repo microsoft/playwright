@@ -132,8 +132,7 @@ export class Root extends Dispatcher<{ guid: '' }, any> {
   async initialize(params: channels.RootInitializeParams): Promise<channels.RootInitializeResult> {
     assert(this.createPlaywright);
     assert(!this._initialized);
-    const expectedPlaywrightVersion = getPlaywrightVersion();
-    assert(params.version === expectedPlaywrightVersion, `Server (${expectedPlaywrightVersion}) does not match with client version (${params.version}).`);
+    assertPlaywrightVersion(params.version);
     this._initialized = true;
     return {
       playwright: await this.createPlaywright(this, params),
@@ -322,3 +321,10 @@ function formatLogRecording(log: string[]): string {
 }
 
 let lastEventId = 0;
+
+function assertPlaywrightVersion(givenVersion: string): void {
+  const expectedVersion = getPlaywrightVersion();
+  const givenParts = givenVersion.split('.');
+  const expectedParts = givenVersion.split('.');
+  assert(givenParts.slice(0, 2).join('.') === expectedParts.slice(0, 2).join('.'), `${expectedVersion} does not match the client version ${givenVersion}.`);
+}
