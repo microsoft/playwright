@@ -105,9 +105,9 @@ export class WebServer {
 }
 
 async function isPortUsed(port: number): Promise<boolean> {
-  return new Promise<boolean>(resolve => {
+  const innerIsPortUsed = (host: string) => new Promise<boolean>(resolve => {
     const conn = net
-        .connect(port)
+        .connect(port, host)
         .on('error', () => {
           resolve(false);
         })
@@ -116,6 +116,7 @@ async function isPortUsed(port: number): Promise<boolean> {
           resolve(true);
         });
   });
+  return await innerIsPortUsed('127.0.0.1') || await innerIsPortUsed('::1');
 }
 
 async function waitForSocket(port: number, delay: number, cancellationToken: { canceled: boolean }) {
