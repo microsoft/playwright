@@ -589,6 +589,7 @@ interface TestConfig {
    *
    */
   workers?: number;
+  reuseWorkers?: boolean;
 
   /**
    * Configuration for the `expect` assertion library. Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).

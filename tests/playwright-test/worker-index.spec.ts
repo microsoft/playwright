@@ -233,7 +233,7 @@ test('should not reuse workers when reuseWorkers used as false', async ({ runInl
       test('succeeds 1', async ({}, testInfo) => {
         expect(testInfo.workerIndex).toBe(1);
       });`
-  }, { workers: 1}, {}, { additionalArgs: ["--no-reuse-workers"] });
+  }, { workers: 1 }, {}, { additionalArgs: ['--no-reuse-workers'] });
   expect(result.passed).toBe(2);
   expect(result.failed).toBe(0);
   expect(result.exitCode).toBe(0);
