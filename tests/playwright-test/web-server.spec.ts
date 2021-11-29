@@ -162,6 +162,40 @@ test('should be able to specify the baseURL without the server', async ({ runInl
   await new Promise(resolve => server.close(resolve));
 });
 
+test('should be able to specify a custom baseURL with the server', async ({ runInlineTest }, { workerIndex }) => {
+  const customWebServerPort = workerIndex + 10500;
+  const webServerPort = customWebServerPort + 1;
+  const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
+    res.end('<html><body>hello</body></html>');
+  });
+  await new Promise<void>(resolve => server.listen(customWebServerPort, resolve));
+  const result = await runInlineTest({
+    'test.spec.ts': `
+      const { test } = pwt;
+      test('connect to the server', async ({baseURL, page}) => {
+        expect(baseURL).toBe('http://localhost:${customWebServerPort}');
+        await page.goto(baseURL + '/hello');
+        expect(await page.textContent('body')).toBe('hello');
+      });
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        webServer: {
+          command: 'node ${JSON.stringify(path.join(__dirname, 'assets', 'simple-server.js'))} ${webServerPort}',
+          port: ${webServerPort},
+        },
+        use: {
+          baseURL: 'http://localhost:${customWebServerPort}',
+        }
+      };
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.report.suites[0].specs[0].tests[0].results[0].status).toContain('passed');
+  await new Promise(resolve => server.close(resolve));
+});
+
 test('should be able to use an existing server when reuseExistingServer:true ', async ({ runInlineTest }, { workerIndex }) => {
   const port = workerIndex + 10500;
   const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
