@@ -104,6 +104,11 @@ declare global {
       toBeHidden(options?: { timeout?: number }): Promise<R>;
 
       /**
+       * Asserts given DOM node is hidden or detached from DOM.
+       */
+       toBeOK(options?: { timeout?: number }): Promise<R>;
+
+      /**
        * Asserts given DOM node visible on the screen.
        */
       toBeVisible(options?: { timeout?: number }): Promise<R>;

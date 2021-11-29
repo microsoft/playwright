@@ -268,6 +268,11 @@ export class APIResponse implements api.APIResponse {
   _fetchUid(): string {
     return this._initializer.fetchUid;
   }
+
+  async _fetchLog(): Promise<string[]> {
+    const { log } = await this._request._channel.fetchLog({ fetchUid: this._fetchUid() });
+    return log;
+  }
 }
 
 type ServerFilePayload = NonNullable<channels.FormField['file']>;

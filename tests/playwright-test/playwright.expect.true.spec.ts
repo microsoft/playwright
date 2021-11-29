@@ -322,3 +322,41 @@ test('should print syntax error', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain(`Unexpected token "]" while parsing selector "row]"`);
 });
+
+test('should support toBeOK', async ({ runInlineTest, server }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('pass with promise', async ({ page }) => {
+        const res = page.request.get('${server.EMPTY_PAGE}');
+        await expect(res).toBeOK();
+      });
+
+      test('pass with response', async ({ page }) => {
+        const res = await page.request.get('${server.EMPTY_PAGE}');
+        await expect(res).toBeOK();
+      });
+
+      test('pass with not', async ({ page }) => {
+        const res = page.request.get('${server.PREFIX}/unknown');
+        await expect(res).not.toBeOK();
+      });
+
+      test('fail with invalid argument', async ({ page }) => {
+        await expect(page).toBeOK();
+      });
+
+      test('fail', async ({ page }) => {
+        const res = page.request.get('${server.PREFIX}/unknown');
+        await expect(res).toBeOK();
+      });
+      `,
+  }, { workers: 1 });
+  expect(result.passed).toBe(3);
+  expect(result.failed).toBe(2);
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`→ GET ${server.PREFIX}/unknown`);
+  expect(result.output).toContain(`← 404 Not Found`);
+  expect(result.output).toContain(`Error: toBeOK can be only used with APIResponse object`);
+});

@@ -17,6 +17,7 @@
 import * as http from 'http';
 import * as https from 'https';
 import { HttpsProxyAgent } from 'https-proxy-agent';
+import { Progress, ProgressController } from './progress';
 import { SocksProxyAgent } from 'socks-proxy-agent';
 import { pipeline, Readable, Transform } from 'stream';
 import url from 'url';
@@ -29,7 +30,7 @@ import { assert, createGuid, getPlaywrightVersion, monotonicTime } from '../util
 import { BrowserContext } from './browserContext';
 import { CookieStore, domainMatches } from './cookieStore';
 import { MultipartFormData } from './formData';
-import { SdkObject } from './instrumentation';
+import { CallMetadata, SdkObject } from './instrumentation';
 import { Playwright } from './playwright';
 import * as types from './types';
 import { HeadersArray, ProxySettings } from './types';
@@ -50,6 +51,7 @@ export abstract class APIRequestContext extends SdkObject {
   };
 
   readonly fetchResponses: Map<string, Buffer> = new Map();
+  readonly fetchLog: Map<string, string[]> = new Map();
   protected static allInstances: Set<APIRequestContext> = new Set();
 
   static findResponseBody(guid: string): Buffer | undefined {
@@ -69,7 +71,13 @@ export abstract class APIRequestContext extends SdkObject {
   protected _disposeImpl() {
     APIRequestContext.allInstances.delete(this);
     this.fetchResponses.clear();
+    this.fetchLog.clear();
     this.emit(APIRequestContext.Events.Dispose);
+  }
+
+  disposeResponse(fetchUid: string) {
+    this.fetchResponses.delete(fetchUid);
+    this.fetchLog.delete(fetchUid);
   }
 
   abstract dispose(): void;
@@ -85,7 +93,7 @@ export abstract class APIRequestContext extends SdkObject {
     return uid;
   }
 
-  async fetch(params: channels.APIRequestContextFetchParams): Promise<Omit<types.APIResponse, 'body'> & { fetchUid: string }> {
+  async fetch(params: channels.APIRequestContextFetchParams, metadata: CallMetadata): Promise<Omit<types.APIResponse, 'body'> & { fetchUid: string }> {
     const headers: { [name: string]: string } = {};
     const defaults = this._defaultOptions();
     headers['user-agent'] = defaults.userAgent;
@@ -141,15 +149,19 @@ export abstract class APIRequestContext extends SdkObject {
         requestUrl.searchParams.set(name, value);
     }
 
-    let postData;
+    let postData: Buffer | undefined;
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method))
       postData = serializePostData(params, headers);
     else if (params.postData || params.jsonData || params.formData || params.multipartData)
       throw new Error(`Method ${method} does not accept post data`);
     if (postData)
       headers['content-length'] = String(postData.byteLength);
-    const fetchResponse = await this._sendRequest(requestUrl, options, postData);
+    const controller = new ProgressController(metadata, this);
+    const fetchResponse = await controller.run(progress => {
+      return this._sendRequest(progress, requestUrl, options, postData);
+    });
     const fetchUid = this._storeResponseBody(fetchResponse.body);
+    this.fetchLog.set(fetchUid, controller.metadata.log);
     if (params.failOnStatusCode && (fetchResponse.status < 200 || fetchResponse.status >= 400))
       throw new Error(`${fetchResponse.status} ${fetchResponse.statusText}`);
     return { ...fetchResponse, fetchUid };
@@ -191,17 +203,15 @@ export abstract class APIRequestContext extends SdkObject {
     }
   }
 
-  private async _sendRequest(url: URL, options: https.RequestOptions & { maxRedirects: number, deadline: number }, postData?: Buffer): Promise<types.APIResponse>{
+  private async _sendRequest(progress: Progress, url: URL, options: https.RequestOptions & { maxRedirects: number, deadline: number }, postData?: Buffer): Promise<types.APIResponse>{
     await this._updateRequestCookieHeader(url, options);
     return new Promise<types.APIResponse>((fulfill, reject) => {
       const requestConstructor: ((url: URL, options: http.RequestOptions, callback?: (res: http.IncomingMessage) => void) => http.ClientRequest)
         = (url.protocol === 'https:' ? https : http).request;
       const request = requestConstructor(url, options, async response => {
-        if (debugLogger.isEnabled('api')) {
-          debugLogger.log('api', `← ${response.statusCode} ${response.statusMessage}`);
-          for (const [name, value] of Object.entries(response.headers))
-            debugLogger.log('api', `  ${name}: ${value}`);
-        }
+        progress.log(`← ${response.statusCode} ${response.statusMessage}`);
+        for (const [name, value] of Object.entries(response.headers))
+          progress.log(`  ${name}: ${value}`);
         if (response.headers['set-cookie'])
           await this._updateCookiesFromHeader(response.url || url.toString(), response.headers['set-cookie']);
         if (redirectStatus.includes(response.statusCode!)) {
@@ -242,7 +252,7 @@ export abstract class APIRequestContext extends SdkObject {
           // HTTP-redirect fetch step 4: If locationURL is null, then return response.
           if (response.headers.location) {
             const locationURL = new URL(response.headers.location, url);
-            fulfill(this._sendRequest(locationURL, redirectOptions, postData));
+            fulfill(this._sendRequest(progress, locationURL, redirectOptions, postData));
             request.destroy();
             return;
           }
@@ -254,7 +264,7 @@ export abstract class APIRequestContext extends SdkObject {
             const { username, password } = credentials;
             const encoded = Buffer.from(`${username || ''}:${password || ''}`).toString('base64');
             options.headers!['authorization'] = `Basic ${encoded}`;
-            fulfill(this._sendRequest(url, options, postData));
+            fulfill(this._sendRequest(progress, url, options, postData));
             request.destroy();
             return;
           }
@@ -304,12 +314,10 @@ export abstract class APIRequestContext extends SdkObject {
       this.on(APIRequestContext.Events.Dispose, disposeListener);
       request.on('close', () => this.off(APIRequestContext.Events.Dispose, disposeListener));
 
-      if (debugLogger.isEnabled('api')) {
-        debugLogger.log('api', `→ ${options.method} ${url.toString()}`);
-        if (options.headers) {
-          for (const [name, value] of Object.entries(options.headers))
-            debugLogger.log('api', `  ${name}: ${value}`);
-        }
+      progress.log(`→ ${options.method} ${url.toString()}`);
+      if (options.headers) {
+        for (const [name, value] of Object.entries(options.headers))
+          progress.log(`  ${name}: ${value}`);
       }
 
       if (options.deadline) {

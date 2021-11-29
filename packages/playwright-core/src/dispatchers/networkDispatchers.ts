@@ -178,8 +178,8 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
     this._object.dispose();
   }
 
-  async fetch(params: channels.APIRequestContextFetchParams, metadata?: channels.Metadata): Promise<channels.APIRequestContextFetchResult> {
-    const fetchResponse = await this._object.fetch(params);
+  async fetch(params: channels.APIRequestContextFetchParams, metadata: CallMetadata): Promise<channels.APIRequestContextFetchResult> {
+    const fetchResponse = await this._object.fetch(params, metadata);
     return {
       response: {
         url: fetchResponse.url,
@@ -196,7 +196,12 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
     return { binary: buffer ? buffer.toString('base64') : undefined };
   }
 
+  async fetchLog(params: channels.APIRequestContextFetchLogParams, metadata?: channels.Metadata): Promise<channels.APIRequestContextFetchLogResult> {
+    const log = this._object.fetchLog.get(params.fetchUid) || [];
+    return { log };
+  }
+
   async disposeAPIResponse(params: channels.APIRequestContextDisposeAPIResponseParams, metadata?: channels.Metadata): Promise<void> {
-    this._object.fetchResponses.delete(params.fetchUid);
+    this._object.disposeResponse(params.fetchUid);
   }
 }
