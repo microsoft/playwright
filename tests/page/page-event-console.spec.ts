@@ -68,8 +68,12 @@ it('should work for different console API calls', async ({ page }) => {
     console.debug('calling console.debug');
     console.log(Promise.resolve('should not wait until resolved!'));
   });
+  // WebKit uses console.debug() to report binding calls, make sure they don't get reported.
+  await page.exposeBinding('foobar', async (_, value) => page.evaluate(value => console.log(value), value));
+  await page.evaluate(() => window['foobar']('Using bindings'));
+
   expect(messages.map(msg => msg.type())).toEqual([
-    'timeEnd', 'trace', 'dir', 'warning', 'error', 'info', 'debug', 'log'
+    'timeEnd', 'trace', 'dir', 'warning', 'error', 'info', 'debug', 'log', 'log'
   ]);
   expect(messages[0].text()).toContain('calling console.time');
   expect(messages.slice(1).map(msg => msg.text())).toEqual([
@@ -80,6 +84,7 @@ it('should work for different console API calls', async ({ page }) => {
     'calling console.info',
     'calling console.debug',
     'Promise',
+    'Using bindings',
   ]);
 });
 
