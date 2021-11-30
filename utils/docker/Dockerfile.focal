@@ -8,7 +8,7 @@ ARG TZ=America/Los_Angeles
 RUN apt-get update && \
 
     # Install node16
-    apt-get install -y curl && \
+    apt-get install -y curl wget && \
     curl -sL https://deb.nodesource.com/setup_16.x | bash - && \
     apt-get install -y nodejs && \
 
