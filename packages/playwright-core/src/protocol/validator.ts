@@ -188,6 +188,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.LifecycleEvent = tEnum(['load', 'domcontentloaded', 'networkidle', 'commit']);
   scheme.RootInitializeParams = tObject({
     sdkLanguage: tString,
+    version: tString,
   });
   scheme.PlaywrightSocksConnectedParams = tObject({
     uid: tString,
