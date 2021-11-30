@@ -570,11 +570,14 @@ interface TestConfig {
   /**
    * Launch a development web server during the tests.
    *
-   * The server will wait for it to be available before running the tests. For continuous integration, you may want to use
-   * the `reuseExistingServer: !process.env.CI` option which does not use an existing server on the CI.
+   * The server will wait for it to be available on `127.0.0.1` or `::1` before running the tests. For continuous
+   * integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an existing server
+   * on the CI.
    *
    * The port gets then passed over to Playwright as a `baseURL` when creating the context
-   * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context).
+   * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context). For example `8080`
+   * ends up in `baseURL` to be `http://localhost:8080`. If you want to use `https://` you need to manually specify the
+   * `baseURL` inside `use`.
    *
    * ```ts
    * // playwright.config.ts
@@ -1056,11 +1059,14 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   /**
    * Launch a development web server during the tests.
    *
-   * The server will wait for it to be available before running the tests. For continuous integration, you may want to use
-   * the `reuseExistingServer: !process.env.CI` option which does not use an existing server on the CI.
+   * The server will wait for it to be available on `127.0.0.1` or `::1` before running the tests. For continuous
+   * integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an existing server
+   * on the CI.
    *
    * The port gets then passed over to Playwright as a `baseURL` when creating the context
-   * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context).
+   * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context). For example `8080`
+   * ends up in `baseURL` to be `http://localhost:8080`. If you want to use `https://` you need to manually specify the
+   * `baseURL` inside `use`.
    *
    * ```ts
    * // playwright.config.ts
