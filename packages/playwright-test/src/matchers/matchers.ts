@@ -275,7 +275,7 @@ export async function toBeOK(
 ) {
   const matcherName = 'toBeOK';
   expectType(response, 'APIResponse', matcherName);
-  const log = await response._fetchLog();
+  const log = (this.isNot === response.ok()) ? await response._fetchLog() : [];
   const message = () => this.utils.matcherHint(matcherName, undefined, '', { isNot: this.isNot }) + callLogText(log);
   const pass = response.ok();
   return { message, pass };

@@ -104,7 +104,7 @@ declare global {
       toBeHidden(options?: { timeout?: number }): Promise<R>;
 
       /**
-       * Asserts given APIResponse's status is 200.
+       * Asserts given APIResponse's status is between 200 and 299.
        */
       toBeOK(): Promise<R>;
 

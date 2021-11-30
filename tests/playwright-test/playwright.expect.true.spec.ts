@@ -330,26 +330,26 @@ test('should support toBeOK', async ({ runInlineTest, server }) => {
 
       test('pass with response', async ({ page }) => {
         const res = await page.request.get('${server.EMPTY_PAGE}');
-        expect(res).toBeOK();
+        await expect(res).toBeOK();
       });
 
       test('pass with not', async ({ page }) => {
         const res = await page.request.get('${server.PREFIX}/unknown');
-        expect(res).not.toBeOK();
+        await expect(res).not.toBeOK();
       });
 
       test('fail with invalid argument', async ({ page }) => {
-        expect(page).toBeOK();
+        await expect(page).toBeOK();
       });
 
       test('fail with promise', async ({ page }) => {
         const res = page.request.get('${server.EMPTY_PAGE}').catch(e => {});
-        expect(res).toBeOK();
+        await expect(res).toBeOK();
       });
 
       test('fail', async ({ page }) => {
         const res = await page.request.get('${server.PREFIX}/unknown');
-        expect(res).toBeOK();
+        await expect(res).toBeOK();
       });
       `,
   }, { workers: 1 });
