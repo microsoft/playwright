@@ -24,7 +24,6 @@ import url from 'url';
 import zlib from 'zlib';
 import { HTTPCredentials } from '../../types/types';
 import * as channels from '../protocol/channels';
-import { debugLogger } from '../utils/debugLogger';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { assert, createGuid, getPlaywrightVersion, monotonicTime } from '../utils/utils';
 import { BrowserContext } from './browserContext';
