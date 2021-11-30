@@ -31,6 +31,7 @@ import { ProjectImpl } from './project';
 import { FixtureRunner } from './fixtures';
 import { DeadlineRunner, raceAgainstDeadline } from 'playwright-core/lib/utils/async';
 import { calculateFileSha1 } from 'playwright-core/lib/utils/utils';
+import { GlobalFixtureResolver } from './globalFixtures';
 
 const removeFolderAsync = util.promisify(rimraf);
 
@@ -44,6 +45,7 @@ export class WorkerRunner extends EventEmitter {
   private _projectNamePathSegment = '';
   private _uniqueProjectNamePathSegment = '';
   private _fixtureRunner: FixtureRunner;
+  readonly globalFixtureResolver: GlobalFixtureResolver;
 
   private _failedTest: TestData | undefined;
   private _fatalError: TestError | undefined;
@@ -57,6 +59,8 @@ export class WorkerRunner extends EventEmitter {
     super();
     this._params = params;
     this._fixtureRunner = new FixtureRunner();
+    this.globalFixtureResolver = new GlobalFixtureResolver();
+    this._fixtureRunner.globalFixtureResolver = (registration, use) => this.globalFixtureResolver.resolve(registration, use);
   }
 
   stop(): Promise<void> {
@@ -86,6 +90,7 @@ export class WorkerRunner extends EventEmitter {
     const result = await raceAgainstDeadline((async () => {
       await this._fixtureRunner.teardownScope('test');
       await this._fixtureRunner.teardownScope('worker');
+      await this._fixtureRunner.teardownScope('global');
     })(), this._deadline());
     if (result.timedOut && !this._fatalError)
       this._fatalError = { message: colors.red(`Timeout of ${this._project.config.timeout}ms exceeded while shutting down environment`) };
@@ -186,7 +191,7 @@ export class WorkerRunner extends EventEmitter {
     annotations = annotations.concat(suite._annotations);
 
     for (const beforeAllModifier of suite._modifiers) {
-      if (!this._fixtureRunner.dependsOnWorkerFixturesOnly(beforeAllModifier.fn, beforeAllModifier.location))
+      if (!this._fixtureRunner.dependsOnWorkerAndGlobalFixturesOnly(beforeAllModifier.fn, beforeAllModifier.location))
         continue;
       // TODO: separate timeout for beforeAll modifiers?
       const result = await raceAgainstDeadline(this._fixtureRunner.resolveParametersAndRunHookOrTest(beforeAllModifier.fn, this._workerInfo, undefined), this._deadline());
@@ -470,7 +475,7 @@ export class WorkerRunner extends EventEmitter {
     try {
       const beforeEachModifiers: Modifier[] = [];
       for (let s: Suite | undefined = test.parent; s; s = s.parent) {
-        const modifiers = s._modifiers.filter(modifier => !this._fixtureRunner.dependsOnWorkerFixturesOnly(modifier.fn, modifier.location));
+        const modifiers = s._modifiers.filter(modifier => !this._fixtureRunner.dependsOnWorkerAndGlobalFixturesOnly(modifier.fn, modifier.location));
         beforeEachModifiers.push(...modifiers.reverse());
       }
       beforeEachModifiers.reverse();

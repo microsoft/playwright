@@ -17,11 +17,13 @@
 import child_process from 'child_process';
 import path from 'path';
 import { EventEmitter } from 'events';
-import { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams, StepBeginPayload, StepEndPayload, SerializedLoaderData } from './ipc';
+import { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams, StepBeginPayload, StepEndPayload, SerializedLoaderData, GlobalFixtureSetupRequest, GlobalFixtureSetupResponse, GlobalFixtureTeardownRequest } from './ipc';
 import type { TestResult, Reporter, TestStep } from '../types/testReporter';
 import { Suite, TestCase } from './test';
 import { Loader } from './loader';
 import { ManualPromise } from 'playwright-core/lib/utils/async';
+import { GlobalFixtureRunner } from './globalFixtures';
+import { serializeError } from './util';
 
 export type TestGroup = {
   workerHash: string;
@@ -43,15 +45,20 @@ export class Dispatcher {
   private _hasWorkerErrors = false;
   private _failureCount = 0;
 
+  private _globalFixtureRunner: GlobalFixtureRunner;
+
   constructor(loader: Loader, testGroups: TestGroup[], reporter: Reporter) {
     this._loader = loader;
     this._reporter = reporter;
     this._queue = testGroups;
+    const config = loader.fullConfig();
+    this._globalFixtureRunner = new GlobalFixtureRunner(config);
     for (const group of testGroups) {
       for (const test of group.tests) {
         const result = test._appendTestResult();
         // When changing this line, change the one in retry too.
         this._testById.set(test._id, { test, result, steps: new Map(), stepStack: new Set() });
+        this._globalFixtureRunner.registerPool(test._pool!);
       }
     }
   }
@@ -133,14 +140,18 @@ export class Dispatcher {
     worker.run(testGroup);
 
     let doneCallback = () => {};
+    let isDone = false;
     const result = new Promise<void>(f => doneCallback = f);
     const doneWithJob = () => {
       worker.removeListener('testBegin', onTestBegin);
       worker.removeListener('testEnd', onTestEnd);
+      worker.removeListener('globalFixtureSetupRequest', onGlobalFixtureSetupRequest);
+      worker.removeListener('globalFixtureTeardownRequest', onGlobalFixtureTeardownRequest);
       worker.removeListener('stepBegin', onStepBegin);
       worker.removeListener('stepEnd', onStepEnd);
       worker.removeListener('done', onDone);
       worker.removeListener('exit', onExit);
+      isDone = true;
       doneCallback();
     };
 
@@ -182,6 +193,19 @@ export class Dispatcher {
       this._reportTestEnd(test, result);
     };
     worker.addListener('testEnd', onTestEnd);
+
+    const onGlobalFixtureSetupRequest = async (params: GlobalFixtureSetupRequest) => {
+      const response = await this._globalFixtureRunner.globalFixtureSetupRequest(params);
+      if (isDone)
+        return;
+      worker.sendGlobalFixtureSetupResponse(response);
+    };
+    worker.addListener('globalFixtureSetupRequest', onGlobalFixtureSetupRequest);
+
+    const onGlobalFixtureTeardownRequest = (params: GlobalFixtureTeardownRequest) => {
+      this._globalFixtureRunner.globalFixtureTeardownRequest(params);
+    };
+    worker.addListener('globalFixtureTeardownRequest', onGlobalFixtureTeardownRequest);
 
     const onStepBegin = (params: StepBeginPayload) => {
       const { test, result, steps, stepStack } = this._testById.get(params.testId)!;
@@ -377,6 +401,12 @@ export class Dispatcher {
   async stop() {
     this._isStopped = true;
     await Promise.all(this._workerSlots.map(({ worker }) => worker?.stop()));
+    try {
+      await this._globalFixtureRunner.teardown();
+    } catch (e) {
+      this._hasWorkerErrors = true;
+      this._reporter.onError?.(serializeError(e));
+    }
     this._checkFinished();
   }
 
@@ -459,6 +489,10 @@ class Worker extends EventEmitter {
       }),
     };
     this.process.send({ method: 'run', params: runPayload });
+  }
+
+  sendGlobalFixtureSetupResponse(response: GlobalFixtureSetupResponse) {
+    this.process.send({ method: 'globalFixtureSetupResponse', params: response });
   }
 
   didFail() {

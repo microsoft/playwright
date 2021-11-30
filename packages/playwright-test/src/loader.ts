@@ -174,7 +174,7 @@ export class Loader {
     if (!path.isAbsolute(snapshotDir))
       snapshotDir = path.resolve(configDir, snapshotDir);
     const fullProject: FullProject = {
-      expect: takeFirst(this._configOverrides.expect, projectConfig.expect, this._config.expect, undefined),
+      expect: takeFirst(this._configOverrides.expect, projectConfig.expect, this._config.expect, {}),
       outputDir,
       repeatEach: takeFirst(this._configOverrides.repeatEach, projectConfig.repeatEach, this._config.repeatEach, 1),
       retries: takeFirst(this._configOverrides.retries, projectConfig.retries, this._config.retries, 0),

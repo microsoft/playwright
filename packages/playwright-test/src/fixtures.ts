@@ -18,14 +18,20 @@ import { formatLocation, wrapInPromise, debugTest } from './util';
 import * as crypto from 'crypto';
 import { FixturesWithLocation, Location, WorkerInfo, TestInfo, TestStepInternal } from './types';
 
-type FixtureScope = 'test' | 'worker';
-type FixtureRegistration = {
+type FixtureScope = 'test' | 'worker' | 'global';
+const kScopeOrder: FixtureScope[] = ['test', 'worker', 'global'];
+type FixtureOptions = { auto?: boolean, scope?: FixtureScope, option?: boolean };
+type FixtureTuple = [ value: any, options: FixtureOptions ];
+
+export type FixtureRegistration = {
   location: Location;
   name: string;
   scope: FixtureScope;
   fn: Function | any;  // Either a fixture function, or a fixture value.
   auto: boolean;
+  option: boolean;
   deps: string[];
+  fnArgs: string[];  // This corresponds to deps, usually the same except for global fixtures.
   id: string;
   super?: FixtureRegistration;
 };
@@ -54,12 +60,16 @@ class Fixture {
       return;
     }
 
+    const isExternalGlobalFixture = !!this.runner.globalFixtureResolver && this.registration.scope === 'global';
     const params: { [key: string]: any } = {};
-    for (const name of this.registration.deps) {
-      const registration = this.runner.pool!.resolveDependency(this.registration, name)!;
-      const dep = await this.runner.setupFixtureForRegistration(registration, workerInfo, testInfo);
-      dep.usages.add(this);
-      params[name] = dep.value;
+    if (!isExternalGlobalFixture) {
+      for (let i = 0; i < this.registration.deps.length; i++) {
+        const depName = this.registration.deps[i];
+        const registration = this.runner.pool!.resolveDependency(this.registration, depName)!;
+        const dep = await this.runner.setupFixtureForRegistration(registration, workerInfo, testInfo);
+        dep.usages.add(this);
+        params[this.registration.fnArgs[i]] = dep.value;
+      }
     }
 
     let setupFenceFulfill = () => {};
@@ -68,14 +78,17 @@ class Fixture {
     const setupFence = new Promise<void>((f, r) => { setupFenceFulfill = f; setupFenceReject = r; });
     const teardownFence = new Promise(f => this._teardownFenceCallback = f);
     debugTest(`setup ${this.registration.name}`);
-    this._tearDownComplete = wrapInPromise(this.registration.fn(params, async (value: any) => {
+    const useFunc = async (value: any) => {
       if (called)
         throw new Error(`Cannot provide fixture value for the second time`);
       called = true;
       this.value = value;
       setupFenceFulfill();
       return await teardownFence;
-    }, this.registration.scope === 'worker' ? workerInfo : testInfo)).catch((e: any) => {
+    };
+    const info = this.registration.scope === 'test' ? testInfo : workerInfo;
+    const invoked = isExternalGlobalFixture ? this.runner.globalFixtureResolver!(this.registration, useFunc) : this.registration.fn(params, useFunc, info);
+    this._tearDownComplete = wrapInPromise(invoked).catch((e: any) => {
       if (!this._setup)
         setupFenceReject(e);
       else
@@ -103,11 +116,11 @@ class Fixture {
   }
 }
 
-function isFixtureTuple(value: any): value is [any, any] {
+function isFixtureTuple(value: any): value is FixtureTuple {
   return Array.isArray(value) && typeof value[1] === 'object' && ('scope' in value[1] || 'auto' in value[1] || 'option' in value[1]);
 }
 
-export function isFixtureOption(value: any): value is [any, any] {
+export function isFixtureOption(value: any): value is FixtureTuple {
   return isFixtureTuple(value) && !!value[1].option;
 }
 
@@ -115,18 +128,19 @@ export class FixturePool {
   readonly digest: string;
   readonly registrations: Map<string, FixtureRegistration>;
 
-  constructor(fixturesList: FixturesWithLocation[], parentPool?: FixturePool, disallowWorkerFixtures?: boolean) {
+  constructor(fixturesList: FixturesWithLocation[], parentPool?: FixturePool, disallowNonTestFixtures?: boolean) {
     this.registrations = new Map(parentPool ? parentPool.registrations : []);
 
     for (const { fixtures, location } of fixturesList) {
       for (const entry of Object.entries(fixtures)) {
         const name = entry[0];
         let value = entry[1];
-        let options: { auto: boolean, scope: FixtureScope } | undefined;
+        let options: Required<FixtureOptions> | undefined;
         if (isFixtureTuple(value)) {
           options = {
             auto: !!value[1].auto,
-            scope: value[1].scope || 'test'
+            scope: value[1].scope || 'test',
+            option: !!value[1].option,
           };
           value = value[0];
         }
@@ -139,18 +153,20 @@ export class FixturePool {
           if (previous.auto !== options.auto)
             throw errorWithLocations(`Fixture "${name}" has already been registered as a { auto: '${previous.scope}' } fixture.`, { location, name }, previous);
         } else if (previous) {
-          options = { auto: previous.auto, scope: previous.scope };
+          options = { auto: previous.auto, scope: previous.scope, option: previous.option };
         } else if (!options) {
-          options = { auto: false, scope: 'test' };
+          options = { auto: false, scope: 'test', option: false };
         }
 
-        if (options.scope !== 'test' && options.scope !== 'worker')
+        if (!kScopeOrder.includes(options.scope))
           throw errorWithLocations(`Fixture "${name}" has unknown { scope: '${options.scope}' }.`, { location, name });
-        if (options.scope === 'worker' && disallowWorkerFixtures)
+        if (options.scope !== 'test' && disallowNonTestFixtures)
           throw errorWithLocations(`Cannot use({ ${name} }) in a describe group, because it forces a new worker.\nMake it top-level in the test file or put in the configuration file.`, { location, name });
+        if (options.scope === 'global' && options.option)
+          throw errorWithLocations(`Global options are not supported.`, { location, name });
 
         const deps = fixtureParameterNames(fn, location);
-        const registration: FixtureRegistration = { id: '', name, location, scope: options.scope, fn, auto: options.auto, deps, super: previous };
+        const registration: FixtureRegistration = { id: '', name, location, scope: options.scope, fn, auto: options.auto, option: options.option, deps, fnArgs: deps, super: previous };
         registrationId(registration);
         this.registrations.set(name, registration);
       }
@@ -173,8 +189,8 @@ export class FixturePool {
           else
             throw errorWithLocations(`Fixture "${registration.name}" has unknown parameter "${name}".`, registration);
         }
-        if (registration.scope === 'worker' && dep.scope === 'test')
-          throw errorWithLocations(`Worker fixture "${registration.name}" cannot depend on a test fixture "${name}".`, registration, dep);
+        if (kScopeOrder.indexOf(registration.scope) > kScopeOrder.indexOf(dep.scope))
+          throw errorWithLocations(`${registration.scope} fixture "${registration.name}" cannot depend on a ${dep.scope} fixture "${name}".`, registration, dep);
         if (!markers.has(dep)) {
           visit(dep);
         } else if (markers.get(dep) === 'visiting') {
@@ -193,7 +209,7 @@ export class FixturePool {
     for (const name of names) {
       const registration = this.registrations.get(name)!;
       visit(registration);
-      if (registration.scope === 'worker')
+      if (registration.scope === 'worker' || registration.scope === 'global')
         hash.update(registration.id + ';');
     }
     return hash.digest('hex');
@@ -223,6 +239,7 @@ export class FixtureRunner {
   private testScopeClean = true;
   pool: FixturePool | undefined;
   instanceForId = new Map<string, Fixture>();
+  globalFixtureResolver: ((registration: FixtureRegistration, use: (value: any) => Promise<unknown>) => Promise<any>) | undefined;
 
   setPool(pool: FixturePool) {
     if (!this.testScopeClean)
@@ -289,11 +306,11 @@ export class FixtureRunner {
     return fixture;
   }
 
-  dependsOnWorkerFixturesOnly(fn: Function, location: Location): boolean {
+  dependsOnWorkerAndGlobalFixturesOnly(fn: Function, location: Location): boolean {
     const names = fixtureParameterNames(fn, location);
     for (const name of names) {
       const registration = this.pool!.registrations.get(name)!;
-      if (registration.scope !== 'worker')
+      if (registration.scope !== 'worker' && registration.scope !== 'global')
         return false;
     }
     return true;

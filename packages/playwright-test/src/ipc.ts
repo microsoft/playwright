@@ -84,3 +84,17 @@ export type TestOutputPayload = {
   text?: string;
   buffer?: string;
 };
+
+export type GlobalFixtureSetupRequest = {
+  id: string;
+};
+
+export type GlobalFixtureSetupResponse = {
+  id: string;
+  error?: TestError;
+  stringifiedValue?: string;
+};
+
+export type GlobalFixtureTeardownRequest = {
+  id: string;
+};
