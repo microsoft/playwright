@@ -21,7 +21,6 @@ import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWor
 import { rootTestType } from './testType';
 import { createGuid, removeFolders } from 'playwright-core/lib/utils/utils';
 import { GridClient } from 'playwright-core/lib/grid/gridClient';
-import { chromium, firefox, webkit } from 'playwright-core';
 import { prependToTestError } from './util';
 export { expect } from './expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
@@ -172,7 +171,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
 
   _snapshotSuffix: [process.env.PLAYWRIGHT_DOCKER ? 'docker' : process.platform, { scope: 'worker' }],
 
-  _setupContextOptionsAndArtifacts: [async ({ _snapshotSuffix, _combinedContextOptions, _artifactsDir, trace, screenshot, actionTimeout, navigationTimeout }, use, testInfo) => {
+  _setupContextOptionsAndArtifacts: [async ({ playwright, _snapshotSuffix, _combinedContextOptions, _artifactsDir, trace, screenshot, actionTimeout, navigationTimeout }, use, testInfo) => {
     testInfo.snapshotSuffix = _snapshotSuffix;
     if (process.env.PWDEBUG)
       testInfo.setTimeout(0);
@@ -248,7 +247,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     };
 
     // 1. Setup instrumentation and process existing contexts.
-    for (const browserType of [chromium, firefox, webkit]) {
+    for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit]) {
       (browserType as any)._onDidCreateContext = onDidCreateContext;
       (browserType as any)._onWillCloseContext = onWillCloseContext;
       (browserType as any)._defaultContextOptions = _combinedContextOptions;
@@ -283,7 +282,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
 
     // 4. Cleanup instrumentation.
     const leftoverContexts: BrowserContext[] = [];
-    for (const browserType of [chromium, firefox, webkit]) {
+    for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit]) {
       leftoverContexts.push(...(browserType as any)._contexts);
       (browserType as any)._onDidCreateContext = undefined;
       (browserType as any)._onWillCloseContext = undefined;
