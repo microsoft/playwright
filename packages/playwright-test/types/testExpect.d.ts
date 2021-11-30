@@ -104,9 +104,9 @@ declare global {
       toBeHidden(options?: { timeout?: number }): Promise<R>;
 
       /**
-       * Asserts given DOM node is hidden or detached from DOM.
+       * Asserts given APIResponse's status is 200.
        */
-       toBeOK(options?: { timeout?: number }): Promise<R>;
+      toBeOK(): Promise<R>;
 
       /**
        * Asserts given DOM node visible on the screen.
