@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { InvalidSelectorError } from './selectorErrors';
 import { CSSComplexSelectorList, parseCSS } from './cssParser';
 
 export type ParsedSelectorPart = {
@@ -66,7 +67,7 @@ export function splitSelectorByFrame(selectorText: string): ParsedSelector[] {
     const part = selector.parts[i];
     if (part.name === 'control' && part.body === 'enter-frame') {
       if (!chunk.parts.length)
-        throw new Error('Selector cannot start with entering frame, select the iframe first');
+        throw new InvalidSelectorError('Selector cannot start with entering frame, select the iframe first');
       result.push(chunk);
       chunk = { parts: [] };
       chunkStartIndex = i + 1;
@@ -77,10 +78,10 @@ export function splitSelectorByFrame(selectorText: string): ParsedSelector[] {
     chunk.parts.push(part);
   }
   if (!chunk.parts.length)
-    throw new Error(`Selector cannot end with entering frame, while parsing selector ${selectorText}`);
+    throw new InvalidSelectorError(`Selector cannot end with entering frame, while parsing selector ${selectorText}`);
   result.push(chunk);
   if (typeof selector.capture === 'number' && typeof result[result.length - 1].capture !== 'number')
-    throw new Error(`Can not capture the selector before diving into the frame. Only use * after the last frame has been selected`);
+    throw new InvalidSelectorError(`Can not capture the selector before diving into the frame. Only use * after the last frame has been selected`);
   return result;
 }
 
@@ -130,7 +131,7 @@ function parseSelectorString(selector: string): ParsedSelectorStrings {
     result.parts.push({ name, body });
     if (capture) {
       if (result.capture !== undefined)
-        throw new Error(`Only one of the selectors can capture using * modifier`);
+        throw new InvalidSelectorError(`Only one of the selectors can capture using * modifier`);
       result.capture = result.parts.length - 1;
     }
   };
