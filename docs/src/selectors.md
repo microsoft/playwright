@@ -869,7 +869,7 @@ Attribute selectors are not CSS selectors, so anything CSS-specific like `:enabl
 :::
 
 :::note
-Attribute selectors pierce shadow DOM. To opt-out from this behavior, use `:light` suffix after attribute, for example `page.click('data-test-id:light=submit')
+Attribute selectors pierce shadow DOM. To opt-out from this behavior, use `:light` suffix after attribute, for example `page.click('data-test-id:light=submit')`
 :::
 
 
