@@ -277,8 +277,19 @@ it.describe('selector generator', () => {
     }
   });
 
-  it('should work with tricky ids', async ({ page }) => {
+  it('should work with tricky attributes', async ({ page }) => {
     await page.setContent(`<button id="this:is-my-tricky.id"><span></span></button>`);
-    expect(await generate(page, 'button')).toBe('[id="this:is-my-tricky.id"]');
+    expect(await generate(page, 'button')).toBe('[id="this\\:is-my-tricky\\.id"]');
+
+    await page.setContent(`<ng:switch><span></span></ng:switch>`);
+    expect(await generate(page, 'ng\\:switch')).toBe('ng\\:switch');
+
+    await page.setContent(`<div><span></span></div>`);
+    await page.$eval('div', div => div.setAttribute('aria-label', `!#'!?:`));
+    expect(await generate(page, 'div')).toBe("[aria-label=\"\\!\\#\\'\\!\\?\\:\"]");
+
+    await page.setContent(`<div><span></span></div>`);
+    await page.$eval('div', div => div.id = `!#'!?:`);
+    expect(await generate(page, 'div')).toBe("[id=\"\\!\\#\\'\\!\\?\\:\"]");
   });
 });
