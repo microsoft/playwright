@@ -3,6 +3,16 @@
 
 The [PageAssertions] class provides assertion methods that can be used to make assertions about the [Page] state in the tests. A new instance of [LocatorAssertions] is created by calling [`method: PlaywrightAssertions.expectPage`]:
 
+```js
+import { test, expect } from '@playwright/test';
+
+test('navigates to login', async ({ page }) => {
+  // ...
+  await page.click('#login');
+  await expect(page).toHaveURL(/.*\/login/);
+});
+```
+
 ```java
 ...
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
@@ -18,12 +28,36 @@ public class TestPage {
 }
 ```
 
+```python async
+import re
+from playwright.async_api import Page, expect
+
+async def test_navigates_to_login_page(page: Page) -> None:
+    # ..
+    await page.click("#login")
+    await expect(page).to_have_url(re.compile(r".*/login"))
+```
+
+```python sync
+import re
+from playwright.sync_api import Page, expect
+
+def test_navigates_to_login_page(page: Page) -> None:
+    # ..
+    page.click("#login")
+    expect(page).to_have_url(re.compile(r".*/login"))
+```
+
 
 ## method: PageAssertions.not
 * langs: java, js
 - returns: <[PageAssertions]>
 
 Makes the assertion check for the opposite condition. For example, this code tests that the page URL doesn't contain `"error"`:
+
+```js
+await expect(page).not.toHaveURL('error');
+```
 
 ```java
 assertThat(page).not().hasURL("error");
@@ -69,6 +103,22 @@ await expect(page).toHaveTitle(/.*checkout/);
 assertThat(page).hasTitle("Playwright");
 ```
 
+```python async
+import re
+from playwright.async_api import expect
+
+# ...
+await expect(page).to_have_title(re.compile(r".*checkout"))
+```
+
+```python sync
+import re
+from playwright.sync_api import expect
+
+# ...
+expect(page).to_have_title(re.compile(r".*checkout"))
+```
+
 ### param: PageAssertions.toHaveTitle.titleOrRegExp
 - `titleOrRegExp` <[string]|[RegExp]>
 
@@ -88,6 +138,22 @@ await expect(page).toHaveURL(/.*checkout/);
 
 ```java
 assertThat(page).hasURL(".com");
+```
+
+```python async
+import re
+from playwright.async_api import expect
+
+# ...
+await expect(page).to_have_url(re.compile(".*checkout"))
+```
+
+```python sync
+import re
+from playwright.sync_api import expect
+
+# ...
+expect(page).to_have_url(re.compile(".*checkout"))
 ```
 
 ### param: PageAssertions.toHaveURL.urlOrRegExp
