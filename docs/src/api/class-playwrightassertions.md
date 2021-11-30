@@ -18,17 +18,19 @@ test('status becomes submitted', async ({ page }) => {
 ```python async
 from playwright.async_api import Page, expect
 
-async def test_assertions_page_to_have_title(page: Page) -> None:
-    await page.click('#submit-button')
-    await expect(page.locator('.status')).to_have_text('Submitted')
+async def test_status_becomes_submitted(page: Page) -> None:
+    # ..
+    await page.click("#submit-button")
+    await expect(page.locator(".status")).to_have_text("Submitted")
 ```
 
 ```python sync
 from playwright.sync_api import Page, expect
 
-def test_assertions_page_to_have_title(page: Page) -> None:
-    page.click('#submit-button')
-    expect(page.locator('.status')).to_have_text('Submitted')
+def test_status_becomes_submitted(page: Page) -> None:
+    # ..
+    page.click("#submit-button")
+    expect(page.locator(".status")).to_have_text("Submitted")
 ```
 
 ```java
