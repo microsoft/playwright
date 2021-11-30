@@ -194,7 +194,6 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
     /page.gotohttp:\/\/localhost:\d+\/frames\/frame.html/,
     /route.continue/,
     /page.setViewportSize/,
-    /browserContext.close/,
   ]);
 });
 

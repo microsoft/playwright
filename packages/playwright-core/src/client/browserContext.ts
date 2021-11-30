@@ -318,9 +318,9 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
           await artifact.saveAs(this._options.recordHar.path);
           await artifact.delete();
         }
-        await this._channel.close();
-        await this._closedPromise;
-      });
+      }, true);
+      await this._channel.close();
+      await this._closedPromise;
     } catch (e) {
       if (isSafeCloseError(e))
         return;
