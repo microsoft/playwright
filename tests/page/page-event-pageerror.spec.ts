@@ -47,7 +47,6 @@ it('should fire', async ({ page, server, browserName }) => {
 });
 
 it('should not receive console message for pageError', async ({ page, server, browserName }) => {
-  it.skip(browserName === 'firefox');
   const messages = [];
   page.on('console', e => messages.push(e));
   await Promise.all([
