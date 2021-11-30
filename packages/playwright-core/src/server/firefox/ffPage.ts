@@ -401,10 +401,6 @@ export class FFPage implements PageDelegate {
     await this._session.send('Page.close', { runBeforeUnload });
   }
 
-  canScreenshotOutsideViewport(): boolean {
-    return true;
-  }
-
   async setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void> {
     if (color)
       throw new Error('Not implemented');
@@ -428,10 +424,6 @@ export class FFPage implements PageDelegate {
       clip: documentRect,
     });
     return Buffer.from(data, 'base64');
-  }
-
-  async resetViewport(): Promise<void> {
-    assert(false, 'Should not be called');
   }
 
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {

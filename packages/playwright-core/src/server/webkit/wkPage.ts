@@ -747,10 +747,6 @@ export class WKPage implements PageDelegate {
     });
   }
 
-  canScreenshotOutsideViewport(): boolean {
-    return true;
-  }
-
   async setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void> {
     await this._session.send('Page.setDefaultBackgroundColorOverride', { color });
   }
@@ -788,10 +784,6 @@ export class WKPage implements PageDelegate {
     if (format === 'jpeg')
       buffer = jpeg.encode(png.PNG.sync.read(buffer), quality).data;
     return buffer;
-  }
-
-  async resetViewport(): Promise<void> {
-    assert(false, 'Should not be called');
   }
 
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
