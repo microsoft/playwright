@@ -328,33 +328,33 @@ test('should support toBeOK', async ({ runInlineTest, server }) => {
     'a.test.ts': `
       const { test } = pwt;
 
-      test('pass with promise', async ({ page }) => {
-        const res = page.request.get('${server.EMPTY_PAGE}');
-        await expect(res).toBeOK();
-      });
-
       test('pass with response', async ({ page }) => {
         const res = await page.request.get('${server.EMPTY_PAGE}');
-        await expect(res).toBeOK();
+        expect(res).toBeOK();
       });
 
       test('pass with not', async ({ page }) => {
-        const res = page.request.get('${server.PREFIX}/unknown');
-        await expect(res).not.toBeOK();
+        const res = await page.request.get('${server.PREFIX}/unknown');
+        expect(res).not.toBeOK();
       });
 
       test('fail with invalid argument', async ({ page }) => {
-        await expect(page).toBeOK();
+        expect(page).toBeOK();
+      });
+
+      test('fail with promise', async ({ page }) => {
+        const res = page.request.get('${server.EMPTY_PAGE}').catch(e => {});
+        expect(res).toBeOK();
       });
 
       test('fail', async ({ page }) => {
-        const res = page.request.get('${server.PREFIX}/unknown');
-        await expect(res).toBeOK();
+        const res = await page.request.get('${server.PREFIX}/unknown');
+        expect(res).toBeOK();
       });
       `,
   }, { workers: 1 });
-  expect(result.passed).toBe(3);
-  expect(result.failed).toBe(2);
+  expect(result.passed).toBe(2);
+  expect(result.failed).toBe(3);
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain(`→ GET ${server.PREFIX}/unknown`);
   expect(result.output).toContain(`← 404 Not Found`);

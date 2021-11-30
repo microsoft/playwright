@@ -271,11 +271,10 @@ export function toHaveURL(
 
 export async function toBeOK(
   this: ReturnType<Expect['getState']>,
-  responsePromise: Promise<APIResponseEx> | APIResponseEx
+  response: APIResponseEx
 ) {
   const matcherName = 'toBeOK';
-  const response = await responsePromise;
-  expectType(response, 'APIResponse', 'toBeOK');
+  expectType(response, 'APIResponse', matcherName);
   const log = await response._fetchLog();
   const message = () => this.utils.matcherHint(matcherName, undefined, '', { isNot: this.isNot }) + callLogText(log);
   const pass = response.ok();
