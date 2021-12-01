@@ -119,9 +119,8 @@ async function createLoader(opts: { [key: string]: any }): Promise<Loader> {
     overrides.maxFailures = 1;
     overrides.timeout = 0;
     overrides.workers = 1;
-  }
-  if (opts.debug)
     process.env.PWDEBUG = '1';
+  }
 
   const loader = new Loader(defaultConfig, overrides);
 
