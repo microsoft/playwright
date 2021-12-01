@@ -1,9 +1,0 @@
-{
-  "compilerOptions": {
-    "target": "ES2019",
-    "moduleResolution": "Node",
-    "downlevelIteration": true,
-    "esModuleInterop": true,
-  },
-  "include": ["src"],
-}

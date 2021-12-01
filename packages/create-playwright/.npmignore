@@ -1,9 +1,0 @@
-# This ignores everything by default, except for package.json and LICENSE and README.md.
-# See https://docs.npmjs.com/misc/developers
-**/*
-
-!/lib/**/*
-!index.js
-
-!/assets/**/*
-/assets/.eslintrc.js

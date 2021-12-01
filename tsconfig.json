@@ -21,6 +21,5 @@
   "include": ["packages"],
   "exclude": [
     "packages/*/lib",
-    "packages/create-playwright/",
   ],
 }
