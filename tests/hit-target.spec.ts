@@ -16,6 +16,10 @@
 
 import { contextTest as it, expect } from './config/browserTest';
 
+declare const renderComponent;
+declare const e;
+declare const MaterialUI;
+
 it('should block all events when hit target is wrong', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.evaluate(() => {
@@ -122,4 +126,25 @@ it('should click the button again after document.write', async ({ page, server }
   });
   await page.click('button');
   expect(await page.evaluate('result2')).toBe(true);
+});
+
+it('should work with mui select', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/mui.html');
+  await page.evaluate(() => {
+    renderComponent(e(MaterialUI.FormControl, { fullWidth: true }, [
+      e(MaterialUI.InputLabel, { id: 'demo-simple-select-label' }, ['Age']),
+      e(MaterialUI.Select, {
+        labelId: 'demo-simple-select-label',
+        id: 'demo-simple-select',
+        value: 10,
+        label: 'Age',
+      }, [
+        e(MaterialUI.MenuItem, { value: 10 }, ['Ten']),
+        e(MaterialUI.MenuItem, { value: 20 }, ['Twenty']),
+        e(MaterialUI.MenuItem, { value: 30 }, ['Thirty']),
+      ]),
+    ]));
+  });
+  await page.click('div.MuiFormControl-root:has-text("Age")');
+  await expect(page.locator('text=Thirty')).toBeVisible();
 });
