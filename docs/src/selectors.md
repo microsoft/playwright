@@ -955,7 +955,8 @@ For example,
 css=article >> css=.bar > .baz >> css=span[attr=value]
 ```
 is equivalent to
-```js
+
+```js browser
 document
   .querySelector('article')
   .querySelector('.bar > .baz')
