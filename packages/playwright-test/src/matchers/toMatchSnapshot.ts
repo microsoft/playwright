@@ -51,8 +51,7 @@ export function toMatchSnapshot(this: ReturnType<Expect['getState']>, received: 
   const { pass, message, expectedPath, actualPath, diffPath, mimeType } = compare(
       received,
       pathSegments,
-      testInfo.snapshotPath,
-      testInfo.outputPath,
+      testInfo,
       updateSnapshots,
       withNegateComparison,
       options
