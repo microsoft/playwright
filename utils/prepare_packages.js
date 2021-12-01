@@ -55,10 +55,6 @@ const PACKAGES = {
     browsers: ['chromium', 'ffmpeg'],
     files: LICENSE_FILES,
   },
-  'create-playwright': {
-    browsers: [],
-    files: [],
-  }
 };
 
 const dirtyFiles = [];

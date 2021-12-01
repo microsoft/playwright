@@ -176,8 +176,6 @@ for (const file of webPackFiles) {
 for (const packageDir of packages) {
   if (!fs.existsSync(path.join(packageDir, 'src')))
     continue;
-  if (path.basename(packageDir) === 'create-playwright')
-    continue;
   steps.push({
     command: 'npx',
     args: [
@@ -185,7 +183,7 @@ for (const packageDir of packages) {
       ...(watchMode ? ['-w', '--source-maps'] : []),
       '--extensions', '.ts',
       '--out-dir', path.join(packageDir, 'lib'),
-      '--ignore', '"packages/playwright-core/src/server/injected/**/*","packages/create-playwright/**/*"',
+      '--ignore', '"packages/playwright-core/src/server/injected/**/*"',
       path.join(packageDir, 'src')],
     shell: true,
   });
@@ -261,13 +259,5 @@ if (lintMode) {
     shell: true,
   });
 }
-
-// create-playwright package
-steps.push({
-  command: 'npx',
-  args: ['ncc', 'build', 'cli.ts', (watchMode ? '--watch' : '--minify'), '--out', '../lib'],
-  shell: true,
-  cwd: 'packages/create-playwright/src'
-});
 
 watchMode ? runWatch() : runBuild();

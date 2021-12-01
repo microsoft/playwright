@@ -69,7 +69,6 @@
     "@types/yazl": "^2.4.2",
     "@typescript-eslint/eslint-plugin": "^5.4.0",
     "@typescript-eslint/parser": "^5.4.0",
-    "@vercel/ncc": "^0.31.1",
     "@zip.js/zip.js": "^2.3.17",
     "ansi-to-html": "^0.7.1",
     "babel-loader": "^8.2.2",
