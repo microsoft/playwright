@@ -1129,7 +1129,7 @@ class ExpectedTextMatcher {
   private normalizeWhiteSpace(s: string | undefined): string | undefined {
     if (!s)
       return s;
-    return this._normalizeWhiteSpace ? s.trim().replace(/\s+/g, ' ') : s;
+    return this._normalizeWhiteSpace ? s.trim().replace(/\u200b/g, '').replace(/\s+/g, ' ') : s;
   }
 }
 
