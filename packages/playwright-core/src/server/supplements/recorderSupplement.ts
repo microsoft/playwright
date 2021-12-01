@@ -76,7 +76,7 @@ export class RecorderSupplement implements InstrumentationListener {
   }
 
   async install() {
-    const recorderApp = await RecorderApp.open(this._context._browser.options.sdkLanguage);
+    const recorderApp = await RecorderApp.open(this._context._browser.options.sdkLanguage, !!this._context._browser.options.headful);
     this._recorderApp = recorderApp;
     recorderApp.once('close', () => {
       this._debugger.resume(false);
