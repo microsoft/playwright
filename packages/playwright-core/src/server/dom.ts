@@ -407,7 +407,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const point = roundPoint(maybePoint);
     progress.metadata.point = point;
 
-    if (process.env.PLAYWRIGHT_NO_LAYOUT_SHIFT_CHECK)
+    if (!process.env.PLAYWRIGHT_LAYOUT_SHIFT_CHECK)
       return this._finishPointerAction(progress, actionName, point, options, action);
     else
       return this._finishPointerActionDetectLayoutShift(progress, actionName, point, options, action);
