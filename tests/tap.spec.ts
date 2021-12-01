@@ -48,7 +48,7 @@ it('trial run should not tap', async ({ page }) => {
   await page.tap('#a');
   const eventsHandle = await trackEvents(await page.$('#b'));
   await page.tap('#b', { trial: true });
-  const expected = process.env.PLAYWRIGHT_NO_LAYOUT_SHIFT_CHECK ? [] : ['pointerover', 'pointerenter', 'pointerout', 'pointerleave'];
+  const expected = !process.env.PLAYWRIGHT_LAYOUT_SHIFT_CHECK ? [] : ['pointerover', 'pointerenter', 'pointerout', 'pointerleave'];
   expect(await eventsHandle.jsonValue()).toEqual(expected);
 });
 
