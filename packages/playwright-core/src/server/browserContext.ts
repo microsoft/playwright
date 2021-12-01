@@ -78,11 +78,12 @@ export abstract class BrowserContext extends SdkObject {
     // Create instrumentation per context.
     this.instrumentation = createInstrumentation();
 
+    this.fetchRequest = new BrowserContextAPIRequestContext(this);
+
     if (this._options.recordHar)
       this._harRecorder = new HarRecorder(this, { ...this._options.recordHar, path: path.join(this._browser.options.artifactsDir, `${createGuid()}.har`) });
 
     this.tracing = new Tracing(this);
-    this.fetchRequest = new BrowserContextAPIRequestContext(this);
   }
 
   isPersistentContext(): boolean {

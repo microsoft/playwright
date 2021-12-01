@@ -44,9 +44,31 @@ type FetchRequestOptions = {
   baseURL?: string;
 };
 
+export type APIRequestEvent = {
+  url: URL,
+  method: string,
+  headers: { [name: string]: string },
+  cookies: types.NameValueList,
+  postData?: Buffer
+};
+
+export type APIRequestFinishedEvent = {
+  requestEvent: APIRequestEvent,
+  httpVersion: string;
+  headers: http.IncomingHttpHeaders;
+  cookies: types.NetworkCookie[];
+  rawHeaders: string[];
+  statusCode: number;
+  statusMessage: string;
+  body?: Buffer;
+};
+
 export abstract class APIRequestContext extends SdkObject {
   static Events = {
     Dispose: 'dispose',
+
+    Request: 'request',
+    RequestFinished: 'requestfinished',
   };
 
   readonly fetchResponses: Map<string, Buffer> = new Map();
@@ -166,7 +188,9 @@ export abstract class APIRequestContext extends SdkObject {
     return { ...fetchResponse, fetchUid };
   }
 
-  private async _updateCookiesFromHeader(responseUrl: string, setCookie: string[]) {
+  private _parseSetCookieHeader(responseUrl: string, setCookie: string[] | undefined): types.NetworkCookie[] {
+    if (!setCookie)
+      return [];
     const url = new URL(responseUrl);
     // https://datatracker.ietf.org/doc/html/rfc6265#section-5.1.4
     const defaultPath = '/' + url.pathname.substr(1).split('/').slice(0, -1).join('/');
@@ -188,8 +212,7 @@ export abstract class APIRequestContext extends SdkObject {
         cookie.path = defaultPath;
       cookies.push(cookie);
     }
-    if (cookies.length)
-      await this._addCookies(cookies);
+    return cookies;
   }
 
   private async _updateRequestCookieHeader(url: URL, options: http.RequestOptions) {
@@ -204,15 +227,43 @@ export abstract class APIRequestContext extends SdkObject {
 
   private async _sendRequest(progress: Progress, url: URL, options: https.RequestOptions & { maxRedirects: number, deadline: number }, postData?: Buffer): Promise<types.APIResponse>{
     await this._updateRequestCookieHeader(url, options);
+
+    const requestCookies = (options.headers!['cookie'] as (string | undefined))?.split(';').map(p => {
+      const [name, value] = p.split('=').map(v => v.trim());
+      return { name, value };
+    }) || [];
+    const requestEvent: APIRequestEvent = {
+      url,
+      method: options.method!,
+      headers: options.headers as { [name: string]: string },
+      cookies: requestCookies,
+      postData
+    };
+    this.emit(APIRequestContext.Events.Request, requestEvent);
+
     return new Promise<types.APIResponse>((fulfill, reject) => {
       const requestConstructor: ((url: URL, options: http.RequestOptions, callback?: (res: http.IncomingMessage) => void) => http.ClientRequest)
         = (url.protocol === 'https:' ? https : http).request;
       const request = requestConstructor(url, options, async response => {
+        const notifyRequestFinished = (body?: Buffer) => {
+          const requestFinishedEvent: APIRequestFinishedEvent = {
+            requestEvent,
+            statusCode: -1,
+            statusMessage: '',
+            ...response,
+            cookies,
+            body
+          };
+          this.emit(APIRequestContext.Events.RequestFinished, requestFinishedEvent);
+        };
         progress.log(`← ${response.statusCode} ${response.statusMessage}`);
         for (const [name, value] of Object.entries(response.headers))
           progress.log(`  ${name}: ${value}`);
-        if (response.headers['set-cookie'])
-          await this._updateCookiesFromHeader(response.url || url.toString(), response.headers['set-cookie']);
+
+        const cookies = this._parseSetCookieHeader(response.url || url.toString(), response.headers['set-cookie']) ;
+        if (cookies.length)
+          await this._addCookies(cookies);
+
         if (redirectStatus.includes(response.statusCode!)) {
           if (!options.maxRedirects) {
             reject(new Error('Max redirect count exceeded'));
@@ -251,6 +302,7 @@ export abstract class APIRequestContext extends SdkObject {
           // HTTP-redirect fetch step 4: If locationURL is null, then return response.
           if (response.headers.location) {
             const locationURL = new URL(response.headers.location, url);
+            notifyRequestFinished();
             fulfill(this._sendRequest(progress, locationURL, redirectOptions, postData));
             request.destroy();
             return;
@@ -263,6 +315,7 @@ export abstract class APIRequestContext extends SdkObject {
             const { username, password } = credentials;
             const encoded = Buffer.from(`${username || ''}:${password || ''}`).toString('base64');
             options.headers!['authorization'] = `Basic ${encoded}`;
+            notifyRequestFinished();
             fulfill(this._sendRequest(progress, url, options, postData));
             request.destroy();
             return;
@@ -294,6 +347,7 @@ export abstract class APIRequestContext extends SdkObject {
         body.on('data', chunk => chunks.push(chunk));
         body.on('end', () => {
           const body = Buffer.concat(chunks);
+          notifyRequestFinished(body);
           fulfill({
             url: response.url || url.toString(),
             status: response.statusCode || 0,

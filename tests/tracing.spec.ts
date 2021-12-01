@@ -85,6 +85,19 @@ test('should exclude internal pages', async ({ browserName, context, page, serve
   expect(pageIds.size).toBe(1);
 });
 
+test('should include context API requests', async ({ browserName, context, page, server }, testInfo) => {
+  await context.tracing.start({ snapshots: true });
+  await page.request.post(server.PREFIX + '/simple.json', { data: { foo: 'bar' } });
+  await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
+  const { events } = await parseTrace(testInfo.outputPath('trace.zip'));
+  const postEvent = events.find(e => e.metadata?.apiName === 'apiRequestContext.post');
+  expect(postEvent).toBeTruthy();
+  const harEntry = events.find(e => e.type === 'resource-snapshot');
+  expect(harEntry).toBeTruthy();
+  expect(harEntry.snapshot.request.url).toBe(server.PREFIX + '/simple.json');
+  expect(harEntry.snapshot.response.status).toBe(200);
+});
+
 test('should collect two traces', async ({ context, page, server }, testInfo) => {
   await context.tracing.start({ screenshots: true, snapshots: true });
   await page.goto(server.EMPTY_PAGE);
