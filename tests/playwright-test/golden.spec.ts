@@ -155,22 +155,31 @@ test('should fail on same snapshots with negate matcher', async ({ runInlineTest
   expect(result.output).toContain('Expected result should be different from the actual one.');
 });
 
-test('should write missing expectations locally', async ({ runInlineTest }, testInfo) => {
+test('should write missing expectations locally twice and continue', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js': `
       const { test } = require('./helper');
       test('is a test', ({}) => {
         expect('Hello world').toMatchSnapshot('snapshot.txt');
+        expect('Hello world2').toMatchSnapshot('snapshot2.txt');
+        console.log('Here we are!');
       });
     `
-  }, {}, { CI: '' });
+  });
 
   expect(result.exitCode).toBe(1);
-  const snapshotOutputPath = testInfo.outputPath('a.spec.js-snapshots/snapshot.txt');
-  expect(result.output).toContain(`${snapshotOutputPath} is missing in snapshots, writing actual`);
-  const data = fs.readFileSync(snapshotOutputPath);
-  expect(data.toString()).toBe('Hello world');
+  expect(result.failed).toBe(1);
+
+  const snapshot1OutputPath = testInfo.outputPath('a.spec.js-snapshots/snapshot.txt');
+  expect(result.output).toContain(`${snapshot1OutputPath} is missing in snapshots, writing actual`);
+  expect(fs.readFileSync(snapshot1OutputPath, 'utf-8')).toBe('Hello world');
+
+  const snapshot2OutputPath = testInfo.outputPath('a.spec.js-snapshots/snapshot2.txt');
+  expect(result.output).toContain(`${snapshot2OutputPath} is missing in snapshots, writing actual`);
+  expect(fs.readFileSync(snapshot2OutputPath, 'utf-8')).toBe('Hello world2');
+
+  expect(result.output).toContain('Here we are!');
 });
 
 test('shouldn\'t write missing expectations locally for negated matcher', async ({ runInlineTest }, testInfo) => {

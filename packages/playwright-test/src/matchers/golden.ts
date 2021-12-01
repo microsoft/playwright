@@ -26,7 +26,7 @@ import { TestInfoImpl, UpdateSnapshots } from '../types';
 import { addSuffixToFilePath } from '../util';
 
 // Note: we require the pngjs version of pixelmatch to avoid version mismatches.
-const { PNG } = require(require.resolve('pngjs', { paths: [require.resolve('pixelmatch')] }));
+const { PNG } = require(require.resolve('pngjs', { paths: [require.resolve('pixelmatch')] })) as typeof import('pngjs');
 
 const extensionToMimeType: { [key: string]: string } = {
   'dat': 'application/octet-string',
@@ -36,14 +36,15 @@ const extensionToMimeType: { [key: string]: string } = {
   'txt': 'text/plain',
 };
 
-const GoldenComparators: { [key: string]: any } = {
+type Comparator = (actualBuffer: Buffer | string, expectedBuffer: Buffer, mimeType: string, options?: any) => { diff?: Buffer; errorMessage?: string; } | null;
+const GoldenComparators: { [key: string]: Comparator } = {
   'application/octet-string': compareBuffersOrStrings,
   'image/png': compareImages,
   'image/jpeg': compareImages,
   'text/plain': compareText,
 };
 
-function compareBuffersOrStrings(actualBuffer: Buffer | string, expectedBuffer: Buffer, mimeType: string): { diff?: object; errorMessage?: string; } | null {
+function compareBuffersOrStrings(actualBuffer: Buffer | string, expectedBuffer: Buffer, mimeType: string): { diff?: Buffer; errorMessage?: string; } | null {
   if (typeof actualBuffer === 'string')
     return compareText(actualBuffer, expectedBuffer);
   if (!actualBuffer || !(actualBuffer instanceof Buffer))
@@ -53,7 +54,7 @@ function compareBuffersOrStrings(actualBuffer: Buffer | string, expectedBuffer: 
   return null;
 }
 
-function compareImages(actualBuffer: Buffer | string, expectedBuffer: Buffer, mimeType: string, options = {}): { diff?: object; errorMessage?: string; } | null {
+function compareImages(actualBuffer: Buffer | string, expectedBuffer: Buffer, mimeType: string, options = {}): { diff?: Buffer; errorMessage?: string; } | null {
   if (!actualBuffer || !(actualBuffer instanceof Buffer))
     return { errorMessage: 'Actual result should be a Buffer.' };
 
@@ -69,7 +70,7 @@ function compareImages(actualBuffer: Buffer | string, expectedBuffer: Buffer, mi
   return count > 0 ? { diff: PNG.sync.write(diff) } : null;
 }
 
-function compareText(actual: Buffer | string, expectedBuffer: Buffer): { diff?: object; errorMessage?: string; diffExtension?: string; } | null {
+function compareText(actual: Buffer | string, expectedBuffer: Buffer): { diff?: Buffer; errorMessage?: string; diffExtension?: string; } | null {
   if (typeof actual !== 'string')
     return { errorMessage: 'Actual result should be a string' };
   const expected = expectedBuffer.toString('utf-8');
@@ -86,14 +87,13 @@ function compareText(actual: Buffer | string, expectedBuffer: Buffer): { diff?: 
 export function compare(
   actual: Buffer | string,
   pathSegments: string[],
-  snapshotPath: TestInfoImpl['snapshotPath'],
-  outputPath: TestInfoImpl['outputPath'],
+  testInfo: TestInfoImpl,
   updateSnapshots: UpdateSnapshots,
   withNegateComparison: boolean,
   options?: { threshold?: number }
 ): { pass: boolean; message?: string; expectedPath?: string, actualPath?: string, diffPath?: string, mimeType?: string } {
-  const snapshotFile = snapshotPath(...pathSegments);
-  const outputFile = outputPath(...pathSegments);
+  const snapshotFile = testInfo.snapshotPath(...pathSegments);
+  const outputFile = testInfo.outputPath(...pathSegments);
   const expectedPath = addSuffixToFilePath(outputFile, '-expected');
   const actualPath = addSuffixToFilePath(outputFile, '-actual');
   const diffPath = addSuffixToFilePath(outputFile, '-diff');
@@ -114,6 +114,15 @@ export function compare(
     const message = `${commonMissingSnapshotMessage}${isWriteMissingMode ? ', writing actual.' : '.'}`;
     if (updateSnapshots === 'all') {
       console.log(message);
+      return { pass: true, message };
+    }
+    if (updateSnapshots === 'missing') {
+      if (testInfo.status === 'passed')
+        testInfo.status = 'failed';
+      if (!('error' in testInfo))
+        testInfo.error = { value: 'Error: ' + message };
+      else if (testInfo.error?.value)
+        testInfo.error.value += '\nError: ' + message;
       return { pass: true, message };
     }
     return { pass: false, message };
