@@ -173,6 +173,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.APIRequestContextFetchResponseBodyParams = tObject({
     fetchUid: tString,
   });
+  scheme.APIRequestContextFetchLogParams = tObject({
+    fetchUid: tString,
+  });
   scheme.APIRequestContextStorageStateParams = tOptional(tObject({}));
   scheme.APIRequestContextDisposeAPIResponseParams = tObject({
     fetchUid: tString,

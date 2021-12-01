@@ -262,6 +262,14 @@ APIRequestContext:
       returns:
         binary?: binary
 
+    fetchLog:
+      parameters:
+        fetchUid: string
+      returns:
+        log:
+          type: array
+          items: string
+
     storageState:
       returns:
         cookies:

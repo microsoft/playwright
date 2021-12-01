@@ -104,6 +104,11 @@ declare global {
       toBeHidden(options?: { timeout?: number }): Promise<R>;
 
       /**
+       * Asserts given APIResponse's status is between 200 and 299.
+       */
+      toBeOK(): Promise<R>;
+
+      /**
        * Asserts given DOM node visible on the screen.
        */
       toBeVisible(options?: { timeout?: number }): Promise<R>;

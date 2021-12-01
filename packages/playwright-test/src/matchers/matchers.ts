@@ -14,16 +14,21 @@
  * limitations under the License.
  */
 
-import { Locator, Page } from 'playwright-core';
+import { Locator, Page, APIResponse } from 'playwright-core';
 import { FrameExpectOptions } from 'playwright-core/lib/client/types';
 import { constructURLBasedOnBaseURL } from 'playwright-core/lib/utils/utils';
 import type { Expect } from '../types';
+import { expectType } from '../util';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
-import { toExpectedTextValues, toMatchText } from './toMatchText';
+import { callLogText, toExpectedTextValues, toMatchText } from './toMatchText';
 
 interface LocatorEx extends Locator {
   _expect(expression: string, options: FrameExpectOptions): Promise<{ matches: boolean, received?: any, log?: string[] }>;
+}
+
+interface APIResponseEx extends APIResponse {
+  _fetchLog(): Promise<string[]>;
 }
 
 export function toBeChecked(
@@ -262,4 +267,16 @@ export function toHaveURL(
     const expectedText = toExpectedTextValues([expected]);
     return await locator._expect('to.have.url', { expectedText, isNot, timeout });
   }, expected, options);
+}
+
+export async function toBeOK(
+  this: ReturnType<Expect['getState']>,
+  response: APIResponseEx
+) {
+  const matcherName = 'toBeOK';
+  expectType(response, 'APIResponse', matcherName);
+  const log = (this.isNot === response.ok()) ? await response._fetchLog() : [];
+  const message = () => this.utils.matcherHint(matcherName, undefined, '', { isNot: this.isNot }) + callLogText(log);
+  const pass = response.ok();
+  return { message, pass };
 }

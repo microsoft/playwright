@@ -266,6 +266,7 @@ export interface APIRequestContextChannel extends APIRequestContextEventTarget, 
   _type_APIRequestContext: boolean;
   fetch(params: APIRequestContextFetchParams, metadata?: Metadata): Promise<APIRequestContextFetchResult>;
   fetchResponseBody(params: APIRequestContextFetchResponseBodyParams, metadata?: Metadata): Promise<APIRequestContextFetchResponseBodyResult>;
+  fetchLog(params: APIRequestContextFetchLogParams, metadata?: Metadata): Promise<APIRequestContextFetchLogResult>;
   storageState(params?: APIRequestContextStorageStateParams, metadata?: Metadata): Promise<APIRequestContextStorageStateResult>;
   disposeAPIResponse(params: APIRequestContextDisposeAPIResponseParams, metadata?: Metadata): Promise<APIRequestContextDisposeAPIResponseResult>;
   dispose(params?: APIRequestContextDisposeParams, metadata?: Metadata): Promise<APIRequestContextDisposeResult>;
@@ -306,6 +307,15 @@ export type APIRequestContextFetchResponseBodyOptions = {
 };
 export type APIRequestContextFetchResponseBodyResult = {
   binary?: Binary,
+};
+export type APIRequestContextFetchLogParams = {
+  fetchUid: string,
+};
+export type APIRequestContextFetchLogOptions = {
+
+};
+export type APIRequestContextFetchLogResult = {
+  log: string[],
 };
 export type APIRequestContextStorageStateParams = {};
 export type APIRequestContextStorageStateOptions = {};
