@@ -88,6 +88,8 @@ test('should support toHaveText w/ text', async ({ runInlineTest }) => {
         const locator = page.locator('#node');
         // Should normalize whitespace.
         await expect(locator).toHaveText('Text                        content');
+        // Should normalize zero width whitespace.
+        await expect(locator).toHaveText('T\u200be\u200bx\u200bt content');
       });
 
       test('pass contain', async ({ page }) => {
