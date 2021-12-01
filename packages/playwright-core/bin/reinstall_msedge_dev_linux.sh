@@ -8,25 +8,22 @@ if [[ $(arch) == "aarch64" ]]; then
   exit 1
 fi
 
-is_user_root () { [ "${EUID:-$(id -u)}" -eq 0 ]; }
-if is_user_root; then
-  maybesudo=""
-else
-  maybesudo="sudo"
-fi
-
+# 1. make sure to remove old dev if any.
 if dpkg --get-selections | grep -q "^microsoft-edge-dev[[:space:]]*install$" >/dev/null; then
-  $maybesudo apt-get remove -y microsoft-edge-dev
+  apt-get remove -y microsoft-edge-dev
 fi
 
+# 2. Install curl to download Microsoft gpg key
 if ! command -v curl >/dev/null; then
-  $maybesudo apt-get install -y curl
+  apt-get update
+  apt-get install -y curl
 fi
 
+# 3. Add the GPG key, the apt repo, update the apt cache, and install the package
 curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /tmp/microsoft.gpg
-$maybesudo install -o root -g root -m 644 /tmp/microsoft.gpg /etc/apt/trusted.gpg.d/
-$maybesudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge-dev.list'
+install -o root -g root -m 644 /tmp/microsoft.gpg /etc/apt/trusted.gpg.d/
+sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge-dev.list'
 rm /tmp/microsoft.gpg
-$maybesudo apt-get update && $maybesudo apt-get install -y microsoft-edge-dev
+apt-get update && apt-get install -y microsoft-edge-dev
 
 microsoft-edge-dev --version
