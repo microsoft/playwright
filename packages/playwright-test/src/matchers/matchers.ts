@@ -24,7 +24,7 @@ import { toEqual } from './toEqual';
 import { callLogText, toExpectedTextValues, toMatchText } from './toMatchText';
 
 interface LocatorEx extends Locator {
-  _expect(expression: string, options: FrameExpectOptions): Promise<{ matches: boolean, received?: any, log?: string[] }>;
+  _expect(expression: string, options: Omit<FrameExpectOptions, 'expectedValue'> & { expectedValue?: any }): Promise<{ matches: boolean, received?: any, log?: string[] }>;
 }
 
 interface APIResponseEx extends APIResponse {
@@ -34,10 +34,11 @@ interface APIResponseEx extends APIResponse {
 export function toBeChecked(
   this: ReturnType<Expect['getState']>,
   locator: LocatorEx,
-  options?: { timeout?: number },
+  options?: { checked?: boolean, timeout?: number },
 ) {
   return toBeTruthy.call(this, 'toBeChecked', locator, 'Locator', async (isNot, timeout) => {
-    return await locator._expect('to.be.checked', { isNot, timeout });
+    const checked = !options || options.checked === undefined || options.checked === true;
+    return await locator._expect(checked ? 'to.be.checked' : 'to.be.unchecked', { isNot, timeout });
   }, options);
 }
 

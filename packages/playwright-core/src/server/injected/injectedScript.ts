@@ -51,7 +51,7 @@ export type InjectedScriptPoll<T> = {
   cancel: () => void,
 };
 
-export type ElementStateWithoutStable = 'visible' | 'hidden' | 'enabled' | 'disabled' | 'editable' | 'checked';
+export type ElementStateWithoutStable = 'visible' | 'hidden' | 'enabled' | 'disabled' | 'editable' | 'checked' | 'unchecked';
 export type ElementState = ElementStateWithoutStable | 'stable';
 
 export interface SelectorEngineV2 {
@@ -502,14 +502,17 @@ export class InjectedScript {
     if (state === 'editable')
       return !disabled && editable;
 
-    if (state === 'checked') {
-      if (['checkbox', 'radio'].includes(element.getAttribute('role') || ''))
-        return element.getAttribute('aria-checked') === 'true';
+    if (state === 'checked' || state === 'unchecked') {
+      if (['checkbox', 'radio'].includes(element.getAttribute('role') || '')) {
+        const result = element.getAttribute('aria-checked') === 'true';
+        return state === 'checked' ? result : !result;
+      }
       if (element.nodeName !== 'INPUT')
         throw this.createStacklessError('Not a checkbox or radio button');
       if (!['radio', 'checkbox'].includes((element as HTMLInputElement).type.toLowerCase()))
         throw this.createStacklessError('Not a checkbox or radio button');
-      return (element as HTMLInputElement).checked;
+      const result = (element as HTMLInputElement).checked;
+      return state === 'checked' ? result : !result;
     }
     throw this.createStacklessError(`Unexpected element state "${state}"`);
   }
@@ -899,6 +902,8 @@ export class InjectedScript {
       let elementState: boolean | 'error:notconnected' | 'error:notcheckbox' | undefined;
       if (expression === 'to.be.checked') {
         elementState = progress.injectedScript.elementState(element, 'checked');
+      } else if (expression === 'to.be.unchecked') {
+        elementState = progress.injectedScript.elementState(element, 'unchecked');
       } else if (expression === 'to.be.disabled') {
         elementState = progress.injectedScript.elementState(element, 'disabled');
       } else if (expression === 'to.be.editable') {

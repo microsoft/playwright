@@ -280,8 +280,11 @@ locator = page.locator(".subscribe")
 expect(locator).to_be_checked()
 ```
 
-### option: LocatorAssertions.toBeChecked.timeout = %%-assertions-timeout-%%
+### option: LocatorAssertions.toBeChecked.checked
+* langs: js
+- `checked` <[boolean]>
 
+### option: LocatorAssertions.toBeChecked.timeout = %%-assertions-timeout-%%
 
 
 ## method: LocatorAssertions.toBeDisabled

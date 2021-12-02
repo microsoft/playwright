@@ -27,6 +27,18 @@ test('should support toBeChecked', async ({ runInlineTest }) => {
         await expect(locator).toBeChecked();
       });
 
+      test('pass 2', async ({ page }) => {
+        await page.setContent('<input type=checkbox checked></input>');
+        const locator = page.locator('input');
+        await expect(locator).toBeChecked({ checked: true });
+      });
+
+      test('pass 3', async ({ page }) => {
+        await page.setContent('<input type=checkbox checked></input>');
+        const locator = page.locator('input');
+        await expect(locator).not.toBeChecked({ checked: false });
+      });
+
       test('fail', async ({ page }) => {
         await page.setContent('<input type=checkbox></input>');
         const locator = page.locator('input');
@@ -37,7 +49,7 @@ test('should support toBeChecked', async ({ runInlineTest }) => {
   const output = stripAscii(result.output);
   expect(output).toContain('Error: expect(received).toBeChecked()');
   expect(output).toContain('expect(locator).toBeChecked');
-  expect(result.passed).toBe(1);
+  expect(result.passed).toBe(3);
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
 });
@@ -53,22 +65,34 @@ test('should support toBeChecked w/ not', async ({ runInlineTest }) => {
         await expect(locator).not.toBeChecked();
       });
 
+      test('pass 2', async ({ page }) => {
+        await page.setContent('<input type=checkbox></input>');
+        const locator = page.locator('input');
+        await expect(locator).toBeChecked({ checked: false });
+      });
+
       test('fail not', async ({ page }) => {
         await page.setContent('<input type=checkbox checked></input>');
         const locator = page.locator('input');
-        await expect(locator).not.toBeChecked({ timeout: 1000 });
+        await expect(locator).not.toBeChecked({ timeout: 500 });
+      });
+
+      test('fail 2', async ({ page }) => {
+        await page.setContent('<input type=checkbox checked></input>');
+        const locator = page.locator('input');
+        await expect(locator).toBeChecked({ checked: false, timeout: 500 });
       });
 
       test('fail missing', async ({ page }) => {
         await page.setContent('<div>no inputs here</div>');
         const locator2 = page.locator('input2');
-        await expect(locator2).not.toBeChecked({ timeout: 1000 });
+        await expect(locator2).not.toBeChecked({ timeout: 500 });
       });
       `,
   }, { workers: 1 });
   const output = stripAscii(result.output);
-  expect(result.passed).toBe(1);
-  expect(result.failed).toBe(2);
+  expect(result.passed).toBe(2);
+  expect(result.failed).toBe(3);
   expect(result.exitCode).toBe(1);
   // fail not
   expect(output).toContain('Error: expect(received).not.toBeChecked()');
