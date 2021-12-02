@@ -58,6 +58,13 @@ it('inputValue should work', async ({ page, server }) => {
   expect(await handle2.inputValue().catch(e => e.message)).toContain('Node is not an <input>, <textarea> or <select> element');
 });
 
+it('inputValue should work on label', async ({ page, server }) => {
+  await page.setContent(`<label><input type=text></input></label>`);
+  await page.fill('input', 'foo');
+  const handle = await page.$('label');
+  expect(await handle.inputValue()).toBe('foo');
+});
+
 it('innerHTML should work', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
   const handle = await page.$('#outer');

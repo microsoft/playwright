@@ -954,6 +954,7 @@ export class InjectedScript {
       } else if (expression === 'to.have.url') {
         received = document.location.href;
       } else if (expression === 'to.have.value') {
+        element = this.retarget(element, 'follow-label')!;
         if (element.nodeName !== 'INPUT' && element.nodeName !== 'TEXTAREA' && element.nodeName !== 'SELECT')
           throw this.createStacklessError('Not an input element');
         received = (element as any).value;
