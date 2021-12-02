@@ -136,48 +136,11 @@ export class HarTracer {
   }
 
   private _onAPIRequest(event: APIRequestEvent) {
-    const harEntry: har.Entry = {
-      _requestref: '',
-      _frameref: '',
-      _monotonicTime: monotonicTime(),
-      startedDateTime: new Date(),
-      time: -1,
-      request: {
-        method: event.method,
-        url: event.url.toString(),
-        httpVersion: FALLBACK_HTTP_VERSION,
-        cookies: event.cookies,
-        headers: Object.entries(event.headers).map(([name, value]) => ({ name, value })),
-        queryString: [...event.url.searchParams].map(e => ({ name: e[0], value: e[1] })),
-        postData: postDataForBuffer(event.postData || null, event.headers['content-type'],  this._options.content),
-        headersSize: -1,
-        bodySize: event.postData?.length || 0,
-      },
-      response: {
-        status: -1,
-        statusText: '',
-        httpVersion: FALLBACK_HTTP_VERSION,
-        cookies: [],
-        headers: [],
-        content: {
-          size: -1,
-          mimeType: 'x-unknown',
-        },
-        headersSize: -1,
-        bodySize: -1,
-        redirectURL: '',
-        _transferSize: -1
-      },
-      cache: {
-        beforeRequest: null,
-        afterRequest: null,
-      },
-      timings: {
-        send: -1,
-        wait: -1,
-        receive: -1
-      },
-    };
+    const harEntry = createHarEntry(event.method, event.url, '', '');
+    harEntry.request.cookies = event.cookies;
+    harEntry.request.headers = Object.entries(event.headers).map(([name, value]) => ({ name, value }));
+    harEntry.request.postData = postDataForBuffer(event.postData || null, event.headers['content-type'],  this._options.content);
+    harEntry.request.bodySize = event.postData?.length || 0;
     (event as any)[this._entrySymbol] = harEntry;
     if (this._started)
       this._delegate.onEntryStarted(harEntry);
@@ -222,49 +185,10 @@ export class HarTracer {
       return;
 
     const pageEntry = this._ensurePageEntry(page);
-    const harEntry: har.Entry = {
-      pageref: pageEntry.id,
-      _requestref: request.guid,
-      _frameref: request.frame().guid,
-      _monotonicTime: monotonicTime(),
-      startedDateTime: new Date(),
-      time: -1,
-      request: {
-        method: request.method(),
-        url: request.url(),
-        httpVersion: FALLBACK_HTTP_VERSION,
-        cookies: [],
-        headers: [],
-        queryString: [...url.searchParams].map(e => ({ name: e[0], value: e[1] })),
-        postData: postDataForRequest(request, this._options.content),
-        headersSize: -1,
-        bodySize: request.bodySize(),
-      },
-      response: {
-        status: -1,
-        statusText: '',
-        httpVersion: FALLBACK_HTTP_VERSION,
-        cookies: [],
-        headers: [],
-        content: {
-          size: -1,
-          mimeType: request.headerValue('content-type') || 'x-unknown',
-        },
-        headersSize: -1,
-        bodySize: -1,
-        redirectURL: '',
-        _transferSize: -1
-      },
-      cache: {
-        beforeRequest: null,
-        afterRequest: null,
-      },
-      timings: {
-        send: -1,
-        wait: -1,
-        receive: -1
-      },
-    };
+    const harEntry = createHarEntry(request.method(), url, request.guid, request.frame().guid);
+    harEntry.pageref = pageEntry.id;
+    harEntry.request.postData = postDataForRequest(request, this._options.content);
+    harEntry.request.bodySize = request.bodySize();
     if (request.redirectedFrom()) {
       const fromEntry = this._entryForRequest(request.redirectedFrom()!);
       if (fromEntry)
@@ -459,6 +383,51 @@ export class HarTracer {
     this._pageEntries.clear();
     return log;
   }
+}
+
+function createHarEntry(method: string, url: URL, requestref: string, frameref: string): har.Entry {
+  const harEntry: har.Entry = {
+    _requestref: requestref,
+    _frameref: frameref,
+    _monotonicTime: monotonicTime(),
+    startedDateTime: new Date(),
+    time: -1,
+    request: {
+      method: method,
+      url: url.toString(),
+      httpVersion: FALLBACK_HTTP_VERSION,
+      cookies: [],
+      headers: [],
+      queryString: [...url.searchParams].map(e => ({ name: e[0], value: e[1] })),
+      headersSize: -1,
+      bodySize: 0,
+    },
+    response: {
+      status: -1,
+      statusText: '',
+      httpVersion: FALLBACK_HTTP_VERSION,
+      cookies: [],
+      headers: [],
+      content: {
+        size: -1,
+        mimeType: 'x-unknown',
+      },
+      headersSize: -1,
+      bodySize: -1,
+      redirectURL: '',
+      _transferSize: -1
+    },
+    cache: {
+      beforeRequest: null,
+      afterRequest: null,
+    },
+    timings: {
+      send: -1,
+      wait: -1,
+      receive: -1
+    },
+  };
+  return harEntry;
 }
 
 function postDataForRequest(request: network.Request, content: 'omit' | 'sha1' | 'embedded'): har.PostData | undefined {
