@@ -634,3 +634,40 @@ it('should include _requestref for redirects', async ({ contextFactory, server }
   expect(entryEmptyPage.request.url).toBe(server.EMPTY_PAGE);
   expect(entryEmptyPage._requestref).toBe(requests.get(entryEmptyPage.request.url));
 });
+
+it('should include API request', async ({ contextFactory, server }, testInfo) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  const url = server.PREFIX + '/simple.json';
+  const response = await page.request.post(url, {
+    headers: { cookie: 'a=b; c=d' },
+    data: { foo: 'bar' }
+  });
+  const responseBody = await response.body();
+  const log = await getLog();
+  expect(log.entries.length).toBe(1);
+  const entry = log.entries[0];
+  expect(entry.request.url).toBe(url);
+  expect(entry.request.method).toBe('POST');
+  expect(entry.request.httpVersion).toBe('HTTP/1.1');
+  expect(entry.request.cookies).toEqual([
+    {
+      'name': 'a',
+      'value': 'b'
+    },
+    {
+      'name': 'c',
+      'value': 'd'
+    }
+  ]);
+  expect(entry.request.headers.length).toBeGreaterThan(1);
+  expect(entry.request.headers.find(h => h.name.toLowerCase() === 'user-agent')).toBeTruthy();
+  expect(entry.request.headers.find(h => h.name.toLowerCase() === 'content-type')?.value).toBe('application/json');
+  expect(entry.request.headers.find(h => h.name.toLowerCase() === 'content-length')?.value).toBe('13');
+  expect(entry.request.bodySize).toBe(13);
+
+  expect(entry.response.status).toBe(200);
+  expect(entry.response.headers.find(h => h.name.toLowerCase() === 'content-type')?.value).toContain('application/json');
+  expect(entry.response.content.size).toBe(15);
+  expect(entry.response.content.text).toBe(responseBody.toString('base64'));
+});
+
