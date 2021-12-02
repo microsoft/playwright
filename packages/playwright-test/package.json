@@ -45,9 +45,11 @@
     "@babel/preset-typescript": "^7.14.5",
     "colors": "^1.4.0",
     "commander": "^8.2.0",
+    "debug": "^4.1.1",
     "expect": "=27.2.5",
     "jest-matcher-utils": "=27.2.5",
     "jpeg-js": "^0.4.2",
+    "mime": "^2.4.6",
     "minimatch": "^3.0.3",
     "ms": "^2.1.2",
     "open": "^8.3.0",
@@ -58,6 +60,6 @@
     "rimraf": "^3.0.2",
     "source-map-support": "^0.4.18",
     "stack-utils": "^2.0.3",
-    "debug": "^4.1.1"
+    "yazl": "^2.5.1"
   }
 }
