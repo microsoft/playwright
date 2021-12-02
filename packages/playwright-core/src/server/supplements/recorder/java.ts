@@ -18,9 +18,10 @@ import type { BrowserContextOptions } from '../../../..';
 import { LanguageGenerator, LanguageGeneratorOptions, toSignalMap } from './language';
 import { ActionInContext } from './codeGenerator';
 import { Action, actionTitle } from './recorderActions';
-import { escapeWithQuotes, MouseClickOptions, toModifiers } from './utils';
+import { MouseClickOptions, toModifiers } from './utils';
 import deviceDescriptors from '../../deviceDescriptors';
 import { JavaScriptFormatter } from './javascript';
+import { escapeWithQuotes } from '../../../utils/stringUtils';
 
 export class JavaLanguageGenerator implements LanguageGenerator {
   id = 'java';

@@ -9809,7 +9809,14 @@ export interface Locator {
      * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
      */
     timeout?: number;
-  }): Promise<void>;}
+  }): Promise<void>;
+
+  /**
+   * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example,
+   * `"Playwright"` matches `<article><div>Playwright</div></article>`.
+   * @param text Text to filter by as a string or as a regular expression.
+   */
+  withText(text: string|RegExp): Locator;}
 
 /**
  * BrowserType provides methods to launch a specific browser instance or connect to an existing one. The following is a

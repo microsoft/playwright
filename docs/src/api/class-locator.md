@@ -1059,3 +1059,15 @@ orderSent.WaitForAsync();
 
 ### option: Locator.waitFor.state = %%-wait-for-selector-state-%%
 ### option: Locator.waitFor.timeout = %%-input-timeout-%%
+
+## method: Locator.withText
+- returns: <[Locator]>
+
+Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example, `"Playwright"`
+matches `<article><div>Playwright</div></article>`.
+
+
+### param: Locator.withText.text
+- `text` <[string]|[RegExp]>
+
+Text to filter by as a string or as a regular expression.

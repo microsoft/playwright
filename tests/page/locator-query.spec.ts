@@ -59,3 +59,28 @@ it('should throw on due to strictness 2', async ({ page }) => {
   const e = await page.locator('option').evaluate(e => {}).catch(e => e);
   expect(e.message).toContain(`strict mode violation`);
 });
+
+it('should filter by text', async ({ page }) => {
+  await page.setContent(`<div>Foobar</div><div>Bar</div>`);
+  await expect(page.locator('div').withText('Foo')).toHaveText('Foobar');
+});
+
+it('should filter by text 2', async ({ page }) => {
+  await page.setContent(`<div>foo <span>hello world</span> bar</div>`);
+  await expect(page.locator('div').withText('hello world')).toHaveText('foo hello world bar');
+});
+
+it('should filter by regex', async ({ page }) => {
+  await page.setContent(`<div>Foobar</div><div>Bar</div>`);
+  await expect(page.locator('div').withText(/Foo.*/)).toHaveText('Foobar');
+});
+
+it('should filter by text with quotes', async ({ page }) => {
+  await page.setContent(`<div>Hello "world"</div><div>Hello world</div>`);
+  await expect(page.locator('div').withText('Hello "world"')).toHaveText('Hello "world"');
+});
+
+it('should filter by regex with quotes', async ({ page }) => {
+  await page.setContent(`<div>Hello "world"</div><div>Hello world</div>`);
+  await expect(page.locator('div').withText(/Hello "world"/)).toHaveText('Hello "world"');
+});
