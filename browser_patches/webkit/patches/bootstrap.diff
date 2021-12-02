@@ -9785,6 +9785,19 @@ index 350fdd497eaaab711059c54b5075015b19379368..bf5cd7221e1a131dd880d11e968b1327
      )
  endif ()
  
+diff --git a/Source/WebKit/Scripts/generate-unified-sources.sh b/Source/WebKit/Scripts/generate-unified-sources.sh
+index c67e2d1e3d5dd0b98a8775cea6ed9b78e593eb0a..7e5dd02f7e91e6264148d7024b3632750fb1bf50 100755
+--- a/Source/WebKit/Scripts/generate-unified-sources.sh
++++ b/Source/WebKit/Scripts/generate-unified-sources.sh
+@@ -14,7 +14,7 @@ if [ -z "${BUILD_SCRIPTS_DIR}" ]; then
+     fi
+ fi
+ 
+-UnifiedSourceCppFileCount=111
++UnifiedSourceCppFileCount=112
+ UnifiedSourceMmFileCount=80
+ 
+ if [ $# -eq 0 ]; then
 diff --git a/Source/WebKit/Shared/API/c/wpe/WebKit.h b/Source/WebKit/Shared/API/c/wpe/WebKit.h
 index caf67e1dece5b727e43eba780e70814f8fdb0f63..740150d2589d6e16a516daa3bf6ef899ac538c99 100644
 --- a/Source/WebKit/Shared/API/c/wpe/WebKit.h
