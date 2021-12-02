@@ -58,6 +58,7 @@ function copy_test_scripts {
 }
 
 function run_tests {
+  test_yarn2
   test_playwright_test_should_work
   test_connect_to_selenium
   test_screencast
@@ -650,6 +651,19 @@ function test_connect_to_selenium {
   node "${SCRIPTS_PATH}/download-chromedriver.js" ${TEST_ROOT}
   cd ${SCRIPTS_PATH}/output
   PWTEST_CHROMEDRIVER="${TEST_ROOT}/chromedriver" npm run test -- --reporter=list selenium.spec
+  echo "${FUNCNAME[0]} success"
+}
+
+function test_yarn2 {
+  initialize_test "${FUNCNAME[0]}"
+  copy_test_scripts
+
+  npm i corepack
+  npm install ${PLAYWRIGHT_CORE_TGZ}
+  npm install ${PLAYWRIGHT_TEST_TGZ}
+  PLAYWRIGHT_BROWSERS_PATH="0" npx playwright install chromium
+  PLAYWRIGHT_BROWSERS_PATH="0" ./node_modules/.bin/yarn playwright test -c . --reporter=html sample.spec.js
+
   echo "${FUNCNAME[0]} success"
 }
 
