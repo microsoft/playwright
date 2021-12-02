@@ -71,6 +71,8 @@ it('should return response body when Cross-Origin-Opener-Policy is set', async (
 });
 
 it('should fire requestfailed when intercepting race', async ({ page, server, browserName }) => {
+  it.skip(browserName !== 'chromium', 'This test is specifically testing Chromium race');
+
   const promsie = new Promise<void>(resolve => {
     let counter = 0;
     const failures = new Set();
@@ -93,12 +95,6 @@ it('should fire requestfailed when intercepting race', async ({ page, server, br
   // Stall requests to make sure we don't get requestfinished.
   await page.route('**', route => {});
 
-  const runFunc = {
-    chromium: 'abortAll()',  // Fast in chromium to expose the race.
-    webkit: 'setTimeout(abortAll, 0)', // Async in webkit to let it issue requests.
-    firefox: 'setTimeout(abortAll, 1000)', // Slow in firefox to give it enough time to issue requests.
-  }[browserName];
-
   await page.setContent(`
     <iframe src="${server.EMPTY_PAGE}"></iframe>
     <iframe src="${server.EMPTY_PAGE}"></iframe>
@@ -116,7 +112,7 @@ it('should fire requestfailed when intercepting race', async ({ page, server, br
         for (const frame of frames)
           frame.src = "about:blank";
       }
-      ${runFunc}
+      abortAll();
     </script>
   `);
 
