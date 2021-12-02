@@ -1117,8 +1117,9 @@ export class Frame extends SdkObject {
   }
 
   async inputValue(metadata: CallMetadata, selector: string, options: types.TimeoutOptions & types.StrictOptions = {}): Promise<string> {
-    return this._scheduleRerunnableTask(metadata, selector, (progress, element) => {
-      if (element.nodeName !== 'INPUT' && element.nodeName !== 'TEXTAREA' && element.nodeName !== 'SELECT')
+    return this._scheduleRerunnableTask(metadata, selector, (progress, node) => {
+      const element = progress.injectedScript.retarget(node, 'follow-label');
+      if (!element || (element.nodeName !== 'INPUT' && element.nodeName !== 'TEXTAREA' && element.nodeName !== 'SELECT'))
         throw progress.injectedScript.createStacklessError('Node is not an <input>, <textarea> or <select> element');
       return (element as any).value;
     }, undefined, options);

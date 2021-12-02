@@ -199,10 +199,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async inputValue(): Promise<string> {
     return throwRetargetableDOMError(await this.evaluateInUtility(([injected, node]) => {
-      if (node.nodeType !== Node.ELEMENT_NODE || (node.nodeName !== 'INPUT' && node.nodeName !== 'TEXTAREA' && node.nodeName !== 'SELECT'))
+      const element = injected.retarget(node, 'follow-label');
+      if (!element || (element.nodeName !== 'INPUT' && element.nodeName !== 'TEXTAREA' && element.nodeName !== 'SELECT'))
         throw injected.createStacklessError('Node is not an <input>, <textarea> or <select> element');
-      const element = node as unknown as (HTMLInputElement | HTMLTextAreaElement);
-      return { value: element.value };
+      return { value: (element as HTMLInputElement | HTMLTextAreaElement).value };
     }, undefined)).value;
   }
 
