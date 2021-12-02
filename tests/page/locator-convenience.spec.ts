@@ -172,3 +172,16 @@ it('allInnerTexts should work', async ({ page }) => {
   await page.setContent(`<div>A</div><div>B</div><div>C</div>`);
   expect(await page.locator('div').allInnerTexts()).toEqual(['A', 'B', 'C']);
 });
+
+it('isVisible and isHidden should work with details', async ({ page }) => {
+  await page.setContent(`<details>
+    <summary>click to open</summary>
+      <ul>
+        <li>hidden item 1</li>
+        <li>hidden item 2</li>
+        <li>hidden item 3</li>
+      </ul
+  </details>`);
+
+  await expect(page.locator('ul')).toBeHidden();
+});
