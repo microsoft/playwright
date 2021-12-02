@@ -106,7 +106,7 @@ export class ProjectImpl {
         to._addTest(test);
         if (!filter(test)) {
           to._entries.pop();
-          to.suites.pop();
+          to.tests.pop();
         }
       }
     }

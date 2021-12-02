@@ -405,6 +405,36 @@ test('should show nice stacks for locators', async ({ runInlineTest }) => {
   ]);
 });
 
+test('should report correct tests/suites when using grep', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.js': `
+      const { test } = pwt;
+
+      test.describe('@foo', () => {
+        test('test1', async ({ }) => {
+          console.log('%%test1');
+        });
+        test('test2', async ({ }) => {
+          console.log('%%test2');
+        });
+      });
+
+      test('test3', async ({ }) => {
+        console.log('%%test3');
+      });
+    `,
+  }, { 'grep': '@foo' });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toContain('%%test1');
+  expect(result.output).toContain('%%test2');
+  expect(result.output).not.toContain('%%test3');
+  const fileSuite = result.report.suites[0];
+  expect(fileSuite.suites.length).toBe(1);
+  expect(fileSuite.suites[0].specs.length).toBe(2);
+  expect(fileSuite.specs.length).toBe(0);
+});
+
 function stripEscapedAscii(str: string) {
   return str.replace(/\\u00[a-z0-9][a-z0-9]\[[^m]+m/g, '');
 }
