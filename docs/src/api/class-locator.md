@@ -167,13 +167,13 @@ const rows = page.locator('table tr');
 // Pattern 1: use locator methods to calculate text on the whole list.
 const texts = await rows.allTextContents();
 
-// Pattern 2: do something with each element in the list:
+// Pattern 2: do something with each element in the list.
 const count = await rows.count()
 for (let i = 0; i < count; ++i)
   console.log(await rows.nth(i).textContent());
 
-// Pattern 3: resolve locator to elements on page and map them to their text content
-// Note: the code inside evaluateAll runs in page, you can call any DOM apis there
+// Pattern 3: resolve locator to elements on page and map them to their text content.
+// Note: the code inside evaluateAll runs in page, you can call any DOM apis there.
 const texts = await rows.evaluateAll(list => list.map(element => element.textContent));
 ```
 
@@ -184,13 +184,13 @@ rows = page.locator("table tr")
 # Pattern 1: use locator methods to calculate text on the whole list.
 texts = await rows.all_text_contents()
 
-# Pattern 2: do something with each element in the list:
+# Pattern 2: do something with each element in the list.
 count = await rows.count()
 for i in range(count):
   print(await rows.nth(i).text_content())
 
-# Pattern 3: resolve locator to elements on page and map them to their text content
-# Note: the code inside evaluateAll runs in page, you can call any DOM apis there
+# Pattern 3: resolve locator to elements on page and map them to their text content.
+# Note: the code inside evaluateAll runs in page, you can call any DOM apis there.
 texts = await rows.evaluate_all("list => list.map(element => element.textContent)")
 ```
 
@@ -201,13 +201,13 @@ rows = page.locator("table tr")
 # Pattern 1: use locator methods to calculate text on the whole list.
 texts = rows.all_text_contents()
 
-# Pattern 2: do something with each element in the list:
+# Pattern 2: do something with each element in the list.
 count = rows.count()
 for i in range(count):
   print(rows.nth(i).text_content())
 
-# Pattern 3: resolve locator to elements on page and map them to their text content
-# Note: the code inside evaluateAll runs in page, you can call any DOM apis there
+# Pattern 3: resolve locator to elements on page and map them to their text content.
+# Note: the code inside evaluateAll runs in page, you can call any DOM apis there.
 texts = rows.evaluate_all("list => list.map(element => element.textContent)")
 ```
 
@@ -218,14 +218,14 @@ Locator rows = page.locator("table tr");
 // Pattern 1: use locator methods to calculate text on the whole list.
 List<String> texts = rows.allTextContents();
 
-// Pattern 2: do something with each element in the list:
+// Pattern 2: do something with each element in the list.
 int count = rows.count()
 for (int i = 0; i < count; ++i)
   System.out.println(rows.nth(i).textContent());
 
-// Pattern 3: resolve locator to elements on page and map them to their text content
-// Note: the code inside evaluateAll runs in page, you can call any DOM apis there
-Object texts = await rows.evaluateAll("list => list.map(element => element.textContent)");
+// Pattern 3: resolve locator to elements on page and map them to their text content.
+// Note: the code inside evaluateAll runs in page, you can call any DOM apis there.
+Object texts = rows.evaluateAll("list => list.map(element => element.textContent)");
 ```
 
 ```csharp
