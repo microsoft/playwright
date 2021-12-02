@@ -8539,13 +8539,13 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
  * // Pattern 1: use locator methods to calculate text on the whole list.
  * const texts = await rows.allTextContents();
  *
- * // Pattern 2: do something with each element in the list:
+ * // Pattern 2: do something with each element in the list.
  * const count = await rows.count()
  * for (let i = 0; i < count; ++i)
  *   console.log(await rows.nth(i).textContent());
  *
- * // Pattern 3: resolve locator to elements on page and map them to their text content
- * // Note: the code inside evaluateAll runs in page, you can call any DOM apis there
+ * // Pattern 3: resolve locator to elements on page and map them to their text content.
+ * // Note: the code inside evaluateAll runs in page, you can call any DOM apis there.
  * const texts = await rows.evaluateAll(list => list.map(element => element.textContent));
  * ```
  *
