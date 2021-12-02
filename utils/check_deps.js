@@ -21,8 +21,24 @@ const ts = require('typescript');
 const path = require('path');
 
 async function checkDeps() {
-  const root = path.normalize(path.join(__dirname, '..', 'packages', 'playwright-core'));
-  const src = path.normalize(path.join(__dirname, '..', 'packages', 'playwright-core', 'src'));
+  const packages = path.normalize(path.join(__dirname, '..', 'packages'));
+  const corePackageJson = await innerCheckDeps(path.join(packages, 'playwright-core'), true);
+  const testPackageJson = await innerCheckDeps(path.join(packages, 'playwright-test'), false);
+
+  let hasVersionMismatch = false;
+  for (const [key, value] of Object.entries(corePackageJson.dependencies)) {
+    const value2 = testPackageJson.dependencies[key];
+    if (value2 && value2 !== value) {
+      hasVersionMismatch = true;
+      console.log(`Dependency version mismatch ${key}: ${value} != ${value2}`);
+    }
+  }
+  process.exit(hasVersionMismatch ? 1 : 0);
+}
+
+async function innerCheckDeps(root, checkDepsFile) {
+  const deps = new Set();
+  const src = path.join(root, 'src');
   const packageJSON = require(path.join(root, 'package.json'));
   const program = ts.createProgram({
     options: {
@@ -40,23 +56,46 @@ async function checkDeps() {
     if (!usedDeps.has(key) && DEPS[key].length)
       errors.push(`Stale DEPS entry "${key}"`);
   }
-  for (const error of errors)
-    console.log(error);
-  if (errors.length) {
+  if (checkDepsFile && errors.length) {
+    for (const error of errors)
+      console.log(error);
     console.log(`--------------------------------------------------------`);
     console.log(`Changing the project structure or adding new components?`);
     console.log(`Update DEPS in ./${path.relative(root, __filename)}`);
     console.log(`--------------------------------------------------------`);
+    process.exit(1);
   }
-  process.exit(errors.length ? 1 : 0);
+
+  for (const dep of deps) {
+    const resolved = require.resolve(dep);
+    if (dep === resolved || !resolved.includes('node_modules'))
+      deps.delete(dep);
+  }
+  for (const dep of Object.keys(packageJSON.dependencies))
+    deps.delete(dep);
+
+  if (deps.size) {
+    console.log('Dependencies are not declared in package.json:');
+    for (const dep of deps)
+      console.log(`  ${dep}`);
+    process.exit(1);
+  }
+
+  return packageJSON;
 
   function visit(node, fileName) {
     if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
       const importName = node.moduleSpecifier.text;
+      if (!importName.startsWith('.') && !node.importClause.isTypeOnly && !fileName.includes(path.sep + 'web' + path.sep)) {
+        if (importName.startsWith('@'))
+          deps.add(importName.split('/').slice(0, 2).join('/'));
+        else
+          deps.add(importName.split('/')[0]);
+      }
       const importPath = path.resolve(path.dirname(fileName), importName) + '.ts';
-      if (!allowImport(fileName, importPath))
+      if (checkDepsFile && !allowImport(fileName, importPath))
         errors.push(`Disallowed import from ${path.relative(root, fileName)} to ${path.relative(root, importPath)}`);
-      if (!allowExternalImport(fileName, importPath, importName))
+      if (checkDepsFile && !allowExternalImport(fileName, importPath, importName))
         errors.push(`Disallowed external dependency ${importName} from ${path.relative(root, fileName)}`);
     }
     ts.forEachChild(node, x => visit(x, fileName));
