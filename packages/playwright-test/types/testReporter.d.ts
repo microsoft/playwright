@@ -106,6 +106,9 @@ export interface Suite {
  * or repeated multiple times, it will have multiple `TestCase` objects in corresponding projects' suites.
  */
 export interface TestCase {
+  /**
+   * Suite this test case belongs to.
+   */
   parent: Suite;
   /**
    * Test title as passed to the [test.(call)(title, testFunction)](https://playwright.dev/docs/api/class-test#test-call)
