@@ -13083,10 +13083,10 @@ index 0000000000000000000000000000000000000000..4ec8b96bbbddf8a7b042f53a8068754a
 +cairo_status_t cairo_image_surface_write_to_jpeg_mem(cairo_surface_t *sfc, unsigned char **data, size_t *len, int quality);
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..288f46125a3ed43af1ce977c658fd49ad4c97ee1
+index 0000000000000000000000000000000000000000..ec063e2f3757046c6677208f9da60f464d2fac63
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
-@@ -0,0 +1,295 @@
+@@ -0,0 +1,302 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -13180,6 +13180,13 @@ index 0000000000000000000000000000000000000000..288f46125a3ed43af1ce977c658fd49a
 +#if PLATFORM(WPE)
 +    // Get actual image size (in device pixels).
 +    WebCore::IntSize displaySize(cairo_image_surface_get_width(surface), cairo_image_surface_get_height(surface));
++
++    WebCore::IntSize drawingAreaSize = m_page.drawingArea()->size();
++    drawingAreaSize.scale(m_page.deviceScaleFactor());
++    if (drawingAreaSize != displaySize) {
++        return;
++    }
++
 +#else
 +    WebCore::IntSize displaySize = m_page.drawingArea()->size();
 +#endif
