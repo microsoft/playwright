@@ -58,15 +58,3 @@ export function describeFrame(frame: Frame): { frameName?: string, frameUrl: str
     return { isMainFrame: false, frameUrl: frame.url(), frameName: frame.name() };
   return { isMainFrame: false, frameUrl: frame.url() };
 }
-
-export function escapeWithQuotes(text: string, char: string = '\'') {
-  const stringified = JSON.stringify(text);
-  const escapedText = stringified.substring(1, stringified.length - 1).replace(/\\"/g, '"');
-  if (char === '\'')
-    return char + escapedText.replace(/[']/g, '\\\'') + char;
-  if (char === '"')
-    return char + escapedText.replace(/["]/g, '\\"') + char;
-  if (char === '`')
-    return char + escapedText.replace(/[`]/g, '`') + char;
-  throw new Error('Invalid escape char');
-}

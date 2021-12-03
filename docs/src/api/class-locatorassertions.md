@@ -281,7 +281,6 @@ expect(locator).to_be_checked()
 ```
 
 ### option: LocatorAssertions.toBeChecked.checked
-* langs: js
 - `checked` <[boolean]>
 
 ### option: LocatorAssertions.toBeChecked.timeout = %%-assertions-timeout-%%

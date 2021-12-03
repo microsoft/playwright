@@ -18,11 +18,12 @@ import * as structs from '../../types/structs';
 import * as api from '../../types/types';
 import * as channels from '../protocol/channels';
 import * as util from 'util';
-import { monotonicTime } from '../utils/utils';
+import { isRegExp, monotonicTime } from '../utils/utils';
 import { ElementHandle } from './elementHandle';
 import { Frame } from './frame';
 import { FilePayload, FrameExpectOptions, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
 import { parseResult, serializeArgument } from './jsHandle';
+import { escapeWithQuotes } from '../utils/stringUtils';
 
 export class Locator implements api.Locator {
   private _frame: Frame;
@@ -95,6 +96,12 @@ export class Locator implements api.Locator {
 
   locator(selector: string): Locator {
     return new Locator(this._frame, this._selector + ' >> ' + selector);
+  }
+
+  withText(text: string | RegExp): Locator {
+    const matcher = isRegExp(text) ? 'text-matches' : 'has-text';
+    const source = escapeWithQuotes(isRegExp(text) ? text.source : text, '"');
+    return new Locator(this._frame, this._selector + ` >> :scope:${matcher}(${source})`);
   }
 
   frameLocator(selector: string): FrameLocator {
