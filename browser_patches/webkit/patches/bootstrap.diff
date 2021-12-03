@@ -13084,10 +13084,10 @@ index 0000000000000000000000000000000000000000..4ec8b96bbbddf8a7b042f53a8068754a
 +cairo_status_t cairo_image_surface_write_to_jpeg_mem(cairo_surface_t *sfc, unsigned char **data, size_t *len, int quality);
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..b8f95cffbc548e7d6c13e2664587d97d71c9e3fa
+index 0000000000000000000000000000000000000000..694b5afbc78861f0262a33959b3a1644acc8fc82
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
-@@ -0,0 +1,293 @@
+@@ -0,0 +1,298 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -13178,8 +13178,14 @@ index 0000000000000000000000000000000000000000..b8f95cffbc548e7d6c13e2664587d97d
 +#if USE(CAIRO)
 +void InspectorScreencastAgent::didPaint(cairo_surface_t* surface)
 +{
++#if PLATFORM(WPE)
++    // Get actual image size (in device pixels).
++    WebCore::IntSize displaySize(cairo_image_surface_get_width(surface), cairo_image_surface_get_height(surface));
++#else
++    WebCore::IntSize displaySize = m_page.drawingArea()->size();
++#endif
 +    if (m_encoder)
-+        m_encoder->encodeFrame(surface, m_page.drawingArea()->size());
++        m_encoder->encodeFrame(surface, displaySize);
 +    if (m_screencast) {
 +
 +        {
@@ -13198,7 +13204,6 @@ index 0000000000000000000000000000000000000000..b8f95cffbc548e7d6c13e2664587d97d
 +        if (m_screencastFramesInFlight > kMaxFramesInFlight)
 +            return;
 +        // Scale image to fit width / height
-+        WebCore::IntSize displaySize = m_page.drawingArea()->size();
 +        double scale = std::min(m_screencastWidth / displaySize.width(), m_screencastHeight / displaySize.height());
 +        RefPtr<cairo_surface_t> scaledSurface;
 +        if (scale < 1) {
@@ -13486,10 +13491,10 @@ index 0000000000000000000000000000000000000000..a45b32a1c839cf019fcece2f950e595d
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..86a2559c353e8aa87c7318b891e99f31888fe247
+index 0000000000000000000000000000000000000000..47b1594e0af11849dc975d9479c72e90481bcb54
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
-@@ -0,0 +1,393 @@
+@@ -0,0 +1,385 @@
 +/*
 + * Copyright (c) 2010, The WebM Project authors. All rights reserved.
 + * Copyright (c) 2013 The Chromium Authors. All rights reserved.
@@ -13717,7 +13722,6 @@ index 0000000000000000000000000000000000000000..86a2559c353e8aa87c7318b891e99f31
 +                    return false;
 +                }
 +                ++m_frameCount;
-+                // fprintf(stderr, "  #%03d %spts=%" PRId64 " sz=%zd\n", m_frameCount, (pkt->data.frame.flags & VPX_FRAME_IS_KEY) != 0 ? "[K] " : "", pkt->data.frame.pts, pkt->data.frame.sz);
 +                m_pts += pkt->data.frame.duration;
 +            }
 +        }
@@ -13733,7 +13737,6 @@ index 0000000000000000000000000000000000000000..86a2559c353e8aa87c7318b891e99f31
 +
 +        m_writer->finish();
 +        fclose(m_file);
-+        // fprintf(stderr, "ScreencastEncoder::finish %d frames\n", m_frameCount);
 +    }
 +
 +    Ref<WorkQueue> m_encoderQueue;
@@ -13799,7 +13802,6 @@ index 0000000000000000000000000000000000000000..86a2559c353e8aa87c7318b891e99f31
 +    }
 +
 +    std::unique_ptr<VPXCodec> vpxCodec(new VPXCodec(codec, cfg, file));
-+    // fprintf(stderr, "ScreencastEncoder initialized with: %s\n", vpx_codec_iface_name(codec_interface));
 +    return adoptRef(new ScreencastEncoder(WTFMove(vpxCodec), size, scale));
 +}
 +
@@ -13821,21 +13823,17 @@ index 0000000000000000000000000000000000000000..86a2559c353e8aa87c7318b891e99f31
 +#if USE(CAIRO)
 +void ScreencastEncoder::encodeFrame(cairo_surface_t* drawingAreaSurface, IntSize size)
 +{
-+    // fprintf(stderr, "ScreencastEncoder::encodeFrame\n");
 +    flushLastFrame();
 +    // Note that in WPE drawing area size is updated asynchronously and may differ from acutal
 +    // size of the surface.
 +    if (size.isZero()) {
-+        // fprintf(stderr, "Cairo surface size is 0\n");
 +        return;
 +    }
 +
-+    // TODO: adjust device scale factor?
 +    RefPtr<cairo_surface_t> surface = adoptRef(cairo_image_surface_create(CAIRO_FORMAT_ARGB32, m_size.width(), m_size.height()));
 +    {
 +        RefPtr<cairo_t> cr = adoptRef(cairo_create(surface.get()));
 +
-+        // TODO: compare to libyuv scale functions?
 +        cairo_matrix_t transform;
 +        if (m_scale) {
 +            cairo_matrix_init_scale(&transform, *m_scale, *m_scale);
@@ -13859,7 +13857,6 @@ index 0000000000000000000000000000000000000000..86a2559c353e8aa87c7318b891e99f31
 +#elif PLATFORM(MAC)
 +void ScreencastEncoder::encodeFrame(RetainPtr<CGImageRef>&& windowImage)
 +{
-+    // fprintf(stderr, "ScreencastEncoder::encodeFrame\n");
 +    flushLastFrame();
 +
 +    m_lastFrame = makeUnique<VPXFrame>(WTFMove(windowImage), m_scale, m_offsetTop);
