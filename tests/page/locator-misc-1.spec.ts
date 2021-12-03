@@ -87,6 +87,12 @@ it('should focus a button', async ({ page, server }) => {
   expect(await button.evaluate(button => document.activeElement === button)).toBe(true);
 });
 
+it('focus should respect strictness', async ({ page, server }) => {
+  await page.setContent('<div>A</div><div>B</div>');
+  const error = await page.locator('div').focus().catch(e => e);
+  expect(error.message).toContain('strict mode violation');
+});
+
 it('should dispatch click event via ElementHandles', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   const button = page.locator('button');
