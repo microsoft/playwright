@@ -50,6 +50,23 @@ test('should be able to call expect.extend in config', async ({ runInlineTest })
   expect(result.passed).toBe(1);
 });
 
+test('should not expand huge arrays', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'expect-test.spec.ts': `
+      const { test } = pwt;
+      test('numeric ranges', () => {
+        const a1 = Array(100000).fill(1);
+        const a2 = Array(100000).fill(1);
+        a2[500] = 2;
+        test.expect(a1).toEqual(a2);
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.output.length).toBeLessThan(100000);
+});
+
 test('should work with default expect prototype functions', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
@@ -126,19 +143,29 @@ test('should work with custom PlaywrightTest namespace', async ({ runTSC }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should not expand huge arrays', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'expect-test.spec.ts': `
-      const { test } = pwt;
-      test('numeric ranges', () => {
-        const a1 = Array(100000).fill(1);
-        const a2 = Array(100000).fill(1);
-        a2[500] = 2;
-        test.expect(a1).toEqual(a2);
-      });
+test('should hide unrelevant conditional expect matchers', async ({ runTSC }) => {
+  test.fixme();
+  const result = await runTSC({
+    'a.spec.ts': `
+    const { test } = pwt;
+    test('custom matchers', async ({ page }) => {
+      await test.expect(page).toHaveURL('https://example.com');
+      await test.expect(page).toBe(true);
+      // @ts-expect-error
+      await test.expect(page).toBeEnabled();
+
+      await test.expect(page.locator('foo')).toBeEnabled();
+      await test.expect(page.locator('foo')).toBe(true);
+      // @ts-expect-error
+      await test.expect(page.locator('foo')).toHaveURL('https://example.com');
+
+      const res = await page.request.get('http://i-do-definitely-not-exist.com');
+      await test.expect(res).toBeOK();
+      await test.expect(res).toBe(true);
+      // @ts-expect-error
+      await test.expect(res).toHaveURL('https://example.com');
+    });
     `
   });
-  expect(result.exitCode).toBe(1);
-  expect(result.passed).toBe(0);
-  expect(result.output.length).toBeLessThan(100000);
+  expect(result.exitCode).toBe(0);
 });
