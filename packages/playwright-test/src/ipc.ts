@@ -95,6 +95,3 @@ export type GlobalFixtureSetupResponse = {
   stringifiedValue?: string;
 };
 
-export type GlobalFixtureTeardownRequest = {
-  id: string;
-};

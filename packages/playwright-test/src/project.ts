@@ -109,17 +109,25 @@ export class ProjectImpl {
   }
 
   private resolveFixtures(testType: TestTypeImpl, configUse: Fixtures): FixturesWithLocation[] {
-    return testType.fixtures.map(f => {
+    const result: FixturesWithLocation[] = [];
+    for (const f of testType.fixtures) {
       const configKeys = new Set(Object.keys(configUse || {}));
-      const resolved = { ...f.fixtures };
-      for (const [key, value] of Object.entries(resolved)) {
-        if (!isFixtureOption(value) || !configKeys.has(key))
+      const options = {};
+      const fixtures = {};
+      for (const [key, value] of Object.entries(f.fixtures)) {
+        if (!isFixtureOption(value) || !configKeys.has(key)) {
+          (fixtures as any)[key] = value;
           continue;
+        }
         // Apply override from config file.
         const override = (configUse as any)[key];
-        (resolved as any)[key] = [override, value[1]];
+        (options as any)[key] = [override, value[1]];
       }
-      return { fixtures: resolved, location: f.location };
-    });
+      if (Object.entries(options).length)
+        result.push({ fixtures: options, location: { file: `project#${this.index}`, line: 1, column: 1 } });
+      if (Object.entries(fixtures).length)
+        result.push({ fixtures, location: f.location });
+    }
+    return result;
   }
 }

@@ -18,12 +18,8 @@ import { EventEmitter } from 'events';
 import { ManualPromise } from 'playwright-core/lib/utils/async';
 import { FullConfig, WorkerInfo, TestError, FullProject } from './types';
 import { FixturePool, FixtureRegistration, FixtureRunner } from './fixtures';
-import { GlobalFixtureSetupRequest, GlobalFixtureSetupResponse, GlobalFixtureTeardownRequest } from './ipc';
+import { GlobalFixtureSetupRequest, GlobalFixtureSetupResponse } from './ipc';
 import { prependToTestError, serializeError } from './util';
-
-function globalFixtureId(registration: FixtureRegistration): string {
-  return registration.name + '@' + registration.location.file + ':' + registration.location.line + ':' + registration.location.column;
-}
 
 type GlobalFixtureData = {
   originalName: string;
@@ -51,16 +47,17 @@ export class GlobalFixtureRunner {
     }
   }
 
-  registerFixture(pool: FixturePool, registration: FixtureRegistration): FixtureRegistration {
-    const parent = registration.super ? this.registerFixture(pool, registration.super) : undefined;
-    const id = globalFixtureId(registration);
+  private registerFixture(pool: FixturePool, registration: FixtureRegistration): FixtureRegistration {
+    const id = pool.persistentId(registration);
     const data = this._idToFixture.get(id);
     if (data)
       return data.registration;
+    const parent = registration.super ? this.registerFixture(pool, registration.super) : undefined;
     const newRegistration: FixtureRegistration = {
       ...registration,
       super: parent,
       name: id,
+      id,
       deps: registration.deps.map(dep => {
         const oldDep = pool.resolveDependency(registration, dep)!;
         const newDep = this.registerFixture(pool, oldDep);
@@ -72,7 +69,7 @@ export class GlobalFixtureRunner {
     return newRegistration;
   }
 
-  async globalFixtureSetupRequest(payload: GlobalFixtureSetupRequest): Promise<GlobalFixtureSetupResponse> {
+  async setupGlobalFixture(payload: GlobalFixtureSetupRequest): Promise<GlobalFixtureSetupResponse> {
     const data = this._idToFixture.get(payload.id);
     if (!data) {
       return {
@@ -111,11 +108,6 @@ export class GlobalFixtureRunner {
     };
   }
 
-  globalFixtureTeardownRequest(payload: GlobalFixtureTeardownRequest) {
-    // TODO: implement something smart?
-    // For now, we teardown all global fixtures at the very end.
-  }
-
   async teardown() {
     // TODO: handle timeout here.
     await this._runner.teardownScope('global');
@@ -125,17 +117,15 @@ export class GlobalFixtureRunner {
 export class GlobalFixtureResolver extends EventEmitter {
   private _setupPromises = new Map<string, ManualPromise<any>>();
 
-  async resolve(registration: FixtureRegistration, use: (value: any) => Promise<unknown>): Promise<any> {
-    const id = globalFixtureId(registration);
+  async setup(persistentId: string): Promise<any> {
+    const id = persistentId;
     const setupPromise = new ManualPromise<any>();
     this._setupPromises.set(id, setupPromise);
     const setupRequest: GlobalFixtureSetupRequest = { id };
     this.emit('globalFixtureSetupRequest', setupRequest);
     const value = await setupPromise;
     this._setupPromises.delete(id);
-    await use(value);
-    const teardownRequest: GlobalFixtureTeardownRequest = { id };
-    this.emit('globalFixtureTeardownRequest', teardownRequest);
+    return value;
   }
 
   globalFixtureSetupResponse(response: GlobalFixtureSetupResponse) {

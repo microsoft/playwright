@@ -45,7 +45,6 @@ export class WorkerRunner extends EventEmitter {
   private _projectNamePathSegment = '';
   private _uniqueProjectNamePathSegment = '';
   private _fixtureRunner: FixtureRunner;
-  readonly globalFixtureResolver: GlobalFixtureResolver;
 
   private _failedTest: TestData | undefined;
   private _fatalError: TestError | undefined;
@@ -55,12 +54,11 @@ export class WorkerRunner extends EventEmitter {
   private _currentDeadlineRunner: DeadlineRunner<any> | undefined;
   _currentTest: TestData | null = null;
 
-  constructor(params: WorkerInitParams) {
+  constructor(params: WorkerInitParams, globalFixtureResolver: GlobalFixtureResolver) {
     super();
     this._params = params;
     this._fixtureRunner = new FixtureRunner();
-    this.globalFixtureResolver = new GlobalFixtureResolver();
-    this._fixtureRunner.globalFixtureResolver = (registration, use) => this.globalFixtureResolver.resolve(registration, use);
+    this._fixtureRunner.globalFixtureSetup = globalFixtureResolver.setup.bind(globalFixtureResolver);
   }
 
   stop(): Promise<void> {

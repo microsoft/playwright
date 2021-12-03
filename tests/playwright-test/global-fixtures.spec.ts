@@ -167,26 +167,73 @@ test('global fixture should be shared between projects and provide dummy workerI
     `,
   });
   expect(result.exitCode).toBe(0);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+  expect(result.output.split('\n').filter(line => line.startsWith('%%')).sort()).toEqual([
     '%%globalBase setup in project= wi=-1 pi=-1',
-    '%%test: globalBase in project=foo',
     '%%test: globalBase in project=bar',
+    '%%test: globalBase in project=foo',
   ]);
 });
 
-test('global option is not allowed', async ({ runInlineTest }) => {
+test('global option can be parametrized in the config', async ({ runInlineTest }) => {
   const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = {
+        projects: [
+          { name: 'foo', use: { opt: 'foo-opt' } },
+          { name: 'bar', use: { opt: 'bar-opt' } },
+        ],
+      };
+    `,
     'a.spec.js': `
       const test = pwt.test.extend({
-        opt: [ 'opt', { scope: 'global', option: true }],
+        opt: [ 'opt', { scope: 'global', option: true } ],
+        global: [ async ({ opt }, use, workerInfo) => {
+          await use('global-' + opt);
+        }, { scope: 'global' }],
       });
 
-      test('test', async ({ opt }, testInfo) => {
+      test('test', async ({ global }, testInfo) => {
+        console.log('\\n%%test: ' + global + ' in project=' + testInfo.project.name);
       });
     `,
   });
-  expect(result.exitCode).toBe(1);
-  expect(result.output).toMatch(/Error: Global options are not supported.\n\s+"opt" defined at a.spec.js:5:29/);
+  expect(result.exitCode).toBe(0);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%')).sort()).toEqual([
+    '%%test: global-bar-opt in project=bar',
+    '%%test: global-foo-opt in project=foo',
+  ]);
+});
+
+test('global option can be parametrized with test.use', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'helper.js': `
+      module.exports = pwt.test.extend({
+        opt: [ 'opt', { scope: 'global', option: true } ],
+        global: [ async ({ opt }, use, workerInfo) => {
+          await use('global-' + opt);
+        }, { scope: 'global' }],
+      });
+    `,
+    'a.spec.js': `
+      const test = require('./helper');
+      test.use({ opt: 'foo-opt' });
+
+      test('test1', async ({ global }) => {
+        console.log('\\n%%test1: ' + global);
+      });
+    `,
+    'b.spec.js': `
+      const test = require('./helper');
+      test.use({ opt: 'bar-opt' });
+
+      test('test2', async ({ global }) => {
+        console.log('\\n%%test2: ' + global);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toContain('%%test1: global-foo-opt');
+  expect(result.output).toContain('%%test2: global-bar-opt');
 });
 
 test('global fixture cannot depend on worker fixture', async ({ runInlineTest }) => {
@@ -345,15 +392,20 @@ test('should throw for function values', async ({ runInlineTest }) => {
   expect(result.output).toContain('The value of the global fixture "global" cannot be serialized.');
 });
 
-test('can use global fixture in hook but not test', async ({ runInlineTest }) => {
+test('can use global fixture in hooks but not test', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.js': `
       const test = pwt.test.extend({
         global: [ 'foo', { scope: 'global' }],
+        global2: [ 'bar', { scope: 'global' }],
       });
 
       test.beforeAll(({ global }) => {
         console.log('beforeAll ' + global);
+      });
+
+      test.afterEach(({ global2 }) => {
+        console.log('afterEach ' + global2);
       });
 
       test('my test', async () => {
@@ -364,6 +416,7 @@ test('can use global fixture in hook but not test', async ({ runInlineTest }) =>
   expect(result.exitCode).toBe(0);
   expect(result.output).toContain('beforeAll foo');
   expect(result.output).toContain('my test');
+  expect(result.output).toContain('afterEach bar');
 });
 
 test('auto global fixtures run for filtered tests only', async ({ runInlineTest }) => {
@@ -434,4 +487,50 @@ test('global fixtures should work concurrently', async ({ runInlineTest }) => {
   expect(result.output).toContain('global fixture setup done');
   expect(result.output).toContain('running test1');
   expect(result.output).toContain('running test2');
+});
+
+test('auto test fixture depends on a global', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.js': `
+      const teat = pwt.test.extend({
+        fixture: [ ({ global }, use) => {
+          console.log('auto setup: ' + global);
+          use('fixture');
+        }, { scope: 'test', auto: true }],
+        global: [ ({}, use) => {
+          console.log('global setup');
+          use('global');
+        }, { scope: 'global' }],
+      })('test1', ({}) => {
+        console.log('test1');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('global setup');
+  expect(result.output).toContain('auto setup: global');
+  expect(result.output).toContain('test1');
+});
+
+test('global fixture is not affected by test timeout', async ({ runInlineTest }) => {
+  test.fixme();
+
+  const result = await runInlineTest({
+    'a.spec.js': `
+      const teat = pwt.test.extend({
+        global: [ async ({}, use) => {
+          await new Promise(f => setTimeout(f, 2000));
+          console.log('global setup');
+          use('global');
+        }, { scope: 'global' }],
+      })('test1', ({ global }) => {
+        console.log('test1');
+      });
+    `,
+  }, { timeout: 1000 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('global setup');
+  expect(result.output).toContain('test1');
 });

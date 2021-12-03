@@ -492,3 +492,41 @@ test('should work with video size', async ({ runInlineTest }, testInfo) => {
   expect(videoPlayer.videoWidth).toBe(220);
   expect(videoPlayer.videoHeight).toBe(110);
 });
+
+test('can use global fixture that depends on browserName', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = {
+        projects: [
+          { name: 'foo', use: { browserName: 'chromium' } },
+          { name: 'bar', use: { defaultBrowserType: 'webkit' } },
+        ]
+      };
+    `,
+    'a.spec.js': `
+      const test = pwt.test.extend({
+        global: [ async ({ browserName }, use) => {
+          console.log('\\n%%global setup for ' + browserName);
+          await use(browserName);
+        }, { scope: 'global' }],
+      });
+
+      test('test1', async ({ global, page }) => {
+        console.log('\\n%%test1-' + global);
+      });
+
+      test('test2', async ({ global, page }) => {
+        console.log('\\n%%test2-' + global);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%')).sort()).toEqual([
+    '%%global setup for chromium',
+    '%%global setup for webkit',
+    '%%test1-chromium',
+    '%%test1-webkit',
+    '%%test2-chromium',
+    '%%test2-webkit',
+  ]);
+});

@@ -38,8 +38,8 @@ type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
 };
 
 export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
-  defaultBrowserType: [ 'chromium', { scope: 'worker', option: true } ],
-  browserName: [ ({ defaultBrowserType }, use) => use(defaultBrowserType), { scope: 'worker', option: true } ],
+  defaultBrowserType: [ 'chromium', { scope: 'global' as any, option: true } ],
+  browserName: [ ({ defaultBrowserType }, use) => use(defaultBrowserType), { scope: 'global' as any, option: true } ],
   playwright: [async ({}, use, workerInfo) => {
     if (process.env.PW_GRID) {
       const gridClient = await GridClient.connect(process.env.PW_GRID);

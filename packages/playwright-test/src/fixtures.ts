@@ -24,15 +24,27 @@ type FixtureOptions = { auto?: boolean, scope?: FixtureScope, option?: boolean }
 type FixtureTuple = [ value: any, options: FixtureOptions ];
 
 export type FixtureRegistration = {
+  // Fixutre registration location.
   location: Location;
+
   name: string;
   scope: FixtureScope;
-  fn: Function | any;  // Either a fixture function, or a fixture value.
+
+  // Either a fixture function, or a fixture value.
+  fn: Function | any;
   auto: boolean;
   option: boolean;
+
+  // Name of the dependencies, usually come from the first argument of fn: "({foo, bar}) => ..."
   deps: string[];
-  fnArgs: string[];  // This corresponds to deps, usually the same except for global fixtures.
+
+  // Function argument names. These are usually equal to deps, but are renamed for global fixtures.
+  fnArgs: string[];
+
+  // Unique id, to differentiate between fixtures.
   id: string;
+
+  // A fixture override can use the previous version of the fixture.
   super?: FixtureRegistration;
 };
 
@@ -41,7 +53,7 @@ class Fixture {
   registration: FixtureRegistration;
   usages: Set<Fixture>;
   value: any;
-  _teardownFenceCallback!: (value?: unknown) => void;
+  _teardownFenceCallback?: (value?: unknown) => void;
   _tearDownComplete!: Promise<void>;
   _setup = false;
   _teardown = false;
@@ -54,22 +66,26 @@ class Fixture {
   }
 
   async setup(workerInfo: WorkerInfo, testInfo: TestInfo | undefined) {
+    if (this.runner.globalFixtureSetup && this.registration.scope === 'global') {
+      const persistentId = this.runner.pool!.persistentId(this.registration);
+      this.value = await this.runner.globalFixtureSetup(persistentId);
+      this._setup = true;
+      return;
+    }
+
     if (typeof this.registration.fn !== 'function') {
       this._setup = true;
       this.value = this.registration.fn;
       return;
     }
 
-    const isExternalGlobalFixture = !!this.runner.globalFixtureResolver && this.registration.scope === 'global';
     const params: { [key: string]: any } = {};
-    if (!isExternalGlobalFixture) {
-      for (let i = 0; i < this.registration.deps.length; i++) {
-        const depName = this.registration.deps[i];
-        const registration = this.runner.pool!.resolveDependency(this.registration, depName)!;
-        const dep = await this.runner.setupFixtureForRegistration(registration, workerInfo, testInfo);
-        dep.usages.add(this);
-        params[this.registration.fnArgs[i]] = dep.value;
-      }
+    for (let i = 0; i < this.registration.deps.length; i++) {
+      const depName = this.registration.deps[i];
+      const registration = this.runner.pool!.resolveDependency(this.registration, depName)!;
+      const dep = await this.runner.setupFixtureForRegistration(registration, workerInfo, testInfo);
+      dep.usages.add(this);
+      params[this.registration.fnArgs[i]] = dep.value;
     }
 
     let setupFenceFulfill = () => {};
@@ -78,17 +94,14 @@ class Fixture {
     const setupFence = new Promise<void>((f, r) => { setupFenceFulfill = f; setupFenceReject = r; });
     const teardownFence = new Promise(f => this._teardownFenceCallback = f);
     debugTest(`setup ${this.registration.name}`);
-    const useFunc = async (value: any) => {
+    this._tearDownComplete = wrapInPromise(this.registration.fn(params, async (value: any) => {
       if (called)
         throw new Error(`Cannot provide fixture value for the second time`);
       called = true;
       this.value = value;
       setupFenceFulfill();
       return await teardownFence;
-    };
-    const info = this.registration.scope === 'test' ? testInfo : workerInfo;
-    const invoked = isExternalGlobalFixture ? this.runner.globalFixtureResolver!(this.registration, useFunc) : this.registration.fn(params, useFunc, info);
-    this._tearDownComplete = wrapInPromise(invoked).catch((e: any) => {
+    }, this.registration.scope === 'test' ? testInfo : workerInfo)).catch((e: any) => {
       if (!this._setup)
         setupFenceReject(e);
       else
@@ -107,7 +120,7 @@ class Fixture {
     for (const fixture of this.usages)
       await fixture.teardown();
     this.usages.clear();
-    if (this._setup) {
+    if (this._teardownFenceCallback) {
       debugTest(`teardown ${this.registration.name}`);
       this._teardownFenceCallback();
       await this._tearDownComplete;
@@ -127,6 +140,10 @@ export function isFixtureOption(value: any): value is FixtureTuple {
 export class FixturePool {
   readonly digest: string;
   readonly registrations: Map<string, FixtureRegistration>;
+
+  // Id that is persistent between workers and runner processes.
+  // Used to identify global fixtures.
+  private _registrationToPersistentId = new Map<FixtureRegistration, string>();
 
   constructor(fixturesList: FixturesWithLocation[], parentPool?: FixturePool, disallowNonTestFixtures?: boolean) {
     this.registrations = new Map(parentPool ? parentPool.registrations : []);
@@ -162,8 +179,6 @@ export class FixturePool {
           throw errorWithLocations(`Fixture "${name}" has unknown { scope: '${options.scope}' }.`, { location, name });
         if (options.scope !== 'test' && disallowNonTestFixtures)
           throw errorWithLocations(`Cannot use({ ${name} }) in a describe group, because it forces a new worker.\nMake it top-level in the test file or put in the configuration file.`, { location, name });
-        if (options.scope === 'global' && options.option)
-          throw errorWithLocations(`Global options are not supported.`, { location, name });
 
         const deps = fixtureParameterNames(fn, location);
         const registration: FixtureRegistration = { id: '', name, location, scope: options.scope, fn, auto: options.auto, option: options.option, deps, fnArgs: deps, super: previous };
@@ -181,6 +196,7 @@ export class FixturePool {
     const visit = (registration: FixtureRegistration) => {
       markers.set(registration, 'visiting');
       stack.push(registration);
+      let persistentId = registration.name + '@' + registration.location.file + ':' + registration.location.line + ':' + registration.location.column;
       for (const name of registration.deps) {
         const dep = this.resolveDependency(registration, name);
         if (!dep) {
@@ -199,7 +215,14 @@ export class FixturePool {
           const names = regs.map(r => `"${r.name}"`);
           throw errorWithLocations(`Fixtures ${names.join(' -> ')} -> "${dep.name}" form a dependency cycle.`, ...regs);
         }
+        persistentId += ';' + this._registrationToPersistentId.get(dep)!;
       }
+      if (registration.super) {
+        if (!markers.has(registration.super))
+          visit(registration.super);
+        persistentId += '=' + this._registrationToPersistentId.get(registration.super)!;
+      }
+      this._registrationToPersistentId.set(registration, crypto.createHash('sha1').update(persistentId).digest('hex'));
       markers.set(registration, 'visited');
       stack.pop();
     };
@@ -233,13 +256,17 @@ export class FixturePool {
       return registration.super;
     return this.registrations.get(name);
   }
+
+  persistentId(registration: FixtureRegistration) {
+    return this._registrationToPersistentId.get(registration)!;
+  }
 }
 
 export class FixtureRunner {
   private testScopeClean = true;
   pool: FixturePool | undefined;
   instanceForId = new Map<string, Fixture>();
-  globalFixtureResolver: ((registration: FixtureRegistration, use: (value: any) => Promise<unknown>) => Promise<any>) | undefined;
+  globalFixtureSetup?: (persistentId: string) => Promise<any>;
 
   setPool(pool: FixturePool) {
     if (!this.testScopeClean)

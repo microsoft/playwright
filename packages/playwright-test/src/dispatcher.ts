@@ -17,7 +17,7 @@
 import child_process from 'child_process';
 import path from 'path';
 import { EventEmitter } from 'events';
-import { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams, StepBeginPayload, StepEndPayload, SerializedLoaderData, GlobalFixtureSetupRequest, GlobalFixtureSetupResponse, GlobalFixtureTeardownRequest } from './ipc';
+import { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams, StepBeginPayload, StepEndPayload, SerializedLoaderData, GlobalFixtureSetupRequest, GlobalFixtureSetupResponse } from './ipc';
 import type { TestResult, Reporter, TestStep } from '../types/testReporter';
 import { Suite, TestCase } from './test';
 import { Loader } from './loader';
@@ -51,8 +51,7 @@ export class Dispatcher {
     this._loader = loader;
     this._reporter = reporter;
     this._queue = testGroups;
-    const config = loader.fullConfig();
-    this._globalFixtureRunner = new GlobalFixtureRunner(config);
+    this._globalFixtureRunner = new GlobalFixtureRunner(loader.fullConfig());
     for (const group of testGroups) {
       for (const test of group.tests) {
         const result = test._appendTestResult();
@@ -140,18 +139,14 @@ export class Dispatcher {
     worker.run(testGroup);
 
     let doneCallback = () => {};
-    let isDone = false;
     const result = new Promise<void>(f => doneCallback = f);
     const doneWithJob = () => {
       worker.removeListener('testBegin', onTestBegin);
       worker.removeListener('testEnd', onTestEnd);
-      worker.removeListener('globalFixtureSetupRequest', onGlobalFixtureSetupRequest);
-      worker.removeListener('globalFixtureTeardownRequest', onGlobalFixtureTeardownRequest);
       worker.removeListener('stepBegin', onStepBegin);
       worker.removeListener('stepEnd', onStepEnd);
       worker.removeListener('done', onDone);
       worker.removeListener('exit', onExit);
-      isDone = true;
       doneCallback();
     };
 
@@ -193,19 +188,6 @@ export class Dispatcher {
       this._reportTestEnd(test, result);
     };
     worker.addListener('testEnd', onTestEnd);
-
-    const onGlobalFixtureSetupRequest = async (params: GlobalFixtureSetupRequest) => {
-      const response = await this._globalFixtureRunner.globalFixtureSetupRequest(params);
-      if (isDone)
-        return;
-      worker.sendGlobalFixtureSetupResponse(response);
-    };
-    worker.addListener('globalFixtureSetupRequest', onGlobalFixtureSetupRequest);
-
-    const onGlobalFixtureTeardownRequest = (params: GlobalFixtureTeardownRequest) => {
-      this._globalFixtureRunner.globalFixtureTeardownRequest(params);
-    };
-    worker.addListener('globalFixtureTeardownRequest', onGlobalFixtureTeardownRequest);
 
     const onStepBegin = (params: StepBeginPayload) => {
       const { test, result, steps, stepStack } = this._testById.get(params.testId)!;
@@ -395,6 +377,11 @@ export class Dispatcher {
       this._hasWorkerErrors = true;
       this._reporter.onError?.(error);
     });
+    worker.on('globalFixtureSetupRequest', async (params: GlobalFixtureSetupRequest) => {
+      if (worker.didSendStop())
+        return;
+      worker.sendGlobalFixtureSetupResponse(await this._globalFixtureRunner.setupGlobalFixture(params));
+    });
     return worker;
   }
 
@@ -492,6 +479,8 @@ class Worker extends EventEmitter {
   }
 
   sendGlobalFixtureSetupResponse(response: GlobalFixtureSetupResponse) {
+    if (this._didSendStop || this.didExit)
+      return;
     this.process.send({ method: 'globalFixtureSetupResponse', params: response });
   }
 

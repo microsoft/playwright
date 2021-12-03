@@ -16,6 +16,7 @@
 
 import { Console } from 'console';
 import * as util from 'util';
+import { GlobalFixtureResolver } from './globalFixtures';
 import { GlobalFixtureSetupResponse, RunPayload, TestOutputPayload, WorkerInitParams } from './ipc';
 import { startProfiling, stopProfiling } from './profiler';
 import { serializeError } from './util';
@@ -55,6 +56,7 @@ process.on('disconnect', gracefullyCloseAndExit);
 process.on('SIGINT',() => {});
 process.on('SIGTERM',() => {});
 
+const globalFixtureResolver = new GlobalFixtureResolver();
 let workerRunner: WorkerRunner;
 let workerIndex: number | undefined;
 
@@ -73,11 +75,11 @@ process.on('message', async message => {
     const initParams = message.params as WorkerInitParams;
     workerIndex = initParams.workerIndex;
     startProfiling();
-    workerRunner = new WorkerRunner(initParams);
+    workerRunner = new WorkerRunner(initParams, globalFixtureResolver);
     for (const event of ['testBegin', 'testEnd', 'stepBegin', 'stepEnd', 'done', 'teardownError'])
       workerRunner.on(event, sendMessageToParent.bind(null, event));
-    for (const event of ['globalFixtureSetupRequest', 'globalFixtureTeardownRequest'])
-      workerRunner.globalFixtureResolver.on(event, sendMessageToParent.bind(null, event));
+    for (const event of ['globalFixtureSetupRequest'])
+      globalFixtureResolver.on(event, sendMessageToParent.bind(null, event));
     return;
   }
   if (message.method === 'stop') {
@@ -90,7 +92,7 @@ process.on('message', async message => {
   }
   if (message.method === 'globalFixtureSetupResponse') {
     const payload = message.params as GlobalFixtureSetupResponse;
-    workerRunner?.globalFixtureResolver.globalFixtureSetupResponse(payload);
+    globalFixtureResolver.globalFixtureSetupResponse(payload);
   }
 });
 
