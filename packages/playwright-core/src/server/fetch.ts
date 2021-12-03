@@ -248,9 +248,11 @@ export abstract class APIRequestContext extends SdkObject {
         const notifyRequestFinished = (body?: Buffer) => {
           const requestFinishedEvent: APIRequestFinishedEvent = {
             requestEvent,
-            statusCode: -1,
-            statusMessage: '',
-            ...response,
+            httpVersion: response.httpVersion,
+            statusCode: response.statusCode || 0,
+            statusMessage: response.statusMessage || '',
+            headers: response.headers,
+            rawHeaders: response.rawHeaders,
             cookies,
             body
           };
