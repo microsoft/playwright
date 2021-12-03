@@ -110,6 +110,44 @@ it('should pointerdown the div with a custom button', async ({ page, server, bro
   expect(event.pointerId).toBe(browserName === 'firefox' ? 0 : 1);
 });
 
+it('should mousedown the div with extra buttons', async ({ page, server }) => {
+  await page.setContent(
+      `<div style='width: 100px; height: 100px;'>Click me</div>`
+  );
+  await page.evaluate(() => {
+    window['mousedownPromise'] = new Promise(resolve => {
+      document.querySelector('div').addEventListener('mousedown', event => {
+        if (event.button !== 1 /* wheel button */) return;
+
+        resolve({
+          type: event.type,
+          detail: event.detail,
+          clientX: event.clientX,
+          clientY: event.clientY,
+          isTrusted: event.isTrusted,
+          button: event.button,
+          buttons: event.buttons,
+        });
+      });
+    });
+  });
+  await page.mouse.move(50, 60);
+  await page.mouse.down({
+    button: 'right',
+  });
+  await page.mouse.down({
+    button: 'middle',
+  });
+  const event = await page.evaluate(() => window['mousedownPromise']);
+  expect(event.type).toBe('mousedown');
+  expect(event.detail).toBe(1);
+  expect(event.clientX).toBe(50);
+  expect(event.clientY).toBe(60);
+  expect(event.isTrusted).toBe(true);
+  expect(event.button).toBe(1); // wheel button
+  expect(event.buttons).toBe(6); // right + middle button
+});
+
 it('should select the text with mouse', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.focus('textarea');

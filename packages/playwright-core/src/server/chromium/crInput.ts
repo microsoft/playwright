@@ -22,7 +22,7 @@ import { macEditingCommands } from '../macEditingCommands';
 import { isString } from '../../utils/utils';
 import { DragManager } from './crDragDrop';
 import { CRPage } from './crPage';
-import { toModifiersMask } from './crProtocolHelper';
+import { toButtonsMask, toModifiersMask } from './crProtocolHelper';
 
 export class RawKeyboardImpl implements input.RawKeyboard {
   constructor(
@@ -101,6 +101,7 @@ export class RawMouseImpl implements input.RawMouse {
       await this._client.send('Input.dispatchMouseEvent', {
         type: 'mouseMoved',
         button,
+        buttons: toButtonsMask(buttons),
         x,
         y,
         modifiers: toModifiersMask(modifiers)
@@ -120,6 +121,7 @@ export class RawMouseImpl implements input.RawMouse {
     await this._client.send('Input.dispatchMouseEvent', {
       type: 'mousePressed',
       button,
+      buttons: toButtonsMask(buttons),
       x,
       y,
       modifiers: toModifiersMask(modifiers),
@@ -135,6 +137,7 @@ export class RawMouseImpl implements input.RawMouse {
     await this._client.send('Input.dispatchMouseEvent', {
       type: 'mouseReleased',
       button,
+      buttons: toButtonsMask(buttons),
       x,
       y,
       modifiers: toModifiersMask(modifiers),
