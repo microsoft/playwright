@@ -2599,6 +2599,11 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    */
   extend<T, W extends KeyValue = {}>(fixtures: Fixtures<T, W, TestArgs, WorkerArgs>): TestType<TestArgs & T, WorkerArgs & W>;
   extendTest<T, W>(other: TestType<T, W>): TestType<TestArgs & T, WorkerArgs & W>;
+  /**
+   * Returns information about the currently running test. This method can only be called during the test execution,
+   * otherwise it throws.
+   */
+  info(): TestInfo;
 }
 
 type KeyValue = { [key: string]: any };
