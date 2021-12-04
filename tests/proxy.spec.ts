@@ -73,6 +73,51 @@ it('should work with IP:PORT notion', async ({ browserType, server }) => {
   await browser.close();
 });
 
+it('should use proxy for localhost', async ({ browserType, server, proxyServer }) => {
+  server.setRoute('/target.html', async (req, res) => {
+    res.end('<html><title>Served by the proxy</title></html>');
+  });
+  proxyServer.forwardTo(server.PORT);
+  const browser = await browserType.launch({
+    proxy: { server: `localhost:${proxyServer.PORT}` }
+  });
+  const page = await browser.newPage();
+  await page.goto(`http://localhost:${server.PORT}/target.html`);
+  expect(proxyServer.requestUrls).toContain(`http://localhost:${server.PORT}/target.html`);
+  expect(await page.title()).toBe('Served by the proxy');
+  await browser.close();
+});
+
+it('should use proxy for loopback address', async ({ browserType, server, proxyServer }) => {
+  server.setRoute('/target.html', async (req, res) => {
+    res.end('<html><title>Served by the proxy</title></html>');
+  });
+  proxyServer.forwardTo(server.PORT);
+  const browser = await browserType.launch({
+    proxy: { server: `localhost:${proxyServer.PORT}` }
+  });
+  const page = await browser.newPage();
+  await page.goto(`http://127.0.0.1:${server.PORT}/target.html`);
+  expect(proxyServer.requestUrls).toContain(`http://127.0.0.1:${server.PORT}/target.html`);
+  expect(await page.title()).toBe('Served by the proxy');
+  await browser.close();
+});
+
+it('should use proxy for link-local address', async ({ browserType, server, proxyServer }) => {
+  server.setRoute('/target.html', async (req, res) => {
+    res.end('<html><title>Served by the proxy</title></html>');
+  });
+  proxyServer.forwardTo(server.PORT);
+  const browser = await browserType.launch({
+    proxy: { server: `localhost:${proxyServer.PORT}` }
+  });
+  const page = await browser.newPage();
+  await page.goto(`http://169.254.3.4:4321/target.html`);
+  expect(proxyServer.requestUrls).toContain(`http://169.254.3.4:4321/target.html`);
+  expect(await page.title()).toBe('Served by the proxy');
+  await browser.close();
+});
+
 it('should authenticate', async ({ browserType, server }) => {
   server.setRoute('/target.html', async (req, res) => {
     const auth = req.headers['proxy-authorization'];

@@ -91,6 +91,42 @@ it('should use proxy', async ({ contextFactory, server, proxyServer }) => {
   await context.close();
 });
 
+it('should use proxy for localhost', async ({ contextFactory, server, proxyServer }) => {
+  proxyServer.forwardTo(server.PORT);
+  const context = await contextFactory({
+    proxy: { server: `localhost:${proxyServer.PORT}` }
+  });
+  const page = await context.newPage();
+  await page.goto(`http://localhost:${server.PORT}/target.html`);
+  expect(proxyServer.requestUrls).toContain(`http://localhost:${server.PORT}/target.html`);
+  expect(await page.title()).toBe('Served by the proxy');
+  await context.close();
+});
+
+it('should use proxy for loopback address', async ({ contextFactory, server, proxyServer }) => {
+  proxyServer.forwardTo(server.PORT);
+  const context = await contextFactory({
+    proxy: { server: `localhost:${proxyServer.PORT}` }
+  });
+  const page = await context.newPage();
+  await page.goto(`http://127.0.0.1:${server.PORT}/target.html`);
+  expect(proxyServer.requestUrls).toContain(`http://127.0.0.1:${server.PORT}/target.html`);
+  expect(await page.title()).toBe('Served by the proxy');
+  await context.close();
+});
+
+it('should use proxy for link-local address', async ({ contextFactory, server, proxyServer }) => {
+  proxyServer.forwardTo(server.PORT);
+  const context = await contextFactory({
+    proxy: { server: `localhost:${proxyServer.PORT}` }
+  });
+  const page = await context.newPage();
+  await page.goto(`http://169.254.3.4:4321/target.html`);
+  expect(proxyServer.requestUrls).toContain(`http://169.254.3.4:4321/target.html`);
+  expect(await page.title()).toBe('Served by the proxy');
+  await context.close();
+});
+
 it('should use ipv6 proxy', async ({ contextFactory, server, proxyServer, browserName }) => {
   it.fail(browserName === 'firefox', 'page.goto: NS_ERROR_UNKNOWN_HOST');
   it.fail(!!process.env.INSIDE_DOCKER, 'docker does not support IPv6 by default');
