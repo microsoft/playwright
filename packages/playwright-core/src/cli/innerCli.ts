@@ -332,8 +332,6 @@ async function launchContext(options: Options, headless: boolean, executablePath
   if (contextOptions.isMobile && browserType.name() === 'firefox')
     contextOptions.isMobile = undefined;
 
-  contextOptions.acceptDownloads = true;
-
   // Proxy
 
   if (options.proxyServer) {
@@ -441,7 +439,6 @@ async function launchContext(options: Options, headless: boolean, executablePath
   delete launchOptions.headless;
   delete launchOptions.executablePath;
   delete contextOptions.deviceScaleFactor;
-  delete contextOptions.acceptDownloads;
   return { browser, browserName: browserType.name(), context, contextOptions, launchOptions };
 }
 

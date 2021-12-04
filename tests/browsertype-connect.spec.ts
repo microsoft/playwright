@@ -417,7 +417,7 @@ test('should save download', async ({ server, browserType, startRemoteServer }, 
 
   const remoteServer = await startRemoteServer();
   const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
-  const page = await browser.newPage({ acceptDownloads: true });
+  const page = await browser.newPage();
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
   const [ download ] = await Promise.all([
     page.waitForEvent('download'),
@@ -441,7 +441,7 @@ test('should error when saving download after deletion', async ({ server, browse
 
   const remoteServer = await startRemoteServer();
   const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
-  const page = await browser.newPage({ acceptDownloads: true });
+  const page = await browser.newPage();
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
   const [ download ] = await Promise.all([
     page.waitForEvent('download'),

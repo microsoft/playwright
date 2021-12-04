@@ -252,9 +252,7 @@ test.describe('cli codegen', () => {
     const sources = await recorder.waitForOutput('JavaScript', 'waitForEvent');
 
     expect(sources.get('JavaScript').text).toContain(`
-  const context = await browser.newContext({
-    acceptDownloads: true
-  });`);
+  const context = await browser.newContext();`);
     expect(sources.get('JavaScript').text).toContain(`
   // Click text=Download
   const [download] = await Promise.all([
@@ -263,8 +261,7 @@ test.describe('cli codegen', () => {
   ]);`);
 
     expect(sources.get('Java').text).toContain(`
-      BrowserContext context = browser.newContext(new Browser.NewContextOptions()
-        .setAcceptDownloads(true));`);
+      BrowserContext context = browser.newContext();`);
     expect(sources.get('Java').text).toContain(`
       // Click text=Download
       Download download = page.waitForDownload(() -> {
@@ -272,7 +269,7 @@ test.describe('cli codegen', () => {
       });`);
 
     expect(sources.get('Python').text).toContain(`
-    context = browser.new_context(accept_downloads=True)`);
+    context = browser.new_context()`);
     expect(sources.get('Python').text).toContain(`
     # Click text=Download
     with page.expect_download() as download_info:
@@ -280,7 +277,7 @@ test.describe('cli codegen', () => {
     download = download_info.value`);
 
     expect(sources.get('Python Async').text).toContain(`
-    context = await browser.new_context(accept_downloads=True)`);
+    context = await browser.new_context()`);
     expect(sources.get('Python Async').text).toContain(`
     # Click text=Download
     async with page.expect_download() as download_info:
@@ -288,10 +285,7 @@ test.describe('cli codegen', () => {
     download = await download_info.value`);
 
     expect(sources.get('C#').text).toContain(`
-        var context = await browser.NewContextAsync(new BrowserNewContextOptions
-        {
-            AcceptDownloads = true,
-        });`);
+        var context = await browser.NewContextAsync();`);
     expect(sources.get('C#').text).toContain(`
         // Click text=Download
         var download1 = await page.RunAndWaitForDownloadAsync(async () =>
