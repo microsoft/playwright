@@ -126,7 +126,7 @@ function objectType(props, indent, onlyOptional = false) {
   return { ts: `${indent}{${inner.ts}\n${indent}}`, scheme: `tObject({\n${inner.scheme}\n${indent}})` };
 }
 
-const yml = fs.readFileSync(path.join(__dirname, '..', 'src', 'protocol', 'protocol.yml'), 'utf-8');
+const yml = fs.readFileSync(path.join(__dirname, '..', 'packages', 'playwright-core', 'src', 'protocol', 'protocol.yml'), 'utf-8');
 const protocol = yaml.parse(yml);
 
 for (const [name, value] of Object.entries(protocol)) {
@@ -137,6 +137,11 @@ for (const [name, value] of Object.entries(protocol)) {
   }
   if (value.type === 'mixin')
     mixins.set(name, value);
+}
+
+if (!process.argv[2]) {
+  console.error('.NET repository needs to be specified as an argument.\n'+ `Usage: node ${path.relative(process.cwd(), __filename)} ../playwright-dotnet/src/Playwright/`);
+  process.exit(1);
 }
 
 const dir = path.join(process.argv[2], 'Transport', 'Protocol', 'Generated')
