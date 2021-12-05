@@ -59,6 +59,11 @@ export class TestProxy {
     });
     this._prependHandler('connect', (req: IncomingMessage) => {
       this.connectHosts.push(req.url);
+      // Relevant to FF only: skip re-writing this request since it requires
+      // better MITM'ing than the tests require. If you MITM this without setting
+      // up trusted certs, FF will crash on newPage() if using this Proxy Server.
+      if (req.url === 'contile.services.mozilla.com:443')
+        return;
       req.url = `localhost:${port}`;
     });
   }
