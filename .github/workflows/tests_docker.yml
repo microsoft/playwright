@@ -54,6 +54,10 @@ jobs:
       run: docker exec playwright-docker-${{ matrix.tag }}-test npm ci
     - name: Run "npm run build" inside docker
       run: docker exec playwright-docker-${{ matrix.tag }}-test npm run build
+    # Test the channel installation on root user
+    - name: Test installing Chrome&MSEdge
+      if: matrix.user == 'root'
+      run: docker exec playwright-docker-${{ matrix.tag }}-test npx playwright install chrome msedge
     - name: Run "npm run test" inside docker
       run: docker exec -e INSIDE_DOCKER=1 -e CI=1 playwright-docker-${{ matrix.tag }}-test xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run test
     - run: sudo chmod -R 777 . && ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
