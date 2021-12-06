@@ -269,7 +269,7 @@ it.describe('pause', () => {
       'page.pause- XXms',
       'page.waitForEvent(console)',
       'waiting for event \"console\"',
-      'error: Timeout while waiting for event \"console\"',
+      'error: Timeout 1ms exceeded while waiting for event \"console\"',
       'page.pause',
     ]);
     await recorderPage.click('[title="Resume"]');
