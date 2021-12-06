@@ -211,7 +211,7 @@ export class Mouse {
   async click(x: number, y: number, options: { delay?: number, button?: types.MouseButton, clickCount?: number } = {}) {
     const { delay = null, clickCount = 1 } = options;
     if (delay) {
-      this.move(x, y);
+      await this.move(x, y);
       for (let cc = 1; cc <= clickCount; ++cc) {
         await this.down({ ...options, clickCount: cc });
         await new Promise(f => setTimeout(f, delay));
