@@ -108,8 +108,8 @@ it.describe.parallel('should proxy local network requests', () => {
           description: 'link-local'
         }
       ]) {
-        it(`${params.description}`, async ({ browserName, contextFactory, server, proxyServer }) => {
-          it.fail(browserName === 'webkit' && additionalBypass && ['localhost', '127.0.0.1'].includes(params.target), 'WK fails to proxy 127.0.0.1 and localhost if additional bypasses are present');
+        it(`${params.description}`, async ({ platform, browserName, contextFactory, server, proxyServer }) => {
+          it.fail(platform !== 'linux' && browserName === 'webkit' && additionalBypass && ['localhost', '127.0.0.1'].includes(params.target), 'WK fails to proxy 127.0.0.1 and localhost if additional bypasses are present');
 
           const path = `/target-${additionalBypass}-${params.target}.html`;
           server.setRoute(path, async (req, res) => {
