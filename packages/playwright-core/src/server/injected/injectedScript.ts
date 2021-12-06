@@ -571,9 +571,9 @@ export class InjectedScript {
     if (element.nodeName.toLowerCase() === 'input') {
       const input = element as HTMLInputElement;
       const type = input.type.toLowerCase();
-      const kDateTypes = new Set(['date', 'time', 'datetime', 'datetime-local', 'month', 'week']);
-      const kTextInputTypes = new Set(['', 'email', 'number', 'password', 'search', 'tel', 'text', 'url']);
-      if (!kTextInputTypes.has(type) && !kDateTypes.has(type)) {
+      const kInputTypesToSetValue = new Set(['color', 'date', 'time', 'datetime', 'datetime-local', 'month', 'range', 'week']);
+      const kInputTypesToTypeInto = new Set(['', 'email', 'number', 'password', 'search', 'tel', 'text', 'url']);
+      if (!kInputTypesToTypeInto.has(type) && !kInputTypesToSetValue.has(type)) {
         progress.log(`    input of type "${type}" cannot be filled`);
         throw this.createStacklessError(`Input of type "${type}" cannot be filled`);
       }
@@ -582,7 +582,7 @@ export class InjectedScript {
         if (isNaN(Number(value)))
           throw this.createStacklessError('Cannot type text into input[type=number]');
       }
-      if (kDateTypes.has(type)) {
+      if (kInputTypesToSetValue.has(type)) {
         value = value.trim();
         input.focus();
         input.value = value;

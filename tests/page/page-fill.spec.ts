@@ -66,7 +66,7 @@ it('should fill textarea with label', async ({ page }) => {
 
 it('should throw on unsupported inputs', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
-  for (const type of ['button', 'checkbox', 'file', 'image', 'radio', 'range', 'reset', 'submit']) {
+  for (const type of ['button', 'checkbox', 'file', 'image', 'radio', 'reset', 'submit']) {
     await page.$eval('input', (input, type) => input.setAttribute('type', type), type);
     let error = null;
     await page.fill('input', '').catch(e => error = e);
@@ -81,6 +81,34 @@ it('should fill different input types', async ({ page, server }) => {
     await page.fill('input', 'text ' + type);
     expect(await page.evaluate(() => window['result'])).toBe('text ' + type);
   }
+});
+
+it('should fill range input', async ({ page }) => {
+  await page.setContent('<input type=range min=0 max=100 value=50>');
+  await page.fill('input', '42');
+  expect(await page.$eval('input', input => input.value)).toBe('42');
+});
+
+it('should throw on incorrect range value', async ({ page }) => {
+  await page.setContent('<input type=range min=0 max=100 value=50>');
+  const error1 = await page.fill('input', 'foo').catch(e => e);
+  expect(error1.message).toContain('Malformed value');
+  const error2 = await page.fill('input', '200').catch(e => e);
+  expect(error2.message).toContain('Malformed value');
+  const error3 = await page.fill('input', '15.43').catch(e => e);
+  expect(error3.message).toContain('Malformed value');
+});
+
+it('should fill color input', async ({ page }) => {
+  await page.setContent('<input type=color value="#e66465">');
+  await page.fill('input', '#aaaaaa');
+  expect(await page.$eval('input', input => input.value)).toBe('#aaaaaa');
+});
+
+it('should throw on incorrect color value', async ({ page }) => {
+  await page.setContent('<input type=color value="#e66465">');
+  const error1 = await page.fill('input', 'badvalue').catch(e => e);
+  expect(error1.message).toContain('Malformed value');
 });
 
 it('should fill date input after clicking', async ({ page, server }) => {
