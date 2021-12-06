@@ -267,6 +267,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   expect: Expect;
   extend<T, W extends KeyValue = {}>(fixtures: Fixtures<T, W, TestArgs, WorkerArgs>): TestType<TestArgs & T, WorkerArgs & W>;
   extendTest<T, W>(other: TestType<T, W>): TestType<TestArgs & T, WorkerArgs & W>;
+  info(): TestInfo;
 }
 
 type KeyValue = { [key: string]: any };

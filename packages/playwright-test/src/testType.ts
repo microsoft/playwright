@@ -54,6 +54,12 @@ export class TestTypeImpl {
     test.use = wrapFunctionWithLocation(this._use.bind(this));
     test.extend = wrapFunctionWithLocation(this._extend.bind(this));
     test.extendTest = wrapFunctionWithLocation(this._extendTest.bind(this));
+    test.info = () => {
+      const result = currentTestInfo();
+      if (!result)
+        throw new Error('test.info() can only be called while test is running');
+      return result;
+    };
     this.test = test;
   }
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, stripAscii } from './playwright-test-fixtures';
 
 test('should work directly', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -51,4 +51,40 @@ test('should work via fixture', async ({ runInlineTest }) => {
     `,
   });
   expect(result.exitCode).toBe(0);
+});
+
+test('should work via test.info', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'helper.ts': `
+      export const test = pwt.test.extend({
+        title: async ({}, run) => {
+          await run(pwt.test.info().title);
+        },
+      });
+    `,
+    'a.test.js': `
+      const { test } = require('./helper');
+      test('test 1', async ({title}) => {
+        expect(test.info().title).toBe('test 1');
+        expect(title).toBe('test 1');
+      });
+      test('test 2', async ({title}) => {
+        expect(title).toBe('test 2');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+});
+
+test('should throw outside test', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test.info();
+      test('test 1', async ({title}) => {});
+    `,
+  });
+  const output = stripAscii(result.output);
+  expect(result.exitCode).toBe(1);
+  expect(output).toContain('test.info() can only be called while test is running');
 });

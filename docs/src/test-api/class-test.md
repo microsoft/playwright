@@ -800,6 +800,10 @@ A function that returns whether to mark as "fixme", based on test fixtures. Test
 An optional description that will be reflected in a test report.
 
 
+## method: Test.info
+- returns: <[TestInfo]>
+
+Returns information about the currently running test. This method can only be called during the test execution, otherwise it throws.
 
 ## method: Test.only
 
