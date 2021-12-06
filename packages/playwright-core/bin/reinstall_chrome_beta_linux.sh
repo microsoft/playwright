@@ -7,26 +7,23 @@ if [[ $(arch) == "aarch64" ]]; then
   exit 1
 fi
 
-is_user_root () { [ "${EUID:-$(id -u)}" -eq 0 ]; }
-if is_user_root; then
-  maybesudo=""
-else
-  maybesudo="sudo"
-fi
-
 # 1. make sure to remove old beta if any.
 if dpkg --get-selections | grep -q "^google-chrome-beta[[:space:]]*install$" >/dev/null; then
-  $maybesudo apt-get remove -y google-chrome-beta
+  apt-get remove -y google-chrome-beta
 fi
 
+# 2. Update apt lists (needed to install curl and chrome dependencies)
+apt-get update
+
+# 3. Install curl to download chrome
 if ! command -v curl >/dev/null; then
-  $maybesudo apt-get install -y curl
+  apt-get install -y curl
 fi
 
-# 2. download chrome beta from dl.google.com and install it.
+# 4. download chrome beta from dl.google.com and install it.
 cd /tmp
 curl -O https://dl.google.com/linux/direct/google-chrome-beta_current_amd64.deb
-$maybesudo apt-get install -y ./google-chrome-beta_current_amd64.deb
+apt-get install -y ./google-chrome-beta_current_amd64.deb
 rm -rf ./google-chrome-beta_current_amd64.deb
 cd -
 google-chrome-beta --version

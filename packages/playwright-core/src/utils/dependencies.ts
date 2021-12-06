@@ -70,26 +70,18 @@ export async function installDependenciesLinux(targets: Set<DependencyGroup>, dr
   commands.push(['apt-get', 'install', '-y', '--no-install-recommends',
     ...uniqueLibraries,
   ].join(' '));
-  const [command, args] = await buildAptProcessArgs(commands);
+  const { command, args, elevatedPermissions } = await utils.transformCommandsForRoot(commands);
   if (dryRun) {
     console.log(`${command} ${quoteProcessArgs(args).join(' ')}`); // eslint-disable-line no-console
     return;
   }
+  if (elevatedPermissions)
+    console.log('Switching to root user to install dependencies...'); // eslint-disable-line no-console
   const child = childProcess.spawn(command, args, { stdio: 'inherit' });
   await new Promise((resolve, reject) => {
     child.on('exit', resolve);
     child.on('error', reject);
   });
-}
-
-async function buildAptProcessArgs(commands: string[]): Promise<[string, string[]]> {
-  const isRoot = process.getuid() === 0;
-  if (isRoot)
-    return ['sh', ['-c', `${commands.join('&& ')}`]];
-  const sudoExists = await utils.spawnAsync('which', ['sudo']);
-  if (sudoExists.code === 0)
-    return ['sudo', ['--', 'sh', '-c', `${commands.join('&& ')}`]];
-  return ['su', ['root', '-c', `${commands.join('&& ')}`]];
 }
 
 export async function validateDependenciesWindows(windowsExeAndDllDirectories: string[]) {

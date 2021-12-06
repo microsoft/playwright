@@ -21,7 +21,7 @@ import * as util from 'util';
 import * as fs from 'fs';
 import lockfile from 'proper-lockfile';
 import { getUbuntuVersion } from './ubuntuVersion';
-import { getFromENV, getAsBooleanFromENV, calculateSha1, removeFolders, existsAsync, hostPlatform, canAccessFile, spawnAsync, fetchData, wrapInASCIIBox } from './utils';
+import { getFromENV, getAsBooleanFromENV, calculateSha1, removeFolders, existsAsync, hostPlatform, canAccessFile, spawnAsync, fetchData, wrapInASCIIBox, transformCommandsForRoot } from './utils';
 import { DependencyGroup, installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
 import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
 
@@ -645,16 +645,25 @@ export class Registry {
     const scriptName = scripts[process.platform as 'linux' | 'darwin' | 'win32'];
     if (!scriptName)
       throw new Error(`Cannot install ${channel} on ${process.platform}`);
+    const cwd = BIN_PATH;
     const isPowerShell = scriptName.endsWith('.ps1');
-    const shell = isPowerShell ? 'powershell.exe' : 'bash';
-    const args = [
-      ...(isPowerShell ? ['-ExecutionPolicy', 'Bypass', '-File'] : []),
-      path.join(BIN_PATH, scriptName),
-      ...scriptArgs
-    ];
-    const { code } = await spawnAsync(shell, args, { cwd: BIN_PATH, stdio: 'inherit' });
-    if (code !== 0)
-      throw new Error(`Failed to install ${channel}`);
+    if (isPowerShell) {
+      const args = [
+        '-ExecutionPolicy', 'Bypass', '-File',
+        path.join(BIN_PATH, scriptName),
+        ...scriptArgs
+      ];
+      const { code } = await spawnAsync('powershell.exe', args, { cwd, stdio: 'inherit' });
+      if (code !== 0)
+        throw new Error(`Failed to install ${channel}`);
+    } else {
+      const { command, args, elevatedPermissions } = await transformCommandsForRoot([`bash ${path.join(BIN_PATH, scriptName)} ${scriptArgs.join('')}`]);
+      if (elevatedPermissions)
+        console.log('Switching to root user to install dependencies...'); // eslint-disable-line no-console
+      const { code } = await spawnAsync(command, args, { cwd, stdio: 'inherit' });
+      if (code !== 0)
+        throw new Error(`Failed to install ${channel}`);
+    }
   }
 
   private async _validateInstallationCache(linksDir: string) {

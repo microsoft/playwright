@@ -520,3 +520,13 @@ export function streamToString(stream: stream.Readable): Promise<string> {
     stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
   });
 }
+
+export async function transformCommandsForRoot(commands: string[]): Promise<{ command: string, args: string[], elevatedPermissions: boolean}> {
+  const isRoot = process.getuid() === 0;
+  if (isRoot)
+    return { command: 'sh', args: ['-c', `${commands.join('&& ')}`], elevatedPermissions: false };
+  const sudoExists = await spawnAsync('which', ['sudo']);
+  if (sudoExists.code === 0)
+    return { command: 'sudo', args: ['--', 'sh', '-c', `${commands.join('&& ')}`], elevatedPermissions: true };
+  return { command: 'su', args: ['root', '-c', `${commands.join('&& ')}`], elevatedPermissions: true };
+}
