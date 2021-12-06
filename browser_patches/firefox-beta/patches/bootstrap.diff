@@ -890,16 +890,10 @@ index 3718544716cdc161ebe8fdde5ec3c9fd3ed4c688..a5e12c60cc83420b2d8eb98ef596d97d
    if (!sLoadingForegroundTopLevelContentDocument) {
      return false;
 diff --git a/dom/base/Document.h b/dom/base/Document.h
-index 0152c84c78d84873e9be474a6bdcb5608a71b61d..1633cd0c038b119ee5c1d549a0a420353059df28 100644
+index 0152c84c78d84873e9be474a6bdcb5608a71b61d..694eef3a6a11f73ea71662746ac8b9cab735bfd5 100644
 --- a/dom/base/Document.h
 +++ b/dom/base/Document.h
-@@ -4021,11 +4021,15 @@ class Document : public nsINode,
- 
-   // CSS prefers-color-scheme media feature for this document.
-   enum class IgnoreRFP { No, Yes };
-+
-   ColorScheme PreferredColorScheme(IgnoreRFP = IgnoreRFP::No) const;
-   // Returns the initial color-scheme used for this document based on the
+@@ -4026,6 +4026,9 @@ class Document : public nsINode,
    // color-scheme meta tag.
    ColorScheme DefaultColorScheme() const;
  
