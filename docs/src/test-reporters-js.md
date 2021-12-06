@@ -452,7 +452,7 @@ module.exports = MyReporter;
 ```
 
 ```js js-flavor=ts
-// playwright.config.ts
+// my-awesome-reporter.ts
 import { Reporter } from '@playwright/test/reporter';
 
 class MyReporter implements Reporter {
