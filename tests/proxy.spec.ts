@@ -73,49 +73,53 @@ it('should work with IP:PORT notion', async ({ browserType, server }) => {
   await browser.close();
 });
 
-it('should use proxy for localhost', async ({ browserType, server, proxyServer }) => {
-  server.setRoute('/target.html', async (req, res) => {
-    res.end('<html><title>Served by the proxy</title></html>');
-  });
-  proxyServer.forwardTo(server.PORT);
-  const browser = await browserType.launch({
-    proxy: { server: `localhost:${proxyServer.PORT}` }
-  });
-  const page = await browser.newPage();
-  await page.goto(`http://localhost:${server.PORT}/target.html`);
-  expect(proxyServer.requestUrls).toContain(`http://localhost:${server.PORT}/target.html`);
-  expect(await page.title()).toBe('Served by the proxy');
-  await browser.close();
-});
+it.describe.parallel('should proxy local network requests', () => {
+  for (const additionalBypass of [false, true]) {
+    it.describe.parallel(additionalBypass ? 'with other bypasses' : 'by default', () => {
+      for (const params of [
+        {
+          target: 'localhost',
+          description: 'localhost',
+        },
+        {
+          target: '127.0.0.1',
+          description: 'loopback address',
+        },
+        {
+          target: '169.254.3.4',
+          description: 'link-local'
+        }
+      ]) {
+        it(`${params.description}`, async ({ browserName, browserType, server, proxyServer }) => {
+          it.fail(browserName === 'webkit' && additionalBypass && ['localhost', '127.0.0.1'].includes(params.target), 'WK fails to proxy 127.0.0.1 and localhost if additional bypasses are present');
 
-it('should use proxy for loopback address', async ({ browserType, server, proxyServer }) => {
-  server.setRoute('/target.html', async (req, res) => {
-    res.end('<html><title>Served by the proxy</title></html>');
-  });
-  proxyServer.forwardTo(server.PORT);
-  const browser = await browserType.launch({
-    proxy: { server: `localhost:${proxyServer.PORT}` }
-  });
-  const page = await browser.newPage();
-  await page.goto(`http://127.0.0.1:${server.PORT}/target.html`);
-  expect(proxyServer.requestUrls).toContain(`http://127.0.0.1:${server.PORT}/target.html`);
-  expect(await page.title()).toBe('Served by the proxy');
-  await browser.close();
-});
+          const path = `/target-${additionalBypass}-${params.target}.html`;
+          server.setRoute(path, async (req, res) => {
+            res.end('<html><title>Served by the proxy</title></html>');
+          });
 
-it('should use proxy for link-local address', async ({ browserType, server, proxyServer }) => {
-  server.setRoute('/target.html', async (req, res) => {
-    res.end('<html><title>Served by the proxy</title></html>');
-  });
-  proxyServer.forwardTo(server.PORT);
-  const browser = await browserType.launch({
-    proxy: { server: `localhost:${proxyServer.PORT}` }
-  });
-  const page = await browser.newPage();
-  await page.goto(`http://169.254.3.4:4321/target.html`);
-  expect(proxyServer.requestUrls).toContain(`http://169.254.3.4:4321/target.html`);
-  expect(await page.title()).toBe('Served by the proxy');
-  await browser.close();
+          const url = `http://${params.target}:${server.PORT}${path}`;
+          proxyServer.forwardTo(server.PORT);
+          const browser = await browserType.launch({
+            proxy: { server: `localhost:${proxyServer.PORT}`, bypass: additionalBypass ? '1.non.existent.domain.for.the.test' : undefined }
+          });
+
+          const page = await browser.newPage();
+          await page.goto(url);
+          expect(proxyServer.requestUrls).toContain(url);
+          expect(await page.title()).toBe('Served by the proxy');
+
+          await page.goto('http://1.non.existent.domain.for.the.test/foo.html').catch(() => {});
+          if (additionalBypass)
+            expect(proxyServer.requestUrls).not.toContain('http://1.non.existent.domain.for.the.test/foo.html');
+          else
+            expect(proxyServer.requestUrls).toContain('http://1.non.existent.domain.for.the.test/foo.html');
+
+          await browser.close();
+        });
+      }
+    });
+  }
 });
 
 it('should authenticate', async ({ browserType, server }) => {
