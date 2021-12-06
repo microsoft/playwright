@@ -383,7 +383,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     const waiter = Waiter.createForEvent(channel, event);
     if (logLine)
       waiter.log(logLine);
-    waiter.rejectOnTimeout(timeout, `Timeout while waiting for event "${event}"`);
+    waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded while waiting for event "${event}"`);
     if (event !== Events.Page.Crash)
       waiter.rejectOnEvent(this, Events.Page.Crash, new Error('Page crashed'));
     if (event !== Events.Page.Close)

@@ -48,6 +48,7 @@ it('should respect timeout', async ({ page, playwright }) => {
   let error = null;
   await page.waitForEvent('request', { predicate: () => false, timeout: 1 }).catch(e => error = e);
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
+  expect(error.message).toContain('Timeout 1ms exceeded while waiting for event "request"');
 });
 
 it('should respect default timeout', async ({ page, playwright }) => {
