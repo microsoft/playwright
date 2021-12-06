@@ -18,7 +18,6 @@
 // @ts-check
 
 const fs = require('fs');
-const os = require('os');
 const path = require('path');
 const yaml = require('yaml');
 
@@ -41,8 +40,13 @@ function mapType(type) {
     return 'bool';
   if (type === 'number')
     return 'int';
+  // TODO: keep the same names in .NET as upstream
   if (type === 'ResourceTiming')
     return 'RequestTimingResult';
+  if (type === 'LifecycleEvent')
+    return 'WaitUntilState';
+  if (type === 'NameValue')
+    return 'HeaderEntry';
   return type;
 }
 
@@ -65,7 +69,7 @@ function inlineType(type, indent = '', wrapEnums = false) {
       return { ts: mapType(type), scheme: `t${titleCase(type)}`, optional };
     }
     if (channels.has(type))
-      return { ts: `${type}`, scheme: `tChannel('${type}')` , optional };
+      return { ts: `Core.${type}`, scheme: `tChannel('${type}')` , optional };
     if (type === 'Channel')
       return { ts: `Channel`, scheme: `tChannel('*')`, optional };
     return { ts: mapType(type), scheme: `tType('${type}')`, optional };
@@ -179,7 +183,6 @@ for (const [name, item] of Object.entries(protocol)) {
  */
 `)
     channels_ts.push('using System.Collections.Generic;');
-    channels_ts.push('using Microsoft.Playwright.Core;');
     channels_ts.push(``);
     channels_ts.push(`namespace Microsoft.Playwright.Transport.Protocol`);
     channels_ts.push(`{`);
