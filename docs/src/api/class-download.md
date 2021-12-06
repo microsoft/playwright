@@ -56,12 +56,6 @@ var download = await page.RunAndWaitForDownloadAsync(async () =>
 Console.WriteLine(await download.PathAsync());
 ```
 
-:::note
-Browser context **must** be created with the [`option: acceptDownloads`] set to `true` when user needs access to the
-downloaded content. If [`option: acceptDownloads`] is not set, download events are emitted, but the actual download is
-not performed and user has no access to the downloaded files.
-:::
-
 ## async method: Download.cancel
 
 Cancels a download. Will not fail if the download is already finished or canceled.

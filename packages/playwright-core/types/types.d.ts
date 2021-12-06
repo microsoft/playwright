@@ -902,10 +902,6 @@ export interface Page {
   /**
    * Emitted when attachment download started. User can access basic file operations on downloaded content via the passed
    * [Download] instance.
-   *
-   * > NOTE: Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the
-   * downloaded content. If `acceptDownloads` is not set, download events are emitted, but the actual download is not
-   * performed and user has no access to the downloaded files.
    */
   on(event: 'download', listener: (download: Download) => void): this;
 
@@ -1175,10 +1171,6 @@ export interface Page {
   /**
    * Emitted when attachment download started. User can access basic file operations on downloaded content via the passed
    * [Download] instance.
-   *
-   * > NOTE: Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the
-   * downloaded content. If `acceptDownloads` is not set, download events are emitted, but the actual download is not
-   * performed and user has no access to the downloaded files.
    */
   addListener(event: 'download', listener: (download: Download) => void): this;
 
@@ -3525,10 +3517,6 @@ export interface Page {
   /**
    * Emitted when attachment download started. User can access basic file operations on downloaded content via the passed
    * [Download] instance.
-   *
-   * > NOTE: Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the
-   * downloaded content. If `acceptDownloads` is not set, download events are emitted, but the actual download is not
-   * performed and user has no access to the downloaded files.
    */
   waitForEvent(event: 'download', optionsOrPredicate?: { predicate?: (download: Download) => boolean | Promise<boolean>, timeout?: number } | ((download: Download) => boolean | Promise<boolean>)): Promise<Download>;
 
@@ -9948,7 +9936,7 @@ export interface BrowserType<Unused = {}> {
    */
   launchPersistentContext(userDataDir: string, options?: {
     /**
-     * Whether to automatically download all the attachments. Defaults to `false` where all the downloads are canceled.
+     * Whether to automatically download all the attachments. Defaults to `true` where all the downloads are accepted.
      */
     acceptDownloads?: boolean;
 
@@ -11176,7 +11164,7 @@ export interface AndroidDevice {
    */
   launchBrowser(options?: {
     /**
-     * Whether to automatically download all the attachments. Defaults to `false` where all the downloads are canceled.
+     * Whether to automatically download all the attachments. Defaults to `true` where all the downloads are accepted.
      */
     acceptDownloads?: boolean;
 
@@ -12643,7 +12631,7 @@ export interface Browser extends EventEmitter {
    */
   newPage(options?: {
     /**
-     * Whether to automatically download all the attachments. Defaults to `false` where all the downloads are canceled.
+     * Whether to automatically download all the attachments. Defaults to `true` where all the downloads are accepted.
      */
     acceptDownloads?: boolean;
 
@@ -13319,9 +13307,6 @@ export interface Dialog {
  * const path = await download.path();
  * ```
  *
- * > NOTE: Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the
- * downloaded content. If `acceptDownloads` is not set, download events are emitted, but the actual download is not
- * performed and user has no access to the downloaded files.
  */
 export interface Download {
   /**
@@ -13435,7 +13420,7 @@ export interface Electron {
    */
   launch(options?: {
     /**
-     * Whether to automatically download all the attachments. Defaults to `false` where all the downloads are canceled.
+     * Whether to automatically download all the attachments. Defaults to `true` where all the downloads are accepted.
      */
     acceptDownloads?: boolean;
 
@@ -15037,7 +15022,7 @@ export interface WebSocket {
 
 export interface BrowserContextOptions {
   /**
-   * Whether to automatically download all the attachments. Defaults to `false` where all the downloads are canceled.
+   * Whether to automatically download all the attachments. Defaults to `true` where all the downloads are accepted.
    */
   acceptDownloads?: boolean;
 

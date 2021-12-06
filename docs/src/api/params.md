@@ -250,7 +250,7 @@ state is still returned, but won't be saved to the disk.
 ## context-option-acceptdownloads
 - `acceptDownloads` <[boolean]>
 
-Whether to automatically download all the attachments. Defaults to `false` where all the downloads are canceled.
+Whether to automatically download all the attachments. Defaults to `true` where all the downloads are accepted.
 
 ## context-option-ignorehttpserrors
 - `ignoreHTTPSErrors` <[boolean]>

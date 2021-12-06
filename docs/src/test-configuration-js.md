@@ -342,7 +342,7 @@ export default config;
 
 Available options to configure networking:
 
-- `acceptDownloads` - Whether to automatically download all the attachments. [Learn more](./downloads.md) about working with downloads.
+- `acceptDownloads` - Whether to automatically download all the attachments, defaults to `true`. [Learn more](./downloads.md) about working with downloads.
 - `extraHTTPHeaders` - An object containing additional HTTP headers to be sent with every request. All header values must be strings.
 - `httpCredentials` - Credentials for [HTTP authentication](./network.md#http-authentication).
 - `ignoreHTTPSErrors` - Whether to ignore HTTPS errors during navigation.

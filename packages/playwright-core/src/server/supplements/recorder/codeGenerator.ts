@@ -129,10 +129,6 @@ export class CodeGenerator extends EventEmitter {
     if (!this._enabled)
       return;
 
-    // We'll need to pass acceptDownloads for any generated downloads code to work.
-    if (signal.name === 'download')
-      this._options.contextOptions.acceptDownloads = true;
-
     // Signal either arrives while action is being performed or shortly after.
     if (this._currentAction) {
       this._currentAction.action.signals.push(signal);
