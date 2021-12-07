@@ -87,12 +87,12 @@ const FilmStripLane: React.FunctionComponent<{
   const gapLeft = (startTime - boundaries.minimum) / boundariesDuration * width;
   const gapRight = (boundaries.maximum - endTime) / boundariesDuration * width;
   const effectiveWidth = (endTime - startTime) / boundariesDuration * width;
-  const frameCount = effectiveWidth / (frameSize.width + 2 * frameMargin) | 0 + 1;
+  const frameCount = (effectiveWidth / (frameSize.width + 2 * frameMargin)) | 0;
   const frameDuration = (endTime - startTime) / frameCount;
 
   const frames: JSX.Element[] = [];
-  let i = 0;
-  for (let time = startTime; startTime && frameDuration && time <= endTime; time += frameDuration, ++i) {
+  for (let i = 0; startTime && frameDuration && i < frameCount; ++i) {
+    const time = startTime + frameDuration * i;
     const index = upperBound(screencastFrames, time, timeComparator) - 1;
     frames.push(<div className='film-strip-frame' key={i} style={{
       width: frameSize.width,
@@ -104,7 +104,7 @@ const FilmStripLane: React.FunctionComponent<{
     }} />);
   }
   // Always append last frame to show endgame.
-  frames.push(<div className='film-strip-frame' key={i} style={{
+  frames.push(<div className='film-strip-frame' key={frames.length} style={{
     width: frameSize.width,
     height: frameSize.height,
     backgroundImage: `url(sha1/${screencastFrames[screencastFrames.length - 1].sha1})`,
