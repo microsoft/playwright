@@ -21862,7 +21862,7 @@ index 62629b4c1c25ae82bd797b39bbf9de0331f8eed2..5de7900a29b0e629f1ac404bbb0dc5b4
  
  typedef struct _BrowserWindow        BrowserWindow;
 diff --git a/Tools/MiniBrowser/gtk/main.c b/Tools/MiniBrowser/gtk/main.c
-index 9e7863b61b3e9db76e04e14f45116684dae44e37..1ed236613cfd8d45b2faa13ee0ea3bbe494baa19 100644
+index 9e7863b61b3e9db76e04e14f45116684dae44e37..fb47d231744d578bcbef125df9011a80fe3f263c 100644
 --- a/Tools/MiniBrowser/gtk/main.c
 +++ b/Tools/MiniBrowser/gtk/main.c
 @@ -56,7 +56,12 @@ static gboolean enableITP;
@@ -21889,10 +21889,18 @@ index 9e7863b61b3e9db76e04e14f45116684dae44e37..1ed236613cfd8d45b2faa13ee0ea3bbe
      { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &uriArguments, 0, "[URL…]" },
      { 0, 0, 0, 0, 0, 0, 0 }
  };
-@@ -618,6 +627,48 @@ static void filterSavedCallback(WebKitUserContentFilterStore *store, GAsyncResul
+@@ -618,6 +627,57 @@ static void filterSavedCallback(WebKitUserContentFilterStore *store, GAsyncResul
      g_main_loop_quit(data->mainLoop);
  }
  
++static WebKitSettings* createPlaywrightSettings() {
++    WebKitSettings* webkitSettings = webkit_settings_new();
++    // Playwright: revert to the default state before https://github.com/WebKit/WebKit/commit/a73a25b9ea9229987c8fa7b2e092e6324cb17913
++    webkit_settings_set_hardware_acceleration_policy(webkitSettings, WEBKIT_HARDWARE_ACCELERATION_POLICY_NEVER);
++    webkit_settings_set_hardware_acceleration_policy(webkitSettings, WEBKIT_HARDWARE_ACCELERATION_POLICY_ON_DEMAND);
++    return webkitSettings;
++}
++
 +static WebKitWebContext *persistentWebContext = NULL;
 +
 +static WebKitWebView *createNewPage(WebKitBrowserInspector *browser_inspector, WebKitWebContext *context)
@@ -21902,6 +21910,7 @@ index 9e7863b61b3e9db76e04e14f45116684dae44e37..1ed236613cfd8d45b2faa13ee0ea3bbe
 +
 +    WebKitWebView *newWebView = WEBKIT_WEB_VIEW(g_object_new(WEBKIT_TYPE_WEB_VIEW,
 +        "web-context", context,
++        "settings", createPlaywrightSettings(),
 +        "is-ephemeral", webkit_web_context_is_ephemeral(context),
 +        "is-controlled-by-automation", TRUE,
 +        NULL));
@@ -21938,7 +21947,7 @@ index 9e7863b61b3e9db76e04e14f45116684dae44e37..1ed236613cfd8d45b2faa13ee0ea3bbe
  static void startup(GApplication *application)
  {
      const char *actionAccels[] = {
-@@ -648,10 +699,22 @@ static void startup(GApplication *application)
+@@ -648,10 +708,22 @@ static void startup(GApplication *application)
  
  static void activate(GApplication *application, WebKitSettings *webkitSettings)
  {
@@ -21963,7 +21972,7 @@ index 9e7863b61b3e9db76e04e14f45116684dae44e37..1ed236613cfd8d45b2faa13ee0ea3bbe
          char *dataDirectory = g_build_filename(g_get_user_data_dir(), "webkitgtk-" WEBKITGTK_API_VERSION_STRING, "MiniBrowser", NULL);
          char *cacheDirectory = g_build_filename(g_get_user_cache_dir(), "webkitgtk-" WEBKITGTK_API_VERSION_STRING, "MiniBrowser", NULL);
          manager = webkit_website_data_manager_new("base-data-directory", dataDirectory, "base-cache-directory", cacheDirectory, NULL);
-@@ -675,6 +738,7 @@ static void activate(GApplication *application, WebKitSettings *webkitSettings)
+@@ -675,6 +747,7 @@ static void activate(GApplication *application, WebKitSettings *webkitSettings)
          "use-system-appearance-for-scrollbars", FALSE,
  #endif
          NULL);
@@ -21971,7 +21980,7 @@ index 9e7863b61b3e9db76e04e14f45116684dae44e37..1ed236613cfd8d45b2faa13ee0ea3bbe
      g_object_unref(manager);
  
      if (enableSandbox)
-@@ -756,9 +820,7 @@ static void activate(GApplication *application, WebKitSettings *webkitSettings)
+@@ -756,9 +829,7 @@ static void activate(GApplication *application, WebKitSettings *webkitSettings)
                  if (exitAfterLoad)
                      exitAfterWebViewLoadFinishes(webView, application);
              }
@@ -21982,7 +21991,16 @@ index 9e7863b61b3e9db76e04e14f45116684dae44e37..1ed236613cfd8d45b2faa13ee0ea3bbe
          }
      } else {
          WebKitWebView *webView = createBrowserTab(mainWindow, webkitSettings, userContentManager, defaultWebsitePolicies);
-@@ -834,9 +896,11 @@ int main(int argc, char *argv[])
+@@ -802,7 +873,7 @@ int main(int argc, char *argv[])
+     g_option_context_add_group(context, gtk_get_option_group(TRUE));
+ #endif
+ 
+-    WebKitSettings *webkitSettings = webkit_settings_new();
++    WebKitSettings *webkitSettings = createPlaywrightSettings();
+     webkit_settings_set_enable_developer_extras(webkitSettings, TRUE);
+     webkit_settings_set_enable_webgl(webkitSettings, TRUE);
+     webkit_settings_set_enable_media_stream(webkitSettings, TRUE);
+@@ -834,9 +905,11 @@ int main(int argc, char *argv[])
      }
  
      GtkApplication *application = gtk_application_new("org.webkitgtk.MiniBrowser", G_APPLICATION_NON_UNIQUE);
