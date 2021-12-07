@@ -15,7 +15,8 @@
  */
 
 import { SelectorEngine, SelectorRoot } from './selectorEngine';
-import { checkComponentAttribute, parseComponentSelector, isInsideScope } from '../common/componentUtils';
+import { isInsideScope } from './selectorEvaluator';
+import { checkComponentAttribute, parseComponentSelector } from '../common/componentUtils';
 
 type ComponentNode = {
   name: string,

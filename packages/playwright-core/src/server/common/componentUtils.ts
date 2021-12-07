@@ -201,12 +201,3 @@ export function parseComponentSelector(selector: string): ParsedComponentSelecto
   return result;
 }
 
-export function isInsideScope(scope: Node, node: Node): boolean {
-  while (node) {
-    if (scope.contains(node))
-      return true;
-    node = node.parentNode || (node as ShadowRoot).host;
-  }
-  return false;
-}
-
