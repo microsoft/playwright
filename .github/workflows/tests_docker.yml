@@ -38,7 +38,7 @@ jobs:
     - run: npm ci
     - run: npm run build
     - name: Build
-      run: bash utils/docker/build.sh ${{ matrix.tag }} playwright:localbuild-${{ matrix.tag }}
+      run: bash utils/docker/build.sh --amd64 ${{ matrix.tag }} playwright:localbuild-${{ matrix.tag }}
     - name: Clean & Prepare for Docker
       run: |
         npm run clean
