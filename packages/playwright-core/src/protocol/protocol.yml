@@ -423,7 +423,6 @@ Root:
     initialize:
       parameters:
         sdkLanguage: string
-        version: string
       returns:
         playwright: Playwright
 
