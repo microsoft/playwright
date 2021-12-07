@@ -15,6 +15,7 @@
  */
 
 import { SelectorEngine, SelectorRoot } from './selectorEngine';
+import { isInsideScope } from './selectorEvaluator';
 import { checkComponentAttribute, parseComponentSelector } from '../common/componentUtils';
 
 type ComponentNode = {
@@ -132,24 +133,28 @@ function filterComponentsTree(treeNode: ComponentNode, searchFn: (node: Componen
   return result;
 }
 
-function findReactRoots(): ReactVNode[] {
-  const roots: ReactVNode[] = [];
-  const walker = document.createTreeWalker(document, NodeFilter.SHOW_ELEMENT);
-  while (walker.nextNode()) {
+function findReactRoots(root: Document | ShadowRoot, roots: ReactVNode[] = []): ReactVNode[] {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
+  do {
     const node = walker.currentNode;
     // @see https://github.com/baruchvlz/resq/blob/5c15a5e04d3f7174087248f5a158c3d6dcc1ec72/src/utils.js#L329
     if (node.hasOwnProperty('_reactRootContainer'))
       roots.push((node as any)._reactRootContainer._internalRoot.current);
-  }
-  // Pre-react 16: query dom for `data-reactroot`
-  // @see https://github.com/facebook/react/issues/10971
-  for (const node of document.querySelectorAll('[data-reactroot]')) {
-    for (const key of Object.keys(node)) {
-      // @see https://github.com/baruchvlz/resq/blob/5c15a5e04d3f7174087248f5a158c3d6dcc1ec72/src/utils.js#L334
-      if (key.startsWith('__reactInternalInstance') || key.startsWith('__reactFiber'))
-        roots.push((node as any)[key]);
+
+    // Pre-react 16: rely on `data-reactroot`
+    // @see https://github.com/facebook/react/issues/10971
+    if ((node instanceof Element) && node.hasAttribute('data-reactroot')) {
+      for (const key of Object.keys(node)) {
+        // @see https://github.com/baruchvlz/resq/blob/5c15a5e04d3f7174087248f5a158c3d6dcc1ec72/src/utils.js#L334
+        if (key.startsWith('__reactInternalInstance') || key.startsWith('__reactFiber'))
+          roots.push((node as any)[key]);
+      }
     }
-  }
+
+    const shadowRoot = node instanceof Element ? node.shadowRoot : null;
+    if (shadowRoot)
+      findReactRoots(shadowRoot, roots);
+  } while (walker.nextNode());
   return roots;
 }
 
@@ -157,12 +162,12 @@ export const ReactEngine: SelectorEngine = {
   queryAll(scope: SelectorRoot, selector: string): Element[] {
     const { name, attributes } = parseComponentSelector(selector);
 
-    const reactRoots = findReactRoots();
+    const reactRoots = findReactRoots(document);
     const trees = reactRoots.map(reactRoot => buildComponentsTree(reactRoot));
     const treeNodes = trees.map(tree => filterComponentsTree(tree, treeNode => {
       if (name && treeNode.name !== name)
         return false;
-      if (treeNode.rootElements.some(domNode => !scope.contains(domNode)))
+      if (treeNode.rootElements.some(domNode => !isInsideScope(scope, domNode)))
         return false;
       for (const attr of attributes) {
         if (!checkComponentAttribute(treeNode.props, attr))

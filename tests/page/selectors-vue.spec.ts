@@ -132,6 +132,26 @@ for (const [name, url] of Object.entries(vues)) {
         await expect(page.locator('css=#root2 >> _vue=book-item')).toHaveCount(4);
       });
     });
+
+    it('should work with multiroot vue inside shadow DOM', async ({ page }) => {
+      await expect(page.locator(`_vue=book-item`)).toHaveCount(3);
+      await page.evaluate(vueName => {
+        const anotherRoot = document.createElement('div');
+        document.body.append(anotherRoot);
+        const shadowRoot = anotherRoot.attachShadow({ mode: 'open' });
+        if (vueName === 'vue2') {
+          // Vue2 cannot be mounted in shadow root directly.
+          const div = document.createElement('div');
+          shadowRoot.append(div);
+          // @ts-ignore
+          window.mountApp(div);
+        } else {
+          // @ts-ignore
+          window.mountApp(shadowRoot);
+        }
+      }, name);
+      await expect(page.locator(`_vue=book-item`)).toHaveCount(6);
+    });
   });
 }
 

@@ -619,6 +619,17 @@ const nthMatchEngine: SelectorEngine = {
   },
 };
 
+export function isInsideScope(scope: Node, element: Element | undefined): boolean {
+  while (element) {
+    if (scope.contains(element))
+      return true;
+    while (element.parentElement)
+      element = element.parentElement;
+    element = parentElementOrShadowHost(element);
+  }
+  return false;
+}
+
 export function parentElementOrShadowHost(element: Element): Element | undefined {
   if (element.parentElement)
     return element.parentElement;

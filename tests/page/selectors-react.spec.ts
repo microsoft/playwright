@@ -134,6 +134,18 @@ for (const [name, url] of Object.entries(reacts)) {
         await expect(page.locator('css=#root2 >> _react=BookItem')).toHaveCount(4);
       });
     });
+
+    it('should work with multiroot react inside shadow DOM', async ({ page }) => {
+      await expect(page.locator(`_react=BookItem`)).toHaveCount(3);
+      await page.evaluate(() => {
+        const anotherRoot = document.createElement('div');
+        document.body.append(anotherRoot);
+        const shadowRoot = anotherRoot.attachShadow({ mode: 'open' });
+        // @ts-ignore
+        window.mountApp(shadowRoot);
+      });
+      await expect(page.locator(`_react=BookItem`)).toHaveCount(6);
+    });
   });
 }
 
