@@ -423,7 +423,6 @@ Root:
     initialize:
       parameters:
         sdkLanguage: string
-        version: string
       returns:
         playwright: Playwright
 
@@ -3032,4 +3031,5 @@ JsonPipe:
         message: json
 
     closed:
+      parameters:
         error: SerializedError?

@@ -17,7 +17,7 @@
 import WebSocket from 'ws';
 import { Connection } from '../client/connection';
 import { Playwright } from '../client/playwright';
-import { makeWaitForNextTask } from '../utils/utils';
+import { getPlaywrightVersion, makeWaitForNextTask } from '../utils/utils';
 
 export type PlaywrightClientConnectOptions = {
   wsEndpoint: string;
@@ -33,7 +33,11 @@ export class PlaywrightClient {
     const { wsEndpoint, timeout = 30000 } = options;
     const connection = new Connection();
     connection.markAsRemote();
-    const ws = new WebSocket(wsEndpoint);
+    const ws = new WebSocket(wsEndpoint, {
+      headers: {
+        'x-playwright-version': getPlaywrightVersion(),
+      }
+    });
     const waitForNextTask = makeWaitForNextTask();
     connection.onmessage = message => {
       if (ws.readyState === 2 /** CLOSING */ || ws.readyState === 3 /** CLOSED */)
@@ -42,7 +46,7 @@ export class PlaywrightClient {
     };
     ws.on('message', message => waitForNextTask(() => connection.dispatch(JSON.parse(message.toString()))));
     const errorPromise = new Promise((_, reject) => ws.on('error', error => reject(error)));
-    const closePromise = new Promise((_, reject) => ws.on('close', () => reject(new Error('Connection closed'))));
+    const closePromise = new Promise((_, reject) => ws.on('close', (code, message) => reject(new Error(`Connection closed${message ? `: ${message}` : ''}`))));
     const playwrightClientPromise = new Promise<PlaywrightClient>((resolve, reject) => {
       let playwright: Playwright;
       ws.on('open', async () => {

@@ -32,7 +32,7 @@ export class JsonPipeDispatcher extends Dispatcher<{ guid: string }, channels.Js
   async close(): Promise<void> {
     this.emit('close');
     if (!this._disposed) {
-      this._dispatchEvent('closed', {});
+      this._dispatchEvent('closed');
       this._dispose();
     }
   }

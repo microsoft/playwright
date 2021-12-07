@@ -356,7 +356,6 @@ export interface RootChannel extends RootEventTarget, Channel {
 }
 export type RootInitializeParams = {
   sdkLanguage: string,
-  version: string,
 };
 export type RootInitializeOptions = {
 
@@ -3903,7 +3902,9 @@ export interface JsonPipeChannel extends JsonPipeEventTarget, Channel {
 export type JsonPipeMessageEvent = {
   message: any,
 };
-export type JsonPipeClosedEvent = {};
+export type JsonPipeClosedEvent = {
+  error?: SerializedError,
+};
 export type JsonPipeSendParams = {
   message: any,
 };

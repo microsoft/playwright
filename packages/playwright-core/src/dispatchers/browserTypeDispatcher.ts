@@ -22,7 +22,7 @@ import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { CallMetadata } from '../server/instrumentation';
 import WebSocket from 'ws';
 import { JsonPipeDispatcher } from '../dispatchers/jsonPipeDispatcher';
-import { getUserAgent, makeWaitForNextTask } from '../utils/utils';
+import { getPlaywrightVersion, getUserAgent, makeWaitForNextTask } from '../utils/utils';
 import { ManualPromise } from '../utils/async';
 
 export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.BrowserTypeChannel> implements channels.BrowserTypeChannel {
@@ -57,7 +57,12 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.Brow
     const waitForNextTask = params.slowMo
       ? (cb: () => any) => setTimeout(cb, params.slowMo)
       : makeWaitForNextTask();
-    const paramsHeaders = Object.assign({ 'User-Agent': getUserAgent() }, params.headers || {});
+    const paramsHeaders = {
+      'User-Agent': getUserAgent(),
+      ...params.headers,
+      'x-playwright-version': getPlaywrightVersion(),
+    };
+
     const ws = new WebSocket(params.wsEndpoint, [], {
       perMessageDeflate: false,
       maxPayload: 256 * 1024 * 1024, // 256Mb,
@@ -67,7 +72,7 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.Brow
     const pipe = new JsonPipeDispatcher(this._scope);
     const openPromise = new ManualPromise<{ pipe: JsonPipeDispatcher }>();
     ws.on('open', () => openPromise.resolve({ pipe }));
-    ws.on('close', () => pipe.wasClosed());
+    ws.on('close', (code, reason) => pipe.wasClosed(reason ? new Error(reason) : undefined));
     ws.on('error', error => {
       if (openPromise.isDone()) {
         pipe.wasClosed(error);

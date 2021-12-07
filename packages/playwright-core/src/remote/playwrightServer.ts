@@ -21,6 +21,7 @@ import { DispatcherConnection, Root } from '../dispatchers/dispatcher';
 import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
 import { createPlaywright, Playwright } from '../server/playwright';
 import { gracefullyCloseAll } from '../utils/processLauncher';
+import { getPlaywrightVersion } from '../utils/utils';
 
 const debugLog = debug('pw:server');
 
@@ -88,13 +89,19 @@ export class PlaywrightServer {
     debugLog('Listening at ' + wsEndpoint);
 
     this._wsServer = new ws.Server({ server, path });
-    this._wsServer.on('connection', async socket => {
+    this._wsServer.on('connection', async (socket, request) => {
       if (this._clientsCount && !this._delegate.allowMultipleClients) {
         socket.close();
         return;
       }
       this._clientsCount++;
       debugLog('Incoming connection');
+
+      const clientVersion = request.headers['x-playwright-version'];
+      if (!supportsPlaywrightServerVersion(clientVersion)) {
+        socket.close(1003 /* WS status code: Unsupported Data */, `${clientVersion} does not match the client version ${getPlaywrightVersion()}.`);
+        return;
+      }
 
       const connection = new DispatcherConnection();
       connection.onmessage = message => {
@@ -137,4 +144,13 @@ export class PlaywrightServer {
     this._wsServer = undefined;
     await this._delegate.onClose();
   }
+}
+
+function supportsPlaywrightServerVersion(givenVersion: string | string[] | undefined): boolean {
+  if (!givenVersion || Array.isArray(givenVersion))
+    return false;
+  const expectedVersion = getPlaywrightVersion();
+  const givenParts = givenVersion.split('.');
+  const expectedParts = expectedVersion.split('.');
+  return givenParts.slice(0, 2).join('.') === expectedParts.slice(0, 2).join('.');
 }

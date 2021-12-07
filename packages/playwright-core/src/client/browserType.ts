@@ -132,7 +132,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       connection.markAsRemote();
       connection.on('close', closePipe);
 
-      const onPipeClosed = () => {
+      const onPipeClosed = (event: channels.JsonPipeClosedEvent) => {
         // Emulate all pages, contexts and the browser closing upon disconnect.
         for (const context of browser?.contexts() || []) {
           for (const page of context.pages())
@@ -140,7 +140,8 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
           context._onClose();
         }
         browser?._didClose();
-        connection.close(kBrowserClosedError);
+        const errorMessage = event?.error?.error?.message ?? kBrowserClosedError;
+        connection.close(errorMessage);
       };
       pipe.on('closed', onPipeClosed);
       connection.onmessage = message => pipe.send({ message }).catch(onPipeClosed);
