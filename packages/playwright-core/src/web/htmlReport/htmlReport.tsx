@@ -189,6 +189,9 @@ const TestCaseView: React.FC<{
 
   const [selectedResultIndex, setSelectedResultIndex] = React.useState(0);
   return <div className='test-case-column vbox'>
+    <div className='status-container ml-2 pl-2 d-flex' style={{ flexFlow: 'row-reverse' }}>
+      <StatsNavView stats={report.stats}></StatsNavView>
+    </div>
     {test && <div className='test-case-path'>{test.path.join(' › ')}</div>}
     {test && <div className='test-case-title'>{test?.title}</div>}
     {test && <div className='test-case-location'>{test.location.file}:{test.location.line}</div>}
@@ -279,7 +282,7 @@ const StepTreeItem: React.FC<{
 }> = ({ step, depth }) => {
   return <TreeItem title={<span>
     <span style={{ float: 'right' }}>{msToString(step.duration)}</span>
-    {statusIcon(step.error ? 'failed' : 'passed')}
+    {statusIcon(step.error || step.duration === -1 ? 'failed' : 'passed')}
     <span>{step.title}</span>
     {step.location && <span className='test-summary-path'>— {step.location.file}:{step.location.line}</span>}
   </span>} loadChildren={step.steps.length + (step.snippet ? 1 : 0) ? () => {

@@ -195,7 +195,7 @@ export class Dispatcher {
         parent: parentStep,
         category: params.category,
         startTime: new Date(params.wallTime),
-        duration: 0,
+        duration: -1,
         steps: [],
         location: params.location,
         data: {},

@@ -80,7 +80,7 @@ svg {
 
 .test-case-column {
   border-radius: 6px;
-  margin: 20px;
+  margin: 20px 0;
 }
 
 .tree-item {
