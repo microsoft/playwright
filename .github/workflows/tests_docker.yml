@@ -22,7 +22,7 @@ env:
 
 jobs:
   test_linux_docker:
-    name: "Docker Ubuntu-${{ matrix.tag }}-${{ matrix.user }} Tests"
+    name: "Docker Ubuntu-${{ matrix.tag }}-${{ matrix.user }}-${{ matrix.headless }} Tests"
     runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
