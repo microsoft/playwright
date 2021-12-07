@@ -200,4 +200,3 @@ export function parseComponentSelector(selector: string): ParsedComponentSelecto
     throw new Error(`Error while parsing selector \`${selector}\` - selector cannot be empty`);
   return result;
 }
-
