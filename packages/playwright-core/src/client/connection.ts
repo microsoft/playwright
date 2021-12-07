@@ -40,7 +40,6 @@ import { Artifact } from './artifact';
 import { EventEmitter } from 'events';
 import { JsonPipe } from './jsonPipe';
 import { APIRequestContext } from './fetch';
-import { getPlaywrightVersion } from '../utils/utils';
 
 class Root extends ChannelOwner<channels.RootChannel> {
   constructor(connection: Connection) {
@@ -50,7 +49,6 @@ class Root extends ChannelOwner<channels.RootChannel> {
   async initialize(): Promise<Playwright> {
     return Playwright.from((await this._channel.initialize({
       sdkLanguage: 'javascript',
-      version: getPlaywrightVersion(),
     })).playwright);
   }
 }
