@@ -440,6 +440,30 @@ it('should move to the start of the document', async ({ page, isMac }) => {
   expect(await page.evaluate(() => window.getSelection().toString())).toBe('1\n2\n3\n');
 });
 
+it('should dispatch a click event on a button when Space gets pressed', async ({ page }) => {
+  await page.setContent(`<button type="button">a11y</button>`);
+  const actual = await page.evaluateHandle(() => {
+    const actual = { clicked: false };
+    document.querySelector('button').addEventListener('click', () => (actual.clicked = true));
+    return actual;
+  });
+  await page.focus('button');
+  await page.keyboard.press('Space');
+  expect((await actual.jsonValue()).clicked).toBe(true);
+});
+
+it('should dispatch a click event on a button when Enter gets pressed', async ({ page }) => {
+  await page.setContent(`<button type="button">a11y</button>`);
+  const actual = await page.evaluateHandle(() => {
+    const actual = { clicked: false };
+    document.querySelector('button').addEventListener('click', () => (actual.clicked = true));
+    return actual;
+  });
+  await page.focus('button');
+  await page.keyboard.press('Enter');
+  expect((await actual.jsonValue()).clicked).toBe(true);
+});
+
 async function captureLastKeydown(page) {
   const lastEvent = await page.evaluateHandle(() => {
     const lastEvent = {
