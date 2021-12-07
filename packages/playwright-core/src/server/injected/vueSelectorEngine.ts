@@ -15,7 +15,7 @@
  */
 
 import { SelectorEngine, SelectorRoot } from './selectorEngine';
-import { checkComponentAttribute, parseComponentSelector } from '../common/componentUtils';
+import { checkComponentAttribute, parseComponentSelector, isInsideScope } from '../common/componentUtils';
 
 type ComponentNode = {
   name: string,
@@ -205,21 +205,21 @@ function filterComponentsTree(treeNode: ComponentNode, searchFn: (node: Componen
 }
 
 type VueRoot = {version: number, root: VueVNode};
-function findVueRoots(): VueRoot[] {
-  const roots: VueRoot[] = [];
-  // Vue3 roots are marked with [data-v-app] attribute
-  for (const node of document.querySelectorAll('[data-v-app]')) {
-    if ((node as any)._vnode && (node as any)._vnode.component)
-      roots.push({ root: (node as any)._vnode.component, version: 3 });
-  }
+function findVueRoots(root: Document | ShadowRoot, roots: VueRoot[] = []): VueRoot[] {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
   // Vue2 roots are referred to from elements.
-  const walker = document.createTreeWalker(document, NodeFilter.SHOW_ELEMENT);
-  const vue2Roots: Set<VueVNode>  = new Set();
-  while (walker.nextNode()) {
-    const element = walker.currentNode as any;
-    if (element && element.__vue__)
-      vue2Roots.add(element.__vue__.$root);
-  }
+  const vue2Roots: Set<VueVNode> = new Set();
+  do {
+    const node = walker.currentNode;
+    if ((node as any).__vue__)
+      vue2Roots.add((node as any).__vue__.$root);
+    // Vue3 roots are marked with __vue_app__.
+    if ((node as any).__vue_app__ && (node as any)._vnode && (node as any)._vnode.component)
+      roots.push({ root: (node as any)._vnode.component, version: 3 });
+    const shadowRoot = node instanceof Element ? node.shadowRoot : null;
+    if (shadowRoot)
+      findVueRoots(shadowRoot, roots);
+  } while (walker.nextNode());
   for (const vue2root of vue2Roots) {
     roots.push({
       version: 2,
@@ -232,12 +232,12 @@ function findVueRoots(): VueRoot[] {
 export const VueEngine: SelectorEngine = {
   queryAll(scope: SelectorRoot, selector: string): Element[] {
     const { name, attributes } = parseComponentSelector(selector);
-    const vueRoots = findVueRoots();
+    const vueRoots = findVueRoots(document);
     const trees = vueRoots.map(vueRoot => vueRoot.version === 3 ? buildComponentsTreeVue3(vueRoot.root) : buildComponentsTreeVue2(vueRoot.root));
     const treeNodes = trees.map(tree => filterComponentsTree(tree, treeNode => {
       if (name && treeNode.name !== name)
         return false;
-      if (treeNode.rootElements.some(rootElement => !scope.contains(rootElement)))
+      if (treeNode.rootElements.some(rootElement => !isInsideScope(scope, rootElement)))
         return false;
       for (const attr of attributes) {
         if (!checkComponentAttribute(treeNode.props, attr))
