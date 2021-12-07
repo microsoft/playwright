@@ -52,18 +52,13 @@ jobs:
       run: |
         utils/build/build-playwright-driver.sh
         utils/build/upload-playwright-driver.sh
-    - name: trigger docker build
-      run: |
-        VERSION=$(node -e 'console.log(require("./package.json").version)')
-        if [[ "${VERSION}" != *-* ]]; then
-          echo "ERROR: canary version must have dash inside, received '${VERSION}' instead"
-          exit 1
-        fi
-        curl -X POST \
-          -H "Accept: application/vnd.github.v3+json" \
-          -H "Authorization: token ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}" \
-          --data "{\"event_type\": \"publish_docker\", \"client_payload\": {\"ref\": \"${{ github.sha }}\", \"package_version\": \"${VERSION}\", \"release_channel\": \"canary\"}}" \
-          https://api.github.com/repos/microsoft/playwright-internal/dispatches
+    - uses: azure/docker-login@v1
+      with:
+        login-server: playwright.azurecr.io
+        username: playwright
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: publish docker canary
+      run: ./utils/docker/publish_docker.sh canary
 
   publish-trace-viewer:
     name: "publish Trace Viewer to trace.playwright.dev"
