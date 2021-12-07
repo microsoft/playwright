@@ -91,93 +91,55 @@ it('should use proxy', async ({ contextFactory, server, proxyServer }) => {
   await context.close();
 });
 
-it.describe('should proxy local network requests', () => {
+it.describe.parallel('should proxy local network requests', () => {
   for (const additionalBypass of [false, true]) {
-    it.describe(additionalBypass ? 'with other bypasses' : 'by default', () => {
-      it('localhost', async ({ platform, browserName, contextFactory, server, proxyServer }) => {
-        it.fail(platform !== 'linux' && browserName === 'webkit' && additionalBypass, 'WK fails to proxy localhost if additional bypasses are present');
+    it.describe.parallel(additionalBypass ? 'with other bypasses' : 'by default', () => {
+      for (const params of [
+        {
+          target: 'localhost',
+          description: 'localhost',
+        },
+        {
+          target: '127.0.0.1',
+          description: 'loopback address',
+        },
+        {
+          target: '169.254.3.4',
+          description: 'link-local'
+        }
+      ]) {
+        it(`${params.description}`, async ({ platform, browserName, contextFactory, server, proxyServer }) => {
+          it.fail(platform !== 'linux' && browserName === 'webkit' && additionalBypass && ['localhost', '127.0.0.1'].includes(params.target), 'WK fails to proxy 127.0.0.1 and localhost if additional bypasses are present');
 
-        const path = `/target-${additionalBypass}-localhost.html`;
-        server.setRoute(path, async (req, res) => {
-          res.end('<html><title>Served by the proxy</title></html>');
+          const path = `/target-${additionalBypass}-${params.target}.html`;
+          server.setRoute(path, async (req, res) => {
+            res.end('<html><title>Served by the proxy</title></html>');
+          });
+
+          const url = `http://${params.target}:${server.PORT}${path}`;
+          proxyServer.forwardTo(server.PORT);
+          const context = await contextFactory({
+            proxy: { server: `localhost:${proxyServer.PORT}`, bypass: additionalBypass ? '1.non.existent.domain.for.the.test' : undefined }
+          });
+
+          const page = await context.newPage();
+          await page.goto(url);
+          expect(proxyServer.requestUrls).toContain(url);
+          expect(await page.title()).toBe('Served by the proxy');
+
+          await page.goto('http://1.non.existent.domain.for.the.test/foo.html').catch(() => {});
+          if (additionalBypass)
+            expect(proxyServer.requestUrls).not.toContain('http://1.non.existent.domain.for.the.test/foo.html');
+          else
+            expect(proxyServer.requestUrls).toContain('http://1.non.existent.domain.for.the.test/foo.html');
+
+          await context.close();
         });
-
-        const url = `http://localhost:${server.PORT}${path}`;
-        proxyServer.forwardTo(server.PORT);
-        const context = await contextFactory({
-          proxy: { server: `localhost:${proxyServer.PORT}`, bypass: additionalBypass ? '1.non.existent.domain.for.the.test' : undefined }
-        });
-
-        const page = await context.newPage();
-        await page.goto(url);
-        expect(proxyServer.requestUrls).toContain(url);
-        expect(await page.title()).toBe('Served by the proxy');
-
-        await page.goto('http://1.non.existent.domain.for.the.test/foo.html').catch(() => {});
-        if (additionalBypass)
-          expect(proxyServer.requestUrls).not.toContain('http://1.non.existent.domain.for.the.test/foo.html');
-        else
-          expect(proxyServer.requestUrls).toContain('http://1.non.existent.domain.for.the.test/foo.html');
-
-        await context.close();
-      });
-
-      it('loopback address', async ({ platform, browserName, contextFactory, server, proxyServer }) => {
-        it.fail(platform !== 'linux' && browserName === 'webkit' && additionalBypass, 'WK fails to proxy 127.0.0.1 if additional bypasses are present');
-
-        const path = `/target-${additionalBypass}-127.0.0.1.html`;
-        server.setRoute(path, async (req, res) => {
-          res.end('<html><title>Served by the proxy</title></html>');
-        });
-
-        const url = `http://127.0.0.1:${server.PORT}${path}`;
-        proxyServer.forwardTo(server.PORT);
-        const context = await contextFactory({
-          proxy: { server: `localhost:${proxyServer.PORT}`, bypass: additionalBypass ? '1.non.existent.domain.for.the.test' : undefined }
-        });
-
-        const page = await context.newPage();
-        await page.goto(url);
-        expect(proxyServer.requestUrls).toContain(url);
-        expect(await page.title()).toBe('Served by the proxy');
-
-        await page.goto('http://1.non.existent.domain.for.the.test/foo.html').catch(() => {});
-        if (additionalBypass)
-          expect(proxyServer.requestUrls).not.toContain('http://1.non.existent.domain.for.the.test/foo.html');
-        else
-          expect(proxyServer.requestUrls).toContain('http://1.non.existent.domain.for.the.test/foo.html');
-
-        await context.close();
-      });
-
-      it('link-local address', async ({ contextFactory, server, proxyServer }) => {
-        const path = `/target-${additionalBypass}-169.254.3.4.html`;
-        server.setRoute(path, async (req, res) => {
-          res.end('<html><title>Served by the proxy</title></html>');
-        });
-
-        const url = `http://169.254.3.4:${server.PORT}${path}`;
-        proxyServer.forwardTo(server.PORT);
-        const context = await contextFactory({
-          proxy: { server: `localhost:${proxyServer.PORT}`, bypass: additionalBypass ? '1.non.existent.domain.for.the.test' : undefined }
-        });
-
-        const page = await context.newPage();
-        await page.goto(url);
-        expect(proxyServer.requestUrls).toContain(url);
-        expect(await page.title()).toBe('Served by the proxy');
-
-        await page.goto('http://1.non.existent.domain.for.the.test/foo.html').catch(() => {});
-        if (additionalBypass)
-          expect(proxyServer.requestUrls).not.toContain('http://1.non.existent.domain.for.the.test/foo.html');
-        else
-          expect(proxyServer.requestUrls).toContain('http://1.non.existent.domain.for.the.test/foo.html');
-
-        await context.close();
-      });
+      }
     });
   }
 });
+
 
 it('should use ipv6 proxy', async ({ contextFactory, server, proxyServer, browserName }) => {
   it.fail(browserName === 'firefox', 'page.goto: NS_ERROR_UNKNOWN_HOST');
