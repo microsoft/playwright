@@ -143,6 +143,7 @@ for (const [name, url] of Object.entries(vues)) {
           // Vue2 cannot be mounted in shadow root directly.
           const div = document.createElement('div');
           shadowRoot.append(div);
+          // @ts-ignore
           window.mountApp(div);
         } else {
           // @ts-ignore
