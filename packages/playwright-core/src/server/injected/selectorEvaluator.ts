@@ -623,6 +623,8 @@ export function isInsideScope(scope: Node, element: Element | undefined): boolea
   while (element) {
     if (scope.contains(element))
       return true;
+    while (element.parentElement)
+      element = element.parentElement;
     element = parentElementOrShadowHost(element);
   }
   return false;
