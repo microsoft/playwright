@@ -14,12 +14,40 @@
  * limitations under the License.
  */
 
+import { escapeWithQuotes } from '../../../utils/stringUtils';
 import type InjectedScript from '../../injected/injectedScript';
 import { generateSelector } from '../../injected/selectorGenerator';
+
+function createLocator(injectedScript: InjectedScript, initial: string) {
+  class Locator {
+    selector: string;
+    element: Element | undefined;
+    elements: Element[];
+
+    constructor(selector: string) {
+      this.selector = selector;
+      const parsed = injectedScript.parseSelector(this.selector);
+      this.element = injectedScript.querySelector(parsed, document, false);
+      this.elements = injectedScript.querySelectorAll(parsed, document);
+    }
+
+    locator(selector: string): Locator {
+      return new Locator(this.selector ? this.selector + ' >> ' + selector : selector);
+    }
+
+    withText(text: string | RegExp): Locator {
+      const matcher = text instanceof RegExp ? 'text-matches' : 'has-text';
+      const source = escapeWithQuotes(text instanceof RegExp ? text.source : text, '"');
+      return new Locator(this.selector + ` >> :scope:${matcher}(${source})`);
+    }
+  }
+  return new Locator(initial);
+}
 
 type ConsoleAPIInterface = {
   $: (selector: string) => void;
   $$: (selector: string) => void;
+  locator: (selector: string) => any;
   inspect: (selector: string) => void;
   selector: (element: Element) => void;
   resume: () => void;
@@ -43,6 +71,7 @@ export class ConsoleAPI {
     window.playwright = {
       $: (selector: string, strict?: boolean) => this._querySelector(selector, !!strict),
       $$: (selector: string) => this._querySelectorAll(selector),
+      locator: (selector: string) => createLocator(this._injectedScript, selector),
       inspect: (selector: string) => this._inspect(selector),
       selector: (element: Element) => this._selector(element),
       resume: () => this._resume(),
