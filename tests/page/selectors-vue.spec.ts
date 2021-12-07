@@ -138,7 +138,7 @@ for (const [name, url] of Object.entries(vues)) {
       await page.evaluate(vueName => {
         const anotherRoot = document.createElement('div');
         document.body.append(anotherRoot);
-        const shadowRoot = anotherRoot.attachShadow({mode: 'open'});
+        const shadowRoot = anotherRoot.attachShadow({ mode: 'open' });
         if (vueName === 'vue2') {
           // Vue2 cannot be mounted in shadow root directly.
           const div = document.createElement('div');
