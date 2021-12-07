@@ -166,6 +166,7 @@ When running in Debug Mode with `PWDEBUG=console`, a `playwright` object is avai
     * `playwright.$$(selector)`: Highlight all occurrences of the selector. This reflects
       how `page.$$` would see the page.
     * `playwright.inspect(selector)`: Inspect the selector in the Elements panel.
+    * `playwright.locator(selector)`: Highlight the first occurrence of the locator.
     * `playwright.clear()`: Clear existing highlights.
     * `playwright.selector(element)`: Generate a selector that points to the element.
 
