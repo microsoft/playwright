@@ -1,3 +1,5 @@
+/* eslint-disable notice/notice */
+
 /**
  * In this script, we will login and run a few tests that use GitHub API.
  *
@@ -7,8 +9,7 @@
  * 3. Delete the repo.
  */
 
-
-const { test, expect } = require('@playwright/test');
+import { test, expect } from '@playwright/test';
 
 const user = process.env.GITHUB_USER;
 const repo = 'Test-Repo-1';
