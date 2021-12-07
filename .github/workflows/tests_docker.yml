@@ -29,6 +29,7 @@ jobs:
       matrix:
         tag: [bionic, focal]
         user: [pwuser, root]
+        headless: ['headless', 'headful']
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
@@ -59,7 +60,11 @@ jobs:
       if: matrix.user == 'root'
       run: docker exec playwright-docker-${{ matrix.tag }}-test npx playwright install chrome msedge
     - name: Run "npm run test" inside docker
+      if: matrix.headless == 'headless'
       run: docker exec -e INSIDE_DOCKER=1 -e CI=1 playwright-docker-${{ matrix.tag }}-test xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run test
+    - name: Run "HEADFUL=1 npm run test" inside docker
+      if: matrix.headless == 'headful'
+      run: docker exec -e HEADFUL=1 -e INSIDE_DOCKER=1 -e CI=1 playwright-docker-${{ matrix.tag }}-test xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run test
     - run: sudo chmod -R 777 . && ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
     - uses: actions/upload-artifact@v1
