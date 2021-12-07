@@ -183,6 +183,18 @@ Reveal element in the Elements panel (if DevTools of the respective browser supp
 > playwright.inspect('text=Log in')
 ```
 
+#### playwright.locator(selector)
+
+Query Playwright element using the actual Playwright query engine, for example:
+
+```js
+> playwright.locator('.auth-form').withText('Log in');
+
+> Locator ()
+>   - element: button
+>   - elements: [button]
+```
+
 #### playwright.selector(element)
 
 Generates selector for the given element.
