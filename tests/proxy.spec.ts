@@ -73,9 +73,9 @@ it('should work with IP:PORT notion', async ({ browserType, server }) => {
   await browser.close();
 });
 
-it.describe.parallel('should proxy local network requests', () => {
+it.describe('should proxy local network requests', () => {
   for (const additionalBypass of [false, true]) {
-    it.describe.parallel(additionalBypass ? 'with other bypasses' : 'by default', () => {
+    it.describe(additionalBypass ? 'with other bypasses' : 'by default', () => {
       for (const params of [
         {
           target: 'localhost',
