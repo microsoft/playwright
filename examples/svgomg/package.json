@@ -1,0 +1,16 @@
+{
+  "name": "svgomg-tests",
+  "version": "0.0.1",
+  "scripts": {
+    "test": "playwright test",
+    "ctest": "playwright test --project=chromium",
+    "ftest": "playwright test --project=firefox",
+    "wtest": "playwright test --project=webkit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.17.1"
+  }
+}
