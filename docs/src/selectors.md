@@ -1,11 +1,9 @@
 ---
 id: selectors
-title: "Element selectors"
+title: "Selectors"
 ---
 
-Selectors are strings that point to the elements in the page. They are used to perform actions on those
-elements by means of methods such as [`method: Page.click`], [`method: Page.fill`] and alike. All those
-methods accept [`param: selector`] as their first argument.
+Selectors are strings that are used to create [Locator]s. Locators are used to perform actions on the elements by means of methods such as [`method: Locator.click`], [`method: Locator.fill`] and alike.
 
 <!-- TOC -->
 
@@ -13,204 +11,204 @@ methods accept [`param: selector`] as their first argument.
 
 - Text selector
   ```js
-  await page.click('text=Log in');
+  await page.locator('text=Log in').click();
   ```
   ```java
-  page.click("text=Log in");
+  page.locator("text=Log in").click();
   ```
   ```python async
-  await page.click("text=Log in")
+  await page.locator("text=Log in").click()
   ```
   ```python sync
-  page.click("text=Log in")
+  page.locator("text=Log in").click()
   ```
   ```csharp
-  await page.ClickAsync("text=Log in");
+  await page.Locator("text=Log in").ClickAsync();
   ```
   Learn more about [text selector][text].
 - CSS selector
   ```js
-  await page.click('button');
-  await page.click('#nav-bar .contact-us-item');
+  await page.locator('button').click();
+  await page.locator('#nav-bar .contact-us-item').click();
   ```
   ```java
-  page.click("button");
-  page.click("#nav-bar .contact-us-item");
+  page.locator("button").click();
+  page.locator("#nav-bar .contact-us-item").click();
   ```
   ```python async
-  await page.click("button")
-  await page.click("#nav-bar .contact-us-item")
+  await page.locator("button").click()
+  await page.locator("#nav-bar .contact-us-item").click()
   ```
   ```python sync
-  page.click("button")
-  page.click("#nav-bar .contact-us-item")
+  page.locator("button").click()
+  page.locator("#nav-bar .contact-us-item").click()
   ```
   ```csharp
-  await page.ClickAsync("button");
-  await page.ClickAsync("#nav-bar .contact-us-item");
+  await page.Locator("button").ClickAsync();
+  await page.Locator("#nav-bar .contact-us-item").ClickAsync();
   ```
   Learn more about [css selector][css].
 - Select by attribute, with css selector
   ```js
-  await page.click('[data-test=login-button]');
-  await page.click('[aria-label="Sign in"]');
+  await page.locator('[data-test=login-button]').click();
+  await page.locator('[aria-label="Sign in"]').click();
   ```
   ```java
-  page.click("[data-test=login-button]");
-  page.click("[aria-label='Sign in']");
+  page.locator("[data-test=login-button]").click();
+  page.locator("[aria-label='Sign in']").click();
   ```
   ```python async
-  await page.click("[data-test=login-button]")
-  await page.click("[aria-label='Sign in']")
+  await page.locator("[data-test=login-button]").click()
+  await page.locator("[aria-label='Sign in']").click()
   ```
   ```python sync
-  page.click("[data-test=login-button]")
-  page.click("[aria-label='Sign in']")
+  page.locator("[data-test=login-button]").click()
+  page.locator("[aria-label='Sign in']").click()
   ```
   ```csharp
-  await page.ClickAsync("[data-test=login-button]");
-  await page.ClickAsync("[aria-label='Sign in']");
+  await page.Locator("[data-test=login-button]").ClickAsync();
+  await page.Locator("[aria-label='Sign in']").ClickAsync();
   ```
   Learn more about [css selector][css].
 - Combine css and text selectors
   ```js
-  await page.click('article:has-text("Playwright")');
-  await page.click('#nav-bar >> text=Contact Us');
+  await page.locator('article:has-text("Playwright")').click();
+  await page.locator('#nav-bar >> text=Contact Us').click();
   ```
   ```java
-  page.click("article:has-text(\"Playwright\")");
-  page.click("#nav-bar :text(\"Contact us\")");
+  page.locator("article:has-text(\"Playwright\")").click();
+  page.locator("#nav-bar :text(\"Contact us\")").click();
   ```
   ```python async
-  await page.click("article:has-text('Playwright')")
-  await page.click("#nav-bar :text('Contact us')")
+  await page.locator("article:has-text('Playwright')").click()
+  await page.locator("#nav-bar :text('Contact us')").click()
   ```
   ```python sync
-  page.click("article:has-text('Playwright')")
-  page.click("#nav-bar :text('Contact us')")
+  page.locator("article:has-text('Playwright')").click()
+  page.locator("#nav-bar :text('Contact us')").click()
   ```
   ```csharp
-  await page.ClickAsync("article:has-text(\"Playwright\")");
-  await page.ClickAsync("#nav-bar :text(\"Contact us\")");
+  await page.Locator("article:has-text(\"Playwright\")").ClickAsync();
+  await page.Locator("#nav-bar :text(\"Contact us\")").ClickAsync();
   ```
   Learn more about [`:has-text()` and `:text()` pseudo classes][text].
 - Element that contains another, with css selector
   ```js
-  await page.click('.item-description:has(.item-promo-banner)');
+  await page.locator('.item-description:has(.item-promo-banner)').click();
   ```
   ```java
-  page.click(".item-description:has(.item-promo-banner)");
+  page.locator(".item-description:has(.item-promo-banner)").click();
   ```
   ```python async
-  await page.click(".item-description:has(.item-promo-banner)")
+  await page.locator(".item-description:has(.item-promo-banner)").click()
   ```
   ```python sync
-  page.click(".item-description:has(.item-promo-banner)")
+  page.locator(".item-description:has(.item-promo-banner)").click()
   ```
   ```csharp
-  await page.ClickAsync(".item-description:has(.item-promo-banner)");
+  await page.Locator(".item-description:has(.item-promo-banner)").ClickAsync();
   ```
   Learn more about [`:has()` pseudo class](#selecting-elements-that-contain-other-elements).
 - Selecting based on layout, with css selector
   ```js
-  await page.click('input:right-of(:text("Username"))');
+  await page.locator('input:right-of(:text("Username"))').click();
   ```
   ```java
-  page.click("input:right-of(:text(\"Username\"))");
+  page.locator("input:right-of(:text(\"Username\"))").click();
   ```
   ```python async
-  await page.click("input:right-of(:text('Username'))")
+  await page.locator("input:right-of(:text('Username'))").click()
   ```
   ```python sync
-  page.click("input:right-of(:text('Username'))")
+  page.locator("input:right-of(:text('Username'))").click()
   ```
   ```csharp
-  await page.ClickAsync("input:right-of(:text(\"Username\"))");
+  await page.Locator("input:right-of(:text(\"Username\"))").ClickAsync();
   ```
   Learn more about [layout selectors](#selecting-elements-based-on-layout).
 - Only visible elements, with css selector
   ```js
-  await page.click('.login-button:visible');
+  await page.locator('.login-button:visible').click();
   ```
   ```java
-  page.click(".login-button:visible");
+  page.locator(".login-button:visible").click();
   ```
   ```python async
-  await page.click(".login-button:visible")
+  await page.locator(".login-button:visible").click()
   ```
   ```python sync
-  page.click(".login-button:visible")
+  page.locator(".login-button:visible").click()
   ```
   ```csharp
-  await page.ClickAsync(".login-button:visible");
+  await page.Locator(".login-button:visible").ClickAsync();
   ```
   Learn more about [selecting visible elements](#selecting-visible-elements).
 - Pick n-th match
   ```js
-  await page.click(':nth-match(:text("Buy"), 3)');
+  await page.locator(':nth-match(:text("Buy"), 3)').click();
   ```
   ```java
-  page.click(":nth-match(:text('Buy'), 3)");
+  page.locator(":nth-match(:text('Buy'), 3)").click();
   ```
   ```python async
-  await page.click(":nth-match(:text('Buy'), 3)")
+  await page.locator(":nth-match(:text('Buy'), 3)").click()
   ```
   ```python sync
-  page.click(":nth-match(:text('Buy'), 3)")
+  page.locator(":nth-match(:text('Buy'), 3)").click()
   ```
   ```csharp
-  await page.ClickAsync(":nth-match(:text('Buy'), 3)");
+  await page.Locator(":nth-match(:text('Buy'), 3)").ClickAsync();
   ```
   Learn more about [`:nth-match()` pseudo-class](#pick-n-th-match-from-the-query-result).
 - XPath selector
   ```js
-  await page.click('xpath=//button');
+  await page.locator('xpath=//button').click();
   ```
   ```java
-  page.click("xpath=//button");
+  page.locator("xpath=//button").click();
   ```
   ```python async
-  await page.click("xpath=//button")
+  await page.locator("xpath=//button").click()
   ```
   ```python sync
-  page.click("xpath=//button")
+  page.locator("xpath=//button").click()
   ```
   ```csharp
-  await page.ClickAsync("xpath=//button");
+  await page.Locator("xpath=//button").ClickAsync();
   ```
   Learn more about [XPath selector][xpath].
 - React selector (experimental)
   ```js
-  await page.click('_react=ListItem[text *= "milk" i]');
+  await page.locator('_react=ListItem[text *= "milk" i]').click();
   ```
   ```java
-  page.click("_react=ListItem[text *= 'milk' i]");
+  page.locator("_react=ListItem[text *= 'milk' i]").click();
   ```
   ```python async
-  await page.click("_react=ListItem[text *= 'milk' i]")
+  await page.locator("_react=ListItem[text *= 'milk' i]").click()
   ```
   ```python sync
-  page.click("_react=ListItem[text *= 'milk' i]")
+  page.locator("_react=ListItem[text *= 'milk' i]").click()
   ```
   ```csharp
-  await page.ClickAsync("_react=ListItem[text *= 'milk' i]");
+  await page.Locator("_react=ListItem[text *= 'milk' i]").ClickAsync();
   ```
   Learn more about [React selectors][react].
 - Vue selector (experimental)
   ```js
-  await page.click('_vue=list-item[text *= "milk" i]');
+  await page.locator('_vue=list-item[text *= "milk" i]').click();
   ```
   ```java
-  page.click("_vue=list-item[text *= 'milk' i]");
+  page.locator("_vue=list-item[text *= 'milk' i]").click();
   ```
   ```python async
-  await page.click("_vue=list-item[text *= "milk" i]")
+  await page.locator("_vue=list-item[text *= "milk" i]").click()
   ```
   ```python sync
-  page.click("_vue=list-item[text *= 'milk' i]")
+  page.locator("_vue=list-item[text *= 'milk' i]").click()
   ```
   ```csharp
-  await page.ClickAsync("_vue=list-item[text *= 'milk' i]");
+  await page.Locator("_vue=list-item[text *= 'milk' i]").ClickAsync();
   ```
   Learn more about [Vue selectors][vue].
 
@@ -221,19 +219,19 @@ methods accept [`param: selector`] as their first argument.
 Text selector locates elements that contain passed text.
 
 ```js
-await page.click('text=Log in');
+await page.locator('text=Log in').click();
 ```
 ```java
-page.click("text=Log in");
+page.locator("text=Log in").click();
 ```
 ```python async
-await page.click("text=Log in")
+await page.locator("text=Log in").click()
 ```
 ```python sync
-page.click("text=Log in")
+page.locator("text=Log in").click()
 ```
 ```csharp
-await page.ClickAsync("text=Log in");
+await page.Locator("text=Log in").ClickAsync();
 ```
 
 Text selector has a few variations:
@@ -241,19 +239,19 @@ Text selector has a few variations:
 - `text=Log in` - default matching is case-insensitive and searches for a substring. For example, `text=Log` matches `<button>Log in</button>`.
 
   ```js
-  await page.click('text=Log in');
+  await page.locator('text=Log in').click();
   ```
   ```java
-  page.click("text=Log in");
+  page.locator("text=Log in").click();
   ```
   ```python async
-  await page.click("text=Log in")
+  await page.locator("text=Log in").click()
   ```
   ```python sync
-  page.click("text=Log in")
+  page.locator("text=Log in").click()
   ```
   ```csharp
-  await page.ClickAsync("text=Log in");
+  await page.Locator("text=Log in").ClickAsync();
   ```
 
 - `text="Log in"` - text body can be escaped with single or double quotes to search for a text node with exact content. For example, `text="Log"` does not match `<button>Log in</button>` because `<button>` contains a single text node `"Log in"` that is not equal to `"Log"`. However, `text="Log"` matches `<button>Log<span>in</span></button>`, because `<button>` contains a text node `"Log"`.
@@ -261,55 +259,55 @@ Text selector has a few variations:
   Quoted body follows the usual escaping rules, e.g. use `\"` to escape double quote in a double-quoted string: `text="foo\"bar"`.
 
   ```js
-  await page.click('text="Log in"');
+  await page.locator('text="Log in"').click();
   ```
   ```java
-  page.click("text='Log in'");
+  page.locator("text='Log in'").click();
   ```
   ```python async
-  await page.click("text='Log in'")
+  await page.locator("text='Log in'").click()
   ```
   ```python sync
-  page.click("text='Log in'")
+  page.locator("text='Log in'").click()
   ```
   ```csharp
-  await page.ClickAsync("text='Log in'");
+  await page.Locator("text='Log in'").ClickAsync();
   ```
 
 - `"Log in"` - selector starting and ending with a quote (either `"` or `'`) is assumed to be a text selector. For example, `"Log in"` is converted to `text="Log in"` internally.
 
   ```js
-  await page.click('"Log in"');
+  await page.locator('"Log in"').click();
   ```
   ```java
-  page.click("'Log in'");
+  page.locator("'Log in'").click();
   ```
   ```python async
-  await page.click("'Log in'")
+  await page.locator("'Log in'").click()
   ```
   ```python sync
-  page.click("'Log in'")
+  page.locator("'Log in'").click()
   ```
   ```csharp
-  await page.ClickAsync("'Log in'");
+  await page.Locator("'Log in'").ClickAsync();
   ```
 
 - `/Log\s*in/i` - body can be a [JavaScript-like regex](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp) wrapped in `/` symbols. For example, `text=/Log\s*in/i` matches `<button>Login</button>` and `<button>log IN</button>`.
 
   ```js
-  await page.click('text=/Log\\s*in/i');
+  await page.locator('text=/Log\\s*in/i').click();
   ```
   ```java
-  page.click("text=/Log\\s*in/i");
+  page.locator("text=/Log\\s*in/i").click();
   ```
   ```python async
-  await page.click("text=/Log\s*in/i")
+  await page.locator("text=/Log\s*in/i").click()
   ```
   ```python sync
-  page.click("text=/Log\s*in/i")
+  page.locator("text=/Log\s*in/i").click()
   ```
   ```csharp
-  await page.ClickAsync("text=/Log\\s*in/i");
+  await page.Locator("text=/Log\\s*in/i").ClickAsync();
   ```
 
 - `article:has-text("Playwright")` - the `:has-text()` pseudo-class can be used inside a [css] selector. It matches any element containing specified text somewhere inside, possibly in a child or a descendant element. For example, `article:has-text("Playwright")` matches `<article><div>Playwright</div></article>`.
@@ -317,54 +315,54 @@ Text selector has a few variations:
   Note that `:has-text()` should be used together with other `css` specifiers, otherwise it will match all the elements containing specified text, including the `<body>`.
   ```js
   // Wrong, will match many elements including <body>
-  await page.click(':has-text("Playwright")');
+  await page.locator(':has-text("Playwright")').click();
   // Correct, only matches the <article> element
-  await page.click('article:has-text("Playwright")');
+  await page.locator('article:has-text("Playwright")').click();
   ```
 
   ```java
   // Wrong, will match many elements including <body>
-  page.click(":has-text(\"Playwright\")");
+  page.locator(":has-text(\"Playwright\")").click();
   // Correct, only matches the <article> element
-  page.click("article:has-text(\"Playwright\")");
+  page.locator("article:has-text(\"Playwright\")").click();
   ```
 
   ```python async
   # Wrong, will match many elements including <body>
-  await page.click(':has-text("Playwright")')
+  await page.locator(':has-text("Playwright")').click()
   # Correct, only matches the <article> element
-  await page.click('article:has-text("Playwright")')
+  await page.locator('article:has-text("Playwright")').click()
   ```
   ```python sync
   # Wrong, will match many elements including <body>
-  page.click(':has-text("Playwright")')
+  page.locator(':has-text("Playwright")').click()
   # Correct, only matches the <article> element
-  page.click('article:has-text("All products")')
+  page.locator('article:has-text("All products")').click()
   ```
 
   ```csharp
   // Wrong, will match many elements including <body>
-  await page.ClickAsync(":has-text(\"Playwright\")");
+  await page.Locator(":has-text(\"Playwright\")").ClickAsync();
   // Correct, only matches the <article> element
-  await page.ClickAsync("article:has-text(\"Playwright\")");
+  await page.Locator("article:has-text(\"Playwright\")").ClickAsync();
   ```
 
 - `#nav-bar :text("Home")` - the `:text()` pseudo-class can be used inside a [css] selector. It matches the smallest element containing specified text. This example is equivalent to `text=Home`, but inside the `#nav-bar` element.
 
   ```js
-  await page.click('#nav-bar :text("Home")');
+  await page.locator('#nav-bar :text("Home")').click();
   ```
   ```java
-  page.click("#nav-bar :text('Home')");
+  page.locator("#nav-bar :text('Home')").click();
   ```
   ```python async
-  await page.click("#nav-bar :text('Home')")
+  await page.locator("#nav-bar :text('Home')").click()
   ```
   ```python sync
-  page.click("#nav-bar :text('Home')")
+  page.locator("#nav-bar :text('Home')").click()
   ```
   ```csharp
-  await page.ClickAsync("#nav-bar :text('Home')");
+  await page.Locator("#nav-bar :text('Home')").ClickAsync();
   ```
 
 - `#nav-bar :text-is("Home")` - the `:text-is()` pseudo-class can be used inside a [css] selector, for strict text node match. This example is equivalent to `text="Home"` (note quotes), but inside the `#nav-bar` element.
@@ -386,23 +384,23 @@ Playwright augments standard CSS selectors in two ways:
 * Playwright adds custom pseudo-classes like `:visible`, `:text` and more.
 
 ```js
-await page.click('button');
+await page.locator('button').click();
 ```
 
 ```java
-page.click("button");
+page.locator("button").click();
 ```
 
 ```python async
-await page.click("button")
+await page.locator("button").click()
 ```
 
 ```python sync
-page.click("button")
+page.locator("button").click()
 ```
 
 ```csharp
-await page.ClickAsync("button");
+await page.Locator("button").ClickAsync();
 ```
 
 ## Selecting visible elements
@@ -432,46 +430,46 @@ Consider a page with two buttons, first invisible and second visible.
 * This will find the first button, because it is the first one in DOM order. Then it will wait for the button to become visible before clicking, or timeout while waiting:
 
   ```js
-  await page.click('button');
+  await page.locator('button').click();
   ```
 
   ```java
-  page.click("button");
+  page.locator("button").click();
   ```
 
   ```python async
-  await page.click("button")
+  await page.locator("button").click()
   ```
 
   ```python sync
-  page.click("button")
+  page.locator("button").click()
   ```
 
   ```csharp
-  await page.ClickAsync("button");
+  await page.Locator("button").ClickAsync();
   ```
 
 * These will find a second button, because it is visible, and then click it.
 
   ```js
-  await page.click('button:visible');
-  await page.click('button >> visible=true');
+  await page.locator('button:visible').click();
+  await page.locator('button >> visible=true').click();
   ```
   ```java
-  page.click("button:visible");
-  page.click("button >> visible=true");
+  page.locator("button:visible").click();
+  page.locator("button >> visible=true").click();
   ```
   ```python async
-  await page.click("button:visible")
-  await page.click("button >> visible=true")
+  await page.locator("button:visible").click()
+  await page.locator("button >> visible=true").click()
   ```
   ```python sync
-  page.click("button:visible")
-  page.click("button >> visible=true")
+  page.locator("button:visible").click()
+  page.locator("button >> visible=true").click()
   ```
   ```csharp
-  await page.ClickAsync("button:visible");
-  await page.ClickAsync("button >> visible=true");
+  await page.Locator("button:visible").ClickAsync();
+  await page.Locator("button >> visible=true").ClickAsync();
   ```
 
 ## Selecting elements that contain other elements
@@ -482,23 +480,23 @@ relative to the :scope of the given element match at least one element.
 Following snippet returns text content of an `<article>` element that has a `<div class=promo>` inside.
 
 ```js
-await page.textContent('article:has(div.promo)');
+await page.locator('article:has(div.promo)').textContent();
 ```
 
 ```java
-page.textContent("article:has(div.promo)");
+page.locator("article:has(div.promo)").textContent();
 ```
 
 ```python async
-await page.text_content("article:has(div.promo)")
+await page.locator("article:has(div.promo)").text_content()
 ```
 
 ```python sync
-page.text_content("article:has(div.promo)")
+page.locator("article:has(div.promo)").text_content()
 ```
 
 ```csharp
-await page.TextContentAsync("article:has(div.promo)");
+await page.Locator("article:has(div.promo)").TextContentAsync();
 ```
 
 ## Selecting elements matching one of the conditions
@@ -510,27 +508,27 @@ one of the selectors in that list.
 
 ```js
 // Clicks a <button> that has either a "Log in" or "Sign in" text.
-await page.click('button:has-text("Log in"), button:has-text("Sign in")');
+await page.locator('button:has-text("Log in"), button:has-text("Sign in")').click();
 ```
 
 ```java
 // Clicks a <button> that has either a "Log in" or "Sign in" text.
-page.click("button:has-text(\"Log in\"), button:has-text(\"Sign in\")");
+page.locator("button:has-text(\"Log in\"), button:has-text(\"Sign in\")").click();
 ```
 
 ```python async
 # Clicks a <button> that has either a "Log in" or "Sign in" text.
-await page.click('button:has-text("Log in"), button:has-text("Sign in")')
+await page.locator('button:has-text("Log in"), button:has-text("Sign in")').click()
 ```
 
 ```python sync
 # Clicks a <button> that has either a "Log in" or "Sign in" text.
-page.click('button:has-text("Log in"), button:has-text("Sign in")')
+page.locator('button:has-text("Log in"), button:has-text("Sign in")').click()
 ```
 
 ```csharp
 // Clicks a <button> that has either a "Log in" or "Sign in" text.
-await page.ClickAsync("button:has-text(\"Log in\"), button:has-text(\"Sign in\")");
+await page.Locator("button:has-text(\"Log in\"), button:has-text(\"Sign in\")").ClickAsync();
 ```
 
 The `:is()` pseudo-class is an [experimental CSS pseudo-class](https://developer.mozilla.org/en-US/docs/Web/CSS/:is) that
@@ -543,27 +541,27 @@ elements that can be selected by one of the selectors in that list.
 
 ```js
 // Waits for either confirmation dialog or load spinner.
-await page.waitForSelector(`//span[contains(@class, 'spinner__loading')]|//div[@id='confirmation']`);
+await page.locator(`//span[contains(@class, 'spinner__loading')]|//div[@id='confirmation']`).waitFor();
 ```
 
 ```java
 // Waits for either confirmation dialog or load spinner.
-page.waitForSelector("//span[contains(@class, 'spinner__loading')]|//div[@id='confirmation']");
+page.locator("//span[contains(@class, 'spinner__loading')]|//div[@id='confirmation']").waitFor();
 ```
 
 ```python async
 # Waits for either confirmation dialog or load spinner.
-await page.click("//span[contains(@class, 'spinner__loading')]|//div[@id='confirmation']")
+await page.locator("//span[contains(@class, 'spinner__loading')]|//div[@id='confirmation']").wait_for()
 ```
 
 ```python sync
 # Waits for either confirmation dialog or load spinner.
-page.click("//span[contains(@class, 'spinner__loading')]|//div[@id='confirmation']")
+page.locator("//span[contains(@class, 'spinner__loading')]|//div[@id='confirmation']").wait_for()
 ```
 
 ```csharp
 // Waits for either confirmation dialog or load spinner.
-await page.ClickAsync("//span[contains(@class, 'spinner__loading')]|//div[@id='confirmation']");
+await page.Locator("//span[contains(@class, 'spinner__loading')]|//div[@id='confirmation']").WaitFor();
 ```
 
 ## Selecting elements in Shadow DOM
@@ -580,23 +578,23 @@ selector. It does not search inside closed shadow roots or iframes.
 If you'd like to opt-out of this behavior, you can use `:light` CSS extension or `text:light` selector engine. They do not pierce shadow roots.
 
 ```js
-await page.click(':light(.article > .header)');
+await page.locator(':light(.article > .header)').click();
 ```
 
 ```java
-page.click(":light(.article > .header)");
+page.locator(":light(.article > .header)").click();
 ```
 
 ```python async
-await page.click(":light(.article > .header)")
+await page.locator(":light(.article > .header)").click()
 ```
 
 ```python sync
-page.click(":light(.article > .header)")
+page.locator(":light(.article > .header)").click()
 ```
 
 ```csharp
-await page.ClickAsync(":light(.article > .header)");
+await page.Locator(":light(.article > .header)").ClickAsync();
 ```
 
 More advanced Shadow DOM use cases:
@@ -647,42 +645,42 @@ to compute distance and relative position of the elements.
 
 ```js
 // Fill an input to the right of "Username".
-await page.fill('input:right-of(:text("Username"))', 'value');
+await page.locator('input:right-of(:text("Username"))', 'value').fill();
 
 // Click a button near the promo card.
-await page.click('button:near(.promo-card)');
+await page.locator('button:near(.promo-card)').click();
 ```
 
 ```java
 // Fill an input to the right of "Username".
-page.fill("input:right-of(:text(\"Username\"))", "value");
+page.locator("input:right-of(:text(\"Username\"))", "value").fill();
 
 // Click a button near the promo card.
-page.click("button:near(.promo-card)");
+page.locator("button:near(.promo-card)").click();
 ```
 
 ```python async
 # Fill an input to the right of "Username".
-await page.fill('input:right-of(:text("Username"))', 'value')
+await page.locator('input:right-of(:text("Username"))', 'value').fill()
 
 # Click a button near the promo card.
-await page.click('button:near(.promo-card)')
+await page.locator('button:near(.promo-card)').click()
 ```
 
 ```python sync
 # Fill an input to the right of "Username".
-page.fill('input:right-of(:text("Username"))', 'value')
+page.locator('input:right-of(:text("Username"))', 'value').fill()
 
 # Click a button near the promo card.
-page.click('button:near(.promo-card)')
+page.locator('button:near(.promo-card)').click()
 ```
 
 ```csharp
 // Fill an input to the right of "Username".
-await page.FillAsync("input:right-of(:text(\"Username\"))", "value");
+await page.Locator("input:right-of(:text(\"Username\"))", "value").FillAsync();
 
 // Click a button near the promo card.
-await page.ClickAsync("button:near(.promo-card)");
+await page.Locator("button:near(.promo-card)").ClickAsync();
 ```
 
 All layout selectors support optional maximum pixel distance as the last argument. For example
@@ -706,42 +704,42 @@ You can narrow down query to the n-th match using the `nth=` selector. Unlike CS
 
 ```js
 // Click first button
-await page.click('button >> nth=0');
+await page.locator('button >> nth=0').click();
 
 // Click last button
-await page.click('button >> nth=-1');
+await page.locator('button >> nth=-1').click();
 ```
 
 ```java
 // Click first button
-page.click("button >> nth=0");
+page.locator("button >> nth=0").click();
 
 // Click last button
-page.click("button >> nth=-1");
+page.locator("button >> nth=-1").click();
 ```
 
 ```python async
 # Click first button
-await page.click("button >> nth=0")
+await page.locator("button >> nth=0").click()
 
 # Click last button
-await page.click("button >> nth=-1")
+await page.locator("button >> nth=-1").click()
 ```
 
 ```python sync
 # Click first button
-page.click("button >> nth=0")
+page.locator("button >> nth=0").click()
 
 # Click last button
-page.click("button >> nth=-1")
+page.locator("button >> nth=-1").click()
 ```
 
 ```csharp
 // Click first button
-await page.ClickAsync("button >> nth=0");
+await page.Locator("button >> nth=0").ClickAsync();
 
 // Click last button
-await page.ClickAsync("button >> nth=-1");
+await page.Locator("button >> nth=-1").ClickAsync();
 ```
 
 ## React selectors
@@ -826,42 +824,42 @@ the following attributes are supported:
 
 ```js
 // Fill an input with the id "username"
-await page.fill('id=username', 'value');
+await page.locator('id=username', 'value').fill();
 
 // Click an element with data-test-id "submit"
-await page.click('data-test-id=submit');
+await page.locator('data-test-id=submit').click();
 ```
 
 ```java
 // Fill an input with the id "username"
-page.fill("id=username", "value");
+page.locator("id=username", "value").fill();
 
 // Click an element with data-test-id "submit"
-page.click("data-test-id=submit");
+page.locator("data-test-id=submit").click();
 ```
 
 ```python async
 # Fill an input with the id "username"
-await page.fill('id=username', 'value')
+await page.locator('id=username', 'value').fill()
 
 # Click an element with data-test-id "submit"
-await page.click('data-test-id=submit')
+await page.locator('data-test-id=submit').click()
 ```
 
 ```python sync
 # Fill an input with the id "username"
-page.fill('id=username', 'value')
+page.locator('id=username', 'value').fill()
 
 # Click an element with data-test-id "submit"
-page.click('data-test-id=submit')
+page.locator('data-test-id=submit').click()
 ```
 
 ```csharp
 // Fill an input with the id "username"
-await page.FillAsync("id=username", "value");
+await page.Locator("id=username", "value").FillAsync();
 
 // Click an element with data-test-id "submit"
-await page.ClickAsync("data-test-id=submit");
+await page.Locator("data-test-id=submit").ClickAsync();
 ```
 
 :::note
@@ -869,7 +867,7 @@ Attribute selectors are not CSS selectors, so anything CSS-specific like `:enabl
 :::
 
 :::note
-Attribute selectors pierce shadow DOM. To opt-out from this behavior, use `:light` suffix after attribute, for example `page.click('data-test-id:light=submit')`
+Attribute selectors pierce shadow DOM. To opt-out from this behavior, use `:light` suffix after attribute, for example `page.locator('data-test-id:light=submit').click()`
 :::
 
 
@@ -887,27 +885,27 @@ In this case, `:nth-match(:text("Buy"), 3)` will select the third button from th
 
 ```js
 // Click the third "Buy" button
-await page.click(':nth-match(:text("Buy"), 3)');
+await page.locator(':nth-match(:text("Buy"), 3)').click();
 ```
 
 ```java
 // Click the third "Buy" button
-page.click(":nth-match(:text('Buy'), 3)");
+page.locator(":nth-match(:text('Buy'), 3)").click();
 ```
 
 ```python async
 # Click the third "Buy" button
-await page.click(":nth-match(:text('Buy'), 3)"
+await page.locator(":nth-match(:text('Buy'), 3).click()"
 ```
 
 ```python sync
 # Click the third "Buy" button
-page.click(":nth-match(:text('Buy'), 3)"
+page.locator(":nth-match(:text('Buy'), 3).click()"
 ```
 
 ```csharp
 // Click the third "Buy" button
-await page.ClickAsync(":nth-match(:text('Buy'), 3)");
+await page.Locator(":nth-match(:text('Buy'), 3)").ClickAsync();
 ```
 
 `:nth-match()` is also useful to wait until a specified number of elements appear, using [`method: Locator.waitFor`].
@@ -982,87 +980,87 @@ The following examples use the built-in [text] and [css] selector engines.
 
 ```js
 // queries "Login" text selector
-await page.click('text="Login"');
-await page.click('"Login"'); // short-form
+await page.locator('text="Login"').click();
+await page.locator('"Login"').click(); // short-form
 
 // queries "Search GitHub" placeholder attribute
-await page.fill('css=[placeholder="Search GitHub"]', 'query');
-await page.fill('[placeholder="Search GitHub"]', 'query'); // short-form
+await page.locator('css=[placeholder="Search GitHub"]', 'query').fill();
+await page.locator('[placeholder="Search GitHub"]', 'query').fill(); // short-form
 
 // queries "Close" accessibility label
-await page.click('css=[aria-label="Close"]');
-await page.click('[aria-label="Close"]'); // short-form
+await page.locator('css=[aria-label="Close"]').click();
+await page.locator('[aria-label="Close"]').click(); // short-form
 
 // combine role and text queries
-await page.click('css=nav >> text=Login');
+await page.locator('css=nav >> text=Login').click();
 ```
 
 ```java
 // queries "Login" text selector
-page.click("text=\"Login\"");
-page.click("\"Login\""); // short-form
+page.locator("text=\"Login\"").click();
+page.locator("\"Login\"").click(); // short-form
 
 // queries "Search GitHub" placeholder attribute
-page.fill("css=[placeholder='Search GitHub']", "query");
-page.fill("[placeholder='Search GitHub']", "query"); // short-form
+page.locator("css=[placeholder='Search GitHub']", "query").fill();
+page.locator("[placeholder='Search GitHub']", "query").fill(); // short-form
 
 // queries "Close" accessibility label
-page.click("css=[aria-label='Close']");
-page.click("[aria-label='Close']"); // short-form
+page.locator("css=[aria-label='Close']").click();
+page.locator("[aria-label='Close']").click(); // short-form
 
 // combine role and text queries
-page.click("css=nav >> text=Login");
+page.locator("css=nav >> text=Login").click();
 ```
 
 ```python async
 # queries "Login" text selector
-await page.click('text="Login"')
-await page.click('"Login"') # short-form
+await page.locator('text="Login"').click()
+await page.locator('"Login"').click() # short-form
 
 # queries "Search GitHub" placeholder attribute
-await page.fill('css=[placeholder="Search GitHub"]', 'query')
-await page.fill('[placeholder="Search GitHub"]', 'query') # short-form
+await page.locator('css=[placeholder="Search GitHub"]', 'query').fill()
+await page.locator('[placeholder="Search GitHub"]', 'query').fill() # short-form
 
 # queries "Close" accessibility label
-await page.click('css=[aria-label="Close"]')
-await page.click('[aria-label="Close"]') # short-form
+await page.locator('css=[aria-label="Close"]').click()
+await page.locator('[aria-label="Close"]').click() # short-form
 
 # combine role and text queries
-await page.click('css=nav >> text=Login')
+await page.locator('css=nav >> text=Login').click()
 ```
 
 ```python sync
 # queries "Login" text selector
-page.click('text="Login"')
-page.click('"Login"') # short-form
+page.locator('text="Login"').click()
+page.locator('"Login"').click() # short-form
 
 # queries "Search GitHub" placeholder attribute
-page.fill('css=[placeholder="Search GitHub"]')
-page.fill('[placeholder="Search GitHub"]') # short-form
+page.locator('css=[placeholder="Search GitHub"]').fill()
+page.locator('[placeholder="Search GitHub"]').fill() # short-form
 
 # queries "Close" accessibility label
-page.click('css=[aria-label="Close"]')
-page.click('[aria-label="Close"]') # short-form
+page.locator('css=[aria-label="Close"]').click()
+page.locator('[aria-label="Close"]').click() # short-form
 
 # combine role and text queries
-page.click('css=nav >> text=Login')
+page.locator('css=nav >> text=Login').click()
 ```
 
 ```csharp
 // queries "Login" text selector
-await page.ClickAsync("text=\"Login\"");
-await page.ClickAsync("\"Login\""); // short-form
+await page.Locator("text=\"Login\"").ClickAsync();
+await page.Locator("\"Login\"").ClickAsync(); // short-form
 
 // queries "Search GitHub" placeholder attribute
-await page.FillAsync("css=[placeholder='Search GitHub']", "query");
-await page.FillAsync("[placeholder='Search GitHub']", "query"); // short-form
+await page.Locator("css=[placeholder='Search GitHub']", "query").FillAsync();
+await page.Locator("[placeholder='Search GitHub']", "query").FillAsync(); // short-form
 
 // queries "Close" accessibility label
-await page.ClickAsync("css=[aria-label='Close']");
-await page.ClickAsync("[aria-label='Close']"); // short-form
+await page.Locator("css=[aria-label='Close']").ClickAsync();
+await page.Locator("[aria-label='Close']").ClickAsync(); // short-form
 
 // combine role and text queries
-await page.ClickAsync("css=nav >> text=Login");
+await page.Locator("css=nav >> text=Login").ClickAsync();
 ```
 
 ### Define explicit contract
@@ -1075,47 +1073,47 @@ When user-facing attributes change frequently, it is recommended to use explicit
 
 ```js
 // queries data-test-id attribute with css
-await page.click('css=[data-test-id=directions]');
-await page.click('[data-test-id=directions]'); // short-form
+await page.locator('css=[data-test-id=directions]').click();
+await page.locator('[data-test-id=directions]').click(); // short-form
 
 // queries data-test-id with id
-await page.click('data-test-id=directions');
+await page.locator('data-test-id=directions').click();
 ```
 
 ```java
 // queries data-test-id attribute with css
-page.click("css=[data-test-id=directions]");
-page.click("[data-test-id=directions]"); // short-form
+page.locator("css=[data-test-id=directions]").click();
+page.locator("[data-test-id=directions]").click(); // short-form
 
 // queries data-test-id with id
-page.click("data-test-id=directions");
+page.locator("data-test-id=directions").click();
 ```
 
 ```python async
 # queries data-test-id attribute with css
-await page.click('css=[data-test-id=directions]')
-await page.click('[data-test-id=directions]') # short-form
+await page.locator('css=[data-test-id=directions]').click()
+await page.locator('[data-test-id=directions]').click() # short-form
 
 # queries data-test-id with id
-await page.click('data-test-id=directions')
+await page.locator('data-test-id=directions').click()
 ```
 
 ```python sync
 # queries data-test-id attribute with css
-page.click('css=[data-test-id=directions]')
-page.click('[data-test-id=directions]') # short-form
+page.locator('css=[data-test-id=directions]').click()
+page.locator('[data-test-id=directions]').click() # short-form
 
 # queries data-test-id with id
-page.click('data-test-id=directions')
+page.locator('data-test-id=directions').click()
 ```
 
 ```csharp
 // queries data-test-id attribute with css
-await page.ClickAsync("css=[data-test-id=directions]");
-await page.ClickAsync("[data-test-id=directions]"); // short-form
+await page.Locator("css=[data-test-id=directions]").ClickAsync();
+await page.Locator("[data-test-id=directions]").ClickAsync(); // short-form
 
 // queries data-test-id with id
-await page.ClickAsync("data-test-id=directions");
+await page.Locator("data-test-id=directions").ClickAsync();
 ```
 
 ### Avoid selectors tied to implementation
@@ -1125,32 +1123,32 @@ the DOM structure changes.
 
 ```js
 // avoid long css or xpath chains
-await page.click('#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input');
-await page.click('//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input');
+await page.locator('#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input').click();
+await page.locator('//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input').click();
 ```
 
 ```java
 // avoid long css or xpath chains
-page.click("#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input");
-page.click("//*[@id='tsf']/div[2]/div[1]/div[1]/div/div[2]/input");
+page.locator("#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input").click();
+page.locator("//*[@id='tsf']/div[2]/div[1]/div[1]/div/div[2]/input").click();
 ```
 
 ```python async
 # avoid long css or xpath chains
-await page.click('#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input')
-await page.click('//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input')
+await page.locator('#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input').click()
+await page.locator('//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input').click()
 ```
 
 ```python sync
 # avoid long css or xpath chains
-page.click('#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input')
-page.click('//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input')
+page.locator('#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input').click()
+page.locator('//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input').click()
 ```
 
 ```csharp
 // avoid long css or xpath chains
-await page.ClickAsync("#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input");
-await page.ClickAsync("//*[@id='tsf']/div[2]/div[1]/div[1]/div/div[2]/input");
+await page.Locator("#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input").ClickAsync();
+await page.Locator("//*[@id='tsf']/div[2]/div[1]/div[1]/div/div[2]/input").ClickAsync();
 ```
 
 [text]: #text-selector
