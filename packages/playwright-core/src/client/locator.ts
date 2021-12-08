@@ -99,9 +99,9 @@ export class Locator implements api.Locator {
   }
 
   withText(text: string | RegExp): Locator {
-    const matcher = isRegExp(text) ? 'text-matches' : 'has-text';
-    const source = escapeWithQuotes(isRegExp(text) ? text.source : text, '"');
-    return new Locator(this._frame, this._selector + ` >> :scope:${matcher}(${source})`);
+    if (isRegExp(text))
+      return new Locator(this._frame, this._selector + ` >> :scope:text-matches(${escapeWithQuotes(text.source, '"')}, "${text.flags}")`);
+    return new Locator(this._frame, this._selector + ` >> :scope:has-text(${escapeWithQuotes(text, '"')})`);
   }
 
   frameLocator(selector: string): FrameLocator {

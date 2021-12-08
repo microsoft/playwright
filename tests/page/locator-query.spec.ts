@@ -84,3 +84,8 @@ it('should filter by regex with quotes', async ({ page }) => {
   await page.setContent(`<div>Hello "world"</div><div>Hello world</div>`);
   await expect(page.locator('div').withText(/Hello "world"/)).toHaveText('Hello "world"');
 });
+
+it('should filter by regex and regexp flags', async ({ page }) => {
+  await page.setContent(`<div>Hello "world"</div><div>Hello world</div>`);
+  await expect(page.locator('div').withText(/hElLo "world"/i)).toHaveText('Hello "world"');
+});
