@@ -409,7 +409,7 @@ Learn more in the [documentation](./test-advanced#launching-a-development-web-se
 
 #### Playwright Test
 
-- **⚡️ Introducing [Reporter API](https://github.com/microsoft/playwright/blob/master/types/testReporter.d.ts)** which is already used to create an [Allure Playwright reporter](https://github.com/allure-framework/allure-js/pull/297).
+- **⚡️ Introducing [Reporter API](https://github.com/microsoft/playwright/blob/65a9037461ffc15d70cdc2055832a0c5512b227c/packages/playwright-test/types/testReporter.d.ts)** which is already used to create an [Allure Playwright reporter](https://github.com/allure-framework/allure-js/pull/297).
 - **⛺️ New [`baseURL` fixture](./test-configuration#basic-options)** to support relative paths in tests.
 
 

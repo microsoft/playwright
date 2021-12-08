@@ -51,7 +51,7 @@ information on using pull requests.
 
 ### Code Style
 
-- Coding style is fully defined in [.eslintrc](https://github.com/microsoft/playwright/blob/master/.eslintrc.js)
+- Coding style is fully defined in [.eslintrc](https://github.com/microsoft/playwright/blob/main/.eslintrc.js)
 - Comments should be generally avoided. If the code would not be understood without comments, consider re-writing the code to make it self-explanatory.
 
 To run code linter, use:
@@ -106,7 +106,7 @@ Fixes #123, fixes #234
 
 ### Writing Documentation
 
-All API classes, methods, and events should have a description in [`docs/src`](https://github.com/microsoft/playwright/blob/master/docs/src). There's a [documentation linter](https://github.com/microsoft/playwright/tree/master/utils/doclint) which makes sure documentation is aligned with the codebase.
+All API classes, methods, and events should have a description in [`docs/src`](https://github.com/microsoft/playwright/blob/main/docs/src). There's a [documentation linter](https://github.com/microsoft/playwright/tree/main/utils/doclint) which makes sure documentation is aligned with the codebase.
 
 To run the documentation linter, use:
 
@@ -130,7 +130,7 @@ A barrier for introducing new installation dependencies is especially high:
 - Tests should be *hermetic*. Tests should not depend on external services.
 - Tests should work on all three platforms: Mac, Linux and Win. This is especially important for screenshot tests.
 
-Playwright tests are located in [`tests`](https://github.com/microsoft/playwright/blob/master/tests) and use `@playwright/test` test runner.
+Playwright tests are located in [`tests`](https://github.com/microsoft/playwright/blob/main/tests) and use `@playwright/test` test runner.
 These are integration tests, making sure public API methods and events work as expected.
 
 - To run all tests:

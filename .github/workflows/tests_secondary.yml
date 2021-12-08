@@ -3,7 +3,7 @@ name: "tests 2"
 on:
   push:
     branches:
-      - master
+      - main
       - release-*
   pull_request:
     paths-ignore:
@@ -11,7 +11,7 @@ on:
       - 'docs/**'
     types: [ labeled ]
     branches:
-      - master
+      - main
       - release-*
 
 env:

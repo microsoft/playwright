@@ -3,7 +3,7 @@ name: "Internal Tests"
 on:
   push:
     branches:
-      - master
+      - main
       - release-*
 
 jobs:

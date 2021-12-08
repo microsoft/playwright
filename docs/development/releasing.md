@@ -3,7 +3,7 @@ Releasing is a 3-step process.
 # 1. Create a release branch
 
 1. On your local machine, create a new branch `release-X.Y` based off the "cutting" commit and land a `chore: mark vX.Y.Z` in the local branch:
-  - `git checkout master`
+  - `git checkout main`
   - `git checkout -b release-X.Y`
   - `./utils/update_version.js vX.Y`
   - `npm run doc`

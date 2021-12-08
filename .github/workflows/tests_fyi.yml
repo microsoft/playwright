@@ -3,7 +3,7 @@ name: "tests 3"
 on:
   push:
     branches:
-      - master
+      - main
       - release-*
 
 env:

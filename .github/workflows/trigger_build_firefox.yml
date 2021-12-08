@@ -3,7 +3,7 @@ name: "Firefox Builder"
 on:
   push:
     branches:
-      - master
+      - main
       - release-*
     paths:
       - browser_patches/firefox/BUILD_NUMBER

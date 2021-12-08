@@ -6,10 +6,10 @@ on:
       ref:
         description: 'Playwright SHA / ref to build Chromium'
         required: true
-        default: 'master'
+        default: 'main'
   push:
     branches:
-      - master
+      - main
       - release-*
     paths:
       - browser_patches/chromium/BUILD_NUMBER

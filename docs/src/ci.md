@@ -74,7 +74,7 @@ steps:
     run: pytest
 ```
 
-We run [our tests](https://github.com/microsoft/playwright/blob/master/.github/workflows/tests_secondary.yml) on GitHub Actions, across a matrix of 3 platforms (Windows, Linux, macOS) and 3 browsers (Chromium, Firefox, WebKit).
+We run [our tests](https://github.com/microsoft/playwright/blob/main/.github/workflows/tests_secondary.yml) on GitHub Actions, across a matrix of 3 platforms (Windows, Linux, macOS) and 3 browsers (Chromium, Firefox, WebKit).
 
 ### GitHub Actions on deployment
 

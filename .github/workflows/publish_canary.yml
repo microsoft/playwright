@@ -24,14 +24,14 @@ jobs:
     - run: npm run build
     - run: npx playwright install-deps
     - name: "@next: publish with commit timestamp (triggered manually)"
-      if: contains(github.ref, 'master') && github.event_name == 'workflow_dispatch'
+      if: contains(github.ref, 'main') && github.event_name == 'workflow_dispatch'
       run: |
         node utils/build/update_canary_version.js --alpha --commit-timestamp
         utils/publish_all_packages.sh --alpha
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
     - name: "@next: publish with today's date (triggered automatically)"
-      if: contains(github.ref, 'master') && github.event_name != 'workflow_dispatch'
+      if: contains(github.ref, 'main') && github.event_name != 'workflow_dispatch'
       run: |
         node utils/build/update_canary_version.js --alpha --today-date
         utils/publish_all_packages.sh --alpha
@@ -76,7 +76,7 @@ jobs:
     - run: npm i -g npm@7
     - name: Deploy Canary
       run: bash utils/build/deploy-trace-viewer.sh --canary
-      if: contains(github.ref, 'master')
+      if: contains(github.ref, 'main')
       env:
         GH_SERVICE_ACCOUNT_TOKEN: ${{ secrets.GH_SERVICE_ACCOUNT_TOKEN }}
     - name: Deploy BETA

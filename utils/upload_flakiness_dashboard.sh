@@ -32,7 +32,7 @@ if [[ ("${GITHUB_REPOSITORY}" != "microsoft/playwright") && ("${GITHUB_REPOSITOR
   exit 0
 fi
 
-if [[ "${GITHUB_REF}" != "refs/heads/master" && "${GITHUB_REF}" != 'refs/heads/release-'* ]]; then
+if [[ "${GITHUB_REF}" != "refs/heads/main" && "${GITHUB_REF}" != 'refs/heads/release-'* ]]; then
   echo "NOTE: skipping dashboard uploading from Playwright branches"
   exit 0
 fi

@@ -3,14 +3,14 @@ name: "tests 1"
 on:
   push:
     branches:
-      - master
+      - main
       - release-*
   pull_request:
     paths-ignore:
       - 'browser_patches/**'
       - 'docs/**'
     branches:
-      - master
+      - main
       - release-*
 
 env:
