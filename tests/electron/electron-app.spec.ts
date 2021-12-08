@@ -16,6 +16,7 @@
 
 import type { BrowserWindow } from 'electron';
 import path from 'path';
+import fs from 'fs';
 import { electronTest as test, expect } from './electronTest';
 
 test('should fire close event', async ({ playwright }) => {
@@ -165,4 +166,17 @@ test('should return same browser window for browser view pages', async ({ playwr
   );
   expect(firstWindowId).toEqual(secondWindowId);
   await app.close();
+});
+
+test('should record video', async ({ playwright }, testInfo) => {
+  const app = await playwright._electron.launch({
+    args: [path.join(__dirname, 'electron-window-app.js')],
+    recordVideo: { dir: testInfo.outputPath('video') }
+  });
+  const page = await app.firstWindow();
+  await page.setContent(`<style>body {background:red}</style>`);
+  await page.waitForTimeout(1000);
+  await app.close();
+  const videoPath = await page.video().path();
+  expect(fs.statSync(videoPath).size).toBeGreaterThan(0);
 });

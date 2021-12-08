@@ -26,7 +26,7 @@ import { Page } from '../page';
 import { TimeoutSettings } from '../../utils/timeoutSettings';
 import { WebSocketTransport } from '../transport';
 import { launchProcess, envArrayToObject } from '../../utils/processLauncher';
-import { BrowserContext } from '../browserContext';
+import { BrowserContext, validateBrowserContextOptions } from '../browserContext';
 import type { BrowserWindow } from 'electron';
 import { Progress, ProgressController } from '../progress';
 import { helper } from '../helper';
@@ -37,6 +37,7 @@ import * as readline from 'readline';
 import { RecentLogsCollector } from '../../utils/debugLogger';
 import { internalCallMetadata, SdkObject } from '../instrumentation';
 import * as channels from '../../protocol/channels';
+import { BrowserContextOptions } from '../types';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
@@ -69,6 +70,10 @@ export class ElectronApplication extends SdkObject {
         }
       });
     });
+    this._browserContext.setCustomCloseHandler(async () => {
+      const electronHandle = await this._nodeElectronHandlePromise;
+      await electronHandle.evaluate(({ app }) => app.quit());
+    });
     this._nodeSession.send('Runtime.enable', {}).catch(e => {});
   }
 
@@ -79,8 +84,7 @@ export class ElectronApplication extends SdkObject {
   async close() {
     const progressController = new ProgressController(internalCallMetadata(), this);
     const closed = progressController.run(progress => helper.waitForEvent(progress, this, ElectronApplication.Events.Close).promise, this._timeoutSettings.timeout({}));
-    const electronHandle = await this._nodeElectronHandlePromise;
-    await electronHandle.evaluate(({ app }) => app.quit());
+    await this._browserContext.close(internalCallMetadata());
     this._nodeConnection.close();
     await closed;
   }
@@ -168,26 +172,16 @@ export class Electron extends SdkObject {
         close: gracefullyClose,
         kill
       };
+      const contextOptions: BrowserContextOptions = {
+        ...options,
+        noDefaultViewport: true,
+      };
       const browserOptions: BrowserOptions = {
         ...this._playwrightOptions,
         name: 'electron',
         isChromium: true,
         headful: true,
-        persistent: {
-          noDefaultViewport: true,
-          acceptDownloads: options.acceptDownloads,
-          bypassCSP: options.bypassCSP,
-          colorScheme: options.colorScheme,
-          extraHTTPHeaders: options.extraHTTPHeaders,
-          geolocation: options.geolocation,
-          httpCredentials: options.httpCredentials,
-          ignoreHTTPSErrors: options.ignoreHTTPSErrors,
-          locale: options.locale,
-          offline: options.offline,
-          recordHar: options.recordHar,
-          recordVideo: options.recordVideo,
-          timezoneId: options.timezoneId,
-        },
+        persistent: contextOptions,
         browserProcess,
         protocolLogger: helper.debugProtocolLogger(),
         browserLogsCollector,
@@ -195,6 +189,7 @@ export class Electron extends SdkObject {
         downloadsPath: artifactsDir,
         tracesDir: artifactsDir,
       };
+      validateBrowserContextOptions(contextOptions, browserOptions);
       const browser = await CRBrowser.connect(chromeTransport, browserOptions);
       app = new ElectronApplication(this, browser, nodeConnection);
       return app;

@@ -65,6 +65,7 @@ export abstract class BrowserContext extends SdkObject {
   readonly _harRecorder: HarRecorder | undefined;
   readonly tracing: Tracing;
   readonly fetchRequest: BrowserContextAPIRequestContext;
+  private _customCloseHandler?: () => Promise<any>;
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super(browser, 'browser-context');
@@ -275,6 +276,10 @@ export abstract class BrowserContext extends SdkObject {
     await Promise.all(Array.from(this._downloads).map(download => download.artifact.deleteOnContextClose()));
   }
 
+  setCustomCloseHandler(handler: (() => Promise<any>) | undefined) {
+    this._customCloseHandler = handler;
+  }
+
   async close(metadata: CallMetadata) {
     if (this._closedStatus === 'open') {
       this.emit(BrowserContext.Events.BeforeClose);
@@ -291,7 +296,9 @@ export abstract class BrowserContext extends SdkObject {
           promises.push(artifact.finishedPromise());
       }
 
-      if (this._isPersistentContext) {
+      if (this._customCloseHandler) {
+        await this._customCloseHandler();
+      } else if (this._isPersistentContext) {
         // Close all the pages instead of the context,
         // because we cannot close the default context.
         await Promise.all(this.pages().map(page => page.close(metadata)));
@@ -304,6 +311,10 @@ export abstract class BrowserContext extends SdkObject {
       // so that browser does not write to the download file anymore.
       promises.push(this._deleteAllDownloads());
       await Promise.all(promises);
+
+      // Custom handler should trigger didCloseInternal itself.
+      if (this._customCloseHandler)
+        return;
 
       // Persistent context should also close the browser.
       if (this._isPersistentContext)
