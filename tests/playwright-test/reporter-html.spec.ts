@@ -228,6 +228,31 @@ test('should show trace source', async ({ runInlineTest, page, showReport }) => 
   await expect(page.locator('.stack-trace-frame.selected')).toContainText('a.test.js');
 });
 
+test('should include trace link', async ({ runInlineTest, page, showReport }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = { use: { trace: 'on' } };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('passes', async ({ page }) => {
+        await page.evaluate('2 + 2');
+      });
+    `,
+  }, { reporter: 'dot,html' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+
+  await showReport();
+  await page.click('text=passes');
+  await expect(page.locator('text=Traces')).toBeVisible();
+
+  const traceLink = page.locator('.tree-item-title a:has-text("trace")');
+  await expect(traceLink).toBeVisible();
+  const href = await traceLink.getAttribute('href');
+  expect(href).toBeTruthy();
+});
+
 test('should show trace title', async ({ runInlineTest, page, showReport }) => {
   const result = await runInlineTest({
     'playwright.config.js': `
@@ -293,45 +318,4 @@ test('should render annotations', async ({ runInlineTest, page, showReport }) =>
   await showReport();
   await page.click('text=skipped test');
   await expect(page.locator('.test-case-annotation')).toHaveText('skip: I am not interested in this test');
-});
-
-test('should render text attachments as text', async ({ runInlineTest, page, showReport }) => {
-  const result = await runInlineTest({
-    'a.test.js': `
-      const { test } = pwt;
-      test('passing', async ({ page }, testInfo) => {
-        testInfo.attachments.push({
-          name: 'example.txt',
-          contentType: 'text/plain',
-          body: Buffer.from('foo'),
-        });
-
-        testInfo.attachments.push({
-          name: 'example.json',
-          contentType: 'application/json',
-          body: Buffer.from(JSON.stringify({ foo: 1 })),
-        });
-
-        testInfo.attachments.push({
-          name: 'example-utf16.txt',
-          contentType: 'text/plain, charset=utf16le',
-          body: Buffer.from('utf16 encoded', 'utf16le'),
-        });
-
-        testInfo.attachments.push({
-          name: 'example-null.txt',
-          contentType: 'text/plain, charset=utf16le',
-          body: null,
-        });
-      });
-    `,
-  }, { reporter: 'dot,html' });
-  expect(result.exitCode).toBe(0);
-
-  await showReport();
-  await page.click('text=passing');
-  await page.click('text=example.txt');
-  await page.click('text=example.json');
-  await page.click('text=example-utf16.txt');
-  await expect(page.locator('.attachment-body')).toHaveText(['foo', '{"foo":1}', 'utf16 encoded']);
 });
