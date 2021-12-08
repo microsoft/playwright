@@ -80,6 +80,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     const browser = Browser.from((await this._channel.launch(launchOptions)).browser);
     browser._logger = logger;
     browser._setBrowserType(this);
+    browser._localUtils = this._playwright._utils;
     return browser;
   }
 
@@ -108,6 +109,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     context._options = contextParams;
     context._logger = logger;
     context._setBrowserType(this);
+    context._localUtils = this._playwright._utils;
     await this._onDidCreateContext?.(context);
     return context;
   }
@@ -172,6 +174,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
           browser._logger = logger;
           browser._shouldCloseConnectionOnClose = true;
           browser._setBrowserType((playwright as any)[browser._name]);
+          browser._localUtils = this._playwright._utils;
           browser.on(Events.Browser.Disconnected, closePipe);
           fulfill(browser);
         } catch (e) {
@@ -216,6 +219,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       browser._contexts.add(BrowserContext.from(result.defaultContext));
     browser._logger = logger;
     browser._setBrowserType(this);
+    browser._localUtils = this._playwright._utils;
     return browser;
   }
 }

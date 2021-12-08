@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-import { expect, contextTest as test, browserTest } from './config/browserTest';
-import { ZipFileSystem } from '../packages/playwright-core/lib/utils/vfs';
+import fs from 'fs';
 import jpeg from 'jpeg-js';
 import path from 'path';
+import { browserTest, contextTest as test, expect } from './config/browserTest';
+import { parseTrace } from './config/utils';
 
 test.skip(({ trace }) => trace === 'on');
 
@@ -129,6 +130,21 @@ test('should collect two traces', async ({ context, page, server }, testInfo) =>
     expect(events.find(e => e.metadata?.apiName === 'page.dblclick')).toBeTruthy();
     expect(events.find(e => e.metadata?.apiName === 'page.close')).toBeTruthy();
   }
+});
+
+test('should collect sources', async ({ context, page, server }, testInfo) => {
+  await context.tracing.start({ sources: true });
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent('<button>Click</button>');
+  await page.click('"Click"');
+  await context.tracing.stop({ path: testInfo.outputPath('trace1.zip') });
+
+  const { resources } = await parseTrace(testInfo.outputPath('trace1.zip'));
+  const sourceNames = Array.from(resources.keys()).filter(k => k.endsWith('.txt'));
+  expect(sourceNames.length).toBe(1);
+  const sourceFile = resources.get(sourceNames[0]);
+  const thisFile = await fs.promises.readFile(__filename);
+  expect(sourceFile).toEqual(thisFile);
 });
 
 test('should not stall on dialogs', async ({ page, context, server }) => {
@@ -341,28 +357,6 @@ test('should hide internal stack frames in expect', async ({ context, page }, te
   for (const action of actions)
     expect(relativeStack(action)).toEqual(['tracing.spec.ts']);
 });
-
-async function parseTrace(file: string): Promise<{ events: any[], resources: Map<string, Buffer> }> {
-  const zipFS = new ZipFileSystem(file);
-  const resources = new Map<string, Buffer>();
-  for (const entry of await zipFS.entries())
-    resources.set(entry, await zipFS.read(entry));
-  zipFS.close();
-
-  const events = [];
-  for (const line of resources.get('trace.trace').toString().split('\n')) {
-    if (line)
-      events.push(JSON.parse(line));
-  }
-  for (const line of resources.get('trace.network').toString().split('\n')) {
-    if (line)
-      events.push(JSON.parse(line));
-  }
-  return {
-    events,
-    resources,
-  };
-}
 
 function expectRed(pixels: Buffer, offset: number) {
   const r = pixels.readUInt8(offset);

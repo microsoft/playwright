@@ -15,12 +15,12 @@
  * limitations under the License.
  */
 
-import { playwrightTest as test, expect } from './config/browserTest';
 import fs from 'fs';
 import * as path from 'path';
 import { getUserAgent } from 'playwright-core/lib/utils/utils';
 import WebSocket from 'ws';
-import { suppressCertificateWarning } from './config/utils';
+import { expect, playwrightTest as test } from './config/browserTest';
+import { parseTrace, suppressCertificateWarning } from './config/utils';
 
 test.slow(true, 'All connect tests are slow');
 
@@ -530,4 +530,27 @@ test('should save har', async ({ browserType, startRemoteServer, server }, testI
   const entry = log.entries[0];
   expect(entry.pageref).toBe(log.pages[0].id);
   expect(entry.request.url).toBe(server.EMPTY_PAGE);
+});
+
+test('should record trace with sources', async ({ browserType, startRemoteServer, server }, testInfo) => {
+  const remoteServer = await startRemoteServer();
+  const browser = await browserType.connect(remoteServer.wsEndpoint());
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  await context.tracing.start({ sources: true });
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent('<button>Click</button>');
+  await page.click('"Click"');
+  await context.tracing.stop({ path: testInfo.outputPath('trace1.zip') });
+
+  await context.close();
+  await browser.close();
+
+  const { resources } = await parseTrace(testInfo.outputPath('trace1.zip'));
+  const sourceNames = Array.from(resources.keys()).filter(k => k.endsWith('.txt'));
+  expect(sourceNames.length).toBe(1);
+  const sourceFile = resources.get(sourceNames[0]);
+  const thisFile = await fs.promises.readFile(__filename);
+  expect(sourceFile).toEqual(thisFile);
 });

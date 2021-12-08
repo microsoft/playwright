@@ -51,6 +51,7 @@ export type InitializerTraits<T> =
     T extends SelectorsChannel ? SelectorsInitializer :
     T extends PlaywrightChannel ? PlaywrightInitializer :
     T extends RootChannel ? RootInitializer :
+    T extends LocalUtilsChannel ? LocalUtilsInitializer :
     T extends APIRequestContextChannel ? APIRequestContextInitializer :
     object;
 
@@ -84,6 +85,7 @@ export type EventsTraits<T> =
     T extends SelectorsChannel ? SelectorsEvents :
     T extends PlaywrightChannel ? PlaywrightEvents :
     T extends RootChannel ? RootEvents :
+    T extends LocalUtilsChannel ? LocalUtilsEvents :
     T extends APIRequestContextChannel ? APIRequestContextEvents :
     undefined;
 
@@ -117,6 +119,7 @@ export type EventTargetTraits<T> =
     T extends SelectorsChannel ? SelectorsEventTarget :
     T extends PlaywrightChannel ? PlaywrightEventTarget :
     T extends RootChannel ? RootEventTarget :
+    T extends LocalUtilsChannel ? LocalUtilsEventTarget :
     T extends APIRequestContextChannel ? APIRequestContextEventTarget :
     undefined;
 
@@ -346,6 +349,36 @@ export type APIResponse = {
 };
 
 export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle' | 'commit';
+// ----------- LocalUtils -----------
+export type LocalUtilsInitializer = {};
+export interface LocalUtilsEventTarget {
+}
+export interface LocalUtilsChannel extends LocalUtilsEventTarget, Channel {
+  _type_LocalUtils: boolean;
+  zipTrace(params: LocalUtilsZipTraceParams, metadata?: Metadata): Promise<LocalUtilsZipTraceResult>;
+  addSourcesToTrace(params: LocalUtilsAddSourcesToTraceParams, metadata?: Metadata): Promise<LocalUtilsAddSourcesToTraceResult>;
+}
+export type LocalUtilsZipTraceParams = {
+  traceFile: string,
+  entries: NameValue[],
+  sources: string[],
+};
+export type LocalUtilsZipTraceOptions = {
+
+};
+export type LocalUtilsZipTraceResult = void;
+export type LocalUtilsAddSourcesToTraceParams = {
+  traceFile: string,
+  sources: string[],
+};
+export type LocalUtilsAddSourcesToTraceOptions = {
+
+};
+export type LocalUtilsAddSourcesToTraceResult = void;
+
+export interface LocalUtilsEvents {
+}
+
 // ----------- Root -----------
 export type RootInitializer = {};
 export interface RootEventTarget {
@@ -374,6 +407,7 @@ export type PlaywrightInitializer = {
   webkit: BrowserTypeChannel,
   android: AndroidChannel,
   electron: ElectronChannel,
+  utils: LocalUtilsChannel,
   deviceDescriptors: {
     name: string,
     descriptor: {

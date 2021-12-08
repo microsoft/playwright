@@ -24,6 +24,7 @@ import { Selectors } from './selectors';
 import { WebKit } from './webkit/webkit';
 import { CallMetadata, createInstrumentation, SdkObject } from './instrumentation';
 import { debugLogger } from '../utils/debugLogger';
+import { LocalUtils } from './localUtils';
 
 export class Playwright extends SdkObject {
   readonly selectors: Selectors;
@@ -33,6 +34,7 @@ export class Playwright extends SdkObject {
   readonly firefox: Firefox;
   readonly webkit: WebKit;
   readonly options: PlaywrightOptions;
+  readonly utils: LocalUtils;
 
   constructor(sdkLanguage: string, isInternal: boolean) {
     super({ attribution: { isInternal }, instrumentation: createInstrumentation() } as any, undefined, 'Playwright');
@@ -46,6 +48,7 @@ export class Playwright extends SdkObject {
       selectors: new Selectors(),
       sdkLanguage: sdkLanguage,
     };
+    this.utils = new LocalUtils(this);
     this.chromium = new Chromium(this.options);
     this.firefox = new Firefox(this.options);
     this.webkit = new WebKit(this.options);

@@ -40,6 +40,7 @@ import { Artifact } from './artifact';
 import { EventEmitter } from 'events';
 import { JsonPipe } from './jsonPipe';
 import { APIRequestContext } from './fetch';
+import { LocalUtils } from './localUtils';
 
 class Root extends ChannelOwner<channels.RootChannel> {
   constructor(connection: Connection) {
@@ -228,6 +229,9 @@ export class Connection extends EventEmitter {
         break;
       case 'JsonPipe':
         result = new JsonPipe(parent, type, guid, initializer);
+        break;
+      case 'LocalUtils':
+        result = new LocalUtils(parent, type, guid, initializer);
         break;
       case 'Page':
         result = new Page(parent, type, guid, initializer);

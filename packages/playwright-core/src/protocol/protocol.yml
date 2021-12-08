@@ -415,6 +415,28 @@ ContextOptions:
         path: string
     strictSelectors: boolean?
 
+LocalUtils:
+  type: interface
+
+  commands:
+
+    zipTrace:
+      parameters:
+        traceFile: string
+        entries:
+          type: array
+          items: NameValue
+        sources:
+          type: array
+          items: string
+
+    addSourcesToTrace:
+      parameters:
+        traceFile: string
+        sources:
+          type: array
+          items: string
+
 Root:
   type: interface
 
@@ -435,6 +457,7 @@ Playwright:
     webkit: BrowserType
     android: Android
     electron: Electron
+    utils: LocalUtils
     deviceDescriptors:
       type: array
       items:
