@@ -98,7 +98,7 @@ playwright install --help
 ```
 
 ```bash csharp
-playwright install --help
+bin\Debug\netX\playwright.ps1 install --help
 ```
 
 ## Generate code
@@ -116,7 +116,7 @@ playwright codegen wikipedia.org
 ```
 
 ```bash csharp
-playwright codegen wikipedia.org
+bin\Debug\netX\playwright.ps1 codegen wikipedia.org
 ```
 
 Run `codegen` and perform actions in the browser. Playwright CLI will generate JavaScript code for the user interactions. `codegen` will attempt to generate resilient text-based selectors.
@@ -146,7 +146,7 @@ playwright codegen --save-storage=auth.json
 ```
 
 ```bash csharp
-playwright codegen --save-storage=auth.json
+bin\Debug\netX\playwright.ps1 codegen --save-storage=auth.json
 # Perform authentication and exit.
 # auth.json will contain the storage state.
 ```
@@ -173,7 +173,7 @@ playwright codegen --load-storage=auth.json my.web.app
 ```
 
 ```bash csharp
-playwright open --load-storage=auth.json my.web.app
+bin\Debug\netX\playwright.ps1 open --load-storage=auth.json my.web.app
 playwright codegen --load-storage=auth.json my.web.app
 # Perform actions in authenticated state.
 ```
@@ -581,5 +581,5 @@ playwright install-deps chromium
 ```
 
 ```bash csharp
-playwright install-deps chromium
+bin\Debug\netX\playwright.ps1 install-deps chromium
 ```
