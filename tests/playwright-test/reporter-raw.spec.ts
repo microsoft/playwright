@@ -72,13 +72,13 @@ test('should save stdio', async ({ runInlineTest }, testInfo) => {
     {
       name: 'stdout',
       contentType: 'application/octet-stream',
-      body: 'AQID'
+      body: { data: [1, 2, 3], type: 'Buffer' }
     },
     { name: 'stderr', contentType: 'text/plain', body: 'STDERR\n' },
     {
       name: 'stderr',
       contentType: 'application/octet-stream',
-      body: 'BAUG'
+      body: { data: [4, 5, 6], type: 'Buffer' }
     }
   ]);
 });
