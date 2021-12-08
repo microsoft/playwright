@@ -248,3 +248,29 @@ test('should show trace title', async ({ runInlineTest, page, showReport }) => {
   await page.click('img');
   await expect(page.locator('.workbench .title')).toHaveText('a.test.js:6 › passes');
 });
+
+test('should show timed out steps', async ({ runInlineTest, page, showReport }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = { timeout: 500 };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('fails', async ({ page }) => {
+        await test.step('outer step', async () => {
+          await test.step('inner step', async () => {
+            await new Promise(() => {});
+          });
+        });
+      });
+    `,
+  }, { reporter: 'dot,html' });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+
+  await showReport();
+  await page.click('text=fails');
+  await page.click('text=outer step');
+  await expect(page.locator('.tree-item:has-text("outer step") svg.color-text-danger')).toHaveCount(2);
+  await expect(page.locator('.tree-item:has-text("inner step") svg.color-text-danger')).toHaveCount(2);
+});
