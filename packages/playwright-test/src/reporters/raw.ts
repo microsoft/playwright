@@ -71,7 +71,7 @@ export type JsonTestCase = {
 
 export type JsonAttachment = {
   name: string;
-  body?: string;
+  body?: string | Buffer;
   path?: string;
   contentType: string;
 };
@@ -245,7 +245,7 @@ class RawReporter {
         attachments.push({
           name: attachment.name,
           contentType: attachment.contentType,
-          body: attachment.body.toString('base64')
+          body: attachment.body
         });
       } else if (attachment.path) {
         attachments.push({
@@ -274,7 +274,7 @@ class RawReporter {
     return {
       name: type,
       contentType: 'application/octet-stream',
-      body: chunk.toString('base64')
+      body: chunk
     };
   }
 
