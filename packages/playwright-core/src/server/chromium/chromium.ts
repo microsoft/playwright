@@ -129,7 +129,7 @@ export class Chromium extends BrowserType {
       `Chromium sandboxing failed!`,
       `================================`,
       `To workaround sandboxing issues, do either of the following:`,
-      `  - (preferred): Configure environment to support sandboxing: https://github.com/microsoft/playwright/blob/master/docs/troubleshooting.md`,
+      `  - (preferred): Configure environment to support sandboxing: https://playwright.dev/docs/troubleshooting`,
       `  - (alternative): Launch Chromium without sandbox using 'chromiumSandbox: false' option`,
       `================================`,
       ``,

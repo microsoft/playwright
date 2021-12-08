@@ -7,7 +7,7 @@ on:
       ref:
         description: 'Playwright SHA / ref to build Chromium With Symbols'
         required: true
-        default: 'master'
+        default: 'main'
   release:
     types: [published]
   push:

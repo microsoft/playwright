@@ -3,7 +3,7 @@ name: "Deprecated WebKit Mac 10.14 Builder"
 on:
   push:
     branches:
-      - master
+      - main
       - release-*
     paths:
       - browser_patches/depcrecated-webkit-mac-10.14/BUILD_NUMBER

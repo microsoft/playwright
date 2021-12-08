@@ -41,7 +41,7 @@ jobs:
               owner: 'microsoft',
               repo: 'playwright',
               head: 'microsoft:${{ steps.prepare-branch.outputs.BRANCH_NAME }}',
-              base: 'master',
+              base: 'main',
               title: 'browser(chromium): roll to r${{ steps.bump-chromium.outputs.BASE_POSITION }}',
               body: 'Upstream commit: https://github.com/chromium/chromium/commit/${{ steps.bump-chromium.outputs.GIT_COMMIT }}',
             });

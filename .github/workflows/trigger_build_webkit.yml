@@ -3,7 +3,7 @@ name: "WebKit Builder"
 on:
   push:
     branches:
-      - master
+      - main
       - release-*
     paths:
       - browser_patches/webkit/BUILD_NUMBER

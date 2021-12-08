@@ -3,7 +3,7 @@ name: "FFMPEG Builder"
 on:
   push:
     branches:
-      - master
+      - main
       - release-*
     paths:
       - browser_patches/ffmpeg/BUILD_NUMBER

@@ -3,7 +3,7 @@ name: "WinLDD Builder"
 on:
   push:
     branches:
-      - master
+      - main
       - release-*
     paths:
       - browser_patches/winldd/BUILD_NUMBER

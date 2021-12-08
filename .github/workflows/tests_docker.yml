@@ -3,7 +3,7 @@ name: "Docker tests"
 on:
   push:
     branches:
-      - master
+      - main
       - release-*
   pull_request:
     paths:
@@ -12,7 +12,7 @@ on:
       - 'browsers.json'
       - 'package.json'
     branches:
-      - master
+      - main
       - release-*
 
 env:
