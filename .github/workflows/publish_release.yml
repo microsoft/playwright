@@ -64,6 +64,10 @@ jobs:
         login-server: playwright.azurecr.io
         username: playwright
         password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Set up Docker QEMU for arm64 docker builds
+      uses: docker/setup-qemu-action@v1
+      with:
+        platforms: arm64
     - run: npm i -g npm@8
     - run: npm ci
     - run: npm run build
