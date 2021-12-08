@@ -106,7 +106,7 @@ it('should fill color input', async ({ page }) => {
 });
 
 it('should throw on incorrect color value', async ({ page, browserName, isWindows }) => {
-  it.fail(browserName === 'webkit' && isWindows, 'Error is undefined');
+  it.skip(browserName === 'webkit' && isWindows, 'WebKit win does not support color inputs');
   await page.setContent('<input type=color value="#e66465">');
   const error1 = await page.fill('input', 'badvalue').catch(e => e);
   expect(error1.message).toContain('Malformed value');
