@@ -1,6 +1,6 @@
 ---
 id: frames
-title: "Pages and frames"
+title: "Frames"
 ---
 
 <!-- TOC -->

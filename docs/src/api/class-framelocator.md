@@ -41,10 +41,10 @@ await page.frameLocator('.result-frame').first().locator('button').click();
 
 ```python async
 # Throws if there are several frames in DOM:
-await page.frame_locator('.result-frame').locator('button')..click()
+await page.frame_locator('.result-frame').locator('button').click()
 
 # Works because we explicitly tell locator to pick the first frame:
-await page.frame_locator('.result-frame').first.locator('button')..click()
+await page.frame_locator('.result-frame').first.locator('button').click()
 ```
 
 ```python sync
