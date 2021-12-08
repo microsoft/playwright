@@ -99,7 +99,7 @@ it.describe('should proxy local network requests', () => {
           });
 
           const url = `http://${params.target}:${server.PORT}${path}`;
-          proxyServer.forwardTo(server.PORT);
+          proxyServer.forwardTo(server.PORT, { skipConnectRequests: true });
           const browser = await browserType.launch({
             proxy: { server: `localhost:${proxyServer.PORT}`, bypass: additionalBypass ? '1.non.existent.domain.for.the.test' : undefined }
           });
