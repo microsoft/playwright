@@ -8202,7 +8202,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       width: number;
       height: number;
       toolbarHeight: number;
-      scale?: number;
     }
     export type startVideoReturnValue = {
       /**
