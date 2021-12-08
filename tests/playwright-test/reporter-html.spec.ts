@@ -274,3 +274,23 @@ test('should show timed out steps', async ({ runInlineTest, page, showReport }) 
   await expect(page.locator('.tree-item:has-text("outer step") svg.color-text-danger')).toHaveCount(2);
   await expect(page.locator('.tree-item:has-text("inner step") svg.color-text-danger')).toHaveCount(2);
 });
+
+test('should render annotations', async ({ runInlineTest, page, showReport }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = { timeout: 500 };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('skipped test', async ({ page }) => {
+        test.skip(true, 'I am not interested in this test');
+      });
+    `,
+  }, { reporter: 'dot,html' });
+  expect(result.exitCode).toBe(0);
+  expect(result.skipped).toBe(1);
+
+  await showReport();
+  await page.click('text=skipped test');
+  await expect(page.locator('.test-case-annotation')).toHaveText('skip: I am not interested in this test');
+});

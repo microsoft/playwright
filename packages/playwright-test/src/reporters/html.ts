@@ -68,6 +68,7 @@ export type TestCaseSummary = {
   path: string[];
   projectName: string;
   location: Location;
+  annotations: { type: string, description?: string }[];
   outcome: 'skipped' | 'expected' | 'unexpected' | 'flaky';
   duration: number;
   ok: boolean;
@@ -348,6 +349,7 @@ class HtmlBuilder {
         projectName,
         location,
         duration,
+        annotations: test.annotations,
         outcome: test.outcome,
         path,
         results: test.results.map(r => this._createTestResult(r)),
@@ -359,6 +361,7 @@ class HtmlBuilder {
         projectName,
         location,
         duration,
+        annotations: test.annotations,
         outcome: test.outcome,
         path,
         ok: test.outcome === 'expected' || test.outcome === 'flaky',
