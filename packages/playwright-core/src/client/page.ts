@@ -168,7 +168,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   private _onRoute(route: Route, request: Request) {
-    for (const routeHandler of this._routes) {
+    for (const routeHandler of [...this._routes]) {
       if (routeHandler.matches(request.url())) {
         if (routeHandler.handle(route, request)) {
           this._routes.splice(this._routes.indexOf(routeHandler), 1);
