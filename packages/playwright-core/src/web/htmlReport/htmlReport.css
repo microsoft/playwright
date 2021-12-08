@@ -121,7 +121,6 @@ svg {
   flex: auto;
   display: flex;
   flex-direction: column;
-  padding: 0 16px;
   margin-bottom: 20px;
 }
 
@@ -197,6 +196,13 @@ svg {
   padding: 0 10px;
 }
 
+.test-case-annotation {
+  flex: none;
+  align-items: center;
+  padding: 0 10px;
+  line-height: 24px;
+}
+
 .test-details-column {
   overflow-y: auto;
 }
@@ -234,6 +240,7 @@ video, img {
   max-width: 1024px;
   margin: 0 auto;
   width: 100%;
+  padding: 0 16px;
 }
 
 .file-summary-list {
@@ -385,7 +392,7 @@ a.no-decorations {
   border-radius: 2em;
   background-color: var(--color-scale-gray-4);
   color: white;
-  margin-left: 10px;
+  margin: 0 10px;
   flex: none;
   font-weight: 600;
 }
@@ -573,6 +580,10 @@ article, aside, details, figcaption, figure, footer, header, main, menu, nav, se
 }
 
 @media only screen and (max-width: 600px) {
+  .flow-container {
+    padding: 0;
+  }
+
   .chip-header {
     border-radius: 0 !important;
     border-right: none !important;
