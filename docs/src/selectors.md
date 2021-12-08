@@ -752,7 +752,7 @@ React selectors are experimental and prefixed with `_`. The functionality might 
 
 React selectors allow selecting elements by its component name and property values. The syntax is very similar to [attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors) and supports all attribute selector operators.
 
-In react selectors, component names are transcribed with **CamelCase**.
+In react selectors, component names are transcribed with **PascalCase**.
 
 Selector examples:
 
