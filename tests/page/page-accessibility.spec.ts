@@ -300,7 +300,7 @@ it('should work on a menu', async ({ page, browserName, browserVersion }) => {
     [ { role: 'menuitem', name: 'First Item' },
       { role: 'menuitem', name: 'Second Item' },
       { role: 'menuitem', name: 'Third Item' } ],
-    orientation: (browserName === 'webkit' || (browserName === 'chromium' && !chromiumVersionLessThan(browserVersion, '98.0.4696.0'))) ? 'vertical' : undefined
+    orientation: (browserName === 'webkit' || (browserName === 'chromium' && !chromiumVersionLessThan(browserVersion, '98.0.1089'))) ? 'vertical' : undefined
   });
 });
 
