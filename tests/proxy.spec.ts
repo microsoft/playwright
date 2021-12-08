@@ -91,7 +91,7 @@ it.describe('should proxy local network requests', () => {
         }
       ]) {
         it(`${params.description}`, async ({ platform, browserName, browserType, server, proxyServer }) => {
-          it.fail(platform !== 'linux' && browserName === 'webkit' && additionalBypass && ['localhost', '127.0.0.1'].includes(params.target), 'WK fails to proxy 127.0.0.1 and localhost if additional bypasses are present');
+          it.fail(browserName === 'webkit' && platform === 'darwin' && additionalBypass && ['localhost', '127.0.0.1'].includes(params.target), 'WK fails to proxy 127.0.0.1 and localhost if additional bypasses are present');
 
           const path = `/target-${additionalBypass}-${params.target}.html`;
           server.setRoute(path, async (req, res) => {
