@@ -105,7 +105,8 @@ it('should fill color input', async ({ page }) => {
   expect(await page.$eval('input', input => input.value)).toBe('#aaaaaa');
 });
 
-it('should throw on incorrect color value', async ({ page }) => {
+it('should throw on incorrect color value', async ({ page, browserName, platform }) => {
+  it.skip(browserName === 'webkit' && platform === 'win32', 'WebKit option ENABLE_INPUT_TYPE_COLOR is off on Windows');
   await page.setContent('<input type=color value="#e66465">');
   const error1 = await page.fill('input', 'badvalue').catch(e => e);
   expect(error1.message).toContain('Malformed value');
