@@ -122,7 +122,7 @@ function _wrapAndEscape(node, maxColumns = 0) {
     return `<a href="${linkUrl}">${linkName}</a>`;
   });
   text = text.replace(/(?<!`)\[(.*?)\]/g, (match, link) => `<see cref="${link}"/>`);
-  text = text.replace(/`([^`]*)`/g, (match, code) => `<c>${code.replace('<', '&lt;').replace('>', '&gt;')}</c>`);
+  text = text.replace(/`([^`]*)`/g, (match, code) => `<c>${code.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</c>`);
   text = text.replace(/ITimeoutError/, 'TimeoutException');
   text = text.replace(/Promise/, 'Task');
 
