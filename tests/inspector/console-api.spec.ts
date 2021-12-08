@@ -36,9 +36,7 @@ it.afterEach(async ({ recorderPageGetter }) => {
 
 it('should support playwright.$, playwright.$$', async ({ page }) => {
   const body = await page.evaluateHandle('playwright.$("body")');
-  // Give them a chance to calculate the preview.
   expect(await body.evaluate<string, HTMLBodyElement>((node: HTMLBodyElement) => node.nodeName)).toBe('BODY');
-  expect(body.toString()).toBe('JSHandle@<body></body>');
   const length = await page.evaluate('playwright.$$("body").length');
   expect(length).toBe(1);
 });
@@ -51,9 +49,7 @@ it('should support playwright.selector', async ({ page }) => {
 it('should support playwright.locator.value', async ({ page }) => {
   await page.setContent('<div>Hello<div>');
   const handle = await page.evaluateHandle(`playwright.locator('div').withText('Hello').element`);
-  // Give them a chance to calculate the preview.
   expect(await handle.evaluate<string, HTMLDivElement>((node: HTMLDivElement) => node.nodeName)).toBe('DIV');
-  expect(handle.toString()).toBe('JSHandle@<div>…</div>');
 });
 
 it('should support playwright.locator.values', async ({ page }) => {
