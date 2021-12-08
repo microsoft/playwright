@@ -264,6 +264,7 @@ const TestResultView: React.FC<{
         <a href={`trace/index.html?trace=${new URL(a.path!, window.location.href)}`}>
           <img src={traceImage} style={{ width: 192, height: 117, marginLeft: 20 }} />
         </a>
+        <AttachmentLink attachment={a}></AttachmentLink>
       </div>)}
     </Chip>}
 
