@@ -83,7 +83,7 @@ await page.locator('.header').screenshot({ path: 'screenshot.png' });
 ```
 
 ```java
-page.locator(".header").screenshot(new ElementHandle.ScreenshotOptions().setPath(Paths.get("screenshot.png")));
+page.locator(".header").screenshot(new Locator.ScreenshotOptions().setPath(Paths.get("screenshot.png")));
 ```
 
 ```python async
@@ -95,5 +95,5 @@ page.locator(".header").screenshot(path="screenshot.png")
 ```
 
 ```csharp
-await page.Locator(".header").ScreenshotAsync(new ElementHandleScreenshotOptions { Path = "screenshot.png" });
+await page.Locator(".header").ScreenshotAsync(new LocatorScreenshotOptions { Path = "screenshot.png" });
 ```
