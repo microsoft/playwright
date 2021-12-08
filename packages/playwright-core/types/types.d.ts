@@ -8467,76 +8467,11 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
   }): Promise<void>;}
 
 /**
- * Locator represents a view to the element(s) on the page. It captures the logic sufficient to retrieve the element at any
- * given moment. Locator can be created with the
+ * Locators are the central piece of Playwright's auto-waiting and retry-ability. In a nutshell, locators represent a way
+ * to find element(s) on the page at any moment. Locator can be created with the
  * [page.locator(selector)](https://playwright.dev/docs/api/class-page#page-locator) method.
  *
- * ```js
- * const locator = page.locator('text=Submit');
- * await locator.click();
- * ```
- *
- * The difference between the Locator and [ElementHandle] is that the latter points to a particular element, while Locator
- * captures the logic of how to retrieve that element.
- *
- * In the example below, handle points to a particular DOM element on page. If that element changes text or is used by
- * React to render an entirely different component, handle is still pointing to that very DOM element. This can lead to
- * unexpected behaviors.
- *
- * ```js
- * const handle = await page.$('text=Submit');
- * // ...
- * await handle.hover();
- * await handle.click();
- * ```
- *
- * With the locator, every time the `element` is used, up-to-date DOM element is located in the page using the selector. So
- * in the snippet below, underlying DOM element is going to be located twice.
- *
- * ```js
- * const locator = page.locator('text=Submit');
- * // ...
- * await locator.hover();
- * await locator.click();
- * ```
- *
- * **Strictness**
- *
- * Locators are strict. This means that all operations on locators that imply some target DOM element will throw if more
- * than one element matches given selector.
- *
- * ```js
- * // Throws if there are several buttons in DOM:
- * await page.locator('button').click();
- *
- * // Works because we explicitly tell locator to pick the first element:
- * await page.locator('button').first().click();
- *
- * // Works because count knows what to do with multiple matches:
- * await page.locator('button').count();
- * ```
- *
- * **Lists**
- *
- * You can also use locators to work with the element lists.
- *
- * ```js
- * // Locate elements, this locator points to a list.
- * const rows = page.locator('table tr');
- *
- * // Pattern 1: use locator methods to calculate text on the whole list.
- * const texts = await rows.allTextContents();
- *
- * // Pattern 2: do something with each element in the list.
- * const count = await rows.count()
- * for (let i = 0; i < count; ++i)
- *   console.log(await rows.nth(i).textContent());
- *
- * // Pattern 3: resolve locator to elements on page and map them to their text content.
- * // Note: the code inside evaluateAll runs in page, you can call any DOM apis there.
- * const texts = await rows.evaluateAll(list => list.map(element => element.textContent));
- * ```
- *
+ * [Learn more about locators](https://playwright.dev/docs/locators).
  */
 export interface Locator {
   /**
