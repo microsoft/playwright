@@ -278,7 +278,7 @@ test('should show timed out steps', async ({ runInlineTest, page, showReport }) 
 test('should render annotations', async ({ runInlineTest, page, showReport }) => {
   const result = await runInlineTest({
     'playwright.config.js': `
-      module.exports = { timeout: 500 };
+      module.exports = { timeout: 1500 };
     `,
     'a.test.js': `
       const { test } = pwt;
