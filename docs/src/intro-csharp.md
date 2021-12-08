@@ -6,14 +6,6 @@ title: "Getting started"
 <!-- TOC -->
 - [Release notes](./release-notes.md)
 
-## Installation
-
-Start with installing `playwright` dotnet tool globally. This only needs to be done once. Learn more about [Playwright CLI](./cli.md) tool.
-
-```bash
-dotnet tool install --global Microsoft.Playwright.CLI
-```
-
 ## First project
 
 Create a console project and add the Playwright dependency.
@@ -23,10 +15,12 @@ Create a console project and add the Playwright dependency.
 dotnet new console -n PlaywrightDemo
 cd PlaywrightDemo
 
-# Install dependencies, build project and download necessary browsers.
+# Add project dependency
 dotnet add package Microsoft.Playwright
+# Build the project
 dotnet build
-playwright install
+# Install required browsers
+bin\Debug\netX\playwright.ps1 install
 ```
 
 Create a `Program.cs` that will navigate to `https://playwright.dev/dotnet` and take a screenshot in Chromium.
@@ -77,9 +71,12 @@ cd PlaywrightTests
 Install dependencies, build project and download necessary browsers. This is only done once per project.
 
 ```bash
+# Add project dependency
 dotnet add package Microsoft.Playwright.NUnit
+# Build the project
 dotnet build
-playwright install
+# Install required browsers
+bin\Debug\netX\playwright.ps1 install
 ```
 
 Edit UnitTest1.cs file.
@@ -119,7 +116,7 @@ dotnet test -- NUnit.NumberOfTestWorkers=5
 [Command line tools](./cli.md) can be used to record user interactions and generate C# code.
 
 ```bash
-playwright codegen
+bin\Debug\netX\playwright.ps1 codegen
 ```
 
 ## System requirements
