@@ -84,15 +84,15 @@ Locator frameLocator = locator.frameLocator(':scope');
 ```
 
 ```python async
-frameLocator = locator.frameLocator(":scope");
+frameLocator = locator.frame_locator(":scope");
 ```
 
 ```python sync
-frameLocator = locator.frameLocator(":scope");
+frameLocator = locator.frame_locator(":scope");
 ```
 
 ```csharp
-var frameLocator = locator.frameLocator(":scope");
+var frameLocator = locator.FrameLocator(":scope");
 ```
 
 ## method: FrameLocator.first
