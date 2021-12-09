@@ -464,6 +464,17 @@ it('should dispatch a click event on a button when Enter gets pressed', async ({
   expect((await actual.jsonValue()).clicked).toBe(true);
 });
 
+it('should support simple copy-pasting', async ({ page, isMac }) => {
+  it.skip(!isMac);
+  await page.setContent(`<div contenteditable>123</div>`);
+  await page.focus('div');
+  await page.keyboard.press('Meta+KeyA');
+  await page.keyboard.press('Meta+KeyC');
+  await page.keyboard.press('Meta+KeyV');
+  await page.keyboard.press('Meta+KeyV');
+  expect(await page.evaluate(() => document.querySelector('div').textContent)).toBe('123123');
+});
+
 async function captureLastKeydown(page) {
   const lastEvent = await page.evaluateHandle(() => {
     const lastEvent = {
