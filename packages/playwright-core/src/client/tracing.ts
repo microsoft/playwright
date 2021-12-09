@@ -16,17 +16,10 @@
 
 import * as api from '../../types/types';
 import * as channels from '../protocol/channels';
+import { ParsedStackTrace } from '../utils/stackTrace';
 import { Artifact } from './artifact';
 import { BrowserContext } from './browserContext';
-import fs from 'fs';
-import path from 'path';
-import yauzl from 'yauzl';
-import yazl from 'yazl';
-import { assert, calculateSha1 } from '../utils/utils';
-import { ManualPromise } from '../utils/async';
-import EventEmitter from 'events';
 import { ClientInstrumentationListener } from './clientInstrumentation';
-import { ParsedStackTrace } from '../utils/stackTrace';
 
 export class Tracing implements api.Tracing {
   private _context: BrowserContext;
