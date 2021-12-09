@@ -437,6 +437,8 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
               continue;
             if (nodeName === 'IFRAME' && (name === 'src' || name === 'sandbox'))
               continue;
+            if (nodeName === 'FRAME' && name === 'src')
+              continue;
             let value = element.attributes[i].value;
             if (nodeName === 'META')
               value = this.__sanitizeMetaAttribute(name, value, (node as HTMLMetaElement).httpEquiv);

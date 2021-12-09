@@ -133,6 +133,30 @@ it.describe('snapshots', () => {
     expect((await snapshotter.resourceContentForTest(resource.response.content._sha1)).toString()).toBe('button { color: blue; }');
   });
 
+  it('should capture frame', async ({ page, server, toImpl, browserName, snapshotter }) => {
+    it.skip(browserName === 'firefox');
+
+    await page.route('**/empty.html', route => {
+      route.fulfill({
+        body: '<frameset><frame src="frame.html"></frameset>',
+        contentType: 'text/html'
+      }).catch(() => {});
+    });
+    await page.route('**/frame.html', route => {
+      route.fulfill({
+        body: '<html><button>Hello iframe</button></html>',
+        contentType: 'text/html'
+      }).catch(() => {});
+    });
+    await page.goto(server.EMPTY_PAGE);
+
+    await waitUntilPass(async (counter: number) => {
+      const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot' + counter);
+      const text = distillSnapshot(snapshot).replace(/frame@[^"]+["]/, '<id>"');
+      expect(text).toBe('<FRAMESET><FRAME __playwright_src__=\"/snapshot/<id>\"></FRAME></FRAMESET>');
+    });
+  });
+
   it('should capture iframe', async ({ page, server, toImpl, browserName, snapshotter }) => {
     it.skip(browserName === 'firefox');
 
@@ -151,15 +175,11 @@ it.describe('snapshots', () => {
     await page.goto(server.EMPTY_PAGE);
 
     // Marking iframe hierarchy is racy, do not expect snapshot, wait for it.
-    let counter = 0;
-    let snapshot: any;
-    for (; ; ++counter) {
-      snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot' + counter);
+    await waitUntilPass(async (counter: number) => {
+      const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot' + counter);
       const text = distillSnapshot(snapshot).replace(/frame@[^"]+["]/, '<id>"');
-      if (text === '<IFRAME __playwright_src__=\"/snapshot/<id>\"></IFRAME>')
-        break;
-      await page.waitForTimeout(250);
-    }
+      expect(text).toBe('<IFRAME __playwright_src__=\"/snapshot/<id>\"></IFRAME>');
+    });
   });
 
   it('should capture snapshot target', async ({ page, toImpl, snapshotter }) => {
@@ -224,6 +244,24 @@ it.describe('snapshots', () => {
     expect(snapshot2.html).toEqual([[1, 13]]);
   });
 });
+
+
+async function waitUntilPass(fn: (counter: number) => Promise<unknown>, sleep = 250) {
+  let counter = 0;
+  for (; ; ++counter) {
+    let err: unknown;
+    try {
+      await fn(counter);
+    } catch (e) {
+      err = e;
+    }
+
+    if (err)
+      await new Promise(resolve => setTimeout(() => resolve, sleep));
+    else
+      break;
+  }
+}
 
 function distillSnapshot(snapshot, distillTarget = true) {
   let { html } = snapshot.render();
