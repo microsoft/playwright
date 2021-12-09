@@ -2730,6 +2730,11 @@ export interface PlaywrightWorkerOptions {
    * - `'retain-on-failure'`: Record video for each test, but remove all videos from successful test runs.
    * - `'on-first-retry'`: Record video only when retrying a test for the first time.
    *
+   * If video size is not specified, it will be equal to
+   * [testOptions.viewport](https://playwright.dev/docs/api/class-testoptions#test-options-viewport) scaled down to fit into
+   * 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of each page will
+   * be scaled down if necessary to fit the specified size.
+   *
    * Learn more about [recording video](https://playwright.dev/docs/test-configuration#record-video).
    */
   video: VideoMode | /** deprecated */ 'retry-with-video' | { mode: VideoMode, size?: ViewportSize };
