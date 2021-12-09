@@ -420,7 +420,11 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
             if (nodeName === 'IFRAME' && name === 'src')
               continue;
             let value = element.attributes[i].value;
-            if (name === 'src' && (nodeName === 'IMG'))
+            if (name === 'charset' && nodeName === 'META')
+              value = 'utf-8';
+            else if (nodeName === 'META' && (node as HTMLMetaElement).httpEquiv.toLowerCase() === 'content-type' && name === 'content')
+              value = 'text/html; charset=utf-8';
+            else if (name === 'src' && (nodeName === 'IMG'))
               value = this._sanitizeUrl(value);
             else if (name === 'srcset' && (nodeName === 'IMG'))
               value = this._sanitizeSrcSet(value);

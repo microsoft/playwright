@@ -103,6 +103,20 @@ it.describe('snapshots', () => {
     expect(distillSnapshot(snapshot)).toBe('<!DOCTYPE foo>hi');
   });
 
+  it('should replace meta charset attr that specifies charset', async ({ page, server, toImpl, snapshotter }) => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent('<meta charset="shift-jis" />');
+    const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot');
+    expect(distillSnapshot(snapshot)).toBe('<META charset="utf-8" />');
+  });
+
+  it('should replace meta content attr that specifies charset', async ({ page, server, toImpl, snapshotter }) => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent('<meta http-equiv="Content-Type" content="text/html; charset=Shift_JIS">');
+    const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot');
+    expect(distillSnapshot(snapshot)).toBe('<META http-equiv="Content-Type" content="text/html; charset=utf-8">');
+  });
+
   it('should respect subresource CSSOM change', async ({ page, server, toImpl, snapshotter }) => {
     await page.goto(server.EMPTY_PAGE);
     await page.route('**/style.css', route => {
