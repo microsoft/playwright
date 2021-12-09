@@ -15,7 +15,6 @@
  */
 
 import * as channels from '../protocol/channels';
-import { NameValueList } from '../server/types';
 import { ChannelOwner } from './channelOwner';
 
 export class LocalUtils extends ChannelOwner<channels.LocalUtilsChannel> {
@@ -27,7 +26,7 @@ export class LocalUtils extends ChannelOwner<channels.LocalUtilsChannel> {
     super(parent, type, guid, initializer);
   }
 
-  async zipTrace(traceFile: string, entries: NameValueList, sources: string[]): Promise<void> {
+  async zipTrace(traceFile: string, entries: channels.NameValue[], sources: string[]): Promise<void> {
     await this._channel.zipTrace({ traceFile, entries, sources });
   }
 
