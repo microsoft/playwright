@@ -9026,13 +9026,6 @@ export interface Locator {
    * await locator.click();
    * ```
    *
-   * If you have a [Locator] object pointing to an `iframe` it can be converted to [FrameLocator] using
-   * [`:scope`](https://developer.mozilla.org/en-US/docs/Web/CSS/:scope) CSS selector:
-   *
-   * ```js
-   * const frameLocator = locator.frameLocator(':scope');
-   * ```
-   *
    * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    */
   frameLocator(selector: string): FrameLocator;
@@ -13613,6 +13606,15 @@ export interface FileChooser {
  *
  * // Works because we explicitly tell locator to pick the first frame:
  * await page.frameLocator('.result-frame').first().locator('button').click();
+ * ```
+ *
+ * **Converting Locator to FrameLocator**
+ *
+ * If you have a [Locator] object pointing to an `iframe` it can be converted to [FrameLocator] using
+ * [`:scope`](https://developer.mozilla.org/en-US/docs/Web/CSS/:scope) CSS selector:
+ *
+ * ```js
+ * const frameLocator = locator.frameLocator(':scope');
  * ```
  *
  */

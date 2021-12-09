@@ -427,28 +427,6 @@ var locator = page.FrameLocator("iframe").Locator("text=Submit");
 await locator.ClickAsync();
 ```
 
-If you have a [Locator] object pointing to an `iframe` it can be converted to [FrameLocator] using [`:scope`](https://developer.mozilla.org/en-US/docs/Web/CSS/:scope) CSS selector:
-
-```js
-const frameLocator = locator.frameLocator(':scope');
-```
-
-```java
-Locator frameLocator = locator.frameLocator(':scope');
-```
-
-```python async
-frameLocator = locator.frameLocator(":scope");
-```
-
-```python sync
-frameLocator = locator.frameLocator(":scope");
-```
-
-```csharp
-var frameLocator = locator.frameLocator(":scope");
-```
-
 ### param: Locator.frameLocator.selector = %%-find-selector-%%
 
 
