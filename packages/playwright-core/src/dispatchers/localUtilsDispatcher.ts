@@ -14,21 +14,75 @@
  * limitations under the License.
  */
 
+import EventEmitter from 'events';
+import fs from 'fs';
+import path from 'path';
+import yauzl from 'yauzl';
+import yazl from 'yazl';
 import * as channels from '../protocol/channels';
-import { LocalUtils } from '../server/localUtils';
+import { ManualPromise } from '../utils/async';
+import { assert, createGuid } from '../utils/utils';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 
-export class LocalUtilsDispatcher extends Dispatcher<LocalUtils, channels.LocalUtilsChannel> implements channels.LocalUtilsChannel {
+export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.LocalUtilsChannel> implements channels.LocalUtilsChannel {
   _type_LocalUtils: boolean;
-  constructor(scope: DispatcherScope, utils: LocalUtils) {
-    super(scope, utils, 'LocalUtils', {});
+  constructor(scope: DispatcherScope) {
+    super(scope, { guid: 'localUtils@' + createGuid() }, 'LocalUtils', {});
     this._type_LocalUtils = true;
   }
-  async zipTrace(params: channels.LocalUtilsZipTraceParams, metadata?: channels.Metadata): Promise<void> {
-    await this._object.zipTrace(params);
-  }
 
-  async addSourcesToTrace(params: channels.LocalUtilsAddSourcesToTraceParams, metadata?: channels.Metadata): Promise<void> {
-    await this._object.addSourcesToTrace(params);
+  async zip(params: channels.LocalUtilsZipParams, metadata?: channels.Metadata): Promise<void> {
+    const promise = new ManualPromise<void>();
+    const zipFile = new yazl.ZipFile();
+    (zipFile as any as EventEmitter).on('error', error => promise.reject(error));
+
+    for (const entry of params.entries) {
+      try {
+        if (fs.statSync(entry.value).isFile())
+          zipFile.addFile(entry.value, entry.name);
+      } catch (e) {
+      }
+    }
+
+    if (!fs.statSync(params.zipFile).isFile()) {
+      // New file, just compress the entries.
+      await fs.promises.mkdir(path.dirname(params.zipFile), { recursive: true });
+      zipFile.end(undefined, () => {
+        zipFile.outputStream.pipe(fs.createWriteStream(params.zipFile)).on('close', () => promise.resolve());
+      });
+      return promise;
+    }
+
+    // File already exists. Repack and add new entries.
+    const tempFile = params.zipFile + '.tmp';
+    await fs.promises.rename(params.zipFile, tempFile);
+
+    yauzl.open(tempFile, (err, inZipFile) => {
+      if (err) {
+        promise.reject(err);
+        return;
+      }
+      assert(inZipFile);
+      let pendingEntries = inZipFile.entryCount;
+      inZipFile.on('entry', entry => {
+        inZipFile.openReadStream(entry, (err, readStream) => {
+          if (err) {
+            promise.reject(err);
+            return;
+          }
+          zipFile.addReadStream(readStream!, entry.fileName);
+          if (--pendingEntries === 0) {
+            zipFile.end(undefined, () => {
+              zipFile.outputStream.pipe(fs.createWriteStream(params.zipFile)).on('close', () => {
+                fs.promises.unlink(tempFile).then(() => {
+                  promise.resolve();
+                });
+              });
+            });
+          }
+        });
+      });
+    });
+    return promise;
   }
 }

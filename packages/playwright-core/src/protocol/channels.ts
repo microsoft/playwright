@@ -355,26 +355,16 @@ export interface LocalUtilsEventTarget {
 }
 export interface LocalUtilsChannel extends LocalUtilsEventTarget, Channel {
   _type_LocalUtils: boolean;
-  zipTrace(params: LocalUtilsZipTraceParams, metadata?: Metadata): Promise<LocalUtilsZipTraceResult>;
-  addSourcesToTrace(params: LocalUtilsAddSourcesToTraceParams, metadata?: Metadata): Promise<LocalUtilsAddSourcesToTraceResult>;
+  zip(params: LocalUtilsZipParams, metadata?: Metadata): Promise<LocalUtilsZipResult>;
 }
-export type LocalUtilsZipTraceParams = {
-  traceFile: string,
+export type LocalUtilsZipParams = {
+  zipFile: string,
   entries: NameValue[],
-  sources: string[],
 };
-export type LocalUtilsZipTraceOptions = {
+export type LocalUtilsZipOptions = {
 
 };
-export type LocalUtilsZipTraceResult = void;
-export type LocalUtilsAddSourcesToTraceParams = {
-  traceFile: string,
-  sources: string[],
-};
-export type LocalUtilsAddSourcesToTraceOptions = {
-
-};
-export type LocalUtilsAddSourcesToTraceResult = void;
+export type LocalUtilsZipResult = void;
 
 export interface LocalUtilsEvents {
 }

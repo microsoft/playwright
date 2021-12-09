@@ -26,11 +26,7 @@ export class LocalUtils extends ChannelOwner<channels.LocalUtilsChannel> {
     super(parent, type, guid, initializer);
   }
 
-  async zipTrace(traceFile: string, entries: channels.NameValue[], sources: string[]): Promise<void> {
-    await this._channel.zipTrace({ traceFile, entries, sources });
-  }
-
-  async addSourcesToTrace(traceFile: string, sources: string[]): Promise<void> {
-    await this._channel.addSourcesToTrace({ traceFile, sources });
+  async zip(zipFile: string, entries: channels.NameValue[]): Promise<void> {
+    await this._channel.zip({ zipFile, entries });
   }
 }

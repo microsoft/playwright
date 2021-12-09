@@ -44,7 +44,7 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
       webkit: new BrowserTypeDispatcher(scope, playwright.webkit),
       android: new AndroidDispatcher(scope, playwright.android),
       electron: new ElectronDispatcher(scope, playwright.electron),
-      utils: new LocalUtilsDispatcher(scope, playwright.utils),
+      utils: new LocalUtilsDispatcher(scope),
       deviceDescriptors,
       selectors: customSelectors || new SelectorsDispatcher(scope, playwright.selectors),
       preLaunchedBrowser,

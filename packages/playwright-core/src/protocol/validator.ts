@@ -189,14 +189,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     headers: tArray(tType('NameValue')),
   });
   scheme.LifecycleEvent = tEnum(['load', 'domcontentloaded', 'networkidle', 'commit']);
-  scheme.LocalUtilsZipTraceParams = tObject({
-    traceFile: tString,
+  scheme.LocalUtilsZipParams = tObject({
+    zipFile: tString,
     entries: tArray(tType('NameValue')),
-    sources: tArray(tString),
-  });
-  scheme.LocalUtilsAddSourcesToTraceParams = tObject({
-    traceFile: tString,
-    sources: tArray(tString),
   });
   scheme.RootInitializeParams = tObject({
     sdkLanguage: tString,

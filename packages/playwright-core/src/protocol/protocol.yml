@@ -420,22 +420,12 @@ LocalUtils:
 
   commands:
 
-    zipTrace:
+    zip:
       parameters:
-        traceFile: string
+        zipFile: string
         entries:
           type: array
           items: NameValue
-        sources:
-          type: array
-          items: string
-
-    addSourcesToTrace:
-      parameters:
-        traceFile: string
-        sources:
-          type: array
-          items: string
 
 Root:
   type: interface

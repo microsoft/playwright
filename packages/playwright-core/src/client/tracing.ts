@@ -17,6 +17,7 @@
 import * as api from '../../types/types';
 import * as channels from '../protocol/channels';
 import { ParsedStackTrace } from '../utils/stackTrace';
+import { calculateSha1 } from '../utils/utils';
 import { Artifact } from './artifact';
 import { BrowserContext } from './browserContext';
 import { ClientInstrumentationListener } from './clientInstrumentation';
@@ -67,26 +68,24 @@ export class Tracing implements api.Tracing {
     this._context._instrumentation!.removeListener(this._instrumentationListener);
     const isLocal = !this._context._connection.isRemote();
 
-    const result = await channel.tracingStopChunk({ save: !!filePath, skipCompress: false });
+    const result = await channel.tracingStopChunk({ save: !!filePath, skipCompress: isLocal });
     if (!filePath) {
       // Not interested in artifacts.
       return;
     }
 
-    if (isLocal) {
-      // We were running locally, compress on client side
-      await this._context._localUtils.zipTrace(filePath, result.entries, Array.from(sources));
-      return;
+    const sourceEntries: channels.NameValue[] = [];
+    for (const value of sources)
+      sourceEntries.push({ name: 'resources/src@' + calculateSha1(value) + '.txt', value });
+
+    if (!isLocal) {
+      // We run against remote Playwright, compress on remote side.
+      const artifact = Artifact.from(result.artifact!);
+      await artifact.saveAs(filePath);
+      await artifact.delete();
     }
 
-    // We run against remote Playwright, compress on remote side.
-    const artifact = Artifact.from(result.artifact!);
-    await artifact.saveAs(filePath);
-    await artifact.delete();
-
-    if (sources) {
-      // Add local source files to the trace zip created remotely.
-      await this._context._localUtils.addSourcesToTrace(filePath, Array.from(sources));
-    }
+    if (isLocal || sourceEntries)
+      await this._context._localUtils.zip(filePath, sourceEntries.concat(result.entries));
   }
 }
