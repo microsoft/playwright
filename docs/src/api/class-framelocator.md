@@ -71,6 +71,29 @@ await page.FrameLocator(".result-frame").Locator("button").ClickAsync();
 await page.FrameLocator(".result-frame").First.Locator("button").ClickAsync();
 ```
 
+**Converting Locator to FrameLocator**
+
+If you have a [Locator] object pointing to an `iframe` it can be converted to [FrameLocator] using [`:scope`](https://developer.mozilla.org/en-US/docs/Web/CSS/:scope) CSS selector:
+
+```js
+const frameLocator = locator.frameLocator(':scope');
+```
+
+```java
+Locator frameLocator = locator.frameLocator(':scope');
+```
+
+```python async
+frameLocator = locator.frame_locator(":scope");
+```
+
+```python sync
+frameLocator = locator.frame_locator(":scope");
+```
+
+```csharp
+var frameLocator = locator.FrameLocator(":scope");
+```
 
 ## method: FrameLocator.first
 - returns: <[FrameLocator]>

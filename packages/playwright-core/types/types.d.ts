@@ -13608,6 +13608,15 @@ export interface FileChooser {
  * await page.frameLocator('.result-frame').first().locator('button').click();
  * ```
  *
+ * **Converting Locator to FrameLocator**
+ *
+ * If you have a [Locator] object pointing to an `iframe` it can be converted to [FrameLocator] using
+ * [`:scope`](https://developer.mozilla.org/en-US/docs/Web/CSS/:scope) CSS selector:
+ *
+ * ```js
+ * const frameLocator = locator.frameLocator(':scope');
+ * ```
+ *
  */
 export interface FrameLocator {
   /**
