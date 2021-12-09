@@ -22,6 +22,7 @@ import * as pirates from 'pirates';
 import * as sourceMapSupport from 'source-map-support';
 import * as url from 'url';
 import type { Location } from './types';
+import { TsConfigLoaderResult } from './third_party/tsconfig-loader';
 
 const version = 4;
 const cacheDir = process.env.PWTEST_CACHE_DIR || path.join(os.tmpdir(), 'playwright-transform-cache');
@@ -52,7 +53,7 @@ function calculateCachePath(content: string, filePath: string): string {
   return path.join(cacheDir, hash[0] + hash[1], fileName);
 }
 
-export function transformHook(code: string, filename: string, isModule = false): string {
+export function transformHook(code: string, filename: string, tsconfig: TsConfigLoaderResult, isModule = false): string {
   const cachePath = calculateCachePath(code, filename);
   const codePath = cachePath + '.js';
   const sourceMapPath = cachePath + '.map';
@@ -63,6 +64,21 @@ export function transformHook(code: string, filename: string, isModule = false):
   // Silence the annoying warning.
   process.env.BROWSERSLIST_IGNORE_OLD_DATA = 'true';
   const babel: typeof import('@babel/core') = require('@babel/core');
+
+  const alias: { [key: string]: string | ((s: string[]) => string) } = {};
+  for (const [key, values] of Object.entries(tsconfig.paths || {})) {
+    const regexKey = '^' + key.replace('*', '.*');
+    alias[regexKey] = ([name]) => {
+      for (const value of values) {
+        const relative = (key.endsWith('/*') ? value.substring(0, value.length - 1) + name.substring(key.length - 1) : value)
+            .replace(/\//g, path.sep);
+        const result = path.resolve(tsconfig.baseUrl || '', relative);
+        if (fs.existsSync(result) || fs.existsSync(result + '.js') || fs.existsSync(result + '.ts'))
+          return result;
+      }
+      return name;
+    };
+  }
 
   const plugins = [
     [require.resolve('@babel/plugin-proposal-class-properties')],
@@ -75,6 +91,10 @@ export function transformHook(code: string, filename: string, isModule = false):
     [require.resolve('@babel/plugin-syntax-async-generators')],
     [require.resolve('@babel/plugin-syntax-object-rest-spread')],
     [require.resolve('@babel/plugin-proposal-export-namespace-from')],
+    [require.resolve('babel-plugin-module-resolver'), {
+      root: ['./'],
+      alias
+    }],
   ];
   if (!isModule) {
     plugins.push([require.resolve('@babel/plugin-transform-modules-commonjs')]);
@@ -104,8 +124,8 @@ export function transformHook(code: string, filename: string, isModule = false):
   return result.code || '';
 }
 
-export function installTransform(): () => void {
-  return pirates.addHook(transformHook, { exts: ['.ts'] });
+export function installTransform(tsconfig: TsConfigLoaderResult): () => void {
+  return pirates.addHook((code: string, filename: string) => transformHook(code, filename, tsconfig), { exts: ['.ts'] });
 }
 
 export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Location, ...args: A) => R): (...args: A) => R {

@@ -27,6 +27,7 @@ import { ProjectImpl } from './project';
 import { Reporter } from '../types/testReporter';
 import { BuiltInReporter, builtInReporters } from './runner';
 import { isRegExp } from 'playwright-core/lib/utils/utils';
+import { tsConfigLoader, TsConfigLoaderResult } from './third_party/tsconfig-loader';
 
 export class Loader {
   private _defaultConfig: Config;
@@ -37,6 +38,7 @@ export class Loader {
   private _projects: ProjectImpl[] = [];
   private _fileSuites = new Map<string, Suite>();
   private _lastModuleInfo: { rootFolder: string, isModule: boolean } | null = null;
+  private _tsConfigCache = new Map<string, TsConfigLoaderResult>();
 
   constructor(defaultConfig: Config, configOverrides: Config) {
     this._defaultConfig = defaultConfig;
@@ -192,7 +194,18 @@ export class Loader {
 
 
   private async _requireOrImport(file: string) {
-    const revertBabelRequire = installTransform();
+    // Respect tsconfig paths.
+    const cwd = path.dirname(file);
+    let tsconfig = this._tsConfigCache.get(cwd);
+    if (!tsconfig) {
+      tsconfig = tsConfigLoader({
+        getEnv: (name: string) => process.env[name],
+        cwd
+      });
+      this._tsConfigCache.set(cwd, tsconfig);
+    }
+
+    const revertBabelRequire = installTransform(tsconfig);
 
     // Figure out if we are importing or requiring.
     let isModule: boolean;
