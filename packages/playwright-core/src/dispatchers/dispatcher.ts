@@ -273,7 +273,6 @@ export class DispatcherConnection {
       const result = await (dispatcher as any)[method](validParams, callMetadata);
       callMetadata.result = this._replaceDispatchersWithGuids(result);
     } catch (e) {
-      console.log('sdkObject = ' + sdkObject);
       // Dispatching error
       // We want original, unmodified error in metadata.
       callMetadata.error = serializeError(e);
