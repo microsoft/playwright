@@ -44,7 +44,7 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
       }
     }
 
-    if (!fs.statSync(params.zipFile).isFile()) {
+    if (!fs.existsSync(params.zipFile)) {
       // New file, just compress the entries.
       await fs.promises.mkdir(path.dirname(params.zipFile), { recursive: true });
       zipFile.end(undefined, () => {
