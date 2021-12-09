@@ -48,7 +48,9 @@ export const electronTest = baseTest.extend<ElectronTestFixtures, PageWorkerFixt
     await run(async () => {
       const [ window ] = await Promise.all([
         electronApp.waitForEvent('window'),
-        electronApp.evaluate(electron => {
+        electronApp.evaluate(async electron => {
+          // Avoid "Error: Cannot create BrowserWindow before app is ready".
+          await electron.app.whenReady();
           const window = new electron.BrowserWindow({
             width: 800,
             height: 600,

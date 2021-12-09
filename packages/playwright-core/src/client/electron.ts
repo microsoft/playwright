@@ -51,12 +51,14 @@ export class Electron extends ChannelOwner<channels.ElectronChannel> implements 
       extraHTTPHeaders: options.extraHTTPHeaders && headersObjectToArray(options.extraHTTPHeaders),
       env: envObjectToArray(options.env ? options.env : process.env),
     };
-    return ElectronApplication.from((await this._channel.launch(params)).electronApplication);
+    const app = ElectronApplication.from((await this._channel.launch(params)).electronApplication);
+    app._context._options = params;
+    return app;
   }
 }
 
 export class ElectronApplication extends ChannelOwner<channels.ElectronApplicationChannel> implements api.ElectronApplication {
-  private _context: BrowserContext;
+  readonly _context: BrowserContext;
   private _windows = new Set<Page>();
   private _timeoutSettings = new TimeoutSettings();
 
@@ -91,7 +93,7 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
   }
 
   context(): BrowserContext {
-    return this._context! as BrowserContext;
+    return this._context;
   }
 
   async close() {
