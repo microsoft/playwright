@@ -37,7 +37,7 @@ import { GridServer, GridFactory } from '../grid/gridServer';
 const packageJSON = require('../../package.json');
 
 program
-    .version('Version ' + packageJSON.version)
+    .version('Version ' + (process.env.PW_CLI_DISPLAY_VERSION || packageJSON.version))
     .name(buildBasePlaywrightCLICommand(process.env.PW_CLI_TARGET_LANG));
 
 commandWithOpenOptions('open [url]', 'open page in browser specified via -b, --browser', [])
