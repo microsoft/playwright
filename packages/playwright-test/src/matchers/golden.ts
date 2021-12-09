@@ -20,13 +20,14 @@ import colors from 'colors/safe';
 import fs from 'fs';
 import path from 'path';
 import jpeg from 'jpeg-js';
-import pixelmatch from 'pixelmatch';
+import { PNG } from 'pngjs';
+import * as pbd from 'pixel-buffer-diff';
 import { diff_match_patch, DIFF_INSERT, DIFF_DELETE, DIFF_EQUAL } from '../third_party/diff_match_patch';
 import { TestInfoImpl, UpdateSnapshots } from '../types';
 import { addSuffixToFilePath } from '../util';
 
 // Note: we require the pngjs version of pixelmatch to avoid version mismatches.
-const { PNG } = require(require.resolve('pngjs', { paths: [require.resolve('pixelmatch')] })) as typeof import('pngjs');
+//const { PNG } = require(require.resolve('pngjs', { paths: [require.resolve('pixelmatch')] })) as typeof import('pngjs');
 
 const extensionToMimeType: { [key: string]: string } = {
   'dat': 'application/octet-string',
@@ -66,8 +67,8 @@ function compareImages(actualBuffer: Buffer | string, expectedBuffer: Buffer, mi
     };
   }
   const diff = new PNG({ width: expected.width, height: expected.height });
-  const count = pixelmatch(expected.data, actual.data, diff.data, expected.width, expected.height, { threshold: 0.2, ...options });
-  return count > 0 ? { diff: PNG.sync.write(diff) } : null;
+  const diffResult = pbd.diff(expected.data, actual.data, diff.data, expected.width, expected.height, { threshold: 0.2, ...options });
+  return diffResult.cumulatedDiff > 0 ? { diff: PNG.sync.write(diff) } : null;
 }
 
 function compareText(actual: Buffer | string, expectedBuffer: Buffer): { diff?: Buffer; errorMessage?: string; diffExtension?: string; } | null {
