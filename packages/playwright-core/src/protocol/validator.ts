@@ -503,6 +503,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     name: tOptional(tString),
     snapshots: tOptional(tBoolean),
     screenshots: tOptional(tBoolean),
+    sources: tOptional(tBoolean),
   });
   scheme.BrowserContextTracingStartChunkParams = tObject({
     title: tOptional(tString),

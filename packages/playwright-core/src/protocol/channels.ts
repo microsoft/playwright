@@ -1249,11 +1249,13 @@ export type BrowserContextTracingStartParams = {
   name?: string,
   snapshots?: boolean,
   screenshots?: boolean,
+  sources?: boolean,
 };
 export type BrowserContextTracingStartOptions = {
   name?: string,
   snapshots?: boolean,
   screenshots?: boolean,
+  sources?: boolean,
 };
 export type BrowserContextTracingStartResult = void;
 export type BrowserContextTracingStartChunkParams = {
@@ -1273,6 +1275,7 @@ export type BrowserContextTracingStopChunkOptions = {
 export type BrowserContextTracingStopChunkResult = {
   artifact?: ArtifactChannel,
   entries: NameValue[],
+  sourceEntries: NameValue[],
 };
 export type BrowserContextTracingStopParams = {};
 export type BrowserContextTracingStopOptions = {};

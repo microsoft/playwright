@@ -14,31 +14,32 @@
  * limitations under the License.
  */
 
+import { EventEmitter } from 'events';
 import fs from 'fs';
 import path from 'path';
 import yazl from 'yazl';
-import { EventEmitter } from 'events';
-import { createGuid, mkdirIfNeeded, monotonicTime } from '../../../utils/utils';
+import { NameValue } from '../../../common/types';
+import { commandsWithTracingSnapshots } from '../../../protocol/channels';
+import { ManualPromise } from '../../../utils/async';
+import { eventsHelper, RegisteredListener } from '../../../utils/eventsHelper';
+import { calculateSha1, createGuid, mkdirIfNeeded, monotonicTime } from '../../../utils/utils';
 import { Artifact } from '../../artifact';
 import { BrowserContext } from '../../browserContext';
 import { ElementHandle } from '../../dom';
-import { eventsHelper, RegisteredListener } from '../../../utils/eventsHelper';
 import { CallMetadata, InstrumentationListener, SdkObject } from '../../instrumentation';
 import { Page } from '../../page';
-import * as trace from '../common/traceEvents';
-import { commandsWithTracingSnapshots } from '../../../protocol/channels';
-import { Snapshotter, SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
-import { FrameSnapshot } from '../common/snapshotTypes';
-import { HarTracer, HarTracerDelegate } from '../../supplements/har/harTracer';
 import * as har from '../../supplements/har/har';
+import { HarTracer, HarTracerDelegate } from '../../supplements/har/harTracer';
+import { FrameSnapshot } from '../common/snapshotTypes';
+import * as trace from '../common/traceEvents';
 import { VERSION } from '../common/traceEvents';
-import { NameValue } from '../../../common/types';
-import { ManualPromise } from '../../../utils/async';
+import { Snapshotter, SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
 
 export type TracerOptions = {
   name?: string;
   snapshots?: boolean;
   screenshots?: boolean;
+  sources?: boolean;
 };
 
 type RecordingState = {
@@ -48,6 +49,7 @@ type RecordingState = {
   traceFile: string,
   filesCount: number,
   sha1s: Set<string>,
+  sources: Set<string>,
   recording: boolean;
 };
 
@@ -102,7 +104,7 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
     const traceName = options.name || createGuid();
     const traceFile = path.join(this._tracesDir, traceName + '.trace');
     const networkFile = path.join(this._tracesDir, traceName + '.network');
-    this._state = { options, traceName, traceFile, networkFile, filesCount: 0, sha1s: new Set(), recording: false };
+    this._state = { options, traceName, traceFile, networkFile, filesCount: 0, sha1s: new Set(), sources: new Set(), recording: false };
 
     this._writeChain = fs.promises.mkdir(this._resourcesDir, { recursive: true }).then(() => fs.promises.writeFile(networkFile, ''));
     if (options.snapshots)
@@ -167,7 +169,7 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
     await this._writeChain;
   }
 
-  async stopChunk(save: boolean, skipCompress: boolean): Promise<{ artifact: Artifact | null, entries: NameValue[] }> {
+  async stopChunk(save: boolean, skipCompress: boolean): Promise<{ artifact: Artifact | null, entries: NameValue[], sourceEntries: NameValue[] }> {
     if (this._isStopping)
       throw new Error(`Tracing is already stopping`);
     this._isStopping = true;
@@ -176,7 +178,7 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
       this._isStopping = false;
       if (save)
         throw new Error(`Must start tracing before stopping`);
-      return { artifact: null, entries: [] };
+      return { artifact: null, entries: [], sourceEntries: [] };
     }
 
     const state = this._state!;
@@ -203,11 +205,8 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
     // Chain the export operation against write operations,
     // so that neither trace files nor sha1s change during the export.
     return await this._appendTraceOperation(async () => {
-      this._isStopping = false;
-      state.recording = false;
-
       if (!save)
-        return { artifact: null, entries: [] };
+        return { artifact: null, entries: [], sourceEntries: [] };
 
       // Har files a live, make a snapshot before returning the resulting entries.
       const networkFile = path.join(state.networkFile, '..', createGuid());
@@ -219,9 +218,18 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
       for (const sha1 of state.sha1s)
         entries.push({ name: path.join('resources', sha1), value: path.join(this._resourcesDir, sha1) });
 
-      const zipArtifact = skipCompress ? null : await this._exportZip(entries, state).catch(() => null);
-      return { artifact: zipArtifact, entries };
-    }) || { artifact: null, entries: [] };
+      const sourceEntries: NameValue[] = [];
+      for (const value of state.sources)
+        sourceEntries.push({ name: 'resources/src@' + calculateSha1(value) + '.txt', value });
+
+      const artifact = skipCompress ? null : await this._exportZip(entries, state).catch(() => null);
+      return { artifact, entries, sourceEntries };
+    }).finally(() => {
+      state.sha1s = new Set();
+      state.sources = new Set();
+      this._isStopping = false;
+      state.recording = false;
+    }) || { artifact: null, entries: [], sourceEntries: [] };
   }
 
   private async _exportZip(entries: NameValue[], state: RecordingState): Promise<Artifact | null> {
@@ -263,6 +271,10 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
     metadata.afterSnapshot = `after@${metadata.id}`;
     const beforeSnapshot = this._captureSnapshot('before', sdkObject, metadata);
     this._pendingCalls.set(metadata.id, { sdkObject, metadata, beforeSnapshot });
+    if (this._state?.options.sources) {
+      for (const frame of metadata.stack || [])
+        this._state.sources.add(frame.file);
+    }
     await beforeSnapshot;
   }
 

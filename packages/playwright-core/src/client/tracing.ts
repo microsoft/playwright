@@ -16,30 +16,17 @@
 
 import * as api from '../../types/types';
 import * as channels from '../protocol/channels';
-import { ParsedStackTrace } from '../utils/stackTrace';
-import { calculateSha1 } from '../utils/utils';
 import { Artifact } from './artifact';
 import { BrowserContext } from './browserContext';
-import { ClientInstrumentationListener } from './clientInstrumentation';
 
 export class Tracing implements api.Tracing {
   private _context: BrowserContext;
-  private _sources = new Set<string>();
-  private _instrumentationListener: ClientInstrumentationListener;
 
   constructor(channel: BrowserContext) {
     this._context = channel;
-    this._instrumentationListener = {
-      onApiCallBegin: (apiCall: string, stackTrace: ParsedStackTrace | null) => {
-        for (const frame of stackTrace?.frames || [])
-          this._sources.add(frame.file);
-      }
-    };
   }
 
   async start(options: { name?: string, title?: string, snapshots?: boolean, screenshots?: boolean, sources?: boolean } = {}) {
-    if (options.sources)
-      this._context._instrumentation!.addListener(this._instrumentationListener);
     await this._context._wrapApiCall(async () => {
       await this._context._channel.tracingStart(options);
       await this._context._channel.tracingStartChunk({ title: options.title });
@@ -47,7 +34,6 @@ export class Tracing implements api.Tracing {
   }
 
   async startChunk(options: { title?: string } = {}) {
-    this._sources = new Set();
     await this._context._channel.tracingStartChunk(options);
   }
 
@@ -63,9 +49,6 @@ export class Tracing implements api.Tracing {
   }
 
   private async _doStopChunk(channel: channels.BrowserContextChannel, filePath: string | undefined) {
-    const sources = this._sources;
-    this._sources = new Set();
-    this._context._instrumentation!.removeListener(this._instrumentationListener);
     const isLocal = !this._context._connection.isRemote();
 
     const result = await channel.tracingStopChunk({ save: !!filePath, skipCompress: isLocal });
@@ -74,10 +57,6 @@ export class Tracing implements api.Tracing {
       return;
     }
 
-    const sourceEntries: channels.NameValue[] = [];
-    for (const value of sources)
-      sourceEntries.push({ name: 'resources/src@' + calculateSha1(value) + '.txt', value });
-
     if (!isLocal) {
       // We run against remote Playwright, compress on remote side.
       const artifact = Artifact.from(result.artifact!);
@@ -85,7 +64,7 @@ export class Tracing implements api.Tracing {
       await artifact.delete();
     }
 
-    if (isLocal || sourceEntries)
-      await this._context._localUtils.zip(filePath, sourceEntries.concat(result.entries));
+    if (isLocal || result.sourceEntries.length)
+      await this._context._localUtils.zip(filePath, result.sourceEntries.concat(result.entries));
   }
 }
