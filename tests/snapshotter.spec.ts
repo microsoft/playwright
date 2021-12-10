@@ -107,7 +107,7 @@ it.describe('snapshots', () => {
     await page.goto(server.EMPTY_PAGE);
     await page.setContent('<meta charset="shift-jis" />');
     const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot');
-    expect(distillSnapshot(snapshot)).toBe('<META charset="utf-8" />');
+    expect(distillSnapshot(snapshot)).toBe('<META charset="utf-8">');
   });
 
   it('should replace meta content attr that specifies charset', async ({ page, server, toImpl, snapshotter }) => {
