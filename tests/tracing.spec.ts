@@ -148,7 +148,7 @@ test('should not include trace resources from the provious chunks', async ({ con
     const { resources } = await parseTrace(testInfo.outputPath('trace1.zip'));
     const names = Array.from(resources.keys());
     expect(names.filter(n => n.endsWith('.html')).length).toBe(1);
-    expect(names.filter(n => n.endsWith('.jpeg')).length).toBe(3);
+    expect(names.filter(n => n.endsWith('.jpeg')).length).toBeGreaterThan(1);
     // 1 source file for the test.
     expect(names.filter(n => n.endsWith('.txt')).length).toBe(1);
   }
@@ -161,6 +161,31 @@ test('should not include trace resources from the provious chunks', async ({ con
     expect(names.filter(n => n.endsWith('.jpeg')).length).toBe(0);
     // 1 source file for the test.
     expect(names.filter(n => n.endsWith('.txt')).length).toBe(1);
+  }
+});
+
+test('should overwrite existing file', async ({ context, page, server }, testInfo) => {
+  await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent('<button>Click</button>');
+  await page.click('"Click"');
+  const path = testInfo.outputPath('trace1.zip');
+  await context.tracing.stop({ path });
+  {
+    const { resources } = await parseTrace(path);
+    const names = Array.from(resources.keys());
+    expect(names.filter(n => n.endsWith('.html')).length).toBe(1);
+    expect(names.filter(n => n.endsWith('.jpeg')).length).toBeGreaterThan(1);
+  }
+
+  await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
+  await context.tracing.stop({ path });
+
+  {
+    const { resources } = await parseTrace(path);
+    const names = Array.from(resources.keys());
+    expect(names.filter(n => n.endsWith('.html')).length).toBe(0);
+    expect(names.filter(n => n.endsWith('.jpeg')).length).toBe(0);
   }
 });
 

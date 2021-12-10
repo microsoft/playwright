@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
 import * as api from '../../types/types';
 import * as channels from '../protocol/channels';
 import { Artifact } from './artifact';
@@ -56,6 +57,9 @@ export class Tracing implements api.Tracing {
       // Not interested in artifacts.
       return;
     }
+
+    if (filePath && fs.existsSync(filePath))
+      await fs.promises.unlink(filePath);
 
     if (!isLocal) {
       // We run against remote Playwright, compress on remote side.
