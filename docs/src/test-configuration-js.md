@@ -93,10 +93,10 @@ The same works inside describe.
 const { test, expect } = require('@playwright/test');
 
 test.describe('locale block', () => {
-  // Run tests in this describe block with specified locale.
-  test.use({ locale: 'en-US' });
+  // Run tests in this describe block with portrait-like viewport.
+  test.use({ viewport: { width: 600, height: 900 } });
 
-  test('my locale test', async ({ page }) => {
+  test('my portrait test', async ({ page }) => {
     // ...
   });
 });
@@ -107,10 +107,10 @@ test.describe('locale block', () => {
 import { test, expect } from '@playwright/test';
 
 test.describe('locale block', () => {
-  // Run tests in this describe block with specified locale.
-  test.use({ locale: 'en-US' });
+  // Run tests in this describe block with portrait-like viewport.
+  test.use({ viewport: { width: 600, height: 900 } });
 
-  test('my locale test', async ({ page }) => {
+  test('my portrait test', async ({ page }) => {
     // ...
   });
 });
@@ -453,7 +453,7 @@ Playwright Test can record videos for your tests, controlled by the `video` opti
 - `'retain-on-failure'` - Record video for each test, but remove all videos from successful test runs.
 - `'on-first-retry'` - Record video only when retrying a test for the first time.
 
-Video files will appear in the test output directory, typically `test-results`.
+Video files will appear in the test output directory, typically `test-results`. See [`property: TestOptions.video`] for advanced video configuration.
 
 ```js js-flavor=js
 // @ts-check
@@ -487,7 +487,7 @@ Playwright Test can produce test traces while running the tests. Later on, you c
 - `'retain-on-failure'` - Record trace for each test, but remove it from successful test runs.
 - `'on-first-retry'` - Record trace only when retrying a test for the first time.
 
-Trace files will appear in the test output directory, typically `test-results`.
+Trace files will appear in the test output directory, typically `test-results`. See [`property: TestOptions.trace`] for advanced video configuration.
 
 ```js js-flavor=js
 // @ts-check
@@ -514,7 +514,7 @@ export default config;
 
 ## More browser and context options
 
-Any options accepted by [`method: BrowserType.launch`] or [`method: Browser.newContext`] can be put into `launchOptions` or `contextOptions` respectively in the `use` section.
+Any options accepted by [`method: BrowserType.launch`] or [`method: Browser.newContext`] can be put into `launchOptions` or `contextOptions` respectively in the `use` section. Take a look at the [full list of available options][TestOptions].
 
 ```js js-flavor=js
 // @ts-check
@@ -547,7 +547,7 @@ However, most common ones like `headless` or `viewport` are available directly i
 
 ## Testing options
 
-In addition to configuring [Browser] or [BrowserContext], videos or screenshots, Playwright Test has many options to configure how your tests are run. Below are the most common ones, see [advanced configuration](./test-advanced.md) for the full list.
+In addition to configuring [Browser] or [BrowserContext], videos or screenshots, Playwright Test has many options to configure how your tests are run. Below are the most common ones, see [TestConfig] for the full list.
 
 - `forbidOnly`: Whether to exit with an error if any tests are marked as `test.only`. Useful on CI.
 - `globalSetup`: Path to the global setup file. This file will be required and run before all the tests. It must export a single function.

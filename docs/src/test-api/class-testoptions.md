@@ -182,6 +182,8 @@ Whether to record trace for each test. Defaults to `'off'`.
 * `'retain-on-failure'`: Record trace for each test, but remove all traces from successful test runs.
 * `'on-first-retry'`: Record trace only when retrying a test for the first time.
 
+For more control, pass an object that specifies `mode` and trace features to enable.
+
 Learn more about [recording trace](./test-configuration.md#record-test-trace).
 
 ## property: TestOptions.userAgent = %%-context-option-useragent-%%
@@ -199,7 +201,7 @@ Whether to record video for each test. Defaults to `'off'`.
 * `'retain-on-failure'`: Record video for each test, but remove all videos from successful test runs.
 * `'on-first-retry'`: Record video only when retrying a test for the first time.
 
-If video size is not specified, it will be equal to [`property: TestOptions.viewport`] scaled down to fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of each page will be scaled down if necessary to fit the specified size.
+To control video size, pass an object with `mode` and `size` properties. If video size is not specified, it will be equal to [`property: TestOptions.viewport`] scaled down to fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of each page will be scaled down if necessary to fit the specified size.
 
 Learn more about [recording video](./test-configuration.md#record-video).
 
