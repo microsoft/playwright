@@ -25,6 +25,7 @@ import { BrowserType } from './browserType';
 import { ChannelOwner } from './channelOwner';
 import { Electron } from './electron';
 import { APIRequest } from './fetch';
+import { LocalUtils } from './localUtils';
 import { Selectors, SelectorsOwner } from './selectors';
 import { Size } from './types';
 const dnsLookupAsync = util.promisify(dns.lookup);
@@ -49,6 +50,7 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   selectors: Selectors;
   readonly request: APIRequest;
   readonly errors: { TimeoutError: typeof TimeoutError };
+  _utils: LocalUtils;
   private _sockets = new Map<string, net.Socket>();
   private _redirectPortForTest: number | undefined;
 
@@ -68,6 +70,7 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
       this.devices[name] = descriptor;
     this.selectors = new Selectors();
     this.errors = { TimeoutError };
+    this._utils = LocalUtils.from(initializer.utils);
 
     const selectorsOwner = SelectorsOwner.from(initializer.selectors);
     this.selectors._addChannel(selectorsOwner);

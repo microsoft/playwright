@@ -16,6 +16,7 @@
 
 import { expect } from '@playwright/test';
 import type { Frame, Page } from 'playwright-core';
+import { ZipFileSystem } from '../../packages/playwright-core/lib/utils/vfs';
 
 export async function attachFrame(page: Page, frameId: string, url: string): Promise<Frame> {
   const handle = await page.evaluateHandle(async ({ frameId, url }) => {
@@ -86,5 +87,27 @@ export function suppressCertificateWarning() {
       return;
     }
     return originalEmitWarning.call(process, warning, ...args);
+  };
+}
+
+export async function parseTrace(file: string): Promise<{ events: any[], resources: Map<string, Buffer> }> {
+  const zipFS = new ZipFileSystem(file);
+  const resources = new Map<string, Buffer>();
+  for (const entry of await zipFS.entries())
+    resources.set(entry, await zipFS.read(entry));
+  zipFS.close();
+
+  const events = [];
+  for (const line of resources.get('trace.trace').toString().split('\n')) {
+    if (line)
+      events.push(JSON.parse(line));
+  }
+  for (const line of resources.get('trace.network').toString().split('\n')) {
+    if (line)
+      events.push(JSON.parse(line));
+  }
+  return {
+    events,
+    resources,
   };
 }
