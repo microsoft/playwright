@@ -512,8 +512,8 @@ it('should contain http2 for http2 requests', async ({ contextFactory, browserNa
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(`https://localhost:${(server.address() as AddressInfo).port}`);
   const log = await getLog();
-  expect(log.entries[0].request.httpVersion).toBe('h2');
-  expect(log.entries[0].response.httpVersion).toBe('h2');
+  expect(log.entries[0].request.httpVersion).toBe('HTTP/2.0');
+  expect(log.entries[0].response.httpVersion).toBe('HTTP/2.0');
   expect(Buffer.from(log.entries[0].response.content.text, 'base64').toString()).toBe('<h1>Hello World</h1>');
   server.close();
 });
