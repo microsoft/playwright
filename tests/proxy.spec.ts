@@ -94,6 +94,39 @@ it('should authenticate', async ({ browserType, server }) => {
   await browser.close();
 });
 
+it('should work with authenticate followed by redirect', async ({ browserName, browserType, server }) => {
+  it.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/10095');
+  function hasAuth(req, res) {
+    const auth = req.headers['proxy-authorization'];
+    if (!auth) {
+      res.writeHead(407, 'Proxy Authentication Required', {
+        'Proxy-Authenticate': 'Basic realm="Access to internal site"'
+      });
+      res.end();
+      return false;
+    }
+    return true;
+  }
+  server.setRoute('/page1.html', async (req, res) => {
+    if (!hasAuth(req, res))
+      return;
+    res.writeHead(302, { location: '/page2.html' });
+    res.end();
+  });
+  server.setRoute('/page2.html', async (req, res) => {
+    if (!hasAuth(req, res))
+      return;
+    res.end('<html><title>Served by the proxy</title></html>');
+  });
+  const browser = await browserType.launch({
+    proxy: { server: `localhost:${server.PORT}`, username: 'user', password: 'secret' }
+  });
+  const page = await browser.newPage();
+  await page.goto('http://non-existent.com/page1.html');
+  expect(await page.title()).toBe('Served by the proxy');
+  await browser.close();
+});
+
 it('should exclude patterns', async ({ browserType, server, browserName, headless }) => {
   it.fixme(browserName === 'chromium' && !headless, 'Chromium headed crashes with CHECK(!in_frame_tree_) in RenderFrameImpl::OnDeleteFrame.');
 
