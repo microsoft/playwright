@@ -270,7 +270,7 @@ function distillSnapshot(snapshot, distillTarget = true) {
   return html
       .replace(/<style>\*,\*::before,\*::after { visibility: hidden }<\/style>/, '')
       .replace(/<script>[.\s\S]+<\/script>/, '')
-      .replace(/<style>.*__playwright_target__.*<\/style>/, '')
+      .replace(/<style>.*__playwright_target__.*?<\/style>/, '')
       .replace(/<BASE href="about:blank">/, '')
       .replace(/<BASE href="http:\/\/localhost:[\d]+\/empty.html">/, '')
       .replace(/<HTML>/, '')
