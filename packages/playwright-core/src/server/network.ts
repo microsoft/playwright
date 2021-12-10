@@ -434,6 +434,8 @@ export class Response extends SdkObject {
       return 'HTTP/1.1';
     if (this._httpVersion === 'http/1.1')
       return 'HTTP/1.1';
+    if (this._httpVersion === 'h2')
+      return 'HTTP/2.0';
     return this._httpVersion;
   }
 
