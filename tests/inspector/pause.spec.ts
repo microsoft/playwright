@@ -318,6 +318,46 @@ it.describe('pause', () => {
     await recorderPage.click('[title=Resume]');
     await scriptPromise;
   });
+
+  it('should not prevent key events', async ({ page, recorderPageGetter }) => {
+    await page.setContent('<div>Hello</div>');
+    await page.evaluate(() => {
+      (window as any).log = [];
+      for (const event of ['keydown', 'keyup', 'keypress'])
+        window.addEventListener(event, e => (window as any).log.push(e.type));
+    });
+    const scriptPromise = (async () => {
+      await page.pause();
+      await page.keyboard.press('Enter');
+      await page.keyboard.press('A');
+      await page.keyboard.press('Shift+A');
+    })();
+    const recorderPage = await recorderPageGetter();
+    await recorderPage.waitForSelector(`.source-line-paused:has-text("page.pause")`);
+    await recorderPage.click('[title="Step over"]');
+    await recorderPage.waitForSelector(`.source-line-paused:has-text("press('Enter')")`);
+    await recorderPage.click('[title="Step over"]');
+    await recorderPage.waitForSelector(`.source-line-paused:has-text("press('A')")`);
+    await recorderPage.click('[title="Step over"]');
+    await recorderPage.waitForSelector(`.source-line-paused:has-text("press('Shift+A')")`);
+    await recorderPage.click('[title=Resume]');
+    await scriptPromise;
+
+    const log = await page.evaluate(() => (window as any).log);
+    expect(log).toEqual([
+      'keydown',
+      'keypress',
+      'keyup',
+      'keydown',
+      'keypress',
+      'keyup',
+      'keydown',
+      'keydown',
+      'keypress',
+      'keyup',
+      'keyup',
+    ]);
+  });
 });
 
 async function sanitizeLog(recorderPage: Page): Promise<string[]> {

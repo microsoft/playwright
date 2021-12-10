@@ -477,7 +477,7 @@ export class Recorder {
       return;
     }
     if (this._mode !== 'recording')
-      return true;
+      return;
     if (!this._shouldGenerateKeyPressFor(event))
       return;
     if (this._actionInProgress(event)) {
@@ -509,6 +509,8 @@ export class Recorder {
   }
 
   private _onKeyUp(event: KeyboardEvent) {
+    if (this._mode === 'none')
+      return;
     if (!this._shouldGenerateKeyPressFor(event))
       return;
 
