@@ -257,7 +257,7 @@ async function waitUntilPass(fn: (counter: number) => Promise<unknown>, sleep = 
     }
 
     if (err)
-      await new Promise(resolve => setTimeout(() => resolve, sleep));
+      await new Promise<void>(resolve => setTimeout(() => resolve(), sleep));
     else
       break;
   }
