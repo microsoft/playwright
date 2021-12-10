@@ -50,7 +50,7 @@ export class TestProxy {
     await new Promise(x => this._server.close(x));
   }
 
-  forwardTo(port: number) {
+  forwardTo(port: number, options?: { skipConnectRequests: boolean }) {
     this._prependHandler('request', (req: IncomingMessage) => {
       this.requestUrls.push(req.url);
       const url = new URL(req.url);
@@ -58,6 +58,13 @@ export class TestProxy {
       req.url = url.toString();
     });
     this._prependHandler('connect', (req: IncomingMessage) => {
+      // If using this proxy at the browser-level, you'll want to skip trying to
+      // MITM connect requests otherwise, unless the system/browser is configured
+      // to ignore HTTPS errors (or the host has been configured to trust the test
+      // certs), Playwright will crash in funny ways. (e.g. CR Headful tries to connect
+      // to accounts.google.com as part of its starup routine and fatally complains of "Invalid method encountered".)
+      if (options?.skipConnectRequests)
+        return;
       this.connectHosts.push(req.url);
       req.url = `localhost:${port}`;
     });

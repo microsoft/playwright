@@ -90,10 +90,19 @@ export class CRBrowser extends Browser {
 
   async newContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
     validateBrowserContextOptions(options, this.options);
+
+    let proxyBypassList = undefined;
+    if (options.proxy) {
+      if (process.env.PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK)
+        proxyBypassList = options.proxy.bypass;
+      else
+        proxyBypassList = '<-loopback>' + (options.proxy.bypass ? `,${options.proxy.bypass}` : '');
+    }
+
     const { browserContextId } = await this._session.send('Target.createBrowserContext', {
       disposeOnDetach: true,
       proxyServer: options.proxy ? options.proxy.server : undefined,
-      proxyBypassList: options.proxy ? options.proxy.bypass : undefined,
+      proxyBypassList,
     });
     const context = new CRBrowserContext(this, browserContextId, options);
     await context._initialize();
