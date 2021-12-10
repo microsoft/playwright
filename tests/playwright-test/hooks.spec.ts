@@ -139,26 +139,30 @@ test('beforeEach failure should prevent the test, but not other hooks', async ({
 });
 
 test('beforeAll should be run once', async ({ runInlineTest }) => {
-  const report = await runInlineTest({
+  const result = await runInlineTest({
     'a.test.js': `
       const { test } = pwt;
       test.describe('suite1', () => {
         let counter = 0;
         test.beforeAll(async () => {
-          console.log('beforeAll1-' + (++counter));
+          console.log('\\n%%beforeAll1-' + (++counter));
         });
         test.describe('suite2', () => {
           test.beforeAll(async () => {
-            console.log('beforeAll2');
+            console.log('\\n%%beforeAll2');
           });
           test('one', async ({}) => {
-            console.log('test');
+            console.log('\\n%%test');
           });
         });
       });
     `,
   });
-  expect(report.output).toContain('beforeAll1-1\nbeforeAll2\ntest');
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%beforeAll1-1',
+    '%%beforeAll2',
+    '%%test',
+  ]);
 });
 
 test('beforeEach should be able to skip a test', async ({ runInlineTest }) => {
@@ -566,4 +570,44 @@ test('should report error from fixture teardown when beforeAll times out', async
   expect(result.failed).toBe(1);
   expect(stripAscii(result.output)).toContain('Timeout of 1000ms exceeded in beforeAll hook.');
   expect(stripAscii(result.output)).toContain('Error: Oh my!');
+});
+
+test('should not hang and report results when worker process suddenly exits during afterAll', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.js': `
+      const { test } = pwt;
+      test('passed', () => {});
+      test.afterAll(() => { process.exit(0); });
+    `
+  }, { reporter: 'line' });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('Worker process exited unexpectedly');
+  expect(stripAscii(result.output)).toContain('[1/1] a.spec.js:6:7 › passed');
+  expect(stripAscii(result.output)).toContain('[1/1] a.spec.js:7:12 › afterAll');
+});
+
+test('same beforeAll running in parallel should be reported correctly', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.js': `
+      const { test } = pwt;
+      test.describe.parallel('', () => {
+        test.beforeAll(async () => {
+          await new Promise(f => setTimeout(f, 3000));
+        });
+        test('test1', () => {});
+        test('test2', () => {});
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+  const hook = result.report.suites[0].suites[0].hooks[0];
+  expect(hook.title).toBe('beforeAll');
+  expect(hook.tests.length).toBe(1);
+  expect(hook.tests[0].results.length).toBe(2);
+  expect(hook.tests[0].results[0].status).toBe('passed');
+  expect(hook.tests[0].results[1].status).toBe('passed');
+  const workers = [hook.tests[0].results[0].workerIndex, hook.tests[0].results[1].workerIndex];
+  expect(workers.sort()).toEqual([0, 1]);
 });

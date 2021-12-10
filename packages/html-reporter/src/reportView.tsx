@@ -72,7 +72,7 @@ const TestCaseViewLoader: React.FC<{
       if (!fileId)
         return;
       const file = await report.entry(`${fileId}.json`) as TestFile;
-      for (const t of file.tests) {
+      for (const t of [...file.tests, ...file.hooks]) {
         if (t.testId === testId) {
           setTest(t);
           break;

@@ -38,7 +38,7 @@ export const TestFileView: React.FC<{
       <span style={{ float: 'right' }}>{msToString(file.stats.duration)}</span>
       {file.fileName}
     </span>}>
-    {file.tests.filter(t => filter.matches(t)).map(test =>
+    {[...file.tests, ...file.hooks].filter(t => filter.matches(t)).map(test =>
       <div key={`test-${test.testId}`} className={'test-file-test test-file-test-outcome-' + test.outcome}>
         <span style={{ float: 'right' }}>{msToString(test.duration)}</span>
         {report.projectNames.length > 1 && !!test.projectName &&

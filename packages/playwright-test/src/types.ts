@@ -37,3 +37,5 @@ export interface TestStepInternal {
 export interface TestInfoImpl extends TestInfo {
   _addStep: (data: Omit<TestStepInternal, 'complete'>) => TestStepInternal;
 }
+
+export type TestCaseType = 'beforeAll' | 'afterAll' | 'test';

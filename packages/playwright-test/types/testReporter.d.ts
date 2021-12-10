@@ -85,6 +85,11 @@ export interface Suite {
    */
   tests: TestCase[];
   /**
+   * `beforeAll` and `afterAll` hooks in the suite. Note that other hooks such as `beforeEach` and `afterEach` are reported
+   * as the steps within the test.
+   */
+  hooks: TestCase[];
+  /**
    * Returns a list of titles from the root down to this suite.
    */
   titlePath(): string[];
@@ -379,14 +384,14 @@ export interface Reporter {
   /**
    * Called when something has been written to the standard output in the worker process.
    * @param chunk Output chunk.
-   * @param test Test that was running. Note that output may happen when to test is running, in which case this will be [void].
+   * @param test Test that was running. Note that output may happen when no test is running, in which case this will be [void].
    * @param result Result of the test run, this object gets populated while the test runs.
    */
   onStdOut?(chunk: string | Buffer, test?: TestCase, result?: TestResult): void;
   /**
    * Called when something has been written to the standard error in the worker process.
    * @param chunk Output chunk.
-   * @param test Test that was running. Note that output may happen when to test is running, in which case this will be [void].
+   * @param test Test that was running. Note that output may happen when no test is running, in which case this will be [void].
    * @param result Result of the test run, this object gets populated while the test runs.
    */
   onStdErr?(chunk: string | Buffer, test?: TestCase, result?: TestResult): void;
@@ -398,16 +403,16 @@ export interface Reporter {
   onTestEnd?(test: TestCase, result: TestResult): void;
   /**
    * Called when a test step started in the worker process.
-   * @param test Test that has been started.
+   * @param test Test that the step belongs to.
    * @param result Result of the test run, this object gets populated while the test runs.
-   * @param step Test step instance.
+   * @param step Test step instance that has started.
    */
   onStepBegin?(test: TestCase, result: TestResult, step: TestStep): void;
   /**
    * Called when a test step finished in the worker process.
-   * @param test Test that has been finished.
+   * @param test Test that the step belongs to.
    * @param result Result of the test run.
-   * @param step Test step instance.
+   * @param step Test step instance that has finished.
    */
   onStepEnd?(test: TestCase, result: TestResult, step: TestStep): void;
   /**

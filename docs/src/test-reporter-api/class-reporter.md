@@ -144,7 +144,7 @@ Output chunk.
 ### param: Reporter.onStdErr.test
 - `test` <[void]|[TestCase]>
 
-Test that was running. Note that output may happen when to test is running, in which case this will be [void].
+Test that was running. Note that output may happen when no test is running, in which case this will be [void].
 
 ### param: Reporter.onStdErr.result
 - `result` <[void]|[TestResult]>
@@ -164,7 +164,7 @@ Output chunk.
 ### param: Reporter.onStdOut.test
 - `test` <[void]|[TestCase]>
 
-Test that was running. Note that output may happen when to test is running, in which case this will be [void].
+Test that was running. Note that output may happen when no test is running, in which case this will be [void].
 
 ### param: Reporter.onStdOut.result
 - `result` <[void]|[TestResult]>
@@ -178,7 +178,7 @@ Called when a test step started in the worker process.
 ### param: Reporter.onStepBegin.test
 - `test` <[TestCase]>
 
-Test that has been started.
+Test that the step belongs to.
 
 ### param: Reporter.onStepBegin.result
 - `result` <[TestResult]>
@@ -188,7 +188,7 @@ Result of the test run, this object gets populated while the test runs.
 ### param: Reporter.onStepBegin.step
 - `step` <[TestStep]>
 
-Test step instance.
+Test step instance that has started.
 
 ## method: Reporter.onStepEnd
 
@@ -197,7 +197,7 @@ Called when a test step finished in the worker process.
 ### param: Reporter.onStepEnd.test
 - `test` <[TestCase]>
 
-Test that has been finished.
+Test that the step belongs to.
 
 ### param: Reporter.onStepEnd.result
 - `result` <[TestResult]>
@@ -207,7 +207,7 @@ Result of the test run.
 ### param: Reporter.onStepEnd.step
 - `step` <[TestStep]>
 
-Test step instance.
+Test step instance that has finished.
 
 ## method: Reporter.onTestBegin
 
