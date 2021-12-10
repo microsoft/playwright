@@ -825,6 +825,7 @@ BrowserContext:
         name: string?
         snapshots: boolean?
         screenshots: boolean?
+        sources: boolean?
 
     tracingStartChunk:
       parameters:
@@ -837,6 +838,9 @@ BrowserContext:
       returns:
         artifact: Artifact?
         entries:
+          type: array
+          items: NameValue
+        sourceEntries:
           type: array
           items: NameValue
 

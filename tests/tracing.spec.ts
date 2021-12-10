@@ -132,6 +132,63 @@ test('should collect two traces', async ({ context, page, server }, testInfo) =>
   }
 });
 
+test('should not include trace resources from the provious chunks', async ({ context, page, server }, testInfo) => {
+  await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
+
+  await context.tracing.startChunk();
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent('<button>Click</button>');
+  await page.click('"Click"');
+  await context.tracing.stopChunk({ path: testInfo.outputPath('trace1.zip') });
+
+  await context.tracing.startChunk();
+  await context.tracing.stopChunk({ path: testInfo.outputPath('trace2.zip') });
+
+  {
+    const { resources } = await parseTrace(testInfo.outputPath('trace1.zip'));
+    const names = Array.from(resources.keys());
+    expect(names.filter(n => n.endsWith('.html')).length).toBe(1);
+    expect(names.filter(n => n.endsWith('.jpeg')).length).toBeGreaterThan(1);
+    // 1 source file for the test.
+    expect(names.filter(n => n.endsWith('.txt')).length).toBe(1);
+  }
+
+  {
+    const { resources } = await parseTrace(testInfo.outputPath('trace2.zip'));
+    const names = Array.from(resources.keys());
+    // 1 network resource should be preserved.
+    expect(names.filter(n => n.endsWith('.html')).length).toBe(1);
+    expect(names.filter(n => n.endsWith('.jpeg')).length).toBe(0);
+    // 1 source file for the test.
+    expect(names.filter(n => n.endsWith('.txt')).length).toBe(1);
+  }
+});
+
+test('should overwrite existing file', async ({ context, page, server }, testInfo) => {
+  await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent('<button>Click</button>');
+  await page.click('"Click"');
+  const path = testInfo.outputPath('trace1.zip');
+  await context.tracing.stop({ path });
+  {
+    const { resources } = await parseTrace(path);
+    const names = Array.from(resources.keys());
+    expect(names.filter(n => n.endsWith('.html')).length).toBe(1);
+    expect(names.filter(n => n.endsWith('.jpeg')).length).toBeGreaterThan(1);
+  }
+
+  await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
+  await context.tracing.stop({ path });
+
+  {
+    const { resources } = await parseTrace(path);
+    const names = Array.from(resources.keys());
+    expect(names.filter(n => n.endsWith('.html')).length).toBe(0);
+    expect(names.filter(n => n.endsWith('.jpeg')).length).toBe(0);
+  }
+});
+
 test('should collect sources', async ({ context, page, server }, testInfo) => {
   await context.tracing.start({ sources: true });
   await page.goto(server.EMPTY_PAGE);
