@@ -20,7 +20,7 @@ dotnet add package Microsoft.Playwright
 # Build the project
 dotnet build
 # Install required browsers
-bin\Debug\netX\playwright.ps1 install
+pwsh bin\Debug\netX\playwright.ps1 install
 ```
 
 Create a `Program.cs` that will navigate to `https://playwright.dev/dotnet` and take a screenshot in Chromium.
@@ -76,7 +76,7 @@ dotnet add package Microsoft.Playwright.NUnit
 # Build the project
 dotnet build
 # Install required browsers
-bin\Debug\netX\playwright.ps1 install
+pwsh bin\Debug\netX\playwright.ps1 install
 ```
 
 Edit UnitTest1.cs file.
@@ -116,7 +116,7 @@ dotnet test -- NUnit.NumberOfTestWorkers=5
 [Command line tools](./cli.md) can be used to record user interactions and generate C# code.
 
 ```bash
-bin\Debug\netX\playwright.ps1 codegen
+pwsh bin\Debug\netX\playwright.ps1 codegen
 ```
 
 ## System requirements
