@@ -833,13 +833,15 @@ BrowserContext:
 
     tracingStopChunk:
       parameters:
-        save: boolean
-        skipCompress: boolean
+        localTraceFile: string?
+        mode:
+          type: enum
+          literals:
+          - doNotSave
+          - compressTrace
+          - compressTraceAndSources
       returns:
         artifact: Artifact?
-        entries:
-          type: array
-          items: NameValue
         sourceEntries:
           type: array
           items: NameValue
