@@ -117,7 +117,22 @@ Here's how to polyfill `waitForAngular` function in Playwright Test:
     ​await executeScriptAsync(page, clientSideScripts.waitForAngular, '');
     }
     ```
-
+    If you don't want to keep a version protractor around, you can also use this simpler approach using this function (only works for Angular 2+):
+    ```js
+    async function waitForAngular(page) {
+      await page.evaluate(async () => {
+        // @ts-expect-error
+        if (window.getAllAngularTestabilities) {
+          // @ts-expect-error
+          await Promise.all(window.getAllAngularTestabilities().map(whenStable));
+          // @ts-expect-error
+          async function whenStable(testability) {
+            return new Promise((res) => testability.whenStable(res) );
+          }
+        }
+       });
+     }
+     ```
 1. Polyfill usage
 
     ```js
