@@ -132,7 +132,7 @@ class NetworkRequest {
       // use onStopRequest, but that will only happen after the last redirect has finished.
       redirectedFrom._sendOnRequestFinished();
     }
-    // In case of proxy auth, we get to requests with the same channel:
+    // In case of proxy auth, we get two requests with the same channel:
     // - one is pre-auth
     // - second is with auth header.
     //
@@ -142,6 +142,8 @@ class NetworkRequest {
     // Since we want to maintain _channelToRequest map without clashes,
     // we must call `_sendOnRequestFinished` **before** we update it with a new object
     // here.
+    if (this._networkObserver._channelToRequest.has(this.httpChannel))
+      throw new Error(`Internal Error: invariant is broken for _channelToRequest map`);
     this._networkObserver._channelToRequest.set(this.httpChannel, this);
 
     this._pageNetwork = redirectedFrom ? redirectedFrom._pageNetwork : networkObserver._findPageNetwork(httpChannel);
