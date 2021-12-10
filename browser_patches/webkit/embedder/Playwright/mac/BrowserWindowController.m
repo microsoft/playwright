@@ -911,7 +911,10 @@ static NSSet *dataTypes()
 - (IBAction)saveAsPDF:(id)sender
 {
     NSSavePanel *panel = [NSSavePanel savePanel];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     panel.allowedFileTypes = @[ @"pdf" ];
+#pragma clang diagnostic pop
     [panel beginSheetModalForWindow:self.window completionHandler:^(NSInteger result) {
         if (result == NSModalResponseOK) {
             [_webView createPDFWithConfiguration:nil completionHandler:^(NSData *pdfSnapshotData, NSError *error) {
@@ -924,7 +927,10 @@ static NSSet *dataTypes()
 - (IBAction)saveAsWebArchive:(id)sender
 {
     NSSavePanel *panel = [NSSavePanel savePanel];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     panel.allowedFileTypes = @[ @"webarchive" ];
+#pragma clang diagnostic pop
     [panel beginSheetModalForWindow:self.window completionHandler:^(NSInteger result) {
         if (result == NSModalResponseOK) {
             [_webView createWebArchiveDataWithCompletionHandler:^(NSData *archiveData, NSError *error) {
