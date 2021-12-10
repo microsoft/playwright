@@ -76,7 +76,7 @@ const DOWNLOAD_URLS = {
     'mac10.14': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-mac-11.zip',
     'mac10.15': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-mac-11.zip',
     'mac11': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-mac-11.zip',
-    'mac11-arm64': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-mac-11.0-arm64.zip',
+    'mac11-arm64': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-mac-11-arm64.zip',
     'win64': 'https://playwright.azureedge.net/builds/firefox/%s/firefox-win64.zip',
   },
   'firefox-beta': {
@@ -85,7 +85,7 @@ const DOWNLOAD_URLS = {
     'mac10.14': 'https://playwright.azureedge.net/builds/firefox-beta/%s/firefox-beta-mac-11.zip',
     'mac10.15': 'https://playwright.azureedge.net/builds/firefox-beta/%s/firefox-beta-mac-11.zip',
     'mac11': 'https://playwright.azureedge.net/builds/firefox-beta/%s/firefox-beta-mac-11.zip',
-    'mac11-arm64': 'https://playwright.azureedge.net/builds/firefox-beta/%s/firefox-beta-mac-11.0-arm64.zip',
+    'mac11-arm64': 'https://playwright.azureedge.net/builds/firefox-beta/%s/firefox-beta-mac-11-arm64.zip',
     'win64': 'https://playwright.azureedge.net/builds/firefox-beta/%s/firefox-beta-win64.zip',
   },
 };
@@ -193,29 +193,29 @@ function httpRequest(url, method, response) {
 }
 
 function downloadFile(url, destinationPath, progressCallback) {
-  let fulfill = ({ error }) => {};
   let downloadedBytes = 0;
   let totalBytes = 0;
 
-  const promise = new Promise(x => { fulfill = x; });
+  let fulfill, reject;
+  const promise = new Promise((x, y) => { fulfill = x; reject = y; });
 
   const request = httpRequest(url, 'GET', response => {
     if (response.statusCode !== 200) {
       const error = new Error(`Download failed: server returned code ${response.statusCode}. URL: ${url}`);
       // consume response data to free up memory
       response.resume();
-      fulfill({ error });
+      reject(error);
       return;
     }
     const file = fs.createWriteStream(destinationPath);
-    file.on('finish', () => fulfill({ error: null }));
-    file.on('error', error => fulfill({ error }));
+    file.on('finish', () => fulfill());
+    file.on('error', error => reject(error));
     response.pipe(file);
     totalBytes = parseInt(response.headers['content-length'], 10);
     if (progressCallback)
       response.on('data', onData);
   });
-  request.on('error', error => fulfill({ error }));
+  request.on('error', error => reject(error));
   return promise;
 
   function onData(chunk) {
@@ -315,7 +315,10 @@ function getHostPlatform() {
 }
 
 async function main() {
-  const buildInfo = await ensureFirefoxBuild(browserName, process.argv[3], process.argv[4]);
+  const buildInfo = await ensureFirefoxBuild(browserName, process.argv[3], process.argv[4]).catch(e => {
+    console.log(e.message);
+    process.exit(1);
+  });
   await repackageJuggler(browserName, buildInfo);
 }
 
