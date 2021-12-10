@@ -16,5 +16,5 @@ if [[ -d $OBJ_FOLDER ]]; then
 fi
 
 if [[ -f "mach" ]]; then
-  ./mach clobber
+  ./mach clobber || true
 fi
