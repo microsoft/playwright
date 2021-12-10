@@ -87,10 +87,10 @@ export class SnapshotRenderer {
     // Hide the document in order to prevent flickering. We will unhide once script has processed shadow.
     const hideAllStyle = '<style>*,*::before,*::after { visibility: hidden }</style>';
     const prefix = snapshot.doctype ? `<!DOCTYPE ${snapshot.doctype}>` + hideAllStyle : hideAllStyle;
-    html = prefix + `
-      <style>*[__playwright_target__="${this.snapshotName}"] { background-color: #6fa8dc7f; }</style>
-      <script>${snapshotScript()}</script>
-    ` + html;
+    html = prefix + [
+      `<style>*[__playwright_target__="${this.snapshotName}"] { background-color: #6fa8dc7f; }</style>`,
+      `<script>${snapshotScript()}</script>`
+    ].join('') + html;
 
     return { html, pageId: snapshot.pageId, frameId: snapshot.frameId, index: this._index };
   }
