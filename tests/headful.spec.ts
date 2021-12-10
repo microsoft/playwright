@@ -141,6 +141,7 @@ it('should not block third party SameSite=None cookies', async ({ httpsServer, b
 
   await page.goto(httpsServer.EMPTY_PAGE);
   expect(await cookie).toBe('a=b');
+  await browser.close();
 });
 
 it('should not override viewport size when passed null', async function({ browserType, server, browserName }) {
