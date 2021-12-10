@@ -48,7 +48,8 @@ type RecordingState = {
   networkFile: string,
   traceFile: string,
   filesCount: number,
-  sha1s: Set<string>,
+  networkSha1s: Set<string>,
+  traceSha1s: Set<string>,
   sources: Set<string>,
   recording: boolean;
 };
@@ -104,8 +105,7 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
     const traceName = options.name || createGuid();
     const traceFile = path.join(this._tracesDir, traceName + '.trace');
     const networkFile = path.join(this._tracesDir, traceName + '.network');
-    this._state = { options, traceName, traceFile, networkFile, filesCount: 0, sha1s: new Set(), sources: new Set(), recording: false };
-
+    this._state = { options, traceName, traceFile, networkFile, filesCount: 0, traceSha1s: new Set(), networkSha1s: new Set(), sources: new Set(), recording: false };
     this._writeChain = fs.promises.mkdir(this._resourcesDir, { recursive: true }).then(() => fs.promises.writeFile(networkFile, ''));
     if (options.snapshots)
       this._harTracer.start();
@@ -215,7 +215,7 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
       const entries: NameValue[] = [];
       entries.push({ name: 'trace.trace', value: state.traceFile });
       entries.push({ name: 'trace.network', value: networkFile });
-      for (const sha1 of state.sha1s)
+      for (const sha1 of new Set([...state.traceSha1s, ...state.networkSha1s]))
         entries.push({ name: path.join('resources', sha1), value: path.join(this._resourcesDir, sha1) });
 
       const sourceEntries: NameValue[] = [];
@@ -225,7 +225,8 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
       const artifact = skipCompress ? null : await this._exportZip(entries, state).catch(() => null);
       return { artifact, entries, sourceEntries };
     }).finally(() => {
-      state.sha1s = new Set();
+      // Only reset trace sha1s, network resources are preserved between chunks.
+      state.traceSha1s = new Set();
       state.sources = new Set();
       this._isStopping = false;
       state.recording = false;
@@ -314,7 +315,7 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
   onEntryFinished(entry: har.Entry) {
     const event: trace.ResourceSnapshotTraceEvent = { type: 'resource-snapshot', snapshot: entry };
     this._appendTraceOperation(async () => {
-      visitSha1s(event, this._state!.sha1s);
+      visitSha1s(event, this._state!.networkSha1s);
       await fs.promises.appendFile(this._state!.networkFile, JSON.stringify(event) + '\n');
     });
   }
@@ -356,7 +357,7 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
 
   private _appendTraceEvent(event: trace.TraceEvent) {
     this._appendTraceOperation(async () => {
-      visitSha1s(event, this._state!.sha1s);
+      visitSha1s(event, this._state!.traceSha1s);
       await fs.promises.appendFile(this._state!.traceFile, JSON.stringify(event) + '\n');
     });
   }
