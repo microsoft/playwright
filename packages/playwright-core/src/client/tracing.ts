@@ -52,33 +52,25 @@ export class Tracing implements api.Tracing {
     const isLocal = !this._context._connection.isRemote();
 
     let mode: channels.BrowserContextTracingStopChunkParams['mode'] = 'doNotSave';
-    let localTraceFile = undefined;
     if (filePath) {
-      if (isLocal) {
-        localTraceFile = filePath;
+      if (isLocal)
         mode = 'compressTraceAndSources';
-      } else {
+      else
         mode = 'compressTrace';
-
-      }
     }
 
-    const result = await channel.tracingStopChunk({ mode, localTraceFile });
+    const result = await channel.tracingStopChunk({ mode });
     if (!filePath) {
       // Not interested in artifacts.
       return;
     }
 
-    // For the local case we zip all in the driver.
-    if (isLocal)
-      return;
-
-    // Save remote trace to a local file.
+    // Save trace to the final local file.
     const artifact = Artifact.from(result.artifact!);
     await artifact.saveAs(filePath);
     await artifact.delete();
 
-    // Add local sources to the remote trace.
+    // Add local sources to the remote trace if necessary.
     if (result.sourceEntries.length)
       await this._context._localUtils.zip(filePath, result.sourceEntries);
   }

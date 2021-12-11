@@ -1266,11 +1266,10 @@ export type BrowserContextTracingStartChunkOptions = {
 };
 export type BrowserContextTracingStartChunkResult = void;
 export type BrowserContextTracingStopChunkParams = {
-  localTraceFile?: string,
   mode: 'doNotSave' | 'compressTrace' | 'compressTraceAndSources',
 };
 export type BrowserContextTracingStopChunkOptions = {
-  localTraceFile?: string,
+
 };
 export type BrowserContextTracingStopChunkResult = {
   artifact?: ArtifactChannel,

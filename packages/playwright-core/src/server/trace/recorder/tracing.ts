@@ -223,7 +223,7 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
       for (const value of state.sources)
         targetForSources.push({ name: 'resources/src@' + calculateSha1(value) + '.txt', value });
 
-      const artifact = await this._exportZip(entries, state, params.localTraceFile).catch(() => null);
+      const artifact = await this._exportZip(entries, state).catch(() => null);
       return { artifact, sourceEntries };
     }).finally(() => {
       // Only reset trace sha1s, network resources are preserved between chunks.
@@ -234,16 +234,14 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
     }) || { artifact: null, sourceEntries: [] };
   }
 
-  private async _exportZip(entries: NameValue[], state: RecordingState, localTraceFile?: string): Promise<Artifact | null> {
+  private async _exportZip(entries: NameValue[], state: RecordingState): Promise<Artifact | null> {
     const zipFile = new yazl.ZipFile();
     const result = new ManualPromise<Artifact | null>();
     (zipFile as any as EventEmitter).on('error', error => result.reject(error));
     for (const entry of entries)
       zipFile.addFile(entry.value, entry.name);
     zipFile.end();
-    if (localTraceFile)
-      await fs.promises.mkdir(path.dirname(localTraceFile), { recursive: true });
-    const zipFileName = localTraceFile || state.traceFile + '.zip';
+    const zipFileName = state.traceFile + '.zip';
     zipFile.outputStream.pipe(fs.createWriteStream(zipFileName)).on('close', () => {
       const artifact = new Artifact(this._context, zipFileName);
       artifact.reportFinished();

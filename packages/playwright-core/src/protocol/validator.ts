@@ -509,7 +509,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     title: tOptional(tString),
   });
   scheme.BrowserContextTracingStopChunkParams = tObject({
-    localTraceFile: tOptional(tString),
     mode: tEnum(['doNotSave', 'compressTrace', 'compressTraceAndSources']),
   });
   scheme.BrowserContextTracingStopParams = tOptional(tObject({}));

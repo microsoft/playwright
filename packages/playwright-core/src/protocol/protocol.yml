@@ -833,7 +833,6 @@ BrowserContext:
 
     tracingStopChunk:
       parameters:
-        localTraceFile: string?
         mode:
           type: enum
           literals:
