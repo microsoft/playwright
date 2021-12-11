@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
 import * as api from '../../types/types';
 import * as channels from '../protocol/channels';
 import { Artifact } from './artifact';
