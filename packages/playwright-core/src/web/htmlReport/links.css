@@ -1,0 +1,104 @@
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+.label {
+  display: inline-block;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  border: 1px solid transparent;
+  border-radius: 2em;
+  background-color: var(--color-scale-gray-4);
+  color: white;
+  margin: 0 10px;
+  flex: none;
+  font-weight: 600;
+}
+
+@media(prefers-color-scheme: light) {
+  .label-color-0 {
+    background-color: var(--color-scale-blue-0);
+    color: var(--color-scale-blue-6);
+    border: 1px solid var(--color-scale-blue-4);
+  }
+  .label-color-1 {
+    background-color: var(--color-scale-yellow-0);
+    color: var(--color-scale-yellow-6);
+    border: 1px solid var(--color-scale-yellow-4);
+  }
+  .label-color-2 {
+    background-color: var(--color-scale-purple-0);
+    color: var(--color-scale-purple-6);
+    border: 1px solid var(--color-scale-purple-4);
+  }
+  .label-color-3 {
+    background-color: var(--color-scale-pink-0);
+    color: var(--color-scale-pink-6);
+    border: 1px solid var(--color-scale-pink-4);
+  }
+  .label-color-4 {
+    background-color: var(--color-scale-coral-0);
+    color: var(--color-scale-coral-6);
+    border: 1px solid var(--color-scale-coral-4);
+  }
+  .label-color-5 {
+    background-color: var(--color-scale-orange-0);
+    color: var(--color-scale-orange-6);
+    border: 1px solid var(--color-scale-orange-4);
+  }
+}
+
+@media(prefers-color-scheme: dark) {
+  .label-color-0 {
+    background-color: var(--color-scale-blue-9);
+    color: var(--color-scale-blue-2);
+    border: 1px solid var(--color-scale-blue-4);
+  }
+  .label-color-1 {
+    background-color: var(--color-scale-yellow-9);
+    color: var(--color-scale-yellow-2);
+    border: 1px solid var(--color-scale-yellow-4);
+  }
+  .label-color-2 {
+    background-color: var(--color-scale-purple-9);
+    color: var(--color-scale-purple-2);
+    border: 1px solid var(--color-scale-purple-4);
+  }
+  .label-color-3 {
+    background-color: var(--color-scale-pink-9);
+    color: var(--color-scale-pink-2);
+    border: 1px solid var(--color-scale-pink-4);
+  }
+  .label-color-4 {
+    background-color: var(--color-scale-coral-9);
+    color: var(--color-scale-coral-2);
+    border: 1px solid var(--color-scale-coral-4);
+  }
+  .label-color-5 {
+    background-color: var(--color-scale-orange-9);
+    color: var(--color-scale-orange-2);
+    border: 1px solid var(--color-scale-orange-4);
+  }
+}
+
+.attachment-link {
+  white-space: pre-wrap;
+  background-color: var(--color-canvas-subtle);
+  margin-left: 24px;
+  line-height: normal;
+  padding: 8px;
+}
