@@ -241,6 +241,8 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
     for (const entry of entries)
       zipFile.addFile(entry.value, entry.name);
     zipFile.end();
+    if (localTraceFile)
+      await fs.promises.mkdir(path.dirname(localTraceFile), { recursive: true });
     const zipFileName = localTraceFile || state.traceFile + '.zip';
     zipFile.outputStream.pipe(fs.createWriteStream(zipFileName)).on('close', () => {
       const artifact = new Artifact(this._context, zipFileName);
