@@ -196,6 +196,24 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
       visitNode(this._fakeBase);
     }
 
+    private __sanitizeMetaAttribute(name: string, value: string, httpEquiv: string) {
+      if (name === 'charset')
+        return 'utf-8';
+
+      if (httpEquiv.toLowerCase() !== 'content-type' || name !== 'content')
+        return value;
+
+      const [type, ...params] = value.split(';');
+      if (type !== 'text/html' || params.length <= 0)
+        return value;
+
+      const charsetParamIdx = params.findIndex(param => param.trim().startsWith('charset='));
+      if (charsetParamIdx > -1)
+        params[charsetParamIdx] = 'charset=utf-8';
+
+      return `${type}; ${params.join('; ')}`;
+    }
+
     private _sanitizeUrl(url: string): string {
       if (url.startsWith('javascript:'))
         return '';
@@ -420,7 +438,9 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
             if (nodeName === 'IFRAME' && (name === 'src' || name === 'sandbox'))
               continue;
             let value = element.attributes[i].value;
-            if (name === 'src' && (nodeName === 'IMG'))
+            if (nodeName === 'META')
+              value = this.__sanitizeMetaAttribute(name, value, (node as HTMLMetaElement).httpEquiv);
+            else if (name === 'src' && (nodeName === 'IMG'))
               value = this._sanitizeUrl(value);
             else if (name === 'srcset' && (nodeName === 'IMG'))
               value = this._sanitizeSrcSet(value);
