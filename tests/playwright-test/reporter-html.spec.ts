@@ -61,10 +61,10 @@ test('should generate report', async ({ runInlineTest, showReport, page }) => {
   await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('1');
   await expect(page.locator('.subnav-item:has-text("Skipped") .counter')).toHaveText('1');
 
-  await expect(page.locator('.test-summary.outcome-unexpected >> text=fails')).toBeVisible();
-  await expect(page.locator('.test-summary.outcome-flaky >> text=flaky')).toBeVisible();
-  await expect(page.locator('.test-summary.outcome-expected >> text=passes')).toBeVisible();
-  await expect(page.locator('.test-summary.outcome-skipped >> text=skipped')).toBeVisible();
+  await expect(page.locator('.test-file-test-outcome-unexpected >> text=fails')).toBeVisible();
+  await expect(page.locator('.test-file-test-outcome-flaky >> text=flaky')).toBeVisible();
+  await expect(page.locator('.test-file-test-outcome-expected >> text=passes')).toBeVisible();
+  await expect(page.locator('.test-file-test-outcome-skipped >> text=skipped')).toBeVisible();
 });
 
 test('should not throw when attachment is missing', async ({ runInlineTest, page, showReport }, testInfo) => {
@@ -88,7 +88,7 @@ test('should not throw when attachment is missing', async ({ runInlineTest, page
   await page.click('text=passes');
   await page.locator('text=Missing attachment "screenshot"').click();
   const screenshotFile = testInfo.outputPath('test-results' , 'a-passes', 'screenshot.png');
-  await expect(page.locator('.attachment-body')).toHaveText(`Attachment file ${screenshotFile} is missing`);
+  await expect(page.locator('.attachment-link')).toHaveText(`Attachment file ${screenshotFile} is missing`);
 });
 
 test('should include image diff', async ({ runInlineTest, page, showReport }) => {
@@ -114,7 +114,7 @@ test('should include image diff', async ({ runInlineTest, page, showReport }) =>
 
   await showReport();
   await page.click('text=fails');
-  const imageDiff = page.locator('.test-image-mismatch');
+  const imageDiff = page.locator('data-testid=test-result-image-mismatch');
   const image = imageDiff.locator('img');
   await expect(image).toHaveAttribute('src', /.*png/);
   const actualSrc = await image.getAttribute('src');
@@ -173,9 +173,9 @@ test('should include stdio', async ({ runInlineTest, page, showReport }) => {
   await showReport();
   await page.click('text=fails');
   await page.locator('text=stdout').click();
-  await expect(page.locator('.attachment-body')).toHaveText('First line\nSecond line');
+  await expect(page.locator('.attachment-link')).toHaveText('First line\nSecond line');
   await page.locator('text=stderr').click();
-  await expect(page.locator('.attachment-body').nth(1)).toHaveText('Third line');
+  await expect(page.locator('.attachment-link').nth(1)).toHaveText('Third line');
 });
 
 test('should highlight error', async ({ runInlineTest, page, showReport }) => {
@@ -192,7 +192,7 @@ test('should highlight error', async ({ runInlineTest, page, showReport }) => {
 
   await showReport();
   await page.click('text=fails');
-  await expect(page.locator('.error-message span:has-text("received")').nth(1)).toHaveCSS('color', 'rgb(204, 0, 0)');
+  await expect(page.locator('.test-result-error-message span:has-text("received")').nth(1)).toHaveCSS('color', 'rgb(204, 0, 0)');
 });
 
 test('should show trace source', async ({ runInlineTest, page, showReport }) => {
@@ -333,5 +333,5 @@ test('should render text attachments as text', async ({ runInlineTest, page, sho
   await page.click('text=example.txt');
   await page.click('text=example.json');
   await page.click('text=example-utf16.txt');
-  await expect(page.locator('.attachment-body')).toHaveText(['foo', '{"foo":1}', 'utf16 encoded']);
+  await expect(page.locator('.attachment-link')).toHaveText(['foo', '{"foo":1}', 'utf16 encoded']);
 });

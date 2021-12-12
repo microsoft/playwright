@@ -1,0 +1,76 @@
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+.tabbed-pane {
+  display: flex;
+  flex: auto;
+  overflow: hidden;
+}
+
+.tabbed-pane-tab-content {
+  display: flex;
+  flex: auto;
+  overflow: hidden;
+}
+
+.tabbed-pane-tab-strip {
+  display: flex;
+  align-items: center;
+  padding-right: 10px;
+  flex: none;
+  width: 100%;
+  z-index: 2;
+  font-size: 14px;
+  line-height: 32px;
+  color: var(--color-fg-default);
+  height: 48px;
+  min-width: 70px;
+  box-shadow: inset 0 -1px 0 var(--color-border-muted) !important;
+}
+
+.tabbed-pane-tab-strip:focus {
+  outline: none;
+}
+
+.tabbed-pane-tab-element {
+  padding: 4px 8px 0 8px;
+  margin-right: 4px;
+  cursor: pointer;
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  border-bottom: 2px solid transparent;
+  outline: none;
+  height: 100%;
+}
+
+.tabbed-pane-tab-label {
+  max-width: 250px;
+  white-space: pre;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+}
+
+.tabbed-pane-tab-element.selected {
+  border-bottom-color: #666;
+}
+
+.tabbed-pane-tab-element:hover {
+  color: #333;
+}

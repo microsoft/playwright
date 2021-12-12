@@ -1,0 +1,70 @@
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+.chip-header {
+  border: 1px solid var(--color-border-default);
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  background-color: var(--color-canvas-subtle);
+  padding: 0 8px;
+  border-bottom: none;
+  margin-top: 24px;
+  font-weight: 600;
+  line-height: 38px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chip-header.expanded-false {
+  border: 1px solid var(--color-border-default);
+  border-radius: 6px;
+}
+
+.chip-header.expanded-false,
+.chip-header.expanded-true {
+  cursor: pointer;
+}
+
+.chip-body {
+  border: 1px solid var(--color-border-default);
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+  padding: 16px;
+}
+
+.chip-body-no-insets {
+  padding: 0;
+}
+
+@media only screen and (max-width: 600px) {
+  .chip-header {
+    border-radius: 0;
+    border-right: none;
+    border-left: none;
+  }
+
+  .chip-body {
+    border-radius: 0;
+    border-right: none;
+    border-left: none;
+    padding: 8px;
+  }
+
+  .chip-body-no-insets {
+    padding: 0; 
+  }
+}
