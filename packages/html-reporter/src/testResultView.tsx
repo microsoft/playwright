@@ -19,7 +19,7 @@ import ansi2html from 'ansi-to-html';
 import * as React from 'react';
 import { TreeItem } from './treeItem';
 import { TabbedPane } from './tabbedPane';
-import { msToString } from '../uiUtils';
+import { msToString } from './uiUtils';
 import { Chip } from './chip';
 import { traceImage } from './images';
 import { AttachmentLink } from './links';
