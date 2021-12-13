@@ -150,11 +150,13 @@ it.describe('snapshots', () => {
     });
     await page.goto(server.EMPTY_PAGE);
 
-    await waitUntilPass(async (counter: number) => {
+    for (let counter = 0; ; ++counter) {
       const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot' + counter);
       const text = distillSnapshot(snapshot).replace(/frame@[^"]+["]/, '<id>"');
-      expect(text).toBe('<FRAMESET><FRAME __playwright_src__=\"/snapshot/<id>\"></FRAME></FRAMESET>');
-    });
+      if (text === '<FRAMESET><FRAME __playwright_src__=\"/snapshot/<id>\"></FRAME></FRAMESET>')
+        break;
+      await page.waitForTimeout(250);
+    }
   });
 
   it('should capture iframe', async ({ page, server, toImpl, browserName, snapshotter }) => {
@@ -175,11 +177,13 @@ it.describe('snapshots', () => {
     await page.goto(server.EMPTY_PAGE);
 
     // Marking iframe hierarchy is racy, do not expect snapshot, wait for it.
-    await waitUntilPass(async (counter: number) => {
+    for (let counter = 0; ; ++counter) {
       const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'snapshot' + counter);
       const text = distillSnapshot(snapshot).replace(/frame@[^"]+["]/, '<id>"');
-      expect(text).toBe('<IFRAME __playwright_src__=\"/snapshot/<id>\"></IFRAME>');
-    });
+      if (text === '<IFRAME __playwright_src__=\"/snapshot/<id>\"></IFRAME>')
+        break;
+      await page.waitForTimeout(250);
+    }
   });
 
   it('should capture snapshot target', async ({ page, toImpl, snapshotter }) => {
@@ -244,24 +248,6 @@ it.describe('snapshots', () => {
     expect(snapshot2.html).toEqual([[1, 13]]);
   });
 });
-
-
-async function waitUntilPass(fn: (counter: number) => Promise<unknown>, sleep = 250) {
-  let counter = 0;
-  for (; ; ++counter) {
-    let err: unknown;
-    try {
-      await fn(counter);
-    } catch (e) {
-      err = e;
-    }
-
-    if (err)
-      await new Promise<void>(resolve => setTimeout(() => resolve(), sleep));
-    else
-      break;
-  }
-}
 
 function distillSnapshot(snapshot, distillTarget = true) {
   let { html } = snapshot.render();
