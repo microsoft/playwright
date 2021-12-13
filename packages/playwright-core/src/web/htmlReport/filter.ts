@@ -15,7 +15,6 @@
 */
 
 import type { TestCaseSummary } from '@playwright/test/src/reporters/html';
-import './htmlReport.css';
 
 export class Filter {
   project: string[] = [];
