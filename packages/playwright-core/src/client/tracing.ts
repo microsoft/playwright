@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
 import * as api from '../../types/types';
 import * as channels from '../protocol/channels';
 import { Artifact } from './artifact';
@@ -52,23 +51,27 @@ export class Tracing implements api.Tracing {
   private async _doStopChunk(channel: channels.BrowserContextChannel, filePath: string | undefined) {
     const isLocal = !this._context._connection.isRemote();
 
-    const result = await channel.tracingStopChunk({ save: !!filePath, skipCompress: isLocal });
+    let mode: channels.BrowserContextTracingStopChunkParams['mode'] = 'doNotSave';
+    if (filePath) {
+      if (isLocal)
+        mode = 'compressTraceAndSources';
+      else
+        mode = 'compressTrace';
+    }
+
+    const result = await channel.tracingStopChunk({ mode });
     if (!filePath) {
       // Not interested in artifacts.
       return;
     }
 
-    if (filePath && fs.existsSync(filePath))
-      await fs.promises.unlink(filePath);
+    // Save trace to the final local file.
+    const artifact = Artifact.from(result.artifact!);
+    await artifact.saveAs(filePath);
+    await artifact.delete();
 
-    if (!isLocal) {
-      // We run against remote Playwright, compress on remote side.
-      const artifact = Artifact.from(result.artifact!);
-      await artifact.saveAs(filePath);
-      await artifact.delete();
-    }
-
-    if (isLocal || result.sourceEntries.length)
-      await this._context._localUtils.zip(filePath, result.sourceEntries.concat(result.entries));
+    // Add local sources to the remote trace if necessary.
+    if (result.sourceEntries?.length)
+      await this._context._localUtils.zip(filePath, result.sourceEntries);
   }
 }

@@ -19,7 +19,7 @@ import fs from 'fs';
 import path from 'path';
 import yazl from 'yazl';
 import { NameValue } from '../../../common/types';
-import { commandsWithTracingSnapshots } from '../../../protocol/channels';
+import { commandsWithTracingSnapshots, BrowserContextTracingStopChunkParams } from '../../../protocol/channels';
 import { ManualPromise } from '../../../utils/async';
 import { eventsHelper, RegisteredListener } from '../../../utils/eventsHelper';
 import { calculateSha1, createGuid, mkdirIfNeeded, monotonicTime } from '../../../utils/utils';
@@ -113,7 +113,7 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
 
   async startChunk(options: { title?: string } = {}) {
     if (this._state && this._state.recording)
-      await this.stopChunk(false, false);
+      await this.stopChunk({ mode: 'doNotSave' });
 
     if (!this._state)
       throw new Error('Must start tracing before starting a new chunk');
@@ -169,16 +169,16 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
     await this._writeChain;
   }
 
-  async stopChunk(save: boolean, skipCompress: boolean): Promise<{ artifact: Artifact | null, entries: NameValue[], sourceEntries: NameValue[] }> {
+  async stopChunk(params: BrowserContextTracingStopChunkParams): Promise<{ artifact: Artifact | null, sourceEntries: NameValue[] | undefined }> {
     if (this._isStopping)
       throw new Error(`Tracing is already stopping`);
     this._isStopping = true;
 
     if (!this._state || !this._state.recording) {
       this._isStopping = false;
-      if (save)
+      if (params.mode !== 'doNotSave')
         throw new Error(`Must start tracing before stopping`);
-      return { artifact: null, entries: [], sourceEntries: [] };
+      return { artifact: null, sourceEntries: [] };
     }
 
     const state = this._state!;
@@ -205,8 +205,8 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
     // Chain the export operation against write operations,
     // so that neither trace files nor sha1s change during the export.
     return await this._appendTraceOperation(async () => {
-      if (!save)
-        return { artifact: null, entries: [], sourceEntries: [] };
+      if (params.mode === 'doNotSave')
+        return { artifact: null, sourceEntries: undefined };
 
       // Har files a live, make a snapshot before returning the resulting entries.
       const networkFile = path.join(state.networkFile, '..', createGuid());
@@ -218,19 +218,27 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
       for (const sha1 of new Set([...state.traceSha1s, ...state.networkSha1s]))
         entries.push({ name: path.join('resources', sha1), value: path.join(this._resourcesDir, sha1) });
 
-      const sourceEntries: NameValue[] = [];
-      for (const value of state.sources)
-        sourceEntries.push({ name: 'resources/src@' + calculateSha1(value) + '.txt', value });
+      let sourceEntries: NameValue[] | undefined;
+      if (state.sources.size) {
+        sourceEntries = [];
+        for (const value of state.sources) {
+          const entry = { name: 'resources/src@' + calculateSha1(value) + '.txt', value };
+          if (params.mode === 'compressTraceAndSources')
+            entries.push(entry);
+          else
+            sourceEntries.push(entry);
+        }
+      }
 
-      const artifact = skipCompress ? null : await this._exportZip(entries, state).catch(() => null);
-      return { artifact, entries, sourceEntries };
+      const artifact = await this._exportZip(entries, state).catch(() => null);
+      return { artifact, sourceEntries };
     }).finally(() => {
       // Only reset trace sha1s, network resources are preserved between chunks.
       state.traceSha1s = new Set();
       state.sources = new Set();
       this._isStopping = false;
       state.recording = false;
-    }) || { artifact: null, entries: [], sourceEntries: [] };
+    }) || { artifact: null, sourceEntries: undefined };
   }
 
   private async _exportZip(entries: NameValue[], state: RecordingState): Promise<Artifact | null> {

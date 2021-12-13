@@ -198,8 +198,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async tracingStopChunk(params: channels.BrowserContextTracingStopChunkParams): Promise<channels.BrowserContextTracingStopChunkResult> {
-    const { artifact, entries, sourceEntries } = await this._context.tracing.stopChunk(params.save, params.skipCompress);
-    return { artifact: artifact ? new ArtifactDispatcher(this._scope, artifact) : undefined, entries, sourceEntries };
+    const { artifact, sourceEntries } = await this._context.tracing.stopChunk(params);
+    return { artifact: artifact ? new ArtifactDispatcher(this._scope, artifact) : undefined, sourceEntries };
   }
 
   async tracingStop(params: channels.BrowserContextTracingStopParams): Promise<channels.BrowserContextTracingStopResult> {
