@@ -91,6 +91,7 @@ export class RecorderApp extends EventEmitter {
       '--app=data:text/html,',
       '--window-size=600,600',
       '--window-position=1280,10',
+      '--test-type=',
     ];
     if (process.env.PWTEST_RECORDER_PORT)
       args.push(`--remote-debugging-port=${process.env.PWTEST_RECORDER_PORT}`);
@@ -98,6 +99,7 @@ export class RecorderApp extends EventEmitter {
       channel: findChromiumChannel(sdkLanguage),
       args,
       noDefaultViewport: true,
+      ignoreDefaultArgs: ['--enable-automation'],
       headless: !!process.env.PWTEST_CLI_HEADLESS || (isUnderTest() && !headed),
       useWebSocket: !!process.env.PWTEST_RECORDER_PORT
     });

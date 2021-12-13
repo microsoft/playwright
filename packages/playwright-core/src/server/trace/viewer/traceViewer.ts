@@ -52,7 +52,8 @@ export async function showTraceViewer(traceUrl: string, browserName: string, hea
   const traceViewerBrowser = isUnderTest() ? 'chromium' : browserName;
   const args = traceViewerBrowser === 'chromium' ? [
     '--app=data:text/html,',
-    '--window-size=1280,800'
+    '--window-size=1280,800',
+    '--test-type=',
   ] : [];
   if (isUnderTest())
     args.push(`--remote-debugging-port=0`);
@@ -62,6 +63,7 @@ export async function showTraceViewer(traceUrl: string, browserName: string, hea
     channel: findChromiumChannel(traceViewerPlaywright.options.sdkLanguage),
     args,
     noDefaultViewport: true,
+    ignoreDefaultArgs: ['--enable-automation'],
     headless,
     useWebSocket: isUnderTest()
   });
