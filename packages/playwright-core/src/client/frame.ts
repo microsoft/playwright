@@ -93,7 +93,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   }
 
   private _setupNavigationWaiter(options: { timeout?: number }): Waiter {
-    const waiter = new Waiter(this._page!._channel, '');
+    const waiter = new Waiter(this._page!, '');
     if (this._page!.isClosed())
       waiter.rejectImmediately(new Error('Navigation failed because page was closed!'));
     waiter.rejectOnEvent(this._page!, Events.Page.Close, new Error('Navigation failed because page was closed!'));

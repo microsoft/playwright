@@ -19,28 +19,30 @@ import { rewriteErrorMessage } from '../utils/stackTrace';
 import { TimeoutError } from '../utils/errors';
 import { createGuid } from '../utils/utils';
 import * as channels from '../protocol/channels';
+import { ChannelOwner } from './channelOwner';
 
 export class Waiter {
   private _dispose: (() => void)[];
   private _failures: Promise<any>[] = [];
   private _immediateError?: Error;
-  // TODO: can/should we move these logs into wrapApiCall?
   private _logs: string[] = [];
-  private _channel: channels.EventTargetChannel;
+  private _channelOwner: ChannelOwner<channels.EventTargetChannel>;
   private _waitId: string;
   private _error: string | undefined;
 
-  constructor(channel: channels.EventTargetChannel, event: string) {
+  constructor(channelOwner: ChannelOwner<channels.EventTargetChannel>, event: string) {
     this._waitId = createGuid();
-    this._channel = channel;
-    this._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'before', event } }).catch(() => {});
+    this._channelOwner = channelOwner;
+    this._channelOwner._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'before', event } }).catch(() => {});
     this._dispose = [
-      () => this._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'after', error: this._error } }).catch(() => {})
+      () => this._channelOwner._wrapApiCall(async () => {
+        await this._channelOwner._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'after', error: this._error } });
+      }, true).catch(() => {}),
     ];
   }
 
-  static createForEvent(channel: channels.EventTargetChannel, event: string) {
-    return new Waiter(channel, event);
+  static createForEvent(channelOwner: ChannelOwner<channels.EventTargetChannel>, event: string) {
+    return new Waiter(channelOwner, event);
   }
 
   async waitForEvent<T = void>(emitter: EventEmitter, event: string, predicate?: (arg: T) => boolean | Promise<boolean>): Promise<T> {
@@ -89,7 +91,9 @@ export class Waiter {
 
   log(s: string) {
     this._logs.push(s);
-    this._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'log', message: s } }).catch(() => {});
+    this._channelOwner._wrapApiCall(async () => {
+      await this._channelOwner._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'log', message: s } }).catch(() => {});
+    }, true);
   }
 
   private _rejectOn(promise: Promise<any>, dispose?: () => void) {
