@@ -85,9 +85,9 @@ export class SnapshotRenderer {
       return { html: '', pageId: snapshot.pageId, frameId: snapshot.frameId, index: this._index };
 
     // Hide the document in order to prevent flickering. We will unhide once script has processed shadow.
-    const hideAllStyle = '<style>*,*::before,*::after { visibility: hidden }</style>';
-    const prefix = snapshot.doctype ? `<!DOCTYPE ${snapshot.doctype}>` + hideAllStyle : hideAllStyle;
+    const prefix = snapshot.doctype ? `<!DOCTYPE ${snapshot.doctype}>` : '';
     html = prefix + [
+      '<style>*,*::before,*::after { visibility: hidden }</style>',
       `<style>*[__playwright_target__="${this.snapshotName}"] { background-color: #6fa8dc7f; }</style>`,
       `<script>${snapshotScript()}</script>`
     ].join('') + html;
