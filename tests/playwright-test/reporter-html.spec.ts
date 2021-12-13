@@ -252,7 +252,7 @@ test('should show trace title', async ({ runInlineTest, page, showReport }) => {
 test('should show timed out steps', async ({ runInlineTest, page, showReport }) => {
   const result = await runInlineTest({
     'playwright.config.js': `
-      module.exports = { timeout: 500 };
+      module.exports = { timeout: 3000 };
     `,
     'a.test.js': `
       const { test } = pwt;
