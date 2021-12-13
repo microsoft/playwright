@@ -144,29 +144,29 @@ test('should work with custom PlaywrightTest namespace', async ({ runTSC }) => {
 });
 
 test('should propose only the relevant matchers when custom expect matcher classes were passed', async ({ runTSC }) => {
-  test.fixme();
   const result = await runTSC({
     'a.spec.ts': `
     const { test } = pwt;
     test('custom matchers', async ({ page }) => {
       await test.expect(page).toHaveURL('https://example.com');
-      // @ts-expect-error
       await test.expect(page).toBe(true);
       // @ts-expect-error
       await test.expect(page).toBeEnabled();
 
       await test.expect(page.locator('foo')).toBeEnabled();
-      // @ts-expect-error
       await test.expect(page.locator('foo')).toBe(true);
       // @ts-expect-error
       await test.expect(page.locator('foo')).toHaveURL('https://example.com');
 
       const res = await page.request.get('http://i-do-definitely-not-exist.com');
       await test.expect(res).toBeOK();
-      // @ts-expect-error
       await test.expect(res).toBe(true);
       // @ts-expect-error
       await test.expect(res).toHaveURL('https://example.com');
+
+      await test.expect(res as any).toHaveURL('https://example.com');
+      // @ts-expect-error
+      await test.expect(123).toHaveURL('https://example.com');
     });
     `
   });
