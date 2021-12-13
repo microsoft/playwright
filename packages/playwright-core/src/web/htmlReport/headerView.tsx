@@ -16,11 +16,45 @@
 
 import type { Stats } from '@playwright/test/src/reporters/html';
 import * as React from 'react';
-import './htmlReport.css';
-import { Link } from './links';
+import './common.css';
+import * as icons from './icons';
+import { Link, navigate } from './links';
 import { statusIcon } from './statusIcon';
 
-export const StatsNavView: React.FC<{
+export const HeaderView: React.FC<{
+  stats: Stats,
+  filterText: string,
+  setFilterText: (filterText: string) => void,
+}> = ({ stats, filterText, setFilterText }) => {
+  React.useEffect(() => {
+    (async () => {
+      window.addEventListener('popstate', () => {
+        const params = new URLSearchParams(window.location.hash.slice(1));
+        setFilterText(params.get('q') || '');
+      });
+    })();
+  });
+
+  return <div className='pt-3'>
+    <div className='status-container ml-2 pl-2 d-flex'>
+      <StatsNavView stats={stats}></StatsNavView>
+    </div>
+    <form className='subnav-search' onSubmit={
+      event => {
+        event.preventDefault();
+        navigate(`#?q=${filterText ? encodeURIComponent(filterText) : ''}`);
+      }
+    }>
+      {icons.search()}
+      {/* Use navigationId to reset defaultValue */}
+      <input type='search' spellCheck={false} className='form-control subnav-search-input input-contrast width-full' value={filterText} onChange={e => {
+        setFilterText(e.target.value);
+      }}></input>
+    </form>
+  </div>;
+};
+
+const StatsNavView: React.FC<{
   stats: Stats
 }> = ({ stats }) => {
   return <nav className='d-flex no-wrap'>

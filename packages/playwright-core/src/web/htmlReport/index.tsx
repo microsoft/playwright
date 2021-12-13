@@ -14,11 +14,50 @@
  * limitations under the License.
  */
 
+import type { HTMLReport } from '@playwright/test/src/reporters/html';
+import type zip from '@zip.js/zip.js';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { Report } from './htmlReport';
 import './colors.css';
+import { LoadedReport } from './loadedReport';
+import { ReportView } from './reportView';
+
+const zipjs = (self as any).zip;
+
+const ReportLoader: React.FC = () => {
+  const [report, setReport] = React.useState<LoadedReport | undefined>();
+  React.useEffect(() => {
+    if (report)
+      return;
+    const zipReport = new ZipReport();
+    zipReport.load().then(() => setReport(zipReport));
+  }, [report]);
+  return <ReportView report={report}></ReportView>;
+};
 
 window.onload = () => {
-  ReactDOM.render(<Report />, document.querySelector('#root'));
+  ReactDOM.render(<ReportLoader />, document.querySelector('#root'));
 };
+
+class ZipReport implements LoadedReport {
+  private _entries = new Map<string, zip.Entry>();
+  private _json!: HTMLReport;
+
+  async load() {
+    const zipReader = new zipjs.ZipReader(new zipjs.Data64URIReader(window.playwrightReportBase64), { useWebWorkers: false }) as zip.ZipReader;
+    for (const entry of await zipReader.getEntries())
+      this._entries.set(entry.filename, entry);
+    this._json = await this.entry('report.json') as HTMLReport;
+  }
+
+  json(): HTMLReport {
+    return this._json;
+  }
+
+  async entry(name: string): Promise<Object> {
+    const reportEntry = this._entries.get(name);
+    const writer = new zipjs.TextWriter() as zip.TextWriter;
+    await reportEntry!.getData!(writer);
+    return JSON.parse(await writer.getData());
+  }
+}
