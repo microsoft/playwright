@@ -169,7 +169,7 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
     await this._writeChain;
   }
 
-  async stopChunk(params: BrowserContextTracingStopChunkParams): Promise<{ artifact: Artifact | null, sourceEntries: NameValue[] }> {
+  async stopChunk(params: BrowserContextTracingStopChunkParams): Promise<{ artifact: Artifact | null, sourceEntries: NameValue[] | undefined }> {
     if (this._isStopping)
       throw new Error(`Tracing is already stopping`);
     this._isStopping = true;
@@ -206,7 +206,7 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
     // so that neither trace files nor sha1s change during the export.
     return await this._appendTraceOperation(async () => {
       if (params.mode === 'doNotSave')
-        return { artifact: null, sourceEntries: [] };
+        return { artifact: null, sourceEntries: undefined };
 
       // Har files a live, make a snapshot before returning the resulting entries.
       const networkFile = path.join(state.networkFile, '..', createGuid());
@@ -218,10 +218,17 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
       for (const sha1 of new Set([...state.traceSha1s, ...state.networkSha1s]))
         entries.push({ name: path.join('resources', sha1), value: path.join(this._resourcesDir, sha1) });
 
-      const sourceEntries: NameValue[] = [];
-      const targetForSources = (params.mode === 'compressTraceAndSources') ? entries : sourceEntries;
-      for (const value of state.sources)
-        targetForSources.push({ name: 'resources/src@' + calculateSha1(value) + '.txt', value });
+      let sourceEntries: NameValue[] | undefined;
+      if (state.sources.size) {
+        sourceEntries = [];
+        for (const value of state.sources) {
+          const entry = { name: 'resources/src@' + calculateSha1(value) + '.txt', value };
+          if (params.mode === 'compressTraceAndSources')
+            entries.push(entry);
+          else
+            sourceEntries.push(entry);
+        }
+      }
 
       const artifact = await this._exportZip(entries, state).catch(() => null);
       return { artifact, sourceEntries };
@@ -231,7 +238,7 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
       state.sources = new Set();
       this._isStopping = false;
       state.recording = false;
-    }) || { artifact: null, sourceEntries: [] };
+    }) || { artifact: null, sourceEntries: undefined };
   }
 
   private async _exportZip(entries: NameValue[], state: RecordingState): Promise<Artifact | null> {

@@ -71,7 +71,7 @@ export class Tracing implements api.Tracing {
     await artifact.delete();
 
     // Add local sources to the remote trace if necessary.
-    if (result.sourceEntries.length)
+    if (result.sourceEntries?.length)
       await this._context._localUtils.zip(filePath, result.sourceEntries);
   }
 }

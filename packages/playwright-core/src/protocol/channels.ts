@@ -1273,7 +1273,7 @@ export type BrowserContextTracingStopChunkOptions = {
 };
 export type BrowserContextTracingStopChunkResult = {
   artifact?: ArtifactChannel,
-  sourceEntries: NameValue[],
+  sourceEntries?: NameValue[],
 };
 export type BrowserContextTracingStopParams = {};
 export type BrowserContextTracingStopOptions = {};

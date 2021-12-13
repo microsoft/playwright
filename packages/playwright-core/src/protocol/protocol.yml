@@ -842,7 +842,7 @@ BrowserContext:
       returns:
         artifact: Artifact?
         sourceEntries:
-          type: array
+          type: array?
           items: NameValue
 
     tracingStop:
