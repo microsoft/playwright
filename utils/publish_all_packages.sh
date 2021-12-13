@@ -92,7 +92,7 @@ fi
 
 echo "==================== Publishing version ${VERSION} ================"
 node ./utils/prepare_packages.js
-node -e "console.log(require('./utils/list_packages').packages.join('\\n'))" | while read package
+node -e "console.log(require('./utils/list_packages').packagesToPublish.join('\\n'))" | while read package
 do
   npm publish ${package} --tag="${NPM_PUBLISH_TAG}"
 done

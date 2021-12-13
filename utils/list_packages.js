@@ -35,4 +35,10 @@ function* internalDependencies(packagePath) {
   }
 }
 
-module.exports = { packages, packageNameToPath };
+const packagesToPublish = packages.filter(packagePath => !packagePathToJSON.get(packagePath).private);
+
+module.exports = {
+  packages,
+  packageNameToPath,
+  packagesToPublish,
+};

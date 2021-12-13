@@ -55,6 +55,9 @@ const PACKAGES = {
     browsers: ['chromium', 'ffmpeg'],
     files: LICENSE_FILES,
   },
+  'html-reporter': {
+    files: [],
+  }
 };
 
 const dirtyFiles = [];
@@ -92,6 +95,8 @@ async function lintPackage(packageName) {
   // 4. Generate package.json
   const pwInternalJSON = require(path.join(ROOT_PATH, 'package.json'));
   const currentPackageJSON = require(path.join(packagePath, 'package.json'));
+  if (currentPackageJSON.private)
+    return;
   currentPackageJSON.version = pwInternalJSON.version;
   currentPackageJSON.repository = pwInternalJSON.repository;
   currentPackageJSON.engines = pwInternalJSON.engines;
