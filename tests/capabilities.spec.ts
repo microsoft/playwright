@@ -83,6 +83,19 @@ it('should play video', async ({ page, asset, browserName, platform }) => {
   await page.$eval('video', v => v.pause());
 });
 
+it('should play audio', async ({ page, server, browserName, platform }) => {
+  it.fixme(browserName === 'firefox' && platform === 'win32', 'https://github.com/microsoft/playwright/issues/10887');
+  it.fixme(browserName === 'firefox' && platform === 'linux', 'https://github.com/microsoft/playwright/issues/10887');
+  it.fixme(browserName === 'webkit' && platform === 'win32', 'https://github.com/microsoft/playwright/issues/10892');
+  it.fixme(browserName === 'webkit' && platform === 'darwin', 'https://github.com/microsoft/playwright/issues/10892');
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<audio src="${server.PREFIX}/example.mp3"></audio>`);
+  await page.$eval('audio', e => e.play());
+  await page.waitForTimeout(1000);
+  await page.$eval('audio', e => e.pause());
+  expect(await page.$eval('audio', e => e.currentTime)).toBeGreaterThan(0.5);
+});
+
 it('should support webgl', async ({ page, browserName, headless }) => {
   it.fixme(browserName === 'firefox' && headless);
 
