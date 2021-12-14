@@ -27,7 +27,7 @@ import { ConnectionTransport, ProtocolRequest, WebSocketTransport } from '../tra
 import { CRDevTools } from './crDevTools';
 import { Browser, BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
 import * as types from '../types';
-import { debugMode, fetchData, headersArrayToObject, HTTPRequestParams, removeFolders, streamToString } from '../../utils/utils';
+import { debugMode, fetchData, getUserAgent, headersArrayToObject, HTTPRequestParams, removeFolders, streamToString } from '../../utils/utils';
 import { RecentLogsCollector } from '../../utils/debugLogger';
 import { Progress, ProgressController } from '../progress';
 import { TimeoutSettings } from '../../utils/timeoutSettings';
@@ -62,6 +62,11 @@ export class Chromium extends BrowserType {
     let headersMap: { [key: string]: string; } | undefined;
     if (options.headers)
       headersMap = headersArrayToObject(options.headers, false);
+
+    if (!headersMap)
+      headersMap = { 'User-Agent': getUserAgent() };
+    else if (headersMap && !Object.keys(headersMap).some(key => key.toLowerCase() === 'user-agent'))
+      headersMap['User-Agent'] = getUserAgent();
 
     const artifactsDir = await fs.promises.mkdtemp(ARTIFACTS_FOLDER);
 
