@@ -46,7 +46,8 @@ class LineReporter extends BaseReporter {
   private _dumpToStdio(test: TestCase | undefined, chunk: string | Buffer, stream: NodeJS.WriteStream) {
     if (this.config.quiet)
       return;
-    stream.write(`\u001B[1A\u001B[2K`);
+    if (!process.env.PWTEST_SKIP_TEST_OUTPUT)
+      stream.write(`\u001B[1A\u001B[2K`);
     if (test && this._lastTest !== test) {
       // Write new header for the output.
       stream.write(colors.gray(formatTestTitle(this.config, test) + `\n`));
@@ -59,12 +60,18 @@ class LineReporter extends BaseReporter {
 
   override onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
-    const width = process.stdout.columns! - 1;
-    const title = `[${++this._current}/${this.totalTestCount}] ${formatTestTitle(this.config, test)}`.substring(0, width);
-    process.stdout.write(`\u001B[1A\u001B[2K${title}\n`);
+    const width = process.env.PWTEST_SKIP_TEST_OUTPUT ? 79 : process.stdout.columns! - 1;
+    ++this._current;
+    const retriesSuffix = this.totalTestCount < this._current ? ` (retries)` : ``;
+    const title = `[${this._current}/${this.totalTestCount}]${retriesSuffix} ${formatTestTitle(this.config, test)}`.substring(0, width);
+    if (process.env.PWTEST_SKIP_TEST_OUTPUT)
+      process.stdout.write(`${title}\n`);
+    else
+      process.stdout.write(`\u001B[1A\u001B[2K${title}\n`);
 
     if (!this.willRetry(test) && (test.outcome() === 'flaky' || test.outcome() === 'unexpected')) {
-      process.stdout.write(`\u001B[1A\u001B[2K`);
+      if (!process.env.PWTEST_SKIP_TEST_OUTPUT)
+        process.stdout.write(`\u001B[1A\u001B[2K`);
       console.log(formatFailure(this.config, test, {
         index: ++this._failures
       }).message);
@@ -73,7 +80,8 @@ class LineReporter extends BaseReporter {
   }
 
   override async onEnd(result: FullResult) {
-    process.stdout.write(`\u001B[1A\u001B[2K`);
+    if (!process.env.PWTEST_SKIP_TEST_OUTPUT)
+      process.stdout.write(`\u001B[1A\u001B[2K`);
     await super.onEnd(result);
     this.epilogue(false);
   }
