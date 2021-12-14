@@ -26,6 +26,10 @@ test('render unexpected after retry', async ({ runInlineTest }) => {
     `,
   }, { retries: 3, reporter: 'line' });
   const text = stripAscii(result.output);
+  expect(text).toContain('[1/1] a.test.js:6:7 › one');
+  expect(text).toContain('[2/1] (retries) a.test.js:6:7 › one');
+  expect(text).toContain('[3/1] (retries) a.test.js:6:7 › one');
+  expect(text).toContain('[4/1] (retries) a.test.js:6:7 › one');
   expect(text).toContain('1 failed');
   expect(text).toContain('1) a.test');
   expect(text).not.toContain('2) a.test');
