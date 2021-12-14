@@ -868,3 +868,12 @@ Slows down Playwright operations by the specified amount of milliseconds. Useful
 - %%-browser-option-proxy-%%
 - %%-browser-option-timeout-%%
 - %%-browser-option-tracesdir-%%
+
+## locator-option-has-text
+- `hasText` <[string]|[RegExp]>
+
+Matches elements containing specified text somewhere inside, possibly in a child or a descendant element.
+For example, `"Playwright"` matches `<article><div>Playwright</div></article>`.
+
+## locator-options-list
+- %%-locator-option-has-text-%%

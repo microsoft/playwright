@@ -989,6 +989,7 @@ The method returns an element locator that can be used to perform actions in the
 Locator is resolved to the element immediately before performing an action, so a series of actions on the same locator can in fact be performed on different DOM elements. That would happen if the DOM structure between those actions has changed.
 
 ### param: Frame.locator.selector = %%-find-selector-%%
+### option: Frame.locator.-inline- = %%-locator-options-list-%%
 
 ## method: Frame.name
 - returns: <[string]>

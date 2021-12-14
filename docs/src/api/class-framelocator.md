@@ -122,6 +122,7 @@ Returns locator to the last matching frame.
 The method finds an element matching the specified selector in the FrameLocator's subtree.
 
 ### param: FrameLocator.locator.selector = %%-find-selector-%%
+### option: FrameLocator.locator.-inline- = %%-locator-options-list-%%
 
 
 ## method: FrameLocator.nth
