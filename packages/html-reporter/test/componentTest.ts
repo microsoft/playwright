@@ -20,22 +20,21 @@ import { test as baseTest, Locator } from '@playwright/test';
 declare global {
   interface Window {
     __playwright_render: (component: string, props: any) => void;
-    __playwright_options: (component: string) => { viewport: { width: number, height: number } };
   }
 }
 
 type TestFixtures = {
-  renderComponent: (component: string, params?: any) => Promise<Locator>;
+  render: (component: { type: string, props: Object }) => Promise<Locator>;
   webpack: string;
 };
 
 export const test = baseTest.extend<TestFixtures>({
   webpack: '',
-  renderComponent: async ({ page, webpack }, use, testInfo) => {
+  render: async ({ page, webpack }, use) => {
     const webpackConfig = require(webpack);
     const outputPath = webpackConfig.output.path;
     const filename = webpackConfig.output.filename.replace('[name]', 'playwright');
-    await use(async (component: string, optionalParams?: Object) => {
+    await use(async (component: { type: string, props: Object }) => {
       await page.route('http://component/index.html', route => {
         route.fulfill({
           body: `<html>
@@ -49,27 +48,23 @@ export const test = baseTest.extend<TestFixtures>({
       await page.goto('http://component/index.html');
 
       await page.addScriptTag({ path: path.resolve(__dirname, outputPath, filename) });
-      const options = await page.evaluate((component: string) => {
-        return window.__playwright_options(component);
-      }, component);
-      await page.setViewportSize(options.viewport);
 
-      const params = { ...optionalParams };
-      for (const [key, value] of Object.entries(params)) {
+      const props = { ...component.props };
+      for (const [key, value] of Object.entries(props)) {
         if (typeof value === 'function') {
           const functionName = '__pw_func_' + key;
           await page.exposeFunction(functionName, value);
-          (params as any)[key] = functionName;
+          (props as any)[key] = functionName;
         }
       }
       await page.evaluate(v => {
-        const params = v.params;
-        for (const [key, value] of Object.entries(params)) {
+        const props = v.props;
+        for (const [key, value] of Object.entries(props)) {
           if (typeof value === 'string' && (value as string).startsWith('__pw_func_'))
-            (params as any)[key] = window[value];
+            (props as any)[key] = (window as any)[value];
         }
-        window.__playwright_render(v.component, params);
-      }, { component, params });
+        window.__playwright_render(v.type, props);
+      }, { type: component.type, props });
       return page.locator('#pw-root');
     });
   },

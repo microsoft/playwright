@@ -14,6 +14,13 @@
  * limitations under the License.
  */
 
+import { AutoChip, Chip } from './src/chip';
+import { HeaderView } from './src/headerView';
+import { TestCaseView } from './src/testCaseView';
 import './src/theme.css';
-import './src/chip.story.tsx';
-import './src/headerView.story.tsx';
+import { registerComponent } from './test/component';
+
+registerComponent('HeaderView', HeaderView);
+registerComponent('Chip', Chip);
+registerComponent('TestCaseView', TestCaseView);
+registerComponent('AutoChip', AutoChip);

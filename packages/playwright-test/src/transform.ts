@@ -24,7 +24,7 @@ import * as url from 'url';
 import type { Location } from './types';
 import { TsConfigLoaderResult } from './third_party/tsconfig-loader';
 
-const version = 4;
+const version = 5;
 const cacheDir = process.env.PWTEST_CACHE_DIR || path.join(os.tmpdir(), 'playwright-transform-cache');
 const sourceMaps: Map<string, string> = new Map();
 
@@ -54,6 +54,8 @@ function calculateCachePath(content: string, filePath: string): string {
 }
 
 export function transformHook(code: string, filename: string, tsconfig: TsConfigLoaderResult, isModule = false): string {
+  if (isComponentImport(filename))
+    return componentStub();
   const cachePath = calculateCachePath(code, filename);
   const codePath = cachePath + '.js';
   const sourceMapPath = cachePath + '.map';
@@ -65,7 +67,7 @@ export function transformHook(code: string, filename: string, tsconfig: TsConfig
   process.env.BROWSERSLIST_IGNORE_OLD_DATA = 'true';
   const babel: typeof import('@babel/core') = require('@babel/core');
 
-  const alias: { [key: string]: string | ((s: string[]) => string) } = {};
+  const extensions = ['', '.js', '.ts', '.mjs', ...(process.env.PW_COMPONENT_TESTING ? ['.tsx', '.jsx'] : [])];  const alias: { [key: string]: string | ((s: string[]) => string) } = {};
   for (const [key, values] of Object.entries(tsconfig.paths || {})) {
     const regexKey = '^' + key.replace('*', '.*');
     alias[regexKey] = ([name]) => {
@@ -73,8 +75,10 @@ export function transformHook(code: string, filename: string, tsconfig: TsConfig
         const relative = (key.endsWith('/*') ? value.substring(0, value.length - 1) + name.substring(key.length - 1) : value)
             .replace(/\//g, path.sep);
         const result = path.resolve(tsconfig.baseUrl || '', relative);
-        if (fs.existsSync(result) || fs.existsSync(result + '.js') || fs.existsSync(result + '.ts'))
-          return result;
+        for (const extension of extensions) {
+          if (fs.existsSync(result + extension))
+            return result;
+        }
       }
       return name;
     };
@@ -96,6 +100,10 @@ export function transformHook(code: string, filename: string, tsconfig: TsConfig
       alias
     }],
   ];
+
+  if (process.env.PW_COMPONENT_TESTING)
+    plugins.unshift([require.resolve('@babel/plugin-transform-react-jsx')]);
+
   if (!isModule) {
     plugins.push([require.resolve('@babel/plugin-transform-modules-commonjs')]);
     plugins.push([require.resolve('@babel/plugin-proposal-dynamic-import')]);
@@ -125,7 +133,7 @@ export function transformHook(code: string, filename: string, tsconfig: TsConfig
 }
 
 export function installTransform(tsconfig: TsConfigLoaderResult): () => void {
-  return pirates.addHook((code: string, filename: string) => transformHook(code, filename, tsconfig), { exts: ['.ts'] });
+  return pirates.addHook((code: string, filename: string) => transformHook(code, filename, tsconfig), { exts: ['.ts', '.tsx'] });
 }
 
 export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Location, ...args: A) => R): (...args: A) => R {
@@ -150,4 +158,21 @@ export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Lo
     Error.prepareStackTrace = oldPrepareStackTrace;
     return func(location, ...args);
   };
+}
+
+// Experimental components support for internal testing.
+function isComponentImport(filename: string): boolean {
+  if (!process.env.PW_COMPONENT_TESTING)
+    return false;
+  if (filename.endsWith('.tsx') && !filename.endsWith('spec.tsx') && !filename.endsWith('test.tsx'))
+    return true;
+  if (filename.endsWith('.jsx') && !filename.endsWith('spec.jsx') && !filename.endsWith('test.jsx'))
+    return true;
+  return false;
+}
+
+function componentStub(): string {
+  return `module.exports = new Proxy({}, {
+    get: (obj, prop) => prop
+  });`;
 }

@@ -80,5 +80,5 @@ const TestCaseViewLoader: React.FC<{
       }
     })();
   }, [test, report, testId]);
-  return <TestCaseView report={report.json()} test={test}></TestCaseView>;
+  return <TestCaseView projectNames={report.json().projectNames} test={test}></TestCaseView>;
 };

@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-import type { Stats } from '@playwright/test/src/reporters/html';
+import React from 'react';
 import { test, expect } from '../test/componentTest';
+import { HeaderView } from './headerView';
 
 test.use({ webpack: require.resolve('../webpack.config.js') });
+test.use({ viewport: { width: 720, height: 200 } });
 
-test('should render counters', async ({ renderComponent }) => {
-  const stats: Stats = {
+test('should render counters', async ({ render }) => {
+  const component = await render(<HeaderView stats={{
     total: 100,
     expected: 42,
     unexpected: 31,
@@ -28,8 +30,7 @@ test('should render counters', async ({ renderComponent }) => {
     skipped: 10,
     ok: false,
     duration: 100000
-  };
-  const component = await renderComponent('HeaderView', { stats });
+  }} filterText='' setFilterText={() => {}}></HeaderView>);
   await expect(component.locator('a', { hasText: 'All' }).locator('.counter')).toHaveText('100');
   await expect(component.locator('a', { hasText: 'Passed' }).locator('.counter')).toHaveText('42');
   await expect(component.locator('a', { hasText: 'Failed' }).locator('.counter')).toHaveText('31');
@@ -37,21 +38,21 @@ test('should render counters', async ({ renderComponent }) => {
   await expect(component.locator('a', { hasText: 'Skipped' }).locator('.counter')).toHaveText('10');
 });
 
-test('should toggle filters', async ({ page, renderComponent }) => {
-  const stats: Stats = {
-    total: 100,
-    expected: 42,
-    unexpected: 31,
-    flaky: 17,
-    skipped: 10,
-    ok: false,
-    duration: 100000
-  };
+test('should toggle filters', async ({ page, render: render }) => {
   const filters: string[] = [];
-  const component = await renderComponent('HeaderView', {
-    stats,
-    setFilterText: (filterText: string) => filters.push(filterText)
-  });
+  const component = await render(<HeaderView
+    stats={{
+      total: 100,
+      expected: 42,
+      unexpected: 31,
+      flaky: 17,
+      skipped: 10,
+      ok: false,
+      duration: 100000
+    }}
+    filterText=''
+    setFilterText={(filterText: string) => filters.push(filterText)}>
+  </HeaderView>);
   await component.locator('a', { hasText: 'All' }).click();
   await component.locator('a', { hasText: 'Passed' }).click();
   await expect(page).toHaveURL(/#\?q=s:passed/);

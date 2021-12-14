@@ -20,7 +20,7 @@ import * as React from 'react';
 import { TreeItem } from './treeItem';
 import { TabbedPane } from './tabbedPane';
 import { msToString } from './uiUtils';
-import { Chip } from './chip';
+import { AutoChip } from './chip';
 import { traceImage } from './images';
 import { AttachmentLink } from './links';
 import { statusIcon } from './statusIcon';
@@ -51,50 +51,50 @@ export const TestResultView: React.FC<{
   const actual = attachmentsMap.get('actual');
   const diff = attachmentsMap.get('diff');
   return <div className='test-result'>
-    {result.error && <Chip header='Errors'>
+    {result.error && <AutoChip header='Errors'>
       <ErrorMessage key='test-result-error-message' error={result.error}></ErrorMessage>
-    </Chip>}
-    {!!result.steps.length && <Chip header='Test Steps'>
+    </AutoChip>}
+    {!!result.steps.length && <AutoChip header='Test Steps'>
       {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} depth={0}></StepTreeItem>)}
-    </Chip>}
+    </AutoChip>}
 
-    {expected && actual && <Chip header='Image mismatch'>
+    {expected && actual && <AutoChip header='Image mismatch'>
       <ImageDiff actual={actual} expected={expected} diff={diff}></ImageDiff>
       <AttachmentLink key={`expected`} attachment={expected}></AttachmentLink>
       <AttachmentLink key={`actual`} attachment={actual}></AttachmentLink>
       {diff && <AttachmentLink key={`diff`} attachment={diff}></AttachmentLink>}
-    </Chip>}
+    </AutoChip>}
 
-    {!!screenshots.length && <Chip header='Screenshots'>
+    {!!screenshots.length && <AutoChip header='Screenshots'>
       {screenshots.map((a, i) => {
         return <div key={`screenshot-${i}`}>
           <img src={a.path} />
           <AttachmentLink attachment={a}></AttachmentLink>
         </div>;
       })}
-    </Chip>}
+    </AutoChip>}
 
-    {!!traces.length && <Chip header='Traces'>
+    {!!traces.length && <AutoChip header='Traces'>
       {traces.map((a, i) => <div key={`trace-${i}`}>
         <a href={`trace/index.html?trace=${new URL(a.path!, window.location.href)}`}>
           <img src={traceImage} style={{ width: 192, height: 117, marginLeft: 20 }} />
         </a>
         <AttachmentLink attachment={a}></AttachmentLink>
       </div>)}
-    </Chip>}
+    </AutoChip>}
 
-    {!!videos.length && <Chip header='Videos'>
+    {!!videos.length && <AutoChip header='Videos'>
       {videos.map((a, i) => <div key={`video-${i}`}>
         <video controls>
           <source src={a.path} type={a.contentType}/>
         </video>
         <AttachmentLink attachment={a}></AttachmentLink>
       </div>)}
-    </Chip>}
+    </AutoChip>}
 
-    {!!otherAttachments.length && <Chip header='Attachments'>
+    {!!otherAttachments.length && <AutoChip header='Attachments'>
       {otherAttachments.map((a, i) => <AttachmentLink key={`attachment-link-${i}`} attachment={a}></AttachmentLink>)}
-    </Chip>}
+    </AutoChip>}
   </div>;
 };
 

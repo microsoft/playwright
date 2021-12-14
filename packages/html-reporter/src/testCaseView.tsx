@@ -14,10 +14,10 @@
   limitations under the License.
 */
 
-import type { HTMLReport, TestCase } from '@playwright/test/src/reporters/html';
+import type { TestCase } from '@playwright/test/src/reporters/html';
 import * as React from 'react';
 import { TabbedPane } from './tabbedPane';
-import { Chip } from './chip';
+import { AutoChip } from './chip';
 import './common.css';
 import { ProjectLink } from './links';
 import { statusIcon } from './statusIcon';
@@ -25,22 +25,22 @@ import './testCaseView.css';
 import { TestResultView } from './testResultView';
 
 export const TestCaseView: React.FC<{
-  report: HTMLReport,
+  projectNames: string[],
   test: TestCase | undefined,
-}> = ({ report, test }) => {
+}> = ({ projectNames, test }) => {
   const [selectedResultIndex, setSelectedResultIndex] = React.useState(0);
 
   return <div className='test-case-column vbox'>
     {test && <div className='test-case-path'>{test.path.join(' › ')}</div>}
     {test && <div className='test-case-title'>{test?.title}</div>}
     {test && <div className='test-case-location'>{test.location.file}:{test.location.line}</div>}
-    {test && !!test.projectName && <ProjectLink report={report} projectName={test.projectName}></ProjectLink>}
-    {test && !!test.annotations.length && <Chip header='Annotations'>
+    {test && !!test.projectName && <ProjectLink projectNames={projectNames} projectName={test.projectName}></ProjectLink>}
+    {test && !!test.annotations.length && <AutoChip header='Annotations'>
       {test.annotations.map(a => <div className='test-case-annotation'>
         <span style={{ fontWeight: 'bold' }}>{a.type}</span>
         {a.description && <span>: {a.description}</span>}
       </div>)}
-    </Chip>}
+    </AutoChip>}
     {test && <TabbedPane tabs={
       test.results.map((result, index) => ({
         id: String(index),

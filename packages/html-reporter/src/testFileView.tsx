@@ -42,7 +42,7 @@ export const TestFileView: React.FC<{
       <div key={`test-${test.testId}`} className={'test-file-test test-file-test-outcome-' + test.outcome}>
         <span style={{ float: 'right' }}>{msToString(test.duration)}</span>
         {report.projectNames.length > 1 && !!test.projectName &&
-          <span style={{ float: 'right' }}><ProjectLink report={report} projectName={test.projectName}></ProjectLink></span>}
+          <span style={{ float: 'right' }}><ProjectLink projectNames={report.projectNames} projectName={test.projectName}></ProjectLink></span>}
         {statusIcon(test.outcome)}
         <Link href={`#?testId=${test.testId}`} title={[...test.path, test.title].join(' › ')}>
           {[...test.path, test.title].join(' › ')}

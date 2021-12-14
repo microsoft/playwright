@@ -185,7 +185,7 @@ export class Loader {
       testDir,
       snapshotDir,
       testIgnore: takeFirst(this._configOverrides.testIgnore, projectConfig.testIgnore, this._config.testIgnore, []),
-      testMatch: takeFirst(this._configOverrides.testMatch, projectConfig.testMatch, this._config.testMatch, '**/?(*.)@(spec|test).@(ts|js|mjs)'),
+      testMatch: takeFirst(this._configOverrides.testMatch, projectConfig.testMatch, this._config.testMatch, '**/?(*.)@(spec|test).*'),
       timeout: takeFirst(this._configOverrides.timeout, projectConfig.timeout, this._config.timeout, 10000),
       use: mergeObjects(mergeObjects(this._config.use, projectConfig.use), this._configOverrides.use),
     };

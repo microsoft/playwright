@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
+import React from 'react';
 import { test, expect } from '../test/componentTest';
+import { Chip, AutoChip } from './chip';
 
 test.use({ webpack: require.resolve('../webpack.config.js') });
+test.use({ viewport: { width: 500, height: 500 } });
 
-test('chip expand collapse', async ({ renderComponent }) => {
-  const component = await renderComponent('ChipComponent');
+test('chip expand collapse', async ({ render }) => {
+  const component = await render(<AutoChip header='title'>
+    Chip body
+  </AutoChip>);
   await expect(component.locator('text=Chip body')).toBeVisible();
   // expect(await component.screenshot()).toMatchSnapshot('expanded.png');
   await component.locator('text=Title').click();
@@ -30,18 +35,20 @@ test('chip expand collapse', async ({ renderComponent }) => {
   // expect(await component.screenshot()).toMatchSnapshot('expanded.png');
 });
 
-test('chip render long title', async ({ renderComponent }) => {
+test('chip render long title', async ({ render }) => {
   const title = 'Extremely long title. '.repeat(10);
-  const component = await renderComponent('ChipComponent', { title });
+  const component = await render(<AutoChip header={title}>
+    Chip body
+  </AutoChip>);
   await expect(component).toContainText('Extremely long title.');
   await expect(component.locator('text=Extremely long title.')).toHaveAttribute('title', title);
 });
 
-test('chip setExpanded is called', async ({ renderComponent }) => {
+test('chip setExpanded is called', async ({ render }) => {
   const expandedValues: boolean[] = [];
-  const component = await renderComponent('ChipComponentWithFunctions', {
-    setExpanded: (expanded: boolean) => expandedValues.push(expanded)
-  });
+  const component = await render(<Chip header='Title'
+    setExpanded={(expanded: boolean) => expandedValues.push(expanded)}>
+  </Chip>);
 
   await component.locator('text=Title').click();
   expect(expandedValues).toEqual([true]);
