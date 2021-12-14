@@ -119,7 +119,6 @@ Maximum time in milliseconds to wait for the connection to be established. Defau
 `30000` (30 seconds). Pass `0` to disable timeout.
 
 ## async method: BrowserType.connectOverCDP
-* langs: java, js, python
 - returns: <[Browser]>
 
 This methods attaches Playwright to an existing browser instance using the Chrome DevTools Protocol.
@@ -131,7 +130,6 @@ Connecting over the Chrome DevTools Protocol is only supported for Chromium-base
 :::
 
 ### param: BrowserType.connectOverCDP.endpointURL
-* langs: java, python, js
 - `endpointURL` <[string]>
 
 A CDP websocket endpoint or http url to connect to. For example `http://localhost:9222/` or `ws://127.0.0.1:9222/devtools/browser/387adf4c-243f-4051-a181-46798f4a46f4`.
@@ -143,13 +141,11 @@ A CDP websocket endpoint or http url to connect to. For example `http://localhos
 Deprecated, use the first argument instead. Optional.
 
 ### option: BrowserType.connectOverCDP.headers
-* langs: java, python, js
 - `headers` <[Object]<[string], [string]>>
 
 Additional HTTP headers to be sent with connect request. Optional.
 
 ### option: BrowserType.connectOverCDP.slowMo
-* langs: java, python, js
 - `slowMo` <[float]>
 
 Slows down Playwright operations by the specified amount of milliseconds. Useful so that you
@@ -162,7 +158,6 @@ can see what is going on. Defaults to 0.
 Logger sink for Playwright logging. Optional.
 
 ### option: BrowserType.connectOverCDP.timeout
-* langs: java, python, js
 - `timeout` <[float]>
 
 Maximum time in milliseconds to wait for the connection to be established. Defaults to
