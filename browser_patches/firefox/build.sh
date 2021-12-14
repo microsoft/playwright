@@ -86,9 +86,29 @@ if [[ $1 != "--juggler" ]]; then
 fi
 
 if [[ $1 == "--full" || $2 == "--full" ]]; then
-  echo "ac_add_options --enable-bootstrap" >> .mozconfig
   if [[ "$(uname)" == "Darwin" || "$(uname)" == "Linux" ]]; then
     SHELL=/bin/sh ./mach --no-interactive bootstrap --application-choice=browser
+  fi
+  if [[ "$(uname)" == "Darwin" ]]; then
+    HOMEBREW_LLVM="/opt/homebrew/opt/llvm/bin/clang";
+    if [[ ! -f "${HOMEBREW_LLVM}" || $($HOMEBREW_LLVM --version) != *"version 13"* ]]; then
+      echo "ERROR: as of Dec, 2021, building release firefox requires HomeBrew LLVM v13"
+      echo "Please run:"
+      echo
+      echo "    brew install llvm@13"
+      echo
+      exit 1
+    fi
+    echo "CC=${HOMEBREW_LLVM}" >> .mozconfig
+    echo "CXX=${HOMEBREW_LLVM}++" >> .mozconfig
+
+    # Download wasi toolchain if needed
+    if [[ ! -d "$HOME/.mozbuild/sysroot-wasm32-wasi" ]]; then
+      ./mach artifact toolchain --from-build toolchain-sysroot-wasm32-wasi
+      mv ./sysroot-wasm32-wasi ~/.mozbuild/
+    fi
+  elif [[ "$(uname)" == "Linux" ]]; then
+    echo "ac_add_options --enable-bootstrap" >> .mozconfig
   fi
   if [[ ! -z "${WIN32_REDIST_DIR}" ]]; then
     # Having this option in .mozconfig kills incremental compilation.
