@@ -32,7 +32,7 @@ assert content == "home"
 
 ```csharp
 var content = await page.TextContentAsync("nav:first-child");
-Assert.Equals("home", content);
+Assert.AreEqual("home", content);
 ```
 
 ### API reference
@@ -63,7 +63,7 @@ assert text == "value"
 
 ```csharp
 var content = await page.InnerTextAsync(".selected");
-Assert.Equals("value", content);
+Assert.AreEqual("value", content);
 ```
 
 ### API reference
@@ -94,7 +94,7 @@ assert alt == "Text"
 
 ```csharp
 var value = await page.GetAttributeAsync("input", "alt");
-Assert.Equals("Text", value);
+Assert.AreEqual("Text", value);
 ```
 
 ## Checkbox state
@@ -152,7 +152,7 @@ assert content == "home"
 
 ```csharp
 var content = await page.locator("nav:first-child").TextContentAsync();
-Assert.Equals("home", content);
+Assert.AreEqual("home", content);
 ```
 
 ### API reference
@@ -183,7 +183,7 @@ assert html == "<p>Result</p>"
 
 ```csharp
 var html = await page.InnerHTMLAsync("div.result");
-Assert.Equals("<p>Result</p>", html);
+Assert.AreEqual("<p>Result</p>", html);
 ```
 
 ### API reference
@@ -337,13 +337,13 @@ Assert.NotNull(userId);
 
 // Assert value for input element
 var value = await page.Locator("#search").InputValueAsync();
-Assert.Equals("query", value);
+Assert.AreEqual("query", value);
 
 // Assert computed style
 var fontSize = await page.Locator("div").EvalOnSelectorAsync<string>("el => window.getComputedStyle(el).fontSize");
-Assert.Equals("16px", fontSize);
+Assert.AreEqual("16px", fontSize);
 
 // Assert list length
 var length = await page.Locator("li.selected").CountAsync();
-Assert.Equals(3, length);
+Assert.AreEqual(3, length);
 ```

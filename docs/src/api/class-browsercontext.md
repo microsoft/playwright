@@ -591,7 +591,7 @@ await page.SetContentAsync("<script>\n" +
 await page.ClickAsync("div");
 // Note: it makes sense to await the result here, because otherwise, the context
 //  gets closed and the binding function will throw an exception.
-Assert.Equal("Click me", await result.Task);
+Assert.AreEqual("Click me", await result.Task);
 ```
 
 ### param: BrowserContext.exposeBinding.name

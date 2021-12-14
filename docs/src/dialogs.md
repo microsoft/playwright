@@ -124,7 +124,7 @@ page.close(run_before_unload=True)
 ```csharp
 page.Dialog += (_, dialog) =>
 {
-    Assert.Equal("beforeunload", dialog.Type);
+    Assert.AreEqual("beforeunload", dialog.Type);
     dialog.DismissAsync();
 };
 await page.CloseAsync(runBeforeUnload: true);

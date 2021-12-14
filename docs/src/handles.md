@@ -118,7 +118,7 @@ var elementHandle = jsHandle as ElementHandle;
 
 // Assert bounding box for the element
 var boundingBox = await elementHandle.BoundingBoxAsync();
-Assert.Equal(100, boundingBox.Width);
+Assert.AreEqual(100, boundingBox.Width);
 
 // Assert attribute for the element
 var classNames = await elementHandle.GetAttributeAsync("class");

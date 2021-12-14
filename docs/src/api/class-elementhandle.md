@@ -377,8 +377,8 @@ assert tweet_handle.eval_on_selector(".retweets", "node => node.innerText") = "1
 
 ```csharp
 var tweetHandle = await page.QuerySelectorAsync(".tweet");
-Assert.Equals("100", await tweetHandle.EvalOnSelectorAsync(".like", "node => node.innerText"));
-Assert.Equals("10", await tweetHandle.EvalOnSelectorAsync(".retweets", "node => node.innerText"));
+Assert.AreEqual("100", await tweetHandle.EvalOnSelectorAsync(".like", "node => node.innerText"));
+Assert.AreEqual("10", await tweetHandle.EvalOnSelectorAsync(".retweets", "node => node.innerText"));
 ```
 
 ### param: ElementHandle.evalOnSelector.selector = %%-query-selector-%%
@@ -436,7 +436,7 @@ assert feed_handle.eval_on_selector_all(".tweet", "nodes => nodes.map(n => n.inn
 
 ```csharp
 var feedHandle = await page.QuerySelectorAsync(".feed");
-Assert.Equals(new [] { "Hello!", "Hi!" }, await feedHandle.EvalOnSelectorAllAsync<string[]>(".tweet", "nodes => nodes.map(n => n.innerText)"));
+Assert.AreEqual(new [] { "Hello!", "Hi!" }, await feedHandle.EvalOnSelectorAllAsync<string[]>(".tweet", "nodes => nodes.map(n => n.innerText)"));
 ```
 
 ### param: ElementHandle.evalOnSelectorAll.selector = %%-query-selector-%%
