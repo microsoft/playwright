@@ -51,10 +51,19 @@ else
   exit 1;
 fi
 
+if [[ $1 == "--linux-arm64" || $2 == "--linux-arm64" ]]; then
+  echo "ac_add_options --target=aarch64-linux-gnu" >> .mozconfig
+fi
+
 OBJ_FOLDER="obj-build-playwright"
 echo "mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/${OBJ_FOLDER}" >> .mozconfig
 echo "ac_add_options --disable-crashreporter" >> .mozconfig
 echo "ac_add_options --disable-backgroundtasks" >> .mozconfig
+
+if [[ -n $FF_DEBUG_BUILD ]]; then
+  echo "ac_add_options --enable-debug" >> .mozconfig
+  echo "ac_add_options --enable-debug-symbols" >> .mozconfig
+fi
 
 if [[ "$(uname)" == MINGW* || "$(uname)" == "Darwin" ]]; then
   # This options is only available on win and mac.

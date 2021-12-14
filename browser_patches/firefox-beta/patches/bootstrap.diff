@@ -290,7 +290,7 @@ index 0be8f84cd6c818e13a8d7049a3e8db7010a10a3c..6766416dc62715549f8f04ef30a30f6b
  
    bool CanSet(FieldIndex<IDX_SuspendMediaWhenInactive>, bool, ContentParent*) {
 diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
-index 27d174041eaa2fe840d02b27b7cdfb5e6c38bc50..e65e37c17f39f6ada25c6dcac6ae2b9ee667505e 100644
+index 27d174041eaa2fe840d02b27b7cdfb5e6c38bc50..4b9c9d88d1eeb296cd0784e7c32d7e4b311b1d58 100644
 --- a/docshell/base/nsDocShell.cpp
 +++ b/docshell/base/nsDocShell.cpp
 @@ -15,6 +15,12 @@
@@ -338,7 +338,7 @@ index 27d174041eaa2fe840d02b27b7cdfb5e6c38bc50..e65e37c17f39f6ada25c6dcac6ae2b9e
  #include "nsNetCID.h"
  #include "nsNetUtil.h"
  #include "nsObjectLoadingContent.h"
-@@ -368,6 +378,14 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
+@@ -368,6 +378,13 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
        mAllowDNSPrefetch(true),
        mAllowWindowControl(true),
        mCSSErrorReportingEnabled(false),
@@ -347,13 +347,12 @@ index 27d174041eaa2fe840d02b27b7cdfb5e6c38bc50..e65e37c17f39f6ada25c6dcac6ae2b9e
 +      mBypassCSPEnabled(false),
 +      mForceActiveState(false),
 +      mOnlineOverride(nsIDocShell::ONLINE_OVERRIDE_NONE),
-+      mColorSchemeOverride(COLOR_SCHEME_OVERRIDE_NONE),
 +      mReducedMotionOverride(REDUCED_MOTION_OVERRIDE_NONE),
 +      mForcedColorsOverride(FORCED_COLORS_OVERRIDE_NO_OVERRIDE),
        mAllowAuth(mItemType == typeContent),
        mAllowKeywordFixup(false),
        mDisableMetaRefreshWhenInactive(false),
-@@ -3120,6 +3138,239 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
+@@ -3120,6 +3137,221 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
    return NS_OK;
  }
  
@@ -535,24 +534,6 @@ index 27d174041eaa2fe840d02b27b7cdfb5e6c38bc50..e65e37c17f39f6ada25c6dcac6ae2b9e
 +}
 +
 +NS_IMETHODIMP
-+nsDocShell::GetColorSchemeOverride(ColorSchemeOverride* aColorSchemeOverride) {
-+  *aColorSchemeOverride = GetRootDocShell()->mColorSchemeOverride;
-+  return NS_OK;
-+}
-+
-+NS_IMETHODIMP
-+nsDocShell::SetColorSchemeOverride(ColorSchemeOverride aColorSchemeOverride) {
-+  mColorSchemeOverride = aColorSchemeOverride;
-+  RefPtr<nsPresContext> presContext = GetPresContext();
-+  if (presContext) {
-+    presContext->MediaFeatureValuesChanged(
-+        {MediaFeatureChangeReason::SystemMetricsChange},
-+        MediaFeatureChangePropagation::JustThisDocument);
-+  }
-+  return NS_OK;
-+}
-+
-+NS_IMETHODIMP
 +nsDocShell::GetReducedMotionOverride(ReducedMotionOverride* aReducedMotionOverride) {
 +  *aReducedMotionOverride = GetRootDocShell()->mReducedMotionOverride;
 +  return NS_OK;
@@ -593,7 +574,7 @@ index 27d174041eaa2fe840d02b27b7cdfb5e6c38bc50..e65e37c17f39f6ada25c6dcac6ae2b9e
  NS_IMETHODIMP
  nsDocShell::GetIsNavigating(bool* aOut) {
    *aOut = mIsNavigating;
-@@ -4755,7 +5006,7 @@ nsDocShell::GetVisibility(bool* aVisibility) {
+@@ -4755,7 +4987,7 @@ nsDocShell::GetVisibility(bool* aVisibility) {
  }
  
  void nsDocShell::ActivenessMaybeChanged() {
@@ -602,7 +583,7 @@ index 27d174041eaa2fe840d02b27b7cdfb5e6c38bc50..e65e37c17f39f6ada25c6dcac6ae2b9e
    if (RefPtr<PresShell> presShell = GetPresShell()) {
      presShell->ActivenessMaybeChanged();
    }
-@@ -8504,6 +8755,12 @@ nsresult nsDocShell::PerformRetargeting(nsDocShellLoadState* aLoadState) {
+@@ -8504,6 +8736,12 @@ nsresult nsDocShell::PerformRetargeting(nsDocShellLoadState* aLoadState) {
                       true,  // aForceNoOpener
                       getter_AddRefs(newBC));
        MOZ_ASSERT(!newBC);
@@ -615,7 +596,7 @@ index 27d174041eaa2fe840d02b27b7cdfb5e6c38bc50..e65e37c17f39f6ada25c6dcac6ae2b9e
        return rv;
      }
  
-@@ -12578,6 +12835,9 @@ class OnLinkClickEvent : public Runnable {
+@@ -12578,6 +12816,9 @@ class OnLinkClickEvent : public Runnable {
        mHandler->OnLinkClickSync(mContent, mLoadState, mNoOpenerImplied,
                                  mTriggeringPrincipal);
      }
@@ -625,7 +606,7 @@ index 27d174041eaa2fe840d02b27b7cdfb5e6c38bc50..e65e37c17f39f6ada25c6dcac6ae2b9e
      return NS_OK;
    }
  
-@@ -12656,6 +12916,8 @@ nsresult nsDocShell::OnLinkClick(
+@@ -12656,6 +12897,8 @@ nsresult nsDocShell::OnLinkClick(
    nsCOMPtr<nsIRunnable> ev =
        new OnLinkClickEvent(this, aContent, loadState, noOpenerImplied,
                             aIsTrusted, aTriggeringPrincipal);
@@ -635,7 +616,7 @@ index 27d174041eaa2fe840d02b27b7cdfb5e6c38bc50..e65e37c17f39f6ada25c6dcac6ae2b9e
  }
  
 diff --git a/docshell/base/nsDocShell.h b/docshell/base/nsDocShell.h
-index 81ab6b1295424de657b3b1ec1b49ab1d2e821fd0..26f2e3aa9884832afbbe1a0e95bbd76f66a4c569 100644
+index 81ab6b1295424de657b3b1ec1b49ab1d2e821fd0..c96df5597f4344ca0630edab277ea2288fd61567 100644
 --- a/docshell/base/nsDocShell.h
 +++ b/docshell/base/nsDocShell.h
 @@ -16,6 +16,7 @@
@@ -679,7 +660,7 @@ index 81ab6b1295424de657b3b1ec1b49ab1d2e821fd0..26f2e3aa9884832afbbe1a0e95bbd76f
    // Handles retrieval of subframe session history for nsDocShell::LoadURI. If a
    // load is requested in a subframe of the current DocShell, the subframe
    // loadType may need to reflect the loadType of the parent document, or in
-@@ -1282,6 +1295,17 @@ class nsDocShell final : public nsDocLoader,
+@@ -1282,6 +1295,16 @@ class nsDocShell final : public nsDocLoader,
    bool mAllowDNSPrefetch : 1;
    bool mAllowWindowControl : 1;
    bool mCSSErrorReportingEnabled : 1;
@@ -690,7 +671,6 @@ index 81ab6b1295424de657b3b1ec1b49ab1d2e821fd0..26f2e3aa9884832afbbe1a0e95bbd76f
 +  nsString mLanguageOverride;
 +  RefPtr<nsGeolocationService> mGeolocationServiceOverride;
 +  OnlineOverride mOnlineOverride;
-+  ColorSchemeOverride mColorSchemeOverride;
 +  ReducedMotionOverride mReducedMotionOverride;
 +  ForcedColorsOverride mForcedColorsOverride;
 +
@@ -698,7 +678,7 @@ index 81ab6b1295424de657b3b1ec1b49ab1d2e821fd0..26f2e3aa9884832afbbe1a0e95bbd76f
    bool mAllowKeywordFixup : 1;
    bool mDisableMetaRefreshWhenInactive : 1;
 diff --git a/docshell/base/nsIDocShell.idl b/docshell/base/nsIDocShell.idl
-index cde0c30784c28f4bef85e0100fd374a1823f2896..4a1f8bc872d1ab8e13143763d65530037ab149c3 100644
+index cde0c30784c28f4bef85e0100fd374a1823f2896..3d52eb1f3e511b48607de1baad0719e10b6c4460 100644
 --- a/docshell/base/nsIDocShell.idl
 +++ b/docshell/base/nsIDocShell.idl
 @@ -44,6 +44,7 @@ interface nsIURI;
@@ -709,7 +689,7 @@ index cde0c30784c28f4bef85e0100fd374a1823f2896..4a1f8bc872d1ab8e13143763d6553003
  interface nsIEditor;
  interface nsIEditingSession;
  interface nsIInputStream;
-@@ -805,6 +806,49 @@ interface nsIDocShell : nsIDocShellTreeItem
+@@ -805,6 +806,41 @@ interface nsIDocShell : nsIDocShellTreeItem
     */
    void synchronizeLayoutHistoryState();
  
@@ -732,14 +712,6 @@ index cde0c30784c28f4bef85e0100fd374a1823f2896..4a1f8bc872d1ab8e13143763d6553003
 +  };
 +  [infallible] attribute nsIDocShell_OnlineOverride onlineOverride;
 +
-+  cenum ColorSchemeOverride : 8 {
-+    COLOR_SCHEME_OVERRIDE_LIGHT,
-+    COLOR_SCHEME_OVERRIDE_DARK,
-+    COLOR_SCHEME_OVERRIDE_NO_PREFERENCE,
-+    COLOR_SCHEME_OVERRIDE_NONE, /* This clears the override. */
-+  };
-+  [infallible] attribute nsIDocShell_ColorSchemeOverride colorSchemeOverride;
-+
 +  cenum ReducedMotionOverride : 8 {
 +    REDUCED_MOTION_OVERRIDE_REDUCE,
 +    REDUCED_MOTION_OVERRIDE_NO_PREFERENCE,
@@ -760,7 +732,7 @@ index cde0c30784c28f4bef85e0100fd374a1823f2896..4a1f8bc872d1ab8e13143763d6553003
     * This attempts to save any applicable layout history state (like
     * scroll position) in the nsISHEntry. This is normally done
 diff --git a/dom/base/Document.cpp b/dom/base/Document.cpp
-index 3718544716cdc161ebe8fdde5ec3c9fd3ed4c688..a5e12c60cc83420b2d8eb98ef596d97dad42656a 100644
+index 3718544716cdc161ebe8fdde5ec3c9fd3ed4c688..d00de6349f2e851a2df0b5f4570767da3d7f3a8a 100644
 --- a/dom/base/Document.cpp
 +++ b/dom/base/Document.cpp
 @@ -3526,6 +3526,9 @@ void Document::SendToConsole(nsCOMArray<nsISecurityConsoleMessage>& aMessages) {
@@ -796,28 +768,7 @@ index 3718544716cdc161ebe8fdde5ec3c9fd3ed4c688..a5e12c60cc83420b2d8eb98ef596d97d
    if (!fm->IsInActiveWindow(bc)) {
      return false;
    }
-@@ -17626,6 +17638,20 @@ ColorScheme Document::DefaultColorScheme() const {
- }
- 
- ColorScheme Document::PreferredColorScheme(IgnoreRFP aIgnoreRFP) const {
-+  auto* docShell = static_cast<nsDocShell*>(GetDocShell());
-+  nsIDocShell::ColorSchemeOverride colorScheme;
-+  if (docShell && docShell->GetColorSchemeOverride(&colorScheme) == NS_OK &&
-+      colorScheme != nsIDocShell::COLOR_SCHEME_OVERRIDE_NONE) {
-+    switch (colorScheme) {
-+      case nsIDocShell::COLOR_SCHEME_OVERRIDE_LIGHT:
-+        return ColorScheme::Light;
-+      case nsIDocShell::COLOR_SCHEME_OVERRIDE_DARK:
-+        return ColorScheme::Dark;
-+      case nsIDocShell::COLOR_SCHEME_OVERRIDE_NONE:
-+      case nsIDocShell::COLOR_SCHEME_OVERRIDE_NO_PREFERENCE:
-+        break;
-+    };
-+  }
-   if (aIgnoreRFP == IgnoreRFP::No &&
-       nsContentUtils::ShouldResistFingerprinting(this)) {
-     return ColorScheme::Light;
-@@ -17646,6 +17672,71 @@ ColorScheme Document::PreferredColorScheme(IgnoreRFP aIgnoreRFP) const {
+@@ -17646,6 +17658,71 @@ ColorScheme Document::PreferredColorScheme(IgnoreRFP aIgnoreRFP) const {
    return LookAndFeel::PreferredColorSchemeForContent();
  }
  
@@ -2668,7 +2619,7 @@ index 2b11df66d9445080d4d8a19a915b3e00285c5d32..caef1b65bbcff899f45c3e3cddfe76e8
        }
        if (aEvent.IsMeta()) {
 diff --git a/widget/headless/HeadlessCompositorWidget.cpp b/widget/headless/HeadlessCompositorWidget.cpp
-index b31a969b7ab3d0fc80912b110d91dfdf3e5991f4..beb2343fe704e0f700693fd13280689caca0e4ca 100644
+index b31a969b7ab3d0fc80912b110d91dfdf3e5991f4..52aed4f9fb51f3f58a440d7e57eaccd6dfcbc2ab 100644
 --- a/widget/headless/HeadlessCompositorWidget.cpp
 +++ b/widget/headless/HeadlessCompositorWidget.cpp
 @@ -3,6 +3,7 @@
@@ -2679,24 +2630,24 @@ index b31a969b7ab3d0fc80912b110d91dfdf3e5991f4..beb2343fe704e0f700693fd13280689c
  #include "mozilla/widget/PlatformWidgetTypes.h"
  #include "HeadlessCompositorWidget.h"
  #include "VsyncDispatcher.h"
-@@ -17,6 +18,33 @@ HeadlessCompositorWidget::HeadlessCompositorWidget(
+@@ -13,10 +14,32 @@ namespace widget {
+ HeadlessCompositorWidget::HeadlessCompositorWidget(
+     const HeadlessCompositorWidgetInitData& aInitData,
+     const layers::CompositorOptions& aOptions, HeadlessWidget* aWindow)
+-    : CompositorWidget(aOptions), mWidget(aWindow) {
++    : CompositorWidget(aOptions), mWidget(aWindow), mMon("snapshotListener") {
    mClientSize = aInitData.InitialClientSize();
  }
  
 +void HeadlessCompositorWidget::SetSnapshotListener(HeadlessWidget::SnapshotListener&& listener) {
 +  MOZ_ASSERT(NS_IsMainThread());
 +
-+  layers::CompositorThread()->Dispatch(NewRunnableMethod<HeadlessWidget::SnapshotListener&&>(
-+      "HeadlessCompositorWidget::SetSnapshotListener", this,
-+      &HeadlessCompositorWidget::SetSnapshotListenerOnCompositorThread,
-+      std::move(listener)));
-+}
-+
-+void HeadlessCompositorWidget::SetSnapshotListenerOnCompositorThread(
-+    HeadlessWidget::SnapshotListener&& listener) {
-+  MOZ_ASSERT(NS_IsInCompositorThread());
++  ReentrantMonitorAutoEnter lock(mMon);
 +  mSnapshotListener = std::move(listener);
-+  PeriodicSnapshot();
++  layers::CompositorThread()->Dispatch(NewRunnableMethod(
++      "HeadlessCompositorWidget::PeriodicSnapshot", this,
++      &HeadlessCompositorWidget::PeriodicSnapshot
++  ));
 +}
 +
 +already_AddRefed<gfx::DrawTarget> HeadlessCompositorWidget::StartRemoteDrawingInRegion(
@@ -2713,7 +2664,7 @@ index b31a969b7ab3d0fc80912b110d91dfdf3e5991f4..beb2343fe704e0f700693fd13280689c
  void HeadlessCompositorWidget::ObserveVsync(VsyncObserver* aObserver) {
    if (RefPtr<CompositorVsyncDispatcher> cvd =
            mWidget->GetCompositorVsyncDispatcher()) {
-@@ -29,6 +57,58 @@ nsIWidget* HeadlessCompositorWidget::RealWidget() { return mWidget; }
+@@ -29,6 +52,59 @@ nsIWidget* HeadlessCompositorWidget::RealWidget() { return mWidget; }
  void HeadlessCompositorWidget::NotifyClientSizeChanged(
      const LayoutDeviceIntSize& aClientSize) {
    mClientSize = aClientSize;
@@ -2743,6 +2694,7 @@ index b31a969b7ab3d0fc80912b110d91dfdf3e5991f4..beb2343fe704e0f700693fd13280689c
 +}
 +
 +void HeadlessCompositorWidget::PeriodicSnapshot() {
++  ReentrantMonitorAutoEnter lock(mMon);
 +  if (!mSnapshotListener)
 +    return;
 +
@@ -2773,10 +2725,18 @@ index b31a969b7ab3d0fc80912b110d91dfdf3e5991f4..beb2343fe704e0f700693fd13280689c
  
  LayoutDeviceIntSize HeadlessCompositorWidget::GetClientSize() {
 diff --git a/widget/headless/HeadlessCompositorWidget.h b/widget/headless/HeadlessCompositorWidget.h
-index 7f91de9e67d7ffa02de3eef1d760e5cfd05e7ad6..684293dab3e81e8a60d245f979f2051df395948f 100644
+index 7f91de9e67d7ffa02de3eef1d760e5cfd05e7ad6..753b8902026626e8f0a190ea3130ba5e65c24835 100644
 --- a/widget/headless/HeadlessCompositorWidget.h
 +++ b/widget/headless/HeadlessCompositorWidget.h
-@@ -23,8 +23,12 @@ class HeadlessCompositorWidget final : public CompositorWidget,
+@@ -6,6 +6,7 @@
+ #ifndef widget_headless_HeadlessCompositorWidget_h
+ #define widget_headless_HeadlessCompositorWidget_h
+ 
++#include "mozilla/ReentrantMonitor.h"
+ #include "mozilla/widget/CompositorWidget.h"
+ 
+ #include "HeadlessWidget.h"
+@@ -23,8 +24,12 @@ class HeadlessCompositorWidget final : public CompositorWidget,
                             HeadlessWidget* aWindow);
  
    void NotifyClientSizeChanged(const LayoutDeviceIntSize& aClientSize);
@@ -2789,17 +2749,16 @@ index 7f91de9e67d7ffa02de3eef1d760e5cfd05e7ad6..684293dab3e81e8a60d245f979f2051d
  
    uintptr_t GetWidgetKey() override;
  
-@@ -42,9 +46,18 @@ class HeadlessCompositorWidget final : public CompositorWidget,
+@@ -42,9 +47,17 @@ class HeadlessCompositorWidget final : public CompositorWidget,
    }
  
   private:
-+  void SetSnapshotListenerOnCompositorThread(
-+      HeadlessWidget::SnapshotListener&& listener);
 +  void UpdateDrawTarget(const LayoutDeviceIntSize& aClientSize);
 +  void PeriodicSnapshot();
 +  void TakeSnapshot();
 +
    HeadlessWidget* mWidget;
++  mozilla::ReentrantMonitor mMon;
  
    LayoutDeviceIntSize mClientSize;
 +
