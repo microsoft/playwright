@@ -77,7 +77,7 @@ assert tweet_handle.evaluate("node => node.innerText") == "10 retweets"
 
 ```csharp
 var tweetHandle = await page.QuerySelectorAsync(".tweet .retweets");
-Assert.Equals("10 retweets", await tweetHandle.EvaluateAsync("node => node.innerText"));
+Assert.AreEqual("10 retweets", await tweetHandle.EvaluateAsync("node => node.innerText"));
 ```
 
 ### param: JSHandle.evaluate.expression = %%-evaluate-expression-%%

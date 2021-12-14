@@ -288,7 +288,7 @@ assert tweets.evaluate("node => node.innerText") == "10 retweets"
 
 ```csharp
 var tweets = page.Locator(".tweet .retweets");
-Assert.Equals("10 retweets", await tweets.EvaluateAsync("node => node.innerText"));
+Assert.AreEqual("10 retweets", await tweets.EvaluateAsync("node => node.innerText"));
 ```
 
 ### param: Locator.evaluate.expression = %%-evaluate-expression-%%
