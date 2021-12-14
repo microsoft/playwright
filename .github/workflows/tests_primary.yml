@@ -76,3 +76,21 @@ jobs:
     - run: xvfb-run npm run ttest
       if: matrix.os == 'ubuntu-latest'
 
+  test_html_report:
+    name: HTML Report
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: 12
+    - run: npm i -g npm@8
+    - run: npm ci
+      env:
+        DEBUG: pw:install
+    - run: npm run build
+    - run: npx playwright install --with-deps
+    - run: npm run htest
+      if: matrix.os != 'ubuntu-latest'
+    - run: xvfb-run npm run htest
+      if: matrix.os == 'ubuntu-latest'

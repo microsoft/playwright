@@ -25,6 +25,7 @@ import { LoadedReport } from './loadedReport';
 import './reportView.css';
 import { TestCaseView } from './testCaseView';
 import { TestFilesView } from './testFilesView';
+import './theme.css';
 
 declare global {
   interface Window {
