@@ -16,7 +16,9 @@
 
 import type { Stats } from '@playwright/test/src/reporters/html';
 import * as React from 'react';
+import './colors.css';
 import './common.css';
+import './headerView.css';
 import * as icons from './icons';
 import { Link, navigate } from './links';
 import { statusIcon } from './statusIcon';
@@ -36,7 +38,7 @@ export const HeaderView: React.FC<{
   });
 
   return <div className='pt-3'>
-    <div className='status-container ml-2 pl-2 d-flex'>
+    <div className='header-view-status-container ml-2 pl-2 d-flex'>
       <StatsNavView stats={stats}></StatsNavView>
     </div>
     <form className='subnav-search' onSubmit={

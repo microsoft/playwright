@@ -14,27 +14,9 @@
   limitations under the License.
 */
 
-html, body {
-  width: 100%;
-  height: 100%;
-  padding: 0;
-  margin: 0;
-  overscroll-behavior-x: none;
-}
-
-body {
-  overflow: auto;
-  max-width: 1024px;
-  margin: 0 auto;
-  width: 100%;
-}
-
-.test-file-test:not(:first-child) {
-  border-top: 1px solid var(--color-border-default);
-}
-
-@media only screen and (max-width: 600px) {
-  .report {
-    padding: 0 !important;
-  }
+#root {
+  color: var(--color-fg-default);
+  font-size: 14px;
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
+  -webkit-font-smoothing: antialiased;
 }

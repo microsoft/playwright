@@ -16,6 +16,8 @@
 
 import * as React from 'react';
 import './chip.css';
+import './colors.css';
+import './common.css';
 import * as icons from './icons';
 
 export const Chip: React.FunctionComponent<{
@@ -26,7 +28,10 @@ export const Chip: React.FunctionComponent<{
   children?: any,
 }> = ({ header, expanded, setExpanded, children, noInsets }) => {
   return <div className='chip'>
-    <div className={'chip-header' + (setExpanded ? ' expanded-' + expanded : '')} onClick={() => setExpanded?.(!expanded)}>
+    <div
+      className={'chip-header' + (setExpanded ? ' expanded-' + expanded : '')}
+      onClick={() => setExpanded?.(!expanded)}
+      title={typeof header === 'string' ? header : undefined}>
       {setExpanded && !!expanded && icons.downArrow()}
       {setExpanded && !expanded && icons.rightArrow()}
       {header}
