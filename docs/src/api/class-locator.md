@@ -541,6 +541,7 @@ Returns locator to the last matching element.
 The method finds an element matching the specified selector in the `Locator`'s subtree.
 
 ### param: Locator.locator.selector = %%-find-selector-%%
+### option: Locator.locator.-inline- = %%-locator-options-list-%%
 
 ## method: Locator.nth
 - returns: <[Locator]>
@@ -908,15 +909,3 @@ orderSent.WaitForAsync();
 
 ### option: Locator.waitFor.state = %%-wait-for-selector-state-%%
 ### option: Locator.waitFor.timeout = %%-input-timeout-%%
-
-## method: Locator.withText
-- returns: <[Locator]>
-
-Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example, `"Playwright"`
-matches `<article><div>Playwright</div></article>`.
-
-
-### param: Locator.withText.text
-- `text` <[string]|[RegExp]>
-
-Text to filter by as a string or as a regular expression.

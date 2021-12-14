@@ -280,8 +280,8 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return await this._channel.fill({ selector, value, ...options });
   }
 
-  locator(selector: string): Locator {
-    return new Locator(this, selector);
+  locator(selector: string, options?: { hasText?: string | RegExp }): Locator {
+    return new Locator(this, selector, options);
   }
 
   frameLocator(selector: string): FrameLocator {

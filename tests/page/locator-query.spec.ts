@@ -62,30 +62,30 @@ it('should throw on due to strictness 2', async ({ page }) => {
 
 it('should filter by text', async ({ page }) => {
   await page.setContent(`<div>Foobar</div><div>Bar</div>`);
-  await expect(page.locator('div').withText('Foo')).toHaveText('Foobar');
+  await expect(page.locator('div', { hasText: 'Foo' })).toHaveText('Foobar');
 });
 
 it('should filter by text 2', async ({ page }) => {
   await page.setContent(`<div>foo <span>hello world</span> bar</div>`);
-  await expect(page.locator('div').withText('hello world')).toHaveText('foo hello world bar');
+  await expect(page.locator('div', { hasText: 'hello world' })).toHaveText('foo hello world bar');
 });
 
 it('should filter by regex', async ({ page }) => {
   await page.setContent(`<div>Foobar</div><div>Bar</div>`);
-  await expect(page.locator('div').withText(/Foo.*/)).toHaveText('Foobar');
+  await expect(page.locator('div', { hasText: /Foo.*/ })).toHaveText('Foobar');
 });
 
 it('should filter by text with quotes', async ({ page }) => {
   await page.setContent(`<div>Hello "world"</div><div>Hello world</div>`);
-  await expect(page.locator('div').withText('Hello "world"')).toHaveText('Hello "world"');
+  await expect(page.locator('div', { hasText: 'Hello "world"' })).toHaveText('Hello "world"');
 });
 
 it('should filter by regex with quotes', async ({ page }) => {
   await page.setContent(`<div>Hello "world"</div><div>Hello world</div>`);
-  await expect(page.locator('div').withText(/Hello "world"/)).toHaveText('Hello "world"');
+  await expect(page.locator('div', { hasText: /Hello "world"/ })).toHaveText('Hello "world"');
 });
 
 it('should filter by regex and regexp flags', async ({ page }) => {
   await page.setContent(`<div>Hello "world"</div><div>Hello world</div>`);
-  await expect(page.locator('div').withText(/hElLo "world"/i)).toHaveText('Hello "world"');
+  await expect(page.locator('div', { hasText: /hElLo "world"/i })).toHaveText('Hello "world"');
 });

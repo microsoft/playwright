@@ -48,12 +48,12 @@ it('should support playwright.selector', async ({ page }) => {
 
 it('should support playwright.locator.value', async ({ page }) => {
   await page.setContent('<div>Hello<div>');
-  const handle = await page.evaluateHandle(`playwright.locator('div').withText('Hello').element`);
+  const handle = await page.evaluateHandle(`playwright.locator('div', { hasText: 'Hello' }).element`);
   expect(await handle.evaluate<string, HTMLDivElement>((node: HTMLDivElement) => node.nodeName)).toBe('DIV');
 });
 
 it('should support playwright.locator.values', async ({ page }) => {
-  await page.setContent('<div>Hello<div>');
-  const length = await page.evaluate(`playwright.locator('div').withText('Hello').elements.length`);
+  await page.setContent('<div>Hello<div>Bar</div></div>');
+  const length = await page.evaluate(`playwright.locator('div', { hasText: 'Hello' }).elements.length`);
   expect(length).toBe(1);
 });

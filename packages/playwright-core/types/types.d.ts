@@ -2556,10 +2556,18 @@ export interface Page {
    * element immediately before performing an action, so a series of actions on the same locator can in fact be performed on
    * different DOM elements. That would happen if the DOM structure between those actions has changed.
    *
-   * Shortcut for main frame's [frame.locator(selector)](https://playwright.dev/docs/api/class-frame#frame-locator).
+   * Shortcut for main frame's
+   * [frame.locator(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-locator).
    * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param options
    */
-  locator(selector: string): Locator;
+  locator(selector: string, options?: {
+    /**
+     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example,
+     * `"Playwright"` matches `<article><div>Playwright</div></article>`.
+     */
+    hasText?: string|RegExp;
+  }): Locator;
 
   /**
    * The page's main frame. Page is guaranteed to have a main frame which persists during navigations.
@@ -5324,8 +5332,15 @@ export interface Frame {
    * element immediately before performing an action, so a series of actions on the same locator can in fact be performed on
    * different DOM elements. That would happen if the DOM structure between those actions has changed.
    * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param options
    */
-  locator(selector: string): Locator;
+  locator(selector: string, options?: {
+    /**
+     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example,
+     * `"Playwright"` matches `<article><div>Playwright</div></article>`.
+     */
+    hasText?: string|RegExp;
+  }): Locator;
 
   /**
    * Returns frame's name attribute as specified in the tag.
@@ -8469,7 +8484,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 /**
  * Locators are the central piece of Playwright's auto-waiting and retry-ability. In a nutshell, locators represent a way
  * to find element(s) on the page at any moment. Locator can be created with the
- * [page.locator(selector)](https://playwright.dev/docs/api/class-page#page-locator) method.
+ * [page.locator(selector[, options])](https://playwright.dev/docs/api/class-page#page-locator) method.
  *
  * [Learn more about locators](https://playwright.dev/docs/locators).
  */
@@ -9230,8 +9245,15 @@ export interface Locator {
   /**
    * The method finds an element matching the specified selector in the `Locator`'s subtree.
    * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param options
    */
-  locator(selector: string): Locator;
+  locator(selector: string, options?: {
+    /**
+     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example,
+     * `"Playwright"` matches `<article><div>Playwright</div></article>`.
+     */
+    hasText?: string|RegExp;
+  }): Locator;
 
   /**
    * Returns locator to the n-th matching element.
@@ -9753,14 +9775,7 @@ export interface Locator {
      * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
      */
     timeout?: number;
-  }): Promise<void>;
-
-  /**
-   * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example,
-   * `"Playwright"` matches `<article><div>Playwright</div></article>`.
-   * @param text Text to filter by as a string or as a regular expression.
-   */
-  withText(text: string|RegExp): Locator;}
+  }): Promise<void>;}
 
 /**
  * BrowserType provides methods to launch a specific browser instance or connect to an existing one. The following is a
@@ -13639,8 +13654,15 @@ export interface FrameLocator {
   /**
    * The method finds an element matching the specified selector in the FrameLocator's subtree.
    * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param options
    */
-  locator(selector: string): Locator;
+  locator(selector: string, options?: {
+    /**
+     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example,
+     * `"Playwright"` matches `<article><div>Playwright</div></article>`.
+     */
+    hasText?: string|RegExp;
+  }): Locator;
 
   /**
    * Returns locator to the n-th matching frame.

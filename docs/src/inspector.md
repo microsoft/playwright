@@ -188,7 +188,7 @@ Reveal element in the Elements panel (if DevTools of the respective browser supp
 Query Playwright element using the actual Playwright query engine, for example:
 
 ```js
-> playwright.locator('.auth-form').withText('Log in');
+> playwright.locator('.auth-form', { hasText: 'Log in' });
 
 > Locator ()
 >   - element: button

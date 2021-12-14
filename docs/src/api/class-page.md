@@ -2113,6 +2113,7 @@ Locator is resolved to the element immediately before performing an action, so a
 Shortcut for main frame's [`method: Frame.locator`].
 
 ### param: Page.locator.selector = %%-find-selector-%%
+### option: Page.locator.-inline- = %%-locator-options-list-%%
 
 ## method: Page.mainFrame
 - returns: <[Frame]>

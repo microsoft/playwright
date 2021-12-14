@@ -29,9 +29,17 @@ export class Locator implements api.Locator {
   private _frame: Frame;
   private _selector: string;
 
-  constructor(frame: Frame, selector: string) {
+  constructor(frame: Frame, selector: string, options?: { hasText?: string | RegExp }) {
     this._frame = frame;
     this._selector = selector;
+
+    if (options?.hasText) {
+      const text = options.hasText;
+      if (isRegExp(text))
+        this._selector += ` >> :scope:text-matches(${escapeWithQuotes(text.source, '"')}, "${text.flags}")`;
+      else
+        this._selector += ` >> :scope:has-text(${escapeWithQuotes(text, '"')})`;
+    }
   }
 
   private async _withElement<R>(task: (handle: ElementHandle<SVGElement | HTMLElement>, timeout?: number) => Promise<R>, timeout?: number): Promise<R> {
@@ -94,14 +102,8 @@ export class Locator implements api.Locator {
     return this._frame.fill(this._selector, value, { strict: true, ...options });
   }
 
-  locator(selector: string): Locator {
-    return new Locator(this._frame, this._selector + ' >> ' + selector);
-  }
-
-  withText(text: string | RegExp): Locator {
-    if (isRegExp(text))
-      return new Locator(this._frame, this._selector + ` >> :scope:text-matches(${escapeWithQuotes(text.source, '"')}, "${text.flags}")`);
-    return new Locator(this._frame, this._selector + ` >> :scope:has-text(${escapeWithQuotes(text, '"')})`);
+  locator(selector: string, options?: { hasText?: string | RegExp }): Locator {
+    return new Locator(this._frame, this._selector + ' >> ' + selector, options);
   }
 
   frameLocator(selector: string): FrameLocator {
@@ -269,8 +271,8 @@ export class FrameLocator implements api.FrameLocator {
     this._frameSelector = selector;
   }
 
-  locator(selector: string): Locator {
-    return new Locator(this._frame, this._frameSelector + ' >> control=enter-frame >> ' + selector);
+  locator(selector: string, options?: { hasText?: string | RegExp }): Locator {
+    return new Locator(this._frame, this._frameSelector + ' >> control=enter-frame >> ' + selector, options);
   }
 
   frameLocator(selector: string): FrameLocator {
