@@ -600,7 +600,6 @@ export class WorkerRunner extends EventEmitter {
 function buildTestBeginPayload(testId: string, testInfo: TestInfo, startWallTime: number): TestBeginPayload {
   return {
     testId,
-    workerIndex: testInfo.workerIndex,
     startWallTime,
   };
 }

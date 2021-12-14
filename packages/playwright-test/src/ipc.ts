@@ -33,7 +33,6 @@ export type WorkerInitParams = {
 export type TestBeginPayload = {
   testId: string;
   startWallTime: number;  // milliseconds since unix epoch
-  workerIndex: number;
 };
 
 export type TestEndPayload = {
