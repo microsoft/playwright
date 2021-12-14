@@ -136,6 +136,9 @@ function renderClass(clazz) {
 
   const body = [];
   for (const member of clazz.membersArray) {
+    // Classes inherit it from IAsyncDisposable
+    if (member.name === 'dispose')
+      continue
     if (member.alias.startsWith('RunAnd'))
       renderMember(member, clazz, { trimRunAndPrefix: true }, body);
     renderMember(member, clazz, {}, body);
