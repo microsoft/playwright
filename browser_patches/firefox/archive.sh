@@ -40,6 +40,8 @@ OBJ_FOLDER="${FF_CHECKOUT_PATH}/obj-build-playwright"
 
 cd "${FF_CHECKOUT_PATH}"
 
+export MH_BRANCH=mozilla-release
+export MOZ_BUILD_DATE=$(date +%Y%m%d%H%M%S)
 if [[ "$2" == "--linux-arm64" ]]; then
   CMD_STRIP=/usr/bin/aarch64-linux-gnu-strip ./mach package
 else
