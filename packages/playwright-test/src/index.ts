@@ -260,9 +260,8 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
 
     // 3. Determine whether we need the artifacts.
     const testFailed = testInfo.status !== testInfo.expectedStatus;
-    const isHook = !!hookType(testInfo);
-    const preserveTrace = captureTrace && !isHook && (traceMode === 'on' || (testFailed && traceMode === 'retain-on-failure') || (traceMode === 'on-first-retry' && testInfo.retry === 1));
-    const captureScreenshots = !isHook && (screenshot === 'on' || (screenshot === 'only-on-failure' && testFailed));
+    const preserveTrace = captureTrace && (traceMode === 'on' || (testFailed && traceMode === 'retain-on-failure') || (traceMode === 'on-first-retry' && testInfo.retry === 1));
+    const captureScreenshots = (screenshot === 'on' || (screenshot === 'only-on-failure' && testFailed));
 
     const traceAttachments: string[] = [];
     const addTraceAttachment = () => {
