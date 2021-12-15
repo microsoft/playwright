@@ -97,10 +97,6 @@ if [[ $1 == "--full" || $2 == "--full" ]]; then
   fi
 fi
 
-if ! [[ -f "$HOME/.mozbuild/_virtualenvs/mach/bin/python" ]]; then
-  ./mach create-mach-environment
-fi
-
 if [[ $1 == "--juggler" ]]; then
   ./mach build faster
 else
