@@ -149,6 +149,8 @@ export class RawMouseImpl implements input.RawMouse {
   }
 
   async wheel(x: number, y: number, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, deltaX: number, deltaY: number): Promise<void> {
+    if (this._page?._browserContext._options.isMobile)
+      throw new Error('Mouse wheel is not supported in mobile WebKit');
     await this._session!.send('Page.updateScrollingState');
     // Wheel events hit the compositor first, so wait one frame for it to be synced.
     await this._page!.mainFrame().evaluateExpression(`new Promise(requestAnimationFrame)`, false, false, 'utility');
