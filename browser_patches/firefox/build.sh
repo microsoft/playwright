@@ -104,8 +104,7 @@ fi
 if [[ "$(uname)" == "Darwin" ]]; then
   if [[ ! -d "$HOME/.mozbuild/clang" ]]; then
     echo "ERROR: build toolchains are not found, specifically \$HOME/.mozbuild/clang is not there!"
-    echo "Since December, 2021, release build toolchains cannot be downloaded automatically. See:"
-    echo "   https://bugzilla.mozilla.org/show_bug.cgi?id=1744197#c2"
+    echo "Since December, 2021, build toolchains have to be predownloaded (see https://github.com/microsoft/playwright/pull/10929)"
     echo
     echo "To bootstrap toolchains:"
     echo "    ./browser_patches/prepare_checkout.sh firefox-beta"
