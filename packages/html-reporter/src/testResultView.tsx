@@ -38,7 +38,6 @@ export const TestResultView: React.FC<{
     const attachments = result?.attachments || [];
     const otherAttachments = new Set<TestAttachment>(attachments);
     const screenshots = attachments.filter(a => a.contentType.startsWith('image/') && !imageDiffNames.includes(a.name));
-    console.log(screenshots);
     const videos = attachments.filter(a => a.name === 'video');
     const traces = attachments.filter(a => a.name === 'trace');
     for (const a of attachments)
