@@ -132,7 +132,8 @@ test('should collect two traces', async ({ context, page, server }, testInfo) =>
   }
 });
 
-test('should not include trace resources from the provious chunks', async ({ context, page, server }, testInfo) => {
+test('should not include trace resources from the provious chunks', async ({ context, page, server, browserName }, testInfo) => {
+  test.skip(browserName !== 'chromium', 'The number of screenshots is flaky in non-Chromium');
   await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
 
   await context.tracing.startChunk();
@@ -177,7 +178,6 @@ test('should overwrite existing file', async ({ context, page, server }, testInf
     const { resources } = await parseTrace(path);
     const names = Array.from(resources.keys());
     expect(names.filter(n => n.endsWith('.html')).length).toBe(1);
-    expect(names.filter(n => n.endsWith('.jpeg')).length).toBeGreaterThan(0);
   }
 
   await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
@@ -187,7 +187,6 @@ test('should overwrite existing file', async ({ context, page, server }, testInf
     const { resources } = await parseTrace(path);
     const names = Array.from(resources.keys());
     expect(names.filter(n => n.endsWith('.html')).length).toBe(0);
-    expect(names.filter(n => n.endsWith('.jpeg')).length).toBe(0);
   }
 });
 
