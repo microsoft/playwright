@@ -39,7 +39,7 @@ export class TraceModel {
 
   async load(traceURL: string, progress: (done: number, total: number) => void) {
     const zipReader = new zipjs.ZipReader( // @ts-ignore
-        new zipjs.HttpReader(traceURL, { mode: 'cors' }),
+        new zipjs.HttpReader(traceURL, { mode: 'cors', preventHeadRequest: true }),
         { useWebWorkers: false }) as zip.ZipReader;
     let traceEntry: zip.Entry | undefined;
     let networkEntry: zip.Entry | undefined;
