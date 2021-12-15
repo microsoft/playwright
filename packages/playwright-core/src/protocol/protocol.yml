@@ -3049,4 +3049,5 @@ JsonPipe:
         message: json
 
     closed:
+      parameters:
         error: SerializedError?
