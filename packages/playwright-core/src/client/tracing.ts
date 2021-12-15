@@ -65,6 +65,9 @@ export class Tracing implements api.Tracing {
       return;
     }
 
+    if (!result.artifact)
+      return;
+
     // Save trace to the final local file.
     const artifact = Artifact.from(result.artifact!);
     await artifact.saveAs(filePath);
