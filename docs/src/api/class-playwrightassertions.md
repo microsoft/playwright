@@ -64,6 +64,24 @@ By default, the timeout for assertions is set to 5 seconds.
 </dependency>
 ```
 
+## method: PlaywrightAssertions.expectAPIResponse
+* langs: js
+  - alias-java: assertThat
+  - alias-python: expect
+  - alias-js: expect
+- returns: <[APIResponseAssertions]>
+
+Creates a [APIResponseAssertions] object for the given [APIResponse].
+
+```java
+PlaywrightAssertions.assertThat(response).isOK();
+```
+
+### param: PlaywrightAssertions.expectAPIResponse.response
+- `response` <[APIResponse]>
+
+[APIResponse] object to use for assertions.
+
 ## method: PlaywrightAssertions.expectLocator
 * langs: java, python, js
   - alias-java: assertThat
