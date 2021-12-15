@@ -59,8 +59,9 @@ const testCase: TestCase = {
   results: [result]
 };
 
-test('should render counters', async ({ render }) => {
+test('should render test case', async ({ render, capture }) => {
   const component = await render(<TestCaseView projectNames={['chromium', 'webkit']} test={testCase}></TestCaseView>);
+  await capture(component, 'testcase');
   await expect(component.locator('text=Annotation text').first()).toBeVisible();
   await component.locator('text=Annotations').click();
   await expect(component.locator('text=Annotation text')).not.toBeVisible();
@@ -70,4 +71,5 @@ test('should render counters', async ({ render }) => {
   await expect(component.locator('text=Inner step')).toBeVisible();
   await expect(component.locator('text=test.spec.ts:42')).toBeVisible();
   await expect(component.locator('text=My test')).toBeVisible();
+  await capture(component, 'testcase-expanded');
 });

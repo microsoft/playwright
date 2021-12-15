@@ -21,7 +21,7 @@ import { HeaderView } from './headerView';
 test.use({ webpack: require.resolve('../webpack.config.js') });
 test.use({ viewport: { width: 720, height: 200 } });
 
-test('should render counters', async ({ render }) => {
+test('should render counters', async ({ render, capture }) => {
   const component = await render(<HeaderView stats={{
     total: 100,
     expected: 42,
@@ -36,6 +36,7 @@ test('should render counters', async ({ render }) => {
   await expect(component.locator('a', { hasText: 'Failed' }).locator('.counter')).toHaveText('31');
   await expect(component.locator('a', { hasText: 'Flaky' }).locator('.counter')).toHaveText('17');
   await expect(component.locator('a', { hasText: 'Skipped' }).locator('.counter')).toHaveText('10');
+  await capture(component, 'counters');
 });
 
 test('should toggle filters', async ({ page, render: render }) => {
