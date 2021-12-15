@@ -207,6 +207,8 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
         onApiCallBegin: (apiCall: string, stackTrace: ParsedStackTrace | null, userData: any) => {
           if (apiCall.startsWith('expect.'))
             return { userObject: null };
+          if (apiCall === 'page.pause')
+            testInfo.setTimeout(0);
           const testInfoImpl = testInfo as any;
           const step = testInfoImpl._addStep({
             location: stackTrace?.frames[0],
