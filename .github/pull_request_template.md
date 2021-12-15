@@ -1,7 +1,7 @@
 <!--
 Thank you for your Pull Request. Please link to the issue this PR addresses.
 -->
-Fixes: <issue #>
+Fixes #
 
 <!-- PR Checklist
 - The issue has been triaged and positive signals were received from maintainers
