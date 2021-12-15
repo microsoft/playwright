@@ -21,7 +21,6 @@ import { wrapFunctionWithLocation } from './transform';
 import { Fixtures, FixturesWithLocation, Location, TestType } from './types';
 import { errorWithLocation, serializeError } from './util';
 
-const countByFile = new Map<string, number>();
 const testTypeSymbol = Symbol('testType');
 
 export class TestTypeImpl {
@@ -69,10 +68,7 @@ export class TestTypeImpl {
     if (!suite)
       throw errorWithLocation(location, `test() can only be called in a test file`);
 
-    const ordinalInFile = countByFile.get(suite._requireFile) || 0;
-    countByFile.set(suite._requireFile, ordinalInFile + 1);
-
-    const test = new TestCase('test', title, fn, ordinalInFile, this, location);
+    const test = new TestCase('test', title, fn, nextOrdinalInFile(suite._requireFile), this, location);
     test._requireFile = suite._requireFile;
     suite._addTest(test);
 
@@ -127,9 +123,9 @@ export class TestTypeImpl {
     if (!suite)
       throw errorWithLocation(location, `${name} hook can only be called in a test file`);
     if (name === 'beforeAll' || name === 'afterAll') {
-      const sameTypeCount = suite._allHooks.filter(hook => hook._type === name).length;
+      const sameTypeCount = suite.hooks.filter(hook => hook._type === name).length;
       const suffix = sameTypeCount ? String(sameTypeCount) : '';
-      const hook = new TestCase(name, name + suffix, fn, 0, this, location);
+      const hook = new TestCase(name, name + suffix, fn, nextOrdinalInFile(suite._requireFile), this, location);
       hook._requireFile = suite._requireFile;
       suite._addAllHook(hook);
     } else {
@@ -230,6 +226,13 @@ function throwIfRunningInsideJest() {
         `See https://playwright.dev/docs/intro/ for more information about Playwright Test.`,
     );
   }
+}
+
+const countByFile = new Map<string, number>();
+function nextOrdinalInFile(file: string) {
+  const ordinalInFile = countByFile.get(file) || 0;
+  countByFile.set(file, ordinalInFile + 1);
+  return ordinalInFile;
 }
 
 export const rootTestType = new TestTypeImpl([]);

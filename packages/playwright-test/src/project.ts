@@ -54,7 +54,7 @@ export class ProjectImpl {
           pool = new FixturePool(parent._use, pool, parent._isDescribe);
         for (const hook of parent._eachHooks)
           pool.validateFunction(hook.fn, hook.type + ' hook', hook.location);
-        for (const hook of parent._allHooks)
+        for (const hook of parent.hooks)
           pool.validateFunction(hook.fn, hook._type + ' hook', hook.location);
         for (const modifier of parent._modifiers)
           pool.validateFunction(modifier.fn, modifier.type + ' modifier', modifier.location);
@@ -94,10 +94,13 @@ export class ProjectImpl {
     }
     if (!to._entries.length)
       return false;
-    for (const hook of from._allHooks) {
+    for (const hook of from.hooks) {
       const clone = hook._clone();
+      clone.retries = 1;
       clone._pool = this.buildPool(hook);
       clone._projectIndex = this.index;
+      clone._id = `${hook._ordinalInFile}@${hook._requireFile}#run${this.index}-repeat${repeatEachIndex}`;
+      clone._repeatEachIndex = repeatEachIndex;
       to._addAllHook(clone);
     }
     return true;

@@ -26,7 +26,7 @@ import { TestBeginPayload, TestEndPayload, RunPayload, TestEntry, DonePayload, W
 import { setCurrentTestInfo } from './globals';
 import { Loader } from './loader';
 import { Modifier, Suite, TestCase } from './test';
-import { Annotations, TestError, TestInfo, TestInfoImpl, TestStepInternal, WorkerInfo } from './types';
+import { Annotations, TestCaseType, TestError, TestInfo, TestInfoImpl, TestStepInternal, WorkerInfo } from './types';
 import { ProjectImpl } from './project';
 import { FixtureRunner } from './fixtures';
 import { DeadlineRunner, raceAgainstDeadline } from 'playwright-core/lib/utils/async';
@@ -34,7 +34,7 @@ import { calculateFileSha1 } from 'playwright-core/lib/utils/utils';
 
 const removeFolderAsync = util.promisify(rimraf);
 
-type TestData = { testId: string, testInfo: TestInfoImpl, type: 'test' | 'beforeAll' | 'afterAll' };
+type TestData = { testId: string, testInfo: TestInfoImpl, type: TestCaseType };
 
 export class WorkerRunner extends EventEmitter {
   private _params: WorkerInitParams;
@@ -171,7 +171,7 @@ export class WorkerRunner extends EventEmitter {
       if (this._failedTest) {
         // Now that we did run all hooks and teared down scopes, we can
         // report the failure, possibly with any error details revealed by teardown.
-        this.emit('testEnd', buildTestEndPayload(this._failedTest.testId, this._failedTest.testInfo));
+        this.emit('testEnd', buildTestEndPayload(this._failedTest));
       }
       this._reportDone();
       runFinishedCallback();
@@ -199,7 +199,7 @@ export class WorkerRunner extends EventEmitter {
         annotations.push({ type: beforeAllModifier.type, description: beforeAllModifier.description });
     }
 
-    for (const hook of suite._allHooks) {
+    for (const hook of suite.hooks) {
       if (hook._type !== 'beforeAll')
         continue;
       const firstTest = suite.allTests()[0];
@@ -214,7 +214,7 @@ export class WorkerRunner extends EventEmitter {
           await this._runTestOrAllHook(entry, annotations, runEntry.retry);
       }
     }
-    for (const hook of suite._allHooks) {
+    for (const hook of suite.hooks) {
       if (hook._type !== 'afterAll')
         continue;
       await this._runTestOrAllHook(hook, annotations, 0);
@@ -222,7 +222,6 @@ export class WorkerRunner extends EventEmitter {
   }
 
   private async _runTestOrAllHook(test: TestCase, annotations: Annotations, retry: number) {
-    const reportEvents = test._type === 'test';
     const startTime = monotonicTime();
     const startWallTime = Date.now();
     let deadlineRunner: DeadlineRunner<any> | undefined;
@@ -351,8 +350,7 @@ export class WorkerRunner extends EventEmitter {
               wallTime: Date.now(),
               error,
             };
-            if (reportEvents)
-              this.emit('stepEnd', payload);
+            this.emit('stepEnd', payload);
           }
         };
         const hasLocation = data.location && !data.location.file.includes('@playwright');
@@ -365,8 +363,7 @@ export class WorkerRunner extends EventEmitter {
           location,
           wallTime: Date.now(),
         };
-        if (reportEvents)
-          this.emit('stepBegin', payload);
+        this.emit('stepBegin', payload);
         return step;
       },
     };
@@ -405,13 +402,11 @@ export class WorkerRunner extends EventEmitter {
       return testInfo.timeout ? startTime + testInfo.timeout : 0;
     };
 
-    if (reportEvents)
-      this.emit('testBegin', buildTestBeginPayload(testId, testInfo, startWallTime));
+    this.emit('testBegin', buildTestBeginPayload(testData, startWallTime));
 
     if (testInfo.expectedStatus === 'skipped') {
       testInfo.status = 'skipped';
-      if (reportEvents)
-        this.emit('testEnd', buildTestEndPayload(testId, testInfo));
+      this.emit('testEnd', buildTestEndPayload(testData));
       return;
     }
 
@@ -446,10 +441,10 @@ export class WorkerRunner extends EventEmitter {
 
     const isFailure = testInfo.status !== 'skipped' && testInfo.status !== testInfo.expectedStatus;
     if (isFailure) {
-      if (test._type === 'test') {
-        // Delay reporting testEnd result until after teardownScopes is done.
-        this._failedTest = testData;
-      } else {
+      // Delay reporting testEnd result until after teardownScopes is done.
+      this._failedTest = testData;
+      if (test._type !== 'test') {
+        // beforeAll/afterAll hook failure skips any remaining tests in the worker.
         if (!this._fatalError)
           this._fatalError = testInfo.error;
         // Keep any error we have, and add "timeout" message.
@@ -457,8 +452,8 @@ export class WorkerRunner extends EventEmitter {
           this._fatalError = prependToTestError(this._fatalError, colors.red(`Timeout of ${testInfo.timeout}ms exceeded in ${test._type} hook.\n`));
       }
       this.stop();
-    } else if (reportEvents) {
-      this.emit('testEnd', buildTestEndPayload(testId, testInfo));
+    } else {
+      this.emit('testEnd', buildTestEndPayload(testData));
     }
 
     const preserveOutput = this._loader.fullConfig().preserveOutput === 'always' ||
@@ -597,14 +592,15 @@ export class WorkerRunner extends EventEmitter {
   }
 }
 
-function buildTestBeginPayload(testId: string, testInfo: TestInfo, startWallTime: number): TestBeginPayload {
+function buildTestBeginPayload(testData: TestData, startWallTime: number): TestBeginPayload {
   return {
-    testId,
+    testId: testData.testId,
     startWallTime,
   };
 }
 
-function buildTestEndPayload(testId: string, testInfo: TestInfo): TestEndPayload {
+function buildTestEndPayload(testData: TestData): TestEndPayload {
+  const { testId, testInfo } = testData;
   return {
     testId,
     duration: testInfo.duration,

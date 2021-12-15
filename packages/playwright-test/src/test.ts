@@ -17,7 +17,7 @@
 import type { FixturePool } from './fixtures';
 import * as reporterTypes from '../types/testReporter';
 import type { TestTypeImpl } from './testType';
-import { Annotations, FixturesWithLocation, Location } from './types';
+import { Annotations, FixturesWithLocation, Location, TestCaseType } from './types';
 import { FullProject } from './types';
 
 class Base {
@@ -45,7 +45,7 @@ export class Suite extends Base implements reporterTypes.Suite {
   _use: FixturesWithLocation[] = [];
   _isDescribe = false;
   _entries: (Suite | TestCase)[] = [];
-  _allHooks: TestCase[] = [];
+  hooks: TestCase[] = [];
   _eachHooks: { type: 'beforeEach' | 'afterEach', fn: Function, location: Location }[] = [];
   _timeout: number | undefined;
   _annotations: Annotations = [];
@@ -67,7 +67,7 @@ export class Suite extends Base implements reporterTypes.Suite {
 
   _addAllHook(hook: TestCase) {
     hook.parent = this;
-    this._allHooks.push(hook);
+    this.hooks.push(hook);
   }
 
   allTests(): TestCase[] {
@@ -132,7 +132,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   annotations: Annotations = [];
   retries = 0;
 
-  _type: 'beforeAll' | 'afterAll' | 'test';
+  _type: TestCaseType;
   _ordinalInFile: number;
   _testType: TestTypeImpl;
   _id = '';
@@ -141,7 +141,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   _repeatEachIndex = 0;
   _projectIndex = 0;
 
-  constructor(type: 'beforeAll' | 'afterAll' | 'test', title: string, fn: Function, ordinalInFile: number, testType: TestTypeImpl, location: Location) {
+  constructor(type: TestCaseType, title: string, fn: Function, ordinalInFile: number, testType: TestTypeImpl, location: Location) {
     super(title);
     this._type = type;
     this.fn = fn;

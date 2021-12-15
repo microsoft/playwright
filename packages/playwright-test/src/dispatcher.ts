@@ -57,8 +57,15 @@ export class Dispatcher {
     this._reporter = reporter;
     this._queue = testGroups;
     for (const group of testGroups) {
-      for (const test of group.tests)
+      for (const test of group.tests) {
         this._testById.set(test._id, { test, resultByWorkerIndex: new Map() });
+        for (let suite: Suite | undefined = test.parent; suite; suite = suite.parent) {
+          for (const hook of suite.hooks) {
+            if (!this._testById.has(hook._id))
+              this._testById.set(hook._id, { test: hook, resultByWorkerIndex: new Map() });
+          }
+        }
+      }
     }
   }
 
@@ -165,11 +172,14 @@ export class Dispatcher {
 
     const remainingByTestId = new Map(testGroup.tests.map(e => [ e._id, e ]));
     const failedTestIds = new Set<string>();
+    let runningHookId: string | undefined;
 
     const onTestBegin = (params: TestBeginPayload) => {
+      const data = this._testById.get(params.testId)!;
+      if (data.test._type !== 'test')
+        runningHookId = params.testId;
       if (this._hasReachedMaxFailures())
         return;
-      const data = this._testById.get(params.testId)!;
       const result = data.test._appendTestResult();
       data.resultByWorkerIndex.set(worker.workerIndex, { result, stepStack: new Set(), steps: new Map() });
       result.workerIndex = worker.workerIndex;
@@ -179,6 +189,7 @@ export class Dispatcher {
     worker.addListener('testBegin', onTestBegin);
 
     const onTestEnd = (params: TestEndPayload) => {
+      runningHookId = undefined;
       remainingByTestId.delete(params.testId);
       if (this._hasReachedMaxFailures())
         return;
@@ -199,7 +210,7 @@ export class Dispatcher {
       test.annotations = params.annotations;
       test.timeout = params.timeout;
       const isFailure = result.status !== 'skipped' && result.status !== test.expectedStatus;
-      if (isFailure)
+      if (isFailure && test._type === 'test')
         failedTestIds.add(params.testId);
       this._reportTestEnd(test, result);
     };
@@ -276,6 +287,15 @@ export class Dispatcher {
       // In case of fatal error, report first remaining test as failing with this error,
       // and all others as skipped.
       if (params.fatalError) {
+        // Perhaps we were running a hook - report it as failed.
+        if (runningHookId) {
+          const data = this._testById.get(runningHookId)!;
+          const { result } = data.resultByWorkerIndex.get(worker.workerIndex)!;
+          result.error = params.fatalError;
+          result.status = 'failed';
+          this._reporter.onTestEnd?.(data.test, result);
+        }
+
         let first = true;
         for (const test of remaining) {
           if (this._hasReachedMaxFailures())
@@ -418,7 +438,7 @@ export class Dispatcher {
   }
 
   private _reportTestEnd(test: TestCase, result: TestResult) {
-    if (result.status !== 'skipped' && result.status !== test.expectedStatus)
+    if (test._type === 'test' && result.status !== 'skipped' && result.status !== test.expectedStatus)
       ++this._failureCount;
     this._reporter.onTestEnd?.(test, result);
     const maxFailures = this._loader.fullConfig().maxFailures;

@@ -61,7 +61,8 @@ class LineReporter extends BaseReporter {
   override onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
     const width = process.env.PWTEST_SKIP_TEST_OUTPUT ? 79 : process.stdout.columns! - 1;
-    ++this._current;
+    if (!test.title.startsWith('beforeAll') && !test.title.startsWith('afterAll'))
+      ++this._current;
     const retriesSuffix = this.totalTestCount < this._current ? ` (retries)` : ``;
     const title = `[${this._current}/${this.totalTestCount}]${retriesSuffix} ${formatTestTitle(this.config, test)}`.substring(0, width);
     if (process.env.PWTEST_SKIP_TEST_OUTPUT)
