@@ -150,7 +150,7 @@ test('should not include trace resources from the provious chunks', async ({ con
     const { resources } = await parseTrace(testInfo.outputPath('trace1.zip'));
     const names = Array.from(resources.keys());
     expect(names.filter(n => n.endsWith('.html')).length).toBe(1);
-    expect(names.filter(n => n.endsWith('.jpeg')).length).toBeGreaterThan(1);
+    expect(names.filter(n => n.endsWith('.jpeg')).length).toBeGreaterThan(0);
     // 1 source file for the test.
     expect(names.filter(n => n.endsWith('.txt')).length).toBe(1);
   }
@@ -177,7 +177,7 @@ test('should overwrite existing file', async ({ context, page, server }, testInf
     const { resources } = await parseTrace(path);
     const names = Array.from(resources.keys());
     expect(names.filter(n => n.endsWith('.html')).length).toBe(1);
-    expect(names.filter(n => n.endsWith('.jpeg')).length).toBeGreaterThan(1);
+    expect(names.filter(n => n.endsWith('.jpeg')).length).toBeGreaterThan(0);
   }
 
   await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
