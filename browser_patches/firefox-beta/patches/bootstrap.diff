@@ -1863,7 +1863,7 @@ index b32d426ba38045d14e6f1e79d17e8e6061e78227..df782034e79466fcc251e9a06e99d2e1
    }
  
 diff --git a/js/src/vm/DateTime.cpp b/js/src/vm/DateTime.cpp
-index e8f27fb69691aa6062c860a14ec94660fb9e5189..67715cbbc8257f11927564b45bbc8ee5384f809d 100644
+index e8f27fb69691aa6062c860a14ec94660fb9e5189..83cffc97f12072c24a7ea1bbd7b26ee37d856df3 100644
 --- a/js/src/vm/DateTime.cpp
 +++ b/js/src/vm/DateTime.cpp
 @@ -170,6 +170,11 @@ void js::DateTimeInfo::internalResetTimeZone(ResetTimeZoneMode mode) {
@@ -1903,13 +1903,16 @@ index e8f27fb69691aa6062c860a14ec94660fb9e5189..67715cbbc8257f11927564b45bbc8ee5
  #if JS_HAS_INTL_API
  #  if defined(XP_WIN)
  static bool IsOlsonCompatibleWindowsTimeZoneId(std::string_view tz) {
-@@ -719,9 +738,14 @@ void js::ResyncICUDefaultTimeZone() {
+@@ -719,9 +738,17 @@ void js::ResyncICUDefaultTimeZone() {
  
  void js::DateTimeInfo::internalResyncICUDefaultTimeZone() {
  #if JS_HAS_INTL_API
 +  if (!timeZoneOverride_.empty()) {
 +    mozilla::Span<const char> tzid = mozilla::Span(timeZoneOverride_.data(), timeZoneOverride_.length());
-+    mozilla::intl::TimeZone::SetDefaultTimeZone(tzid);
++    auto result = mozilla::intl::TimeZone::SetDefaultTimeZone(tzid);
++    if (result.isErr()) {
++      fprintf(stderr, "ERROR: failed to setup default time zone\n");
++    }
 +    return;
 +  }
 +

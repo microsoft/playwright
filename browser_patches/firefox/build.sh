@@ -62,6 +62,9 @@ echo "ac_add_options --disable-backgroundtasks" >> .mozconfig
 
 if [[ -n $FF_DEBUG_BUILD ]]; then
   echo "ac_add_options --enable-debug" >> .mozconfig
+  echo "ac_add_options --enable-debug-symbols" >> .mozconfig
+else
+  echo "ac_add_options --enable-release" >> .mozconfig
 fi
 
 if [[ "$(uname)" == MINGW* || "$(uname)" == "Darwin" ]]; then
@@ -89,31 +92,28 @@ if [[ $1 == "--full" || $2 == "--full" ]]; then
   if [[ "$(uname)" == "Darwin" || "$(uname)" == "Linux" ]]; then
     SHELL=/bin/sh ./mach --no-interactive bootstrap --application-choice=browser
   fi
-  if [[ "$(uname)" == "Darwin" ]]; then
-    HOMEBREW_LLVM="/opt/homebrew/opt/llvm/bin/clang";
-    if [[ ! -f "${HOMEBREW_LLVM}" || $($HOMEBREW_LLVM --version) != *"version 13"* ]]; then
-      echo "ERROR: as of Dec, 2021, building release firefox requires HomeBrew LLVM v13"
-      echo "Please run:"
-      echo
-      echo "    brew install llvm@13"
-      echo
-      exit 1
-    fi
-    echo "CC=${HOMEBREW_LLVM}" >> .mozconfig
-    echo "CXX=${HOMEBREW_LLVM}++" >> .mozconfig
-
-    # Download wasi toolchain if needed
-    if [[ ! -d "$HOME/.mozbuild/sysroot-wasm32-wasi" ]]; then
-      ./mach artifact toolchain --from-build toolchain-sysroot-wasm32-wasi
-      mv ./sysroot-wasm32-wasi ~/.mozbuild/
-    fi
-  elif [[ "$(uname)" == "Linux" ]]; then
+  if [[ "$(uname)" == "Linux" ]]; then
     echo "ac_add_options --enable-bootstrap" >> .mozconfig
   fi
   if [[ ! -z "${WIN32_REDIST_DIR}" ]]; then
     # Having this option in .mozconfig kills incremental compilation.
     echo "export WIN32_REDIST_DIR=\"$WIN32_REDIST_DIR\"" >> .mozconfig
   fi
+fi
+
+if [[ "$(uname)" == "Darwin" ]]; then
+  if [[ ! -d "$HOME/.mozbuild/clang" ]]; then
+    echo "ERROR: build toolchains are not found, specifically \$HOME/.mozbuild/clang is not there!"
+    echo "Since December, 2021, build toolchains have to be predownloaded (see https://github.com/microsoft/playwright/pull/10929)"
+    echo
+    echo "To bootstrap toolchains:"
+    echo "    ./browser_patches/prepare_checkout.sh firefox-beta"
+    echo "    ./browser_patches/build.sh firefox-beta --bootstrap"
+    echo
+    exit 1
+  fi
+  export MOZ_AUTOMATION=1
+  export MOZ_FETCHES_DIR=$HOME/.mozbuild
 fi
 
 if ! [[ -f "$HOME/.mozbuild/_virtualenvs/mach/bin/python" ]]; then
