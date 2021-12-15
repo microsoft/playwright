@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { HTMLReport, TestAttachment } from '@playwright/test/src/reporters/html';
+import type { TestAttachment } from '@playwright/test/src/reporters/html';
 import * as React from 'react';
 import * as icons from './icons';
 import { TreeItem } from './treeItem';
@@ -53,13 +53,13 @@ export const Link: React.FunctionComponent<{
 };
 
 export const ProjectLink: React.FunctionComponent<{
-  report: HTMLReport,
+  projectNames: string[],
   projectName: string,
-}> = ({ report, projectName }) => {
+}> = ({ projectNames, projectName }) => {
   const encoded = encodeURIComponent(projectName);
   const value = projectName === encoded ? projectName : `"${encoded.replace(/%22/g, '%5C%22')}"`;
   return <Link href={`#?q=p:${value}`}>
-    <span className={'label label-color-' + (report.projectNames.indexOf(projectName) % 6)}>
+    <span className={'label label-color-' + (projectNames.indexOf(projectName) % 6)}>
       {projectName}
     </span>
   </Link>;

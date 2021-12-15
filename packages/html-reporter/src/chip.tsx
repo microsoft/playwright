@@ -39,3 +39,20 @@ export const Chip: React.FunctionComponent<{
     {(!setExpanded || expanded) && <div className={'chip-body' + (noInsets ? ' chip-body-no-insets' : '')}>{children}</div>}
   </div>;
 };
+
+export const AutoChip: React.FC<{
+  header: JSX.Element | string,
+  initialExpanded?: boolean,
+  noInsets?: boolean,
+  children?: any,
+}> = ({ header, initialExpanded, noInsets, children }) => {
+  const [expanded, setExpanded] = React.useState(initialExpanded || initialExpanded === undefined);
+  return <Chip
+    header={header}
+    expanded={expanded}
+    setExpanded={setExpanded}
+    noInsets={noInsets}
+  >
+    {children}
+  </Chip>;
+};

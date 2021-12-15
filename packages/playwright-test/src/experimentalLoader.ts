@@ -26,15 +26,15 @@ async function resolve(specifier: string, context: { parentURL: string }, defaul
     return defaultResolve(specifier, context, defaultResolve);
   let url = new URL(specifier, context.parentURL).toString();
   url = url.substring('file://'.length);
-  if (fs.existsSync(url + '.ts'))
-    return defaultResolve(specifier + '.ts', context, defaultResolve);
-  if (fs.existsSync(url + '.js'))
-    return defaultResolve(specifier + '.js', context, defaultResolve);
+  for (const extension of ['.ts', '.js', '.tsx', '.jsx']) {
+    if (fs.existsSync(url + extension))
+      return defaultResolve(specifier + extension, context, defaultResolve);
+  }
   return defaultResolve(specifier, context, defaultResolve);
 }
 
 async function load(url: string, context: any, defaultLoad: any) {
-  if (url.endsWith('.ts')) {
+  if (url.endsWith('.ts') || url.endsWith('.tsx')) {
     const filename = url.substring('file://'.length);
     const cwd = path.dirname(filename);
     let tsconfig = tsConfigCache.get(cwd);

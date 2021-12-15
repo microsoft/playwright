@@ -57,21 +57,15 @@ const Component = ({ style, children }) => {
 
 const registry = new Map();
 
-export const registerComponent = (name, component, options) => {
-  registry.set(name, { component, options });
+export const registerComponent = (name, component) => {
+  registry.set(name, component);
 };
 
 function render(name, params) {
-  const entry = registry.get(name);
+  const component = registry.get(name);
   ReactDOM.render(
-      React.createElement(Component, null, React.createElement(entry.component, params || null)),
+      React.createElement(Component, null, React.createElement(component, params || null)),
       document.getElementById('root'));
 }
 
-function options(name) {
-  const entry = registry.get(name);
-  return entry.options;
-}
-
 window.__playwright_render = render;
-window.__playwright_options = options;
