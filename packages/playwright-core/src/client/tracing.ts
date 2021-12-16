@@ -65,8 +65,12 @@ export class Tracing implements api.Tracing {
       return;
     }
 
+    // The artifact may be missing if the browser closed while stopping tracing.
+    if (!result.artifact)
+      return;
+
     // Save trace to the final local file.
-    const artifact = Artifact.from(result.artifact!);
+    const artifact = Artifact.from(result.artifact);
     await artifact.saveAs(filePath);
     await artifact.delete();
 

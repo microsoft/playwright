@@ -840,6 +840,7 @@ BrowserContext:
           - compressTrace
           - compressTraceAndSources
       returns:
+        # The artifact may be missing if the browser closes while tracing is beeing stopped.
         artifact: Artifact?
         sourceEntries:
           type: array?
