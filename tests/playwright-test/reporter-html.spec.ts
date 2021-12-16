@@ -299,9 +299,12 @@ test('should render beforeAll/afterAll hooks', async ({ runInlineTest, page, sho
   const result = await runInlineTest({
     'a.test.js': `
       const { test } = pwt;
+      test.use({ trace: 'on' });
       test.beforeAll(async () => {
       });
-      test.afterAll(async () => {
+      test.afterAll(async ({ browser }) => {
+        const page = await browser.newPage();
+        await page.close();
         await test.step('after step', () => {
           throw new Error('oh!');
         });
@@ -328,6 +331,7 @@ test('should render beforeAll/afterAll hooks', async ({ runInlineTest, page, sho
 
   await page.click('text=afterAll');
   await expect(page.locator('.tree-item:has-text("after step") svg.color-text-danger')).toHaveCount(1);
+  await expect(page.locator('img')).toBeVisible();
 });
 
 test('should render text attachments as text', async ({ runInlineTest, page, showReport }) => {
