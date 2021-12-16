@@ -108,7 +108,7 @@ it('should fall back to context.route', async ({ browser, server }) => {
   await context.close();
 });
 
-it('should support Set-Cookie header', async ({ contextFactory, server, browserName }) => {
+it('should support Set-Cookie header', async ({ contextFactory, server, browserName, browserMajorVersion }) => {
   it.fixme(browserName === 'webkit');
 
   const context = await contextFactory();
@@ -123,8 +123,9 @@ it('should support Set-Cookie header', async ({ contextFactory, server, browserN
     });
   });
   await page.goto('https://example.com');
+  const defaultSameSiteCookieValue = browserName === 'chromium' || (browserName === 'firefox' && browserMajorVersion >= 96) ? 'Lax' : 'None';
   expect(await context.cookies()).toEqual([{
-    sameSite: browserName === 'chromium' ? 'Lax' : 'None',
+    sameSite: defaultSameSiteCookieValue,
     name: 'name',
     value: 'value',
     domain: '.example.com',
@@ -153,7 +154,7 @@ it('should ignore secure Set-Cookie header for insecure requests', async ({ cont
   expect(await context.cookies()).toEqual([]);
 });
 
-it('should use Set-Cookie header in future requests', async ({ contextFactory, server, browserName }) => {
+it('should use Set-Cookie header in future requests', async ({ contextFactory, server, browserName, browserMajorVersion }) => {
   it.fixme(browserName === 'webkit');
 
   const context = await contextFactory();
@@ -169,8 +170,9 @@ it('should use Set-Cookie header in future requests', async ({ contextFactory, s
     });
   });
   await page.goto(server.EMPTY_PAGE);
+  const defaultSameSiteCookieValue = browserName === 'chromium' || (browserName === 'firefox' && browserMajorVersion >= 96) ? 'Lax' : 'None';
   expect(await context.cookies()).toEqual([{
-    sameSite: browserName === 'chromium' ? 'Lax' : 'None',
+    sameSite: defaultSameSiteCookieValue,
     name: 'name',
     value: 'value',
     domain: 'localhost',

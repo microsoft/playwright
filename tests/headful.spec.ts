@@ -67,7 +67,7 @@ it('should close browser after context menu was triggered', async ({ browserType
   await browser.close();
 });
 
-it('should(not) block third party cookies', async ({ browserType, server, browserName }) => {
+it('should(not) block third party cookies', async ({ browserType, server, browserName, browserMajorVersion }) => {
   const browser = await browserType.launch({ headless: false });
   const page = await browser.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -85,7 +85,7 @@ it('should(not) block third party cookies', async ({ browserType, server, browse
     return document.cookie;
   });
   await page.waitForTimeout(2000);
-  const allowsThirdParty = browserName === 'firefox';
+  const allowsThirdParty = browserName === 'firefox' && browserMajorVersion <= 95;
   expect(documentCookie).toBe(allowsThirdParty ? 'username=John Doe' : '');
   const cookies = await page.context().cookies(server.CROSS_PROCESS_PREFIX + '/grid.html');
   if (allowsThirdParty) {

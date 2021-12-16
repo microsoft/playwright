@@ -104,9 +104,9 @@ it('should work when the event is canceled', async ({ page }) => {
     altKey: false,
     metaKey: false,
   });
-  // give the page a chacne to scroll
+  // Give the page a chance to scroll.
   await page.waitForTimeout(100);
-  // ensure that it did not.
+  // Ensure that it did not.
   expect(await page.evaluate('window.scrollY')).toBe(0);
 });
 
