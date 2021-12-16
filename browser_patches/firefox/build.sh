@@ -89,11 +89,9 @@ if [[ $1 != "--juggler" ]]; then
 fi
 
 if [[ $1 == "--full" || $2 == "--full" ]]; then
-  if [[ "$(uname)" == "Darwin" || "$(uname)" == "Linux" ]]; then
-    SHELL=/bin/sh ./mach --no-interactive bootstrap --application-choice=browser
-  fi
   if [[ "$(uname)" == "Linux" ]]; then
     echo "ac_add_options --enable-bootstrap" >> .mozconfig
+    SHELL=/bin/sh ./mach --no-interactive bootstrap --application-choice=browser
   fi
   if [[ ! -z "${WIN32_REDIST_DIR}" ]]; then
     # Having this option in .mozconfig kills incremental compilation.
