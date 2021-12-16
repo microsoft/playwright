@@ -51,19 +51,28 @@ export const ActionList: React.FC<ActionListProps> = ({
       onKeyDown={event => {
         if (event.key !== 'ArrowDown' &&  event.key !== 'ArrowUp')
           return;
+        event.stopPropagation();
+        event.preventDefault();
         const index = selectedAction ? actions.indexOf(selectedAction) : -1;
+        let newIndex = index;
         if (event.key === 'ArrowDown') {
           if (index === -1)
-            onSelected(actions[0]);
+            newIndex = 0;
           else
-            onSelected(actions[Math.min(index + 1, actions.length - 1)]);
+            newIndex = Math.min(index + 1, actions.length - 1);
         }
         if (event.key === 'ArrowUp') {
           if (index === -1)
-            onSelected(actions[actions.length - 1]);
+            newIndex = actions.length - 1;
           else
-            onSelected(actions[Math.max(index - 1, 0)]);
+            newIndex = Math.max(index - 1, 0);
         }
+        const element = actionListRef.current?.children.item(newIndex);
+        if ((element as any)?.scrollIntoViewIfNeeded)
+          (element as any).scrollIntoViewIfNeeded(false);
+        else
+          element?.scrollIntoView();
+        onSelected(actions[newIndex]);
       }}
       ref={actionListRef}
     >
