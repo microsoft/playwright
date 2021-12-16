@@ -257,7 +257,7 @@ export class RecorderSupplement implements InstrumentationListener {
       return;
     const logs: CallLog[] = [];
     for (const metadata of metadatas) {
-      if (!metadata.method)
+      if (!metadata.method || metadata.internal)
         continue;
       let status: CallLogStatus = 'done';
       if (this._currentCallsMetadata.has(metadata))
