@@ -30,13 +30,36 @@ it('should work', async ({ page, server, browserName, headless }) => {
 });
 
 it('should handle nested frames', async ({ page, server }) => {
-  await page.setViewportSize({ width: 500, height: 500 });
+  await page.setViewportSize({ width: 616, height: 500 });
   await page.goto(server.PREFIX + '/frames/nested-frames.html');
   const nestedFrame = page.frames().find(frame => frame.name() === 'dos');
   const elementHandle = await nestedFrame.$('div');
   const box = await elementHandle.boundingBox();
   expect(box).toEqual({ x: 24, y: 224, width: 268, height: 18 });
 });
+
+it('should get frame box', async ({ page, browserName }) => {
+  it.fail(browserName === 'webkit', 'https://github.com/microsoft/playwright/issues/10977');
+  await page.setViewportSize({ width: 200, height: 200 });
+  await page.setContent(`<style>
+  body {
+      display: flex;
+      height: 500px;
+      margin: 0px;
+  }
+  body iframe {
+      flex-shrink: 1;
+      border: 0;
+      background-color: green;
+  }
+  </style>
+  <iframe></iframe>
+  `);
+  const elementHandle = await page.$('iframe');
+  const box = await elementHandle.boundingBox();
+  expect(box).toEqual({ x: 0, y: 0, width: 300, height: 500 });
+});
+
 
 it('should handle scroll offset and click', async ({ page, server }) => {
   await page.setContent(`
