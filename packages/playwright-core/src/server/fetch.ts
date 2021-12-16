@@ -313,7 +313,7 @@ export abstract class APIRequestContext extends SdkObject {
         if (response.statusCode === 401 && !options.headers!['authorization']) {
           const auth = response.headers['www-authenticate'];
           const credentials = this._defaultOptions().httpCredentials;
-          if (auth?.trim().startsWith('Basic ') && credentials) {
+          if (auth?.trim().startsWith('Basic') && credentials) {
             const { username, password } = credentials;
             const encoded = Buffer.from(`${username || ''}:${password || ''}`).toString('base64');
             options.headers!['authorization'] = `Basic ${encoded}`;

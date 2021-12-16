@@ -115,6 +115,24 @@ it('should return error with wrong credentials', async ({ playwright, server }) 
   expect(response.status()).toBe(401);
 });
 
+it('should support WWW-Authenticate: Basic', async ({ playwright, server }) => {
+  let credentials;
+  server.setRoute('/empty.html', (req, res) => {
+    if (!req.headers.authorization) {
+      res.writeHead(401, { 'WWW-Authenticate': 'Basic' });
+      res.end('HTTP Error 401 Unauthorized: Access is denied');
+      return;
+    }
+    credentials = Buffer.from((req.headers.authorization).split(' ')[1] || '', 'base64').toString();
+    res.writeHead(200, { 'content-type': 'text/plain' });
+    res.end();
+  });
+  const request = await playwright.request.newContext({ httpCredentials: { username: 'user', password: 'pass' } });
+  const response = await request.get(server.EMPTY_PAGE);
+  expect(response.status()).toBe(200);
+  expect(credentials).toBe('user:pass');
+});
+
 it('should use socks proxy', async ({ playwright, server, socksPort }) => {
   const request = await playwright.request.newContext({ proxy: {
     server: `socks5://localhost:${socksPort}`,
