@@ -60,7 +60,7 @@ expect(response).not.toBeOK();
 ```
 
 ```java
-assertThat(page).not().isOK();
+assertThat(response).not().isOK();
 ```
 
 ## method: APIResponseAssertions.toBeOK
