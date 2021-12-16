@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-import { currentTestInfo } from '../globals';
 import type { Expect } from '../types';
 import { expectType } from '../util';
-import { callLogText } from './toMatchText';
+import { callLogText, currentExpectTimeout } from './toMatchText';
 
 export async function toBeTruthy(
   this: ReturnType<Expect['getState']>,
@@ -34,11 +33,7 @@ export async function toBeTruthy(
     promise: this.promise,
   };
 
-  const testInfo = currentTestInfo();
-  let defaultExpectTimeout = testInfo?.project.expect?.timeout;
-  if (typeof defaultExpectTimeout === 'undefined')
-    defaultExpectTimeout = 5000;
-  const timeout = options.timeout === 0 ? 0 : options.timeout || defaultExpectTimeout;
+  const timeout = currentExpectTimeout(options);
 
   const { matches, log } = await query(this.isNot, timeout);
 

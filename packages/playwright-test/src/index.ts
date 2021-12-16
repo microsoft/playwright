@@ -189,8 +189,8 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
 
     const onDidCreateContext = async (context: BrowserContext) => {
       createdContexts.add(context);
-      context.setDefaultTimeout(actionTimeout || 0);
-      context.setDefaultNavigationTimeout(navigationTimeout || actionTimeout || 0);
+      context.setDefaultTimeout(testInfo.timeout === 0 ? 0 : (actionTimeout || 0));
+      context.setDefaultNavigationTimeout(testInfo.timeout === 0 ? 0 : (navigationTimeout || actionTimeout || 0));
       if (captureTrace) {
         const title = [path.relative(testInfo.project.testDir, testInfo.file) + ':' + testInfo.line, ...testInfo.titlePath.slice(1)].join(' › ');
         if (!(context.tracing as any)[kTracingStarted]) {
@@ -207,8 +207,11 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
         onApiCallBegin: (apiCall: string, stackTrace: ParsedStackTrace | null, userData: any) => {
           if (apiCall.startsWith('expect.'))
             return { userObject: null };
-          if (apiCall === 'page.pause')
+          if (apiCall === 'page.pause') {
             testInfo.setTimeout(0);
+            context.setDefaultNavigationTimeout(0);
+            context.setDefaultTimeout(0);
+          }
           const testInfoImpl = testInfo as any;
           const step = testInfoImpl._addStep({
             location: stackTrace?.frames[0],
