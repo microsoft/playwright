@@ -64,26 +64,9 @@ async function launchDockerGridAgent(agentId: string, gridURL: string): Promise<
   const pwImage = images.find(image => image.RepoTags?.includes(imageName));
 
   if (!pwImage) {
-    const pwImages = images
-        .map(image => image.RepoTags?.find(tag => tag.startsWith('mcr.microsoft.com/playwright:')))
-        .filter((tag): tag is string => typeof tag === 'string');
-
-    const usage = pwImages.length > 0 ? [
-      ``,
-      `Available images:`,
-      ...pwImages.map(image => `- ${image}`),
-      ``,
-      `Use available images via PWTEST_IMAGE_NAME environment variable:`,
-      `    PWTEST_IMAGE_NAME=${pwImages[0]} playwright test`,
-      ``
-    ] : [];
-
-    const pullPrefix = pwImages.length > 0 ? 'Alternatively, please' : 'Please';
-
     throw new Error(`\n` + utils.wrapInASCIIBox([
       `Failed to find ${imageName} docker image.`,
-      ...usage,
-      `${pullPrefix} pull docker image with the following command:`,
+      `Please pull docker image with the following command:`,
       ``,
       `    npx playwright install docker-image`,
       ``,
