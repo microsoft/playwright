@@ -25,6 +25,7 @@ declare global {
 
 type TestFixtures = {
   render: (component: { type: string, props: Object }) => Promise<Locator>;
+  capture: (locator: Locator, name: string) => Promise<void>;
   webpack: string;
 };
 
@@ -68,6 +69,18 @@ export const test = baseTest.extend<TestFixtures>({
       return page.locator('#pw-root');
     });
   },
+
+  capture: async ({}, use, testInfo) => {
+    await use(async (locator: Locator, name: string) => {
+      const screenshotPath = path.join(__dirname, '..', 'screenshots', sanitizeForFilePath(path.basename(testInfo.file) + '-' + testInfo.title + '-' + name) + '.png');
+      testInfo.attachments.push({ name, path: screenshotPath, contentType: 'image/png' });
+      await locator.screenshot({ path: screenshotPath });
+    });
+  }
 });
+
+export function sanitizeForFilePath(s: string) {
+  return s.replace(/[\x00-\x2C\x2E-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F]+/g, '-');
+}
 
 export { expect } from '@playwright/test';

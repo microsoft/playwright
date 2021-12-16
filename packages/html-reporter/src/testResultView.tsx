@@ -26,6 +26,8 @@ import { AttachmentLink } from './links';
 import { statusIcon } from './statusIcon';
 import './testResultView.css';
 
+const imageDiffNames = ['expected', 'actual', 'diff'];
+
 export const TestResultView: React.FC<{
   test: TestCase,
   result: TestResult,
@@ -34,16 +36,13 @@ export const TestResultView: React.FC<{
   const { screenshots, videos, traces, otherAttachments, attachmentsMap } = React.useMemo(() => {
     const attachmentsMap = new Map<string, TestAttachment>();
     const attachments = result?.attachments || [];
-    const otherAttachments: TestAttachment[] = [];
-    const screenshots = attachments.filter(a => a.name === 'screenshot');
+    const otherAttachments = new Set<TestAttachment>(attachments);
+    const screenshots = attachments.filter(a => a.contentType.startsWith('image/') && !imageDiffNames.includes(a.name));
     const videos = attachments.filter(a => a.name === 'video');
     const traces = attachments.filter(a => a.name === 'trace');
-    const knownNames = new Set(['screenshot', 'image', 'expected', 'actual', 'diff', 'video', 'trace']);
-    for (const a of attachments) {
+    for (const a of attachments)
       attachmentsMap.set(a.name, a);
-      if (!knownNames.has(a.name))
-        otherAttachments.push(a);
-    }
+    [...screenshots, ...videos, ...traces].forEach(a => otherAttachments.delete(a));
     return { attachmentsMap, screenshots, videos, otherAttachments, traces };
   }, [ result ]);
 
@@ -92,8 +91,8 @@ export const TestResultView: React.FC<{
       </div>)}
     </AutoChip>}
 
-    {!!otherAttachments.length && <AutoChip header='Attachments'>
-      {otherAttachments.map((a, i) => <AttachmentLink key={`attachment-link-${i}`} attachment={a}></AttachmentLink>)}
+    {!!otherAttachments.size && <AutoChip header='Attachments'>
+      {[...otherAttachments].map((a, i) => <AttachmentLink key={`attachment-link-${i}`} attachment={a}></AttachmentLink>)}
     </AutoChip>}
   </div>;
 };
