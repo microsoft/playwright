@@ -47,7 +47,9 @@ it('should scope context handles', async ({ browserType, server }) => {
 
   const context = await browser.newContext();
   const page = await context.newPage();
-  await page.goto(server.EMPTY_PAGE);
+  // Firefox Beta 96 yields a console warning for the pages that
+  // don't use `<!DOCTYPE HTML> tag.
+  await page.goto(server.PREFIX + '/empty-standard-mode.html');
   await expectScopeState(browser, {
     _guid: '',
     objects: [
