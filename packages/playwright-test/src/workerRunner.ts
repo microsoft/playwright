@@ -329,6 +329,8 @@ export class WorkerRunner extends EventEmitter {
       fail: (...args: [arg?: any, description?: string]) => modifier(testInfo, 'fail', args),
       slow: (...args: [arg?: any, description?: string]) => modifier(testInfo, 'slow', args),
       setTimeout: (timeout: number) => {
+        if (!testInfo.timeout)
+          return; // Zero timeout means some debug mode - do not set a timeout.
         testInfo.timeout = timeout;
         if (deadlineRunner)
           deadlineRunner.updateDeadline(deadline());
