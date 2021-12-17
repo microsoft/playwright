@@ -47,7 +47,7 @@ npm i -D @playwright/test
 npx playwright install
 ```
 
-You can optionally install only selected browsers, see [installing browsers](./browsers.md#installing-browsers) for more details. Or you can install no browsers at all and use existing [browser channels](./browsers.md).
+You can optionally install only selected browsers, see [install browsers](./cli.md#install-browsers) for more details. Or you can install no browsers at all and use existing [browser channels](./browsers.md).
 
 ## First test
 
