@@ -223,10 +223,12 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
         sourceEntries = [];
         for (const value of state.sources) {
           const entry = { name: 'resources/src@' + calculateSha1(value) + '.txt', value };
-          if (params.mode === 'compressTraceAndSources')
-            entries.push(entry);
-          else
+          if (params.mode === 'compressTraceAndSources') {
+            if (fs.existsSync(entry.value))
+              entries.push(entry);
+          } else {
             sourceEntries.push(entry);
+          }
         }
       }
 
