@@ -65,13 +65,6 @@ playwright.close();
 Additional environment variables that will be passed to the driver process. By default driver
 process inherits environment variables of the Playwright process.
 
-### option: Playwright.create.env
-* langs: java
-- `sources` <[Array]<[path]>>
-
-List of directories with source code for the application. It is used to resolve source files
-when collection callstacks for tracing and also by the inspector.
-
 ### param: BrowserContext.waitForPage.callback = %%-java-wait-for-event-callback-%%
 
 ### param: Frame.waitForNavigation.callback = %%-java-wait-for-event-callback-%%

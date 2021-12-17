@@ -128,10 +128,17 @@ a timeline preview.
 Whether to capture DOM snapshot on every action.
 
 ### option: Tracing.start.sources
-* langs: js, java
+* langs: js
 - `sources` <[boolean]>
 
 Whether to include source files for trace actions.
+
+### option: Tracing.start.sources
+* langs: java
+- `sources` <[boolean]>
+
+Whether to include source files for trace actions. List of the directories with source code for the application
+must be provided via `PLAYWRIGHT_JAVA_SRC` environment variable.
 
 ### option: Tracing.start.title
 - `title` <[string]>
