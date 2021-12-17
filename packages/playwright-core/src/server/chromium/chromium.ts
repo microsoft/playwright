@@ -156,7 +156,16 @@ export class Chromium extends BrowserType {
 
     const args = this._innerDefaultArgs(options);
     args.push('--remote-debugging-port=0');
-    const desiredCapabilities = { 'browserName': 'chrome', 'goog:chromeOptions': { args } };
+    let desiredCapabilities = { 'browserName': 'chrome', 'goog:chromeOptions': { args } };
+    try {
+      if (process.env.SELENIUM_REMOTE_CAPABILITIES) {
+        const parsed = JSON.parse(process.env.SELENIUM_REMOTE_CAPABILITIES);
+        desiredCapabilities = { ...desiredCapabilities, ...parsed };
+        progress.log(`<selenium> using additional capabilities "${process.env.SELENIUM_REMOTE_CAPABILITIES}"`);
+      }
+    } catch (e) {
+      progress.log(`<selenium> ignoring additional capabilities "${process.env.SELENIUM_REMOTE_CAPABILITIES}": ${e}`);
+    }
 
     progress.log(`<selenium> connecting to ${hubUrl}`);
     const response = await fetchData({
@@ -189,12 +198,15 @@ export class Chromium extends BrowserType {
 
       if (capabilities['se:cdp']) {
         // Selenium 4 - use built-in CDP websocket proxy.
+        progress.log(`<selenium> using selenium v4`);
         const endpointURLString = addProtocol(capabilities['se:cdp']);
         endpointURL = new URL(endpointURLString);
-        endpointURL.hostname = new URL(hubUrl).hostname;
+        if (endpointURL.hostname === 'localhost' || endpointURL.hostname === '127.0.0.1')
+          endpointURL.hostname = new URL(hubUrl).hostname;
         progress.log(`<selenium> retrieved endpoint ${endpointURL.toString()} for sessionId=${sessionId}`);
       } else {
         // Selenium 3 - resolve target node IP to use instead of localhost ws url.
+        progress.log(`<selenium> using selenium v3`);
         const maybeChromeOptions = capabilities['goog:chromeOptions'];
         const chromeOptions = maybeChromeOptions && typeof maybeChromeOptions === 'object' ? maybeChromeOptions : undefined;
         const debuggerAddress = chromeOptions && typeof chromeOptions.debuggerAddress === 'string' ? chromeOptions.debuggerAddress : undefined;
