@@ -99,19 +99,19 @@ test('should truncate long test names', async ({ runInlineTest }) => {
       });
       test('passes 2 long name', async () => {
       });
-      test.skip('skipped long name', async () => {
+      test.skip('skipped very long name', async () => {
       });
     `,
-  }, { reporter: 'list', retries: 0 }, { PWTEST_TTY_WIDTH: 40, PWTEST_SKIP_TEST_OUTPUT: undefined });
+  }, { reporter: 'list', retries: 0 }, { PWTEST_TTY_WIDTH: 50, PWTEST_SKIP_TEST_OUTPUT: undefined });
   const text = stripAscii(result.output);
   const positiveStatusMarkPrefix = process.platform === 'win32' ? 'ok' : '✓ ';
   const negativateStatusMarkPrefix = process.platform === 'win32' ? 'x ' : '✘ ';
   expect(text).toContain(`${negativateStatusMarkPrefix} [foo] › a.test.ts:6:7 › fails long`);
-  expect(text).not.toContain(`${negativateStatusMarkPrefix} [foo] › a.test.ts:6:7 › fails long n`);
+  expect(text).not.toContain(`${negativateStatusMarkPrefix} [foo] › a.test.ts:6:7 › fails long name (`);
   expect(text).toContain(`${positiveStatusMarkPrefix} [foo] › a.test.ts:9:7 › passes (`);
-  expect(text).toContain(`${positiveStatusMarkPrefix} [foo] › a.test.ts:11:7 › passes 2 l`);
-  expect(text).not.toContain(`${positiveStatusMarkPrefix} [foo] › a.test.ts:11:7 › passes 2 lo`);
-  expect(text).toContain(`-  [foo] › a.test.ts:13:12 › skipped l`);
-  expect(text).not.toContain(`-  [foo] › a.test.ts:13:12 › skipped lo`);
+  expect(text).toContain(`${positiveStatusMarkPrefix} [foo] › a.test.ts:11:7 › passes 2 long`);
+  expect(text).not.toContain(`${positiveStatusMarkPrefix} [foo] › a.test.ts:11:7 › passes 2 long name (`);
+  expect(text).toContain(`-  [foo] › a.test.ts:13:12 › skipped very long n`);
+  expect(text).not.toContain(`-  [foo] › a.test.ts:13:12 › skipped very long na`);
   expect(result.exitCode).toBe(1);
 });
