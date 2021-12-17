@@ -15,7 +15,7 @@
  */
 
 import colors from 'colors/safe';
-import { BaseReporter, formatFailure, formatTestTitle } from './base';
+import { BaseReporter, fitToScreen, formatFailure, formatTestTitle } from './base';
 import { FullConfig, TestCase, Suite, TestResult, FullResult } from '../../types/testReporter';
 
 class LineReporter extends BaseReporter {
@@ -50,7 +50,8 @@ class LineReporter extends BaseReporter {
       stream.write(`\u001B[1A\u001B[2K`);
     if (test && this._lastTest !== test) {
       // Write new header for the output.
-      stream.write(colors.gray(formatTestTitle(this.config, test) + `\n`));
+      const title = colors.gray(formatTestTitle(this.config, test));
+      stream.write(fitToScreen(title, this.ttyWidth()) + `\n`);
       this._lastTest = test;
     }
 
@@ -60,15 +61,15 @@ class LineReporter extends BaseReporter {
 
   override onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
-    const width = process.env.PWTEST_SKIP_TEST_OUTPUT ? 79 : process.stdout.columns! - 1;
     if (!test.title.startsWith('beforeAll') && !test.title.startsWith('afterAll'))
       ++this._current;
     const retriesSuffix = this.totalTestCount < this._current ? ` (retries)` : ``;
-    const title = `[${this._current}/${this.totalTestCount}]${retriesSuffix} ${formatTestTitle(this.config, test)}`.substring(0, width);
+    const title = `[${this._current}/${this.totalTestCount}]${retriesSuffix} ${formatTestTitle(this.config, test)}`;
+    const suffix = result.retry ? ` (retry #${result.retry})` : '';
     if (process.env.PWTEST_SKIP_TEST_OUTPUT)
-      process.stdout.write(`${title}\n`);
+      process.stdout.write(`${title + suffix}\n`);
     else
-      process.stdout.write(`\u001B[1A\u001B[2K${title}\n`);
+      process.stdout.write(`\u001B[1A\u001B[2K${fitToScreen(title, this.ttyWidth(), suffix) + colors.yellow(suffix)}\n`);
 
     if (!this.willRetry(test) && (test.outcome() === 'flaky' || test.outcome() === 'unexpected')) {
       if (!process.env.PWTEST_SKIP_TEST_OUTPUT)
