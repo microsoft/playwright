@@ -173,6 +173,30 @@ it.describe('pause', () => {
     await scriptPromise;
   });
 
+  it('should hide internal calls', async ({ page, recorderPageGetter, trace }) => {
+    it.skip(trace === 'on');
+
+    const scriptPromise = (async () => {
+      await page.pause();
+      await page.context().tracing.start();
+      page.setDefaultTimeout(0);
+      page.context().setDefaultNavigationTimeout(0);
+      await page.context().tracing.stop();
+      await page.pause();  // 2
+    })();
+    const recorderPage = await recorderPageGetter();
+    await recorderPage.click('[title="Resume"]');
+    await recorderPage.waitForSelector('.source-line-paused:has-text("page.pause();  // 2")');
+    expect(await sanitizeLog(recorderPage)).toEqual([
+      'page.pause- XXms',
+      'tracing.start- XXms',
+      'tracing.stop- XXms',
+      'page.pause',
+    ]);
+    await recorderPage.click('[title="Resume"]');
+    await scriptPromise;
+  });
+
   it('should show expect.toHaveText', async ({ page, recorderPageGetter }) => {
     await page.setContent('<button>Submit</button>');
     const scriptPromise = (async () => {
