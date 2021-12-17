@@ -140,3 +140,17 @@ test('should respect test.slow', async ({ runInlineTest }) => {
   expect(result.passed).toBe(2);
   expect(result.output).toContain('Timeout of 1000ms exceeded');
 });
+
+test('should ignore test.setTimeout when debugging', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const { test } = pwt;
+      test('my test', async ({}) => {
+        test.setTimeout(1000);
+        await new Promise(f => setTimeout(f, 2000));
+      });
+    `
+  }, { timeout: 0 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
