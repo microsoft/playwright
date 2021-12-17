@@ -85,12 +85,12 @@ export class SnapshotRenderer {
       return { html: '', pageId: snapshot.pageId, frameId: snapshot.frameId, index: this._index };
 
     // Hide the document in order to prevent flickering. We will unhide once script has processed shadow.
-    const hideAllStyle = '<style>*,*::before,*::after { visibility: hidden }</style>';
-    const prefix = snapshot.doctype ? `<!DOCTYPE ${snapshot.doctype}>` + hideAllStyle : hideAllStyle;
-    html = prefix + html + `
-      <style>*[__playwright_target__="${this.snapshotName}"] { background-color: #6fa8dc7f; }</style>
-      <script>${snapshotScript()}</script>
-    `;
+    const prefix = snapshot.doctype ? `<!DOCTYPE ${snapshot.doctype}>` : '';
+    html = prefix + [
+      '<style>*,*::before,*::after { visibility: hidden }</style>',
+      `<style>*[__playwright_target__="${this.snapshotName}"] { background-color: #6fa8dc7f; }</style>`,
+      `<script>${snapshotScript()}</script>`
+    ].join('') + html;
 
     return { html, pageId: snapshot.pageId, frameId: snapshot.frameId, index: this._index };
   }
@@ -184,7 +184,7 @@ function snapshotScript() {
       for (const e of root.querySelectorAll(`[${scrollLeftAttribute}]`))
         scrollLefts.push(e);
 
-      for (const iframe of root.querySelectorAll('iframe')) {
+      for (const iframe of root.querySelectorAll('iframe, frame')) {
         const src = iframe.getAttribute('__playwright_src__');
         if (!src) {
           iframe.setAttribute('src', 'data:text/html,<body style="background: #ddd"></body>');
@@ -221,7 +221,6 @@ function snapshotScript() {
         (root as any).adoptedStyleSheets = adoptedSheets;
       }
     };
-    visit(document);
 
     const onLoad = () => {
       window.removeEventListener('load', onLoad);
@@ -252,7 +251,11 @@ function snapshotScript() {
       }
       document.styleSheets[0].disabled = true;
     };
+
+    const onDOMContentLoaded = () => visit(document);
+
     window.addEventListener('load', onLoad);
+    window.addEventListener('DOMContentLoaded', onDOMContentLoaded);
   }
 
   const kShadowAttribute = '__playwright_shadow_root_';
