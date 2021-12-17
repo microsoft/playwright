@@ -57,11 +57,7 @@ export async function toMatchText(
     );
   }
 
-  const testInfo = currentTestInfo();
-  let defaultExpectTimeout = testInfo?.project.expect?.timeout;
-  if (typeof defaultExpectTimeout === 'undefined')
-    defaultExpectTimeout = 5000;
-  const timeout = options.timeout === 0 ? 0 : options.timeout || defaultExpectTimeout;
+  const timeout = currentExpectTimeout(options);
 
   const { matches: pass, received, log } = await query(this.isNot, timeout);
   const stringSubstring = options.matchSubstring ? 'substring' : 'string';
@@ -123,4 +119,16 @@ export function callLogText(log: string[] | undefined): string {
 Call log:
   ${colors.dim('- ' + (log || []).join('\n  - '))}
 `;
+}
+
+export function currentExpectTimeout(options: { timeout?: number }) {
+  const testInfo = currentTestInfo();
+  if (testInfo && !testInfo.timeout)
+    return 0;
+  if (options.timeout !== undefined)
+    return options.timeout;
+  let defaultExpectTimeout = testInfo?.project.expect?.timeout;
+  if (typeof defaultExpectTimeout === 'undefined')
+    defaultExpectTimeout = 5000;
+  return defaultExpectTimeout;
 }

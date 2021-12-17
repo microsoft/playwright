@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-import { currentTestInfo } from '../globals';
 import type { Expect } from '../types';
 import { expectType } from '../util';
-import { callLogText } from './toMatchText';
+import { callLogText, currentExpectTimeout } from './toMatchText';
 
 // Omit colon and one or more spaces, so can call getLabelPrinter.
 const EXPECTED_LABEL = 'Expected';
@@ -43,11 +42,7 @@ export async function toEqual<T>(
     promise: this.promise,
   };
 
-  const testInfo = currentTestInfo();
-  let defaultExpectTimeout = testInfo?.project.expect?.timeout;
-  if (typeof defaultExpectTimeout === 'undefined')
-    defaultExpectTimeout = 5000;
-  const timeout = options.timeout === 0 ? 0 : options.timeout || defaultExpectTimeout;
+  const timeout = currentExpectTimeout(options);
 
   const { matches: pass, received, log } = await query(this.isNot, timeout);
 
