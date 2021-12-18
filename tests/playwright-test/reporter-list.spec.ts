@@ -83,6 +83,25 @@ test('render steps', async ({ runInlineTest }) => {
   ]);
 });
 
+test('render retries', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      test('flaky', async ({}, testInfo) => {
+        expect(testInfo.retry).toBe(1);
+      });
+    `,
+  }, { reporter: 'list', retries: '1' });
+  const text = stripAscii(result.output);
+  const lines = text.split('\n').filter(l => l.startsWith('0 :') || l.startsWith('1 :')).map(l => l.replace(/[\dm]+s/, 'XXms'));
+  const positiveStatusMarkPrefix = process.platform === 'win32' ? 'ok' : '✓ ';
+  const negativateStatusMarkPrefix = process.platform === 'win32' ? 'x ' : '✘ ';
+  expect(lines).toEqual([
+    `0 :   ${negativateStatusMarkPrefix} a.test.ts:6:7 › flaky (XXms)`,
+    `1 :   ${positiveStatusMarkPrefix} a.test.ts:6:7 › flaky (retry #1) (XXms)`,
+  ]);
+});
+
 test('should truncate long test names', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
@@ -92,7 +111,7 @@ test('should truncate long test names', async ({ runInlineTest }) => {
     `,
     'a.test.ts': `
       const { test } = pwt;
-      test('fails long name', async ({}) => {
+      test('fails very long name', async ({}) => {
         expect(1).toBe(0);
       });
       test('passes', async ({}) => {
@@ -106,8 +125,8 @@ test('should truncate long test names', async ({ runInlineTest }) => {
   const text = stripAscii(result.output);
   const positiveStatusMarkPrefix = process.platform === 'win32' ? 'ok' : '✓ ';
   const negativateStatusMarkPrefix = process.platform === 'win32' ? 'x ' : '✘ ';
-  expect(text).toContain(`${negativateStatusMarkPrefix} [foo] › a.test.ts:6:7 › fails long`);
-  expect(text).not.toContain(`${negativateStatusMarkPrefix} [foo] › a.test.ts:6:7 › fails long name (`);
+  expect(text).toContain(`${negativateStatusMarkPrefix} [foo] › a.test.ts:6:7 › fails very`);
+  expect(text).not.toContain(`${negativateStatusMarkPrefix} [foo] › a.test.ts:6:7 › fails very long name (`);
   expect(text).toContain(`${positiveStatusMarkPrefix} [foo] › a.test.ts:9:7 › passes (`);
   expect(text).toContain(`${positiveStatusMarkPrefix} [foo] › a.test.ts:11:7 › passes 2 long`);
   expect(text).not.toContain(`${positiveStatusMarkPrefix} [foo] › a.test.ts:11:7 › passes 2 long name (`);

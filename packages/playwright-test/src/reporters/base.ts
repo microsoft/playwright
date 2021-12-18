@@ -64,9 +64,11 @@ export class BaseReporter implements Reporter  {
   monotonicStartTime: number = 0;
   private printTestOutput = !process.env.PWTEST_SKIP_TEST_OUTPUT;
   protected _omitFailures: boolean;
+  private readonly _ttyWidthForTest: number;
 
   constructor(options: { omitFailures?: boolean } = {}) {
     this._omitFailures = options.omitFailures || false;
+    this._ttyWidthForTest = parseInt(process.env.PWTEST_TTY_WIDTH || '', 10);
   }
 
   onBegin(config: FullConfig, suite: Suite) {
@@ -106,6 +108,10 @@ export class BaseReporter implements Reporter  {
   async onEnd(result: FullResult) {
     this.duration = monotonicTime() - this.monotonicStartTime;
     this.result = result;
+  }
+
+  protected ttyWidth() {
+    return this._ttyWidthForTest || (process.env.PWTEST_SKIP_TEST_OUTPUT ? 80 : process.stdout.columns || 0);
   }
 
   protected generateStartingMessage() {
@@ -428,4 +434,23 @@ function monotonicTime(): number {
 const asciiRegex = new RegExp('[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))', 'g');
 export function stripAnsiEscapes(str: string): string {
   return str.replace(asciiRegex, '');
+}
+
+// Leaves enough space for the "suffix" to also fit.
+export function fitToScreen(line: string, width: number, suffix?: string): string {
+  const suffixLength = suffix ? stripAnsiEscapes(suffix).length : 0;
+  width -= suffixLength;
+  if (line.length <= width)
+    return line;
+  let m;
+  let ansiLen = 0;
+  asciiRegex.lastIndex = 0;
+  while ((m = asciiRegex.exec(line)) !== null) {
+    const visibleLen = m.index - ansiLen;
+    if (visibleLen >= width)
+      break;
+    ansiLen += m[0].length;
+  }
+  // Truncate and reset all colors.
+  return line.substr(0, width + ansiLen) + '\u001b[0m';
 }
