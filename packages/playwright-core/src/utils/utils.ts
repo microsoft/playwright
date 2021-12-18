@@ -115,8 +115,13 @@ export function fetchData(params: HTTPRequestParams, onError?: (params: HTTPRequ
 
 type OnProgressCallback = (downloadedBytes: number, totalBytes: number) => void;
 type DownloadFileLogger = (message: string) => void;
+type DownloadFileOptions = {
+  progressCallback?: OnProgressCallback,
+  log?: DownloadFileLogger,
+  userAgent?: string
+};
 
-function downloadFile(url: string, destinationPath: string, options: {progressCallback?: OnProgressCallback, log?: DownloadFileLogger} = {}): Promise<{error: any}> {
+function downloadFile(url: string, destinationPath: string, options: DownloadFileOptions = {}): Promise<{error: any}> {
   const {
     progressCallback,
     log = () => {},
@@ -130,7 +135,12 @@ function downloadFile(url: string, destinationPath: string, options: {progressCa
 
   const promise: Promise<{error: any}> = new Promise(x => { fulfill = x; });
 
-  httpRequest({ url }, response => {
+  httpRequest({
+    url,
+    headers: options.userAgent ? {
+      'User-Agent': options.userAgent,
+    } : undefined,
+  }, response => {
     log(`-- response status code: ${response.statusCode}`);
     if (response.statusCode !== 200) {
       const error = new Error(`Download failed: server returned code ${response.statusCode}. URL: ${url}`);
@@ -156,16 +166,19 @@ function downloadFile(url: string, destinationPath: string, options: {progressCa
   }
 }
 
+type DownloadOptions = {
+  progressBarName?: string,
+  retryCount?: number
+  log?: DownloadFileLogger
+  userAgent?: string
+};
+
 export async function download(
   url: string,
   destination: string,
-  options: {
-		progressBarName?: string,
-		retryCount?: number
-    log?: DownloadFileLogger
-	} = {}
+  options: DownloadOptions = {}
 ) {
-  const { progressBarName = 'file', retryCount = 3, log = () => {} } = options;
+  const { progressBarName = 'file', retryCount = 3, log = () => {}, userAgent } = options;
   for (let attempt = 1; attempt <= retryCount; ++attempt) {
     log(
         `downloading ${progressBarName} - attempt #${attempt}`
@@ -173,6 +186,7 @@ export async function download(
     const { error } = await downloadFile(url, destination, {
       progressCallback: getDownloadProgress(progressBarName),
       log,
+      userAgent,
     });
     if (!error) {
       log(`SUCCESS downloading ${progressBarName}`);

@@ -19,8 +19,10 @@ import extract from 'extract-zip';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { existsAsync, download } from './utils';
+import { execSync } from 'child_process';
+import { existsAsync, download, getPlaywrightVersion } from './utils';
 import { debugLogger } from './debugLogger';
+import { getUbuntuVersionSync } from './ubuntuVersion';
 
 export async function downloadBrowserWithProgressBar(title: string, browserDirectory: string, executablePath: string, downloadURL: string, downloadFileName: string): Promise<boolean> {
   const progressBarName = `Playwright build of ${title}`;
@@ -35,7 +37,8 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
   try {
     await download(url, zipPath, {
       progressBarName,
-      log: debugLogger.log.bind(debugLogger, 'install')
+      log: debugLogger.log.bind(debugLogger, 'install'),
+      userAgent: getDownloadUserAgent(),
     });
     debugLogger.log('install', `extracting archive`);
     debugLogger.log('install', `-- zip: ${zipPath}`);
@@ -62,4 +65,46 @@ export function logPolitely(toBeLogged: string) {
 
   if (!logLevelDisplay)
     console.log(toBeLogged);  // eslint-disable-line no-console
+}
+
+let cachedUserAgent: string | undefined;
+function getDownloadUserAgent(): string {
+  if (cachedUserAgent)
+    return cachedUserAgent;
+  try {
+    cachedUserAgent = determineDownloadUserAgent();
+  } catch (e) {
+    cachedUserAgent = 'Playwright/unknown';
+  }
+  return cachedUserAgent;
+}
+
+function determineDownloadUserAgent(): string {
+  let osIdentifier = 'unknown';
+  let osVersion = 'unknown';
+  if (process.platform === 'win32') {
+    const version = os.release().split('.');
+    osIdentifier = 'windows';
+    osVersion = `${version[0]}.${version[1]}`;
+  } else if (process.platform === 'darwin') {
+    const version = execSync('sw_vers -productVersion').toString().trim().split('.');
+    osIdentifier = 'macOS';
+    osVersion = `${version[0]}.${version[1]}`;
+  } else if (process.platform === 'linux') {
+    const version = getUbuntuVersionSync();
+    osIdentifier = version ? 'ubuntu' : 'linux';
+    osVersion = version ?? 'unknown';
+  }
+
+  let langName = 'unknown';
+  let langVersion = 'unknown';
+  if (!process.env.PW_CLI_TARGET_LANG) {
+    langName = 'node';
+    langVersion = process.version.substring(1).split('.').slice(0, 2).join('.');
+  } else if (['node', 'python', 'java', 'csharp'].includes(process.env.PW_CLI_TARGET_LANG)) {
+    langName = process.env.PW_CLI_TARGET_LANG;
+    langVersion = process.env.PW_CLI_TARGET_LANG_VERSION ?? 'unknown';
+  }
+
+  return `Playwright/${getPlaywrightVersion()} (${os.arch()}; ${osIdentifier} ${osVersion}) ${langName}/${langVersion}`;
 }
