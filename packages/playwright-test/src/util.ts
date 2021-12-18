@@ -173,11 +173,17 @@ export function getContainedPath(parentPath: string, subPath: string = ''): stri
 
 export const debugTest = debug('pw:test');
 
-export function prependToTestError(testError: TestError | undefined, message: string | undefined) {
+export function prependToTestError(testError: TestError | undefined, message: string | undefined, location?: Location) {
   if (!message)
     return testError;
-  if (!testError)
-    return { value: message };
+  if (!testError) {
+    if (!location)
+      return { value: message };
+    let stack = `    at ${location.file}:${location.line}:${location.column}`;
+    if (!message.endsWith('\n'))
+      stack = '\n' + stack;
+    return { message: message, stack: message + stack };
+  }
   if (testError.message) {
     const stack = testError.stack ? message + testError.stack : testError.stack;
     message = message + testError.message;
