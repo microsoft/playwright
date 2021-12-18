@@ -450,7 +450,7 @@ test('beforeAll timeout should be reported', async ({ runInlineTest }) => {
   expect(result.output).toContain('Timeout of 1000ms exceeded in beforeAll hook.');
 });
 
-test('afterAll timeout should be reported', async ({ runInlineTest }) => {
+test('afterAll timeout should be reported', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'a.test.js': `
       const { test } = pwt;
@@ -470,6 +470,7 @@ test('afterAll timeout should be reported', async ({ runInlineTest }) => {
     '%%afterAll',
   ]);
   expect(result.output).toContain('Timeout of 1000ms exceeded in afterAll hook.');
+  expect(result.output).toContain(`at ${testInfo.outputPath('a.test.js')}:6:12`);
 });
 
 test('beforeAll and afterAll timeouts at the same time should be reported', async ({ runInlineTest }) => {

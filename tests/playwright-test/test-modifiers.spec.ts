@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, stripAscii } from './playwright-test-fixtures';
 
 test('test modifiers should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -317,4 +317,19 @@ test('test.skip should not define a skipped test inside another test', async ({ 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('It looks like you are calling test.skip() inside the test and pass a callback');
+});
+
+test('modifier timeout should be reported', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      test.skip(async () => new Promise(() => {}));
+      test('fails', () => {
+      });
+    `,
+  }, { timeout: 2000 });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Error: Timeout of 2000ms exceeded while running skip modifier');
+  expect(stripAscii(result.output)).toContain('6 |       test.skip(async () => new Promise(() => {}));');
 });
