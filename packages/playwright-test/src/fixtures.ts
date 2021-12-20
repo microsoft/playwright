@@ -17,6 +17,7 @@
 import { formatLocation, wrapInPromise, debugTest } from './util';
 import * as crypto from 'crypto';
 import { FixturesWithLocation, Location, WorkerInfo, TestInfo, TestStepInternal } from './types';
+import { ManualPromise } from 'playwright-core/lib/utils/async';
 
 type FixtureScope = 'test' | 'worker';
 type FixtureRegistration = {
@@ -35,10 +36,10 @@ class Fixture {
   registration: FixtureRegistration;
   usages: Set<Fixture>;
   value: any;
-  _teardownFenceCallback!: (value?: unknown) => void;
-  _tearDownComplete!: Promise<void>;
-  _setup = false;
-  _teardown = false;
+
+  _useFuncFinished: ManualPromise<void> | undefined;
+  _selfTeardownComplete: Promise<void> | undefined;
+  _teardownWithDepsComplete: Promise<void> | undefined;
 
   constructor(runner: FixtureRunner, registration: FixtureRegistration) {
     this.runner = runner;
@@ -49,7 +50,6 @@ class Fixture {
 
   async setup(workerInfo: WorkerInfo, testInfo: TestInfo | undefined) {
     if (typeof this.registration.fn !== 'function') {
-      this._setup = true;
       this.value = this.registration.fn;
       return;
     }
@@ -62,42 +62,44 @@ class Fixture {
       params[name] = dep.value;
     }
 
-    let setupFenceFulfill = () => {};
-    let setupFenceReject = (e: Error) => {};
     let called = false;
-    const setupFence = new Promise<void>((f, r) => { setupFenceFulfill = f; setupFenceReject = r; });
-    const teardownFence = new Promise(f => this._teardownFenceCallback = f);
+    const useFuncStarted = new ManualPromise<void>();
     debugTest(`setup ${this.registration.name}`);
-    this._tearDownComplete = wrapInPromise(this.registration.fn(params, async (value: any) => {
+    const useFunc = async (value: any) => {
       if (called)
         throw new Error(`Cannot provide fixture value for the second time`);
       called = true;
       this.value = value;
-      setupFenceFulfill();
-      return await teardownFence;
-    }, this.registration.scope === 'worker' ? workerInfo : testInfo)).catch((e: any) => {
-      if (!this._setup)
-        setupFenceReject(e);
+      this._useFuncFinished = new ManualPromise<void>();
+      useFuncStarted.resolve();
+      await this._useFuncFinished;
+    };
+    const info = this.registration.scope === 'worker' ? workerInfo : testInfo;
+    this._selfTeardownComplete = wrapInPromise(this.registration.fn(params, useFunc, info)).catch((e: any) => {
+      if (!useFuncStarted.isDone())
+        useFuncStarted.reject(e);
       else
         throw e;
     });
-    await setupFence;
-    this._setup = true;
+    await useFuncStarted;
   }
 
   async teardown() {
-    if (this._teardown)
-      return;
-    this._teardown = true;
+    if (!this._teardownWithDepsComplete)
+      this._teardownWithDepsComplete = this._teardownInternal();
+    await this._teardownWithDepsComplete;
+  }
+
+  private async _teardownInternal() {
     if (typeof this.registration.fn !== 'function')
       return;
     for (const fixture of this.usages)
       await fixture.teardown();
     this.usages.clear();
-    if (this._setup) {
+    if (this._useFuncFinished) {
       debugTest(`teardown ${this.registration.name}`);
-      this._teardownFenceCallback();
-      await this._tearDownComplete;
+      this._useFuncFinished.resolve();
+      await this._selfTeardownComplete;
     }
     this.runner.instanceForId.delete(this.registration.id);
   }
