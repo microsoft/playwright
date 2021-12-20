@@ -118,7 +118,7 @@ it('should support webgl 2', async ({ page, browserName, headless }) => {
   expect(hasWebGL2).toBe(true);
 });
 
-it('should not crash on page with mp4', async ({ page, server }) => {
+it.only('should not crash on page with mp4', async ({ page, server }) => {
   await page.setContent(`<video><source src="${server.PREFIX}/movie.mp4"/></video>`);
   await page.waitForTimeout(1000);
 });
