@@ -387,6 +387,36 @@ playwright.chromium.launch().then(async browser => {
   await browser.close();
 })();
 
+// test locator.evaluate
+(async () => {
+  const browser = await playwright.firefox.launch();
+  const page = await browser.newPage();
+  const locator = page.locator('.foo');
+  {
+    const result = await locator.evaluate((sel: HTMLSelectElement) => sel.options[sel.selectedIndex].textContent)
+    const assertion: AssertType<string, typeof result> = true;
+  }
+  {
+    const result = await locator.evaluate((media: HTMLMediaElement, dummy) => media.duration, 10);
+    const assertion: AssertType<number, typeof result> = true;
+  }
+  {
+    await locator.evaluate((input: HTMLInputElement) => {})
+  }
+  {
+    const list = await locator.evaluateAll((i: HTMLInputElement[]) => i.length);
+    const assertion: AssertType<number, typeof list> = true;
+  }
+  {
+    const list = await locator.evaluateAll((i: HTMLInputElement[], dummy) => i.length, 10);
+    const assertion: AssertType<number, typeof list> = true;
+  }
+  {
+    await locator.evaluateAll((sel: HTMLSelectElement[]) => {})
+  }
+  await browser.close();
+})();
+
 // waitForEvent
 (async () => {
   const browser = await playwright.webkit.launch();
