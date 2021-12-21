@@ -15,10 +15,9 @@
  * limitations under the License.
  */
 
-import url from 'url';
-import { test as it, expect } from './pageTest';
 import fs from 'fs';
-import exp from 'constants';
+import url from 'url';
+import { expect, test as it } from './pageTest';
 
 it('should work', async ({ page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
