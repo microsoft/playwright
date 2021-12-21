@@ -388,3 +388,50 @@ test('should error for unsupported scope', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain(`Error: Fixture "failure" has unknown { scope: 'foo' }`);
 });
+
+test('should give enough time for fixture teardown', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const test = pwt.test.extend({
+        fixture: async ({ }, use) => {
+          await use();
+          console.log('\\n%%teardown start');
+          await new Promise(f => setTimeout(f, 800));
+          console.log('\\n%%teardown finished');
+        },
+      });
+      test('fast enough but close', async ({ fixture }) => {
+        test.setTimeout(1000);
+        await new Promise(f => setTimeout(f, 800));
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Timeout of 1000ms exceeded');
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%teardown start',
+    '%%teardown finished',
+  ]);
+});
+
+test('should not teardown when setup times out', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const test = pwt.test.extend({
+        fixture: async ({ }, use) => {
+          await new Promise(f => setTimeout(f, 1500));
+          await use();
+          console.log('\\n%%teardown');
+        },
+      });
+      test('fast enough but close', async ({ fixture }) => {
+      });
+    `,
+  }, { timeout: 1000 });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Timeout of 1000ms exceeded');
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+  ]);
+});
