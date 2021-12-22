@@ -29,11 +29,11 @@ source "${SCRIPT_FOLDER}/../utils.sh"
 
 CURRENT_HOST_OS_VERSION=$(getMacVersion)
 # As of Oct 2021, we build FFMPEG for Mac with Xcode 13 to align toolchains.
-if [[ "${CURRENT_HOST_OS_VERSION}" == "11."* ]]; then
-  selectXcodeVersionOrDie "13"
-else
+if [[ "${CURRENT_HOST_OS_VERSION}" == "10."* ]]; then
   echo "ERROR: ${CURRENT_HOST_OS_VERSION} is not supported"
   exit 1
+else
+  selectXcodeVersionOrDie "13"
 fi
 
 source ./CONFIG.sh
