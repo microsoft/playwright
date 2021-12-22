@@ -279,6 +279,12 @@ elif [[ "$BUILD_FLAVOR" == "webkit-mac-12" ]]; then
   EXPECTED_HOST_OS="Darwin"
   EXPECTED_HOST_OS_VERSION="12.1"
   BUILD_BLOB_NAME="webkit-mac-12.zip"
+elif [[ "$BUILD_FLAVOR" == "webkit-mac-12-arm64" ]]; then
+  BROWSER_NAME="webkit"
+  EXPECTED_HOST_OS="Darwin"
+  EXPECTED_HOST_OS_VERSION="12.1"
+  EXPECTED_ARCH="arm64"
+  BUILD_BLOB_NAME="webkit-mac-12-arm64.zip"
 elif [[ "$BUILD_FLAVOR" == "webkit-mac-11-arm64" ]]; then
   BROWSER_NAME="webkit"
   EXPECTED_HOST_OS="Darwin"
