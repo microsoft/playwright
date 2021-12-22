@@ -100,8 +100,8 @@ export class Runner {
     try {
       const config = this._loader.fullConfig();
       const globalDeadline = config.globalTimeout ? config.globalTimeout + monotonicTime() : 0;
-      const { result, timedOut } = await raceAgainstDeadline(this._run(list, filePatternFilters, projectNames), globalDeadline);
-      if (timedOut) {
+      const result = await raceAgainstDeadline(this._run(list, filePatternFilters, projectNames), globalDeadline);
+      if (result.timedOut) {
         const actualResult: FullResult = { status: 'timedout' };
         if (this._didBegin)
           await this._reporter.onEnd?.(actualResult);
@@ -109,7 +109,7 @@ export class Runner {
           this._reporter.onError?.(createStacklessError(`Timed out waiting ${config.globalTimeout / 1000}s for the entire test run`));
         return actualResult;
       }
-      return result!;
+      return result.result;
     } catch (e) {
       const result: FullResult = { status: 'failed' };
       try {

@@ -20,15 +20,18 @@ import { FixturesWithLocation, Location, WorkerInfo, TestInfo, TestStepInternal 
 import { ManualPromise } from 'playwright-core/lib/utils/async';
 
 type FixtureScope = 'test' | 'worker';
+type FixtureOptions = { auto?: boolean, scope?: FixtureScope, option?: boolean };
+type FixtureTuple = [ value: any, options: FixtureOptions ];
 type FixtureRegistration = {
-  location: Location;
+  location: Location;  // Fixutre registration location.
   name: string;
   scope: FixtureScope;
   fn: Function | any;  // Either a fixture function, or a fixture value.
   auto: boolean;
-  deps: string[];
-  id: string;
-  super?: FixtureRegistration;
+  option: boolean;
+  deps: string[];  // Names of the dependencies, ({ foo, bar }) => {...}
+  id: string;  // Unique id, to differentiate between fixtures with the same name.
+  super?: FixtureRegistration;  // A fixture override can use the previous version of the fixture.
 };
 
 class Fixture {
@@ -105,11 +108,11 @@ class Fixture {
   }
 }
 
-function isFixtureTuple(value: any): value is [any, any] {
+function isFixtureTuple(value: any): value is FixtureTuple {
   return Array.isArray(value) && typeof value[1] === 'object' && ('scope' in value[1] || 'auto' in value[1] || 'option' in value[1]);
 }
 
-export function isFixtureOption(value: any): value is [any, any] {
+export function isFixtureOption(value: any): value is FixtureTuple {
   return isFixtureTuple(value) && !!value[1].option;
 }
 
@@ -124,11 +127,12 @@ export class FixturePool {
       for (const entry of Object.entries(fixtures)) {
         const name = entry[0];
         let value = entry[1];
-        let options: { auto: boolean, scope: FixtureScope } | undefined;
+        let options: Required<FixtureOptions> | undefined;
         if (isFixtureTuple(value)) {
           options = {
             auto: !!value[1].auto,
-            scope: value[1].scope || 'test'
+            scope: value[1].scope || 'test',
+            option: !!value[1].option,
           };
           value = value[0];
         }
@@ -141,9 +145,9 @@ export class FixturePool {
           if (previous.auto !== options.auto)
             throw errorWithLocations(`Fixture "${name}" has already been registered as a { auto: '${previous.scope}' } fixture.`, { location, name }, previous);
         } else if (previous) {
-          options = { auto: previous.auto, scope: previous.scope };
+          options = { auto: previous.auto, scope: previous.scope, option: previous.option };
         } else if (!options) {
-          options = { auto: false, scope: 'test' };
+          options = { auto: false, scope: 'test', option: false };
         }
 
         if (options.scope !== 'test' && options.scope !== 'worker')
@@ -152,7 +156,7 @@ export class FixturePool {
           throw errorWithLocations(`Cannot use({ ${name} }) in a describe group, because it forces a new worker.\nMake it top-level in the test file or put in the configuration file.`, { location, name });
 
         const deps = fixtureParameterNames(fn, location);
-        const registration: FixtureRegistration = { id: '', name, location, scope: options.scope, fn, auto: options.auto, deps, super: previous };
+        const registration: FixtureRegistration = { id: '', name, location, scope: options.scope, fn, auto: options.auto, option: options.option, deps, super: previous };
         registrationId(registration);
         this.registrations.set(name, registration);
       }
