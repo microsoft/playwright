@@ -50,7 +50,9 @@ it('should emit close events', async ({ page, server }) => {
 });
 
 it('should emit frame events', async ({ page, server }) => {
-  server.sendOnWebSocketConnection('incoming');
+  server.onceWebSocketConnection(ws => {
+    ws.on('message', () => ws.send('incoming'));
+  });
   let socketClosed;
   const socketClosePromise = new Promise(f => socketClosed = f);
   const log = [];
@@ -64,16 +66,17 @@ it('should emit frame events', async ({ page, server }) => {
     const ws = new WebSocket('ws://localhost:' + port + '/ws');
     ws.addEventListener('open', () => ws.send('outgoing'));
     ws.addEventListener('message', () => { ws.close(); });
+    (window as any).ws = ws;
   }, server.PORT);
   await socketClosePromise;
-  expect(log[0]).toBe('open');
-  expect(log[3]).toBe('close');
-  log.sort();
-  expect(log.join(':')).toBe('close:open:received<incoming>:sent<outgoing>');
+  expect(log).toEqual(['open', 'sent<outgoing>', 'received<incoming>', 'close']);
 });
 
 it('should filter out the close events when the server closes with a message', async ({ page, server }) => {
-  server.sendOnWebSocketConnection('incoming');
+  server.onceWebSocketConnection(ws => {
+    ws.send('incoming');
+    ws.on('message', () => ws.close(1003, 'closed by Playwright test-server'));
+  });
   let socketClosed;
   const socketClosePromise = new Promise(f => socketClosed = f);
   const log = [];
@@ -84,15 +87,12 @@ it('should filter out the close events when the server closes with a message', a
     ws.on('close', () => { log.push('close'); socketClosed(); });
   });
   await page.evaluate(port => {
-    const ws = new WebSocket('ws://localhost:' + port + '/ws-emit-and-close');
-    ws.addEventListener('open', () => ws.send('outgoing'));
-    ws.addEventListener('message', () => { ws.close(); });
+    const ws = new WebSocket('ws://localhost:' + port + '/ws');
+    ws.addEventListener('message', () => ws.send('outgoing'));
+    (window as any).ws = ws;
   }, server.PORT);
   await socketClosePromise;
-  expect(log[0]).toBe('open');
-  expect(log[3]).toBe('close');
-  log.sort();
-  expect(log.join(':')).toBe('close:open:received<incoming>:sent<outgoing>');
+  expect(log).toEqual(['open', 'received<incoming>', 'sent<outgoing>', 'close']);
 });
 
 it('should pass self as argument to close event', async ({ page, server }) => {

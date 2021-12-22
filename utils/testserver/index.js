@@ -75,7 +75,7 @@ class TestServer {
       const pathname = url.parse(request.url).pathname;
       if (pathname === '/ws-slow')
         await new Promise(f => setTimeout(f, 2000));
-      if (!['/ws', '/ws-slow', '/ws-emit-and-close'].includes(pathname)) {
+      if (!['/ws', '/ws-slow'].includes(pathname)) {
         socket.write('HTTP/1.1 400 Bad Request\r\n\r\n');
         socket.destroy();
         return;
@@ -83,10 +83,6 @@ class TestServer {
       this._wsServer.handleUpgrade(request, socket, head, ws => {
         // Next emit is only for our internal 'connection' listeners.
         this._wsServer.emit('connection', ws, request);
-        if (this._onWebSocketConnectionData !== undefined)
-          ws.send(this._onWebSocketConnectionData);
-        if (pathname === '/ws-emit-and-close')
-          ws.close(1003, 'closed by Playwright test-server');
       });
     });
     this._server.listen(port);
@@ -110,8 +106,6 @@ class TestServer {
     this._gzipRoutes = new Set();
     /** @type {!Map<string, !Promise>} */
     this._requestSubscribers = new Map();
-    /** @type {string|undefined} */
-    this._onWebSocketConnectionData = undefined;
 
     const cross_origin = loopback || '127.0.0.1';
     const same_origin = loopback || 'localhost';
@@ -341,7 +335,7 @@ class TestServer {
   }
 
   sendOnWebSocketConnection(data) {
-    this._onWebSocketConnectionData = data;
+    this.onceWebSocketConnection(ws => ws.send(data));
   }
 }
 
