@@ -834,11 +834,14 @@ it('should not hang when frame is detached', async ({ page, server, mode }) => {
     button.style.marginLeft = '200px';
   });
 
-  let detachPromise;
+  let resolveDetachPromise;
+  const detachPromise = new Promise(resolve => resolveDetachPromise = resolve);
   const __testHookBeforeStable = () => {
     // Detach the frame after "waiting for stable" has started.
-    setTimeout(() => {
-      detachPromise = detachFrame(page, 'frame1');
+
+    setTimeout(async () => {
+      await detachFrame(page, 'frame1');
+      resolveDetachPromise();
     }, 1000);
   };
   const promise = frame.click('button', { __testHookBeforeStable } as any).catch(e => e);
