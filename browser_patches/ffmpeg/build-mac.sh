@@ -91,7 +91,11 @@ for dependency in ${REQUIERED_BUILD_TOOLS[@]}; do
 done
 
 if [[ ${#missing_build_tools[@]} != 0 ]]; then
-  die "ERROR: missing dependencies! Please run:    brew install ${missing_build_tools[@]}"
+  if [[ "$1" == "--full" ]]; then
+    brew install ${missing_build_tools[@]}
+  else
+    die "ERROR: missing dependencies! Please run:    brew install ${missing_build_tools[@]}"
+  fi
 fi
 
 # Cleanup
