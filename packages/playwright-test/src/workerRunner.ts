@@ -194,9 +194,9 @@ export class WorkerRunner extends EventEmitter {
         if (!this._fatalError)
           this._fatalError = serializeError(new Error(`Timeout of ${this._project.config.timeout}ms exceeded while running ${beforeAllModifier.type} modifier\n    at ${formatLocation(beforeAllModifier.location)}`));
         this.stop();
-      }
-      if (!!result.result)
+      } else if (!!result.result) {
         annotations.push({ type: beforeAllModifier.type, description: beforeAllModifier.description });
+      }
     }
 
     for (const hook of suite.hooks) {

@@ -183,7 +183,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       });
 
       const result = await raceAgainstDeadline(createBrowserPromise, deadline);
-      if (result.result) {
+      if (!result.timedOut) {
         return result.result;
       } else {
         closePipe();

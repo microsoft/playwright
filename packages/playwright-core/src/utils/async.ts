@@ -18,18 +18,18 @@ import { monotonicTime } from './utils';
 
 export class DeadlineRunner<T> {
   private _timer: NodeJS.Timer | undefined;
-  readonly result = new ManualPromise<{ result?: T, timedOut?: boolean }>();
+  readonly result = new ManualPromise<{ timedOut: true } | { result: T, timedOut: false }>();
 
   constructor(promise: Promise<T>, deadline: number) {
     promise.then(result => {
-      this._finish({ result });
+      this._finish({ result, timedOut: false });
     }).catch(e => {
       this._finish(undefined, e);
     });
     this.updateDeadline(deadline);
   }
 
-  private _finish(success?: { result?: T, timedOut?: boolean }, error?: any) {
+  private _finish(success?: { timedOut: true } | { result: T, timedOut: false }, error?: any) {
     if (this.result.isDone())
       return;
     this.updateDeadline(0);
@@ -58,7 +58,7 @@ export class DeadlineRunner<T> {
   }
 }
 
-export async function raceAgainstDeadline<T>(promise: Promise<T>, deadline: number): Promise<{ result?: T, timedOut?: boolean }> {
+export async function raceAgainstDeadline<T>(promise: Promise<T>, deadline: number) {
   return (new DeadlineRunner(promise, deadline)).result;
 }
 
