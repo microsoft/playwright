@@ -120,6 +120,7 @@ const test = playwrightTest.extend<{ showTraceViewer: (trace: string) => Promise
 });
 
 test.skip(({ trace }) => trace === 'on');
+test.slow();
 
 let traceFile: string;
 
@@ -149,9 +150,14 @@ test.beforeAll(async function recordTrace({ browser, browserName, browserType, s
   }
   await doClick();
 
+  // Make sure resources arrive in a predictable order.
+  const htmlDone = page.waitForEvent('requestfinished', request => request.url().includes('frame.html'));
   const styleDone = page.waitForEvent('requestfinished', request => request.url().includes('style.css'));
+  await page.route(server.PREFIX + '/frames/style.css', async route => {
+    await htmlDone;
+    await route.continue();
+  });
   await page.route(server.PREFIX + '/frames/script.js', async route => {
-    // Make sure script arrives after style for predictable results.
     await styleDone;
     await route.continue();
   });
@@ -188,10 +194,12 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
     /page.evaluate/,
     /page.click"Click"/,
     /page.waitForEvent/,
+    /page.waitForEvent/,
     /page.route/,
     /page.waitForNavigation/,
     /page.waitForTimeout/,
     /page.gotohttp:\/\/localhost:\d+\/frames\/frame.html/,
+    /route.continue/,
     /route.continue/,
     /page.setViewportSize/,
   ]);
