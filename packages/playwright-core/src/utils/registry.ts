@@ -68,8 +68,8 @@ const EXECUTABLE_PATHS = {
   'ffmpeg': {
     'ubuntu18.04': ['ffmpeg-linux'],
     'ubuntu20.04': ['ffmpeg-linux'],
-    'ubuntu18.04-arm64': ['ffmpeg-linux-arm64'],
-    'ubuntu20.04-arm64': ['ffmpeg-linux-arm64'],
+    'ubuntu18.04-arm64': ['ffmpeg-linux'],
+    'ubuntu20.04-arm64': ['ffmpeg-linux'],
     'mac10.13': ['ffmpeg-mac'],
     'mac10.14': ['ffmpeg-mac'],
     'mac10.15': ['ffmpeg-mac'],
@@ -149,7 +149,7 @@ const DOWNLOAD_PATHS = {
     'mac10.14': 'builds/ffmpeg/%s/ffmpeg-mac.zip',
     'mac10.15': 'builds/ffmpeg/%s/ffmpeg-mac.zip',
     'mac11': 'builds/ffmpeg/%s/ffmpeg-mac.zip',
-    'mac11-arm64': 'builds/ffmpeg/%s/ffmpeg-mac.zip',
+    'mac11-arm64': 'builds/ffmpeg/%s/ffmpeg-mac-arm64.zip',
     'win64': 'builds/ffmpeg/%s/ffmpeg-win64.zip',
   },
 };

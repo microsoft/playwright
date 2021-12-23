@@ -11,6 +11,7 @@ on:
       - '**/Dockerfile*'
       - 'browsers.json'
       - 'package.json'
+    types: [ labeled ]
     branches:
       - main
       - release-*
