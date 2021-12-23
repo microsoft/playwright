@@ -75,6 +75,12 @@ jobs:
       run: docker exec --workdir /home/pwuser/playwright docker-tests npm ci
     - name: Run "npm run build" inside docker
       run: docker exec --workdir /home/pwuser/playwright docker-tests npm run build
+    # Test channel installation for root user.
+    # Note #1: as of Dec 2021, pwuser would require manual password for root since we don't ship passwordless sudo (and any sudo, actually) in our containers.
+    # Note #2: neither chrome nor msedge are shipped for arm64.
+    - name: Test installing Chrome & MSEdge
+      if: matrix.user == 'root' && matrix.arch == 'amd64'
+      run: docker exec --workdir /home/pwuser/playwright docker-tests docker-tests -test npx playwright install chrome msedge
     - name: Run "npm run test" inside docker
       run: docker exec --workdir /home/pwuser/playwright docker-tests xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run test
     - name: Upload Flakiness dashboard
