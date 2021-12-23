@@ -133,6 +133,43 @@ class JUnitReporter implements Reporter {
     };
     entries.push(entry);
 
+    const properties: XMLEntry = {
+      name: 'properties',
+      children: [] as XMLEntry[]
+    };
+
+    const testKey = test.annotations.find(annotation => {
+      return annotation.type === 'test_key';
+    });
+    if (testKey !== undefined) {
+      const property = {
+        name: 'property',
+        attributes: {
+          name: 'test_key',
+          value: testKey.description
+        }
+      };
+      properties.children.push(property);
+    }
+
+    const requirements = test.annotations.find(annotation => {
+      return annotation.type === 'requirements';
+    });
+    if (requirements !== undefined) {
+      const property = {
+        name: 'property',
+        attributes: {
+          name: 'requirements',
+          value: requirements.description
+        }
+      };
+      properties.children.push(property);
+    }
+
+    entry.children.push(properties);
+    //test.annotations
+
+
     if (test.outcome() === 'skipped') {
       entry.children.push({ name: 'skipped' });
       return;
