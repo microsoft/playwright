@@ -51,6 +51,18 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: ./utils/docker/build.sh --${{ matrix.arch }} ${{ matrix.tag }} playwright:localbuild
+    - name: Freeup Space
+      run: |
+        pwd
+        df -h
+        # Based on the official advice:
+        # https://github.com/actions/virtual-environments/issues/2840#issuecomment-790492173
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf "/usr/local/share/boost"
+        sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+        df -h
+
     - name: Launch container
       run: |
         docker run \
