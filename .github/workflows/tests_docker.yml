@@ -72,19 +72,37 @@ jobs:
       run: docker exec --workdir /home/pwuser/playwright docker-tests npm run build
     - name: Run "npm run test" inside docker
       run: docker exec --workdir /home/pwuser/playwright docker-tests xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run test
-    - name: Copy test results from container
-      run: docker cp docker-tests:/home/pwuser/playwright/test-results ./test-results
-      if: always()
-    - name: Stop container
-      if: always()
-      run: docker kill docker-tests
     - name: Upload Flakiness dashboard
-      run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
+      run: |
+        # Flakiness dashboard has to be uploaded from-inside docker container so that it can collect meta information, e.g. arch
+        # See https://github.com/microsoft/playwright/blob/13b1e52d95df416fdfa7846c8a840aad8df263af/utils/upload_flakiness_dashboard.sh#L71-L86
+        docker exec \
+          --env FLAKINESS_CONNECTION_STRING \
+          --env GITHUB_REPOSITORY \
+          --env GITHUB_REF \
+          --env GITHUB_RUN_ID \
+          --workdir /home/pwuser/playwright docker-tests /bin/bash -c '
+            if ! command -v pip3 >/dev/null; then
+              apt-get update
+              apt-get install python-pip3
+            fi
+            # Azure-CLI is needed for upload_flakiness_dashboard.sh script.
+            # Azure-CLI can only be installed via PIP3 inside ubuntu 20.04 arm64,
+            # see https://github.com/Azure/azure-cli/issues/7368
+            pip install azure-cli
+            ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+          '
+    - name: Copy test results from container
+      if: always()
+      run: docker cp docker-tests:/home/pwuser/playwright/test-results ./test-results
     - name: Upload Github Artifacts
-      uses: actions/upload-artifact@v1
       if: ${{ always() }}
+      uses: actions/upload-artifact@v1
       with:
         name: docker-ubuntu-${{ matrix.tag }}-${{ matrix.arch }}-${{ matrix.user }}-test-results
         path: test-results
+    - name: Stop container
+      if: always()
+      run: docker kill docker-tests
 
