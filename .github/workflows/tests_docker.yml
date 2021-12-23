@@ -22,49 +22,87 @@ env:
 
 jobs:
   test_linux_docker:
-    name: "Docker Ubuntu-${{ matrix.tag }}-${{ matrix.user }} Tests"
+    name: "Docker ${{ matrix.os_name}} ${{ matrix.arch}} ${{ matrix.user }} Tests"
     runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
       matrix:
-        tag: [bionic, focal]
-        user: [pwuser, root]
+        include:
+        - os_name: "Ubuntu 18.04"
+          tag: bionic
+          user: pwuser
+          arch: amd64
+        - os_name: "Ubuntu 20.04"
+          tag: focal
+          user: root
+          arch: arm64
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 14
+        node-version: 16
     - run: npm i -g npm@8
     - run: npm ci
     - run: npm run build
-    - name: Build
-      run: bash utils/docker/build.sh --amd64 ${{ matrix.tag }} playwright:localbuild-${{ matrix.tag }}
-    - name: Clean & Prepare for Docker
-      run: |
-        npm run clean
-        rm -rf node_modules/
-        if [[ ${{ matrix.user }} == 'root' ]]; then
-          sudo chown -R 0 $(pwd)
-        else
-          sudo chown -R 1000 $(pwd)
-        fi
+    - run: ./utils/docker/build.sh --${{ matrix.arch }} ${{ matrix.tag }} playwright:localbuild
     - name: Launch container
-      run: docker run --rm --user=${{ matrix.user }} -v $(pwd):/tmp/playwright --workdir /tmp/playwright/ --name playwright-docker-${{ matrix.tag }}-test -d -t playwright:localbuild-${{ matrix.tag }} /bin/bash
+      run: |
+        docker run \
+          --rm \
+          --name docker-tests \
+          --platform linux/${{ matrix.arch }} \
+          --user=${{ matrix.user }} \
+          --workdir /home/pwuser \
+          --env CI \
+          --env INSIDE_DOCKER=1 \
+          -d \
+          -t \
+          playwright:localbuild /bin/bash
+    - name: Clone inside docker
+      run: |
+        docker exec docker-tests /bin/bash -c '
+          git clone https://github.com/microsoft/playwright
+          cd playwright
+          git checkout ${{ env.GITHUB_SHA }}
+          git show
+        '
     - name: Run "npm ci" inside docker
-      run: docker exec playwright-docker-${{ matrix.tag }}-test npm ci
+      run: docker exec --workdir /home/pwuser/playwright docker-tests npm ci
     - name: Run "npm run build" inside docker
-      run: docker exec playwright-docker-${{ matrix.tag }}-test npm run build
-    # Test the channel installation on root user
-    - name: Test installing Chrome&MSEdge
-      if: matrix.user == 'root'
-      run: docker exec playwright-docker-${{ matrix.tag }}-test npx playwright install chrome msedge
+      run: docker exec --workdir /home/pwuser/playwright docker-tests npm run build
     - name: Run "npm run test" inside docker
-      run: docker exec -e INSIDE_DOCKER=1 -e CI=1 playwright-docker-${{ matrix.tag }}-test xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run test
-    - run: sudo chmod -R 777 . && ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      run: docker exec --workdir /home/pwuser/playwright docker-tests xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run test
+    - name: Upload Flakiness dashboard
       if: always()
-    - uses: actions/upload-artifact@v1
+      run: |
+        # Flakiness dashboard has to be uploaded from-inside docker container so that it can collect meta information, e.g. arch
+        # See https://github.com/microsoft/playwright/blob/13b1e52d95df416fdfa7846c8a840aad8df263af/utils/upload_flakiness_dashboard.sh#L71-L86
+        docker exec \
+          --env FLAKINESS_CONNECTION_STRING \
+          --env GITHUB_REPOSITORY \
+          --env GITHUB_REF \
+          --env GITHUB_RUN_ID \
+          --workdir /home/pwuser/playwright docker-tests /bin/bash -c '
+            if ! command -v pip3 >/dev/null; then
+              apt-get update
+              apt-get install python-pip3
+            fi
+            # Azure-CLI is needed for upload_flakiness_dashboard.sh script.
+            # Azure-CLI can only be installed via PIP3 inside ubuntu 20.04 arm64,
+            # see https://github.com/Azure/azure-cli/issues/7368
+            pip install azure-cli
+            ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+          '
+    - name: Copy test results from container
+      if: always()
+      run: docker cp docker-tests:/home/pwuser/playwright/test-results ./test-results
+    - name: Upload Github Artifacts
       if: ${{ always() }}
+      uses: actions/upload-artifact@v1
       with:
-        name: docker-ubuntu-${{ matrix.tag }}-${{ matrix.user }}-test-results
+        name: docker-ubuntu-${{ matrix.tag }}-${{ matrix.arch }}-${{ matrix.user }}-test-results
         path: test-results
+    - name: Stop container
+      if: always()
+      run: docker kill docker-tests
 
