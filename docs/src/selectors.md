@@ -755,8 +755,8 @@ In react selectors, component names are transcribed with **CamelCase**.
 Selector examples:
 
 - match by **component**: `_react=BookItem`
-- match by component and **exact property value**, case-sensetive: `_react=BookItem[author = "Steven King"]`
-- match by property value only, **case-insensetive**: `_react=[author = "steven king" i]`
+- match by component and **exact property value**, case-sensitive: `_react=BookItem[author = "Steven King"]`
+- match by property value only, **case-insensitive**: `_react=[author = "steven king" i]`
 - match by component and **truthy property value**: `_react=MyButton[enabled]`
 - match by component and **boolean value**: `_react=MyButton[enabled = false]`
 - match by property **value substring**: `_react=[author *= "King"]`
@@ -791,8 +791,8 @@ In vue selectors, component names are transcribed with **kebab-case**.
 Selector examples:
 
 - match by **component**: `_vue=book-item`
-- match by component and **exact property value**, case-sensetive: `_vue=book-item[author = "Steven King"]`
-- match by property value only, **case-insensetive**: `_vue=[author = "steven king" i]`
+- match by component and **exact property value**, case-sensitive: `_vue=book-item[author = "Steven King"]`
+- match by property value only, **case-insensitive**: `_vue=[author = "steven king" i]`
 - match by component and **truthy property value**: `_vue=my-button[enabled]`
 - match by component and **boolean value**: `_vue=my-button[enabled = false]`
 - match by property **value substring**: `_vue=[author *= "King"]`
