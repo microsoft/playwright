@@ -41,6 +41,11 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 16
+    - name: Set up Docker QEMU for arm64 docker builds
+      if: ${{ matrix.arch == "arm64" }}
+      uses: docker/setup-qemu-action@v1
+      with:
+        platforms: arm64
     - run: npm i -g npm@8
     - run: npm ci
     - run: npm run build
