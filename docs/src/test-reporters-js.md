@@ -389,6 +389,8 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
+You can add custom properties for a test case, by adding `@propert_name=property_value`, e.g. `@test_key=ABC` to the test name. 
+
 ### GitHub Actions annotations
 
 You can use the built in `github` reporter to get automatic failure annotations when running in GitHub actions.

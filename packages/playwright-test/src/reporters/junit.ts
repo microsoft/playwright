@@ -121,15 +121,17 @@ class JUnitReporter implements Reporter {
   }
 
   private _addTestCase(test: TestCase, entries: XMLEntry[]) {
+    const testCaseName = test.titlePath().slice(3).join(' ');
+    const properties = this._findProperties(testCaseName);
     const entry = {
       name: 'testcase',
       attributes: {
         // Skip root, project, file
-        name: test.titlePath().slice(3).join(' '),
+        name: testCaseName,
         classname: formatTestTitle(this.config, test),
         time: (test.results.reduce((acc, value) => acc + value.duration, 0)) / 1000
       },
-      children: [] as XMLEntry[]
+      children: properties ? [properties] : [] as XMLEntry[]
     };
     entries.push(entry);
 
@@ -173,6 +175,34 @@ class JUnitReporter implements Reporter {
       entry.children.push({ name: 'system-out', text: systemOut.join('') });
     if (systemErr.length)
       entry.children.push({ name: 'system-err', text: systemErr.join('') });
+  }
+
+  // properties are expected to be in format @PROPERTY_NAME=PROPPERTY_VALUE, e.g. @test_key=XXX-355
+  private _findProperties(name: string): XMLEntry | undefined {
+    const properties = [];
+    const regex = /@(\S+)=(\S+)/gm;
+    let match;
+    while ((match = regex.exec(name)) !== null) {
+      if (match.index === regex.lastIndex) regex.lastIndex++;
+      const [, name, value] = match;
+
+      if (Boolean(name && value)) {
+        properties.push({
+          name: 'property',
+          attributes: {
+            name,
+            value,
+          },
+        });
+      }
+    }
+
+    if (properties.length === 0) return;
+
+    return {
+      name: 'properties',
+      children: properties,
+    };
   }
 }
 
