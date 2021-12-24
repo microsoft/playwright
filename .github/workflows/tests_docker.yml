@@ -23,7 +23,7 @@ env:
 jobs:
   test_linux_docker:
     name: "Docker ${{ matrix.os_name}} ${{ matrix.arch}} ${{ matrix.user }} Tests"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-18.04
     if: github.repository == 'microsoft/playwright'
     strategy:
       fail-fast: false
