@@ -10525,6 +10525,20 @@ Example URLs: http://www.google.com/file.html -> "google.com"
        */
       reason: BackForwardCacheNotRestoredReason;
     }
+    export interface BackForwardCacheNotRestoredExplanationTree {
+      /**
+       * URL of each frame
+       */
+      url: string;
+      /**
+       * Not restored reasons of each frame
+       */
+      explanations: BackForwardCacheNotRestoredExplanation[];
+      /**
+       * Array of children frame
+       */
+      children: BackForwardCacheNotRestoredExplanationTree[];
+    }
     
     export type domContentEventFiredPayload = {
       timestamp: Network.MonotonicTime;
@@ -10792,6 +10806,10 @@ when bfcache navigation fails.
        * Array of reasons why the page could not be cached. This must not be empty.
        */
       notRestoredExplanations: BackForwardCacheNotRestoredExplanation[];
+      /**
+       * Tree structure of reasons why the page could not be cached for each frame.
+       */
+      notRestoredExplanationsTree?: BackForwardCacheNotRestoredExplanationTree;
     }
     export type loadEventFiredPayload = {
       timestamp: Network.MonotonicTime;
@@ -14110,6 +14128,12 @@ https://fidoalliance.org/specs/fido-v2.1-rd-20201208/fido-client-to-authenticato
 Defaults to false.
        */
       hasCredBlob?: boolean;
+      /**
+       * If set to true, the authenticator will support the minPinLength extension.
+https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-minpinlength-extension
+Defaults to false.
+       */
+      hasMinPinLength?: boolean;
       /**
        * If set to true, tests of user presence will succeed immediately.
 Otherwise, they will not be resolved. Defaults to true.
