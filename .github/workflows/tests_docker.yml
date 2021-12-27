@@ -69,9 +69,9 @@ jobs:
     - name: Clone inside docker
       run: |
         docker exec docker-tests /bin/bash -c '
-          git clone https://github.com/microsoft/playwright
+          git clone ${{ github.repository }} playwright
           cd playwright
-          git checkout ${{ env.GITHUB_SHA }}
+          git checkout ${{ github.sha }}
           git show
         '
     - name: Run "npm ci" inside docker
