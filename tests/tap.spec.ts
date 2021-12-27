@@ -20,7 +20,7 @@ import type { ServerResponse } from 'http';
 
 it.use({ hasTouch: true });
 
-it('should send all of the correct events', async ({ page }) => {
+it('should send all of the correct events #smoke', async ({ page }) => {
   await page.setContent(`
   <div id="a" style="background: lightblue; width: 50px; height: 50px">a</div>
   <div id="b" style="background: pink; width: 50px; height: 50px">b</div>

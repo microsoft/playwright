@@ -105,7 +105,7 @@ it('should forward non-forwarded requests', async ({ pageFactory, server }) => {
   expect(reachedOriginalTarget).toBe(true);
 });
 
-it('should proxy localhost requests', async ({ pageFactory, server, browserName, platform }, workerInfo) => {
+it('should proxy localhost requests #smoke', async ({ pageFactory, server, browserName, platform }, workerInfo) => {
   it.skip(browserName === 'webkit' && platform === 'darwin');
   const { testServerPort, stopTestServer } = await startTestServer();
   let reachedOriginalTarget = false;

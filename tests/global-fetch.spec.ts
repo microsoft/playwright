@@ -40,7 +40,7 @@ it.afterAll(() => {
 });
 
 for (const method of ['fetch', 'delete', 'get', 'head', 'patch', 'post', 'put'] as const) {
-  it(`${method} should work`, async ({ playwright, server }) => {
+  it(`${method} should work #smoke`, async ({ playwright, server }) => {
     const request = await playwright.request.newContext();
     const response = await request[method](server.PREFIX + '/simple.json');
     expect(response.url()).toBe(server.PREFIX + '/simple.json');

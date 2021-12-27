@@ -21,7 +21,7 @@ it.skip(({ isElectron, browserMajorVersion }) => {
   // Old Electron has flaky wheel events.
   return isElectron && browserMajorVersion <= 11;
 });
-it('should dispatch wheel events', async ({ page, server }) => {
+it('should dispatch wheel events #smoke', async ({ page, server }) => {
   await page.setContent(`<div style="width: 5000px; height: 5000px;"></div>`);
   await page.mouse.move(50, 60);
   await listenForWheelEvents(page, 'div');

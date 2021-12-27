@@ -42,7 +42,7 @@ it.afterAll(() => {
   http.globalAgent = prevAgent;
 });
 
-it('get should work', async ({ context, server }) => {
+it('get should work #smoke', async ({ context, server }) => {
   const response = await context.request.get(server.PREFIX + '/simple.json');
   expect(response.url()).toBe(server.PREFIX + '/simple.json');
   expect(response.status()).toBe(200);

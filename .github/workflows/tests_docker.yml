@@ -23,7 +23,7 @@ env:
 jobs:
   test_linux_docker:
     name: "Docker ${{ matrix.os_name}} ${{ matrix.arch}} ${{ matrix.user }} Tests"
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     if: github.repository == 'microsoft/playwright'
     strategy:
       fail-fast: false
@@ -51,18 +51,6 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: ./utils/docker/build.sh --${{ matrix.arch }} ${{ matrix.tag }} playwright:localbuild
-    - name: Freeup Space
-      run: |
-        pwd
-        df -h
-        # Based on the official advice:
-        # https://github.com/actions/virtual-environments/issues/2840#issuecomment-790492173
-        sudo rm -rf /usr/share/dotnet
-        sudo rm -rf /opt/ghc
-        sudo rm -rf "/usr/local/share/boost"
-        sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-        df -h
-
     - name: Launch container
       run: |
         docker run \
@@ -91,11 +79,19 @@ jobs:
     # Test channel installation for root user.
     # Note #1: as of Dec 2021, pwuser would require manual password for root since we don't ship passwordless sudo (and any sudo, actually) in our containers.
     # Note #2: neither chrome nor msedge are shipped for arm64.
-    - name: Test installing Chrome & MSEdge
+    - name: '[amd64 only] Test installing Chrome & MSEdge'
       if: matrix.user == 'root' && matrix.arch == 'amd64'
       run: docker exec --workdir /home/pwuser/playwright docker-tests docker-tests -test npx playwright install chrome msedge
-    - name: Run "npm run test" inside docker
-      run: docker exec --workdir /home/pwuser/playwright docker-tests xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run test
+    # Chromium crashes  when run on x86_64 host machine with qemu emulating aarch64
+    - name: '[amd64 only] Run "npm run ctest" inside docker'
+      if: matrix.arch == 'amd64'
+      run: docker exec --workdir /home/pwuser/playwright docker-tests xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run ctest -- --grep '#smoke' --output chromium-test-results
+    - name: Run "npm run ftest" inside docker
+      run: docker exec --workdir /home/pwuser/playwright docker-tests xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run ftest -- --grep '#smoke' --output firefox-test-results
+      if: always()
+    - name: Run "npm run wtest" inside docker
+      run: docker exec --workdir /home/pwuser/playwright docker-tests xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run ftest -- --grep '#smoke' --output webkit-test-results
+      if: always()
     - name: Upload Flakiness dashboard
       if: always()
       run: |
@@ -115,7 +111,11 @@ jobs:
             # Azure-CLI can only be installed via PIP3 inside ubuntu 20.04 arm64,
             # see https://github.com/Azure/azure-cli/issues/7368
             pip install azure-cli
-            ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+            if [[ -d ./chromium-test-results ]]; then
+              ./utils/upload_flakiness_dashboard.sh ./chromium-test-results/report.json
+            fi
+            ./utils/upload_flakiness_dashboard.sh ./firefox-test-results/report.json
+            ./utils/upload_flakiness_dashboard.sh ./webkit-test-results/report.json
           '
     - name: Copy test results from container
       if: always()

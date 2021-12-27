@@ -29,7 +29,7 @@ for (const [name, url] of Object.entries(reacts)) {
       await page.goto(server.PREFIX + url);
     });
 
-    it('should work with single-root elements', async ({ page }) => {
+    it('should work with single-root elements #smoke', async ({ page }) => {
       expect(await page.$$eval(`_react=BookList`, els => els.length)).toBe(1);
       expect(await page.$$eval(`_react=BookItem`, els => els.length)).toBe(3);
       expect(await page.$$eval(`_react=BookList >> _react=BookItem`, els => els.length)).toBe(3);

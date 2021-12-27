@@ -18,7 +18,7 @@
 import { browserTest as it, expect } from './config/browserTest';
 import { attachFrame } from './config/utils';
 
-it('should bypass CSP meta tag', async ({ browser, server }) => {
+it('should bypass CSP meta tag #smoke', async ({ browser, server }) => {
   // Make sure CSP prohibits addScriptTag.
   {
     const context = await browser.newContext();

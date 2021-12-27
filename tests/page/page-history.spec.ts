@@ -18,7 +18,7 @@
 import { test as it, expect } from './pageTest';
 import url from 'url';
 
-it('page.goBack should work', async ({ page, server }) => {
+it('page.goBack should work #smoke', async ({ page, server }) => {
   expect(await page.goBack()).toBe(null);
 
   await page.goto(server.EMPTY_PAGE);

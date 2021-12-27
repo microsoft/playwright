@@ -23,7 +23,7 @@ async function giveItAChanceToClick(page) {
     await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
 }
 
-it('should click the button', async ({ page, server }) => {
+it('should click the button #smoke', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.click('button');
   expect(await page.evaluate('result')).toBe('Clicked');

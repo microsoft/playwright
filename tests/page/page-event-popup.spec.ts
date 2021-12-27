@@ -16,7 +16,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work', async ({ page }) => {
+it('should work #smoke', async ({ page }) => {
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => window['__popup'] = window.open('about:blank')),

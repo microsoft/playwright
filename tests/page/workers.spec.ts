@@ -19,7 +19,7 @@ import { test as it, expect } from './pageTest';
 import { attachFrame } from '../config/utils';
 import type { ConsoleMessage } from 'playwright-core';
 
-it('Page.workers', async function({ page, server }) {
+it('Page.workers #smoke', async function({ page, server }) {
   await Promise.all([
     page.waitForEvent('worker'),
     page.goto(server.PREFIX + '/worker/worker.html')]);
