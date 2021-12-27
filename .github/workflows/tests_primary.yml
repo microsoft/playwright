@@ -1,18 +1,5 @@
 name: "tests 1"
 
-on:
-  push:
-    branches:
-      - main
-      - release-*
-  pull_request:
-    paths-ignore:
-      - 'browser_patches/**'
-      - 'docs/**'
-    branches:
-      - main
-      - release-*
-
 env:
   # Force terminal colors. @see https://www.npmjs.com/package/colors
   FORCE_COLOR: 1
