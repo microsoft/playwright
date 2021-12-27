@@ -31,11 +31,11 @@ jobs:
         include:
         - os_name: "Ubuntu 18.04"
           tag: bionic
-          user: pwuser
+          user: root
           arch: amd64
         - os_name: "Ubuntu 20.04"
           tag: focal
-          user: root
+          user: pwuser
           arch: arm64
     steps:
     - uses: actions/checkout@v2
@@ -85,12 +85,12 @@ jobs:
     # Chromium crashes  when run on x86_64 host machine with qemu emulating aarch64
     - name: '[amd64 only] Run "npm run ctest" inside docker'
       if: matrix.arch == 'amd64'
-      run: docker exec --workdir /home/pwuser/playwright docker-tests xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run ctest -- --grep '#smoke' --output chromium-test-results
+      run: docker exec --workdir /home/pwuser/playwright docker-tests -- xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run ctest -- --grep '#smoke' --output chromium-test-results
     - name: Run "npm run ftest" inside docker
-      run: docker exec --workdir /home/pwuser/playwright docker-tests xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run ftest -- --grep '#smoke' --output firefox-test-results
+      run: docker exec --workdir /home/pwuser/playwright docker-tests -- xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run ftest -- --grep '#smoke' --output firefox-test-results
       if: always()
     - name: Run "npm run wtest" inside docker
-      run: docker exec --workdir /home/pwuser/playwright docker-tests xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run ftest -- --grep '#smoke' --output webkit-test-results
+      run: docker exec --workdir /home/pwuser/playwright docker-tests -- xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run ftest -- --grep '#smoke' --output webkit-test-results
       if: always()
     - name: Upload Flakiness dashboard
       if: always()
