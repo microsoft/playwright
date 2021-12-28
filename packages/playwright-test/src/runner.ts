@@ -26,6 +26,7 @@ import { Loader } from './loader';
 import { FullResult, Reporter, TestError } from '../types/testReporter';
 import { Multiplexer } from './reporters/multiplexer';
 import DotReporter from './reporters/dot';
+import ProgressReporter from './reporters/progress';
 import GitHubReporter from './reporters/github';
 import LineReporter from './reporters/line';
 import ListReporter from './reporters/list';
@@ -60,6 +61,7 @@ export class Runner {
       dot: list ? ListModeReporter : DotReporter,
       line: list ? ListModeReporter : LineReporter,
       list: list ? ListModeReporter : ListReporter,
+      progress: list ? ListModeReporter : ProgressReporter,
       github: GitHubReporter,
       json: JSONReporter,
       junit: JUnitReporter,
@@ -578,5 +580,5 @@ function createStacklessError(message: string): TestError {
   return { message };
 }
 
-export const builtInReporters = ['list', 'line', 'dot', 'json', 'junit', 'null', 'github', 'html'] as const;
+export const builtInReporters = ['list', 'line', 'dot', 'progress', 'json', 'junit', 'null', 'github', 'html'] as const;
 export type BuiltInReporter = typeof builtInReporters[number];
