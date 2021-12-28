@@ -66,14 +66,13 @@ jobs:
           -d \
           -t \
           playwright:localbuild /bin/bash
-    - name: Clone inside docker
+    - name: Copy repository inside docker container
       run: |
-        docker exec docker-tests /bin/bash -c '
-          git clone ${{ github.repository }} playwright
-          cd playwright
-          git checkout ${{ github.sha }}
-          git show
-        '
+        # Note: we cannot do explicit `git clone` inside container because it requires some smarts to decide if github.sha or
+        # github.ref should be used for checkout.
+        # The actions/checkout action already handled this complexity for us, so we'll just copy checkout.
+        docker cp . docker-tests:/home/pwuser/playwright
+        docker exec --user root docker-tests chown -R ${{ matrix.user }} /home/pwuser/playwright
     - name: Run "npm ci" inside docker
       run: docker exec --workdir /home/pwuser/playwright docker-tests npm ci
     - name: Run "npm run build" inside docker
