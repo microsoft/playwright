@@ -554,12 +554,18 @@ class NetworkRequest {
   _sendOnRequestFinished() {
     const pageNetwork = this._pageNetwork;
     if (pageNetwork) {
+      let protocolVersion = undefined;
+      try {
+        protocolVersion = this.httpChannel.protocolVersion;
+      } catch (e) {
+        // protocolVersion is unavailable in certain cases.
+      };
       pageNetwork.emit(PageNetwork.Events.RequestFinished, {
         requestId: this.requestId,
         responseEndTime: this.httpChannel.responseEndTime,
         transferSize: this.httpChannel.transferSize,
         encodedBodySize: this.httpChannel.encodedBodySize,
-        protocolVersion: this.httpChannel.protocolVersion,
+        protocolVersion,
       }, this._frameId);
     }
     this._networkObserver._channelToRequest.delete(this.httpChannel);
