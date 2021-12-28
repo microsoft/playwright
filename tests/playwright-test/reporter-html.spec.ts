@@ -374,3 +374,30 @@ test('should render text attachments as text', async ({ runInlineTest, page, sho
   await page.click('text=example-utf16.txt');
   await expect(page.locator('.attachment-link')).toHaveText(['foo', '{"foo":1}', 'utf16 encoded']);
 });
+
+test('should strikethough textual diff', async ({ runInlineTest, showReport, page }) => {
+  test.fail();
+
+  const result = await runInlineTest({
+    'helper.ts': `
+      export const test = pwt.test.extend({
+        auto: [ async ({}, run, testInfo) => {
+          testInfo.snapshotSuffix = '';
+          await run();
+        }, { auto: true } ]
+      });
+    `,
+    'a.spec.js-snapshots/snapshot.txt': `old`,
+    'a.spec.js': `
+      const { test } = require('./helper');
+      test('is a test', ({}) => {
+        expect('new').toMatchSnapshot('snapshot.txt');
+      });
+    `
+  }, { reporter: 'dot,html' });
+  expect(result.exitCode).toBe(1);
+  await showReport();
+  await page.click('text="is a test"');
+  const stricken = await page.locator("css=strike").innerText();
+  expect(stricken).toBe("old");
+});
