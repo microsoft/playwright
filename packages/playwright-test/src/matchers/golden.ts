@@ -228,7 +228,7 @@ function diff_prettyTerminal(diffs: diff_match_patch.Diff[]) {
         html[x] = colors.green(text);
         break;
       case DIFF_DELETE:
-        html[x] = colors.strikethrough(colors.red(text));
+        html[x] = colors.reset(colors.strikethrough(colors.red(text)));
         break;
       case DIFF_EQUAL:
         html[x] = text;

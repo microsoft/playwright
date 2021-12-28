@@ -72,7 +72,7 @@ Line7`,
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('Line1');
   expect(result.output).toContain('Line2' + colors.green('2'));
-  expect(result.output).toContain('line' + colors.strikethrough(colors.red('1')) + colors.green('2'));
+  expect(result.output).toContain('line' + colors.reset(colors.strikethrough(colors.red('1'))) + colors.green('2'));
   expect(result.output).toContain('Line3');
   expect(result.output).toContain('Line5');
   expect(result.output).toContain('Line7');

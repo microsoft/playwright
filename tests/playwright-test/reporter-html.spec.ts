@@ -376,8 +376,6 @@ test('should render text attachments as text', async ({ runInlineTest, page, sho
 });
 
 test('should strikethough textual diff', async ({ runInlineTest, showReport, page }) => {
-  test.fail();
-
   const result = await runInlineTest({
     'helper.ts': `
       export const test = pwt.test.extend({
@@ -398,6 +396,31 @@ test('should strikethough textual diff', async ({ runInlineTest, showReport, pag
   expect(result.exitCode).toBe(1);
   await showReport();
   await page.click('text="is a test"');
-  const stricken = await page.locator("css=strike").innerText();
-  expect(stricken).toBe("old");
+  const stricken = await page.locator('css=strike').innerText();
+  expect(stricken).toBe('old');
+});
+
+test('should strikethough textual diff with commonalities', async ({ runInlineTest, showReport, page }) => {
+  const result = await runInlineTest({
+    'helper.ts': `
+      export const test = pwt.test.extend({
+        auto: [ async ({}, run, testInfo) => {
+          testInfo.snapshotSuffix = '';
+          await run();
+        }, { auto: true } ]
+      });
+    `,
+    'a.spec.js-snapshots/snapshot.txt': `oldcommon`,
+    'a.spec.js': `
+      const { test } = require('./helper');
+      test('is a test', ({}) => {
+        expect('newcommon').toMatchSnapshot('snapshot.txt');
+      });
+    `
+  }, { reporter: 'dot,html' });
+  expect(result.exitCode).toBe(1);
+  await showReport();
+  await page.click('text="is a test"');
+  const stricken = await page.locator('css=strike').innerText();
+  expect(stricken).toBe('old');
 });
