@@ -38,6 +38,7 @@
   "dependencies": {
     "commander": "^8.2.0",
     "debug": "^4.1.1",
+    "dom-accessibility-api": "^0.5.10",
     "extract-zip": "^2.0.1",
     "https-proxy-agent": "^5.0.0",
     "jpeg-js": "^0.4.2",

@@ -23,6 +23,7 @@ import { SelectorEvaluatorImpl, isVisible, parentElementOrShadowHost, elementMat
 import { CSSComplexSelectorList } from '../common/cssParser';
 import { generateSelector } from './selectorGenerator';
 import type * as channels from '../../protocol/channels';
+import { computeAccessibleName } from 'dom-accessibility-api';
 
 type Predicate<T> = (progress: InjectedScriptProgress) => T | symbol;
 
@@ -1190,6 +1191,10 @@ function deepEquals(a: any, b: any): boolean {
 
 function isElementDisabled(element: Element): boolean {
   const isRealFormControl = ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'].includes(element.nodeName);
+  const name = computeAccessibleName(element);
+
+  if (isRealFormControl && (!name || name.length === 0))
+    return true;
   if (isRealFormControl && element.hasAttribute('disabled'))
     return true;
   if (isRealFormControl && hasDisabledFieldSet(element))
