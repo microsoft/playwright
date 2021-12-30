@@ -172,7 +172,7 @@ index 040c7b124dec6bb254563bbe74fe50012cb077a3..b4e6b8132786af70e8ad0dce88b67c28
    const transportProvider = {
      setListener(upgradeListener) {
 diff --git a/docshell/base/BrowsingContext.cpp b/docshell/base/BrowsingContext.cpp
-index 8025adb2d19f392ce8f82a228b13ad8dcf9394d8..d339e7aaaab9719289a7c61aaa0a8d5b8afb9847 100644
+index 1cebebb4ada6ec3f262d5a9c0730e2230cba0068..f563b2aba06e5346229a49dbe28d65afd949ed62 100644
 --- a/docshell/base/BrowsingContext.cpp
 +++ b/docshell/base/BrowsingContext.cpp
 @@ -109,6 +109,20 @@ struct ParamTraits<mozilla::dom::PrefersColorSchemeOverride>
@@ -196,7 +196,7 @@ index 8025adb2d19f392ce8f82a228b13ad8dcf9394d8..d339e7aaaab9719289a7c61aaa0a8d5b
  template <>
  struct ParamTraits<mozilla::dom::ExplicitActiveStatus>
      : public ContiguousEnumSerializer<
-@@ -2774,6 +2788,40 @@ void BrowsingContext::DidSet(FieldIndex<IDX_PrefersColorSchemeOverride>,
+@@ -2778,6 +2792,40 @@ void BrowsingContext::DidSet(FieldIndex<IDX_PrefersColorSchemeOverride>,
    });
  }
  
@@ -238,7 +238,7 @@ index 8025adb2d19f392ce8f82a228b13ad8dcf9394d8..d339e7aaaab9719289a7c61aaa0a8d5b
                               nsString&& aOldValue) {
    MOZ_ASSERT(IsTop());
 diff --git a/docshell/base/BrowsingContext.h b/docshell/base/BrowsingContext.h
-index eeb742c95e515aaa3d51760ec1505aaee54b78e2..f3c9a91fb331c3803a70b5bc64d59fbd8088323a 100644
+index 7d11fb7edf6a6aa6a52d258b1939d539a8cb0559..0e1c966a754b2f3459ed5b258835bb0a777c99da 100644
 --- a/docshell/base/BrowsingContext.h
 +++ b/docshell/base/BrowsingContext.h
 @@ -207,6 +207,8 @@ enum class ExplicitActiveStatus : uint8_t {
@@ -250,7 +250,7 @@ index eeb742c95e515aaa3d51760ec1505aaee54b78e2..f3c9a91fb331c3803a70b5bc64d59fbd
    FIELD(DisplayMode, mozilla::dom::DisplayMode)                               \
    /* The number of entries added to the session history because of this       \
     * browsing context. */                                                     \
-@@ -868,6 +870,14 @@ class BrowsingContext : public nsILoadContext, public nsWrapperCache {
+@@ -871,6 +873,14 @@ class BrowsingContext : public nsILoadContext, public nsWrapperCache {
      return GetPrefersColorSchemeOverride();
    }
  
@@ -265,7 +265,7 @@ index eeb742c95e515aaa3d51760ec1505aaee54b78e2..f3c9a91fb331c3803a70b5bc64d59fbd
    void FlushSessionStore();
  
    bool IsInBFCache() const;
-@@ -1007,6 +1017,23 @@ class BrowsingContext : public nsILoadContext, public nsWrapperCache {
+@@ -1013,6 +1023,23 @@ class BrowsingContext : public nsILoadContext, public nsWrapperCache {
    void DidSet(FieldIndex<IDX_PrefersColorSchemeOverride>,
                dom::PrefersColorSchemeOverride aOldValue);
  
@@ -290,7 +290,7 @@ index eeb742c95e515aaa3d51760ec1505aaee54b78e2..f3c9a91fb331c3803a70b5bc64d59fbd
  
    bool CanSet(FieldIndex<IDX_SuspendMediaWhenInactive>, bool, ContentParent*) {
 diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
-index 67d78caa63174823c4c1947f087cfdfbafa36bda..ce3952ae8ad870ffcc664b95abfd81e6b592baa8 100644
+index 5f7c391e1091f5c84c6d3405e8abe541e3b5b379..6875168c6033154619a81f64df3fcac5d258eed3 100644
 --- a/docshell/base/nsDocShell.cpp
 +++ b/docshell/base/nsDocShell.cpp
 @@ -15,6 +15,12 @@
@@ -596,7 +596,7 @@ index 67d78caa63174823c4c1947f087cfdfbafa36bda..ce3952ae8ad870ffcc664b95abfd81e6
        return rv;
      }
  
-@@ -12593,6 +12831,9 @@ class OnLinkClickEvent : public Runnable {
+@@ -12596,6 +12834,9 @@ class OnLinkClickEvent : public Runnable {
        mHandler->OnLinkClickSync(mContent, mLoadState, mNoOpenerImplied,
                                  mTriggeringPrincipal);
      }
@@ -606,7 +606,7 @@ index 67d78caa63174823c4c1947f087cfdfbafa36bda..ce3952ae8ad870ffcc664b95abfd81e6
      return NS_OK;
    }
  
-@@ -12671,6 +12912,8 @@ nsresult nsDocShell::OnLinkClick(
+@@ -12674,6 +12915,8 @@ nsresult nsDocShell::OnLinkClick(
    nsCOMPtr<nsIRunnable> ev =
        new OnLinkClickEvent(this, aContent, loadState, noOpenerImplied,
                             aIsTrusted, aTriggeringPrincipal);
@@ -919,7 +919,7 @@ index e36cd43b76fd09596f6ccc1e0d70848b3d4ab7c0..40b7f24d8507219a3a7c42857b068e50
    dom::MediaCapabilities* MediaCapabilities();
    dom::MediaSession* MediaSession();
 diff --git a/dom/base/nsContentUtils.cpp b/dom/base/nsContentUtils.cpp
-index 0239d370c05758b7f891dd8c9b667f07092f6d72..0fd2e8478a9c81bca54f1e5054a018558314c786 100644
+index f8c384103eab909965513d2f39afa0b604a7ec05..b1b0bb7112ac31e4704a50d24902056ccfa3cfb9 100644
 --- a/dom/base/nsContentUtils.cpp
 +++ b/dom/base/nsContentUtils.cpp
 @@ -8163,7 +8163,8 @@ nsresult nsContentUtils::SendMouseEvent(
@@ -941,7 +941,7 @@ index 0239d370c05758b7f891dd8c9b667f07092f6d72..0fd2e8478a9c81bca54f1e5054a01855
    nsPresContext* presContext = aPresShell->GetPresContext();
    if (!presContext) return NS_ERROR_FAILURE;
 diff --git a/dom/base/nsContentUtils.h b/dom/base/nsContentUtils.h
-index 1da3e3005af42c3f1a383c762b08a797899db926..103a83eda019aac8d5e4736cd80dd961d05effab 100644
+index 0482f3312ece8743fec76603711e162621b4d5e8..d04433ac2c94ec4cb9116ce5d04bdc1cf4f240e9 100644
 --- a/dom/base/nsContentUtils.h
 +++ b/dom/base/nsContentUtils.h
 @@ -2884,7 +2884,8 @@ class nsContentUtils {
@@ -955,7 +955,7 @@ index 1da3e3005af42c3f1a383c762b08a797899db926..103a83eda019aac8d5e4736cd80dd961
    static void FirePageShowEventForFrameLoaderSwap(
        nsIDocShellTreeItem* aItem,
 diff --git a/dom/base/nsDOMWindowUtils.cpp b/dom/base/nsDOMWindowUtils.cpp
-index be5a841ba2ecdb03dac6fda601b26a6b6b15e3f3..5b7c4024f3f3995d2113579ab9e0246c6183695f 100644
+index 32b900aab003f09b126256f5d36859f20b2b7189..27d9f3be141408601247e999d2894605cb8c611e 100644
 --- a/dom/base/nsDOMWindowUtils.cpp
 +++ b/dom/base/nsDOMWindowUtils.cpp
 @@ -642,7 +642,7 @@ nsDOMWindowUtils::SendMouseEvent(
@@ -1388,7 +1388,7 @@ index 5b6f967e4002f62a9276abf841e7c5ead538ede8..04832d5ca36ed87f48f01def7fb6cd92
      return NS_OK;
    }
 diff --git a/dom/interfaces/base/nsIDOMWindowUtils.idl b/dom/interfaces/base/nsIDOMWindowUtils.idl
-index fb5efd4252a3495b9626ce1c84851b25e5a1b9d7..b20ecf18fe32d04403134998372789563031aff3 100644
+index e74922a6826fba2d6fbe92ef31ba8738b667dd3d..7b18bcb59a661c7df03ff7f791414f7026291020 100644
 --- a/dom/interfaces/base/nsIDOMWindowUtils.idl
 +++ b/dom/interfaces/base/nsIDOMWindowUtils.idl
 @@ -353,7 +353,8 @@ interface nsIDOMWindowUtils : nsISupports {
@@ -2169,7 +2169,7 @@ index 4a5dd759a6deefa5b0431e1e4d1595a9866d28d5..08242057a294b90fb8943c39f230d27e
        !isXpcshell &&
        isNotThunderbird
 diff --git a/servo/components/style/gecko/media_features.rs b/servo/components/style/gecko/media_features.rs
-index be30e5f0b6f43341c727c2f033b8ce71fdd2b121..53921de6374505614f2c2e89e6e74f64b82903b5 100644
+index c80ace2015b82948257a6aff0477ba573821f375..7547fe8097bd159d89f8fcb3df3491d5200e2348 100644
 --- a/servo/components/style/gecko/media_features.rs
 +++ b/servo/components/style/gecko/media_features.rs
 @@ -336,10 +336,15 @@ pub enum ForcedColors {
@@ -2560,7 +2560,7 @@ diff --git a/widget/cocoa/NativeKeyBindings.mm b/widget/cocoa/NativeKeyBindings.
 index 2b11df66d9445080d4d8a19a915b3e00285c5d32..caef1b65bbcff899f45c3e3cddfe76e88479ec30 100644
 --- a/widget/cocoa/NativeKeyBindings.mm
 +++ b/widget/cocoa/NativeKeyBindings.mm
-@@ -491,6 +491,13 @@
+@@ -491,6 +491,13 @@ void NativeKeyBindings::GetEditCommandsForTests(NativeKeyBindingsType aType,
        break;
      case KEY_NAME_INDEX_ArrowLeft:
        if (aEvent.IsAlt()) {
@@ -2574,7 +2574,7 @@ index 2b11df66d9445080d4d8a19a915b3e00285c5d32..caef1b65bbcff899f45c3e3cddfe76e8
          break;
        }
        if (aEvent.IsMeta() || (aEvent.IsControl() && aEvent.IsShift())) {
-@@ -511,6 +518,13 @@
+@@ -511,6 +518,13 @@ void NativeKeyBindings::GetEditCommandsForTests(NativeKeyBindingsType aType,
        break;
      case KEY_NAME_INDEX_ArrowRight:
        if (aEvent.IsAlt()) {
@@ -2588,7 +2588,7 @@ index 2b11df66d9445080d4d8a19a915b3e00285c5d32..caef1b65bbcff899f45c3e3cddfe76e8
          break;
        }
        if (aEvent.IsMeta() || (aEvent.IsControl() && aEvent.IsShift())) {
-@@ -531,6 +545,10 @@
+@@ -531,6 +545,10 @@ void NativeKeyBindings::GetEditCommandsForTests(NativeKeyBindingsType aType,
        break;
      case KEY_NAME_INDEX_ArrowUp:
        if (aEvent.IsControl()) {
@@ -2599,7 +2599,7 @@ index 2b11df66d9445080d4d8a19a915b3e00285c5d32..caef1b65bbcff899f45c3e3cddfe76e8
          break;
        }
        if (aEvent.IsMeta()) {
-@@ -540,7 +558,7 @@
+@@ -540,7 +558,7 @@ void NativeKeyBindings::GetEditCommandsForTests(NativeKeyBindingsType aType,
          instance->AppendEditCommandsForSelector(
              !aEvent.IsShift()
                  ? ToObjcSelectorPtr(@selector(moveToBeginningOfDocument:))
@@ -2608,7 +2608,7 @@ index 2b11df66d9445080d4d8a19a915b3e00285c5d32..caef1b65bbcff899f45c3e3cddfe76e8
              aCommands);
          break;
        }
-@@ -563,6 +581,10 @@
+@@ -563,6 +581,10 @@ void NativeKeyBindings::GetEditCommandsForTests(NativeKeyBindingsType aType,
        break;
      case KEY_NAME_INDEX_ArrowDown:
        if (aEvent.IsControl()) {
