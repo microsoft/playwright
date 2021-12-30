@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should intercept', async ({ page, server }) => {
+it('should intercept #smoke', async ({ page, server }) => {
   let intercepted = false;
   await page.route('**/empty.html', (route, request) => {
     expect(route.request()).toBe(request);

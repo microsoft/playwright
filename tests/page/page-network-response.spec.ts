@@ -19,7 +19,7 @@ import url from 'url';
 import { test as it, expect } from './pageTest';
 import fs from 'fs';
 
-it('should work', async ({ page, server }) => {
+it('should work #smoke', async ({ page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('foo', 'bar');
     res.setHeader('BaZ', 'bAz');

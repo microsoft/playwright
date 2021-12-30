@@ -42,7 +42,7 @@ it('should work with setHTTPCredentials', async ({ browser, server, browserName,
   await context.close();
 });
 
-it('should work with correct credentials', async ({ browser, server }) => {
+it('should work with correct credentials #smoke', async ({ browser, server }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext({
     httpCredentials: { username: 'user', password: 'pass' }

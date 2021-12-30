@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work with large DOM', async ({ page, server }) => {
+it('should work with large DOM #smoke', async ({ page, server }) => {
   await page.evaluate(() => {
     let id = 0;
     const next = (tag: string) => {

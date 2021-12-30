@@ -17,7 +17,7 @@
 
 import { contextTest as it, expect } from './config/browserTest';
 
-it('should work with browser context scripts', async ({ context, server }) => {
+it('should work with browser context scripts #smoke', async ({ context, server }) => {
   await context.addInitScript(() => window['temp'] = 123);
   const page = await context.newPage();
   await page.addInitScript(() => window['injected'] = window['temp']);

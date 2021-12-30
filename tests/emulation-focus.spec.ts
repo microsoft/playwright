@@ -22,7 +22,7 @@ it('should think that it is focused by default', async ({ page }) => {
   expect(await page.evaluate('document.hasFocus()')).toBe(true);
 });
 
-it('should think that all pages are focused', async ({ page }) => {
+it('should think that all pages are focused #smoke', async ({ page }) => {
   const page2 = await page.context().newPage();
   expect(await page.evaluate('document.hasFocus()')).toBe(true);
   expect(await page2.evaluate('document.hasFocus()')).toBe(true);
