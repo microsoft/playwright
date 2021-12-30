@@ -20,7 +20,7 @@ import { attachFrame } from '../config/utils';
 
 it.skip(({ isAndroid }) => isAndroid);
 
-it('should type into a textarea', async ({ page }) => {
+it('should type into a textarea #smoke', async ({ page }) => {
   await page.evaluate(() => {
     const textarea = document.createElement('textarea');
     document.body.appendChild(textarea);

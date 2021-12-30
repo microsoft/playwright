@@ -28,7 +28,7 @@ for (const [name, url] of Object.entries(vues)) {
       await page.goto(server.PREFIX + url);
     });
 
-    it('should work with single-root elements', async ({ page }) => {
+    it('should work with single-root elements #smoke', async ({ page }) => {
       expect(await page.$$eval(`_vue=book-list`, els => els.length)).toBe(1);
       expect(await page.$$eval(`_vue=book-item`, els => els.length)).toBe(3);
       expect(await page.$$eval(`_vue=book-list >> _vue=book-item`, els => els.length)).toBe(3);

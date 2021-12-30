@@ -242,7 +242,7 @@ it('should include secure set-cookies', async ({ contextFactory, httpsServer }, 
   expect(cookies[0]).toEqual({ name: 'name1', value: 'value1', secure: true });
 });
 
-it('should include content', async ({ contextFactory, server }, testInfo) => {
+it('should include content #smoke', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.PREFIX + '/har.html');
   const log = await getLog();

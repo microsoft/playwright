@@ -16,7 +16,7 @@
 
 import { playwrightTest as it, expect } from './config/browserTest';
 
-it('should have default url when launching browser', async ({ browserType, createUserDataDir }) => {
+it('should have default url when launching browser #smoke', async ({ browserType, createUserDataDir }) => {
   const browserContext = await browserType.launchPersistentContext(await createUserDataDir(), { headless: false });
   const urls = browserContext.pages().map(page => page.url());
   expect(urls).toEqual(['about:blank']);

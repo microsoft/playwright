@@ -28,7 +28,7 @@ it('should have different execution contexts', async ({ page, server }) => {
   expect(await page.frames()[1].evaluate(() => window['FOO'])).toBe('bar');
 });
 
-it('should have correct execution contexts', async ({ page, server }) => {
+it('should have correct execution contexts #smoke', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   expect(page.frames().length).toBe(2);
   expect(await page.frames()[0].evaluate(() => document.body.textContent.trim())).toBe('');

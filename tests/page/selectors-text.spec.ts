@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work', async ({ page }) => {
+it('should work #smoke', async ({ page }) => {
   await page.setContent(`<div>yo</div><div>ya</div><div>\nye  </div>`);
   expect(await page.$eval(`text=ya`, e => e.outerHTML)).toBe('<div>ya</div>');
   expect(await page.$eval(`text="ya"`, e => e.outerHTML)).toBe('<div>ya</div>');

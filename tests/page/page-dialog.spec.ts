@@ -27,7 +27,7 @@ it('should fire', async ({ page, server }) => {
   await page.evaluate(() => alert('yo'));
 });
 
-it('should allow accepting prompts', async ({ page, isElectron }) => {
+it('should allow accepting prompts #smoke', async ({ page, isElectron }) => {
   it.skip(isElectron, 'prompt() is not a thing in electron');
 
   page.on('dialog', dialog => {

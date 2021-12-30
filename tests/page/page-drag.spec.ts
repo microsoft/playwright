@@ -22,7 +22,7 @@ it.describe('Drag and drop', () => {
   it.skip(({ isAndroid }) => isAndroid);
   it.skip(({ browserName, browserMajorVersion }) => browserName === 'chromium' && browserMajorVersion < 91);
 
-  it('should work', async ({ page, server }) => {
+  it('should work #smoke', async ({ page, server }) => {
     await page.goto(server.PREFIX + '/drag-n-drop.html');
     await page.hover('#source');
     await page.mouse.down();
