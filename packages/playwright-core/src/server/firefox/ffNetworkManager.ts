@@ -131,7 +131,8 @@ export class FFNetworkManager {
       this._requests.delete(request._id);
       response._requestFinished(responseEndTime);
     }
-    response._setHttpVersion(event.protocolVersion);
+    if (event.protocolVersion)
+      response._setHttpVersion(event.protocolVersion);
     this._page._frameManager.reportRequestFinished(request.request, response);
   }
 
