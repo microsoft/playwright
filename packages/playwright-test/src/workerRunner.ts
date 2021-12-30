@@ -303,7 +303,7 @@ export class WorkerRunner extends EventEmitter {
       stdout: [],
       stderr: [],
       timeout: this._project.config.timeout,
-      snapshotSuffix: '',
+      snapshotSuffix: this._project.config.snapshotSuffix,
       outputDir: baseOutputDir,
       snapshotDir,
       outputPath: (...pathSegments: string[]): string => {

@@ -184,6 +184,7 @@ export class Loader {
       name: takeFirst(this._configOverrides.name, projectConfig.name, this._config.name, ''),
       testDir,
       snapshotDir,
+      snapshotSuffix: takeFirst(this._configOverrides.snapshotSuffix, projectConfig.snapshotSuffix, this._config.snapshotSuffix, process.env.PLAYWRIGHT_DOCKER ? 'docker' : process.platform),
       testIgnore: takeFirst(this._configOverrides.testIgnore, projectConfig.testIgnore, this._config.testIgnore, []),
       testMatch: takeFirst(this._configOverrides.testMatch, projectConfig.testMatch, this._config.testMatch, '**/?(*.)@(spec|test).*'),
       timeout: takeFirst(this._configOverrides.timeout, projectConfig.timeout, this._config.timeout, 10000),

@@ -136,6 +136,13 @@ interface TestProject {
    */
   snapshotDir?: string;
   /**
+   * Suffix used to differentiate snapshots between multiple test configurations. For example, if snapshots depend on the
+   * platform, you can set `testInfo.snapshotSuffix` equal to `process.platform`. In this case
+   * `expect(value).toMatchSnapshot(snapshotName)` will use different snapshots depending on the platform. Learn more about
+   * [snapshots](https://playwright.dev/docs/test-snapshots).
+   */
+  snapshotSuffix?: string;
+  /**
    * The output directory for files created during test execution. Defaults to `test-results`.
    *
    * This directory is cleaned at the start. When running a test, a unique subdirectory inside the
@@ -671,6 +678,13 @@ interface TestConfig {
    * resolve to `snapshots/a.spec.js-snapshots`.
    */
   snapshotDir?: string;
+  /**
+   * Suffix used to differentiate snapshots between multiple test configurations. For example, if snapshots depend on the
+   * platform, you can set `testInfo.snapshotSuffix` equal to `process.platform`. In this case
+   * `expect(value).toMatchSnapshot(snapshotName)` will use different snapshots depending on the platform. Learn more about
+   * [snapshots](https://playwright.dev/docs/test-snapshots).
+   */
+  snapshotSuffix?: string;
   /**
    * The output directory for files created during test execution. Defaults to `test-results`.
    *

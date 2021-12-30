@@ -41,6 +41,10 @@ drwxr-xr-x  3 user  group   96 Jun  4 11:46 example.spec.ts-snapshots
 
 Note the `chromium-darwin` in the generated snapshot file name - it contains the browser name and the platform. Screenshots differ between browsers and platforms due to different rendering, fonts and more, so you will need different snapshots for them. If you use multiple projects in your [configuration file](./test-configuration.md), project name will be used instead of `chromium`.
 
+:::note
+If you're snapshotting platform-independent data, like JSON or YAML from an API response, you can opt out of embedding the platform name (e.g. `linux`, `darwin`, etc.). See [Snapshot Suffix Overrides](#snapshot-suffix-overrides) for more details.
+:::
+
 If you are not on the same operating system as your CI system, you can use Docker to generate/update the screenshots:
 
 ```bash
@@ -125,3 +129,70 @@ test('example test', async ({ page }) => {
 ```
 
 Snapshots are stored next to the test file, in a separate directory. For example, `my.spec.ts` file will produce and store snapshots in the `my.spec.ts-snapshots` directory. You should commit this directory to your version control (e.g. `git`), and review any changes to it.
+
+
+## Snapshot Suffix Overrides
+
+By default, Playwright Test will embed the OS Platform in your snapshot files since Browser-based tests involving screenshots may be different depending on the platform.
+
+If you're snapshotting data that is platform-agnostic like JSON or YAML data from an API response, you can opt out of the default behavior.
+
+If you want to globally disable the behavior you can set `snapshotSuffix` to be empty (`''`):
+
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  snapshotSuffix: '', // empty by default for all projects unless other overrides present
+
+  projects: [
+    {
+      name: 'API Tests',
+      snapshotSuffix: '', // override per-project
+    }
+  ]
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  snapshotSuffix: '', // empty by default for all projects unless other overrides present
+
+  projects: [
+    {
+      name: 'API Tests',
+      snapshotSuffix: '', // override per-project
+    }
+  ]
+};
+export default config;
+```
+
+You can also customize it per-test via [`property: TestInfo.snapshotSuffix`] directly in a test (see below), in a hook (like [`method: Test.beforeEach`]), or even in an `auto`-run fixture (see [Test Fixtures](./test-fixtures.md):
+
+```js js-flavor=js
+// example.spec.js
+const { test, expect } = require('@playwright/test');
+
+test('it works', async ({ api }, testInfo) => {
+  testInfo.snapshotSuffix = '';
+  expect(await api.getProducts()).toMatchSnapshot('products.json');
+});
+```
+
+```js js-flavor=ts
+// example.spec.ts
+import { test, expect } from '@playwright/test';
+
+test('it works', async ({ api }, testInfo) => {
+  testInfo.snapshotSuffix = '';
+  expect(await api.getProducts()).toMatchSnapshot('products.json');
+});
+```

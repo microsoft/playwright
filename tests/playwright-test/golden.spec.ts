@@ -790,3 +790,112 @@ test('should allow comparing text with text without file extension', async ({ ru
   });
   expect(result.exitCode).toBe(0);
 });
+
+test.describe('snapshotSuffix', () => {
+  test('default to platform', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      [`a.spec.ts-snapshots/example-${process.env.PLAYWRIGHT_DOCKER ? 'docker' : process.platform}.txt`]: `Hello world`,
+      'a.spec.ts': `
+        const test = pwt.test;
+        test('is a test', ({}) => {
+          expect('Hello world').toMatchSnapshot('example.txt');
+        });
+      `
+    });
+    expect(result.exitCode).toBe(0);
+  });
+
+  test('includes project name', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'playwright.config.ts': `
+        module.exports = { projects: [{ name: 'Awesome Project' }] };
+      `,
+      [`a.spec.ts-snapshots/example-Awesome-Project-suffix.txt`]: `Hello world`,
+      'a.spec.ts': `
+        const test = pwt.test;
+        test('is a test', ({}, testInfo) => {
+          testInfo.snapshotSuffix = 'suffix';
+          expect('Hello world').toMatchSnapshot('example.txt');
+        });
+      `
+    });
+    expect(result.exitCode).toBe(0);
+  });
+
+  test('override by testInfo.snapshotSuffix', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'playwright.config.ts': `
+        module.exports = { snapshotSuffix: 'top-level' };
+      `,
+      [`a.spec.ts-snapshots/example-testinfo-override.txt`]: `Hello world`,
+      'a.spec.ts': `
+        const test = pwt.test;
+        test('is a test', ({}, testInfo) => {
+          testInfo.snapshotSuffix = 'testinfo-override';
+          expect('Hello world').toMatchSnapshot('example.txt');
+        });
+      `
+    });
+    expect(result.exitCode).toBe(0);
+  });
+
+  test('override by top-level config', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'playwright.config.ts': `
+        module.exports = { snapshotSuffix: 'top-level' };
+      `,
+      [`a.spec.ts-snapshots/example-top-level.txt`]: `Hello world`,
+      'a.spec.ts': `
+        const test = pwt.test;
+        test('is a test', ({}, testInfo) => {
+          expect('Hello world').toMatchSnapshot('example.txt');
+        });
+      `
+    });
+    expect(result.exitCode).toBe(0);
+  });
+
+  test('override by project', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'playwright.config.ts': `
+        module.exports = {
+          snapshotSuffix: 'top-level',
+          projects: [
+            { name: 'Project 1' },
+            { name: 'Project 2', snapshotSuffix: 'project-override' },
+            { name: 'Project 3', snapshotSuffix: '' }
+          ],
+        };
+      `,
+      [`a.spec.ts-snapshots/example-Project-1-top-level.txt`]: `Hello world`,
+      [`a.spec.ts-snapshots/example-Project-2-project-override.txt`]: `Hello world`,
+      [`a.spec.ts-snapshots/example-Project-3.txt`]: `Hello world`,
+      'a.spec.ts': `
+        const test = pwt.test;
+        test('is a test', ({}, testInfo) => {
+          expect('Hello world').toMatchSnapshot('example.txt');
+        });
+      `
+    });
+    expect(result.exitCode).toBe(0);
+  });
+
+  test('override by fixture', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      [`a.spec.ts-snapshots/example-fixture-overriden.txt`]: `Hello world`,
+      'a.spec.ts': `
+        const test = pwt.test.extend({
+          removeSnapshotSuffix: [ async ({}, use, testInfo) => {
+            testInfo.snapshotSuffix = 'fixture-overriden'
+            await use();
+          }, { auto: true } ]
+        });
+
+        test('is a test', ({}, testInfo) => {
+          expect('Hello world').toMatchSnapshot('example.txt');
+        });
+      `
+    });
+    expect(result.exitCode).toBe(0);
+  });
+});

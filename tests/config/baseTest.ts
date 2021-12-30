@@ -27,6 +27,9 @@ export const baseTest = test
     .extendTest(testModeTest)
     .extend<CommonFixtures>(commonFixtures)
     .extendTest(serverTest)
-    .extend<{}, { _snapshotSuffix: string }>({
-      _snapshotSuffix: ['', { scope: 'worker' }],
+    .extend<{ autoRemoveSnapshotSuffix: void }>({
+      autoRemoveSnapshotSuffix: [ async ({}, use, testInfo) => {
+        testInfo.snapshotSuffix = '';
+        await use();
+      }, { auto: true } ]
     });

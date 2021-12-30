@@ -34,7 +34,6 @@ type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
   _browserType: BrowserType;
   _browserOptions: LaunchOptions;
   _artifactsDir: () => string;
-  _snapshotSuffix: string;
 };
 
 export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
@@ -169,10 +168,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     });
   },
 
-  _snapshotSuffix: [process.env.PLAYWRIGHT_DOCKER ? 'docker' : process.platform, { scope: 'worker' }],
-
-  _setupContextOptionsAndArtifacts: [async ({ playwright, _snapshotSuffix, _combinedContextOptions, _artifactsDir, trace, screenshot, actionTimeout, navigationTimeout }, use, testInfo) => {
-    testInfo.snapshotSuffix = _snapshotSuffix;
+  _setupContextOptionsAndArtifacts: [async ({ playwright, _combinedContextOptions, _artifactsDir, trace, screenshot, actionTimeout, navigationTimeout }, use, testInfo) => {
     if (process.env.PWDEBUG)
       testInfo.setTimeout(0);
 

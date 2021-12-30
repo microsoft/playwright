@@ -133,6 +133,11 @@ The directory for each test can be accessed by [`property: TestInfo.snapshotDir`
 
 This path will serve as the base directory for each test file snapshot directory. Setting `snapshotDir` to `'snapshots'`, the [`property: TestInfo.snapshotDir`] would resolve to `snapshots/a.spec.js-snapshots`.
 
+## property: TestProject.snapshotSuffix
+- type: <[string]>
+
+Suffix used to differentiate snapshots between multiple test configurations. For example, if snapshots depend on the platform, you can set `testInfo.snapshotSuffix` equal to `process.platform`. In this case `expect(value).toMatchSnapshot(snapshotName)` will use different snapshots depending on the platform. Learn more about [snapshots](./test-snapshots.md).
+
 ## property: TestProject.outputDir
 - type: <[string]>
 
