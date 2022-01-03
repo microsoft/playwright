@@ -17,6 +17,8 @@
 
 import { test as it, expect } from './pageTest';
 
+it.skip(({ isAndroid }) => isAndroid);
+
 async function giveItAChanceToFill(page) {
   for (let i = 0; i < 5; i++)
     await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
