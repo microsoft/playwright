@@ -404,3 +404,10 @@ it('should match root after >> with *', async ({ page }) => {
   await page.setContent(`<button> hello world </button> <button> hellow <span> world </span> </button>`);
   expect(await page.$$eval('*css=button >> text=hello >> text=world', els => els.length)).toBe(2);
 });
+
+it('should work with leading and trailing spaces', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/10997' });
+  await page.setContent(`<button> Add widget </button>`);
+  await expect(page.locator('text=Add widget')).toBeVisible();
+  await expect(page.locator('text= Add widget ')).toBeVisible();
+});
