@@ -46,6 +46,11 @@ Testing outcome for this test. Note that outcome is not the same as [`property: 
 
 Suite this test case belongs to.
 
+## property: TestCase.repeatEachIndex
+- type: <[int]>
+
+Contains the repeat index when running in "repeat each" mode. This mode is enabled by passing `--repeat-each` to the [command line](./test-cli.md).
+
 ## property: TestCase.results
 - type: <[Array]<[TestResult]>>
 

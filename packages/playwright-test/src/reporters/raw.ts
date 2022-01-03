@@ -181,8 +181,8 @@ class RawReporter {
   }
 
   private _serializeSuite(suite: Suite): JsonSuite {
-    const fileId = calculateSha1(suite.location!.file.split(path.sep).join('/'));
     const location = this._relativeLocation(suite.location);
+    const fileId = calculateSha1(location!.file.split(path.sep).join('/'));
     return {
       title: suite.title,
       fileId,
@@ -195,7 +195,7 @@ class RawReporter {
 
   private _serializeTest(test: TestCase, fileId: string): JsonTestCase {
     const [, projectName, , ...titles] = test.titlePath();
-    const testIdExpression = `project:${projectName}|path:${titles.join('>')}`;
+    const testIdExpression = `project:${projectName}|path:${titles.join('>')}|repeat:${test.repeatEachIndex}`;
     const testId = fileId + '-' + calculateSha1(testIdExpression);
     return {
       testId,

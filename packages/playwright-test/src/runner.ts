@@ -475,7 +475,7 @@ function createTestGroups(rootSuite: Suite): TestGroup[] {
     return {
       workerHash: test._workerHash,
       requireFile: test._requireFile,
-      repeatEachIndex: test._repeatEachIndex,
+      repeatEachIndex: test.repeatEachIndex,
       projectIndex: test._projectIndex,
       tests: [],
     };

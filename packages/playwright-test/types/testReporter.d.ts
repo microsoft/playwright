@@ -167,6 +167,11 @@ export interface TestCase {
    */
   retries: number;
   /**
+   * Contains the repeat index when running in "repeat each" mode. This mode is enabled by passing `--repeat-each` to the
+   * [command line](https://playwright.dev/docs/test-cli).
+   */
+  repeatEachIndex: number;
+  /**
    * Results for each run of this test.
    */
   results: TestResult[];
