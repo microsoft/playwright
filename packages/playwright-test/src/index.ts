@@ -188,6 +188,9 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     const createdContexts = new Set<BrowserContext>();
 
     const onDidCreateContext = async (context: BrowserContext) => {
+      const browser = context.browser();
+      if (browser && !testInfo.annotations.find(a => a.type === 'browserVersion'))
+        testInfo.annotations.push({ type: 'browserVersion', description: browser.version() });
       createdContexts.add(context);
       context.setDefaultTimeout(testInfo.timeout === 0 ? 0 : (actionTimeout || 0));
       context.setDefaultNavigationTimeout(testInfo.timeout === 0 ? 0 : (navigationTimeout || actionTimeout || 0));

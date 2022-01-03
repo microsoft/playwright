@@ -292,7 +292,10 @@ test('should render annotations', async ({ runInlineTest, page, showReport }) =>
 
   await showReport();
   await page.click('text=skipped test');
-  await expect(page.locator('.test-case-annotation')).toHaveText('skip: I am not interested in this test');
+  await expect(page.locator('.test-case-annotation')).toHaveText([
+    /browserVersion: [\d.]+/,
+    'skip: I am not interested in this test',
+  ]);
 });
 
 test('should render beforeAll/afterAll hooks', async ({ runInlineTest, page, showReport }) => {
