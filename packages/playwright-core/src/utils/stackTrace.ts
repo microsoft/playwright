@@ -37,6 +37,7 @@ const UTIL_LIB = path.join(CORE_DIR, 'lib', 'util');
 const UTIL_SRC = path.join(CORE_DIR, 'src', 'util');
 const TEST_DIR_SRC = path.resolve(CORE_DIR, '..', 'playwright-test');
 const TEST_DIR_LIB = path.resolve(CORE_DIR, '..', '@playwright', 'test');
+const COVERAGE_PATH = path.join(CORE_DIR, '..', '..', 'tests', 'config', 'coverage.js')
 const WS_LIB = path.relative(process.cwd(), path.dirname(require.resolve('ws')));
 
 export type ParsedStackTrace = {
@@ -85,7 +86,7 @@ export function captureStackTrace(rawStack?: string): ParsedStackTrace {
       fileName = new URL(frame.file).pathname;
     else
       fileName = path.resolve(process.cwd(), frame.file);
-    if (isTesting && fileName.includes(path.join('playwright', 'tests', 'config', 'coverage.js')))
+    if (isTesting && fileName.includes(COVERAGE_PATH))
       return null;
     const inClient = fileName.startsWith(CLIENT_LIB) || fileName.startsWith(CLIENT_SRC) || fileName.startsWith(UTIL_LIB) || fileName.startsWith(UTIL_SRC);
     const parsed: ParsedFrame = {
