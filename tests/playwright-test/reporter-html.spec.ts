@@ -447,3 +447,26 @@ test('should differentiate repeat-each test cases', async ({ runInlineTest, show
   await expect(page.locator('text=Before Hooks')).toBeVisible();
   await expect(page.locator('text=ouch')).toBeHidden();
 });
+
+test('should group similar / loop steps', async ({ runInlineTest, showReport, page }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/10098' });
+  const result = await runInlineTest({
+    'a.spec.js': `
+      const { test } = pwt;
+      test('sample', async ({}, testInfo) => {
+        for (let i = 0; i < 10; ++i)
+          expect(1).toBe(1);
+        for (let i = 0; i < 20; ++i)
+          expect(2).toEqual(2);
+      });
+    `
+  }, { 'reporter': 'dot,html' });
+  expect(result.exitCode).toBe(0);
+  await showReport();
+
+  await page.locator('text=sample').first().click();
+  await expect(page.locator('.tree-item-title')).toContainText([
+    /expect\.toBe.*10/,
+    /expect\.toEqual.*20/,
+  ]);
+});
