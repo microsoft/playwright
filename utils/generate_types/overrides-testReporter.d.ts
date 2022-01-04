@@ -44,6 +44,7 @@ export interface TestCase {
   timeout: number;
   annotations: { type: string, description?: string }[];
   retries: number;
+  repeatEachIndex: number;
   results: TestResult[];
   outcome(): 'skipped' | 'expected' | 'unexpected' | 'flaky';
   ok(): boolean;

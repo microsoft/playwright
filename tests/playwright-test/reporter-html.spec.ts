@@ -424,3 +424,26 @@ test('should strikethough textual diff with commonalities', async ({ runInlineTe
   const stricken = await page.locator('css=strike').innerText();
   expect(stricken).toBe('old');
 });
+
+test('should differentiate repeat-each test cases', async ({ runInlineTest, showReport, page }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/10859' });
+  const result = await runInlineTest({
+    'a.spec.js': `
+      const { test } = pwt;
+      test('sample', async ({}, testInfo) => {
+        if (testInfo.repeatEachIndex === 2)
+          throw new Error('ouch');
+      });
+    `
+  }, { 'reporter': 'dot,html', 'repeat-each': 3 });
+  expect(result.exitCode).toBe(1);
+  await showReport();
+
+  await page.locator('text=sample').first().click();
+  await expect(page.locator('text=ouch')).toBeVisible();
+  await page.locator('text=All').first().click();
+
+  await page.locator('text=sample').nth(1).click();
+  await expect(page.locator('text=Before Hooks')).toBeVisible();
+  await expect(page.locator('text=ouch')).toBeHidden();
+});

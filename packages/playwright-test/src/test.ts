@@ -131,6 +131,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   timeout = 0;
   annotations: Annotations = [];
   retries = 0;
+  repeatEachIndex = 0;
 
   _type: TestCaseType;
   _ordinalInFile: number;
@@ -138,7 +139,6 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   _id = '';
   _workerHash = '';
   _pool: FixturePool | undefined;
-  _repeatEachIndex = 0;
   _projectIndex = 0;
 
   constructor(type: TestCaseType, title: string, fn: Function, ordinalInFile: number, testType: TestTypeImpl, location: Location) {

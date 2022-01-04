@@ -79,7 +79,7 @@ export class ProjectImpl {
         const test = entry._clone();
         test.retries = this.config.retries;
         test._id = `${entry._ordinalInFile}@${entry._requireFile}#run${this.index}-repeat${repeatEachIndex}`;
-        test._repeatEachIndex = repeatEachIndex;
+        test.repeatEachIndex = repeatEachIndex;
         test._projectIndex = this.index;
         to._addTest(test);
         if (!filter(test)) {
@@ -100,7 +100,7 @@ export class ProjectImpl {
       clone._pool = this.buildPool(hook);
       clone._projectIndex = this.index;
       clone._id = `${hook._ordinalInFile}@${hook._requireFile}#run${this.index}-repeat${repeatEachIndex}`;
-      clone._repeatEachIndex = repeatEachIndex;
+      clone.repeatEachIndex = repeatEachIndex;
       to._addAllHook(clone);
     }
     return true;
