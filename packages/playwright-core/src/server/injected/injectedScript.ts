@@ -731,19 +731,17 @@ export class InjectedScript {
       if (!event.isTrusted)
         return;
 
-      // Element was detached during the action, for example in some event handler.
-      // If events before that were correctly pointing to it, consider this a valid scenario.
-      if (!element.isConnected)
-        return;
-
       // Determine the event point. Note that Firefox does not always have window.TouchEvent.
       const point = (!!window.TouchEvent && (event instanceof window.TouchEvent)) ? event.touches[0] : (event as MouseEvent | PointerEvent);
-      if (!!point && (result === undefined || result === 'done')) {
-        // Determine whether we hit the target element, unless we have already failed.
+
+      // Check that we hit the right element at the first event, and assume all
+      // subsequent events will be fine.
+      if (result === undefined && point) {
         const hitElement = this.deepElementFromPoint(document, point.clientX, point.clientY);
         result = this._expectHitTargetParent(hitElement, element);
       }
-      if (blockAllEvents || result !== 'done') {
+
+      if (blockAllEvents || (result !== 'done' && result !== undefined)) {
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();

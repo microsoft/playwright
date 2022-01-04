@@ -48,18 +48,18 @@ it('should block all events when hit target is wrong', async ({ page, server }) 
   expect(allEvents).toEqual([]);
 });
 
-it('should block click when mousedown succeeds but mouseup fails', async ({ page, server }) => {
-  it.skip(!process.env.PLAYWRIGHT_LAYOUT_SHIFT_CHECK);
+it('should block click when mousedown fails', async ({ page, server }) => {
+  it.skip(!!process.env.PLAYWRIGHT_NO_LAYOUT_SHIFT_CHECK);
 
   await page.goto(server.PREFIX + '/input/button.html');
   await page.$eval('button', button => {
-    button.addEventListener('mousedown', () => {
+    button.addEventListener('mousemove', () => {
       button.style.marginLeft = '100px';
     });
 
     const allEvents = [];
     (window as any).allEvents = allEvents;
-    for (const name of ['mousedown', 'mouseup', 'click', 'dblclick', 'auxclick', 'contextmenu', 'pointerdown', 'pointerup'])
+    for (const name of ['mousemove', 'mousedown', 'mouseup', 'click', 'dblclick', 'auxclick', 'contextmenu', 'pointerdown', 'pointerup'])
       button.addEventListener(name, e => allEvents.push(e.type));
   });
 
@@ -68,9 +68,9 @@ it('should block click when mousedown succeeds but mouseup fails', async ({ page
   const allEvents = await page.evaluate(() => (window as any).allEvents);
   expect(allEvents).toEqual([
     // First attempt failed.
-    'pointerdown', 'mousedown',
+    'mousemove',
     // Second attempt succeeded.
-    'pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click',
+    'mousemove', 'pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click',
   ]);
 });
 
@@ -87,12 +87,42 @@ it('should click when element detaches in mousedown', async ({ page, server }) =
   expect(await page.evaluate('result')).toBe('Mousedown');
 });
 
+it('should block all events when hit target is wrong and element detaches', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/input/button.html');
+  await page.$eval('button', button => {
+    const blocker = document.createElement('div');
+    blocker.style.position = 'absolute';
+    blocker.style.width = '400px';
+    blocker.style.height = '400px';
+    blocker.style.left = '0';
+    blocker.style.top = '0';
+    document.body.appendChild(blocker);
+
+    window.addEventListener('mousemove', () => button.remove());
+
+    const allEvents = [];
+    (window as any).allEvents = allEvents;
+    for (const name of ['mousedown', 'mouseup', 'click', 'dblclick', 'auxclick', 'contextmenu', 'pointerdown', 'pointerup']) {
+      window.addEventListener(name, e => allEvents.push(e.type));
+      blocker.addEventListener(name, e => allEvents.push(e.type));
+    }
+  });
+
+  const error = await page.click('button', { timeout: 1000 }).catch(e => e);
+  expect(error.message).toContain('page.click: Timeout 1000ms exceeded.');
+
+  // Give it some time, just in case.
+  await page.waitForTimeout(1000);
+  const allEvents = await page.evaluate(() => (window as any).allEvents);
+  expect(allEvents).toEqual([]);
+});
+
 it('should not block programmatic events', async ({ page, server }) => {
-  it.skip(!process.env.PLAYWRIGHT_LAYOUT_SHIFT_CHECK);
+  it.skip(!!process.env.PLAYWRIGHT_NO_LAYOUT_SHIFT_CHECK);
 
   await page.goto(server.PREFIX + '/input/button.html');
   await page.$eval('button', button => {
-    button.addEventListener('mousedown', () => {
+    button.addEventListener('mousemove', () => {
       button.style.marginLeft = '100px';
       button.dispatchEvent(new MouseEvent('click'));
     });

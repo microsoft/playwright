@@ -113,7 +113,7 @@ export class RawMouseImpl implements input.RawMouse {
     this._session = session;
   }
 
-  async move(x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>): Promise<void> {
+  async move(x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, forClick: boolean): Promise<void> {
     await this._pageProxySession.send('Input.dispatchMouseEvent', {
       type: 'move',
       button,
