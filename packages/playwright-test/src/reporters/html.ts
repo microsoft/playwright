@@ -106,6 +106,7 @@ export type TestStep = {
   snippet?: string;
   error?: string;
   steps: TestStep[];
+  count: number;
 };
 
 type TestEntry = {
@@ -478,7 +479,8 @@ class HtmlBuilder {
       snippet: step.snippet,
       steps: step.steps.map(s => this._createTestStep(s)),
       location: step.location,
-      error: step.error
+      error: step.error,
+      count: step.count
     };
   }
 }

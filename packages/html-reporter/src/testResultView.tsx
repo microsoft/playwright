@@ -105,6 +105,7 @@ const StepTreeItem: React.FC<{
     <span style={{ float: 'right' }}>{msToString(step.duration)}</span>
     {statusIcon(step.error || step.duration === -1 ? 'failed' : 'passed')}
     <span>{step.title}</span>
+    {step.count > 1 && <> ✕ <span className='test-result-counter'>{step.count}</span></>}
     {step.location && <span className='test-result-path'>— {step.location.file}:{step.location.line}</span>}
   </span>} loadChildren={step.steps.length + (step.snippet ? 1 : 0) ? () => {
     const children = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1}></StepTreeItem>);
