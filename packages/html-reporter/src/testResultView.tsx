@@ -49,6 +49,7 @@ export const TestResultView: React.FC<{
   const expected = attachmentsMap.get('expected');
   const actual = attachmentsMap.get('actual');
   const diff = attachmentsMap.get('diff');
+  const hasImages = [actual?.contentType, expected?.contentType, diff?.contentType].some(v => v && /^image\//i.test(v));
   return <div className='test-result'>
     {result.error && <AutoChip header='Errors'>
       <ErrorMessage key='test-result-error-message' error={result.error}></ErrorMessage>
@@ -57,8 +58,8 @@ export const TestResultView: React.FC<{
       {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} depth={0}></StepTreeItem>)}
     </AutoChip>}
 
-    {expected && actual && <AutoChip header='Image mismatch'>
-      <ImageDiff actual={actual} expected={expected} diff={diff}></ImageDiff>
+    {expected && actual && <AutoChip header={`${hasImages ? 'Image' : 'Snapshot'} mismatch`}>
+      {hasImages && <ImageDiff actual={actual} expected={expected} diff={diff}></ImageDiff>}
       <AttachmentLink key={`expected`} attachment={expected}></AttachmentLink>
       <AttachmentLink key={`actual`} attachment={actual}></AttachmentLink>
       {diff && <AttachmentLink key={`diff`} attachment={diff}></AttachmentLink>}
