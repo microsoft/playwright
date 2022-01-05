@@ -35,13 +35,14 @@ import EmptyReporter from './reporters/empty';
 import HtmlReporter from './reporters/html';
 import { ProjectImpl } from './project';
 import { Minimatch } from 'minimatch';
-import { FullConfig } from './types';
+import { Config, FullConfig } from './types';
 import { WebServer } from './webServer';
 import { raceAgainstDeadline } from 'playwright-core/lib/utils/async';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
 const readFileAsync = promisify(fs.readFile);
+export const kDefaultConfigFiles = ['playwright.config.ts', 'playwright.config.js', 'playwright.config.mjs'];
 
 type InternalGlobalSetupFunction = () => Promise<() => Promise<void>>;
 
@@ -51,8 +52,42 @@ export class Runner {
   private _didBegin = false;
   private _internalGlobalSetups: Array<InternalGlobalSetupFunction> = [];
 
-  constructor(loader: Loader) {
-    this._loader = loader;
+  constructor(configOverrides: Config, defaultConfig: Config = {}) {
+    this._loader = new Loader(defaultConfig, configOverrides);
+  }
+
+  async loadConfigFromFile(configFileOrDirectory: string): Promise<Config> {
+    const loadConfig = async (configFile: string) => {
+      if (fs.existsSync(configFile)) {
+        if (process.stdout.isTTY)
+          console.log(`Using config at ` + configFile);
+        const config = await this._loader.loadConfigFile(configFile);
+        return config;
+      }
+    };
+
+    const loadConfigFromDirectory = async (directory: string) => {
+      for (const configName of kDefaultConfigFiles) {
+        const config = await loadConfig(path.resolve(directory, configName));
+        if (config)
+          return config;
+      }
+    };
+
+    if (!fs.existsSync(configFileOrDirectory))
+      throw new Error(`${configFileOrDirectory} does not exist`);
+    if (fs.statSync(configFileOrDirectory).isDirectory()) {
+      // When passed a directory, look for a config file inside.
+      const config = await loadConfigFromDirectory(configFileOrDirectory);
+      if (config)
+        return config;
+      // If there is no config, assume this as a root testing directory.
+      return this._loader.loadEmptyConfig(configFileOrDirectory);
+    } else {
+      // When passed a file, it must be a config file.
+      const config = await loadConfig(configFileOrDirectory);
+      return config!;
+    }
   }
 
   private async _createReporter(list: boolean) {

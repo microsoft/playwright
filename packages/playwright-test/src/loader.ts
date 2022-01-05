@@ -68,9 +68,10 @@ export class Loader {
     return rawConfig;
   }
 
-  loadEmptyConfig(rootDir: string) {
+  loadEmptyConfig(rootDir: string): Config {
     this._config = {};
     this._processConfigObject(rootDir);
+    return {};
   }
 
   private _processConfigObject(rootDir: string) {
