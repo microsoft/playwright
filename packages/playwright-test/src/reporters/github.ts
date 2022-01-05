@@ -69,7 +69,7 @@ export class GitHubReporter extends BaseReporter {
   }
 
   override onError(error: TestError) {
-    const errorMessage = formatError(error, false).message;
+    const errorMessage = formatError(this.config, error, false).message;
     this.githubLogger.error(errorMessage);
   }
 
@@ -100,21 +100,19 @@ export class GitHubReporter extends BaseReporter {
 
   private _printFailureAnnotations(failures: TestCase[]) {
     failures.forEach((test, index) => {
-      const filePath = workspaceRelativePath(test.location.file);
       const { annotations } = formatFailure(this.config, test, {
-        filePath,
         index: index + 1,
         includeStdio: true,
         includeAttachments: false,
       });
-      annotations.forEach(({ filePath, title, message, position }) => {
+      annotations.forEach(({ location, title, message }) => {
         const options: GitHubLogOptions = {
-          file: filePath,
+          file: workspaceRelativePath(location?.file || test.location.file),
           title,
         };
-        if (position) {
-          options.line = position.line;
-          options.col = position.column;
+        if (location) {
+          options.line = location.line;
+          options.col = location.column;
         }
         this.githubLogger.error(message, options);
       });

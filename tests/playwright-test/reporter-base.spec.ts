@@ -64,26 +64,15 @@ test('print should print the error name without a message', async ({ runInlineTe
   expect(result.output).toContain('FooBarError');
 });
 
-test('print an error in a codeframe', async ({ runInlineTest }) => {
+test('should print an error in a codeframe', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'my-lib.ts': `
-    const foobar = () => {
-      const error = new Error('my-message');
-      error.name = 'FooBarError';
-      throw error;
-    }
-    export default () => {
-      foobar();
-    }
-    `,
     'a.spec.ts': `
-    const { test } = pwt;
-    import myLib from './my-lib';
-    test('foobar', async ({}) => {
-      const error = new Error('my-message');
-      error.name = 'FooBarError';
-      throw error;
-    });
+      const { test } = pwt;
+      test('foobar', async ({}) => {
+        const error = new Error('my-message');
+        error.name = 'FooBarError';
+        throw error;
+      });
     `
   }, {}, {
     FORCE_COLOR: '0',
@@ -91,9 +80,36 @@ test('print an error in a codeframe', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('FooBarError: my-message');
-  expect(result.output).toContain('test(\'foobar\', async');
-  expect(result.output).toContain('throw error;');
-  expect(result.output).toContain('import myLib from \'./my-lib\';');
+  expect(result.output).not.toContain('at a.spec.ts:7');
+  expect(result.output).toContain(`   5 |       const { test } = pwt;`);
+  expect(result.output).toContain(`   6 |       test('foobar', async ({}) => {`);
+  expect(result.output).toContain(`>  7 |         const error = new Error('my-message');`);
+});
+
+test('should print codeframe from a helper', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'helper.ts': `
+      export function ohMy() {
+        throw new Error('oh my');
+      }
+    `,
+    'a.spec.ts': `
+      import { ohMy } from './helper';
+      const { test } = pwt;
+      test('foobar', async ({}) => {
+        ohMy();
+      });
+    `
+  }, {}, {
+    FORCE_COLOR: '0',
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Error: oh my');
+  expect(result.output).toContain(`   at helper.ts:5`);
+  expect(result.output).toContain(`  4 |       export function ohMy() {`);
+  expect(result.output).toContain(`> 5 |         throw new Error('oh my');`);
+  expect(result.output).toContain(`    |               ^`);
 });
 
 test('should print slow tests', async ({ runInlineTest }) => {

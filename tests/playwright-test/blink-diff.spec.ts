@@ -730,7 +730,6 @@ it.describe('Blink-Diff', () => {
 
       it('should crop image-a', async () => {
         instance._cropImageA = { width: 1, height: 2 };
-        console.log('A');
         const result = instance.runSync();
         expect(result.dimension).toBe(2);
       });
