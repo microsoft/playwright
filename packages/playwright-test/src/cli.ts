@@ -121,7 +121,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     process.env.PWDEBUG = '1';
   }
 
-  const runner = new Runner(overrides, defaultConfig);
+  const runner = new Runner(overrides, { defaultConfig, printResolvedConfig: process.stdout.isTTY });
 
   // When no --config option is passed, let's look for the config file in the current directory.
   const configFile = opts.config ? path.resolve(process.cwd(), opts.config) : process.cwd();
@@ -129,7 +129,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   if (('projects' in config) && opts.browser)
     throw new Error(`Cannot use --browser option when configuration file defines projects. Specify browserName in the projects instead.`);
 
-  const filePatternFilters: FilePatternFilter[] = args.map(arg => {
+  const filePatternFilter: FilePatternFilter[] = args.map(arg => {
     const match = /^(.*):(\d+)$/.exec(arg);
     return {
       re: forceRegExp(match ? match[1] : arg),
@@ -139,14 +139,12 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
 
   if (process.env.PLAYWRIGHT_DOCKER)
     runner.addInternalGlobalSetup(launchDockerContainer);
-  const result = await runner.run(!!opts.list, filePatternFilters, opts.project || undefined);
+  const result = await runner.runAllTests({
+    listOnly: !!opts.list,
+    filePatternFilter,
+    projectFilter: opts.project || undefined,
+  });
   await stopProfiling(undefined);
-
-  // Calling process.exit() might truncate large stdout/stderr output.
-  // See https://github.com/nodejs/node/issues/6456.
-  // See https://github.com/nodejs/node/issues/12921
-  await new Promise<void>(resolve => process.stdout.write('', () => resolve()));
-  await new Promise<void>(resolve => process.stderr.write('', () => resolve()));
 
   if (result.status === 'interrupted')
     process.exit(130);
