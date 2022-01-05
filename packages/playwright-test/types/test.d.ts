@@ -1389,15 +1389,14 @@ export interface TestInfo {
   /**
    * The list of files or buffers attached to the current test. Some reporters show test attachments.
    *
-   * To safely add a file from disk as an attachment, please use
-   * [testInfo.attach(path[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach-1) instead of
-   * directly pushing onto this array. For inline attachments, use
-   * [testInfo.attach(path[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach-1).
+   * To add an attachment, use
+   * [testInfo.attach(name[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach) instead of directly
+   * pushing onto this array.
    */
   attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
   /**
-   * Attach a file from disk to the current test. Some reporters show test attachments. The `name` and `contentType` will be
-   * inferred by default from the `path`, but you can optionally override either of these.
+   * Attach a value or a file from disk to the current test. Some reporters show test attachments. Either `path` or `body`
+   * must be specified, but not both.
    *
    * For example, you can attach a screenshot to the test:
    *
@@ -1406,15 +1405,8 @@ export interface TestInfo {
    *
    * test('basic test', async ({ page }, testInfo) => {
    *   await page.goto('https://playwright.dev');
-   *
-   *   // Capture a screenshot and attach it.
-   *   const path = testInfo.outputPath('screenshot.png');
-   *   await page.screenshot({ path });
-   *   await testInfo.attach(path);
-   *   // Optionally override the name.
-   *   await testInfo.attach(path, { name: 'example.png' });
-   *   // Optionally override the contentType.
-   *   await testInfo.attach(path, { name: 'example.custom-file', contentType: 'x-custom-content-type' });
+   *   const screenshot = await page.screenshot();
+   *   await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
    * });
    * ```
    *
@@ -1426,24 +1418,17 @@ export interface TestInfo {
    * test('basic test', async ({}, testInfo) => {
    *   const { download } = require('./my-custom-helpers');
    *   const tmpPath = await download('a');
-   *   await testInfo.attach(tmpPath, { name: 'example.json' });
+   *   await testInfo.attach('downloaded', { path: tmpPath });
    * });
    * ```
    *
-   * > NOTE: [testInfo.attach(path[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach-1)
-   * automatically takes care of copying attachments to a location that is accessible to reporters, even if you were to
-   * delete the attachment after awaiting the attach call.
-   * @param path
-   * @param options
-   */
-  attach(path: string, options?: { contentType?: string, name?: string}): Promise<void>;
-  /**
-   * Attach data to the current test, either a `string` or a `Buffer`. Some reporters show test attachments.
-   * @param body
+   * > NOTE: [testInfo.attach(name[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach)
+   * automatically takes care of copying attached files to a location that is accessible to reporters. You can safely remove
+   * the attachment after awaiting the attach call.
    * @param name
    * @param options
    */
-  attach(body: string | Buffer, name: string, options?: { contentType?: string }): Promise<void>;
+  attach(name: string, options?: { contentType?: string, path?: string, body?: string | Buffer }): Promise<void>;
   /**
    * Specifies a unique repeat index when running in "repeat each" mode. This mode is enabled by passing `--repeat-each` to
    * the [command line](https://playwright.dev/docs/test-cli).

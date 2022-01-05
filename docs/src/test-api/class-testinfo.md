@@ -40,10 +40,11 @@ Learn more about [test annotations](./test-annotations.md).
 
 The list of files or buffers attached to the current test. Some reporters show test attachments.
 
-To safely add a file from disk as an attachment, please use [`method: TestInfo.attach#1`] instead of directly pushing onto this array. For inline attachments, use [`method: TestInfo.attach#1`].
+To add an attachment, use [`method: TestInfo.attach`] instead of directly pushing onto this array.
 
-## method: TestInfo.attach#1
-Attach a file from disk to the current test. Some reporters show test attachments. The [`option: name`] and [`option: contentType`] will be inferred by default from the [`param: path`], but you can optionally override either of these.
+## method: TestInfo.attach
+
+Attach a value or a file from disk to the current test. Some reporters show test attachments. Either [`option: path`] or [`option: body`] must be specified, but not both.
 
 For example, you can attach a screenshot to the test:
 
@@ -52,15 +53,8 @@ const { test, expect } = require('@playwright/test');
 
 test('basic test', async ({ page }, testInfo) => {
   await page.goto('https://playwright.dev');
-
-  // Capture a screenshot and attach it.
-  const path = testInfo.outputPath('screenshot.png');
-  await page.screenshot({ path });
-  await testInfo.attach(path);
-  // Optionally override the name.
-  await testInfo.attach(path, { name: 'example.png' });
-  // Optionally override the contentType.
-  await testInfo.attach(path, { name: 'example.custom-file', contentType: 'x-custom-content-type' });
+  const screenshot = await page.screenshot();
+  await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
 });
 ```
 
@@ -69,15 +63,8 @@ import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ page }, testInfo) => {
   await page.goto('https://playwright.dev');
-
-  // Capture a screenshot and attach it.
-  const path = testInfo.outputPath('screenshot.png');
-  await page.screenshot({ path });
-  await testInfo.attach(path);
-  // Optionally override the name.
-  await testInfo.attach(path, { name: 'example.png' });
-  // Optionally override the contentType.
-  await testInfo.attach(path, { name: 'example.custom-file', contentType: 'x-custom-content-type' });
+  const screenshot = await page.screenshot();
+  await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
 });
 ```
 
@@ -89,7 +76,7 @@ const { test, expect } = require('@playwright/test');
 test('basic test', async ({}, testInfo) => {
   const { download } = require('./my-custom-helpers');
   const tmpPath = await download('a');
-  await testInfo.attach(tmpPath, { name: 'example.json' });
+  await testInfo.attach('downloaded', { path: tmpPath });
 });
 ```
 
@@ -99,38 +86,28 @@ import { test, expect } from '@playwright/test';
 test('basic test', async ({}, testInfo) => {
   const { download } = require('./my-custom-helpers');
   const tmpPath = await download('a');
-  await testInfo.attach(tmpPath, { name: 'example.json' });
+  await testInfo.attach('downloaded', { path: tmpPath });
 });
 ```
 
 :::note
-[`method: TestInfo.attach#1`] automatically takes care of copying attachments to a
-location that is accessible to reporters, even if you were to delete the attachment
+[`method: TestInfo.attach`] automatically takes care of copying attached files to a
+location that is accessible to reporters. You can safely remove the attachment
 after awaiting the attach call.
 :::
 
-### param: TestInfo.attach#1.path
-- `path` <[string]> Path on the filesystem to the attached file.
-
-### option: TestInfo.attach#1.name
-- `name` <[void]|[string]> Optional attachment name. If omitted, this will be inferred from [`param: path`].
-
-### option: TestInfo.attach#1.contentType
-- `contentType` <[void]|[string]> Optional content type of this attachment to properly present in the report, for example `'application/json'` or `'image/png'`. If omitted, this falls back to an inferred type based on the [`param: name`] (if set) or [`param: path`]'s extension; it will be set to `application/octet-stream` if the type cannot be inferred from the file extension.
-
-
-## method: TestInfo.attach#2
-
-Attach data to the current test, either a `string` or a `Buffer`. Some reporters show test attachments.
-
-### param: TestInfo.attach#2.body
-- `body` <[string]|[Buffer]> Attachment body.
-
-### param: TestInfo.attach#2.name
+### param: TestInfo.attach.name
 - `name` <[string]> Attachment name.
 
-### option: TestInfo.attach#2.contentType
-- `contentType` <[void]|[string]> Optional content type of this attachment to properly present in the report, for example `'application/json'` or `'application/xml'`. If omitted, this falls back to an inferred type based on the [`param: name`]'s extension; if the type cannot be inferred from the name's extension, it will be set to `text/plain` (if [`param: body`] is a `string`) or `application/octet-stream` (if [`param: body`] is a `Buffer`).
+### option: TestInfo.attach.body
+- `body` <[string]|[Buffer]> Attachment body. Mutually exclusive with [`option: path`].
+
+### option: TestInfo.attach.contentType
+- `contentType` <[void]|[string]> Optional content type of this attachment to properly present in the report, for example `'application/json'` or `'image/png'`. If omitted, content type is inferred based on the [`option: path`], or defaults to `text/plain` for [string] attachments and `application/octet-stream` for [Buffer] attachments.
+
+### option: TestInfo.attach.path
+- `path` <[string]> Path on the filesystem to the attached file. Mutually exclusive with [`option: body`].
+
 
 ## property: TestInfo.column
 - type: <[int]>
