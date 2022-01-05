@@ -52,7 +52,7 @@ export class TestTypeImpl {
     test.step = wrapFunctionWithLocation(this._step.bind(this));
     test.use = wrapFunctionWithLocation(this._use.bind(this));
     test.extend = wrapFunctionWithLocation(this._extend.bind(this));
-    test.extendTest = wrapFunctionWithLocation(this._extendTest.bind(this));
+    test._extendTest = wrapFunctionWithLocation(this._extendTest.bind(this));
     test.info = () => {
       const result = currentTestInfo();
       if (!result)
@@ -203,7 +203,7 @@ export class TestTypeImpl {
 
   private _extend(location: Location, fixtures: Fixtures) {
     if ((fixtures as any)[testTypeSymbol])
-      throw new Error(`test.extend() accepts fixtures object, not a test object.\nDid you mean to call test.extendTest()?`);
+      throw new Error(`test.extend() accepts fixtures object, not a test object.\nDid you mean to call test._extendTest()?`);
     const fixturesWithLocation: FixturesWithLocation = { fixtures, location };
     return new TestTypeImpl([...this.fixtures, fixturesWithLocation]).test;
   }
@@ -211,7 +211,7 @@ export class TestTypeImpl {
   private _extendTest(location: Location, test: TestType<any, any>) {
     const testTypeImpl = (test as any)[testTypeSymbol] as TestTypeImpl;
     if (!testTypeImpl)
-      throw new Error(`test.extendTest() accepts a single "test" parameter.\nDid you mean to call test.extend() with fixtures instead?`);
+      throw new Error(`test._extendTest() accepts a single "test" parameter.\nDid you mean to call test.extend() with fixtures instead?`);
     // Filter out common ancestor fixtures.
     const newFixtures = testTypeImpl.fixtures.filter(theirs => !this.fixtures.find(ours => ours.fixtures === theirs.fixtures));
     return new TestTypeImpl([...this.fixtures, ...newFixtures]).test;
