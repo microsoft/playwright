@@ -292,4 +292,13 @@ it.describe('selector generator', () => {
     await page.$eval('div', div => div.id = `!#'!?:`);
     expect(await generate(page, 'div')).toBe("[id=\"\\!\\#\\'\\!\\?\\:\"]");
   });
+
+  it('should work without CSS.escape', async ({ page }) => {
+    await page.setContent(`<button></button>`);
+    await page.$eval('button', button => {
+      delete window.CSS.escape;
+      button.setAttribute('name', '-tricky\u0001name');
+    });
+    expect(await generate(page, 'button')).toBe(`button[name="-tricky\\1 name"]`);
+  });
 });
