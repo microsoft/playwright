@@ -305,3 +305,14 @@ it('data-testid on the handle should be relative', async ({ page }) => {
   expect(await div.$eval(`data-testid=find-me`, e => e.id)).toBe('target2');
   expect(await page.$eval(`div >> data-testid=find-me`, e => e.id)).toBe('target2');
 });
+
+it('should consider display:contents elements visible', async ({ page }) => {
+  it.fixme(true, 'Nested <p> returns empty client rect');
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11202' });
+
+  await page.setContent(`
+    <div>
+      <p style="display:contents">DISPLAY CONTENTS</p>
+    </div>`);
+  await page.waitForSelector('"DISPLAY CONTENTS"');
+});
