@@ -2598,7 +2598,6 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * @param fixtures An object containing fixtures and/or options. Learn more about [fixtures format](https://playwright.dev/docs/test-fixtures).
    */
   extend<T, W extends KeyValue = {}>(fixtures: Fixtures<T, W, TestArgs, WorkerArgs>): TestType<TestArgs & T, WorkerArgs & W>;
-  extendTest<T, W>(other: TestType<T, W>): TestType<TestArgs & T, WorkerArgs & W>;
   /**
    * Returns information about the currently running test. This method can only be called during the test execution,
    * otherwise it throws.

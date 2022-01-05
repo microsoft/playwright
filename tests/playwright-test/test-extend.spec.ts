@@ -181,7 +181,7 @@ test('test.extend should be able to merge', async ({ runInlineTest }) => {
         fixture2: ({}, use) => use('fixture2'),
       });
 
-      const test3 = test1.extendTest(test2);
+      const test3 = test1._extendTest(test2);
 
       test3('merged', async ({ param, fixture1, myFixture, fixture2 }) => {
         console.log('param-' + param);
@@ -199,7 +199,7 @@ test('test.extend should be able to merge', async ({ runInlineTest }) => {
   expect(result.output).toContain('fixture2-fixture2');
 });
 
-test('test.extend should print nice message when used as extendTest', async ({ runInlineTest }) => {
+test('test.extend should print nice message when used as _extendTest', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
       const test1 = pwt.test.extend({});
@@ -211,13 +211,13 @@ test('test.extend should print nice message when used as extendTest', async ({ r
   });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
-  expect(result.output).toContain('Did you mean to call test.extendTest()?');
+  expect(result.output).toContain('Did you mean to call test._extendTest()?');
 });
 
-test('test.extendTest should print nice message when used as extend', async ({ runInlineTest }) => {
+test('test._extendTest should print nice message when used as extend', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const test3 = pwt.test.extendTest({});
+      const test3 = pwt.test._extendTest({});
       test3('test', () => {});
     `,
   });

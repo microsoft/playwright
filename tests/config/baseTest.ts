@@ -14,19 +14,27 @@
  * limitations under the License.
  */
 
-import { test } from '@playwright/test';
+import { test, TestType, Fixtures } from '@playwright/test';
 import { commonFixtures, CommonFixtures } from './commonFixtures';
 import { serverTest } from './serverFixtures';
 import { coverageTest } from './coverageFixtures';
 import { platformTest } from './platformFixtures';
 import { testModeTest } from './testModeFixtures';
 
-export const baseTest = test
-    .extendTest(coverageTest)
-    .extendTest(platformTest)
-    .extendTest(testModeTest)
+interface TestTypeEx<TestArgs, WorkerArgs> extends TestType<TestArgs, WorkerArgs> {
+  extend<T, W = {}>(fixtures: Fixtures<T, W, TestArgs, WorkerArgs>): TestTypeEx<TestArgs & T, WorkerArgs & W>;
+  _extendTest<T, W>(other: TestType<T, W>): TestTypeEx<TestArgs & T, WorkerArgs & W>;
+}
+type BaseT = (typeof test) extends TestType<infer T, infer W> ? T : never; // eslint-disable-line
+type BaseW = (typeof test) extends TestType<infer T, infer W> ? W : never; // eslint-disable-line
+export const base = test as TestTypeEx<BaseT, BaseW>;
+
+export const baseTest = base
+    ._extendTest(coverageTest)
+    ._extendTest(platformTest)
+    ._extendTest(testModeTest)
     .extend<CommonFixtures>(commonFixtures)
-    .extendTest(serverTest)
+    ._extendTest(serverTest)
     .extend<{}, { _snapshotSuffix: string }>({
       _snapshotSuffix: ['', { scope: 'worker' }],
     });
