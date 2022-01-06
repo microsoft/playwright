@@ -197,7 +197,7 @@ type Fixtures = {
 
 export const test = base
     .extend<CommonFixtures>(commonFixtures)
-    .extend<ServerFixtures, ServerWorkerOptions>(serverFixtures as any)
+    .extend<ServerFixtures, ServerWorkerOptions>(serverFixtures)
     .extend<Fixtures>({
       writeFiles: async ({}, use, testInfo) => {
         await use(files => writeFiles(testInfo, files));

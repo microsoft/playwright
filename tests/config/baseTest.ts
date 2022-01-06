@@ -16,7 +16,7 @@
 
 import { test, TestType, Fixtures } from '@playwright/test';
 import { commonFixtures, CommonFixtures } from './commonFixtures';
-import { serverTest } from './serverFixtures';
+import { serverFixtures, ServerFixtures, ServerWorkerOptions } from './serverFixtures';
 import { coverageTest } from './coverageFixtures';
 import { platformTest } from './platformFixtures';
 import { testModeTest } from './testModeFixtures';
@@ -34,7 +34,7 @@ export const baseTest = base
     ._extendTest(platformTest)
     ._extendTest(testModeTest)
     .extend<CommonFixtures>(commonFixtures)
-    ._extendTest(serverTest)
+    .extend<ServerFixtures, ServerWorkerOptions>(serverFixtures)
     .extend<{}, { _snapshotSuffix: string }>({
       _snapshotSuffix: ['', { scope: 'worker' }],
     });
