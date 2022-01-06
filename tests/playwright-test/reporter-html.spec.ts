@@ -88,7 +88,7 @@ test('should not throw when attachment is missing', async ({ runInlineTest, page
   await page.click('text=passes');
   await page.locator('text=Missing attachment "screenshot"').click();
   const screenshotFile = testInfo.outputPath('test-results' , 'a-passes', 'screenshot.png');
-  await expect(page.locator('.attachment-link')).toHaveText(`Attachment file ${screenshotFile} is missing`);
+  await expect(page.locator('.attachment-body')).toHaveText(`Attachment file ${screenshotFile} is missing`);
 });
 
 test('should include image diff', async ({ runInlineTest, page, showReport }) => {
@@ -203,9 +203,9 @@ test('should include stdio', async ({ runInlineTest, page, showReport }) => {
   await showReport();
   await page.click('text=fails');
   await page.locator('text=stdout').click();
-  await expect(page.locator('.attachment-link')).toHaveText('First line\nSecond line');
+  await expect(page.locator('.attachment-body')).toHaveText('First line\nSecond line');
   await page.locator('text=stderr').click();
-  await expect(page.locator('.attachment-link').nth(1)).toHaveText('Third line');
+  await expect(page.locator('.attachment-body').nth(1)).toHaveText('Third line');
 });
 
 test('should highlight error', async ({ runInlineTest, page, showReport }) => {
@@ -402,7 +402,7 @@ test('should render text attachments as text', async ({ runInlineTest, page, sho
   await page.click('text=example.txt');
   await page.click('text=example.json');
   await page.click('text=example-utf16.txt');
-  await expect(page.locator('.attachment-link')).toHaveText(['foo', '{"foo":1}', 'utf16 encoded']);
+  await expect(page.locator('.attachment-body')).toHaveText(['foo', '{"foo":1}', 'utf16 encoded']);
 });
 
 test('should strikethough textual diff', async ({ runInlineTest, showReport, page }) => {
