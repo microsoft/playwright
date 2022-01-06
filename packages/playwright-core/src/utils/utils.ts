@@ -348,7 +348,7 @@ export function headersObjectToArray(headers: HeadersObject, separator?: string,
   const result: HeadersArray = [];
   for (const name in headers) {
     const values = headers[name];
-    if (separator) {
+    if (separator && typeof values === 'string') {
       const sep = name.toLowerCase() === 'set-cookie' ? setCookieSeparator : separator;
       for (const value of values.split(sep!))
         result.push({ name, value: value.trim() });
