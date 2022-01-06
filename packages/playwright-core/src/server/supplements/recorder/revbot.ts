@@ -1,5 +1,7 @@
+import { escapeWithQuotes } from "playwright-core/lib/utils/stringUtils";
 import { ActionInContext } from "./codeGenerator";
 import { LanguageGenerator, LanguageGeneratorOptions } from "./language";
+import { Action, actionTitle } from "./recorderActions";
 
 export class RevBotActionGenerator implements LanguageGenerator {
   id = 'revbot';
@@ -7,7 +9,48 @@ export class RevBotActionGenerator implements LanguageGenerator {
   highlighter = 'revbot';
 
   generateAction(actionInContext: ActionInContext): string {
-    return 'ya yeet'
+    const { action, pageAlias } = actionInContext;
+    const formatter = new RevBotFormatter(6);
+    formatter.newLine();
+    formatter.add('// ' + actionTitle(action));
+
+    const actionCall = this._generateActionCall(action);
+    if (actionCall.length > 0) {
+      formatter.add(actionCall)
+    }
+
+    return formatter.format();
+  }
+
+  private _generateActionCall(action: Action): string {
+    switch (action.name) {
+      case 'click':
+        return this._selectorWarningText(action.selector) + `click({ selector: ${quote(action.selector)} })`;
+      case 'check':
+        return this._selectorWarningText(action.selector) + `click({ selector: ${quote(action.selector)} })`;
+      case 'fill':
+        return this._selectorWarningText(action.selector) + `fill({ selector: ${quote(action.selector)}, copy: ${quote(action.text)} }),`;
+      case 'navigate':
+        return `goto({ url: ${quote(action.url)} }),`;
+      case 'select':
+        return this._selectorWarningText(action.selector) + `selectOption({ selector: ${quote(action.selector)}, selection: ${formatObject(action.options.length > 1 ? action.options : action.options[0])} })`;
+
+      case 'uncheck':
+      case 'setInputFiles':
+      case 'press':
+        return `// action ${quote(action.name)} is not implemented.`
+
+      // Navigate phase assumes the page is already open.
+      case 'openPage':
+      case 'closePage':
+        return '';
+    }
+  }
+
+  private _selectorWarningText(selector: string): string {
+    return (selector.length > 15)
+      ? '// The generator might have gotten carried away with its selector...\n'
+      : ''
   }
 
   generateHeader(options: LanguageGeneratorOptions): string {
@@ -21,10 +64,12 @@ export class RevBotActionGenerator implements LanguageGenerator {
 
       let {
         chain,
-        log,
-        phase,
         click,
         fill,
+        goto,
+        log,
+        phase,
+        selectOption,
         waitForSelector,
       } = bot.actions
 
@@ -70,19 +115,38 @@ class RevBotFormatter {
     return this._lines.map((line: string) => {
       if (line === '')
         return line;
-      if (line.startsWith('}') || line.startsWith(']') || line.includes('});') || line === ');')
+      if (line.startsWith('}') || line.startsWith(']'))
         spaces = spaces.substring(this._baseIndent.length);
 
-      const extraSpaces = /^(for|while|if).*\(.*\)$/.test(previousLine) ? this._baseIndent : '';
+      const extraSpaces = /^(for|while|if|try).*\(.*\)$/.test(previousLine) ? this._baseIndent : '';
       previousLine = line;
 
-      line = spaces + extraSpaces + line;
-      if (line.endsWith('{') || line.endsWith('[') || line.endsWith('('))
+      const callCarryOver = line.startsWith('.set');
+      line = spaces + extraSpaces + (callCarryOver ? this._baseIndent : '') + line;
+      if (line.endsWith('{') || line.endsWith('['))
         spaces += this._baseIndent;
-      if (line.endsWith('));'))
-        spaces = spaces.substring(this._baseIndent.length);
-
       return this._baseOffset + line;
     }).join('\n');
   }
+}
+
+function formatObject(value: any, indent = '  '): string {
+  if (typeof value === 'string')
+    return quote(value);
+  if (Array.isArray(value))
+    return `[${value.map(o => formatObject(o)).join(', ')}]`;
+  if (typeof value === 'object') {
+    const keys = Object.keys(value);
+    if (!keys.length)
+      return '{}';
+    const tokens: string[] = [];
+    for (const key of keys)
+      tokens.push(`${key}: ${formatObject(value[key])}`);
+    return `{\n${indent}${tokens.join(`,\n${indent}`)}\n}`;
+  }
+  return String(value);
+}
+
+function quote(text: string) {
+  return escapeWithQuotes(text, '\'');
 }
