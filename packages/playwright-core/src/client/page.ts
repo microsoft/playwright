@@ -382,19 +382,21 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   private async _waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions, logLine?: string): Promise<any> {
-    const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
-    const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
-    const waiter = Waiter.createForEvent(this, event);
-    if (logLine)
-      waiter.log(logLine);
-    waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded while waiting for event "${event}"`);
-    if (event !== Events.Page.Crash)
-      waiter.rejectOnEvent(this, Events.Page.Crash, new Error('Page crashed'));
-    if (event !== Events.Page.Close)
-      waiter.rejectOnEvent(this, Events.Page.Close, new Error('Page closed'));
-    const result = await waiter.waitForEvent(this, event, predicate as any);
-    waiter.dispose();
-    return result;
+    return this._wrapApiCall(async () => {
+      const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
+      const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
+      const waiter = Waiter.createForEvent(this, event);
+      if (logLine)
+        waiter.log(logLine);
+      waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded while waiting for event "${event}"`);
+      if (event !== Events.Page.Crash)
+        waiter.rejectOnEvent(this, Events.Page.Crash, new Error('Page crashed'));
+      if (event !== Events.Page.Close)
+        waiter.rejectOnEvent(this, Events.Page.Close, new Error('Page closed'));
+      const result = await waiter.waitForEvent(this, event, predicate as any);
+      waiter.dispose();
+      return result;
+    });
   }
 
   async goBack(options: channels.PageGoBackOptions = {}): Promise<Response | null> {
