@@ -87,7 +87,6 @@ it('should play audio #smoke', async ({ page, server, browserName, platform }) =
   it.fixme(browserName === 'firefox' && platform === 'win32', 'https://github.com/microsoft/playwright/issues/10887');
   it.fixme(browserName === 'firefox' && platform === 'linux', 'https://github.com/microsoft/playwright/issues/10887');
   it.fixme(browserName === 'webkit' && platform === 'win32', 'https://github.com/microsoft/playwright/issues/10892');
-  it.fixme(browserName === 'webkit' && platform === 'darwin', 'https://github.com/microsoft/playwright/issues/10892');
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<audio src="${server.PREFIX}/example.mp3"></audio>`);
   await page.$eval('audio', e => e.play());
