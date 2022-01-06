@@ -124,3 +124,14 @@ it('should not crash on page with mp4 #smoke', async ({ page, server, platform, 
   await page.setContent(`<video><source src="${server.PREFIX}/movie.mp4"/></video>`);
   await page.waitForTimeout(1000);
 });
+
+it('should not crash on showDirectoryPicker', async ({ page, server, platform, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/7339' });
+  it.fixme(browserName === 'chromium', 'https://github.com/microsoft/playwright/issues/7339, crashes');
+  it.skip(browserName !== 'chromium', 'showDirectoryPicker is only available in Chromium');
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(async () => {
+    const dir = await (window as any).showDirectoryPicker();
+    return dir.name;
+  });
+});
