@@ -227,12 +227,9 @@ export class Runner {
     if (config.globalSetup && !list)
       globalSetupResult = await (await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup'))(this._loader.fullConfig());
     try {
-      for (const file of allTestFiles)
-        await this._loader.loadTestFile(file);
-
       const preprocessRoot = new Suite('');
-      for (const fileSuite of this._loader.fileSuites().values())
-        preprocessRoot._addSuite(fileSuite);
+      for (const file of allTestFiles)
+        preprocessRoot._addSuite(await this._loader.loadTestFile(file));
       if (config.forbidOnly) {
         const onlyTestsAndSuites = preprocessRoot._getOnlyItems();
         if (onlyTestsAndSuites.length > 0) {
