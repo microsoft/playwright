@@ -29,6 +29,11 @@ import { BuiltInReporter, builtInReporters } from './runner';
 import { isRegExp } from 'playwright-core/lib/utils/utils';
 import { tsConfigLoader, TsConfigLoaderResult } from './third_party/tsconfig-loader';
 
+// To allow multiple loaders in the same process without clearing require cache,
+// we make these maps global.
+const cachedFileSuites = new Map<string, Suite>();
+const cachedTSConfigs = new Map<string, TsConfigLoaderResult>();
+
 export class Loader {
   private _defaultConfig: Config;
   private _configOverrides: Config;
@@ -36,9 +41,7 @@ export class Loader {
   private _config: Config = {};
   private _configFile: string | undefined;
   private _projects: ProjectImpl[] = [];
-  private _fileSuites = new Map<string, Suite>();
   private _lastModuleInfo: { rootFolder: string, isModule: boolean } | null = null;
-  private _tsConfigCache = new Map<string, TsConfigLoaderResult>();
 
   constructor(defaultConfig: Config, configOverrides: Config) {
     this._defaultConfig = defaultConfig;
@@ -113,15 +116,15 @@ export class Loader {
   }
 
   async loadTestFile(file: string) {
-    if (this._fileSuites.has(file))
-      return this._fileSuites.get(file)!;
+    if (cachedFileSuites.has(file))
+      return cachedFileSuites.get(file)!;
     try {
       const suite = new Suite(path.relative(this._fullConfig.rootDir, file) || path.basename(file));
       suite._requireFile = file;
       suite.location = { file, line: 0, column: 0 };
       setCurrentlyLoadingFileSuite(suite);
       await this._requireOrImport(file);
-      this._fileSuites.set(file, suite);
+      cachedFileSuites.set(file, suite);
       return suite;
     } finally {
       setCurrentlyLoadingFileSuite(undefined);
@@ -152,10 +155,6 @@ export class Loader {
 
   projects() {
     return this._projects;
-  }
-
-  fileSuites() {
-    return this._fileSuites;
   }
 
   serialize(): SerializedLoaderData {
@@ -197,13 +196,13 @@ export class Loader {
   private async _requireOrImport(file: string) {
     // Respect tsconfig paths.
     const cwd = path.dirname(file);
-    let tsconfig = this._tsConfigCache.get(cwd);
+    let tsconfig = cachedTSConfigs.get(cwd);
     if (!tsconfig) {
       tsconfig = tsConfigLoader({
         getEnv: (name: string) => process.env[name],
         cwd
       });
-      this._tsConfigCache.set(cwd, tsconfig);
+      cachedTSConfigs.set(cwd, tsconfig);
     }
 
     const revertBabelRequire = installTransform(tsconfig);
