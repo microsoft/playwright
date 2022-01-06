@@ -39,6 +39,7 @@ it('should handle nested frames', async ({ page, server }) => {
 });
 
 it('should get frame box', async ({ page, browserName }) => {
+  it.fail(browserName === 'webkit', 'https://github.com/microsoft/playwright/issues/10977');
   await page.setViewportSize({ width: 200, height: 200 });
   await page.setContent(`<style>
   body {
