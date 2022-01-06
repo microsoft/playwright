@@ -60,18 +60,23 @@ export class RevBotActionGenerator implements LanguageGenerator {
       import { Revbot } from 'bots/v2/interfaces/revbot'
 
       declare let bot: Revbot
-      const { helpers: helperActions, navigation: navigationActions } = bot.customActions
 
-      let {
+      const {
         chain,
         click,
         fill,
         goto,
-        log,
         phase,
         selectOption,
-        waitForSelector,
       } = bot.actions
+
+      const { helpers: helperActions, navigation: navigationActions } = bot.customActions
+
+      const selector = bot.constants.selector
+
+      export const requiredFields: RequiredFields = [
+        // TODO: Add required fields while adjusting selectors below
+      ]
 
       /**
        * This navigate method was generated. User discretion is advised.
