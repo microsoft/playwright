@@ -1,5 +1,5 @@
 # class: APIResponseAssertions
-* langs: js
+* langs: js, java
 
 The [APIResponseAssertions] class provides assertion methods that can be used to make assertions about the [APIResponse] in the tests. A new instance of [APIResponseAssertions] is created by calling [`method: PlaywrightAssertions.expectAPIResponse`]:
 
@@ -9,7 +9,7 @@ import { test, expect } from '@playwright/test';
 test('navigates to login', async ({ page }) => {
   // ...
   const response = await page.request.get('https://playwright.dev');
-  expect(response).toBeOK();
+  await expect(response).toBeOK();
 });
 ```
 
@@ -35,7 +35,7 @@ from playwright.async_api import Page, expect
 async def test_navigates_to_login_page(page: Page) -> None:
     # ..
     response = await page.request.get('https://playwright.dev')
-    expect(response).to_be_ok()
+    await expect(response).to_be_ok()
 ```
 
 ```python sync
@@ -56,21 +56,21 @@ def test_navigates_to_login_page(page: Page) -> None:
 Makes the assertion check for the opposite condition. For example, this code tests that the response status is not successfull:
 
 ```js
-expect(response).not.toBeOK();
+await expect(response).not.toBeOK();
 ```
 
 ```java
 assertThat(response).not().isOK();
 ```
 
-## method: APIResponseAssertions.toBeOK
+## async method: APIResponseAssertions.toBeOK
 * langs:
   - alias-java: isOK
 
 Ensures the response status code is within [200..299) range.
 
 ```js
-expect(response).toBeOK();
+await expect(response).toBeOK();
 ```
 
 ```java
@@ -82,7 +82,7 @@ import re
 from playwright.async_api import expect
 
 # ...
-expect(response).to_be_ok()
+await expect(response).to_be_ok()
 ```
 
 ```python sync
