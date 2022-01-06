@@ -264,39 +264,20 @@ export class WorkerRunner extends EventEmitter {
       expectedStatus: test.expectedStatus,
       annotations: [],
       attachments: [],
-      attach: async (...args) => {
-        const [ pathOrBody, nameOrFileOptions, inlineOptions ] = args as [string | Buffer, string | { contentType?: string, name?: string} | undefined, { contentType?: string } | undefined];
-        let attachment: { name: string, contentType: string, body?: Buffer, path?: string } | undefined;
-        if (typeof nameOrFileOptions === 'string') { // inline attachment
-          const body = pathOrBody;
-          const name = nameOrFileOptions;
-
-          attachment = {
-            name,
-            contentType: inlineOptions?.contentType ?? (mime.getType(name) || (typeof body === 'string' ? 'text/plain' : 'application/octet-stream')),
-            body: typeof body === 'string' ? Buffer.from(body) : body,
-          };
-        } else { // path based attachment
-          const options = nameOrFileOptions;
-          const thePath = pathOrBody as string;
-          const name = options?.name ?? path.basename(thePath);
-          attachment = {
-            name,
-            path: thePath,
-            contentType: options?.contentType ?? (mime.getType(name) || 'application/octet-stream')
-          };
-        }
-
-        const tmpAttachment = { ...attachment };
-        if (attachment.path) {
-          const hash = await calculateFileSha1(attachment.path);
-          const dest = testInfo.outputPath('attachments', hash + path.extname(attachment.path));
+      attach: async (name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}) => {
+        if ((options.path !== undefined ? 1 : 0) + (options.body !== undefined ? 1 : 0) !== 1)
+          throw new Error(`Exactly one of "path" and "body" must be specified`);
+        if (options.path) {
+          const hash = await calculateFileSha1(options.path);
+          const dest = testInfo.outputPath('attachments', hash + path.extname(options.path));
           await fs.promises.mkdir(path.dirname(dest), { recursive: true });
-          await fs.promises.copyFile(attachment.path, dest);
-          tmpAttachment.path = dest;
+          await fs.promises.copyFile(options.path, dest);
+          const contentType = options.contentType ?? (mime.getType(path.basename(options.path)) || 'application/octet-stream');
+          testInfo.attachments.push({ name, contentType, path: dest });
+        } else {
+          const contentType = options.contentType ?? (typeof options.body === 'string' ? 'text/plain' : 'application/octet-stream');
+          testInfo.attachments.push({ name, contentType, body: typeof options.body === 'string' ? Buffer.from(options.body) : options.body });
         }
-
-        testInfo.attachments.push(tmpAttachment);
       },
       duration: 0,
       status: 'passed',

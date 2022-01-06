@@ -81,33 +81,25 @@ test('render trace attachment', async ({ runInlineTest }) => {
 });
 
 
-test(`testInfo.attach throws an error when attaching a non-existent attachment`, async ({ runInlineTest }) => {
+test(`testInfo.attach errors`, async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
       const { test } = pwt;
-      test('all options specified', async ({}, testInfo) => {
-        await testInfo.attach('non-existent-path-all-options', { contentType: 'text/plain', name: 'foo.txt'});
+      test('fail1', async ({}, testInfo) => {
+        await testInfo.attach('name', { path: 'foo.txt' });
       });
-
-      test('no options specified', async ({}, testInfo) => {
-        await testInfo.attach('non-existent-path-no-options');
+      test('fail2', async ({}, testInfo) => {
+        await testInfo.attach('name', { path: 'foo.txt', body: 'bar' });
       });
-
-      test('partial options - contentType', async ({}, testInfo) => {
-        await testInfo.attach('non-existent-path-partial-options-content-type', { contentType: 'text/plain'});
-      });
-
-      test('partial options - name', async ({}, testInfo) => {
-        await testInfo.attach('non-existent-path-partial-options-name', { name: 'foo.txt'});
+      test('fail3', async ({}, testInfo) => {
+        await testInfo.attach('name', {});
       });
     `,
   }, { reporter: 'line', workers: 1 });
   const text = stripAscii(result.output).replace(/\\/g, '/');
-  expect(text).toMatch(/Error: ENOENT: no such file or directory, open '.*non-existent-path-all-options.*'/);
-  expect(text).toMatch(/Error: ENOENT: no such file or directory, open '.*non-existent-path-no-options.*'/);
-  expect(text).toMatch(/Error: ENOENT: no such file or directory, open '.*non-existent-path-partial-options-content-type.*'/);
-  expect(text).toMatch(/Error: ENOENT: no such file or directory, open '.*non-existent-path-partial-options-name.*'/);
+  expect(text).toMatch(/Error: ENOENT: no such file or directory, open '.*foo.txt.*'/);
+  expect(text).toContain(`Exactly one of "path" and "body" must be specified`);
   expect(result.passed).toBe(0);
-  expect(result.failed).toBe(4);
+  expect(result.failed).toBe(3);
   expect(result.exitCode).toBe(1);
 });
