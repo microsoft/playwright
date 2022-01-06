@@ -106,16 +106,26 @@ export const NetworkResourceDetails: React.FunctionComponent<{
   if (charset)
     contentType = charset[1];
 
-  return <div
-    className={'network-request ' + (selected ? 'selected' : '')} onClick={() => setSelected(index)}>
-    <Expandable expanded={expanded} setExpanded={setExpanded} style={{ width: '100%' }} title={
-      <div className='network-request-title'>
-        <div className={'network-request-title-status ' + formatStatus(resource.response.status)}>{resource.response.status}</div>
+  const renderTitle = () => {
+    if (resource.response._failureText) {
+      return <div className='network-request-title'>
+        <div className={'network-request-title-status status-failure'}>{resource.response._failureText}</div>;
+        <div className='network-request-title-method'>{resource.request.method}</div>
+        <div className='network-request-title-url'>{resource.request.url}</div>
+      </div>;
+    } else {
+      return <div className='network-request-title'>
+        <div className={'network-request-title-status ' + formatStatus(resource.response.status)}>{resource.response.status}</div>;
         <div className='network-request-title-method'>{resource.request.method}</div>
         <div className='network-request-title-url'>{resourceName}</div>
         <div className='network-request-title-content-type'>{contentType}</div>
-      </div>
-    } body={
+      </div>;
+    }
+  };
+
+  return <div
+    className={'network-request ' + (selected ? 'selected' : '')} onClick={() => setSelected(index)}>
+    <Expandable expanded={expanded} setExpanded={setExpanded} style={{ width: '100%' }} title={ renderTitle() } body={
       <div className='network-request-details'>
         <div className='network-request-details-header'>URL</div>
         <div className='network-request-details-url'>{resource.request.url}</div>

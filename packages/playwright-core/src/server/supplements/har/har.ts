@@ -85,6 +85,7 @@ export type Response = {
   headersSize: number;
   bodySize: number;
   _transferSize: number;
+  _failureText?: string
 };
 
 export type Cookie = {

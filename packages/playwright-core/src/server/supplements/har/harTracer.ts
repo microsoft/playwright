@@ -64,6 +64,7 @@ export class HarTracer {
       eventsHelper.addEventListener(this._context, BrowserContext.Events.Page, (page: Page) => this._ensurePageEntry(page)),
       eventsHelper.addEventListener(this._context, BrowserContext.Events.Request, (request: network.Request) => this._onRequest(request)),
       eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestFinished, ({ request, response }) => this._onRequestFinished(request, response).catch(() => {})),
+      eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestFailed, request => this._onRequestFailed(request)),
       eventsHelper.addEventListener(this._context, BrowserContext.Events.Response, (response: network.Response) => this._onResponse(response)),
       eventsHelper.addEventListener(this._context.fetchRequest, APIRequestContext.Events.Request, (event: APIRequestEvent) => this._onAPIRequest(event)),
       eventsHelper.addEventListener(this._context.fetchRequest, APIRequestContext.Events.RequestFinished, (event: APIRequestFinishedEvent) => this._onAPIRequestFinished(event)),
@@ -262,6 +263,17 @@ export class HarTracer {
       harEntry.request.headersSize = sizes.requestHeadersSize;
       compressionCalculationBarrier.setEncodedBodySize(sizes.responseBodySize);
     }));
+  }
+
+  private async _onRequestFailed(request: network.Request) {
+    const harEntry = this._entryForRequest(request);
+    if (!harEntry)
+      return;
+
+    if (request._failureText !== null)
+      harEntry.response._failureText = request._failureText;
+    if (this._started)
+      this._delegate.onEntryFinished(harEntry);
   }
 
   private _storeResponseContent(buffer: Buffer | undefined, content: har.Content) {
