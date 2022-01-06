@@ -34,6 +34,10 @@ Error.stackTraceLimit = kStackTraceLimit;
 sourceMapSupport.install({
   environment: 'node',
   handleUncaughtExceptions: false,
+  // Due to the on-the-fly transformation, stack traces contain original file names (test.spec.ts).
+  // source-map-support's default logic would try to parse source map out of that file, but original
+  // files have no source maps, so it fails. We help it here using the ts -> map mapping we generated
+  // during the transformation.
   retrieveSourceMap(source) {
     if (!sourceMaps.has(source))
       return null;
@@ -121,7 +125,7 @@ export function transformHook(code: string, filename: string, tsconfig: TsConfig
       [require.resolve('@babel/preset-typescript'), { onlyRemoveTypeImports: true }],
     ],
     plugins,
-    sourceMaps: 'both',
+    sourceMaps: true, // only generate external mapping.
   } as babel.TransformOptions)!;
   if (result.code) {
     fs.mkdirSync(path.dirname(cachePath), { recursive: true });
