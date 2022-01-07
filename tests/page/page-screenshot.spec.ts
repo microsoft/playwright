@@ -321,32 +321,4 @@ it.describe('page screenshot', () => {
       screenshotSeveralTimes()
     ]);
   });
-
-  it('should work for text on canvas', async ({ page, headless, browserName, platform }) => {
-    it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11177' });
-    it.skip(platform !== 'darwin', 'Only test mac for font consistency');
-    it.fixme(browserName === 'chromium' && !headless, 'Text is misaligned in headed vs headless Chromium');
-
-    await page.setContent(`
-      <canvas></canvas>
-      <script>
-        function draw() {
-          const canvas = document.querySelector('canvas');
-          canvas.width = 300;
-          canvas.height = 150;
-          canvas.style.width = '300px';
-          canvas.style.height = '150px';
-
-          const context = canvas.getContext('2d');
-          context.font = 'bold 15px sans-serif';
-          context.fillStyle = '#000000';      
-          context.textBaseline = 'middle';
-
-          context.fillText('LOREM IPSUM', 10, 50);
-        }
-      </script>`);
-    await page.evaluate('draw()');
-    const screenshot = await page.screenshot();
-    expect(screenshot).toMatchSnapshot('screenshot-canvas-text.png', { threshold: 0 });
-  });
 });
