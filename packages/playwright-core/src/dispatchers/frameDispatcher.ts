@@ -100,6 +100,10 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel> im
     return { elements: elements.map(e => ElementHandleDispatcher.from(this._scope, e)) };
   }
 
+  async queryCount(params: channels.FrameQueryCountParams): Promise<channels.FrameQueryCountResult> {
+    return { value: await this._frame.queryCount(params.selector) };
+  }
+
   async content(): Promise<channels.FrameContentResult> {
     return { value: await this._frame.content() };
   }
