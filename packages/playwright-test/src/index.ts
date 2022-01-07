@@ -96,7 +96,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
   ignoreHTTPSErrors: [ undefined, { option: true } ],
   isMobile: [ undefined, { option: true } ],
   javaScriptEnabled: [ undefined, { option: true } ],
-  locale: [ undefined, { option: true } ],
+  locale: [ 'en-US', { option: true } ],
   offline: [ undefined, { option: true } ],
   permissions: [ undefined, { option: true } ],
   proxy: [ undefined, { option: true } ],
