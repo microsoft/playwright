@@ -41,7 +41,7 @@ it('should await navigation when clicking anchor', async ({ page, server }) => {
 });
 
 it('should not stall on JS navigation link', async ({ page, browserName }) => {
-  it.fixme(browserName === 'webkit')
+  it.fixme(browserName === 'webkit');
   await page.setContent(`<a href="javascript:console.log(1)">console.log</a>`);
   await page.click('a');
 });
