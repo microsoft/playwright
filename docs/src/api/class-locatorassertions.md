@@ -543,7 +543,7 @@ expect(locator).to_contain_text("substring")
 expect(locator).to_contain_text(re.compile(r"\d messages"))
 ```
 
-Note that if array is passed as an expected value, entire lists can be asserted:
+Note that if array is passed as an expected value, entire lists of elements can be asserted:
 
 ```js
 const locator = page.locator('list > .list-item');
@@ -660,7 +660,7 @@ locator = page.locator("#component")
 expect(locator).to_have_class(re.compile(r"selected"))
 ```
 
-Note that if array is passed as an expected value, entire lists can be asserted:
+Note that if array is passed as an expected value, entire lists of elements can be asserted:
 
 ```js
 const locator = page.locator('list > .component');
@@ -891,7 +891,7 @@ expect(locator).to_have_text(re.compile(r"Welcome, Test User"))
 expect(locator).to_have_text(re.compile(r"Welcome, .*"))
 ```
 
-Note that if array is passed as an expected value, entire lists can be asserted:
+Note that if array is passed as an expected value, entire lists of elements can be asserted:
 
 ```js
 const locator = page.locator('list > .component');
