@@ -997,10 +997,18 @@ export class Frame extends SdkObject {
         // Always fail on JavaScript errors or when the main connection is closed.
         if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e))
           throw e;
-        // If error has happened in the detached inner frame, ignore it, keep polling.
-        if (selectorInFrame?.frame !== this && selectorInFrame?.frame.isDetached())
-          continue;
-        throw e;
+        // Certain error opt-out of the retries, throw.
+        if (dom.isNonRecoverableDOMError(e))
+          throw e;
+        // If the call is made on the detached frame - throw.
+        if (this.isDetached())
+          throw e;
+        // If there is scope, and scope is within the frame we use to select, assume context is destroyed and
+        // operation is not recoverable.
+        if (scope && scope._context.frame === selectorInFrame?.frame)
+          throw e;
+        // Retry upon all other errors.
+        continue;
       }
     }
     progress.throwIfAborted();

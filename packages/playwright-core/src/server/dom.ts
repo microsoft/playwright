@@ -29,6 +29,13 @@ import * as types from './types';
 
 type SetInputFilesFiles = channels.ElementHandleSetInputFilesParams['files'];
 
+export class NonRecoverableDOMError extends Error {
+}
+
+export function isNonRecoverableDOMError(error: Error) {
+  return error instanceof NonRecoverableDOMError;
+}
+
 export class FrameExecutionContext extends js.ExecutionContext {
   readonly frame: frames.Frame;
   private _injectedScriptPromise?: Promise<js.JSHandle>;
@@ -356,13 +363,13 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       ++retry;
       if (result === 'error:notvisible') {
         if (options.force)
-          throw new Error('Element is not visible');
+          throw new NonRecoverableDOMError('Element is not visible');
         progress.log('  element is not visible');
         continue;
       }
       if (result === 'error:notinviewport') {
         if (options.force)
-          throw new Error('Element is outside of the viewport');
+          throw new NonRecoverableDOMError('Element is outside of the viewport');
         progress.log('  element is outside of the viewport');
         continue;
       }
@@ -740,7 +747,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     if (options.trial)
       return 'done';
     if (await isChecked() !== state)
-      throw new Error('Clicking the checkbox did not change its state');
+      throw new NonRecoverableDOMError('Clicking the checkbox did not change its state');
     return 'done';
   }
 
