@@ -40,6 +40,12 @@ it('should await navigation when clicking anchor', async ({ page, server }) => {
   expect(messages.join('|')).toBe('route|navigated|click');
 });
 
+it('should not stall on JS navigation link', async ({ page, browserName }) => {
+  it.fixme(browserName === 'webkit');
+  await page.setContent(`<a href="javascript:console.log(1)">console.log</a>`);
+  await page.click('a');
+});
+
 it('should await navigation when clicking anchor programmatically', async ({ page, server }) => {
   const messages = initServer(server);
   await page.setContent(`<a id="anchor" href="${server.EMPTY_PAGE}">empty.html</a>`);
