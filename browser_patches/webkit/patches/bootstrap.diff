@@ -3297,7 +3297,7 @@ index d2957810d8382c9351d5a93f144aed1493bcc651..8669933013d7972e355eacc358646d65
  {
      return context ? instrumentingAgents(*context) : nullptr;
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
-index 7a790bb23c8f37af57e4284b367cad9d679a434f..e1c81580f7756c722e0ba6caaff2307321822619 100644
+index 7a790bb23c8f37af57e4284b367cad9d679a434f..6690fcc604ae0036973845ac4347d15516e09571 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 @@ -62,12 +62,16 @@
@@ -3540,27 +3540,20 @@ index 7a790bb23c8f37af57e4284b367cad9d679a434f..e1c81580f7756c722e0ba6caaff23073
  {
      Document* document = &node->document();
      if (auto* templateHost = document->templateDocumentHost())
-@@ -2848,12 +2982,17 @@ RefPtr<Protocol::Runtime::RemoteObject> InspectorDOMAgent::resolveNode(Node* nod
-     if (!frame)
+@@ -2849,7 +2983,12 @@ RefPtr<Protocol::Runtime::RemoteObject> InspectorDOMAgent::resolveNode(Node* nod
          return nullptr;
  
--    auto& globalObject = mainWorldGlobalObject(*frame);
+     auto& globalObject = mainWorldGlobalObject(*frame);
 -    auto injectedScript = m_injectedScriptManager.injectedScriptFor(&globalObject);
 +    InjectedScript injectedScript;
-+    if (contextId) {
++    if (contextId)
 +        injectedScript = m_injectedScriptManager.injectedScriptForId(*contextId);
-+    } else {
-+        auto& globalObject = mainWorldGlobalObject(*frame);
++    else
 +        injectedScript = m_injectedScriptManager.injectedScriptFor(&globalObject);
-+    }
++
      if (injectedScript.hasNoValue())
          return nullptr;
  
--    return injectedScript.wrapObject(nodeAsScriptValue(globalObject, node), objectGroup);
-+    return injectedScript.wrapObject(nodeAsScriptValue(*injectedScript.globalObject(), node), objectGroup);
- }
- 
- Node* InspectorDOMAgent::scriptValueAsNode(JSC::JSValue value)
 @@ -2876,4 +3015,42 @@ Protocol::ErrorStringOr<void> InspectorDOMAgent::setAllowEditingUserAgentShadowT
      return { };
  }
@@ -9144,7 +9137,7 @@ index 6a53b5d70a0544b8b02b349aff1b4bc60eade208..aeb2f1fbec86cbc95888db2b107b6d3d
  #if !LOG_DISABLED
              LOG(NetworkSession, "%llu didReceiveResponse completionHandler (%d)", taskIdentifier, policyAction);
 diff --git a/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp b/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp
-index 84669e209d77bf52a36afe2a7dab252a6900dcf7..1a0e7803464ea64e7ed2fe78e2c587a0b35bc899 100644
+index 84669e209d77bf52a36afe2a7dab252a6900dcf7..8785d13d2ff02882704e47659a68871cb9cb511a 100644
 --- a/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp
 +++ b/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp
 @@ -26,9 +26,13 @@
@@ -9196,19 +9189,21 @@ index 84669e209d77bf52a36afe2a7dab252a6900dcf7..1a0e7803464ea64e7ed2fe78e2c587a0
  
      handleCookieHeaders(request.resourceRequest(), receivedResponse);
  
-@@ -177,7 +188,10 @@ void NetworkDataTaskCurl::curlDidReceiveBuffer(CurlRequest&, Ref<FragmentedShare
+@@ -177,7 +188,12 @@ void NetworkDataTaskCurl::curlDidReceiveBuffer(CurlRequest&, Ref<FragmentedShare
      Ref protectedThis { *this };
      if (state() == State::Canceling || state() == State::Completed || (!m_client && !isDownload()))
          return;
 -
 +    if (isDownload()) {
-+        FileSystem::writeToFile(m_downloadDestinationFile, buffer->data(), buffer->size());
++        buffer->forEachSegment([&](auto& segment) {
++            FileSystem::writeToFile(m_downloadDestinationFile, segment.data(), segment.size());
++        });
 +        return;
 +    }
      m_client->didReceiveData(WTFMove(buffer));
  }
  
-@@ -186,9 +200,26 @@ void NetworkDataTaskCurl::curlDidComplete(CurlRequest&, NetworkLoadMetrics&& net
+@@ -186,9 +202,26 @@ void NetworkDataTaskCurl::curlDidComplete(CurlRequest&, NetworkLoadMetrics&& net
      if (state() == State::Canceling || state() == State::Completed || (!m_client && !isDownload()))
          return;
  
@@ -9235,7 +9230,7 @@ index 84669e209d77bf52a36afe2a7dab252a6900dcf7..1a0e7803464ea64e7ed2fe78e2c587a0
  void NetworkDataTaskCurl::curlDidFailWithError(CurlRequest& request, ResourceError&& resourceError, CertificateInfo&& certificateInfo)
  {
      if (state() == State::Canceling || state() == State::Completed || (!m_client && !isDownload()))
-@@ -199,6 +230,14 @@ void NetworkDataTaskCurl::curlDidFailWithError(CurlRequest& request, ResourceErr
+@@ -199,6 +232,14 @@ void NetworkDataTaskCurl::curlDidFailWithError(CurlRequest& request, ResourceErr
          return;
      }
  
@@ -9250,7 +9245,7 @@ index 84669e209d77bf52a36afe2a7dab252a6900dcf7..1a0e7803464ea64e7ed2fe78e2c587a0
      m_client->didCompleteWithError(resourceError);
  }
  
-@@ -236,6 +275,19 @@ void NetworkDataTaskCurl::invokeDidReceiveResponse()
+@@ -236,6 +277,19 @@ void NetworkDataTaskCurl::invokeDidReceiveResponse()
          case PolicyAction::Ignore:
              invalidateAndCancel();
              break;
@@ -9270,7 +9265,7 @@ index 84669e209d77bf52a36afe2a7dab252a6900dcf7..1a0e7803464ea64e7ed2fe78e2c587a0
          default:
              notImplemented();
              break;
-@@ -315,6 +367,8 @@ void NetworkDataTaskCurl::willPerformHTTPRedirection()
+@@ -315,6 +369,8 @@ void NetworkDataTaskCurl::willPerformHTTPRedirection()
              m_curlRequest->setUserPass(m_initialCredential.user(), m_initialCredential.password());
              m_curlRequest->setAuthenticationScheme(ProtectionSpace::AuthenticationScheme::HTTPBasic);
          }
