@@ -3297,7 +3297,7 @@ index d2957810d8382c9351d5a93f144aed1493bcc651..8669933013d7972e355eacc358646d65
  {
      return context ? instrumentingAgents(*context) : nullptr;
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
-index 7a790bb23c8f37af57e4284b367cad9d679a434f..6690fcc604ae0036973845ac4347d15516e09571 100644
+index 7a790bb23c8f37af57e4284b367cad9d679a434f..a8b090780ff0811a0ac7614ee6ad3da1d01df665 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 @@ -62,12 +62,16 @@
@@ -3540,21 +3540,29 @@ index 7a790bb23c8f37af57e4284b367cad9d679a434f..6690fcc604ae0036973845ac4347d155
  {
      Document* document = &node->document();
      if (auto* templateHost = document->templateDocumentHost())
-@@ -2849,7 +2983,12 @@ RefPtr<Protocol::Runtime::RemoteObject> InspectorDOMAgent::resolveNode(Node* nod
+@@ -2848,12 +2982,18 @@ RefPtr<Protocol::Runtime::RemoteObject> InspectorDOMAgent::resolveNode(Node* nod
+     if (!frame)
          return nullptr;
  
-     auto& globalObject = mainWorldGlobalObject(*frame);
+-    auto& globalObject = mainWorldGlobalObject(*frame);
 -    auto injectedScript = m_injectedScriptManager.injectedScriptFor(&globalObject);
 +    InjectedScript injectedScript;
-+    if (contextId)
++    if (contextId) {
 +        injectedScript = m_injectedScriptManager.injectedScriptForId(*contextId);
-+    else
++    } else {
++        auto& globalObject = mainWorldGlobalObject(*frame);
 +        injectedScript = m_injectedScriptManager.injectedScriptFor(&globalObject);
++    }
 +
      if (injectedScript.hasNoValue())
          return nullptr;
  
-@@ -2876,4 +3015,42 @@ Protocol::ErrorStringOr<void> InspectorDOMAgent::setAllowEditingUserAgentShadowT
+-    return injectedScript.wrapObject(nodeAsScriptValue(globalObject, node), objectGroup);
++    return injectedScript.wrapObject(nodeAsScriptValue(*injectedScript.globalObject(), node), objectGroup);
+ }
+ 
+ Node* InspectorDOMAgent::scriptValueAsNode(JSC::JSValue value)
+@@ -2876,4 +3016,42 @@ Protocol::ErrorStringOr<void> InspectorDOMAgent::setAllowEditingUserAgentShadowT
      return { };
  }
  
