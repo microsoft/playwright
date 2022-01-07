@@ -5384,7 +5384,7 @@ index b46981d750b25c1fd307f16fda74b7ee306a4c39..a48ccb58b7fb1be21b601646ffdf7a75
      DocumentWriter& writer() const { return m_writer; }
  
 diff --git a/Source/WebCore/loader/FrameLoader.cpp b/Source/WebCore/loader/FrameLoader.cpp
-index fdc97dc462c87526aa188f7968d60a0c83d680d9..4413aeac2541a73a32045479ca1d067c51e0961b 100644
+index fdc97dc462c87526aa188f7968d60a0c83d680d9..211d323fc7b359ffa3c8431af2bdc1d83565a13d 100644
 --- a/Source/WebCore/loader/FrameLoader.cpp
 +++ b/Source/WebCore/loader/FrameLoader.cpp
 @@ -1154,6 +1154,7 @@ void FrameLoader::loadInSameDocument(const URL& url, SerializedScriptValue* stat
@@ -5395,15 +5395,16 @@ index fdc97dc462c87526aa188f7968d60a0c83d680d9..4413aeac2541a73a32045479ca1d067c
  
      m_frame.document()->statePopped(stateObject ? Ref<SerializedScriptValue> { *stateObject } : SerializedScriptValue::nullValue());
      m_client->dispatchDidPopStateWithinPage();
-@@ -1481,6 +1482,7 @@ void FrameLoader::load(FrameLoadRequest&& request)
+@@ -1489,6 +1490,8 @@ void FrameLoader::loadWithNavigationAction(const ResourceRequest& request, Navig
+         return completionHandler();
+     }
  
- void FrameLoader::loadWithNavigationAction(const ResourceRequest& request, NavigationAction&& action, FrameLoadType type, RefPtr<FormState>&& formState, AllowNavigationToInvalidURL allowNavigationToInvalidURL, CompletionHandler<void()>&& completionHandler)
- {
 +    InspectorInstrumentation::frameScheduledNavigation(m_frame, Seconds(0));
-     FRAMELOADER_RELEASE_LOG(ResourceLoading, "loadWithNavigationAction: frame load started");
++
+     Ref<DocumentLoader> loader = m_client->createDocumentLoader(request, defaultSubstituteDataForURL(request.url()));
+     applyShouldOpenExternalURLsPolicyToNewDocumentLoader(m_frame, loader, action.initiatedByMainFrame(), action.shouldOpenExternalURLsPolicy());
  
-     if (request.url().protocolIsJavaScript()) {
-@@ -1590,6 +1592,8 @@ void FrameLoader::loadWithDocumentLoader(DocumentLoader* loader, FrameLoadType t
+@@ -1590,6 +1593,8 @@ void FrameLoader::loadWithDocumentLoader(DocumentLoader* loader, FrameLoadType t
      const String& httpMethod = loader->request().httpMethod();
  
      if (shouldPerformFragmentNavigation(isFormSubmission, httpMethod, policyChecker().loadType(), newURL)) {
@@ -5412,7 +5413,7 @@ index fdc97dc462c87526aa188f7968d60a0c83d680d9..4413aeac2541a73a32045479ca1d067c
          RefPtr<DocumentLoader> oldDocumentLoader = m_documentLoader;
          NavigationAction action { *m_frame.document(), loader->request(), InitiatedByMainFrame::Unknown, policyChecker().loadType(), isFormSubmission };
  
-@@ -2796,12 +2800,17 @@ String FrameLoader::userAgent(const URL& url) const
+@@ -2796,12 +2801,17 @@ String FrameLoader::userAgent(const URL& url) const
  
  String FrameLoader::navigatorPlatform() const
  {
@@ -5432,7 +5433,7 @@ index fdc97dc462c87526aa188f7968d60a0c83d680d9..4413aeac2541a73a32045479ca1d067c
  }
  
  void FrameLoader::dispatchOnloadEvents()
-@@ -3206,6 +3215,8 @@ void FrameLoader::receivedMainResourceError(const ResourceError& error)
+@@ -3206,6 +3216,8 @@ void FrameLoader::receivedMainResourceError(const ResourceError& error)
      checkCompleted();
      if (m_frame.page())
          checkLoadComplete();
@@ -5441,7 +5442,7 @@ index fdc97dc462c87526aa188f7968d60a0c83d680d9..4413aeac2541a73a32045479ca1d067c
  }
  
  void FrameLoader::continueFragmentScrollAfterNavigationPolicy(const ResourceRequest& request, bool shouldContinue)
-@@ -3973,9 +3984,6 @@ String FrameLoader::referrer() const
+@@ -3973,9 +3985,6 @@ String FrameLoader::referrer() const
  
  void FrameLoader::dispatchDidClearWindowObjectsInAllWorlds()
  {
@@ -5451,7 +5452,7 @@ index fdc97dc462c87526aa188f7968d60a0c83d680d9..4413aeac2541a73a32045479ca1d067c
      Vector<Ref<DOMWrapperWorld>> worlds;
      ScriptController::getAllWorlds(worlds);
      for (auto& world : worlds)
-@@ -3984,13 +3992,13 @@ void FrameLoader::dispatchDidClearWindowObjectsInAllWorlds()
+@@ -3984,13 +3993,13 @@ void FrameLoader::dispatchDidClearWindowObjectsInAllWorlds()
  
  void FrameLoader::dispatchDidClearWindowObjectInWorld(DOMWrapperWorld& world)
  {
