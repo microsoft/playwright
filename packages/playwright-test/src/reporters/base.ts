@@ -346,27 +346,30 @@ export function formatError(config: FullConfig, error: TestError, highlightCode:
   const tokens = [''];
   let location: Location | undefined;
   if (stack) {
-    const parsed = prepareErrorStack(stack);
-    tokens.push(parsed.message);
-    location = parsed.location;
-    if (location) {
-      try {
-        // Stack will have /private/var/folders instead of /var/folders on Mac.
-        const realFile = fs.realpathSync(location.file);
-        const source = fs.readFileSync(realFile, 'utf8');
-        const codeFrame = codeFrameColumns(source, { start: location }, { highlightCode });
-        if (!file || file !== realFile) {
+    const stackLines = prepareErrorStack(stack);
+    for (let i = 0; i < stackLines.length; i++) {
+      const stackLine = stackLines[i];
+      if (i == 0) location = stackLine.location;
+      if (stackLine.message) tokens.push(stackLine.message);
+      if (stackLine.location) {
+        try {
+          // Stack will have /private/var/folders instead of /var/folders on Mac.
+          const realFile = fs.realpathSync(stackLine.location.file);
+          const source = fs.readFileSync(realFile, 'utf8');
+          const codeFrame = codeFrameColumns(source, { start: stackLine.location }, { highlightCode });
+          if (!file || file !== realFile) {
+            tokens.push('');
+            tokens.push(colors.gray(`   at `) + `${relativeFilePath(config, realFile)}:${stackLine.location.line}`);
+          }
           tokens.push('');
-          tokens.push(colors.gray(`   at `) + `${relativeFilePath(config, realFile)}:${location.line}`);
+          tokens.push(codeFrame);
+          tokens.push('');
+        } catch (e) {
+          // Failed to read the source file - that's ok.
         }
-        tokens.push('');
-        tokens.push(codeFrame);
-      } catch (e) {
-        // Failed to read the source file - that's ok.
       }
+      tokens.push(colors.dim(stackLine.line));
     }
-    tokens.push('');
-    tokens.push(colors.dim(parsed.stackLines.join('\n')));
   } else if (error.message) {
     tokens.push(error.message);
   } else if (error.value) {
@@ -388,26 +391,28 @@ function indent(lines: string, tab: string) {
   return lines.replace(/^(?=.+$)/gm, tab);
 }
 
-export function prepareErrorStack(stack: string): {
-  message: string;
-  stackLines: string[];
-  location?: Location;
-} {
+export function prepareErrorStack(stack: string): { message?: string, line: string, location?: Location }[] {
   const lines = stack.split('\n');
   let firstStackLine = lines.findIndex(line => line.startsWith('    at '));
   if (firstStackLine === -1)
     firstStackLine = lines.length;
   const message = lines.slice(0, firstStackLine).join('\n');
-  const stackLines = lines.slice(firstStackLine);
-  let location: Location | undefined;
-  for (const line of stackLines) {
+  const rawStackLines = lines.slice(firstStackLine);
+  const stackLines: { message?: string, line: string, location?: Location }[] = [];
+  let messageLocation: Location | undefined;
+  for (const line of rawStackLines) {
+    const info: { message?: string, line: string, location?: Location } = { line };
+    stackLines.push(info);
     const parsed = stackUtils.parseLine(line);
     if (parsed && parsed.file) {
-      location = { file: path.join(process.cwd(), parsed.file), column: parsed.column || 0, line: parsed.line || 0 };
-      break;
+      const location = { file: path.join(process.cwd(), parsed.file), column: parsed.column || 0, line: parsed.line || 0 };
+      info.location = location;
+      if (!messageLocation) messageLocation = location;
     }
   }
-  return { message, stackLines, location };
+  stackLines[0].message = message;
+  stackLines[0].location = messageLocation;
+  return stackLines;
 }
 
 function monotonicTime(): number {

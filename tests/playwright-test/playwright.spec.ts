@@ -36,6 +36,57 @@ export class VideoPlayer {
   }
 }
 
+test.only('example', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'base.ts': `
+      const { test: _test, expect } = pwt;
+      export const test = _test.extend<{
+        helpers: {
+          runParameterizedTest: (v: number) => Promise<void>;
+          exampleFixtureThatThrows: (v: number) => Promise<void>;
+        };
+      }>({
+        helpers: async ({}, use) => {
+          const helpers = {
+            runParameterizedTest: async (v: number) => {
+              expect(v).toBe(2);
+            },
+            exampleFixtureThatThrows: async (v: number) => {
+              throw new Error("oops! this is a def broken fixture helper!");
+            },
+          };
+          await use(helpers);
+        },
+      });
+
+      export const parameterizeTest = async (v: number) => {
+        await test.step("a", () => expect(1).toBe(3));
+      };
+    `,
+    'a.test.ts': `
+      import { test, parameterizeTest } from "./base.ts";
+
+      test("basic expect example", () => {
+        expect(1).toBe(2);
+      });
+
+      test("parameterized test helper fixture expect error", async ({ helpers }) => {
+        await helpers.runParameterizedTest(5);
+      });
+
+      test("example fixture that throws", async ({ helpers }) => {
+        await helpers.exampleFixtureThatThrows(5);
+      });
+
+      test("non-fixture parameterizer example", async () => {
+        await parameterizeTest(47);
+      });
+    `
+  });
+
+  console.log(result.output);
+});
+
 test('should respect viewport option', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `

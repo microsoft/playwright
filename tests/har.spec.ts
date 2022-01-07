@@ -670,4 +670,3 @@ it('should include API request', async ({ contextFactory, server }, testInfo) =>
   expect(entry.response.content.size).toBe(15);
   expect(entry.response.content.text).toBe(responseBody.toString('base64'));
 });
-
