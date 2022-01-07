@@ -109,13 +109,13 @@ export const NetworkResourceDetails: React.FunctionComponent<{
   const renderTitle = () => {
     if (resource.response._failureText) {
       return <div className='network-request-title'>
-        <div className={'network-request-title-status status-failure'}>{resource.response._failureText}</div>;
+        <div className={'network-request-title-status status-failure'}>{resource.response._failureText}</div>
         <div className='network-request-title-method'>{resource.request.method}</div>
         <div className='network-request-title-url'>{resource.request.url}</div>
       </div>;
     } else {
       return <div className='network-request-title'>
-        <div className={'network-request-title-status ' + formatStatus(resource.response.status)}>{resource.response.status}</div>;
+        <div className={'network-request-title-status ' + formatStatus(resource.response.status)}>{resource.response.status}</div>
         <div className='network-request-title-method'>{resource.request.method}</div>
         <div className='network-request-title-url'>{resourceName}</div>
         <div className='network-request-title-content-type'>{contentType}</div>
