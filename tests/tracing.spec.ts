@@ -205,6 +205,17 @@ test('should collect sources', async ({ context, page, server }, testInfo) => {
   expect(sourceFile).toEqual(thisFile);
 });
 
+test('should record network failures', async ({ context, page, server }, testInfo) => {
+  await context.tracing.start({ snapshots: true });
+  await page.route('**/*', route => route.abort('connectionaborted'));
+  await page.goto(server.EMPTY_PAGE).catch(e => {});
+  await context.tracing.stop({ path: testInfo.outputPath('trace1.zip') });
+
+  const { events } = await parseTrace(testInfo.outputPath('trace1.zip'));
+  const requestEvent = events.find(e => e.type === 'resource-snapshot' && !!e.snapshot.response._failureText);
+  expect(requestEvent).toBeTruthy();
+});
+
 test('should not stall on dialogs', async ({ page, context, server }) => {
   await context.tracing.start({ screenshots: true, snapshots: true });
   await page.goto(server.EMPTY_PAGE);
