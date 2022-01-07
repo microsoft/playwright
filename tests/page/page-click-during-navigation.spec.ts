@@ -18,13 +18,13 @@
 import { test as it } from './pageTest';
 
 it('should not fail with internal error upon navigation', async ({ page, server }) => {
-  it.slow();
-  (async () => {
-    while (true) {
-      await page.goto(server.PREFIX + '/input/button.html').catch(() => {});
-      await page.waitForTimeout(100).catch(() => {});
-    }
-  })();
-  for (let i = 0; i < 100; ++i)
-    await page.click('button');
+  await page.goto(server.PREFIX + '/input/button.html');
+  let triggered = false;
+  const __testHookAfterStable = () => {
+    if (triggered)
+      return;
+    triggered = true;
+    return page.goto(server.PREFIX + '/input/button.html');
+  };
+  await page.click('button', { __testHookAfterStable } as any);
 });
