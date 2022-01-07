@@ -1640,6 +1640,12 @@ Frame:
           type: array
           items: ElementHandle
 
+    queryCount:
+      parameters:
+        selector: string
+      returns:
+        value: number
+
     selectOption:
       parameters:
         selector: string

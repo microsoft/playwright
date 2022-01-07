@@ -1794,6 +1794,7 @@ export interface FrameChannel extends FrameEventTarget, Channel {
   press(params: FramePressParams, metadata?: Metadata): Promise<FramePressResult>;
   querySelector(params: FrameQuerySelectorParams, metadata?: Metadata): Promise<FrameQuerySelectorResult>;
   querySelectorAll(params: FrameQuerySelectorAllParams, metadata?: Metadata): Promise<FrameQuerySelectorAllResult>;
+  queryCount(params: FrameQueryCountParams, metadata?: Metadata): Promise<FrameQueryCountResult>;
   selectOption(params: FrameSelectOptionParams, metadata?: Metadata): Promise<FrameSelectOptionResult>;
   setContent(params: FrameSetContentParams, metadata?: Metadata): Promise<FrameSetContentResult>;
   setInputFiles(params: FrameSetInputFilesParams, metadata?: Metadata): Promise<FrameSetInputFilesResult>;
@@ -2209,6 +2210,15 @@ export type FrameQuerySelectorAllOptions = {
 };
 export type FrameQuerySelectorAllResult = {
   elements: ElementHandleChannel[],
+};
+export type FrameQueryCountParams = {
+  selector: string,
+};
+export type FrameQueryCountOptions = {
+
+};
+export type FrameQueryCountResult = {
+  value: number,
 };
 export type FrameSelectOptionParams = {
   selector: string,

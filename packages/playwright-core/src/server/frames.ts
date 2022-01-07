@@ -780,7 +780,7 @@ export class Frame extends SdkObject {
     const pair = await this.resolveFrameForSelectorNoWait(selector, {});
     if (!pair)
       throw new Error(`Error: failed to find frame for selector "${selector}"`);
-    const arrayHandle = await this._page.selectors._queryArray(pair.frame, pair.info);
+    const arrayHandle = await this._page.selectors._queryArrayInMainWorld(pair.frame, pair.info);
     const result = await arrayHandle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
     arrayHandle.dispose();
     return result;
@@ -791,6 +791,13 @@ export class Frame extends SdkObject {
     if (!pair)
       return [];
     return this._page.selectors._queryAll(pair.frame, pair.info, undefined, true /* adoptToMain */);
+  }
+
+  async queryCount(selector: string): Promise<number> {
+    const pair = await this.resolveFrameForSelectorNoWait(selector);
+    if (!pair)
+      throw new Error(`Error: failed to find frame for selector "${selector}"`);
+    return await this._page.selectors._queryCount(pair.frame, pair.info);
   }
 
   async content(): Promise<string> {
@@ -1536,7 +1543,7 @@ export class Frame extends SdkObject {
     return { frame, info: this._page.parseSelector(frameChunks[frameChunks.length - 1], options) };
   }
 
-  async resolveFrameForSelectorNoWait(selector: string, options: types.StrictOptions & types.TimeoutOptions, scope?: dom.ElementHandle): Promise<SelectorInFrame | null> {
+  async resolveFrameForSelectorNoWait(selector: string, options: types.StrictOptions & types.TimeoutOptions = {}, scope?: dom.ElementHandle): Promise<SelectorInFrame | null> {
     let frame: Frame | null = this;
     const frameChunks = splitSelectorByFrame(selector);
 

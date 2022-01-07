@@ -797,7 +797,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       throw new Error(`Error: failed to find frame for selector "${selector}"`);
     const { frame, info } = pair;
     // If we end up in the same frame => use the scope again, line above was noop.
-    const arrayHandle = await this._page.selectors._queryArray(frame, info, this._frame === frame ? this : undefined);
+    const arrayHandle = await this._page.selectors._queryArrayInMainWorld(frame, info, this._frame === frame ? this : undefined);
     const result = await arrayHandle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
     arrayHandle.dispose();
     return result;

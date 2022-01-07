@@ -135,7 +135,7 @@ export class Locator implements api.Locator {
   }
 
   async count(): Promise<number> {
-    return this.evaluateAll(ee => ee.length);
+    return this._frame._queryCount(this._selector);
   }
 
   async getAttribute(name: string, options?: TimeoutOptions): Promise<string | null> {

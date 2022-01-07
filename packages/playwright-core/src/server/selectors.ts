@@ -83,13 +83,21 @@ export class Selectors {
     return this._adoptIfNeeded(elementHandle, mainContext);
   }
 
-  async _queryArray(frame: frames.Frame, info: SelectorInfo, scope?: dom.ElementHandle): Promise<js.JSHandle<Element[]>> {
+  async _queryArrayInMainWorld(frame: frames.Frame, info: SelectorInfo, scope?: dom.ElementHandle): Promise<js.JSHandle<Element[]>> {
     const context = await frame._mainContext();
     const injectedScript = await context.injectedScript();
     const arrayHandle = await injectedScript.evaluateHandle((injected, { parsed, scope }) => {
       return injected.querySelectorAll(parsed, scope || document);
     }, { parsed: info.parsed, scope });
     return arrayHandle;
+  }
+
+  async _queryCount(frame: frames.Frame, info: SelectorInfo, scope?: dom.ElementHandle): Promise<number> {
+    const context = await frame._utilityContext();
+    const injectedScript = await context.injectedScript();
+    return await injectedScript.evaluate((injected, { parsed, scope }) => {
+      return injected.querySelectorAll(parsed, scope || document).length;
+    }, { parsed: info.parsed, scope });
   }
 
   async _queryAll(frame: frames.Frame, selector: SelectorInfo, scope?: dom.ElementHandle, adoptToMain?: boolean): Promise<dom.ElementHandle<Element>[]> {
