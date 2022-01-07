@@ -229,12 +229,12 @@ class JSONReporter implements Reporter {
       annotations: test.annotations,
       expectedStatus: test.expectedStatus,
       projectName: test.titlePath()[1],
-      results: test.results.map(r => this._serializeTestResult(r)),
+      results: test.results.map(r => this._serializeTestResult(r, test)),
       status: test.outcome(),
     };
   }
 
-  private _serializeTestResult(result: TestResult): JSONReportTestResult {
+  private _serializeTestResult(result: TestResult, test: TestCase): JSONReportTestResult {
     const steps = result.steps.filter(s => s.category === 'test.step');
     const jsonResult: JSONReportTestResult = {
       workerIndex: result.workerIndex,
@@ -253,7 +253,7 @@ class JSONReporter implements Reporter {
       })),
     };
     if (result.error?.stack)
-      jsonResult.errorLocation = prepareErrorStack(result.error.stack).location;
+      jsonResult.errorLocation = prepareErrorStack(result.error.stack, test.location.file).location;
     return jsonResult;
   }
 

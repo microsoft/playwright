@@ -346,18 +346,17 @@ export function formatError(config: FullConfig, error: TestError, highlightCode:
   const tokens = [''];
   let location: Location | undefined;
   if (stack) {
-    const parsed = prepareErrorStack(stack);
+    const parsed = prepareErrorStack(stack, file);
     tokens.push(parsed.message);
     location = parsed.location;
     if (location) {
       try {
-        // Stack will have /private/var/folders instead of /var/folders on Mac.
-        const realFile = fs.realpathSync(location.file);
-        const source = fs.readFileSync(realFile, 'utf8');
+        const source = fs.readFileSync(location.file, 'utf8');
         const codeFrame = codeFrameColumns(source, { start: location }, { highlightCode });
-        if (!file || file !== realFile) {
+        // Convert /var/folders to /private/var/folders on Mac.
+        if (!file || fs.realpathSync(file) !== location.file) {
           tokens.push('');
-          tokens.push(colors.gray(`   at `) + `${relativeFilePath(config, realFile)}:${location.line}`);
+          tokens.push(colors.gray(`   at `) + `${relativeFilePath(config, location.file)}:${location.line}`);
         }
         tokens.push('');
         tokens.push(codeFrame);
@@ -388,11 +387,15 @@ function indent(lines: string, tab: string) {
   return lines.replace(/^(?=.+$)/gm, tab);
 }
 
-export function prepareErrorStack(stack: string): {
+export function prepareErrorStack(stack: string, file?: string): {
   message: string;
   stackLines: string[];
   location?: Location;
 } {
+  if (file) {
+    // Stack will have /private/var/folders instead of /var/folders on Mac.
+    file = fs.realpathSync(file);
+  }
   const lines = stack.split('\n');
   let firstStackLine = lines.findIndex(line => line.startsWith('    at '));
   if (firstStackLine === -1)
@@ -402,8 +405,11 @@ export function prepareErrorStack(stack: string): {
   let location: Location | undefined;
   for (const line of stackLines) {
     const parsed = stackUtils.parseLine(line);
-    if (parsed && parsed.file) {
-      location = { file: path.join(process.cwd(), parsed.file), column: parsed.column || 0, line: parsed.line || 0 };
+    if (!parsed || !parsed.file)
+      continue;
+    const resolvedFile = path.join(process.cwd(), parsed.file);
+    if (!file || resolvedFile === file) {
+      location = { file: resolvedFile, column: parsed.column || 0, line: parsed.line || 0 };
       break;
     }
   }
