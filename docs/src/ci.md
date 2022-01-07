@@ -334,6 +334,8 @@ stages:
 tests:
   stage: test
   image: mcr.microsoft.com/playwright:focal
+  variables:
+    FORCE_COLOR: 1 # ensure pretty, colorized errors from `expect` (courtesy of https://www.npmjs.com/package/colors)
   script:
   ...
 ```
