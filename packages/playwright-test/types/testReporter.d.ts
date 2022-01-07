@@ -389,15 +389,15 @@ export interface Reporter {
   /**
    * Called when something has been written to the standard output in the worker process.
    * @param chunk Output chunk.
-   * @param test Test that was running. Note that output may happen when no test is running, in which case this will be [void].
-   * @param result Result of the test run, this object gets populated while the test runs.
+   * @param test Test or hook that was running. Note that output may happen when no test is running, in which case this will be [void].
+   * @param result Result of the test/hook run, this object gets populated while the test/hook runs.
    */
   onStdOut?(chunk: string | Buffer, test?: TestCase, result?: TestResult): void;
   /**
    * Called when something has been written to the standard error in the worker process.
    * @param chunk Output chunk.
-   * @param test Test that was running. Note that output may happen when no test is running, in which case this will be [void].
-   * @param result Result of the test run, this object gets populated while the test runs.
+   * @param test Test or hook that was running. Note that output may happen when no test is running, in which case this will be [void].
+   * @param result Result of the test/hook run, this object gets populated while the test/hook runs.
    */
   onStdErr?(chunk: string | Buffer, test?: TestCase, result?: TestResult): void;
   /**
@@ -408,18 +408,32 @@ export interface Reporter {
   onTestEnd?(test: TestCase, result: TestResult): void;
   /**
    * Called when a test step started in the worker process.
-   * @param test Test that the step belongs to.
-   * @param result Result of the test run, this object gets populated while the test runs.
+   * @param test Test or hook that the step belongs to.
+   * @param result Result of the test/hook run, this object gets populated while the test/hook runs.
    * @param step Test step instance that has started.
    */
   onStepBegin?(test: TestCase, result: TestResult, step: TestStep): void;
   /**
    * Called when a test step finished in the worker process.
-   * @param test Test that the step belongs to.
-   * @param result Result of the test run.
+   * @param test Test or hook that the step belongs to.
+   * @param result Result of the test/hook run.
    * @param step Test step instance that has finished.
    */
   onStepEnd?(test: TestCase, result: TestResult, step: TestStep): void;
+  /**
+   * Called after a `beforeAll` or `afterAll` hook has been started in the worker process. Note that `beforeEach` and
+   * `afterEach` hooks are reported as steps inside applicable tests.
+   * @param hook Hook that has been started.
+   * @param result Result of the hook run, this object gets populated while the hook runs.
+   */
+  onHookBegin?(hook: TestCase, result: TestResult): void;
+  /**
+   * Called after a `beforeAll` or `afterAll` hook has been finished in the worker process. Note that `beforeEach` and
+   * `afterEach` hooks are reported as steps inside applicable tests.
+   * @param hook Hook that has been finished.
+   * @param result Result of the hook run.
+   */
+  onHookEnd?(hook: TestCase, result: TestResult): void;
   /**
    * Called on some global error, for example unhandled exception in the worker process.
    * @param error The error.

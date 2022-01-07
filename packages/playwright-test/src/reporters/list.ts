@@ -98,9 +98,7 @@ class ListReporter extends BaseReporter {
     stream.write(chunk);
   }
 
-  override onTestEnd(test: TestCase, result: TestResult) {
-    super.onTestEnd(test, result);
-
+  override onTestOrHookEnd(test: TestCase, result: TestResult, isHook: boolean) {
     let duration = colors.dim(` (${milliseconds(result.duration)})`);
     const title = formatTestTitle(this.config, test);
     let text = '';

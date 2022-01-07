@@ -132,6 +132,38 @@ Called on some global error, for example unhandled exception in the worker proce
 The error.
 
 
+
+## method: Reporter.onHookBegin
+
+Called after a `beforeAll` or `afterAll` hook has been started in the worker process. Note that `beforeEach` and `afterEach` hooks are reported as steps inside applicable tests.
+
+### param: Reporter.onHookBegin.hook
+- `hook` <[TestCase]>
+
+Hook that has been started.
+
+### param: Reporter.onHookBegin.result
+- `result` <[TestResult]>
+
+Result of the hook run, this object gets populated while the hook runs.
+
+
+## method: Reporter.onHookEnd
+
+Called after a `beforeAll` or `afterAll` hook has been finished in the worker process. Note that `beforeEach` and `afterEach` hooks are reported as steps inside applicable tests.
+
+### param: Reporter.onHookEnd.hook
+- `hook` <[TestCase]>
+
+Hook that has been finished.
+
+### param: Reporter.onHookEnd.result
+- `result` <[TestResult]>
+
+Result of the hook run.
+
+
+
 ## method: Reporter.onStdErr
 
 Called when something has been written to the standard error in the worker process.
@@ -144,12 +176,13 @@ Output chunk.
 ### param: Reporter.onStdErr.test
 - `test` <[void]|[TestCase]>
 
-Test that was running. Note that output may happen when no test is running, in which case this will be [void].
+Test or hook that was running. Note that output may happen when no test is running, in which case this will be [void].
 
 ### param: Reporter.onStdErr.result
 - `result` <[void]|[TestResult]>
 
-Result of the test run, this object gets populated while the test runs.
+Result of the test/hook run, this object gets populated while the test/hook runs.
+
 
 
 ## method: Reporter.onStdOut
@@ -164,12 +197,14 @@ Output chunk.
 ### param: Reporter.onStdOut.test
 - `test` <[void]|[TestCase]>
 
-Test that was running. Note that output may happen when no test is running, in which case this will be [void].
+Test or hook that was running. Note that output may happen when no test is running, in which case this will be [void].
 
 ### param: Reporter.onStdOut.result
 - `result` <[void]|[TestResult]>
 
-Result of the test run, this object gets populated while the test runs.
+Result of the test/hook run, this object gets populated while the test/hook runs.
+
+
 
 ## method: Reporter.onStepBegin
 
@@ -178,17 +213,19 @@ Called when a test step started in the worker process.
 ### param: Reporter.onStepBegin.test
 - `test` <[TestCase]>
 
-Test that the step belongs to.
+Test or hook that the step belongs to.
 
 ### param: Reporter.onStepBegin.result
 - `result` <[TestResult]>
 
-Result of the test run, this object gets populated while the test runs.
+Result of the test/hook run, this object gets populated while the test/hook runs.
 
 ### param: Reporter.onStepBegin.step
 - `step` <[TestStep]>
 
 Test step instance that has started.
+
+
 
 ## method: Reporter.onStepEnd
 
@@ -197,17 +234,19 @@ Called when a test step finished in the worker process.
 ### param: Reporter.onStepEnd.test
 - `test` <[TestCase]>
 
-Test that the step belongs to.
+Test or hook that the step belongs to.
 
 ### param: Reporter.onStepEnd.result
 - `result` <[TestResult]>
 
-Result of the test run.
+Result of the test/hook run.
 
 ### param: Reporter.onStepEnd.step
 - `step` <[TestStep]>
 
 Test step instance that has finished.
+
+
 
 ## method: Reporter.onTestBegin
 
@@ -222,6 +261,7 @@ Test that has been started.
 - `result` <[TestResult]>
 
 Result of the test run, this object gets populated while the test runs.
+
 
 
 ## method: Reporter.onTestEnd

@@ -91,12 +91,25 @@ export class BaseReporter implements Reporter  {
     (result as any)[kOutputSymbol].push(output);
   }
 
-  onTestEnd(test: TestCase, result: TestResult) {
+  private _appendToFileDuration(test: TestCase, result: TestResult) {
     const projectName = test.titlePath()[1];
     const relativePath = relativeTestPath(this.config, test);
     const fileAndProject = (projectName ? `[${projectName}] › ` : '') + relativePath;
     const duration = this.fileDurations.get(fileAndProject) || 0;
     this.fileDurations.set(fileAndProject, duration + result.duration);
+  }
+
+  onTestEnd(test: TestCase, result: TestResult) {
+    this._appendToFileDuration(test, result);
+    this.onTestOrHookEnd(test, result, false);
+  }
+
+  onHookEnd(hook: TestCase, result: TestResult) {
+    this._appendToFileDuration(hook, result);
+    this.onTestOrHookEnd(hook, result, true);
+  }
+
+  protected onTestOrHookEnd(test: TestCase, result: TestResult, isHook: boolean) {
   }
 
   onError(error: TestError) {

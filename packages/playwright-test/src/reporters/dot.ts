@@ -42,8 +42,7 @@ class DotReporter extends BaseReporter {
       process.stderr.write(chunk);
   }
 
-  override onTestEnd(test: TestCase, result: TestResult) {
-    super.onTestEnd(test, result);
+  override onTestOrHookEnd(test: TestCase, result: TestResult, isHook: boolean) {
     if (this._counter === 80) {
       process.stdout.write('\n');
       this._counter = 0;

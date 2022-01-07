@@ -71,4 +71,14 @@ export class Multiplexer implements Reporter {
     for (const reporter of this._reporters)
       (reporter as any).onStepEnd?.(test, result, step);
   }
+
+  onHookBegin(hook: TestCase, result: TestResult) {
+    for (const reporter of this._reporters)
+      reporter.onHookBegin?.(hook, result);
+  }
+
+  onHookEnd(hook: TestCase, result: TestResult) {
+    for (const reporter of this._reporters)
+      reporter.onHookEnd?.(hook, result);
+  }
 }

@@ -99,6 +99,8 @@ export interface Reporter {
   onTestEnd?(test: TestCase, result: TestResult): void;
   onStepBegin?(test: TestCase, result: TestResult, step: TestStep): void;
   onStepEnd?(test: TestCase, result: TestResult, step: TestStep): void;
+  onHookBegin?(hook: TestCase, result: TestResult): void;
+  onHookEnd?(hook: TestCase, result: TestResult): void;
   onError?(error: TestError): void;
   onEnd?(result: FullResult): void | Promise<void>;
 }
