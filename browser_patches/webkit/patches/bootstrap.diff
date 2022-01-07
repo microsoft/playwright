@@ -3297,7 +3297,7 @@ index d2957810d8382c9351d5a93f144aed1493bcc651..8669933013d7972e355eacc358646d65
  {
      return context ? instrumentingAgents(*context) : nullptr;
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
-index 7a790bb23c8f37af57e4284b367cad9d679a434f..e1c81580f7756c722e0ba6caaff2307321822619 100644
+index 7a790bb23c8f37af57e4284b367cad9d679a434f..109a07bcf4238287e6cdd1a8157c5c287e9af1f6 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 @@ -62,12 +62,16 @@
@@ -3540,17 +3540,15 @@ index 7a790bb23c8f37af57e4284b367cad9d679a434f..e1c81580f7756c722e0ba6caaff23073
  {
      Document* document = &node->document();
      if (auto* templateHost = document->templateDocumentHost())
-@@ -2848,12 +2982,17 @@ RefPtr<Protocol::Runtime::RemoteObject> InspectorDOMAgent::resolveNode(Node* nod
-     if (!frame)
+@@ -2849,11 +2983,16 @@ RefPtr<Protocol::Runtime::RemoteObject> InspectorDOMAgent::resolveNode(Node* nod
          return nullptr;
  
--    auto& globalObject = mainWorldGlobalObject(*frame);
+     auto& globalObject = mainWorldGlobalObject(*frame);
 -    auto injectedScript = m_injectedScriptManager.injectedScriptFor(&globalObject);
 +    InjectedScript injectedScript;
 +    if (contextId) {
 +        injectedScript = m_injectedScriptManager.injectedScriptForId(*contextId);
 +    } else {
-+        auto& globalObject = mainWorldGlobalObject(*frame);
 +        injectedScript = m_injectedScriptManager.injectedScriptFor(&globalObject);
 +    }
      if (injectedScript.hasNoValue())
@@ -5384,7 +5382,7 @@ index b46981d750b25c1fd307f16fda74b7ee306a4c39..a48ccb58b7fb1be21b601646ffdf7a75
      DocumentWriter& writer() const { return m_writer; }
  
 diff --git a/Source/WebCore/loader/FrameLoader.cpp b/Source/WebCore/loader/FrameLoader.cpp
-index fdc97dc462c87526aa188f7968d60a0c83d680d9..211d323fc7b359ffa3c8431af2bdc1d83565a13d 100644
+index fdc97dc462c87526aa188f7968d60a0c83d680d9..4413aeac2541a73a32045479ca1d067c51e0961b 100644
 --- a/Source/WebCore/loader/FrameLoader.cpp
 +++ b/Source/WebCore/loader/FrameLoader.cpp
 @@ -1154,6 +1154,7 @@ void FrameLoader::loadInSameDocument(const URL& url, SerializedScriptValue* stat
@@ -5395,16 +5393,15 @@ index fdc97dc462c87526aa188f7968d60a0c83d680d9..211d323fc7b359ffa3c8431af2bdc1d8
  
      m_frame.document()->statePopped(stateObject ? Ref<SerializedScriptValue> { *stateObject } : SerializedScriptValue::nullValue());
      m_client->dispatchDidPopStateWithinPage();
-@@ -1489,6 +1490,8 @@ void FrameLoader::loadWithNavigationAction(const ResourceRequest& request, Navig
-         return completionHandler();
-     }
+@@ -1481,6 +1482,7 @@ void FrameLoader::load(FrameLoadRequest&& request)
  
+ void FrameLoader::loadWithNavigationAction(const ResourceRequest& request, NavigationAction&& action, FrameLoadType type, RefPtr<FormState>&& formState, AllowNavigationToInvalidURL allowNavigationToInvalidURL, CompletionHandler<void()>&& completionHandler)
+ {
 +    InspectorInstrumentation::frameScheduledNavigation(m_frame, Seconds(0));
-+
-     Ref<DocumentLoader> loader = m_client->createDocumentLoader(request, defaultSubstituteDataForURL(request.url()));
-     applyShouldOpenExternalURLsPolicyToNewDocumentLoader(m_frame, loader, action.initiatedByMainFrame(), action.shouldOpenExternalURLsPolicy());
+     FRAMELOADER_RELEASE_LOG(ResourceLoading, "loadWithNavigationAction: frame load started");
  
-@@ -1590,6 +1593,8 @@ void FrameLoader::loadWithDocumentLoader(DocumentLoader* loader, FrameLoadType t
+     if (request.url().protocolIsJavaScript()) {
+@@ -1590,6 +1592,8 @@ void FrameLoader::loadWithDocumentLoader(DocumentLoader* loader, FrameLoadType t
      const String& httpMethod = loader->request().httpMethod();
  
      if (shouldPerformFragmentNavigation(isFormSubmission, httpMethod, policyChecker().loadType(), newURL)) {
@@ -5413,7 +5410,7 @@ index fdc97dc462c87526aa188f7968d60a0c83d680d9..211d323fc7b359ffa3c8431af2bdc1d8
          RefPtr<DocumentLoader> oldDocumentLoader = m_documentLoader;
          NavigationAction action { *m_frame.document(), loader->request(), InitiatedByMainFrame::Unknown, policyChecker().loadType(), isFormSubmission };
  
-@@ -2796,12 +2801,17 @@ String FrameLoader::userAgent(const URL& url) const
+@@ -2796,12 +2800,17 @@ String FrameLoader::userAgent(const URL& url) const
  
  String FrameLoader::navigatorPlatform() const
  {
@@ -5433,7 +5430,7 @@ index fdc97dc462c87526aa188f7968d60a0c83d680d9..211d323fc7b359ffa3c8431af2bdc1d8
  }
  
  void FrameLoader::dispatchOnloadEvents()
-@@ -3206,6 +3216,8 @@ void FrameLoader::receivedMainResourceError(const ResourceError& error)
+@@ -3206,6 +3215,8 @@ void FrameLoader::receivedMainResourceError(const ResourceError& error)
      checkCompleted();
      if (m_frame.page())
          checkLoadComplete();
@@ -5442,7 +5439,7 @@ index fdc97dc462c87526aa188f7968d60a0c83d680d9..211d323fc7b359ffa3c8431af2bdc1d8
  }
  
  void FrameLoader::continueFragmentScrollAfterNavigationPolicy(const ResourceRequest& request, bool shouldContinue)
-@@ -3973,9 +3985,6 @@ String FrameLoader::referrer() const
+@@ -3973,9 +3984,6 @@ String FrameLoader::referrer() const
  
  void FrameLoader::dispatchDidClearWindowObjectsInAllWorlds()
  {
@@ -5452,7 +5449,7 @@ index fdc97dc462c87526aa188f7968d60a0c83d680d9..211d323fc7b359ffa3c8431af2bdc1d8
      Vector<Ref<DOMWrapperWorld>> worlds;
      ScriptController::getAllWorlds(worlds);
      for (auto& world : worlds)
-@@ -3984,13 +3993,13 @@ void FrameLoader::dispatchDidClearWindowObjectsInAllWorlds()
+@@ -3984,13 +3992,13 @@ void FrameLoader::dispatchDidClearWindowObjectsInAllWorlds()
  
  void FrameLoader::dispatchDidClearWindowObjectInWorld(DOMWrapperWorld& world)
  {
@@ -9144,7 +9141,7 @@ index 6a53b5d70a0544b8b02b349aff1b4bc60eade208..aeb2f1fbec86cbc95888db2b107b6d3d
  #if !LOG_DISABLED
              LOG(NetworkSession, "%llu didReceiveResponse completionHandler (%d)", taskIdentifier, policyAction);
 diff --git a/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp b/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp
-index 84669e209d77bf52a36afe2a7dab252a6900dcf7..1a0e7803464ea64e7ed2fe78e2c587a0b35bc899 100644
+index 84669e209d77bf52a36afe2a7dab252a6900dcf7..8785d13d2ff02882704e47659a68871cb9cb511a 100644
 --- a/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp
 +++ b/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp
 @@ -26,9 +26,13 @@
@@ -9196,19 +9193,21 @@ index 84669e209d77bf52a36afe2a7dab252a6900dcf7..1a0e7803464ea64e7ed2fe78e2c587a0
  
      handleCookieHeaders(request.resourceRequest(), receivedResponse);
  
-@@ -177,7 +188,10 @@ void NetworkDataTaskCurl::curlDidReceiveBuffer(CurlRequest&, Ref<FragmentedShare
+@@ -177,7 +188,12 @@ void NetworkDataTaskCurl::curlDidReceiveBuffer(CurlRequest&, Ref<FragmentedShare
      Ref protectedThis { *this };
      if (state() == State::Canceling || state() == State::Completed || (!m_client && !isDownload()))
          return;
 -
 +    if (isDownload()) {
-+        FileSystem::writeToFile(m_downloadDestinationFile, buffer->data(), buffer->size());
++        buffer->forEachSegment([&](auto& segment) {
++            FileSystem::writeToFile(m_downloadDestinationFile, segment.data(), segment.size());
++        });
 +        return;
 +    }
      m_client->didReceiveData(WTFMove(buffer));
  }
  
-@@ -186,9 +200,26 @@ void NetworkDataTaskCurl::curlDidComplete(CurlRequest&, NetworkLoadMetrics&& net
+@@ -186,9 +202,26 @@ void NetworkDataTaskCurl::curlDidComplete(CurlRequest&, NetworkLoadMetrics&& net
      if (state() == State::Canceling || state() == State::Completed || (!m_client && !isDownload()))
          return;
  
@@ -9235,7 +9234,7 @@ index 84669e209d77bf52a36afe2a7dab252a6900dcf7..1a0e7803464ea64e7ed2fe78e2c587a0
  void NetworkDataTaskCurl::curlDidFailWithError(CurlRequest& request, ResourceError&& resourceError, CertificateInfo&& certificateInfo)
  {
      if (state() == State::Canceling || state() == State::Completed || (!m_client && !isDownload()))
-@@ -199,6 +230,14 @@ void NetworkDataTaskCurl::curlDidFailWithError(CurlRequest& request, ResourceErr
+@@ -199,6 +232,14 @@ void NetworkDataTaskCurl::curlDidFailWithError(CurlRequest& request, ResourceErr
          return;
      }
  
@@ -9250,7 +9249,7 @@ index 84669e209d77bf52a36afe2a7dab252a6900dcf7..1a0e7803464ea64e7ed2fe78e2c587a0
      m_client->didCompleteWithError(resourceError);
  }
  
-@@ -236,6 +275,19 @@ void NetworkDataTaskCurl::invokeDidReceiveResponse()
+@@ -236,6 +277,19 @@ void NetworkDataTaskCurl::invokeDidReceiveResponse()
          case PolicyAction::Ignore:
              invalidateAndCancel();
              break;
@@ -9270,7 +9269,7 @@ index 84669e209d77bf52a36afe2a7dab252a6900dcf7..1a0e7803464ea64e7ed2fe78e2c587a0
          default:
              notImplemented();
              break;
-@@ -315,6 +367,8 @@ void NetworkDataTaskCurl::willPerformHTTPRedirection()
+@@ -315,6 +369,8 @@ void NetworkDataTaskCurl::willPerformHTTPRedirection()
              m_curlRequest->setUserPass(m_initialCredential.user(), m_initialCredential.password());
              m_curlRequest->setAuthenticationScheme(ProtectionSpace::AuthenticationScheme::HTTPBasic);
          }
