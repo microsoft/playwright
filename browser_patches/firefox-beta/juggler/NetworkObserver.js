@@ -62,6 +62,13 @@ class PageNetwork {
     this._extraHTTPHeaders = headers;
   }
 
+  combinedExtraHTTPHeaders() {
+    return [
+      ...(this._target.browserContext().extraHTTPHeaders || []),
+      ...(this._extraHTTPHeaders || []),
+    ];
+  }
+
   enableRequestInterception() {
     this._requestInterceptionEnabled = true;
   }
@@ -151,11 +158,8 @@ class NetworkRequest {
     this._expectingResumedRequest = undefined;  // { method, headers, postData }
     this._sentOnResponse = false;
 
-    const pageNetwork = this._pageNetwork;
-    if (pageNetwork) {
-      appendExtraHTTPHeaders(httpChannel, pageNetwork._target.browserContext().extraHTTPHeaders);
-      appendExtraHTTPHeaders(httpChannel, pageNetwork._extraHTTPHeaders);
-    }
+    if (this._pageNetwork)
+      appendExtraHTTPHeaders(httpChannel, this._pageNetwork.combinedExtraHTTPHeaders());
 
     this._responseBodyChunks = [];
 
@@ -241,6 +245,8 @@ class NetworkRequest {
         this.httpChannel.setRequestHeader(header.name, '', false /* merge */);
       for (const header of headers)
         this.httpChannel.setRequestHeader(header.name, header.value, false /* merge */);
+    } else if (this._pageNetwork) {
+      appendExtraHTTPHeaders(this.httpChannel, this._pageNetwork.combinedExtraHTTPHeaders());
     }
     if (method)
       this.httpChannel.requestMethod = method;
