@@ -114,7 +114,7 @@ page_one = await context.new_page()
 page_two = await context.new_page()
 
 # get pages of a browser context
-all_pages = context.pages()
+all_pages = context.pages
 ```
 
 ```python sync
@@ -123,7 +123,7 @@ page_one = context.new_page()
 page_two = context.new_page()
 
 # get pages of a browser context
-all_pages = context.pages()
+all_pages = context.pages
 ```
 
 ```csharp
