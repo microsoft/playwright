@@ -125,7 +125,8 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: ${{ matrix.node_version }}
-    - run: npm i -g npm@8
+    # NPM 7 is the latest version which supports Node.js 12.0.0
+    - run: npm i -g npm@7
     - run: npm ci
       env:
         DEBUG: pw:install
