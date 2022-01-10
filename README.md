@@ -42,59 +42,47 @@ Playwright is built to automate the broad and growing set of web browser capabil
 
 #### Page screenshot
 
-This code snippet navigates to whatsmyuseragent.org in Chromium, Firefox and WebKit, and saves 3 screenshots.
+This code snippet navigates to whatsmyuseragent.org and saves a screenshot.
 
-```js
-const playwright = require('playwright');
+```TypeScript
+import { test } from '@playwright/test';
 
-(async () => {
-  for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit]) {
-    const browser = await browserType.launch();
-    const context = await browser.newContext();
-    const page = await context.newPage();
+test('Page Screenshot', async ({ page }) => {
     await page.goto('http://whatsmyuseragent.org/');
-    await page.screenshot({ path: `example-${browserType.name()}.png` });
-    await browser.close();
-  }
-})();
+    await page.screenshot({ path: `example.png` });
+});
 ```
 
 #### Mobile and geolocation
 
 This snippet emulates Mobile Safari on a device at a given geolocation, navigates to maps.google.com, performs action and takes a screenshot.
 
-```js
-const { webkit, devices } = require('playwright');
-const iPhone11 = devices['iPhone 11 Pro'];
+```TypeScript
+import { test, devices } from '@playwright/test';
 
-(async () => {
-  const browser = await webkit.launch();
-  const context = await browser.newContext({
-    ...iPhone11,
-    locale: 'en-US',
-    geolocation: { longitude: 12.492507, latitude: 41.889938 },
-    permissions: ['geolocation']
-  });
-  const page = await context.newPage();
+test.use({
+  ...devices['iPhone 13 Pro'],
+  locale: 'en-US',
+  geolocation: { longitude: 12.492507, latitude: 41.889938 },
+  permissions: ['geolocation'],
+})
+
+test('Mobile and geolocation', async ({ page }) => {
   await page.goto('https://maps.google.com');
-  await page.click('text="Your location"');
+  await page.locator('text="Your location"').click();
   await page.waitForRequest(/.*preview\/pwa/);
   await page.screenshot({ path: 'colosseum-iphone.png' });
-  await browser.close();
-})();
+});
 ```
 
 #### Evaluate in browser context
 
-This code snippet navigates to example.com in Firefox, and executes a script in the page context.
+This code snippet navigates to example.com, and executes a script in the page context.
 
-```js
-const { firefox } = require('playwright');
+```TypeScript
+import { test } from '@playwright/test';
 
-(async () => {
-  const browser = await firefox.launch();
-  const context = await browser.newContext();
-  const page = await context.newPage();
+test('Evaluate in browser context', async ({ page }) => {
   await page.goto('https://www.example.com/');
   const dimensions = await page.evaluate(() => {
     return {
@@ -104,32 +92,24 @@ const { firefox } = require('playwright');
     }
   });
   console.log(dimensions);
-
-  await browser.close();
-})();
+});
 ```
 
 #### Intercept network requests
 
-This code snippet sets up request routing for a WebKit page to log all network requests.
+This code snippet sets up request routing for a page to log all network requests.
 
-```js
-const { webkit } = require('playwright');
+```TypeScript
+import { test } from '@playwright/test';
 
-(async () => {
-  const browser = await webkit.launch();
-  const context = await browser.newContext();
-  const page = await context.newPage();
-
+test('Intercept network requests', async ({ page }) => {
   // Log and continue all network requests
   await page.route('**', route => {
     console.log(route.request().url());
     route.continue();
   });
-
   await page.goto('http://todomvc.com');
-  await browser.close();
-})();
+});
 ```
 
 ## Resources
