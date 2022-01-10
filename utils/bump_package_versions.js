@@ -47,17 +47,13 @@ const { packages } = require('./list_packages.js');
     const packageLockPath = path.join(rootDir, 'package-lock.json');
     const packageLock = JSON.parse(fs.readFileSync(packageLockPath, 'utf8'));
     for (const package of packages.map(package => path.basename(package))) {
-      packageLock['packages']['packages/' + package].version = version;
-      if (packageLock['packages']['packages/' + package].dependencies?.['playwright-core'])
+      const playwrightCorePackages = packageLock['packages']['packages/' + package];
+      playwrightCorePackages.version = version;
+      if (playwrightCorePackages.dependencies && playwrightCorePackages.dependencies['playwright-core'])
         packageLock['packages']['packages/playwright-test']['dependencies']['playwright-core'] = '=' + version;
     }
     fs.writeFileSync(packageLockPath, JSON.stringify(packageLock, null, 2) + '\n');
   }
-  // 4. Verify integrity with npm i
-  execSync('npm install', {
-    stdio: 'inherit',
-    cwd: rootDir,
-  });
 
 })().catch(err => {
   console.error(err);
