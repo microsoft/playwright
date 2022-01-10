@@ -61,19 +61,6 @@ test('should get stdio from worker fixture teardown', async ({ runInlineTest }) 
   ]);
 });
 
-test('should get stdio from beforeAll and afterAll', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'a.spec.js': `
-      const { test } = pwt;
-      test.beforeAll(() => console.log('before'));
-      test('is a test', () => {});
-      test.afterAll(() => console.error('after'));
-    `
-  });
-  expect(result.report.suites[0].hooks[0].tests[0].results[0].stdout).toEqual([{ text: 'before\n' }]);
-  expect(result.report.suites[0].hooks[1].tests[0].results[0].stderr).toEqual([{ text: 'after\n' }]);
-});
-
 test('should ignore stdio when quiet', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `

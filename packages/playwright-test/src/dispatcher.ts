@@ -184,7 +184,8 @@ export class Dispatcher {
       data.resultByWorkerIndex.set(worker.workerIndex, { result, stepStack: new Set(), steps: new Map() });
       result.workerIndex = worker.workerIndex;
       result.startTime = new Date(params.startWallTime);
-      this._reporter.onTestBegin?.(data.test, result);
+      if (data.test._type === 'test')
+        this._reporter.onTestBegin?.(data.test, result);
     };
     worker.addListener('testBegin', onTestBegin);
 
@@ -308,7 +309,8 @@ export class Dispatcher {
             result = runData.result;
           } else {
             result = data.test._appendTestResult();
-            this._reporter.onTestBegin?.(test, result);
+            if (test._type === 'test')
+              this._reporter.onTestBegin?.(test, result);
           }
           result.error = params.fatalError;
           result.status = first ? 'failed' : 'skipped';
@@ -354,9 +356,9 @@ export class Dispatcher {
           return true;
 
         // Emulate a "skipped" run, and drop this test from remaining.
-        const data = this._testById.get(test._id)!;
-        const result = data.test._appendTestResult();
-        this._reporter.onTestBegin?.(test, result);
+        const result = test._appendTestResult();
+        if (test._type === 'test')
+          this._reporter.onTestBegin?.(test, result);
         result.status = 'skipped';
         this._reportTestEnd(test, result);
         return false;
@@ -440,7 +442,8 @@ export class Dispatcher {
   private _reportTestEnd(test: TestCase, result: TestResult) {
     if (test._type === 'test' && result.status !== 'skipped' && result.status !== test.expectedStatus)
       ++this._failureCount;
-    this._reporter.onTestEnd?.(test, result);
+    if (test._type === 'test')
+      this._reporter.onTestEnd?.(test, result);
     const maxFailures = this._loader.fullConfig().maxFailures;
     if (maxFailures && this._failureCount === maxFailures)
       this.stop().catch(e => {});

@@ -42,7 +42,6 @@ export interface JSONReportSuite {
   column: number;
   line: number;
   specs: JSONReportSpec[];
-  hooks: JSONReportSpec[];
   suites?: JSONReportSuite[];
 }
 export interface JSONReportSpec {
@@ -208,7 +207,6 @@ class JSONReporter implements Reporter {
       title: suite.title,
       ...this._relativeLocation(suite.location),
       specs: suite.tests.map(test => this._serializeTestSpec(test)),
-      hooks: suite.hooks.map(test => this._serializeTestSpec(test)),
       suites: suites.length ? suites : undefined,
     };
   }

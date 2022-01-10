@@ -29,7 +29,6 @@ export interface Suite {
   location?: Location;
   suites: Suite[];
   tests: TestCase[];
-  hooks: TestCase[];
   titlePath(): string[];
   allTests(): TestCase[];
   project(): FullProject | undefined;

@@ -587,28 +587,3 @@ test('should not hang and report results when worker process suddenly exits duri
   expect(stripAscii(result.output)).toContain('[1/1] a.spec.js:6:7 › passed');
   expect(stripAscii(result.output)).toContain('[1/1] a.spec.js:7:12 › afterAll');
 });
-
-test('same beforeAll running in parallel should be reported correctly', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'a.spec.js': `
-      const { test } = pwt;
-      test.describe.parallel('', () => {
-        test.beforeAll(async () => {
-          await new Promise(f => setTimeout(f, 3000));
-        });
-        test('test1', () => {});
-        test('test2', () => {});
-      });
-    `
-  });
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(2);
-  const hook = result.report.suites[0].suites[0].hooks[0];
-  expect(hook.title).toBe('beforeAll');
-  expect(hook.tests.length).toBe(1);
-  expect(hook.tests[0].results.length).toBe(2);
-  expect(hook.tests[0].results[0].status).toBe('passed');
-  expect(hook.tests[0].results[1].status).toBe('passed');
-  const workers = [hook.tests[0].results[0].workerIndex, hook.tests[0].results[1].workerIndex];
-  expect(workers.sort()).toEqual([0, 1]);
-});
