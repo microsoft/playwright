@@ -49,10 +49,18 @@ steps:
   - uses: actions/setup-node@v2
     with:
       node-version: '14'
-  - name: Install operating system dependencies
-    run: npx playwright install-deps
+  - name: Install dependencies
+    run: npm ci
+  - name: Install Playwright
+    run: npx playwright install --with-deps
   - name: Run your tests
     run: npm test
+  - name: Upload test results
+    if: always()
+    uses: actions/upload-artifact@v2
+    with:
+      name: playwright-results
+      path: test-results
 ```
 
 ```yml python
