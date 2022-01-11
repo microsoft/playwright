@@ -2228,10 +2228,10 @@ index 664b0e29f6ba3ce4826e5109d73f86cc9bc6adfd..95e9875d933ff7b9219b2a1d89029b8a
  
  #if !defined(ENABLE_TOUCH_ACTION_REGIONS)
 diff --git a/Source/WTF/wtf/PlatformEnableCocoa.h b/Source/WTF/wtf/PlatformEnableCocoa.h
-index 0213ba5bff79592226f14015534641cd0836cd62..e5cdb16cb1b126645d13b458e366f217b98bd0bd 100644
+index 7af4666a014579814cabd9160d6dd26917761d7b..a472a87e5a9723bd40ac4c888333553fe4791bd7 100644
 --- a/Source/WTF/wtf/PlatformEnableCocoa.h
 +++ b/Source/WTF/wtf/PlatformEnableCocoa.h
-@@ -224,7 +224,7 @@
+@@ -223,7 +223,7 @@
  #define ENABLE_DATA_DETECTION 1
  #endif
  
@@ -2253,7 +2253,7 @@ index 3901bfb0f5479064f4e7b67c90621ff26d74b580..5b3615a871d0d7123822394c94d5ce10
  
  if (Journald_FOUND)
 diff --git a/Source/WTF/wtf/PlatformHave.h b/Source/WTF/wtf/PlatformHave.h
-index 328edacb99219b8c91c44d12fe961098d4b6577c..e154d64ea24e6ca3f75d726e0e08f0cca1579a3b 100644
+index c1aca612f3e5d3e8bf8991c85f271b61280786c2..5fe296df5a0247ecf67a8868d4ae36ef4b50267f 100644
 --- a/Source/WTF/wtf/PlatformHave.h
 +++ b/Source/WTF/wtf/PlatformHave.h
 @@ -395,7 +395,7 @@
@@ -2444,10 +2444,10 @@ index 33ac35df7d3d583c86d275654cadc1caf75b079a..2697718f3a9309df08493cdf78ef0abd
  __ZN7WebCore14DocumentLoaderD2Ev
  __ZN7WebCore14DocumentLoader17clearMainResourceEv
 diff --git a/Source/WebCore/WebCore.xcodeproj/project.pbxproj b/Source/WebCore/WebCore.xcodeproj/project.pbxproj
-index 8f7bcbda467a21af62abb195666e589b4762bc7a..99ba919adbdbb205772d75940ad4ebffb2b673e9 100644
+index d28b3831d4f69192ca56202c8004e1783dc3c5c0..20b86266998344c121b996a52b69f9bf9616801b 100644
 --- a/Source/WebCore/WebCore.xcodeproj/project.pbxproj
 +++ b/Source/WebCore/WebCore.xcodeproj/project.pbxproj
-@@ -5469,6 +5469,13 @@
+@@ -5470,6 +5470,13 @@
  		EDE3A5000C7A430600956A37 /* ColorMac.h in Headers */ = {isa = PBXBuildFile; fileRef = EDE3A4FF0C7A430600956A37 /* ColorMac.h */; settings = {ATTRIBUTES = (Private, ); }; };
  		EDEC98030AED7E170059137F /* WebCorePrefix.h in Headers */ = {isa = PBXBuildFile; fileRef = EDEC98020AED7E170059137F /* WebCorePrefix.h */; };
  		EFCC6C8F20FE914400A2321B /* CanvasActivityRecord.h in Headers */ = {isa = PBXBuildFile; fileRef = EFCC6C8D20FE914000A2321B /* CanvasActivityRecord.h */; settings = {ATTRIBUTES = (Private, ); }; };
@@ -2461,7 +2461,7 @@ index 8f7bcbda467a21af62abb195666e589b4762bc7a..99ba919adbdbb205772d75940ad4ebff
  		F12171F616A8CF0B000053CA /* WebVTTElement.h in Headers */ = {isa = PBXBuildFile; fileRef = F12171F416A8BC63000053CA /* WebVTTElement.h */; };
  		F32BDCD92363AACA0073B6AE /* UserGestureEmulationScope.h in Headers */ = {isa = PBXBuildFile; fileRef = F32BDCD72363AACA0073B6AE /* UserGestureEmulationScope.h */; };
  		F344C7141125B82C00F26EEE /* InspectorFrontendClient.h in Headers */ = {isa = PBXBuildFile; fileRef = F344C7121125B82C00F26EEE /* InspectorFrontendClient.h */; settings = {ATTRIBUTES = (Private, ); }; };
-@@ -17666,6 +17673,14 @@
+@@ -17669,6 +17676,14 @@
  		EDEC98020AED7E170059137F /* WebCorePrefix.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = WebCorePrefix.h; sourceTree = "<group>"; tabWidth = 4; usesTabs = 0; };
  		EFB7287B2124C73D005C2558 /* CanvasActivityRecord.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = CanvasActivityRecord.cpp; sourceTree = "<group>"; };
  		EFCC6C8D20FE914000A2321B /* CanvasActivityRecord.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CanvasActivityRecord.h; sourceTree = "<group>"; };
@@ -2476,7 +2476,7 @@ index 8f7bcbda467a21af62abb195666e589b4762bc7a..99ba919adbdbb205772d75940ad4ebff
  		F12171F316A8BC63000053CA /* WebVTTElement.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WebVTTElement.cpp; sourceTree = "<group>"; };
  		F12171F416A8BC63000053CA /* WebVTTElement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebVTTElement.h; sourceTree = "<group>"; };
  		F32BDCD52363AAC90073B6AE /* UserGestureEmulationScope.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UserGestureEmulationScope.cpp; sourceTree = "<group>"; };
-@@ -23967,7 +23982,12 @@
+@@ -23972,7 +23987,12 @@
  				93D6B7A62551D3ED0058DD3A /* DummySpeechRecognitionProvider.h */,
  				1AF326770D78B9440068F0C4 /* EditorClient.h */,
  				93C09A800B064F00005ABD4D /* EventHandler.cpp */,
@@ -2489,7 +2489,7 @@ index 8f7bcbda467a21af62abb195666e589b4762bc7a..99ba919adbdbb205772d75940ad4ebff
  				E0FEF371B27C53EAC1C1FBEE /* EventSource.cpp */,
  				E0FEF371B17C53EAC1C1FBEE /* EventSource.h */,
  				E0FEF371B07C53EAC1C1FBEE /* EventSource.idl */,
-@@ -29917,6 +29937,8 @@
+@@ -29922,6 +29942,8 @@
  				29E4D8DF16B0940F00C84704 /* PlatformSpeechSynthesizer.h */,
  				1AD8F81A11CAB9E900E93E54 /* PlatformStrategies.cpp */,
  				1AD8F81911CAB9E900E93E54 /* PlatformStrategies.h */,
@@ -2498,7 +2498,7 @@ index 8f7bcbda467a21af62abb195666e589b4762bc7a..99ba919adbdbb205772d75940ad4ebff
  				0FD7C21D23CE41E30096D102 /* PlatformWheelEvent.cpp */,
  				935C476A09AC4D4F00A6AAB4 /* PlatformWheelEvent.h */,
  				BCBB8AB513F1AFB000734DF0 /* PODInterval.h */,
-@@ -32227,6 +32249,7 @@
+@@ -32232,6 +32254,7 @@
  				BCCFBAE70B5152ED0001F1D7 /* DocumentParser.h */,
  				AD6E71AA1668899D00320C13 /* DocumentSharedObjectPool.cpp */,
  				AD6E71AB1668899D00320C13 /* DocumentSharedObjectPool.h */,
@@ -2506,7 +2506,7 @@ index 8f7bcbda467a21af62abb195666e589b4762bc7a..99ba919adbdbb205772d75940ad4ebff
  				6BDB5DC1227BD3B800919770 /* DocumentStorageAccess.cpp */,
  				6BDB5DC0227BD3B800919770 /* DocumentStorageAccess.h */,
  				7CE7FA5B1EF882300060C9D6 /* DocumentTouch.cpp */,
-@@ -33245,6 +33268,7 @@
+@@ -33250,6 +33273,7 @@
  				93C4F6EB1108F9A50099D0DB /* AccessibilityScrollbar.h in Headers */,
  				29489FC712C00F0300D83F0F /* AccessibilityScrollView.h in Headers */,
  				0709FC4E1025DEE30059CDBA /* AccessibilitySlider.h in Headers */,
@@ -2514,7 +2514,7 @@ index 8f7bcbda467a21af62abb195666e589b4762bc7a..99ba919adbdbb205772d75940ad4ebff
  				29D7BCFA1444AF7D0070619C /* AccessibilitySpinButton.h in Headers */,
  				69A6CBAD1C6BE42C00B836E9 /* AccessibilitySVGElement.h in Headers */,
  				AAC08CF315F941FD00F1E188 /* AccessibilitySVGRoot.h in Headers */,
-@@ -35371,6 +35395,7 @@
+@@ -35376,6 +35400,7 @@
  				6E4ABCD5138EA0B70071D291 /* JSHTMLUnknownElement.h in Headers */,
  				E44614170CD6826900FADA75 /* JSHTMLVideoElement.h in Headers */,
  				81BE20D311F4BC3200915DFA /* JSIDBCursor.h in Headers */,
@@ -2522,7 +2522,7 @@ index 8f7bcbda467a21af62abb195666e589b4762bc7a..99ba919adbdbb205772d75940ad4ebff
  				7C3D8EF01E0B21430023B084 /* JSIDBCursorDirection.h in Headers */,
  				C585A68311D4FB08004C3E4B /* JSIDBDatabase.h in Headers */,
  				C585A69711D4FB13004C3E4B /* JSIDBFactory.h in Headers */,
-@@ -36480,6 +36505,7 @@
+@@ -36485,6 +36510,7 @@
  				0F7D07331884C56C00B4AF86 /* PlatformTextTrack.h in Headers */,
  				074E82BB18A69F0E007EF54C /* PlatformTimeRanges.h in Headers */,
  				CDD08ABD277E542600EA3755 /* PlatformTrackConfiguration.h in Headers */,
@@ -2530,7 +2530,7 @@ index 8f7bcbda467a21af62abb195666e589b4762bc7a..99ba919adbdbb205772d75940ad4ebff
  				CD1F9B022700323D00617EB6 /* PlatformVideoColorPrimaries.h in Headers */,
  				CD1F9B01270020B700617EB6 /* PlatformVideoColorSpace.h in Headers */,
  				CD1F9B032700323D00617EB6 /* PlatformVideoMatrixCoefficients.h in Headers */,
-@@ -38509,6 +38535,7 @@
+@@ -38515,6 +38541,7 @@
  				1ABA76CA11D20E50004C201C /* CSSPropertyNames.cpp in Sources */,
  				2D22830323A8470700364B7E /* CursorMac.mm in Sources */,
  				5CBD59592280E926002B22AA /* CustomHeaderFields.cpp in Sources */,
@@ -2538,7 +2538,7 @@ index 8f7bcbda467a21af62abb195666e589b4762bc7a..99ba919adbdbb205772d75940ad4ebff
  				6E72F54C229DCD0C00B3E151 /* ExtensionsGLANGLE.cpp in Sources */,
  				7CE6CBFD187F394900D46BF5 /* FormatConverter.cpp in Sources */,
  				5130F2F624AEA60A00E1D0A0 /* GameControllerSoftLink.mm in Sources */,
-@@ -38579,6 +38606,7 @@
+@@ -38585,6 +38612,7 @@
  				6E72F54F229DCD1300B3E151 /* TemporaryANGLESetting.cpp in Sources */,
  				CE88EE262414467B007F29C2 /* TextAlternativeWithRange.mm in Sources */,
  				51DF6D800B92A18E00C2DC85 /* ThreadCheck.mm in Sources */,
@@ -2546,7 +2546,7 @@ index 8f7bcbda467a21af62abb195666e589b4762bc7a..99ba919adbdbb205772d75940ad4ebff
  				538EC8031F96AF81004D22A8 /* UnifiedSource1-mm.mm in Sources */,
  				538EC8021F96AF81004D22A8 /* UnifiedSource1.cpp in Sources */,
  				538EC8051F96AF81004D22A8 /* UnifiedSource2-mm.mm in Sources */,
-@@ -38627,6 +38655,7 @@
+@@ -38633,6 +38661,7 @@
  				538EC8881F993F9C004D22A8 /* UnifiedSource23.cpp in Sources */,
  				DE5F85801FA1ABF4006DB63A /* UnifiedSource24-mm.mm in Sources */,
  				538EC8891F993F9D004D22A8 /* UnifiedSource24.cpp in Sources */,
@@ -2554,7 +2554,7 @@ index 8f7bcbda467a21af62abb195666e589b4762bc7a..99ba919adbdbb205772d75940ad4ebff
  				DE5F85811FA1ABF4006DB63A /* UnifiedSource25-mm.mm in Sources */,
  				538EC88A1F993F9D004D22A8 /* UnifiedSource25.cpp in Sources */,
  				DE5F85821FA1ABF4006DB63A /* UnifiedSource26-mm.mm in Sources */,
-@@ -39159,6 +39188,7 @@
+@@ -39165,6 +39194,7 @@
  				2D8B92F1203D13E1009C868F /* UnifiedSource516.cpp in Sources */,
  				2D8B92F2203D13E1009C868F /* UnifiedSource517.cpp in Sources */,
  				2D8B92F3203D13E1009C868F /* UnifiedSource518.cpp in Sources */,
@@ -7916,18 +7916,6 @@ index 262e53180d6dd7c4d133ddc1daf5652bd6f31c76..d09aed9c9c58afe3c2040e1d5d683374
      // The networkLoadMetrics info is only send over IPC and not stored in disk cache.
      if constexpr (Decoder::isIPCDecoder) {
          std::optional<Box<NetworkLoadMetrics>> networkLoadMetrics;
-diff --git a/Source/WebCore/platform/network/SynchronousLoaderClient.cpp b/Source/WebCore/platform/network/SynchronousLoaderClient.cpp
-index 30b4bb0fdaef7ae2cc74ac609f7b00997e5a6dcc..6a21c2644fc86685773c3434b64b1f3cd4b4ff28 100644
---- a/Source/WebCore/platform/network/SynchronousLoaderClient.cpp
-+++ b/Source/WebCore/platform/network/SynchronousLoaderClient.cpp
-@@ -29,6 +29,7 @@
- #include "AuthenticationChallenge.h"
- #include "ResourceHandle.h"
- #include "ResourceRequest.h"
-+#include "SharedBuffer.h"
- #include <wtf/CompletionHandler.h>
- 
- namespace WebCore {
 diff --git a/Source/WebCore/platform/network/cocoa/NetworkStorageSessionCocoa.mm b/Source/WebCore/platform/network/cocoa/NetworkStorageSessionCocoa.mm
 index b28ebbddea4fba00a321d18d20bef45bd0392ac7..7291be7bb171ad99142147270389152b1bd34eb5 100644
 --- a/Source/WebCore/platform/network/cocoa/NetworkStorageSessionCocoa.mm
@@ -9061,7 +9049,7 @@ index 0a3c1b81902ce2a82a96a08aea42aa911789c1ef..d0ec4d3febee0b702b232116673d0f9b
  #if !LOG_DISABLED
              LOG(NetworkSession, "%llu didReceiveResponse completionHandler (%d)", taskIdentifier, policyAction);
 diff --git a/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp b/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp
-index 13fcc7bd48a55a093912926ba4484cf5e355132b..1796e9bf8ec9bf3c0f5dc1eef44bcf935953efbb 100644
+index 13fcc7bd48a55a093912926ba4484cf5e355132b..013327f235abf03a6411ccc034b5dcc8b1514d66 100644
 --- a/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp
 +++ b/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp
 @@ -26,9 +26,13 @@
@@ -9119,7 +9107,7 @@ index 13fcc7bd48a55a093912926ba4484cf5e355132b..1796e9bf8ec9bf3c0f5dc1eef44bcf93
          return;
 -
 +    if (isDownload()) {
-+        buffer->forEachSegment([&](auto& segment) {
++        buffer.forEachSegment([&](auto& segment) {
 +            FileSystem::writeToFile(m_downloadDestinationFile, segment.data(), segment.size());
 +        });
 +        return;
