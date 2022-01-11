@@ -9906,6 +9906,8 @@ export interface BrowserType<Unused = {}> {
      * constructor for building the corresponding URL. Examples:
      * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
      * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in `http://localhost:3000/foo/bar.html`
+     * - baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in
+     *   `http://localhost:3000/bar.html`
      */
     baseURL?: string;
 
@@ -11128,6 +11130,8 @@ export interface AndroidDevice {
      * constructor for building the corresponding URL. Examples:
      * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
      * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in `http://localhost:3000/foo/bar.html`
+     * - baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in
+     *   `http://localhost:3000/bar.html`
      */
     baseURL?: string;
 
@@ -11797,6 +11801,8 @@ export interface APIRequest {
      * - baseURL: `http://localhost:3000` and sending request to `/bar.html` results in `http://localhost:3000/bar.html`
      * - baseURL: `http://localhost:3000/foo/` and sending request to `./bar.html` results in
      *   `http://localhost:3000/foo/bar.html`
+     * - baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in
+     *   `http://localhost:3000/bar.html`
      */
     baseURL?: string;
 
@@ -12595,6 +12601,8 @@ export interface Browser extends EventEmitter {
      * constructor for building the corresponding URL. Examples:
      * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
      * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in `http://localhost:3000/foo/bar.html`
+     * - baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in
+     *   `http://localhost:3000/bar.html`
      */
     baseURL?: string;
 
@@ -15002,6 +15010,8 @@ export interface BrowserContextOptions {
    * constructor for building the corresponding URL. Examples:
    * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
    * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in `http://localhost:3000/foo/bar.html`
+   * - baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in
+   *   `http://localhost:3000/bar.html`
    */
   baseURL?: string;
 

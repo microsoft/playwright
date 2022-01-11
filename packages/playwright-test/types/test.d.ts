@@ -2860,6 +2860,8 @@ export interface PlaywrightTestOptions {
    * constructor for building the corresponding URL. Examples:
    * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
    * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in `http://localhost:3000/foo/bar.html`
+   * - baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in
+   *   `http://localhost:3000/bar.html`
    */
   baseURL: string | undefined;
   /**
