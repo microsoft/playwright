@@ -16824,7 +16824,7 @@ index 0000000000000000000000000000000000000000..48c9ccc420c1b4ae3259e1d5ba17fd8f
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.cpp b/Source/WebKit/UIProcess/WebPageProxy.cpp
-index b2b642b75cc2ebfc6dbcffdb1c51e4d34701311b..2a1f524685e8d6010ecb78ff4d1e351720f82a2a 100644
+index b2b642b75cc2ebfc6dbcffdb1c51e4d34701311b..ae687084a32aacf45a1b77cb1cfe9e4eb81d64c8 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.cpp
 +++ b/Source/WebKit/UIProcess/WebPageProxy.cpp
 @@ -246,6 +246,9 @@
@@ -16985,10 +16985,10 @@ index b2b642b75cc2ebfc6dbcffdb1c51e4d34701311b..2a1f524685e8d6010ecb78ff4d1e3517
 +#endif
  
 +#if PLATFORM(WIN) && ENABLE(DRAG_SUPPORT)
-+void WebPageProxy::startDrag(WebCore::DragDataMap& dragDataMap)
++void WebPageProxy::startDrag(WebCore::DragDataMap&& dragDataMap)
 +{
 +    if (m_interceptDrags) {
-+        m_dragSelectionData = dragDataMap;
++        m_dragSelectionData = WTFMove(dragDataMap);
 +        m_dragSourceOperationMask = WebCore::anyDragOperation();
 +    }
      didStartDrag();
@@ -17344,7 +17344,7 @@ index b2b642b75cc2ebfc6dbcffdb1c51e4d34701311b..2a1f524685e8d6010ecb78ff4d1e3517
      // and make it one UIClient call that calls the completionHandler with false
      // if there is no delegate instead of returning the completionHandler
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.h b/Source/WebKit/UIProcess/WebPageProxy.h
-index 0552b7ba5e5c65738b6bc4859a9b3cfb39790b8c..8f5ae35b288cff2cf4d4109e9e7469a80d5218a2 100644
+index 0552b7ba5e5c65738b6bc4859a9b3cfb39790b8c..de46aba0340e482caf302478db27217193d7de59 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.h
 +++ b/Source/WebKit/UIProcess/WebPageProxy.h
 @@ -39,6 +39,7 @@
@@ -17452,7 +17452,7 @@ index 0552b7ba5e5c65738b6bc4859a9b3cfb39790b8c..8f5ae35b288cff2cf4d4109e9e7469a8
      void startDrag(WebCore::SelectionData&&, OptionSet<WebCore::DragOperation>, const ShareableBitmap::Handle& dragImage);
  #endif
 +#if PLATFORM(WIN)
-+    void startDrag(WebCore::DragDataMap& dragDataMap);
++    void startDrag(WebCore::DragDataMap&& dragDataMap);
 +#endif
  #endif
  
