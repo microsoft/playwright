@@ -469,7 +469,6 @@ export class WorkerRunner extends EventEmitter {
     let error1: TestError | undefined;
     if (test._type === 'test')
       error1 = await this._runFn(() => this._runBeforeHooks(test, testInfo), testInfo, 'allowSkips');
-    // Continue running afterEach hooks even after the failure.
 
     // Do not run the test when beforeEach hook fails.
     if (testInfo.status === 'failed' || testInfo.status === 'skipped') {
