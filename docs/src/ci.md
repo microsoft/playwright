@@ -335,7 +335,7 @@ tests:
   stage: test
   image: mcr.microsoft.com/playwright:focal
   variables:
-    FORCE_COLOR: 1 # ensure pretty, colorized errors from `expect` (courtesy of https://www.npmjs.com/package/colors)
+    FORCE_COLOR: 1 # Ensure colorized errors appear in all reports like the HTML Reporter. (Follow https://github.com/microsoft/playwright/issues/11314 to be notified of when this is no longer necessary.)
   script:
   ...
 ```
