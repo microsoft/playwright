@@ -7114,18 +7114,6 @@ index 70a084bd9eb6375bcec4ac89b95092aad8c146b4..6bc9698129073a49e474537905600743
  
  namespace WebCore {
  
-diff --git a/Source/WebCore/platform/graphics/gstreamer/GStreamerCommon.h b/Source/WebCore/platform/graphics/gstreamer/GStreamerCommon.h
-index d82cd3e18ece04761d6ad4ec2d52e2ad9dc38468..6f39094ba425855b7d701f224708748d9ae294a4 100644
---- a/Source/WebCore/platform/graphics/gstreamer/GStreamerCommon.h
-+++ b/Source/WebCore/platform/graphics/gstreamer/GStreamerCommon.h
-@@ -389,7 +389,6 @@ public:
-         {
-             return m_iter == other.m_iter && m_done == other.m_done;
-         }
--        bool operator!=(const iterator& other) { return !(*this == other); }
- 
-     private:
-         GstIterator* m_iter;
 diff --git a/Source/WebCore/platform/graphics/opengl/GraphicsContextGLOpenGLBase.cpp b/Source/WebCore/platform/graphics/opengl/GraphicsContextGLOpenGLBase.cpp
 index 68b6cd3f524bf6a09eaf7fd6848fbac1da733ab3..991d7f20c21290db6732f02f8455974167e34bcf 100644
 --- a/Source/WebCore/platform/graphics/opengl/GraphicsContextGLOpenGLBase.cpp
@@ -12852,7 +12840,7 @@ index 0000000000000000000000000000000000000000..4ec8b96bbbddf8a7b042f53a8068754a
 +cairo_status_t cairo_image_surface_write_to_jpeg_mem(cairo_surface_t *sfc, unsigned char **data, size_t *len, int quality);
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..ec063e2f3757046c6677208f9da60f464d2fac63
+index 0000000000000000000000000000000000000000..d33d2423fd7ca230e40acecc581cfee611cd113c
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 @@ -0,0 +1,302 @@
@@ -13123,7 +13111,7 @@ index 0000000000000000000000000000000000000000..ec063e2f3757046c6677208f9da60f46
 +            WebCore::IntSize scaledImageSize = imageSize;
 +            scaledImageSize.scale(scale);
 +            auto colorSpace = adoptCF(CGColorSpaceCreateDeviceRGB());
-+            auto context = adoptCF(CGBitmapContextCreate(nullptr, screencastSize.width(), screencastSize.height(), 8, 4 * screencastSize.width(), colorSpace.get(), kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host));
++            auto context = adoptCF(CGBitmapContextCreate(nullptr, screencastSize.width(), screencastSize.height(), 8, 4 * screencastSize.width(), colorSpace.get(), (CGBitmapInfo)kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host));
 +            CGContextDrawImage(context.get(), CGRectMake(0, 0, scaledImageSize.width(), scaledImageSize.height()), imagePtr);
 +            scaledImageRef = adoptCF(CGBitmapContextCreateImage(context.get()));
 +            imagePtr = scaledImageRef.get();
@@ -14439,7 +14427,7 @@ index 8c1339345d451874502b271f6aa2eca3fa0d3faf..1f8f5e74c86b61c1c5a16ac33d48afdd
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/mac/ScreencastEncoderMac.mm b/Source/WebKit/UIProcess/Inspector/mac/ScreencastEncoderMac.mm
 new file mode 100644
-index 0000000000000000000000000000000000000000..235e9a3f8455f1113109631b54c7e90cfad8a614
+index 0000000000000000000000000000000000000000..6a04ee480bc3a8270a7de20b1cd0da718242b4c1
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/mac/ScreencastEncoderMac.mm
 @@ -0,0 +1,55 @@
@@ -14483,7 +14471,7 @@ index 0000000000000000000000000000000000000000..235e9a3f8455f1113109631b54c7e90c
 +    size_t bytesPerPixel = 4;
 +    size_t bytesPerRow = bytesPerPixel * width;
 +    RetainPtr<CGColorSpaceRef> colorSpace = adoptCF(CGColorSpaceCreateDeviceRGB());
-+    RetainPtr<CGContextRef> context = adoptCF(CGBitmapContextCreate(argb_data, width, height, bitsPerComponent, bytesPerRow, colorSpace.get(), kCGImageAlphaNoneSkipFirst | kCGBitmapByteOrder32Little));
++    RetainPtr<CGContextRef> context = adoptCF(CGBitmapContextCreate(argb_data, width, height, bitsPerComponent, bytesPerRow, colorSpace.get(), (CGBitmapInfo)kCGImageAlphaNoneSkipFirst | kCGBitmapByteOrder32Little));
 +    double imageWidth = CGImageGetWidth(image);
 +    double imageHeight = CGImageGetHeight(image);
 +    double pageHeight = imageHeight - offsetTop;
