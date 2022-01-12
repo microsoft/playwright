@@ -405,6 +405,7 @@ export function arrayToObject(array?: NameValue[]): { [key: string]: string } | 
 export async function calculateFileSha1(filename: string): Promise<string> {
   const hashStream = new HashStream();
   const stream = fs.createReadStream(filename);
+  stream.once('error', err => hashStream.emit('error', err));
   stream.on('open', () => stream.pipe(hashStream));
   await new Promise((f, r) => {
     hashStream.on('finish', f);

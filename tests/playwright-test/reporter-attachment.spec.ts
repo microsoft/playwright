@@ -105,7 +105,6 @@ test(`testInfo.attach errors`, async ({ runInlineTest }) => {
 });
 
 test(`testInfo.attach doesn't hang fixture`, async ({ runInlineTest }) => {
-  test.fail();
   const result = await runInlineTest({
     'a.test.js': `
       const { test: _test } = pwt;
