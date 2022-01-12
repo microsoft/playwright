@@ -31,20 +31,13 @@ global.console = new Console({
   colorMode: process.env.FORCE_COLOR === '1',
 });
 
-process.stdout.write = (chunk: string | Buffer) => {
-  const outPayload: TestOutputPayload = {
-    testId: workerRunner?._currentTest?.testId,
-    ...chunkToParams(chunk)
-  };
-  sendMessageToParent('stdOut', outPayload);
-  return true;
-};
-
 if (!process.env.PW_RUNNER_DEBUG) {
   console.log(`
 
 
+---------------------------------
       REPLACING process.stderr.write
+---------------------------------
 
 
   `);
@@ -56,7 +49,25 @@ if (!process.env.PW_RUNNER_DEBUG) {
     sendMessageToParent('stdErr', outPayload);
     return true;
   };
+} else {
+  console.log(`
+
+---------------------------------
+      OH NO - NOT REPLACING!!
+---------------------------------
+
+
+  `);
 }
+
+process.stdout.write = (chunk: string | Buffer) => {
+  const outPayload: TestOutputPayload = {
+    testId: workerRunner?._currentTest?.testId,
+    ...chunkToParams(chunk)
+  };
+  sendMessageToParent('stdOut', outPayload);
+  return true;
+};
 
 process.on('disconnect', gracefullyCloseAndExit);
 process.on('SIGINT',() => {});
