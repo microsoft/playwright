@@ -20,10 +20,12 @@ const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
 
-const { packages } = require('./list_packages.js');
+const { packages, packagesToPublish } = require('./list_packages.js');
 
 (async () => {
   const version = process.argv[2];
+  if (version.startsWith('v'))
+    throw new Error('Version must not start with "v"');
   if (!version)
     throw new Error('Please specify version! See --help for more information.');
   if (process.argv[2] === '--help')
@@ -46,11 +48,13 @@ const { packages } = require('./list_packages.js');
   {
     const packageLockPath = path.join(rootDir, 'package-lock.json');
     const packageLock = JSON.parse(fs.readFileSync(packageLockPath, 'utf8'));
+    const publicPackages = new Set(packagesToPublish.map(package => path.basename(package)));
     for (const package of packages.map(package => path.basename(package))) {
       const playwrightCorePackages = packageLock['packages']['packages/' + package];
-      playwrightCorePackages.version = version;
+      if (publicPackages.has(package))
+        playwrightCorePackages.version = version;
       if (playwrightCorePackages.dependencies && playwrightCorePackages.dependencies['playwright-core'])
-        packageLock['packages']['packages/playwright-test']['dependencies']['playwright-core'] = '=' + version;
+        packageLock['packages']['packages/' + package]['dependencies']['playwright-core'] = '=' + version;
     }
     fs.writeFileSync(packageLockPath, JSON.stringify(packageLock, null, 2) + '\n');
   }
