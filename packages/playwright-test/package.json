@@ -1,6 +1,6 @@
 {
   "name": "@playwright/test",
-  "version": "1.18.0-next",
+  "version": "1.19.0-next",
   "description": "A high-level API to automate web browsers",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
@@ -59,7 +59,7 @@
     "open": "^8.3.0",
     "pirates": "^4.0.1",
     "pixelmatch": "^5.2.1",
-    "playwright-core": "=1.18.0-next",
+    "playwright-core": "=1.19.0-next",
     "pngjs": "^5.0.0",
     "rimraf": "^3.0.2",
     "source-map-support": "^0.4.18",
