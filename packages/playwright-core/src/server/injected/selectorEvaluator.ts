@@ -202,6 +202,9 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
       let firstIndex = -1;
       if (css !== undefined) {
         elements = this._queryCSS(context, css);
+        const hasScopeClause = funcs.some(f => f.name === 'scope');
+        if (hasScopeClause && context.scope.nodeType === 1 /* Node.ELEMENT_NODE */)
+          elements.unshift(context.scope as Element);
       } else {
         firstIndex = funcs.findIndex(func => this._getEngine(func.name).query !== undefined);
         if (firstIndex === -1)
