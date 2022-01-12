@@ -55,6 +55,13 @@ class DebugLogger {
       this._debuggers.set(name, cachedDebugger);
       (cachedDebugger as any).color = debugLoggerColorMap[name];
     }
+    console.log(`
+
+
+        LOGGING MESSAGE TO STDERR
+
+
+    `);
     cachedDebugger(message);
   }
 

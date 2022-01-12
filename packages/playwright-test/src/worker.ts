@@ -41,6 +41,13 @@ process.stdout.write = (chunk: string | Buffer) => {
 };
 
 if (!process.env.PW_RUNNER_DEBUG) {
+  console.log(`
+
+
+      REPLACING process.stderr.write
+
+
+  `);
   process.stderr.write = (chunk: string | Buffer) => {
     const outPayload: TestOutputPayload = {
       testId: workerRunner?._currentTest?.testId,
