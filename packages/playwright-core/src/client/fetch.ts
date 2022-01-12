@@ -28,6 +28,7 @@ import * as network from './network';
 import { RawHeaders } from './network';
 import { FilePayload, Headers, StorageState } from './types';
 import { Playwright } from './playwright';
+import { createInstrumentation } from './clientInstrumentation';
 
 export type FetchOptions = {
   params?: { [key: string]: string; },
@@ -51,6 +52,12 @@ type RequestWithoutBodyOptions = Omit<RequestWithBodyOptions, 'data'|'form'|'mul
 
 export class APIRequest implements api.APIRequest {
   private _playwright: Playwright;
+  readonly _contexts = new Set<APIRequestContext>();
+
+  // Instrumentation.
+  _onDidCreateContext?: (context: APIRequestContext) => Promise<void>;
+  _onWillCloseContext?: (context: APIRequestContext) => Promise<void>;
+
   constructor(playwright: Playwright) {
     this._playwright = playwright;
   }
@@ -59,25 +66,34 @@ export class APIRequest implements api.APIRequest {
     const storageState = typeof options.storageState === 'string' ?
       JSON.parse(await fs.promises.readFile(options.storageState, 'utf8')) :
       options.storageState;
-    return APIRequestContext.from((await this._playwright._channel.newRequest({
+    const context = APIRequestContext.from((await this._playwright._channel.newRequest({
       ...options,
       extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
       storageState,
     })).request);
+    this._contexts.add(context);
+    await this._onDidCreateContext?.(context);
+    return context;
   }
 }
 
 export class APIRequestContext extends ChannelOwner<channels.APIRequestContextChannel> implements api.APIRequestContext {
+  private _request?: APIRequest;
+
   static from(channel: channels.APIRequestContextChannel): APIRequestContext {
     return (channel as any)._object;
   }
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.APIRequestContextInitializer) {
-    super(parent, type, guid, initializer);
+    super(parent, type, guid, initializer, createInstrumentation());
+    if (parent instanceof APIRequest)
+      this._request = parent;
   }
 
   async dispose(): Promise<void> {
+    await this._request?._onWillCloseContext?.(this);
     await this._channel.dispose();
+    this._request?._contexts.delete(this);
   }
 
   async delete(url: string, options?: RequestWithBodyOptions): Promise<APIResponse> {
