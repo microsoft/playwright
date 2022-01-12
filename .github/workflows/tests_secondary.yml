@@ -42,6 +42,8 @@ jobs:
         DEBUG: pw:install
     - run: npm run build
     - run: npx playwright install-deps
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash installation-tests/installation-tests.sh
     - uses: actions/upload-artifact@v2
       if: ${{ always() }}
