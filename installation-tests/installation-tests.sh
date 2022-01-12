@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-set +x
+set -x
 
 trap "cd $(pwd -P)" EXIT
 cd "$(dirname $0)"
@@ -58,6 +58,8 @@ function copy_test_scripts {
 }
 
 function run_tests {
+  test_playwright_test_stacks_should_work
+  return;
   test_playwright_test_should_work
   test_connect_to_selenium
   test_screencast
@@ -82,7 +84,6 @@ function run_tests {
   test_playwright_chromium_should_work
   test_playwright_webkit_should_work
   test_playwright_firefox_should_work
-  test_playwright_test_stacks_should_work
 }
 
 function test_screencast {
