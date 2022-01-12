@@ -109,7 +109,7 @@ test('should support toBeEditable, toBeEnabled, toBeDisabled, toBeEmpty', async 
       const { test } = pwt;
 
       test('editable', async ({ page }) => {
-        await page.setContent('<input></input>');
+        await page.setContent('<input aria-label="my input"></input>');
         const locator = page.locator('input');
         await expect(locator).toBeEditable();
       });

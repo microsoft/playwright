@@ -183,6 +183,36 @@ it('getAttribute should be atomic', async ({ playwright, page }) => {
   expect(await page.evaluate(() => document.querySelector('div').getAttribute('foo'))).toBe('modified');
 });
 
+it('is not visible if missing an accessible name', async ({ page }) => {
+  await page.setContent(`
+  <input placeholder='My Input' id='unlabelled' type='text' />
+  <label>My Input <input id='labelled-wrapped' type='text' />
+  <label for='labelled-id-ref'>My Input</label><input id='labelled-id-ref' type='text' />
+  <input placeholder='My Input' aria-label='My Input' id='labelled-aria' type='text' />
+  <input placeholder='My Input' aria-hidden='true' id='ignored-aria-hidden' type='text' />
+  `);
+
+  const unlabelled = await page.$('input#unlabelled');
+  expect(await unlabelled.isEnabled()).toBe(false);
+  expect(await page.isEnabled('input#unlabelled')).toBe(false);
+
+  const labelledWrapped = await page.$('input#labelled-wrapped');
+  expect(await labelledWrapped.isEnabled()).toBe(true);
+  expect(await page.isEnabled('input#labelled-wrapped')).toBe(true);
+
+  const labelledIdRef = await page.$('input#labelled-id-ref');
+  expect(await labelledIdRef.isEnabled()).toBe(true);
+  expect(await page.isEnabled('input#labelled-id-ref')).toBe(true);
+
+  const labelledAria = await page.$('input#labelled-aria');
+  expect(await labelledAria.isEnabled()).toBe(true);
+  expect(await page.isEnabled('input#labelled-aria')).toBe(true);
+
+  const ignoredHidden = await page.$('input#ignored-aria-hidden');
+  expect(await ignoredHidden.isEnabled()).toBe(false);
+  expect(await page.isEnabled('input#ignored-aria-hidden')).toBe(false);
+});
+
 it('isVisible and isHidden should work', async ({ page }) => {
   await page.setContent(`<div>Hi</div><span></span>`);
 
