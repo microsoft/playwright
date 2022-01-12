@@ -104,6 +104,35 @@ test(`testInfo.attach errors`, async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
 });
 
+test(`testInfo.attach works in fixture`, async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const fs = require('fs');
+      const { test: _test } = pwt;
+      const test = _test.extend({
+        aFixture: async ({}, use, testInfo) => {
+          const outFile = testInfo.outputPath('foo.txt');
+          await fs.promises.writeFile(outFile, 'Hello world\\n');
+          await use(10);
+          await testInfo.attach('example.txt', {
+            path: outFile,
+          });
+        }
+      });
+
+      test('working', ({ aFixture }) => {
+        expect(aFixture).toBe(2);
+      });
+    `
+  }, { reporter: 'line', workers: 1 });
+  const text = stripAscii(result.output).replace(/\\/g, '/');
+  expect(text).toContain('    attachment #1: example.txt (text/plain) --------------------------------------------------------');
+  expect(text).toContain('    test-results/a-working/attachments/33ab5639bfd8e7b95eb1d8d0b87781d4ffea4d5d.txt');
+  expect(text).toContain('    ------------------------------------------------------------------------------------------------');
+  expect(result.failed).toBe(1);
+  expect(result.exitCode).toBe(1);
+});
+
 test(`testInfo.attach doesn't hang fixture`, async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
