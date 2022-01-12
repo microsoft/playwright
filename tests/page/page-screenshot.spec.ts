@@ -617,7 +617,7 @@ it.describe('page screenshot animations', () => {
   });
 });
 
-it.only('should work for text with default font', async ({ page, headless, browserName, platform }) => {
+it('should work for text with default font', async ({ page, headless, browserName, platform }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11177' });
   it.fixme(browserName === 'firefox', 'Text is misaligned in headed vs headless');
   it.fixme(platform === 'win32', 'Update expectations on Windows');
