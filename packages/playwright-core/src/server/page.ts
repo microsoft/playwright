@@ -169,6 +169,7 @@ export class Page extends SdkObject {
       this.pdf = delegate.pdf.bind(delegate);
     this.coverage = delegate.coverage ? delegate.coverage() : null;
     this.selectors = browserContext.selectors();
+    this.instrumentation.onPageOpen(this);
   }
 
   async initOpener(opener: PageDelegate | null) {
@@ -208,6 +209,7 @@ export class Page extends SdkObject {
   }
 
   _didClose() {
+    this.instrumentation.onPageClose(this);
     this._frameManager.dispose();
     this._frameThrottler.setEnabled(false);
     assert(this._closedState !== 'closed', 'Page closed twice');
@@ -217,6 +219,7 @@ export class Page extends SdkObject {
   }
 
   _didCrash() {
+    this.instrumentation.onPageClose(this);
     this._frameManager.dispose();
     this._frameThrottler.setEnabled(false);
     this.emit(Page.Events.Crash);
@@ -224,6 +227,7 @@ export class Page extends SdkObject {
   }
 
   _didDisconnect() {
+    this.instrumentation.onPageClose(this);
     this._frameManager.dispose();
     this._frameThrottler.setEnabled(false);
     assert(!this._disconnected, 'Page disconnected twice');
@@ -517,6 +521,10 @@ export class Page extends SdkObject {
   parseSelector(selector: string | ParsedSelector, options?: types.StrictOptions): SelectorInfo {
     const strict = typeof options?.strict === 'boolean' ? options.strict : !!this.context()._options.strictSelectors;
     return this.selectors.parseSelector(selector, strict);
+  }
+
+  async hideHighlight() {
+    await Promise.all(this.frames().map(frame => frame.hideHighlight().catch(() => {})));
   }
 }
 

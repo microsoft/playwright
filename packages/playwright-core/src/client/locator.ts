@@ -102,6 +102,10 @@ export class Locator implements api.Locator {
     return this._frame.fill(this._selector, value, { strict: true, ...options });
   }
 
+  async _highlight() {
+    return this._frame._highlight(this._selector);
+  }
+
   locator(selector: string, options?: { hasText?: string | RegExp }): Locator {
     return new Locator(this._frame, this._selector + ' >> ' + selector, options);
   }

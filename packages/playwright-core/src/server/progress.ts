@@ -82,7 +82,7 @@ export class ProgressController {
           if (this._state === 'running')
             this.metadata.log.push(message);
           // Note: we might be sending logs after progress has finished, for example browser logs.
-          this.instrumentation.onCallLog(this._logName, message, this.sdkObject, this.metadata);
+          this.instrumentation.onCallLog(this.sdkObject, this.metadata, this._logName, message);
         }
         if ('intermediateResult' in entry)
           this._lastIntermediateResult = entry.intermediateResult;

@@ -432,6 +432,7 @@ export interface PlaywrightChannel extends PlaywrightEventTarget, Channel {
   socksError(params: PlaywrightSocksErrorParams, metadata?: Metadata): Promise<PlaywrightSocksErrorResult>;
   socksEnd(params: PlaywrightSocksEndParams, metadata?: Metadata): Promise<PlaywrightSocksEndResult>;
   newRequest(params: PlaywrightNewRequestParams, metadata?: Metadata): Promise<PlaywrightNewRequestResult>;
+  hideHighlight(params?: PlaywrightHideHighlightParams, metadata?: Metadata): Promise<PlaywrightHideHighlightResult>;
 }
 export type PlaywrightSocksRequestedEvent = {
   uid: string,
@@ -530,6 +531,9 @@ export type PlaywrightNewRequestOptions = {
 export type PlaywrightNewRequestResult = {
   request: APIRequestContextChannel,
 };
+export type PlaywrightHideHighlightParams = {};
+export type PlaywrightHideHighlightOptions = {};
+export type PlaywrightHideHighlightResult = void;
 
 export interface PlaywrightEvents {
   'socksRequested': PlaywrightSocksRequestedEvent;
@@ -1779,6 +1783,7 @@ export interface FrameChannel extends FrameEventTarget, Channel {
   fill(params: FrameFillParams, metadata?: Metadata): Promise<FrameFillResult>;
   focus(params: FrameFocusParams, metadata?: Metadata): Promise<FrameFocusResult>;
   frameElement(params?: FrameFrameElementParams, metadata?: Metadata): Promise<FrameFrameElementResult>;
+  highlight(params: FrameHighlightParams, metadata?: Metadata): Promise<FrameHighlightResult>;
   getAttribute(params: FrameGetAttributeParams, metadata?: Metadata): Promise<FrameGetAttributeResult>;
   goto(params: FrameGotoParams, metadata?: Metadata): Promise<FrameGotoResult>;
   hover(params: FrameHoverParams, metadata?: Metadata): Promise<FrameHoverResult>;
@@ -2028,6 +2033,13 @@ export type FrameFrameElementOptions = {};
 export type FrameFrameElementResult = {
   element: ElementHandleChannel,
 };
+export type FrameHighlightParams = {
+  selector: string,
+};
+export type FrameHighlightOptions = {
+
+};
+export type FrameHighlightResult = void;
 export type FrameGetAttributeParams = {
   selector: string,
   strict?: boolean,

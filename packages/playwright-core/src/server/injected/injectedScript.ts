@@ -23,6 +23,7 @@ import { SelectorEvaluatorImpl, isVisible, parentElementOrShadowHost, elementMat
 import { CSSComplexSelectorList } from '../common/cssParser';
 import { generateSelector } from './selectorGenerator';
 import type * as channels from '../../protocol/channels';
+import { Highlight } from './highlight';
 
 type Predicate<T> = (progress: InjectedScriptProgress) => T | symbol;
 
@@ -74,6 +75,7 @@ export class InjectedScript {
   private _browserName: string;
   onGlobalListenersRemoved = new Set<() => void>();
   private _hitTargetInterceptor: undefined | ((event: MouseEvent | PointerEvent | TouchEvent) => void);
+  private _highlight: Highlight | undefined;
 
   constructor(stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine}[]) {
     this._evaluator = new SelectorEvaluatorImpl(new Map());
@@ -854,6 +856,21 @@ export class InjectedScript {
     // Chromium/WebKit should delete the stack instead.
     delete error.stack;
     return error;
+  }
+
+  highlight(selector: ParsedSelector) {
+    if (!this._highlight) {
+      this._highlight = new Highlight(false);
+      this._highlight.install();
+    }
+    this._highlight.updateHighlight(this.querySelectorAll(selector, document.documentElement), stringifySelector(selector), false);
+  }
+
+  hideHighlight() {
+    if (this._highlight) {
+      this._highlight.uninstall();
+      delete this._highlight;
+    }
   }
 
   private _setupGlobalListenersRemovalDetection() {

@@ -542,6 +542,8 @@ Playwright:
       returns:
         request: APIRequestContext
 
+    hideHighlight:
+
   events:
     socksRequested:
       parameters:
@@ -1481,6 +1483,10 @@ Frame:
     frameElement:
       returns:
         element: ElementHandle
+
+    highlight:
+      parameters:
+        selector: string
 
     getAttribute:
       parameters:
