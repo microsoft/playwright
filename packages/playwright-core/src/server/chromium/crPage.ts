@@ -79,7 +79,7 @@ export class CRPage implements PageDelegate {
     this._opener = opener;
     this._isBackgroundPage = isBackgroundPage;
     const dragManager = new DragManager(this);
-    this.rawKeyboard = new RawKeyboardImpl(client, browserContext._browser._isMac, dragManager);
+    this.rawKeyboard = new RawKeyboardImpl(client, browserContext._browser._platform() === 'Mac', dragManager);
     this.rawMouse = new RawMouseImpl(this, client, dragManager);
     this.rawTouchscreen = new RawTouchscreenImpl(client);
     this._pdf = new CRPDF(client);
@@ -512,7 +512,7 @@ class FrameSession {
       promises.push(emulateLocale(this._client, options.locale));
     if (options.timezoneId)
       promises.push(emulateTimezone(this._client, options.timezoneId));
-    if (this._crPage._browserContext._browser._isHeadless())
+    if (!this._crPage._browserContext._browser.options.headful)
       promises.push(this._setDefaultFontFamilies(this._client));
     promises.push(this._updateGeolocation(true));
     promises.push(this._updateExtraHTTPHeaders(true));

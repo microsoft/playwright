@@ -40,7 +40,6 @@ export class CRBrowser extends Browser {
   _backgroundPages = new Map<string, CRPage>();
   _serviceWorkers = new Map<string, CRServiceWorker>();
   _devtools?: CRDevTools;
-  _isMac = false;
   private _version = '';
 
   private _tracingRecording = false;
@@ -49,6 +48,8 @@ export class CRBrowser extends Browser {
   private _userAgent: string = '';
 
   static async connect(transport: ConnectionTransport, options: BrowserOptions, devtools?: CRDevTools): Promise<CRBrowser> {
+    // Make a copy in case wee need to update `headful` property below.
+    options = Object.assign({}, options);
     const connection = new CRConnection(transport, options.protocolLogger, options.browserLogsCollector);
     const browser = new CRBrowser(connection, options);
     browser._devtools = devtools;
@@ -57,9 +58,9 @@ export class CRBrowser extends Browser {
       await (options as any).__testHookOnConnectToBrowser();
 
     const version = await session.send('Browser.getVersion');
-    browser._isMac = version.userAgent.includes('Macintosh');
     browser._version = version.product.substring(version.product.indexOf('/') + 1);
     browser._userAgent = version.userAgent;
+    browser.options.headful = !version.userAgent.includes('Headless');
     if (!options.persistent) {
       await session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
       return browser;
@@ -123,14 +124,10 @@ export class CRBrowser extends Browser {
     return this._userAgent;
   }
 
-  _isHeadless(): boolean {
-    return this._userAgent.includes('Headless');
-  }
-
   _platform(): 'Mac' | 'Linux' | 'Windows' {
     if (this._userAgent.includes('Windows'))
       return 'Windows';
-    if (this._isMac)
+    if (this._userAgent.includes('Macintosh'))
       return 'Mac';
     return 'Linux';
   }
