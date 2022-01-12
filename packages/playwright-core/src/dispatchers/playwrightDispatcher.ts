@@ -82,6 +82,10 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
     const request = new GlobalAPIRequestContext(this._object, params);
     return { request: APIRequestContextDispatcher.from(this._scope, request) };
   }
+
+  async hideHighlight(params: channels.PlaywrightHideHighlightParams, metadata?: channels.Metadata): Promise<channels.PlaywrightHideHighlightResult> {
+    await this._object.hideHighlight();
+  }
 }
 
 class SocksProxy implements SocksConnectionClient {

@@ -67,7 +67,7 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
       await this.pause(sdkObject, metadata);
   }
 
-  async onCallLog(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+  async onCallLog(sdkObject: SdkObject, metadata: CallMetadata, logName: string, message: string): Promise<void> {
     debugLogger.log(logName as any, message);
   }
 

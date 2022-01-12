@@ -232,6 +232,10 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel> im
     return { value: await this._frame.title() };
   }
 
+  async highlight(params: channels.FrameHighlightParams, metadata: CallMetadata): Promise<void> {
+    return await this._frame.highlight(params.selector);
+  }
+
   async expect(params: channels.FrameExpectParams, metadata: CallMetadata): Promise<channels.FrameExpectResult> {
     const expectedValue = params.expectedValue ? parseArgument(params.expectedValue) : undefined;
     const result = await this._frame.expect(metadata, params.selector, { ...params, expectedValue });

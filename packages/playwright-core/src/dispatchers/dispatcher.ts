@@ -251,7 +251,7 @@ export class DispatcherConnection {
         } case 'log': {
           const originalMetadata = this._waitOperations.get(info.waitId)!;
           originalMetadata.log.push(info.message);
-          sdkObject.instrumentation.onCallLog('api', info.message, sdkObject, originalMetadata);
+          sdkObject.instrumentation.onCallLog(sdkObject, originalMetadata, 'api', info.message);
           this.onmessage({ id });
           return;
         } case 'after': {

@@ -24,6 +24,7 @@ import { Selectors } from './selectors';
 import { WebKit } from './webkit/webkit';
 import { CallMetadata, createInstrumentation, SdkObject } from './instrumentation';
 import { debugLogger } from '../utils/debugLogger';
+import { Page } from './page';
 
 export class Playwright extends SdkObject {
   readonly selectors: Selectors;
@@ -33,14 +34,17 @@ export class Playwright extends SdkObject {
   readonly firefox: Firefox;
   readonly webkit: WebKit;
   readonly options: PlaywrightOptions;
+  private _allPages = new Set<Page>();
 
   constructor(sdkLanguage: string, isInternal: boolean) {
     super({ attribution: { isInternal }, instrumentation: createInstrumentation() } as any, undefined, 'Playwright');
     this.instrumentation.addListener({
-      onCallLog: (logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata) => {
+      onPageOpen: page => this._allPages.add(page),
+      onPageClose: page => this._allPages.delete(page),
+      onCallLog: (sdkObject: SdkObject, metadata: CallMetadata, logName: string, message: string) => {
         debugLogger.log(logName as any, message);
       }
-    });
+    }, null);
     this.options = {
       rootSdkObject: this,
       selectors: new Selectors(),
@@ -52,6 +56,10 @@ export class Playwright extends SdkObject {
     this.electron = new Electron(this.options);
     this.android = new Android(new AdbBackend(), this.options);
     this.selectors = this.options.selectors;
+  }
+
+  async hideHighlight() {
+    await Promise.all([...this._allPages].map(p => p.hideHighlight().catch(() => {})));
   }
 }
 

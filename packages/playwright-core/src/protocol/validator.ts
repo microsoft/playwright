@@ -237,6 +237,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       origins: tArray(tType('OriginStorage')),
     })),
   });
+  scheme.PlaywrightHideHighlightParams = tOptional(tObject({}));
   scheme.SelectorsRegisterParams = tObject({
     name: tString,
     source: tString,
@@ -747,6 +748,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     timeout: tOptional(tNumber),
   });
   scheme.FrameFrameElementParams = tOptional(tObject({}));
+  scheme.FrameHighlightParams = tObject({
+    selector: tString,
+  });
   scheme.FrameGetAttributeParams = tObject({
     selector: tString,
     strict: tOptional(tBoolean),

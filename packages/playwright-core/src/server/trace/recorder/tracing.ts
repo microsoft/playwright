@@ -131,7 +131,7 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
       await fs.promises.appendFile(state.traceFile, JSON.stringify({ ...this._contextCreatedEvent, title: options.title, wallTime: Date.now() }) + '\n');
     });
 
-    this._context.instrumentation.addListener(this);
+    this._context.instrumentation.addListener(this, this._context);
     if (state.options.screenshots)
       this._startScreencast();
     if (state.options.snapshots)
