@@ -49,7 +49,7 @@ export const Link: React.FunctionComponent<{
   title?: string,
   children: any,
 }> = ({ href, className, children, title }) => {
-  return <a style={{ textDecoration: 'none', color: 'initial' }} className={`${className || ''}`} href={href} title={title}>{children}</a>;
+  return <a style={{ textDecoration: 'none', color: 'var(--color-fg-default)' }} className={`${className || ''}`} href={href} title={title}>{children}</a>;
 };
 
 export const ProjectLink: React.FunctionComponent<{
