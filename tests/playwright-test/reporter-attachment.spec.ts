@@ -103,3 +103,27 @@ test(`testInfo.attach errors`, async ({ runInlineTest }) => {
   expect(result.failed).toBe(3);
   expect(result.exitCode).toBe(1);
 });
+
+test(`testInfo.attach doesn't hang fixture`, async ({ runInlineTest }) => {
+  test.fail();
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test: _test } = pwt;
+      const test = _test.extend({
+        aFixture: async ({}, use, testInfo) => {
+          await use(10);
+          await testInfo.attach('name', {
+            path: 'foo.txt',
+          });
+        },
+      });
+
+      test('example', ({ aFixture }) => {
+        expect(aFixture).toBe(10);
+      });
+    `
+  }, { reporter: 'line', workers: 1 });
+  const text = stripAscii(result.output).replace(/\\/g, '/');
+  expect(text).toMatch(/Error: ENOENT: no such file or directory, open '.*foo.txt.*'/);
+  expect(result.exitCode).toBe(1);
+});
