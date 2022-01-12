@@ -633,7 +633,7 @@ function test_playwright_test_stacks_should_work {
   copy_test_scripts
 
   echo "Running playwright test"
-  OUTPUT=$(DEBUG=pw:api npx playwright test -c . failing.spec.js || true)
+  OUTPUT=$(DEBUG=pw:api npx playwright test -c . failing.spec.js 2>&1 || true)
   if [[ "${OUTPUT}" != *"expect.toHaveText started"* ]]; then
     echo "ERROR: missing 'expect.toHaveText started' in the output"
     exit 1

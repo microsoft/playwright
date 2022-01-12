@@ -67,7 +67,7 @@ class ListReporter extends BaseReporter {
 
   override onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     super.onStdErr(chunk, test, result);
-    this._dumpToStdio(test, chunk, process.stdout);
+    this._dumpToStdio(test, chunk, process.stderr);
   }
 
   onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
