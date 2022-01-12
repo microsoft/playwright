@@ -123,6 +123,18 @@ export class CRBrowser extends Browser {
     return this._userAgent;
   }
 
+  _isHeadless(): boolean {
+    return this._userAgent.includes('Headless');
+  }
+
+  _platform(): 'Mac' | 'Linux' | 'Windows' {
+    if (this._userAgent.includes('Windows'))
+      return 'Windows';
+    if (this._isMac)
+      return 'Mac';
+    return 'Linux';
+  }
+
   isClank(): boolean {
     return this.options.name === 'clank';
   }

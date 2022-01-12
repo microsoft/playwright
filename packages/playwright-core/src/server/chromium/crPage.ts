@@ -512,6 +512,8 @@ class FrameSession {
       promises.push(emulateLocale(this._client, options.locale));
     if (options.timezoneId)
       promises.push(emulateTimezone(this._client, options.timezoneId));
+    if (this._crPage._browserContext._browser._isHeadless())
+      promises.push(this._setDefaultFontFamilies(this._client));
     promises.push(this._updateGeolocation(true));
     promises.push(this._updateExtraHTTPHeaders(true));
     promises.push(this._updateRequestInterception());
@@ -1015,6 +1017,41 @@ class FrameSession {
     ];
     // Empty string disables the override.
     await this._client.send('Emulation.setEmulatedMedia', { media: this._page._state.mediaType || '', features });
+  }
+
+  private async _setDefaultFontFamilies(session: CRSession) {
+    // Taken from https://chromium.googlesource.com/chromium/src/+/main/chrome/app/resources/locale_settings_linux.grd
+    const platformToFontFamilies = {
+      'Mac': {
+        standard: 'Times',
+        fixed: 'Courier',
+        serif: 'Times',
+        sansSerif: 'Helvetica',
+        cursive: 'Apple Chancery',
+        fantasy: 'Papyrus',
+        pictograph: 'Apple Color Emoji',
+      },
+      'Windows': {
+        standard: 'Times New Roman',
+        fixed: 'Courier New',
+        serif: 'Times New Roman',
+        sansSerif: 'Arial',
+        cursive: 'Comic Sans MS',
+        fantasy: 'Impact',
+        pictograph: 'Segoe UI Symbol',
+      },
+      'Linux': {
+        standard: 'Times New Roman',
+        fixed: 'Monospace',
+        serif: 'Times New Roman',
+        sansSerif: 'Arial',
+        cursive: 'Comic Sans MS',
+        fantasy: 'Impact',
+        pictograph: 'Times New Roman',
+      }
+    };
+    const fontFamilies = platformToFontFamilies[this._crPage._browserContext._browser._platform()];
+    await session.send('Page.setFontFamilies', { fontFamilies });
   }
 
   async _updateRequestInterception(): Promise<void> {
