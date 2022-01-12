@@ -15,7 +15,7 @@
  */
 
 import fs from 'fs';
-import { isString } from '../utils/utils';
+import { isString, isRegExp } from '../utils/utils';
 import * as channels from '../protocol/channels';
 import { Events } from './events';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
@@ -289,7 +289,7 @@ function toSelectorChannel(selector: api.AndroidSelector): channels.AndroidSelec
   const toRegex = (value: RegExp | string | undefined): string | undefined => {
     if (value === undefined)
       return undefined;
-    if (value instanceof RegExp)
+    if (isRegExp(value))
       return value.source;
     return '^' + value.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&').replace(/-/g, '\\x2d') + '$';
   };
