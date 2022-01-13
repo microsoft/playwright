@@ -96,15 +96,18 @@ class Fixture {
   private async _teardownInternal() {
     if (typeof this.registration.fn !== 'function')
       return;
-    for (const fixture of this.usages)
-      await fixture.teardown();
-    this.usages.clear();
-    if (this._useFuncFinished) {
-      debugTest(`teardown ${this.registration.name}`);
-      this._useFuncFinished.resolve();
-      await this._selfTeardownComplete;
+    try {
+      for (const fixture of this.usages)
+        await fixture.teardown();
+      this.usages.clear();
+      if (this._useFuncFinished) {
+        debugTest(`teardown ${this.registration.name}`);
+        this._useFuncFinished.resolve();
+        await this._selfTeardownComplete;
+      }
+    } finally {
+      this.runner.instanceForId.delete(this.registration.id);
     }
-    this.runner.instanceForId.delete(this.registration.id);
   }
 }
 

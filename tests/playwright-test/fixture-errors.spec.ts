@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, countTimes, stripAscii } from './playwright-test-fixtures';
 
 test('should handle fixture timeout', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -434,4 +434,24 @@ test('should not teardown when setup times out', async ({ runInlineTest }) => {
   expect(result.output).toContain('Timeout of 1000ms exceeded');
   expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
   ]);
+});
+
+test('should not report fixture teardown error twice', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const test = pwt.test.extend({
+        fixture: async ({ }, use) => {
+          await use();
+          throw new Error('Oh my error');
+        },
+      });
+      test('good', async ({ fixture }) => {
+      });
+    `,
+  }, { reporter: 'list' });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Error: Oh my error');
+  expect(stripAscii(result.output)).toContain(`throw new Error('Oh my error')`);
+  expect(countTimes(result.output, 'Oh my error')).toBe(2);
 });

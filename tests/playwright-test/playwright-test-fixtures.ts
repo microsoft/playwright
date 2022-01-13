@@ -247,7 +247,7 @@ export function stripAscii(str: string): string {
   return str.replace(asciiRegex, '');
 }
 
-function countTimes(s: string, sub: string): number {
+export function countTimes(s: string, sub: string): number {
   let result = 0;
   for (let index = 0; index !== -1;) {
     index = s.indexOf(sub, index);
