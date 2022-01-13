@@ -362,6 +362,7 @@ it('should work with has=', async ({ page, server }) => {
   expect(await page.$$eval(`div >> has="span"`, els => els.length)).toBe(2);
   expect(await page.$$eval(`div >> has="span >> text=wor"`, els => els.length)).toBe(1);
   expect(await page.$eval(`div >> has="span >> text=wor"`, e => e.outerHTML)).toBe(`<div><span>world</span></div>`);
+  expect(await page.$eval(`div >> has="span >> text=wor" >> span`, e => e.outerHTML)).toBe(`<span>world</span>`);
 
   const error1 = await page.$(`div >> has=abc`).catch(e => e);
   expect(error1.message).toContain('Malformed selector: has=abc');

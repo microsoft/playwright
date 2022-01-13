@@ -2571,6 +2571,14 @@ export interface Page {
    */
   locator(selector: string, options?: {
     /**
+     * Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer one.
+     * For example, `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
+     *
+     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+     */
+    has?: Locator;
+
+    /**
      * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example,
      * `"Playwright"` matches `<article><div>Playwright</div></article>`.
      */
@@ -5353,6 +5361,14 @@ export interface Frame {
    * @param options
    */
   locator(selector: string, options?: {
+    /**
+     * Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer one.
+     * For example, `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
+     *
+     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+     */
+    has?: Locator;
+
     /**
      * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example,
      * `"Playwright"` matches `<article><div>Playwright</div></article>`.
@@ -9266,6 +9282,14 @@ export interface Locator {
    * @param options
    */
   locator(selector: string, options?: {
+    /**
+     * Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer one.
+     * For example, `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
+     *
+     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+     */
+    has?: Locator;
+
     /**
      * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example,
      * `"Playwright"` matches `<article><div>Playwright</div></article>`.
@@ -13696,6 +13720,14 @@ export interface FrameLocator {
    * @param options
    */
   locator(selector: string, options?: {
+    /**
+     * Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer one.
+     * For example, `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
+     *
+     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+     */
+    has?: Locator;
+
     /**
      * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example,
      * `"Playwright"` matches `<article><div>Playwright</div></article>`.

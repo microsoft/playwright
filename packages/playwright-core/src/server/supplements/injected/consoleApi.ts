@@ -24,7 +24,7 @@ function createLocator(injectedScript: InjectedScript, initial: string, options?
     element: Element | undefined;
     elements: Element[];
 
-    constructor(selector: string, options?: { hasText?: string | RegExp }) {
+    constructor(selector: string, options?: { hasText?: string | RegExp, has?: Locator }) {
       this.selector = selector;
       if (options?.hasText) {
         const text = options.hasText;
@@ -33,12 +33,14 @@ function createLocator(injectedScript: InjectedScript, initial: string, options?
         else
           this.selector += ` >> :scope:has-text(${escapeWithQuotes(text)})`;
       }
+      if (options?.has)
+        this.selector += ` >> has=` + JSON.stringify(options.has.selector);
       const parsed = injectedScript.parseSelector(this.selector);
       this.element = injectedScript.querySelector(parsed, document, false);
       this.elements = injectedScript.querySelectorAll(parsed, document);
     }
 
-    locator(selector: string, options?: { hasText: string | RegExp }): Locator {
+    locator(selector: string, options?: { hasText: string | RegExp, has?: Locator }): Locator {
       return new Locator(this.selector ? this.selector + ' >> ' + selector : selector, options);
     }
   }
@@ -48,7 +50,7 @@ function createLocator(injectedScript: InjectedScript, initial: string, options?
 type ConsoleAPIInterface = {
   $: (selector: string) => void;
   $$: (selector: string) => void;
-  locator: (selector: string) => any;
+  locator: (selector: string, options?: { hasText: string | RegExp, has?: any }) => any;
   inspect: (selector: string) => void;
   selector: (element: Element) => void;
   resume: () => void;
