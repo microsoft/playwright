@@ -78,7 +78,7 @@ export class RecorderApp extends EventEmitter {
 
     this._page.once('close', () => {
       this.emit('close');
-      this._page.context().close(internalCallMetadata()).catch(e => console.error(e));
+      this._page.context().close(internalCallMetadata()).catch(() => {});
     });
 
     const mainFrame = this._page.mainFrame();

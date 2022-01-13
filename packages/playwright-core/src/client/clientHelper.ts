@@ -19,14 +19,6 @@ import * as types from './types';
 import fs from 'fs';
 import { isString, isRegExp, constructURLBasedOnBaseURL } from '../utils/utils';
 
-const deprecatedHits = new Set();
-export function deprecate(methodName: string, message: string) {
-  if (deprecatedHits.has(methodName))
-    return;
-  deprecatedHits.add(methodName);
-  console.warn(message);
-}
-
 export function envObjectToArray(env: types.Env): { name: string, value: string }[] {
   const result: { name: string, value: string }[] = [];
   for (const name in env) {
