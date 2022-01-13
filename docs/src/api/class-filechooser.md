@@ -3,9 +3,13 @@
 [FileChooser] objects are dispatched by the page in the [`event: Page.fileChooser`] event.
 
 ```js
+// Note that Promise.all prevents a race condition
+// between clicking and waiting for the file chooser.
 const [fileChooser] = await Promise.all([
+  // It is important to call waitForEvent before click to set up waiting.
   page.waitForEvent('filechooser'),
-  page.click('upload')
+  // Opens the file chooser.
+  page.locator('text=Upload').click(),
 ]);
 await fileChooser.setFiles('myfile.pdf');
 ```
