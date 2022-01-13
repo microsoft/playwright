@@ -19,8 +19,7 @@ import extract from 'extract-zip';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { execSync } from 'child_process';
-import { existsAsync, download, getPlaywrightVersion, getUserAgent } from './utils';
+import { existsAsync, download, getUserAgent } from './utils';
 import { debugLogger } from './debugLogger';
 
 export async function downloadBrowserWithProgressBar(title: string, browserDirectory: string, executablePath: string, downloadURL: string, downloadFileName: string): Promise<boolean> {
