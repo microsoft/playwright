@@ -256,7 +256,7 @@ function parseXML(xml: string): any {
   return result;
 }
 
-test.only('should not render Xray text based annotations to custom testcase properties', async ({ runInlineTest }) => {
+test('should not render Xray text based annotations to custom testcase properties', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
       const { test } = pwt;
@@ -271,7 +271,7 @@ test.only('should not render Xray text based annotations to custom testcase prop
   expect(result.exitCode).toBe(0);
 });
 
-test.only('should render Xray text based annotations to custom testcase properties', async ({ runInlineTest }) => {
+test('should render Xray text based annotations to custom testcase properties', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
       const { test } = pwt;
@@ -303,7 +303,7 @@ test.only('should render Xray text based annotations to custom testcase properti
 });
 
 
-test.only('should embed attachments to a custom testcase property, if explictly requested', async ({ runInlineTest }) => {
+test('should embed attachments to a custom testcase property, if explictly requested', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
       const { test } = pwt;
@@ -328,7 +328,7 @@ test.only('should embed attachments to a custom testcase property, if explictly 
   expect(result.exitCode).toBe(0);
 });
 
-test.only('should not embed attachments to a custom testcase property, if not explictly requested', async ({ runInlineTest }) => {
+test('should not embed attachments to a custom testcase property, if not explictly requested', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
       const { test } = pwt;
