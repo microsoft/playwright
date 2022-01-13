@@ -282,7 +282,7 @@ test.only('should render Xray text based annotations to custom testcase properti
         testInfo.annotations.push({ type: 'requirements', description: 'CALC-5,CALC-6' });
         testInfo.annotations.push({ type: 'test_description', description: 'sample description' });
         testInfo.annotations.push({ type: 'unknown_annotation', description: 'unknown' });
-      });2
+      });
     `
   }, { reporter: 'junit' });
   const xml = parseXML(result.output);
@@ -313,7 +313,7 @@ test.only('should embed attachments to a custom testcase property, if explictly 
         require('fs').writeFileSync(file, 'hello', 'utf8');
         testInfo.attachments.push({ name: 'evidence1.txt', path: file, contentType: 'text/plain' });
         testInfo.attachments.push({ name: 'evidence2.txt', body: Buffer.from('world'), contentType: 'text/plain' });
-      });2
+      });
     `
   }, { reporter: 'junit' });
   const xml = parseXML(result.output);
@@ -337,7 +337,7 @@ test.only('should not embed attachments to a custom testcase property, if not ex
         require('fs').writeFileSync(file, 'hello', 'utf8');
         testInfo.attachments.push({ name: 'evidence1.txt', path: file, contentType: 'text/plain' });
         testInfo.attachments.push({ name: 'evidence2.txt', body: Buffer.from('world'), contentType: 'text/plain' });
-      });2
+      });
     `
   }, { reporter: 'junit' });
   const xml = parseXML(result.output);
