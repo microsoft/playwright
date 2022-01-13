@@ -464,14 +464,14 @@ export function getUserAgent(): string {
   if (cachedUserAgent)
     return cachedUserAgent;
   try {
-    cachedUserAgent = determineDownloadUserAgent();
+    cachedUserAgent = determineUserAgent();
   } catch (e) {
     cachedUserAgent = 'Playwright/unknown';
   }
   return cachedUserAgent;
 }
 
-function determineDownloadUserAgent(): string {
+function determineUserAgent(): string {
   let osIdentifier = 'unknown';
   let osVersion = 'unknown';
   if (process.platform === 'win32') {

@@ -184,17 +184,17 @@ it('should set playwright as user-agent', async ({ playwright, server, isWindows
     server.waitForRequest('/empty.html'),
     request.get(server.EMPTY_PAGE)
   ]);
-  const userAgent = serverRequest.headers['user-agent'];
-  expect(userAgent).toContain('Playwright/' + getPlaywrightVersion());
-  expect(userAgent).toContain(os.arch());
-  const NODEJS_VERSION = process.version.substring(1).split('.').slice(0, 2).join('.');
-  expect(userAgent).toContain('node/' + NODEJS_VERSION);
+  const userAgentMasked = serverRequest.headers['user-agent']
+      .replace(os.arch(), '<ARCH>')
+      .replace(getPlaywrightVersion(), 'X.X.X')
+      .replace(/\d+/g, 'X');
+
   if (isWindows)
-    expect(userAgent).toContain('windows');
+    expect(userAgentMasked).toBe('Playwright/X.X.X (<ARCH>; windows X.X) node/X.X');
   else if (isLinux)
-    expect(userAgent).toContain('ubuntu');
+    expect(userAgentMasked).toBe('Playwright/X.X.X (<ARCH>; ubuntu X.X) node/X.X');
   else if (isMac)
-    expect(userAgent).toContain('macOS');
+    expect(userAgentMasked).toBe('Playwright/X.X.X (<ARCH>; macOS X.X) node/X.X');
 });
 
 it('should be able to construct with context options', async ({ playwright, browserType, server }) => {
