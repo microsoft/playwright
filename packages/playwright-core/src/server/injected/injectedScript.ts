@@ -18,7 +18,7 @@ import { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
 import { ReactEngine } from './reactSelectorEngine';
 import { VueEngine } from './vueSelectorEngine';
-import { ParsedSelector, ParsedSelectorPart, parseSelector, stringifySelector } from '../common/selectorParser';
+import { allEngineNames, ParsedSelector, ParsedSelectorPart, parseSelector, stringifySelector } from '../common/selectorParser';
 import { SelectorEvaluatorImpl, isVisible, parentElementOrShadowHost, elementMatchesText, TextMatcher, createRegexTextMatcher, createStrictTextMatcher, createLaxTextMatcher } from './selectorEvaluator';
 import { CSSComplexSelectorList } from '../common/cssParser';
 import { generateSelector } from './selectorGenerator';
@@ -99,6 +99,7 @@ export class InjectedScript {
     this._engines.set('nth', { queryAll: () => [] });
     this._engines.set('visible', { queryAll: () => [] });
     this._engines.set('control', this._createControlEngine());
+    this._engines.set('has', this._createHasEngine());
 
     for (const { name, engine } of customEngines)
       this._engines.set(name, engine);
@@ -116,9 +117,9 @@ export class InjectedScript {
 
   parseSelector(selector: string): ParsedSelector {
     const result = parseSelector(selector);
-    for (const part of result.parts) {
-      if (!this._engines.has(part.name))
-        throw this.createStacklessError(`Unknown engine "${part.name}" while parsing selector ${selector}`);
+    for (const name of allEngineNames(result)) {
+      if (!this._engines.has(name))
+        throw this.createStacklessError(`Unknown engine "${name}" while parsing selector ${selector}`);
     }
     return result;
   }
@@ -181,7 +182,7 @@ export class InjectedScript {
       }
       let all = queryResults[index];
       if (!all) {
-        all = this._queryEngineAll(selector.parts[index], root.element);
+        all = this._queryEngineAll(part, root.element);
         queryResults[index] = all;
       }
 
@@ -276,6 +277,16 @@ export class InjectedScript {
         throw new Error(`Internal error, unknown control selector ${body}`);
       }
     };
+  }
+
+  private _createHasEngine(): SelectorEngineV2 {
+    const queryAll = (root: SelectorRoot, body: ParsedSelector) => {
+      if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
+        return [];
+      const has = !!this.querySelector(body, root, false);
+      return has ? [root as Element] : [];
+    };
+    return { queryAll };
   }
 
   extend(source: string, params: any): any {

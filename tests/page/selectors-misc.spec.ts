@@ -339,3 +339,36 @@ it('should properly determine visibility of display:contents elements', async ({
     </div>`);
   await page.waitForSelector('article', { state: 'hidden' });
 });
+
+it('should work with has=', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/deep-shadow.html');
+  expect(await page.$$eval(`div >> has="#target"`, els => els.length)).toBe(2);
+  expect(await page.$$eval(`div >> has="[data-testid=foo]"`, els => els.length)).toBe(3);
+  expect(await page.$$eval(`div >> has="[attr*=value]"`, els => els.length)).toBe(2);
+
+  await page.setContent(`<section><span></span><div></div></section><section><br></section>`);
+  expect(await page.$$eval(`section >> has="span, div"`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`section >> has="span, div"`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`section >> has="br"`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`section >> has="span, br"`, els => els.length)).toBe(2);
+  expect(await page.$$eval(`section >> has="span, br, div"`, els => els.length)).toBe(2);
+
+  await page.setContent(`<div><span>hello</span></div><div><span>world</span></div>`);
+  expect(await page.$$eval(`div >> has="text=world"`, els => els.length)).toBe(1);
+  expect(await page.$eval(`div >> has="text=world"`, e => e.outerHTML)).toBe(`<div><span>world</span></div>`);
+  expect(await page.$$eval(`div >> has="text=\\"hello\\""`, els => els.length)).toBe(1);
+  expect(await page.$eval(`div >> has="text=\\"hello\\""`, e => e.outerHTML)).toBe(`<div><span>hello</span></div>`);
+  expect(await page.$$eval(`div >> has="xpath=./span"`, els => els.length)).toBe(2);
+  expect(await page.$$eval(`div >> has="span"`, els => els.length)).toBe(2);
+  expect(await page.$$eval(`div >> has="span >> text=wor"`, els => els.length)).toBe(1);
+  expect(await page.$eval(`div >> has="span >> text=wor"`, e => e.outerHTML)).toBe(`<div><span>world</span></div>`);
+
+  const error1 = await page.$(`div >> has=abc`).catch(e => e);
+  expect(error1.message).toContain('Malformed selector: has=abc');
+  const error2 = await page.$(`has="div"`).catch(e => e);
+  expect(error2.message).toContain('"has" selector cannot be first');
+  const error3 = await page.$(`div >> has=33`).catch(e => e);
+  expect(error3.message).toContain('Malformed selector: has=33');
+  const error4 = await page.$(`div >> has="span!"`).catch(e => e);
+  expect(error4.message).toContain('Unexpected token "!" while parsing selector "span!"');
+});

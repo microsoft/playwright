@@ -19,7 +19,7 @@ export { InvalidSelectorError, isInvalidSelectorError } from './cssParser';
 
 export type ParsedSelectorPart = {
   name: string,
-  body: string | CSSComplexSelectorList,
+  body: string | CSSComplexSelectorList | ParsedSelector,
   source: string,
 };
 
@@ -34,6 +34,7 @@ type ParsedSelectorStrings = {
 };
 
 export const customCSSNames = new Set(['not', 'is', 'where', 'has', 'scope', 'light', 'visible', 'text', 'text-matches', 'text-is', 'has-text', 'above', 'below', 'right-of', 'left-of', 'near', 'nth-match']);
+const kNestedSelectorNames = new Set(['has']);
 
 export function parseSelector(selector: string): ParsedSelector {
   const result = parseSelectorString(selector);
@@ -48,8 +49,25 @@ export function parseSelector(selector: string): ParsedSelector {
         source: part.body
       };
     }
+    if (kNestedSelectorNames.has(part.name)) {
+      let innerSelector: string;
+      try {
+        const unescaped = JSON.parse(part.body);
+        if (typeof unescaped !== 'string')
+          throw new Error(`Malformed selector: ${part.name}=` + part.body);
+        innerSelector = unescaped;
+      } catch (e) {
+        throw new Error(`Malformed selector: ${part.name}=` + part.body);
+      }
+      const result = { name: part.name, source: part.body, body: parseSelector(innerSelector) };
+      if (result.body.parts.some(part => part.name === 'control' && part.body === 'enter-frame'))
+        throw new Error(`Frames are not allowed inside "${part.name}" selectors`);
+      return result;
+    }
     return { ...part, source: part.body };
   });
+  if (kNestedSelectorNames.has(parts[0].name))
+    throw new Error(`"${parts[0].name}" selector cannot be first`);
   return {
     capture: result.capture,
     parts
@@ -92,6 +110,19 @@ export function stringifySelector(selector: string | ParsedSelector): string {
     const prefix = p.name === 'css' ? '' : p.name + '=';
     return `${i === selector.capture ? '*' : ''}${prefix}${p.source}`;
   }).join(' >> ');
+}
+
+export function allEngineNames(selector: ParsedSelector): Set<string> {
+  const result = new Set<string>();
+  const visit = (selector: ParsedSelector) => {
+    for (const part of selector.parts) {
+      result.add(part.name);
+      if (kNestedSelectorNames.has(part.name))
+        visit(part.body as ParsedSelector);
+    }
+  };
+  visit(selector);
+  return result;
 }
 
 function parseSelectorString(selector: string): ParsedSelectorStrings {
