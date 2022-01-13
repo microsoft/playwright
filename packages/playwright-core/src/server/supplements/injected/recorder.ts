@@ -58,7 +58,7 @@ export class Recorder {
     };
     globalThis._playwrightRefreshOverlay();
     if (params.isUnderTest)
-      console.error('Recorder script ready for test');
+      console.error('Recorder script ready for test'); // eslint-disable-line no-console
   }
 
   private _refreshListenersIfNeeded() {
@@ -240,7 +240,7 @@ export class Recorder {
     const result = activeElement ? generateSelector(this._injectedScript, activeElement) : null;
     this._activeModel = result && result.selector ? result : null;
     if (this._params.isUnderTest)
-      console.error('Highlight updated for test: ' + (result ? result.selector : null));
+      console.error('Highlight updated for test: ' + (result ? result.selector : null)); // eslint-disable-line no-console
   }
 
   private _updateModelForHoveredElement() {
@@ -256,7 +256,7 @@ export class Recorder {
     this._hoveredModel = selector ? { selector, elements } : null;
     this._updateHighlight();
     if (this._params.isUnderTest)
-      console.error('Highlight updated for test: ' + selector);
+      console.error('Highlight updated for test: ' + selector); // eslint-disable-line no-console
   }
 
   private _updateHighlight() {
@@ -400,7 +400,7 @@ export class Recorder {
     if (this._params.isUnderTest) {
       // Serialize all to string as we cannot attribute console message to isolated world
       // in Firefox.
-      console.error('Action performed for test: ' + JSON.stringify({
+      console.error('Action performed for test: ' + JSON.stringify({ // eslint-disable-line no-console
         hovered: this._hoveredModel ? this._hoveredModel.selector : null,
         active: this._activeModel ? this._activeModel.selector : null,
       }));
