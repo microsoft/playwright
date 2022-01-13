@@ -255,3 +255,93 @@ function parseXML(xml: string): any {
   xml2js.parseString(xml, (err, r) => result = r);
   return result;
 }
+
+test.only('should not render Xray text based annotations to custom testcase properties', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('one', async ({}, testInfo) => {
+        testInfo.annotations.push({ type: 'unknown_annotation', description: 'unknown' });
+      });2
+    `
+  }, { reporter: 'junit' });
+  const xml = parseXML(result.output);
+  const testcase = xml['testsuites']['testsuite'][0]['testcase'][0];
+  expect(testcase['properties']).not.toBeTruthy();
+  expect(result.exitCode).toBe(0);
+});
+
+test.only('should render Xray text based annotations to custom testcase properties', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('one', async ({}, testInfo) => {
+        testInfo.annotations.push({ type: 'test_id', description: '1234' });
+        testInfo.annotations.push({ type: 'test_key', description: 'CALC-2' });
+        testInfo.annotations.push({ type: 'test_summary', description: 'sample summary' });
+        testInfo.annotations.push({ type: 'requirements', description: 'CALC-5,CALC-6' });
+        testInfo.annotations.push({ type: 'test_description', description: 'sample description' });
+        testInfo.annotations.push({ type: 'unknown_annotation', description: 'unknown' });
+      });2
+    `
+  }, { reporter: 'junit' });
+  const xml = parseXML(result.output);
+  const testcase = xml['testsuites']['testsuite'][0]['testcase'][0];
+  expect(testcase['properties']).toBeTruthy();
+  expect(testcase['properties'][0]['property'].length).toBe(5);
+  expect(testcase['properties'][0]['property'][0]['$']['name']).toBe('test_id');
+  expect(testcase['properties'][0]['property'][0]['$']['value']).toBe('1234');
+  expect(testcase['properties'][0]['property'][1]['$']['name']).toBe('test_key');
+  expect(testcase['properties'][0]['property'][1]['$']['value']).toBe('CALC-2');
+  expect(testcase['properties'][0]['property'][2]['$']['name']).toBe('test_summary');
+  expect(testcase['properties'][0]['property'][2]['$']['value']).toBe('sample summary');
+  expect(testcase['properties'][0]['property'][3]['$']['name']).toBe('requirements');
+  expect(testcase['properties'][0]['property'][3]['$']['value']).toBe('CALC-5,CALC-6');
+  expect(testcase['properties'][0]['property'][4]['$']['name']).toBe('test_description');
+  expect(testcase['properties'][0]['property'][4]['_']).toBe('\nsample description\n');
+  expect(result.exitCode).toBe(0);
+});
+
+
+test.only('should embed attachments to a custom testcase property, if explictly requested', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('one', async ({}, testInfo) => {
+        testInfo.annotations.push({ type: 'embed_attachments_in_report', description: 'true' });
+        const file = testInfo.outputPath('evidence1.txt');
+        require('fs').writeFileSync(file, 'hello', 'utf8');
+        testInfo.attachments.push({ name: 'evidence1.txt', path: file, contentType: 'text/plain' });
+        testInfo.attachments.push({ name: 'evidence2.txt', body: Buffer.from('world'), contentType: 'text/plain' });
+      });2
+    `
+  }, { reporter: 'junit' });
+  const xml = parseXML(result.output);
+  const testcase = xml['testsuites']['testsuite'][0]['testcase'][0];
+  expect(testcase['properties']).toBeTruthy();
+  expect(testcase['properties'][0]['property'].length).toBe(1);
+  expect(testcase['properties'][0]['property'][0]['$']['name']).toBe('testrun_evidence');
+  expect(testcase['properties'][0]['property'][0]['item'][0]['$']['name']).toBe('evidence1.txt');
+  expect(testcase['properties'][0]['property'][0]['item'][0]['_']).toBe('\naGVsbG8=\n');
+  expect(testcase['properties'][0]['property'][0]['item'][1]['$']['name']).toBe('evidence2.txt');
+  expect(testcase['properties'][0]['property'][0]['item'][1]['_']).toBe('\nd29ybGQ=\n');
+  expect(result.exitCode).toBe(0);
+});
+
+test.only('should not embed attachments to a custom testcase property, if not explictly requested', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('one', async ({}, testInfo) => {
+        const file = testInfo.outputPath('evidence1.txt');
+        require('fs').writeFileSync(file, 'hello', 'utf8');
+        testInfo.attachments.push({ name: 'evidence1.txt', path: file, contentType: 'text/plain' });
+        testInfo.attachments.push({ name: 'evidence2.txt', body: Buffer.from('world'), contentType: 'text/plain' });
+      });2
+    `
+  }, { reporter: 'junit' });
+  const xml = parseXML(result.output);
+  const testcase = xml['testsuites']['testsuite'][0]['testcase'][0];
+  expect(testcase['properties']).not.toBeTruthy();
+  expect(result.exitCode).toBe(0);
+});

@@ -133,42 +133,94 @@ class JUnitReporter implements Reporter {
     };
     entries.push(entry);
 
+    // Xray Test Management supports testcase level properties, where additional metadata may be provided
+    // some annotations are encoded as value attributes, other as cdata content
     const properties: XMLEntry = {
       name: 'properties',
       children: [] as XMLEntry[]
     };
 
-    const testKey = test.annotations.find(annotation => {
-      return annotation.type === 'test_key';
-    });
-    if (testKey !== undefined) {
-      const property = {
-        name: 'property',
-        attributes: {
-          name: 'test_key',
-          value: testKey.description
-        }
-      };
-      properties.children.push(property);
+    const textValueBasedAnnotations = ['test_id', 'test_key', 'test_summary', 'requirements'];
+    for (const annotationType of textValueBasedAnnotations) {
+      const annotation = test.annotations.find(annotation => {
+        return annotation.type === annotationType;
+      });
+      if (annotation !== undefined) {
+        const property: XMLEntry = {
+          name: 'property',
+          attributes: {
+            name: annotationType,
+            value: (annotation?.description ? annotation.description : '')
+          }
+        };
+        properties.children?.push(property);
+      }
     }
 
-    const requirements = test.annotations.find(annotation => {
-      return annotation.type === 'requirements';
-    });
-    if (requirements !== undefined) {
-      const property = {
-        name: 'property',
-        attributes: {
-          name: 'requirements',
-          value: requirements.description
-        }
-      };
-      properties.children.push(property);
+    const textContentBasedAnnotations = ['test_description'];
+    for (const annotationType of textContentBasedAnnotations) {
+      const annotation = test.annotations.find(annotation => {
+        return annotation.type === annotationType;
+      });
+      if (annotation !== undefined) {
+        const property: XMLEntry = {
+          name: 'property',
+          attributes: {
+            name: annotationType
+          },
+          text: annotation.description
+        };
+        properties.children?.push(property);
+      }
     }
 
-    entry.children.push(properties);
-    //test.annotations
+    // attachments are optionally embed as base64 encoded content on inner elements
+    const embedAttachments = test.annotations.find(annotation => {
+      return annotation.type === 'embed_attachments_in_report';
+    });
+    if (embedAttachments?.description === 'true') {
+      const evidence: XMLEntry = {
+        name: 'property',
+        attributes: {
+          name: 'testrun_evidence'
+        },
+        children: [] as XMLEntry[]
+      };
+      for (const result of test.results) {
+        for (const attachment of result.attachments) {
+          let contents;
+          if (attachment.body) {
+            contents = attachment.body.toString('base64');
+          } else {
+            if (!attachment.path)
+              continue;
+            try {
+              const attachmentPath = path.relative(this.config.rootDir, attachment.path);
+              if (fs.existsSync(attachmentPath))
+                contents = fs.readFileSync(attachmentPath, { encoding: 'base64' });
+            } catch (e) {
+            }
+          }
 
+          if (contents) {
+            const item: XMLEntry = {
+              name: 'item',
+              attributes: {
+                name: attachment.name
+              },
+              text: contents
+            };
+            evidence.children?.push(item);
+          }
+
+        }
+      }
+      properties.children?.push(evidence);
+    }
+
+    // TODO: check this
+    if (properties.children?.length)
+      entry.children.push(properties);
 
     if (test.outcome() === 'skipped') {
       entry.children.push({ name: 'skipped' });
@@ -241,7 +293,7 @@ function escape(text: string, stripANSIControlSequences: boolean, isCharacterDat
   const escapeRe = isCharacterData ? /[&<]/g : /[&"<>]/g;
   text = text.replace(escapeRe, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]!));
   if (isCharacterData)
-    text = text.replace(/]]>/g, ']]&gt;');
+    text = '<![CDATA[' + text.replace(/]]>/g, ']]&gt;') + ']]>';
   text = text.replace(discouragedXMLCharacters, '');
   return text;
 }
