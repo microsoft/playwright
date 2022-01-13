@@ -371,19 +371,6 @@ export function monotonicTime(): number {
   return seconds * 1000 + (nanoseconds / 1000 | 0) / 1000;
 }
 
-class HashStream extends stream.Writable {
-  private _hash = crypto.createHash('sha1');
-
-  override _write(chunk: Buffer, encoding: string, done: () => void) {
-    this._hash.update(chunk);
-    done();
-  }
-
-  digest(): string {
-    return this._hash.digest('hex');
-  }
-}
-
 export function objectToArray(map?:  { [key: string]: any }): NameValue[] | undefined {
   if (!map)
     return undefined;
@@ -400,17 +387,6 @@ export function arrayToObject(array?: NameValue[]): { [key: string]: string } | 
   for (const { name, value } of array)
     result[name] = value;
   return result;
-}
-
-export async function calculateFileSha1(filename: string): Promise<string> {
-  const hashStream = new HashStream();
-  const stream = fs.createReadStream(filename);
-  stream.on('open', () => stream.pipe(hashStream));
-  await new Promise((f, r) => {
-    hashStream.on('finish', f);
-    hashStream.on('error', r);
-  });
-  return hashStream.digest();
 }
 
 export function calculateSha1(buffer: Buffer | string): string {
