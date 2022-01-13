@@ -484,11 +484,15 @@ function determineDownloadUserAgent(): string {
     osVersion = `${version[0]}.${version[1]}`;
   } else if (process.platform === 'linux') {
     try {
+      // List of /etc/os-release values for different distributions could be
+      // found here: https://gist.github.com/aslushnikov/8ceddb8288e4cf9db3039c02e0f4fb75
       const osReleaseText = fs.readFileSync('/etc/os-release', 'utf8');
       const fields = parseOSReleaseText(osReleaseText);
       osIdentifier = fields.get('id') || 'unknown';
       osVersion = fields.get('version_id') || 'unknown';
     } catch (e) {
+      // Linux distribution without /etc/os-release.
+      // Default to unknown/unknown.
     }
   }
 
