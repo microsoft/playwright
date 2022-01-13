@@ -22,7 +22,7 @@ import path from 'path';
 import { execSync } from 'child_process';
 import { existsAsync, download, getPlaywrightVersion } from './utils';
 import { debugLogger } from './debugLogger';
-import { getUbuntuVersionSync } from './ubuntuVersion';
+import { parseOSReleaseText } from './ubuntuVersion';
 
 export async function downloadBrowserWithProgressBar(title: string, browserDirectory: string, executablePath: string, downloadURL: string, downloadFileName: string): Promise<boolean> {
   const progressBarName = `Playwright build of ${title}`;
@@ -91,9 +91,13 @@ function determineDownloadUserAgent(): string {
     osIdentifier = 'macOS';
     osVersion = `${version[0]}.${version[1]}`;
   } else if (process.platform === 'linux') {
-    const version = getUbuntuVersionSync();
-    osIdentifier = version ? 'ubuntu' : 'linux';
-    osVersion = version ?? 'unknown';
+    try {
+      const osReleaseText = fs.readFileSync('/etc/os-release', 'utf8');
+      const fields = parseOSReleaseText(osReleaseText);
+      osIdentifier = fields.get('id') || 'unknown';
+      osVersion = fields.get('version_id') || 'unknown';
+    } catch (e) {
+    }
   }
 
   let langName = 'unknown';

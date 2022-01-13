@@ -60,7 +60,7 @@ function getUbuntuVersionSyncInternal(): string {
   }
 }
 
-function parseUbuntuVersion(osReleaseText: string): string {
+export function parseOSReleaseText(osReleaseText: string): Map<string, string> {
   const fields = new Map();
   for (const line of osReleaseText.split('\n')) {
     const tokens = line.split('=');
@@ -72,11 +72,16 @@ function parseUbuntuVersion(osReleaseText: string): string {
       continue;
     fields.set(name.toLowerCase(), value);
   }
+  return fields;
+}
+
+function parseUbuntuVersion(osReleaseText: string): string {
+  const fields = parseOSReleaseText(osReleaseText);
   // For Linux mint
-  if (fields.get('distrib_id') && fields.get('distrib_id').toLowerCase() === 'ubuntu')
+  if (fields.get('distrib_id') && fields.get('distrib_id')?.toLowerCase() === 'ubuntu')
     return fields.get('distrib_release') || '';
 
-  if (!fields.get('name') || fields.get('name').toLowerCase() !== 'ubuntu')
+  if (!fields.get('name') || fields.get('name')?.toLowerCase() !== 'ubuntu')
     return '';
   return fields.get('version_id') || '';
 }
