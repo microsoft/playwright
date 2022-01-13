@@ -15,6 +15,7 @@
  */
 
 import http from 'http';
+import os from 'os';
 import * as util from 'util';
 import { getPlaywrightVersion } from 'playwright-core/lib/utils/utils';
 import { expect, playwrightTest as it } from './config/browserTest';
@@ -177,13 +178,23 @@ it('should resolve url relative to gobal baseURL option', async ({ playwright, s
   expect(response.url()).toBe(server.EMPTY_PAGE);
 });
 
-it('should set playwright as user-agent', async ({ playwright, server }) => {
+it('should set playwright as user-agent', async ({ playwright, server, isWindows, isLinux, isMac }) => {
   const request = await playwright.request.newContext();
   const [serverRequest] = await Promise.all([
     server.waitForRequest('/empty.html'),
     request.get(server.EMPTY_PAGE)
   ]);
-  expect(serverRequest.headers['user-agent']).toBe('Playwright/' + getPlaywrightVersion());
+  const userAgent = serverRequest.headers['user-agent'];
+  expect(userAgent).toContain('Playwright/' + getPlaywrightVersion());
+  expect(userAgent).toContain(os.arch());
+  const NODEJS_VERSION = process.version.substring(1).split('.').slice(0, 2).join('.');
+  expect(userAgent).toContain('node/' + NODEJS_VERSION);
+  if (isWindows)
+    expect(userAgent).toContain('windows');
+  else if (isLinux)
+    expect(userAgent).toContain('ubuntu');
+  else if (isMac)
+    expect(userAgent).toContain('macOS');
 });
 
 it('should be able to construct with context options', async ({ playwright, browserType, server }) => {

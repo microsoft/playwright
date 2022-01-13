@@ -25,7 +25,7 @@ import zlib from 'zlib';
 import { HTTPCredentials } from '../../types/types';
 import * as channels from '../protocol/channels';
 import { TimeoutSettings } from '../utils/timeoutSettings';
-import { assert, createGuid, getPlaywrightVersion, monotonicTime } from '../utils/utils';
+import { assert, createGuid, getUserAgent, monotonicTime } from '../utils/utils';
 import { BrowserContext } from './browserContext';
 import { CookieStore, domainMatches } from './cookieStore';
 import { MultipartFormData } from './formData';
@@ -457,7 +457,7 @@ export class GlobalAPIRequestContext extends APIRequestContext {
     }
     this._options = {
       baseURL: options.baseURL,
-      userAgent: options.userAgent || `Playwright/${getPlaywrightVersion()}`,
+      userAgent: options.userAgent || getUserAgent(),
       extraHTTPHeaders: options.extraHTTPHeaders,
       ignoreHTTPSErrors: !!options.ignoreHTTPSErrors,
       httpCredentials: options.httpCredentials,

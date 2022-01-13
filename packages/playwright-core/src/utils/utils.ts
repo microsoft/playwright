@@ -22,10 +22,10 @@ import * as crypto from 'crypto';
 import os from 'os';
 import http from 'http';
 import https from 'https';
-import { spawn, SpawnOptions } from 'child_process';
+import { spawn, SpawnOptions, execSync } from 'child_process';
 import { getProxyForUrl } from 'proxy-from-env';
 import * as URL from 'url';
-import { getUbuntuVersionSync } from './ubuntuVersion';
+import { getUbuntuVersionSync, parseOSReleaseText } from './ubuntuVersion';
 import { NameValue } from '../protocol/channels';
 import ProgressBar from 'progress';
 
@@ -459,8 +459,50 @@ export function canAccessFile(file: string) {
   }
 }
 
-export function getUserAgent() {
-  return `Playwright/${getPlaywrightVersion()} (${os.arch()}/${os.platform()}/${os.release()})`;
+let cachedUserAgent: string | undefined;
+export function getUserAgent(): string {
+  if (cachedUserAgent)
+    return cachedUserAgent;
+  try {
+    cachedUserAgent = determineDownloadUserAgent();
+  } catch (e) {
+    cachedUserAgent = 'Playwright/unknown';
+  }
+  return cachedUserAgent;
+}
+
+function determineDownloadUserAgent(): string {
+  let osIdentifier = 'unknown';
+  let osVersion = 'unknown';
+  if (process.platform === 'win32') {
+    const version = os.release().split('.');
+    osIdentifier = 'windows';
+    osVersion = `${version[0]}.${version[1]}`;
+  } else if (process.platform === 'darwin') {
+    const version = execSync('sw_vers -productVersion').toString().trim().split('.');
+    osIdentifier = 'macOS';
+    osVersion = `${version[0]}.${version[1]}`;
+  } else if (process.platform === 'linux') {
+    try {
+      const osReleaseText = fs.readFileSync('/etc/os-release', 'utf8');
+      const fields = parseOSReleaseText(osReleaseText);
+      osIdentifier = fields.get('id') || 'unknown';
+      osVersion = fields.get('version_id') || 'unknown';
+    } catch (e) {
+    }
+  }
+
+  let langName = 'unknown';
+  let langVersion = 'unknown';
+  if (!process.env.PW_CLI_TARGET_LANG) {
+    langName = 'node';
+    langVersion = process.version.substring(1).split('.').slice(0, 2).join('.');
+  } else if (['node', 'python', 'java', 'csharp'].includes(process.env.PW_CLI_TARGET_LANG)) {
+    langName = process.env.PW_CLI_TARGET_LANG;
+    langVersion = process.env.PW_CLI_TARGET_LANG_VERSION ?? 'unknown';
+  }
+
+  return `Playwright/${getPlaywrightVersion()} (${os.arch()}; ${osIdentifier} ${osVersion}) ${langName}/${langVersion}`;
 }
 
 export function getPlaywrightVersion(majorMinorOnly = false) {
