@@ -139,7 +139,7 @@ export const test = base.extend<{ saveLogs: void }>({
 
 To launch a server during the tests, use the `webServer` option in the [configuration file](#configuration-object).
 
-You can specify a port via `port` or additional environment variables, see [here](#configuration-object). The server will wait for it to be available (on `127.0.0.1` or `::1`) before running the tests. For continuous integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an existing server on the CI.
+You can specify a port via `port` or additional environment variables, see [here](#configuration-object). The server will wait for it to be available (on `127.0.0.1` or `::1`) before running the tests. For continuous integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an existing server on the CI. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable.
 
 The port gets then passed over to Playwright as a [`param: baseURL`] when creating the context [`method: Browser.newContext`].
 
