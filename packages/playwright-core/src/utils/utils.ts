@@ -492,7 +492,8 @@ function determineUserAgent(): string {
       osVersion = fields.get('version_id') || 'unknown';
     } catch (e) {
       // Linux distribution without /etc/os-release.
-      // Default to unknown/unknown.
+      // Default to linux/unknown.
+      osIdentifier = 'linux';
     }
   }
 
