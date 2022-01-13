@@ -17,6 +17,7 @@
 import net from 'net';
 import os from 'os';
 import stream from 'stream';
+import debug from 'debug';
 import { monotonicTime } from './util';
 import { raceAgainstDeadline } from 'playwright-core/lib/utils/async';
 import { WebServerConfig } from './types';
@@ -32,6 +33,8 @@ const newProcessLogPrefixer = () => new stream.Transform({
     callback();
   },
 });
+
+const debugWebServer = debug('pw:webserver');
 
 export class WebServer {
   private _killProcess?: () => Promise<void>;
@@ -79,7 +82,7 @@ export class WebServer {
     this._killProcess = kill;
 
     launchedProcess.stderr!.pipe(newProcessLogPrefixer()).pipe(process.stderr);
-    launchedProcess.stdout!.on('data', () => {});
+    launchedProcess.stdout!.on('data', (line: Buffer) => debugWebServer(line.toString()));
   }
 
   private async _waitForProcess() {
