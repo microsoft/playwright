@@ -62,6 +62,7 @@ Wait for popup window:
 // Note that Promise.all prevents a race condition
 // between clicking and waiting for the popup.
 const [popup] = await Promise.all([
+  // It is important to call waitForEvent first.
   page.waitForEvent('popup'),
   // This action triggers the popup
   page.evaluate('window.open()')

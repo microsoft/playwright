@@ -313,8 +313,11 @@ recommended to explicitly call [`method: Page.waitForNavigation`]. For example:
 // Note that Promise.all prevents a race condition
 // between clicking and waiting for a navigation.
 await Promise.all([
-  page.waitForNavigation(), // Waits for the next navigation
-  page.click('div.delayed-navigation'), // Triggers a navigation after a timeout
+  // Waits for the next navigation.
+  // It is important to call waitForNavigation before click to set up waiting.
+  page.waitForNavigation(),
+  // Triggers a navigation after a timeout.
+  page.locator('div.delayed-navigation').clikc(),
 ]);
 ```
 
@@ -363,8 +366,10 @@ Clicking an element could trigger multiple navigations. In these cases, it is re
 // Note that Promise.all prevents a race condition
 // between clicking and waiting for a navigation.
 await Promise.all([
+  // It is important to call waitForNavigation before click to set up waiting.
   page.waitForNavigation({ url: '**/login' }),
-  page.click('a'), // Triggers a navigation with a script redirect
+  // Triggers a navigation with a script redirect.
+  page.locator('text=Click me').click(),
 ]);
 ```
 
@@ -411,9 +416,13 @@ When popup is opened, explicitly calling [`method: Page.waitForLoadState`] ensur
 state.
 
 ```js
+// Note that Promise.all prevents a race condition
+// between clicking and waiting for the popup.
 const [ popup ] = await Promise.all([
+  // It is important to call waitForEvent before click to set up waiting.
   page.waitForEvent('popup'),
-  page.click('a[target="_blank"]'),  // Opens popup
+  // Opens popup.
+  page.locator('a[target="_blank"]').click(),
 ]);
 await popup.waitForLoadState('load');
 ```
