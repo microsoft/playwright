@@ -24,7 +24,7 @@ const [ download ] = await Promise.all([
   // Start waiting for the download
   page.waitForEvent('download'),
   // Perform the action that initiates download
-  page.click('button#delayed-download')
+  page.locator('button#delayed-download').click(),
 ]);
 // Wait for the download process to complete
 const path = await download.path();
