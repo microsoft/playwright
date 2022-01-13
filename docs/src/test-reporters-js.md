@@ -389,6 +389,31 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
+The JUnit reporter also provides support for Xray Test Management, which uses an evolved JUnit XML format to provide additional information on the `testcase` elements using inner `properties`. Specific annotations can be used to, for example, link a Playwright test with an existing Test in Xray or to link a test with an existing story/requirement in Jira (i.e., "cover" it). For more information about the available properties and their semantics, please check [Xray Test Management documentation](https://docs.getxray.app/display/XRAYCLOUD/Taking+advantage+of+JUnit+XML+reports).
+
+```js js-flavor=js
+test('using specific annotations for passing test metadata to Xray', async ({}, testInfo) => {
+  testInfo.annotations.push({ type: 'test_id', description: '1234' });
+  testInfo.annotations.push({ type: 'test_key', description: 'CALC-2' });
+  testInfo.annotations.push({ type: 'test_summary', description: 'sample summary' });
+  testInfo.annotations.push({ type: 'requirements', description: 'CALC-5,CALC-6' });
+  testInfo.annotations.push({ type: 'test_description', description: 'sample description' });
+});
+```
+
+A more advanced scenario is supported by Xray: the ability to embed attachments, including their contents, on the JUnit XML report. For that, the `embed_attachments_in_report` annotation must be specified, having the `true` value as its description. Attachments are obtained from the `TestInfo` object, using either a path or a body, and are embed as base64 encoded content on a custom `property` on the JUnit report.
+Embedding attachments can be used to attach screenshots or any other relevant evidence; nevertheless, use it wisely as it affects the report size.
+
+```js js-flavor=js
+test('embed attachments on the JUnit report processable by Xray', async ({}, testInfo) => {
+  testInfo.annotations.push({ type: 'embed_attachments_in_report', description: 'true' });
+  const file = testInfo.outputPath('evidence1.txt');
+  require('fs').writeFileSync(file, 'hello', 'utf8');
+  testInfo.attachments.push({ name: 'evidence1.txt', path: file, contentType: 'text/plain' });
+  testInfo.attachments.push({ name: 'evidence2.txt', body: Buffer.from('world'), contentType: 'text/plain' });
+});
+```
+
 ### GitHub Actions annotations
 
 You can use the built in `github` reporter to get automatic failure annotations when running in GitHub actions.
