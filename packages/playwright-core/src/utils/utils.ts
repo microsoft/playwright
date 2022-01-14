@@ -22,10 +22,10 @@ import * as crypto from 'crypto';
 import os from 'os';
 import http from 'http';
 import https from 'https';
-import { spawn, SpawnOptions } from 'child_process';
+import { spawn, SpawnOptions, execSync } from 'child_process';
 import { getProxyForUrl } from 'proxy-from-env';
 import * as URL from 'url';
-import { getUbuntuVersionSync } from './ubuntuVersion';
+import { getUbuntuVersionSync, parseOSReleaseText } from './ubuntuVersion';
 import { NameValue } from '../protocol/channels';
 import ProgressBar from 'progress';
 
@@ -115,8 +115,13 @@ export function fetchData(params: HTTPRequestParams, onError?: (params: HTTPRequ
 
 type OnProgressCallback = (downloadedBytes: number, totalBytes: number) => void;
 type DownloadFileLogger = (message: string) => void;
+type DownloadFileOptions = {
+  progressCallback?: OnProgressCallback,
+  log?: DownloadFileLogger,
+  userAgent?: string
+};
 
-function downloadFile(url: string, destinationPath: string, options: {progressCallback?: OnProgressCallback, log?: DownloadFileLogger} = {}): Promise<{error: any}> {
+function downloadFile(url: string, destinationPath: string, options: DownloadFileOptions = {}): Promise<{error: any}> {
   const {
     progressCallback,
     log = () => {},
@@ -130,7 +135,12 @@ function downloadFile(url: string, destinationPath: string, options: {progressCa
 
   const promise: Promise<{error: any}> = new Promise(x => { fulfill = x; });
 
-  httpRequest({ url }, response => {
+  httpRequest({
+    url,
+    headers: options.userAgent ? {
+      'User-Agent': options.userAgent,
+    } : undefined,
+  }, response => {
     log(`-- response status code: ${response.statusCode}`);
     if (response.statusCode !== 200) {
       const error = new Error(`Download failed: server returned code ${response.statusCode}. URL: ${url}`);
@@ -156,16 +166,19 @@ function downloadFile(url: string, destinationPath: string, options: {progressCa
   }
 }
 
+type DownloadOptions = {
+  progressBarName?: string,
+  retryCount?: number
+  log?: DownloadFileLogger
+  userAgent?: string
+};
+
 export async function download(
   url: string,
   destination: string,
-  options: {
-		progressBarName?: string,
-		retryCount?: number
-    log?: DownloadFileLogger
-	} = {}
+  options: DownloadOptions = {}
 ) {
-  const { progressBarName = 'file', retryCount = 3, log = () => {} } = options;
+  const { progressBarName = 'file', retryCount = 3, log = () => {}, userAgent } = options;
   for (let attempt = 1; attempt <= retryCount; ++attempt) {
     log(
         `downloading ${progressBarName} - attempt #${attempt}`
@@ -173,6 +186,7 @@ export async function download(
     const { error } = await downloadFile(url, destination, {
       progressCallback: getDownloadProgress(progressBarName),
       log,
+      userAgent,
     });
     if (!error) {
       log(`SUCCESS downloading ${progressBarName}`);
@@ -421,8 +435,55 @@ export function canAccessFile(file: string) {
   }
 }
 
-export function getUserAgent() {
-  return `Playwright/${getPlaywrightVersion()} (${os.arch()}/${os.platform()}/${os.release()})`;
+let cachedUserAgent: string | undefined;
+export function getUserAgent(): string {
+  if (cachedUserAgent)
+    return cachedUserAgent;
+  try {
+    cachedUserAgent = determineUserAgent();
+  } catch (e) {
+    cachedUserAgent = 'Playwright/unknown';
+  }
+  return cachedUserAgent;
+}
+
+function determineUserAgent(): string {
+  let osIdentifier = 'unknown';
+  let osVersion = 'unknown';
+  if (process.platform === 'win32') {
+    const version = os.release().split('.');
+    osIdentifier = 'windows';
+    osVersion = `${version[0]}.${version[1]}`;
+  } else if (process.platform === 'darwin') {
+    const version = execSync('sw_vers -productVersion').toString().trim().split('.');
+    osIdentifier = 'macOS';
+    osVersion = `${version[0]}.${version[1]}`;
+  } else if (process.platform === 'linux') {
+    try {
+      // List of /etc/os-release values for different distributions could be
+      // found here: https://gist.github.com/aslushnikov/8ceddb8288e4cf9db3039c02e0f4fb75
+      const osReleaseText = fs.readFileSync('/etc/os-release', 'utf8');
+      const fields = parseOSReleaseText(osReleaseText);
+      osIdentifier = fields.get('id') || 'unknown';
+      osVersion = fields.get('version_id') || 'unknown';
+    } catch (e) {
+      // Linux distribution without /etc/os-release.
+      // Default to linux/unknown.
+      osIdentifier = 'linux';
+    }
+  }
+
+  let langName = 'unknown';
+  let langVersion = 'unknown';
+  if (!process.env.PW_CLI_TARGET_LANG) {
+    langName = 'node';
+    langVersion = process.version.substring(1).split('.').slice(0, 2).join('.');
+  } else if (['node', 'python', 'java', 'csharp'].includes(process.env.PW_CLI_TARGET_LANG)) {
+    langName = process.env.PW_CLI_TARGET_LANG;
+    langVersion = process.env.PW_CLI_TARGET_LANG_VERSION ?? 'unknown';
+  }
+
+  return `Playwright/${getPlaywrightVersion()} (${os.arch()}; ${osIdentifier} ${osVersion}) ${langName}/${langVersion}`;
 }
 
 export function getPlaywrightVersion(majorMinorOnly = false) {
