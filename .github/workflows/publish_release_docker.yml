@@ -30,3 +30,6 @@ jobs:
     - run: npm run build
     - run: npx playwright install-deps
     - run: ./utils/docker/publish_docker.sh stable
+      if: "!github.event.release.prerelease"
+    - run: ./utils/docker/publish_docker.sh canary
+      if: "github.event.release.prerelease"
