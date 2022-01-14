@@ -24,11 +24,6 @@ Reporter is given a root suite in the [`method: Reporter.onBegin`] method.
 
 Returns the list of all test cases in this suite and its descendants, as opposite to [`property: Suite.tests`].
 
-## property: Suite.hooks
-- type: <[Array]<[TestCase]>>
-
-`beforeAll` and `afterAll` hooks in the suite. Note that other hooks such as `beforeEach` and `afterEach` are reported as the steps within the test.
-
 ## property: Suite.location
 - type: <[void]|[Location]>
 

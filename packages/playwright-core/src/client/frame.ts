@@ -284,6 +284,10 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return await this._channel.fill({ selector, value, ...options });
   }
 
+  async _highlight(selector: string) {
+    return await this._channel.highlight({ selector });
+  }
+
   locator(selector: string, options?: { hasText?: string | RegExp }): Locator {
     return new Locator(this, selector, options);
   }

@@ -54,24 +54,18 @@ type RunOptions = {
 
 export class Runner {
   private _loader: Loader;
-  private _printResolvedConfig: boolean;
   private _reporter!: Reporter;
   private _didBegin = false;
   private _internalGlobalSetups: Array<InternalGlobalSetupFunction> = [];
 
-  constructor(configOverrides: Config, options: { defaultConfig?: Config, printResolvedConfig?: boolean } = {}) {
-    this._printResolvedConfig = !!options.printResolvedConfig;
+  constructor(configOverrides: Config, options: { defaultConfig?: Config } = {}) {
     this._loader = new Loader(options.defaultConfig || {}, configOverrides);
   }
 
   async loadConfigFromFile(configFileOrDirectory: string): Promise<Config> {
     const loadConfig = async (configFile: string) => {
-      if (fs.existsSync(configFile)) {
-        if (this._printResolvedConfig)
-          console.log(`Using config at ` + configFile);
-        const config = await this._loader.loadConfigFile(configFile);
-        return config;
-      }
+      if (fs.existsSync(configFile))
+        return await this._loader.loadConfigFile(configFile);
     };
 
     const loadConfigFromDirectory = async (directory: string) => {

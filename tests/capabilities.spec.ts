@@ -119,6 +119,7 @@ it('should support webgl 2 #smoke', async ({ page, browserName, headless }) => {
 
 it('should not crash on page with mp4 #smoke', async ({ page, server, platform, browserName }) => {
   it.fixme(browserName === 'webkit' && platform === 'win32', 'https://github.com/microsoft/playwright/issues/11009, times out in setContent');
+  it.fixme(browserName === 'firefox', 'https://bugzilla.mozilla.org/show_bug.cgi?id=1697004');
   await page.setContent(`<video><source src="${server.PREFIX}/movie.mp4"/></video>`);
   await page.waitForTimeout(1000);
 });

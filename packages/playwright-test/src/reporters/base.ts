@@ -58,10 +58,9 @@ export class BaseReporter implements Reporter  {
   suite!: Suite;
   totalTestCount = 0;
   result!: FullResult;
-  fileDurations = new Map<string, number>();
-  monotonicStartTime: number = 0;
-  private printTestOutput = !process.env.PWTEST_SKIP_TEST_OUTPUT;
-  protected _omitFailures: boolean;
+  private fileDurations = new Map<string, number>();
+  private monotonicStartTime: number = 0;
+  private _omitFailures: boolean;
   private readonly _ttyWidthForTest: number;
 
   constructor(options: { omitFailures?: boolean } = {}) {
@@ -196,7 +195,6 @@ export class BaseReporter implements Reporter  {
     failures.forEach((test, index) => {
       console.log(formatFailure(this.config, test, {
         index: index + 1,
-        includeStdio: this.printTestOutput
       }).message);
     });
   }

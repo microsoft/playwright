@@ -121,7 +121,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     process.env.PWDEBUG = '1';
   }
 
-  const runner = new Runner(overrides, { defaultConfig, printResolvedConfig: process.stdout.isTTY });
+  const runner = new Runner(overrides, { defaultConfig });
 
   // When no --config option is passed, let's look for the config file in the current directory.
   const configFile = opts.config ? path.resolve(process.cwd(), opts.config) : process.cwd();

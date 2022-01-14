@@ -1,0 +1,29 @@
+name: "publish release - NPM"
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish-npm-release:
+    name: "publish to NPM"
+    runs-on: ubuntu-20.04
+    if: github.repository == 'microsoft/playwright'
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: 12
+        registry-url: 'https://registry.npmjs.org'
+    - run: npm i -g npm@8
+    - run: npm ci
+    - run: npm run build
+    - run: npx playwright install-deps
+    - run: utils/publish_all_packages.sh --release-candidate
+      if: "github.event.release.prerelease"
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    - run: utils/publish_all_packages.sh --release
+      if: "!github.event.release.prerelease"
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

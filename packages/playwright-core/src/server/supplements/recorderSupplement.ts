@@ -72,7 +72,7 @@ export class RecorderSupplement implements InstrumentationListener {
     this._contextRecorder = new ContextRecorder(context, params);
     this._context = context;
     this._debugger = Debugger.lookup(context)!;
-    context.instrumentation.addListener(this);
+    context.instrumentation.addListener(this, context);
   }
 
   async install() {
@@ -248,7 +248,7 @@ export class RecorderSupplement implements InstrumentationListener {
   async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata) {
   }
 
-  async onCallLog(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+  async onCallLog(sdkObject: SdkObject, metadata: CallMetadata, logName: string, message: string): Promise<void> {
     this.updateCallLog([metadata]);
   }
 

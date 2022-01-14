@@ -366,8 +366,12 @@ popup with `window.open('http://example.com')`, this event will fire when the ne
 done and its response has started loading in the popup.
 
 ```js
+// Note that Promise.all prevents a race condition
+// between evaluating and waiting for the popup.
 const [popup] = await Promise.all([
+  // It is important to call waitForEvent first.
   page.waitForEvent('popup'),
+  // Opens the popup.
   page.evaluate(() => window.open('https://example.com')),
 ]);
 console.log(await popup.evaluate('location.href'));
@@ -3122,9 +3126,13 @@ Waits for event to fire and passes its value into the predicate function. Return
 value. Will throw an error if the page is closed before the event is fired. Returns the event data value.
 
 ```js
+// Note that Promise.all prevents a race condition
+// between clicking and waiting for the event.
 const [frame, _] = await Promise.all([
+  // It is important to call waitForEvent before click to set up waiting.
   page.waitForEvent('framenavigated'),
-  page.click('button')
+  // Triggers the navigation.
+  page.locator('button').click(),
 ]);
 ```
 
@@ -3331,8 +3339,10 @@ await page.WaitForLoadStateAsync(); // The promise resolves after 'load' event.
 
 ```js
 const [popup] = await Promise.all([
+  // It is important to call waitForEvent before click to set up waiting.
   page.waitForEvent('popup'),
-  page.click('button'), // Click triggers a popup.
+  // Click triggers a popup.
+  page.locator('button').click(),
 ])
 await popup.waitForLoadState('domcontentloaded'); // The promise resolves after 'domcontentloaded' event.
 console.log(await popup.title()); // Popup is ready to use.
@@ -3394,9 +3404,13 @@ cause the page to navigate. e.g. The click target has an `onclick` handler that 
 Consider this example:
 
 ```js
+// Note that Promise.all prevents a race condition
+// between clicking and waiting for the navigation.
 const [response] = await Promise.all([
-  page.waitForNavigation(), // The promise resolves after navigation has finished
-  page.click('a.delayed-navigation'), // Clicking the link will indirectly cause a navigation
+  // It is important to call waitForNavigation before click to set up waiting.
+  page.waitForNavigation(),
+  // Clicking the link will indirectly cause a navigation.
+  page.locator('a.delayed-navigation').click(),
 ]);
 ```
 

@@ -16,7 +16,7 @@
 
 import { formatLocation, wrapInPromise, debugTest } from './util';
 import * as crypto from 'crypto';
-import { FixturesWithLocation, Location, WorkerInfo, TestInfo, TestStepInternal } from './types';
+import { FixturesWithLocation, Location, WorkerInfo, TestInfo } from './types';
 import { ManualPromise } from 'playwright-core/lib/utils/async';
 
 type FixtureScope = 'test' | 'worker';
@@ -96,15 +96,18 @@ class Fixture {
   private async _teardownInternal() {
     if (typeof this.registration.fn !== 'function')
       return;
-    for (const fixture of this.usages)
-      await fixture.teardown();
-    this.usages.clear();
-    if (this._useFuncFinished) {
-      debugTest(`teardown ${this.registration.name}`);
-      this._useFuncFinished.resolve();
-      await this._selfTeardownComplete;
+    try {
+      for (const fixture of this.usages)
+        await fixture.teardown();
+      this.usages.clear();
+      if (this._useFuncFinished) {
+        debugTest(`teardown ${this.registration.name}`);
+        this._useFuncFinished.resolve();
+        await this._selfTeardownComplete;
+      }
+    } finally {
+      this.runner.instanceForId.delete(this.registration.id);
     }
-    this.runner.instanceForId.delete(this.registration.id);
   }
 }
 
@@ -258,7 +261,7 @@ export class FixtureRunner {
       throw error;
   }
 
-  async resolveParametersAndRunHookOrTest(fn: Function, workerInfo: WorkerInfo, testInfo: TestInfo | undefined, paramsStepCallback?: TestStepInternal) {
+  async resolveParametersForFunction(fn: Function, workerInfo: WorkerInfo, testInfo: TestInfo | undefined): Promise<object> {
     // Install all automatic fixtures.
     for (const registration of this.pool!.registrations.values()) {
       const shouldSkip = !testInfo && registration.scope === 'test';
@@ -274,10 +277,11 @@ export class FixtureRunner {
       const fixture = await this.setupFixtureForRegistration(registration, workerInfo, testInfo);
       params[name] = fixture.value;
     }
+    return params;
+  }
 
-    // Report fixture hooks step as completed.
-    paramsStepCallback?.complete();
-
+  async resolveParametersAndRunFunction(fn: Function, workerInfo: WorkerInfo, testInfo: TestInfo | undefined) {
+    const params = await this.resolveParametersForFunction(fn, workerInfo, testInfo);
     return fn(params, testInfo || workerInfo);
   }
 

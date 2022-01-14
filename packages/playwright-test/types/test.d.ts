@@ -572,7 +572,7 @@ interface TestConfig {
    *
    * The server will wait for it to be available on `127.0.0.1` or `::1` before running the tests. For continuous
    * integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an existing server
-   * on the CI.
+   * on the CI. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable.
    *
    * The port gets then passed over to Playwright as a `baseURL` when creating the context
    * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context). For example `8080`
@@ -1061,7 +1061,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * The server will wait for it to be available on `127.0.0.1` or `::1` before running the tests. For continuous
    * integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an existing server
-   * on the CI.
+   * on the CI. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable.
    *
    * The port gets then passed over to Playwright as a `baseURL` when creating the context
    * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context). For example `8080`
@@ -2860,6 +2860,8 @@ export interface PlaywrightTestOptions {
    * constructor for building the corresponding URL. Examples:
    * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
    * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in `http://localhost:3000/foo/bar.html`
+   * - baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in
+   *   `http://localhost:3000/bar.html`
    */
   baseURL: string | undefined;
   /**

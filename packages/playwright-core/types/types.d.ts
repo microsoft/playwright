@@ -955,8 +955,12 @@ export interface Page {
    * done and its response has started loading in the popup.
    *
    * ```js
+   * // Note that Promise.all prevents a race condition
+   * // between evaluating and waiting for the popup.
    * const [popup] = await Promise.all([
+   *   // It is important to call waitForEvent first.
    *   page.waitForEvent('popup'),
+   *   // Opens the popup.
    *   page.evaluate(() => window.open('https://example.com')),
    * ]);
    * console.log(await popup.evaluate('location.href'));
@@ -1224,8 +1228,12 @@ export interface Page {
    * done and its response has started loading in the popup.
    *
    * ```js
+   * // Note that Promise.all prevents a race condition
+   * // between evaluating and waiting for the popup.
    * const [popup] = await Promise.all([
+   *   // It is important to call waitForEvent first.
    *   page.waitForEvent('popup'),
+   *   // Opens the popup.
    *   page.evaluate(() => window.open('https://example.com')),
    * ]);
    * console.log(await popup.evaluate('location.href'));
@@ -3578,8 +3586,12 @@ export interface Page {
    * done and its response has started loading in the popup.
    *
    * ```js
+   * // Note that Promise.all prevents a race condition
+   * // between evaluating and waiting for the popup.
    * const [popup] = await Promise.all([
+   *   // It is important to call waitForEvent first.
    *   page.waitForEvent('popup'),
+   *   // Opens the popup.
    *   page.evaluate(() => window.open('https://example.com')),
    * ]);
    * console.log(await popup.evaluate('location.href'));
@@ -3646,8 +3658,10 @@ export interface Page {
    *
    * ```js
    * const [popup] = await Promise.all([
+   *   // It is important to call waitForEvent before click to set up waiting.
    *   page.waitForEvent('popup'),
-   *   page.click('button'), // Click triggers a popup.
+   *   // Click triggers a popup.
+   *   page.locator('button').click(),
    * ])
    * await popup.waitForLoadState('domcontentloaded'); // The promise resolves after 'domcontentloaded' event.
    * console.log(await popup.title()); // Popup is ready to use.
@@ -3683,9 +3697,13 @@ export interface Page {
    * Consider this example:
    *
    * ```js
+   * // Note that Promise.all prevents a race condition
+   * // between clicking and waiting for the navigation.
    * const [response] = await Promise.all([
-   *   page.waitForNavigation(), // The promise resolves after navigation has finished
-   *   page.click('a.delayed-navigation'), // Clicking the link will indirectly cause a navigation
+   *   // It is important to call waitForNavigation before click to set up waiting.
+   *   page.waitForNavigation(),
+   *   // Clicking the link will indirectly cause a navigation.
+   *   page.locator('a.delayed-navigation').click(),
    * ]);
    * ```
    *
@@ -9906,6 +9924,8 @@ export interface BrowserType<Unused = {}> {
      * constructor for building the corresponding URL. Examples:
      * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
      * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in `http://localhost:3000/foo/bar.html`
+     * - baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in
+     *   `http://localhost:3000/bar.html`
      */
     baseURL?: string;
 
@@ -11128,6 +11148,8 @@ export interface AndroidDevice {
      * constructor for building the corresponding URL. Examples:
      * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
      * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in `http://localhost:3000/foo/bar.html`
+     * - baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in
+     *   `http://localhost:3000/bar.html`
      */
     baseURL?: string;
 
@@ -11797,6 +11819,8 @@ export interface APIRequest {
      * - baseURL: `http://localhost:3000` and sending request to `/bar.html` results in `http://localhost:3000/bar.html`
      * - baseURL: `http://localhost:3000/foo/` and sending request to `./bar.html` results in
      *   `http://localhost:3000/foo/bar.html`
+     * - baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in
+     *   `http://localhost:3000/bar.html`
      */
     baseURL?: string;
 
@@ -12595,6 +12619,8 @@ export interface Browser extends EventEmitter {
      * constructor for building the corresponding URL. Examples:
      * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
      * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in `http://localhost:3000/foo/bar.html`
+     * - baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in
+     *   `http://localhost:3000/bar.html`
      */
     baseURL?: string;
 
@@ -13249,9 +13275,13 @@ export interface Dialog {
  * Download event is emitted once the download starts. Download path becomes available once download completes:
  *
  * ```js
+ * // Note that Promise.all prevents a race condition
+ * // between clicking and waiting for the download.
  * const [ download ] = await Promise.all([
- *   page.waitForEvent('download'), // wait for download to start
- *   page.click('a')
+ *   // It is important to call waitForEvent before click to set up waiting.
+ *   page.waitForEvent('download'),
+ *   // Triggers the download.
+ *   page.locator('text=Download file').click(),
  * ]);
  * // wait for download to complete
  * const path = await download.path();
@@ -13521,9 +13551,13 @@ export interface Electron {
  * [page.on('filechooser')](https://playwright.dev/docs/api/class-page#page-event-file-chooser) event.
  *
  * ```js
+ * // Note that Promise.all prevents a race condition
+ * // between clicking and waiting for the file chooser.
  * const [fileChooser] = await Promise.all([
+ *   // It is important to call waitForEvent before click to set up waiting.
  *   page.waitForEvent('filechooser'),
- *   page.click('upload')
+ *   // Opens the file chooser.
+ *   page.locator('text=Upload').click(),
  * ]);
  * await fileChooser.setFiles('myfile.pdf');
  * ```
@@ -15002,6 +15036,8 @@ export interface BrowserContextOptions {
    * constructor for building the corresponding URL. Examples:
    * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
    * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in `http://localhost:3000/foo/bar.html`
+   * - baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in
+   *   `http://localhost:3000/bar.html`
    */
   baseURL?: string;
 

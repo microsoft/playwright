@@ -79,6 +79,11 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
       for (const uid of this._sockets.keys())
         this._onSocksClosed(uid);
     });
+    (global as any)._playwrightInstance = this;
+  }
+
+  async _hideHighlight() {
+    await this._channel.hideHighlight();
   }
 
   _setSelectors(selectors: Selectors) {

@@ -58,6 +58,8 @@ class Reporter {
   onStepEnd(test, result, step) {
     if (step.error?.stack)
       step.error.stack = '<stack>';
+    if (step.error?.message.includes('getaddrinfo'))
+      step.error.message = '<message>';
     console.log('%%%% end', JSON.stringify(this.distillStep(step)));
   }
 }
@@ -258,12 +260,14 @@ test('should report api steps', async ({ runInlineTest }) => {
     `,
     'a.test.ts': `
       const { test } = pwt;
-      test('pass', async ({ page }) => {
+      test('pass', async ({ page, request }) => {
         await Promise.all([
           page.waitForNavigation(),
           page.goto('data:text/html,<button></button>'),
         ]);
         await page.click('button');
+        await page.request.get('http://localhost2').catch(() => {});
+        await request.get('http://localhost2').catch(() => {});
       });
 
       test.describe('suite', () => {
@@ -299,10 +303,16 @@ test('should report api steps', async ({ runInlineTest }) => {
     `%% end {\"title\":\"page.goto(data:text/html,<button></button>)\",\"category\":\"pw:api\"}`,
     `%% begin {\"title\":\"page.click(button)\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"page.click(button)\",\"category\":\"pw:api\"}`,
+    `%% begin {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api"}`,
+    `%% end {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api","error":{"message":"<message>","stack":"<stack>"}}`,
+    `%% begin {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api"}`,
+    `%% end {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api","error":{"message":"<message>","stack":"<stack>"}}`,
     `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+    `%% begin {\"title\":\"apiRequestContext.dispose\",\"category\":\"pw:api\"}`,
+    `%% end {\"title\":\"apiRequestContext.dispose\",\"category\":\"pw:api\"}`,
     `%% begin {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"browserContext.close\",\"category\":\"pw:api\"}]}`,
+    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"apiRequestContext.dispose\",\"category\":\"pw:api\"},{\"title\":\"browserContext.close\",\"category\":\"pw:api\"}]}`,
     `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
     `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
     `%% begin {\"title\":\"browser.newPage\",\"category\":\"pw:api\"}`,

@@ -16,7 +16,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type { LaunchOptions, BrowserContextOptions, Page, BrowserContext, BrowserType, Video, Browser } from 'playwright-core';
+import type { LaunchOptions, BrowserContextOptions, Page, BrowserContext, BrowserType, Video, Browser, APIRequestContext } from 'playwright-core';
 import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo } from '../types/test';
 import { rootTestType } from './testType';
 import { createGuid, removeFolders } from 'playwright-core/lib/utils/utils';
@@ -96,7 +96,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
   ignoreHTTPSErrors: [ undefined, { option: true } ],
   isMobile: [ undefined, { option: true } ],
   javaScriptEnabled: [ undefined, { option: true } ],
-  locale: [ undefined, { option: true } ],
+  locale: [ 'en-US', { option: true } ],
   offline: [ undefined, { option: true } ],
   permissions: [ undefined, { option: true } ],
   proxy: [ undefined, { option: true } ],
@@ -199,30 +199,15 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     const temporaryScreenshots: string[] = [];
     const createdContexts = new Set<BrowserContext>();
 
-    const onDidCreateContext = async (context: BrowserContext) => {
-      createdContexts.add(context);
-      context.setDefaultTimeout(testInfo.timeout === 0 ? 0 : (actionTimeout || 0));
-      context.setDefaultNavigationTimeout(testInfo.timeout === 0 ? 0 : (navigationTimeout || actionTimeout || 0));
-      if (captureTrace) {
-        const title = [path.relative(testInfo.project.testDir, testInfo.file) + ':' + testInfo.line, ...testInfo.titlePath.slice(1)].join(' › ');
-        if (!(context.tracing as any)[kTracingStarted]) {
-          await context.tracing.start({ ...traceOptions, title });
-          (context.tracing as any)[kTracingStarted] = true;
-        } else {
-          await context.tracing.startChunk({ title });
-        }
-      } else {
-        (context.tracing as any)[kTracingStarted] = false;
-        await context.tracing.stop();
-      }
-      (context as any)._instrumentation.addListener({
+    const createInstrumentationListener = (context?: BrowserContext) => {
+      return {
         onApiCallBegin: (apiCall: string, stackTrace: ParsedStackTrace | null, userData: any) => {
           if (apiCall.startsWith('expect.'))
             return { userObject: null };
           if (apiCall === 'page.pause') {
             testInfo.setTimeout(0);
-            context.setDefaultNavigationTimeout(0);
-            context.setDefaultTimeout(0);
+            context?.setDefaultNavigationTimeout(0);
+            context?.setDefaultTimeout(0);
           }
           const testInfoImpl = testInfo as any;
           const step = testInfoImpl._addStep({
@@ -238,7 +223,31 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
           const step = userData.userObject;
           step?.complete(error);
         },
-      });
+      };
+    };
+
+    const onDidCreateBrowserContext = async (context: BrowserContext) => {
+      createdContexts.add(context);
+      context.setDefaultTimeout(testInfo.timeout === 0 ? 0 : (actionTimeout || 0));
+      context.setDefaultNavigationTimeout(testInfo.timeout === 0 ? 0 : (navigationTimeout || actionTimeout || 0));
+      if (captureTrace) {
+        const title = [path.relative(testInfo.project.testDir, testInfo.file) + ':' + testInfo.line, ...testInfo.titlePath.slice(1)].join(' › ');
+        if (!(context.tracing as any)[kTracingStarted]) {
+          await context.tracing.start({ ...traceOptions, title });
+          (context.tracing as any)[kTracingStarted] = true;
+        } else {
+          await context.tracing.startChunk({ title });
+        }
+      } else {
+        (context.tracing as any)[kTracingStarted] = false;
+        await context.tracing.stop();
+      }
+      const listener = createInstrumentationListener(context);
+      (context as any)._instrumentation.addListener(listener);
+      (context.request as any)._instrumentation.addListener(listener);
+    };
+    const onDidCreateRequestContext = async (context: APIRequestContext) => {
+      (context as any)._instrumentation.addListener(createInstrumentationListener());
     };
 
     const startedCollectingArtifacts = Symbol('startedCollectingArtifacts');
@@ -265,12 +274,13 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
 
     // 1. Setup instrumentation and process existing contexts.
     for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit]) {
-      (browserType as any)._onDidCreateContext = onDidCreateContext;
+      (browserType as any)._onDidCreateContext = onDidCreateBrowserContext;
       (browserType as any)._onWillCloseContext = onWillCloseContext;
       (browserType as any)._defaultContextOptions = _combinedContextOptions;
       const existingContexts = Array.from((browserType as any)._contexts) as BrowserContext[];
-      await Promise.all(existingContexts.map(onDidCreateContext));
+      await Promise.all(existingContexts.map(onDidCreateBrowserContext));
     }
+    (playwright.request as any)._onDidCreateContext = onDidCreateRequestContext;
 
     // 2. Run the test.
     await use();
@@ -305,6 +315,9 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       (browserType as any)._defaultContextOptions = undefined;
     }
     leftoverContexts.forEach(context => (context as any)._instrumentation.removeAllListeners());
+    (playwright.request as any)._onDidCreateContext = undefined;
+    for (const context of (playwright.request as any)._contexts)
+      context._instrumentation.removeAllListeners();
 
     // 5. Collect artifacts from any non-closed contexts.
     await Promise.all(leftoverContexts.map(async context => {

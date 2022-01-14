@@ -73,6 +73,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
           headers: { 'Content-Type': 'application/json' }
         });
       } catch (error: unknown) {
+        // eslint-disable-next-line no-console
         console.error(error);
         const traceFileName = url.searchParams.get('traceFileName')!;
         return new Response(JSON.stringify({

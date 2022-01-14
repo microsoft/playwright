@@ -85,11 +85,6 @@ export interface Suite {
    */
   tests: TestCase[];
   /**
-   * `beforeAll` and `afterAll` hooks in the suite. Note that other hooks such as `beforeEach` and `afterEach` are reported
-   * as the steps within the test.
-   */
-  hooks: TestCase[];
-  /**
    * Returns a list of titles from the root down to this suite.
    */
   titlePath(): string[];

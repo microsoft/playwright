@@ -190,7 +190,7 @@ class RawReporter {
       location,
       suites: suite.suites.map(s => this._serializeSuite(s)),
       tests: suite.tests.map(t => this._serializeTest(t, fileId)),
-      hooks: suite.hooks.map(t => this._serializeTest(t, fileId)),
+      hooks: [],
     };
   }
 

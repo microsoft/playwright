@@ -1140,6 +1140,25 @@ export class Frame extends SdkObject {
     }, undefined, options);
   }
 
+  async highlight(selector: string) {
+    const pair = await this.resolveFrameForSelectorNoWait(selector);
+    if (!pair)
+      return;
+    const context = await this._utilityContext();
+    const injectedScript = await context.injectedScript();
+    return await injectedScript.evaluate((injected, { parsed }) => {
+      return injected.highlight(parsed);
+    }, { parsed: pair.info.parsed });
+  }
+
+  async hideHighlight() {
+    const context = await this._utilityContext();
+    const injectedScript = await context.injectedScript();
+    return await injectedScript.evaluate(injected => {
+      return injected.hideHighlight();
+    });
+  }
+
   private async _elementState(metadata: CallMetadata, selector: string, state: ElementStateWithoutStable, options: types.QueryOnSelectorOptions = {}): Promise<boolean> {
     const result = await this._scheduleRerunnableTask(metadata, selector, (progress, element, data) => {
       const injected = progress.injectedScript;

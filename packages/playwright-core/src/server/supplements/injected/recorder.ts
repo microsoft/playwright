@@ -19,6 +19,7 @@ import type InjectedScript from '../../injected/injectedScript';
 import { generateSelector, querySelector } from '../../injected/selectorGenerator';
 import type { Point } from '../../../common/types';
 import type { UIState } from '../recorder/recorderTypes';
+import { Highlight } from '../../injected/highlight';
 
 
 declare module globalThis {
@@ -32,11 +33,6 @@ declare module globalThis {
 export class Recorder {
   private _injectedScript: InjectedScript;
   private _performingAction = false;
-  private _outerGlassPaneElement: HTMLElement;
-  private _glassPaneShadow: ShadowRoot;
-  private _innerGlassPaneElement: HTMLElement;
-  private _highlightElements: HTMLElement[] = [];
-  private _tooltipElement: HTMLElement;
   private _listeners: (() => void)[] = [];
   private _hoveredModel: HighlightModel | null = null;
   private _hoveredElement: HTMLElement | null = null;
@@ -44,76 +40,15 @@ export class Recorder {
   private _expectProgrammaticKeyUp = false;
   private _pollRecorderModeTimer: NodeJS.Timeout | undefined;
   private _mode: 'none' | 'inspecting' | 'recording' = 'none';
-  private _actionPointElement: HTMLElement;
   private _actionPoint: Point | undefined;
   private _actionSelector: string | undefined;
   private _params: { isUnderTest: boolean; };
+  private _highlight: Highlight;
 
   constructor(injectedScript: InjectedScript, params: { isUnderTest: boolean }) {
     this._params = params;
     this._injectedScript = injectedScript;
-    this._outerGlassPaneElement = document.createElement('x-pw-glass');
-    this._outerGlassPaneElement.style.position = 'fixed';
-    this._outerGlassPaneElement.style.top = '0';
-    this._outerGlassPaneElement.style.right = '0';
-    this._outerGlassPaneElement.style.bottom = '0';
-    this._outerGlassPaneElement.style.left = '0';
-    this._outerGlassPaneElement.style.zIndex = '2147483647';
-    this._outerGlassPaneElement.style.pointerEvents = 'none';
-    this._outerGlassPaneElement.style.display = 'flex';
-
-    this._tooltipElement = document.createElement('x-pw-tooltip');
-    this._actionPointElement = document.createElement('x-pw-action-point');
-    this._actionPointElement.setAttribute('hidden', 'true');
-
-    this._innerGlassPaneElement = document.createElement('x-pw-glass-inner');
-    this._innerGlassPaneElement.style.flex = 'auto';
-    this._innerGlassPaneElement.appendChild(this._tooltipElement);
-
-    // Use a closed shadow root to prevent selectors matching our internal previews.
-    this._glassPaneShadow = this._outerGlassPaneElement.attachShadow({ mode: this._params.isUnderTest ? 'open' : 'closed' });
-    this._glassPaneShadow.appendChild(this._innerGlassPaneElement);
-    this._glassPaneShadow.appendChild(this._actionPointElement);
-    const styleElement = document.createElement('style');
-    styleElement.textContent = `
-        x-pw-tooltip {
-          align-items: center;
-          backdrop-filter: blur(5px);
-          background-color: rgba(0, 0, 0, 0.7);
-          border-radius: 2px;
-          box-shadow: rgba(0, 0, 0, 0.1) 0px 3.6px 3.7px,
-                      rgba(0, 0, 0, 0.15) 0px 12.1px 12.3px,
-                      rgba(0, 0, 0, 0.1) 0px -2px 4px,
-                      rgba(0, 0, 0, 0.15) 0px -12.1px 24px,
-                      rgba(0, 0, 0, 0.25) 0px 54px 55px;
-          color: rgb(204, 204, 204);
-          display: none;
-          font-family: 'Dank Mono', 'Operator Mono', Inconsolata, 'Fira Mono',
-                       'SF Mono', Monaco, 'Droid Sans Mono', 'Source Code Pro', monospace;
-          font-size: 12.8px;
-          font-weight: normal;
-          left: 0;
-          line-height: 1.5;
-          max-width: 600px;
-          padding: 3.2px 5.12px 3.2px;
-          position: absolute;
-          top: 0;
-        }
-        x-pw-action-point {
-          position: absolute;
-          width: 20px;
-          height: 20px;
-          background: red;
-          border-radius: 10px;
-          pointer-events: none;
-          margin: -10px 0 0 -10px;
-          z-index: 2;
-        }
-        *[hidden] {
-          display: none !important;
-        }
-    `;
-    this._glassPaneShadow.appendChild(styleElement);
+    this._highlight = new Highlight(params.isUnderTest);
 
     this._refreshListenersIfNeeded();
     injectedScript.onGlobalListenersRemoved.add(() => this._refreshListenersIfNeeded());
@@ -123,12 +58,12 @@ export class Recorder {
     };
     globalThis._playwrightRefreshOverlay();
     if (params.isUnderTest)
-      console.error('Recorder script ready for test');
+      console.error('Recorder script ready for test'); // eslint-disable-line no-console
   }
 
   private _refreshListenersIfNeeded() {
     // Ensure we are attached to the current document, and we are on top (last element);
-    if (this._outerGlassPaneElement.parentElement === document.documentElement && !this._outerGlassPaneElement.nextElementSibling)
+    if (this._highlight.isInstalled())
       return;
     removeEventListeners(this._listeners);
     this._listeners = [
@@ -144,11 +79,11 @@ export class Recorder {
       addEventListener(document, 'focus', () => this._onFocus(), true),
       addEventListener(document, 'scroll', () => {
         this._hoveredModel = null;
-        this._actionPointElement.hidden = true;
+        this._highlight.hideActionPoint();
         this._updateHighlight();
       }, true),
     ];
-    document.documentElement.appendChild(this._outerGlassPaneElement);
+    this._highlight.install();
   }
 
   private async _pollRecorderMode() {
@@ -171,13 +106,10 @@ export class Recorder {
     } else if (!actionPoint && !this._actionPoint) {
       // All good.
     } else {
-      if (actionPoint) {
-        this._actionPointElement.style.top = actionPoint.y + 'px';
-        this._actionPointElement.style.left = actionPoint.x + 'px';
-        this._actionPointElement.hidden = false;
-      } else {
-        this._actionPointElement.hidden = true;
-      }
+      if (actionPoint)
+        this._highlight.showActionPoint(actionPoint.x, actionPoint.y);
+      else
+        this._highlight.hideActionPoint();
       this._actionPoint = actionPoint;
     }
 
@@ -308,7 +240,7 @@ export class Recorder {
     const result = activeElement ? generateSelector(this._injectedScript, activeElement) : null;
     this._activeModel = result && result.selector ? result : null;
     if (this._params.isUnderTest)
-      console.error('Highlight updated for test: ' + (result ? result.selector : null));
+      console.error('Highlight updated for test: ' + (result ? result.selector : null)); // eslint-disable-line no-console
   }
 
   private _updateModelForHoveredElement() {
@@ -324,80 +256,13 @@ export class Recorder {
     this._hoveredModel = selector ? { selector, elements } : null;
     this._updateHighlight();
     if (this._params.isUnderTest)
-      console.error('Highlight updated for test: ' + selector);
+      console.error('Highlight updated for test: ' + selector); // eslint-disable-line no-console
   }
 
   private _updateHighlight() {
     const elements = this._hoveredModel ? this._hoveredModel.elements : [];
-
-    // Code below should trigger one layout and leave with the
-    // destroyed layout.
-
-    // Destroy the layout
-    this._tooltipElement.textContent = this._hoveredModel ? this._hoveredModel.selector : '';
-    this._tooltipElement.style.top = '0';
-    this._tooltipElement.style.left = '0';
-    this._tooltipElement.style.display = 'flex';
-
-    // Trigger layout.
-    const boxes = elements.map(e => e.getBoundingClientRect());
-    const tooltipWidth = this._tooltipElement.offsetWidth;
-    const tooltipHeight = this._tooltipElement.offsetHeight;
-    const totalWidth = this._innerGlassPaneElement.offsetWidth;
-    const totalHeight = this._innerGlassPaneElement.offsetHeight;
-
-    // Destroy the layout again.
-    if (boxes.length) {
-      const primaryBox = boxes[0];
-      let anchorLeft = primaryBox.left;
-      if (anchorLeft + tooltipWidth > totalWidth - 5)
-        anchorLeft = totalWidth - tooltipWidth - 5;
-      let anchorTop = primaryBox.bottom + 5;
-      if (anchorTop + tooltipHeight > totalHeight - 5) {
-        // If can't fit below, either position above...
-        if (primaryBox.top > tooltipHeight + 5) {
-          anchorTop = primaryBox.top - tooltipHeight - 5;
-        } else {
-          // Or on top in case of large element
-          anchorTop = totalHeight - 5 - tooltipHeight;
-        }
-      }
-      this._tooltipElement.style.top = anchorTop + 'px';
-      this._tooltipElement.style.left = anchorLeft + 'px';
-    } else {
-      this._tooltipElement.style.display = 'none';
-    }
-
-    const pool = this._highlightElements;
-    this._highlightElements = [];
-    for (const box of boxes) {
-      const highlightElement = pool.length ? pool.shift()! : this._createHighlightElement();
-      const color = this._mode === 'recording' ? '#dc6f6f7f' : '#6fa8dc7f';
-      highlightElement.style.backgroundColor = this._highlightElements.length ? '#f6b26b7f' : color;
-      highlightElement.style.left = box.x + 'px';
-      highlightElement.style.top = box.y + 'px';
-      highlightElement.style.width = box.width + 'px';
-      highlightElement.style.height = box.height + 'px';
-      highlightElement.style.display = 'block';
-      this._highlightElements.push(highlightElement);
-    }
-
-    for (const highlightElement of pool) {
-      highlightElement.style.display = 'none';
-      this._highlightElements.push(highlightElement);
-    }
-  }
-
-  private _createHighlightElement(): HTMLElement {
-    const highlightElement = document.createElement('x-pw-highlight');
-    highlightElement.style.position = 'absolute';
-    highlightElement.style.top = '0';
-    highlightElement.style.left = '0';
-    highlightElement.style.width = '0';
-    highlightElement.style.height = '0';
-    highlightElement.style.boxSizing = 'border-box';
-    this._glassPaneShadow.appendChild(highlightElement);
-    return highlightElement;
+    const selector = this._hoveredModel ? this._hoveredModel.selector : '';
+    this._highlight.updateHighlight(elements, selector, this._mode === 'recording');
   }
 
   private _onInput(event: Event) {
@@ -535,7 +400,7 @@ export class Recorder {
     if (this._params.isUnderTest) {
       // Serialize all to string as we cannot attribute console message to isolated world
       // in Firefox.
-      console.error('Action performed for test: ' + JSON.stringify({
+      console.error('Action performed for test: ' + JSON.stringify({ // eslint-disable-line no-console
         hovered: this._hoveredModel ? this._hoveredModel.selector : null,
         active: this._activeModel ? this._activeModel.selector : null,
       }));

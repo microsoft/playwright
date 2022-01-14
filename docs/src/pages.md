@@ -241,10 +241,13 @@ If the page opens a pop-up (e.g. pages opened by `target="_blank"` links), you c
 This event is emitted in addition to the `browserContext.on('page')` event, but only for popups relevant to this page.
 
 ```js
-// Get popup after a specific action (e.g., click)
+// Note that Promise.all prevents a race condition
+// between clicking and waiting for the popup.
 const [popup] = await Promise.all([
+  // It is important to call waitForEvent before click to set up waiting.
   page.waitForEvent('popup'),
-  page.click('#open')
+  // Opens popup.
+  page.locator('#open').click(),
 ]);
 await popup.waitForLoadState();
 console.log(await popup.title());
