@@ -5,6 +5,10 @@ on:
     branches:
       - main
       - release-*
+  pull_request:
+    branches:
+      - main
+      - release-*
 
 env:
   # Force terminal colors. @see https://www.npmjs.com/package/colors
@@ -12,36 +16,6 @@ env:
   FLAKINESS_CONNECTION_STRING: ${{ secrets.FLAKINESS_CONNECTION_STRING }}
 
 jobs:
-  video_linux:
-    name: "Video Linux"
-    strategy:
-      fail-fast: false
-      matrix:
-        browser: [chromium, firefox, webkit]
-    runs-on: ubuntu-20.04
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
-      with:
-        node-version: 12
-    - run: npm i -g npm@8
-    - run: npm ci
-      env:
-        DEBUG: pw:install
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}
-      env:
-        PWTEST_VIDEO: 1
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
-    - uses: actions/upload-artifact@v1
-      if: ${{ always() }}
-      with:
-        name: video-${{ matrix.browser }}-linux-test-results
-        path: test-results
-
   test_android:
     name: Android Emulator (shard ${{ matrix.shard }})
     strategy:
@@ -64,6 +38,8 @@ jobs:
       run: utils/avd_recreate.sh
     - name: Start Android Emulator
       run: utils/avd_start.sh
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
     - name: Run tests
       run: npm run atest -- --shard=${{ matrix.shard }}/2
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
