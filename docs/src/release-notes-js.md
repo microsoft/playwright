@@ -11,7 +11,12 @@ title: "Release notes"
 
 - [`method: Locator.dragTo`]
 - [`expect(locator).toBeChecked({ checked })`](./api/class-locatorassertions#locator-assertions-to-be-checked)
-- Each locator can now be optionally filtered by the text it contains: [`locator('button', { hasText: 'Submit' })`](./api/class-locator#locator-locator-option-has-text)
+- Each locator can now be optionally filtered by the text it contains:
+    ```js
+    await page.locator('li', { hasText: 'my item' }).locator('button').click();
+    ```
+    Read more in [locator documentation](./api/class-locator#locator-locator-option-has-text)
+
 
 ### Testing API improvements
 
