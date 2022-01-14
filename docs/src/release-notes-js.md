@@ -30,7 +30,8 @@ PW_EXPERIMENTAL_TS_ESM=1 npx playwright test
 
 ## Testing Scenarios Cookbook
 
-We now have a testing scenarios cookbook! Check out [aka.ms/playwright-examples](https://aka.ms/playwright-examples)
+We now have a testing scenarios cookbook! Check out [aka.ms/playwright-examples](https://aka.ms/playwright-examples).
+
 Feel free to [file an issue](https://github.com/microsoft/playwright-examples/issues/new?assignees=MarcusFelling&labels=testing-scenario-idea&template=testing-scenario-idea-template.md&title=%5BIdea+for+testing+scenario%5D) to that repo if you have an idea for a new example.
 
 ## Create Playwright
