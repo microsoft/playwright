@@ -19,7 +19,7 @@ import extract from 'extract-zip';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { existsAsync, download } from './utils';
+import { existsAsync, download, getUserAgent } from './utils';
 import { debugLogger } from './debugLogger';
 
 export async function downloadBrowserWithProgressBar(title: string, browserDirectory: string, executablePath: string, downloadURL: string, downloadFileName: string): Promise<boolean> {
@@ -35,7 +35,8 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
   try {
     await download(url, zipPath, {
       progressBarName,
-      log: debugLogger.log.bind(debugLogger, 'install')
+      log: debugLogger.log.bind(debugLogger, 'install'),
+      userAgent: getUserAgent(),
     });
     debugLogger.log('install', `extracting archive`);
     debugLogger.log('install', `-- zip: ${zipPath}`);
