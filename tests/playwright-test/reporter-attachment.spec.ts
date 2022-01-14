@@ -143,3 +143,35 @@ test(`testInfo.attach success in fixture`, async ({ runInlineTest }) => {
   expect(result.failed).toBe(1);
   expect(stripAscii(result.output)).toContain('attachment #1: name (text/plain)');
 });
+
+test(`testInfo.attach allow empty string body`, async ({ runInlineTest }) => {
+  test.fail(true, `Currently throws TypeError: Cannot read property 'toString' of undefined: https://github.com/microsoft/playwright/issues/11413`);
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('success', async ({}, testInfo) => {
+        await testInfo.attach('name', { body: '', contentType: 'text/plain' });
+        expect(0).toBe(1);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(stripAscii(result.output)).toContain('attachment #1: name (text/plain)');
+});
+
+test(`testInfo.attach allow empty buffer body`, async ({ runInlineTest }) => {
+  test.fail(true, `Currently throws TypeError: Cannot read property 'toString' of undefined: https://github.com/microsoft/playwright/issues/11413`);
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('success', async ({}, testInfo) => {
+        await testInfo.attach('name', { body: Buffer.from(''), contentType: 'text/plain' });
+        expect(0).toBe(1);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(stripAscii(result.output)).toContain('attachment #1: name (text/plain)');
+});
