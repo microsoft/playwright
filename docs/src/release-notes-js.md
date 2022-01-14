@@ -5,6 +5,66 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.18
+
+### Locator Improvements
+
+- [`method: Locator.dragTo`]
+- [`expect(locator).toBeChecked({ checked })`](./api/class-locatorassertions#locator-assertions-to-be-checked)
+- Each locator can now be optionally filtered by the text it contains: [`locator('button', { hasText: 'Submit' })`](./api/class-locator#locator-locator-option-has-text)
+
+### Testing API improvements
+
+- [`expect(response).toBeOK()`](./api/class-apiresponseassertions)
+- [`testInfo.attach()`](./api/class-testinfo#test-info-attach)
+- [`test.info()`](./api/class-test#test-info)
+
+### Improved TypeScript Support
+
+1. Playwright Test now respects `tsconfig.json`'s [`baseUrl`](https://www.typescriptlang.org/tsconfig#baseUrl) and [`paths`](https://www.typescriptlang.org/tsconfig#paths), so you can use aliases
+1. There is a new environment variable `PW_EXPERIMENTAL_TS_ESM` that allows importing ESM modules in your TS code, without the need for the compile step. Don't forget the `.js` suffix when you are importing your esm modules. Run your tests as follows:
+
+```bash
+npm i --save-dev @playwright/test@1.18.0-rc1
+PW_EXPERIMENTAL_TS_ESM=1 npx playwright test
+```
+
+### Testing Scenarios Cookbook
+
+We now have a testing scenarios cookbook! Check out http://aka.ms/playwright/samples
+Feel free to file an issue to that repo if something is missing.
+
+### Create Playwright
+
+The `npm init playwright` command is now generally available for your use:
+
+```sh
+# Run from your project's root directory
+npm init playwright
+# Or create a new project
+npm init playwright new-project
+```
+
+This will create a Playwright Test configuration file, optionally add examples, a GitHub Action workflow and a first test `example.spec.ts`.
+
+### New APIs & changes
+
+- new [`testCase.repeatEachIndex`](./api/class-testcase#test-case-repeat-each-index) API
+- new [option fixtures](./test-fixtures#fixtures-options)
+- [`acceptDownloads`](./api/class-browser#browser-new-context-option-accept-downloads) option now defaults to `true`
+
+### Browser Versions
+
+- Chromium 99.0.4812.0
+- Mozilla Firefox 95.0
+- WebKit 15.4
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 97
+- Microsoft Edge 97
+
+
 ## Version 1.17
 
 ### Frame Locators
