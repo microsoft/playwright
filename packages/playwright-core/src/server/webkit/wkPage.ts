@@ -75,6 +75,7 @@ export class WKPage implements PageDelegate {
   private _nextWindowOpenPopupFeatures?: string[];
   private _recordingVideoFile: string | null = null;
   private _screencastGeneration: number = 0;
+  private _interceptingFileChooser = false;
 
   constructor(browserContext: WKBrowserContext, pageProxySession: WKSession, opener: WKPage | null) {
     this._pageProxySession = pageProxySession;
@@ -205,6 +206,8 @@ export class WKPage implements PageDelegate {
       promises.push(session.send('Page.setTimeZone', { timeZone: contextOptions.timezoneId }).
           catch(e => { throw new Error(`Invalid timezone ID: ${contextOptions.timezoneId}`); }));
     }
+    if (this._interceptingFileChooser)
+      promises.push(session.send('Page.setInterceptFileChooserDialog', { enabled: true }));
     promises.push(session.send('Page.overrideSetting', { setting: 'DeviceOrientationEventEnabled' as any, value: contextOptions.isMobile }));
     promises.push(session.send('Page.overrideSetting', { setting: 'FullScreenEnabled' as any, value: !contextOptions.isMobile }));
     promises.push(session.send('Page.overrideSetting', { setting: 'NotificationsEnabled' as any, value: !contextOptions.isMobile }));
@@ -685,6 +688,7 @@ export class WKPage implements PageDelegate {
   }
 
   async setFileChooserIntercepted(enabled: boolean) {
+    this._interceptingFileChooser = enabled;
     await this._session.send('Page.setInterceptFileChooserDialog', { enabled }).catch(e => {}); // target can be closed.
   }
 

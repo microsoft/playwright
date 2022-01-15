@@ -400,7 +400,7 @@ it('should work for "webkitdirectory"', async ({ page, server }) => {
 
 it('should emit event after navigation', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11375' });
-  it.fixme(browserName === 'chromium' || browserName === 'webkit');
+  it.fixme(browserName === 'chromium');
 
   const logs = [];
   page.on('filechooser', () => logs.push('filechooser'));
