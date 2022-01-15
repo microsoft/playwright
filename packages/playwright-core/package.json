@@ -24,6 +24,7 @@
     "./lib/grid/gridServer": "./lib/grid/gridServer.js",
     "./lib/grid/gridClient": "./lib/grid/gridClient.js",
     "./lib/grid/dockerGridFactory": "./lib/grid/dockerGridFactory.js",
+    "./lib/outofprocess": "./lib/outofprocess.js",
     "./lib/utils/async": "./lib/utils/async.js",
     "./lib/utils/httpServer": "./lib/utils/httpServer.js",
     "./lib/utils/multimap": "./lib/utils/multimap.js",
