@@ -221,9 +221,15 @@ export class Runner {
     if (config.globalSetup && !list)
       globalSetupResult = await (await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup'))(this._loader.fullConfig());
     try {
+      // 1. Add all tests.
       const preprocessRoot = new Suite('');
       for (const file of allTestFiles)
         preprocessRoot._addSuite(await this._loader.loadTestFile(file));
+
+      // 2. Filter tests to respect column filter.
+      filterByFocusedLine(preprocessRoot, testFileReFilters);
+
+      // 3. Complain about only.
       if (config.forbidOnly) {
         const onlyTestsAndSuites = preprocessRoot._getOnlyItems();
         if (onlyTestsAndSuites.length > 0) {
@@ -231,13 +237,16 @@ export class Runner {
           return { status: 'failed' };
         }
       }
+
+      // 4. Filter only
+      filterOnly(preprocessRoot);
+
+      // 5. Complain about clashing.
       const clashingTests = getClashingTestsPerSuite(preprocessRoot);
       if (clashingTests.size > 0) {
         this._reporter.onError?.(createDuplicateTitlesError(config, clashingTests));
         return { status: 'failed' };
       }
-      filterOnly(preprocessRoot);
-      filterByFocusedLine(preprocessRoot, testFileReFilters);
 
       const fileSuites = new Map<string, Suite>();
       for (const fileSuite of preprocessRoot.suites)
@@ -305,7 +314,7 @@ export class Runner {
         }
 
         testGroups = shardGroups;
-        filterSuite(rootSuite, () => false, test => shardTests.has(test));
+        filterSuiteWithOnlySemantics(rootSuite, () => false, test => shardTests.has(test));
         total = rootSuite.allTests().length;
       }
       (config as any).__testGroupsCount = testGroups.length;
@@ -374,21 +383,27 @@ export class Runner {
 function filterOnly(suite: Suite) {
   const suiteFilter = (suite: Suite) => suite._only;
   const testFilter = (test: TestCase) => test._only;
-  return filterSuite(suite, suiteFilter, testFilter);
+  return filterSuiteWithOnlySemantics(suite, suiteFilter, testFilter);
 }
 
 function filterByFocusedLine(suite: Suite, focusedTestFileLines: FilePatternFilter[]) {
+  const filterWithLine = !!focusedTestFileLines.find(f => f.line !== null);
+  if (!filterWithLine)
+    return;
+
   const testFileLineMatches = (testFileName: string, testLine: number) => focusedTestFileLines.some(({ re, line }) => {
     re.lastIndex = 0;
     return re.test(testFileName) && (line === testLine || line === null);
   });
-  const suiteFilter = (suite: Suite) => !!suite.location && testFileLineMatches(suite.location.file, suite.location.line);
+  const suiteFilter = (suite: Suite) => {
+    return !!suite.location && testFileLineMatches(suite.location.file, suite.location.line);
+  };
   const testFilter = (test: TestCase) => testFileLineMatches(test.location.file, test.location.line);
   return filterSuite(suite, suiteFilter, testFilter);
 }
 
-function filterSuite(suite: Suite, suiteFilter: (suites: Suite) => boolean, testFilter: (test: TestCase) => boolean) {
-  const onlySuites = suite.suites.filter(child => filterSuite(child, suiteFilter, testFilter) || suiteFilter(child));
+function filterSuiteWithOnlySemantics(suite: Suite, suiteFilter: (suites: Suite) => boolean, testFilter: (test: TestCase) => boolean) {
+  const onlySuites = suite.suites.filter(child => filterSuiteWithOnlySemantics(child, suiteFilter, testFilter) || suiteFilter(child));
   const onlyTests = suite.tests.filter(testFilter);
   const onlyEntries = new Set([...onlySuites, ...onlyTests]);
   if (onlyEntries.size) {
@@ -398,6 +413,16 @@ function filterSuite(suite: Suite, suiteFilter: (suites: Suite) => boolean, test
     return true;
   }
   return false;
+}
+
+function filterSuite(suite: Suite, suiteFilter: (suites: Suite) => boolean, testFilter: (test: TestCase) => boolean) {
+  for (const child of suite.suites) {
+    if (!suiteFilter(child))
+      filterSuite(child, suiteFilter, testFilter);
+  }
+  suite.tests = suite.tests.filter(testFilter);
+  const entries = new Set([...suite.suites, ...suite.tests]);
+  suite._entries = suite._entries.filter(e => entries.has(e)); // Preserve the order.
 }
 
 async function collectFiles(testDir: string): Promise<string[]> {
