@@ -18,6 +18,7 @@ import * as channels from '../protocol/channels';
 import { APIRequestContext } from '../server/fetch';
 import { CallMetadata } from '../server/instrumentation';
 import { Request, Response, Route, WebSocket } from '../server/network';
+import { isString } from '../utils/utils';
 import { Dispatcher, DispatcherScope, existingDispatcher, lookupNullableDispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 
@@ -122,7 +123,7 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteChannel> im
       url: params.url,
       method: params.method,
       headers: params.headers,
-      postData: params.postData ? Buffer.from(params.postData, 'base64') : undefined,
+      postData: isString(params.postData) ? Buffer.from(params.postData, 'base64') : undefined,
     });
   }
 

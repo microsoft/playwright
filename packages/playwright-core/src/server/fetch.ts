@@ -25,7 +25,7 @@ import zlib from 'zlib';
 import { HTTPCredentials } from '../../types/types';
 import * as channels from '../protocol/channels';
 import { TimeoutSettings } from '../utils/timeoutSettings';
-import { assert, createGuid, getUserAgent, monotonicTime } from '../utils/utils';
+import { assert, createGuid, getUserAgent, isString, monotonicTime } from '../utils/utils';
 import { BrowserContext } from './browserContext';
 import { CookieStore, domainMatches } from './cookieStore';
 import { MultipartFormData } from './formData';
@@ -563,7 +563,7 @@ function isJsonParsable(value: any) {
 
 function serializePostData(params: channels.APIRequestContextFetchParams, headers: { [name: string]: string }): Buffer | undefined {
   assert((params.postData ? 1 : 0) + (params.jsonData ? 1 : 0) + (params.formData ? 1 : 0) + (params.multipartData ? 1 : 0) <= 1, `Only one of 'data', 'form' or 'multipart' can be specified`);
-  if (params.jsonData) {
+  if (isString(params.jsonData)) {
     const json = isJsonParsable(params.jsonData) ? params.jsonData : JSON.stringify(params.jsonData);
     headers['content-type'] ??= 'application/json';
     return Buffer.from(json, 'utf8');
@@ -583,7 +583,7 @@ function serializePostData(params: channels.APIRequestContextFetchParams, header
     }
     headers['content-type'] ??= formData.contentTypeHeader();
     return formData.finish();
-  } else if (params.postData) {
+  } else if (isString(params.postData)) {
     headers['content-type'] ??= 'application/octet-stream';
     return Buffer.from(params.postData, 'base64');
   }

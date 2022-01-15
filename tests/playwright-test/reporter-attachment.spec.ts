@@ -104,7 +104,6 @@ test(`testInfo.attach errors`, async ({ runInlineTest }) => {
 });
 
 test(`testInfo.attach errors with empty path`, async ({ runInlineTest }) => {
-  test.fail(true, `We're ending up in the inline body branch due to falseyness of empty string as path making the exit clean, but since '' is not an valid file path, we should probably error. (Here's the branch that's actually getting executed right now: https://github.com/microsoft/playwright/blob/1b0c350d0a1c22faa4329c3897f92cd8569b82e2/packages/playwright-test/src/workerRunner.ts#L278)`);
   const result = await runInlineTest({
     'a.test.js': `
       const { test } = pwt;
@@ -113,6 +112,7 @@ test(`testInfo.attach errors with empty path`, async ({ runInlineTest }) => {
       });
     `,
   }, { reporter: 'line', workers: 1 });
+  expect(stripAscii(result.output)).toMatch(/Error: ENOENT: no such file or directory, copyfile ''/);
   expect(result.exitCode).toBe(1);
 });
 
