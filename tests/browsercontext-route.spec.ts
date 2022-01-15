@@ -212,3 +212,70 @@ it('should support the times parameter with route matching', async ({ context, p
   await page.goto(server.EMPTY_PAGE);
   expect(intercepted).toHaveLength(1);
 });
+
+it(`should overwrite post body`, async ({ context, server, page }) => {
+  server.setRoute('/load', (req, res) => {
+    res.write(`
+      <script>
+        (async () => {
+          await Promise.all([
+            fetch('/empty.html', {
+              method: 'POST',
+              body: 'original',
+            }),
+          ]);
+        })()
+      </script>
+    `);
+    res.end();
+  });
+
+  await context.route('**/empty.html', route => {
+    route.continue({
+      postData: 'replaced',
+    });
+  });
+
+  const [req] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    page.goto(server.PREFIX + '/load'),
+  ]);
+
+  const body = (await req.postBody).toString();
+  expect(body).not.toBe('original');
+  expect(body).toBe('replaced');
+});
+
+it(`should overwrite post body with empty string`, async ({ context, server, page }) => {
+  it.fail(true, 'Search for "postData ?" for likely fix locations');
+  server.setRoute('/load', (req, res) => {
+    res.write(`
+      <script>
+        (async () => {
+          await Promise.all([
+            fetch('/empty.html', {
+              method: 'POST',
+              body: 'original',
+            }),
+          ]);
+        })()
+      </script>
+    `);
+    res.end();
+  });
+
+  await context.route('**/empty.html', route => {
+    route.continue({
+      postData: '',
+    });
+  });
+
+  const [req] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    page.goto(server.PREFIX + '/load'),
+  ]);
+
+  const body = (await req.postBody).toString();
+  expect(body).not.toBe('original');
+  expect(body).toBe('');
+});

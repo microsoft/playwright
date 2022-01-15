@@ -266,16 +266,21 @@ it('should remove content-length from reidrected post requests', async ({ playwr
 });
 
 
-const serialization = [
+const serialization: [string, any][] = [
   ['object', { 'foo': 'bar' }],
   ['array', ['foo', 'bar', 2021]],
   ['string', 'foo'],
+  ['string (falsey)', ''],
   ['bool', true],
+  ['bool (false)', false],
   ['number', 2021],
+  ['number (falsey)', 0],
+  ['null', null],
 ];
 for (const [type, value] of serialization) {
   const stringifiedValue = JSON.stringify(value);
   it(`should json stringify ${type} body when content-type is application/json`, async ({ playwright, server }) => {
+    it.fail(/false|null/.test(type), 'Search for /if.*jsonData/ for likely fix locations');
     const request = await playwright.request.newContext();
     const [req] = await Promise.all([
       server.waitForRequest('/empty.html'),
