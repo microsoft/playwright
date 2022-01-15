@@ -35,6 +35,6 @@ jobs:
     - run: npm run build
     - run: npx playwright install-deps
     - run: ./utils/docker/publish_docker.sh stable
-      if: (github.event_name != 'workflow_dispatch' && !github.event.release.prerelease) || (github.event_name == 'workflow_dispatch' && github.event.inputs.is_release)
+      if: (github.event_name != 'workflow_dispatch' && !github.event.release.prerelease) || (github.event_name == 'workflow_dispatch' && github.event.inputs.is_release == 'true')
     - run: ./utils/docker/publish_docker.sh canary
-      if: (github.event_name != 'workflow_dispatch' && github.event.release.prerelease) || (github.event_name == 'workflow_dispatch' && !github.event.inputs.is_release)
+      if: (github.event_name != 'workflow_dispatch' && github.event.release.prerelease) || (github.event_name == 'workflow_dispatch' && github.event.inputs.is_release != 'true')
