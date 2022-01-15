@@ -317,7 +317,7 @@ await Promise.all([
   // It is important to call waitForNavigation before click to set up waiting.
   page.waitForNavigation(),
   // Triggers a navigation after a timeout.
-  page.locator('div.delayed-navigation').clikc(),
+  page.locator('div.delayed-navigation').click(),
 ]);
 ```
 
