@@ -370,7 +370,7 @@ Text selector has a few variations:
 * `#nav-bar :text-matches("reg?ex", "i")` - the `:text-matches()` pseudo-class can be used inside a [css] selector, for regex-based match. This example is equivalent to `text=/reg?ex/i`, but inside the `#nav-bar` element.
 
 :::note
-Matching always normalizes whitespace, for example it turns multiple spaces into one, turns line breaks into spaces and ignores leading and trailing whitespace.
+Matching always normalizes whitespace. For example, it turns multiple spaces into one, turns line breaks into spaces and ignores leading and trailing whitespace.
 :::
 
 :::note
@@ -409,7 +409,7 @@ There are two ways of selecting only [visible](./actionability.md#visible) eleme
 - `:visible` pseudo-class in CSS selectors
 - `visible=` selector engine
 
-If you prefer your selectors to be CSS and don't want to rely on [chaining selectors](#chaining-selectors), use `:visible` pseudo class like so: `input:visible`. If you prefer combining selector engines, use `input >> visible=true`. The latter allows you combining `text=`, `xpath=` and other selector engines with the visibility filter.
+If you prefer your selectors to be CSS and don't want to rely on [chaining selectors](#chaining-selectors), use `:visible` pseudo class like so: `input:visible`. If you prefer combining selector engines, use `input >> visible=true`. The latter allows you to combine `text=`, `xpath=` and other selector engines with the visibility filter.
 
 For example, `input` matches all the inputs on the page, while
 `input:visible` and `input >> visible=true` only match visible inputs. This is useful to distinguish elements
@@ -427,7 +427,7 @@ Consider a page with two buttons, first invisible and second visible.
 <button>Visible</button>
 ```
 
-* This will find the first button, because it is the first one in DOM order. Then it will wait for the button to become visible before clicking, or timeout while waiting:
+* This will find the first button because it is the first element in DOM order. Then it will wait for the button to become visible before clicking, or timeout while waiting:
 
   ```js
   await page.locator('button').click();
@@ -503,7 +503,7 @@ await page.Locator("article:has(div.promo)").TextContentAsync();
 
 ### CSS selector list
 
-Comma separated list of CSS selectors will match all elements that can be selected by
+Comma-separated list of CSS selectors will match all elements that can be selected by
 one of the selectors in that list.
 
 ```js
@@ -575,7 +575,7 @@ or [Child combinator](https://developer.mozilla.org/en-US/docs/Web/CSS/Child_com
 arbitrary number of open shadow roots, including the implicit descendant combinator at the start of the
 selector. It does not search inside closed shadow roots or iframes.
 
-If you'd like to opt-out of this behavior, you can use `:light` CSS extension or `text:light` selector engine. They do not pierce shadow roots.
+If you'd like to opt out of this behavior, you can use `:light` CSS extension or `text:light` selector engine. They do not pierce shadow roots.
 
 ```js
 await page.locator(':light(.article > .header)').click();
@@ -748,7 +748,7 @@ await page.Locator("button >> nth=-1").ClickAsync();
 React selectors are experimental and prefixed with `_`. The functionality might change in future.
 :::
 
-React selectors allow selecting elements by its component name and property values. The syntax is very similar to [attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors) and supports all attribute selector operators.
+React selectors allow selecting elements by their component name and property values. The syntax is very similar to [attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors) and supports all attribute selector operators.
 
 In react selectors, component names are transcribed with **CamelCase**.
 
@@ -784,9 +784,9 @@ React selectors, as well as [React DevTools](https://chrome.google.com/webstore/
 Vue selectors are experimental and prefixed with `_`. The functionality might change in future.
 :::
 
-Vue selectors allow selecting elements by its component name and property values. The syntax is very similar to [attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors) and supports all attribute selector operators.
+Vue selectors allow selecting elements by their component name and property values. The syntax is very similar to [attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors) and supports all attribute selector operators.
 
-In vue selectors, component names are transcribed with **kebab-case**.
+In Vue selectors, component names are transcribed with **kebab-case**.
 
 Selector examples:
 
@@ -814,7 +814,7 @@ Vue selectors, as well as [Vue DevTools](https://chrome.google.com/webstore/deta
 
 ## id, data-testid, data-test-id, data-test selectors
 
-Playwright supports a shorthand for selecting elements using certain attributes. Currently, only
+Playwright supports shorthand for selecting elements using certain attributes. Currently, only
 the following attributes are supported:
 
 - `id`
@@ -946,7 +946,7 @@ prefer using [text] or [css] selectors over the `:nth-match()`.
 
 ## Chaining selectors
 
-Selectors defined as `engine=body` or in short-form can be combined with the `>>` token, e.g. `selector1 >> selector2 >> selectors3`. When selectors are chained, next one is queried relative to the previous one's result.
+Selectors defined as `engine=body` or in short-form can be combined with the `>>` token, e.g. `selector1 >> selector2 >> selectors3`. When selectors are chained, the next one is queried relative to the previous one's result.
 
 For example,
 ```
