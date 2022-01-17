@@ -863,7 +863,13 @@ export class InjectedScript {
       this._highlight = new Highlight(false);
       this._highlight.install();
     }
-    this._highlight.updateHighlight(this.querySelectorAll(selector, document.documentElement), stringifySelector(selector), false);
+    this._runHighlightOnRaf(selector);
+  }
+
+  _runHighlightOnRaf(selector: ParsedSelector) {
+    if (this._highlight)
+      this._highlight.updateHighlight(this.querySelectorAll(selector, document.documentElement), stringifySelector(selector), false);
+    requestAnimationFrame(() => this._runHighlightOnRaf(selector));
   }
 
   hideHighlight() {
