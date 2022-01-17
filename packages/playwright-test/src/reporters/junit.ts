@@ -218,7 +218,6 @@ class JUnitReporter implements Reporter {
       properties.children?.push(evidence);
     }
 
-    // TODO: check this
     if (properties.children?.length)
       entry.children.push(properties);
 
