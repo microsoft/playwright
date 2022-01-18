@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// @playwright.config
-
 import type { Config, PlaywrightTestOptions, PlaywrightWorkerOptions } from '@playwright/test';
 import * as path from 'path';
 import { TestModeWorkerOptions } from './testModeFixtures';
