@@ -24,7 +24,7 @@ LOCAL_INCLUDES += [
     '/dom/media/systemservices',
     '/media/libyuv/libyuv/include',
     '/third_party/libwebrtc',
-    '/third_party/libwebrtc/webrtc',
+    '/third_party/libwebrtc/third_party/abseil-cpp',
 ]
 
 LOCAL_INCLUDES += [

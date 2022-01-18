@@ -9,8 +9,9 @@
 #include "libyuv.h"
 #include "mozilla/EndianUtils.h"
 #include "mozilla/gfx/DataSurfaceHelpers.h"
-#include "rtc_base/refcountedobject.h"
-#include "rtc_base/scoped_ref_ptr.h"
+#include "rtc_base/ref_counted_object.h"
+#include "rtc_base/time_utils.h"
+#include "api/scoped_refptr.h"
 
 using namespace mozilla::widget;
 using namespace webrtc;
