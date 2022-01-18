@@ -24,10 +24,10 @@ const { packages, packagesToPublish } = require('./list_packages.js');
 
 (async () => {
   const version = process.argv[2];
-  if (version.startsWith('v'))
-    throw new Error('Version must not start with "v"');
   if (!version)
     throw new Error('Please specify version! See --help for more information.');
+  if (version.startsWith('v'))
+    throw new Error('Version must not start with "v"');
   if (process.argv[2] === '--help')
     throw new Error(`Usage: node ${path.relative(process.cwd(), __filename)} <version>`);
   const rootDir = path.join(__dirname, '..');
