@@ -18,11 +18,10 @@
 #include "nsThreadManager.h"
 #include "nsView.h"
 #include "nsViewManager.h"
-#include "webrtc/modules/desktop_capture/desktop_capturer.h"
-#include "webrtc/modules/desktop_capture/desktop_capture_options.h"
-#include "webrtc/modules/desktop_capture/desktop_device_info.h"
-#include "webrtc/modules/desktop_capture/desktop_frame.h"
-#include "webrtc/modules/video_capture/video_capture.h"
+#include "modules/desktop_capture/desktop_capturer.h"
+#include "modules/desktop_capture/desktop_capture_options.h"
+#include "modules/desktop_capture/desktop_frame.h"
+#include "modules/video_capture/video_capture.h"
 #include "mozilla/widget/PlatformWidgetTypes.h"
 #include "video_engine/desktop_capture_impl.h"
 extern "C" {
@@ -270,7 +269,7 @@ class nsScreencastService::Session : public rtc::VideoSinkInterface<webrtc::Vide
   rtc::scoped_refptr<webrtc::VideoCaptureModuleEx> mCaptureModule;
   RefPtr<ScreencastEncoder> mEncoder;
   uint32_t mJpegQuality;
-  rtc::CriticalSection mCaptureCallbackCs;
+  rtc::RecursiveCriticalSection mCaptureCallbackCs;
   uint32_t mFramesInFlight = 0;
   int mWidth;
   int mHeight;

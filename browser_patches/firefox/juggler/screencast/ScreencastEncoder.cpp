@@ -39,7 +39,7 @@
 #include "nsIThread.h"
 #include "nsThreadUtils.h"
 #include "WebMFileWriter.h"
-#include "webrtc/api/video/video_frame.h"
+#include "api/video/video_frame.h"
 
 namespace mozilla {
 
