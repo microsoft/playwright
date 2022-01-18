@@ -81,8 +81,8 @@ export class Locator implements api.Locator {
 
   async dragTo(target: Locator, options: channels.FrameDragAndDropOptions = {}) {
     return this._frame.dragAndDrop(this._selector, target._selector, {
-      ...options,
       strict: true,
+      ...options,
     });
   }
 

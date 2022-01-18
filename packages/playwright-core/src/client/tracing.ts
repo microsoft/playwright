@@ -38,17 +38,17 @@ export class Tracing implements api.Tracing {
   }
 
   async stopChunk(options: { path?: string } = {}) {
-    await this._doStopChunk(this._context._channel, options.path);
+    await this._doStopChunk(options.path);
   }
 
   async stop(options: { path?: string } = {}) {
     await this._context._wrapApiCall(async () => {
-      await this._doStopChunk(this._context._channel, options.path);
+      await this._doStopChunk(options.path);
       await this._context._channel.tracingStop();
     });
   }
 
-  private async _doStopChunk(channel: channels.BrowserContextChannel, filePath: string | undefined) {
+  private async _doStopChunk(filePath: string | undefined) {
     const isLocal = !this._context._connection.isRemote();
 
     let mode: channels.BrowserContextTracingStopChunkParams['mode'] = 'doNotSave';
@@ -59,7 +59,7 @@ export class Tracing implements api.Tracing {
         mode = 'compressTrace';
     }
 
-    const result = await channel.tracingStopChunk({ mode });
+    const result = await this._context._channel.tracingStopChunk({ mode });
     if (!filePath) {
       // Not interested in artifacts.
       return;
