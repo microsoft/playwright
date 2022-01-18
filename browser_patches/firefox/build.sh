@@ -114,10 +114,6 @@ if [[ "$(uname)" == "Darwin" ]]; then
   export MOZ_FETCHES_DIR=$HOME/.mozbuild
 fi
 
-if ! [[ -f "$HOME/.mozbuild/_virtualenvs/mach/bin/python" ]]; then
-  ./mach create-mach-environment
-fi
-
 if [[ $1 == "--juggler" ]]; then
   ./mach build faster
 else
