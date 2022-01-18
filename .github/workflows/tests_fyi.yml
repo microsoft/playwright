@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - release-*
+      - "bugfix/android"
 
 env:
   # Force terminal colors. @see https://www.npmjs.com/package/colors
