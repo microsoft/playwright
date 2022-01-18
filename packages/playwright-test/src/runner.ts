@@ -163,10 +163,27 @@ export class Runner {
     }
   }
 
-  async _run(list: boolean, testFileReFilters: FilePatternFilter[], projectNames?: string[]): Promise<FullResult> {
-    const testFileFilter = testFileReFilters.length ? createFileMatcher(testFileReFilters.map(e => e.re)) : () => true;
-    const config = this._loader.fullConfig();
+  async listAllTestFiles(projectNames: string[] | undefined): Promise<any> {
+    const filesByProject = await this._collectFiles([], projectNames);
+    const report: any = {
+      projects: []
+    };
+    for (const [project, files] of filesByProject) {
+      report.projects.push({
+        name: project.config.name,
+        files: files
+      });
+    }
+    return report;
+  }
 
+  private async _run(list: boolean, testFileReFilters: FilePatternFilter[], projectNames?: string[]): Promise<FullResult> {
+    const filesByProject = await this._collectFiles(testFileReFilters, projectNames);
+    return await this._runFiles(list, filesByProject, testFileReFilters);
+  }
+
+  private async _collectFiles(testFileReFilters: FilePatternFilter[], projectNames?: string[]): Promise<Map<ProjectImpl, string[]>> {
+    const testFileFilter = testFileReFilters.length ? createFileMatcher(testFileReFilters.map(e => e.re)) : () => true;
     let projectsToFind: Set<string> | undefined;
     let unknownProjects: Map<string, string> | undefined;
     if (projectNames) {
@@ -194,7 +211,6 @@ export class Runner {
     }
 
     const files = new Map<ProjectImpl, string[]>();
-    const allTestFiles = new Set<string>();
     for (const project of projects) {
       const testDir = project.config.testDir;
       if (!fs.existsSync(testDir))
@@ -208,9 +224,16 @@ export class Runner {
       const testFileExtension = (file: string) => extensions.includes(path.extname(file));
       const testFiles = allFiles.filter(file => !testIgnore(file) && testMatch(file) && testFileFilter(file) && testFileExtension(file));
       files.set(project, testFiles);
-      testFiles.forEach(file => allTestFiles.add(file));
     }
+    return files;
+  }
 
+  private async _runFiles(list: boolean, filesByProject: Map<ProjectImpl, string[]>, testFileReFilters: FilePatternFilter[]): Promise<FullResult> {
+    const allTestFiles = new Set<string>();
+    for (const files of filesByProject.values())
+      files.forEach(file => allTestFiles.add(file));
+
+    const config = this._loader.fullConfig();
     const internalGlobalTeardowns: (() => Promise<void>)[] = [];
     if (!list) {
       for (const internalGlobalSetup of this._internalGlobalSetups)
@@ -257,11 +280,11 @@ export class Runner {
       const grepMatcher = createTitleMatcher(config.grep);
       const grepInvertMatcher = config.grepInvert ? createTitleMatcher(config.grepInvert) : null;
       const rootSuite = new Suite('');
-      for (const project of projects) {
+      for (const [project, files] of filesByProject) {
         const projectSuite = new Suite(project.config.name);
         projectSuite._projectConfig = project.config;
         rootSuite._addSuite(projectSuite);
-        for (const file of files.get(project)!) {
+        for (const file of files) {
           const fileSuite = fileSuites.get(file);
           if (!fileSuite)
             continue;

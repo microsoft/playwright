@@ -246,6 +246,7 @@ if (!process.env.PW_CLI_TARGET_LANG) {
   if (playwrightTestPackagePath) {
     require(playwrightTestPackagePath).addTestCommand(program);
     require(playwrightTestPackagePath).addShowReportCommand(program);
+    require(playwrightTestPackagePath).addListTestsCommand(program);
   } else {
     {
       const command = program.command('test').allowUnknownOption(true);
