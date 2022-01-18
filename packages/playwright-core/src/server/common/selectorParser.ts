@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { InvalidSelectorError } from './selectorErrors';
-import { CSSComplexSelectorList, parseCSS } from './cssParser';
+import { InvalidSelectorError, CSSComplexSelectorList, parseCSS } from './cssParser';
+export { InvalidSelectorError, isInvalidSelectorError } from './cssParser';
 
 export type ParsedSelectorPart = {
   name: string,

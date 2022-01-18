@@ -14,8 +14,14 @@
  * limitations under the License.
  */
 
-import { InvalidSelectorError } from './selectorErrors';
 import * as css from './cssTokenizer';
+
+export class InvalidSelectorError extends Error {
+}
+
+export function isInvalidSelectorError(error: Error) {
+  return error instanceof InvalidSelectorError;
+}
 
 // Note: '>=' is used internally for text engine to preserve backwards compatibility.
 type ClauseCombinator = '' | '>' | '+' | '~' | '>=';
