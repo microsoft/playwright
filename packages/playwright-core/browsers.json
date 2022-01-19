@@ -3,12 +3,12 @@
   "browsers": [
     {
       "name": "chromium",
-      "revision": "956323",
+      "revision": "960211",
       "installByDefault": true
     },
     {
       "name": "chromium-with-symbols",
-      "revision": "956323",
+      "revision": "960211",
       "installByDefault": false
     },
     {
