@@ -63,11 +63,18 @@ Read more in [our documentation](./api/class-playwrightassertions).
     ```
     Read more in [locator documentation](./api/class-locator#locator-locator-option-has-text)
 
+### Tracing Improvements
+
+[Tracing](./api/class-tracing.md) now can embed Java sources to recorded
+traces, using new [`setSources`](./api/class-tracing#tracing-start-option-sources) option.
+
+![tracing-java-sources](https://user-images.githubusercontent.com/746130/150180856-40a7df71-370c-4597-8665-40c77a5e06ad.png)
 
 ### New APIs & changes
 
 - [`acceptDownloads`](./api/class-browser#browser-new-context-option-accept-downloads) option now defaults to `true`.
-- [`setSources`](./api/class-tracing#tracing-start-option-sources) option to embed sources into traces.
+
+
 
 ### Browser Versions
 
