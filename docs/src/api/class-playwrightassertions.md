@@ -54,16 +54,6 @@ reached. You can pass this timeout as an option.
 
 By default, the timeout for assertions is set to 5 seconds.
 
-**langs: java**To use Playwright assertions add the following dependency into the `pom.xml` of your Maven project:
-
-```xml java
-<dependency>
-  <groupId>com.microsoft.playwright</groupId>
-  <artifactId>assertions</artifactId>
-  <version>1.17.0</version>
-</dependency>
-```
-
 ## method: PlaywrightAssertions.expectAPIResponse
 * langs: js, java
   - alias-java: assertThat
