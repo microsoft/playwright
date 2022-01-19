@@ -500,19 +500,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     page: tOptional(tChannel('Page')),
     frame: tOptional(tChannel('Frame')),
   });
-  scheme.BrowserContextTracingStartParams = tObject({
-    name: tOptional(tString),
-    snapshots: tOptional(tBoolean),
-    screenshots: tOptional(tBoolean),
-    sources: tOptional(tBoolean),
-  });
-  scheme.BrowserContextTracingStartChunkParams = tObject({
-    title: tOptional(tString),
-  });
-  scheme.BrowserContextTracingStopChunkParams = tObject({
-    mode: tEnum(['doNotSave', 'compressTrace', 'compressTraceAndSources']),
-  });
-  scheme.BrowserContextTracingStopParams = tOptional(tObject({}));
   scheme.BrowserContextHarExportParams = tOptional(tObject({}));
   scheme.PageSetDefaultNavigationTimeoutNoReplyParams = tObject({
     timeout: tOptional(tNumber),
@@ -1167,6 +1154,19 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     promptText: tOptional(tString),
   });
   scheme.DialogDismissParams = tOptional(tObject({}));
+  scheme.TracingTracingStartParams = tObject({
+    name: tOptional(tString),
+    snapshots: tOptional(tBoolean),
+    screenshots: tOptional(tBoolean),
+    sources: tOptional(tBoolean),
+  });
+  scheme.TracingTracingStartChunkParams = tObject({
+    title: tOptional(tString),
+  });
+  scheme.TracingTracingStopChunkParams = tObject({
+    mode: tEnum(['doNotSave', 'compressTrace', 'compressTraceAndSources']),
+  });
+  scheme.TracingTracingStopParams = tOptional(tObject({}));
   scheme.ArtifactPathAfterFinishedParams = tOptional(tObject({}));
   scheme.ArtifactSaveAsParams = tObject({
     path: tString,

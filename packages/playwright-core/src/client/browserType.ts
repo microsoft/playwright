@@ -109,7 +109,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     context._options = contextParams;
     context._logger = logger;
     context._setBrowserType(this);
-    context._localUtils = this._playwright._utils;
+    context.tracing._localUtils = this._playwright._utils;
     await this._onDidCreateContext?.(context);
     return context;
   }

@@ -20,6 +20,7 @@ import { CallMetadata } from '../server/instrumentation';
 import { Request, Response, Route, WebSocket } from '../server/network';
 import { Dispatcher, DispatcherScope, existingDispatcher, lookupNullableDispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
+import { TracingDispatcher } from './tracingDispatcher';
 
 export class RequestDispatcher extends Dispatcher<Request, channels.RequestChannel> implements channels.RequestChannel {
   _type_Request: boolean;
@@ -163,7 +164,9 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
   }
 
   private constructor(scope: DispatcherScope, request: APIRequestContext) {
-    super(scope, request, 'APIRequestContext', {}, true);
+    super(scope, request, 'APIRequestContext', {
+      tracing: TracingDispatcher.from(scope, request.tracing()),
+    }, true);
     request.once(APIRequestContext.Events.Dispose, () => {
       if (!this._disposed)
         super._dispose();

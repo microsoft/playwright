@@ -35,7 +35,7 @@ export class HarRecorder {
   constructor(context: BrowserContext, options: HarOptions) {
     this._artifact = new Artifact(context, options.path);
     this._options = options;
-    this._tracer = new HarTracer(context, this, {
+    this._tracer = new HarTracer(context.fetchRequest, context, this, {
       content: options.omitContent ? 'omit' : 'embedded',
       waitForContentOnStop: true,
       skipScripts: false,

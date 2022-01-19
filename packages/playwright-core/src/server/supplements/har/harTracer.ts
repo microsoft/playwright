@@ -40,7 +40,8 @@ type HarTracerOptions = {
 };
 
 export class HarTracer {
-  private _context: BrowserContext;
+  private _apiRequest: APIRequestContext;
+  private _context?: BrowserContext;
   private _barrierPromises = new Set<Promise<void>>();
   private _delegate: HarTracerDelegate;
   private _options: HarTracerOptions;
@@ -49,7 +50,8 @@ export class HarTracer {
   private _started = false;
   private _entrySymbol: symbol;
 
-  constructor(context: BrowserContext, delegate: HarTracerDelegate, options: HarTracerOptions) {
+  constructor(apiRequest: APIRequestContext, context: BrowserContext | undefined, delegate: HarTracerDelegate, options: HarTracerOptions) {
+    this._apiRequest = apiRequest;
     this._context = context;
     this._delegate = delegate;
     this._options = options;
@@ -61,14 +63,18 @@ export class HarTracer {
       return;
     this._started = true;
     this._eventListeners = [
-      eventsHelper.addEventListener(this._context, BrowserContext.Events.Page, (page: Page) => this._ensurePageEntry(page)),
-      eventsHelper.addEventListener(this._context, BrowserContext.Events.Request, (request: network.Request) => this._onRequest(request)),
-      eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestFinished, ({ request, response }) => this._onRequestFinished(request, response).catch(() => {})),
-      eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestFailed, request => this._onRequestFailed(request)),
-      eventsHelper.addEventListener(this._context, BrowserContext.Events.Response, (response: network.Response) => this._onResponse(response)),
-      eventsHelper.addEventListener(this._context.fetchRequest, APIRequestContext.Events.Request, (event: APIRequestEvent) => this._onAPIRequest(event)),
-      eventsHelper.addEventListener(this._context.fetchRequest, APIRequestContext.Events.RequestFinished, (event: APIRequestFinishedEvent) => this._onAPIRequestFinished(event)),
+      eventsHelper.addEventListener(this._apiRequest, APIRequestContext.Events.Request, (event: APIRequestEvent) => this._onAPIRequest(event)),
+      eventsHelper.addEventListener(this._apiRequest, APIRequestContext.Events.RequestFinished, (event: APIRequestFinishedEvent) => this._onAPIRequestFinished(event)),
     ];
+    if (this._context) {
+      this._eventListeners.push(
+          eventsHelper.addEventListener(this._context, BrowserContext.Events.Page, (page: Page) => this._ensurePageEntry(page)),
+          eventsHelper.addEventListener(this._context, BrowserContext.Events.Request, (request: network.Request) => this._onRequest(request)),
+          eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestFinished, ({ request, response }) => this._onRequestFinished(request, response).catch(() => {})),
+          eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestFailed, request => this._onRequestFailed(request)),
+          eventsHelper.addEventListener(this._context, BrowserContext.Events.Response, (response: network.Response) => this._onResponse(response)));
+    }
+
   }
 
   private _entryForRequest(request: network.Request | APIRequestEvent): har.Entry | undefined {
@@ -377,8 +383,8 @@ export class HarTracer {
         version: require('../../../../package.json')['version'],
       },
       browser: {
-        name: this._context._browser.options.name,
-        version: this._context._browser.version()
+        name: this._context?._browser.options.name || '',
+        version: this._context?._browser.version() || ''
       },
       pages: Array.from(this._pageEntries.values()),
       entries: [],

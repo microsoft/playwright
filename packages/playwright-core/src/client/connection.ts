@@ -41,6 +41,7 @@ import { EventEmitter } from 'events';
 import { JsonPipe } from './jsonPipe';
 import { APIRequestContext } from './fetch';
 import { LocalUtils } from './localUtils';
+import { Tracing } from './tracing';
 
 class Root extends ChannelOwner<channels.RootChannel> {
   constructor(connection: Connection) {
@@ -253,6 +254,9 @@ export class Connection extends EventEmitter {
         break;
       case 'Selectors':
         result = new SelectorsOwner(parent, type, guid, initializer);
+        break;
+      case 'Tracing':
+        result = new Tracing(parent, type, guid, initializer);
         break;
       case 'WebSocket':
         result = new WebSocket(parent, type, guid, initializer);

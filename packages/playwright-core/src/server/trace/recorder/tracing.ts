@@ -16,10 +16,11 @@
 
 import { EventEmitter } from 'events';
 import fs from 'fs';
+import { APIRequestContext } from '../../fetch';
 import path from 'path';
 import yazl from 'yazl';
 import { NameValue } from '../../../common/types';
-import { commandsWithTracingSnapshots, BrowserContextTracingStopChunkParams } from '../../../protocol/channels';
+import { commandsWithTracingSnapshots, TracingTracingStopChunkParams } from '../../../protocol/channels';
 import { ManualPromise } from '../../../utils/async';
 import { eventsHelper, RegisteredListener } from '../../../utils/eventsHelper';
 import { calculateSha1, createGuid, mkdirIfNeeded, monotonicTime } from '../../../utils/utils';
@@ -56,13 +57,18 @@ type RecordingState = {
 
 const kScreencastOptions = { width: 800, height: 600, quality: 90 };
 
-export class Tracing implements InstrumentationListener, SnapshotterDelegate, HarTracerDelegate {
+export class Tracing extends SdkObject implements InstrumentationListener, SnapshotterDelegate, HarTracerDelegate {
+  static Events = {
+    Dispose: 'dispose',
+  };
+
   private _writeChain = Promise.resolve();
-  private _snapshotter: Snapshotter;
+  private _snapshotter?: Snapshotter;
   private _harTracer: HarTracer;
   private _screencastListeners: RegisteredListener[] = [];
   private _pendingCalls = new Map<string, { sdkObject: SdkObject, metadata: CallMetadata, beforeSnapshot: Promise<void>, actionSnapshot?: Promise<void>, afterSnapshot?: Promise<void> }>();
-  private _context: BrowserContext;
+  private _apiRequest: APIRequestContext;
+  private _context?: BrowserContext;
   private _resourcesDir: string;
   private _state: RecordingState | undefined;
   private _isStopping = false;
@@ -70,12 +76,15 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
   private _allResources = new Set<string>();
   private _contextCreatedEvent: trace.ContextCreatedTraceEvent;
 
-  constructor(context: BrowserContext) {
+  constructor(apiRequest: APIRequestContext, tracesDir: string, context?: BrowserContext) {
+    super(context || apiRequest, 'Tracing');
+    this._apiRequest = apiRequest;
     this._context = context;
-    this._tracesDir = context._browser.options.tracesDir;
-    this._resourcesDir = path.join(this._tracesDir, 'resources');
-    this._snapshotter = new Snapshotter(context, this);
-    this._harTracer = new HarTracer(context, this, {
+    this._tracesDir = tracesDir;
+    this._resourcesDir = path.join(tracesDir, 'resources');
+    if (context)
+      this._snapshotter = new Snapshotter(context, this);
+    this._harTracer = new HarTracer(apiRequest, context, this, {
       content: 'sha1',
       waitForContentOnStop: false,
       skipScripts: true,
@@ -83,8 +92,8 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
     this._contextCreatedEvent = {
       version: VERSION,
       type: 'context-options',
-      browserName: this._context._browser.options.name,
-      options: this._context._options,
+      browserName: this._context?._browser.options.name || '',
+      options: this._context?._options || {},
       platform: process.platform,
       wallTime: 0,
     };
@@ -131,14 +140,20 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
       await fs.promises.appendFile(state.traceFile, JSON.stringify({ ...this._contextCreatedEvent, title: options.title, wallTime: Date.now() }) + '\n');
     });
 
-    this._context.instrumentation.addListener(this, this._context);
+    if (this._context)
+      this._context.instrumentation.addListener(this, this._context);
+    else
+      this._apiRequest.instrumentation.addListener(this, null);
+
     if (state.options.screenshots)
       this._startScreencast();
     if (state.options.snapshots)
-      await this._snapshotter.start();
+      await this._snapshotter?.start();
   }
 
   private _startScreencast() {
+    if (!this._context)
+      return;
     for (const page of this._context.pages())
       this._startScreencastInPage(page);
     this._screencastListeners.push(
@@ -148,6 +163,8 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
 
   private _stopScreencast() {
     eventsHelper.removeEventListeners(this._screencastListeners);
+    if (!this._context)
+      return;
     for (const page of this._context.pages())
       page.setScreencastOptions(null);
   }
@@ -165,11 +182,12 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
   }
 
   async dispose() {
-    this._snapshotter.dispose();
+    this._snapshotter?.dispose();
     await this._writeChain;
+    this.emit(Tracing.Events.Dispose);
   }
 
-  async stopChunk(params: BrowserContextTracingStopChunkParams): Promise<{ artifact: Artifact | null, sourceEntries: NameValue[] | undefined }> {
+  async stopChunk(params: TracingTracingStopChunkParams): Promise<{ artifact: Artifact | null, sourceEntries: NameValue[] | undefined }> {
     if (this._isStopping)
       throw new Error(`Tracing is already stopping`);
     this._isStopping = true;
@@ -182,7 +200,10 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
     }
 
     const state = this._state!;
-    this._context.instrumentation.removeListener(this);
+    if (this._context)
+      this._context.instrumentation.removeListener(this);
+    else
+      this._apiRequest.instrumentation.removeListener(this);
     if (this._state?.options.screenshots)
       this._stopScreencast();
 
@@ -200,7 +221,7 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
     }
 
     if (state.options.snapshots)
-      await this._snapshotter.stop();
+      await this._snapshotter?.stop();
 
     // Chain the export operation against write operations,
     // so that neither trace files nor sha1s change during the export.
@@ -252,7 +273,7 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
     zipFile.end();
     const zipFileName = state.traceFile + '.zip';
     zipFile.outputStream.pipe(fs.createWriteStream(zipFileName)).on('close', () => {
-      const artifact = new Artifact(this._context, zipFileName);
+      const artifact = new Artifact(this._context || this._apiRequest, zipFileName);
       artifact.reportFinished();
       result.resolve(artifact);
     });
@@ -260,6 +281,8 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
   }
 
   async _captureSnapshot(name: 'before' | 'after' | 'action' | 'event', sdkObject: SdkObject, metadata: CallMetadata, element?: ElementHandle) {
+    if (!this._snapshotter)
+      return;
     if (!sdkObject.attribution.page)
       return;
     if (!this._snapshotter.started())
@@ -394,7 +417,7 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
     let error: Error | undefined;
     let result: T | undefined;
     this._writeChain = this._writeChain.then(async () => {
-      if (!this._context._browser.isConnected())
+      if (this._context && !this._context._browser.isConnected())
         return;
       try {
         result = await cb();

@@ -27,6 +27,7 @@ import { CallMetadata } from '../server/instrumentation';
 import { ArtifactDispatcher } from './artifactDispatcher';
 import { Artifact } from '../server/artifact';
 import { Request, Response } from '../server/network';
+import { TracingDispatcher } from './tracingDispatcher';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextChannel> implements channels.BrowserContextChannel {
   _type_EventTarget = true;
@@ -37,6 +38,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     super(scope, context, 'BrowserContext', {
       isChromium: context._browser.options.isChromium,
       APIRequestContext: APIRequestContextDispatcher.from(scope, context.fetchRequest),
+      tracing: TracingDispatcher.from(scope, context.tracing),
     }, true);
     this._context = context;
     // Note: when launching persistent context, dispatcher is created very late,
@@ -187,23 +189,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       throw new Error(`CDP session must be initiated with either Page or Frame, not none or both`);
     const crBrowserContext = this._object as CRBrowserContext;
     return { session: new CDPSessionDispatcher(this._scope, await crBrowserContext.newCDPSession((params.page ? params.page as PageDispatcher : params.frame as FrameDispatcher)._object)) };
-  }
-
-  async tracingStart(params: channels.BrowserContextTracingStartParams): Promise<channels.BrowserContextTracingStartResult> {
-    await this._context.tracing.start(params);
-  }
-
-  async tracingStartChunk(params: channels.BrowserContextTracingStartChunkParams): Promise<channels.BrowserContextTracingStartChunkResult> {
-    await this._context.tracing.startChunk(params);
-  }
-
-  async tracingStopChunk(params: channels.BrowserContextTracingStopChunkParams): Promise<channels.BrowserContextTracingStopChunkResult> {
-    const { artifact, sourceEntries } = await this._context.tracing.stopChunk(params);
-    return { artifact: artifact ? new ArtifactDispatcher(this._scope, artifact) : undefined, sourceEntries };
-  }
-
-  async tracingStop(params: channels.BrowserContextTracingStopParams): Promise<channels.BrowserContextTracingStopResult> {
-    await this._context.tracing.stop();
   }
 
   async harExport(params: channels.BrowserContextHarExportParams): Promise<channels.BrowserContextHarExportResult> {

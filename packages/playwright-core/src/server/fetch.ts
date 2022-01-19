@@ -33,6 +33,10 @@ import { CallMetadata, SdkObject } from './instrumentation';
 import { Playwright } from './playwright';
 import * as types from './types';
 import { HeadersArray, ProxySettings } from './types';
+import { Tracing } from './trace/recorder/tracing';
+import path from 'path';
+import os from 'os';
+import fs from 'fs';
 
 type FetchRequestOptions = {
   userAgent: string;
@@ -62,6 +66,8 @@ export type APIRequestFinishedEvent = {
   statusMessage: string;
   body?: Buffer;
 };
+
+const API_REQUEST_ARTIFACTS_DIR = path.join(os.tmpdir(), 'playwright-api-request-artifacts-');
 
 export abstract class APIRequestContext extends SdkObject {
   static Events = {
@@ -100,6 +106,8 @@ export abstract class APIRequestContext extends SdkObject {
     this.fetchResponses.delete(fetchUid);
     this.fetchLog.delete(fetchUid);
   }
+
+  abstract tracing(): Tracing;
 
   abstract dispose(): void;
 
@@ -404,6 +412,10 @@ export class BrowserContextAPIRequestContext extends APIRequestContext {
     context.once(BrowserContext.Events.Close, () => this._disposeImpl());
   }
 
+  override tracing() {
+    return this._context.tracing;
+  }
+
   override dispose() {
     this.fetchResponses.clear();
   }
@@ -438,8 +450,16 @@ export class GlobalAPIRequestContext extends APIRequestContext {
   private readonly _cookieStore: CookieStore = new CookieStore();
   private readonly _options: FetchRequestOptions;
   private readonly _origins: channels.OriginStorage[] | undefined;
+  private readonly _tracing: Tracing;
 
-  constructor(playwright: Playwright, options: channels.PlaywrightNewRequestOptions) {
+  static async create(playwright: Playwright, options: channels.PlaywrightNewRequestOptions) {
+    const artifactsDir = await fs.promises.mkdtemp(API_REQUEST_ARTIFACTS_DIR);
+    // tempDirectories.push(artifactsDir);
+    // TODO: delete
+    return new GlobalAPIRequestContext(playwright, artifactsDir, options);
+  }
+
+  constructor(playwright: Playwright, artifactsDir: string, options: channels.PlaywrightNewRequestOptions) {
     super(playwright);
     const timeoutSettings = new TimeoutSettings();
     if (options.timeout !== undefined)
@@ -464,7 +484,11 @@ export class GlobalAPIRequestContext extends APIRequestContext {
       proxy,
       timeoutSettings,
     };
+    this._tracing = new Tracing(this, artifactsDir);
+  }
 
+  override tracing() {
+    return this._tracing;
   }
 
   override dispose() {

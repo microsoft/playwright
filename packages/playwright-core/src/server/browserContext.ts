@@ -81,7 +81,7 @@ export abstract class BrowserContext extends SdkObject {
     if (this._options.recordHar)
       this._harRecorder = new HarRecorder(this, { ...this._options.recordHar, path: path.join(this._browser.options.artifactsDir, `${createGuid()}.har`) });
 
-    this.tracing = new Tracing(this);
+    this.tracing = new Tracing(this.fetchRequest, browser.options.tracesDir, this);
   }
 
   isPersistentContext(): boolean {
