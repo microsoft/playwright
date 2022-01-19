@@ -140,7 +140,9 @@ export async function validateDependenciesWindows(windowsExeAndDllDirectories: s
   if (isSupportedWindowsVersion()) {
     throw new Error(message);
   } else {
+    // eslint-disable-next-line no-console
     console.warn(`WARNING: running on unsupported windows version!`);
+    // eslint-disable-next-line no-console
     console.warn(message);
   }
 }

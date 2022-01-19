@@ -17,7 +17,7 @@
 import * as mime from 'mime';
 import * as injectedScriptSource from '../generated/injectedScriptSource';
 import * as channels from '../protocol/channels';
-import { isSessionClosedError } from './common/protocolError';
+import { isSessionClosedError } from './protocolError';
 import * as frames from './frames';
 import type { InjectedScript, InjectedScriptPoll, LogEntry, HitTargetInterceptionResult } from './injected/injectedScript';
 import { CallMetadata } from './instrumentation';

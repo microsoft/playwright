@@ -397,3 +397,24 @@ it('should work for "webkitdirectory"', async ({ page, server }) => {
   ]);
   expect(fileChooser.isMultiple()).toBe(true);
 });
+
+it('should emit event after navigation', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11375' });
+  it.fixme(browserName === 'chromium');
+
+  const logs = [];
+  page.on('filechooser', () => logs.push('filechooser'));
+  await page.goto(server.PREFIX + '/empty.html');
+  await page.setContent(`<input type=file>`);
+  await Promise.all([
+    page.waitForEvent('filechooser'),
+    page.click('input'),
+  ]);
+  await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
+  await page.setContent(`<input type=file>`);
+  await Promise.all([
+    page.waitForEvent('filechooser'),
+    page.click('input'),
+  ]);
+  expect(logs).toEqual(['filechooser', 'filechooser']);
+});

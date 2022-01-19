@@ -5,6 +5,37 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.18
+
+### Locator Improvements
+
+- [`method: Locator.dragTo`]
+- Each locator can now be optionally filtered by the text it contains:
+    ```csharp
+    await Page.Locator("li", new () { HasTextString = "My Item" })
+              .Locator("button").click();
+    ```
+    Read more in [locator documentation](./api/class-locator#locator-locator-option-has-text)
+
+
+### New APIs & changes
+
+- [`AcceptDownloads`](./api/class-browser#browser-new-context-option-accept-downloads) option now defaults to `true`.
+- [`Sources`](./api/class-tracing#tracing-start-option-sources) option to embed sources into traces.
+
+### Browser Versions
+
+- Chromium 99.0.4812.0
+- Mozilla Firefox 95.0
+- WebKit 15.4
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 97
+- Microsoft Edge 97
+
+
+
 ## Version 1.17
 
 ### Frame Locators

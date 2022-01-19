@@ -18,8 +18,7 @@ import * as dom from './dom';
 import * as frames from './frames';
 import * as js from './javascript';
 import * as types from './types';
-import { ParsedSelector, parseSelector, stringifySelector } from './common/selectorParser';
-import { InvalidSelectorError } from './common/selectorErrors';
+import { InvalidSelectorError, ParsedSelector, parseSelector, stringifySelector } from './common/selectorParser';
 import { createGuid } from '../utils/utils';
 
 export type SelectorInfo = {

@@ -307,6 +307,7 @@ export class GridServer {
           return { error: undefined };
         }).catch(error => {
           this._log('failed to launch agent ' + agent.agentId);
+          // eslint-disable-next-line no-console
           console.error(error);
           agent.closeAgent(WSErrors.AGENT_CREATION_FAILED);
           return { error };

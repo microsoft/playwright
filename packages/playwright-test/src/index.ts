@@ -24,6 +24,7 @@ import { GridClient } from 'playwright-core/lib/grid/gridClient';
 import { prependToTestError } from './util';
 export { expect } from './expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
+import * as outOfProcess from 'playwright-core/lib/outofprocess';
 
 if ((process as any)['__pw_initiator__']) {
   const originalStackTraceLimit = Error.stackTraceLimit;
@@ -56,7 +57,11 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     if (process.env.PW_GRID) {
       const gridClient = await GridClient.connect(process.env.PW_GRID);
       await use(gridClient.playwright() as any);
-      await gridClient.close();
+      gridClient.close();
+    } else if (process.env.PW_OUT_OF_PROCESS) {
+      const impl = await outOfProcess.start();
+      await use(impl.playwright as any);
+      await impl.stop();
     } else {
       await use(require('playwright-core'));
     }

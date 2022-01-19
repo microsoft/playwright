@@ -30,7 +30,9 @@ const getExecutablePath = (browserName: BrowserName) => {
     return process.env.WKPATH;
 };
 
-const mode = (process.env.PWTEST_MODE || 'default') as ('default' | 'driver' | 'service');
+const mode = process.env.PW_OUT_OF_PROCESS ?
+  'driver' :
+  (process.env.PWTEST_MODE || 'default') as ('default' | 'driver' | 'service');
 const headed = !!process.env.HEADFUL;
 const channel = process.env.PWTEST_CHANNEL as any;
 const video = !!process.env.PWTEST_VIDEO;

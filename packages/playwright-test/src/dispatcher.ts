@@ -204,7 +204,7 @@ export class Dispatcher {
         name: a.name,
         path: a.path,
         contentType: a.contentType,
-        body: a.body ? Buffer.from(a.body, 'base64') : undefined
+        body: typeof a.body !== 'undefined' ? Buffer.from(a.body, 'base64') : undefined
       }));
       result.status = params.status;
       test.expectedStatus = params.expectedStatus;

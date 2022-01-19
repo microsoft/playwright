@@ -21,6 +21,9 @@ dotnet add package Microsoft.Playwright
 dotnet build
 # Install required browsers
 pwsh bin\Debug\netX\playwright.ps1 install
+
+# If the pwsh command does not work (throws TypeNotFound), make sure to use an up-to-date version of PowerShell.
+dotnet tool update --global PowerShell
 ```
 
 Create a `Program.cs` that will navigate to `https://playwright.dev/dotnet` and take a screenshot in Chromium.

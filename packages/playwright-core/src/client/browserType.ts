@@ -134,6 +134,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       connection.markAsRemote();
       connection.on('close', closePipe);
 
+      let closeError: string | undefined;
       const onPipeClosed = () => {
         // Emulate all pages, contexts and the browser closing upon disconnect.
         for (const context of browser?.contexts() || []) {
@@ -142,7 +143,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
           context._onClose();
         }
         browser?._didClose();
-        connection.close(kBrowserClosedError);
+        connection.close(closeError || kBrowserClosedError);
       };
       pipe.on('closed', onPipeClosed);
       connection.onmessage = message => pipe.send({ message }).catch(onPipeClosed);
@@ -151,8 +152,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
         try {
           connection!.dispatch(message);
         } catch (e) {
-          console.error(`Playwright: Connection dispatch error`);
-          console.error(e);
+          closeError = e.toString();
           closePipe();
         }
       });

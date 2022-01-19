@@ -30,7 +30,7 @@ import { Annotations, TestCaseType, TestError, TestInfo, TestInfoImpl, TestStepI
 import { ProjectImpl } from './project';
 import { FixtureRunner } from './fixtures';
 import { DeadlineRunner, raceAgainstDeadline } from 'playwright-core/lib/utils/async';
-import { calculateFileSha1 } from 'playwright-core/lib/utils/utils';
+import { calculateSha1 } from 'playwright-core/lib/utils/utils';
 
 const removeFolderAsync = util.promisify(rimraf);
 
@@ -268,7 +268,7 @@ export class WorkerRunner extends EventEmitter {
         if ((options.path !== undefined ? 1 : 0) + (options.body !== undefined ? 1 : 0) !== 1)
           throw new Error(`Exactly one of "path" and "body" must be specified`);
         if (options.path) {
-          const hash = await calculateFileSha1(options.path);
+          const hash = calculateSha1(options.path);
           const dest = testInfo.outputPath('attachments', hash + path.extname(options.path));
           await fs.promises.mkdir(path.dirname(dest), { recursive: true });
           await fs.promises.copyFile(options.path, dest);

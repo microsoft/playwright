@@ -19,7 +19,7 @@ import { WKSession } from './wkConnection';
 import { Protocol } from './protocol';
 import * as js from '../javascript';
 import { parseEvaluationResultValue } from '../common/utilityScriptSerializers';
-import { isSessionClosedError } from '../common/protocolError';
+import { isSessionClosedError } from '../protocolError';
 
 export class WKExecutionContext implements js.ExecutionContextDelegate {
   private readonly _session: WKSession;
