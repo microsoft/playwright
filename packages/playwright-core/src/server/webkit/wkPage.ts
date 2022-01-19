@@ -728,6 +728,11 @@ export class WKPage implements PageDelegate {
 
   private _calculateBootstrapScript(): string {
     const scripts: string[] = [];
+    if (!this._page.context()._options.isMobile) {
+      scripts.push('delete window.orientation');
+      scripts.push('delete window.ondevicemotion');
+      scripts.push('delete window.ondeviceorientation');
+    }
     for (const binding of this._page.allBindings())
       scripts.push(this._bindingToScript(binding));
     scripts.push(...this._browserContext._evaluateOnNewDocumentSources);
