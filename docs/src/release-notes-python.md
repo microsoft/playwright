@@ -5,6 +5,95 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.18
+
+### API Testing
+
+Playwright for Python 1.18 introduces new [API Testing](./api/class-apirequestcontext) that lets you send requests to the server directly from Python!
+Now you can:
+
+- test your server API
+- prepare server side state before visiting the web application in a test
+- validate server side post-conditions after running some actions in the browser
+
+To do a request on behalf of Playwright's Page, use **new [`property: Page.request`] API**:
+
+```python async
+# Do a GET request on behalf of page
+res = await page.request.get("http://example.com/foo.json")
+```
+
+```python sync
+# Do a GET request on behalf of page
+res = page.request.get("http://example.com/foo.json")
+```
+
+Read more in [our documentation](./api/class-apirequestcontext).
+
+### Web-First Assertions
+
+Playwright for Python 1.18 introduces [Web-First Assertions](./api/class-playwrightassertions).
+
+Consider the following example:
+
+```python async
+from playwright.async_api import Page, expect
+
+async def test_status_becomes_submitted(page: Page) -> None:
+    # ..
+    await page.click("#submit-button")
+    await expect(page.locator(".status")).to_have_text("Submitted")
+```
+
+```python sync
+from playwright.sync_api import Page, expect
+
+def test_status_becomes_submitted(page: Page) -> None:
+    # ..
+    page.click("#submit-button")
+    expect(page.locator(".status")).to_have_text("Submitted")
+```
+
+Playwright will be re-testing the node with the selector `.status` until
+fetched Node has the `"Submitted"` text. It will be re-fetching the node and
+checking it over and over, until the condition is met or until the timeout is
+reached. You can pass this timeout as an option.
+
+Read more in [our documentation](./api/class-playwrightassertions).
+
+### Locator Improvements
+
+- [`method: Locator.dragTo`]
+- Each locator can now be optionally filtered by the text it contains:
+    ```python async
+    await page.locator("li", has_text="my item")).locator("button").click()
+    ```
+
+    ```python sync
+    page.locator("li", has_text="my item")).locator("button").click()
+    ```
+
+    Read more in [locator documentation](./api/class-locator#locator-locator-option-has-text)
+
+
+### New APIs & changes
+
+- [`accept_downloads`](./api/class-browser#browser-new-context-option-accept-downloads) option now defaults to `True`.
+- [`sources`](./api/class-tracing#tracing-start-option-sources) option to embed sources into traces.
+
+### Browser Versions
+
+- Chromium 99.0.4812.0
+- Mozilla Firefox 95.0
+- WebKit 15.4
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 97
+- Microsoft Edge 97
+
+
+
 ## Version 1.17
 
 ### Frame Locators
