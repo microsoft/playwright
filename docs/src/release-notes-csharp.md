@@ -20,7 +20,8 @@ title: "Release notes"
 
 ### New APIs & changes
 
-- [`acceptDownloads`](./api/class-browser#browser-new-context-option-accept-downloads) option now defaults to `true`.
+- [`AcceptDownloads`](./api/class-browser#browser-new-context-option-accept-downloads) option now defaults to `true`.
+- [`Sources`](./api/class-tracing#tracing-start-option-sources) option to embed sources into traces.
 
 ### Browser Versions
 
