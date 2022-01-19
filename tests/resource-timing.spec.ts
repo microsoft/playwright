@@ -96,13 +96,13 @@ it('should work for redirect', async ({ contextFactory, browserName, server }) =
   await context.close();
 });
 
-it('should produce consistent RT', async ({ contextFactory, server}) => {
+it('should produce consistent RT', async ({ contextFactory, server, isLinux, browserName }) => {
+  it.fixme(browserName === 'webkit' && isLinux, 'receiveDelay < 20ms');
   const context = await contextFactory();
   const page = await context.newPage();
   const timings = { wait: 0, receive: 0, total: 0};
   context.on('requestfinished', req => {
     const timing  = req.timing();
-    console.log('timing', timing);
     timings.wait = timing.responseStart - timing.requestStart;
     timings.receive = timing.responseEnd - timing.responseStart;
     timings.total = timing.responseEnd - timing.domainLookupStart;
