@@ -34,11 +34,6 @@ npm i --save-dev @playwright/test@1.18.0-rc1
 PW_EXPERIMENTAL_TS_ESM=1 npx playwright test
 ```
 
-### Testing Scenarios Cookbook
-
-We now have a testing scenarios cookbook! Check out http://aka.ms/playwright/samples
-Feel free to file an issue to that repo if something is missing.
-
 ### Create Playwright
 
 The `npm init playwright` command is now generally available for your use:
