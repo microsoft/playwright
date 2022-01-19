@@ -5,6 +5,56 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.18
+
+### API Testing
+
+Playwright for Java 1.18 introduces new [API Testing](./api/class-apirequestcontext) that lets you send requests to the server directly from Java!
+Now you can:
+
+- test your server API
+- prepare server side state before visiting the web application in a test
+- validate server side post-conditions after running some actions in the browser
+
+To do a request on behalf of Playwright's Page, use **new [`property: Page.request`] API**:
+
+```java
+// Do a GET request on behalf of page
+APIResponse res = page.request().get("http://example.com/foo.json");
+```
+
+Read more about it in our [API testing guide](./test-api-testing).
+
+
+### Locator Improvements
+
+- [`method: Locator.dragTo`]
+- Each locator can now be optionally filtered by the text it contains:
+    ```java
+    page.locator("li", new Page.LocatorOptions().setHasText("my item"))
+        .locator("button").click();
+    ```
+    Read more in [locator documentation](./api/class-locator#locator-locator-option-has-text)
+
+
+### New APIs & changes
+
+- [`acceptDownloads`](./api/class-browser#browser-new-context-option-accept-downloads) option now defaults to `true`.
+- [`setSources`](./api/class-tracing#tracing-start-option-sources) option to embed sources into traces.
+
+### Browser Versions
+
+- Chromium 99.0.4812.0
+- Mozilla Firefox 95.0
+- WebKit 15.4
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 97
+- Microsoft Edge 97
+
+
+
 ## Version 1.17
 
 ### Frame Locators
