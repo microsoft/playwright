@@ -78,7 +78,7 @@ Read more in [our documentation](./api/class-playwrightassertions).
 
 ### New APIs & changes
 
-- [`accept_downloads`](./api/class-browser#browser-new-context-option-accept-downloads) option now defaults to `true`.
+- [`accept_downloads`](./api/class-browser#browser-new-context-option-accept-downloads) option now defaults to `True`.
 - [`sources`](./api/class-tracing#tracing-start-option-sources) option to embed sources into traces.
 
 ### Browser Versions
