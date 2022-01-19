@@ -7,6 +7,24 @@ title: "Release notes"
 
 ## Version 1.18
 
+### API Testing
+
+Playwright for Python 1.18 introduces new [API Testing](./api/class-apirequestcontext) that lets you send requests to the server directly from Python!
+Now you can:
+
+- test your server API
+- prepare server side state before visiting the web application in a test
+- validate server side post-conditions after running some actions in the browser
+
+To do a request on behalf of Playwright's Page, use **new [`property: Page.request`] API**:
+
+```python
+// Do a GET request on behalf of page
+res = await page.request.get("http://example.com/foo.json");
+```
+
+Read more in our [docs](./api/class-apirequestcontext).
+
 ### Locator Improvements
 
 - [`method: Locator.dragTo`]
