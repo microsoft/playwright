@@ -241,7 +241,7 @@ function toMegabytes(bytes: number) {
 }
 
 export function spawnAsync(cmd: string, args: string[], options: SpawnOptions = {}): Promise<{stdout: string, stderr: string, code: number | null, error?: Error}> {
-  const process = spawn(cmd, args, options);
+  const process = spawn(cmd, args, Object.assign({ windowsHide: true }, options));
 
   return new Promise(resolve => {
     let stdout = '';
