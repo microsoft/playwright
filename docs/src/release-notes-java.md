@@ -25,6 +25,33 @@ APIResponse res = page.request().get("http://example.com/foo.json");
 
 Read more about it in our [API testing guide](./test-api-testing).
 
+### Web-First Assertions
+
+Playwright for Java 1.18 introduces [Web-First Assertions](./api/class-playwrightassertions).
+
+Consider the following example:
+
+```java
+...
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+
+public class TestExample {
+  ...
+  @Test
+  void statusBecomesSubmitted() {
+    ...
+    page.click("#submit-button");
+    assertThat(page.locator(".status")).hasText("Submitted");
+  }
+}
+```
+
+Playwright will be re-testing the node with the selector `.status` until
+fetched Node has the `"Submitted"` text. It will be re-fetching the node and
+checking it over and over, until the condition is met or until the timeout is
+reached. You can pass this timeout as an option.
+
+Read more in [our documentation](./api/class-playwrightassertions).
 
 ### Locator Improvements
 
