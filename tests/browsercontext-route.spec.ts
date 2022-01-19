@@ -245,7 +245,6 @@ it(`should overwrite post body`, async ({ context, server, page }) => {
 });
 
 it(`should overwrite post body with empty string`, async ({ context, server, page, browserName }) => {
-  it.fail(browserName === 'firefox', `There's likely a FF-specific bug in Juggler or how we ser/de to Juggler.`);
   server.setRoute('/load', (req, res) => {
     res.write(`
       <script>
