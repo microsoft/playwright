@@ -19,12 +19,12 @@ Now you can:
 To do a request on behalf of Playwright's Page, use **new [`property: Page.request`] API**:
 
 ```python sync
-// Do a GET request on behalf of page
+# Do a GET request on behalf of page
 res = page.request.get("http://example.com/foo.json")
 ```
 
 ```python async
-// Do a GET request on behalf of page
+# Do a GET request on behalf of page
 res = await page.request.get("http://example.com/foo.json")
 ```
 
@@ -78,7 +78,7 @@ Read more in [our documentation](./api/class-playwrightassertions).
 
 ### New APIs & changes
 
-- [`acceptDownloads`](./api/class-browser#browser-new-context-option-accept-downloads) option now defaults to `true`.
+- [`accept_downloads`](./api/class-browser#browser-new-context-option-accept-downloads) option now defaults to `true`.
 - [`sources`](./api/class-tracing#tracing-start-option-sources) option to embed sources into traces.
 
 ### Browser Versions
