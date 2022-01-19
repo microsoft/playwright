@@ -18,14 +18,14 @@ Now you can:
 
 To do a request on behalf of Playwright's Page, use **new [`property: Page.request`] API**:
 
-```python sync
-# Do a GET request on behalf of page
-res = page.request.get("http://example.com/foo.json")
-```
-
 ```python async
 # Do a GET request on behalf of page
 res = await page.request.get("http://example.com/foo.json")
+```
+
+```python sync
+# Do a GET request on behalf of page
+res = page.request.get("http://example.com/foo.json")
 ```
 
 Read more in [our documentation](./api/class-apirequestcontext).
@@ -36,15 +36,6 @@ Playwright for Python 1.18 introduces [Web-First Assertions](./api/class-playwri
 
 Consider the following example:
 
-```python sync
-from playwright.sync_api import Page, expect
-
-def test_status_becomes_submitted(page: Page) -> None:
-    # ..
-    page.click("#submit-button")
-    expect(page.locator(".status")).to_have_text("Submitted")
-```
-
 ```python async
 from playwright.async_api import Page, expect
 
@@ -52,6 +43,15 @@ async def test_status_becomes_submitted(page: Page) -> None:
     # ..
     await page.click("#submit-button")
     await expect(page.locator(".status")).to_have_text("Submitted")
+```
+
+```python sync
+from playwright.sync_api import Page, expect
+
+def test_status_becomes_submitted(page: Page) -> None:
+    # ..
+    page.click("#submit-button")
+    expect(page.locator(".status")).to_have_text("Submitted")
 ```
 
 Playwright will be re-testing the node with the selector `.status` until
@@ -65,12 +65,12 @@ Read more in [our documentation](./api/class-playwrightassertions).
 
 - [`method: Locator.dragTo`]
 - Each locator can now be optionally filtered by the text it contains:
-    ```python sync
-    page.locator("li", has_text="my item")).locator("button").click()
-    ```
-
     ```python async
     await page.locator("li", has_text="my item")).locator("button").click()
+    ```
+
+    ```python sync
+    page.locator("li", has_text="my item")).locator("button").click()
     ```
 
     Read more in [locator documentation](./api/class-locator#locator-locator-option-has-text)
