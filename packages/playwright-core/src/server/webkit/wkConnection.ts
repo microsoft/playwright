@@ -24,7 +24,7 @@ import { debugLogger, RecentLogsCollector } from '../../utils/debugLogger';
 import { ProtocolLogger } from '../types';
 import { helper } from '../helper';
 import { kBrowserClosedError } from '../../utils/errors';
-import { ProtocolError } from '../common/protocolError';
+import { ProtocolError } from '../protocolError';
 
 // WKPlaywright uses this special id to issue Browser.close command which we
 // should ignore.

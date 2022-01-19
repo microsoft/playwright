@@ -32,10 +32,9 @@ import { debugLogger } from '../utils/debugLogger';
 import { CallMetadata, internalCallMetadata, SdkObject } from './instrumentation';
 import type InjectedScript from './injected/injectedScript';
 import type { ElementStateWithoutStable, FrameExpectParams, InjectedScriptPoll, InjectedScriptProgress } from './injected/injectedScript';
-import { isSessionClosedError } from './common/protocolError';
-import { splitSelectorByFrame, stringifySelector } from './common/selectorParser';
+import { isSessionClosedError } from './protocolError';
+import { isInvalidSelectorError, splitSelectorByFrame, stringifySelector } from './common/selectorParser';
 import { SelectorInfo } from './selectors';
-import { isInvalidSelectorError } from './common/selectorErrors';
 
 type ContextData = {
   contextPromise: ManualPromise<dom.FrameExecutionContext | Error>;
