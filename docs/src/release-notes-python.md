@@ -23,7 +23,29 @@ To do a request on behalf of Playwright's Page, use **new [`property: Page.reque
 res = await page.request.get("http://example.com/foo.json");
 ```
 
-Read more in our [docs](./api/class-apirequestcontext).
+Read more in [our documentation](./api/class-apirequestcontext).
+
+### Web-First Assertions
+
+Playwright for Python 1.18 introduces [Web-First Assertions](./api/class-playwrightassertions).
+
+Consider the following example:
+
+```python
+from playwright.async_api import Page, expect
+
+async def test_status_becomes_submitted(page: Page) -> None:
+    # ..
+    await page.click("#submit-button")
+    await expect(page.locator(".status")).to_have_text("Submitted")
+```
+
+Playwright will be re-testing the node with the selector `.status` until
+fetched Node has the `"Submitted"` text. It will be re-fetching the node and
+checking it over and over, until the condition is met or until the timeout is
+reached. You can pass this timeout as an option.
+
+Read more in [our documentation](./api/class-playwrightassertions).
 
 ### Locator Improvements
 
