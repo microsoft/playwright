@@ -250,7 +250,7 @@ class NetworkRequest {
     }
     if (method)
       this.httpChannel.requestMethod = method;
-    if (postData)
+    if (postData !== undefined)
       setPostData(this.httpChannel, postData, headers);
   }
 
