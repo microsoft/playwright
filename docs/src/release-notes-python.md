@@ -300,7 +300,7 @@ button.click("button >> visible=true")
 
 - [Intro](./intro.md)
 - [Authentication](./auth.md)
-- [Chome Extensions](./chrome-extensions.md)
+- [Chrome Extensions](./chrome-extensions.md)
 
 
 #### Browser Versions

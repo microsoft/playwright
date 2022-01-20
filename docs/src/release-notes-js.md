@@ -487,7 +487,7 @@ Learn more in the [documentation](./test-advanced#launching-a-development-web-se
 
 - [Intro](./intro.md)
 - [Authentication](./auth.md)
-- [Chome Extensions](./chrome-extensions.md)
+- [Chrome Extensions](./chrome-extensions.md)
 - [Playwright Test Annotations](./test-annotations.md)
 - [Playwright Test Configuration](./test-configuration.md)
 - [Playwright Test Fixtures](./test-fixtures.md)
