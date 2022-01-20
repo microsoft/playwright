@@ -28,9 +28,10 @@ function createLocator(injectedScript: InjectedScript, initial: string, options?
       this.selector = selector;
       if (options?.hasText) {
         const text = options.hasText;
-        const matcher = text instanceof RegExp ? 'text-matches' : 'has-text';
-        const source = escapeWithQuotes(text instanceof RegExp ? text.source : text, '"');
-        this.selector += ` >> :scope:${matcher}(${source})`;
+        if (text instanceof RegExp)
+          this.selector += ` >> :scope:text-matches(${escapeWithQuotes(text.source, '"')}, "${text.flags}")`;
+        else
+          this.selector += ` >> :scope:has-text(${escapeWithQuotes(text)})`;
       }
       const parsed = injectedScript.parseSelector(this.selector);
       this.element = injectedScript.querySelector(parsed, document, false);
