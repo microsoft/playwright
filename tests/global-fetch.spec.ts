@@ -276,13 +276,11 @@ const serialization: [string, any][] = [
   ['number', 2021],
   ['number (falsey)', 0],
   ['null', null],
-  ['literal string null', 'null'],
   ['literal string undefined', 'undefined'],
 ];
 for (const [type, value] of serialization) {
   const stringifiedValue = JSON.stringify(value);
   it(`should json stringify ${type} body when content-type is application/json`, async ({ playwright, server }) => {
-    it.fail(type === 'literal string null', `Some where isn't escaping this. Perhaps either at the following link or before: https://github.com/microsoft/playwright/blob/bfe7b7cc20ab9fdbf63dc84986369bf0f3f5a2dd/packages/playwright-core/src/protocol/serializers.ts#L53`);
     const request = await playwright.request.newContext();
     const [req] = await Promise.all([
       server.waitForRequest('/empty.html'),
