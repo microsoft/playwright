@@ -213,53 +213,8 @@ it('should support the times parameter with route matching', async ({ context, p
   expect(intercepted).toHaveLength(1);
 });
 
-it(`should overwrite post body`, async ({ context, server, page }) => {
-  server.setRoute('/load', (req, res) => {
-    res.write(`
-      <script>
-        (async () => {
-          await fetch('/empty.html', {
-            method: 'POST',
-            body: 'original',
-          });
-        })()
-      </script>
-    `);
-    res.end();
-  });
-
-  await context.route('**/empty.html', route => {
-    route.continue({
-      postData: 'replaced',
-    });
-  });
-
-  const [req] = await Promise.all([
-    server.waitForRequest('/empty.html'),
-    page.goto(server.PREFIX + '/load'),
-  ]);
-
-  const body = (await req.postBody).toString();
-  expect(body).not.toBe('original');
-  expect(body).toBe('replaced');
-});
-
-it(`should overwrite post body with empty string`, async ({ context, server, page, browserName }) => {
-  it.fail(browserName === 'firefox', `There's likely a FF-specific bug in Juggler or how we ser/de to Juggler.`);
-  server.setRoute('/load', (req, res) => {
-    res.write(`
-      <script>
-        (async () => {
-            await fetch('/empty.html', {
-              method: 'POST',
-              body: 'original',
-            });
-        })()
-      </script>
-    `);
-    res.end();
-  });
-
+it('should overwrite post body with empty string', async ({ context, server, page, browserName }) => {
+  it.fail(browserName === 'firefox', 'This should work after rev of FF built from #11421 with some Juggler fixes.');
   await context.route('**/empty.html', route => {
     route.continue({
       postData: '',
@@ -268,7 +223,16 @@ it(`should overwrite post body with empty string`, async ({ context, server, pag
 
   const [req] = await Promise.all([
     server.waitForRequest('/empty.html'),
-    page.goto(server.PREFIX + '/load'),
+    page.setContent(`
+      <script>
+        (async () => {
+            await fetch('/empty.html', {
+              method: 'POST',
+              body: 'original',
+            });
+        })()
+      </script>
+    `),
   ]);
 
   const body = (await req.postBody).toString();

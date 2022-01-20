@@ -25,7 +25,7 @@ import zlib from 'zlib';
 import { HTTPCredentials } from '../../types/types';
 import * as channels from '../protocol/channels';
 import { TimeoutSettings } from '../utils/timeoutSettings';
-import { assert, createGuid, getUserAgent, isString, monotonicTime } from '../utils/utils';
+import { assert, createGuid, getUserAgent, monotonicTime } from '../utils/utils';
 import { BrowserContext } from './browserContext';
 import { CookieStore, domainMatches } from './cookieStore';
 import { MultipartFormData } from './formData';
@@ -583,7 +583,7 @@ function serializePostData(params: channels.APIRequestContextFetchParams, header
     }
     headers['content-type'] ??= formData.contentTypeHeader();
     return formData.finish();
-  } else if (isString(params.postData)) {
+  } else if (params.postData !== undefined) {
     headers['content-type'] ??= 'application/octet-stream';
     return Buffer.from(params.postData, 'base64');
   }

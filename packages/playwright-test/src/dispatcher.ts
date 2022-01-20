@@ -22,7 +22,6 @@ import type { TestResult, Reporter, TestStep } from '../types/testReporter';
 import { Suite, TestCase } from './test';
 import { Loader } from './loader';
 import { ManualPromise } from 'playwright-core/lib/utils/async';
-import { isString } from 'playwright-core/lib/utils/utils';
 
 export type TestGroup = {
   workerHash: string;
@@ -205,7 +204,7 @@ export class Dispatcher {
         name: a.name,
         path: a.path,
         contentType: a.contentType,
-        body: isString(a.body) ? Buffer.from(a.body, 'base64') : undefined
+        body: a.body !== undefined ? Buffer.from(a.body, 'base64') : undefined
       }));
       result.status = params.status;
       test.expectedStatus = params.expectedStatus;
