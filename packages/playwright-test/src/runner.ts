@@ -239,7 +239,8 @@ export class Runner {
       }
 
       // 4. Filter only
-      filterOnly(preprocessRoot);
+      if (!list)
+        filterOnly(preprocessRoot);
 
       // 5. Complain about clashing.
       const clashingTests = getClashingTestsPerSuite(preprocessRoot);
