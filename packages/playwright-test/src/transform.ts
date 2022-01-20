@@ -48,7 +48,7 @@ sourceMapSupport.install({
 });
 
 function calculateCachePath(content: string, filePath: string): string {
-  const hash = crypto.createHash('sha1').update(content).update(filePath).update(String(version)).digest('hex');
+  const hash = crypto.createHash('sha1').update(process.env.PW_EXPERIMENTAL_TS_ESM ? 'esm' : 'no_esm').update(content).update(filePath).update(String(version)).digest('hex');
   const fileName = path.basename(filePath, path.extname(filePath)).replace(/\W/g, '') + '_' + hash;
   return path.join(cacheDir, hash[0] + hash[1], fileName);
 }
@@ -60,7 +60,7 @@ export function transformHook(code: string, filename: string, tsconfig: TsConfig
   const codePath = cachePath + '.js';
   const sourceMapPath = cachePath + '.map';
   sourceMaps.set(filename, sourceMapPath);
-  if (fs.existsSync(codePath))
+  if (!process.env.PW_IGNORE_COMPILE_CACHE && fs.existsSync(codePath))
     return fs.readFileSync(codePath, 'utf8');
   // We don't use any browserslist data, but babel checks it anyway.
   // Silence the annoying warning.
