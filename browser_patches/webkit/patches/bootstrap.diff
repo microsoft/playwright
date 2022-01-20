@@ -1818,6 +1818,34 @@ index 5219f8f7242b86f940e82823584e61fe2ba49e61..51bd401528326fc8fea07ed052d0f561
      // Do not use icu::TimeZone::createDefault. ICU internally has a cache for timezone and createDefault returns this cached value.
      m_timeZoneCache = std::unique_ptr<OpaqueICUTimeZone, OpaqueICUTimeZoneDeleter>(bitwise_cast<OpaqueICUTimeZone*>(icu::TimeZone::detectHostTimeZone()));
  #endif
+diff --git a/Source/JavaScriptCore/wasm/WasmCompilationMode.h b/Source/JavaScriptCore/wasm/WasmCompilationMode.h
+index 6f134e33eb8ebdd3888fdb068df7bfcd0c4225fd..1e3f2f08ee3bcb1d4a52009907a2dd9e622c4c67 100644
+--- a/Source/JavaScriptCore/wasm/WasmCompilationMode.h
++++ b/Source/JavaScriptCore/wasm/WasmCompilationMode.h
+@@ -50,7 +50,6 @@ constexpr inline bool isOSREntry(CompilationMode compilationMode)
+     case CompilationMode::OMGForOSREntryMode:
+         return true;
+     }
+-    RELEASE_ASSERT_UNDER_CONSTEXPR_CONTEXT(false);
+ }
+ 
+ constexpr inline bool isAnyBBQ(CompilationMode compilationMode)
+@@ -65,7 +64,6 @@ constexpr inline bool isAnyBBQ(CompilationMode compilationMode)
+     case CompilationMode::EmbedderEntrypointMode:
+         return false;
+     }
+-    RELEASE_ASSERT_UNDER_CONSTEXPR_CONTEXT(false);
+ }
+ 
+ constexpr inline bool isAnyOMG(CompilationMode compilationMode)
+@@ -80,7 +78,6 @@ constexpr inline bool isAnyOMG(CompilationMode compilationMode)
+     case CompilationMode::EmbedderEntrypointMode:
+         return false;
+     }
+-    RELEASE_ASSERT_UNDER_CONSTEXPR_CONTEXT(false);
+ }
+ 
+ } } // namespace JSC::Wasm
 diff --git a/Source/PlatformWPE.cmake b/Source/PlatformWPE.cmake
 index fabd776e617d07a6c30b9f2df30f884491259359..d9c39df7db565545108c765407ce1cda544856f7 100644
 --- a/Source/PlatformWPE.cmake
