@@ -236,6 +236,5 @@ it('should overwrite post body with empty string', async ({ context, server, pag
   ]);
 
   const body = (await req.postBody).toString();
-  expect(body).not.toBe('original');
   expect(body).toBe('');
 });
