@@ -116,3 +116,17 @@ it('should work with no timeout', async ({ page, server }) => {
   ]);
   expect(response.url()).toBe(server.PREFIX + '/digits/2.png');
 });
+
+it('should work with re-rendered cached IMG elements', async ({ page, server, browserName }) => {
+  it.fixme(browserName === 'webkit');
+  it.fixme(browserName === 'firefox');
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<img src="pptr.png">`);
+  await page.$eval('img', img => img.remove());
+  const [response] = await Promise.all([
+    page.waitForRequest(/pptr/),
+    page.waitForResponse(/pptr/),
+    page.setContent(`<img src="pptr.png">`)
+  ]);
+  expect(response.url()).toBe(server.PREFIX + '/pptr.png');
+});
