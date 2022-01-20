@@ -23,7 +23,7 @@ To do a request on behalf of Playwright's Page, use **new [`property: Page.reque
 APIResponse res = page.request().get("http://example.com/foo.json");
 ```
 
-Read more about it in our [API testing guide](./test-api-testing).
+Read more about it in our [API testing guide](./api-testing).
 
 ### Web-First Assertions
 
