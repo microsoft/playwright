@@ -226,7 +226,7 @@ it('should overwrite post body with empty string', async ({ context, server, pag
     page.setContent(`
       <script>
         (async () => {
-            await fetch('/empty.html', {
+            await fetch('${server.EMPTY_PAGE}', {
               method: 'POST',
               body: 'original',
             });
