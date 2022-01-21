@@ -75,6 +75,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   private _tracesDir: string;
   private _allResources = new Set<string>();
   private _contextCreatedEvent: trace.ContextCreatedTraceEvent;
+  private _disposed: boolean = false;
 
   constructor(apiRequest: APIRequestContext, tracesDir: string, context?: BrowserContext) {
     super(context || apiRequest, 'Tracing');
@@ -181,9 +182,13 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     this._state = undefined;
   }
 
-  async dispose() {
+  async flush() {
     this._snapshotter?.dispose();
     await this._writeChain;
+  }
+
+  async dispose() {
+    this._snapshotter?.dispose();
     this.emit(Tracing.Events.Dispose);
   }
 

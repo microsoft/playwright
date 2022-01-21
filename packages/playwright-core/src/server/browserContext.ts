@@ -138,6 +138,7 @@ export abstract class BrowserContext extends SdkObject {
     this._closedStatus = 'closed';
     this._deleteAllDownloads();
     this._downloads.clear();
+    this.tracing.dispose();
     if (this._isPersistentContext)
       this._onClosePersistent();
     this._closePromiseFulfill!(new Error('Context closed'));
@@ -283,7 +284,7 @@ export abstract class BrowserContext extends SdkObject {
       this._closedStatus = 'closing';
 
       await this._harRecorder?.flush();
-      await this.tracing.dispose();
+      await this.tracing.flush();
 
       // Cleanup.
       const promises: Promise<void>[] = [];
