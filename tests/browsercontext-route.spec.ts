@@ -212,3 +212,19 @@ it('should support the times parameter with route matching', async ({ context, p
   await page.goto(server.EMPTY_PAGE);
   expect(intercepted).toHaveLength(1);
 });
+
+it('should lead in uncaughtException when route raises', async ({ context, page, server }) => {
+  it.fail();
+  await context.route('**/empty.html', route => {
+    throw new Error('foobar');
+  });
+  await page.goto(server.EMPTY_PAGE);
+});
+
+it('should lead in unhandledRejection when async route raises', async ({ context, page, server }) => {
+  it.fail();
+  await context.route('**/empty.html', async route => {
+    throw new Error('foobar');
+  });
+  await page.goto(server.EMPTY_PAGE);
+});

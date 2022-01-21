@@ -146,10 +146,14 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   _onRoute(route: network.Route, request: network.Request) {
     for (const routeHandler of this._routes) {
       if (routeHandler.matches(request.url())) {
-        if (routeHandler.handle(route, request)) {
-          this._routes.splice(this._routes.indexOf(routeHandler), 1);
-          if (!this._routes.length)
-            this._wrapApiCall(() => this._disableInterception(), true).catch(() => {});
+        try {
+          routeHandler.handle(route, request);
+        } finally {
+          if (!routeHandler.isActive()) {
+            this._routes.splice(this._routes.indexOf(routeHandler), 1);
+            if (!this._routes.length)
+              this._wrapApiCall(() => this._disableInterception(), true).catch(() => {});
+          }
         }
         return;
       }

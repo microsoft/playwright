@@ -710,3 +710,19 @@ it('should contain raw response header after fulfill', async ({ page, server }) 
   const headers = await response.allHeaders();
   expect(headers['content-type']).toBeTruthy();
 });
+
+it('should lead in uncaughtException when route raises', async ({ page, server }) => {
+  it.fail();
+  await page.route('**/empty.html', route => {
+    throw new Error('foobar');
+  });
+  await page.goto(server.EMPTY_PAGE);
+});
+
+it('should lead in unhandledRejection when async route raises', async ({ page, server }) => {
+  it.fail();
+  await page.route('**/empty.html', async route => {
+    throw new Error('foobar');
+  });
+  await page.goto(server.EMPTY_PAGE);
+});

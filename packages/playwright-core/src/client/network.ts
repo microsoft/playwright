@@ -514,12 +514,13 @@ export class RouteHandler {
     return urlMatches(this._baseURL, requestURL, this.url);
   }
 
-  public handle(route: Route, request: Request): boolean {
-    try {
-      this.handler(route, request);
-    } finally {
-      return ++this.handledCount >= this._times;
-    }
+  public handle(route: Route, request: Request): void {
+    ++this.handledCount;
+    this.handler(route, request);
+  }
+
+  public isActive(): boolean {
+    return this.handledCount < this._times;
   }
 }
 
