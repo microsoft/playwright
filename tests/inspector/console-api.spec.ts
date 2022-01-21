@@ -54,6 +54,9 @@ it('should support playwright.locator.value', async ({ page }) => {
 
 it('should support playwright.locator.values', async ({ page }) => {
   await page.setContent('<div>Hello<div>Bar</div></div>');
-  const length = await page.evaluate(`playwright.locator('div', { hasText: 'Hello' }).elements.length`);
-  expect(length).toBe(1);
+  expect(await page.evaluate(`playwright.locator('div', { hasText: 'Hello' }).elements.length`)).toBe(1);
+  expect(await page.evaluate(`playwright.locator('div', { hasText: 'HElLo' }).elements.length`)).toBe(1);
+  expect(await page.evaluate(`playwright.locator('div', { hasText: /ELL/ }).elements.length`)).toBe(0);
+  expect(await page.evaluate(`playwright.locator('div', { hasText: /ELL/i }).elements.length`)).toBe(1);
+  expect(await page.evaluate(`playwright.locator('div', { hasText: /Hello/ }).elements.length`)).toBe(1);
 });
