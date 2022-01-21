@@ -8,6 +8,7 @@
     "node": ">=12"
   },
   "scripts": {
+    "install": "node install.js",
     "prepare": "babel --config-file ../../babel.config.json -s --extensions \".ts\" --out-dir lib/utils/ src/utils"
   },
   "author": {

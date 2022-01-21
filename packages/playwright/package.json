@@ -22,9 +22,6 @@
   "bin": {
     "playwright": "./cli.js"
   },
-  "scripts": {
-    "install": "node install.js"
-  },
   "dependencies": {
     "playwright-core": "=1.19.0-next"
   }
