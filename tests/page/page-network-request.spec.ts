@@ -273,7 +273,7 @@ it('should report raw headers', async ({ page, server, browserName, platform }) 
     for (let i = 0; i < req.rawHeaders.length; i += 2)
       expectedHeaders.push({ name: req.rawHeaders[i], value: req.rawHeaders[i + 1] });
     if (browserName === 'webkit' && platform === 'win32')
-      expectedHeaders = expectedHeaders.filter(({ name }) => name.toLowerCase() !== 'accept-encoding' && name.toLowerCase() !== 'accept-language');
+      expectedHeaders = expectedHeaders.filter(({ name }) => name.toLowerCase() !== 'accept-encoding');
     res.end();
   });
   await page.goto(server.EMPTY_PAGE);
