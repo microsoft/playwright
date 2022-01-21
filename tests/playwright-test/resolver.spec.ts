@@ -108,6 +108,37 @@ test('should respect baseurl', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
+test('should respect baseurl w/o paths', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        projects: [{name: 'foo'}],
+      };
+    `,
+    'tsconfig.json': `{
+      "compilerOptions": {
+        "target": "ES2019",
+        "module": "commonjs",
+        "lib": ["esnext", "dom", "DOM.Iterable"],
+        "baseUrl": "./"
+      },
+    }`,
+    'a.test.ts': `
+      import { foo } from 'foo/b';
+      const { test } = pwt;
+      test('test', ({}, testInfo) => {
+        expect(testInfo.project.name).toBe(foo);
+      });
+    `,
+    'foo/b.ts': `
+      export const foo: string = 'foo';
+    `,
+  });
+
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
+
 test('should respect path resolver in experimental mode', async ({ runInlineTest }) => {
   // We only support experimental esm mode on Node 16+
   test.skip(parseInt(process.version.slice(1), 10) < 16);
