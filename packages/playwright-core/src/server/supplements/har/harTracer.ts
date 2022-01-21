@@ -134,6 +134,7 @@ export class HarTracer {
       promise
     ]) as Promise<void>;
     this._barrierPromises.add(race);
+    race.then(() => this._barrierPromises.delete(race));
   }
 
   private _onAPIRequest(event: APIRequestEvent) {
