@@ -676,7 +676,6 @@ it('should include API request', async ({ contextFactory, server }, testInfo) =>
 
 it('should not hang on resources served from cache', async ({ contextFactory, server, browserName }, testInfo) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11435' });
-  it.fixme(browserName === 'firefox', 'Hangs in firefox');
   server.setRoute('/one-style.css', (req, res) => {
     res.writeHead(200, {
       'Content-Type': 'text/css',
@@ -689,6 +688,10 @@ it('should not hang on resources served from cache', async ({ contextFactory, se
   await page.goto(server.PREFIX + '/har.html');
   const log = await getLog();
   const entries = log.entries.filter(e => e.request.url.endsWith('one-style.css'));
-  expect(entries.length).toBe(2);
+  // In firefox no request events are fired for cached resources.
+  if (browserName === 'firefox')
+    expect(entries.length).toBe(1);
+  else
+    expect(entries.length).toBe(2);
 });
 
