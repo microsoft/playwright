@@ -17,7 +17,6 @@
 import * as http from 'http';
 import * as https from 'https';
 import { HttpsProxyAgent } from 'https-proxy-agent';
-import { Progress, ProgressController } from './progress';
 import { SocksProxyAgent } from 'socks-proxy-agent';
 import { pipeline, Readable, Transform } from 'stream';
 import url from 'url';
@@ -31,12 +30,10 @@ import { CookieStore, domainMatches } from './cookieStore';
 import { MultipartFormData } from './formData';
 import { CallMetadata, SdkObject } from './instrumentation';
 import { Playwright } from './playwright';
+import { Progress, ProgressController } from './progress';
+import { Tracing } from './trace/recorder/tracing';
 import * as types from './types';
 import { HeadersArray, ProxySettings } from './types';
-import { Tracing } from './trace/recorder/tracing';
-import path from 'path';
-import os from 'os';
-import fs from 'fs';
 
 type FetchRequestOptions = {
   userAgent: string;
@@ -67,8 +64,6 @@ export type APIRequestFinishedEvent = {
   body?: Buffer;
 };
 
-const API_REQUEST_ARTIFACTS_DIR = path.join(os.tmpdir(), 'playwright-api-request-artifacts-');
-
 export abstract class APIRequestContext extends SdkObject {
   static Events = {
     Dispose: 'dispose',
@@ -92,7 +87,6 @@ export abstract class APIRequestContext extends SdkObject {
 
   constructor(parent: SdkObject) {
     super(parent, 'fetchRequest');
-    this.attribution.context = this;
     APIRequestContext.allInstances.add(this);
   }
 
@@ -110,7 +104,7 @@ export abstract class APIRequestContext extends SdkObject {
 
   abstract tracing(): Tracing;
 
-  abstract dispose(): void;
+  abstract dispose(): Promise<void>;
 
   abstract _defaultOptions(): FetchRequestOptions;
   abstract _addCookies(cookies: types.NetworkCookie[]): Promise<void>;
@@ -417,7 +411,7 @@ export class BrowserContextAPIRequestContext extends APIRequestContext {
     return this._context.tracing;
   }
 
-  override dispose() {
+  override async dispose() {
     this.fetchResponses.clear();
   }
 
@@ -453,15 +447,9 @@ export class GlobalAPIRequestContext extends APIRequestContext {
   private readonly _origins: channels.OriginStorage[] | undefined;
   private readonly _tracing: Tracing;
 
-  static async create(playwright: Playwright, options: channels.PlaywrightNewRequestOptions) {
-    const artifactsDir = await fs.promises.mkdtemp(API_REQUEST_ARTIFACTS_DIR);
-    // tempDirectories.push(artifactsDir);
-    // TODO: delete
-    return new GlobalAPIRequestContext(playwright, artifactsDir, options);
-  }
-
-  constructor(playwright: Playwright, artifactsDir: string, options: channels.PlaywrightNewRequestOptions) {
+  constructor(playwright: Playwright, options: channels.PlaywrightNewRequestOptions) {
     super(playwright);
+    this.attribution.context = this;
     const timeoutSettings = new TimeoutSettings();
     if (options.timeout !== undefined)
       timeoutSettings.setDefaultTimeout(options.timeout);
@@ -485,14 +473,17 @@ export class GlobalAPIRequestContext extends APIRequestContext {
       proxy,
       timeoutSettings,
     };
-    this._tracing = new Tracing(this, artifactsDir);
+    this._tracing = new Tracing(this, options.tracesDir);
   }
 
   override tracing() {
     return this._tracing;
   }
 
-  override dispose() {
+  override async dispose() {
+    await this._tracing.flush();
+    await this._tracing.deleteTmpTracedDir();
+    this._tracing.dispose();
     this._disposeImpl();
   }
 

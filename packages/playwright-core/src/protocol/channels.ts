@@ -511,6 +511,7 @@ export type PlaywrightNewRequestParams = {
     cookies: NetworkCookie[],
     origins: OriginStorage[],
   },
+  tracesDir?: string,
 };
 export type PlaywrightNewRequestOptions = {
   baseURL?: string,
@@ -532,6 +533,7 @@ export type PlaywrightNewRequestOptions = {
     cookies: NetworkCookie[],
     origins: OriginStorage[],
   },
+  tracesDir?: string,
 };
 export type PlaywrightNewRequestResult = {
   request: APIRequestContextChannel,

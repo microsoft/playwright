@@ -178,7 +178,7 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
   }
 
   async dispose(params?: channels.APIRequestContextDisposeParams): Promise<void> {
-    this._object.dispose();
+    await this._object.dispose();
   }
 
   async fetch(params: channels.APIRequestContextFetchParams, metadata: CallMetadata): Promise<channels.APIRequestContextFetchResult> {

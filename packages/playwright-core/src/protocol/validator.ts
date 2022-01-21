@@ -236,6 +236,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       cookies: tArray(tType('NetworkCookie')),
       origins: tArray(tType('OriginStorage')),
     })),
+    tracesDir: tOptional(tString),
   });
   scheme.PlaywrightHideHighlightParams = tOptional(tObject({}));
   scheme.SelectorsRegisterParams = tObject({

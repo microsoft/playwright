@@ -541,6 +541,7 @@ Playwright:
             origins:
               type: array
               items: OriginStorage
+        tracesDir: string?
 
       returns:
         request: APIRequestContext
