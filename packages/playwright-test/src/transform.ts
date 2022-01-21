@@ -24,7 +24,7 @@ import * as url from 'url';
 import type { Location } from './types';
 import { TsConfigLoaderResult } from './third_party/tsconfig-loader';
 
-const version = 5;
+const version = 6;
 const cacheDir = process.env.PWTEST_CACHE_DIR || path.join(os.tmpdir(), 'playwright-transform-cache');
 const sourceMaps: Map<string, string> = new Map();
 
@@ -47,8 +47,14 @@ sourceMapSupport.install({
   }
 });
 
-function calculateCachePath(content: string, filePath: string): string {
-  const hash = crypto.createHash('sha1').update(process.env.PW_EXPERIMENTAL_TS_ESM ? 'esm' : 'no_esm').update(content).update(filePath).update(String(version)).digest('hex');
+function calculateCachePath(tsconfig: TsConfigLoaderResult, content: string, filePath: string): string {
+  const hash = crypto.createHash('sha1')
+      .update(tsconfig.serialized || '')
+      .update(process.env.PW_EXPERIMENTAL_TS_ESM ? 'esm' : 'no_esm')
+      .update(content)
+      .update(filePath)
+      .update(String(version))
+      .digest('hex');
   const fileName = path.basename(filePath, path.extname(filePath)).replace(/\W/g, '') + '_' + hash;
   return path.join(cacheDir, hash[0] + hash[1], fileName);
 }
@@ -56,7 +62,7 @@ function calculateCachePath(content: string, filePath: string): string {
 export function transformHook(code: string, filename: string, tsconfig: TsConfigLoaderResult, isModule = false): string {
   if (isComponentImport(filename))
     return componentStub();
-  const cachePath = calculateCachePath(code, filename);
+  const cachePath = calculateCachePath(tsconfig, code, filename);
   const codePath = cachePath + '.js';
   const sourceMapPath = cachePath + '.map';
   sourceMaps.set(filename, sourceMapPath);
@@ -67,15 +73,23 @@ export function transformHook(code: string, filename: string, tsconfig: TsConfig
   process.env.BROWSERSLIST_IGNORE_OLD_DATA = 'true';
   const babel: typeof import('@babel/core') = require('@babel/core');
 
+  const hasBaseUrl = !!tsconfig.baseUrl;
   const extensions = ['', '.js', '.ts', '.mjs', ...(process.env.PW_COMPONENT_TESTING ? ['.tsx', '.jsx'] : [])];  const alias: { [key: string]: string | ((s: string[]) => string) } = {};
-  for (const [key, values] of Object.entries(tsconfig.paths || {})) {
+  for (const [key, values] of Object.entries(tsconfig.paths || { '*': '*' })) {
     const regexKey = '^' + key.replace('*', '.*');
     alias[regexKey] = ([name]) => {
       for (const value of values) {
-        const relative = (key.endsWith('/*') ? value.substring(0, value.length - 1) + name.substring(key.length - 1) : value)
-            .replace(/\//g, path.sep);
+        let relative: string;
+        if (key === '*' && value === '*')
+          relative = name;
+        else if (key.endsWith('/*'))
+          relative = value.substring(0, value.length - 1) + name.substring(key.length - 1);
+        else
+          relative = value;
+        relative = relative.replace(/\//g, path.sep);
         const result = path.resolve(tsconfig.baseUrl || '', relative);
         for (const extension of extensions) {
+          // TODO: We can't cover this one with the hash!
           if (fs.existsSync(result + extension))
             return result;
         }
@@ -95,11 +109,14 @@ export function transformHook(code: string, filename: string, tsconfig: TsConfig
     [require.resolve('@babel/plugin-syntax-async-generators')],
     [require.resolve('@babel/plugin-syntax-object-rest-spread')],
     [require.resolve('@babel/plugin-proposal-export-namespace-from')],
-    [require.resolve('babel-plugin-module-resolver'), {
+  ] as any;
+
+  if (hasBaseUrl) {
+    plugins.push([require.resolve('babel-plugin-module-resolver'), {
       root: ['./'],
       alias
-    }],
-  ];
+    }]);
+  }
 
   if (process.env.PW_COMPONENT_TESTING)
     plugins.unshift([require.resolve('@babel/plugin-transform-react-jsx')]);
@@ -127,7 +144,10 @@ export function transformHook(code: string, filename: string, tsconfig: TsConfig
     fs.mkdirSync(path.dirname(cachePath), { recursive: true });
     if (result.map)
       fs.writeFileSync(sourceMapPath, JSON.stringify(result.map), 'utf8');
-    fs.writeFileSync(codePath, result.code, 'utf8');
+    // Compiled files with base URL depend on the FS state during compilation,
+    // never cache them.
+    if (!hasBaseUrl)
+      fs.writeFileSync(codePath, result.code, 'utf8');
   }
   return result.code || '';
 }

@@ -44,6 +44,7 @@ export interface TsConfigLoaderResult {
   tsConfigPath: string | undefined;
   baseUrl: string | undefined;
   paths: { [key: string]: Array<string> } | undefined;
+  serialized: string | undefined;
 }
 
 export interface TsConfigLoaderParams {
@@ -67,6 +68,7 @@ export function tsConfigLoader({
   // tsconfig.loadSync handles if TS_NODE_PROJECT is a file or directory
   // and also overrides baseURL if TS_NODE_BASEURL is available.
   const loadResult = loadSync(cwd, TS_NODE_PROJECT, TS_NODE_BASEURL);
+  loadResult.serialized = JSON.stringify(loadResult);
   return loadResult;
 }
 
@@ -84,6 +86,7 @@ function loadSyncDefault(
       tsConfigPath: undefined,
       baseUrl: undefined,
       paths: undefined,
+      serialized: undefined,
     };
   }
   const config = loadTsconfig(configPath);
@@ -94,6 +97,7 @@ function loadSyncDefault(
       baseUrl ||
       (config && config.compilerOptions && config.compilerOptions.baseUrl),
     paths: config && config.compilerOptions && config.compilerOptions.paths,
+    serialized: undefined,
   };
 }
 
