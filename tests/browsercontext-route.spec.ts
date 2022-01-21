@@ -214,7 +214,6 @@ it('should support the times parameter with route matching', async ({ context, p
 });
 
 it('should overwrite post body with empty string', async ({ context, server, page, browserName }) => {
-  it.fail(browserName === 'firefox', 'This should work after rev of FF built from #11421 with some Juggler fixes.');
   await context.route('**/empty.html', route => {
     route.continue({
       postData: '',
