@@ -674,7 +674,9 @@ it('should include API request', async ({ contextFactory, server }, testInfo) =>
   expect(entry.response.content.text).toBe(responseBody.toString('base64'));
 });
 
-it('should not hang on resources served from cache', async ({ contextFactory, server }, testInfo) => {
+it('should not hang on resources served from cache', async ({ contextFactory, server, browserName }, testInfo) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11435' });
+  it.fixme(browserName === 'firefox', 'Hangs in firefox');
   server.setRoute('/one-style.css', (req, res) => {
     res.writeHead(200, {
       'Content-Type': 'text/css',
