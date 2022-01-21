@@ -15,6 +15,7 @@
  */
 
 import fs from 'fs';
+import { APIRequestContext } from '../../fetch';
 import { Artifact } from '../../artifact';
 import { BrowserContext } from '../../browserContext';
 import * as har from './har';
@@ -32,10 +33,10 @@ export class HarRecorder {
   private _tracer: HarTracer;
   private _entries: har.Entry[] = [];
 
-  constructor(context: BrowserContext, options: HarOptions) {
+  constructor(context: BrowserContext | APIRequestContext, options: HarOptions) {
     this._artifact = new Artifact(context, options.path);
     this._options = options;
-    this._tracer = new HarTracer(context.fetchRequest, context, this, {
+    this._tracer = new HarTracer(context, this, {
       content: options.omitContent ? 'omit' : 'embedded',
       waitForContentOnStop: true,
       skipScripts: false,

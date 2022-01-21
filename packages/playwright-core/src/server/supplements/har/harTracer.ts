@@ -40,8 +40,7 @@ type HarTracerOptions = {
 };
 
 export class HarTracer {
-  private _apiRequest: APIRequestContext;
-  private _context?: BrowserContext;
+  private _context: BrowserContext | APIRequestContext;
   private _barrierPromises = new Set<Promise<void>>();
   private _delegate: HarTracerDelegate;
   private _options: HarTracerOptions;
@@ -50,8 +49,7 @@ export class HarTracer {
   private _started = false;
   private _entrySymbol: symbol;
 
-  constructor(apiRequest: APIRequestContext, context: BrowserContext | undefined, delegate: HarTracerDelegate, options: HarTracerOptions) {
-    this._apiRequest = apiRequest;
+  constructor(context: BrowserContext | APIRequestContext, delegate: HarTracerDelegate, options: HarTracerOptions) {
     this._context = context;
     this._delegate = delegate;
     this._options = options;
@@ -62,9 +60,10 @@ export class HarTracer {
     if (this._started)
       return;
     this._started = true;
+    const apiRequest = this._context instanceof APIRequestContext ? this._context : this._context.fetchRequest;
     this._eventListeners = [
-      eventsHelper.addEventListener(this._apiRequest, APIRequestContext.Events.Request, (event: APIRequestEvent) => this._onAPIRequest(event)),
-      eventsHelper.addEventListener(this._apiRequest, APIRequestContext.Events.RequestFinished, (event: APIRequestFinishedEvent) => this._onAPIRequestFinished(event)),
+      eventsHelper.addEventListener(apiRequest, APIRequestContext.Events.Request, (event: APIRequestEvent) => this._onAPIRequest(event)),
+      eventsHelper.addEventListener(apiRequest, APIRequestContext.Events.RequestFinished, (event: APIRequestFinishedEvent) => this._onAPIRequestFinished(event)),
     ];
     if (this._context) {
       this._eventListeners.push(
@@ -376,6 +375,7 @@ export class HarTracer {
     eventsHelper.removeEventListeners(this._eventListeners);
     this._barrierPromises.clear();
 
+    const context = this._context instanceof BrowserContext ? this._context : undefined;
     const log: har.Log = {
       version: '1.2',
       creator: {
@@ -383,8 +383,8 @@ export class HarTracer {
         version: require('../../../../package.json')['version'],
       },
       browser: {
-        name: this._context?._browser.options.name || '',
-        version: this._context?._browser.version() || ''
+        name: context?._browser.options.name || '',
+        version: context?._browser.version() || ''
       },
       pages: Array.from(this._pageEntries.values()),
       entries: [],

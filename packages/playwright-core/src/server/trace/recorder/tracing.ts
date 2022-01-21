@@ -67,34 +67,32 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   private _harTracer: HarTracer;
   private _screencastListeners: RegisteredListener[] = [];
   private _pendingCalls = new Map<string, { sdkObject: SdkObject, metadata: CallMetadata, beforeSnapshot: Promise<void>, actionSnapshot?: Promise<void>, afterSnapshot?: Promise<void> }>();
-  private _apiRequest: APIRequestContext;
-  private _context?: BrowserContext;
+  private _context: BrowserContext | APIRequestContext;
   private _resourcesDir: string;
   private _state: RecordingState | undefined;
   private _isStopping = false;
   private _tracesDir: string;
   private _allResources = new Set<string>();
   private _contextCreatedEvent: trace.ContextCreatedTraceEvent;
-  private _disposed: boolean = false;
 
-  constructor(apiRequest: APIRequestContext, tracesDir: string, context?: BrowserContext) {
-    super(context || apiRequest, 'Tracing');
-    this._apiRequest = apiRequest;
+  constructor(context: BrowserContext | APIRequestContext, tracesDir: string) {
+    super(context, 'Tracing');
     this._context = context;
     this._tracesDir = tracesDir;
     this._resourcesDir = path.join(tracesDir, 'resources');
-    if (context)
+    if (context instanceof BrowserContext)
       this._snapshotter = new Snapshotter(context, this);
-    this._harTracer = new HarTracer(apiRequest, context, this, {
+    this._harTracer = new HarTracer(context, this, {
       content: 'sha1',
       waitForContentOnStop: false,
       skipScripts: true,
     });
+    const browserContext = this._context instanceof BrowserContext ? this._context : undefined;
     this._contextCreatedEvent = {
       version: VERSION,
       type: 'context-options',
-      browserName: this._context?._browser.options.name || '',
-      options: this._context?._options || {},
+      browserName: browserContext?._browser.options.name || '',
+      options: browserContext?._options || {},
       platform: process.platform,
       wallTime: 0,
     };
@@ -141,11 +139,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       await fs.promises.appendFile(state.traceFile, JSON.stringify({ ...this._contextCreatedEvent, title: options.title, wallTime: Date.now() }) + '\n');
     });
 
-    if (this._context)
-      this._context.instrumentation.addListener(this, this._context);
-    else
-      this._apiRequest.instrumentation.addListener(this, null);
-
+    this._context.instrumentation.addListener(this, this._context);
     if (state.options.screenshots)
       this._startScreencast();
     if (state.options.snapshots)
@@ -153,7 +147,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   private _startScreencast() {
-    if (!this._context)
+    if (!(this._context instanceof BrowserContext))
       return;
     for (const page of this._context.pages())
       this._startScreencastInPage(page);
@@ -164,7 +158,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
   private _stopScreencast() {
     eventsHelper.removeEventListeners(this._screencastListeners);
-    if (!this._context)
+    if (!(this._context instanceof BrowserContext))
       return;
     for (const page of this._context.pages())
       page.setScreencastOptions(null);
@@ -205,10 +199,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     }
 
     const state = this._state!;
-    if (this._context)
-      this._context.instrumentation.removeListener(this);
-    else
-      this._apiRequest.instrumentation.removeListener(this);
+    this._context.instrumentation.removeListener(this);
     if (this._state?.options.screenshots)
       this._stopScreencast();
 
@@ -278,7 +269,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     zipFile.end();
     const zipFileName = state.traceFile + '.zip';
     zipFile.outputStream.pipe(fs.createWriteStream(zipFileName)).on('close', () => {
-      const artifact = new Artifact(this._context || this._apiRequest, zipFileName);
+      const artifact = new Artifact(this._context, zipFileName);
       artifact.reportFinished();
       result.resolve(artifact);
     });
@@ -422,7 +413,9 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     let error: Error | undefined;
     let result: T | undefined;
     this._writeChain = this._writeChain.then(async () => {
-      if (this._context && !this._context._browser.isConnected())
+      // This check is here because closing the browser removes the tracesDir and tracing
+      // dies trying to archive.
+      if (this._context instanceof BrowserContext && !this._context._browser.isConnected())
         return;
       try {
         result = await cb();

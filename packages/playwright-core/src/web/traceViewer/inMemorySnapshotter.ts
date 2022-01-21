@@ -33,7 +33,7 @@ export class InMemorySnapshotter extends BaseSnapshotStorage implements Snapshot
   constructor(context: BrowserContext) {
     super();
     this._snapshotter = new Snapshotter(context, this);
-    this._harTracer = new HarTracer(context.fetchRequest, context, this, { content: 'sha1', waitForContentOnStop: false, skipScripts: true });
+    this._harTracer = new HarTracer(context, this, { content: 'sha1', waitForContentOnStop: false, skipScripts: true });
   }
 
   async initialize(): Promise<void> {
