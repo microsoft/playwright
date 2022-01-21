@@ -42,7 +42,7 @@ export const ReportView: React.FC<{
 
   const filter = React.useMemo(() => Filter.parse(filterText), [filterText]);
 
-  return <div className='htmlreport vbox px-4'>
+  return <div className='htmlreport vbox px-4 pb-4'>
     {report?.json() && <HeaderView stats={report.json().stats} filterText={filterText} setFilterText={setFilterText}></HeaderView>}
     {<>
       <Route params=''>
