@@ -15,6 +15,9 @@ RUN apt-get update && \
     # Feature-parity with node.js base images.
     apt-get install -y --no-install-recommends git openssh-client && \
     npm install -g yarn && \
+    
+    # Install minimal dependencies
+    apt-get install -y jq \
 
     # Install Python 3.8
     apt-get install -y python3.8 python3-pip && \
