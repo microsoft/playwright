@@ -81,7 +81,7 @@ export abstract class BrowserContext extends SdkObject {
     if (this._options.recordHar)
       this._harRecorder = new HarRecorder(this, { ...this._options.recordHar, path: path.join(this._browser.options.artifactsDir, `${createGuid()}.har`) });
 
-    this.tracing = new Tracing(this);
+    this.tracing = new Tracing(this, browser.options.tracesDir);
   }
 
   isPersistentContext(): boolean {
@@ -138,6 +138,7 @@ export abstract class BrowserContext extends SdkObject {
     this._closedStatus = 'closed';
     this._deleteAllDownloads();
     this._downloads.clear();
+    this.tracing.dispose();
     if (this._isPersistentContext)
       this._onClosePersistent();
     this._closePromiseFulfill!(new Error('Context closed'));
@@ -283,7 +284,7 @@ export abstract class BrowserContext extends SdkObject {
       this._closedStatus = 'closing';
 
       await this._harRecorder?.flush();
-      await this.tracing.dispose();
+      await this.tracing.flush();
 
       // Cleanup.
       const promises: Promise<void>[] = [];

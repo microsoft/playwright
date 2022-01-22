@@ -17,24 +17,29 @@
 import * as api from '../../types/types';
 import * as channels from '../protocol/channels';
 import { Artifact } from './artifact';
-import { BrowserContext } from './browserContext';
+import { ChannelOwner } from './channelOwner';
+import { LocalUtils } from './localUtils';
 
-export class Tracing implements api.Tracing {
-  private _context: BrowserContext;
+export class Tracing extends ChannelOwner<channels.TracingChannel> implements api.Tracing {
+  _localUtils!: LocalUtils;
 
-  constructor(channel: BrowserContext) {
-    this._context = channel;
+  static from(channel: channels.TracingChannel): Tracing {
+    return (channel as any)._object;
+  }
+
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.TracingInitializer) {
+    super(parent, type, guid, initializer);
   }
 
   async start(options: { name?: string, title?: string, snapshots?: boolean, screenshots?: boolean, sources?: boolean } = {}) {
-    await this._context._wrapApiCall(async () => {
-      await this._context._channel.tracingStart(options);
-      await this._context._channel.tracingStartChunk({ title: options.title });
+    await this._wrapApiCall(async () => {
+      await this._channel.tracingStart(options);
+      await this._channel.tracingStartChunk({ title: options.title });
     });
   }
 
   async startChunk(options: { title?: string } = {}) {
-    await this._context._channel.tracingStartChunk(options);
+    await this._channel.tracingStartChunk(options);
   }
 
   async stopChunk(options: { path?: string } = {}) {
@@ -42,16 +47,16 @@ export class Tracing implements api.Tracing {
   }
 
   async stop(options: { path?: string } = {}) {
-    await this._context._wrapApiCall(async () => {
+    await this._wrapApiCall(async () => {
       await this._doStopChunk(options.path);
-      await this._context._channel.tracingStop();
+      await this._channel.tracingStop();
     });
   }
 
   private async _doStopChunk(filePath: string | undefined) {
-    const isLocal = !this._context._connection.isRemote();
+    const isLocal = !this._connection.isRemote();
 
-    let mode: channels.BrowserContextTracingStopChunkParams['mode'] = 'doNotSave';
+    let mode: channels.TracingTracingStopChunkParams['mode'] = 'doNotSave';
     if (filePath) {
       if (isLocal)
         mode = 'compressTraceAndSources';
@@ -59,7 +64,7 @@ export class Tracing implements api.Tracing {
         mode = 'compressTrace';
     }
 
-    const result = await this._context._channel.tracingStopChunk({ mode });
+    const result = await this._channel.tracingStopChunk({ mode });
     if (!filePath) {
       // Not interested in artifacts.
       return;
@@ -76,6 +81,6 @@ export class Tracing implements api.Tracing {
 
     // Add local sources to the remote trace if necessary.
     if (result.sourceEntries?.length)
-      await this._context._localUtils.zip(filePath, result.sourceEntries);
+      await this._localUtils.zip(filePath, result.sourceEntries);
   }
 }

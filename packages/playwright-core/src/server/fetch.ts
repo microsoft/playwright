@@ -17,7 +17,6 @@
 import * as http from 'http';
 import * as https from 'https';
 import { HttpsProxyAgent } from 'https-proxy-agent';
-import { Progress, ProgressController } from './progress';
 import { SocksProxyAgent } from 'socks-proxy-agent';
 import { pipeline, Readable, Transform } from 'stream';
 import url from 'url';
@@ -31,6 +30,8 @@ import { CookieStore, domainMatches } from './cookieStore';
 import { MultipartFormData } from './formData';
 import { CallMetadata, SdkObject } from './instrumentation';
 import { Playwright } from './playwright';
+import { Progress, ProgressController } from './progress';
+import { Tracing } from './trace/recorder/tracing';
 import * as types from './types';
 import { HeadersArray, ProxySettings } from './types';
 
@@ -101,7 +102,9 @@ export abstract class APIRequestContext extends SdkObject {
     this.fetchLog.delete(fetchUid);
   }
 
-  abstract dispose(): void;
+  abstract tracing(): Tracing;
+
+  abstract dispose(): Promise<void>;
 
   abstract _defaultOptions(): FetchRequestOptions;
   abstract _addCookies(cookies: types.NetworkCookie[]): Promise<void>;
@@ -404,7 +407,11 @@ export class BrowserContextAPIRequestContext extends APIRequestContext {
     context.once(BrowserContext.Events.Close, () => this._disposeImpl());
   }
 
-  override dispose() {
+  override tracing() {
+    return this._context.tracing;
+  }
+
+  override async dispose() {
     this.fetchResponses.clear();
   }
 
@@ -438,9 +445,11 @@ export class GlobalAPIRequestContext extends APIRequestContext {
   private readonly _cookieStore: CookieStore = new CookieStore();
   private readonly _options: FetchRequestOptions;
   private readonly _origins: channels.OriginStorage[] | undefined;
+  private readonly _tracing: Tracing;
 
   constructor(playwright: Playwright, options: channels.PlaywrightNewRequestOptions) {
     super(playwright);
+    this.attribution.context = this;
     const timeoutSettings = new TimeoutSettings();
     if (options.timeout !== undefined)
       timeoutSettings.setDefaultTimeout(options.timeout);
@@ -464,10 +473,17 @@ export class GlobalAPIRequestContext extends APIRequestContext {
       proxy,
       timeoutSettings,
     };
-
+    this._tracing = new Tracing(this, options.tracesDir);
   }
 
-  override dispose() {
+  override tracing() {
+    return this._tracing;
+  }
+
+  override async dispose() {
+    await this._tracing.flush();
+    await this._tracing.deleteTmpTracesDir();
+    this._tracing.dispose();
     this._disposeImpl();
   }
 
