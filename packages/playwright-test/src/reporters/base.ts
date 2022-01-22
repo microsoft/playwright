@@ -340,7 +340,7 @@ function formatTestHeader(config: FullConfig, test: TestCase, indent: string, in
 }
 
 export function formatError(config: FullConfig, error: TestError, highlightCode: boolean, file?: string): ErrorDetails {
-  const stack = error.stack || '';
+  const stack = error.stack;
   const tokens = [''];
   let location: Location | undefined;
   if (stack) {
