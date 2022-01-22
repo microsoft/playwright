@@ -72,7 +72,7 @@ export class APIRequest implements api.APIRequest {
       extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
       storageState,
     })).request);
-    context.tracing._localUtils = this._playwright._utils;
+    context._tracing._localUtils = this._playwright._utils;
     this._contexts.add(context);
     await this._onDidCreateContext?.(context);
     return context;
@@ -81,7 +81,7 @@ export class APIRequest implements api.APIRequest {
 
 export class APIRequestContext extends ChannelOwner<channels.APIRequestContextChannel> implements api.APIRequestContext {
   private _request?: APIRequest;
-  readonly tracing: Tracing;
+  readonly _tracing: Tracing;
 
   static from(channel: channels.APIRequestContextChannel): APIRequestContext {
     return (channel as any)._object;
@@ -91,7 +91,7 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
     super(parent, type, guid, initializer, createInstrumentation());
     if (parent instanceof APIRequest)
       this._request = parent;
-    this.tracing = Tracing.from(initializer.tracing);
+    this._tracing = Tracing.from(initializer.tracing);
   }
 
   async dispose(): Promise<void> {
