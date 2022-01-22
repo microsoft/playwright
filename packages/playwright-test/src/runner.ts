@@ -163,9 +163,10 @@ export class Runner {
     }
   }
 
-  async listAllTestFiles(projectNames: string[] | undefined): Promise<any> {
+  async listAllTestFiles(config: Config, projectNames: string[] | undefined): Promise<any> {
     const filesByProject = await this._collectFiles([], projectNames);
     const report: any = {
+      testDir: config.testDir,
       projects: []
     };
     for (const [project, files] of filesByProject) {

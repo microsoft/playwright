@@ -170,10 +170,11 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
 async function listTests(opts: { [key: string]: any }) {
   const configFile = opts.config ? path.resolve(process.cwd(), opts.config) : process.cwd();
   const runner = new Runner({}, { defaultConfig: {} });
-  await runner.loadConfigFromFile(configFile);
-  const report = await runner.listAllTestFiles(opts.project);
-  process.stdout.write(JSON.stringify(report));
-  process.exit(0);
+  const config = await runner.loadConfigFromFile(configFile);
+  const report = await runner.listAllTestFiles(config, opts.project);
+  process.stdout.write(JSON.stringify(report), () => {
+    process.exit(0);
+  });
 }
 
 function forceRegExp(pattern: string): RegExp {
