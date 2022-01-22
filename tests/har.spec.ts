@@ -674,3 +674,24 @@ it('should include API request', async ({ contextFactory, server }, testInfo) =>
   expect(entry.response.content.text).toBe(responseBody.toString('base64'));
 });
 
+it('should not hang on resources served from cache', async ({ contextFactory, server, browserName }, testInfo) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11435' });
+  server.setRoute('/one-style.css', (req, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'text/css',
+      'Cache-Control': 'public, max-age=10031518'
+    });
+    res.end(`body { background: red }`);
+  });
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  await page.goto(server.PREFIX + '/har.html');
+  await page.goto(server.PREFIX + '/har.html');
+  const log = await getLog();
+  const entries = log.entries.filter(e => e.request.url.endsWith('one-style.css'));
+  // In firefox no request events are fired for cached resources.
+  if (browserName === 'firefox')
+    expect(entries.length).toBe(1);
+  else
+    expect(entries.length).toBe(2);
+});
+
