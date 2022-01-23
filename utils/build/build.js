@@ -153,6 +153,14 @@ function copyFile(file, from, to) {
   fs.copyFileSync(file, destination);
 }
 
+// Update test runner.
+steps.push({
+  command: 'npm',
+  args: ['ci', '--save=false', '--fund=false', '--audit=false'],
+  shell: true,
+  cwd: path.join(__dirname, '..', '..', 'tests', 'playwright-test', 'stable-test-runner'),
+});
+
 // Build injected scripts.
 const webPackFiles = [
   'packages/playwright-core/src/server/injected/webpack.config.js',
