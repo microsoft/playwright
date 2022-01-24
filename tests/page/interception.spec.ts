@@ -109,6 +109,7 @@ it('should intercept network activity from worker 2', async function({ page, ser
   it.skip(isAndroid);
   it.fixme(isElectron);
   it.fixme(browserName === 'chromium' && browserMajorVersion === 97, '@see https://github.com/microsoft/playwright/issues/10048');
+  it.fixme(browserName === 'chromium' && browserMajorVersion === 99, '@see https://github.com/microsoft/playwright/issues/11593');
 
   const url = server.PREFIX + '/worker/worker.js';
   await page.route(url, route => {
