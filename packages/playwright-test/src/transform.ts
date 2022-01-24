@@ -89,9 +89,8 @@ export function transformHook(code: string, filename: string, tsconfig: TsConfig
         relative = relative.replace(/\//g, path.sep);
         const result = path.resolve(tsconfig.baseUrl || '', relative);
         for (const extension of extensions) {
-          // TODO: We can't cover this one with the hash!
           if (fs.existsSync(result + extension))
-            return result;
+            return result + extension;
         }
       }
       return name;
