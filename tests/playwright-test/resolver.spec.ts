@@ -135,6 +135,7 @@ test('should respect baseurl w/o paths', async ({ runInlineTest }) => {
     `,
   });
 
+  expect(result.output).not.toContain('Could not');
   expect(result.passed).toBe(1);
   expect(result.exitCode).toBe(0);
 });
