@@ -14,6 +14,13 @@
  * limitations under the License.
  */
 
-const { installBrowsersForNpmInstall } = require('playwright-core/lib/utils/registry');
+let install;
 
-installBrowsersForNpmInstall(['chromium', 'ffmpeg']);
+try {
+  install = require('playwright-core/lib/utils/registry').installBrowsersForNpmInstall;
+} catch (e) {
+  // Dev build, don't install browsers by default.
+}
+
+if (install)
+  install(['chromium', 'ffmpeg']);

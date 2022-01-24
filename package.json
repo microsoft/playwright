@@ -31,7 +31,6 @@
     "lint-tests": "node utils/lint_tests.js",
     "flint": "concurrently \"npm run eslint\" \"npm run tsc\" \"npm run doc\" \"npm run check-deps\" \"node utils/generate_channels.js\" \"node utils/generate_types/ --check-clean\" \"npm run lint-tests\" \"npm run test-types\" \"npm run lint-packages\"",
     "clean": "rimraf packages/playwright-core/lib && rimraf packages/playwright-test/lib && rimraf packages/playwright-core/src/generated/",
-    "prepare": "node install-from-github.js",
     "build": "node utils/build/build.js",
     "watch": "node utils/build/build.js --watch --lint",
     "test-types": "node utils/generate_types/ && npx -p typescript@3.7.5 tsc -p utils/generate_types/test/tsconfig.json && tsc -p ./tests/",

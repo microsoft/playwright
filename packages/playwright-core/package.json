@@ -7,9 +7,6 @@
   "engines": {
     "node": ">=12"
   },
-  "scripts": {
-    "prepare": "babel --config-file ../../babel.config.json -s --extensions \".ts\" --out-dir lib/utils/ src/utils"
-  },
   "author": {
     "name": "Microsoft Corporation"
   },

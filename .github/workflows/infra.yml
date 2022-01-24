@@ -23,6 +23,7 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: npx playwright install-deps
+    - run: npx playwright install
     - run: npm run lint
     - name: Verify clean tree
       run: |
