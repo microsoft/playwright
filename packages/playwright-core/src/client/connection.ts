@@ -57,7 +57,6 @@ class Root extends ChannelOwner<channels.RootChannel> {
 
 export class Connection extends EventEmitter {
   readonly _objects = new Map<string, ChannelOwner>();
-  private _waitingForObject = new Map<string, any>();
   onmessage = (message: object): void => {};
   private _lastId = 0;
   private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void, stackTrace: ParsedStackTrace | null }>();
@@ -266,11 +265,6 @@ export class Connection extends EventEmitter {
         break;
       default:
         throw new Error('Missing type ' + type);
-    }
-    const callback = this._waitingForObject.get(guid);
-    if (callback) {
-      callback(result);
-      this._waitingForObject.delete(guid);
     }
     return result;
   }
