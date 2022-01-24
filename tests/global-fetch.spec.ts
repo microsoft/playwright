@@ -266,12 +266,17 @@ it('should remove content-length from reidrected post requests', async ({ playwr
 });
 
 
-const serialization = [
+const serialization: [string, any][] = [
   ['object', { 'foo': 'bar' }],
   ['array', ['foo', 'bar', 2021]],
   ['string', 'foo'],
+  ['string (falsey)', ''],
   ['bool', true],
+  ['bool (false)', false],
   ['number', 2021],
+  ['number (falsey)', 0],
+  ['null', null],
+  ['literal string undefined', 'undefined'],
 ];
 for (const [type, value] of serialization) {
   const stringifiedValue = JSON.stringify(value);

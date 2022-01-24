@@ -123,7 +123,7 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteChannel> im
       url: params.url,
       method: params.method,
       headers: params.headers,
-      postData: params.postData ? Buffer.from(params.postData, 'base64') : undefined,
+      postData: params.postData !== undefined ? Buffer.from(params.postData, 'base64') : undefined,
     });
   }
 

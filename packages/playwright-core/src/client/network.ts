@@ -78,7 +78,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
     if (this._redirectedFrom)
       this._redirectedFrom._redirectedTo = this;
     this._provisionalHeaders = new RawHeaders(initializer.headers);
-    this._postData = initializer.postData ? Buffer.from(initializer.postData, 'base64') : null;
+    this._postData = initializer.postData !== undefined ? Buffer.from(initializer.postData, 'base64') : null;
     this._timing = {
       startTime: 0,
       domainLookupStart: -1,

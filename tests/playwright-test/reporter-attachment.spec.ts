@@ -103,6 +103,19 @@ test(`testInfo.attach errors`, async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
 });
 
+test(`testInfo.attach errors with empty path`, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('fail', async ({}, testInfo) => {
+        await testInfo.attach('name', { path: '' });
+      });
+    `,
+  }, { reporter: 'line', workers: 1 });
+  expect(stripAscii(result.output)).toMatch(/Error: ENOENT: no such file or directory, copyfile ''/);
+  expect(result.exitCode).toBe(1);
+});
+
 test(`testInfo.attach error in fixture`, async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
