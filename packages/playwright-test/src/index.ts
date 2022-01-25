@@ -392,6 +392,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     const prependToError = testInfo.status === 'timedOut' ?
       formatPendingCalls((browser as any)._connection.pendingProtocolCalls()) : '';
 
+    let counter = 0;
     await Promise.all([...contexts.keys()].map(async context => {
       await context.close();
 
@@ -402,8 +403,8 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
         const videos = pages.map(p => p.video()).filter(Boolean) as Video[];
         await Promise.all(videos.map(async v => {
           try {
-            const videoPath = await v.path();
-            const savedPath = testInfo.outputPath(path.basename(videoPath));
+            const savedPath = testInfo.outputPath(`video${counter ? '-' + counter : ''}.webm`);
+            ++counter;
             await v.saveAs(savedPath);
             testInfo.attachments.push({ name: 'video', path: savedPath, contentType: 'video/webm' });
           } catch (e) {
