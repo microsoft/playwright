@@ -943,7 +943,7 @@ index 882a2d56befef0aba460cc8ff041969e0d2c1ed3..9aecd6067741af596e5ec7fdf9c832ea
      ],
      "events": [
 diff --git a/Source/JavaScriptCore/inspector/protocol/Page.json b/Source/JavaScriptCore/inspector/protocol/Page.json
-index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..6000f19a0e5aadc859c95dc9003d395ba9c7b546 100644
+index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..658937fdc58425b9a164d9bc368a9e61ed836918 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Page.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Page.json
 @@ -21,13 +21,20 @@
@@ -1264,12 +1264,40 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..6000f19a0e5aadc859c95dc9003d395b
          {
              "name": "defaultAppearanceDidChange",
              "description": "Fired when page's default appearance changes, even if there is a forced appearance.",
-@@ -385,6 +589,14 @@
+@@ -385,6 +589,42 @@
              "parameters": [
                  { "name": "appearance", "$ref": "Appearance", "description": "Name of the appearance that is active (not considering any forced appearance.)" }
              ]
 +        },
 +        {
++            "name": "willCheckNavigationPolicy",
++            "description": "Fired when page is about to check policy for newly triggered navigation.",
++            "parameters": [
++                {
++                    "name": "frameId",
++                    "description": "Id of the frame.",
++                    "$ref": "Network.FrameId"
++                }
++            ]
++          },
++          {
++            "name": "didCheckNavigationPolicy",
++            "description": "Fired when page has received navigation policy decision.",
++            "parameters": [
++                {
++                    "name": "frameId",
++                    "description": "Id of the frame.",
++                    "$ref": "Network.FrameId"
++                },
++                {
++                    "name": "cancel",
++                    "description": "True if the navigation will not continue in this frame.",
++                    "type": "boolean",
++                    "optional": true
++                }
++            ]
++          },
++          {
 +            "name": "fileChooserOpened",
 +            "description": "Fired when the page shows file chooser for it's <input type=file>.",
 +            "parameters": [
@@ -2950,7 +2978,7 @@ index f6fec7cfbcbd2d7fba30bdd3138e0edfb3f69054..519786c307944a5ca4ba468513ba257b
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.cpp b/Source/WebCore/inspector/InspectorInstrumentation.cpp
-index 3c978e3f4421cf35a2061dfce0d1e0aae511349a..3460c242561537754a04c1be8b9104c3bb844ad3 100644
+index 3c978e3f4421cf35a2061dfce0d1e0aae511349a..236f45965debfe32fdb7a9fd75f5d7ee0439cb51 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.cpp
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.cpp
 @@ -572,6 +572,13 @@ void InspectorInstrumentation::applyUserAgentOverrideImpl(InstrumentingAgents& i
@@ -3030,7 +3058,7 @@ index 3c978e3f4421cf35a2061dfce0d1e0aae511349a..3460c242561537754a04c1be8b9104c3
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
  void InspectorInstrumentation::defaultAppearanceDidChangeImpl(InstrumentingAgents& instrumentingAgents, bool useDarkAppearance)
  {
-@@ -1289,6 +1299,24 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
+@@ -1289,6 +1299,36 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
          layerTreeAgent->renderLayerDestroyed(renderLayer);
  }
  
@@ -3052,10 +3080,22 @@ index 3c978e3f4421cf35a2061dfce0d1e0aae511349a..3460c242561537754a04c1be8b9104c3
 +    return false;
 +}
 +
++void InspectorInstrumentation::willCheckNavigationPolicyImpl(InstrumentingAgents& instrumentingAgents, Frame& frame)
++{
++    if (InspectorPageAgent* pageAgent = instrumentingAgents.enabledPageAgent())
++        pageAgent->willCheckNavigationPolicy(frame);
++}
++
++void InspectorInstrumentation::didCheckNavigationPolicyImpl(InstrumentingAgents& instrumentingAgents, Frame& frame, bool cancel)
++{
++    if (InspectorPageAgent* pageAgent = instrumentingAgents.enabledPageAgent())
++        pageAgent->didCheckNavigationPolicy(frame, cancel);
++}
++
  InstrumentingAgents& InspectorInstrumentation::instrumentingAgents(WorkerOrWorkletGlobalScope& globalScope)
  {
      return globalScope.inspectorController().m_instrumentingAgents;
-@@ -1300,6 +1328,13 @@ InstrumentingAgents& InspectorInstrumentation::instrumentingAgents(Page& page)
+@@ -1300,6 +1340,13 @@ InstrumentingAgents& InspectorInstrumentation::instrumentingAgents(Page& page)
      return page.inspectorController().m_instrumentingAgents.get();
  }
  
@@ -3070,7 +3110,7 @@ index 3c978e3f4421cf35a2061dfce0d1e0aae511349a..3460c242561537754a04c1be8b9104c3
  {
      if (is<Document>(context))
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.h b/Source/WebCore/inspector/InspectorInstrumentation.h
-index 82acced20cfd5131b2502f099a9c4fa2fdd616eb..1a3e81ca333e3206b1af46d6ff55e39d322ea288 100644
+index 82acced20cfd5131b2502f099a9c4fa2fdd616eb..38accfb77a0e47dd8213fe9a4b6abf25c812d3d0 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.h
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.h
 @@ -31,6 +31,7 @@
@@ -3126,18 +3166,20 @@ index 82acced20cfd5131b2502f099a9c4fa2fdd616eb..1a3e81ca333e3206b1af46d6ff55e39d
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
      static void defaultAppearanceDidChange(Page&, bool useDarkAppearance);
  #endif
-@@ -313,6 +318,10 @@ public:
+@@ -313,6 +318,12 @@ public:
      static void layerTreeDidChange(Page*);
      static void renderLayerDestroyed(Page*, const RenderLayer&);
  
 +    static void runOpenPanel(Frame*, HTMLInputElement*, bool*);
 +    static void frameAttached(Frame*);
 +    static bool shouldBypassCSP(ScriptExecutionContext*);
++    static void willCheckNavigationPolicy(Frame&);
++    static void didCheckNavigationPolicy(Frame&, bool cancel);
 +
      static void frontendCreated();
      static void frontendDeleted();
      static bool hasFrontends() { return InspectorInstrumentationPublic::hasFrontends(); }
-@@ -329,6 +338,8 @@ public:
+@@ -329,6 +340,8 @@ public:
      static void registerInstrumentingAgents(InstrumentingAgents&);
      static void unregisterInstrumentingAgents(InstrumentingAgents&);
  
@@ -3146,7 +3188,7 @@ index 82acced20cfd5131b2502f099a9c4fa2fdd616eb..1a3e81ca333e3206b1af46d6ff55e39d
  private:
      static void didClearWindowObjectInWorldImpl(InstrumentingAgents&, Frame&, DOMWrapperWorld&);
      static bool isDebuggerPausedImpl(InstrumentingAgents&);
-@@ -406,6 +417,7 @@ private:
+@@ -406,6 +419,7 @@ private:
      static void didRecalculateStyleImpl(InstrumentingAgents&);
      static void didScheduleStyleRecalculationImpl(InstrumentingAgents&, Document&);
      static void applyUserAgentOverrideImpl(InstrumentingAgents&, String&);
@@ -3154,7 +3196,7 @@ index 82acced20cfd5131b2502f099a9c4fa2fdd616eb..1a3e81ca333e3206b1af46d6ff55e39d
      static void applyEmulatedMediaImpl(InstrumentingAgents&, String&);
  
      static void willSendRequestImpl(InstrumentingAgents&, ResourceLoaderIdentifier, DocumentLoader*, ResourceRequest&, const ResourceResponse& redirectResponse, const CachedResource*);
-@@ -417,6 +429,7 @@ private:
+@@ -417,6 +431,7 @@ private:
      static void didReceiveDataImpl(InstrumentingAgents&, ResourceLoaderIdentifier, const SharedBuffer&, int encodedDataLength);
      static void didFinishLoadingImpl(InstrumentingAgents&, ResourceLoaderIdentifier, DocumentLoader*, const NetworkLoadMetrics&, ResourceLoader*);
      static void didFailLoadingImpl(InstrumentingAgents&, ResourceLoaderIdentifier, DocumentLoader*, const ResourceError&);
@@ -3162,7 +3204,7 @@ index 82acced20cfd5131b2502f099a9c4fa2fdd616eb..1a3e81ca333e3206b1af46d6ff55e39d
      static void willLoadXHRSynchronouslyImpl(InstrumentingAgents&);
      static void didLoadXHRSynchronouslyImpl(InstrumentingAgents&);
      static void scriptImportedImpl(InstrumentingAgents&, ResourceLoaderIdentifier, const String& sourceString);
-@@ -427,11 +440,11 @@ private:
+@@ -427,11 +442,11 @@ private:
      static void frameDetachedFromParentImpl(InstrumentingAgents&, Frame&);
      static void didCommitLoadImpl(InstrumentingAgents&, Frame&, DocumentLoader*);
      static void frameDocumentUpdatedImpl(InstrumentingAgents&, Frame&);
@@ -3175,18 +3217,20 @@ index 82acced20cfd5131b2502f099a9c4fa2fdd616eb..1a3e81ca333e3206b1af46d6ff55e39d
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
      static void defaultAppearanceDidChangeImpl(InstrumentingAgents&, bool useDarkAppearance);
  #endif
-@@ -513,6 +526,10 @@ private:
+@@ -513,6 +528,12 @@ private:
      static void layerTreeDidChangeImpl(InstrumentingAgents&);
      static void renderLayerDestroyedImpl(InstrumentingAgents&, const RenderLayer&);
  
 +    static void runOpenPanelImpl(InstrumentingAgents&, HTMLInputElement*, bool*);
 +    static void frameAttachedImpl(InstrumentingAgents&, Frame&);
 +    static bool shouldBypassCSPImpl(InstrumentingAgents&);
++    static void willCheckNavigationPolicyImpl(InstrumentingAgents&, Frame&);
++    static void didCheckNavigationPolicyImpl(InstrumentingAgents&, Frame&, bool cancel);
 +
      static InstrumentingAgents& instrumentingAgents(Page&);
      static InstrumentingAgents& instrumentingAgents(WorkerOrWorkletGlobalScope&);
  
-@@ -1031,6 +1048,13 @@ inline void InspectorInstrumentation::applyUserAgentOverride(Frame& frame, Strin
+@@ -1031,6 +1052,13 @@ inline void InspectorInstrumentation::applyUserAgentOverride(Frame& frame, Strin
          applyUserAgentOverrideImpl(*agents, userAgent);
  }
  
@@ -3200,7 +3244,7 @@ index 82acced20cfd5131b2502f099a9c4fa2fdd616eb..1a3e81ca333e3206b1af46d6ff55e39d
  inline void InspectorInstrumentation::applyEmulatedMedia(Frame& frame, String& media)
  {
      FAST_RETURN_IF_NO_FRONTENDS(void());
-@@ -1119,6 +1143,13 @@ inline void InspectorInstrumentation::didFailLoading(WorkerOrWorkletGlobalScope&
+@@ -1119,6 +1147,13 @@ inline void InspectorInstrumentation::didFailLoading(WorkerOrWorkletGlobalScope&
      didFailLoadingImpl(instrumentingAgents(globalScope), identifier, nullptr, error);
  }
  
@@ -3214,7 +3258,7 @@ index 82acced20cfd5131b2502f099a9c4fa2fdd616eb..1a3e81ca333e3206b1af46d6ff55e39d
  inline void InspectorInstrumentation::continueAfterXFrameOptionsDenied(Frame& frame, ResourceLoaderIdentifier identifier, DocumentLoader& loader, const ResourceResponse& response)
  {
      // Treat the same as didReceiveResponse.
-@@ -1209,13 +1240,6 @@ inline void InspectorInstrumentation::frameDocumentUpdated(Frame& frame)
+@@ -1209,13 +1244,6 @@ inline void InspectorInstrumentation::frameDocumentUpdated(Frame& frame)
          frameDocumentUpdatedImpl(*agents, frame);
  }
  
@@ -3228,7 +3272,7 @@ index 82acced20cfd5131b2502f099a9c4fa2fdd616eb..1a3e81ca333e3206b1af46d6ff55e39d
  inline void InspectorInstrumentation::frameStartedLoading(Frame& frame)
  {
      FAST_RETURN_IF_NO_FRONTENDS(void());
-@@ -1244,6 +1268,13 @@ inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& fra
+@@ -1244,6 +1272,13 @@ inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& fra
          frameClearedScheduledNavigationImpl(*agents, frame);
  }
  
@@ -3242,7 +3286,7 @@ index 82acced20cfd5131b2502f099a9c4fa2fdd616eb..1a3e81ca333e3206b1af46d6ff55e39d
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
  inline void InspectorInstrumentation::defaultAppearanceDidChange(Page& page, bool useDarkAppearance)
  {
-@@ -1674,6 +1705,28 @@ inline void InspectorInstrumentation::renderLayerDestroyed(Page* page, const Ren
+@@ -1674,6 +1709,42 @@ inline void InspectorInstrumentation::renderLayerDestroyed(Page* page, const Ren
          renderLayerDestroyedImpl(*agents, renderLayer);
  }
  
@@ -3266,6 +3310,20 @@ index 82acced20cfd5131b2502f099a9c4fa2fdd616eb..1a3e81ca333e3206b1af46d6ff55e39d
 +    if (auto* agents = instrumentingAgents(context))
 +        return shouldBypassCSPImpl(*agents);
 +    return false;
++}
++
++inline void InspectorInstrumentation::willCheckNavigationPolicy(Frame& frame)
++{
++    FAST_RETURN_IF_NO_FRONTENDS(void());
++    if (auto* agents = instrumentingAgents(frame))
++        willCheckNavigationPolicyImpl(*agents, frame);
++}
++
++inline void InspectorInstrumentation::didCheckNavigationPolicy(Frame& frame, bool cancel)
++{
++    FAST_RETURN_IF_NO_FRONTENDS(void());
++    if (auto* agents = instrumentingAgents(frame))
++        didCheckNavigationPolicyImpl(*agents, frame, cancel);
 +}
 +
  inline InstrumentingAgents* InspectorInstrumentation::instrumentingAgents(ScriptExecutionContext* context)
@@ -3818,7 +3876,7 @@ index 72f423ff61277eef4bd356328c46d3bd9131ff65..ede5b6605b1e661b9d5d73e02fe6ae4c
      // InspectorInstrumentation
      void willRecalculateStyle();
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index a4ffd1361cdde5ab7d973cd00d19a910ae9ed29f..4cf0bde722ccacd20e9f13f021f402c6a73428af 100644
+index a4ffd1361cdde5ab7d973cd00d19a910ae9ed29f..80d24823328eb8377327ce5c828a3556a3c60087 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,20 +32,28 @@
@@ -4178,7 +4236,7 @@ index a4ffd1361cdde5ab7d973cd00d19a910ae9ed29f..4cf0bde722ccacd20e9f13f021f402c6
  }
  
  void InspectorPageAgent::didPaint(RenderObject& renderer, const LayoutRect& rect)
-@@ -944,6 +1065,42 @@ void InspectorPageAgent::didRecalculateStyle()
+@@ -944,6 +1065,52 @@ void InspectorPageAgent::didRecalculateStyle()
      m_overlay->update();
  }
  
@@ -4218,10 +4276,20 @@ index a4ffd1361cdde5ab7d973cd00d19a910ae9ed29f..4cf0bde722ccacd20e9f13f021f402c6
 +    return m_bypassCSP;
 +}
 +
++void InspectorPageAgent::willCheckNavigationPolicy(Frame& frame)
++{
++    m_frontendDispatcher->willCheckNavigationPolicy(frameId(&frame));
++}
++
++void InspectorPageAgent::didCheckNavigationPolicy(Frame& frame, bool cancel)
++{
++    m_frontendDispatcher->didCheckNavigationPolicy(frameId(&frame), cancel);
++}
++
  Ref<Protocol::Page::Frame> InspectorPageAgent::buildObjectForFrame(Frame* frame)
  {
      ASSERT_ARG(frame, frame);
-@@ -1057,6 +1214,12 @@ void InspectorPageAgent::applyUserAgentOverride(String& userAgent)
+@@ -1057,6 +1224,12 @@ void InspectorPageAgent::applyUserAgentOverride(String& userAgent)
          userAgent = m_userAgentOverride;
  }
  
@@ -4234,7 +4302,7 @@ index a4ffd1361cdde5ab7d973cd00d19a910ae9ed29f..4cf0bde722ccacd20e9f13f021f402c6
  void InspectorPageAgent::applyEmulatedMedia(String& media)
  {
      if (!m_emulatedMedia.isEmpty())
-@@ -1080,11 +1243,13 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::snapshotNode(Protocol::DOM::
+@@ -1080,11 +1253,13 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::snapshotNode(Protocol::DOM::
      return snapshot->toDataURL("image/png"_s, std::nullopt, PreserveResolution::Yes);
  }
  
@@ -4249,7 +4317,7 @@ index a4ffd1361cdde5ab7d973cd00d19a910ae9ed29f..4cf0bde722ccacd20e9f13f021f402c6
  
      IntRect rectangle(x, y, width, height);
      auto snapshot = snapshotFrameRect(m_inspectedPage.mainFrame(), rectangle, WTFMove(options));
-@@ -1095,6 +1260,47 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::snapshotRect(int x, int y, i
+@@ -1095,6 +1270,47 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::snapshotRect(int x, int y, i
      return snapshot->toDataURL("image/png"_s, std::nullopt, PreserveResolution::Yes);
  }
  
@@ -4297,7 +4365,7 @@ index a4ffd1361cdde5ab7d973cd00d19a910ae9ed29f..4cf0bde722ccacd20e9f13f021f402c6
  #if ENABLE(WEB_ARCHIVE) && USE(CF)
  Protocol::ErrorStringOr<String> InspectorPageAgent::archive()
  {
-@@ -1107,7 +1313,6 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::archive()
+@@ -1107,7 +1323,6 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::archive()
  }
  #endif
  
@@ -4305,7 +4373,7 @@ index a4ffd1361cdde5ab7d973cd00d19a910ae9ed29f..4cf0bde722ccacd20e9f13f021f402c6
  Protocol::ErrorStringOr<void> InspectorPageAgent::setScreenSizeOverride(std::optional<int>&& width, std::optional<int>&& height)
  {
      if (width.has_value() != height.has_value())
-@@ -1122,6 +1327,630 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::setScreenSizeOverride(std::opt
+@@ -1122,6 +1337,630 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::setScreenSizeOverride(std::opt
      m_inspectedPage.mainFrame().setOverrideScreenSize(FloatSize(width.value_or(0), height.value_or(0)));
      return { };
  }
@@ -4937,7 +5005,7 @@ index a4ffd1361cdde5ab7d973cd00d19a910ae9ed29f..4cf0bde722ccacd20e9f13f021f402c6
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 3d5e566dbe0c5ec11d9e8df67fcf0a70988a2f8f..30488f2a6c8338088c039cd3c424eb36327851c0 100644
+index 3d5e566dbe0c5ec11d9e8df67fcf0a70988a2f8f..9db71cc22000a6dc6ddc157cbb0c9a90e0c9fa36 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -34,17 +34,23 @@
@@ -4999,7 +5067,7 @@ index 3d5e566dbe0c5ec11d9e8df67fcf0a70988a2f8f..30488f2a6c8338088c039cd3c424eb36
      Inspector::Protocol::ErrorStringOr<Ref<JSON::ArrayOf<Inspector::Protocol::GenericTypes::SearchMatch>>> searchInResource(const Inspector::Protocol::Network::FrameId&, const String& url, const String& query, std::optional<bool>&& caseSensitive, std::optional<bool>&& isRegex, const Inspector::Protocol::Network::RequestId&);
      Inspector::Protocol::ErrorStringOr<Ref<JSON::ArrayOf<Inspector::Protocol::Page::SearchResult>>> searchInResources(const String&, std::optional<bool>&& caseSensitive, std::optional<bool>&& isRegex);
  #if !PLATFORM(IOS_FAMILY)
-@@ -114,35 +125,53 @@ public:
+@@ -114,35 +125,55 @@ public:
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
      Inspector::Protocol::ErrorStringOr<void> setForcedAppearance(std::optional<Inspector::Protocol::Page::Appearance>&&);
  #endif
@@ -5055,11 +5123,13 @@ index 3d5e566dbe0c5ec11d9e8df67fcf0a70988a2f8f..30488f2a6c8338088c039cd3c424eb36
 +    void runOpenPanel(HTMLInputElement* element, bool* intercept);
 +    void frameAttached(Frame&);
 +    bool shouldBypassCSP();
++    void willCheckNavigationPolicy(Frame&);
++    void didCheckNavigationPolicy(Frame&, bool cancel);
 +    bool doingAccessibilitySnapshot() const { return m_doingAccessibilitySnapshot; };
  
      Frame* frameForId(const Inspector::Protocol::Network::FrameId&);
      WEBCORE_EXPORT String frameId(Frame*);
-@@ -151,6 +180,7 @@ public:
+@@ -151,6 +182,7 @@ public:
  
  private:
      double timestamp();
@@ -5067,7 +5137,7 @@ index 3d5e566dbe0c5ec11d9e8df67fcf0a70988a2f8f..30488f2a6c8338088c039cd3c424eb36
  
      static bool mainResourceContent(Frame*, bool withBase64Encode, String* result);
      static bool dataContent(const uint8_t* data, unsigned size, const String& textEncodingName, bool withBase64Encode, String* result);
-@@ -162,18 +192,20 @@ private:
+@@ -162,18 +194,20 @@ private:
      RefPtr<Inspector::PageBackendDispatcher> m_backendDispatcher;
  
      Page& m_inspectedPage;
@@ -5349,7 +5419,7 @@ index c2bea6f6a69b836472c0aff7a0d7070396ba6c2b..80af07d2f4327a400c85b65b640bcfa2
      DocumentWriter& writer() const { return m_writer; }
  
 diff --git a/Source/WebCore/loader/FrameLoader.cpp b/Source/WebCore/loader/FrameLoader.cpp
-index 2df49958f62b72ff357f2ba8ff380c9ea5760019..8092eb4df3635a0729398de23114ac0a21686be1 100644
+index 2df49958f62b72ff357f2ba8ff380c9ea5760019..50a13cbc13a42476aad8be56017ff994f451eba5 100644
 --- a/Source/WebCore/loader/FrameLoader.cpp
 +++ b/Source/WebCore/loader/FrameLoader.cpp
 @@ -1154,6 +1154,7 @@ void FrameLoader::loadInSameDocument(const URL& url, SerializedScriptValue* stat
@@ -5360,16 +5430,7 @@ index 2df49958f62b72ff357f2ba8ff380c9ea5760019..8092eb4df3635a0729398de23114ac0a
  
      m_frame.document()->statePopped(stateObject ? Ref<SerializedScriptValue> { *stateObject } : SerializedScriptValue::nullValue());
      m_client->dispatchDidPopStateWithinPage();
-@@ -1489,6 +1490,8 @@ void FrameLoader::loadWithNavigationAction(const ResourceRequest& request, Navig
-         return completionHandler();
-     }
- 
-+    InspectorInstrumentation::frameScheduledNavigation(m_frame, Seconds(0));
-+
-     Ref<DocumentLoader> loader = m_client->createDocumentLoader(request, defaultSubstituteDataForURL(request.url()));
-     applyShouldOpenExternalURLsPolicyToNewDocumentLoader(m_frame, loader, action.initiatedByMainFrame(), action.shouldOpenExternalURLsPolicy());
- 
-@@ -1590,6 +1593,8 @@ void FrameLoader::loadWithDocumentLoader(DocumentLoader* loader, FrameLoadType t
+@@ -1590,6 +1591,8 @@ void FrameLoader::loadWithDocumentLoader(DocumentLoader* loader, FrameLoadType t
      const String& httpMethod = loader->request().httpMethod();
  
      if (shouldPerformFragmentNavigation(isFormSubmission, httpMethod, policyChecker().loadType(), newURL)) {
@@ -5378,6 +5439,16 @@ index 2df49958f62b72ff357f2ba8ff380c9ea5760019..8092eb4df3635a0729398de23114ac0a
          RefPtr<DocumentLoader> oldDocumentLoader = m_documentLoader;
          NavigationAction action { *m_frame.document(), loader->request(), InitiatedByMainFrame::Unknown, policyChecker().loadType(), isFormSubmission };
  
+@@ -1632,7 +1635,9 @@ void FrameLoader::loadWithDocumentLoader(DocumentLoader* loader, FrameLoadType t
+     }
+ 
+     RELEASE_ASSERT(!isBackForwardLoadType(policyChecker().loadType()) || history().provisionalItem());
++    InspectorInstrumentation::willCheckNavigationPolicy(m_frame);
+     policyChecker().checkNavigationPolicy(ResourceRequest(loader->request()), ResourceResponse { } /* redirectResponse */, loader, WTFMove(formState), [this, protectedFrame = Ref { m_frame }, allowNavigationToInvalidURL, completionHandler = completionHandlerCaller.release()] (const ResourceRequest& request, WeakPtr<FormState>&& formState, NavigationPolicyDecision navigationPolicyDecision) mutable {
++        InspectorInstrumentation::didCheckNavigationPolicy(m_frame, navigationPolicyDecision != NavigationPolicyDecision::ContinueLoad);
+         continueLoadAfterNavigationPolicy(request, formState.get(), navigationPolicyDecision, allowNavigationToInvalidURL);
+         completionHandler();
+     }, PolicyDecisionMode::Asynchronous);
 @@ -2797,12 +2802,17 @@ String FrameLoader::userAgent(const URL& url) const
  
  String FrameLoader::navigatorPlatform() const
