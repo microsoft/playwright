@@ -6404,16 +6404,26 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       appearance: Appearance;
     }
     /**
-     * Fired when page tries to open a new window.
+     * Fired when page is about to check policy for newly triggered navigation.
      */
-    export type willRequestOpenWindowPayload = {
-      url: string;
+    export type willCheckNavigationPolicyPayload = {
+      /**
+       * Id of the frame.
+       */
+      frameId: Network.FrameId;
     }
     /**
-     * Fired after page did try to open a new window.
+     * Fired when page has received navigation policy decision.
      */
-    export type didRequestOpenWindowPayload = {
-      opened: boolean;
+    export type didCheckNavigationPolicyPayload = {
+      /**
+       * Id of the frame.
+       */
+      frameId: Network.FrameId;
+      /**
+       * True if the navigation will not continue in this frame.
+       */
+      cancel?: boolean;
     }
     /**
      * Fired when the page shows file chooser for it's <input type=file>.
@@ -8760,8 +8770,8 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.frameClearedScheduledNavigation": Page.frameClearedScheduledNavigationPayload;
     "Page.navigatedWithinDocument": Page.navigatedWithinDocumentPayload;
     "Page.defaultAppearanceDidChange": Page.defaultAppearanceDidChangePayload;
-    "Page.willRequestOpenWindow": Page.willRequestOpenWindowPayload;
-    "Page.didRequestOpenWindow": Page.didRequestOpenWindowPayload;
+    "Page.willCheckNavigationPolicy": Page.willCheckNavigationPolicyPayload;
+    "Page.didCheckNavigationPolicy": Page.didCheckNavigationPolicyPayload;
     "Page.fileChooserOpened": Page.fileChooserOpenedPayload;
     "Playwright.pageProxyCreated": Playwright.pageProxyCreatedPayload;
     "Playwright.pageProxyDestroyed": Playwright.pageProxyDestroyedPayload;
