@@ -426,20 +426,6 @@ export class WorkerRunner extends EventEmitter {
       await removeFolderAsync(testInfo.outputDir).catch(e => {});
   }
 
-  private async _runBeforeHooks(test: TestCase, testInfo: TestInfoImpl) {
-    const beforeEachModifiers: Modifier[] = [];
-    for (let s: Suite | undefined = test.parent; s; s = s.parent) {
-      const modifiers = s._modifiers.filter(modifier => !this._fixtureRunner.dependsOnWorkerFixturesOnly(modifier.fn, modifier.location));
-      beforeEachModifiers.push(...modifiers.reverse());
-    }
-    beforeEachModifiers.reverse();
-    for (const modifier of beforeEachModifiers) {
-      const result = await this._fixtureRunner.resolveParametersAndRunFunction(modifier.fn, this._workerInfo, testInfo);
-      testInfo[modifier.type](!!result, modifier.description!);
-    }
-    await this._runHooks(test.parent!, 'beforeEach', testInfo);
-  }
-
   private async _runTestWithBeforeHooks(test: TestCase, testInfo: TestInfoImpl) {
     const step = testInfo._addStep({
       category: 'hook',
@@ -447,24 +433,27 @@ export class WorkerRunner extends EventEmitter {
       canHaveChildren: true,
       forceNoParent: true
     });
-    let error1: TestError | undefined;
-    if (test._type === 'test')
-      error1 = await this._runFn(() => this._runBeforeHooks(test, testInfo), testInfo, 'allowSkips');
+    const maybeError = await this._runFn(async () => {
+      if (test._type === 'test') {
+        const beforeEachModifiers: Modifier[] = [];
+        for (let s: Suite | undefined = test.parent; s; s = s.parent) {
+          const modifiers = s._modifiers.filter(modifier => !this._fixtureRunner.dependsOnWorkerFixturesOnly(modifier.fn, modifier.location));
+          beforeEachModifiers.push(...modifiers.reverse());
+        }
+        beforeEachModifiers.reverse();
+        for (const modifier of beforeEachModifiers) {
+          const result = await this._fixtureRunner.resolveParametersAndRunFunction(modifier.fn, this._workerInfo, testInfo);
+          testInfo[modifier.type](!!result, modifier.description!);
+        }
+        await this._runHooks(test.parent!, 'beforeEach', testInfo);
+      }
 
-    // Do not run the test when beforeEach hook fails.
-    if (testInfo.status === 'failed' || testInfo.status === 'skipped') {
-      step.complete(error1);
-      return;
-    }
-
-    const error2 = await this._runFn(async () => {
       const params = await this._fixtureRunner.resolveParametersForFunction(test.fn, this._workerInfo, testInfo);
       step.complete(); // Report fixture hooks step as completed.
       const fn = test.fn; // Extract a variable to get a better stack trace ("myTest" vs "TestCase.myTest [as fn]").
       await fn(params, testInfo);
     }, testInfo, 'allowSkips');
-
-    step.complete(error2); // Second complete is a no-op.
+    step.complete(maybeError); // Second complete is a no-op.
   }
 
   private async _runAfterHooks(test: TestCase, testInfo: TestInfoImpl) {
