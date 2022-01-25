@@ -22,6 +22,7 @@ import { helper } from './helper';
 import { eventsHelper, RegisteredListener } from '../utils/eventsHelper';
 import * as js from './javascript';
 import * as network from './network';
+import { Dialog } from './dialog';
 import { Page } from './page';
 import * as types from './types';
 import { BrowserContext } from './browserContext';
@@ -85,7 +86,7 @@ export class FrameManager {
   readonly _consoleMessageTags = new Map<string, ConsoleTagHandler>();
   readonly _signalBarriers = new Set<SignalBarrier>();
   private _webSockets = new Map<string, network.WebSocket>();
-  _dialogCounter = 0;
+  _openedDialogs: Set<Dialog> = new Set();
 
   constructor(page: Page) {
     this._page = page;
@@ -307,15 +308,15 @@ export class FrameManager {
     this._page._browserContext.emit(BrowserContext.Events.RequestFailed, request);
   }
 
-  dialogDidOpen() {
+  dialogDidOpen(dialog: Dialog) {
     // Any ongoing evaluations will be stalled until the dialog is closed.
     for (const frame of this._frames.values())
       frame._invalidateNonStallingEvaluations('JavaScript dialog interrupted evaluation');
-    this._dialogCounter++;
+    this._openedDialogs.add(dialog);
   }
 
-  dialogWillClose() {
-    this._dialogCounter--;
+  dialogWillClose(dialog: Dialog) {
+    this._openedDialogs.delete(dialog);
   }
 
   removeChildFramesRecursively(frame: Frame) {
@@ -508,7 +509,7 @@ export class Frame extends SdkObject {
   async nonStallingRawEvaluateInExistingMainContext(expression: string): Promise<any> {
     if (this._pendingDocument)
       throw new Error('Frame is currently attempting a navigation');
-    if (this._page._frameManager._dialogCounter)
+    if (this._page._frameManager._openedDialogs.size)
       throw new Error('Open JavaScript dialog prevents evaluation');
     const context = this._existingMainContext();
     if (!context)

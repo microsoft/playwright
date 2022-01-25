@@ -21,6 +21,7 @@ import { assert } from '../../utils/utils';
 import * as network from '../network';
 import { Page, PageBinding, PageDelegate, Worker } from '../page';
 import { Frame } from '../frames';
+import { Dialog } from '../dialog';
 import { ConnectionTransport } from '../transport';
 import * as types from '../types';
 import { ConnectionEvents, CRConnection, CRSession } from './crConnection';
@@ -471,6 +472,18 @@ export class CRBrowserContext extends BrowserContext {
 
   async _doClose() {
     assert(this._browserContextId);
+    // Headful chrome cannot dispose browser context with opened 'beforeunload'
+    // dialogs, so we should close all that are currently opened.
+    // We also won't get new ones since `Target.disposeBrowserContext` does not trigger
+    // beforeunload.
+    const openedBeforeUnloadDialogs: Dialog[] = [];
+    for (const crPage of this._browser._crPages.values()) {
+      if (crPage._browserContext !== this)
+        continue;
+      const dialogs = [...crPage._page._frameManager._openedDialogs].filter(dialog => dialog.type() === 'beforeunload');
+      openedBeforeUnloadDialogs.push(...dialogs);
+    }
+    await Promise.all(openedBeforeUnloadDialogs.map(dialog => dialog.dismiss()));
     await this._browser._session.send('Target.disposeBrowserContext', { browserContextId: this._browserContextId });
     this._browser._contexts.delete(this._browserContextId);
     for (const [targetId, serviceWorker] of this._browser._serviceWorkers) {
