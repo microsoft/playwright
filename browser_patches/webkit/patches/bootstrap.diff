@@ -943,7 +943,7 @@ index 882a2d56befef0aba460cc8ff041969e0d2c1ed3..9aecd6067741af596e5ec7fdf9c832ea
      ],
      "events": [
 diff --git a/Source/JavaScriptCore/inspector/protocol/Page.json b/Source/JavaScriptCore/inspector/protocol/Page.json
-index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..cf8c009d5591c4eac1a65e2c0de15533cb40b236 100644
+index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..6000f19a0e5aadc859c95dc9003d395ba9c7b546 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Page.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Page.json
 @@ -21,13 +21,20 @@
@@ -1264,24 +1264,10 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..cf8c009d5591c4eac1a65e2c0de15533
          {
              "name": "defaultAppearanceDidChange",
              "description": "Fired when page's default appearance changes, even if there is a forced appearance.",
-@@ -385,6 +589,28 @@
+@@ -385,6 +589,14 @@
              "parameters": [
                  { "name": "appearance", "$ref": "Appearance", "description": "Name of the appearance that is active (not considering any forced appearance.)" }
              ]
-+        },
-+        {
-+          "name": "willRequestOpenWindow",
-+          "description": "Fired when page tries to open a new window.",
-+          "parameters": [
-+              { "name": "url", "type": "string" }
-+          ]
-+        },
-+        {
-+          "name": "didRequestOpenWindow",
-+          "description": "Fired after page did try to open a new window.",
-+          "parameters": [
-+              { "name": "opened", "type": "boolean" }
-+          ]
 +        },
 +        {
 +            "name": "fileChooserOpened",
@@ -2964,7 +2950,7 @@ index f6fec7cfbcbd2d7fba30bdd3138e0edfb3f69054..519786c307944a5ca4ba468513ba257b
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.cpp b/Source/WebCore/inspector/InspectorInstrumentation.cpp
-index 3c978e3f4421cf35a2061dfce0d1e0aae511349a..065b18a11d25066139aae51b8c534b9020cbf108 100644
+index 3c978e3f4421cf35a2061dfce0d1e0aae511349a..3460c242561537754a04c1be8b9104c3bb844ad3 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.cpp
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.cpp
 @@ -572,6 +572,13 @@ void InspectorInstrumentation::applyUserAgentOverrideImpl(InstrumentingAgents& i
@@ -3044,7 +3030,7 @@ index 3c978e3f4421cf35a2061dfce0d1e0aae511349a..065b18a11d25066139aae51b8c534b90
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
  void InspectorInstrumentation::defaultAppearanceDidChangeImpl(InstrumentingAgents& instrumentingAgents, bool useDarkAppearance)
  {
-@@ -1289,6 +1299,36 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
+@@ -1289,6 +1299,24 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
          layerTreeAgent->renderLayerDestroyed(renderLayer);
  }
  
@@ -3066,22 +3052,10 @@ index 3c978e3f4421cf35a2061dfce0d1e0aae511349a..065b18a11d25066139aae51b8c534b90
 +    return false;
 +}
 +
-+void InspectorInstrumentation::willCheckNewWindowPolicyImpl(InstrumentingAgents& instrumentingAgents, const URL& url)
-+{
-+    if (InspectorPageAgent* pageAgent = instrumentingAgents.enabledPageAgent())
-+        pageAgent->willCheckNewWindowPolicy(url);
-+}
-+
-+void InspectorInstrumentation::didCheckNewWindowPolicyImpl(InstrumentingAgents& instrumentingAgents, bool allowed)
-+{
-+    if (InspectorPageAgent* pageAgent = instrumentingAgents.enabledPageAgent())
-+        pageAgent->didCheckNewWindowPolicy(allowed);
-+}
-+
  InstrumentingAgents& InspectorInstrumentation::instrumentingAgents(WorkerOrWorkletGlobalScope& globalScope)
  {
      return globalScope.inspectorController().m_instrumentingAgents;
-@@ -1300,6 +1340,13 @@ InstrumentingAgents& InspectorInstrumentation::instrumentingAgents(Page& page)
+@@ -1300,6 +1328,13 @@ InstrumentingAgents& InspectorInstrumentation::instrumentingAgents(Page& page)
      return page.inspectorController().m_instrumentingAgents.get();
  }
  
@@ -3096,7 +3070,7 @@ index 3c978e3f4421cf35a2061dfce0d1e0aae511349a..065b18a11d25066139aae51b8c534b90
  {
      if (is<Document>(context))
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.h b/Source/WebCore/inspector/InspectorInstrumentation.h
-index 82acced20cfd5131b2502f099a9c4fa2fdd616eb..af1f80b79646bee52e19af88e84efc5d2f488e21 100644
+index 82acced20cfd5131b2502f099a9c4fa2fdd616eb..1a3e81ca333e3206b1af46d6ff55e39d322ea288 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.h
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.h
 @@ -31,6 +31,7 @@
@@ -3152,20 +3126,18 @@ index 82acced20cfd5131b2502f099a9c4fa2fdd616eb..af1f80b79646bee52e19af88e84efc5d
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
      static void defaultAppearanceDidChange(Page&, bool useDarkAppearance);
  #endif
-@@ -313,6 +318,12 @@ public:
+@@ -313,6 +318,10 @@ public:
      static void layerTreeDidChange(Page*);
      static void renderLayerDestroyed(Page*, const RenderLayer&);
  
 +    static void runOpenPanel(Frame*, HTMLInputElement*, bool*);
 +    static void frameAttached(Frame*);
 +    static bool shouldBypassCSP(ScriptExecutionContext*);
-+    static void willCheckNewWindowPolicy(Frame&, const URL&);
-+    static void didCheckNewWindowPolicy(Frame&, bool allowed);
 +
      static void frontendCreated();
      static void frontendDeleted();
      static bool hasFrontends() { return InspectorInstrumentationPublic::hasFrontends(); }
-@@ -329,6 +340,8 @@ public:
+@@ -329,6 +338,8 @@ public:
      static void registerInstrumentingAgents(InstrumentingAgents&);
      static void unregisterInstrumentingAgents(InstrumentingAgents&);
  
@@ -3174,7 +3146,7 @@ index 82acced20cfd5131b2502f099a9c4fa2fdd616eb..af1f80b79646bee52e19af88e84efc5d
  private:
      static void didClearWindowObjectInWorldImpl(InstrumentingAgents&, Frame&, DOMWrapperWorld&);
      static bool isDebuggerPausedImpl(InstrumentingAgents&);
-@@ -406,6 +419,7 @@ private:
+@@ -406,6 +417,7 @@ private:
      static void didRecalculateStyleImpl(InstrumentingAgents&);
      static void didScheduleStyleRecalculationImpl(InstrumentingAgents&, Document&);
      static void applyUserAgentOverrideImpl(InstrumentingAgents&, String&);
@@ -3182,7 +3154,7 @@ index 82acced20cfd5131b2502f099a9c4fa2fdd616eb..af1f80b79646bee52e19af88e84efc5d
      static void applyEmulatedMediaImpl(InstrumentingAgents&, String&);
  
      static void willSendRequestImpl(InstrumentingAgents&, ResourceLoaderIdentifier, DocumentLoader*, ResourceRequest&, const ResourceResponse& redirectResponse, const CachedResource*);
-@@ -417,6 +431,7 @@ private:
+@@ -417,6 +429,7 @@ private:
      static void didReceiveDataImpl(InstrumentingAgents&, ResourceLoaderIdentifier, const SharedBuffer&, int encodedDataLength);
      static void didFinishLoadingImpl(InstrumentingAgents&, ResourceLoaderIdentifier, DocumentLoader*, const NetworkLoadMetrics&, ResourceLoader*);
      static void didFailLoadingImpl(InstrumentingAgents&, ResourceLoaderIdentifier, DocumentLoader*, const ResourceError&);
@@ -3190,7 +3162,7 @@ index 82acced20cfd5131b2502f099a9c4fa2fdd616eb..af1f80b79646bee52e19af88e84efc5d
      static void willLoadXHRSynchronouslyImpl(InstrumentingAgents&);
      static void didLoadXHRSynchronouslyImpl(InstrumentingAgents&);
      static void scriptImportedImpl(InstrumentingAgents&, ResourceLoaderIdentifier, const String& sourceString);
-@@ -427,11 +442,11 @@ private:
+@@ -427,11 +440,11 @@ private:
      static void frameDetachedFromParentImpl(InstrumentingAgents&, Frame&);
      static void didCommitLoadImpl(InstrumentingAgents&, Frame&, DocumentLoader*);
      static void frameDocumentUpdatedImpl(InstrumentingAgents&, Frame&);
@@ -3203,20 +3175,18 @@ index 82acced20cfd5131b2502f099a9c4fa2fdd616eb..af1f80b79646bee52e19af88e84efc5d
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
      static void defaultAppearanceDidChangeImpl(InstrumentingAgents&, bool useDarkAppearance);
  #endif
-@@ -513,6 +528,12 @@ private:
+@@ -513,6 +526,10 @@ private:
      static void layerTreeDidChangeImpl(InstrumentingAgents&);
      static void renderLayerDestroyedImpl(InstrumentingAgents&, const RenderLayer&);
  
 +    static void runOpenPanelImpl(InstrumentingAgents&, HTMLInputElement*, bool*);
 +    static void frameAttachedImpl(InstrumentingAgents&, Frame&);
 +    static bool shouldBypassCSPImpl(InstrumentingAgents&);
-+    static void willCheckNewWindowPolicyImpl(InstrumentingAgents&, const URL&);
-+    static void didCheckNewWindowPolicyImpl(InstrumentingAgents&, bool allowed);
 +
      static InstrumentingAgents& instrumentingAgents(Page&);
      static InstrumentingAgents& instrumentingAgents(WorkerOrWorkletGlobalScope&);
  
-@@ -1031,6 +1052,13 @@ inline void InspectorInstrumentation::applyUserAgentOverride(Frame& frame, Strin
+@@ -1031,6 +1048,13 @@ inline void InspectorInstrumentation::applyUserAgentOverride(Frame& frame, Strin
          applyUserAgentOverrideImpl(*agents, userAgent);
  }
  
@@ -3230,7 +3200,7 @@ index 82acced20cfd5131b2502f099a9c4fa2fdd616eb..af1f80b79646bee52e19af88e84efc5d
  inline void InspectorInstrumentation::applyEmulatedMedia(Frame& frame, String& media)
  {
      FAST_RETURN_IF_NO_FRONTENDS(void());
-@@ -1119,6 +1147,13 @@ inline void InspectorInstrumentation::didFailLoading(WorkerOrWorkletGlobalScope&
+@@ -1119,6 +1143,13 @@ inline void InspectorInstrumentation::didFailLoading(WorkerOrWorkletGlobalScope&
      didFailLoadingImpl(instrumentingAgents(globalScope), identifier, nullptr, error);
  }
  
@@ -3244,7 +3214,7 @@ index 82acced20cfd5131b2502f099a9c4fa2fdd616eb..af1f80b79646bee52e19af88e84efc5d
  inline void InspectorInstrumentation::continueAfterXFrameOptionsDenied(Frame& frame, ResourceLoaderIdentifier identifier, DocumentLoader& loader, const ResourceResponse& response)
  {
      // Treat the same as didReceiveResponse.
-@@ -1209,13 +1244,6 @@ inline void InspectorInstrumentation::frameDocumentUpdated(Frame& frame)
+@@ -1209,13 +1240,6 @@ inline void InspectorInstrumentation::frameDocumentUpdated(Frame& frame)
          frameDocumentUpdatedImpl(*agents, frame);
  }
  
@@ -3258,7 +3228,7 @@ index 82acced20cfd5131b2502f099a9c4fa2fdd616eb..af1f80b79646bee52e19af88e84efc5d
  inline void InspectorInstrumentation::frameStartedLoading(Frame& frame)
  {
      FAST_RETURN_IF_NO_FRONTENDS(void());
-@@ -1244,6 +1272,13 @@ inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& fra
+@@ -1244,6 +1268,13 @@ inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& fra
          frameClearedScheduledNavigationImpl(*agents, frame);
  }
  
@@ -3272,7 +3242,7 @@ index 82acced20cfd5131b2502f099a9c4fa2fdd616eb..af1f80b79646bee52e19af88e84efc5d
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
  inline void InspectorInstrumentation::defaultAppearanceDidChange(Page& page, bool useDarkAppearance)
  {
-@@ -1674,6 +1709,42 @@ inline void InspectorInstrumentation::renderLayerDestroyed(Page* page, const Ren
+@@ -1674,6 +1705,28 @@ inline void InspectorInstrumentation::renderLayerDestroyed(Page* page, const Ren
          renderLayerDestroyedImpl(*agents, renderLayer);
  }
  
@@ -3296,20 +3266,6 @@ index 82acced20cfd5131b2502f099a9c4fa2fdd616eb..af1f80b79646bee52e19af88e84efc5d
 +    if (auto* agents = instrumentingAgents(context))
 +        return shouldBypassCSPImpl(*agents);
 +    return false;
-+}
-+
-+inline void InspectorInstrumentation::willCheckNewWindowPolicy(Frame& frame, const URL& url)
-+{
-+    FAST_RETURN_IF_NO_FRONTENDS(void());
-+    if (auto* agents = instrumentingAgents(frame))
-+        willCheckNewWindowPolicyImpl(*agents, url);
-+}
-+
-+inline void InspectorInstrumentation::didCheckNewWindowPolicy(Frame& frame, bool allowed)
-+{
-+    FAST_RETURN_IF_NO_FRONTENDS(void());
-+    if (auto* agents = instrumentingAgents(frame))
-+        didCheckNewWindowPolicyImpl(*agents, allowed);
 +}
 +
  inline InstrumentingAgents* InspectorInstrumentation::instrumentingAgents(ScriptExecutionContext* context)
@@ -3862,7 +3818,7 @@ index 72f423ff61277eef4bd356328c46d3bd9131ff65..ede5b6605b1e661b9d5d73e02fe6ae4c
      // InspectorInstrumentation
      void willRecalculateStyle();
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index a4ffd1361cdde5ab7d973cd00d19a910ae9ed29f..21efdf28e98c3209e294eba34e01f91f4495b502 100644
+index a4ffd1361cdde5ab7d973cd00d19a910ae9ed29f..4cf0bde722ccacd20e9f13f021f402c6a73428af 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,20 +32,28 @@
@@ -4222,7 +4178,7 @@ index a4ffd1361cdde5ab7d973cd00d19a910ae9ed29f..21efdf28e98c3209e294eba34e01f91f
  }
  
  void InspectorPageAgent::didPaint(RenderObject& renderer, const LayoutRect& rect)
-@@ -944,6 +1065,52 @@ void InspectorPageAgent::didRecalculateStyle()
+@@ -944,6 +1065,42 @@ void InspectorPageAgent::didRecalculateStyle()
      m_overlay->update();
  }
  
@@ -4262,20 +4218,10 @@ index a4ffd1361cdde5ab7d973cd00d19a910ae9ed29f..21efdf28e98c3209e294eba34e01f91f
 +    return m_bypassCSP;
 +}
 +
-+void InspectorPageAgent::willCheckNewWindowPolicy(const URL& url)
-+{
-+    m_frontendDispatcher->willRequestOpenWindow(url.string());
-+}
-+
-+void InspectorPageAgent::didCheckNewWindowPolicy(bool allowed)
-+{
-+    m_frontendDispatcher->didRequestOpenWindow(allowed);
-+}
-+
  Ref<Protocol::Page::Frame> InspectorPageAgent::buildObjectForFrame(Frame* frame)
  {
      ASSERT_ARG(frame, frame);
-@@ -1057,6 +1224,12 @@ void InspectorPageAgent::applyUserAgentOverride(String& userAgent)
+@@ -1057,6 +1214,12 @@ void InspectorPageAgent::applyUserAgentOverride(String& userAgent)
          userAgent = m_userAgentOverride;
  }
  
@@ -4288,7 +4234,7 @@ index a4ffd1361cdde5ab7d973cd00d19a910ae9ed29f..21efdf28e98c3209e294eba34e01f91f
  void InspectorPageAgent::applyEmulatedMedia(String& media)
  {
      if (!m_emulatedMedia.isEmpty())
-@@ -1080,11 +1253,13 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::snapshotNode(Protocol::DOM::
+@@ -1080,11 +1243,13 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::snapshotNode(Protocol::DOM::
      return snapshot->toDataURL("image/png"_s, std::nullopt, PreserveResolution::Yes);
  }
  
@@ -4303,7 +4249,7 @@ index a4ffd1361cdde5ab7d973cd00d19a910ae9ed29f..21efdf28e98c3209e294eba34e01f91f
  
      IntRect rectangle(x, y, width, height);
      auto snapshot = snapshotFrameRect(m_inspectedPage.mainFrame(), rectangle, WTFMove(options));
-@@ -1095,6 +1270,47 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::snapshotRect(int x, int y, i
+@@ -1095,6 +1260,47 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::snapshotRect(int x, int y, i
      return snapshot->toDataURL("image/png"_s, std::nullopt, PreserveResolution::Yes);
  }
  
@@ -4351,7 +4297,7 @@ index a4ffd1361cdde5ab7d973cd00d19a910ae9ed29f..21efdf28e98c3209e294eba34e01f91f
  #if ENABLE(WEB_ARCHIVE) && USE(CF)
  Protocol::ErrorStringOr<String> InspectorPageAgent::archive()
  {
-@@ -1107,7 +1323,6 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::archive()
+@@ -1107,7 +1313,6 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::archive()
  }
  #endif
  
@@ -4359,7 +4305,7 @@ index a4ffd1361cdde5ab7d973cd00d19a910ae9ed29f..21efdf28e98c3209e294eba34e01f91f
  Protocol::ErrorStringOr<void> InspectorPageAgent::setScreenSizeOverride(std::optional<int>&& width, std::optional<int>&& height)
  {
      if (width.has_value() != height.has_value())
-@@ -1122,6 +1337,630 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::setScreenSizeOverride(std::opt
+@@ -1122,6 +1327,630 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::setScreenSizeOverride(std::opt
      m_inspectedPage.mainFrame().setOverrideScreenSize(FloatSize(width.value_or(0), height.value_or(0)));
      return { };
  }
@@ -4991,7 +4937,7 @@ index a4ffd1361cdde5ab7d973cd00d19a910ae9ed29f..21efdf28e98c3209e294eba34e01f91f
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 3d5e566dbe0c5ec11d9e8df67fcf0a70988a2f8f..48c39d5217f09c4a2cec26308deeb6bac063e538 100644
+index 3d5e566dbe0c5ec11d9e8df67fcf0a70988a2f8f..30488f2a6c8338088c039cd3c424eb36327851c0 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -34,17 +34,23 @@
@@ -5053,7 +4999,7 @@ index 3d5e566dbe0c5ec11d9e8df67fcf0a70988a2f8f..48c39d5217f09c4a2cec26308deeb6ba
      Inspector::Protocol::ErrorStringOr<Ref<JSON::ArrayOf<Inspector::Protocol::GenericTypes::SearchMatch>>> searchInResource(const Inspector::Protocol::Network::FrameId&, const String& url, const String& query, std::optional<bool>&& caseSensitive, std::optional<bool>&& isRegex, const Inspector::Protocol::Network::RequestId&);
      Inspector::Protocol::ErrorStringOr<Ref<JSON::ArrayOf<Inspector::Protocol::Page::SearchResult>>> searchInResources(const String&, std::optional<bool>&& caseSensitive, std::optional<bool>&& isRegex);
  #if !PLATFORM(IOS_FAMILY)
-@@ -114,35 +125,55 @@ public:
+@@ -114,35 +125,53 @@ public:
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
      Inspector::Protocol::ErrorStringOr<void> setForcedAppearance(std::optional<Inspector::Protocol::Page::Appearance>&&);
  #endif
@@ -5109,13 +5055,11 @@ index 3d5e566dbe0c5ec11d9e8df67fcf0a70988a2f8f..48c39d5217f09c4a2cec26308deeb6ba
 +    void runOpenPanel(HTMLInputElement* element, bool* intercept);
 +    void frameAttached(Frame&);
 +    bool shouldBypassCSP();
-+    void willCheckNewWindowPolicy(const URL&);
-+    void didCheckNewWindowPolicy(bool allowed);
 +    bool doingAccessibilitySnapshot() const { return m_doingAccessibilitySnapshot; };
  
      Frame* frameForId(const Inspector::Protocol::Network::FrameId&);
      WEBCORE_EXPORT String frameId(Frame*);
-@@ -151,6 +182,7 @@ public:
+@@ -151,6 +180,7 @@ public:
  
  private:
      double timestamp();
@@ -5123,7 +5067,7 @@ index 3d5e566dbe0c5ec11d9e8df67fcf0a70988a2f8f..48c39d5217f09c4a2cec26308deeb6ba
  
      static bool mainResourceContent(Frame*, bool withBase64Encode, String* result);
      static bool dataContent(const uint8_t* data, unsigned size, const String& textEncodingName, bool withBase64Encode, String* result);
-@@ -162,18 +194,20 @@ private:
+@@ -162,18 +192,20 @@ private:
      RefPtr<Inspector::PageBackendDispatcher> m_backendDispatcher;
  
      Page& m_inspectedPage;
@@ -5506,7 +5450,7 @@ index 29d2e3f46140aaa51160e6a28562f370e371eb21..676ddc9369050c19454fbf5faffac2b2
      virtual bool shouldPerformSecurityChecks() const { return false; }
      virtual bool havePerformedSecurityChecks(const ResourceResponse&) const { return false; }
 diff --git a/Source/WebCore/loader/PolicyChecker.cpp b/Source/WebCore/loader/PolicyChecker.cpp
-index c3fbb569999a0667188eabe1a460e6f076684f0d..06fc4aa4b23661befa9e689a8010c6826826eb2d 100644
+index c3fbb569999a0667188eabe1a460e6f076684f0d..ab5d5925c91e92d2510246aaffa06b1f35af7ac9 100644
 --- a/Source/WebCore/loader/PolicyChecker.cpp
 +++ b/Source/WebCore/loader/PolicyChecker.cpp
 @@ -46,6 +46,7 @@
@@ -5517,40 +5461,6 @@ index c3fbb569999a0667188eabe1a460e6f076684f0d..06fc4aa4b23661befa9e689a8010c682
  #include "Logging.h"
  #include "ThreadableBlobRegistry.h"
  #include <wtf/CompletionHandler.h>
-@@ -252,26 +253,32 @@ void FrameLoader::PolicyChecker::checkNewWindowPolicy(NavigationAction&& navigat
- 
-     auto blobURLLifetimeExtension = extendBlobURLLifetimeIfNecessary(request);
- 
-+    InspectorInstrumentation::willCheckNewWindowPolicy(m_frame, request.url());
-     auto requestIdentifier = PolicyCheckIdentifier::create();
-     m_frame.loader().client().dispatchDecidePolicyForNewWindowAction(navigationAction, request, formState.get(), frameName, requestIdentifier, [frame = Ref { m_frame }, request,
-         formState = WTFMove(formState), frameName, navigationAction, function = WTFMove(function), blobURLLifetimeExtension = WTFMove(blobURLLifetimeExtension),
-         requestIdentifier] (PolicyAction policyAction, PolicyCheckIdentifier responseIdentifier) mutable {
- 
--        if (!responseIdentifier.isValidFor(requestIdentifier))
-+        if (!responseIdentifier.isValidFor(requestIdentifier)) {
-+            InspectorInstrumentation::didCheckNewWindowPolicy(frame.get(), false);
-             return function({ }, nullptr, { }, { }, ShouldContinuePolicyCheck::No);
-+        }
- 
-         switch (policyAction) {
-         case PolicyAction::Download:
-             frame->loader().client().startDownload(request);
-             FALLTHROUGH;
-         case PolicyAction::Ignore:
-+            InspectorInstrumentation::didCheckNewWindowPolicy(frame.get(), false);
-             function({ }, nullptr, { }, { }, ShouldContinuePolicyCheck::No);
-             return;
-         case PolicyAction::StopAllLoads:
-             ASSERT_NOT_REACHED();
-+            InspectorInstrumentation::didCheckNewWindowPolicy(frame.get(), false);
-             function({ }, nullptr, { }, { }, ShouldContinuePolicyCheck::No);
-             return;
-         case PolicyAction::Use:
-+            InspectorInstrumentation::didCheckNewWindowPolicy(frame.get(), true);
-             function(request, formState, frameName, navigationAction, ShouldContinuePolicyCheck::Yes);
-             return;
-         }
 diff --git a/Source/WebCore/loader/ProgressTracker.cpp b/Source/WebCore/loader/ProgressTracker.cpp
 index fa84c366c63175f9fb4730eb85c4677fc3d6368f..ecf5b8dc97e35910baf493424e673155cfa7d7a4 100644
 --- a/Source/WebCore/loader/ProgressTracker.cpp
