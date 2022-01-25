@@ -327,7 +327,7 @@ export function debugMode() {
     return 'console';
   if (!debugEnv || debugEnv === '0')
     return '';
-  return 'inspector'
+  return 'inspector';
 }
 
 let _isUnderTest = false;
