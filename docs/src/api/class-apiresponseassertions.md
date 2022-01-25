@@ -1,5 +1,5 @@
 # class: APIResponseAssertions
-* langs: js, java
+* langs: js, java, python
 
 The [APIResponseAssertions] class provides assertion methods that can be used to make assertions about the [APIResponse] in the tests. A new instance of [APIResponseAssertions] is created by calling [`method: PlaywrightAssertions.expectAPIResponse`]:
 
@@ -29,7 +29,6 @@ public class TestPage {
 ```
 
 ```python async
-import re
 from playwright.async_api import Page, expect
 
 async def test_navigates_to_login_page(page: Page) -> None:
@@ -39,7 +38,6 @@ async def test_navigates_to_login_page(page: Page) -> None:
 ```
 
 ```python sync
-import re
 from playwright.sync_api import Page, expect
 
 def test_navigates_to_login_page(page: Page) -> None:
@@ -63,6 +61,11 @@ await expect(response).not.toBeOK();
 assertThat(response).not().isOK();
 ```
 
+## async method: APIResponseAssertions.NotToBeOK
+* langs: python
+
+The opposite of [`method: APIResponseAssertions.toBeOK`].
+
 ## async method: APIResponseAssertions.toBeOK
 * langs:
   - alias-java: isOK
@@ -78,7 +81,6 @@ assertThat(response).isOK();
 ```
 
 ```python async
-import re
 from playwright.async_api import expect
 
 # ...
