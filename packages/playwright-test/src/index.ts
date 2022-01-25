@@ -19,7 +19,7 @@ import * as path from 'path';
 import type { LaunchOptions, BrowserContextOptions, Page, BrowserContext, BrowserType, Video, Browser, APIRequestContext } from 'playwright-core';
 import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo } from '../types/test';
 import { rootTestType } from './testType';
-import { createGuid, removeFolders } from 'playwright-core/lib/utils/utils';
+import { createGuid, removeFolders, debugMode } from 'playwright-core/lib/utils/utils';
 import { GridClient } from 'playwright-core/lib/grid/gridClient';
 import { prependToTestError } from './util';
 export { expect } from './expect';
@@ -190,7 +190,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
 
   _setupContextOptionsAndArtifacts: [async ({ playwright, _snapshotSuffix, _combinedContextOptions, _artifactsDir, trace, screenshot, actionTimeout, navigationTimeout }, use, testInfo) => {
     testInfo.snapshotSuffix = _snapshotSuffix;
-    if (process.env.PWDEBUG)
+    if (debugMode())
       testInfo.setTimeout(0);
 
     let traceMode = typeof trace === 'string' ? trace : trace.mode;
