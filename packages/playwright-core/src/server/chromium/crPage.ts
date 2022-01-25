@@ -61,7 +61,7 @@ export class CRPage implements PageDelegate {
   private readonly _pagePromise: Promise<Page | Error>;
   _initializedPage: Page | null = null;
   private _isBackgroundPage: boolean;
-  _pendingDialogs: Set<dialog.Dialog> = new Set();
+  _pendingBeforeUnloadDialogs: Set<dialog.Dialog> = new Set();
 
   // Holds window features for the next popup being opened via window.open,
   // until the popup target arrives. This could be racy if two oopifs
@@ -798,11 +798,12 @@ class FrameSession {
         event.type,
         event.message,
         async (accept: boolean, promptText?: string) => {
-          this._crPage._pendingDialogs.delete(aDialog);
+          this._crPage._pendingBeforeUnloadDialogs.delete(aDialog);
           await this._client.send('Page.handleJavaScriptDialog', { accept, promptText });
         },
         event.defaultPrompt);
-    this._crPage._pendingDialogs.add(aDialog);
+    if (event.type === 'beforeunload')
+      this._crPage._pendingBeforeUnloadDialogs.add(aDialog);
     this._page.emit(Page.Events.Dialog, aDialog);
   }
 
