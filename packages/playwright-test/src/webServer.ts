@@ -18,8 +18,7 @@ import net from 'net';
 import os from 'os';
 import stream from 'stream';
 import debug from 'debug';
-import { monotonicTime } from './util';
-import { raceAgainstDeadline } from 'playwright-core/lib/utils/async';
+import { raceAgainstTimeout } from 'playwright-core/lib/utils/async';
 import { WebServerConfig } from './types';
 import { launchProcess } from 'playwright-core/lib/utils/processLauncher';
 
@@ -95,7 +94,7 @@ export class WebServer {
     const launchTimeout = this.config.timeout || 60 * 1000;
     const cancellationToken = { canceled: false };
     const { timedOut } = (await Promise.race([
-      raceAgainstDeadline(waitForSocket(this.config.port, 100, cancellationToken), launchTimeout + monotonicTime()),
+      raceAgainstTimeout(() => waitForSocket(this.config.port, 100, cancellationToken), launchTimeout),
       this._processExitedPromise,
     ]));
     cancellationToken.canceled = true;

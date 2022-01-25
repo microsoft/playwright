@@ -29,7 +29,7 @@ import { Modifier, Suite, TestCase } from './test';
 import { Annotations, TestCaseType, TestError, TestInfo, TestInfoImpl, TestStepInternal, WorkerInfo } from './types';
 import { ProjectImpl } from './project';
 import { FixtureRunner } from './fixtures';
-import { DeadlineRunner, raceAgainstDeadline } from 'playwright-core/lib/utils/async';
+import { TimeoutRunner, raceAgainstTimeout, TimeoutRunnerError } from 'playwright-core/lib/utils/async';
 import { calculateSha1 } from 'playwright-core/lib/utils/utils';
 
 const removeFolderAsync = util.promisify(rimraf);
@@ -50,7 +50,7 @@ export class WorkerRunner extends EventEmitter {
   private _entries = new Map<string, TestEntry>();
   private _isStopped = false;
   private _runFinished = Promise.resolve();
-  private _currentDeadlineRunner: DeadlineRunner<any> | undefined;
+  private _currentTimeoutRunner: TimeoutRunner | undefined;
   _currentTest: TestData | null = null;
 
   constructor(params: WorkerInitParams) {
@@ -64,7 +64,7 @@ export class WorkerRunner extends EventEmitter {
       this._isStopped = true;
 
       // Interrupt current action.
-      this._currentDeadlineRunner?.interrupt();
+      this._currentTimeoutRunner?.interrupt();
 
       // TODO: mark test as 'interrupted' instead.
       if (this._currentTest && this._currentTest.testInfo.status === 'passed')
@@ -83,10 +83,10 @@ export class WorkerRunner extends EventEmitter {
 
   private async _teardownScopes() {
     // TODO: separate timeout for teardown?
-    const result = await raceAgainstDeadline((async () => {
+    const result = await raceAgainstTimeout(async () => {
       await this._fixtureRunner.teardownScope('test');
       await this._fixtureRunner.teardownScope('worker');
-    })(), this._deadline());
+    }, this._project.config.timeout);
     if (result.timedOut && !this._fatalError)
       this._fatalError = { message: colors.red(`Timeout of ${this._project.config.timeout}ms exceeded while shutting down environment`) };
   }
@@ -113,10 +113,6 @@ export class WorkerRunner extends EventEmitter {
         this._fatalError = serializeError(error);
     }
     this.stop();
-  }
-
-  private _deadline() {
-    return this._project.config.timeout ? monotonicTime() + this._project.config.timeout : 0;
   }
 
   private async _loadIfNeeded() {
@@ -189,7 +185,7 @@ export class WorkerRunner extends EventEmitter {
       if (!this._fixtureRunner.dependsOnWorkerFixturesOnly(beforeAllModifier.fn, beforeAllModifier.location))
         continue;
       // TODO: separate timeout for beforeAll modifiers?
-      const result = await raceAgainstDeadline(this._fixtureRunner.resolveParametersAndRunFunction(beforeAllModifier.fn, this._workerInfo, undefined), this._deadline());
+      const result = await raceAgainstTimeout(() => this._fixtureRunner.resolveParametersAndRunFunction(beforeAllModifier.fn, this._workerInfo, undefined), this._project.config.timeout);
       if (result.timedOut) {
         if (!this._fatalError)
           this._fatalError = serializeError(new Error(`Timeout of ${this._project.config.timeout}ms exceeded while running ${beforeAllModifier.type} modifier\n    at ${formatLocation(beforeAllModifier.location)}`));
@@ -224,7 +220,7 @@ export class WorkerRunner extends EventEmitter {
   private async _runTestOrAllHook(test: TestCase, annotations: Annotations, retry: number) {
     const startTime = monotonicTime();
     const startWallTime = Date.now();
-    let deadlineRunner: DeadlineRunner<any> | undefined;
+    let timeoutRunner: TimeoutRunner;
     const testId = test._id;
 
     const baseOutputDir = (() => {
@@ -313,8 +309,8 @@ export class WorkerRunner extends EventEmitter {
         if (!testInfo.timeout)
           return; // Zero timeout means some debug mode - do not set a timeout.
         testInfo.timeout = timeout;
-        if (deadlineRunner)
-          deadlineRunner.updateDeadline(deadline());
+        if (timeoutRunner)
+          timeoutRunner.updateTimeout(timeout);
       },
       _addStep: data => {
         const stepId = `${data.category}@${data.title}@${++lastStepId}`;
@@ -381,10 +377,6 @@ export class WorkerRunner extends EventEmitter {
     this._currentTest = testData;
     setCurrentTestInfo(testInfo);
 
-    const deadline = () => {
-      return testInfo.timeout ? startTime + testInfo.timeout : 0;
-    };
-
     this.emit('testBegin', buildTestBeginPayload(testData, startWallTime));
 
     if (testInfo.expectedStatus === 'skipped') {
@@ -396,29 +388,18 @@ export class WorkerRunner extends EventEmitter {
     // Update the fixture pool - it may differ between tests, but only in test-scoped fixtures.
     this._fixtureRunner.setPool(test._pool!);
 
-    this._currentDeadlineRunner = deadlineRunner = new DeadlineRunner(this._runTestWithBeforeHooks(test, testInfo), deadline());
-    const result = await deadlineRunner.result;
-    // Do not overwrite test failure upon hook timeout.
-    if (result.timedOut && testInfo.status === 'passed')
-      testInfo.status = 'timedOut';
+    this._currentTimeoutRunner = timeoutRunner = new TimeoutRunner(testInfo.timeout);
+    await this._runWithTimeout(timeoutRunner, () => this._runTestWithBeforeHooks(test, testInfo), testInfo);
     testInfo.duration = monotonicTime() - startTime;
 
-    if (!result.timedOut) {
-      this._currentDeadlineRunner = deadlineRunner = new DeadlineRunner(this._runAfterHooks(test, testInfo), deadline());
-      deadlineRunner.updateDeadline(deadline());
-      const hooksResult = await deadlineRunner.result;
-      // Do not overwrite test failure upon hook timeout.
-      if (hooksResult.timedOut && testInfo.status === 'passed')
-        testInfo.status = 'timedOut';
-    } else {
+    if (testInfo.status === 'timedOut') {
       // A timed-out test gets a full additional timeout to run after hooks.
-      const newDeadline = this._deadline();
-      this._currentDeadlineRunner = deadlineRunner = new DeadlineRunner(this._runAfterHooks(test, testInfo), newDeadline);
-      await deadlineRunner.result;
+      timeoutRunner.resetTimeout(testInfo.timeout);
     }
+    await this._runWithTimeout(timeoutRunner, () => this._runAfterHooks(test, testInfo), testInfo);
 
     testInfo.duration = monotonicTime() - startTime;
-    this._currentDeadlineRunner = undefined;
+    this._currentTimeoutRunner = undefined;
     this._currentTest = null;
     setCurrentTestInfo(null);
 
@@ -496,10 +477,10 @@ export class WorkerRunner extends EventEmitter {
 
     let teardownError1: TestError | undefined;
     if (test._type === 'test')
-      teardownError1 = await this._runFn(() => this._runHooks(test.parent!, 'afterEach', testInfo), testInfo, 'disallowSkips');
+      teardownError1 = await this._runFn(() => this._runHooks(test.parent!, 'afterEach', testInfo), testInfo);
     // Continue teardown even after the failure.
 
-    const teardownError2 = await this._runFn(() => this._fixtureRunner.teardownScope('test'), testInfo, 'disallowSkips');
+    const teardownError2 = await this._runFn(() => this._fixtureRunner.teardownScope('test'), testInfo);
     step.complete(teardownError1 || teardownError2);
   }
 
@@ -524,7 +505,19 @@ export class WorkerRunner extends EventEmitter {
       throw error;
   }
 
-  private async _runFn(fn: Function, testInfo: TestInfoImpl, skips: 'allowSkips' | 'disallowSkips'): Promise<TestError | undefined> {
+  private async _runWithTimeout(timeoutRunner: TimeoutRunner, cb: () => Promise<any>, testInfo: TestInfoImpl): Promise<void> {
+    try {
+      await timeoutRunner.run(cb);
+    } catch (error) {
+      if (!(error instanceof TimeoutRunnerError))
+        throw error;
+      // Do not overwrite existing failure upon hook/teardown timeout.
+      if (testInfo.status === 'passed')
+        testInfo.status = 'timedOut';
+    }
+  }
+
+  private async _runFn(fn: Function, testInfo: TestInfoImpl, skips?: 'allowSkips'): Promise<TestError | undefined> {
     try {
       await fn();
     } catch (error) {
