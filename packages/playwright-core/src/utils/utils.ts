@@ -325,7 +325,9 @@ const debugEnv = getFromENV('PWDEBUG') || '';
 export function debugMode() {
   if (debugEnv === 'console')
     return 'console';
-  return debugEnv ? 'inspector' : '';
+  if (!debugEnv || debugEnv === '0')
+    return '';
+  return 'inspector'
 }
 
 let _isUnderTest = false;
