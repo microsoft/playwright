@@ -551,6 +551,11 @@ Returns locator to the n-th matching element.
 ### param: Locator.nth.index
 - `index` <[int]>
 
+## method: Locator.page
+- returns: <[Page]>
+
+A page this locator belongs to.
+
 ## async method: Locator.press
 
 Focuses the element, and then uses [`method: Keyboard.down`] and [`method: Keyboard.up`].
