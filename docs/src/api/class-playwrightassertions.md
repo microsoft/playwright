@@ -55,7 +55,7 @@ reached. You can pass this timeout as an option.
 By default, the timeout for assertions is set to 5 seconds.
 
 ## method: PlaywrightAssertions.expectAPIResponse
-* langs: js, java
+* langs: js, java, python
   - alias-java: assertThat
   - alias-python: expect
   - alias-js: expect
