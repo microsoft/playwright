@@ -471,17 +471,12 @@ export class CRBrowserContext extends BrowserContext {
 
   async _doClose() {
     assert(this._browserContextId);
-    // We have to close all pending beforeUnload dialogs
-    while (true) {
-      const pendingBeforeUnloadDialogs = [];
-      for (const crPage of this._browser._crPages.values()) {
-        if (crPage._browserContext === this)
-          pendingBeforeUnloadDialogs.push(...[...crPage._pendingBeforeUnloadDialogs]);
-      }
-      if (!pendingBeforeUnloadDialogs.length)
-        break;
-      await Promise.all(pendingBeforeUnloadDialogs.map(dialog => dialog.dismiss()));
+    const pendingBeforeUnloadDialogs = [];
+    for (const crPage of this._browser._crPages.values()) {
+      if (crPage._browserContext === this)
+        pendingBeforeUnloadDialogs.push(...[...crPage._pendingBeforeUnloadDialogs]);
     }
+    await Promise.all(pendingBeforeUnloadDialogs.map(dialog => dialog.dismiss()));
     await this._browser._session.send('Target.disposeBrowserContext', { browserContextId: this._browserContextId });
     this._browser._contexts.delete(this._browserContextId);
     for (const [targetId, serviceWorker] of this._browser._serviceWorkers) {
