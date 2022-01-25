@@ -26,7 +26,7 @@ import { envObjectToArray } from './clientHelper';
 import { assert, headersObjectToArray, monotonicTime } from '../utils/utils';
 import * as api from '../../types/types';
 import { kBrowserClosedError } from '../utils/errors';
-import { raceAgainstDeadline } from '../utils/async';
+import { raceAgainstTimeout } from '../utils/async';
 import type { Playwright } from './playwright';
 
 export interface BrowserServerLauncher {
@@ -157,32 +157,25 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
         }
       });
 
-      const createBrowserPromise = new Promise<Browser>(async (fulfill, reject) => {
-        try {
-          // For tests.
-          if ((params as any).__testHookBeforeCreateBrowser)
-            await (params as any).__testHookBeforeCreateBrowser();
+      const result = await raceAgainstTimeout(async () => {
+        // For tests.
+        if ((params as any).__testHookBeforeCreateBrowser)
+          await (params as any).__testHookBeforeCreateBrowser();
 
-          const playwright = await connection!.initializePlaywright();
-          if (!playwright._initializer.preLaunchedBrowser) {
-            reject(new Error('Malformed endpoint. Did you use launchServer method?'));
-            closePipe();
-            return;
-          }
-          playwright._setSelectors(this._playwright.selectors);
-          browser = Browser.from(playwright._initializer.preLaunchedBrowser!);
-          browser._logger = logger;
-          browser._shouldCloseConnectionOnClose = true;
-          browser._setBrowserType((playwright as any)[browser._name]);
-          browser._localUtils = this._playwright._utils;
-          browser.on(Events.Browser.Disconnected, closePipe);
-          fulfill(browser);
-        } catch (e) {
-          reject(e);
+        const playwright = await connection!.initializePlaywright();
+        if (!playwright._initializer.preLaunchedBrowser) {
+          closePipe();
+          throw new Error('Malformed endpoint. Did you use launchServer method?');
         }
-      });
-
-      const result = await raceAgainstDeadline(createBrowserPromise, deadline);
+        playwright._setSelectors(this._playwright.selectors);
+        browser = Browser.from(playwright._initializer.preLaunchedBrowser!);
+        browser._logger = logger;
+        browser._shouldCloseConnectionOnClose = true;
+        browser._setBrowserType((playwright as any)[browser._name]);
+        browser._localUtils = this._playwright._utils;
+        browser.on(Events.Browser.Disconnected, closePipe);
+        return browser;
+      }, deadline ? deadline - monotonicTime() : 0);
       if (!result.timedOut) {
         return result.result;
       } else {

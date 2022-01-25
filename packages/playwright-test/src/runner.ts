@@ -20,7 +20,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
 import { Dispatcher, TestGroup } from './dispatcher';
-import { createFileMatcher, createTitleMatcher, FilePatternFilter, monotonicTime, serializeError } from './util';
+import { createFileMatcher, createTitleMatcher, FilePatternFilter, serializeError } from './util';
 import { TestCase, Suite } from './test';
 import { Loader } from './loader';
 import { FullResult, Reporter, TestError } from '../types/testReporter';
@@ -37,7 +37,7 @@ import { ProjectImpl } from './project';
 import { Minimatch } from 'minimatch';
 import { Config, FullConfig } from './types';
 import { WebServer } from './webServer';
-import { raceAgainstDeadline } from 'playwright-core/lib/utils/async';
+import { raceAgainstTimeout } from 'playwright-core/lib/utils/async';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -136,8 +136,7 @@ export class Runner {
     this._reporter = await this._createReporter(!!options.listOnly);
     try {
       const config = this._loader.fullConfig();
-      const globalDeadline = config.globalTimeout ? config.globalTimeout + monotonicTime() : 0;
-      const result = await raceAgainstDeadline(this._run(!!options.listOnly, options.filePatternFilter || [], options.projectFilter), globalDeadline);
+      const result = await raceAgainstTimeout(() => this._run(!!options.listOnly, options.filePatternFilter || [], options.projectFilter), config.globalTimeout);
       if (result.timedOut) {
         const actualResult: FullResult = { status: 'timedout' };
         if (this._didBegin)
