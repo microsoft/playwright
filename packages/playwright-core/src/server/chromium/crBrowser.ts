@@ -472,6 +472,10 @@ export class CRBrowserContext extends BrowserContext {
 
   async _doClose() {
     assert(this._browserContextId);
+    // Headful chrome cannot dispose browser context with opened 'beforeunload'
+    // dialogs, so we should close all that are currently opened.
+    // We also won't get new ones since `Target.disposeBrowserContext` does not trigger
+    // beforeunload.
     const openedBeforeUnloadDialogs: Dialog[] = [];
     for (const crPage of this._browser._crPages.values()) {
       if (crPage._browserContext !== this)
