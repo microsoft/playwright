@@ -9,7 +9,7 @@ if [[ $(arch) == "aarch64" ]]; then
 fi
 
 if [[ ! -f "/etc/os-release" ]]; then
-  echo "ERROR: cannot install on unknown linux distribution"
+  echo "ERROR: cannot install on unknown linux distribution (/etc/os-release is missing)"
   exit 1
 fi
 
