@@ -40,10 +40,14 @@ sourceMapSupport.install({
     const sourceMapPath = sourceMaps.get(source)!;
     if (!fs.existsSync(sourceMapPath))
       return null;
-    return {
-      map: JSON.parse(fs.readFileSync(sourceMapPath, 'utf-8')),
-      url: source
-    };
+    try {
+      return {
+        map: JSON.parse(fs.readFileSync(sourceMapPath, 'utf-8')),
+        url: source
+      };
+    } catch (e) {
+      return null;
+    }
   }
 });
 
