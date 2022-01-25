@@ -644,7 +644,10 @@ export const deps: any = {
 deps['ubuntu20.04-arm64'] = {
   tools: [...deps['ubuntu20.04'].tools],
   chromium: [...deps['ubuntu20.04'].chromium],
-  firefox: [...deps['ubuntu20.04'].firefox],
+  firefox: [
+    ...deps['ubuntu20.04'].firefox,
+    'libxtst6'
+  ],
   webkit: [
     ...deps['ubuntu20.04'].webkit,
     'libevent-2.1-7',
