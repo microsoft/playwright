@@ -471,6 +471,12 @@ export class CRBrowserContext extends BrowserContext {
 
   async _doClose() {
     assert(this._browserContextId);
+    const pendingDialogs = [];
+    for (const crPage of this._browser._crPages.values()) {
+      if (crPage._browserContext === this)
+        pendingDialogs.push(...[...crPage._pendingDialogs]);
+    }
+    await Promise.all(pendingDialogs.map(dialog => dialog.dismiss()));
     await this._browser._session.send('Target.disposeBrowserContext', { browserContextId: this._browserContextId });
     this._browser._contexts.delete(this._browserContextId);
     for (const [targetId, serviceWorker] of this._browser._serviceWorkers) {

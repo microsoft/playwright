@@ -61,6 +61,7 @@ export class CRPage implements PageDelegate {
   private readonly _pagePromise: Promise<Page | Error>;
   _initializedPage: Page | null = null;
   private _isBackgroundPage: boolean;
+  _pendingDialogs: Set<dialog.Dialog> = new Set();
 
   // Holds window features for the next popup being opened via window.open,
   // until the popup target arrives. This could be racy if two oopifs
@@ -792,14 +793,17 @@ class FrameSession {
   _onDialog(event: Protocol.Page.javascriptDialogOpeningPayload) {
     if (!this._page._frameManager.frame(this._targetId))
       return; // Our frame/subtree may be gone already.
-    this._page.emit(Page.Events.Dialog, new dialog.Dialog(
+    const aDialog = new dialog.Dialog(
         this._page,
         event.type,
         event.message,
         async (accept: boolean, promptText?: string) => {
+          this._crPage._pendingDialogs.delete(aDialog);
           await this._client.send('Page.handleJavaScriptDialog', { accept, promptText });
         },
-        event.defaultPrompt));
+        event.defaultPrompt);
+    this._crPage._pendingDialogs.add(aDialog);
+    this._page.emit(Page.Events.Dialog, aDialog);
   }
 
   _handleException(exceptionDetails: Protocol.Runtime.ExceptionDetails) {
