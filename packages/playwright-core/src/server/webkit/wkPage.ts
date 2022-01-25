@@ -358,7 +358,6 @@ export class WKPage implements PageDelegate {
   }
 
   private _addSessionListeners() {
-    // TODO: remove Page.willRequestOpenWindow and Page.didRequestOpenWindow from the protocol.
     this._sessionListeners = [
       eventsHelper.addEventListener(this._session, 'Page.frameNavigated', event => this._onFrameNavigated(event.frame, false)),
       eventsHelper.addEventListener(this._session, 'Page.navigatedWithinDocument', event => this._onFrameNavigatedWithinDocument(event.frameId, event.url)),
