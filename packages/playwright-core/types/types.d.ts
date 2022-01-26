@@ -9280,6 +9280,11 @@ export interface Locator {
   nth(index: number): Locator;
 
   /**
+   * A page this locator belongs to.
+   */
+  page(): Page;
+
+  /**
    * Focuses the element, and then uses [keyboard.down(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-down)
    * and [keyboard.up(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-up).
    *

@@ -403,7 +403,7 @@ page.route(
 page.goto("https://example.com")
 ```
 
-You can mock API endpoints via handling the network quests in your Playwright script.
+You can mock API endpoints via handling the network requests in your Playwright script.
 
 #### Variations
 

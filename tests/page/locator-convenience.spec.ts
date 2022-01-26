@@ -191,3 +191,15 @@ it('isVisible and isHidden should work with details', async ({ page }) => {
 
   await expect(page.locator('ul')).toBeHidden();
 });
+
+it('should return page', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/frames/two-frames.html');
+  const outer = page.locator('#outer');
+  expect(outer.page()).toBe(page);
+
+  const inner = outer.locator('#inner');
+  expect(inner.page()).toBe(page);
+
+  const inFrame = page.frames()[1].locator('div');
+  expect(inFrame.page()).toBe(page);
+});

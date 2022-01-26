@@ -122,6 +122,18 @@ dotnet test -- NUnit.NumberOfTestWorkers=5
 pwsh bin\Debug\netX\playwright.ps1 codegen
 ```
 
+## Install browsers via API
+
+It's possible to run [Command line tools](./cli.md) commands via the .NET API:
+
+```csharp
+var exitCode = Microsoft.Playwright.Program.Main(new[] {"install"});
+if (exitCode != 0)
+{
+    throw new Exception($"Playwright exited with code {exitCode}");
+}
+```
+
 ## Bundle drivers for different platforms
 
 Playwright by default does bundle only the driver for the .NET publish target runtime. If you want to bundle for additional platforms, you can
@@ -139,7 +151,6 @@ or:
 <PropertyGroup>
   <PlaywrightPlatform>osx;linux</PlaywrightPlatform>
 </PropertyGroup>
-```
 
 ## System requirements
 

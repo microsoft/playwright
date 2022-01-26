@@ -21439,7 +21439,7 @@ index 1c84f30b2ea96dd0c168918f9d63773b8e2548a3..55603437900a65de7bef70563c9ec039
  }
  
 diff --git a/Tools/MiniBrowser/gtk/BrowserWindow.c b/Tools/MiniBrowser/gtk/BrowserWindow.c
-index 881609c9fe8f2b5ed6158a5972438c14fd650cf5..4a032f5cc0808087405f2f9dd9614b5cbf85252a 100644
+index 881609c9fe8f2b5ed6158a5972438c14fd650cf5..566568382a2983a8a823cf0a0cf2634a9848d607 100644
 --- a/Tools/MiniBrowser/gtk/BrowserWindow.c
 +++ b/Tools/MiniBrowser/gtk/BrowserWindow.c
 @@ -70,7 +70,7 @@ struct _BrowserWindowClass {
@@ -21468,7 +21468,22 @@ index 881609c9fe8f2b5ed6158a5972438c14fd650cf5..4a032f5cc0808087405f2f9dd9614b5c
      gtk_window_set_title(GTK_WINDOW(window), privateTitle ? privateTitle : title);
      g_free(privateTitle);
  }
-@@ -1445,6 +1443,12 @@ static gboolean browserWindowDeleteEvent(GtkWidget *widget, GdkEventAny* event)
+@@ -493,8 +491,12 @@ static gboolean webViewDecidePolicy(WebKitWebView *webView, WebKitPolicyDecision
+         return FALSE;
+ 
+     WebKitNavigationAction *navigationAction = webkit_navigation_policy_decision_get_navigation_action(WEBKIT_NAVIGATION_POLICY_DECISION(decision));
+-    if (webkit_navigation_action_get_navigation_type(navigationAction) != WEBKIT_NAVIGATION_TYPE_LINK_CLICKED
+-        || webkit_navigation_action_get_mouse_button(navigationAction) != GDK_BUTTON_MIDDLE)
++    if (webkit_navigation_action_get_navigation_type(navigationAction) != WEBKIT_NAVIGATION_TYPE_LINK_CLICKED)
++        return FALSE;
++
++    guint modifiers = webkit_navigation_action_get_modifiers(navigationAction);
++    if (webkit_navigation_action_get_mouse_button(navigationAction) != GDK_BUTTON_MIDDLE &&
++        (webkit_navigation_action_get_mouse_button(navigationAction) != GDK_BUTTON_PRIMARY || (modifiers & (GDK_CONTROL_MASK | GDK_SHIFT_MASK)) == 0))
+         return FALSE;
+ 
+     /* Multiple tabs are not allowed in editor mode. */
+@@ -1445,6 +1447,12 @@ static gboolean browserWindowDeleteEvent(GtkWidget *widget, GdkEventAny* event)
  }
  #endif
  
@@ -21481,7 +21496,7 @@ index 881609c9fe8f2b5ed6158a5972438c14fd650cf5..4a032f5cc0808087405f2f9dd9614b5c
  static void browser_window_class_init(BrowserWindowClass *klass)
  {
      GObjectClass *gobjectClass = G_OBJECT_CLASS(klass);
-@@ -1458,6 +1462,14 @@ static void browser_window_class_init(BrowserWindowClass *klass)
+@@ -1458,6 +1466,14 @@ static void browser_window_class_init(BrowserWindowClass *klass)
      GtkWidgetClass *widgetClass = GTK_WIDGET_CLASS(klass);
      widgetClass->delete_event = browserWindowDeleteEvent;
  #endif
@@ -21661,7 +21676,7 @@ index 9e7863b61b3e9db76e04e14f45116684dae44e37..fb47d231744d578bcbef125df9011a80
  
      return exitAfterLoad && webProcessCrashed ? 1 : 0;
 diff --git a/Tools/MiniBrowser/wpe/main.cpp b/Tools/MiniBrowser/wpe/main.cpp
-index 4584d9573ba7d11d2249f17552ee5c947af539d2..9244a803a40e4d2ecd76f87282837660587142dd 100644
+index 4584d9573ba7d11d2249f17552ee5c947af539d2..d5247a28b5374aef79e515fb701f1db7232711bc 100644
 --- a/Tools/MiniBrowser/wpe/main.cpp
 +++ b/Tools/MiniBrowser/wpe/main.cpp
 @@ -41,6 +41,9 @@ static gboolean headlessMode;
@@ -21684,7 +21699,7 @@ index 4584d9573ba7d11d2249f17552ee5c947af539d2..9244a803a40e4d2ecd76f87282837660
      { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &uriArguments, nullptr, "[URL]" },
      { nullptr, 0, 0, G_OPTION_ARG_NONE, nullptr, nullptr, nullptr }
  };
-@@ -148,13 +154,34 @@ static void filterSavedCallback(WebKitUserContentFilterStore *store, GAsyncResul
+@@ -148,13 +154,36 @@ static void filterSavedCallback(WebKitUserContentFilterStore *store, GAsyncResul
      g_main_loop_quit(data->mainLoop);
  }
  
@@ -21714,13 +21729,15 @@ index 4584d9573ba7d11d2249f17552ee5c947af539d2..9244a803a40e4d2ecd76f87282837660
 +    return TRUE;
 +}
 +
++static gboolean webViewDecidePolicy(WebKitWebView *webView, WebKitPolicyDecision *decision, WebKitPolicyDecisionType decisionType, gpointer);
++
 +static WebKitWebView* createWebView(WebKitWebView* webView, WebKitNavigationAction*, gpointer);
 +
 +static WebKitWebView* createWebViewImpl(WebKitWebView* webView, WebKitWebContext *webContext)
  {
      auto backend = createViewBackend(1280, 720);
      struct wpe_view_backend* wpeBackend = backend->backend();
-@@ -166,17 +193,66 @@ static WebKitWebView* createWebView(WebKitWebView* webView, WebKitNavigationActi
+@@ -166,17 +195,88 @@ static WebKitWebView* createWebView(WebKitWebView* webView, WebKitNavigationActi
              delete static_cast<WPEToolingBackends::ViewBackend*>(data);
          }, backend.release());
  
@@ -21752,13 +21769,35 @@ index 4584d9573ba7d11d2249f17552ee5c947af539d2..9244a803a40e4d2ecd76f87282837660
 +    g_signal_connect(newWebView, "load-failed", G_CALLBACK(webViewLoadFailed), nullptr);
 +    g_signal_connect(newWebView, "script-dialog", G_CALLBACK(scriptDialog), nullptr);
 +    g_signal_connect(newWebView, "script-dialog-handled", G_CALLBACK(scriptDialogHandled), nullptr);
-+    g_signal_connect(newWebView, "create", G_CALLBACK(createWebView), nullptr);
++    g_signal_connect(newWebView, "decide-policy", G_CALLBACK(webViewDecidePolicy), nullptr);
      return newWebView;
  }
  
 +static WebKitWebView* createWebView(WebKitWebView* webView, WebKitNavigationAction*, gpointer)
 +{
 +    return createWebViewImpl(webView, nullptr);
++}
++
++static gboolean webViewDecidePolicy(WebKitWebView *webView, WebKitPolicyDecision *decision, WebKitPolicyDecisionType decisionType, gpointer)
++{
++    if (decisionType != WEBKIT_POLICY_DECISION_TYPE_NAVIGATION_ACTION)
++        return FALSE;
++
++    WebKitNavigationAction *navigationAction = webkit_navigation_policy_decision_get_navigation_action(WEBKIT_NAVIGATION_POLICY_DECISION(decision));
++    if (webkit_navigation_action_get_navigation_type(navigationAction) != WEBKIT_NAVIGATION_TYPE_LINK_CLICKED)
++        return FALSE;
++
++    guint modifiers = webkit_navigation_action_get_modifiers(navigationAction);
++    if (webkit_navigation_action_get_mouse_button(navigationAction) != 2 /* GDK_BUTTON_MIDDLE */ &&
++        (webkit_navigation_action_get_mouse_button(navigationAction) != 1 /* GDK_BUTTON_PRIMARY */ || (modifiers & (wpe_input_keyboard_modifier_control | wpe_input_keyboard_modifier_shift)) == 0))
++        return FALSE;
++
++    /* Open a new tab if link clicked with the middle button, shift+click or ctrl+click. */
++    WebKitWebView* newWebView = createWebViewImpl(nullptr, webkit_web_view_get_context(webView));
++    webkit_web_view_load_request(newWebView, webkit_navigation_action_get_request(navigationAction));
++
++    webkit_policy_decision_ignore(decision);
++    return TRUE;
 +}
 +
 +static WebKitWebContext *persistentWebContext = NULL;
@@ -21789,7 +21828,7 @@ index 4584d9573ba7d11d2249f17552ee5c947af539d2..9244a803a40e4d2ecd76f87282837660
  int main(int argc, char *argv[])
  {
  #if ENABLE_DEVELOPER_MODE
-@@ -208,6 +284,16 @@ int main(int argc, char *argv[])
+@@ -208,6 +308,16 @@ int main(int argc, char *argv[])
      }
  
      auto* loop = g_main_loop_new(nullptr, FALSE);
@@ -21806,7 +21845,7 @@ index 4584d9573ba7d11d2249f17552ee5c947af539d2..9244a803a40e4d2ecd76f87282837660
  
      auto backend = createViewBackend(1280, 720);
      struct wpe_view_backend* wpeBackend = backend->backend();
-@@ -217,7 +303,15 @@ int main(int argc, char *argv[])
+@@ -217,7 +327,15 @@ int main(int argc, char *argv[])
          return 1;
      }
  
@@ -21823,7 +21862,7 @@ index 4584d9573ba7d11d2249f17552ee5c947af539d2..9244a803a40e4d2ecd76f87282837660
      webkit_website_data_manager_set_itp_enabled(manager, enableITP);
  
      if (proxy) {
-@@ -229,7 +323,8 @@ int main(int argc, char *argv[])
+@@ -229,7 +347,8 @@ int main(int argc, char *argv[])
      if (ignoreTLSErrors)
          webkit_website_data_manager_set_tls_errors_policy(manager, WEBKIT_TLS_ERRORS_POLICY_IGNORE);
  
@@ -21833,7 +21872,7 @@ index 4584d9573ba7d11d2249f17552ee5c947af539d2..9244a803a40e4d2ecd76f87282837660
      g_object_unref(manager);
  
      if (cookiesPolicy) {
-@@ -288,7 +383,14 @@ int main(int argc, char *argv[])
+@@ -288,7 +407,14 @@ int main(int argc, char *argv[])
      auto* viewBackend = webkit_web_view_backend_new(wpeBackend, [](gpointer data) {
          delete static_cast<WPEToolingBackends::ViewBackend*>(data);
      }, backend.release());
@@ -21849,7 +21888,7 @@ index 4584d9573ba7d11d2249f17552ee5c947af539d2..9244a803a40e4d2ecd76f87282837660
      auto* webView = WEBKIT_WEB_VIEW(g_object_new(WEBKIT_TYPE_WEB_VIEW,
          "backend", viewBackend,
          "web-context", webContext,
-@@ -305,8 +407,6 @@ int main(int argc, char *argv[])
+@@ -305,8 +431,6 @@ int main(int argc, char *argv[])
          backendPtr->setAccessibleChild(ATK_OBJECT(accessible));
  #endif
  
@@ -21858,7 +21897,7 @@ index 4584d9573ba7d11d2249f17552ee5c947af539d2..9244a803a40e4d2ecd76f87282837660
      webkit_web_context_set_automation_allowed(webContext, automationMode);
      g_signal_connect(webContext, "automation-started", G_CALLBACK(automationStartedCallback), webView);
      g_signal_connect(webView, "permission-request", G_CALLBACK(decidePermissionRequest), nullptr);
-@@ -319,16 +419,9 @@ int main(int argc, char *argv[])
+@@ -319,16 +443,9 @@ int main(int argc, char *argv[])
          webkit_web_view_set_background_color(webView, &color);
  
      if (uriArguments) {
@@ -21878,7 +21917,7 @@ index 4584d9573ba7d11d2249f17552ee5c947af539d2..9244a803a40e4d2ecd76f87282837660
          webkit_web_view_load_uri(webView, "about:blank");
      else
          webkit_web_view_load_uri(webView, "https://wpewebkit.org");
-@@ -338,8 +431,7 @@ int main(int argc, char *argv[])
+@@ -338,8 +455,7 @@ int main(int argc, char *argv[])
      g_hash_table_destroy(openViews);
  
  
