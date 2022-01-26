@@ -557,7 +557,7 @@ For TypeScript, also add the following to `global.d.ts`. You don't need it for J
 ```ts
 // global.d.ts
 declare global {
-  declare namespace PlaywrightTest {
+ namespace PlaywrightTest {
     interface Matchers<R> {
       toBeWithinRange(a: number, b: number): R;
     }
