@@ -398,8 +398,9 @@ it('should work for "webkitdirectory"', async ({ page, server }) => {
   expect(fileChooser.isMultiple()).toBe(true);
 });
 
-it('should emit event after navigation', async ({ page, server, browserName }) => {
+it('should emit event after navigation', async ({ page, server, browserName, browserMajorVersion }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11375' });
+  it.skip(browserName === 'chromium' && browserMajorVersion < 99);
 
   const logs = [];
   page.on('filechooser', () => logs.push('filechooser'));
