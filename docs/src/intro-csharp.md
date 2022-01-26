@@ -122,6 +122,18 @@ dotnet test -- NUnit.NumberOfTestWorkers=5
 pwsh bin\Debug\netX\playwright.ps1 codegen
 ```
 
+## Install browsers via API
+
+It's possible to run [Command line tools](./cli.md) commands via the .NET API:
+
+```csharp
+var exitCode = Microsoft.Playwright.Program.Main(new[] {"install"});
+if (exitCode != 0)
+{
+    throw new Exception($"Playwright exited with code {exitCode}");
+}
+```
+
 ## System requirements
 
 The browser binaries for Chromium, Firefox and WebKit work across the 3 platforms (Windows, macOS, Linux):
