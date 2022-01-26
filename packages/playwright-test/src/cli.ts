@@ -27,6 +27,7 @@ import { showHTMLReport } from './reporters/html';
 import { GridServer } from 'playwright-core/lib/grid/gridServer';
 import dockerFactory from 'playwright-core/lib/grid/dockerGridFactory';
 import { createGuid } from 'playwright-core/lib/utils/utils';
+import { cleanupUniqueCacheDir } from './transform';
 
 const defaultTimeout = 30000;
 const defaultReporter: BuiltInReporter = process.env.CI ? 'dot' : 'list';
@@ -159,6 +160,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     filePatternFilter,
     projectFilter: opts.project || undefined,
   });
+  await cleanupUniqueCacheDir();
   await stopProfiling(undefined);
 
   if (result.status === 'interrupted')
@@ -172,6 +174,7 @@ async function listTests(opts: { [key: string]: any }) {
   const runner = new Runner({}, { defaultConfig: {} });
   const config = await runner.loadConfigFromFile(configFile);
   const report = await runner.listAllTestFiles(config, opts.project);
+  await cleanupUniqueCacheDir();
   process.stdout.write(JSON.stringify(report), () => {
     process.exit(0);
   });

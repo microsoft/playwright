@@ -21,12 +21,21 @@ import * as fs from 'fs';
 import * as pirates from 'pirates';
 import * as sourceMapSupport from 'source-map-support';
 import * as url from 'url';
+import * as util from 'util';
+import rimraf from 'rimraf';
 import type { Location } from './types';
 import { TsConfigLoaderResult } from './third_party/tsconfig-loader';
+import { createGuid } from 'playwright-core/lib/utils/utils';
 
 const version = 6;
-const cacheDir = process.env.PWTEST_CACHE_DIR || path.join(os.tmpdir(), 'playwright-transform-cache');
+const defaultCacheDir = process.env.PWTEST_CACHE_DIR || path.join(os.tmpdir(), 'playwright-transform-cache');
 const sourceMaps: Map<string, string> = new Map();
+
+// Compiled files with base URL depend on the FS state during compilation,
+// so we only cache them for a single test run.
+if (!process.env.PW_UNIQUE_CACHE_DIR)
+  process.env.PW_UNIQUE_CACHE_DIR = createGuid();
+const uniqueCacheDir = path.join(defaultCacheDir, process.env.PW_UNIQUE_CACHE_DIR);
 
 const kStackTraceLimit = 15;
 Error.stackTraceLimit = kStackTraceLimit;
@@ -56,7 +65,7 @@ function calculateCachePath(tsconfig: TsConfigLoaderResult, content: string, fil
       .update(String(version))
       .digest('hex');
   const fileName = path.basename(filePath, path.extname(filePath)).replace(/\W/g, '') + '_' + hash;
-  return path.join(cacheDir, hash[0] + hash[1], fileName);
+  return path.join(tsconfig.baseUrl ? uniqueCacheDir : defaultCacheDir, hash[0] + hash[1], fileName);
 }
 
 export function transformHook(code: string, filename: string, tsconfig: TsConfigLoaderResult, isModule = false): string {
@@ -143,10 +152,7 @@ export function transformHook(code: string, filename: string, tsconfig: TsConfig
     fs.mkdirSync(path.dirname(cachePath), { recursive: true });
     if (result.map)
       fs.writeFileSync(sourceMapPath, JSON.stringify(result.map), 'utf8');
-    // Compiled files with base URL depend on the FS state during compilation,
-    // never cache them.
-    if (!hasBaseUrl)
-      fs.writeFileSync(codePath, result.code, 'utf8');
+    fs.writeFileSync(codePath, result.code, 'utf8');
   }
   return result.code || '';
 }
@@ -177,6 +183,10 @@ export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Lo
     Error.prepareStackTrace = oldPrepareStackTrace;
     return func(location, ...args);
   };
+}
+
+export async function cleanupUniqueCacheDir() {
+  await util.promisify(rimraf)(uniqueCacheDir).catch(e => {});
 }
 
 // Experimental components support for internal testing.
