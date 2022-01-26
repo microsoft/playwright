@@ -59,6 +59,10 @@ export class Locator implements api.Locator {
     });
   }
 
+  page() {
+    return this._frame.page();
+  }
+
   async boundingBox(options?: TimeoutOptions): Promise<Rect | null> {
     return this._withElement(h => h.boundingBox(), options?.timeout);
   }
