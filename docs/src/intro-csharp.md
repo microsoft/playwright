@@ -134,6 +134,24 @@ if (exitCode != 0)
 }
 ```
 
+## Bundle drivers for different platforms
+
+Playwright by default does bundle only the driver for the .NET publish target runtime. If you want to bundle for additional platforms, you can
+override this behavior by using either `all`, `none` or `linux`, `win`, `osx` in your project file.
+
+```xml
+<PropertyGroup>
+  <PlaywrightPlatform>all</PlaywrightPlatform>
+</PropertyGroup>
+```
+
+or:
+
+```xml
+<PropertyGroup>
+  <PlaywrightPlatform>osx;linux</PlaywrightPlatform>
+</PropertyGroup>
+
 ## System requirements
 
 The browser binaries for Chromium, Firefox and WebKit work across the 3 platforms (Windows, macOS, Linux):
