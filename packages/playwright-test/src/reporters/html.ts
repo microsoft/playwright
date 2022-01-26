@@ -21,6 +21,7 @@ import path from 'path';
 import { Transform, TransformCallback } from 'stream';
 import { FullConfig, Suite, Reporter } from '../../types/testReporter';
 import { HttpServer } from 'playwright-core/lib/utils/httpServer';
+import { SigIntWatcher } from 'playwright-core/lib/utils/utils';
 import { calculateSha1, removeFolders } from 'playwright-core/lib/utils/utils';
 import RawReporter, { JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep } from './raw';
 import assert from 'assert';
@@ -190,11 +191,12 @@ export async function showHTMLReport(reportFolder: string | undefined, testId?: 
   const server = startHtmlReportServer(folder);
   let url = await server.start(9323);
   console.log('');
-  console.log(colors.cyan(`  Serving HTML report at ${url}. Press Ctrl+C to quit.`));
+  console.log(colors.cyan(`  Serving HTML report at ${url}. Press Ctrl+C to quit.\n`));
   if (testId)
     url += `#?testId=${testId}`;
   open(url);
-  await new Promise(() => {});
+  const sigintWatcher = new SigIntWatcher();
+  await sigintWatcher.promise();
 }
 
 export function startHtmlReportServer(folder: string): HttpServer {

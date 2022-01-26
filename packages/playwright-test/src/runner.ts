@@ -38,6 +38,7 @@ import { Minimatch } from 'minimatch';
 import { Config, FullConfig } from './types';
 import { WebServer } from './webServer';
 import { raceAgainstDeadline } from 'playwright-core/lib/utils/async';
+import { SigIntWatcher } from 'playwright-core/lib/utils/utils';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -344,46 +345,24 @@ export class Runner {
       }
       (config as any).__testGroupsCount = testGroups.length;
 
-      let sigint = false;
-      let sigintCallback: () => void;
-      const sigIntPromise = new Promise<void>(f => sigintCallback = f);
-      const sigintHandler = () => {
-        // We remove the handler so that second Ctrl+C immediately kills the runner
-        // via the default sigint handler. This is handy in the case where our shutdown
-        // takes a lot of time or is buggy.
-        //
-        // When running through NPM we might get multiple SIGINT signals
-        // for a single Ctrl+C - this is an NPM bug present since at least NPM v6.
-        // https://github.com/npm/cli/issues/1591
-        // https://github.com/npm/cli/issues/2124
-        //
-        // Therefore, removing the handler too soon will just kill the process
-        // with default handler without printing the results.
-        // We work around this by giving NPM 1000ms to send us duplicate signals.
-        // The side effect is that slow shutdown or bug in our runner will force
-        // the user to hit Ctrl+C again after at least a second.
-        setTimeout(() => process.off('SIGINT', sigintHandler), 1000);
-        sigint = true;
-        sigintCallback();
-      };
-      process.on('SIGINT', sigintHandler);
+      const sigintWatcher = new SigIntWatcher();
 
       this._reporter.onBegin?.(config, rootSuite);
       this._didBegin = true;
       let hasWorkerErrors = false;
       if (!list) {
         const dispatcher = new Dispatcher(this._loader, testGroups, this._reporter);
-        await Promise.race([dispatcher.run(), sigIntPromise]);
-        if (!sigint) {
+        await Promise.race([dispatcher.run(), sigintWatcher.promise()]);
+        if (!sigintWatcher.hadSignal()) {
           // We know for sure there was no Ctrl+C, so we remove custom SIGINT handler
           // as soon as we can.
-          process.off('SIGINT', sigintHandler);
+          sigintWatcher.disarm();
         }
         await dispatcher.stop();
         hasWorkerErrors = dispatcher.hasWorkerErrors();
       }
 
-      if (sigint) {
+      if (sigintWatcher.hadSignal()) {
         const result: FullResult = { status: 'interrupted' };
         await this._reporter.onEnd?.(result);
         return result;
