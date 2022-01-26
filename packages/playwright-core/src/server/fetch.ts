@@ -517,7 +517,21 @@ function toHeadersArray(rawHeaders: string[]): types.HeadersArray {
 const redirectStatus = [301, 302, 303, 307, 308];
 
 function parseCookie(header: string): types.NetworkCookie | null {
-  const pairs = header.split(';').filter(s => s.trim().length > 0).map(p => p.split('=').map(s => s.trim()));
+  const pairs = header.split(';').filter(s => s.trim().length > 0).map(p => {
+    let key = '';
+    let value = '';
+    const separatorPos = p.indexOf('=');
+    if (separatorPos === -1) {
+      // If only a key is specified, the value is left undefined.
+      key = p.trim();
+    } else {
+      // Otherwise we assume that the key is the element before the first `=`
+      key = p.slice(0, separatorPos).trim();
+      // And the value is the rest of the string.
+      value = p.slice(separatorPos + 1).trim();
+    }
+    return [key, value];
+  });
   if (!pairs.length)
     return null;
   const [name, value] = pairs[0];
