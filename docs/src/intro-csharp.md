@@ -137,8 +137,7 @@ or:
 
 ```xml
 <PropertyGroup>
-  <PlaywrightPlatform>osx</PlaywrightPlatform>
-  <PlaywrightPlatform>linux</PlaywrightPlatform>
+  <PlaywrightPlatform>osx;linux</PlaywrightPlatform>
 </PropertyGroup>
 ```
 
