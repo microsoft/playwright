@@ -100,6 +100,7 @@ WebKitBrowserWindow::WebKitBrowserWindow(BrowserWindowClient& client, HWND mainW
     policyClient.base.version = 1;
     policyClient.base.clientInfo = this;
     policyClient.decidePolicyForResponse_deprecatedForUseWithV0 = decidePolicyForResponse;
+    policyClient.decidePolicyForNavigationAction = decidePolicyForNavigationAction;
     WKPageSetPagePolicyClient(page, &policyClient.base);
     resetZoom();
 }
@@ -382,6 +383,20 @@ void WebKitBrowserWindow::didNotHandleKeyEvent(WKPageRef, WKNativeEventPtr event
 {
     auto& thisWindow = toWebKitBrowserWindow(clientInfo);
     PostMessage(thisWindow.m_hMainWnd, event->message, event->wParam, event->lParam);
+}
+
+void WebKitBrowserWindow::decidePolicyForNavigationAction(WKPageRef page, WKFrameRef frame, WKFrameNavigationType navigationType, WKEventModifiers modifiers, WKEventMouseButton mouseButton, WKFrameRef originatingFrame, WKURLRequestRef request, WKFramePolicyListenerRef listener, WKTypeRef userData, const void* clientInfo)
+{
+    WebKitBrowserWindow* browserWindow = reinterpret_cast<WebKitBrowserWindow*>(const_cast<void*>(clientInfo));
+    if (navigationType == kWKFrameNavigationTypeLinkClicked &&
+        mouseButton == kWKEventMouseButtonLeftButton &&
+        (modifiers & (kWKEventModifiersShiftKey | kWKEventModifiersControlKey)) != 0) {
+        WKRetainPtr<WKPageRef> newPage = createViewCallback(WKPageCopyPageConfiguration(page), false);
+        WKPageLoadURLRequest(newPage.get(), request);
+        WKFramePolicyListenerIgnore(listener);
+        return;
+    }
+    WKFramePolicyListenerUse(listener);
 }
 
 void WebKitBrowserWindow::decidePolicyForResponse(WKPageRef page, WKFrameRef frame, WKURLResponseRef response, WKURLRequestRef request, WKFramePolicyListenerRef listener, WKTypeRef userData, const void* clientInfo)
