@@ -58,8 +58,10 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       const gridClient = await GridClient.connect(process.env.PW_GRID);
       await use(gridClient.playwright() as any);
       gridClient.close();
-    } else if (process.env.PW_OUT_OF_PROCESS) {
-      const impl = await outOfProcess.start();
+    } else if (process.env.PW_OUT_OF_PROCESS_DRIVER) {
+      const impl = await outOfProcess.start({
+        NODE_OPTIONS: undefined  // Hide driver process while debugging.
+      });
       await use(impl.playwright as any);
       await impl.stop();
     } else {

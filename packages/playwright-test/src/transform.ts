@@ -58,6 +58,7 @@ sourceMapSupport.install({
 function calculateCachePath(tsconfigData: ParsedTsConfigData | undefined, content: string, filePath: string): string {
   const hash = crypto.createHash('sha1')
       .update(tsconfigData?.hash || '')
+      .update(process.env.PW_TEST_SOURCE_TRANSFORM || '')
       .update(process.env.PW_EXPERIMENTAL_TS_ESM ? 'esm' : 'no_esm')
       .update(content)
       .update(filePath)
@@ -134,7 +135,6 @@ export function transformHook(code: string, filename: string, isModule = false):
   // Silence the annoying warning.
   process.env.BROWSERSLIST_IGNORE_OLD_DATA = 'true';
   const babel: typeof import('@babel/core') = require('@babel/core');
-
   const plugins = [
     [require.resolve('@babel/plugin-proposal-class-properties')],
     [require.resolve('@babel/plugin-proposal-numeric-separator')],
@@ -165,6 +165,9 @@ export function transformHook(code: string, filename: string, isModule = false):
     plugins.push([require.resolve('@babel/plugin-transform-modules-commonjs')]);
     plugins.push([require.resolve('@babel/plugin-proposal-dynamic-import')]);
   }
+
+  if (process.env.PW_TEST_SOURCE_TRANSFORM)
+    plugins.push([process.env.PW_TEST_SOURCE_TRANSFORM]);
 
   const result = babel.transformFileSync(filename, {
     babelrc: false,
