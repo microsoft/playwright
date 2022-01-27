@@ -73,16 +73,22 @@ export type WebServerConfig = {
   command: string,
   /**
    * The port that your http server is expected to appear on. It does wait until it accepts connections.
+   * Exactly one of `port` or `url` is required.
    */
-  port: number,
+  port?: number,
+  /**
+   * The url on your http server that is expected to return a 2xx status code when the server is ready to accept connections.
+   * Exactly one of `port` or `url` is required.
+   */
+  url?: string,
   /**
    * How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
    */
   timeout?: number,
   /**
-   * If true, it will re-use an existing server on the port when available. If no server is running
-   * on that port, it will run the command to start a new server.
-   * If false, it will throw if an existing process is listening on the port.
+   * If true, it will re-use an existing server on the port or url when available. If no server is running
+   * on that port or url, it will run the command to start a new server.
+   * If false, it will throw if an existing process is listening on the port or url.
    * This should commonly set to !process.env.CI to allow the local dev server when running tests locally.
    */
   reuseExistingServer?: boolean

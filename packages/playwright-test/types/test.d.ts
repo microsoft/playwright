@@ -355,16 +355,22 @@ export type WebServerConfig = {
   command: string,
   /**
    * The port that your http server is expected to appear on. It does wait until it accepts connections.
+   * Exactly one of `port` or `url` is required.
    */
-  port: number,
+  port?: number,
+  /**
+   * The url on your http server that is expected to return a 2xx status code when the server is ready to accept connections.
+   * Exactly one of `port` or `url` is required.
+   */
+  url?: string,
   /**
    * How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
    */
   timeout?: number,
   /**
-   * If true, it will re-use an existing server on the port when available. If no server is running
-   * on that port, it will run the command to start a new server.
-   * If false, it will throw if an existing process is listening on the port.
+   * If true, it will re-use an existing server on the port or url when available. If no server is running
+   * on that port or url, it will run the command to start a new server.
+   * If false, it will throw if an existing process is listening on the port or url.
    * This should commonly set to !process.env.CI to allow the local dev server when running tests locally.
    */
   reuseExistingServer?: boolean
@@ -570,14 +576,16 @@ interface TestConfig {
   /**
    * Launch a development web server during the tests.
    *
-   * The server will wait for it to be available on `127.0.0.1` or `::1` before running the tests. For continuous
-   * integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an existing server
-   * on the CI. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable.
+   * If the port is specified, the server will wait for it to be available on `127.0.0.1` or `::1`, before running the tests.
+   * If the url is specified, the server will wait for the URL to return a 2xx status code before running the tests. For
+   * continuous integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an
+   * existing server on the CI. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable.
    *
-   * The port gets then passed over to Playwright as a `baseURL` when creating the context
-   * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context). For example `8080`
-   * ends up in `baseURL` to be `http://localhost:8080`. If you want to use `https://` you need to manually specify the
-   * `baseURL` inside `use`.
+   * The port or url gets then passed over to Playwright as a `baseURL` when creating the context
+   * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context). For example port
+   * `8080` ends up in `baseURL` to be `http://localhost:8080`. If you want to instead use `https://` you need to manually
+   * specify the `baseURL` inside `use` or use a url instead of a port in the `webServer` configuration. The url ends up in
+   * `baseURL` without any change.
    *
    * ```ts
    * // playwright.config.ts
@@ -1059,14 +1067,16 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   /**
    * Launch a development web server during the tests.
    *
-   * The server will wait for it to be available on `127.0.0.1` or `::1` before running the tests. For continuous
-   * integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an existing server
-   * on the CI. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable.
+   * If the port is specified, the server will wait for it to be available on `127.0.0.1` or `::1`, before running the tests.
+   * If the url is specified, the server will wait for the URL to return a 2xx status code before running the tests. For
+   * continuous integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an
+   * existing server on the CI. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable.
    *
-   * The port gets then passed over to Playwright as a `baseURL` when creating the context
-   * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context). For example `8080`
-   * ends up in `baseURL` to be `http://localhost:8080`. If you want to use `https://` you need to manually specify the
-   * `baseURL` inside `use`.
+   * The port or url gets then passed over to Playwright as a `baseURL` when creating the context
+   * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context). For example port
+   * `8080` ends up in `baseURL` to be `http://localhost:8080`. If you want to instead use `https://` you need to manually
+   * specify the `baseURL` inside `use` or use a url instead of a port in the `webServer` configuration. The url ends up in
+   * `baseURL` without any change.
    *
    * ```ts
    * // playwright.config.ts
