@@ -151,6 +151,7 @@ or:
 <PropertyGroup>
   <PlaywrightPlatform>osx;linux</PlaywrightPlatform>
 </PropertyGroup>
+```
 
 ## System requirements
 
