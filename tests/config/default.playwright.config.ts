@@ -30,7 +30,7 @@ const getExecutablePath = (browserName: BrowserName) => {
     return process.env.WKPATH;
 };
 
-const mode = process.env.PW_OUT_OF_PROCESS ?
+const mode = process.env.PW_OUT_OF_PROCESS_DRIVER ?
   'driver' :
   (process.env.PWTEST_MODE || 'default') as ('default' | 'driver' | 'service');
 const headed = !!process.env.HEADFUL;

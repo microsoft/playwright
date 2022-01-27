@@ -29,7 +29,9 @@ export class DriverTestMode implements TestMode {
   private _impl: { playwright: Playwright; stop: () => Promise<void>; };
 
   async setup() {
-    this._impl = await start();
+    this._impl = await start({
+      NODE_OPTIONS: undefined  // Hide driver process while debugging.
+    });
     return this._impl.playwright;
   }
 

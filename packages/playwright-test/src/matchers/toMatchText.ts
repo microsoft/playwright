@@ -123,8 +123,6 @@ Call log:
 
 export function currentExpectTimeout(options: { timeout?: number }) {
   const testInfo = currentTestInfo();
-  if (testInfo && !testInfo.timeout)
-    return 0;
   if (options.timeout !== undefined)
     return options.timeout;
   let defaultExpectTimeout = testInfo?.project.expect?.timeout;
