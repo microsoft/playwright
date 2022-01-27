@@ -16,7 +16,6 @@
 
 import http from 'http';
 import https from 'https';
-import net from 'net';
 import os from 'os';
 import stream from 'stream';
 import debug from 'debug';
@@ -78,8 +77,8 @@ export class WebServer {
       cwd: this.config.cwd,
       stdio: 'stdin',
       shell: true,
-      attemptToGracefullyClose: async () => {},
-      log: () => {},
+      attemptToGracefullyClose: async () => { },
+      log: () => { },
       onExit: code => processExitedReject(new Error(`Process from config.webServer was not able to start. Exit code: ${code}`)),
       tempDirectories: [],
     });
@@ -111,27 +110,15 @@ export class WebServer {
   }
 }
 
-async function isPortUsed(port: number): Promise<boolean> {
-  const innerIsPortUsed = (host: string) => new Promise<boolean>(resolve => {
-    const conn = net
-        .connect(port, host)
-        .on('error', () => {
-          resolve(false);
-        })
-        .on('connect', () => {
-          conn.end();
-          resolve(true);
-        });
-  });
-  return await innerIsPortUsed('127.0.0.1') || await innerIsPortUsed('::1');
-}
-
 async function isURLAvailable(url: URL) {
   return new Promise<boolean>(resolve => {
     (url.protocol === 'https:' ? https : http).get(url, res => {
       res.resume();
       const statusCode = res.statusCode ?? 0;
-      resolve(statusCode >= 200 && statusCode < 300);
+      const passes = statusCode >= 200 && statusCode < 300;
+      if (!passes)
+        debugWebServer(`Failed to connect to ${url} with status code ${statusCode}. Expected [200-299].`);
+      resolve(passes);
     }).on('error', () => {
       resolve(false);
     });
@@ -152,7 +139,7 @@ function getIsAvailableFunction({ url, port }: Pick<WebServerConfig, 'port' | 'u
     const urlObject = new URL(url);
     return () => isURLAvailable(urlObject);
   } else if (port && typeof url === 'undefined') {
-    return () => isPortUsed(port);
+    return async () => await isURLAvailable(new URL(`http://127.0.0.1:${port}`)) || await isURLAvailable(new URL(`http://[::1]:${port}`));
   } else {
     throw new Error(`Exactly one of 'port' or 'url' is required in config.webServer.`);
   }

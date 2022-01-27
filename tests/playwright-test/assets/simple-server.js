@@ -9,5 +9,8 @@ setTimeout(() => {
     server.setRoute('/env-FOO', (message, response) => {
       response.end(process.env.FOO);
     });
+    server.setRoute('/', (message, response) => {
+      response.end();
+    });
   });
 }, 750);
