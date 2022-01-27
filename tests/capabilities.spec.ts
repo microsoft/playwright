@@ -124,13 +124,18 @@ it('should not crash on page with mp4 #smoke', async ({ page, server, platform, 
   await page.waitForTimeout(1000);
 });
 
-it('should not crash on showDirectoryPicker', async ({ page, server, platform, browserName }) => {
+it('should not crash on showDirectoryPicker', async ({ page, server, browserName, browserMajorVersion }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/7339' });
-  it.fixme(browserName === 'chromium', 'https://github.com/microsoft/playwright/issues/7339, crashes');
+  it.skip(browserName === 'chromium' && browserMajorVersion < 99, 'Fixed in Chromium r956769');
   it.skip(browserName !== 'chromium', 'showDirectoryPicker is only available in Chromium');
   await page.goto(server.EMPTY_PAGE);
-  await page.evaluate(async () => {
-    const dir = await (window as any).showDirectoryPicker();
-    return dir.name;
-  });
+  await Promise.race([
+    page.evaluate(async () => {
+      const dir = await (window as any).showDirectoryPicker();
+      return dir.name;
+    }),
+    // The dialog will not be accepted, so we just wait for some time to
+    // to give the browser a chance to crash.
+    new Promise(r => setTimeout(r, 1000))
+  ]);
 });
