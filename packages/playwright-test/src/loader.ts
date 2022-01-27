@@ -27,12 +27,10 @@ import { ProjectImpl } from './project';
 import { Reporter } from '../types/testReporter';
 import { BuiltInReporter, builtInReporters } from './runner';
 import { isRegExp } from 'playwright-core/lib/utils/utils';
-import { tsConfigLoader, TsConfigLoaderResult } from './third_party/tsconfig-loader';
 
 // To allow multiple loaders in the same process without clearing require cache,
 // we make these maps global.
 const cachedFileSuites = new Map<string, Suite>();
-const cachedTSConfigs = new Map<string, TsConfigLoaderResult>();
 
 export class Loader {
   private _defaultConfig: Config;
@@ -194,18 +192,7 @@ export class Loader {
 
 
   private async _requireOrImport(file: string) {
-    // Respect tsconfig paths.
-    const cwd = path.dirname(file);
-    let tsconfig = cachedTSConfigs.get(cwd);
-    if (!tsconfig) {
-      tsconfig = tsConfigLoader({
-        getEnv: (name: string) => process.env[name],
-        cwd
-      });
-      cachedTSConfigs.set(cwd, tsconfig);
-    }
-
-    const revertBabelRequire = installTransform(tsconfig);
+    const revertBabelRequire = installTransform();
 
     // Figure out if we are importing or requiring.
     let isModule: boolean;

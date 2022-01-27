@@ -19,7 +19,7 @@ import fs from 'fs';
 import path from 'path';
 import { spawnSync } from 'child_process';
 import { PNG } from 'pngjs';
-import { registry } from 'playwright-core/lib/utils/registry';
+import { registry } from '../packages/playwright-core/lib/utils/registry';
 
 const ffmpeg = registry.findExecutable('ffmpeg')!.executablePath('javascript');
 
