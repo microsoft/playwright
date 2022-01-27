@@ -418,7 +418,7 @@ await locator.click()
 ```
 
 ```python sync
-locator = page.frame_locator("text=Submit").locator("text=Submit")
+locator = page.frame_locator("iframe").locator("text=Submit")
 locator.click()
 ```
 
