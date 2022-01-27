@@ -328,6 +328,26 @@ export abstract class APIRequestContext extends SdkObject {
         }
         response.on('aborted', () => reject(new Error('aborted')));
 
+        const chunks: Buffer[] = [];
+        const notifyBodyFinished = () => {
+          const body = Buffer.concat(chunks);
+          notifyRequestFinished(body);
+          fulfill({
+            url: response.url || url.toString(),
+            status: response.statusCode || 0,
+            statusText: response.statusMessage || '',
+            headers: toHeadersArray(response.rawHeaders),
+            body
+          });
+        };
+
+        // These requests don't have response body.
+        if (['HEAD', 'PUT', 'TRACE'].includes(options.method!)) {
+          notifyBodyFinished();
+          request.destroy();
+          return;
+        }
+
         let body: Readable = response;
         let transform: Transform | undefined;
         const encoding = response.headers['content-encoding'];
@@ -348,20 +368,9 @@ export abstract class APIRequestContext extends SdkObject {
           });
         }
 
-        const chunks: Buffer[] = [];
         body.on('data', chunk => chunks.push(chunk));
-        body.on('end', () => {
-          const body = Buffer.concat(chunks);
-          notifyRequestFinished(body);
-          fulfill({
-            url: response.url || url.toString(),
-            status: response.statusCode || 0,
-            statusText: response.statusMessage || '',
-            headers: toHeadersArray(response.rawHeaders),
-            body
-          });
-        });
-        body.on('error',reject);
+        body.on('end', notifyBodyFinished);
+        body.on('error', reject);
       });
       request.on('error', reject);
 

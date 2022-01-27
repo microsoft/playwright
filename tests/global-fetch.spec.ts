@@ -344,3 +344,22 @@ it(`should have nice toString`, async ({ playwright, server }) => {
     expect(str).toContain(`  ${name}: ${value}`);
   await request.dispose();
 });
+
+it('should not fail on empty body with encoding', async ({ playwright, server }) => {
+  const request = await playwright.request.newContext();
+  for (const method of ['head', 'put']) {
+    for (const encoding of ['br', 'gzip', 'deflate']) {
+      server.setRoute('/empty.html', (req, res) => {
+        res.writeHead(200, {
+          'Content-Encoding': encoding,
+          'Content-Type': 'text/plain',
+        });
+        res.end();
+      });
+      const response = await request[method](server.EMPTY_PAGE);
+      expect(response.status()).toBe(200);
+      expect((await response.body()).length).toBe(0);
+    }
+  }
+  await request.dispose();
+});
