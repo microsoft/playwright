@@ -407,6 +407,15 @@ export class WKPage implements PageDelegate {
   }
 
   private _onWillCheckNavigationPolicy(frameId: string) {
+    // It may happen that new policy check occurs while there is an ongoing
+    // provisional load, in this case it should be safe to ignore it as it will
+    // either:
+    // - end up canceled, e.g. ctrl+click opening link in new tab, having no effect
+    //   on this page
+    // - start new provisional load which we will miss in our signal trackers but
+    //   we certainly won't hang waiting for it to finish and there is high chance
+    //   that the current provisional page will commit navigation canceling the new
+    //   one.
     if (this._provisionalPage)
       return;
     this._page._frameManager.frameRequestedNavigation(frameId);
