@@ -363,6 +363,8 @@ export class WKPage implements PageDelegate {
       eventsHelper.addEventListener(this._session, 'Page.navigatedWithinDocument', event => this._onFrameNavigatedWithinDocument(event.frameId, event.url)),
       eventsHelper.addEventListener(this._session, 'Page.frameAttached', event => this._onFrameAttached(event.frameId, event.parentFrameId)),
       eventsHelper.addEventListener(this._session, 'Page.frameDetached', event => this._onFrameDetached(event.frameId)),
+      eventsHelper.addEventListener(this._session, 'Page.willCheckNavigationPolicy', event => this._onWillCheckNavigationPolicy(event.frameId)),
+      eventsHelper.addEventListener(this._session, 'Page.didCheckNavigationPolicy', event => this._onDidCheckNavigationPolicy(event.frameId, event.cancel)),
       eventsHelper.addEventListener(this._session, 'Page.frameScheduledNavigation', event => this._onFrameScheduledNavigation(event.frameId)),
       eventsHelper.addEventListener(this._session, 'Page.frameStoppedLoading', event => this._onFrameStoppedLoading(event.frameId)),
       eventsHelper.addEventListener(this._session, 'Page.loadEventFired', event => this._onLifecycleEvent(event.frameId, 'load')),
@@ -402,6 +404,31 @@ export class WKPage implements PageDelegate {
     if (this._provisionalPage)
       sessions.push(this._provisionalPage._session);
     await Promise.all(sessions.map(session => callback(session).catch(e => {})));
+  }
+
+  private _onWillCheckNavigationPolicy(frameId: string) {
+    // It may happen that new policy check occurs while there is an ongoing
+    // provisional load, in this case it should be safe to ignore it as it will
+    // either:
+    // - end up canceled, e.g. ctrl+click opening link in new tab, having no effect
+    //   on this page
+    // - start new provisional load which we will miss in our signal trackers but
+    //   we certainly won't hang waiting for it to finish and there is high chance
+    //   that the current provisional page will commit navigation canceling the new
+    //   one.
+    if (this._provisionalPage)
+      return;
+    this._page._frameManager.frameRequestedNavigation(frameId);
+  }
+
+  private _onDidCheckNavigationPolicy(frameId: string, cancel?: boolean) {
+    if (!cancel)
+      return;
+    // This is a cross-process navigation that is canceled in the original page and continues in
+    // the provisional page. Bail out as we are tracking it.
+    if (this._provisionalPage)
+      return;
+    this._page._frameManager.frameAbortedNavigation(frameId, 'Navigation canceled by policy check');
   }
 
   private _onFrameScheduledNavigation(frameId: string) {
