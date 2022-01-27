@@ -255,7 +255,9 @@ it('should fail when frame detaches', async ({ page, server }) => {
   server.setRoute('/empty.html', () => {});
   const [error] = await Promise.all([
     frame.waitForNavigation().catch(e => e),
-    page.evaluate('var frame = document.querySelector("iframe"); frame.contentWindow.location.href = "/empty.html"; setTimeout(() => frame.remove())'),
+    page.$eval('iframe', frame => { frame.contentWindow.location.href = '/empty.html'; }),
+    // Make sure policy checks pass and navigation actually begins before removing the frame to avoid other errors
+    server.waitForRequest('/empty.html').then(() => page.$eval('iframe', frame => setTimeout(() => frame.remove(), 0)))
   ]);
   expect(error.message).toContain('waiting for navigation until "load"');
   expect(error.message).toContain('frame was detached');
