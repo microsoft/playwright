@@ -63,16 +63,18 @@ it('should override request url', async ({ page, server }) => {
 });
 
 it('should not allow changing protocol when overriding url', async ({ page, server }) => {
-  let error: Error | undefined;
+  let resolve;
+  const errorPromise = new Promise<Error|null>(f => resolve = f);
   await page.route('**/*', async route => {
     try {
       await route.continue({ url: 'file:///tmp/foo' });
+      resolve(null);
     } catch (e) {
-      error = e;
-      await route.continue();
+      resolve(e);
     }
   });
-  await page.goto(server.EMPTY_PAGE);
+  page.goto(server.EMPTY_PAGE).catch(() => {});
+  const error = await errorPromise;
   expect(error).toBeTruthy();
   expect(error.message).toContain('New URL must have same protocol as overridden URL');
 });
