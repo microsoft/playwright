@@ -223,7 +223,7 @@ function throwIfRunningInsideJest() {
     throw new Error(
         `Playwright Test needs to be invoked via 'npx playwright test' and excluded from Jest test runs.\n` +
         `Creating one directory for Playwright tests and one for Jest is the recommended way of doing it.\n` +
-        `See https://playwright.dev/docs/intro/ for more information about Playwright Test.`,
+        `See https://playwright.dev/docs/intro for more information about Playwright Test.`,
     );
   }
 }
