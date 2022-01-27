@@ -133,7 +133,7 @@ it('should not crash on showDirectoryPicker', async ({ page, server, browserName
     page.evaluate(async () => {
       const dir = await (window as any).showDirectoryPicker();
       return dir.name;
-    }),
+    }).catch(e => expect(e.message).toContain('DOMException: The user aborted a request')),
     // The dialog will not be accepted, so we just wait for some time to
     // to give the browser a chance to crash.
     new Promise(r => setTimeout(r, 1000))
