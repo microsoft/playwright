@@ -108,6 +108,31 @@ test('should create a server with environment variables', async ({ runInlineTest
   expect(result.report.suites[0].specs[0].tests[0].results[0].status).toContain('passed');
 });
 
+test('should create a server with url', async ({ runInlineTest }, { workerIndex }) => {
+  const port = workerIndex + 10500;
+  const result = await runInlineTest({
+    'test.spec.ts': `
+      const { test } = pwt;
+      test('connect to the server', async ({baseURL, page}) => {
+        expect(baseURL).toBe('http://localhost:${port}/ready');
+        await page.goto(baseURL);
+        expect(await page.textContent('body')).toBe('hello');
+      });
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        webServer: {
+          command: 'node ${JSON.stringify(path.join(__dirname, 'assets', 'simple-server-with-ready-route.js'))} ${port}',
+          url: 'http://localhost:${port}/ready'
+        }
+      };
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.report.suites[0].specs[0].tests[0].results[0].status).toContain('passed');
+});
+
 test('should time out waiting for a server', async ({ runInlineTest }, { workerIndex }) => {
   const port = workerIndex + 10500;
   const result = await runInlineTest({
@@ -131,6 +156,31 @@ test('should time out waiting for a server', async ({ runInlineTest }, { workerI
   });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain(`Timed out waiting 100ms from config.webServer.`);
+});
+
+test('should time out waiting for a server with url', async ({ runInlineTest }, { workerIndex }) => {
+  const port = workerIndex + 10500;
+  const result = await runInlineTest({
+    'test.spec.ts': `
+      const { test } = pwt;
+      test('connect to the server', async ({baseURL, page}) => {
+        expect(baseURL).toBe('http://localhost:${port}/ready');
+        await page.goto(baseURL);
+        expect(await page.textContent('body')).toBe('hello');
+      });
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        webServer: {
+          command: 'node ${JSON.stringify(path.join(__dirname, 'assets', 'simple-server-with-ready-route.js'))} ${port}',
+          url: 'http://localhost:${port}/ready',
+          timeout: 300,
+        }
+      };
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`Timed out waiting 300ms from config.webServer.`);
 });
 
 test('should be able to specify the baseURL without the server', async ({ runInlineTest }, { workerIndex }) => {
@@ -256,7 +306,7 @@ test('should throw when a server is already running on the given port and strict
     `,
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`Port ${port} is used, make sure that nothing is running on the port`);
+  expect(result.output).toContain(`http://localhost:${port} is already used, make sure that nothing is running on the port/url`);
   await new Promise(resolve => server.close(resolve));
 });
 
@@ -287,7 +337,7 @@ for (const host of ['localhost', '127.0.0.1', '0.0.0.0']) {
     `,
       });
       expect(result.exitCode).toBe(1);
-      expect(result.output).toContain(`Port ${port} is used, make sure that nothing is running on the port`);
+      expect(result.output).toContain(`http://localhost:${port} is already used, make sure that nothing is running on the port/url`);
     } finally {
       await new Promise(resolve => server.close(resolve));
     }

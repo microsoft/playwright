@@ -740,6 +740,15 @@ static NSSet *dataTypes()
         return;
     }
 
+    if (navigationAction.buttonNumber == 1 &&
+        (navigationAction.modifierFlags & (NSEventModifierFlagCommand | NSEventModifierFlagShift)) != 0) {
+        WKWindowFeatures* windowFeatures = [[[WKWindowFeatures alloc] init] autorelease];
+        WKWebView* newView = [self webView:webView createWebViewWithConfiguration:webView.configuration forNavigationAction:navigationAction windowFeatures:windowFeatures];
+        [newView loadRequest:navigationAction.request];
+        decisionHandler(WKNavigationActionPolicyCancel);
+        return;
+    }
+
     if (navigationAction._canHandleRequest) {
         decisionHandler(WKNavigationActionPolicyAllow);
         return;
