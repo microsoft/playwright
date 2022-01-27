@@ -17,6 +17,8 @@
 import { test, expect } from './playwright-test-fixtures';
 
 test('should respect path resolver', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11656' });
+
   const result = await runInlineTest({
     'playwright.config.ts': `
       export default {
@@ -31,7 +33,7 @@ test('should respect path resolver', async ({ runInlineTest }) => {
         "baseUrl": ".",
         "paths": {
           "util/*": ["./foo/bar/util/*"],
-          "util2/*": ["./non-existent/*", "./foo/bar/util/*"],
+          "util2/*": ["./foo/bar/util/*"],
           "util3": ["./foo/bar/util/b"],
         },
       },
@@ -60,10 +62,36 @@ test('should respect path resolver', async ({ runInlineTest }) => {
     'foo/bar/util/b.ts': `
       export const foo: string = 'foo';
     `,
+    'helper.ts': `
+      export { foo } from 'util3';
+    `,
+    'dir/tsconfig.json': `{
+      "compilerOptions": {
+        "target": "ES2019",
+        "module": "commonjs",
+        "lib": ["esnext", "dom", "DOM.Iterable"],
+        "baseUrl": ".",
+        "paths": {
+          "parent-util/*": ["../foo/bar/util/*"],
+        },
+      },
+    }`,
+    'dir/inner.spec.ts': `
+      // This import should pick up <root>/dir/tsconfig
+      import { foo } from 'parent-util/b';
+      // This import should pick up <root>/tsconfig through the helper
+      import { foo as foo2 } from '../helper';
+      const { test } = pwt;
+      test('test', ({}, testInfo) => {
+        expect(testInfo.project.name).toBe(foo);
+        expect(testInfo.project.name).toBe(foo2);
+      });
+    `,
   });
 
-  expect(result.passed).toBe(3);
+  expect(result.passed).toBe(4);
   expect(result.exitCode).toBe(0);
+  expect(result.output).not.toContain(`Could not`);
 });
 
 test('should respect baseurl', async ({ runInlineTest }) => {
@@ -108,13 +136,8 @@ test('should respect baseurl', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should respect baseurl w/o paths', async ({ runInlineTest }) => {
+test('should ignore for baseurl w/o paths', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'playwright.config.ts': `
-      export default {
-        projects: [{name: 'foo'}],
-      };
-    `,
     'tsconfig.json': `{
       "compilerOptions": {
         "target": "ES2019",
@@ -125,19 +148,60 @@ test('should respect baseurl w/o paths', async ({ runInlineTest }) => {
     }`,
     'a.test.ts': `
       import { foo } from 'foo/b';
-      const { test } = pwt;
-      test('test', ({}, testInfo) => {
-        expect(testInfo.project.name).toBe(foo);
-      });
     `,
     'foo/b.ts': `
-      export const foo: string = 'foo';
+      export const foo = 1;
     `,
   });
 
-  expect(result.output).not.toContain('Could not');
-  expect(result.passed).toBe(1);
-  expect(result.exitCode).toBe(0);
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`Cannot find module 'foo/b'`);
+});
+
+test('should ignore tsconfig with ambiguous paths', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'tsconfig.json': `{
+      "compilerOptions": {
+        "target": "ES2019",
+        "module": "commonjs",
+        "lib": ["esnext", "dom", "DOM.Iterable"],
+        "baseUrl": "./",
+        "paths": { "*/*": ["*/*"] }
+      },
+    }`,
+    'a.test.ts': `
+      import { foo } from 'foo/b';
+    `,
+    'foo/b.ts': `
+      export const foo = 1;
+    `,
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`Cannot find module 'foo/b'`);
+});
+
+test('should ignore tsconfig with multi-value paths', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'tsconfig.json': `{
+      "compilerOptions": {
+        "target": "ES2019",
+        "module": "commonjs",
+        "lib": ["esnext", "dom", "DOM.Iterable"],
+        "baseUrl": "./",
+        "paths": { "foo/*": ["./foo/*", "./bar/*"] }
+      },
+    }`,
+    'a.test.ts': `
+      import { foo } from 'foo/b';
+    `,
+    'foo/b.ts': `
+      export const foo = 1;
+    `,
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`Cannot find module 'foo/b'`);
 });
 
 test('should respect path resolver in experimental mode', async ({ runInlineTest }) => {
