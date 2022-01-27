@@ -16,7 +16,7 @@
 
 import { EventEmitter } from 'events';
 import fs from 'fs';
-import { APIRequestContext } from '../../fetch';
+import os from 'os';
 import path from 'path';
 import yazl from 'yazl';
 import { NameValue } from '../../../common/types';
@@ -27,6 +27,7 @@ import { assert, calculateSha1, createGuid, mkdirIfNeeded, monotonicTime, remove
 import { Artifact } from '../../artifact';
 import { BrowserContext } from '../../browserContext';
 import { ElementHandle } from '../../dom';
+import { APIRequestContext } from '../../fetch';
 import { CallMetadata, InstrumentationListener, SdkObject } from '../../instrumentation';
 import { Page } from '../../page';
 import * as har from '../../supplements/har/har';
@@ -192,7 +193,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   private async _createTracesDirIfNeeded() {
     if (this._precreatedTracesDir)
       return this._precreatedTracesDir;
-    this._tracesTmpDir = await fs.promises.mkdtemp('playwright-tracing-');
+    this._tracesTmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-tracing-'));
     return this._tracesTmpDir;
   }
 
