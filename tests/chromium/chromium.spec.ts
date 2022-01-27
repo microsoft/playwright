@@ -19,7 +19,7 @@ import { contextTest as test, expect } from '../config/browserTest';
 import { playwrightTest } from '../config/browserTest';
 import http from 'http';
 import fs from 'fs';
-import { getUserAgent } from 'playwright-core/lib/utils/utils';
+import { getUserAgent } from '../../packages/playwright-core/lib/utils/utils';
 import { suppressCertificateWarning } from '../config/utils';
 
 test('should create a worker from a service worker', async ({ page, server }) => {

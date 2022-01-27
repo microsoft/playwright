@@ -17,7 +17,7 @@
 
 import fs from 'fs';
 import * as path from 'path';
-import { getUserAgent } from 'playwright-core/lib/utils/utils';
+import { getUserAgent } from '../packages/playwright-core/lib/utils/utils';
 import WebSocket from 'ws';
 import { expect, playwrightTest as test } from './config/browserTest';
 import { parseTrace, suppressCertificateWarning } from './config/utils';
