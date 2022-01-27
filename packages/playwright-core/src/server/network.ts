@@ -238,14 +238,12 @@ export class Route extends SdkObject {
   }
 
   async abort(errorCode: string = 'failed') {
-    assert(!this._handled, 'Route is already handled!');
-    this._handled = true;
+    this._startHandling();
     await this._delegate.abort(errorCode);
   }
 
   async fulfill(overrides: { status?: number, headers?: types.HeadersArray, body?: string, isBase64?: boolean, useInterceptedResponseBody?: boolean, fetchResponseUid?: string }) {
-    assert(!this._handled, 'Route is already handled!');
-    this._handled = true;
+    this._startHandling();
     let body = overrides.body;
     let isBase64 = overrides.isBase64 || false;
     if (body === undefined) {
@@ -269,7 +267,7 @@ export class Route extends SdkObject {
   }
 
   async continue(overrides: types.NormalizedContinueOverrides = {}) {
-    assert(!this._handled, 'Route is already handled!');
+    this._startHandling();
     if (overrides.url) {
       const newUrl = new URL(overrides.url);
       const oldUrl = new URL(this._request.url());
@@ -277,6 +275,11 @@ export class Route extends SdkObject {
         throw new Error('New URL must have same protocol as overridden URL');
     }
     await this._delegate.continue(this._request, overrides);
+  }
+
+  private _startHandling() {
+    assert(!this._handled, 'Route is already handled!');
+    this._handled = true;
   }
 }
 
