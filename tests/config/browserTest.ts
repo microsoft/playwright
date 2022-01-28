@@ -43,8 +43,8 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
     await run(browser.version());
   }, { scope: 'worker' } ],
 
-  browserType: [async ({ _browserType }: any, run) => {
-    await run(_browserType);
+  browserType: [async ({ playwright, browserName }, run) => {
+    await run(playwright[browserName]);
   }, { scope: 'worker' } ],
 
   browserMajorVersion: [async ({ browserVersion }, run) => {
