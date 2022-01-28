@@ -4,7 +4,7 @@
 
 ## [Documentation](https://playwright.dev) | [API reference](https://playwright.dev/docs/api/class-playwright/)
 
-Playwright is a framework for Web Testing and Automation. It allows testing [Chromium](https://www.chromium.org/Home), [Firefox](https://www.mozilla.org/en-US/firefox/new/) and [WebKit](https://webkit.org/) with a single API, and bindings for [TypeScript](https://playwright.dev/docs/intro), [JavaScript](https://playwright.dev/docs/intro), [Python](https://playwright.dev/python/docs/intro), [.NET](https://playwright.dev/dotnet/docs/intro), [Java](https://playwright.dev/java/docs/intro). Playwright is built to enable cross-browser web automation that is **ever-green**, **capable**, **reliable** and **fast**.
+Playwright is a framework for Web Testing and Automation. It allows testing [Chromium](https://www.chromium.org/Home), [Firefox](https://www.mozilla.org/en-US/firefox/new/) and [WebKit](https://webkit.org/) with a single API. Playwright is built to enable cross-browser web automation that is **ever-green**, **capable**, **reliable** and **fast**.
 
 |          | Linux | macOS | Windows |
 |   :---   | :---: | :---: | :---:   |
@@ -13,6 +13,8 @@ Playwright is a framework for Web Testing and Automation. It allows testing [Chr
 | Firefox <!-- GEN:firefox-version -->96.0.1<!-- GEN:stop --> | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 
 Headless execution is supported for all the browsers on all platforms. Check out [system requirements](https://playwright.dev/docs/library#system-requirements) for details.
+
+Looking for Playwright for [Python](https://playwright.dev/python/docs/intro), [.NET](https://playwright.dev/dotnet/docs/intro), or [Java](https://playwright.dev/java/docs/intro)?
 
 ## Installation
 
@@ -80,6 +82,8 @@ Test frames, pierce Shadow DOM. Playwright selectors pierce shadow DOM and allow
 **Playwright inspector**. Inspect page, generate selectors, step through the test execution, see click points, explore execution logs.
 
 **Trace Viewer**. Capture all the information to investigate the test failure. Playwright trace contains test execution screencast, live DOM snapshots, action explorer, test source and many more.
+
+Looking for Playwright for [TypeScript](https://playwright.dev/docs/intro), [JavaScript](https://playwright.dev/docs/intro), [Python](https://playwright.dev/python/docs/intro), [.NET](https://playwright.dev/dotnet/docs/intro), or [Java](https://playwright.dev/java/docs/intro)?
 
 ## Examples
 
