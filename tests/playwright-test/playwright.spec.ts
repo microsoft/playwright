@@ -229,6 +229,34 @@ test('should respect context options in various contexts', async ({ runInlineTes
   expect(result.passed).toBe(5);
 });
 
+test('should respect headless in launchPersistent', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { headless: false } };
+    `,
+    'a.test.ts': `
+      import fs from 'fs';
+      import os from 'os';
+      import path from 'path';
+      import rimraf from 'rimraf';
+
+      const { test } = pwt;
+
+      test('persistent context', async ({ playwright, browserName }) => {
+        const dir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'user-data-dir-'));
+        const context = await playwright[browserName].launchPersistentContext(dir);
+        const page = context.pages()[0];
+        expect(await page.evaluate(() => navigator.userAgent)).not.toContain('Headless');
+        await context.close();
+        rimraf.sync(dir);
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
 test('should call logger from launchOptions config', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'a.test.ts': `
