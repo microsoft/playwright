@@ -144,6 +144,8 @@ export class Runner {
         else
           this._reporter.onError?.(createStacklessError(`Timed out waiting ${config.globalTimeout / 1000}s for the entire test run`));
         return actualResult;
+      } else if (this._didBegin) {
+        await this._reporter.onEnd?.(result.result);
       }
       return result.result;
     } catch (e) {
@@ -179,10 +181,7 @@ export class Runner {
 
   private async _run(list: boolean, testFileReFilters: FilePatternFilter[], projectNames?: string[]): Promise<FullResult> {
     const filesByProject = await this._collectFiles(testFileReFilters, projectNames);
-    const result = await this._runFiles(list, filesByProject, testFileReFilters);
-    if (this._didBegin)
-      await this._reporter.onEnd?.(result);
-    return result;
+    return await this._runFiles(list, filesByProject, testFileReFilters);
   }
 
   private async _collectFiles(testFileReFilters: FilePatternFilter[], projectNames?: string[]): Promise<Map<ProjectImpl, string[]>> {

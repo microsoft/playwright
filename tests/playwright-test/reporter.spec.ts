@@ -176,6 +176,35 @@ test('should work without a file extension', async ({ runInlineTest }) => {
   ]);
 });
 
+test('should report onEnd after global teardown', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': smallReporterJS,
+    'globalSetup.ts': `
+      module.exports = () => {
+        return () => console.log('\\n%%global teardown');
+      };
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+        globalSetup: './globalSetup',
+      };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('pass', async ({}) => {
+      });
+    `
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%begin',
+    '%%global teardown',
+    '%%end',
+  ]);
+});
+
 test('should load reporter from node_modules', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'node_modules/my-reporter/index.js': smallReporterJS,
