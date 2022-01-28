@@ -179,7 +179,10 @@ export class Runner {
 
   private async _run(list: boolean, testFileReFilters: FilePatternFilter[], projectNames?: string[]): Promise<FullResult> {
     const filesByProject = await this._collectFiles(testFileReFilters, projectNames);
-    return await this._runFiles(list, filesByProject, testFileReFilters);
+    const result = await this._runFiles(list, filesByProject, testFileReFilters);
+    if (this._didBegin)
+      await this._reporter.onEnd?.(result);
+    return result;
   }
 
   private async _collectFiles(testFileReFilters: FilePatternFilter[], projectNames?: string[]): Promise<Map<ProjectImpl, string[]>> {
@@ -384,13 +387,11 @@ export class Runner {
 
       if (sigint) {
         const result: FullResult = { status: 'interrupted' };
-        await this._reporter.onEnd?.(result);
         return result;
       }
 
       const failed = hasWorkerErrors || rootSuite.allTests().some(test => !test.ok());
       const result: FullResult = { status: failed ? 'failed' : 'passed' };
-      await this._reporter.onEnd?.(result);
       return result;
     } finally {
       if (globalSetupResult && typeof globalSetupResult === 'function')
