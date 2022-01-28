@@ -33,7 +33,7 @@ global.console = new Console({
 
 process.stdout.write = (chunk: string | Buffer) => {
   const outPayload: TestOutputPayload = {
-    testId: workerRunner?._currentTest?.testId,
+    testId: workerRunner?._currentTest?._test._id,
     ...chunkToParams(chunk)
   };
   sendMessageToParent('stdOut', outPayload);
@@ -43,7 +43,7 @@ process.stdout.write = (chunk: string | Buffer) => {
 if (!process.env.PW_RUNNER_DEBUG) {
   process.stderr.write = (chunk: string | Buffer) => {
     const outPayload: TestOutputPayload = {
-      testId: workerRunner?._currentTest?.testId,
+      testId: workerRunner?._currentTest?._test._id,
       ...chunkToParams(chunk)
     };
     sendMessageToParent('stdErr', outPayload);

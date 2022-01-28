@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Fixtures, TestError, TestInfo } from '../types/test';
+import type { Fixtures, TestError } from '../types/test';
 import type { Location } from '../types/testReporter';
 export * from '../types/test';
 export { Location } from '../types/testReporter';
@@ -32,10 +32,6 @@ export interface TestStepInternal {
   canHaveChildren: boolean;
   forceNoParent: boolean;
   location?: Location;
-}
-
-export interface TestInfoImpl extends TestInfo {
-  _addStep: (data: Omit<TestStepInternal, 'complete'>) => TestStepInternal;
 }
 
 export type TestCaseType = 'beforeAll' | 'afterAll' | 'test';

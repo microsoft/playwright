@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { TestInfoImpl } from './types';
+import type { TestInfoImpl } from './testInfo';
 import { Suite } from './test';
 
 let currentTestInfoValue: TestInfoImpl | null = null;
