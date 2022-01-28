@@ -187,7 +187,7 @@ it('should work with Ctrl-clicking', async ({ browser, server, isMac, browserNam
 
 it('should not hang on ctrl-click during provisional load', async ({ context, page, server, isMac, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11595' });
-  it.fixme(browserName === 'chromium', 'click hangs in Chromium waiting for selector');
+  it.skip(browserName === 'chromium', 'Chromium does not dispatch renderer messages while navigation is provisional.');
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<a href="/one-style.html">yo</a>');
   server.setRoute('/slow.html', () => {});
