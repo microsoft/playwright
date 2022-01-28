@@ -184,3 +184,17 @@ it('should work with Ctrl-clicking', async ({ browser, server, isMac, browserNam
   expect(await popup.opener()).toBe(null);
   await context.close();
 });
+
+it('should not hang on ctrl-click during provisional load', async ({ context, page, server, isMac, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11595' });
+  it.skip(browserName === 'chromium', 'Chromium does not dispatch renderer messages while navigation is provisional.');
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent('<a href="/one-style.html">yo</a>');
+  server.setRoute('/slow.html', () => {});
+  const [popup] = await Promise.all([
+    context.waitForEvent('page'),
+    server.waitForRequest('/slow.html').then(() => page.click('a', { modifiers: [ isMac ? 'Meta' : 'Control'] })),
+    page.evaluate(url => setTimeout(() => location.href = url, 0), server.CROSS_PROCESS_PREFIX + '/slow.html'),
+  ]);
+  expect(popup).toBeTruthy();
+});
