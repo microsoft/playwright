@@ -647,7 +647,7 @@ export class Registry {
       if (code !== 0)
         throw new Error(`Failed to install ${channel}`);
     } else {
-      const { command, args, elevatedPermissions } = await transformCommandsForRoot([`bash ${path.join(BIN_PATH, scriptName)} ${scriptArgs.join('')}`]);
+      const { command, args, elevatedPermissions } = await transformCommandsForRoot([`bash "${path.join(BIN_PATH, scriptName)}" ${scriptArgs.join('')}`]);
       if (elevatedPermissions)
         console.log('Switching to root user to install dependencies...'); // eslint-disable-line no-console
       const { code } = await spawnAsync(command, args, { cwd, stdio: 'inherit' });
