@@ -92,7 +92,40 @@ export const printReceivedStringContainExpectedResult = (
 
 // #endregion
 
-export const expect: Expect = expectLibrary as any;
+class ExpectMetaInfoProxy {
+  private _message: string;
+
+  constructor(message: string) {
+    this._message = message;
+  }
+
+  get(target: any, prop: any, receiver: any): any {
+    const value = Reflect.get(target, prop, receiver);
+    if (typeof value !== 'function')
+      return new Proxy(value, this);
+    return (...args: any[]) => {
+      try {
+        expectCallMetaInfo = {
+          message: this._message,
+        };
+        const result = value.call(target, ...args);
+        return result;
+      } finally {
+        expectCallMetaInfo = undefined;
+      }
+    };
+  }
+}
+
+export const expect: Expect = new Proxy(expectLibrary as any, {
+  apply: function(target: any, thisArg: any, argumentsList: [actual: unknown, message: string|undefined]) {
+    const message: string = argumentsList[1] || '';
+    if (typeof message !== 'string')
+      throw new Error('Second `expect` argument must be string!');
+    return new Proxy(expectLibrary.call(thisArg, argumentsList[0]), new ExpectMetaInfoProxy(message));
+  }
+});
+
 expectLibrary.setState({ expand: false });
 const customMatchers = {
   toBeChecked,
@@ -118,23 +151,31 @@ const customMatchers = {
   toMatchSnapshot,
 };
 
+type ExpectMetaInfo = {
+  message: string;
+};
+
+let expectCallMetaInfo: undefined|ExpectMetaInfo = undefined;
+
 function wrap(matcherName: string, matcher: any) {
   const result = function(this: any, ...args: any[]) {
     const testInfo = currentTestInfo();
     if (!testInfo)
       return matcher.call(this, ...args);
 
-    const INTERNAL_STACK_LENGTH = 3;
+    const INTERNAL_STACK_LENGTH = 4;
     // at Object.__PWTRAP__[expect.toHaveText] (...)
     // at __EXTERNAL_MATCHER_TRAP__ (...)
     // at Object.throwingMatcher [as toHaveText] (...)
+    // at Proxy.<anonymous>
     // at <test function> (...)
     const stackLines = new Error().stack!.split('\n').slice(INTERNAL_STACK_LENGTH + 1);
     const frame = stackLines[0] ? stackUtils.parseLine(stackLines[0]) : undefined;
+    const customMessage = expectCallMetaInfo?.message ?? '';
     const step = testInfo._addStep({
       location: frame && frame.file ? { file: path.resolve(process.cwd(), frame.file), line: frame.line || 0, column: frame.column || 0 } : undefined,
       category: 'expect',
-      title: `expect${this.isNot ? '.not' : ''}.${matcherName}`,
+      title: `expect${this.isNot ? '.not' : ''}.${matcherName}${customMessage ? ' - ' + customMessage : ''}`,
       canHaveChildren: true,
       forceNoParent: false
     });
@@ -145,6 +186,14 @@ function wrap(matcherName: string, matcher: any) {
       if (!success) {
         const message = result.message();
         error = { message, stack: message + '\n' + stackLines.join('\n') };
+        if (customMessage) {
+          const newMessage = [
+            customMessage,
+            '',
+            message
+          ].join('\n');
+          result.message = () => newMessage;
+        }
       }
       step.complete(error);
       return result;

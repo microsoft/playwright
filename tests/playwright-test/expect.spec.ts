@@ -67,6 +67,34 @@ test('should not expand huge arrays', async ({ runInlineTest }) => {
   expect(result.output.length).toBeLessThan(100000);
 });
 
+test('should include custom error message', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'expect-test.spec.ts': `
+      const { test } = pwt;
+      test('custom expect message', () => {
+        test.expect(1+1, 'one plus one is two!').toEqual(3);
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.output).toContain(`Error: one plus one is two!\n`);
+});
+
+test('should include custom error message with web-first assertions', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'expect-test.spec.ts': `
+      const { test } = pwt;
+      test('custom expect message', async ({page}) => {
+        await expect(page.locator('x-foo'), 'x-foo must be visible').toBeVisible({timeout: 1});
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.output).toContain(`Error: x-foo must be visible\n`);
+});
+
 test('should work with default expect prototype functions', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
@@ -85,6 +113,16 @@ test('should work with default expect matchers', async ({ runTSC }) => {
     'a.spec.ts': `
       const { test } = pwt;
       test.expect(42).toBe(42);
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
+
+test('should work with expect message', async ({ runTSC }) => {
+  const result = await runTSC({
+    'a.spec.ts': `
+      const { test } = pwt;
+      test.expect(42, 'this is expect message').toBe(42);
     `
   });
   expect(result.exitCode).toBe(0);
