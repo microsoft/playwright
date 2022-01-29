@@ -16,7 +16,7 @@
 
 import { ResourceSnapshot } from '../../../server/trace/common/snapshotTypes';
 import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
-import { ContextEntry } from '../entries';
+import { ContextEntry, MergedContexts, PageEntry } from '../entries';
 
 const contextSymbol = Symbol('context');
 const nextSymbol = Symbol('next');
@@ -86,4 +86,20 @@ export function resourcesForAction(action: ActionTraceEvent): ResourceSnapshot[]
   });
   (action as any)[resourcesSymbol] = result;
   return result;
+}
+
+export function mergeContexts(contexts: ContextEntry[]): MergedContexts {
+  if (contexts.length === 1)
+    return contexts[0];
+  const newContext: MergedContexts = Object.assign({}, contexts[0], {
+    startTime: contexts.map(c => c.startTime).reduce((prev, cur) => Math.min(prev, cur), Number.MAX_VALUE),
+    endTime: contexts.map(c => c.endTime).reduce((prev, cur) => Math.max(prev, cur), Number.MIN_VALUE),
+    pages: ([] as PageEntry[]).concat(...contexts.map(c => c.pages)),
+    actions: ([] as ActionTraceEvent[]).concat(...contexts.map(c => c.actions)),
+    events: ([] as ActionTraceEvent[]).concat(...contexts.map(c => c.events)),
+    hasSource: contexts.some(c => c.hasSource)
+  });
+  newContext.actions.sort((a1, a2) => a1.metadata.startTime - a2.metadata.startTime);
+  newContext.events.sort((a1, a2) => a1.metadata.startTime - a2.metadata.startTime);
+  return newContext;
 }

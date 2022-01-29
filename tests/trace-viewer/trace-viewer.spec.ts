@@ -100,7 +100,7 @@ const test = playwrightTest.extend<{ showTraceViewer: (trace: string) => Promise
     let browser: Browser;
     let contextImpl: any;
     await use(async (trace: string) => {
-      contextImpl = await showTraceViewer(trace, browserName, headless);
+      contextImpl = await showTraceViewer([trace], browserName, headless);
       browser = await playwright.chromium.connectOverCDP({ endpointURL: contextImpl._browser.options.wsEndpoint });
       return new TraceViewerPage(browser.contexts()[0].pages()[0]);
     });

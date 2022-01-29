@@ -37,9 +37,18 @@ export class TraceModel {
     this.contextEntry = createEmptyContext();
   }
 
+  private _formatUrl(trace: string) {
+    let url = trace.startsWith('http') || trace.startsWith('blob') ? trace : `file?path=${trace}`;
+    // Dropbox does not support cors.
+    if (url.startsWith('https://www.dropbox.com/'))
+      url = 'https://dl.dropboxusercontent.com/' + url.substring('https://www.dropbox.com/'.length);
+    return url;
+  }
+
   async load(traceURL: string, progress: (done: number, total: number) => void) {
+    this.contextEntry.traceUrl = traceURL;
     const zipReader = new zipjs.ZipReader( // @ts-ignore
-        new zipjs.HttpReader(traceURL, { mode: 'cors', preventHeadRequest: true }),
+        new zipjs.HttpReader(this._formatUrl(traceURL), { mode: 'cors', preventHeadRequest: true }),
         { useWebWorkers: false }) as zip.ZipReader;
     let traceEntry: zip.Entry | undefined;
     let networkEntry: zip.Entry | undefined;

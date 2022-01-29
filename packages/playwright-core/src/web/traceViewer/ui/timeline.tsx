@@ -16,7 +16,7 @@
 */
 
 import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
-import { ContextEntry } from '../entries';
+import { ContextEntry, MergedContexts } from '../entries';
 import './timeline.css';
 import { Boundaries } from '../geometry';
 import * as React from 'react';
@@ -37,7 +37,7 @@ type TimelineBar = {
 };
 
 export const Timeline: React.FunctionComponent<{
-  context: ContextEntry,
+  context: MergedContexts,
   boundaries: Boundaries,
   selectedAction: ActionTraceEvent | undefined,
   highlightedAction: ActionTraceEvent | undefined,
