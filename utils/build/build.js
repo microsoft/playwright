@@ -74,11 +74,7 @@ function filePath(relative) {
  * @returns {string}
  */
 function quotePath(path) {
-  if (process.env.PSModulePath) {
-    return "\\\"" + path + "\\\"";
-  } else {
-    return "\"" + path + "\"";
-  }
+  return "\"" + path + "\"";
 }
 
 async function runWatch() {
