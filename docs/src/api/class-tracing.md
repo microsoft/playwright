@@ -125,7 +125,9 @@ a timeline preview.
 ### option: Tracing.start.snapshots
 - `snapshots` <[boolean]>
 
-Whether to capture DOM snapshot on every action.
+If this option is true tracing will
+* capture DOM snapshot on every action
+* record network activity
 
 ### option: Tracing.start.sources
 * langs: js, csharp, python
