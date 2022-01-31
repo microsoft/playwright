@@ -144,6 +144,8 @@ export class Runner {
         else
           this._reporter.onError?.(createStacklessError(`Timed out waiting ${config.globalTimeout / 1000}s for the entire test run`));
         return actualResult;
+      } else if (this._didBegin) {
+        await this._reporter.onEnd?.(result.result);
       }
       return result.result;
     } catch (e) {
@@ -384,13 +386,11 @@ export class Runner {
 
       if (sigint) {
         const result: FullResult = { status: 'interrupted' };
-        await this._reporter.onEnd?.(result);
         return result;
       }
 
       const failed = hasWorkerErrors || rootSuite.allTests().some(test => !test.ok());
       const result: FullResult = { status: failed ? 'failed' : 'passed' };
-      await this._reporter.onEnd?.(result);
       return result;
     } finally {
       if (globalSetupResult && typeof globalSetupResult === 'function')
