@@ -19227,6 +19227,18 @@ index 0000000000000000000000000000000000000000..5cf8a010e9809e6a95741cdb7c2cbeb4
 +}
 +
 +} // namespace WebKit
+diff --git a/Source/WebKit/UIProcess/win/WebProcessPoolWin.cpp b/Source/WebKit/UIProcess/win/WebProcessPoolWin.cpp
+index a86b34ddaa8f715e1c947b8943cefd92139c4130..69f3521277d317e942bfbdd3f6d14cb71d741307 100644
+--- a/Source/WebKit/UIProcess/win/WebProcessPoolWin.cpp
++++ b/Source/WebKit/UIProcess/win/WebProcessPoolWin.cpp
+@@ -34,6 +34,7 @@
+ #include <JavaScriptCore/RemoteInspectorServer.h>
+ #include <WebCore/WebCoreBundleWin.h>
+ #include <wtf/text/StringToIntegerConversion.h>
++#include <wtf/URL.h>
+ #endif
+ 
+ namespace WebKit {
 diff --git a/Source/WebKit/UIProcess/wpe/InspectorTargetProxyWPE.cpp b/Source/WebKit/UIProcess/wpe/InspectorTargetProxyWPE.cpp
 new file mode 100644
 index 0000000000000000000000000000000000000000..7453194ca6f032ba86a4c67f5bf12688ab6ec1be
