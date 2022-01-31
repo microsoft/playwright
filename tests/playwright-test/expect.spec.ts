@@ -15,6 +15,7 @@
  */
 
 import { test, expect } from './playwright-test-fixtures';
+import { stripAnsiEscapes } from '../../packages/playwright-test/lib/reporters/base.js';
 
 test('should be able to call expect.extend in config', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -78,7 +79,12 @@ test('should include custom error message', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
-  expect(result.output).toContain(`Error: one plus one is two!\n`);
+  expect(stripAnsiEscapes(result.output)).toContain([
+    `    Error: one plus one is two!`,
+    ``,
+    `    Expected: 3`,
+    `    Received: 2`,
+  ].join('\n'));
 });
 
 test('should include custom error message with web-first assertions', async ({ runInlineTest }) => {

@@ -175,7 +175,7 @@ function wrap(matcherName: string, matcher: any) {
     const step = testInfo._addStep({
       location: frame && frame.file ? { file: path.resolve(process.cwd(), frame.file), line: frame.line || 0, column: frame.column || 0 } : undefined,
       category: 'expect',
-      title: `expect${this.isNot ? '.not' : ''}.${matcherName}${customMessage ? ' - ' + customMessage : ''}`,
+      title: customMessage || `expect${this.isNot ? '.not' : ''}.${matcherName}`,
       canHaveChildren: true,
       forceNoParent: false
     });
@@ -187,10 +187,21 @@ function wrap(matcherName: string, matcher: any) {
         const message = result.message();
         error = { message, stack: message + '\n' + stackLines.join('\n') };
         if (customMessage) {
+          const messageLines = message.split('\n');
+          // Jest adds something like the following error to all errors:
+          //    expect(received).toBe(expected); // Object.is equality
+          const uselessMatcherLineIndex = messageLines.findIndex((line: string) => /expect.*\(.*received.*\)/.test(line));
+          if (uselessMatcherLineIndex !== -1) {
+            // if there's a newline after the matcher text, then remove it as well.
+            if (uselessMatcherLineIndex + 1 < messageLines.length && messageLines[uselessMatcherLineIndex + 1].trim() === '')
+              messageLines.splice(uselessMatcherLineIndex, 2);
+            else
+              messageLines.splice(uselessMatcherLineIndex, 1);
+          }
           const newMessage = [
             customMessage,
             '',
-            message
+            ...messageLines,
           ].join('\n');
           result.message = () => newMessage;
         }

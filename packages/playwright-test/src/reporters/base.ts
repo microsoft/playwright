@@ -419,9 +419,9 @@ function monotonicTime(): number {
   return seconds * 1000 + (nanoseconds / 1000000 | 0);
 }
 
-const asciiRegex = new RegExp('[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))', 'g');
+const ansiRegex = new RegExp('[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))', 'g');
 export function stripAnsiEscapes(str: string): string {
-  return str.replace(asciiRegex, '');
+  return str.replace(ansiRegex, '');
 }
 
 // Leaves enough space for the "suffix" to also fit.
@@ -432,8 +432,8 @@ export function fitToScreen(line: string, width: number, suffix?: string): strin
     return line;
   let m;
   let ansiLen = 0;
-  asciiRegex.lastIndex = 0;
-  while ((m = asciiRegex.exec(line)) !== null) {
+  ansiRegex.lastIndex = 0;
+  while ((m = ansiRegex.exec(line)) !== null) {
     const visibleLen = m.index - ansiLen;
     if (visibleLen >= width)
       break;

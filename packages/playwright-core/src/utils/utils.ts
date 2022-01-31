@@ -619,3 +619,4 @@ export class SigIntWatcher {
     process.off('SIGINT', this._sigintHandler);
   }
 }
+
