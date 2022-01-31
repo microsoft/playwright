@@ -162,7 +162,7 @@ export module Protocol {
       animationId: AnimationId;
     }
     export type requestEffectTargetReturnValue = {
-      nodeId: DOM.NodeId;
+      nodeId: DOM.Styleable;
     }
     /**
      * Resolves JavaScript `WebAnimation` object for given `AnimationId`.
@@ -906,7 +906,7 @@ export module Protocol {
     /**
      * The layout context type of a node.
      */
-    export type LayoutContextType = "grid";
+    export type LayoutContextType = "flex"|"grid";
     /**
      * The mode for how layout context type changes are handled (default: <code>Observed</code>). <code>Observed</code> limits handling to those nodes already known to the frontend by other means (generally, this means the node is a visible item in the Elements tab). <code>All</code> informs the frontend of all layout context type changes and all nodes with a known layout context are sent to the frontend.
      */
@@ -2084,6 +2084,13 @@ export module Protocol {
        * The margin highlight fill color (default: transparent).
        */
       marginColor?: RGBAColor;
+    }
+    /**
+     * An object referencing a node and a pseudo-element, primarily used to identify an animation effect target.
+     */
+    export interface Styleable {
+      nodeId: NodeId;
+      pseudoId?: CSS.PseudoId;
     }
     /**
      * Data to construct File object.
