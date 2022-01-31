@@ -14708,7 +14708,9 @@ export interface Tracing {
     screenshots?: boolean;
 
     /**
-     * Whether to capture DOM snapshot on every action.
+     * If this option is true tracing will
+     * - capture DOM snapshot on every action
+     * - record network activity
      */
     snapshots?: boolean;
 
