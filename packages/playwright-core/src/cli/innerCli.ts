@@ -38,7 +38,7 @@ const packageJSON = require('../../package.json');
 
 program
     .version('Version ' + (process.env.PW_CLI_DISPLAY_VERSION || packageJSON.version))
-    .name(buildBasePlaywrightCLICommand(process.env.PW_CLI_TARGET_LANG));
+    .name(buildBasePlaywrightCLICommand(process.env.PW_LANG_NAME));
 
 commandWithOpenOptions('open [url]', 'open page in browser specified via -b, --browser', [])
     .action(function(url, options) {
@@ -235,7 +235,7 @@ Examples:
 
   $ show-trace https://example.com/trace.zip`);
 
-if (!process.env.PW_CLI_TARGET_LANG) {
+if (!process.env.PW_LANG_NAME) {
   let playwrightTestPackagePath = null;
   try {
     playwrightTestPackagePath = require.resolve('@playwright/test/lib/cli', {
@@ -246,6 +246,7 @@ if (!process.env.PW_CLI_TARGET_LANG) {
   if (playwrightTestPackagePath) {
     require(playwrightTestPackagePath).addTestCommand(program);
     require(playwrightTestPackagePath).addShowReportCommand(program);
+    require(playwrightTestPackagePath).addListTestsCommand(program);
   } else {
     {
       const command = program.command('test').allowUnknownOption(true);
@@ -558,7 +559,7 @@ function logErrorAndExit(e: Error) {
 }
 
 function language(): string {
-  return process.env.PW_CLI_TARGET_LANG || 'test';
+  return process.env.PW_LANG_NAME || 'test';
 }
 
 function commandWithOpenOptions(command: string, description: string, options: any[][]): Command {

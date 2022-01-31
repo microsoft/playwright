@@ -35,6 +35,23 @@ it('should close browser with beforeunload page', async ({ browserType, server, 
   await browserContext.close();
 });
 
+it('should close browsercontext with pending beforeunload dialog', async ({ server, browserType }) => {
+  const browser = await browserType.launch({ headless: false });
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto(server.PREFIX + '/beforeunload.html');
+  // We have to interact with a page so that 'beforeunload' handlers
+  // fire.
+  await page.click('body');
+  await Promise.all([
+    page.waitForEvent('dialog'),
+    page.close({ runBeforeUnload: true }),
+  ]);
+  await context.close();
+  await browser.close();
+});
+
+
 it('should not crash when creating second context', async ({ browserType }) => {
   const browser = await browserType.launch({ headless: false });
   {

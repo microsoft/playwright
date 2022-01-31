@@ -9973,7 +9973,7 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
     export type setShowScrollBottleneckRectsReturnValue = {
     }
     /**
-     * Requests that backend shows hit-test borders on layers
+     * Deprecated, no longer has any effect.
      */
     export type setShowHitTestBordersParameters = {
       /**
@@ -10447,6 +10447,19 @@ Example URLs: http://www.google.com/file.html -> "google.com"
        * The pictograph font-family.
        */
       pictograph?: string;
+    }
+    /**
+     * Font families collection for a script.
+     */
+    export interface ScriptFontFamilies {
+      /**
+       * Name of the script which these font families are defined for.
+       */
+      script: string;
+      /**
+       * Generic font families collection for the script.
+       */
+      fontFamilies: FontFamilies;
     }
     /**
      * Default font sizes.
@@ -11559,6 +11572,10 @@ autosizing and more.
        * Specifies font families to set. If a font family is not specified, it won't be changed.
        */
       fontFamilies: FontFamilies;
+      /**
+       * Specifies font families to set for individual scripts.
+       */
+      forScripts?: ScriptFontFamilies[];
     }
     export type setFontFamiliesReturnValue = {
     }

@@ -17,7 +17,6 @@
 import * as http from 'http';
 import * as https from 'https';
 import { HttpsProxyAgent } from 'https-proxy-agent';
-import { Progress, ProgressController } from './progress';
 import { SocksProxyAgent } from 'socks-proxy-agent';
 import { pipeline, Readable, Transform } from 'stream';
 import url from 'url';
@@ -31,6 +30,8 @@ import { CookieStore, domainMatches } from './cookieStore';
 import { MultipartFormData } from './formData';
 import { CallMetadata, SdkObject } from './instrumentation';
 import { Playwright } from './playwright';
+import { Progress, ProgressController } from './progress';
+import { Tracing } from './trace/recorder/tracing';
 import * as types from './types';
 import { HeadersArray, ProxySettings } from './types';
 
@@ -101,7 +102,9 @@ export abstract class APIRequestContext extends SdkObject {
     this.fetchLog.delete(fetchUid);
   }
 
-  abstract dispose(): void;
+  abstract tracing(): Tracing;
+
+  abstract dispose(): Promise<void>;
 
   abstract _defaultOptions(): FetchRequestOptions;
   abstract _addCookies(cookies: types.NetworkCookie[]): Promise<void>;
@@ -325,6 +328,26 @@ export abstract class APIRequestContext extends SdkObject {
         }
         response.on('aborted', () => reject(new Error('aborted')));
 
+        const chunks: Buffer[] = [];
+        const notifyBodyFinished = () => {
+          const body = Buffer.concat(chunks);
+          notifyRequestFinished(body);
+          fulfill({
+            url: response.url || url.toString(),
+            status: response.statusCode || 0,
+            statusText: response.statusMessage || '',
+            headers: toHeadersArray(response.rawHeaders),
+            body
+          });
+        };
+
+        // These requests don't have response body.
+        if (['HEAD', 'PUT', 'TRACE'].includes(options.method!)) {
+          notifyBodyFinished();
+          request.destroy();
+          return;
+        }
+
         let body: Readable = response;
         let transform: Transform | undefined;
         const encoding = response.headers['content-encoding'];
@@ -345,20 +368,9 @@ export abstract class APIRequestContext extends SdkObject {
           });
         }
 
-        const chunks: Buffer[] = [];
         body.on('data', chunk => chunks.push(chunk));
-        body.on('end', () => {
-          const body = Buffer.concat(chunks);
-          notifyRequestFinished(body);
-          fulfill({
-            url: response.url || url.toString(),
-            status: response.statusCode || 0,
-            statusText: response.statusMessage || '',
-            headers: toHeadersArray(response.rawHeaders),
-            body
-          });
-        });
-        body.on('error',reject);
+        body.on('end', notifyBodyFinished);
+        body.on('error', reject);
       });
       request.on('error', reject);
 
@@ -404,7 +416,11 @@ export class BrowserContextAPIRequestContext extends APIRequestContext {
     context.once(BrowserContext.Events.Close, () => this._disposeImpl());
   }
 
-  override dispose() {
+  override tracing() {
+    return this._context.tracing;
+  }
+
+  override async dispose() {
     this.fetchResponses.clear();
   }
 
@@ -438,9 +454,11 @@ export class GlobalAPIRequestContext extends APIRequestContext {
   private readonly _cookieStore: CookieStore = new CookieStore();
   private readonly _options: FetchRequestOptions;
   private readonly _origins: channels.OriginStorage[] | undefined;
+  private readonly _tracing: Tracing;
 
   constructor(playwright: Playwright, options: channels.PlaywrightNewRequestOptions) {
     super(playwright);
+    this.attribution.context = this;
     const timeoutSettings = new TimeoutSettings();
     if (options.timeout !== undefined)
       timeoutSettings.setDefaultTimeout(options.timeout);
@@ -464,10 +482,17 @@ export class GlobalAPIRequestContext extends APIRequestContext {
       proxy,
       timeoutSettings,
     };
-
+    this._tracing = new Tracing(this, options.tracesDir);
   }
 
-  override dispose() {
+  override tracing() {
+    return this._tracing;
+  }
+
+  override async dispose() {
+    await this._tracing.flush();
+    await this._tracing.deleteTmpTracesDir();
+    this._tracing.dispose();
     this._disposeImpl();
   }
 
@@ -501,7 +526,21 @@ function toHeadersArray(rawHeaders: string[]): types.HeadersArray {
 const redirectStatus = [301, 302, 303, 307, 308];
 
 function parseCookie(header: string): types.NetworkCookie | null {
-  const pairs = header.split(';').filter(s => s.trim().length > 0).map(p => p.split('=').map(s => s.trim()));
+  const pairs = header.split(';').filter(s => s.trim().length > 0).map(p => {
+    let key = '';
+    let value = '';
+    const separatorPos = p.indexOf('=');
+    if (separatorPos === -1) {
+      // If only a key is specified, the value is left undefined.
+      key = p.trim();
+    } else {
+      // Otherwise we assume that the key is the element before the first `=`
+      key = p.slice(0, separatorPos).trim();
+      // And the value is the rest of the string.
+      value = p.slice(separatorPos + 1).trim();
+    }
+    return [key, value];
+  });
   if (!pairs.length)
     return null;
   const [name, value] = pairs[0];
@@ -563,7 +602,7 @@ function isJsonParsable(value: any) {
 
 function serializePostData(params: channels.APIRequestContextFetchParams, headers: { [name: string]: string }): Buffer | undefined {
   assert((params.postData ? 1 : 0) + (params.jsonData ? 1 : 0) + (params.formData ? 1 : 0) + (params.multipartData ? 1 : 0) <= 1, `Only one of 'data', 'form' or 'multipart' can be specified`);
-  if (params.jsonData) {
+  if (params.jsonData !== undefined) {
     const json = isJsonParsable(params.jsonData) ? params.jsonData : JSON.stringify(params.jsonData);
     headers['content-type'] ??= 'application/json';
     return Buffer.from(json, 'utf8');
@@ -583,7 +622,7 @@ function serializePostData(params: channels.APIRequestContextFetchParams, header
     }
     headers['content-type'] ??= formData.contentTypeHeader();
     return formData.finish();
-  } else if (params.postData) {
+  } else if (params.postData !== undefined) {
     headers['content-type'] ??= 'application/octet-stream';
     return Buffer.from(params.postData, 'base64');
   }

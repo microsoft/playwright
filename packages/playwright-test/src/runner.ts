@@ -20,7 +20,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
 import { Dispatcher, TestGroup } from './dispatcher';
-import { createFileMatcher, createTitleMatcher, FilePatternFilter, monotonicTime, serializeError } from './util';
+import { createFileMatcher, createTitleMatcher, FilePatternFilter, serializeError } from './util';
 import { TestCase, Suite } from './test';
 import { Loader } from './loader';
 import { FullResult, Reporter, TestError } from '../types/testReporter';
@@ -37,7 +37,8 @@ import { ProjectImpl } from './project';
 import { Minimatch } from 'minimatch';
 import { Config, FullConfig } from './types';
 import { WebServer } from './webServer';
-import { raceAgainstDeadline } from 'playwright-core/lib/utils/async';
+import { raceAgainstTimeout } from 'playwright-core/lib/utils/async';
+import { SigIntWatcher } from 'playwright-core/lib/utils/utils';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -136,8 +137,7 @@ export class Runner {
     this._reporter = await this._createReporter(!!options.listOnly);
     try {
       const config = this._loader.fullConfig();
-      const globalDeadline = config.globalTimeout ? config.globalTimeout + monotonicTime() : 0;
-      const result = await raceAgainstDeadline(this._run(!!options.listOnly, options.filePatternFilter || [], options.projectFilter), globalDeadline);
+      const result = await raceAgainstTimeout(() => this._run(!!options.listOnly, options.filePatternFilter || [], options.projectFilter), config.globalTimeout);
       if (result.timedOut) {
         const actualResult: FullResult = { status: 'timedout' };
         if (this._didBegin)
@@ -145,6 +145,8 @@ export class Runner {
         else
           this._reporter.onError?.(createStacklessError(`Timed out waiting ${config.globalTimeout / 1000}s for the entire test run`));
         return actualResult;
+      } else if (this._didBegin) {
+        await this._reporter.onEnd?.(result.result);
       }
       return result.result;
     } catch (e) {
@@ -163,10 +165,28 @@ export class Runner {
     }
   }
 
-  async _run(list: boolean, testFileReFilters: FilePatternFilter[], projectNames?: string[]): Promise<FullResult> {
-    const testFileFilter = testFileReFilters.length ? createFileMatcher(testFileReFilters.map(e => e.re)) : () => true;
-    const config = this._loader.fullConfig();
+  async listAllTestFiles(config: Config, projectNames: string[] | undefined): Promise<any> {
+    const filesByProject = await this._collectFiles([], projectNames);
+    const report: any = {
+      testDir: config.testDir,
+      projects: []
+    };
+    for (const [project, files] of filesByProject) {
+      report.projects.push({
+        name: project.config.name,
+        files: files
+      });
+    }
+    return report;
+  }
 
+  private async _run(list: boolean, testFileReFilters: FilePatternFilter[], projectNames?: string[]): Promise<FullResult> {
+    const filesByProject = await this._collectFiles(testFileReFilters, projectNames);
+    return await this._runFiles(list, filesByProject, testFileReFilters);
+  }
+
+  private async _collectFiles(testFileReFilters: FilePatternFilter[], projectNames?: string[]): Promise<Map<ProjectImpl, string[]>> {
+    const testFileFilter = testFileReFilters.length ? createFileMatcher(testFileReFilters.map(e => e.re)) : () => true;
     let projectsToFind: Set<string> | undefined;
     let unknownProjects: Map<string, string> | undefined;
     if (projectNames) {
@@ -194,7 +214,6 @@ export class Runner {
     }
 
     const files = new Map<ProjectImpl, string[]>();
-    const allTestFiles = new Set<string>();
     for (const project of projects) {
       const testDir = project.config.testDir;
       if (!fs.existsSync(testDir))
@@ -208,9 +227,16 @@ export class Runner {
       const testFileExtension = (file: string) => extensions.includes(path.extname(file));
       const testFiles = allFiles.filter(file => !testIgnore(file) && testMatch(file) && testFileFilter(file) && testFileExtension(file));
       files.set(project, testFiles);
-      testFiles.forEach(file => allTestFiles.add(file));
     }
+    return files;
+  }
 
+  private async _runFiles(list: boolean, filesByProject: Map<ProjectImpl, string[]>, testFileReFilters: FilePatternFilter[]): Promise<FullResult> {
+    const allTestFiles = new Set<string>();
+    for (const files of filesByProject.values())
+      files.forEach(file => allTestFiles.add(file));
+
+    const config = this._loader.fullConfig();
     const internalGlobalTeardowns: (() => Promise<void>)[] = [];
     if (!list) {
       for (const internalGlobalSetup of this._internalGlobalSetups)
@@ -239,7 +265,8 @@ export class Runner {
       }
 
       // 4. Filter only
-      filterOnly(preprocessRoot);
+      if (!list)
+        filterOnly(preprocessRoot);
 
       // 5. Complain about clashing.
       const clashingTests = getClashingTestsPerSuite(preprocessRoot);
@@ -256,11 +283,11 @@ export class Runner {
       const grepMatcher = createTitleMatcher(config.grep);
       const grepInvertMatcher = config.grepInvert ? createTitleMatcher(config.grepInvert) : null;
       const rootSuite = new Suite('');
-      for (const project of projects) {
+      for (const [project, files] of filesByProject) {
         const projectSuite = new Suite(project.config.name);
         projectSuite._projectConfig = project.config;
         rootSuite._addSuite(projectSuite);
-        for (const file of files.get(project)!) {
+        for (const file of files) {
           const fileSuite = fileSuites.get(file);
           if (!fileSuite)
             continue;
@@ -319,54 +346,30 @@ export class Runner {
       }
       (config as any).__testGroupsCount = testGroups.length;
 
-      let sigint = false;
-      let sigintCallback: () => void;
-      const sigIntPromise = new Promise<void>(f => sigintCallback = f);
-      const sigintHandler = () => {
-        // We remove the handler so that second Ctrl+C immediately kills the runner
-        // via the default sigint handler. This is handy in the case where our shutdown
-        // takes a lot of time or is buggy.
-        //
-        // When running through NPM we might get multiple SIGINT signals
-        // for a single Ctrl+C - this is an NPM bug present since at least NPM v6.
-        // https://github.com/npm/cli/issues/1591
-        // https://github.com/npm/cli/issues/2124
-        //
-        // Therefore, removing the handler too soon will just kill the process
-        // with default handler without printing the results.
-        // We work around this by giving NPM 1000ms to send us duplicate signals.
-        // The side effect is that slow shutdown or bug in our runner will force
-        // the user to hit Ctrl+C again after at least a second.
-        setTimeout(() => process.off('SIGINT', sigintHandler), 1000);
-        sigint = true;
-        sigintCallback();
-      };
-      process.on('SIGINT', sigintHandler);
+      const sigintWatcher = new SigIntWatcher();
 
       this._reporter.onBegin?.(config, rootSuite);
       this._didBegin = true;
       let hasWorkerErrors = false;
       if (!list) {
         const dispatcher = new Dispatcher(this._loader, testGroups, this._reporter);
-        await Promise.race([dispatcher.run(), sigIntPromise]);
-        if (!sigint) {
+        await Promise.race([dispatcher.run(), sigintWatcher.promise()]);
+        if (!sigintWatcher.hadSignal()) {
           // We know for sure there was no Ctrl+C, so we remove custom SIGINT handler
           // as soon as we can.
-          process.off('SIGINT', sigintHandler);
+          sigintWatcher.disarm();
         }
         await dispatcher.stop();
         hasWorkerErrors = dispatcher.hasWorkerErrors();
       }
 
-      if (sigint) {
+      if (sigintWatcher.hadSignal()) {
         const result: FullResult = { status: 'interrupted' };
-        await this._reporter.onEnd?.(result);
         return result;
       }
 
       const failed = hasWorkerErrors || rootSuite.allTests().some(test => !test.ok());
       const result: FullResult = { status: failed ? 'failed' : 'passed' };
-      await this._reporter.onEnd?.(result);
       return result;
     } finally {
       if (globalSetupResult && typeof globalSetupResult === 'function')

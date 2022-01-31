@@ -72,6 +72,7 @@ private:
     static void handleJavaScriptDialog(WKPageRef page, bool accept, WKStringRef value, const void *clientInfo);
     static WKRect getWindowFrame(WKPageRef page, const void *clientInfo);
     static void didNotHandleKeyEvent(WKPageRef, WKNativeEventPtr, const void*);
+    static void decidePolicyForNavigationAction(WKPageRef, WKFrameRef, WKFrameNavigationType, WKEventModifiers, WKEventMouseButton, WKFrameRef, WKURLRequestRef, WKFramePolicyListenerRef, WKTypeRef, const void* clientInfo);
     static void decidePolicyForResponse(WKPageRef, WKFrameRef, WKURLResponseRef, WKURLRequestRef, WKFramePolicyListenerRef, WKTypeRef, const void*);
 
     BrowserWindowClient& m_client;

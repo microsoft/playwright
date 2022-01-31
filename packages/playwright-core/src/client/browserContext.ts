@@ -38,14 +38,12 @@ import type { BrowserType } from './browserType';
 import { Artifact } from './artifact';
 import { APIRequestContext } from './fetch';
 import { createInstrumentation } from './clientInstrumentation';
-import { LocalUtils } from './localUtils';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
   _pages = new Set<Page>();
   private _routes: network.RouteHandler[] = [];
   readonly _browser: Browser | null = null;
   private _browserType: BrowserType | undefined;
-  _localUtils!: LocalUtils;
   readonly _bindings = new Map<string, (source: structs.BindingSource, ...args: any[]) => any>();
   _timeoutSettings = new TimeoutSettings();
   _ownerPage: Page | undefined;
@@ -71,7 +69,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     if (parent instanceof Browser)
       this._browser = parent;
     this._isChromium = this._browser?._name === 'chromium';
-    this.tracing = new Tracing(this);
+    this.tracing = Tracing.from(initializer.tracing);
     this.request = APIRequestContext.from(initializer.APIRequestContext);
 
     this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));
@@ -146,10 +144,14 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   _onRoute(route: network.Route, request: network.Request) {
     for (const routeHandler of this._routes) {
       if (routeHandler.matches(request.url())) {
-        if (routeHandler.handle(route, request)) {
-          this._routes.splice(this._routes.indexOf(routeHandler), 1);
-          if (!this._routes.length)
-            this._wrapApiCall(() => this._disableInterception(), true).catch(() => {});
+        try {
+          routeHandler.handle(route, request);
+        } finally {
+          if (!routeHandler.isActive()) {
+            this._routes.splice(this._routes.indexOf(routeHandler), 1);
+            if (!this._routes.length)
+              this._wrapApiCall(() => this._disableInterception(), true).catch(() => {});
+          }
         }
         return;
       }

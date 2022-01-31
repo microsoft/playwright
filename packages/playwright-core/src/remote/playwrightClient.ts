@@ -21,7 +21,8 @@ import { makeWaitForNextTask } from '../utils/utils';
 
 export type PlaywrightClientConnectOptions = {
   wsEndpoint: string;
-  timeout?: number
+  timeout?: number;
+  followRedirects?: boolean;
 };
 
 export class PlaywrightClient {
@@ -30,10 +31,10 @@ export class PlaywrightClient {
   private _closePromise: Promise<void>;
 
   static async connect(options: PlaywrightClientConnectOptions): Promise<PlaywrightClient> {
-    const { wsEndpoint, timeout = 30000 } = options;
+    const { wsEndpoint, timeout = 30000, followRedirects = true } = options;
     const connection = new Connection();
     connection.markAsRemote();
-    const ws = new WebSocket(wsEndpoint);
+    const ws = new WebSocket(wsEndpoint, { followRedirects });
     const waitForNextTask = makeWaitForNextTask();
     connection.onmessage = message => {
       if (ws.readyState === 2 /** CLOSING */ || ws.readyState === 3 /** CLOSED */)

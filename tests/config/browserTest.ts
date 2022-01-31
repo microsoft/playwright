@@ -19,7 +19,7 @@ import * as os from 'os';
 import { PageTestFixtures, PageWorkerFixtures } from '../page/pageTestApi';
 import * as path from 'path';
 import type { BrowserContext, BrowserContextOptions, BrowserType, Page } from 'playwright-core';
-import { removeFolders } from 'playwright-core/lib/utils/utils';
+import { removeFolders } from '../../packages/playwright-core/lib/utils/utils';
 import { baseTest } from './baseTest';
 import { RemoteServer, RemoteServerOptions } from './remoteServer';
 
@@ -43,8 +43,8 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
     await run(browser.version());
   }, { scope: 'worker' } ],
 
-  browserType: [async ({ _browserType }: any, run) => {
-    await run(_browserType);
+  browserType: [async ({ playwright, browserName }, run) => {
+    await run(playwright[browserName]);
   }, { scope: 'worker' } ],
 
   browserMajorVersion: [async ({ browserVersion }, run) => {

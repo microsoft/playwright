@@ -405,7 +405,7 @@ it('should fail when replaced by another navigation', async ({ page, server, bro
   if (browserName === 'chromium')
     expect(error.message).toContain('net::ERR_ABORTED');
   else if (browserName === 'webkit')
-    expect(error.message).toContain('cancelled');
+    expect(error.message).toContain('Navigation interrupted by another one');
   else
     expect(error.message).toContain('NS_BINDING_ABORTED');
 });

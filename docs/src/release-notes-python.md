@@ -66,11 +66,11 @@ Read more in [our documentation](./api/class-playwrightassertions).
 - [`method: Locator.dragTo`]
 - Each locator can now be optionally filtered by the text it contains:
     ```python async
-    await page.locator("li", has_text="my item")).locator("button").click()
+    await page.locator("li", has_text="my item").locator("button").click()
     ```
 
     ```python sync
-    page.locator("li", has_text="my item")).locator("button").click()
+    page.locator("li", has_text="my item").locator("button").click()
     ```
 
     Read more in [locator documentation](./api/class-locator#locator-locator-option-has-text)
@@ -300,7 +300,7 @@ button.click("button >> visible=true")
 
 - [Intro](./intro.md)
 - [Authentication](./auth.md)
-- [Chome Extensions](./chrome-extensions.md)
+- [Chrome Extensions](./chrome-extensions.md)
 
 
 #### Browser Versions

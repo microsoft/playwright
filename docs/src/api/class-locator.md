@@ -418,7 +418,7 @@ await locator.click()
 ```
 
 ```python sync
-locator = page.frame_locator("text=Submit").locator("text=Submit")
+locator = page.frame_locator("iframe").locator("text=Submit")
 locator.click()
 ```
 
@@ -550,6 +550,11 @@ Returns locator to the n-th matching element.
 
 ### param: Locator.nth.index
 - `index` <[int]>
+
+## method: Locator.page
+- returns: <[Page]>
+
+A page this locator belongs to.
 
 ## async method: Locator.press
 

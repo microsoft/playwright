@@ -17,7 +17,7 @@
 import http from 'http';
 import os from 'os';
 import * as util from 'util';
-import { getPlaywrightVersion } from 'playwright-core/lib/utils/utils';
+import { getPlaywrightVersion } from '../packages/playwright-core/lib/utils/utils';
 import { expect, playwrightTest as it } from './config/browserTest';
 
 it.skip(({ mode }) => mode !== 'default');
@@ -50,7 +50,7 @@ for (const method of ['fetch', 'delete', 'get', 'head', 'patch', 'post', 'put'] 
     expect(response.ok()).toBeTruthy();
     expect(response.headers()['content-type']).toBe('application/json; charset=utf-8');
     expect(response.headersArray()).toContainEqual({ name: 'Content-Type', value: 'application/json; charset=utf-8' });
-    expect(await response.text()).toBe(method === 'head' ? '' : '{"foo": "bar"}\n');
+    expect(await response.text()).toBe(['head', 'put'].includes(method) ? '' : '{"foo": "bar"}\n');
   });
 }
 
@@ -266,12 +266,17 @@ it('should remove content-length from reidrected post requests', async ({ playwr
 });
 
 
-const serialization = [
+const serialization: [string, any][] = [
   ['object', { 'foo': 'bar' }],
   ['array', ['foo', 'bar', 2021]],
   ['string', 'foo'],
+  ['string (falsey)', ''],
   ['bool', true],
+  ['bool (false)', false],
   ['number', 2021],
+  ['number (falsey)', 0],
+  ['null', null],
+  ['literal string undefined', 'undefined'],
 ];
 for (const [type, value] of serialization) {
   const stringifiedValue = JSON.stringify(value);
@@ -337,5 +342,24 @@ it(`should have nice toString`, async ({ playwright, server }) => {
   expect(str).toContain('APIResponse: 200 OK');
   for (const { name, value } of response.headersArray())
     expect(str).toContain(`  ${name}: ${value}`);
+  await request.dispose();
+});
+
+it('should not fail on empty body with encoding', async ({ playwright, server }) => {
+  const request = await playwright.request.newContext();
+  for (const method of ['head', 'put']) {
+    for (const encoding of ['br', 'gzip', 'deflate']) {
+      server.setRoute('/empty.html', (req, res) => {
+        res.writeHead(200, {
+          'Content-Encoding': encoding,
+          'Content-Type': 'text/plain',
+        });
+        res.end();
+      });
+      const response = await request[method](server.EMPTY_PAGE);
+      expect(response.status()).toBe(200);
+      expect((await response.body()).length).toBe(0);
+    }
+  }
   await request.dispose();
 });

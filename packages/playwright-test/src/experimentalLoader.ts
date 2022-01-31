@@ -15,11 +15,7 @@
  */
 
 import fs from 'fs';
-import path from 'path';
-import { tsConfigLoader, TsConfigLoaderResult } from './third_party/tsconfig-loader';
 import { transformHook } from './transform';
-
-const tsConfigCache = new Map<string, TsConfigLoaderResult>();
 
 async function resolve(specifier: string, context: { parentURL: string }, defaultResolve: any) {
   if (specifier.endsWith('.js') || specifier.endsWith('.ts') || specifier.endsWith('.mjs'))
@@ -36,17 +32,8 @@ async function resolve(specifier: string, context: { parentURL: string }, defaul
 async function load(url: string, context: any, defaultLoad: any) {
   if (url.endsWith('.ts') || url.endsWith('.tsx')) {
     const filename = url.substring('file://'.length);
-    const cwd = path.dirname(filename);
-    let tsconfig = tsConfigCache.get(cwd);
-    if (!tsconfig) {
-      tsconfig = tsConfigLoader({
-        getEnv: (name: string) => process.env[name],
-        cwd
-      });
-      tsConfigCache.set(cwd, tsconfig);
-    }
     const code = fs.readFileSync(filename, 'utf-8');
-    const source = transformHook(code, filename, tsconfig, true);
+    const source = transformHook(code, filename, true);
     return { format: 'module', source };
   }
   return defaultLoad(url, context, defaultLoad);

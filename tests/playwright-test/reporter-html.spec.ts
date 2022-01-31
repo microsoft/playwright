@@ -15,7 +15,7 @@
  */
 
 import { test as baseTest, expect } from './playwright-test-fixtures';
-import { HttpServer } from 'playwright-core/lib/utils/httpServer';
+import { HttpServer } from '../../packages/playwright-core/lib/utils/httpServer';
 import { startHtmlReportServer } from '../../packages/playwright-test/lib/reporters/html';
 
 const test = baseTest.extend<{ showReport: () => Promise<void> }>({

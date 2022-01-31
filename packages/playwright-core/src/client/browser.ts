@@ -64,7 +64,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
     this._contexts.add(context);
     context._logger = options.logger || this._logger;
     context._setBrowserType(this._browserType);
-    context._localUtils = this._localUtils;
+    context.tracing._localUtils = this._localUtils;
     await this._browserType._onDidCreateContext?.(context);
     return context;
   }

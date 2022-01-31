@@ -7,9 +7,6 @@
   "engines": {
     "node": ">=12"
   },
-  "scripts": {
-    "prepare": "babel --config-file ../../babel.config.json -s --extensions \".ts\" --out-dir lib/utils/ src/utils"
-  },
   "author": {
     "name": "Microsoft Corporation"
   },
@@ -30,7 +27,9 @@
     "./lib/utils/multimap": "./lib/utils/multimap.js",
     "./lib/utils/processLauncher": "./lib/utils/processLauncher.js",
     "./lib/utils/registry": "./lib/utils/registry.js",
-    "./lib/utils/utils": "./lib/utils/utils.js"
+    "./lib/utils/utils": "./lib/utils/utils.js",
+    "./lib/remote/playwrightServer": "./lib/remote/playwrightServer.js",
+    "./lib/remote/playwrightClient": "./lib/remote/playwrightClient.js"
   },
   "types": "types/types.d.ts",
   "bin": {

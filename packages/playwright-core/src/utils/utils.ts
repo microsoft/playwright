@@ -241,7 +241,7 @@ function toMegabytes(bytes: number) {
 }
 
 export function spawnAsync(cmd: string, args: string[], options: SpawnOptions = {}): Promise<{stdout: string, stderr: string, code: number | null, error?: Error}> {
-  const process = spawn(cmd, args, options);
+  const process = spawn(cmd, args, Object.assign({ windowsHide: true }, options));
 
   return new Promise(resolve => {
     let stdout = '';
@@ -325,6 +325,8 @@ const debugEnv = getFromENV('PWDEBUG') || '';
 export function debugMode() {
   if (debugEnv === 'console')
     return 'console';
+  if (debugEnv === '0' || debugEnv === 'false')
+    return '';
   return debugEnv ? 'inspector' : '';
 }
 
@@ -475,12 +477,12 @@ function determineUserAgent(): string {
 
   let langName = 'unknown';
   let langVersion = 'unknown';
-  if (!process.env.PW_CLI_TARGET_LANG) {
+  if (!process.env.PW_LANG_NAME) {
     langName = 'node';
     langVersion = process.version.substring(1).split('.').slice(0, 2).join('.');
-  } else if (['node', 'python', 'java', 'csharp'].includes(process.env.PW_CLI_TARGET_LANG)) {
-    langName = process.env.PW_CLI_TARGET_LANG;
-    langVersion = process.env.PW_CLI_TARGET_LANG_VERSION ?? 'unknown';
+  } else if (['node', 'python', 'java', 'csharp'].includes(process.env.PW_LANG_NAME)) {
+    langName = process.env.PW_LANG_NAME;
+    langVersion = process.env.PW_LANG_NAME_VERSION ?? 'unknown';
   }
 
   return `Playwright/${getPlaywrightVersion()} (${os.arch()}; ${osIdentifier} ${osVersion}) ${langName}/${langVersion}`;
@@ -574,4 +576,46 @@ export async function transformCommandsForRoot(commands: string[]): Promise<{ co
   if (sudoExists.code === 0)
     return { command: 'sudo', args: ['--', 'sh', '-c', `${commands.join('&& ')}`], elevatedPermissions: true };
   return { command: 'su', args: ['root', '-c', `${commands.join('&& ')}`], elevatedPermissions: true };
+}
+
+export class SigIntWatcher {
+  private _hadSignal: boolean = false;
+  private _sigintPromise: Promise<void>;
+  private _sigintHandler: () => void;
+  constructor() {
+    let sigintCallback: () => void;
+    this._sigintPromise = new Promise<void>(f => sigintCallback = f);
+    this._sigintHandler = () => {
+      // We remove the handler so that second Ctrl+C immediately kills the runner
+      // via the default sigint handler. This is handy in the case where our shutdown
+      // takes a lot of time or is buggy.
+      //
+      // When running through NPM we might get multiple SIGINT signals
+      // for a single Ctrl+C - this is an NPM bug present since at least NPM v6.
+      // https://github.com/npm/cli/issues/1591
+      // https://github.com/npm/cli/issues/2124
+      //
+      // Therefore, removing the handler too soon will just kill the process
+      // with default handler without printing the results.
+      // We work around this by giving NPM 1000ms to send us duplicate signals.
+      // The side effect is that slow shutdown or bug in our runner will force
+      // the user to hit Ctrl+C again after at least a second.
+      setTimeout(() => process.off('SIGINT', this._sigintHandler), 1000);
+      this._hadSignal = true;
+      sigintCallback();
+    };
+    process.on('SIGINT', this._sigintHandler);
+  }
+
+  promise(): Promise<void> {
+    return this._sigintPromise;
+  }
+
+  hadSignal(): boolean {
+    return this._hadSignal;
+  }
+
+  disarm() {
+    process.off('SIGINT', this._sigintHandler);
+  }
 }

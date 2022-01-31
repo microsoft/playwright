@@ -166,6 +166,33 @@ it('should remove expired cookies', async ({ request, server }) => {
   expect(serverRequest.headers.cookie).toBe('a=v');
 });
 
+it('should store cookie from Set-Cookie header even if it contains equal signs', async ({ request, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11612' });
+
+  server.setRoute('/setcookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', ['f=value == value=; secure; httpOnly; path=/some=value']);
+    res.end();
+  });
+
+  await request.get(`http://a.b.one.com:${server.PORT}/setcookie.html`);
+  const state = await request.storageState();
+  expect(state).toEqual({
+    'cookies': [
+      {
+        domain: 'a.b.one.com',
+        expires: -1,
+        name: 'f',
+        path: '/some=value',
+        sameSite: 'Lax',
+        httpOnly: true,
+        secure: true,
+        value: 'value == value=',
+      }
+    ],
+    'origins': []
+  });
+});
+
 it('should export cookies to storage state', async ({ request, server }) => {
   const expires = new Date('12/31/2100 PST');
   server.setRoute('/setcookie.html', (req, res) => {
