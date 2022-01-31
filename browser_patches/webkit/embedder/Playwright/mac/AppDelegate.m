@@ -234,7 +234,6 @@ const NSActivityOptions ActivityOptions =
         configuration.preferences._hiddenPageDOMTimerThrottlingAutoIncreases = NO;
         configuration.preferences._pageVisibilityBasedProcessSuppressionEnabled = NO;
         configuration.preferences._domTimersThrottlingEnabled = NO;
-        configuration.preferences._requestAnimationFrameEnabled = YES;
         _WKProcessPoolConfiguration *processConfiguration = [[[_WKProcessPoolConfiguration alloc] init] autorelease];
         processConfiguration.forceOverlayScrollbars = YES;
         configuration.processPool = [[[WKProcessPool alloc] _initWithConfiguration:processConfiguration] autorelease];
