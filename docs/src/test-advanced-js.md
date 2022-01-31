@@ -554,11 +554,13 @@ test('numeric ranges', () => {
 
 For TypeScript, also add the following to `global.d.ts`. You don't need it for JavaScript.
 
-```js
+```ts
 // global.d.ts
-declare namespace PlaywrightTest {
-  interface Matchers<R> {
-    toBeWithinRange(a: number, b: number): R;
+declare global {
+ namespace PlaywrightTest {
+    interface Matchers<R> {
+      toBeWithinRange(a: number, b: number): R;
+    }
   }
 }
 ```
