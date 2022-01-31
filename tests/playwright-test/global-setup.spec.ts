@@ -106,36 +106,12 @@ test('globalTeardown does not run when globalSetup times out', async ({ runInlin
       });
     `,
   });
-  // We did not collect tests, so everything should be zero.
-  expect(result.skipped).toBe(0);
+  // We did not run tests, so we should only have 1 skipped test.
+  expect(result.skipped).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(0);
   expect(result.exitCode).toBe(1);
   expect(result.output).not.toContain('teardown=');
-});
-
-test('globalSetup should be run before requiring tests', async ({ runInlineTest }) => {
-  const { passed } = await runInlineTest({
-    'playwright.config.ts': `
-      import * as path from 'path';
-      module.exports = {
-        globalSetup: './globalSetup.ts',
-      };
-    `,
-    'globalSetup.ts': `
-      module.exports = async () => {
-        process.env.FOO = JSON.stringify({ foo: 'bar' });
-      };
-    `,
-    'a.test.js': `
-      const { test } = pwt;
-      let value = JSON.parse(process.env.FOO);
-      test('should work', async ({}) => {
-        expect(value).toEqual({ foo: 'bar' });
-      });
-    `,
-  });
-  expect(passed).toBe(1);
 });
 
 test('globalSetup should work with sync function', async ({ runInlineTest }) => {
@@ -153,8 +129,8 @@ test('globalSetup should work with sync function', async ({ runInlineTest }) => 
     `,
     'a.test.js': `
       const { test } = pwt;
-      let value = JSON.parse(process.env.FOO);
       test('should work', async ({}) => {
+        const value = JSON.parse(process.env.FOO);
         expect(value).toEqual({ foo: 'bar' });
       });
     `,

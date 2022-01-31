@@ -27,6 +27,7 @@ import { ProjectImpl } from './project';
 import { Reporter } from '../types/testReporter';
 import { BuiltInReporter, builtInReporters } from './runner';
 import { isRegExp } from 'playwright-core/lib/utils/utils';
+import { serializeError } from './util';
 
 // To allow multiple loaders in the same process without clearing require cache,
 // we make these maps global.
@@ -113,20 +114,25 @@ export class Loader {
     this._fullConfig.projects = this._projects.map(p => p.config);
   }
 
-  async loadTestFile(file: string) {
+  async loadTestFile(file: string, environment: 'runner' | 'worker') {
     if (cachedFileSuites.has(file))
       return cachedFileSuites.get(file)!;
+    const suite = new Suite(path.relative(this._fullConfig.rootDir, file) || path.basename(file));
+    suite._requireFile = file;
+    suite.location = { file, line: 0, column: 0 };
+
+    setCurrentlyLoadingFileSuite(suite);
     try {
-      const suite = new Suite(path.relative(this._fullConfig.rootDir, file) || path.basename(file));
-      suite._requireFile = file;
-      suite.location = { file, line: 0, column: 0 };
-      setCurrentlyLoadingFileSuite(suite);
       await this._requireOrImport(file);
       cachedFileSuites.set(file, suite);
-      return suite;
+    } catch (e) {
+      if (environment === 'worker')
+        throw e;
+      suite.loadError = serializeError(e);
     } finally {
       setCurrentlyLoadingFileSuite(undefined);
     }
+    return suite;
   }
 
   async loadGlobalHook(file: string, name: string): Promise<(config: FullConfig) => any> {
