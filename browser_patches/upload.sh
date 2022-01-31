@@ -45,8 +45,9 @@ fi
 
 GENERATE_MD5_HASH=$(cat <<EOF
   const crypto = require('crypto');
+  const fs = require('fs');
   const buffer = fs.readFileSync(process.argv[1]);
-  console.log(crypto.createHash('md5').update(buffer).digest("base64"));
+  console.log(crypto.createHash('md5').update(buffer).digest('base64'));
 EOF
 )
 
