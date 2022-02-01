@@ -185,7 +185,7 @@ test('should match cli string argument', async ({ runInlineTest }) => {
       const { test } = pwt;
       test('pass', ({}) => {});
     `
-  }, {}, {}, { additionalArgs: [`dir\\${path.sep}a`] });
+  }, {}, {}, { additionalArgs: [`dir${path.sep}a`] });
   expect(result.passed).toBe(1);
   expect(result.report.suites.map(s => s.file).sort()).toEqual(['a.test.ts']);
   expect(result.exitCode).toBe(0);
