@@ -151,7 +151,13 @@ class RawReporter {
         testMatch: serializePatterns(project.testMatch),
         timeout: project.timeout,
       },
-      suites: suite.suites.map(s => this._serializeSuite(s))
+      suites: suite.suites.map(fileSuite => {
+        // fileId is based on the location of the enclosing file suite.
+        // Don't use the file in test/suite location, it can be different
+        // due to the source map / require.
+        const fileId = calculateSha1(fileSuite.location!.file.split(path.sep).join('/'));
+        return this._serializeSuite(fileSuite, fileId);
+      })
     };
     for (const file of this.stepsInFile.keys()) {
       let source: string;
@@ -181,14 +187,13 @@ class RawReporter {
     return report;
   }
 
-  private _serializeSuite(suite: Suite): JsonSuite {
+  private _serializeSuite(suite: Suite, fileId: string): JsonSuite {
     const location = this._relativeLocation(suite.location);
-    const fileId = calculateSha1(location!.file.split(path.sep).join('/'));
     return {
       title: suite.title,
       fileId,
       location,
-      suites: suite.suites.map(s => this._serializeSuite(s)),
+      suites: suite.suites.map(s => this._serializeSuite(s, fileId)),
       tests: suite.tests.map(t => this._serializeTest(t, fileId)),
       hooks: [],
     };
