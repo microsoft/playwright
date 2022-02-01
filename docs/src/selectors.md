@@ -202,7 +202,7 @@ Selectors are strings that are used to create [Locator]s. Locators are used to p
   page.locator("_vue=list-item[text *= 'milk' i]").click();
   ```
   ```python async
-  await page.locator("_vue=list-item[text *= "milk" i]").click()
+  await page.locator("_vue=list-item[text *= 'milk' i]").click()
   ```
   ```python sync
   page.locator("_vue=list-item[text *= 'milk' i]").click()
@@ -645,7 +645,7 @@ to compute distance and relative position of the elements.
 
 ```js
 // Fill an input to the right of "Username".
-await page.locator('input:right-of(:text("Username"))', 'value').fill();
+await page.locator('input:right-of(:text("Username"))').fill('value');
 
 // Click a button near the promo card.
 await page.locator('button:near(.promo-card)').click();
@@ -653,7 +653,7 @@ await page.locator('button:near(.promo-card)').click();
 
 ```java
 // Fill an input to the right of "Username".
-page.locator("input:right-of(:text(\"Username\"))", "value").fill();
+page.locator("input:right-of(:text(\"Username\"))").fill("value");
 
 // Click a button near the promo card.
 page.locator("button:near(.promo-card)").click();
@@ -661,7 +661,7 @@ page.locator("button:near(.promo-card)").click();
 
 ```python async
 # Fill an input to the right of "Username".
-await page.locator('input:right-of(:text("Username"))', 'value').fill()
+await page.locator('input:right-of(:text("Username"))').fill('value')
 
 # Click a button near the promo card.
 await page.locator('button:near(.promo-card)').click()
@@ -669,7 +669,7 @@ await page.locator('button:near(.promo-card)').click()
 
 ```python sync
 # Fill an input to the right of "Username".
-page.locator('input:right-of(:text("Username"))', 'value').fill()
+page.locator('input:right-of(:text("Username"))').fill('value')
 
 # Click a button near the promo card.
 page.locator('button:near(.promo-card)').click()
@@ -677,7 +677,7 @@ page.locator('button:near(.promo-card)').click()
 
 ```csharp
 // Fill an input to the right of "Username".
-await page.Locator("input:right-of(:text(\"Username\"))", "value").FillAsync();
+await page.Locator("input:right-of(:text(\"Username\"))").FillAsync("value");
 
 // Click a button near the promo card.
 await page.Locator("button:near(.promo-card)").ClickAsync();
@@ -824,7 +824,7 @@ the following attributes are supported:
 
 ```js
 // Fill an input with the id "username"
-await page.locator('id=username', 'value').fill();
+await page.locator('id=username').fill('value');
 
 // Click an element with data-test-id "submit"
 await page.locator('data-test-id=submit').click();
@@ -832,7 +832,7 @@ await page.locator('data-test-id=submit').click();
 
 ```java
 // Fill an input with the id "username"
-page.locator("id=username", "value").fill();
+page.locator("id=username").fill("value");
 
 // Click an element with data-test-id "submit"
 page.locator("data-test-id=submit").click();
@@ -840,7 +840,7 @@ page.locator("data-test-id=submit").click();
 
 ```python async
 # Fill an input with the id "username"
-await page.locator('id=username', 'value').fill()
+await page.locator('id=username').fill('value')
 
 # Click an element with data-test-id "submit"
 await page.locator('data-test-id=submit').click()
@@ -848,7 +848,7 @@ await page.locator('data-test-id=submit').click()
 
 ```python sync
 # Fill an input with the id "username"
-page.locator('id=username', 'value').fill()
+page.locator('id=username').fill('value')
 
 # Click an element with data-test-id "submit"
 page.locator('data-test-id=submit').click()
@@ -856,7 +856,7 @@ page.locator('data-test-id=submit').click()
 
 ```csharp
 // Fill an input with the id "username"
-await page.Locator("id=username", "value").FillAsync();
+await page.Locator("id=username").FillAsync("value");
 
 // Click an element with data-test-id "submit"
 await page.Locator("data-test-id=submit").ClickAsync();
@@ -984,8 +984,8 @@ await page.locator('text="Login"').click();
 await page.locator('"Login"').click(); // short-form
 
 // queries "Search GitHub" placeholder attribute
-await page.locator('css=[placeholder="Search GitHub"]', 'query').fill();
-await page.locator('[placeholder="Search GitHub"]', 'query').fill(); // short-form
+await page.locator('css=[placeholder="Search GitHub"]').fill('query');
+await page.locator('[placeholder="Search GitHub"]').fill('query'); // short-form
 
 // queries "Close" accessibility label
 await page.locator('css=[aria-label="Close"]').click();
@@ -1001,8 +1001,8 @@ page.locator("text=\"Login\"").click();
 page.locator("\"Login\"").click(); // short-form
 
 // queries "Search GitHub" placeholder attribute
-page.locator("css=[placeholder='Search GitHub']", "query").fill();
-page.locator("[placeholder='Search GitHub']", "query").fill(); // short-form
+page.locator("css=[placeholder='Search GitHub']").fill("query");
+page.locator("[placeholder='Search GitHub']").fill("query"); // short-form
 
 // queries "Close" accessibility label
 page.locator("css=[aria-label='Close']").click();
@@ -1018,8 +1018,8 @@ await page.locator('text="Login"').click()
 await page.locator('"Login"').click() # short-form
 
 # queries "Search GitHub" placeholder attribute
-await page.locator('css=[placeholder="Search GitHub"]', 'query').fill()
-await page.locator('[placeholder="Search GitHub"]', 'query').fill() # short-form
+await page.locator('css=[placeholder="Search GitHub"]').fill('query')
+await page.locator('[placeholder="Search GitHub"]').fill('query') # short-form
 
 # queries "Close" accessibility label
 await page.locator('css=[aria-label="Close"]').click()
@@ -1035,8 +1035,8 @@ page.locator('text="Login"').click()
 page.locator('"Login"').click() # short-form
 
 # queries "Search GitHub" placeholder attribute
-page.locator('css=[placeholder="Search GitHub"]').fill()
-page.locator('[placeholder="Search GitHub"]').fill() # short-form
+page.locator('css=[placeholder="Search GitHub"]').fill('query')
+page.locator('[placeholder="Search GitHub"]').fill('query') # short-form
 
 # queries "Close" accessibility label
 page.locator('css=[aria-label="Close"]').click()
@@ -1052,8 +1052,8 @@ await page.Locator("text=\"Login\"").ClickAsync();
 await page.Locator("\"Login\"").ClickAsync(); // short-form
 
 // queries "Search GitHub" placeholder attribute
-await page.Locator("css=[placeholder='Search GitHub']", "query").FillAsync();
-await page.Locator("[placeholder='Search GitHub']", "query").FillAsync(); // short-form
+await page.Locator("css=[placeholder='Search GitHub']").FillAsync("query");
+await page.Locator("[placeholder='Search GitHub']").FillAsync("query"); // short-form
 
 // queries "Close" accessibility label
 await page.Locator("css=[aria-label='Close']").ClickAsync();
