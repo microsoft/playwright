@@ -20,7 +20,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
 import { Dispatcher, TestGroup } from './dispatcher';
-import { createFileMatcher, createTitleMatcher, FilePatternFilter } from './util';
+import { createFileMatcher, createTitleMatcher, FilePatternFilter, serializeError } from './util';
 import { TestCase, Suite } from './test';
 import { Loader } from './loader';
 import { FullResult, Reporter, TestError } from '../types/testReporter';
@@ -39,7 +39,6 @@ import { Config, FullConfig } from './types';
 import { WebServer } from './webServer';
 import { raceAgainstTimeout } from 'playwright-core/lib/utils/async';
 import { SigIntWatcher } from 'playwright-core/lib/utils/utils';
-import { serializeError } from './util';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -155,15 +154,15 @@ export class Runner {
     return fullResult;
   }
 
-  async listAllTestFiles(config: Config, projectNames: string[] | undefined): Promise<any> {
+  async listTestFiles(configFile: string, projectNames: string[] | undefined): Promise<any> {
     const filesByProject = await this._collectFiles([], projectNames);
     const report: any = {
-      testDir: config.testDir,
       projects: []
     };
     for (const [project, files] of filesByProject) {
       report.projects.push({
         name: project.config.name,
+        testDir: path.resolve(configFile, project.config.testDir),
         files: files
       });
     }

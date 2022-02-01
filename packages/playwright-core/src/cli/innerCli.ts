@@ -246,7 +246,7 @@ if (!process.env.PW_LANG_NAME) {
   if (playwrightTestPackagePath) {
     require(playwrightTestPackagePath).addTestCommand(program);
     require(playwrightTestPackagePath).addShowReportCommand(program);
-    require(playwrightTestPackagePath).addListTestsCommand(program);
+    require(playwrightTestPackagePath).addListFilesCommand(program);
   } else {
     {
       const command = program.command('test').allowUnknownOption(true);

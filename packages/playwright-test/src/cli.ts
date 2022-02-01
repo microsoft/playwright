@@ -73,14 +73,14 @@ Examples:
   $ npx playwright test --browser=webkit`);
 }
 
-export function addListTestsCommand(program: Command) {
-  const command = program.command('list-tests [test-filter...]', { hidden: true });
-  command.description('List tests with Playwright Test');
+export function addListFilesCommand(program: Command) {
+  const command = program.command('list-files [file-filter...]', { hidden: true });
+  command.description('List files with Playwright Test tests');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional ${kDefaultConfigFiles.map(file => `"${file}"`).join('/')}`);
   command.option('--project <project-name...>', `Only run tests from the specified list of projects (default: list all projects)`);
   command.action(async (args, opts) => {
     try {
-      await listTests(opts);
+      await listTestFiles(opts);
     } catch (e) {
       console.error(e);
       process.exit(1);
@@ -167,11 +167,11 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
 }
 
 
-async function listTests(opts: { [key: string]: any }) {
+async function listTestFiles(opts: { [key: string]: any }) {
   const configFile = opts.config ? path.resolve(process.cwd(), opts.config) : process.cwd();
   const runner = new Runner({}, { defaultConfig: {} });
-  const config = await runner.loadConfigFromFile(configFile);
-  const report = await runner.listAllTestFiles(config, opts.project);
+  await runner.loadConfigFromFile(configFile);
+  const report = await runner.listTestFiles(configFile, opts.project);
   process.stdout.write(JSON.stringify(report), () => {
     process.exit(0);
   });
