@@ -1,8 +1,7 @@
 # class: Electron
 * langs: js
 
-Playwright has **experimental** support for Electron automation. Minimal supported Electron version is **12**.
-You can access electron namespace via:
+Playwright has **experimental** support for Electron automation. You can access electron namespace via:
 
 ```js
 const { _electron } = require('playwright');
@@ -45,6 +44,11 @@ Note that since you don't need Playwright to install web browsers when testing E
 ```bash js
 PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright
 ```
+
+**Supported Electron versions are:**
+* v12.2.0+
+* v13.4.0+
+* v14+
 
 ## async method: Electron.launch
 - returns: <[ElectronApplication]>
