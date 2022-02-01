@@ -67,7 +67,7 @@ async function innerCheckDeps(root, checkDepsFile) {
   }
 
   for (const dep of deps) {
-    const resolved = require.resolve(dep);
+    const resolved = require.resolve(dep, { paths: [root] });
     if (dep === resolved || !resolved.includes('node_modules'))
       deps.delete(dep);
   }
@@ -95,7 +95,7 @@ async function innerCheckDeps(root, checkDepsFile) {
       const importPath = path.resolve(path.dirname(fileName), importName) + '.ts';
       if (checkDepsFile && !allowImport(fileName, importPath))
         errors.push(`Disallowed import ${path.relative(root, importPath)} in ${path.relative(root, fileName)}`);
-      if (checkDepsFile && !allowExternalImport(fileName, importPath, importName))
+      if (checkDepsFile && !allowExternalImport(importPath, importName, root))
         errors.push(`Disallowed external dependency ${importName} from ${path.relative(root, fileName)}`);
     }
     ts.forEachChild(node, x => visit(x, fileName));
@@ -135,7 +135,7 @@ async function innerCheckDeps(root, checkDepsFile) {
   }
 
 
-  function allowExternalImport(from, importPath, importName) {
+  function allowExternalImport(importPath, importName, root) {
     const EXTERNAL_IMPORT_ALLOWLIST = ['electron'];
     // Only external imports are relevant. Files in src/web are bundled via webpack.
     if (importName.startsWith('.') || importPath.startsWith(path.join(src, 'web')))
@@ -143,7 +143,7 @@ async function innerCheckDeps(root, checkDepsFile) {
     if (EXTERNAL_IMPORT_ALLOWLIST.includes(importName))
       return true;
     try {
-      const resolvedImport = require.resolve(importName);
+      const resolvedImport = require.resolve(importName, { paths: [root] });
       const resolvedImportRelativeToNodeModules = path.relative(path.join(root, 'node_modules'), resolvedImport);
       // Filter out internal Node.js modules
       if (!resolvedImportRelativeToNodeModules.startsWith(importName))
