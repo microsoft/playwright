@@ -11,7 +11,7 @@ if [[ ($1 == '--help') || ($1 == '-h') ]]; then
   echo "Upload ZIP-PATH to BLOB-PATH in 'builds' container."
   echo
   echo "--check      pass |--check| as a second parameter instead of a zip-path to check for"
-  echo "             existance of BLOB-PATH"
+  echo "             existence of BLOB-PATH"
   echo
   echo "NOTE: \$AZ_ACCOUNT_KEY (azure account name) and \$AZ_ACCOUNT_NAME (azure account name)"
   echo "env variables are required to upload builds to CDN."
