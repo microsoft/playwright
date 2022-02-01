@@ -461,3 +461,21 @@ test('should group similar / loop steps', async ({ runInlineTest, showReport, pa
     /expect\.toEqual.*20/,
   ]);
 });
+
+test('open tests from required file', async ({ runInlineTest, showReport, page }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11742' });
+  const result = await runInlineTest({
+    'inner.js': `
+      const { test, expect } = pwt;
+      test('sample', async ({}) => { expect(2).toBe(2); });
+    `,
+    'a.spec.js': `require('./inner')`
+  }, { 'reporter': 'dot,html' });
+  expect(result.exitCode).toBe(0);
+  await showReport();
+
+  await page.locator('text=sample').first().click();
+  await expect(page.locator('.tree-item-title')).toContainText([
+    /expect\.toBe/,
+  ]);
+});
