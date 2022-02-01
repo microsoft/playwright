@@ -24,11 +24,6 @@ Reporter is given a root suite in the [`method: Reporter.onBegin`] method.
 
 Returns the list of all test cases in this suite and its descendants, as opposite to [`property: Suite.tests`].
 
-## property: Suite.loadError
-- type: <[void]|[TestError]>
-
-For file suites, contains errors that occurred while loading this file.
-
 ## property: Suite.location
 - type: <[void]|[Location]>
 

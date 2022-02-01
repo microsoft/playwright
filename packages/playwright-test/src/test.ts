@@ -40,7 +40,6 @@ export type Modifier = {
 export class Suite extends Base implements reporterTypes.Suite {
   suites: Suite[] = [];
   tests: TestCase[] = [];
-  loadError?: reporterTypes.TestError;
   location?: Location;
   parent?: Suite;
   _use: FixturesWithLocation[] = [];
@@ -53,6 +52,7 @@ export class Suite extends Base implements reporterTypes.Suite {
   _modifiers: Modifier[] = [];
   _parallelMode: 'default' | 'serial' | 'parallel' = 'default';
   _projectConfig: FullProject | undefined;
+  _loadError?: reporterTypes.TestError;
 
   _addTest(test: TestCase) {
     test.parent = this;
