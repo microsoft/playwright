@@ -125,7 +125,7 @@ export class WorkerRunner extends EventEmitter {
     try {
       this._entries = new Map(runPayload.entries.map(e => [ e.testId, e ]));
       await this._loadIfNeeded();
-      const fileSuite = await this._loader.loadTestFile(runPayload.file);
+      const fileSuite = await this._loader.loadTestFile(runPayload.file, 'worker');
       const suite = this._project.cloneFileSuite(fileSuite, this._params.repeatEachIndex, test => {
         if (!this._entries.has(test._id))
           return false;

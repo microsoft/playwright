@@ -106,10 +106,6 @@ export function mergeObjects<A extends object, B extends object>(a: A | undefine
   return result as any;
 }
 
-export async function wrapInPromise(value: any) {
-  return value;
-}
-
 export function forceRegExp(pattern: string): RegExp {
   const match = pattern.match(/^\/(.*)\/([gi]*)$/);
   if (match)

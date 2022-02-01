@@ -71,6 +71,10 @@ export interface Suite {
    */
   title: string;
   /**
+   * For file suites, contains errors that occurred while loading this file.
+   */
+  loadError?: TestError;
+  /**
    * Location in the source where the suite is defined. Missing for root and project suites.
    */
   location?: Location;

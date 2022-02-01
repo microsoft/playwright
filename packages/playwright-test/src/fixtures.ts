@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { formatLocation, wrapInPromise, debugTest } from './util';
+import { formatLocation, debugTest } from './util';
 import * as crypto from 'crypto';
 import { FixturesWithLocation, Location, WorkerInfo, TestInfo } from './types';
 import { ManualPromise } from 'playwright-core/lib/utils/async';
@@ -78,7 +78,7 @@ class Fixture {
       await this._useFuncFinished;
     };
     const info = this.registration.scope === 'worker' ? workerInfo : testInfo;
-    this._selfTeardownComplete = wrapInPromise(this.registration.fn(params, useFunc, info)).catch((e: any) => {
+    this._selfTeardownComplete = Promise.resolve().then(() => this.registration.fn(params, useFunc, info)).catch((e: any) => {
       if (!useFuncStarted.isDone())
         useFuncStarted.reject(e);
       else

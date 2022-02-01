@@ -26,6 +26,7 @@ export interface Location {
 export interface Suite {
   parent?: Suite;
   title: string;
+  loadError?: TestError;
   location?: Location;
   suites: Suite[];
   tests: TestCase[];
