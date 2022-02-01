@@ -17,7 +17,7 @@
 import colors from 'colors/safe';
 import * as fs from 'fs';
 import * as path from 'path';
-import { test, expect, stripAscii } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 const files = {
   'helper.ts': `
@@ -91,7 +91,7 @@ test('should write detailed failure result to an output folder', async ({ runInl
   });
 
   expect(result.exitCode).toBe(1);
-  const outputText = stripAscii(result.output);
+  const outputText = stripAnsi(result.output);
   expect(outputText).toContain('Snapshot comparison failed:');
   const expectedSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-expected.txt');
   const actualSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-actual.txt');
@@ -114,7 +114,7 @@ test("doesn\'t create comparison artifacts in an output folder for passed negate
   });
 
   expect(result.exitCode).toBe(0);
-  const outputText = stripAscii(result.output);
+  const outputText = stripAnsi(result.output);
   const expectedSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-expected.txt');
   const actualSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-actual.txt');
   expect(outputText).not.toContain(`Expected: ${expectedSnapshotArtifactPath}`);
@@ -406,7 +406,7 @@ test('should compare different PNG images', async ({ runInlineTest }, testInfo) 
     `
   });
 
-  const outputText = stripAscii(result.output);
+  const outputText = stripAnsi(result.output);
   expect(result.exitCode).toBe(1);
   expect(outputText).toContain('Snapshot comparison failed:');
   const expectedSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-expected.png');
@@ -636,7 +636,7 @@ test('should attach expected/actual/diff with snapshot path', async ({ runInline
     `
   });
 
-  const outputText = stripAscii(result.output);
+  const outputText = stripAnsi(result.output);
   const attachments = outputText.split('\n').filter(l => l.startsWith('## ')).map(l => l.substring(3)).map(l => JSON.parse(l))[0];
   for (const attachment of attachments)
     attachment.path = attachment.path.replace(/\\/g, '/').replace(/.*test-results\//, '');
@@ -675,7 +675,7 @@ test('should attach expected/actual/diff', async ({ runInlineTest }, testInfo) =
     `
   });
 
-  const outputText = stripAscii(result.output);
+  const outputText = stripAnsi(result.output);
   const attachments = outputText.split('\n').filter(l => l.startsWith('## ')).map(l => l.substring(3)).map(l => JSON.parse(l))[0];
   for (const attachment of attachments)
     attachment.path = attachment.path.replace(/\\/g, '/').replace(/.*test-results\//, '');
@@ -714,7 +714,7 @@ test('should attach expected/actual and no diff', async ({ runInlineTest }, test
     `
   });
 
-  const outputText = stripAscii(result.output);
+  const outputText = stripAnsi(result.output);
   expect(outputText).toContain('Sizes differ; expected image 2px X 2px, but got 1px X 1px.');
   const attachments = outputText.split('\n').filter(l => l.startsWith('## ')).map(l => l.substring(3)).map(l => JSON.parse(l))[0];
   for (const attachment of attachments)

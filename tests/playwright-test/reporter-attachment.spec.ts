@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAscii } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 test('render text attachment', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -30,7 +30,7 @@ test('render text attachment', async ({ runInlineTest }) => {
       });
     `,
   }, { reporter: 'line' });
-  const text = stripAscii(result.output);
+  const text = stripAnsi(result.output);
   expect(text).toContain('    attachment #1: attachment (text/plain) ---------------------------------------------------------');
   expect(text).toContain('    Hello world');
   expect(text).toContain('    ------------------------------------------------------------------------------------------------');
@@ -51,7 +51,7 @@ test('render screenshot attachment', async ({ runInlineTest }) => {
       });
     `,
   }, { reporter: 'line' });
-  const text = stripAscii(result.output).replace(/\\/g, '/');
+  const text = stripAnsi(result.output).replace(/\\/g, '/');
   expect(text).toContain('    attachment #1: screenshot (image/png) ----------------------------------------------------------');
   expect(text).toContain('    test-results/a-one/some/path.png');
   expect(text).toContain('    ------------------------------------------------------------------------------------------------');
@@ -72,7 +72,7 @@ test('render trace attachment', async ({ runInlineTest }) => {
       });
     `,
   }, { reporter: 'line' });
-  const text = stripAscii(result.output).replace(/\\/g, '/');
+  const text = stripAnsi(result.output).replace(/\\/g, '/');
   expect(text).toContain('    attachment #1: trace (application/zip) ---------------------------------------------------------');
   expect(text).toContain('    test-results/a-one/trace.zip');
   expect(text).toContain('npx playwright show-trace test-results/a-one/trace.zip');
@@ -95,7 +95,7 @@ test(`testInfo.attach errors`, async ({ runInlineTest }) => {
       });
     `,
   }, { reporter: 'line', workers: 1 });
-  const text = stripAscii(result.output).replace(/\\/g, '/');
+  const text = stripAnsi(result.output).replace(/\\/g, '/');
   expect(text).toMatch(/Error: ENOENT: no such file or directory, copyfile '.*foo.txt.*'/);
   expect(text).toContain(`Exactly one of "path" and "body" must be specified`);
   expect(result.passed).toBe(0);
@@ -112,7 +112,7 @@ test(`testInfo.attach errors with empty path`, async ({ runInlineTest }) => {
       });
     `,
   }, { reporter: 'line', workers: 1 });
-  expect(stripAscii(result.output)).toMatch(/Error: ENOENT: no such file or directory, copyfile ''/);
+  expect(stripAnsi(result.output)).toMatch(/Error: ENOENT: no such file or directory, copyfile ''/);
   expect(result.exitCode).toBe(1);
 });
 
@@ -129,7 +129,7 @@ test(`testInfo.attach error in fixture`, async ({ runInlineTest }) => {
       });
     `,
   }, { reporter: 'line', workers: 1 });
-  const text = stripAscii(result.output).replace(/\\/g, '/');
+  const text = stripAnsi(result.output).replace(/\\/g, '/');
   expect(text).toMatch(/Error: ENOENT: no such file or directory, copyfile '.*foo.txt.*'/);
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
@@ -154,7 +154,7 @@ test(`testInfo.attach success in fixture`, async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(stripAscii(result.output)).toContain('attachment #1: name (text/plain)');
+  expect(stripAnsi(result.output)).toContain('attachment #1: name (text/plain)');
 });
 
 test(`testInfo.attach allow empty string body`, async ({ runInlineTest }) => {
@@ -169,7 +169,7 @@ test(`testInfo.attach allow empty string body`, async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(stripAscii(result.output)).toMatch(/^.*attachment #1: name \(text\/plain\).*\n.*\n.*------/gm);
+  expect(stripAnsi(result.output)).toMatch(/^.*attachment #1: name \(text\/plain\).*\n.*\n.*------/gm);
 });
 
 test(`testInfo.attach allow empty buffer body`, async ({ runInlineTest }) => {
@@ -184,5 +184,5 @@ test(`testInfo.attach allow empty buffer body`, async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(stripAscii(result.output)).toMatch(/^.*attachment #1: name \(text\/plain\).*\n.*\n.*------/gm);
+  expect(stripAnsi(result.output)).toMatch(/^.*attachment #1: name \(text\/plain\).*\n.*\n.*------/gm);
 });

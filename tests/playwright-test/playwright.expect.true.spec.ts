@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAscii } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 test('should support toBeChecked', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -46,7 +46,7 @@ test('should support toBeChecked', async ({ runInlineTest }) => {
       });
       `,
   }, { workers: 1 });
-  const output = stripAscii(result.output);
+  const output = stripAnsi(result.output);
   expect(output).toContain('Error: expect(received).toBeChecked()');
   expect(output).toContain('expect(locator).toBeChecked');
   expect(result.passed).toBe(3);
@@ -90,7 +90,7 @@ test('should support toBeChecked w/ not', async ({ runInlineTest }) => {
       });
       `,
   }, { workers: 1 });
-  const output = stripAscii(result.output);
+  const output = stripAnsi(result.output);
   expect(result.passed).toBe(2);
   expect(result.failed).toBe(3);
   expect(result.exitCode).toBe(1);
@@ -172,7 +172,7 @@ test('should support toBeEditable, toBeEnabled, toBeDisabled, toBeEmpty', async 
   expect(result.passed).toBe(8);
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
-  const output = stripAscii(result.output);
+  const output = stripAnsi(result.output);
   expect(output).toContain('expect(locator).toBeEnabled({ timeout: 500 }');
 });
 

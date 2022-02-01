@@ -19,6 +19,12 @@ expect(value).not.toEqual(0);
 await expect(locator).not.toContainText("some text");
 ```
 
+You can also specify a custom error message as a second argument to the `expect` function, for example:
+
+```js
+expect(value, 'my custom error message').toBe(42);
+```
+
 <!-- TOC -->
 - [`method: LocatorAssertions.toBeChecked`]
 - [`method: LocatorAssertions.toBeDisabled`]

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAscii } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 import { ZipFileSystem } from '../../packages/playwright-core/lib/utils/vfs';
 import fs from 'fs';
 
@@ -108,8 +108,8 @@ test('should not throw with trace and timeouts', async ({ runInlineTest }, testI
   }, { workers: 2 });
 
   expect(result.exitCode).toBe(1);
-  expect(stripAscii(result.output)).not.toContain('tracing.stopChunk:');
-  expect(stripAscii(result.output)).not.toContain('tracing.stop:');
+  expect(stripAnsi(result.output)).not.toContain('tracing.stopChunk:');
+  expect(stripAnsi(result.output)).not.toContain('tracing.stop:');
 });
 
 test('should save sources when requested', async ({ runInlineTest }, testInfo) => {

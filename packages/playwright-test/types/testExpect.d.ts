@@ -28,7 +28,7 @@ type MakeMatchers<T, ReturnValue = T> = PlaywrightTest.Matchers<ReturnValue> &
   ExtraMatchers<T, APIResponse, APIResponseMatchers>
 
 export declare type Expect = {
-  <T = unknown>(actual: T): MakeMatchers<T>;
+  <T = unknown>(actual: T, message?: string): MakeMatchers<T>;
 
   // Sourced from node_modules/expect/build/types.d.ts
   assertions(arg0: number): void;

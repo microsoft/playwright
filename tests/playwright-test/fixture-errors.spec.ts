@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, countTimes, stripAscii } from './playwright-test-fixtures';
+import { test, expect, countTimes, stripAnsi } from './playwright-test-fixtures';
 
 test('should handle fixture timeout', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -452,6 +452,6 @@ test('should not report fixture teardown error twice', async ({ runInlineTest })
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('Error: Oh my error');
-  expect(stripAscii(result.output)).toContain(`throw new Error('Oh my error')`);
+  expect(stripAnsi(result.output)).toContain(`throw new Error('Oh my error')`);
   expect(countTimes(result.output, 'Oh my error')).toBe(2);
 });

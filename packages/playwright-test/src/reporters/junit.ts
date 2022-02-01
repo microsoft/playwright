@@ -197,11 +197,10 @@ function serializeXML(entry: XMLEntry, tokens: string[], stripANSIControlSequenc
 
 // See https://en.wikipedia.org/wiki/Valid_characters_in_XML
 const discouragedXMLCharacters = /[\u0001-\u0008\u000b-\u000c\u000e-\u001f\u007f-\u0084\u0086-\u009f]/g;
-const ansiControlSequence = new RegExp('[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))', 'g');
 
 function escape(text: string, stripANSIControlSequences: boolean, isCharacterData: boolean): string {
   if (stripANSIControlSequences)
-    text = text.replace(ansiControlSequence, '');
+    text = stripAnsiEscapes(text);
   const escapeRe = isCharacterData ? /[&<]/g : /[&"<>]/g;
   text = text.replace(escapeRe, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]!));
   if (isCharacterData)

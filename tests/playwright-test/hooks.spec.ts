@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAscii } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 test('hooks should work with fixtures', async ({ runInlineTest }) => {
   const { results } = await runInlineTest({
@@ -546,8 +546,8 @@ test('uncaught error in beforeEach should not be masked by another error', async
   });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(stripAscii(result.output)).toContain('Expected: 2');
-  expect(stripAscii(result.output)).toContain('Received: 1');
+  expect(stripAnsi(result.output)).toContain('Expected: 2');
+  expect(stripAnsi(result.output)).toContain('Received: 1');
 });
 
 test('should report error from fixture teardown when beforeAll times out', async ({ runInlineTest }) => {
@@ -569,8 +569,8 @@ test('should report error from fixture teardown when beforeAll times out', async
   }, { timeout: 1000 });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(stripAscii(result.output)).toContain('Timeout of 1000ms exceeded in beforeAll hook.');
-  expect(stripAscii(result.output)).toContain('Error: Oh my!');
+  expect(stripAnsi(result.output)).toContain('Timeout of 1000ms exceeded in beforeAll hook.');
+  expect(stripAnsi(result.output)).toContain('Error: Oh my!');
 });
 
 test('should not hang and report results when worker process suddenly exits during afterAll', async ({ runInlineTest }) => {
@@ -584,6 +584,6 @@ test('should not hang and report results when worker process suddenly exits duri
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(1);
   expect(result.output).toContain('Worker process exited unexpectedly');
-  expect(stripAscii(result.output)).toContain('[1/1] a.spec.js:6:7 › passed');
-  expect(stripAscii(result.output)).toContain('[1/1] a.spec.js:7:12 › afterAll');
+  expect(stripAnsi(result.output)).toContain('[1/1] a.spec.js:6:7 › passed');
+  expect(stripAnsi(result.output)).toContain('[1/1] a.spec.js:7:12 › afterAll');
 });

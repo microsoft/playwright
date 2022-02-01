@@ -16,7 +16,7 @@
 
 import * as path from 'path';
 import * as fs from 'fs';
-import { test, expect, stripAscii } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 test('should support spec.ok', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -215,6 +215,6 @@ test('should add dot in addition to file json', async ({ runInlineTest }, testIn
     `,
   }, { reporter: '' });
   expect(result.exitCode).toBe(0);
-  expect(stripAscii(result.output)).toContain('·');
+  expect(stripAnsi(result.output)).toContain('·');
   expect(fs.existsSync(testInfo.outputPath('a.json'))).toBeTruthy();
 });
