@@ -51,7 +51,7 @@ def test_navigates_to_login_page(page: Page) -> None:
 * langs: java, js
 - returns: <[APIResponseAssertions]>
 
-Makes the assertion check for the opposite condition. For example, this code tests that the response status is not successfull:
+Makes the assertion check for the opposite condition. For example, this code tests that the response status is not successful:
 
 ```js
 await expect(response).not.toBeOK();

@@ -63,7 +63,7 @@ test('should work and remove non-failures', async ({ runInlineTest }, testInfo) 
 
   expect(fs.existsSync(testInfo.outputPath('test-results', 'my-test-test-1-chromium'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'my-test-test-1-chromium-retry1'))).toBe(true);
-  // Last retry is successfull, so output dir should be removed.
+  // Last retry is successful, so output dir should be removed.
   expect(fs.existsSync(testInfo.outputPath('test-results', 'my-test-test-1-chromium-retry2'))).toBe(false);
 });
 
