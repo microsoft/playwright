@@ -108,7 +108,9 @@ function test_screencast {
 function test_typescript_types {
   initialize_test "${FUNCNAME[0]}"
   copy_test_scripts
-  # @types/node is the last version which is compatibel with typescript@3.7.5
+  # @types/node@14.18.9 is the last version which is compatibel with typescript@3.7.5.
+  # After @types/node@14.18.9 URLSearchParams from @types/node conflicts with typescript's
+  # shipped types and it results in a type error / build failure.
   npm install -D @types/node@14.18.9
 
   # install all packages.
