@@ -13352,7 +13352,8 @@ export interface Download {
 }
 
 /**
- * Playwright has **experimental** support for Electron automation. You can access electron namespace via:
+ * Playwright has **experimental** support for Electron automation. Minimal supported Electron version is **12**. You can
+ * access electron namespace via:
  *
  * ```js
  * const { _electron } = require('playwright');
