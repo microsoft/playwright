@@ -473,7 +473,7 @@ test('open tests from required file', async ({ runInlineTest, showReport, page }
   }, { 'reporter': 'dot,html' });
   expect(result.exitCode).toBe(0);
   await showReport();
-
+  await expect(page.locator('text=a.spec.js')).toBeVisible();
   await page.locator('text=sample').first().click();
   await expect(page.locator('.tree-item-title')).toContainText([
     /expect\.toBe/,

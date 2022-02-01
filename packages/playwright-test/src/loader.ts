@@ -132,6 +132,27 @@ export class Loader {
     } finally {
       setCurrentlyLoadingFileSuite(undefined);
     }
+
+    {
+      // Test locations that we discover potentially have different file name.
+      // This could be due to either
+      //   a) use of source maps or due to
+      //   b) require of one file from another.
+      // Try fixing (a) w/o regressing (b).
+
+      const files = new Set<string>();
+      suite.allTests().map(t => files.add(t.location.file));
+      if (files.size === 1) {
+        // All tests point to one file.
+        const mappedFile = files.values().next().value;
+        if (suite.location.file !== mappedFile) {
+          // The file is different, check for a likely source map case.
+          if (path.extname(mappedFile) !== path.extname(suite.location.file))
+            suite.location.file = mappedFile;
+        }
+      }
+    }
+
     return suite;
   }
 
