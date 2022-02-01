@@ -15,7 +15,7 @@ jobs:
       with:
         node-version: 12
         registry-url: 'https://registry.npmjs.org'
-    - run: npm i -g npm@8
+    - run: npm i -g npm@8.3
     - run: npm ci
     - run: npm run build
     - run: npx playwright install-deps
