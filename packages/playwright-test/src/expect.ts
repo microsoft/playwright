@@ -92,14 +92,22 @@ export const printReceivedStringContainExpectedResult = (
 
 // #endregion
 
+function createExpect(actual: unknown, message: string|undefined, isSoft: boolean) {
+  if (message !== undefined && typeof message !== 'string')
+    throw new Error('expect(actual, optionalErrorMessage): optional error message must be a string.');
+  return new Proxy(expectLibrary(actual), new ExpectMetaInfoProxyHandler(message || '', isSoft));
+}
+
 export const expect: Expect = new Proxy(expectLibrary as any, {
   apply: function(target: any, thisArg: any, argumentsList: [actual: unknown, message: string|undefined]) {
-    const message = argumentsList[1];
-    if (message !== undefined && typeof message !== 'string')
-      throw new Error('expect(actual, optionalErrorMessage): optional error message must be a string.');
-    return new Proxy(expectLibrary.call(thisArg, argumentsList[0]), new ExpectMetaInfoProxyHandler(message || ''));
+    const [actual, message] = argumentsList;
+    return createExpect(actual, message, false /* isSoft */);
   }
 });
+
+expect.soft = (actual: unknown, message: string|undefined) => {
+  return createExpect(actual, message, true /* isSoft */);
+};
 
 expectLibrary.setState({ expand: false });
 const customMatchers = {
@@ -128,15 +136,18 @@ const customMatchers = {
 
 type ExpectMetaInfo = {
   message: string;
+  isSoft: boolean;
 };
 
 let expectCallMetaInfo: undefined|ExpectMetaInfo = undefined;
 
 class ExpectMetaInfoProxyHandler {
   private _message: string;
+  private _isSoft: boolean;
 
-  constructor(message: string) {
+  constructor(message: string, isSoft: boolean) {
     this._message = message;
+    this._isSoft = isSoft;
   }
 
   get(target: any, prop: any, receiver: any): any {
@@ -144,12 +155,26 @@ class ExpectMetaInfoProxyHandler {
     if (typeof value !== 'function')
       return new Proxy(value, this);
     return (...args: any[]) => {
+      const testInfo = currentTestInfo();
+      if (!testInfo)
+        return value.call(target, ...args);
+      const handleError = (e: Error) => {
+        if (this._isSoft || (prop === 'toMatchSnapshot' && e.message.includes('missing')))
+          testInfo._addError(serializeError(e));
+        else
+          throw e;
+      };
       try {
         expectCallMetaInfo = {
           message: this._message,
+          isSoft: this._isSoft,
         };
-        const result = value.call(target, ...args);
+        let result = value.call(target, ...args);
+        if ((result instanceof Promise))
+          result = result.catch(handleError);
         return result;
+      } catch (e) {
+        handleError(e);
       } finally {
         expectCallMetaInfo = undefined;
       }
@@ -172,10 +197,11 @@ function wrap(matcherName: string, matcher: any) {
     const stackLines = new Error().stack!.split('\n').slice(INTERNAL_STACK_LENGTH + 1);
     const frame = stackLines[0] ? stackUtils.parseLine(stackLines[0]) : undefined;
     const customMessage = expectCallMetaInfo?.message ?? '';
+    const isSoft = expectCallMetaInfo?.isSoft ?? false;
     const step = testInfo._addStep({
       location: frame && frame.file ? { file: path.resolve(process.cwd(), frame.file), line: frame.line || 0, column: frame.column || 0 } : undefined,
       category: 'expect',
-      title: customMessage || `expect${this.isNot ? '.not' : ''}.${matcherName}`,
+      title: customMessage || `expect${isSoft ? '.soft' : ''}${this.isNot ? '.not' : ''}.${matcherName}`,
       canHaveChildren: true,
       forceNoParent: false
     });

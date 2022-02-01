@@ -93,7 +93,7 @@ export type TestResult = {
   startTime: string;
   duration: number;
   steps: TestStep[];
-  error?: string;
+  errors: string[];
   attachments: TestAttachment[];
   status: 'passed' | 'failed' | 'timedOut' | 'skipped';
 };
@@ -393,7 +393,7 @@ class HtmlBuilder {
       startTime: result.startTime,
       retry: result.retry,
       steps: result.steps.map(s => this._createTestStep(s)),
-      error: result.error,
+      errors: result.errors,
       status: result.status,
       attachments: result.attachments.map(a => {
         if (a.name === 'trace')

@@ -60,6 +60,7 @@ export class TestInfoImpl implements TestInfo {
   readonly outputDir: string;
   readonly snapshotDir: string;
   error: TestError | undefined = undefined;
+  errors: TestError[] = [];
 
   constructor(
     loader: Loader,
@@ -185,18 +186,22 @@ export class TestInfoImpl implements TestInfo {
     //   - fail after the timeout, e.g. due to fixture teardown.
     if (this.status === 'passed')
       this.status = 'failed';
-    if (this.error === undefined)
+    if (this.error === undefined) {
       this.error = error;
+      this.errors.push(error);
+    }
   }
 
-  _appendErrorMessage(message: string) {
-    // Do not overwrite any previous error status.
+  _addError(error: TestError) {
+    // Do not overwrite any previous error and error status.
+    // Some (but not all) scenarios include:
+    //   - expect() that fails after uncaught exception.
+    //   - fail after the timeout, e.g. due to fixture teardown.
     if (this.status === 'passed')
       this.status = 'failed';
     if (this.error === undefined)
-      this.error = { value: 'Error: ' + message };
-    else if (this.error.value)
-      this.error.value += '\nError: ' + message;
+      this.error = error;
+    this.errors.push(error);
   }
 
   // ------------ TestInfo methods ------------

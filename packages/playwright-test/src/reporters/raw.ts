@@ -83,7 +83,7 @@ export type JsonTestResult = {
   startTime: string;
   duration: number;
   status: TestStatus;
-  error?: JsonError;
+  errors: JsonError[];
   attachments: JsonAttachment[];
   steps: JsonTestStep[];
 };
@@ -224,7 +224,7 @@ class RawReporter {
       startTime: result.startTime.toISOString(),
       duration: result.duration,
       status: result.status,
-      error: formatResultFailure(this.config, test, result, '', true).tokens.join('').trim(),
+      errors: formatResultFailure(this.config, test, result, '', true).map(error => error.message),
       attachments: this._createAttachments(result),
       steps: dedupeSteps(result.steps.map(step => this._serializeStep(test, step)))
     };

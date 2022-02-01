@@ -128,10 +128,6 @@ export function compare(
       console.log(message);
       return { pass: true, message };
     }
-    if (updateSnapshots === 'missing') {
-      testInfo._appendErrorMessage(message);
-      return { pass: true, message };
-    }
     return { pass: false, message };
   }
 
