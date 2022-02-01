@@ -15,6 +15,7 @@
  */
 
 import { test, expect } from './playwright-test-fixtures';
+import path from 'path';
 
 test('should filter by file name', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -89,6 +90,14 @@ test('should run nothing for missing line', async ({ runInlineTest }) => {
       `,
     'foo/y.spec.ts': `pwt.test('fails', () => { expect(1).toBe(2); });`,
   }, undefined, undefined, { additionalArgs: ['x.spec.ts:10', 'y.spec.ts'] });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+});
+
+test('should escape path on windows', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'foo/test.spec.ts': `pwt.test('fails', () => { expect(1).toBe(2); });`,
+  }, undefined, undefined, { additionalArgs: [path.join('foo', 'test.spec.ts')] });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
 });
