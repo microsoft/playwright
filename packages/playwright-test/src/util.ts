@@ -65,7 +65,7 @@ export function createFileMatcher(patterns: string | RegExp | (string | RegExp)[
       if (re.test(filePath))
         return true;
     }
-    // Windows might still recieve unix style paths from Cygwin or Git Bash.
+    // Windows might still receive unix style paths from Cygwin or Git Bash.
     // Check against the file url as well.
     if (path.sep === '\\') {
       const fileURL = url.pathToFileURL(filePath).href;
