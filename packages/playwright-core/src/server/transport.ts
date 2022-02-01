@@ -94,7 +94,7 @@ export class WebSocketTransport implements ConnectionTransport {
       messageWrap(() => {
         try {
           if (this.onmessage)
-            this.onmessage.call(null, JSON.parse(event.data));
+            this.onmessage.call(null, JSON.parse(event.data as string));
         } catch (e) {
           this._ws.close();
         }

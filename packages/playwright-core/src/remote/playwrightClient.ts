@@ -50,7 +50,7 @@ export class PlaywrightClient {
         playwright = await connection.initializePlaywright();
         resolve(new PlaywrightClient(playwright, ws));
       });
-      ws.on('close', (code, reason) => connection.close(reason));
+      ws.on('close', (code, reason) => connection.close(reason.toString()));
     });
     let timer: NodeJS.Timeout;
     try {
