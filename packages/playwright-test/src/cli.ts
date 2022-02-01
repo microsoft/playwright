@@ -185,11 +185,10 @@ function forceRegExp(pattern: string): RegExp {
 }
 
 function overridesFromOptions(options: { [key: string]: any }): Config {
-  const isDebuggerAttached = !!require('inspector').url();
   const shardPair = options.shard ? options.shard.split('/').map((t: string) => parseInt(t, 10)) : undefined;
   return {
     forbidOnly: options.forbidOnly ? true : undefined,
-    globalTimeout: isDebuggerAttached ? 0 : (options.globalTimeout ? parseInt(options.globalTimeout, 10) : undefined),
+    globalTimeout: options.globalTimeout ? parseInt(options.globalTimeout, 10) : undefined,
     grep: options.grep ? forceRegExp(options.grep) : undefined,
     grepInvert: options.grepInvert ? forceRegExp(options.grepInvert) : undefined,
     maxFailures: options.x ? 1 : (options.maxFailures ? parseInt(options.maxFailures, 10) : undefined),
@@ -199,7 +198,7 @@ function overridesFromOptions(options: { [key: string]: any }): Config {
     retries: options.retries ? parseInt(options.retries, 10) : undefined,
     reporter: (options.reporter && options.reporter.length) ? options.reporter.split(',').map((r: string) => [resolveReporter(r)]) : undefined,
     shard: shardPair ? { current: shardPair[0], total: shardPair[1] } : undefined,
-    timeout: isDebuggerAttached ? 0 : (options.timeout ? parseInt(options.timeout, 10) : undefined),
+    timeout: options.timeout ? parseInt(options.timeout, 10) : undefined,
     updateSnapshots: options.updateSnapshots ? 'all' as const : undefined,
     workers: options.workers ? parseInt(options.workers, 10) : undefined,
   };
