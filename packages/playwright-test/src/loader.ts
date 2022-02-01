@@ -128,7 +128,7 @@ export class Loader {
     } catch (e) {
       if (environment === 'worker')
         throw e;
-      suite.loadError = serializeError(e);
+      suite._loadError = serializeError(e);
     } finally {
       setCurrentlyLoadingFileSuite(undefined);
     }

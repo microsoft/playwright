@@ -233,8 +233,8 @@ export class Runner {
     const preprocessRoot = new Suite('');
     for (const file of allTestFiles) {
       const fileSuite = await this._loader.loadTestFile(file, 'runner');
-      if (fileSuite.loadError)
-        fatalErrors.push(fileSuite.loadError);
+      if (fileSuite._loadError)
+        fatalErrors.push(fileSuite._loadError);
       preprocessRoot._addSuite(fileSuite);
     }
 
