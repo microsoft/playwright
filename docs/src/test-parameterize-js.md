@@ -177,3 +177,7 @@ export const test = base.test.extend<TestOptions>({
   },
 });
 ```
+
+:::note
+Parametrized projects behavior has changed in version 1.18. [Learn more](./release-notes#breaking-change-custom-config-options).
+:::

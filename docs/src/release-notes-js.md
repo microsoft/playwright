@@ -50,8 +50,49 @@ This will create a Playwright Test configuration file, optionally add examples, 
 ### New APIs & changes
 
 - new [`testCase.repeatEachIndex`](./api/class-testcase#test-case-repeat-each-index) API
-- new [option fixtures](./test-fixtures#fixtures-options)
 - [`acceptDownloads`](./api/class-browser#browser-new-context-option-accept-downloads) option now defaults to `true`
+
+### Breaking change: custom config options
+
+Custom config options are a convenient way to parametrize projects with different values. Learn more in [this guide](./test-parameterize#parameterized-projects).
+
+Previously, any fixture introduced through [`method: Test.extend`] could be overridden in the [`property: TestProject.use`] config section. For example,
+
+```js
+// WRONG: THIS SNIPPET DOES NOT WORK SINCE v1.18.
+
+// fixtures.js
+const test = base.extend({
+  myParameter: 'default',
+});
+
+// playwright.config.js
+module.exports = {
+  use: {
+    myParameter: 'value',
+  },
+};
+```
+
+The proper way to make a fixture parametrized in the config file is to specify `option: true` when defining the fixture. For example,
+
+```js
+// CORRECT: THIS SNIPPET WORKS SINCE v1.18.
+
+// fixtures.js
+const test = base.extend({
+  // Fixtures marked as "option: true" will get a value specified in the config,
+  // or fallback to the default value.
+  myParameter: ['default', { option: true }],
+});
+
+// playwright.config.js
+module.exports = {
+  use: {
+    myParameter: 'value',
+  },
+};
+```
 
 ### Browser Versions
 
@@ -447,8 +488,8 @@ import { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   webServer: {
     command: 'npm run start', // command to launch
-    port: 3000, // port to await for 
-    timeout: 120 * 1000, 
+    port: 3000, // port to await for
+    timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
   },
 };
