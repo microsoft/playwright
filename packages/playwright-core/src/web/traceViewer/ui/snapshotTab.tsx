@@ -101,13 +101,14 @@ export const SnapshotTab: React.FunctionComponent<{
     </div>
     <div className='snapshot-url' title={snapshotInfo.url}>{snapshotInfo.url}</div>
     <div ref={ref} className='snapshot-wrapper'>
-      <div className='snapshot-container' style={{
+      { snapshots.length ? <div className='snapshot-container' style={{
         width: snapshotSize.width + 'px',
         height: snapshotSize.height + 'px',
         transform: `translate(${-snapshotSize.width * (1 - scale) / 2 + (measure.width - scaledSize.width) / 2}px, ${-snapshotSize.height * (1 - scale) / 2  + (measure.height - scaledSize.height) / 2}px) scale(${scale})`,
       }}>
         <iframe ref={iframeRef} id='snapshot' name='snapshot'></iframe>
-      </div>
+      </div> : <div className='no-snapshot'>Action does not have snapshots</div>
+      }
     </div>
   </div>;
 };
