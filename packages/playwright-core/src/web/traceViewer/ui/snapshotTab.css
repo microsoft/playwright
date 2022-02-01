@@ -88,3 +88,8 @@ iframe#snapshot {
   height: 100%;
   border: none;
 }
+
+.no-snapshot {
+  text-align: center;
+  padding: 50px;
+}
