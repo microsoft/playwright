@@ -216,7 +216,7 @@ class CLIMock {
       this.waitForCallback = f;
       if (timeout) {
         setTimeout(() => {
-          r(new Error('Timed out waiting for text:\n' + text + '\n\nRecieved:\n' + this.text()));
+          r(new Error('Timed out waiting for text:\n' + text + '\n\nReceived:\n' + this.text()));
         }, timeout);
       }
     });
