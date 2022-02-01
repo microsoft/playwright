@@ -36,21 +36,21 @@
     "playwright": "./cli.js"
   },
   "dependencies": {
-    "commander": "^8.3.0",
-    "debug": "^4.3.3",
-    "extract-zip": "^2.0.1",
-    "https-proxy-agent": "^5.0.0",
-    "jpeg-js": "^0.4.3",
-    "mime": "^3.0.0",
-    "pngjs": "^6.0.0",
-    "progress": "^2.0.3",
-    "proper-lockfile": "^4.1.2",
-    "proxy-from-env": "^1.1.0",
-    "rimraf": "^3.0.2",
-    "socks-proxy-agent": "^6.1.1",
-    "stack-utils": "^2.0.5",
-    "ws": "^8.4.2",
-    "yauzl": "^2.10.0",
-    "yazl": "^2.5.1"
+    "commander": "8.3.0",
+    "debug": "4.3.3",
+    "extract-zip": "2.0.1",
+    "https-proxy-agent": "5.0.0",
+    "jpeg-js": "0.4.3",
+    "mime": "3.0.0",
+    "pngjs": "6.0.0",
+    "progress": "2.0.3",
+    "proper-lockfile": "4.1.2",
+    "proxy-from-env": "1.1.0",
+    "rimraf": "3.0.2",
+    "socks-proxy-agent": "6.1.1",
+    "stack-utils": "2.0.5",
+    "ws": "8.4.2",
+    "yauzl": "2.10.0",
+    "yazl": "2.5.1"
   }
 }

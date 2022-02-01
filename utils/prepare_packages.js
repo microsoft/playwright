@@ -105,7 +105,7 @@ async function lintPackage(packageName) {
   currentPackageJSON.license = pwInternalJSON.license;
   for (const name of Object.keys(currentPackageJSON.dependencies || {})) {
     if (name in PACKAGES)
-      currentPackageJSON.dependencies[name] = `=${pwInternalJSON.version}`;
+      currentPackageJSON.dependencies[name] = pwInternalJSON.version;
   }
   await writeToPackage('package.json', JSON.stringify(currentPackageJSON, null, 2) + '\n');
 
