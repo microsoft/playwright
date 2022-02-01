@@ -776,13 +776,13 @@ it('should encode to application/json by default', async function({ context, pag
   expect(json).toEqual(data);
 });
 
-it('should support multipart/form-data', async function({ context, page, server }) {
-  const formReceived = new Promise<any>(resolve => {
+it('should support multipart/form-data', async function({ context, server }) {
+  const formReceived = new Promise<{error: any, fields: formidable.Fields, files: Record<string, formidable.File>, serverRequest: http.IncomingMessage}>(resolve => {
     server.setRoute('/empty.html', async (serverRequest, res) => {
       const form = new formidable.IncomingForm();
       form.parse(serverRequest, (error, fields, files) => {
         server.serveFile(serverRequest, res);
-        resolve({ error, fields, files, serverRequest });
+        resolve({ error, fields, files: files as Record<string, formidable.File>, serverRequest });
       });
     });
   });
@@ -807,19 +807,19 @@ it('should support multipart/form-data', async function({ context, page, server 
   expect(serverRequest.headers['content-type']).toContain('multipart/form-data');
   expect(fields['firstName']).toBe('John');
   expect(fields['lastName']).toBe('Doe');
-  expect(files['file'].name).toBe(file.name);
-  expect(files['file'].type).toBe(file.mimeType);
-  expect(fs.readFileSync(files['file'].path).toString()).toBe(file.buffer.toString('utf8'));
+  expect(files['file'].originalFilename).toBe(file.name);
+  expect(files['file'].mimetype).toBe(file.mimeType);
+  expect(fs.readFileSync(files['file'].filepath).toString()).toBe(file.buffer.toString('utf8'));
   expect(response.status()).toBe(200);
 });
 
 it('should support multipart/form-data with ReadSream values', async function({ context, page, asset, server }) {
-  const formReceived = new Promise<any>(resolve => {
+  const formReceived = new Promise<{error: any, fields: formidable.Fields, files: Record<string, formidable.File>, serverRequest: http.IncomingMessage}>(resolve => {
     server.setRoute('/empty.html', async (serverRequest, res) => {
       const form = new formidable.IncomingForm();
       form.parse(serverRequest, (error, fields, files) => {
         server.serveFile(serverRequest, res);
-        resolve({ error, fields, files, serverRequest });
+        resolve({ error, fields, files: files as Record<string, formidable.File>, serverRequest });
       });
     });
   });
@@ -840,9 +840,9 @@ it('should support multipart/form-data with ReadSream values', async function({ 
   expect(serverRequest.headers['content-length']).toContain('5498');
   expect(fields['firstName']).toBe('John');
   expect(fields['lastName']).toBe('Doe');
-  expect(files['readStream'].name).toBe('simplezip.json');
-  expect(files['readStream'].type).toBe('application/json');
-  expect(fs.readFileSync(files['readStream'].path).toString()).toBe(fs.readFileSync(asset('simplezip.json')).toString());
+  expect(files['readStream'].originalFilename).toBe('simplezip.json');
+  expect(files['readStream'].mimetype).toBe('application/json');
+  expect(fs.readFileSync(files['readStream'].filepath).toString()).toBe(fs.readFileSync(asset('simplezip.json')).toString());
   expect(response.status()).toBe(200);
 });
 
