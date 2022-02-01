@@ -81,7 +81,7 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.Brow
     ws.addEventListener('message', event => {
       waitForNextTask(() => {
         try {
-          pipe.dispatch(JSON.parse(event.data));
+          pipe.dispatch(JSON.parse(event.data as string));
         } catch (e) {
           ws.close();
         }

@@ -67,7 +67,7 @@ async function innerCheckDeps(root, checkDepsFile) {
   }
 
   for (const dep of deps) {
-    const resolved = require.resolve(dep);
+    const resolved = require.resolve(dep, { paths: [root] });
     if (dep === resolved || !resolved.includes('node_modules'))
       deps.delete(dep);
   }

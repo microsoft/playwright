@@ -131,8 +131,11 @@ export class PlaywrightServer {
     if (!this._wsServer)
       return;
     debugLog('Closing server');
+    const waitForClose = new Promise(f => this._wsServer!.close(f));
     // First disconnect all remaining clients.
-    await new Promise(f => this._wsServer!.close(f));
+    for (const ws of this._wsServer!.clients)
+      ws.terminate();
+    await waitForClose;
     await new Promise(f => this._wsServer!.options.server!.close(f));
     this._wsServer = undefined;
     await this._delegate.onClose();
