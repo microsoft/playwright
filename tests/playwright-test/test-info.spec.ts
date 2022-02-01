@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAscii } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 test('should work directly', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -84,7 +84,7 @@ test('should throw outside test', async ({ runInlineTest }) => {
       test('test 1', async ({title}) => {});
     `,
   });
-  const output = stripAscii(result.output);
+  const output = stripAnsi(result.output);
   expect(result.exitCode).toBe(1);
   expect(output).toContain('test.info() can only be called while test is running');
 });

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import path from 'path';
-import { test, expect, stripAscii } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 test('it should not allow multiple tests with the same name per suite', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -194,7 +194,7 @@ test('should not stall when workers are available', async ({ runInlineTest }) =>
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(2);
   expect(result.failed).toBe(1);
-  expect(stripAscii(result.output).split('\n').filter(line => line.startsWith('%%'))).toEqual([
+  expect(stripAnsi(result.output).split('\n').filter(line => line.startsWith('%%'))).toEqual([
     '%%fails-1-started',
     '%%passes-2-started',
     '%%fails-1-done',

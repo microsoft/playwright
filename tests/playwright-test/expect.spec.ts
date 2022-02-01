@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './playwright-test-fixtures';
-import { stripAnsiEscapes } from '../../packages/playwright-test/lib/reporters/base.js';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 test('should be able to call expect.extend in config', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -68,6 +67,20 @@ test('should not expand huge arrays', async ({ runInlineTest }) => {
   expect(result.output.length).toBeLessThan(100000);
 });
 
+test('should fail when passed `null` instead of message', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'expect-test.spec.ts': `
+      const { test } = pwt;
+      test('custom expect message', () => {
+        test.expect(1+1, null).toEqual(3);
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(stripAnsi(result.output)).toContain(`optional error message must be a string.`);
+});
+
 test('should include custom error message', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'expect-test.spec.ts': `
@@ -79,7 +92,7 @@ test('should include custom error message', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
-  expect(stripAnsiEscapes(result.output)).toContain([
+  expect(stripAnsi(result.output)).toContain([
     `    Error: one plus one is two!`,
     ``,
     `    Expected: 3`,
@@ -98,7 +111,11 @@ test('should include custom error message with web-first assertions', async ({ r
   });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
-  expect(result.output).toContain(`Error: x-foo must be visible\n`);
+  expect(result.output).toContain([
+    `    Error: x-foo must be visible`,
+    ``,
+    `    Call log:`,
+  ].join('\n'));
 });
 
 test('should work with default expect prototype functions', async ({ runTSC }) => {

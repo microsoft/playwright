@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAscii } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 import fs from 'fs';
 import path from 'path';
 import { spawnSync } from 'child_process';
@@ -306,7 +306,7 @@ test('should report error and pending operations on timeout', async ({ runInline
   expect(result.output).toContain('- page.click at a.test.ts:9:16');
   expect(result.output).toContain('- page.textContent at a.test.ts:10:16');
   expect(result.output).toContain('waiting for selector');
-  expect(stripAscii(result.output)).toContain(`10 |           page.textContent('text=More missing'),`);
+  expect(stripAnsi(result.output)).toContain(`10 |           page.textContent('text=More missing'),`);
 });
 
 test('should report error on timeout with shared page', async ({ runInlineTest }, testInfo) => {
@@ -330,7 +330,7 @@ test('should report error on timeout with shared page', async ({ runInlineTest }
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('waiting for selector "text=Missing"');
-  expect(stripAscii(result.output)).toContain(`14 |         await page.click('text=Missing');`);
+  expect(stripAnsi(result.output)).toContain(`14 |         await page.click('text=Missing');`);
 });
 
 test('should report error and pending operations from beforeAll timeout', async ({ runInlineTest }, testInfo) => {
@@ -357,7 +357,7 @@ test('should report error and pending operations from beforeAll timeout', async 
   expect(result.output).toContain('- page.click at a.test.ts:10:16');
   expect(result.output).toContain('- page.textContent at a.test.ts:11:16');
   expect(result.output).toContain('waiting for selector');
-  expect(stripAscii(result.output)).toContain(`11 |           page.textContent('text=More missing'),`);
+  expect(stripAnsi(result.output)).toContain(`11 |           page.textContent('text=More missing'),`);
 });
 
 test('should not report waitForEventInfo as pending', async ({ runInlineTest }, testInfo) => {
@@ -417,7 +417,7 @@ test('should report click error on sigint', async ({ runInlineTest }) => {
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(0);
   expect(result.skipped).toBe(1);
-  expect(stripAscii(result.output)).toContain(`8 |         const promise = page.click('text=Missing');`);
+  expect(stripAnsi(result.output)).toContain(`8 |         const promise = page.click('text=Missing');`);
 });
 
 test('should work with video: retain-on-failure', async ({ runInlineTest }, testInfo) => {

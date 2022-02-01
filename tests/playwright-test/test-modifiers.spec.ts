@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAscii } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 test('test modifiers should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -331,5 +331,5 @@ test('modifier timeout should be reported', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('Error: Timeout of 2000ms exceeded while running skip modifier');
-  expect(stripAscii(result.output)).toContain('6 |       test.skip(async () => new Promise(() => {}));');
+  expect(stripAnsi(result.output)).toContain('6 |       test.skip(async () => new Promise(() => {}));');
 });

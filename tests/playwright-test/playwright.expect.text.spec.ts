@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAscii } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 test('should support toHaveText w/ regex', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -37,7 +37,7 @@ test('should support toHaveText w/ regex', async ({ runInlineTest }) => {
       });
       `,
   }, { workers: 1 });
-  const output = stripAscii(result.output);
+  const output = stripAnsi(result.output);
   expect(output).toContain('Error: expect(received).toHaveText(expected)');
   expect(output).toContain('Expected pattern: /Text 2/');
   expect(output).toContain('Received string:  "Text content"');
@@ -68,7 +68,7 @@ test('should support toContainText w/ regex', async ({ runInlineTest }) => {
       });
       `,
   }, { workers: 1 });
-  const output = stripAscii(result.output);
+  const output = stripAnsi(result.output);
   expect(output).toContain('Error: expect(received).toContainText(expected)');
   expect(output).toContain('Expected pattern: /ex2/');
   expect(output).toContain('Received string:  "Text content"');
@@ -107,7 +107,7 @@ test('should support toHaveText w/ text', async ({ runInlineTest }) => {
       });
       `,
   }, { workers: 1 });
-  const output = stripAscii(result.output);
+  const output = stripAnsi(result.output);
   expect(output).toContain('Error: expect(received).toHaveText(expected)');
   expect(output).toContain('Expected string: "Text"');
   expect(output).toContain('Received string: "Text content"');
@@ -135,7 +135,7 @@ test('should support toHaveText w/ not', async ({ runInlineTest }) => {
       });
       `,
   }, { workers: 1 });
-  const output = stripAscii(result.output);
+  const output = stripAnsi(result.output);
   expect(output).toContain('Error: expect(received).not.toHaveText(expected)');
   expect(output).toContain('Expected string: not "Text content"');
   expect(output).toContain('Received string: "Text content');
@@ -208,7 +208,7 @@ test('should support toHaveText w/ array', async ({ runInlineTest }) => {
       });
       `,
   }, { workers: 1 });
-  const output = stripAscii(result.output);
+  const output = stripAnsi(result.output);
   expect(output).toContain('Error: expect(received).toHaveText(expected) // deep equality');
   expect(output).toContain('await expect(locator).toHaveText');
   expect(output).toContain('-   "Extra"');
@@ -237,7 +237,7 @@ test('should support toContainText w/ array', async ({ runInlineTest }) => {
       });
       `,
   }, { workers: 1 });
-  const output = stripAscii(result.output);
+  const output = stripAnsi(result.output);
   expect(output).toContain('Error: expect(received).toContainText(expected)');
   expect(output).toContain('await expect(locator).toContainText');
   expect(output).toContain('-   "Text 2"');
@@ -403,8 +403,8 @@ test('should print expected/received before timeout', async ({ runInlineTest }) 
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('Timeout of 2000ms exceeded.');
-  expect(stripAscii(result.output)).toContain('Expected string: "Text 2"');
-  expect(stripAscii(result.output)).toContain('Received string: "Text content"');
+  expect(stripAnsi(result.output)).toContain('Expected string: "Text 2"');
+  expect(stripAnsi(result.output)).toContain('Received string: "Text content"');
 });
 
 test('should print nice error for toHaveText', async ({ runInlineTest }) => {
@@ -420,7 +420,7 @@ test('should print nice error for toHaveText', async ({ runInlineTest }) => {
   }, { workers: 1, timeout: 2000 });
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
-  const output = stripAscii(result.output);
+  const output = stripAnsi(result.output);
   expect(output).toContain('Pending operations:');
   expect(output).toContain('Error: expect(received).toHaveText(expected)');
   expect(output).toContain('Expected string: "Text"');
@@ -447,8 +447,8 @@ test('should print expected/received on Ctrl+C', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(130);
   expect(result.passed).toBe(0);
   expect(result.skipped).toBe(1);
-  expect(stripAscii(result.output)).toContain('Expected string: "Text 2"');
-  expect(stripAscii(result.output)).toContain('Received string: "Text content"');
+  expect(stripAnsi(result.output)).toContain('Expected string: "Text 2"');
+  expect(stripAnsi(result.output)).toContain('Received string: "Text content"');
 });
 
 test('should support not.toHaveText when selector does not match', async ({ runInlineTest }) => {
@@ -465,7 +465,7 @@ test('should support not.toHaveText when selector does not match', async ({ runI
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
-  const output = stripAscii(result.output);
+  const output = stripAnsi(result.output);
   expect(output).toContain('Expected string: not "hello"');
   expect(output).toContain('Received string: ""');
   expect(output).toContain('waiting for selector "span"');

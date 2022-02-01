@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAscii } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 function monotonicTime(): number {
   const [seconds, nanoseconds] = process.hrtime();
@@ -46,7 +46,7 @@ test('should work with not defined errors', async ({ runInlineTest }) => {
       foo();
     `
   });
-  expect(stripAscii(result.output)).toContain('foo is not defined');
+  expect(stripAnsi(result.output)).toContain('foo is not defined');
   expect(result.exitCode).toBe(1);
 });
 

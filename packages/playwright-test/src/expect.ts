@@ -92,37 +92,12 @@ export const printReceivedStringContainExpectedResult = (
 
 // #endregion
 
-class ExpectMetaInfoProxy {
-  private _message: string;
-
-  constructor(message: string) {
-    this._message = message;
-  }
-
-  get(target: any, prop: any, receiver: any): any {
-    const value = Reflect.get(target, prop, receiver);
-    if (typeof value !== 'function')
-      return new Proxy(value, this);
-    return (...args: any[]) => {
-      try {
-        expectCallMetaInfo = {
-          message: this._message,
-        };
-        const result = value.call(target, ...args);
-        return result;
-      } finally {
-        expectCallMetaInfo = undefined;
-      }
-    };
-  }
-}
-
 export const expect: Expect = new Proxy(expectLibrary as any, {
   apply: function(target: any, thisArg: any, argumentsList: [actual: unknown, message: string|undefined]) {
-    const message: string = argumentsList[1] || '';
-    if (typeof message !== 'string')
-      throw new Error('Second `expect` argument must be string!');
-    return new Proxy(expectLibrary.call(thisArg, argumentsList[0]), new ExpectMetaInfoProxy(message));
+    const message = argumentsList[1];
+    if (message !== undefined && typeof message !== 'string')
+      throw new Error('expect(actual, optionalErrorMessage): optional error message must be a string.');
+    return new Proxy(expectLibrary.call(thisArg, argumentsList[0]), new ExpectMetaInfoProxyHandler(message || ''));
   }
 });
 
@@ -156,6 +131,31 @@ type ExpectMetaInfo = {
 };
 
 let expectCallMetaInfo: undefined|ExpectMetaInfo = undefined;
+
+class ExpectMetaInfoProxyHandler {
+  private _message: string;
+
+  constructor(message: string) {
+    this._message = message;
+  }
+
+  get(target: any, prop: any, receiver: any): any {
+    const value = Reflect.get(target, prop, receiver);
+    if (typeof value !== 'function')
+      return new Proxy(value, this);
+    return (...args: any[]) => {
+      try {
+        expectCallMetaInfo = {
+          message: this._message,
+        };
+        const result = value.call(target, ...args);
+        return result;
+      } finally {
+        expectCallMetaInfo = undefined;
+      }
+    };
+  }
+}
 
 function wrap(matcherName: string, matcher: any) {
   const result = function(this: any, ...args: any[]) {
