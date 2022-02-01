@@ -13397,6 +13397,10 @@ export interface Download {
  * PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright
  * ```
  *
+ * **Supported Electron versions are:**
+ * - v12.2.0+
+ * - v13.4.0+
+ * - v14+
  */
 export interface Electron {
   /**
