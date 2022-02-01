@@ -25,6 +25,6 @@
     "install": "node install.js"
   },
   "dependencies": {
-    "playwright-core": "=1.18.1"
+    "playwright-core": "1.18.1"
   }
 }

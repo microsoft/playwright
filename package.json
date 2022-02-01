@@ -87,6 +87,8 @@
     "file-loader": "^6.2.0",
     "formidable": "^1.2.2",
     "html-webpack-plugin": "^5.3.2",
+    "jpeg-js": "^0.4.2",
+    "mime": "^2.4.6",
     "ncp": "^2.0.0",
     "node-stream-zip": "^1.11.3",
     "proxy": "^1.0.2",

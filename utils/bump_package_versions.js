@@ -54,7 +54,7 @@ const { packages, packagesToPublish } = require('./list_packages.js');
       if (publicPackages.has(package))
         playwrightCorePackages.version = version;
       if (playwrightCorePackages.dependencies && playwrightCorePackages.dependencies['playwright-core'])
-        packageLock['packages']['packages/' + package]['dependencies']['playwright-core'] = '=' + version;
+        packageLock['packages']['packages/' + package]['dependencies']['playwright-core'] = version;
     }
     fs.writeFileSync(packageLockPath, JSON.stringify(packageLock, null, 2) + '\n');
   }
