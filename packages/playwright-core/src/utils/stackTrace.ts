@@ -56,6 +56,21 @@ export function captureRawStack(): string {
   return stack;
 }
 
+export function isInternalFileName(file: string, functionName?: string): boolean {
+  // Node 16+ has node:internal.
+  if (file.startsWith('internal') || file.startsWith('node:'))
+    return true;
+  // EventEmitter.emit has 'events.js' file.
+  if (file === 'events.js' && functionName?.endsWith('emit'))
+    return true;
+  // Node 12
+  if (file === '_stream_readable.js' || file === '_stream_writable.js')
+    return true;
+  if (file.startsWith(WS_LIB))
+    return true;
+  return false;
+}
+
 export function captureStackTrace(rawStack?: string): ParsedStackTrace {
   const stack = rawStack || captureRawStack();
 
@@ -69,16 +84,7 @@ export function captureStackTrace(rawStack?: string): ParsedStackTrace {
     const frame = stackUtils.parseLine(line);
     if (!frame || !frame.file)
       return null;
-    // Node 16+ has node:internal.
-    if (frame.file.startsWith('internal') || frame.file.startsWith('node:'))
-      return null;
-    // EventEmitter.emit has 'events.js' file.
-    if (frame.file === 'events.js' && frame.function?.endsWith('.emit'))
-      return null;
-    // Node 12
-    if (frame.file === '_stream_readable.js' || frame.file === '_stream_writable.js')
-      return null;
-    if (frame.file.startsWith(WS_LIB))
+    if (isInternalFileName(frame.file, frame.function))
       return null;
     // Workaround for https://github.com/tapjs/stack-utils/issues/60
     let fileName: string;
