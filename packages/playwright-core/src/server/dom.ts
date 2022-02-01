@@ -28,6 +28,7 @@ import { SelectorInfo } from './selectors';
 import * as types from './types';
 
 type SetInputFilesFiles = channels.ElementHandleSetInputFilesParams['files'];
+type ActionName = 'click' | 'hover' | 'dblclick' | 'tap' | 'move and up' | 'move and down';
 
 export class NonRecoverableDOMError extends Error {
 }
@@ -328,7 +329,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     };
   }
 
-  async _retryPointerAction(progress: Progress, actionName: string, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>,
+  async _retryPointerAction(progress: Progress, actionName: ActionName, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>,
     options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     let retry = 0;
     // We progressively wait longer between retries, up to 500ms.
@@ -382,7 +383,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return 'done';
   }
 
-  async _performPointerAction(progress: Progress, actionName: string, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>, forceScrollOptions: ScrollIntoViewOptions | undefined, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notvisible' | 'error:notconnected' | 'error:notinviewport' | { hitTargetDescription: string } | 'done'> {
+  async _performPointerAction(progress: Progress, actionName: ActionName, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>, forceScrollOptions: ScrollIntoViewOptions | undefined, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notvisible' | 'error:notconnected' | 'error:notinviewport' | { hitTargetDescription: string } | 'done'> {
     const { force = false, position } = options;
     if ((options as any).__testHookBeforeStable)
       await (options as any).__testHookBeforeStable();
@@ -420,7 +421,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       return this._finishPointerActionDetectLayoutShift(progress, actionName, point, options, action);
   }
 
-  private async _finishPointerAction(progress: Progress, actionName: string, point: types.Point, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions, action: (point: types.Point) => Promise<void>): Promise<'error:notconnected' | { hitTargetDescription: string } | 'done'> {
+  private async _finishPointerAction(progress: Progress, actionName: ActionName, point: types.Point, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions, action: (point: types.Point) => Promise<void>): Promise<'error:notconnected' | { hitTargetDescription: string } | 'done'> {
     if (!options.force) {
       if ((options as any).__testHookBeforeHitTarget)
         await (options as any).__testHookBeforeHitTarget();
@@ -458,7 +459,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return 'done';
   }
 
-  private async _finishPointerActionDetectLayoutShift(progress: Progress, actionName: string, point: types.Point, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions, action: (point: types.Point) => Promise<void>): Promise<'error:notconnected' | { hitTargetDescription: string } | 'done'> {
+  private async _finishPointerActionDetectLayoutShift(progress: Progress, actionName: ActionName, point: types.Point, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions, action: (point: types.Point) => Promise<void>): Promise<'error:notconnected' | { hitTargetDescription: string } | 'done'> {
     await progress.beforeInputAction(this);
 
     let hitTargetInterceptionHandle: js.JSHandle<HitTargetInterceptionResult> | undefined;
@@ -466,18 +467,34 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if ((options as any).__testHookBeforeHitTarget)
         await (options as any).__testHookBeforeHitTarget();
 
-      const actionType = (actionName === 'hover' || actionName === 'tap') ? actionName : 'mouse';
-      const handle = await this.evaluateHandleInUtility(([injected, node, { actionType, trial }]) => injected.setupHitTargetInterceptor(node, actionType, trial), { actionType, trial: !!options.trial } as const);
-      if (handle === 'error:notconnected')
-        return handle;
-      if (!handle._objectId)
-        return handle.rawValue() as 'error:notconnected';
-      hitTargetInterceptionHandle = handle as any;
-      progress.cleanupWhenAborted(() => {
-        // Do not await here, just in case the renderer is stuck (e.g. on alert)
-        // and we won't be able to cleanup.
-        hitTargetInterceptionHandle!.evaluate(h => h.stop()).catch(e => {});
-      });
+      if (actionName === 'move and up') {
+        // When dropping, the "element that is being dragged" often stays under the cursor,
+        // so hit target check at the moment we receive mousedown does not work -
+        // it finds the "element that is being dragged" instead of the
+        // "element that we drop onto".
+        progress.log(`  checking that element receives pointer events at (${point.x},${point.y})`);
+        const hitTargetResult = await this._checkHitTargetAt(point);
+        if (hitTargetResult !== 'done')
+          return hitTargetResult;
+        progress.log(`  element does receive pointer events`);
+        if (options.trial) {
+          progress.log(`  trial ${actionName} has finished`);
+          return 'done';
+        }
+      } else {
+        const actionType = (actionName === 'hover' || actionName === 'tap') ? actionName : 'mouse';
+        const handle = await this.evaluateHandleInUtility(([injected, node, { actionType, trial }]) => injected.setupHitTargetInterceptor(node, actionType, trial), { actionType, trial: !!options.trial } as const);
+        if (handle === 'error:notconnected')
+          return handle;
+        if (!handle._objectId)
+          return handle.rawValue() as 'error:notconnected';
+        hitTargetInterceptionHandle = handle as any;
+        progress.cleanupWhenAborted(() => {
+          // Do not await here, just in case the renderer is stuck (e.g. on alert)
+          // and we won't be able to cleanup.
+          hitTargetInterceptionHandle!.evaluate(h => h.stop()).catch(e => {});
+        });
+      }
     }
 
     const actionResult = await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {

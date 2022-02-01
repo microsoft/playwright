@@ -178,3 +178,9 @@ it('should work with mui select', async ({ page, server }) => {
   await page.click('div.MuiFormControl-root:has-text("Age")');
   await expect(page.locator('text=Thirty')).toBeVisible();
 });
+
+it('should work with drag and drop that moves the element under cursor', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/input/drag-n-drop-manual.html');
+  await page.dragAndDrop('#from', '#to');
+  await expect(page.locator('#to')).toHaveText('Dropped');
+});
