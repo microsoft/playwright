@@ -395,7 +395,6 @@ function buildTestEndPayload(testInfo: TestInfoImpl): TestEndPayload {
     testId: testInfo._test._id,
     duration: testInfo.duration,
     status: testInfo.status!,
-    error: testInfo.error,
     errors: testInfo.errors,
     expectedStatus: testInfo.expectedStatus,
     annotations: testInfo.annotations,
