@@ -24,10 +24,14 @@ supports *soft assertions*: failed soft assertions **do not** terminate test exe
 but mark the test as failed.
 
 ```js
-expect.soft(1+1).toBe(3);
-expect.soft(2*2).toBe(5);
-```
+// Make a few checks that will not stop the test when failed...
+await expect.soft(page.locator('#status')).toHaveText('Success');
+await expect.soft(page.locator('#eta')).toHaveText('1 day');
 
+// ... and continue the test to check more things.
+await page.locator('#next-page').click();
+await expect.soft(page.locator('#title')).toHaveText('Make another order');
+```
 
 You can specify a custom error message as a second argument to the `expect` function, for example:
 

@@ -95,7 +95,7 @@ export class WorkerRunner extends EventEmitter {
     // and continuing to run tests in the same worker is problematic. Therefore,
     // we turn this into a fatal error and restart the worker anyway.
     if (this._currentTest && this._currentTest._test._type === 'test' && this._currentTest.expectedStatus !== 'failed') {
-      this._currentTest._failWithError(serializeError(error));
+      this._currentTest._failWithError(serializeError(error), true /* isHardError */);
     } else {
       // No current test - fatal error.
       if (!this._fatalError)
@@ -294,7 +294,7 @@ export class WorkerRunner extends EventEmitter {
           this._fatalError = testInfo.error;
         // Keep any error we have, and add "timeout" message.
         if (testInfo.status === 'timedOut')
-          this._fatalError = prependToTestError(this._fatalError!, colors.red(`Timeout of ${testInfo.timeout}ms exceeded in ${test._type} hook.\n`), test.location);
+          this._fatalError = prependToTestError(this._fatalError, colors.red(`Timeout of ${testInfo.timeout}ms exceeded in ${test._type} hook.\n`), test.location);
       }
       this.stop();
     } else {

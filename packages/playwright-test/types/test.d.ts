@@ -1492,10 +1492,10 @@ export interface TestInfo {
    */
   status?: TestStatus;
   /**
-   * First error thrown during test execution, if any. This is a read-only property and is equal to the first element in
+   * First error thrown during test execution, if any. This is equal to the first element in
    * [testInfo.errors](https://playwright.dev/docs/api/class-testinfo#test-info-errors).
    */
-  readonly error?: TestError;
+  error?: TestError;
   /**
    * Errors thrown during test execution, if any.
    */

@@ -200,6 +200,7 @@ export class Dispatcher {
       data.resultByWorkerIndex.delete(worker.workerIndex);
       result.duration = params.duration;
       result.errors = params.errors;
+      result.error = result.errors[0];
       result.attachments = params.attachments.map(a => ({
         name: a.name,
         path: a.path,
@@ -293,6 +294,7 @@ export class Dispatcher {
           const data = this._testById.get(runningHookId)!;
           const { result } = data.resultByWorkerIndex.get(worker.workerIndex)!;
           result.errors = [params.fatalError];
+          result.error = result.errors[0];
           result.status = 'failed';
           this._reporter.onTestEnd?.(data.test, result);
         }
@@ -313,6 +315,7 @@ export class Dispatcher {
               this._reporter.onTestBegin?.(test, result);
           }
           result.errors = [params.fatalError];
+          result.error = result.errors[0];
           result.status = first ? 'failed' : 'skipped';
           this._reportTestEnd(test, result);
           failedTestIds.add(test._id);

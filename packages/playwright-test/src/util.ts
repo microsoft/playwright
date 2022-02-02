@@ -24,6 +24,7 @@ import { calculateSha1, isRegExp } from 'playwright-core/lib/utils/utils';
 import { isInternalFileName } from 'playwright-core/lib/utils/stackTrace';
 
 const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core'));
+const EXPECT_PATH = path.dirname(require.resolve('expect'));
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
 
 function filterStackTrace(e: Error) {
@@ -46,7 +47,7 @@ function filterStackTrace(e: Error) {
       const functionName = callSite.getFunctionName() || undefined;
       if (!fileName)
         return true;
-      return !fileName.startsWith(PLAYWRIGHT_TEST_PATH) && !fileName.startsWith(PLAYWRIGHT_CORE_PATH) && !isInternalFileName(fileName, functionName);
+      return !fileName.startsWith(PLAYWRIGHT_TEST_PATH) && !fileName.startsWith(PLAYWRIGHT_CORE_PATH) && !fileName.startsWith(EXPECT_PATH) && !isInternalFileName(fileName, functionName);
     }));
   };
   // eslint-disable-next-line
@@ -202,9 +203,7 @@ export function getContainedPath(parentPath: string, subPath: string = ''): stri
 
 export const debugTest = debug('pw:test');
 
-export function prependToTestError(testError: TestError, message: string | undefined, location?: Location): TestError {
-  if (!message)
-    return testError;
+export function prependToTestError(testError: TestError | undefined, message: string, location?: Location): TestError {
   if (!testError) {
     if (!location)
       return { value: message };

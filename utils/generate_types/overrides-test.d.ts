@@ -215,7 +215,7 @@ export interface TestInfo {
   retry: number;
   duration: number;
   status?: TestStatus;
-  readonly error?: TestError;
+  error?: TestError;
   errors: TestError[];
   stdout: (string | Buffer)[];
   stderr: (string | Buffer)[];
