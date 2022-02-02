@@ -55,6 +55,46 @@ test('test.describe.serial should work', async ({ runInlineTest }) => {
   ]);
 });
 
+test('test.describe.serial should work in describe', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      test.describe('serial suite', () => {
+        test.describe.serial();
+        test('test1', async ({}) => {
+          console.log('\\n%%test1');
+        });
+        test('test2', async ({}) => {
+          console.log('\\n%%test2');
+        });
+
+        test.describe('inner suite', () => {
+          test('test3', async ({}) => {
+            console.log('\\n%%test3');
+            expect(1).toBe(2);
+          });
+          test('test4', async ({}) => {
+            console.log('\\n%%test4');
+          });
+        });
+
+        test('test5', async ({}) => {
+          console.log('\\n%%test5');
+        });
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(2);
+  expect(result.failed).toBe(1);
+  expect(result.skipped).toBe(2);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%test1',
+    '%%test2',
+    '%%test3',
+  ]);
+});
+
 test('test.describe.serial should work with retry', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `

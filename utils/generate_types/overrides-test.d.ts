@@ -237,11 +237,15 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   only: TestFunction<TestArgs & WorkerArgs>;
   describe: SuiteFunction & {
     only: SuiteFunction;
-    serial: SuiteFunction & {
+    serial: {
       only: SuiteFunction;
+      (): void;
+      (title: string, callback: () => void): void;
     };
-    parallel: SuiteFunction & {
+    parallel: {
       only: SuiteFunction;
+      (): void;
+      (title: string, callback: () => void): void;
     };
   };
   skip(title: string, testFunction: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;

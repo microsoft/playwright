@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { isString } from 'playwright-core/lib/utils/utils';
 import { expect } from './expect';
 import { currentlyLoadingFileSuite, currentTestInfo, setCurrentlyLoadingFileSuite } from './globals';
 import { TestCase, Suite } from './test';
@@ -78,15 +79,43 @@ export class TestTypeImpl {
       test.expectedStatus = 'skipped';
   }
 
-  private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only', location: Location, title: string, fn: Function) {
+  private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only', location: Location, title?: string, fn?: Function) {
     throwIfRunningInsideJest();
     const suite = currentlyLoadingFileSuite();
     if (!suite)
       throw errorWithLocation(location, `describe() can only be called in a test file`);
 
-    if (typeof title === 'function') {
+    const hasParallelMode = type === 'serial' || type === 'serial.only' || type === 'parallel' || type === 'parallel.only';
+    if (hasParallelMode && title === undefined && fn === undefined) {
+      if (suite._parallelMode !== 'default')
+        throw errorWithLocation(location, 'Parallel mode is already assigned for the enclosing scope.');
+      if (type === 'serial' || type === 'serial.only')
+        suite._parallelMode = 'serial';
+      if (type === 'parallel' || type === 'parallel.only')
+        suite._parallelMode = 'parallel';
+
+      for (let parent: Suite | undefined = suite.parent; parent; parent = parent.parent) {
+        if (parent._parallelMode === 'serial' && suite._parallelMode === 'parallel')
+          throw errorWithLocation(location, 'describe.parallel cannot be nested inside describe.serial');
+        if (parent._parallelMode === 'parallel' && suite._parallelMode === 'serial')
+          throw errorWithLocation(location, 'describe.serial cannot be nested inside describe.parallel');
+      }
+
+      return;
+    }
+
+    if (!isString(title)) {
       throw errorWithLocation(location, [
         'It looks like you are calling describe() without the title. Pass the title as a first argument:',
+        `test.describe('my test group', () => {`,
+        `  // Declare tests here`,
+        `});`,
+      ].join('\n'));
+    }
+
+    if (typeof fn !== 'function') {
+      throw errorWithLocation(location, [
+        'It looks like you are calling describe() without the body. Pass the body as a second argument:',
         `test.describe('my test group', () => {`,
         `  // Declare tests here`,
         `});`,
@@ -101,16 +130,19 @@ export class TestTypeImpl {
 
     if (type === 'only' || type === 'serial.only' || type === 'parallel.only')
       child._only = true;
-    if (type === 'serial' || type === 'serial.only')
-      child._parallelMode = 'serial';
-    if (type === 'parallel' || type === 'parallel.only')
-      child._parallelMode = 'parallel';
 
-    for (let parent: Suite | undefined = suite; parent; parent = parent.parent) {
-      if (parent._parallelMode === 'serial' && child._parallelMode === 'parallel')
-        throw errorWithLocation(location, 'describe.parallel cannot be nested inside describe.serial');
-      if (parent._parallelMode === 'parallel' && child._parallelMode === 'serial')
-        throw errorWithLocation(location, 'describe.serial cannot be nested inside describe.parallel');
+    if (hasParallelMode) {
+      if (type === 'serial' || type === 'serial.only')
+        child._parallelMode = 'serial';
+      if (type === 'parallel' || type === 'parallel.only')
+        child._parallelMode = 'parallel';
+
+      for (let parent: Suite | undefined = suite; parent; parent = parent.parent) {
+        if (parent._parallelMode === 'serial' && child._parallelMode === 'parallel')
+          throw errorWithLocation(location, 'describe.parallel cannot be nested inside describe.serial');
+        if (parent._parallelMode === 'parallel' && child._parallelMode === 'serial')
+          throw errorWithLocation(location, 'describe.serial cannot be nested inside describe.parallel');
+      }
     }
 
     setCurrentlyLoadingFileSuite(child);

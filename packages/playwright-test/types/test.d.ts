@@ -1632,79 +1632,98 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    */
   only: SuiteFunction;
     /**
-   * Declares a group of tests that should always be run serially. If one of the tests fails, all subsequent tests are
-   * skipped. All tests in a group are retried together.
+   * Makes this group of tests run serially. If one of the tests fails, all subsequent tests are skipped. All tests in a
+   * group are retried together.
    *
    * > NOTE: Using serial is not recommended. It is usually better to make your tests isolated, so they can be run
    * independently.
    *
    * ```ts
-   * test.describe.serial('group', () => {
-   *   test('runs first', async ({ page }) => {
-   *   });
-   *   test('runs second', async ({ page }) => {
-   *   });
-   * });
+   * test.describe.serial();
+   * test('runs first', async ({ page }) => {});
+   * test('runs second', async ({ page }) => {});
    * ```
    *
-   * @param title Group title.
-   * @param callback A callback that is run immediately when calling [test.describe.serial(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-serial). Any tests
-   * added in this callback will belong to the group.
    */
-  serial: SuiteFunction & {
+  serial: {
+      only: SuiteFunction;
       /**
-   * Declares a focused group of tests that should always be run serially. If one of the tests fails, all subsequent tests
-   * are skipped. All tests in a group are retried together. If there are some focused tests or suites, all of them will be
-   * run but nothing else.
+   * Makes this group of tests run serially. If one of the tests fails, all subsequent tests are skipped. All tests in a
+   * group are retried together.
    *
    * > NOTE: Using serial is not recommended. It is usually better to make your tests isolated, so they can be run
    * independently.
    *
    * ```ts
-   * test.describe.serial.only('group', () => {
-   *   test('runs first', async ({ page }) => {
-   *   });
-   *   test('runs second', async ({ page }) => {
-   *   });
-   * });
+   * test.describe.serial();
+   * test('runs first', async ({ page }) => {});
+   * test('runs second', async ({ page }) => {});
    * ```
    *
-   * @param title Group title.
-   * @param callback A callback that is run immediately when calling [test.describe.serial.only(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-serial-only). Any
-   * tests added in this callback will belong to the group.
    */
-  only: SuiteFunction;
+  (): void;
+      /**
+   * Makes this group of tests run serially. If one of the tests fails, all subsequent tests are skipped. All tests in a
+   * group are retried together.
+   *
+   * > NOTE: Using serial is not recommended. It is usually better to make your tests isolated, so they can be run
+   * independently.
+   *
+   * ```ts
+   * test.describe.serial();
+   * test('runs first', async ({ page }) => {});
+   * test('runs second', async ({ page }) => {});
+   * ```
+   *
+   */
+  (title: string, callback: () => void): void;
     };
     /**
-   * Declares a group of tests that could be run in parallel. By default, tests in a single test file run one after another,
-   * but using [test.describe.parallel(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-parallel)
-   * allows them to run in parallel.
+   * Makes this group of tests run in parallel. By default, tests in a single test file run one after another, but using
+   * [test.describe.parallel()](https://playwright.dev/docs/api/class-test#test-describe-parallel) allows them to run in
+   * parallel.
    *
    * ```ts
-   * test.describe.parallel('group', () => {
-   *   test('runs in parallel 1', async ({ page }) => {
-   *   });
-   *   test('runs in parallel 2', async ({ page }) => {
-   *   });
-   * });
+   * test.describe.parallel();
+   * test('runs in parallel 1', async ({ page }) => {});
+   * test('runs in parallel 2', async ({ page }) => {});
    * ```
    *
    * Note that parallel tests are executed in separate processes and cannot share any state or global variables. Each of the
    * parallel tests executes all relevant hooks.
-   * @param title Group title.
-   * @param callback A callback that is run immediately when calling [test.describe.parallel(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-parallel). Any tests
-   * added in this callback will belong to the group.
    */
-  parallel: SuiteFunction & {
+  parallel: {
+      only: SuiteFunction;
       /**
-   * Declares a focused group of tests that could be run in parallel. This is similar to
-   * [test.describe.parallel(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-parallel), but
-   * focuses the group. If there are some focused tests or suites, all of them will be run but nothing else.
-   * @param title Group title.
-   * @param callback A callback that is run immediately when calling [test.describe.parallel.only(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-parallel-only).
-   * Any tests added in this callback will belong to the group.
+   * Makes this group of tests run in parallel. By default, tests in a single test file run one after another, but using
+   * [test.describe.parallel()](https://playwright.dev/docs/api/class-test#test-describe-parallel) allows them to run in
+   * parallel.
+   *
+   * ```ts
+   * test.describe.parallel();
+   * test('runs in parallel 1', async ({ page }) => {});
+   * test('runs in parallel 2', async ({ page }) => {});
+   * ```
+   *
+   * Note that parallel tests are executed in separate processes and cannot share any state or global variables. Each of the
+   * parallel tests executes all relevant hooks.
    */
-  only: SuiteFunction;
+  (): void;
+      /**
+   * Makes this group of tests run in parallel. By default, tests in a single test file run one after another, but using
+   * [test.describe.parallel()](https://playwright.dev/docs/api/class-test#test-describe-parallel) allows them to run in
+   * parallel.
+   *
+   * ```ts
+   * test.describe.parallel();
+   * test('runs in parallel 1', async ({ page }) => {});
+   * test('runs in parallel 2', async ({ page }) => {});
+   * ```
+   *
+   * Note that parallel tests are executed in separate processes and cannot share any state or global variables. Each of the
+   * parallel tests executes all relevant hooks.
+   */
+  (title: string, callback: () => void): void;
     };
   };
   /**

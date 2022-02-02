@@ -143,23 +143,21 @@ Consider the following snippet that uses `test.describe.serial`:
 ```js js-flavor=js
 const { test } = require('@playwright/test');
 
-test.describe.serial('suite', () => {
-  test.beforeAll(async () => { /* ... */ });
-  test('first good', async ({ page }) => { /* ... */ });
-  test('second flaky', async ({ page }) => { /* ... */ });
-  test('third good', async ({ page }) => { /* ... */ });
-});
+test.describe.serial();
+test.beforeAll(async () => { /* ... */ });
+test('first good', async ({ page }) => { /* ... */ });
+test('second flaky', async ({ page }) => { /* ... */ });
+test('third good', async ({ page }) => { /* ... */ });
 ```
 
 ```js js-flavor=ts
 import { test } from '@playwright/test';
 
-test.describe.serial('suite', () => {
-  test.beforeAll(async () => { /* ... */ });
-  test('first good', async ({ page }) => { /* ... */ });
-  test('second flaky', async ({ page }) => { /* ... */ });
-  test('third good', async ({ page }) => { /* ... */ });
-});
+test.describe.serial();
+test.beforeAll(async () => { /* ... */ });
+test('first good', async ({ page }) => { /* ... */ });
+test('second flaky', async ({ page }) => { /* ... */ });
+test('third good', async ({ page }) => { /* ... */ });
 ```
 
 When running without [retries](#retries), all tests after the failure are skipped:
@@ -195,25 +193,24 @@ Playwright Test creates an isolated [Page] object for each test. However, if you
 
 const { test } = require('@playwright/test');
 
-test.describe.serial('use the same page', () => {
-  /** @type {import('@playwright/test').Page} */
-  let page;
+test.describe.serial();
+/** @type {import('@playwright/test').Page} */
+let page;
 
-  test.beforeAll(async ({ browser }) => {
-    page = await browser.newPage();
-  });
+test.beforeAll(async ({ browser }) => {
+  page = await browser.newPage();
+});
 
-  test.afterAll(async () => {
-    await page.close();
-  });
+test.afterAll(async () => {
+  await page.close();
+});
 
-  test('runs first', async () => {
-    await page.goto('https://playwright.dev/');
-  });
+test('runs first', async () => {
+  await page.goto('https://playwright.dev/');
+});
 
-  test('runs second', async () => {
-    await page.click('text=Get Started');
-  });
+test('runs second', async () => {
+  await page.click('text=Get Started');
 });
 ```
 
@@ -222,23 +219,22 @@ test.describe.serial('use the same page', () => {
 
 import { test, Page } from '@playwright/test';
 
-test.describe.serial('use the same page', () => {
-  let page: Page;
+test.describe.serial();
+let page: Page;
 
-  test.beforeAll(async ({ browser }) => {
-    page = await browser.newPage();
-  });
+test.beforeAll(async ({ browser }) => {
+  page = await browser.newPage();
+});
 
-  test.afterAll(async () => {
-    await page.close();
-  });
+test.afterAll(async () => {
+  await page.close();
+});
 
-  test('runs first', async () => {
-    await page.goto('https://playwright.dev/');
-  });
+test('runs first', async () => {
+  await page.goto('https://playwright.dev/');
+});
 
-  test('runs second', async () => {
-    await page.click('text=Get Started');
-  });
+test('runs second', async () => {
+  await page.click('text=Get Started');
 });
 ```

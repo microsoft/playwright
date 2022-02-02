@@ -72,18 +72,80 @@ Note that parallel tests are executed in separate worker processes and cannot sh
 ```js js-flavor=js
 const { test } = require('@playwright/test');
 
-test.describe.parallel('suite', () => {
-  test('runs in parallel 1', async ({ page }) => { /* ... */ });
-  test('runs in parallel 2', async ({ page }) => { /* ... */ });
-});
+test.describe.parallel();
+test('runs in parallel 1', async ({ page }) => { /* ... */ });
+test('runs in parallel 2', async ({ page }) => { /* ... */ });
 ```
 
 ```js js-flavor=ts
 import { test } from '@playwright/test';
 
-test.describe.parallel('suite', () => {
-  test('runs in parallel 1', async ({ page }) => { /* ... */ });
-  test('runs in parallel 2', async ({ page }) => { /* ... */ });
+test.describe.parallel();
+test('runs in parallel 1', async ({ page }) => { /* ... */ });
+test('runs in parallel 2', async ({ page }) => { /* ... */ });
+```
+
+## Serial mode
+
+You can annotate inter-dependent tests as serial. If one of the serial tests
+fails, all subsequent tests are skipped. All tests in a group are retried together.
+
+:::note
+Using serial is not recommended. It is usually better to make your tests isolated, so they can be run independently.
+:::
+
+```js js-flavor=js
+// @ts-check
+
+const { test } = require('@playwright/test');
+
+// Annotate entire file as serial.
+test.describe.serial();
+
+/** @type {import('@playwright/test').Page} */
+let page;
+
+test.beforeAll(async ({ browser }) => {
+  page = await browser.newPage();
+});
+
+test.afterAll(async () => {
+  await page.close();
+});
+
+test('runs first', async () => {
+  await page.goto('https://playwright.dev/');
+});
+
+test('runs second', async () => {
+  await page.click('text=Get Started');
+});
+```
+
+```js js-flavor=ts
+// example.spec.ts
+
+import { test, Page } from '@playwright/test';
+
+// Annotate entire file as serial.
+test.describe.serial();
+
+let page: Page;
+
+test.beforeAll(async ({ browser }) => {
+  page = await browser.newPage();
+});
+
+test.afterAll(async () => {
+  await page.close();
+});
+
+test('runs first', async () => {
+  await page.goto('https://playwright.dev/');
+});
+
+test('runs second', async () => {
+  await page.click('text=Get Started');
 });
 ```
 

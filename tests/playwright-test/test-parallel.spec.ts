@@ -58,3 +58,61 @@ test('test.describe.parallel should work', async ({ runInlineTest }) => {
   expect(result.output).toContain('%% worker=1');
   expect(result.output).toContain('%% worker=2');
 });
+
+test('test.describe.parallel should work in file', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      test.describe.parallel();
+      test('test1', async ({}, testInfo) => {
+        console.log('\\n%% worker=' + testInfo.workerIndex);
+        await new Promise(f => setTimeout(f, 1000));
+      });
+      test('test2', async ({}, testInfo) => {
+        console.log('\\n%% worker=' + testInfo.workerIndex);
+        await new Promise(f => setTimeout(f, 1000));
+      });
+      test.describe('inner suite', () => {
+        test('test3', async ({}, testInfo) => {
+          console.log('\\n%% worker=' + testInfo.workerIndex);
+          await new Promise(f => setTimeout(f, 1000));
+        });
+      });
+    `,
+  }, { workers: 3 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+  expect(result.output).toContain('%% worker=0');
+  expect(result.output).toContain('%% worker=1');
+  expect(result.output).toContain('%% worker=2');
+});
+
+test('test.describe.parallel should work in describe', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      test.describe('parallel suite', () => {
+        test.describe.parallel();
+        test('test1', async ({}, testInfo) => {
+          console.log('\\n%% worker=' + testInfo.workerIndex);
+          await new Promise(f => setTimeout(f, 1000));
+        });
+        test('test2', async ({}, testInfo) => {
+          console.log('\\n%% worker=' + testInfo.workerIndex);
+          await new Promise(f => setTimeout(f, 1000));
+        });
+        test.describe('inner suite', () => {
+          test('test3', async ({}, testInfo) => {
+            console.log('\\n%% worker=' + testInfo.workerIndex);
+            await new Promise(f => setTimeout(f, 1000));
+          });
+        });
+      });
+    `,
+  }, { workers: 3 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+  expect(result.output).toContain('%% worker=0');
+  expect(result.output).toContain('%% worker=1');
+  expect(result.output).toContain('%% worker=2');
+});

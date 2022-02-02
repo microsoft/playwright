@@ -288,130 +288,42 @@ A callback that is run immediately when calling [`method: Test.describe.only`]. 
 
 ## method: Test.describe.parallel
 
-Declares a group of tests that could be run in parallel. By default, tests in a single test file run one after another, but using [`method: Test.describe.parallel`] allows them to run in parallel.
+Makes this group of tests run in parallel. By default, tests in a single test file run one after another, but using [`method: Test.describe.parallel`] allows them to run in parallel.
 
 ```js js-flavor=js
-test.describe.parallel('group', () => {
-  test('runs in parallel 1', async ({ page }) => {
-  });
-  test('runs in parallel 2', async ({ page }) => {
-  });
-});
+test.describe.parallel();
+test('runs in parallel 1', async ({ page }) => {});
+test('runs in parallel 2', async ({ page }) => {});
 ```
 
 ```js js-flavor=ts
-test.describe.parallel('group', () => {
-  test('runs in parallel 1', async ({ page }) => {
-  });
-  test('runs in parallel 2', async ({ page }) => {
-  });
-});
+test.describe.parallel();
+test('runs in parallel 1', async ({ page }) => {});
+test('runs in parallel 2', async ({ page }) => {});
 ```
 
 Note that parallel tests are executed in separate processes and cannot share any state or global variables. Each of the parallel tests executes all relevant hooks.
 
-### param: Test.describe.parallel.title
-- `title` <[string]>
-
-Group title.
-
-### param: Test.describe.parallel.callback
-- `callback` <[function]>
-
-A callback that is run immediately when calling [`method: Test.describe.parallel`]. Any tests added in this callback will belong to the group.
-
-
-
-## method: Test.describe.parallel.only
-
-Declares a focused group of tests that could be run in parallel. This is similar to [`method: Test.describe.parallel`], but focuses the group. If there are some focused tests or suites, all of them will be run but nothing else.
-
-### param: Test.describe.parallel.only.title
-- `title` <[string]>
-
-Group title.
-
-### param: Test.describe.parallel.only.callback
-- `callback` <[function]>
-
-A callback that is run immediately when calling [`method: Test.describe.parallel.only`]. Any tests added in this callback will belong to the group.
-
-
 
 ## method: Test.describe.serial
 
-Declares a group of tests that should always be run serially. If one of the tests fails, all subsequent tests are skipped. All tests in a group are retried together.
+Makes this group of tests run serially. If one of the tests fails, all subsequent tests are skipped. All tests in a group are retried together.
 
 :::note
 Using serial is not recommended. It is usually better to make your tests isolated, so they can be run independently.
 :::
 
 ```js js-flavor=js
-test.describe.serial('group', () => {
-  test('runs first', async ({ page }) => {
-  });
-  test('runs second', async ({ page }) => {
-  });
-});
+test.describe.serial();
+test('runs first', async ({ page }) => {});
+test('runs second', async ({ page }) => {});
 ```
 
 ```js js-flavor=ts
-test.describe.serial('group', () => {
-  test('runs first', async ({ page }) => {
-  });
-  test('runs second', async ({ page }) => {
-  });
-});
+test.describe.serial();
+test('runs first', async ({ page }) => {});
+test('runs second', async ({ page }) => {});
 ```
-
-### param: Test.describe.serial.title
-- `title` <[string]>
-
-Group title.
-
-### param: Test.describe.serial.callback
-- `callback` <[function]>
-
-A callback that is run immediately when calling [`method: Test.describe.serial`]. Any tests added in this callback will belong to the group.
-
-
-
-## method: Test.describe.serial.only
-
-Declares a focused group of tests that should always be run serially. If one of the tests fails, all subsequent tests are skipped. All tests in a group are retried together. If there are some focused tests or suites, all of them will be run but nothing else.
-
-:::note
-Using serial is not recommended. It is usually better to make your tests isolated, so they can be run independently.
-:::
-
-```js js-flavor=js
-test.describe.serial.only('group', () => {
-  test('runs first', async ({ page }) => {
-  });
-  test('runs second', async ({ page }) => {
-  });
-});
-```
-
-```js js-flavor=ts
-test.describe.serial.only('group', () => {
-  test('runs first', async ({ page }) => {
-  });
-  test('runs second', async ({ page }) => {
-  });
-});
-```
-
-### param: Test.describe.serial.only.title
-- `title` <[string]>
-
-Group title.
-
-### param: Test.describe.serial.only.callback
-- `callback` <[function]>
-
-A callback that is run immediately when calling [`method: Test.describe.serial.only`]. Any tests added in this callback will belong to the group.
-
 
 
 
