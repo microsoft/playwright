@@ -144,7 +144,7 @@ npm run test
 npm run ctest # also `ftest` for firefox and `wtest` for WebKit
 ```
 
-- To run a specific test, substitute `it` with `it.only`, Or use the `--grep 'My test'` CLI parameter:
+- To run a specific test, substitute `it` with `it.only`, or use the `--grep 'My test'` CLI parameter:
 
 ```js
 ...
