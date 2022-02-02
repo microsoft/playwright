@@ -123,6 +123,10 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
       ...env,
       PLAYWRIGHT_DOCKER: undefined,
       PW_GRID: undefined,
+      PW_TEST_REPORTER_WS_ENDPOINT: undefined,
+      PW_TEST_SOURCE_TRANSFORM: undefined,
+      PW_OUT_OF_PROCESS_DRIVER: undefined,
+      NODE_OPTIONS: undefined,
     },
     cwd: baseDir,
   });
