@@ -421,7 +421,7 @@ if generate_and_upload_browser_build 2>&1 | ./sanitize_and_compress_log.js $LOG_
       fi
     done;
     LAST_COMMIT_MESSAGE=$(git log --format=%s -n 1 HEAD -- "./${BROWSER_NAME}/BUILD_NUMBER")
-    send_telegram_message "<b>${BROWSER_DISPLAY_NAME} r${BUILD_NUMBER} COMPLETE! ✅</b> ${LAST_COMMIT_MESSAGE}"
+    send_telegram_message "<b>${BROWSER_DISPLAY_NAME} r${BUILD_NUMBER} COMPLETE! \\u270</b> ${LAST_COMMIT_MESSAGE}"
     if [[ "${BROWSER_DISPLAY_NAME}" != "chromium-with-symbols" ]]; then
       create_roll_into_playwright_pr $BROWSER_NAME $BUILD_NUMBER
     fi
@@ -447,7 +447,7 @@ else
   fi
   # Upload logs only in case of failure and report failure.
   ./upload.sh "${LOG_BLOB_PATH}" ${LOG_PATH} || true
-  send_telegram_message "$BUILD_ALIAS -- ${FAILED_STEP} failed! ❌ <a href='https://playwright.azureedge.net/builds/${LOG_BLOB_PATH}'>${LOG_BLOB_NAME}</a> -- <a href='$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID'>GitHub Action Logs</a>"
+  send_telegram_message "$BUILD_ALIAS -- ${FAILED_STEP} failed! \\u274c <a href='https://playwright.azureedge.net/builds/${LOG_BLOB_PATH}'>${LOG_BLOB_NAME}</a> -- <a href='$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID'>GitHub Action Logs</a>"
   exit 1
 fi
 
