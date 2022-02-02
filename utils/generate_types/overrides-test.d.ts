@@ -215,7 +215,8 @@ export interface TestInfo {
   retry: number;
   duration: number;
   status?: TestStatus;
-  error?: TestError;
+  readonly error?: TestError;
+  errors: TestError[];
   stdout: (string | Buffer)[];
   stderr: (string | Buffer)[];
   snapshotSuffix: string;

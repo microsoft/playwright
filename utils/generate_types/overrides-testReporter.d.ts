@@ -55,7 +55,7 @@ export interface TestResult {
   startTime: Date;
   duration: number;
   status: TestStatus;
-  error?: TestError;
+  readonly error?: TestError;
   errors: TestError[];
   attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
   stdout: (string | Buffer)[];
