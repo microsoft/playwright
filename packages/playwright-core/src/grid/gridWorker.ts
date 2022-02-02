@@ -22,9 +22,9 @@ import { createPlaywright } from '../server/playwright';
 import { gracefullyCloseAll } from '../utils/processLauncher';
 
 function launchGridWorker(gridURL: string, agentId: string, workerId: string) {
-  const log = debug(`[worker ${workerId}]`);
+  const log = debug(`pw:grid:worker${workerId}`);
   log('created');
-  const ws = new WebSocket(gridURL + `/registerWorker?agentId=${agentId}&workerId=${workerId}`);
+  const ws = new WebSocket(gridURL.replace('http://', 'ws://') + `/registerWorker?agentId=${agentId}&workerId=${workerId}`);
   const dispatcherConnection = new DispatcherConnection();
   dispatcherConnection.onmessage = message => ws.send(JSON.stringify(message));
   ws.once('open', () => {
