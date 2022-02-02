@@ -40,7 +40,7 @@ test('soft expects should work', async ({ runInlineTest }) => {
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('woof-woof');
+  expect(stripAnsi(result.output)).toContain('woof-woof');
 });
 
 test('should report a mixture of soft and non-soft errors', async ({ runInlineTest }) => {
@@ -56,10 +56,10 @@ test('should report a mixture of soft and non-soft errors', async ({ runInlineTe
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('Error: one plus one');
-  expect(result.output).toContain('Error: two times two');
-  expect(result.output).toContain('Error: three div three');
-  expect(result.output).not.toContain('Error: six minus four');
+  expect(stripAnsi(result.output)).toContain('Error: one plus one');
+  expect(stripAnsi(result.output)).toContain('Error: two times two');
+  expect(stripAnsi(result.output)).toContain('Error: three div three');
+  expect(stripAnsi(result.output)).not.toContain('Error: six minus four');
 });
 
 test('testInfo should contain all soft expect errors', async ({ runInlineTest }) => {
@@ -74,7 +74,7 @@ test('testInfo should contain all soft expect errors', async ({ runInlineTest })
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('Error: one plus one');
-  expect(result.output).toContain('Error: two times two');
-  expect(result.output).not.toContain('Error: must be exactly two errors');
+  expect(stripAnsi(result.output)).toContain('Error: one plus one');
+  expect(stripAnsi(result.output)).toContain('Error: two times two');
+  expect(stripAnsi(result.output)).not.toContain('Error: must be exactly two errors');
 });
