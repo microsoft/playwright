@@ -89,6 +89,6 @@ test('print GitHub annotations for global error', async ({ runInlineTest }) => {
     `,
   }, { reporter: 'github' });
   const text = stripAnsi(result.output);
-  expect(text).toContain('::error ::%0AError: Oh my!%0A%0A');
+  expect(text).toContain('::error ::Error: Oh my!%0A%0A');
   expect(result.exitCode).toBe(1);
 });

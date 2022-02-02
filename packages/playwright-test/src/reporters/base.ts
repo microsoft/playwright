@@ -230,10 +230,12 @@ export function formatFailure(config: FullConfig, test: TestCase, options: {inde
     const errors = formatResultFailure(config, test, result, '    ', colors.enabled);
     if (!errors.length)
       continue;
+    const retryLines = [];
     if (result.retry) {
-      resultLines.push('');
-      resultLines.push(colors.gray(pad(`    Retry #${result.retry}`, '-')));
+      retryLines.push('');
+      retryLines.push(colors.gray(pad(`    Retry #${result.retry}`, '-')));
     }
+    resultLines.push(...retryLines);
     resultLines.push(errors.map(error => error.message).join('\n\n'));
     if (includeAttachments) {
       for (let i = 0; i < result.attachments.length; ++i) {
@@ -276,7 +278,7 @@ export function formatFailure(config: FullConfig, test: TestCase, options: {inde
       annotations.push({
         location: error.location,
         title,
-        message: [header, error.message].join('\n'),
+        message: [header, ...retryLines, error.message].join('\n'),
       });
     }
     lines.push(...resultLines);
