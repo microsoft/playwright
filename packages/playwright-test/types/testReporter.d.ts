@@ -213,7 +213,8 @@ export interface TestResult {
    */
   status: TestStatus;
   /**
-   * First error thrown during the test execution, if any.
+   * First error thrown during test execution, if any. This is a read-only property and is equal to the first element in
+   * [testResult.errors](https://playwright.dev/docs/api/class-testresult#test-result-errors).
    */
   readonly error?: TestError;
   /**
