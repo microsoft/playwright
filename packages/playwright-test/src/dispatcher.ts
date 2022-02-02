@@ -474,7 +474,7 @@ class Worker extends EventEmitter {
     this.process = child_process.fork(path.join(__dirname, 'worker.js'), {
       detached: false,
       env: {
-        FORCE_COLOR: process.stdout.isTTY ? '1' : '0',
+        FORCE_COLOR: '1',
         DEBUG_COLORS: process.stdout.isTTY ? '1' : '0',
         TEST_WORKER_INDEX: String(this.workerIndex),
         TEST_PARALLEL_INDEX: String(this.parallelIndex),
