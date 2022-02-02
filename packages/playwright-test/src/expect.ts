@@ -160,7 +160,7 @@ class ExpectMetaInfoProxyHandler {
         return value.call(target, ...args);
       const handleError = (e: Error) => {
         if (this._isSoft || (prop === 'toMatchSnapshot' && e.message.includes('missing')))
-          testInfo._addError(serializeError(e));
+          testInfo._failWithError(serializeError(e));
         else
           throw e;
       };

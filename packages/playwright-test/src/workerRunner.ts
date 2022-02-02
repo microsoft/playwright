@@ -294,7 +294,7 @@ export class WorkerRunner extends EventEmitter {
           this._fatalError = testInfo.error;
         // Keep any error we have, and add "timeout" message.
         if (testInfo.status === 'timedOut')
-          this._fatalError = prependToTestError(this._fatalError, colors.red(`Timeout of ${testInfo.timeout}ms exceeded in ${test._type} hook.\n`), test.location);
+          this._fatalError = prependToTestError(this._fatalError!, colors.red(`Timeout of ${testInfo.timeout}ms exceeded in ${test._type} hook.\n`), test.location);
       }
       this.stop();
     } else {

@@ -215,7 +215,7 @@ export interface TestResult {
   /**
    * First error thrown during the test execution, if any.
    */
-  error?: TestError;
+  readonly error?: TestError;
   /**
    * Errors thrown during the test execution.
    */

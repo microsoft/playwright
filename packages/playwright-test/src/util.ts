@@ -202,7 +202,7 @@ export function getContainedPath(parentPath: string, subPath: string = ''): stri
 
 export const debugTest = debug('pw:test');
 
-export function prependToTestError(testError: TestError | undefined, message: string | undefined, location?: Location) {
+export function prependToTestError(testError: TestError, message: string | undefined, location?: Location): TestError {
   if (!message)
     return testError;
   if (!testError) {

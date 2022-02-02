@@ -59,8 +59,11 @@ export class TestInfoImpl implements TestInfo {
   snapshotSuffix: string = '';
   readonly outputDir: string;
   readonly snapshotDir: string;
-  error: TestError | undefined = undefined;
   errors: TestError[] = [];
+
+  get error(): TestError | undefined {
+    return this.errors.length > 0 ? this.errors[0] : undefined;
+  }
 
   constructor(
     loader: Loader,
@@ -180,27 +183,8 @@ export class TestInfoImpl implements TestInfo {
   }
 
   _failWithError(error: TestError) {
-    // Do not overwrite any previous error and error status.
-    // Some (but not all) scenarios include:
-    //   - expect() that fails after uncaught exception.
-    //   - fail after the timeout, e.g. due to fixture teardown.
     if (this.status === 'passed')
       this.status = 'failed';
-    if (this.error === undefined) {
-      this.error = error;
-      this.errors.push(error);
-    }
-  }
-
-  _addError(error: TestError) {
-    // Do not overwrite any previous error and error status.
-    // Some (but not all) scenarios include:
-    //   - expect() that fails after uncaught exception.
-    //   - fail after the timeout, e.g. due to fixture teardown.
-    if (this.status === 'passed')
-      this.status = 'failed';
-    if (this.error === undefined)
-      this.error = error;
     this.errors.push(error);
   }
 
