@@ -21,9 +21,42 @@ import type { TestError, Location } from './types';
 import { default as minimatch } from 'minimatch';
 import debug from 'debug';
 import { calculateSha1, isRegExp } from 'playwright-core/lib/utils/utils';
+import { isInternalFileName } from 'playwright-core/lib/utils/stackTrace';
+
+const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core'));
+const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
+
+function filterStackTrace(e: Error) {
+  // This method filters internal stack frames using Error.prepareStackTrace
+  // hook. Read more about the hook: https://v8.dev/docs/stack-trace-api
+  //
+  // NOTE: Error.prepareStackTrace will only be called if `e.stack` has not
+  // been accessed before. This is the case for Jest Expect and simple throw
+  // statements.
+  //
+  // If `e.stack` has been accessed, this method will be NOOP.
+  const oldPrepare = Error.prepareStackTrace;
+  const stackFormatter = oldPrepare || ((error, structuredStackTrace) => [
+    `${error.name}: ${error.message}`,
+    ...structuredStackTrace.map(callSite => '    at ' + callSite.toString()),
+  ].join('\n'));
+  Error.prepareStackTrace = (error, structuredStackTrace) => {
+    return stackFormatter(error, structuredStackTrace.filter(callSite => {
+      const fileName = callSite.getFileName();
+      const functionName = callSite.getFunctionName() || undefined;
+      if (!fileName)
+        return true;
+      return !fileName.startsWith(PLAYWRIGHT_TEST_PATH) && !fileName.startsWith(PLAYWRIGHT_CORE_PATH) && !isInternalFileName(fileName, functionName);
+    }));
+  };
+  // eslint-disable-next-line
+  e.stack; // trigger Error.prepareStackTrace
+  Error.prepareStackTrace = oldPrepare;
+}
 
 export function serializeError(error: Error | any): TestError {
   if (error instanceof Error) {
+    filterStackTrace(error);
     return {
       message: error.message,
       stack: error.stack
