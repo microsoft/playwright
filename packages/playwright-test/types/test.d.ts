@@ -1640,15 +1640,16 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Declares a group of tests that should always be run serially. If one of the tests fails, all subsequent tests are
    * skipped. All tests in a group are retried together.
    *
+   * See [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) for the
+   * preferred way of configuring the execution mode.
+   *
    * > NOTE: Using serial is not recommended. It is usually better to make your tests isolated, so they can be run
    * independently.
    *
    * ```ts
    * test.describe.serial('group', () => {
-   *   test('runs first', async ({ page }) => {
-   *   });
-   *   test('runs second', async ({ page }) => {
-   *   });
+   *   test('runs first', async ({ page }) => {});
+   *   test('runs second', async ({ page }) => {});
    * });
    * ```
    *
@@ -1685,12 +1686,13 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * but using [test.describe.parallel(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-parallel)
    * allows them to run in parallel.
    *
+   * See [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) for the
+   * preferred way of configuring the execution mode.
+   *
    * ```ts
    * test.describe.parallel('group', () => {
-   *   test('runs in parallel 1', async ({ page }) => {
-   *   });
-   *   test('runs in parallel 2', async ({ page }) => {
-   *   });
+   *   test('runs in parallel 1', async ({ page }) => {});
+   *   test('runs in parallel 2', async ({ page }) => {});
    * });
    * ```
    *
@@ -1711,6 +1713,29 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    */
   only: SuiteFunction;
     };
+    /**
+   * Set execution mode of execution for the enclosing scope. Can be executed either on the top level or inside a describe.
+   * Configuration applies to the entire scope, regardless of whether it run before or after the test declaration.
+   *
+   * Learn more about the execution modes [here](https://playwright.dev/docs/test-parallel-js).
+   *
+   * ```ts
+   * // Run all the tests in the file concurrently using parallel workers.
+   * test.describe.configure({ mode: 'parallel' });
+   * test('runs in parallel 1', async ({ page }) => {});
+   * test('runs in parallel 2', async ({ page }) => {});
+   * ```
+   *
+   * ```ts
+   * // Annotate tests as inter-dependent.
+   * test.describe.configure({ mode: 'serial' });
+   * test('runs first', async ({ page }) => {});
+   * test('runs second', async ({ page }) => {});
+   * ```
+   *
+   * @param options
+   */
+  configure: (options: { mode?: 'parallel' | 'serial' }) => void;
   };
   /**
    * Declares a skipped test, similarly to
