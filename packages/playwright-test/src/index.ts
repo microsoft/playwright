@@ -380,7 +380,8 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       const anyContext = leftoverContexts[0];
       const pendingCalls = anyContext ? formatPendingCalls((anyContext as any)._connection.pendingProtocolCalls()) : '';
       await Promise.all(leftoverContexts.filter(c => createdContexts.has(c)).map(c => c.close()));
-      testInfo.error = prependToTestError(testInfo.error, pendingCalls);
+      if (pendingCalls)
+        testInfo.error = prependToTestError(testInfo.error, pendingCalls);
     }
   }, { auto: true }],
 
@@ -434,7 +435,8 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       }
     }));
 
-    testInfo.error = prependToTestError(testInfo.error, prependToError);
+    if (prependToError)
+      testInfo.error = prependToTestError(testInfo.error, prependToError);
   },
 
   context: async ({ _contextFactory }, use) => {

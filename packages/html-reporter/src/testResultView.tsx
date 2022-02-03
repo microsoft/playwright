@@ -51,8 +51,8 @@ export const TestResultView: React.FC<{
   const diff = attachmentsMap.get('diff');
   const hasImages = [actual?.contentType, expected?.contentType, diff?.contentType].some(v => v && /^image\//i.test(v));
   return <div className='test-result'>
-    {result.error && <AutoChip header='Errors'>
-      <ErrorMessage key='test-result-error-message' error={result.error}></ErrorMessage>
+    {!!result.errors.length && <AutoChip header='Errors'>
+      {result.errors.map((error, index) => <ErrorMessage key={'test-result-error-message-' + index} error={error}></ErrorMessage>)}
     </AutoChip>}
     {!!result.steps.length && <AutoChip header='Test Steps'>
       {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} depth={0}></StepTreeItem>)}

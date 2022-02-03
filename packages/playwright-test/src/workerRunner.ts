@@ -95,7 +95,7 @@ export class WorkerRunner extends EventEmitter {
     // and continuing to run tests in the same worker is problematic. Therefore,
     // we turn this into a fatal error and restart the worker anyway.
     if (this._currentTest && this._currentTest._test._type === 'test' && this._currentTest.expectedStatus !== 'failed') {
-      this._currentTest._failWithError(serializeError(error));
+      this._currentTest._failWithError(serializeError(error), true /* isHardError */);
     } else {
       // No current test - fatal error.
       if (!this._fatalError)
@@ -395,7 +395,7 @@ function buildTestEndPayload(testInfo: TestInfoImpl): TestEndPayload {
     testId: testInfo._test._id,
     duration: testInfo.duration,
     status: testInfo.status!,
-    error: testInfo.error,
+    errors: testInfo.errors,
     expectedStatus: testInfo.expectedStatus,
     annotations: testInfo.annotations,
     timeout: testInfo.timeout,

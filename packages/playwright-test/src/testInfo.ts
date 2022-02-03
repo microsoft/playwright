@@ -34,6 +34,7 @@ export class TestInfoImpl implements TestInfo {
   readonly _timeoutRunner: TimeoutRunner;
   readonly _startTime: number;
   readonly _startWallTime: number;
+  private _hasHardError: boolean = false;
 
   // ------------ TestInfo fields ------------
   readonly repeatEachIndex: number;
@@ -59,7 +60,20 @@ export class TestInfoImpl implements TestInfo {
   snapshotSuffix: string = '';
   readonly outputDir: string;
   readonly snapshotDir: string;
-  error: TestError | undefined = undefined;
+  errors: TestError[] = [];
+
+  get error(): TestError | undefined {
+    return this.errors.length > 0 ? this.errors[0] : undefined;
+  }
+
+  set error(e: TestError | undefined) {
+    if (e === undefined)
+      throw new Error('Cannot assign testInfo.error undefined value!');
+    if (!this.errors.length)
+      this.errors.push(e);
+    else
+      this.errors[0] = e;
+  }
 
   constructor(
     loader: Loader,
@@ -168,7 +182,7 @@ export class TestInfoImpl implements TestInfo {
           this.status = 'skipped';
       } else {
         const serialized = serializeError(error);
-        this._failWithError(serialized);
+        this._failWithError(serialized, true /* isHardError */);
         return serialized;
       }
     }
@@ -178,25 +192,18 @@ export class TestInfoImpl implements TestInfo {
     return this._addStepImpl(data);
   }
 
-  _failWithError(error: TestError) {
-    // Do not overwrite any previous error and error status.
+  _failWithError(error: TestError, isHardError: boolean) {
+    // Do not overwrite any previous hard errors.
     // Some (but not all) scenarios include:
     //   - expect() that fails after uncaught exception.
     //   - fail after the timeout, e.g. due to fixture teardown.
+    if (isHardError && this._hasHardError)
+      return;
+    if (isHardError)
+      this._hasHardError = true;
     if (this.status === 'passed')
       this.status = 'failed';
-    if (this.error === undefined)
-      this.error = error;
-  }
-
-  _appendErrorMessage(message: string) {
-    // Do not overwrite any previous error status.
-    if (this.status === 'passed')
-      this.status = 'failed';
-    if (this.error === undefined)
-      this.error = { value: 'Error: ' + message };
-    else if (this.error.value)
-      this.error.value += '\nError: ' + message;
+    this.errors.push(error);
   }
 
   // ------------ TestInfo methods ------------

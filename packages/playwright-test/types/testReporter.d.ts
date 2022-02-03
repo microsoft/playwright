@@ -213,9 +213,14 @@ export interface TestResult {
    */
   status: TestStatus;
   /**
-   * An error thrown during the test execution, if any.
+   * First error thrown during test execution, if any. This is equal to the first element in
+   * [testResult.errors](https://playwright.dev/docs/api/class-testresult#test-result-errors).
    */
   error?: TestError;
+  /**
+   * Errors thrown during the test execution.
+   */
+  errors: TestError[];
   /**
    * The list of files or buffers attached during the test execution through
    * [testInfo.attachments](https://playwright.dev/docs/api/class-testinfo#test-info-attachments).

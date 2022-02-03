@@ -29,6 +29,7 @@ type MakeMatchers<T, ReturnValue = T> = PlaywrightTest.Matchers<ReturnValue> &
 
 export declare type Expect = {
   <T = unknown>(actual: T, message?: string): MakeMatchers<T>;
+  soft: <T = unknown>(actual: T, message?: string) => MakeMatchers<T>;
 
   // Sourced from node_modules/expect/build/types.d.ts
   assertions(arg0: number): void;

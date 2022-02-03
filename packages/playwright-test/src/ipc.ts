@@ -39,7 +39,7 @@ export type TestEndPayload = {
   testId: string;
   duration: number;
   status: TestStatus;
-  error?: TestError;
+  errors: TestError[];
   expectedStatus: TestStatus;
   annotations: { type: string, description?: string }[];
   timeout: number;

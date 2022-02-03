@@ -26,6 +26,7 @@ const result: TestResult = {
   retry: 0,
   startTime: new Date(0).toUTCString(),
   duration: 100,
+  errors: [],
   steps: [{
     title: 'Outer step',
     startTime: new Date(100).toUTCString(),

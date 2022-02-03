@@ -23,7 +23,7 @@ import jpeg from 'jpeg-js';
 import pixelmatch from 'pixelmatch';
 import { diff_match_patch, DIFF_INSERT, DIFF_DELETE, DIFF_EQUAL } from '../third_party/diff_match_patch';
 import { UpdateSnapshots } from '../types';
-import { addSuffixToFilePath } from '../util';
+import { addSuffixToFilePath, serializeError } from '../util';
 import BlinkDiff from '../third_party/blink-diff';
 import PNGImage from '../third_party/png-js';
 import { TestInfoImpl } from '../testInfo';
@@ -129,8 +129,8 @@ export function compare(
       return { pass: true, message };
     }
     if (updateSnapshots === 'missing') {
-      testInfo._appendErrorMessage(message);
-      return { pass: true, message };
+      testInfo._failWithError(serializeError(new Error(message)), false /* isHardError */);
+      return { pass: true };
     }
     return { pass: false, message };
   }

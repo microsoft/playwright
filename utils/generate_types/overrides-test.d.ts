@@ -216,6 +216,7 @@ export interface TestInfo {
   duration: number;
   status?: TestStatus;
   error?: TestError;
+  errors: TestError[];
   stdout: (string | Buffer)[];
   stderr: (string | Buffer)[];
   snapshotSuffix: string;

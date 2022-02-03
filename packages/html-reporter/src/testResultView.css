@@ -55,6 +55,7 @@
   border-radius: 6px;
   padding: 16px;
   line-height: initial;
+  margin-bottom: 6px;
 }
 
 .test-result-counter {

@@ -128,12 +128,15 @@ The number of milliseconds the test took to finish. Always zero before the test 
 
 
 ## property: TestInfo.error
-- type: <[Object]>
-  - `message` <[void]|[string]> Error message. Set when `Error` (or its subclass) has been thrown.
-  - `stack` <[void]|[string]> Error stack. Set when `Error` (or its subclass) has been thrown.
-  - `value` <[void]|[string]> The thrown value. Set when anything except the `Error` (or its subclass) has been thrown.
+- type: <[void]|[TestError]>
 
-An error thrown during test execution, if any.
+First error thrown during test execution, if any. This is equal to the first
+element in [`property: TestInfo.errors`].
+
+## property: TestInfo.errors
+- type: <[Array]<[TestError]>>
+
+Errors thrown during test execution, if any.
 
 
 ## property: TestInfo.expectedStatus

@@ -19,10 +19,25 @@ expect(value).not.toEqual(0);
 await expect(locator).not.toContainText("some text");
 ```
 
-You can also specify a custom error message as a second argument to the `expect` function, for example:
+By default, failed assertion will terminate test execution. Playwright also
+supports *soft assertions*: failed soft assertions **do not** terminate test execution,
+but mark the test as failed.
+
+```js
+// Make a few checks that will not stop the test when failed...
+await expect.soft(page.locator('#status')).toHaveText('Success');
+await expect.soft(page.locator('#eta')).toHaveText('1 day');
+
+// ... and continue the test to check more things.
+await page.locator('#next-page').click();
+await expect.soft(page.locator('#title')).toHaveText('Make another order');
+```
+
+You can specify a custom error message as a second argument to the `expect` function, for example:
 
 ```js
 expect(value, 'my custom error message').toBe(42);
+expect.soft(value, 'my soft assertion').toBe(56);
 ```
 
 <!-- TOC -->

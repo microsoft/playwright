@@ -191,7 +191,8 @@ export class TestCase extends Base implements reporterTypes.TestCase {
       stderr: [],
       attachments: [],
       status: 'skipped',
-      steps: []
+      steps: [],
+      errors: [],
     };
     this.results.push(result);
     return result;
