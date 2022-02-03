@@ -125,7 +125,7 @@ class HtmlReporter implements Reporter {
   constructor(options: { outputFolder?: string, open?: 'always' | 'never' | 'on-failure' } = {}) {
     // TODO: resolve relative to config.
     this._outputFolder = options.outputFolder;
-    this._open = options.open || 'on-failure';
+    this._open = process.env.PW_TEST_HTML_REPORT_OPEN as any || options.open || 'on-failure';
   }
 
   printsToStdio() {
