@@ -172,14 +172,18 @@ test('should write missing expectations locally twice and continue', async ({ ru
   expect(result.failed).toBe(1);
 
   const snapshot1OutputPath = testInfo.outputPath('a.spec.js-snapshots/snapshot.txt');
-  expect(result.output).toContain(`${snapshot1OutputPath} is missing in snapshots, writing actual`);
+  expect(result.output).toContain(`Error: ${snapshot1OutputPath} is missing in snapshots, writing actual`);
   expect(fs.readFileSync(snapshot1OutputPath, 'utf-8')).toBe('Hello world');
 
   const snapshot2OutputPath = testInfo.outputPath('a.spec.js-snapshots/snapshot2.txt');
-  expect(result.output).toContain(`${snapshot2OutputPath} is missing in snapshots, writing actual`);
+  expect(result.output).toContain(`Error: ${snapshot2OutputPath} is missing in snapshots, writing actual`);
   expect(fs.readFileSync(snapshot2OutputPath, 'utf-8')).toBe('Hello world2');
 
   expect(result.output).toContain('Here we are!');
+
+  const stackLines = stripAnsi(result.output).split('\n').filter(line => line.includes('    at ')).filter(line => !line.includes(testInfo.outputPath()));
+  expect(result.output).toContain('a.spec.js:8');
+  expect(stackLines.length).toBe(0);
 });
 
 test('shouldn\'t write missing expectations locally for negated matcher', async ({ runInlineTest }, testInfo) => {
