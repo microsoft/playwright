@@ -94,7 +94,11 @@ export class WorkerRunner extends EventEmitter {
     // a test runner. In the latter case, the worker state could be messed up,
     // and continuing to run tests in the same worker is problematic. Therefore,
     // we turn this into a fatal error and restart the worker anyway.
-    if (this._currentTest && this._currentTest._test._type === 'test' && this._currentTest.expectedStatus !== 'failed') {
+    // The only exception is the expect() error that we still consider ok.
+    const isExpectError = (error instanceof Error) && !!(error as any).matcherResult;
+    const isCurrentTestExpectedToFail = this._currentTest?.expectedStatus === 'failed';
+    const shouldConsiderAsTestError = isExpectError || !isCurrentTestExpectedToFail;
+    if (this._currentTest && this._currentTest._test._type === 'test' && shouldConsiderAsTestError) {
       this._currentTest._failWithError(serializeError(error), true /* isHardError */);
     } else {
       // No current test - fatal error.
