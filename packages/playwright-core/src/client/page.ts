@@ -515,7 +515,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return this._mainFrame.fill(selector, value, options);
   }
 
-  locator(selector: string, options?: { hasText?: string | RegExp }): Locator {
+  locator(selector: string, options?: { hasText?: string | RegExp, has?: Locator }): Locator {
     return this.mainFrame().locator(selector, options);
   }
 

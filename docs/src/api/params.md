@@ -876,5 +876,14 @@ Slows down Playwright operations by the specified amount of milliseconds. Useful
 Matches elements containing specified text somewhere inside, possibly in a child or a descendant element.
 For example, `"Playwright"` matches `<article><div>Playwright</div></article>`.
 
+## locator-option-has
+- `has` <[Locator]>
+
+Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer one.
+For example, `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
+
+Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+
 ## locator-options-list
 - %%-locator-option-has-text-%%
+- %%-locator-option-has-%%

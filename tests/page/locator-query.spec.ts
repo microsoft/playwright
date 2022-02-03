@@ -89,3 +89,47 @@ it('should filter by regex and regexp flags', async ({ page }) => {
   await page.setContent(`<div>Hello "world"</div><div>Hello world</div>`);
   await expect(page.locator('div', { hasText: /hElLo "world"/i })).toHaveText('Hello "world"');
 });
+
+it('should support has:locator', async ({ page }) => {
+  await page.setContent(`<div><span>hello</span></div><div><span>world</span></div>`);
+  await expect(page.locator(`div`, {
+    has: page.locator(`text=world`)
+  })).toHaveCount(1);
+  expect(await page.locator(`div`, {
+    has: page.locator(`text=world`)
+  }).evaluate(e => e.outerHTML)).toBe(`<div><span>world</span></div>`);
+  await expect(page.locator(`div`, {
+    has: page.locator(`text="hello"`)
+  })).toHaveCount(1);
+  expect(await page.locator(`div`, {
+    has: page.locator(`text="hello"`)
+  }).evaluate(e => e.outerHTML)).toBe(`<div><span>hello</span></div>`);
+  await expect(page.locator(`div`, {
+    has: page.locator(`xpath=./span`)
+  })).toHaveCount(2);
+  await expect(page.locator(`div`, {
+    has: page.locator(`span`)
+  })).toHaveCount(2);
+  await expect(page.locator(`div`, {
+    has: page.locator(`span`, { hasText: 'wor' })
+  })).toHaveCount(1);
+  expect(await page.locator(`div`, {
+    has: page.locator(`span`, { hasText: 'wor' })
+  }).evaluate(e => e.outerHTML)).toBe(`<div><span>world</span></div>`);
+  await expect(page.locator(`div`, {
+    has: page.locator(`span`),
+    hasText: 'wor',
+  })).toHaveCount(1);
+});
+
+it('should enforce same frame for has:locator', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/frames/two-frames.html');
+  const child = page.frames()[1];
+  let error;
+  try {
+    page.locator('div', { has: child.locator('span') });
+  } catch (e) {
+    error = e;
+  }
+  expect(error.message).toContain('Inner "has" locator must belong to the same frame.');
+});

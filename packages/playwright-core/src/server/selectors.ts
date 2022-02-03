@@ -18,7 +18,7 @@ import * as dom from './dom';
 import * as frames from './frames';
 import * as js from './javascript';
 import * as types from './types';
-import { InvalidSelectorError, ParsedSelector, parseSelector, stringifySelector } from './common/selectorParser';
+import { allEngineNames, InvalidSelectorError, ParsedSelector, parseSelector, stringifySelector } from './common/selectorParser';
 import { createGuid } from '../utils/utils';
 
 export type SelectorInfo = {
@@ -44,7 +44,7 @@ export class Selectors {
       'data-testid', 'data-testid:light',
       'data-test-id', 'data-test-id:light',
       'data-test', 'data-test:light',
-      'nth', 'visible', 'control'
+      'nth', 'visible', 'control', 'has',
     ]);
     this._builtinEnginesInMainWorld = new Set([
       '_react', '_vue',
@@ -135,13 +135,13 @@ export class Selectors {
   parseSelector(selector: string | ParsedSelector, strict: boolean): SelectorInfo {
     const parsed = typeof selector === 'string' ? parseSelector(selector) : selector;
     let needsMainWorld = false;
-    for (const part of parsed.parts) {
-      const custom = this._engines.get(part.name);
-      if (!custom && !this._builtinEngines.has(part.name))
-        throw new InvalidSelectorError(`Unknown engine "${part.name}" while parsing selector ${stringifySelector(parsed)}`);
+    for (const name of allEngineNames(parsed)) {
+      const custom = this._engines.get(name);
+      if (!custom && !this._builtinEngines.has(name))
+        throw new InvalidSelectorError(`Unknown engine "${name}" while parsing selector ${stringifySelector(parsed)}`);
       if (custom && !custom.contentScript)
         needsMainWorld = true;
-      if (this._builtinEnginesInMainWorld.has(part.name))
+      if (this._builtinEnginesInMainWorld.has(name))
         needsMainWorld = true;
     }
     return {
