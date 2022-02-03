@@ -58,6 +58,7 @@
     "ms": "2.1.3",
     "open": "8.4.0",
     "pirates": "4.0.4",
+    "pixel-buffer-diff": "1.3.2",
     "pixelmatch": "5.2.1",
     "playwright-core": "1.19.0-next",
     "pngjs": "6.0.0",

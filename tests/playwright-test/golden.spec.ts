@@ -425,7 +425,7 @@ test('should compare different PNG images', async ({ runInlineTest }, testInfo) 
 });
 
 test('should respect threshold', async ({ runInlineTest }) => {
-  test.skip(!!process.env.PW_USE_BLINK_DIFF);
+  test.skip(!!process.env.PW_USE_BLINK_DIFF && !!process.env.PW_USE_PIXEL_BUFFER_DIFF);
   const expected = fs.readFileSync(path.join(__dirname, 'assets/screenshot-canvas-expected.png'));
   const actual = fs.readFileSync(path.join(__dirname, 'assets/screenshot-canvas-actual.png'));
   const result = await runInlineTest({
@@ -446,7 +446,7 @@ test('should respect threshold', async ({ runInlineTest }) => {
 });
 
 test('should respect project threshold', async ({ runInlineTest }) => {
-  test.skip(!!process.env.PW_USE_BLINK_DIFF);
+  test.skip(!!process.env.PW_USE_BLINK_DIFF && !!process.env.PW_USE_PIXEL_BUFFER_DIFF);
   const expected = fs.readFileSync(path.join(__dirname, 'assets/screenshot-canvas-expected.png'));
   const actual = fs.readFileSync(path.join(__dirname, 'assets/screenshot-canvas-actual.png'));
   const result = await runInlineTest({

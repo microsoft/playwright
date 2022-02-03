@@ -21,6 +21,7 @@ import fs from 'fs';
 import path from 'path';
 import jpeg from 'jpeg-js';
 import pixelmatch from 'pixelmatch';
+import { diff as pbdDiff } from 'pixel-buffer-diff';
 import { diff_match_patch, DIFF_INSERT, DIFF_DELETE, DIFF_EQUAL } from '../third_party/diff_match_patch';
 import { UpdateSnapshots } from '../types';
 import { addSuffixToFilePath, serializeError } from '../util';
@@ -77,6 +78,10 @@ function compareImages(actualBuffer: Buffer | string, expectedBuffer: Buffer, mi
     });
     const result = diff.runSync();
     return result.code !== BlinkDiff.RESULT_IDENTICAL ? { diff: PNG.sync.write(diff._imageOutput.getImage()) } : null;
+  }
+  if (process.env.PW_USE_PIXEL_BUFFER_DIFF) {
+    const diffResult = pbdDiff(expected.data, actual.data, diff.data, expected.width, expected.height, thresholdOptions);
+    return diffResult.cumulatedDiff > 0 ? { diff: PNG.sync.write(diff) } : null;
   }
   const count = pixelmatch(expected.data, actual.data, diff.data, expected.width, expected.height, thresholdOptions);
   return count > 0 ? { diff: PNG.sync.write(diff) } : null;
