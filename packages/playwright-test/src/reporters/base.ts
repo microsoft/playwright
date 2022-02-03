@@ -236,7 +236,7 @@ export function formatFailure(config: FullConfig, test: TestCase, options: {inde
       retryLines.push(colors.gray(pad(`    Retry #${result.retry}`, '-')));
     }
     resultLines.push(...retryLines);
-    resultLines.push(errors.map(error => error.message).join('\n\n'));
+    resultLines.push(...errors.map(error => '\n' + error.message));
     if (includeAttachments) {
       for (let i = 0; i < result.attachments.length; ++i) {
         const attachment = result.attachments[i];
