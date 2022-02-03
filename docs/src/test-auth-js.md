@@ -293,30 +293,30 @@ order to achieve that:
 
 const { test } = require('@playwright/test');
 
-test.describe.serial('use the same page', () => {
-  /** @type {import('@playwright/test').Page} */
-  let page;
+test.describe.configure({ mode: 'serial' });
 
-  test.beforeAll(async ({ browser }) => {
-    // Create page yourself and sign in.
-    page = await browser.newPage();
-    await page.goto('https://github.com/login');
-    await page.fill('input[name="user"]', 'user');
-    await page.fill('input[name="password"]', 'password');
-    await page.click('text=Sign in');
-  });
+/** @type {import('@playwright/test').Page} */
+let page;
 
-  test.afterAll(async () => {
-    await page.close();
-  });
+test.beforeAll(async ({ browser }) => {
+  // Create page yourself and sign in.
+  page = await browser.newPage();
+  await page.goto('https://github.com/login');
+  await page.fill('input[name="user"]', 'user');
+  await page.fill('input[name="password"]', 'password');
+  await page.click('text=Sign in');
+});
 
-  test('first test', async () => {
-    // page is signed in.
-  });
+test.afterAll(async () => {
+  await page.close();
+});
 
-  test('second test', async () => {
-    // page is signed in.
-  });
+test('first test', async () => {
+  // page is signed in.
+});
+
+test('second test', async () => {
+  // page is signed in.
 });
 ```
 
@@ -325,29 +325,29 @@ test.describe.serial('use the same page', () => {
 
 import { test, Page } from '@playwright/test';
 
-test.describe.serial('use the same page', () => {
-  let page: Page;
+test.describe.configure({ mode: 'serial' });
 
-  test.beforeAll(async ({ browser }) => {
-    // Create page once and sign in.
-    page = await browser.newPage();
-    await page.goto('https://github.com/login');
-    await page.fill('input[name="user"]', 'user');
-    await page.fill('input[name="password"]', 'password');
-    await page.click('text=Sign in');
-  });
+let page: Page;
 
-  test.afterAll(async () => {
-    await page.close();
-  });
+test.beforeAll(async ({ browser }) => {
+  // Create page once and sign in.
+  page = await browser.newPage();
+  await page.goto('https://github.com/login');
+  await page.fill('input[name="user"]', 'user');
+  await page.fill('input[name="password"]', 'password');
+  await page.click('text=Sign in');
+});
 
-  test('first test', async () => {
-    // page is signed in.
-  });
+test.afterAll(async () => {
+  await page.close();
+});
 
-  test('second test', async () => {
-    // page is signed in.
-  });
+test('first test', async () => {
+  // page is signed in.
+});
+
+test('second test', async () => {
+  // page is signed in.
 });
 ```
 

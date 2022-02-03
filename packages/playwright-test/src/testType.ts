@@ -36,6 +36,7 @@ export class TestTypeImpl {
     test.only = wrapFunctionWithLocation(this._createTest.bind(this, 'only'));
     test.describe = wrapFunctionWithLocation(this._describe.bind(this, 'default'));
     test.describe.only = wrapFunctionWithLocation(this._describe.bind(this, 'only'));
+    test.describe.configure = wrapFunctionWithLocation(this._configure.bind(this));
     test.describe.parallel = wrapFunctionWithLocation(this._describe.bind(this, 'parallel'));
     test.describe.parallel.only = wrapFunctionWithLocation(this._describe.bind(this, 'parallel.only'));
     test.describe.serial = wrapFunctionWithLocation(this._describe.bind(this, 'serial'));
@@ -130,6 +131,26 @@ export class TestTypeImpl {
       suite._addAllHook(hook);
     } else {
       suite._eachHooks.push({ type: name, fn, location });
+    }
+  }
+
+  private _configure(location: Location, options: { mode?: 'parallel' | 'serial' }) {
+    throwIfRunningInsideJest();
+    const suite = currentlyLoadingFileSuite();
+    if (!suite)
+      throw errorWithLocation(location, `describe.configure() can only be called in a test file`);
+
+    if (!options.mode)
+      return;
+    if (suite._parallelMode !== 'default')
+      throw errorWithLocation(location, 'Parallel mode is already assigned for the enclosing scope.');
+    suite._parallelMode = options.mode;
+
+    for (let parent: Suite | undefined = suite.parent; parent; parent = parent.parent) {
+      if (parent._parallelMode === 'serial' && suite._parallelMode === 'parallel')
+        throw errorWithLocation(location, 'describe.parallel cannot be nested inside describe.serial');
+      if (parent._parallelMode === 'parallel' && suite._parallelMode === 'serial')
+        throw errorWithLocation(location, 'describe.serial cannot be nested inside describe.parallel');
     }
   }
 

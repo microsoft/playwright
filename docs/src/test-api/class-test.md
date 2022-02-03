@@ -248,6 +248,46 @@ Group title.
 A callback that is run immediately when calling [`method: Test.describe`]. Any tests added in this callback will belong to the group.
 
 
+## method: Test.describe.configure
+
+Set execution mode of execution for the enclosing scope. Can be executed either on the top level or inside a describe. Configuration applies to the entire scope, regardless of whether it run before or after the test
+declaration.
+
+Learn more about the execution modes [here](./test-parallel-js.md).
+
+```js js-flavor=js
+// Run all the tests in the file concurrently using parallel workers.
+test.describe.configure({ mode: 'parallel' });
+test('runs in parallel 1', async ({ page }) => {});
+test('runs in parallel 2', async ({ page }) => {});
+```
+
+```js js-flavor=ts
+// Run all the tests in the file concurrently using parallel workers.
+test.describe.configure({ mode: 'parallel' });
+test('runs in parallel 1', async ({ page }) => {});
+test('runs in parallel 2', async ({ page }) => {});
+```
+
+```js js-flavor=js
+// Annotate tests as inter-dependent.
+test.describe.configure({ mode: 'serial' });
+test('runs first', async ({ page }) => {});
+test('runs second', async ({ page }) => {});
+```
+
+```js js-flavor=ts
+// Annotate tests as inter-dependent.
+test.describe.configure({ mode: 'serial' });
+test('runs first', async ({ page }) => {});
+test('runs second', async ({ page }) => {});
+```
+
+### option: Test.describe.configure.mode
+- `mode` <"parallel"|"serial">
+
+
+
 ## method: Test.describe.only
 
 Declares a focused group of tests. If there are some focused tests or suites, all of them will be run but nothing else.
@@ -290,21 +330,19 @@ A callback that is run immediately when calling [`method: Test.describe.only`]. 
 
 Declares a group of tests that could be run in parallel. By default, tests in a single test file run one after another, but using [`method: Test.describe.parallel`] allows them to run in parallel.
 
+See [`method: Test.describe.configure`] for the preferred way of configuring the execution mode.
+
 ```js js-flavor=js
 test.describe.parallel('group', () => {
-  test('runs in parallel 1', async ({ page }) => {
-  });
-  test('runs in parallel 2', async ({ page }) => {
-  });
+  test('runs in parallel 1', async ({ page }) => {});
+  test('runs in parallel 2', async ({ page }) => {});
 });
 ```
 
 ```js js-flavor=ts
 test.describe.parallel('group', () => {
-  test('runs in parallel 1', async ({ page }) => {
-  });
-  test('runs in parallel 2', async ({ page }) => {
-  });
+  test('runs in parallel 1', async ({ page }) => {});
+  test('runs in parallel 2', async ({ page }) => {});
 });
 ```
 
@@ -342,25 +380,23 @@ A callback that is run immediately when calling [`method: Test.describe.parallel
 
 Declares a group of tests that should always be run serially. If one of the tests fails, all subsequent tests are skipped. All tests in a group are retried together.
 
+See [`method: Test.describe.configure`] for the preferred way of configuring the execution mode.
+
 :::note
 Using serial is not recommended. It is usually better to make your tests isolated, so they can be run independently.
 :::
 
 ```js js-flavor=js
 test.describe.serial('group', () => {
-  test('runs first', async ({ page }) => {
-  });
-  test('runs second', async ({ page }) => {
-  });
+  test('runs first', async ({ page }) => {});
+  test('runs second', async ({ page }) => {});
 });
 ```
 
 ```js js-flavor=ts
 test.describe.serial('group', () => {
-  test('runs first', async ({ page }) => {
-  });
-  test('runs second', async ({ page }) => {
-  });
+  test('runs first', async ({ page }) => {});
+  test('runs second', async ({ page }) => {});
 });
 ```
 
