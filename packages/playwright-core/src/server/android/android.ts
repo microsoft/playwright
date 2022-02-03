@@ -26,7 +26,7 @@ import { BrowserContext, validateBrowserContextOptions } from '../browserContext
 import { ProgressController } from '../progress';
 import { CRBrowser } from '../chromium/crBrowser';
 import { helper } from '../helper';
-import { Transport } from '../../protocol/transport';
+import { PipeTransport } from '../../protocol/transport';
 import { RecentLogsCollector } from '../../utils/debugLogger';
 import { TimeoutSettings } from '../../utils/timeoutSettings';
 import { AndroidWebView } from '../../protocol/channels';
@@ -95,7 +95,7 @@ export class AndroidDevice extends SdkObject {
   readonly _backend: DeviceBackend;
   readonly model: string;
   readonly serial: string;
-  private _driverPromise: Promise<Transport> | undefined;
+  private _driverPromise: Promise<PipeTransport> | undefined;
   private _lastId = 0;
   private _callbacks = new Map<number, { fulfill: (result: any) => void, reject: (error: Error) => void }>();
   private _pollingWebViews: NodeJS.Timeout | undefined;
@@ -155,13 +155,13 @@ export class AndroidDevice extends SdkObject {
     return await this._backend.runCommand(`shell:screencap -p`);
   }
 
-  private async _driver(): Promise<Transport> {
+  private async _driver(): Promise<PipeTransport> {
     if (!this._driverPromise)
       this._driverPromise = this._installDriver();
     return this._driverPromise;
   }
 
-  private async _installDriver(): Promise<Transport> {
+  private async _installDriver(): Promise<PipeTransport> {
     debug('pw:android')('Stopping the old driver');
     await this.shell(`am force-stop com.microsoft.playwright.androiddriver`);
 
@@ -176,7 +176,7 @@ export class AndroidDevice extends SdkObject {
     debug('pw:android')('Starting the new driver');
     this.shell('am instrument -w com.microsoft.playwright.androiddriver.test/androidx.test.runner.AndroidJUnitRunner').catch(e => debug('pw:android')(e));
     const socket = await this._waitForLocalAbstract('playwright_android_driver_socket');
-    const transport = new Transport(socket, socket, socket, 'be');
+    const transport = new PipeTransport(socket, socket, socket, 'be');
     transport.onmessage = message => {
       const response = JSON.parse(message);
       const { id, result, error } = response;
