@@ -33,7 +33,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
-    - run: npm i -g npm@8.3
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -63,7 +63,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
-    - run: npm i -g npm@8.3
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -91,6 +91,8 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
+    # NPM 8.4 installation fails currently on GHA/Windows, see here:
+    # https://github.com/npm/cli/issues/4341
     - run: npm i -g npm@8.3
     - run: npm ci
       env:
@@ -146,7 +148,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
-    - run: npm i -g npm@8.3
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -177,7 +179,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
-    - run: npm i -g npm@8.3
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -207,7 +209,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
-    - run: npm i -g npm@8.3
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -228,7 +230,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
-    - run: npm i -g npm@8.3
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -253,6 +255,8 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
+    # NPM 8.4 installation fails currently on GHA/Windows, see here:
+    # https://github.com/npm/cli/issues/4341
     - run: npm i -g npm@8.3
     - run: npm ci
       env:
@@ -280,7 +284,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
-    - run: npm i -g npm@8.3
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -305,7 +309,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
-    - run: npm i -g npm@8.3
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -330,6 +334,8 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
+    # NPM 8.4 installation fails currently on GHA/Windows, see here:
+    # https://github.com/npm/cli/issues/4341
     - run: npm i -g npm@8.3
     - run: npm ci
       env:
@@ -357,7 +363,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
-    - run: npm i -g npm@8.3
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -382,7 +388,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
-    - run: npm i -g npm@8.3
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -408,6 +414,8 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
+    # NPM 8.4 installation fails currently on GHA/Windows, see here:
+    # https://github.com/npm/cli/issues/4341
     - run: npm i -g npm@8.3
     - run: npm ci
       env:
@@ -432,7 +440,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
-    - run: npm i -g npm@8.3
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -457,7 +465,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
-    - run: npm i -g npm@8.3
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -482,6 +490,8 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
+    # NPM 8.4 installation fails currently on GHA/Windows, see here:
+    # https://github.com/npm/cli/issues/4341
     - run: npm i -g npm@8.3
     - run: npm ci
       env:
@@ -506,7 +516,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
-    - run: npm i -g npm@8.3
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -531,7 +541,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
-    - run: npm i -g npm@8.3
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -556,6 +566,8 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
+    # NPM 8.4 installation fails currently on GHA/Windows, see here:
+    # https://github.com/npm/cli/issues/4341
     - run: npm i -g npm@8.3
     - run: npm ci
       env:
@@ -580,7 +592,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
-    - run: npm i -g npm@8.3
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -605,7 +617,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
-    - run: npm i -g npm@8.3
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -630,6 +642,8 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
+    # NPM 8.4 installation fails currently on GHA/Windows, see here:
+    # https://github.com/npm/cli/issues/4341
     - run: npm i -g npm@8.3
     - run: npm ci
       env:
@@ -657,7 +671,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
-    - run: npm i -g npm@8.3
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -682,7 +696,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
-    - run: npm i -g npm@8.3
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -706,7 +720,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
-    - run: npm i -g npm@8.3
+    - run: npm i -g npm@8
     - run: npm ci
     - run: npm run build
     - run: npx playwright install-deps
