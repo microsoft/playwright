@@ -258,3 +258,29 @@ playwright codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" 
 # Once page opens, click the "my location" button to see geolocation in action
 playwright codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com
 ```
+
+## Test Generator window screen position
+
+By default, Test Generator opens at position `1280,10`. This position can be overridden with `PLAYWRIGHT_TOOLS_POSITION` environment variable.
+
+For example, to make Test Generator appear at the top-left corner:
+
+```bash js
+export PLAYWRIGHT_TOOLS_POSITION=0,0
+npx playwright codegen wikipedia.org
+```
+
+```bash java
+export PLAYWRIGHT_TOOLS_POSITION=0,0
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="codegen wikipedia.org"
+```
+
+```bash python
+export PLAYWRIGHT_TOOLS_POSITION=0,0
+playwright codegen wikipedia.org
+```
+
+```bash csharp
+export PLAYWRIGHT_TOOLS_POSITION=0,0
+playwright codegen wikipedia.org
+```

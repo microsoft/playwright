@@ -90,7 +90,7 @@ export class RecorderApp extends EventEmitter {
     const args = [
       '--app=data:text/html,',
       '--window-size=600,600',
-      '--window-position=1280,10',
+      `--window-position=${process.env.PLAYWRIGHT_TOOLS_POSITION || '1280,10'}`,
       '--test-type=',
     ];
     if (process.env.PWTEST_RECORDER_PORT)

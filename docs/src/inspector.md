@@ -213,3 +213,62 @@ Every action on the target page is turned into the generated script:
 <img width="712" alt="Recorded script" src="https://user-images.githubusercontent.com/883973/108614897-85704600-73b3-11eb-8bcd-f2e129786c49.png"></img>
 
 You can copy entire generated script or clear it using toolbar actions.
+
+## Inspector window screen position
+
+By default, Playwright Inspector opens at position `1280,10`. This position can be overridden with `PLAYWRIGHT_TOOLS_POSITION` environment variable.
+
+For example, to make Playwright Inspector appear at the top-left corner:
+
+```bash bash-flavor=bash lang=js
+export PLAYWRIGHT_TOOLS_POSITION=0,0
+PWDEBUG=1 npm run test
+```
+
+```bash bash-flavor=batch lang=js
+set PLAYWRIGHT_TOOLS_POSITION=0,0
+set PWDEBUG=1
+npm run test
+```
+
+```bash bash-flavor=powershell lang=js
+$env:PLAYWRIGHT_TOOLS_POSITION=0,0
+$env:PWDEBUG=1
+npm run test
+```
+
+```bash bash-flavor=bash lang=java
+export PLAYWRIGHT_TOOLS_POSITION=0,0
+PWDEBUG=1 PLAYWRIGHT_JAVA_SRC=<java src root> mvn test
+```
+
+```bash bash-flavor=batch lang=java
+set PLAYWRIGHT_TOOLS_POSITION=0,0
+set PLAYWRIGHT_JAVA_SRC=<java src root>
+set PWDEBUG=1
+mvn test
+```
+
+```bash bash-flavor=powershell lang=java
+$env:PLAYWRIGHT_TOOLS_POSITION=0,0
+$env:PLAYWRIGHT_JAVA_SRC="<java src root>"
+$env:PWDEBUG=1
+mvn test
+```
+
+```bash bash-flavor=bash lang=python
+export PLAYWRIGHT_TOOLS_POSITION=0,0
+PWDEBUG=1 pytest -s
+```
+
+```bash bash-flavor=batch lang=python
+set PLAYWRIGHT_TOOLS_POSITION=0,0
+set PWDEBUG=1
+pytest -s
+```
+
+```bash bash-flavor=powershell lang=python
+$env:PLAYWRIGHT_TOOLS_POSITION=0,0
+$env:PWDEBUG=1
+pytest -s
+```
