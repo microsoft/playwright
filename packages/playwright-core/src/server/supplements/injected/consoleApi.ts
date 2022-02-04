@@ -104,7 +104,7 @@ export class ConsoleAPI {
   private _selector(element: Element) {
     if (!(element instanceof Element))
       throw new Error(`Usage: playwright.selector(element).`);
-    return generateSelector(this._injectedScript, element).selector;
+    return generateSelector(this._injectedScript, element, true).selector;
   }
 
   private _resume() {
