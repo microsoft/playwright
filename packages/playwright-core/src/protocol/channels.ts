@@ -1475,6 +1475,7 @@ export type PageScreenshotParams = {
   quality?: number,
   omitBackground?: boolean,
   fullPage?: boolean,
+  disableAnimations?: boolean,
   clip?: Rect,
 };
 export type PageScreenshotOptions = {
@@ -1483,6 +1484,7 @@ export type PageScreenshotOptions = {
   quality?: number,
   omitBackground?: boolean,
   fullPage?: boolean,
+  disableAnimations?: boolean,
   clip?: Rect,
 };
 export type PageScreenshotResult = {
@@ -2778,12 +2780,14 @@ export type ElementHandleScreenshotParams = {
   type?: 'png' | 'jpeg',
   quality?: number,
   omitBackground?: boolean,
+  disableAnimations?: boolean,
 };
 export type ElementHandleScreenshotOptions = {
   timeout?: number,
   type?: 'png' | 'jpeg',
   quality?: number,
   omitBackground?: boolean,
+  disableAnimations?: boolean,
 };
 export type ElementHandleScreenshotResult = {
   binary: Binary,

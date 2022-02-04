@@ -69,6 +69,8 @@ export class Screenshotter {
     const format = validateScreenshotOptions(options);
     return this._queue.postTask(async () => {
       const { viewportSize } = await this._originalViewportSize(progress);
+      await this._preparePageForScreenshot(progress, options.disableAnimations || false);
+      progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
 
       if (options.fullPage) {
         const fullPageSize = await this._fullPageSize(progress);
@@ -78,11 +80,15 @@ export class Screenshotter {
           documentRect = trimClipToSize(options.clip, documentRect);
         const buffer = await this._screenshot(progress, format, documentRect, undefined, fitsViewport, options);
         progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
+        await this._restorePageAfterScreenshot();
         return buffer;
       }
 
       const viewportRect = options.clip ? trimClipToSize(options.clip, viewportSize) : { x: 0, y: 0, ...viewportSize };
-      return await this._screenshot(progress, format, undefined, viewportRect, true, options);
+      const buffer = await this._screenshot(progress, format, undefined, viewportRect, true, options);
+      progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
+      await this._restorePageAfterScreenshot();
+      return buffer;
     });
   }
 
@@ -90,6 +96,9 @@ export class Screenshotter {
     const format = validateScreenshotOptions(options);
     return this._queue.postTask(async () => {
       const { viewportSize } = await this._originalViewportSize(progress);
+
+      await this._preparePageForScreenshot(progress, options.disableAnimations || false);
+      progress.throwIfAborted(); // Do not do extra work.
 
       await handle._waitAndScrollIntoViewIfNeeded(progress);
 
@@ -107,8 +116,98 @@ export class Screenshotter {
       documentRect.y += scrollOffset.y;
       const buffer = await this._screenshot(progress, format, helper.enclosingIntRect(documentRect), undefined, fitsViewport, options);
       progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
+      await this._restorePageAfterScreenshot();
       return buffer;
     });
+  }
+
+  async _preparePageForScreenshot(progress: Progress, disableAnimations: boolean) {
+    await Promise.all(this._page.frames().map(async frame => {
+      await frame.nonStallingEvaluateInExistingContext('(' + (function(disableAnimations: boolean) {
+        const styleTag = document.createElement('style');
+        styleTag.textContent = `
+          *,
+          * > *,
+          * > * > *,
+          * > * > * > *,
+          * > * > * > * > * { caret-color: transparent !important; }
+        `;
+        document.documentElement.append(styleTag);
+        const infiniteAnimationsToResume: Set<Animation> = new Set();
+        const cleanupCallbacks: (() => void)[] = [];
+
+        if (disableAnimations) {
+          const collectRoots = (root: Document | ShadowRoot, roots: (Document|ShadowRoot)[] = []): (Document|ShadowRoot)[] => {
+            roots.push(root);
+            const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
+            do {
+              const node = walker.currentNode;
+              const shadowRoot = node instanceof Element ? node.shadowRoot : null;
+              if (shadowRoot)
+                collectRoots(shadowRoot, roots);
+            } while (walker.nextNode());
+            return roots;
+          };
+          const handleAnimations = (root: Document|ShadowRoot): void => {
+            for (const animation of root.getAnimations()) {
+              if (!animation.effect || animation.playbackRate === 0 || infiniteAnimationsToResume.has(animation))
+                continue;
+              const endTime = animation.effect.getComputedTiming().endTime;
+              if (Number.isFinite(endTime)) {
+                try {
+                  animation.finish();
+                } catch (e) {
+                  // animation.finish() should not throw for
+                  // finite animations, but we'd like to be on the
+                  // safe side.
+                }
+              } else {
+                try {
+                  animation.cancel();
+                } catch (e) {
+                  // animation.cancel() should not throw for
+                  // infinite animations, but we'd like to be on the
+                  // safe side.
+                }
+                infiniteAnimationsToResume.add(animation);
+              }
+            }
+          };
+          for (const root of collectRoots(document)) {
+            const handleRootAnimations: (() => void) = handleAnimations.bind(null, root);
+            handleRootAnimations();
+            root.addEventListener('transitionrun', handleRootAnimations);
+            root.addEventListener('animationstart', handleRootAnimations);
+            cleanupCallbacks.push(() => {
+              root.removeEventListener('transitionrun', handleRootAnimations);
+              root.removeEventListener('animationstart', handleRootAnimations);
+            });
+          }
+        }
+
+        window.__cleanupScreenshot = () => {
+          styleTag.remove();
+          for (const animation of infiniteAnimationsToResume) {
+            try {
+              animation.play();
+            } catch (e) {
+              // animation.play() should never throw, but
+              // we'd like to be on the safe side.
+            }
+          }
+          for (const cleanupCallback of cleanupCallbacks)
+            cleanupCallback();
+          delete window.__cleanupScreenshot;
+        };
+      }).toString() + `)(${disableAnimations || false})`, false, 'utility').catch(() => {});
+    }));
+    progress.cleanupWhenAborted(() => this._restorePageAfterScreenshot());
+  }
+
+  async _restorePageAfterScreenshot() {
+    await Promise.all(this._page.frames().map(async frame => {
+      frame.nonStallingEvaluateInExistingContext('window.__cleanupScreenshot && window.__cleanupScreenshot()', false, 'utility').catch(() => {});
+    }));
   }
 
   private async _screenshot(progress: Progress, format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, fitsViewport: boolean | undefined, options: types.ElementScreenshotOptions): Promise<Buffer> {
@@ -122,34 +221,7 @@ export class Screenshotter {
     }
     progress.throwIfAborted(); // Avoid extra work.
 
-    const restoreBlinkingCaret = async () => {
-      await Promise.all(this._page.frames().map(async frame => {
-        frame.nonStallingEvaluateInExistingContext('window.__cleanupScreenshot && window.__cleanupScreenshot()', false, 'utility').catch(() => {});
-      }));
-    };
-    await Promise.all(this._page.frames().map(async frame => {
-      await frame.nonStallingEvaluateInExistingContext((function() {
-        const styleTag = document.createElement('style');
-        styleTag.textContent = `
-          * { caret-color: transparent !important; }
-          * > * { caret-color: transparent !important; }
-          * > * > * { caret-color: transparent !important; }
-          * > * > * > * { caret-color: transparent !important; }
-          * > * > * > * > * { caret-color: transparent !important; }
-        `;
-        document.documentElement.append(styleTag);
-        window.__cleanupScreenshot = () => {
-          styleTag.remove();
-          delete window.__cleanupScreenshot;
-        };
-      }).toString(), true, 'utility').catch(() => {});
-    }));
-    progress.cleanupWhenAborted(() => restoreBlinkingCaret());
-    progress.throwIfAborted(); // Avoid extra work.
-
     const buffer = await this._page._delegate.takeScreenshot(progress, format, documentRect, viewportRect, options.quality, fitsViewport);
-    progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
-    await restoreBlinkingCaret();
     progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
     if (shouldSetDefaultBackground)
       await this._page._delegate.setBackgroundColor();
