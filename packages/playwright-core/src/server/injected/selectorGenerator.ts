@@ -25,6 +25,7 @@ type SelectorToken = {
 
 const cacheAllowText = new Map<Element, SelectorToken[] | null>();
 const cacheDisallowText = new Map<Element, SelectorToken[] | null>();
+const kNthScore = 1000;
 
 export function querySelector(injectedScript: InjectedScript, selector: string, ownerDocument: Document): { selector: string, elements: Element[] } {
   try {
@@ -41,12 +42,12 @@ export function querySelector(injectedScript: InjectedScript, selector: string, 
   }
 }
 
-export function generateSelector(injectedScript: InjectedScript, targetElement: Element): { selector: string, elements: Element[] } {
+export function generateSelector(injectedScript: InjectedScript, targetElement: Element, strict: boolean): { selector: string, elements: Element[] } {
   injectedScript._evaluator.begin();
   try {
     targetElement = targetElement.closest('button,select,input,[role=button],[role=checkbox],[role=radio]') || targetElement;
-    const targetTokens = generateSelectorFor(injectedScript, targetElement);
-    const bestTokens = targetTokens || [cssFallback(injectedScript, targetElement)];
+    const targetTokens = generateSelectorFor(injectedScript, targetElement, strict);
+    const bestTokens = targetTokens || cssFallback(injectedScript, targetElement, strict);
     const selector = joinTokens(bestTokens);
     const parsedSelector = injectedScript.parseSelector(selector);
     return {
@@ -65,7 +66,7 @@ function filterRegexTokens(textCandidates: SelectorToken[][]): SelectorToken[][]
   return textCandidates.filter(c => c[0].selector[0] !== '/');
 }
 
-function generateSelectorFor(injectedScript: InjectedScript, targetElement: Element): SelectorToken[] | null {
+function generateSelectorFor(injectedScript: InjectedScript, targetElement: Element, strict: boolean): SelectorToken[] | null {
   if (targetElement.ownerDocument.documentElement === targetElement)
     return [{ engine: 'css', selector: 'html', score: 1 }];
 
@@ -80,7 +81,7 @@ function generateSelectorFor(injectedScript: InjectedScript, targetElement: Elem
     const noTextCandidates = buildCandidates(injectedScript, element).map(token => [token]);
 
     // First check all text and non-text candidates for the element.
-    let result = chooseFirstSelector(injectedScript, targetElement.ownerDocument, element, [...textCandidates, ...noTextCandidates], allowNthMatch);
+    let result = chooseFirstSelector(injectedScript, targetElement.ownerDocument, element, [...textCandidates, ...noTextCandidates], allowNthMatch, strict);
 
     // Do not use regex for chained selectors (for performance).
     textCandidates = filterRegexTokens(textCandidates);
@@ -110,7 +111,7 @@ function generateSelectorFor(injectedScript: InjectedScript, targetElement: Elem
         if (result && combineScores([...parentTokens, ...bestPossibleInParent]) >= combineScores(result))
           continue;
         // Update the best candidate that finds "element" in the "parent".
-        bestPossibleInParent = chooseFirstSelector(injectedScript, parent, element, candidates, allowNthMatch);
+        bestPossibleInParent = chooseFirstSelector(injectedScript, parent, element, candidates, allowNthMatch, strict);
         if (!bestPossibleInParent)
           return;
         const combined = [...parentTokens, ...bestPossibleInParent];
@@ -214,7 +215,7 @@ function makeSelectorForId(id: string) {
   return /^[a-zA-Z][a-zA-Z0-9\-\_]+$/.test(id) ? '#' + id : `[id="${cssEscape(id)}"]`;
 }
 
-function cssFallback(injectedScript: InjectedScript, targetElement: Element): SelectorToken {
+function cssFallback(injectedScript: InjectedScript, targetElement: Element, strict: boolean): SelectorToken[] {
   const kFallbackScore = 10000000;
   const root: Node = targetElement.ownerDocument;
   const tokens: string[] = [];
@@ -229,6 +230,18 @@ function cssFallback(injectedScript: InjectedScript, targetElement: Element): Se
     return node === targetElement ? selector : undefined;
   }
 
+  function makeStrict(selector: string): SelectorToken[] {
+    const token = { engine: 'css', selector, score: kFallbackScore };
+    if (!strict)
+      return [token];
+    const parsedSelector = injectedScript.parseSelector(selector);
+    const elements = injectedScript.querySelectorAll(parsedSelector, targetElement.ownerDocument);
+    if (elements.length === 1)
+      return [token];
+    const nth = { engine: 'nth', selector: String(elements.indexOf(targetElement)), score: kNthScore };
+    return [token, nth];
+  }
+
   for (let element: Element | null = targetElement; element && element !== root; element = parentElementOrShadowHost(element)) {
     const nodeName = element.nodeName.toLowerCase();
 
@@ -238,7 +251,7 @@ function cssFallback(injectedScript: InjectedScript, targetElement: Element): Se
       const token = makeSelectorForId(element.id);
       const selector = uniqueCSSSelector(token);
       if (selector)
-        return { engine: 'css', selector, score: kFallbackScore };
+        return makeStrict(selector);
       bestTokenForLevel = token;
     }
 
@@ -250,7 +263,7 @@ function cssFallback(injectedScript: InjectedScript, targetElement: Element): Se
       const token = '.' + classes.slice(0, i + 1).join('.');
       const selector = uniqueCSSSelector(token);
       if (selector)
-        return { engine: 'css', selector, score: kFallbackScore };
+        return makeStrict(selector);
       // Even if not unique, does this subset of classes uniquely identify node as a child?
       if (!bestTokenForLevel && parent) {
         const sameClassSiblings = parent.querySelectorAll(token);
@@ -266,7 +279,7 @@ function cssFallback(injectedScript: InjectedScript, targetElement: Element): Se
       const token = sameTagSiblings.indexOf(element) === 0 ? cssEscape(nodeName) : `${cssEscape(nodeName)}:nth-child(${1 + siblings.indexOf(element)})`;
       const selector = uniqueCSSSelector(token);
       if (selector)
-        return { engine: 'css', selector, score: kFallbackScore };
+        return makeStrict(selector);
       if (!bestTokenForLevel)
         bestTokenForLevel = token;
     } else if (!bestTokenForLevel) {
@@ -274,7 +287,7 @@ function cssFallback(injectedScript: InjectedScript, targetElement: Element): Se
     }
     tokens.unshift(bestTokenForLevel);
   }
-  return { engine: 'css', selector: uniqueCSSSelector()!, score: kFallbackScore };
+  return makeStrict(uniqueCSSSelector()!);
 }
 
 function escapeForRegex(text: string): string {
@@ -307,7 +320,7 @@ function combineScores(tokens: SelectorToken[]): number {
   return score;
 }
 
-function chooseFirstSelector(injectedScript: InjectedScript, scope: Element | Document, targetElement: Element, selectors: SelectorToken[][], allowNthMatch: boolean): SelectorToken[] | null {
+function chooseFirstSelector(injectedScript: InjectedScript, scope: Element | Document, targetElement: Element, selectors: SelectorToken[][], allowNthMatch: boolean, strict: boolean): SelectorToken[] | null {
   const joined = selectors.map(tokens => ({ tokens, score: combineScores(tokens) }));
   joined.sort((a, b) => a.score - b.score);
 
@@ -315,26 +328,19 @@ function chooseFirstSelector(injectedScript: InjectedScript, scope: Element | Do
   for (const { tokens } of joined) {
     const parsedSelector = injectedScript.parseSelector(joinTokens(tokens));
     const result = injectedScript.querySelectorAll(parsedSelector, scope);
+    const isStrictEnough = !strict || result.length === 1;
     const index = result.indexOf(targetElement);
-    if (index === 0) {
+    if (index === 0 && isStrictEnough) {
       // We are the first match - found the best selector.
       return tokens;
     }
 
-    // Otherwise, perhaps we can get nth-match?
+    // Otherwise, perhaps we can use nth=?
     if (!allowNthMatch || bestWithIndex || index === -1 || result.length > 5)
       continue;
 
-    // To use nth-match, we must convert everything to css.
-    const allCss = tokens.map(token => {
-      if (token.engine !== 'text')
-        return token;
-      if (token.selector.startsWith('/') && token.selector.endsWith('/'))
-        return { engine: 'css', selector: `:text-matches("${token.selector.substring(1, token.selector.length - 1)}")`, score: token.score };
-      return { engine: 'css', selector: `:text("${token.selector}")`, score: token.score };
-    });
-    const combined = joinTokens(allCss);
-    bestWithIndex = [{ engine: 'css', selector: `:nth-match(${combined}, ${index + 1})`, score: combineScores(allCss) + 1000 }];
+    const nth: SelectorToken = { engine: 'nth', selector: String(index), score: kNthScore };
+    bestWithIndex = [...tokens, nth];
   }
   return bestWithIndex;
 }

@@ -34,7 +34,7 @@ it('should fail page.fill in strict mode', async ({ page }) => {
   await page.setContent(`<input></input><div><input></input></div>`);
   const error = await page.fill('input', 'text', { strict: true }).catch(e => e);
   expect(error.message).toContain('strict mode violation');
-  expect(error.message).toContain('1) <input/> aka playwright.$("input")');
+  expect(error.message).toContain('1) <input/> aka playwright.$("input >> nth=0")');
   expect(error.message).toContain('2) <input/> aka playwright.$("div input")');
 });
 
@@ -54,6 +54,6 @@ it('should fail page.dispatchEvent in strict mode', async ({ page }) => {
   await page.setContent(`<span></span><div><span></span></div>`);
   const error = await page.dispatchEvent('span', 'click', {}, { strict: true }).catch(e => e);
   expect(error.message).toContain('strict mode violation');
-  expect(error.message).toContain('1) <span></span> aka playwright.$("span")');
+  expect(error.message).toContain('1) <span></span> aka playwright.$("span >> nth=0")');
   expect(error.message).toContain('2) <span></span> aka playwright.$("div span")');
 });

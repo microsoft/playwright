@@ -73,12 +73,12 @@ it.describe('selector generator', () => {
       <select><option>foo</option></select>
       <select mark=1><option>bar</option></select>
     `);
-    expect(await generate(page, '[mark="1"]')).toBe(':nth-match(select, 2)');
+    expect(await generate(page, '[mark="1"]')).toBe('select >> nth=1');
   });
 
   it('should use ordinal for identical nodes', async ({ page }) => {
     await page.setContent(`<div>Text</div><div>Text</div><div mark=1>Text</div><div>Text</div>`);
-    expect(await generate(page, 'div[mark="1"]')).toBe(`:nth-match(:text("Text"), 3)`);
+    expect(await generate(page, 'div[mark="1"]')).toBe(`text=Text >> nth=2`);
   });
 
   it('should prefer data-testid', async ({ page }) => {
@@ -94,7 +94,7 @@ it.describe('selector generator', () => {
       <div data-testid=a>
         Text
       </div>`);
-    expect(await generate(page, 'div[mark="1"]')).toBe('[data-testid="a"]');
+    expect(await generate(page, 'div[mark="1"]')).toBe('[data-testid="a"] >> nth=0');
   });
 
   it('should handle second non-unique data-testid', async ({ page }) => {
@@ -105,7 +105,7 @@ it.describe('selector generator', () => {
       <div data-testid=a mark=1>
         Text
       </div>`);
-    expect(await generate(page, 'div[mark="1"]')).toBe(`:nth-match([data-testid="a"], 2)`);
+    expect(await generate(page, 'div[mark="1"]')).toBe(`[data-testid="a"] >> nth=1`);
   });
 
   it('should use readable id', async ({ page }) => {
@@ -121,7 +121,7 @@ it.describe('selector generator', () => {
       <div></div>
       <div id=aAbBcCdDeE mark=1></div>
     `);
-    expect(await generate(page, 'div[mark="1"]')).toBe(`:nth-match(div, 2)`);
+    expect(await generate(page, 'div[mark="1"]')).toBe(`div >> nth=1`);
   });
 
   it('should use has-text', async ({ page }) => {
@@ -195,7 +195,7 @@ it.describe('selector generator', () => {
       <input value="two" mark="1">
       <input value="three">
     `);
-    expect(await generate(page, 'input[mark="1"]')).toBe(':nth-match(input, 2)');
+    expect(await generate(page, 'input[mark="1"]')).toBe('input >> nth=1');
   });
 
   it.describe('should prioritise input element attributes correctly', () => {
@@ -249,7 +249,7 @@ it.describe('selector generator', () => {
       input2.setAttribute('value', 'foo');
       shadowRoot2.appendChild(input2);
     });
-    expect(await generate(page, 'input[value=foo]')).toBe(':nth-match(input, 3)');
+    expect(await generate(page, 'input[value=foo]')).toBe('input >> nth=2');
   });
 
   it('should work in dynamic iframes without navigation', async ({ page }) => {

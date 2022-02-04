@@ -237,7 +237,7 @@ export class Recorder {
 
   private _onFocus() {
     const activeElement = this._deepActiveElement(document);
-    const result = activeElement ? generateSelector(this._injectedScript, activeElement) : null;
+    const result = activeElement ? generateSelector(this._injectedScript, activeElement, true) : null;
     this._activeModel = result && result.selector ? result : null;
     if (this._params.isUnderTest)
       console.error('Highlight updated for test: ' + (result ? result.selector : null)); // eslint-disable-line no-console
@@ -250,7 +250,7 @@ export class Recorder {
       return;
     }
     const hoveredElement = this._hoveredElement;
-    const { selector, elements } = generateSelector(this._injectedScript, hoveredElement);
+    const { selector, elements } = generateSelector(this._injectedScript, hoveredElement, true);
     if ((this._hoveredModel && this._hoveredModel.selector === selector) || this._hoveredElement !== hoveredElement)
       return;
     this._hoveredModel = selector ? { selector, elements } : null;
