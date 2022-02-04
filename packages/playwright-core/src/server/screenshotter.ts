@@ -22,6 +22,12 @@ import * as types from './types';
 import { Progress } from './progress';
 import { assert } from '../utils/utils';
 
+declare global {
+  interface Window {
+    __cleanupScreenshot?: () => void;
+  }
+}
+
 export class Screenshotter {
   private _queue = new TaskQueue();
   private _page: Page;
@@ -115,7 +121,35 @@ export class Screenshotter {
       progress.cleanupWhenAborted(() => this._page._delegate.setBackgroundColor());
     }
     progress.throwIfAborted(); // Avoid extra work.
+
+    const restoreBlinkingCaret = async () => {
+      await Promise.all(this._page.frames().map(async frame => {
+        frame.nonStallingEvaluateInExistingContext('window.__cleanupScreenshot && window.__cleanupScreenshot()', false, 'utility').catch(() => {});
+      }));
+    };
+    await Promise.all(this._page.frames().map(async frame => {
+      await frame.nonStallingEvaluateInExistingContext((function() {
+        const styleTag = document.createElement('style');
+        styleTag.textContent = `
+          * { caret-color: transparent !important; }
+          * > * { caret-color: transparent !important; }
+          * > * > * { caret-color: transparent !important; }
+          * > * > * > * { caret-color: transparent !important; }
+          * > * > * > * > * { caret-color: transparent !important; }
+        `;
+        document.documentElement.append(styleTag);
+        window.__cleanupScreenshot = () => {
+          styleTag.remove();
+          delete window.__cleanupScreenshot;
+        };
+      }).toString(), true, 'utility').catch(() => {});
+    }));
+    progress.cleanupWhenAborted(() => restoreBlinkingCaret());
+    progress.throwIfAborted(); // Avoid extra work.
+
     const buffer = await this._page._delegate.takeScreenshot(progress, format, documentRect, viewportRect, options.quality, fitsViewport);
+    progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
+    await restoreBlinkingCaret();
     progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
     if (shouldSetDefaultBackground)
       await this._page._delegate.setBackgroundColor();

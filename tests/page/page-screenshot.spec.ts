@@ -31,6 +31,23 @@ it.describe('page screenshot', () => {
     expect(screenshot).toMatchSnapshot('screenshot-sanity.png');
   });
 
+  it('should not capture blinking caret', async ({ page, server }) => {
+    await page.setContent(`
+      <div contenteditable="true"></div>
+    `);
+    const div = page.locator('div');
+    await div.type('foo bar');
+    const screenshot = await div.screenshot();
+    for (let i = 0; i < 10; ++i) {
+      // Caret blinking time is set to 500ms.
+      // Try to capture variety of screenshots to make
+      // sure we don't capture blinking caret.
+      await new Promise(x => setTimeout(x, 150));
+      const newScreenshot = await div.screenshot();
+      expect(newScreenshot.equals(screenshot)).toBe(true);
+    }
+  });
+
   it('should clip rect', async ({ page, server }) => {
     await page.setViewportSize({ width: 500, height: 500 });
     await page.goto(server.PREFIX + '/grid.html');
