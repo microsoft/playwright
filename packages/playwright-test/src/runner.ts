@@ -113,6 +113,11 @@ export class Runner {
         reporters.push(new reporterConstructor(arg));
       }
     }
+    if (process.env.PW_TEST_REPORTER) {
+      const reporterConstructor = await this._loader.loadReporter(process.env.PW_TEST_REPORTER);
+      reporters.push(new reporterConstructor());
+    }
+
     const someReporterPrintsToStdio = reporters.some(r => {
       const prints = r.printsToStdio ? r.printsToStdio() : true;
       return prints;
