@@ -426,3 +426,19 @@ test('should not reuse worker after unhandled rejection in test.fail', async ({ 
   expect(result.output).toContain(`Error: Oh my!`);
   expect(result.output).not.toContain(`Did not teardown test scope`);
 });
+
+test('should allow unhandled expects in test.fail', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const { test } = pwt;
+      test('failing1', async ({}) => {
+        test.fail();
+        Promise.resolve().then(() => expect(1).toBe(2));
+        await new Promise(f => setTimeout(f, 100));
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).not.toContain(`Error: expect`);
+});
