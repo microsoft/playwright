@@ -253,7 +253,7 @@ A callback that is run immediately when calling [`method: Test.describe`]. Any t
 Set execution mode of execution for the enclosing scope. Can be executed either on the top level or inside a describe. Configuration applies to the entire scope, regardless of whether it run before or after the test
 declaration.
 
-Learn more about the execution modes [here](./test-parallel-js.md).
+Learn more about the execution modes [here](./test-parallel.md).
 
 Running tests in parallel:
 

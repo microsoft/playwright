@@ -1717,7 +1717,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Set execution mode of execution for the enclosing scope. Can be executed either on the top level or inside a describe.
    * Configuration applies to the entire scope, regardless of whether it run before or after the test declaration.
    *
-   * Learn more about the execution modes [here](https://playwright.dev/docs/test-parallel-js).
+   * Learn more about the execution modes [here](https://playwright.dev/docs/test-parallel).
    *
    * Running tests in parallel:
    *
