@@ -249,6 +249,8 @@ test('should support toHaveTitle', async ({ runInlineTest }) => {
   const output = stripAnsi(result.output);
   expect(output).toContain('expect(page).toHaveTitle');
   expect(output).toContain('Expected string: \"Hello\"');
+  expect(output).not.toContain('waiting for selector ":root"');
+  expect(output).not.toContain('selector resolved to ');
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
@@ -273,6 +275,8 @@ test('should support toHaveURL', async ({ runInlineTest }) => {
   const output = stripAnsi(result.output);
   expect(output).toContain('expect(page).toHaveURL');
   expect(output).toContain('Expected string: \"wrong\"');
+  expect(output).not.toContain('waiting for selector ":root"');
+  expect(output).not.toContain('selector resolved to ');
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);

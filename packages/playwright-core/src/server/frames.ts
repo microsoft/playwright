@@ -1261,6 +1261,9 @@ export class Frame extends SdkObject {
     const mainWorld = options.expression === 'to.have.property';
     const timeout = this._page._timeoutSettings.timeout(options);
 
+    const kPageAssertions = ['to.have.url', 'to.have.title'];
+    const omitSelectorLogs = kPageAssertions.includes(options.expression);
+
     // List all combinations that are satisfied with the detached node(s).
     let omitAttached = false;
     if (!options.isNot && options.expression === 'to.be.hidden')
@@ -1309,7 +1312,7 @@ export class Frame extends SdkObject {
 
         // Reached the expected state!
         return result;
-      }, { ...options, isArray }, { strict: true, querySelectorAll: isArray, mainWorld, omitAttached, logScale: true, ...options });
+      }, { ...options, isArray }, { strict: true, querySelectorAll: isArray, mainWorld, omitAttached, logScale: true, omitSelectorLogs, ...options });
     }, timeout).catch(e => {
       // Q: Why not throw upon isSessionClosedError(e) as in other places?
       // A: We want user to receive a friendly message containing the last intermediate result.
@@ -1380,7 +1383,7 @@ export class Frame extends SdkObject {
     this._parentFrame = null;
   }
 
-  private async _scheduleRerunnableTask<T, R>(metadata: CallMetadata, selector: string, body: DomTaskBody<T, R, Element>, taskData: T, options: types.TimeoutOptions & types.StrictOptions & { mainWorld?: boolean } = {}): Promise<R> {
+  private async _scheduleRerunnableTask<T, R>(metadata: CallMetadata, selector: string, body: DomTaskBody<T, R, Element>, taskData: T, options: types.TimeoutOptions & types.StrictOptions & { mainWorld?: boolean, omitSelectorLogs?: boolean } = {}): Promise<R> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       return await this._scheduleRerunnableTaskWithProgress(progress, selector, body as DomTaskBody<T, R, Element | undefined>, taskData, options);
@@ -1392,12 +1395,13 @@ export class Frame extends SdkObject {
     selector: string,
     body: DomTaskBody<T, R, Element | undefined>,
     taskData: T,
-    options: types.TimeoutOptions & types.StrictOptions & { mainWorld?: boolean, querySelectorAll?: boolean, logScale?: boolean, omitAttached?: boolean } = {}): Promise<R> {
+    options: types.TimeoutOptions & types.StrictOptions & { mainWorld?: boolean, querySelectorAll?: boolean, logScale?: boolean, omitAttached?: boolean, omitSelectorLogs?: boolean } = {}): Promise<R> {
 
     const callbackText = body.toString();
     return this.retryWithProgress(progress, selector, options, async selectorInFrame => {
       // Be careful, |this| can be different from |frame|.
-      progress.log(`waiting for selector "${selector}"`);
+      if (!options.omitSelectorLogs)
+        progress.log(`waiting for selector "${selector}"`);
       const { frame, info } = selectorInFrame || { frame: this, info: { parsed: { parts: [{ name: 'control', body: 'return-empty', source: 'control=return-empty' }] }, world: 'utility', strict: !!options.strict } };
       return await frame._scheduleRerunnableTaskInFrame(progress, info, callbackText, taskData, options);
     });
@@ -1408,13 +1412,13 @@ export class Frame extends SdkObject {
     info: SelectorInfo,
     callbackText: string,
     taskData: T,
-    options: types.TimeoutOptions & types.StrictOptions & { mainWorld?: boolean, querySelectorAll?: boolean, logScale?: boolean, omitAttached?: boolean }): Promise<R> {
+    options: types.TimeoutOptions & types.StrictOptions & { mainWorld?: boolean, querySelectorAll?: boolean, logScale?: boolean, omitAttached?: boolean, omitSelectorLogs?: boolean  }): Promise<R> {
     progress.throwIfAborted();
     const data = this._contextData.get(options.mainWorld ? 'main' : info!.world)!;
     // This potentially runs in a sub-frame.
     {
       const rerunnableTask = new RerunnableTask<R>(data, progress, injectedScript => {
-        return injectedScript.evaluateHandle((injected, { info, taskData, callbackText, querySelectorAll, logScale, omitAttached, snapshotName }) => {
+        return injectedScript.evaluateHandle((injected, { info, taskData, callbackText, querySelectorAll, logScale, omitAttached, snapshotName, omitSelectorLogs }) => {
           const callback = injected.eval(callbackText) as DomTaskBody<T, R, Element | undefined>;
           const poller = logScale ? injected.pollLogScale.bind(injected) : injected.pollRaf.bind(injected);
           let markedElements = new Set<Element>();
@@ -1424,11 +1428,12 @@ export class Frame extends SdkObject {
             if (querySelectorAll) {
               elements = injected.querySelectorAll(info.parsed, document);
               element = elements[0];
-              progress.logRepeating(`  selector resolved to ${elements.length} element${elements.length === 1 ? '' : 's'}`);
+              if (!omitSelectorLogs)
+                progress.logRepeating(`  selector resolved to ${elements.length} element${elements.length === 1 ? '' : 's'}`);
             } else {
               element = injected.querySelector(info.parsed, document, info.strict);
               elements = element ? [element] : [];
-              if (element)
+              if (element && !omitSelectorLogs)
                 progress.logRepeating(`  selector resolved to ${injected.previewNode(element)}`);
             }
 
@@ -1450,7 +1455,7 @@ export class Frame extends SdkObject {
 
             return callback(progress, element, taskData as T, elements);
           });
-        }, { info, taskData, callbackText, querySelectorAll: options.querySelectorAll, logScale: options.logScale, omitAttached: options.omitAttached, snapshotName: progress.metadata.afterSnapshot });
+        }, { info, taskData, callbackText, querySelectorAll: options.querySelectorAll, logScale: options.logScale, omitAttached: options.omitAttached, omitSelectorLogs: options.omitSelectorLogs, snapshotName: progress.metadata.afterSnapshot });
       }, true);
       if (this._detached)
         rerunnableTask.terminate(new Error('Frame got detached.'));
