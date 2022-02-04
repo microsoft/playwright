@@ -84,6 +84,7 @@ export class DragManager {
           const val = await didStartDrag;
           window.removeEventListener('mousemove', mouseListener, { capture: true });
           window.removeEventListener('dragstart', dragListener, { capture: true });
+          delete window.__cleanupDrag;
           return val;
         };
       }).toString(), true, 'utility').catch(() => {});
