@@ -255,6 +255,8 @@ declaration.
 
 Learn more about the execution modes [here](./test-parallel-js.md).
 
+Running tests in parallel:
+
 ```js js-flavor=js
 // Run all the tests in the file concurrently using parallel workers.
 test.describe.configure({ mode: 'parallel' });
@@ -268,6 +270,8 @@ test.describe.configure({ mode: 'parallel' });
 test('runs in parallel 1', async ({ page }) => {});
 test('runs in parallel 2', async ({ page }) => {});
 ```
+
+Running tests sequentially:
 
 ```js js-flavor=js
 // Annotate tests as inter-dependent.
