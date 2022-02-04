@@ -90,7 +90,9 @@ it('should filter by regex and regexp flags', async ({ page }) => {
   await expect(page.locator('div', { hasText: /hElLo "world"/i })).toHaveText('Hello "world"');
 });
 
-it('should support has:locator', async ({ page }) => {
+it('should support has:locator', async ({ page, trace }) => {
+  it.skip(trace === 'on');
+
   await page.setContent(`<div><span>hello</span></div><div><span>world</span></div>`);
   await expect(page.locator(`div`, {
     has: page.locator(`text=world`)
