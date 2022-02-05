@@ -92,7 +92,7 @@ it('should play audio #smoke', async ({ page, server, browserName, platform }) =
   await page.$eval('audio', e => e.play());
   await page.waitForTimeout(1000);
   await page.$eval('audio', e => e.pause());
-  expect(await page.$eval('audio', e => e.currentTime)).toBeGreaterThan(0.5);
+  expect(await page.$eval('audio', e => e.currentTime)).toBeGreaterThan(0.2);
 });
 
 it('should support webgl #smoke', async ({ page, browserName, headless }) => {
