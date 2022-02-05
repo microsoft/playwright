@@ -124,6 +124,10 @@ export class InjectedScript {
     return result;
   }
 
+  generateSelector(targetElement: Element): string {
+    return generateSelector(this, targetElement, true).selector;
+  }
+
   querySelector(selector: ParsedSelector, root: Node, strict: boolean): Element | undefined {
     if (!(root as any)['querySelector'])
       throw this.createStacklessError('Node is not queryable.');
@@ -848,7 +852,7 @@ export class InjectedScript {
   strictModeViolationError(selector: ParsedSelector, matches: Element[]): Error {
     const infos = matches.slice(0, 10).map(m => ({
       preview: this.previewNode(m),
-      selector: generateSelector(this, m, true).selector
+      selector: this.generateSelector(m),
     }));
     const lines = infos.map((info, i) => `\n    ${i + 1}) ${info.preview} aka playwright.$("${info.selector}")`);
     if (infos.length < matches.length)

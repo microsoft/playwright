@@ -48,13 +48,3 @@ export function toModifiers(modifiers: number): ('Alt' | 'Control' | 'Meta' | 'S
     result.push('Shift');
   return result;
 }
-
-export function describeFrame(frame: Frame): { frameName?: string, frameUrl: string, isMainFrame: boolean } {
-  const page = frame._page;
-  if (page.mainFrame() === frame)
-    return { isMainFrame: true, frameUrl: frame.url() };
-  const frames = page.frames().filter(f => f.name() === frame.name());
-  if (frames.length === 1 && frames[0] === frame)
-    return { isMainFrame: false, frameUrl: frame.url(), frameName: frame.name() };
-  return { isMainFrame: false, frameUrl: frame.url() };
-}
