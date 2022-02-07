@@ -457,11 +457,12 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
 
 
 function formatPendingCalls(calls: ParsedStackTrace[]) {
+  calls = calls.filter(call => !!call.apiName);
   if (!calls.length)
     return '';
   return 'Pending operations:\n' + calls.map(call => {
-    const frame = call.frames && call.frames[0] ? formatStackFrame(call.frames[0]) : '<unknown>';
-    return `  - ${call.apiName} at ${frame}\n`;
+    const frame = call.frames && call.frames[0] ? ' at ' + formatStackFrame(call.frames[0]) : '';
+    return `  - ${call.apiName}${frame}\n`;
   }).join('') + '\n';
 }
 
