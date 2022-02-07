@@ -140,6 +140,14 @@ export class Runner {
   async runAllTests(options: RunOptions = {}): Promise<FullResult> {
     this._reporter = await this._createReporter(!!options.listOnly);
     const config = this._loader.fullConfig();
+
+    let legacyGlobalTearDown: (() => Promise<void>) | undefined;
+    if (process.env.PW_TEST_LEGACY_GLOBAL_SETUP_MODE) {
+      legacyGlobalTearDown = await this._performGlobalSetup(config);
+      if (!legacyGlobalTearDown)
+        return { status: 'failed' };
+    }
+
     const result = await raceAgainstTimeout(() => this._run(!!options.listOnly, options.filePatternFilter || [], options.projectFilter), config.globalTimeout);
     let fullResult: FullResult;
     if (result.timedOut) {
@@ -149,6 +157,7 @@ export class Runner {
       fullResult = result.result;
     }
     await this._reporter.onEnd?.(fullResult);
+    await legacyGlobalTearDown?.();
 
     // Calling process.exit() might truncate large stdout/stderr output.
     // See https://github.com/nodejs/node/issues/6456.
@@ -351,21 +360,19 @@ export class Runner {
     if (list)
       return { status: 'passed' };
 
-    // 13. Declare global setup to tear down in finally.
-    const internalGlobalTeardowns: (() => Promise<void>)[] = [];
-    let webServer: WebServer | undefined;
-    let globalSetupResult: any;
+
+    // 13. Run Global setup.
+    let globalTearDown: (() => Promise<void>) | undefined;
+    if (!process.env.PW_TEST_LEGACY_GLOBAL_SETUP_MODE) {
+      globalTearDown = await this._performGlobalSetup(config);
+      if (!globalTearDown)
+        return { status: 'failed' };
+    }
 
     const result: FullResult = { status: 'passed' };
 
+    // 14. Run tests.
     try {
-      // 14. Perform global setup.
-      for (const internalGlobalSetup of this._internalGlobalSetups)
-        internalGlobalTeardowns.push(await internalGlobalSetup());
-      webServer = config.webServer ? await WebServer.create(config.webServer) : undefined;
-      if (config.globalSetup)
-        globalSetupResult = await (await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup'))(this._loader.fullConfig());
-
       const sigintWatcher = new SigIntWatcher();
 
       let hasWorkerErrors = false;
@@ -389,35 +396,59 @@ export class Runner {
       this._reporter.onError?.(serializeError(e));
       return { status: 'failed' };
     } finally {
-
-      await this._runAndAssignError(async () => {
-        if (globalSetupResult && typeof globalSetupResult === 'function')
-          await globalSetupResult(this._loader.fullConfig());
-      }, result);
-
-      await this._runAndAssignError(async () => {
-        if (config.globalTeardown)
-          await (await this._loader.loadGlobalHook(config.globalTeardown, 'globalTeardown'))(this._loader.fullConfig());
-      }, result);
-
-      await this._runAndAssignError(async () => {
-        await webServer?.kill();
-      }, result);
-
-      await this._runAndAssignError(async () => {
-        for (const internalGlobalTeardown of internalGlobalTeardowns)
-          await internalGlobalTeardown();
-      }, result);
+      await globalTearDown?.();
     }
     return result;
   }
 
-  private async _runAndAssignError(callback: () => Promise<void>, result: FullResult) {
+  private async _performGlobalSetup(config: FullConfig): Promise<(() => Promise<void>) | undefined> {
+    const result: FullResult = { status: 'passed' };
+    const internalGlobalTeardowns: (() => Promise<void>)[] = [];
+    let globalSetupResult: any;
+    let webServer: WebServer | undefined;
+
+    const tearDown = async () => {
+      await this._runAndReportError(async () => {
+        if (globalSetupResult && typeof globalSetupResult === 'function')
+          await globalSetupResult(this._loader.fullConfig());
+      }, result);
+
+      await this._runAndReportError(async () => {
+        if (config.globalTeardown)
+          await (await this._loader.loadGlobalHook(config.globalTeardown, 'globalTeardown'))(this._loader.fullConfig());
+      }, result);
+
+      await this._runAndReportError(async () => {
+        await webServer?.kill();
+      }, result);
+
+      await this._runAndReportError(async () => {
+        for (const internalGlobalTeardown of internalGlobalTeardowns)
+          await internalGlobalTeardown();
+      }, result);
+    };
+
+    await this._runAndReportError(async () => {
+      for (const internalGlobalSetup of this._internalGlobalSetups)
+        internalGlobalTeardowns.push(await internalGlobalSetup());
+      webServer = config.webServer ? await WebServer.create(config.webServer) : undefined;
+      if (config.globalSetup)
+        globalSetupResult = await (await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup'))(this._loader.fullConfig());
+    }, result);
+
+    if (result.status !== 'passed') {
+      tearDown();
+      return;
+    }
+
+    return tearDown;
+  }
+
+  private async _runAndReportError(callback: () => Promise<void>, result: FullResult) {
     try {
       await callback();
     } catch (e) {
-      if (result.status === 'passed')
-        result.status = 'failed';
+      result.status = 'failed';
       this._reporter.onError?.(serializeError(e));
     }
   }
