@@ -39,7 +39,7 @@ export function context(action: ActionTraceEvent): ContextEntry {
   return (action as any)[contextSymbol];
 }
 
-export function next(action: ActionTraceEvent): ActionTraceEvent {
+function next(action: ActionTraceEvent): ActionTraceEvent {
   return (action as any)[nextSymbol];
 }
 
@@ -89,16 +89,19 @@ export function resourcesForAction(action: ActionTraceEvent): ResourceSnapshot[]
 }
 
 export function mergeContexts(contexts: ContextEntry[]): MergedContexts {
-  if (contexts.length === 1)
-    return contexts[0];
-  const newContext: MergedContexts = Object.assign({}, contexts[0], {
+  const newContext: MergedContexts = {
+    browserName: contexts[0].browserName,
+    platform: contexts[0].platform,
+    title: contexts[0].title,
+    options: contexts[0].options,
+    wallTime: contexts.map(c => c.wallTime).reduce((prev, cur) => Math.min(prev || Number.MAX_VALUE, cur!), Number.MAX_VALUE),
     startTime: contexts.map(c => c.startTime).reduce((prev, cur) => Math.min(prev, cur), Number.MAX_VALUE),
     endTime: contexts.map(c => c.endTime).reduce((prev, cur) => Math.max(prev, cur), Number.MIN_VALUE),
     pages: ([] as PageEntry[]).concat(...contexts.map(c => c.pages)),
     actions: ([] as ActionTraceEvent[]).concat(...contexts.map(c => c.actions)),
     events: ([] as ActionTraceEvent[]).concat(...contexts.map(c => c.events)),
     hasSource: contexts.some(c => c.hasSource)
-  });
+  };
   newContext.actions.sort((a1, a2) => a1.metadata.startTime - a2.metadata.startTime);
   newContext.events.sort((a1, a2) => a1.metadata.startTime - a2.metadata.startTime);
   return newContext;

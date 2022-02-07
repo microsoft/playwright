@@ -44,7 +44,7 @@ export const Workbench: React.FunctionComponent<{
   const [processingErrorMessage, setProcessingErrorMessage] = React.useState<string | null>(null);
   const [fileForLocalModeError, setFileForLocalModeError] = React.useState<string | null>(null);
 
-  const processTraceFile = (files: FileList) => {
+  const processTraceFiles = (files: FileList) => {
     const blobUrls = [];
     const fileNames = [];
     const url = new URL(window.location.href);
@@ -55,8 +55,8 @@ export const Workbench: React.FunctionComponent<{
       const blobTraceURL = URL.createObjectURL(file);
       blobUrls.push(blobTraceURL);
       fileNames.push(file.name);
-      url.searchParams.set('trace', blobTraceURL);
-      url.searchParams.set('traceFileName', file.name);
+      url.searchParams.append('trace', blobTraceURL);
+      url.searchParams.append('traceFileName', file.name);
     }
     const href = url.toString();
     // Snapshot loaders will inherit the trace url from the query parameters,
@@ -71,14 +71,14 @@ export const Workbench: React.FunctionComponent<{
 
   const handleDropEvent = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
-    processTraceFile(event.dataTransfer.files);
+    processTraceFiles(event.dataTransfer.files);
   };
 
   const handleFileInputChange = (event: any) => {
     event.preventDefault();
     if (!event.target.files)
       return;
-    processTraceFile(event.target.files);
+    processTraceFiles(event.target.files);
   };
 
   React.useEffect(() => {
@@ -216,7 +216,7 @@ export const Workbench: React.FunctionComponent<{
         <div>3. Drop the trace from the download shelf into the page</div>
       </div>
     </div>}
-    {!dragOver && !fileForLocalModeError && (!traceURLs || processingErrorMessage) && <div className='drop-target'>
+    {!dragOver && !fileForLocalModeError && (!traceURLs.length || processingErrorMessage) && <div className='drop-target'>
       <div className='processing-error'>{processingErrorMessage}</div>
       <div className='title'>Drop Playwright Trace to load</div>
       <div>or</div>

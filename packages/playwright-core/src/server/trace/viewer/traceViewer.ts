@@ -28,7 +28,7 @@ import { ProgressController } from '../../progress';
 
 export async function showTraceViewer(traceUrls: string[], browserName: string, headless = false, port?: number): Promise<BrowserContext | undefined> {
   for (const traceUrl of traceUrls) {
-    if (traceUrl && !traceUrl.startsWith('http://') && !traceUrl.startsWith('https://') && !fs.existsSync(traceUrl)) {
+    if (!traceUrl.startsWith('http://') && !traceUrl.startsWith('https://') && !fs.existsSync(traceUrl)) {
       // eslint-disable-next-line no-console
       console.error(`Trace file ${traceUrl} does not exist!`);
       process.exit(1);
