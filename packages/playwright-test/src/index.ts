@@ -70,6 +70,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
   headless: [ undefined, { scope: 'worker', option: true } ],
   channel: [ undefined, { scope: 'worker', option: true } ],
   launchOptions: [ {}, { scope: 'worker', option: true } ],
+  connectOptions: [ undefined, { scope: 'worker', option: true } ],
   screenshot: [ 'off', { scope: 'worker', option: true } ],
   video: [ 'off', { scope: 'worker', option: true } ],
   trace: [ 'off', { scope: 'worker', option: true } ],
@@ -100,9 +101,16 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     await use(options);
   }, { scope: 'worker' }],
 
-  browser: [async ({ playwright, browserName }, use) => {
+  browser: [async ({ playwright, browserName, connectOptions }, use) => {
     if (!['chromium', 'firefox', 'webkit'].includes(browserName))
       throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
+    if (connectOptions) {
+      const browser = await playwright[browserName].connect(connectOptions);
+      await use(browser);
+      await browser.close();
+      return;
+    }
+
     const browser = await playwright[browserName].launch();
     await use(browser);
     await browser.close();

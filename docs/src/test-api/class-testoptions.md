@@ -110,6 +110,13 @@ Learn more about [various timeouts](./test-timeouts.md).
 
 ## property: TestOptions.colorScheme = %%-context-option-colorscheme-%%
 
+## property: TestOptions.connectOptions
+- type: <[void]|[Object]>
+  - `wsEndpoint` <[string]> A browser websocket endpoint to connect to.
+  - `headers` <[void]|[Object]<[string], [string]>> Additional HTTP headers to be sent with web socket connect request. Optional.
+
+When connect options are specified, default [`property: Fixtures.browser`], [`property: Fixtures.context`] and [`property: Fixtures.page`] use the remote browser instead of launching a browser locally, and any launch options like [`property: TestOptions.headless`] or [`property: TestOptions.channel`] are ignored.
+
 ## property: TestOptions.contextOptions
 - type: <[Object]>
 
