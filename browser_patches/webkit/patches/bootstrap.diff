@@ -2672,6 +2672,27 @@ index 345cc24534bc0451867035faa033bdf5cd0604f6..59f4a45331219709e98bbc35c479e78b
  
      if (!value)
          return userPrefersReducedMotion;
+diff --git a/Source/WebCore/dom/AbortSignal.cpp b/Source/WebCore/dom/AbortSignal.cpp
+index 1270ee722c6bb40b414e2e636da14e00622f3672..a13bcc589cdd4d60fe860c43974ca41cb8b6a798 100644
+--- a/Source/WebCore/dom/AbortSignal.cpp
++++ b/Source/WebCore/dom/AbortSignal.cpp
+@@ -34,6 +34,7 @@
+ #include "JSDOMException.h"
+ #include "ScriptExecutionContext.h"
+ #include <JavaScriptCore/Exception.h>
++#include <JavaScriptCore/JSCast.h>
+ #include <wtf/IsoMallocInlines.h>
+ 
+ namespace WebCore {
+@@ -62,7 +63,7 @@ Ref<AbortSignal> AbortSignal::timeout(ScriptExecutionContext& context, uint64_t
+     auto action = [signal](ScriptExecutionContext& context) mutable {
+         signal->setHasActiveTimeoutTimer(false);
+ 
+-        auto* globalObject = jsCast<JSDOMGlobalObject*>(context.globalObject());
++        auto* globalObject = JSC::jsCast<JSDOMGlobalObject*>(context.globalObject());
+         if (!globalObject)
+             return;
+ 
 diff --git a/Source/WebCore/dom/DataTransfer.cpp b/Source/WebCore/dom/DataTransfer.cpp
 index 86ab889bc0ea15a547357fb64dff9f10b862dc54..ec5f9a66c29431a1bbf24c4013e45042d584965c 100644
 --- a/Source/WebCore/dom/DataTransfer.cpp
@@ -6998,6 +7019,21 @@ index 24cfb7137431a77ecb01fedaa4473c69784476c3..9c1413baafa7675fd62d8eb85a267575
          return true;
  #else
          return false;
+diff --git a/Source/WebCore/platform/graphics/PlatformDisplay.cpp b/Source/WebCore/platform/graphics/PlatformDisplay.cpp
+index 0db17070922ca03cd57433871670a11df671a3cb..89f15190dd0396088a4e6ed486c426c49c3616f4 100644
+--- a/Source/WebCore/platform/graphics/PlatformDisplay.cpp
++++ b/Source/WebCore/platform/graphics/PlatformDisplay.cpp
+@@ -84,6 +84,10 @@
+ #include <wtf/glib/GUniquePtr.h>
+ #endif
+ 
++#if USE(GLIB)
++#include <wtf/glib/GRefPtr.h>
++#endif
++
+ namespace WebCore {
+ 
+ std::unique_ptr<PlatformDisplay> PlatformDisplay::createPlatformDisplay()
 diff --git a/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp b/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp
 index 4db603a94f3af1b1bce94ab0f1ae36054c004fcc..c1820f48eb86348f8ca678fde636244e8c91267e 100644
 --- a/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp
@@ -10349,6 +10385,18 @@ index 94419dd86f079c5c53e68ce8e79b915505a87ab0..076d3c33ccbdd2894239375a308df5bd
  WebProcess/WebCoreSupport/wpe/WebEditorClientWPE.cpp
  
  WebProcess/WebPage/AcceleratedSurface.cpp
+diff --git a/Source/WebKit/UIProcess/API/APIInspectorExtensionClient.h b/Source/WebKit/UIProcess/API/APIInspectorExtensionClient.h
+index 2feef6082a064576e7843ad62646417301dbb4d7..eecfb781fc2236e0cf3c016879204ec32322ce42 100644
+--- a/Source/WebKit/UIProcess/API/APIInspectorExtensionClient.h
++++ b/Source/WebKit/UIProcess/API/APIInspectorExtensionClient.h
+@@ -26,6 +26,7 @@
+ #pragma once
+ 
+ #include "InspectorExtensionTypes.h"
++#include <WebCore/FrameIdentifier.h>
+ #include <wtf/Forward.h>
+ 
+ namespace API {
 diff --git a/Source/WebKit/UIProcess/API/APIProcessPoolConfiguration.cpp b/Source/WebKit/UIProcess/API/APIProcessPoolConfiguration.cpp
 index cfd9c3981337c7dd02c623ce8ba686ea36bbffb9..27148d775f97804de9d7a88d57ba1dd5f60c8e16 100644
 --- a/Source/WebKit/UIProcess/API/APIProcessPoolConfiguration.cpp
@@ -13812,6 +13860,18 @@ index 0000000000000000000000000000000000000000..e2ce910f3fd7f587add552275b7e7176
 +};
 +
 +} // namespace WebKit
+diff --git a/Source/WebKit/UIProcess/Inspector/Cocoa/InspectorExtensionDelegate.h b/Source/WebKit/UIProcess/Inspector/Cocoa/InspectorExtensionDelegate.h
+index 0f83f41855bf996b5846e677934a202851941d54..cf4afbd2cccf4607dd8d6e6d7983b03c1c044d42 100644
+--- a/Source/WebKit/UIProcess/Inspector/Cocoa/InspectorExtensionDelegate.h
++++ b/Source/WebKit/UIProcess/Inspector/Cocoa/InspectorExtensionDelegate.h
+@@ -29,6 +29,7 @@
+ 
+ #import "APIInspectorExtensionClient.h"
+ #import "WKFoundation.h"
++#import <WebCore/FrameIdentifier.h>
+ #import <wtf/WeakObjCPtr.h>
+ 
+ @class _WKInspectorExtension;
 diff --git a/Source/WebKit/UIProcess/Inspector/InspectorTargetProxy.cpp b/Source/WebKit/UIProcess/Inspector/InspectorTargetProxy.cpp
 index cfcacce0122bb03fa47fd8580cfbedfb2ad37d48..5619cbd7e4e842be0d8e2db2c64a7e0028838808 100644
 --- a/Source/WebKit/UIProcess/Inspector/InspectorTargetProxy.cpp
@@ -21101,7 +21161,7 @@ index 0000000000000000000000000000000000000000..dd6a53e2d57318489b7e49dd7373706d
 +    LIBVPX_LIBRARIES
 +)
 diff --git a/Source/cmake/OptionsGTK.cmake b/Source/cmake/OptionsGTK.cmake
-index 2260d519347ff8ef62b32da566b496b61d572b10..e771bb505761f5cb705eec3dafbc25a572639a91 100644
+index 2260d519347ff8ef62b32da566b496b61d572b10..67cec307b28545ffa5e5b27d899c620d9fc54ee3 100644
 --- a/Source/cmake/OptionsGTK.cmake
 +++ b/Source/cmake/OptionsGTK.cmake
 @@ -5,6 +5,7 @@ WEBKIT_OPTION_BEGIN()
@@ -21123,7 +21183,7 @@ index 2260d519347ff8ef62b32da566b496b61d572b10..e771bb505761f5cb705eec3dafbc25a5
  include(GStreamerDefinitions)
  
  SET_AND_EXPOSE_TO_BUILD(USE_CAIRO TRUE)
-@@ -60,16 +65,16 @@ WEBKIT_OPTION_DEFINE(ENABLE_JOURNALD_LOG "Whether to enable journald logging" PU
+@@ -60,23 +65,23 @@ WEBKIT_OPTION_DEFINE(ENABLE_JOURNALD_LOG "Whether to enable journald logging" PU
  WEBKIT_OPTION_DEFINE(ENABLE_QUARTZ_TARGET "Whether to enable support for the Quartz windowing target." PUBLIC ON)
  WEBKIT_OPTION_DEFINE(ENABLE_WAYLAND_TARGET "Whether to enable support for the Wayland windowing target." PUBLIC ON)
  WEBKIT_OPTION_DEFINE(ENABLE_X11_TARGET "Whether to enable support for the X11 windowing target." PUBLIC ON)
@@ -21143,6 +21203,14 @@ index 2260d519347ff8ef62b32da566b496b61d572b10..e771bb505761f5cb705eec3dafbc25a5
  WEBKIT_OPTION_DEFINE(USE_WOFF2 "Whether to enable support for WOFF2 Web Fonts." PUBLIC ON)
  WEBKIT_OPTION_DEFINE(USE_WPE_RENDERER "Whether to enable WPE rendering" PUBLIC ON)
  
+ # Private options specific to the GTK port. Changing these options is
+ # completely unsupported. They are intended for use only by WebKit developers.
+ WEBKIT_OPTION_DEFINE(USE_ANGLE_WEBGL "Whether to use ANGLE as WebGL backend." PRIVATE OFF)
+-WEBKIT_OPTION_DEFINE(USE_ATSPI "Whether to use the ATSPI a11y implementation instead of ATK." PRIVATE ON)
++WEBKIT_OPTION_DEFINE(USE_ATSPI "Whether to use the ATSPI a11y implementation instead of ATK." PRIVATE OFF)
+ 
+ WEBKIT_OPTION_DEPEND(ENABLE_3D_TRANSFORMS USE_OPENGL_OR_ES)
+ WEBKIT_OPTION_DEPEND(ENABLE_ASYNC_SCROLLING USE_OPENGL_OR_ES)
 @@ -121,7 +126,7 @@ endif ()
  # without approval from a GTK reviewer. There must be strong reason to support
  # changing the value of the option.
@@ -21178,7 +21246,7 @@ index 2260d519347ff8ef62b32da566b496b61d572b10..e771bb505761f5cb705eec3dafbc25a5
  
  # Finalize the value for all options. Do not attempt to use an option before
 diff --git a/Source/cmake/OptionsWPE.cmake b/Source/cmake/OptionsWPE.cmake
-index 79b46b20c0ca45536777dce7018c8619c7906452..46411c864a9ba597b4071a78ba04cb0af0b905d0 100644
+index 79b46b20c0ca45536777dce7018c8619c7906452..637352517eb126530fbbafcb5ef03e0331ee9db6 100644
 --- a/Source/cmake/OptionsWPE.cmake
 +++ b/Source/cmake/OptionsWPE.cmake
 @@ -3,6 +3,7 @@ include(VersioningUtils)
@@ -21238,6 +21306,15 @@ index 79b46b20c0ca45536777dce7018c8619c7906452..46411c864a9ba597b4071a78ba04cb0a
  WEBKIT_OPTION_DEFINE(USE_WOFF2 "Whether to enable support for WOFF2 Web Fonts." PUBLIC ON)
  
  # Private options specific to the WPE port.
+@@ -87,7 +106,7 @@ WEBKIT_OPTION_DEFINE(USE_GSTREAMER_HOLEPUNCH "Whether to enable GStreamer holepu
+ WEBKIT_OPTION_DEFINE(USE_EXTERNAL_HOLEPUNCH "Whether to enable external holepunch" PRIVATE OFF)
+ WEBKIT_OPTION_DEFINE(USE_ANGLE_WEBGL "Whether to use ANGLE as WebGL backend." PRIVATE OFF)
+ WEBKIT_OPTION_DEPEND(USE_ANGLE_WEBGL ENABLE_WEBGL)
+-WEBKIT_OPTION_DEFINE(USE_ATSPI "Whether to use the ATSPI a11y implementation instead of ATK." PRIVATE ON)
++WEBKIT_OPTION_DEFINE(USE_ATSPI "Whether to use the ATSPI a11y implementation instead of ATK." PRIVATE OFF)
+ WEBKIT_OPTION_DEPEND(ENABLE_WEBGL2 USE_ANGLE_WEBGL)
+ 
+ if (CMAKE_SYSTEM_NAME MATCHES "Linux")
 diff --git a/Source/cmake/OptionsWin.cmake b/Source/cmake/OptionsWin.cmake
 index 04869b0d67226fb9f7951298f32f952c94cb2837..dce1628048dec7c861ff9aeeaacb2c62d88431bb 100644
 --- a/Source/cmake/OptionsWin.cmake
