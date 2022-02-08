@@ -11,13 +11,32 @@ expect(success).toBeTruthy();
 ```
 
 Playwright also extends it with convenience async matchers that will wait until
-the expected condition is met. In general, we can expect the opposite to be true by adding a `.not` to the front
+the expected condition is met. Consider the following example:
+
+```js
+await expect(page.locator('.status')).toHaveText('Submitted');
+```
+
+Playwright Test will be re-testing the node with the selector `.status` until fetched Node has the `"Submitted"`
+text. It will be re-fetching the node and checking it over and over, until the condition is met or until the timeout is
+reached. You can either pass this timeout or configure it once via the [`property: TestConfig.expect`] value
+in test config.
+
+By default, the timeout for assertions is set to 5 seconds. Learn more about [various timeouts](./test-timeouts.md).
+
+<!-- TOC -->
+
+## Negating Matchers
+
+In general, we can expect the opposite to be true by adding a `.not` to the front
 of the matchers:
 
 ```js
 expect(value).not.toEqual(0);
 await expect(locator).not.toContainText("some text");
 ```
+
+## Soft Assertions
 
 By default, failed assertion will terminate test execution. Playwright also
 supports *soft assertions*: failed soft assertions **do not** terminate test execution,
@@ -33,29 +52,49 @@ await page.locator('#next-page').click();
 await expect.soft(page.locator('#title')).toHaveText('Make another order');
 ```
 
+At any point during test execution, you can check whether there were any
+soft assertion failures:
+
+```js
+// Make a few checks that will not stop the test when failed...
+await expect.soft(page.locator('#status')).toHaveText('Success');
+await expect.soft(page.locator('#eta')).toHaveText('1 day');
+
+// Avoid running further if there were soft assertion failures.
+expect(test.info().errors).toBeEmpty();
+```
+
+## Custom Expect Message
+
 You can specify a custom error message as a second argument to the `expect` function, for example:
 
 ```js
-expect(value, 'my custom error message').toBe(42);
-expect.soft(value, 'my soft assertion').toBe(56);
+await expect(page.locator('text=Name'), 'should be logged in').toBeVisible();
 ```
 
-<!-- TOC -->
+The error would look like this:
 
-## Matching
+```bash
+    Error: should be logged in
 
-Consider the following example:
+    Call log:
+      - expect.toBeVisible with timeout 5000ms
+      - waiting for selector "text=Name"
+
+
+      2 |
+      3 | test('example test', async({ page }) => {
+    > 4 |   await expect(page.locator('text=Name'), 'should be logged in').toBeVisible();
+        |                                                                  ^
+      5 | });
+      6 |
+```
+
+The same works with soft assertions:
 
 ```js
-await expect(page.locator('.status')).toHaveText('Submitted');
+expect.soft(value, 'my soft assertion').toBe(56);
 ```
-
-Playwright Test will be re-testing the node with the selector `.status` until fetched Node has the `"Submitted"`
-text. It will be re-fetching the node and checking it over and over, until the condition is met or until the timeout is
-reached. You can either pass this timeout or configure it once via the [`property: TestConfig.expect`] value
-in test config.
-
-By default, the timeout for assertions is set to 5 seconds. Learn more about [various timeouts](./test-timeouts.md).
 
 ## expect(locator).toBeChecked([options])
 - `options`
