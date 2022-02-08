@@ -15,7 +15,7 @@
 */
 
 import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
-import { ContextEntry, createEmptyContext, MergedContexts } from '../entries';
+import { ContextEntry } from '../entries';
 import { ActionList } from './actionList';
 import { TabbedPane } from './tabbedPane';
 import { Timeline } from './timeline';
@@ -29,12 +29,13 @@ import { SplitView } from '../../components/splitView';
 import { ConsoleTab } from './consoleTab';
 import * as modelUtil from './modelUtil';
 import { msToString } from '../../uiUtils';
+import { MultiTraceModel } from './modelUtil';
 
 export const Workbench: React.FunctionComponent<{
 }> = () => {
   const [traceURLs, setTraceURLs] = React.useState<string[]>([]);
   const [uploadedTraceNames, setUploadedTraceNames] = React.useState<string[]>([]);
-  const [contextEntry, setContextEntry] = React.useState<MergedContexts>(emptyContext);
+  const [model, setModel] = React.useState<MultiTraceModel>(emptyModel);
   const [selectedAction, setSelectedAction] = React.useState<ActionTraceEvent | undefined>();
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEvent | undefined>();
   const [selectedNavigatorTab, setSelectedNavigatorTab] = React.useState<string>('actions');
@@ -119,20 +120,19 @@ export const Workbench: React.FunctionComponent<{
             return;
           }
           const contextEntry = await response.json() as ContextEntry;
-          modelUtil.indexModel(contextEntry);
           contextEntries.push(contextEntry);
         }
         navigator.serviceWorker.removeEventListener('message', swListener);
-        const contextEntry = modelUtil.mergeContexts(contextEntries);
+        const model = new MultiTraceModel(contextEntries);
         setProgress({ done: 0, total: 0 });
-        setContextEntry(contextEntry!);
+        setModel(model);
       } else {
-        setContextEntry(emptyContext);
+        setModel(emptyModel);
       }
     })();
   }, [traceURLs, uploadedTraceNames]);
 
-  const boundaries = { minimum: contextEntry.startTime, maximum: contextEntry.endTime };
+  const boundaries = { minimum: model.startTime, maximum: model.endTime };
 
 
   // Leave some nice free space on the right hand side.
@@ -147,19 +147,19 @@ export const Workbench: React.FunctionComponent<{
     { id: 'network', title: 'Network', count: networkCount, render: () => <NetworkTab action={selectedAction} /> },
   ];
 
-  if (contextEntry.hasSource)
+  if (model.hasSource)
     tabs.push({ id: 'source', title: 'Source', count: 0, render: () => <SourceTab action={selectedAction} /> });
 
   return <div className='vbox workbench' onDragOver={event => { event.preventDefault(); setDragOver(true); }}>
     <div className='hbox header'>
       <div className='logo'>🎭</div>
       <div className='product'>Playwright</div>
-      {contextEntry.title && <div className='title'>{contextEntry.title}</div>}
+      {model.title && <div className='title'>{model.title}</div>}
       <div className='spacer'></div>
     </div>
     <div style={{ background: 'white', paddingLeft: '20px', flex: 'none', borderBottom: '1px solid #ddd' }}>
       <Timeline
-        context={contextEntry}
+        context={model}
         boundaries={boundaries}
         selectedAction={selectedAction}
         highlightedAction={highlightedAction}
@@ -175,7 +175,7 @@ export const Workbench: React.FunctionComponent<{
       <TabbedPane tabs={
         [
           { id: 'actions', title: 'Actions', count: 0, render: () => <ActionList
-            actions={contextEntry.actions}
+            actions={model.actions}
             selectedAction={selectedAction}
             highlightedAction={highlightedAction}
             onSelected={action => {
@@ -186,21 +186,21 @@ export const Workbench: React.FunctionComponent<{
           /> },
           { id: 'metadata', title: 'Metadata', count: 0, render: () => <div className='vbox'>
             <div className='call-section' style={{ paddingTop: 2 }}>Time</div>
-            {contextEntry.wallTime && <div className='call-line'>start time: <span className='datetime' title={new Date(contextEntry.wallTime).toLocaleString()}>{new Date(contextEntry.wallTime).toLocaleString()}</span></div>}
-            <div className='call-line'>duration: <span className='number' title={msToString(contextEntry.endTime - contextEntry.startTime)}>{msToString(contextEntry.endTime - contextEntry.startTime)}</span></div>
+            {model.wallTime && <div className='call-line'>start time: <span className='datetime' title={new Date(model.wallTime).toLocaleString()}>{new Date(model.wallTime).toLocaleString()}</span></div>}
+            <div className='call-line'>duration: <span className='number' title={msToString(model.endTime - model.startTime)}>{msToString(model.endTime - model.startTime)}</span></div>
             <div className='call-section'>Browser</div>
-            <div className='call-line'>engine: <span className='string' title={contextEntry.browserName}>{contextEntry.browserName}</span></div>
-            {contextEntry.platform && <div className='call-line'>platform: <span className='string' title={contextEntry.platform}>{contextEntry.platform}</span></div>}
-            {contextEntry.options.userAgent && <div className='call-line'>user agent: <span className='datetime' title={contextEntry.options.userAgent}>{contextEntry.options.userAgent}</span></div>}
+            <div className='call-line'>engine: <span className='string' title={model.browserName}>{model.browserName}</span></div>
+            {model.platform && <div className='call-line'>platform: <span className='string' title={model.platform}>{model.platform}</span></div>}
+            {model.options.userAgent && <div className='call-line'>user agent: <span className='datetime' title={model.options.userAgent}>{model.options.userAgent}</span></div>}
             <div className='call-section'>Viewport</div>
-            {contextEntry.options.viewport && <div className='call-line'>width: <span className='number' title={String(!!contextEntry.options.viewport?.width)}>{contextEntry.options.viewport.width}</span></div>}
-            {contextEntry.options.viewport && <div className='call-line'>height: <span className='number' title={String(!!contextEntry.options.viewport?.height)}>{contextEntry.options.viewport.height}</span></div>}
-            <div className='call-line'>is mobile: <span className='boolean' title={String(!!contextEntry.options.isMobile)}>{String(!!contextEntry.options.isMobile)}</span></div>
-            {contextEntry.options.deviceScaleFactor && <div className='call-line'>device scale: <span className='number' title={String(contextEntry.options.deviceScaleFactor)}>{String(contextEntry.options.deviceScaleFactor)}</span></div>}
+            {model.options.viewport && <div className='call-line'>width: <span className='number' title={String(!!model.options.viewport?.width)}>{model.options.viewport.width}</span></div>}
+            {model.options.viewport && <div className='call-line'>height: <span className='number' title={String(!!model.options.viewport?.height)}>{model.options.viewport.height}</span></div>}
+            <div className='call-line'>is mobile: <span className='boolean' title={String(!!model.options.isMobile)}>{String(!!model.options.isMobile)}</span></div>
+            {model.options.deviceScaleFactor && <div className='call-line'>device scale: <span className='number' title={String(model.options.deviceScaleFactor)}>{String(model.options.deviceScaleFactor)}</span></div>}
             <div className='call-section'>Counts</div>
-            <div className='call-line'>pages: <span className='number'>{contextEntry.pages.length}</span></div>
-            <div className='call-line'>actions: <span className='number'>{contextEntry.actions.length}</span></div>
-            <div className='call-line'>events: <span className='number'>{contextEntry.events.length}</span></div>
+            <div className='call-line'>pages: <span className='number'>{model.pages.length}</span></div>
+            <div className='call-line'>actions: <span className='number'>{model.actions.length}</span></div>
+            <div className='call-line'>events: <span className='number'>{model.events.length}</span></div>
           </div> },
         ]
       } selectedTab={selectedNavigatorTab} setSelectedTab={setSelectedNavigatorTab}/>
@@ -237,6 +237,4 @@ export const Workbench: React.FunctionComponent<{
   </div>;
 };
 
-const emptyContext = createEmptyContext();
-emptyContext.startTime = performance.now();
-emptyContext.endTime = emptyContext.startTime;
+const emptyModel = new MultiTraceModel([]);

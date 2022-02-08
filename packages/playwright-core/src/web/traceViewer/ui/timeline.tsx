@@ -18,10 +18,10 @@
 import * as React from 'react';
 import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
 import { msToString } from '../../uiUtils';
-import { MergedContexts } from '../entries';
 import { Boundaries } from '../geometry';
 import { FilmStrip } from './filmStrip';
 import { useMeasure } from './helpers';
+import { MultiTraceModel } from './modelUtil';
 import './timeline.css';
 
 type TimelineBar = {
@@ -37,7 +37,7 @@ type TimelineBar = {
 };
 
 export const Timeline: React.FunctionComponent<{
-  context: MergedContexts,
+  context: MultiTraceModel,
   boundaries: Boundaries,
   selectedAction: ActionTraceEvent | undefined,
   highlightedAction: ActionTraceEvent | undefined,
