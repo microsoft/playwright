@@ -139,9 +139,16 @@ export const test = base.extend<{ saveLogs: void }>({
 
 To launch a server during the tests, use the `webServer` option in the [configuration file](#configuration-object).
 
-You can specify a port via `port` or additional environment variables, see [here](#configuration-object). The server will wait for it to be available (on `127.0.0.1` or `::1`) before running the tests. For continuous integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an existing server on the CI. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable.
+If `port` is specified in the config, test runner will wait for `127.0.0.1:port` or `::1:port` to be available before running the tests.
+If `url` is specified in the config, test runner will wait for that `url` to return 2xx response before running the tests.
 
-The port gets then passed over to Playwright as a [`param: baseURL`] when creating the context [`method: Browser.newContext`].
+For continuous integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an existing server on the CI. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable.
+
+The `port` (but not the `url`) gets passed over to Playwright as a [`property: TestOptions.baseURL`]. For example port `8080` produces `baseURL` equal `http://localhost:8080`.
+
+:::note
+It is also recommended to specify [`property: TestOptions.baseURL`] in the config, so that tests could use relative urls.
+:::
 
 ```js js-flavor=ts
 // playwright.config.ts

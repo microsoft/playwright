@@ -91,8 +91,8 @@ export class WebServer {
 
   private async _waitForProcess() {
     await this._waitForAvailability();
-    const baseURL = this.config.url ?? `http://localhost:${this.config.port}`;
-    process.env.PLAYWRIGHT_TEST_BASE_URL = baseURL;
+    if (this.config.port !== undefined)
+      process.env.PLAYWRIGHT_TEST_BASE_URL = `http://localhost:${this.config.port}`;
   }
 
   private async _waitForAvailability() {
@@ -148,10 +148,10 @@ async function waitFor(waitFn: () => Promise<boolean>, delay: number, cancellati
 }
 
 function getIsAvailableFunction({ url, port }: Pick<WebServerConfig, 'port' | 'url'>) {
-  if (url && typeof port === 'undefined') {
+  if (url !== undefined && port === undefined) {
     const urlObject = new URL(url);
     return () => isURLAvailable(urlObject);
-  } else if (port && typeof url === 'undefined') {
+  } else if (port !== undefined && url === undefined) {
     return () => isPortUsed(port);
   } else {
     throw new Error(`Exactly one of 'port' or 'url' is required in config.webServer.`);

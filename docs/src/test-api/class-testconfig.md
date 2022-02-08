@@ -568,10 +568,15 @@ export default config;
 
 Launch a development web server during the tests.
 
-If the port is specified, the server will wait for it to be available on `127.0.0.1` or `::1`, before running the tests. If the url is specified, the server will wait for the URL to return a 2xx status code before running the tests. For continuous integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an existing server on the CI. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable.
+If the port is specified, the server will wait for it to be available on `127.0.0.1` or `::1`, before running the tests. If the url is specified, the server will wait for the URL to return a 2xx status code before running the tests.
 
-The port or url gets then passed over to Playwright as a `baseURL` when creating the context [`method: Browser.newContext`].
-For example port `8080` ends up in `baseURL` to be `http://localhost:8080`. If you want to instead use `https://` you need to manually specify the `baseURL` inside `use` or use a url instead of a port in the `webServer` configuration. The url ends up in `baseURL` without any change.
+For continuous integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an existing server on the CI. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable.
+
+The `port` (but not the `url`) gets passed over to Playwright as a [`property: TestOptions.baseURL`]. For example port `8080` produces `baseURL` equal `http://localhost:8080`.
+
+:::note
+It is also recommended to specify [`property: TestOptions.baseURL`] in the config, so that tests could use relative urls.
+:::
 
 ```js js-flavor=ts
 // playwright.config.ts
@@ -582,6 +587,9 @@ const config: PlaywrightTestConfig = {
     port: 3000,
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
+  },
+  use: {
+    baseURL: 'http://localhost:3000/',
   },
 };
 export default config;
@@ -598,22 +606,21 @@ const config = {
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
   },
+  use: {
+    baseURL: 'http://localhost:3000/',
+  },
 };
 module.exports = config;
 ```
 
-Now you can use a relative path when navigating the page, or use `baseURL` fixture:
+Now you can use a relative path when navigating the page:
 
 ```js js-flavor=ts
 // test.spec.ts
 import { test } from '@playwright/test';
-test('test', async ({ page, baseURL }) => {
-  // baseURL is taken directly from your web server,
-  // e.g. http://localhost:3000
-  await page.goto(baseURL + '/bar');
-  // Alternatively, just use relative path, because baseURL is already
-  // set for the default context and page.
-  // For example, this will result in http://localhost:3000/foo
+
+test('test', async ({ page }) => {
+  // This will result in http://localhost:3000/foo
   await page.goto('/foo');
 });
 ```
@@ -621,13 +628,9 @@ test('test', async ({ page, baseURL }) => {
 ```js js-flavor=js
 // test.spec.js
 const { test } = require('@playwright/test');
-test('test', async ({ page, baseURL }) => {
-  // baseURL is taken directly from your web server,
-  // e.g. http://localhost:3000
-  await page.goto(baseURL + '/bar');
-  // Alternatively, just use relative path, because baseURL is already
-  // set for the default context and page.
-  // For example, this will result in http://localhost:3000/foo
+
+test('test', async ({ page }) => {
+  // This will result in http://localhost:3000/foo
   await page.goto('/foo');
 });
 ```
