@@ -69,9 +69,6 @@ class Workspace {
     const packageLock = JSON.parse(await fs.promises.readFile(packageLockPath, 'utf8'));
     for (const pkg of this._packages) {
       const lockEntry = packageLock['packages']['packages/' + path.basename(pkg.path)];
-      if (!lockEntry) {
-        console.log(pkg.name);
-      }
       if (!pkg.isPrivate) {
         lockEntry.version = version;
         pkg.packageJSON.version = version;
@@ -89,6 +86,7 @@ class Workspace {
 
   async preparePackages() {
     let hasChanges = false;
+    const workspacePackageJSON = await readJSON(path.join(this._rootDir, 'package.json'));
     for (const pkg of this._packages) {
       // 1. Copy package files.
       for (const file of pkg.files) {
@@ -102,7 +100,6 @@ class Workspace {
       if (pkg.isPrivate)
         continue;
       const jsonCopy = JSON.stringify(pkg.packageJSON);
-      const workspacePackageJSON = await readJSON(path.join(this._rootDir, 'package.json'));
       pkg.packageJSON.repository = workspacePackageJSON.repository;
       pkg.packageJSON.engines = workspacePackageJSON.engines;
       pkg.packageJSON.homepage = workspacePackageJSON.homepage;
