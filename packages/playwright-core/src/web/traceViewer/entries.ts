@@ -34,8 +34,6 @@ export type ContextEntry = {
   hasSource: boolean;
 };
 
-export type MergedContexts = Pick<ContextEntry, 'startTime' | 'endTime' | 'browserName' | 'platform' | 'wallTime' | 'title' | 'options' | 'pages' | 'actions' | 'events' | 'hasSource'>;
-
 export type PageEntry = {
   screencastFrames: {
     sha1: string,

@@ -15,7 +15,7 @@
 */
 
 import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
-import { ContextEntry, createEmptyContext, MergedContexts } from '../entries';
+import { ContextEntry } from '../entries';
 import { ActionList } from './actionList';
 import { TabbedPane } from './tabbedPane';
 import { Timeline } from './timeline';
@@ -29,12 +29,13 @@ import { SplitView } from '../../components/splitView';
 import { ConsoleTab } from './consoleTab';
 import * as modelUtil from './modelUtil';
 import { msToString } from '../../uiUtils';
+import { MultiTraceModel } from './modelUtil';
 
 export const Workbench: React.FunctionComponent<{
 }> = () => {
   const [traceURLs, setTraceURLs] = React.useState<string[]>([]);
   const [uploadedTraceNames, setUploadedTraceNames] = React.useState<string[]>([]);
-  const [contextEntry, setContextEntry] = React.useState<MergedContexts>(emptyContext);
+  const [contextEntry, setContextEntry] = React.useState<MultiTraceModel>(emptyModel);
   const [selectedAction, setSelectedAction] = React.useState<ActionTraceEvent | undefined>();
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEvent | undefined>();
   const [selectedNavigatorTab, setSelectedNavigatorTab] = React.useState<string>('actions');
@@ -119,15 +120,14 @@ export const Workbench: React.FunctionComponent<{
             return;
           }
           const contextEntry = await response.json() as ContextEntry;
-          modelUtil.indexModel(contextEntry);
           contextEntries.push(contextEntry);
         }
         navigator.serviceWorker.removeEventListener('message', swListener);
-        const contextEntry = modelUtil.mergeContexts(contextEntries);
+        const model = new MultiTraceModel(contextEntries);
         setProgress({ done: 0, total: 0 });
-        setContextEntry(contextEntry!);
+        setContextEntry(model);
       } else {
-        setContextEntry(emptyContext);
+        setContextEntry(emptyModel);
       }
     })();
   }, [traceURLs, uploadedTraceNames]);
@@ -237,6 +237,4 @@ export const Workbench: React.FunctionComponent<{
   </div>;
 };
 
-const emptyContext = createEmptyContext();
-emptyContext.startTime = performance.now();
-emptyContext.endTime = emptyContext.startTime;
+const emptyModel = new MultiTraceModel([]);
