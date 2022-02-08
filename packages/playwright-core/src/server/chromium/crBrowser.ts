@@ -181,8 +181,6 @@ export class CRBrowser extends Browser {
       context.emit(CRBrowserContext.CREvents.ServiceWorker, serviceWorker);
       return;
     }
-
-    assert(false, 'Unknown target type: ' + targetInfo.type);
   }
 
   _onDetachedFromTarget(payload: Protocol.Target.detachFromTargetParameters) {
