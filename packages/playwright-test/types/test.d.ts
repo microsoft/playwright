@@ -1640,9 +1640,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Declares a group of tests that should always be run serially. If one of the tests fails, all subsequent tests are
    * skipped. All tests in a group are retried together.
    *
-   * See [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) for the
-   * preferred way of configuring the execution mode.
-   *
+   * > NOTE: See [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) for
+   * the preferred way of configuring the execution mode.
    * > NOTE: Using serial is not recommended. It is usually better to make your tests isolated, so they can be run
    * independently.
    *
@@ -1686,8 +1685,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * but using [test.describe.parallel(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-parallel)
    * allows them to run in parallel.
    *
-   * See [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) for the
-   * preferred way of configuring the execution mode.
+   * > NOTE: See [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) for
+   * the preferred way of configuring the execution mode.
    *
    * ```ts
    * test.describe.parallel('group', () => {

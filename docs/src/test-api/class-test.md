@@ -334,7 +334,9 @@ A callback that is run immediately when calling [`method: Test.describe.only`]. 
 
 Declares a group of tests that could be run in parallel. By default, tests in a single test file run one after another, but using [`method: Test.describe.parallel`] allows them to run in parallel.
 
+:::note
 See [`method: Test.describe.configure`] for the preferred way of configuring the execution mode.
+:::
 
 ```js js-flavor=js
 test.describe.parallel('group', () => {
@@ -384,7 +386,9 @@ A callback that is run immediately when calling [`method: Test.describe.parallel
 
 Declares a group of tests that should always be run serially. If one of the tests fails, all subsequent tests are skipped. All tests in a group are retried together.
 
+:::note
 See [`method: Test.describe.configure`] for the preferred way of configuring the execution mode.
+:::
 
 :::note
 Using serial is not recommended. It is usually better to make your tests isolated, so they can be run independently.
