@@ -19,12 +19,12 @@ import { Boundaries, Size } from '../geometry';
 import * as React from 'react';
 import { useMeasure } from './helpers';
 import { upperBound } from '../../uiUtils';
-import { ContextEntry, PageEntry } from '../entries';
+import { MergedContexts, PageEntry } from '../entries';
 
 const tileSize = { width: 200, height: 45 };
 
 export const FilmStrip: React.FunctionComponent<{
-  context: ContextEntry,
+  context: MergedContexts,
   boundaries: Boundaries,
   previewPoint?: { x: number, clientY: number },
 }> = ({ context, boundaries, previewPoint }) => {

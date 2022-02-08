@@ -15,14 +15,14 @@
   limitations under the License.
 */
 
-import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
-import { ContextEntry } from '../entries';
-import './timeline.css';
-import { Boundaries } from '../geometry';
 import * as React from 'react';
-import { useMeasure } from './helpers';
+import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
 import { msToString } from '../../uiUtils';
+import { MergedContexts } from '../entries';
+import { Boundaries } from '../geometry';
 import { FilmStrip } from './filmStrip';
+import { useMeasure } from './helpers';
+import './timeline.css';
 
 type TimelineBar = {
   action?: ActionTraceEvent;
@@ -37,7 +37,7 @@ type TimelineBar = {
 };
 
 export const Timeline: React.FunctionComponent<{
-  context: ContextEntry,
+  context: MergedContexts,
   boundaries: Boundaries,
   selectedAction: ActionTraceEvent | undefined,
   highlightedAction: ActionTraceEvent | undefined,

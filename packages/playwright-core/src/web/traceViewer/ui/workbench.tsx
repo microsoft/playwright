@@ -15,7 +15,7 @@
 */
 
 import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
-import { ContextEntry, createEmptyContext } from '../entries';
+import { ContextEntry, createEmptyContext, MergedContexts } from '../entries';
 import { ActionList } from './actionList';
 import { TabbedPane } from './tabbedPane';
 import { Timeline } from './timeline';
@@ -32,9 +32,9 @@ import { msToString } from '../../uiUtils';
 
 export const Workbench: React.FunctionComponent<{
 }> = () => {
-  const [traceURL, setTraceURL] = React.useState<string>('');
-  const [uploadedTraceName, setUploadedTraceName] = React.useState<string|null>(null);
-  const [contextEntry, setContextEntry] = React.useState<ContextEntry>(emptyContext);
+  const [traceURLs, setTraceURLs] = React.useState<string[]>([]);
+  const [uploadedTraceNames, setUploadedTraceNames] = React.useState<string[]>([]);
+  const [contextEntry, setContextEntry] = React.useState<MergedContexts>(emptyContext);
   const [selectedAction, setSelectedAction] = React.useState<ActionTraceEvent | undefined>();
   const [highlightedAction, setHighlightedAction] = React.useState<ActionTraceEvent | undefined>();
   const [selectedNavigatorTab, setSelectedNavigatorTab] = React.useState<string>('actions');
@@ -44,17 +44,26 @@ export const Workbench: React.FunctionComponent<{
   const [processingErrorMessage, setProcessingErrorMessage] = React.useState<string | null>(null);
   const [fileForLocalModeError, setFileForLocalModeError] = React.useState<string | null>(null);
 
-  const processTraceFile = (file: File) => {
-    const blobTraceURL = URL.createObjectURL(file);
+  const processTraceFiles = (files: FileList) => {
+    const blobUrls = [];
+    const fileNames = [];
     const url = new URL(window.location.href);
-    url.searchParams.set('trace', blobTraceURL);
-    url.searchParams.set('traceFileName', file.name);
+    for (let i = 0; i < files.length; i++) {
+      const file = files.item(i);
+      if (!file)
+        continue;
+      const blobTraceURL = URL.createObjectURL(file);
+      blobUrls.push(blobTraceURL);
+      fileNames.push(file.name);
+      url.searchParams.append('trace', blobTraceURL);
+      url.searchParams.append('traceFileName', file.name);
+    }
     const href = url.toString();
     // Snapshot loaders will inherit the trace url from the query parameters,
     // so set it here.
     window.history.pushState({}, '', href);
-    setTraceURL(blobTraceURL);
-    setUploadedTraceName(file.name);
+    setTraceURLs(blobUrls);
+    setUploadedTraceNames(fileNames);
     setSelectedAction(undefined);
     setDragOver(false);
     setProcessingErrorMessage(null);
@@ -62,58 +71,66 @@ export const Workbench: React.FunctionComponent<{
 
   const handleDropEvent = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
-    processTraceFile(event.dataTransfer.files[0]);
+    processTraceFiles(event.dataTransfer.files);
   };
 
   const handleFileInputChange = (event: any) => {
     event.preventDefault();
     if (!event.target.files)
       return;
-    processTraceFile(event.target.files[0]);
+    processTraceFiles(event.target.files);
   };
 
   React.useEffect(() => {
-    const newTraceURL = new URL(window.location.href).searchParams.get('trace');
+    const newTraceURLs = new URL(window.location.href).searchParams.getAll('trace');
     // Don't accept file:// URLs - this means we re opened locally.
-    if (newTraceURL?.startsWith('file:')) {
-      setFileForLocalModeError(newTraceURL);
-      return;
+    for (const url of newTraceURLs) {
+      if (url.startsWith('file:')) {
+        setFileForLocalModeError(url || null);
+        return;
+      }
     }
 
     // Don't re-use blob file URLs on page load (results in Fetch error)
-    if (newTraceURL && !newTraceURL.startsWith('blob:'))
-      setTraceURL(newTraceURL);
-  }, [setTraceURL]);
+    if (!newTraceURLs.some(url => url.startsWith('blob:')))
+      setTraceURLs(newTraceURLs);
+  }, [setTraceURLs]);
 
   React.useEffect(() => {
     (async () => {
-      if (traceURL) {
+      if (traceURLs.length) {
         const swListener = (event: any) => {
           if (event.data.method === 'progress')
             setProgress(event.data.params);
         };
         navigator.serviceWorker.addEventListener('message', swListener);
         setProgress({ done: 0, total: 1 });
-        const params = new URLSearchParams();
-        params.set('trace', traceURL);
-        if (uploadedTraceName)
-          params.set('traceFileName', uploadedTraceName);
-        const response = await fetch(`context?${params.toString()}`);
-        if (!response.ok) {
-          setTraceURL('');
-          setProcessingErrorMessage((await response.json()).error);
-          return;
+        const contextEntries: ContextEntry[] = [];
+        for (let i = 0; i < traceURLs.length; i++) {
+          const url = traceURLs[i];
+          const params = new URLSearchParams();
+          params.set('trace', url);
+          if (uploadedTraceNames.length)
+            params.set('traceFileName', uploadedTraceNames[i]);
+          const response = await fetch(`context?${params.toString()}`);
+          if (!response.ok) {
+            setTraceURLs([]);
+            setProcessingErrorMessage((await response.json()).error);
+            return;
+          }
+          const contextEntry = await response.json() as ContextEntry;
+          modelUtil.indexModel(contextEntry);
+          contextEntries.push(contextEntry);
         }
-        const contextEntry = await response.json() as ContextEntry;
         navigator.serviceWorker.removeEventListener('message', swListener);
+        const contextEntry = modelUtil.mergeContexts(contextEntries);
         setProgress({ done: 0, total: 0 });
-        modelUtil.indexModel(contextEntry);
-        setContextEntry(contextEntry);
+        setContextEntry(contextEntry!);
       } else {
         setContextEntry(emptyContext);
       }
     })();
-  }, [traceURL, uploadedTraceName]);
+  }, [traceURLs, uploadedTraceNames]);
 
   const boundaries = { minimum: contextEntry.startTime, maximum: contextEntry.endTime };
 
@@ -199,7 +216,7 @@ export const Workbench: React.FunctionComponent<{
         <div>3. Drop the trace from the download shelf into the page</div>
       </div>
     </div>}
-    {!dragOver && !fileForLocalModeError && (!traceURL || processingErrorMessage) && <div className='drop-target'>
+    {!dragOver && !fileForLocalModeError && (!traceURLs.length || processingErrorMessage) && <div className='drop-target'>
       <div className='processing-error'>{processingErrorMessage}</div>
       <div className='title'>Drop Playwright Trace to load</div>
       <div>or</div>
