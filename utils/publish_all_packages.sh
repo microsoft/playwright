@@ -91,7 +91,7 @@ else
 fi
 
 echo "==================== Publishing version ${VERSION} ================"
-node ./utils/workspace.js --check-clean
+node ./utils/workspace.js --ensure-consistent
 node ./utils/workspace.js --list-public-package-paths | while read package
 do
   npm publish ${package} --tag="${NPM_PUBLISH_TAG}"

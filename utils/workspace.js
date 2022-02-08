@@ -24,7 +24,6 @@ const fs = require('fs');
 const path = require('path');
 const util = require('util');
 const url = require('url');
-const { execSync } = require('child_process');
 
 const readJSON = async (filePath) => JSON.parse(await fs.promises.readFile(filePath, 'utf8'));
 const writeJSON = async (filePath, json) => {
@@ -59,34 +58,34 @@ class Workspace {
    */
   async setVersion(version) {
     // 1. update workspace's package.json (playwright-internal) with the new version
-    execSync(`npm version --no-git-tag-version ${version}`, {
-      stdio: 'inherit',
-      cwd: this._rootDir,
-    });
-
-    // 2. update versions in package-lock.json and relevant package.json's.
-    const packageLockPath = path.join(this._rootDir, 'package-lock.json');
-    const packageLock = JSON.parse(await fs.promises.readFile(packageLockPath, 'utf8'));
-    for (const pkg of this._packages) {
-      const lockEntry = packageLock['packages']['packages/' + path.basename(pkg.path)];
-      if (!pkg.isPrivate) {
-        lockEntry.version = version;
-        pkg.packageJSON.version = version;
-      }
-      for (const otherPackage of this._packages) {
-        if (lockEntry.dependencies && lockEntry.dependencies[otherPackage.name])
-          lockEntry.dependencies[otherPackage.name] = version;
-        if (pkg.packageJSON.dependencies && pkg.packageJSON.dependencies[otherPackage.name])
-          pkg.packageJSON.dependencies[otherPackage.name] = version;
-      }
-      await writeJSON(pkg.packageJSONPath, pkg.packageJSON);
-    }
-    await writeJSON(packageLockPath, packageLock);
+    const workspacePackageJSON = await readJSON(path.join(this._rootDir, 'package.json'));
+    workspacePackageJSON.version = version;
+    await writeJSON(path.join(this._rootDir, 'package.json'), workspacePackageJSON);
+    // 2. make workspace consistent.
+    await this.ensureConsistent();
   }
 
-  async preparePackages() {
+  async ensureConsistent() {
     let hasChanges = false;
+
+    const maybeWriteJSON = async (jsonPath, json) => {
+      const oldJson = await readJSON(jsonPath);
+      if (JSON.stringify(json) === JSON.stringify(oldJson))
+        return;
+      hasChanges = true;
+      console.warn('Updated', jsonPath);
+      await writeJSON(jsonPath, json);
+    };
+
     const workspacePackageJSON = await readJSON(path.join(this._rootDir, 'package.json'));
+    const packageLockPath = path.join(this._rootDir, 'package-lock.json');
+    const packageLock = JSON.parse(await fs.promises.readFile(packageLockPath, 'utf8'));
+    const version = workspacePackageJSON.version;
+
+    // Make sure package-lock version is consistent with root package.json version.
+    packageLock.version = version;
+    packageLock.packages[""].version = version;
+
     for (const pkg of this._packages) {
       // 1. Copy package files.
       for (const file of pkg.files) {
@@ -96,21 +95,26 @@ class Workspace {
         await fs.promises.copyFile(fromPath, toPath);
       }
 
-      // 2. Update package.json
-      if (pkg.isPrivate)
-        continue;
-      const jsonCopy = JSON.stringify(pkg.packageJSON);
-      pkg.packageJSON.repository = workspacePackageJSON.repository;
-      pkg.packageJSON.engines = workspacePackageJSON.engines;
-      pkg.packageJSON.homepage = workspacePackageJSON.homepage;
-      pkg.packageJSON.author = workspacePackageJSON.author;
-      pkg.packageJSON.license = workspacePackageJSON.license;
-      if (JSON.stringify(pkg.packageJSON) !== jsonCopy) {
-        await writeJSON(pkg.packageJSONPath, pkg.packageJSON);
-        console.warn('Updated', pkg.packageJSONPath);
-        hasChanges = true;
+      // 2. Make sure package-lock and package's package.json are consistent.
+      const lockEntry = packageLock['packages']['packages/' + path.basename(pkg.path)];
+      if (!pkg.isPrivate) {
+        lockEntry.version = version;
+        pkg.packageJSON.version = version;
+        pkg.packageJSON.repository = workspacePackageJSON.repository;
+        pkg.packageJSON.engines = workspacePackageJSON.engines;
+        pkg.packageJSON.homepage = workspacePackageJSON.homepage;
+        pkg.packageJSON.author = workspacePackageJSON.author;
+        pkg.packageJSON.license = workspacePackageJSON.license;
       }
+      for (const otherPackage of this._packages) {
+        if (lockEntry.dependencies && lockEntry.dependencies[otherPackage.name])
+          lockEntry.dependencies[otherPackage.name] = version;
+        if (pkg.packageJSON.dependencies && pkg.packageJSON.dependencies[otherPackage.name])
+          pkg.packageJSON.dependencies[otherPackage.name] = version;
+      }
+      await maybeWriteJSON(pkg.packageJSONPath, pkg.packageJSON);
     }
+    await maybeWriteJSON(packageLockPath, packageLock);
     return hasChanges;
   }
 }
@@ -169,8 +173,10 @@ function die(message, exitCode = 1) {
 
 async function parseCLI() {
   const commands = {
-    '--check-clean': async () => {
-      process.exit(await workspace.preparePackages() ? 1 : 0);
+    '--ensure-consistent': async () => {
+      const hasChanges = await workspace.ensureConsistent();
+      if (hasChanges)
+        die(`\n  ERROR: workspace is inconsistent! Run '//utils/workspace.js --ensure-consistent' and commit changes!`);
     },
     '--list-public-package-paths': () => {
       for (const pkg of workspace.packages()) {
