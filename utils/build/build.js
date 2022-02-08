@@ -20,7 +20,7 @@ const child_process = require('child_process');
 const path = require('path');
 const chokidar = require('chokidar');
 const fs = require('fs');
-const { packages } = require('../list_packages');
+const { workspace } = require('../workspace');
 
 /**
  * @typedef {{
@@ -189,8 +189,8 @@ for (const file of webPackFiles) {
 }
 
 // Run Babel.
-for (const packageDir of packages) {
-  if (!fs.existsSync(path.join(packageDir, 'src')))
+for (const pkg of workspace.packages()) {
+  if (!fs.existsSync(path.join(pkg.path, 'src')))
     continue;
   steps.push({
     command: 'npx',
@@ -198,9 +198,9 @@ for (const packageDir of packages) {
       'babel',
       ...(watchMode ? ['-w', '--source-maps'] : []),
       '--extensions', '.ts',
-      '--out-dir', quotePath(path.join(packageDir, 'lib')),
+      '--out-dir', quotePath(path.join(pkg.path, 'lib')),
       '--ignore', '"packages/playwright-core/src/server/injected/**/*"',
-      quotePath(path.join(packageDir, 'src'))],
+      quotePath(path.join(pkg.path, 'src'))],
     shell: true,
   });
 }
