@@ -104,6 +104,8 @@ class Workspace {
       }
 
       // 2. Make sure package-lock and package's package.json are consistent.
+      //    All manual package-lock management is a workaround for
+      //    https://github.com/npm/cli/issues/3940
       const lockEntry = packageLock['packages']['packages/' + path.basename(pkg.path)];
       if (!pkg.isPrivate) {
         lockEntry.version = version;
