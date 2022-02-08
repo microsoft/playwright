@@ -106,9 +106,10 @@ class Workspace {
       // 2. Make sure package-lock and package's package.json are consistent.
       //    All manual package-lock management is a workaround for
       //    https://github.com/npm/cli/issues/3940
-      const lockEntry = packageLock['packages']['packages/' + path.basename(pkg.path)];
+      const pkgLockEntry = packageLock['packages']['packages/' + path.basename(pkg.path)];
+      const depLockEntry = packageLock['dependencies'][pkg.name];
       if (!pkg.isPrivate) {
-        lockEntry.version = version;
+        pkgLockEntry.version = version;
         pkg.packageJSON.version = version;
         pkg.packageJSON.repository = workspacePackageJSON.repository;
         pkg.packageJSON.engines = workspacePackageJSON.engines;
@@ -117,8 +118,10 @@ class Workspace {
         pkg.packageJSON.license = workspacePackageJSON.license;
       }
       for (const otherPackage of this._packages) {
-        if (lockEntry.dependencies && lockEntry.dependencies[otherPackage.name])
-          lockEntry.dependencies[otherPackage.name] = version;
+        if (pkgLockEntry.dependencies && pkgLockEntry.dependencies[otherPackage.name])
+          pkgLockEntry.dependencies[otherPackage.name] = version;
+        if (depLockEntry.requires && depLockEntry.requires[otherPackage.name])
+          depLockEntry.requires[otherPackage.name] = version;
         if (pkg.packageJSON.dependencies && pkg.packageJSON.dependencies[otherPackage.name])
           pkg.packageJSON.dependencies[otherPackage.name] = version;
       }
