@@ -364,8 +364,6 @@ test.describe('cli codegen', () => {
   });
 
   test('should record open in a new tab with url', async ({ page, openRecorder, browserName, platform }) => {
-    test.fixme(browserName === 'webkit', 'Ctrl+click does not open in new tab on WebKit');
-
     const recorder = await openRecorder();
     await recorder.setContentAndWait(`<a href="about:blank?foo">link</a>`);
 
@@ -375,7 +373,7 @@ test.describe('cli codegen', () => {
     await page.click('a', { modifiers: [ platform === 'darwin' ? 'Meta' : 'Control'] });
     const sources = await recorder.waitForOutput('JavaScript', 'page1');
 
-    if (browserName === 'chromium') {
+    if (browserName !== 'firefox') {
       expect(sources.get('JavaScript').text).toContain(`
   // Open new page
   const page1 = await context.newPage();
@@ -388,7 +386,7 @@ test.describe('cli codegen', () => {
         // Open new page
         var page1 = await context.NewPageAsync();
         await page1.GotoAsync("about:blank?foo");`);
-    } else if (browserName === 'firefox') {
+    } else {
       expect(sources.get('JavaScript').text).toContain(`
   // Click text=link
   const [page1] = await Promise.all([
