@@ -644,9 +644,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async pause() {
-    if (!!require('inspector').url())
-      debugger;  // eslint-disable-line no-debugger
-    else
+    if (!require('inspector').url())
       await this.context()._channel.pause();
   }
 
