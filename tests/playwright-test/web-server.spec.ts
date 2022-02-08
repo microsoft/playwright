@@ -114,8 +114,8 @@ test('should create a server with url', async ({ runInlineTest }, { workerIndex 
     'test.spec.ts': `
       const { test } = pwt;
       test('connect to the server', async ({baseURL, page}) => {
-        expect(baseURL).toBe('http://localhost:${port}/ready');
-        await page.goto(baseURL);
+        expect(baseURL).toBe(undefined);
+        await page.goto('http://localhost:${port}/ready');
         expect(await page.textContent('body')).toBe('hello');
       });
     `,
