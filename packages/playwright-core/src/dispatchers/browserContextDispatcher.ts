@@ -179,7 +179,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async pause(params: channels.BrowserContextPauseParams, metadata: CallMetadata) {
-    // Inspector controller will take care of this.
+    // Debugger will take care of this.
   }
 
   async newCDPSession(params: channels.BrowserContextNewCDPSessionParams): Promise<channels.BrowserContextNewCDPSessionResult> {
