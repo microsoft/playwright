@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//@ts-check
+// @ts-check
 
 /**
  * Use the following command to typescheck this file:
