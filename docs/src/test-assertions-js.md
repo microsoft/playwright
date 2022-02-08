@@ -26,7 +26,7 @@ By default, the timeout for assertions is set to 5 seconds. Learn more about [va
 
 <!-- TOC -->
 
-## Negating matchers
+## Negating Matchers
 
 In general, we can expect the opposite to be true by adding a `.not` to the front
 of the matchers:
