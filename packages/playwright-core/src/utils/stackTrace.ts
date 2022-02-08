@@ -31,10 +31,8 @@ export function rewriteErrorMessage<E extends Error>(e: E, newMessage: string): 
 }
 
 const CORE_DIR = path.resolve(__dirname, '..', '..');
-const CLIENT_LIB = path.join(CORE_DIR, 'lib', 'client');
-const CLIENT_SRC = path.join(CORE_DIR, 'src', 'client');
-const UTIL_LIB = path.join(CORE_DIR, 'lib', 'util');
-const UTIL_SRC = path.join(CORE_DIR, 'src', 'util');
+const CORE_LIB = path.join(CORE_DIR, 'lib');
+const CORE_SRC = path.join(CORE_DIR, 'src');
 const TEST_DIR_SRC = path.resolve(CORE_DIR, '..', 'playwright-test');
 const TEST_DIR_LIB = path.resolve(CORE_DIR, '..', '@playwright', 'test');
 const COVERAGE_PATH = path.join(CORE_DIR, '..', '..', 'tests', 'config', 'coverage.js');
@@ -78,7 +76,7 @@ export function captureStackTrace(rawStack?: string): ParsedStackTrace {
   type ParsedFrame = {
     frame: StackFrame;
     frameText: string;
-    inClient: boolean;
+    inCore: boolean;
   };
   let parsedFrames = stack.split('\n').map(line => {
     const frame = stackUtils.parseLine(line);
@@ -94,7 +92,7 @@ export function captureStackTrace(rawStack?: string): ParsedStackTrace {
       fileName = path.resolve(process.cwd(), frame.file);
     if (isTesting && fileName.includes(COVERAGE_PATH))
       return null;
-    const inClient = fileName.startsWith(CLIENT_LIB) || fileName.startsWith(CLIENT_SRC) || fileName.startsWith(UTIL_LIB) || fileName.startsWith(UTIL_SRC);
+    const inCore = fileName.startsWith(CORE_LIB) || fileName.startsWith(CORE_SRC);
     const parsed: ParsedFrame = {
       frame: {
         file: fileName,
@@ -103,7 +101,7 @@ export function captureStackTrace(rawStack?: string): ParsedStackTrace {
         function: frame.function,
       },
       frameText: line,
-      inClient
+      inCore
     };
     return parsed;
   }).filter(Boolean) as ParsedFrame[];
@@ -126,7 +124,7 @@ export function captureStackTrace(rawStack?: string): ParsedStackTrace {
     // Deepest transition between non-client code calling into client code
     // is the api entry.
     for (let i = 0; i < parsedFrames.length - 1; i++) {
-      if (parsedFrames[i].inClient && !parsedFrames[i + 1].inClient) {
+      if (parsedFrames[i].inCore && !parsedFrames[i + 1].inCore) {
         const frame = parsedFrames[i].frame;
         apiName = normalizeAPIName(frame.function);
         parsedFrames = parsedFrames.slice(i + 1);
