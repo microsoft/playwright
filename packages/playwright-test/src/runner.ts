@@ -218,11 +218,6 @@ export class Runner {
 
     const files = new Map<ProjectImpl, string[]>();
     for (const project of projects) {
-      const testDir = project.config.testDir;
-      if (!fs.existsSync(testDir))
-        throw new Error(`${testDir} does not exist`);
-      if (!fs.statSync(testDir).isDirectory())
-        throw new Error(`${testDir} is not a directory`);
       const allFiles = await collectFiles(project.config.testDir);
       const testMatch = createFileMatcher(project.config.testMatch);
       const testIgnore = createFileMatcher(project.config.testIgnore);
@@ -500,6 +495,11 @@ function filterSuite(suite: Suite, suiteFilter: (suites: Suite) => boolean, test
 }
 
 async function collectFiles(testDir: string): Promise<string[]> {
+  if (!fs.existsSync(testDir))
+    return [];
+  if (!fs.statSync(testDir).isDirectory())
+    return [];
+
   type Rule = {
     dir: string;
     negate: boolean;
