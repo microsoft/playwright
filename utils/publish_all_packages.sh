@@ -91,8 +91,8 @@ else
 fi
 
 echo "==================== Publishing version ${VERSION} ================"
-node ./utils/prepare_packages.js
-node -e "console.log(require('./utils/list_packages').packagesToPublish.join('\\n'))" | while read package
+node ./utils/workspace.js --check-clean
+node ./utils/workspace.js --list-public-package-paths | while read package
 do
   npm publish ${package} --tag="${NPM_PUBLISH_TAG}"
 done

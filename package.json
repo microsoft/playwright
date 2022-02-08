@@ -27,7 +27,7 @@
     "build-installer": "babel -s --extensions \".ts\" --out-dir packages/playwright-core/lib/utils/ packages/playwright-core/src/utils",
     "doc": "node utils/doclint/cli.js",
     "lint": "npm run eslint && npm run tsc && npm run doc && npm run check-deps && node utils/generate_channels.js && node utils/generate_types/ --check-clean && npm run lint-tests && npm run test-types && npm run lint-packages",
-    "lint-packages": "node utils/prepare_packages.js --check-clean",
+    "lint-packages": "node utils/workspace.js --check-clean",
     "lint-tests": "node utils/lint_tests.js",
     "flint": "concurrently \"npm run eslint\" \"npm run tsc\" \"npm run doc\" \"npm run check-deps\" \"node utils/generate_channels.js\" \"node utils/generate_types/ --check-clean\" \"npm run lint-tests\" \"npm run test-types\" \"npm run lint-packages\"",
     "clean": "rimraf packages/playwright-core/lib && rimraf packages/playwright-test/lib && rimraf packages/playwright-core/src/generated/",
