@@ -86,6 +86,11 @@ export class BaseReporter implements Reporter  {
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
+    // Ignore any tests that are run in parallel.
+    for (let suite: Suite | undefined = test.parent; suite; suite = suite.parent) {
+      if ((suite as any)._parallelMode === 'parallel')
+        return;
+    }
     const projectName = test.titlePath()[1];
     const relativePath = relativeTestPath(this.config, test);
     const fileAndProject = (projectName ? `[${projectName}] › ` : '') + relativePath;

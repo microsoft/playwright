@@ -149,6 +149,30 @@ test('should print slow tests', async ({ runInlineTest }) => {
   expect(stripAnsi(result.output)).not.toContain(`Slow test file: [qux] › dir${path.sep}b.test.js (`);
 });
 
+test('should not print slow parallel tests', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        reportSlowTests: { max: 0, threshold: 500 },
+      };
+    `,
+    'dir/a.test.js': `
+      const { test } = pwt;
+      test.describe.parallel('suite', () => {
+        test('inner slow test', async ({}) => {
+          await new Promise(f => setTimeout(f, 1000));
+        });
+        test('inner fast test', async ({}) => {
+          await new Promise(f => setTimeout(f, 100));
+        });
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+  expect(stripAnsi(result.output)).not.toContain('Slow test file');
+});
+
 test('should not print slow tests', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
