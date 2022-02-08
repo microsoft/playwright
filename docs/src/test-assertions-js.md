@@ -78,7 +78,7 @@ The error would look like this:
     Error: should be logged in
 
     Call log:
-      - expect.toBeVisible with timeout 100ms
+      - expect.toBeVisible with timeout 5000ms
       - waiting for selector "text=Name"
 
 
