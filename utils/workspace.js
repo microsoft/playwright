@@ -51,12 +51,20 @@ class Workspace {
     this._packages = packages;
   }
 
-  packages() { return this._packages; }
+  /**
+   * @returns {PWPackage[]}
+   */
+  packages() {
+    return this._packages;
+  }
 
   /**
    * @param {string} version
    */
   async setVersion(version) {
+    if (version.startsWith('v'))
+      throw new Error('version must not start with "v"');
+
     // 1. update workspace's package.json (playwright-internal) with the new version
     const workspacePackageJSON = await readJSON(path.join(this._rootDir, 'package.json'));
     workspacePackageJSON.version = version;
@@ -187,8 +195,6 @@ async function parseCLI() {
     '--set-version': async (version) => {
       if (!version)
         die('ERROR: Please specify version! e.g. --set-version 1.99.2');
-      if (version.startsWith('v'))
-        die('ERROR: Version must not start with "v"');
       await workspace.setVersion(version);
     },
     '--help': () => {
