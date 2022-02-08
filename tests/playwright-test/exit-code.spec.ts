@@ -141,7 +141,7 @@ test('should exit with code 1 if the specified folder does not exist', async ({ 
     `,
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`111111111111.js does not exist`);
+  expect(result.output).toContain(`no tests found.`);
 });
 
 test('should exit with code 1 if passed a file name', async ({ runInlineTest }) => {
@@ -153,7 +153,7 @@ test('should exit with code 1 if passed a file name', async ({ runInlineTest }) 
     `,
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`test.spec.js is not a directory`);
+  expect(result.output).toContain(`no tests found.`);
 });
 
 test('should exit with code 1 when config is not found', async ({ runInlineTest }) => {
