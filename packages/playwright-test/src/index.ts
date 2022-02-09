@@ -320,10 +320,10 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       await Promise.all(existingContexts.map(onDidCreateBrowserContext));
     }
     {
-      const existingApiRequests: APIRequestContext[] =  Array.from((playwright.request as any)._contexts as Set<APIRequestContext>);
-      await Promise.all(existingApiRequests.map(onDidCreateRequestContext));
       (playwright.request as any)._onDidCreateContext = onDidCreateRequestContext;
       (playwright.request as any)._onWillCloseContext = onWillCloseRequestContext;
+      const existingApiRequests: APIRequestContext[] =  Array.from((playwright.request as any)._contexts as Set<APIRequestContext>);
+      await Promise.all(existingApiRequests.map(onDidCreateRequestContext));
     }
 
     // 2. Run the test.

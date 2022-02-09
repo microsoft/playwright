@@ -81,14 +81,14 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
   }, { workers: 1 });
 
   expect(result.exitCode).toBe(1);
-  // expect(result.passed).toBe(2);
+  expect(result.passed).toBe(2);
   expect(result.failed).toBe(1);
   // One trace file for request context and one for each APIRequestContext
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'))).toBeTruthy();
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-pass', 'trace-1.zip'))).toBeTruthy();
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-api-pass', 'trace.zip'))).toBeTruthy();
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-api-pass', 'trace-1.zip'))).toBeFalsy();
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-fail', 'trace-1.zip'))).toBeTruthy();
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-fail', 'trace.zip'))).toBeTruthy();
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-fail', 'trace-1.zip'))).toBeTruthy();
   // One leftover global APIRequestContext from 'api pass' test.
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-fail', 'trace-2.zip'))).toBeTruthy();
