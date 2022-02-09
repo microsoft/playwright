@@ -257,6 +257,26 @@ test('should respect headless in launchPersistent', async ({ runInlineTest }) =>
   expect(result.passed).toBe(1);
 });
 
+test('should respect headless in modifiers that run before tests', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { headless: false } };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test.skip(({ browser }) => false);
+
+      test('should work', async ({ page }) => {
+        expect(await page.evaluate(() => navigator.userAgent)).not.toContain('Headless');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
 test('should call logger from launchOptions config', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'a.test.ts': `
