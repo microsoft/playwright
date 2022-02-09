@@ -55,7 +55,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
       env: options.env ? envObjectToArray(options.env) : undefined,
     }, toProtocolLogger(options.logger)).catch(e => {
       const log = helper.formatBrowserLogs(metadata.log);
-      rewriteErrorMessage(e, `Failed to launch browser.${log}`);
+      rewriteErrorMessage(e, `${e.message} Failed to launch browser.${log}`);
       throw e;
     });
 
