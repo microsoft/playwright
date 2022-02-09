@@ -755,6 +755,7 @@ In react selectors, component names are transcribed with **CamelCase**.
 Selector examples:
 
 - match by **component**: `_react=BookItem`
+- match by component and **key**: `_react=BookItem[key = '2']`
 - match by component and **exact property value**, case-sensitive: `_react=BookItem[author = "Steven King"]`
 - match by property value only, **case-insensitive**: `_react=[author = "steven king" i]`
 - match by component and **truthy property value**: `_react=MyButton[enabled]`

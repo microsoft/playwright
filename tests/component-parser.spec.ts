@@ -23,7 +23,7 @@ const serialize = (parsed: ParsedComponentSelector) => {
     const path = attr.jsonPath.map(token => /^[a-zA-Z0-9]+$/i.test(token) ? token : JSON.stringify(token)).join('.');
     if (attr.op === '<truthy>')
       return '[' + path + ']';
-    return '[' + path + ' ' + attr.op + ' ' + JSON.stringify(attr.value) + (attr.caseSensetive ? ']' : ' i]');
+    return '[' + path + ' ' + attr.op + ' ' + JSON.stringify(attr.value) + (attr.caseSensitive ? ']' : ' i]');
   }).join('');
 };
 
