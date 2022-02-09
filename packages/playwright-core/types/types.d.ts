@@ -8065,6 +8065,12 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    */
   screenshot(options?: {
     /**
+     * When true, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment depending on
+     * their duration:
+     */
+    disableAnimations?: boolean;
+
+    /**
      * Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
      * Defaults to `false`.
      */
@@ -9361,6 +9367,12 @@ export interface Locator {
    * @param options
    */
   screenshot(options?: {
+    /**
+     * When true, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment depending on
+     * their duration:
+     */
+    disableAnimations?: boolean;
+
     /**
      * Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
      * Defaults to `false`.
@@ -15697,6 +15709,12 @@ export interface PageScreenshotOptions {
      */
     height: number;
   };
+
+  /**
+   * When true, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment depending on
+   * their duration:
+   */
+  disableAnimations?: boolean;
 
   /**
    * When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to

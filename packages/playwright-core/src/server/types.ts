@@ -51,6 +51,7 @@ export type ElementScreenshotOptions = TimeoutOptions & {
   type?: 'png' | 'jpeg',
   quality?: number,
   omitBackground?: boolean,
+  disableAnimations?: boolean,
 };
 
 export type ScreenshotOptions = ElementScreenshotOptions & {

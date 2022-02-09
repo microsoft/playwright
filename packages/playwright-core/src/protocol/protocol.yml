@@ -996,6 +996,7 @@ Page:
         quality: number?
         omitBackground: boolean?
         fullPage: boolean?
+        disableAnimations: boolean?
         clip: Rect?
       returns:
         binary: binary
@@ -2148,6 +2149,7 @@ ElementHandle:
           - jpeg
         quality: number?
         omitBackground: boolean?
+        disableAnimations: boolean?
       returns:
         binary: binary
 

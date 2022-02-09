@@ -545,6 +545,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     quality: tOptional(tNumber),
     omitBackground: tOptional(tBoolean),
     fullPage: tOptional(tBoolean),
+    disableAnimations: tOptional(tBoolean),
     clip: tOptional(tType('Rect')),
   });
   scheme.PageSetExtraHTTPHeadersParams = tObject({
@@ -1035,6 +1036,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     type: tOptional(tEnum(['png', 'jpeg'])),
     quality: tOptional(tNumber),
     omitBackground: tOptional(tBoolean),
+    disableAnimations: tOptional(tBoolean),
   });
   scheme.ElementHandleScrollIntoViewIfNeededParams = tObject({
     timeout: tOptional(tNumber),

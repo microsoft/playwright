@@ -339,3 +339,279 @@ it.describe('page screenshot', () => {
     ]);
   });
 });
+
+async function rafraf(page) {
+  // Do a double raf since single raf does not
+  // actually guarantee a new animation frame.
+  await page.evaluate(() => new Promise(x => {
+    requestAnimationFrame(() => requestAnimationFrame(x));
+  }));
+}
+
+declare global {
+  interface Window {
+    animation?: Animation;
+    _EVENTS?: string[];
+  }
+}
+
+it.describe('page screenshot animations', () => {
+  it('should not capture infinite css animation', async ({ page, server }) => {
+    await page.goto(server.PREFIX + '/rotate-z.html');
+    const div = page.locator('div');
+    const screenshot = await div.screenshot({
+      disableAnimations: true,
+    });
+    for (let i = 0; i < 10; ++i) {
+      await rafraf(page);
+      const newScreenshot = await div.screenshot({
+        disableAnimations: true,
+      });
+      expect(newScreenshot.equals(screenshot)).toBe(true);
+    }
+  });
+
+  it('should not capture pseudo element css animation', async ({ page, server }) => {
+    await page.goto(server.PREFIX + '/rotate-pseudo.html');
+    const div = page.locator('div');
+    const screenshot = await div.screenshot({
+      disableAnimations: true,
+    });
+    for (let i = 0; i < 10; ++i) {
+      await rafraf(page);
+      const newScreenshot = await div.screenshot({
+        disableAnimations: true,
+      });
+      expect(newScreenshot.equals(screenshot)).toBe(true);
+    }
+  });
+
+  it('should not capture css animations in shadow DOM', async ({ page, server }) => {
+    await page.goto(server.PREFIX + '/rotate-z-shadow-dom.html');
+    const screenshot = await page.screenshot({
+      disableAnimations: true,
+    });
+    for (let i = 0; i < 4; ++i) {
+      await rafraf(page);
+      const newScreenshot = await page.screenshot({
+        disableAnimations: true,
+      });
+      expect(newScreenshot.equals(screenshot)).toBe(true);
+    }
+  });
+
+  it('should stop animations that happen right before screenshot', async ({ page, server, mode }) => {
+    it.skip(mode !== 'default');
+    await page.goto(server.PREFIX + '/rotate-z.html');
+    // Stop rotating bar.
+    await page.$eval('div', el => el.style.setProperty('animation', 'none'));
+    const buffer1 = await page.screenshot({
+      disableAnimations: true,
+      // Start rotating bar right before screenshot.
+      __testHookBeforeScreenshot: async () => {
+        await page.$eval('div', el => el.style.removeProperty('animation'));
+      },
+    } as any);
+    await rafraf(page);
+    const buffer2 = await page.screenshot({
+      disableAnimations: true,
+    });
+    expect(buffer1.equals(buffer2)).toBe(true);
+  });
+
+  it('should resume infinite animations', async ({ page, server }) => {
+    await page.goto(server.PREFIX + '/rotate-z.html');
+    await page.screenshot({
+      disableAnimations: true,
+    });
+    const buffer1 = await page.screenshot();
+    await rafraf(page);
+    const buffer2 = await page.screenshot();
+    expect(buffer1.equals(buffer2)).toBe(false);
+  });
+
+  it('should not capture infinite web animations', async ({ page, server }) => {
+    await page.goto(server.PREFIX + '/web-animation.html');
+    const div = page.locator('div');
+    const screenshot = await div.screenshot({
+      disableAnimations: true,
+    });
+    for (let i = 0; i < 10; ++i) {
+      await rafraf(page);
+      const newScreenshot = await div.screenshot({
+        disableAnimations: true,
+      });
+      expect(newScreenshot.equals(screenshot)).toBe(true);
+    }
+    // Should resume infinite web animation.
+    const buffer1 = await page.screenshot();
+    await rafraf(page);
+    const buffer2 = await page.screenshot();
+    expect(buffer1.equals(buffer2)).toBe(false);
+  });
+
+  it('should fire transitionend for finite transitions', async ({ page, server }) => {
+    await page.goto(server.PREFIX + '/css-transition.html');
+    const div = page.locator('div');
+    await div.evaluate(el => {
+      el.addEventListener('transitionend', () => window['__TRANSITION_END'] = true, false);
+    });
+
+    await it.step('make sure transition is actually running', async () => {
+      const screenshot1 = await page.screenshot();
+      await rafraf(page);
+      const screenshot2 = await page.screenshot();
+      expect(screenshot1.equals(screenshot2)).toBe(false);
+    });
+
+    // Make a screenshot that finishes all finite animations.
+    const screenshot1 = await div.screenshot({
+      disableAnimations: true,
+    });
+    await rafraf(page);
+    // Make sure finite transition is not restarted.
+    const screenshot2 = await div.screenshot();
+    expect(screenshot1.equals(screenshot2)).toBe(true);
+
+    expect(await page.evaluate(() => window['__TRANSITION_END'])).toBe(true);
+  });
+
+  it('should capture screenshots after layoutchanges in transitionend event', async ({ page, server }) => {
+    await page.goto(server.PREFIX + '/css-transition.html');
+    const div = page.locator('div');
+    await div.evaluate(el => {
+      el.addEventListener('transitionend', () => {
+        const time = Date.now();
+        // Block main thread for 200ms, emulating heavy layout.
+        while (Date.now() - time < 200) ;
+        const h1 = document.createElement('h1');
+        h1.textContent = 'woof-woof';
+        document.body.append(h1);
+      }, false);
+    });
+
+    await it.step('make sure transition is actually running', async () => {
+      const screenshot1 = await page.screenshot();
+      await rafraf(page);
+      const screenshot2 = await page.screenshot();
+      expect(screenshot1.equals(screenshot2)).toBe(false);
+    });
+
+    // 1. Make a screenshot that finishes all finite animations
+    //    and triggers layout.
+    const screenshot1 = await page.screenshot({
+      disableAnimations: true,
+    });
+
+    // 2. Make a second screenshot after h1 is on screen.
+    await expect(page.locator('h1')).toBeVisible();
+    await expect(page.locator('h1')).toHaveText('woof-woof');
+    const screenshot2 = await page.screenshot();
+
+    // 3. Make sure both screenshots are equal, meaning that
+    //    first screenshot actually was taken after transitionend
+    //    changed layout.
+    expect(screenshot1.equals(screenshot2)).toBe(true);
+  });
+
+  it('should not change animation with playbackRate equal to 0', async ({ page, server }) => {
+    await page.goto(server.PREFIX + '/rotate-z.html');
+    await page.evaluate(async () => {
+      window.animation = document.getAnimations()[0];
+      window.animation.updatePlaybackRate(0);
+      await window.animation.ready;
+      window.animation.currentTime = 500;
+    });
+    const screenshot1 = await page.screenshot({
+      disableAnimations: true,
+    });
+    await rafraf(page);
+    const screenshot2 = await page.screenshot({
+      disableAnimations: true,
+    });
+    expect(screenshot1.equals(screenshot2)).toBe(true);
+    expect(await page.evaluate(() => ({
+      playbackRate: window.animation.playbackRate,
+      currentTime: window.animation.currentTime,
+    }))).toEqual({
+      playbackRate: 0,
+      currentTime: 500,
+    });
+  });
+
+  it('should trigger particular events for css transitions', async ({ page, server }) => {
+    await page.goto(server.PREFIX + '/css-transition.html');
+    const div = page.locator('div');
+    await div.evaluate(async el => {
+      window._EVENTS = [];
+      el.addEventListener('transitionend', () => {
+        window._EVENTS.push('transitionend');
+        console.log('transitionend');
+      }, false);
+      const animation = el.getAnimations()[0];
+      animation.oncancel = () => window._EVENTS.push('oncancel');
+      animation.onfinish = () => window._EVENTS.push('onfinish');
+      animation.onremove = () => window._EVENTS.push('onremove');
+      await animation.ready;
+    });
+    await Promise.all([
+      page.screenshot({ disableAnimations: true }),
+      page.waitForEvent('console', msg => msg.text() === 'transitionend'),
+    ]);
+    expect(await page.evaluate(() => window._EVENTS)).toEqual([
+      'onfinish', 'transitionend'
+    ]);
+  });
+
+  it('should trigger particular events for INfinite css animation', async ({ page, server }) => {
+    await page.goto(server.PREFIX + '/rotate-z.html');
+    const div = page.locator('div');
+    await div.evaluate(async el => {
+      window._EVENTS = [];
+      el.addEventListener('animationcancel', () => {
+        window._EVENTS.push('animationcancel');
+        console.log('animationcancel');
+      }, false);
+      const animation = el.getAnimations()[0];
+      animation.oncancel = () => window._EVENTS.push('oncancel');
+      animation.onfinish = () => window._EVENTS.push('onfinish');
+      animation.onremove = () => window._EVENTS.push('onremove');
+      await animation.ready;
+    });
+    await Promise.all([
+      page.screenshot({ disableAnimations: true }),
+      page.waitForEvent('console', msg => msg.text() === 'animationcancel'),
+    ]);
+    expect(await page.evaluate(() => window._EVENTS)).toEqual([
+      'oncancel', 'animationcancel'
+    ]);
+  });
+
+  it('should trigger particular events for finite css animation', async ({ page, server }) => {
+    await page.goto(server.PREFIX + '/rotate-z.html');
+    const div = page.locator('div');
+    await div.evaluate(async el => {
+      window._EVENTS = [];
+      // Make CSS animation to be finite.
+      el.style.setProperty('animation-iteration-count', '1000');
+      el.addEventListener('animationend', () => {
+        window._EVENTS.push('animationend');
+        console.log('animationend');
+      }, false);
+      const animation = el.getAnimations()[0];
+      animation.oncancel = () => window._EVENTS.push('oncancel');
+      animation.onfinish = () => window._EVENTS.push('onfinish');
+      animation.onremove = () => window._EVENTS.push('onremove');
+      await animation.ready;
+    });
+    // Ensure CSS animation is finite.
+    expect(await div.evaluate(async el => Number.isFinite(el.getAnimations()[0].effect.getComputedTiming().endTime))).toBe(true);
+    await Promise.all([
+      page.screenshot({ disableAnimations: true }),
+      page.waitForEvent('console', msg => msg.text() === 'animationend'),
+    ]);
+    expect(await page.evaluate(() => window._EVENTS)).toEqual([
+      'onfinish', 'animationend'
+    ]);
+  });
+});

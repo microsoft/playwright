@@ -1,0 +1,21 @@
+<!DOCTYPE HTML>
+<style>
+  div {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 200px;
+    height: 100px;
+    background-color: red;
+    transition: all 10s;
+  }
+  .transition {
+    transform: rotate(360deg);
+  }
+</style>
+<div></div>
+<script>
+  window.addEventListener('load', () => {
+    document.querySelector('div').classList.add('transition');
+  }, false);
+</script>

@@ -1,8 +1,9 @@
 <html>
   <head>
     <style type="text/css">
-      .square {
+      div::after {
         position: absolute;
+        content: " ";
         top: 0;
         left: 0;
         width: 200px;
@@ -12,6 +13,11 @@
         animation-duration: 5s;
         animation-iteration-count: infinite;
         animation-timing-function: linear;
+      }
+      div {
+        position: absolute;
+        width: 10px;
+        height: 10px;
       }
 
       @keyframes z-spin {
