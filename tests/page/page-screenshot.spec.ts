@@ -593,7 +593,7 @@ it.describe('page screenshot animations', () => {
     await div.evaluate(async el => {
       window._EVENTS = [];
       // Make CSS animation to be finite.
-      el.style.setProperty('animation-iteration-count', 1000);
+      el.style.setProperty('animation-iteration-count', '1000');
       el.addEventListener('animationend', () => {
         window._EVENTS.push('animationend');
         console.log('animationend');
