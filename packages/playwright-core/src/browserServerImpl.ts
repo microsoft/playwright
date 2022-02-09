@@ -34,7 +34,8 @@ import { BrowserContext } from './server/browserContext';
 import { CRBrowser } from './server/chromium/crBrowser';
 import { CDPSessionDispatcher } from './dispatchers/cdpSessionDispatcher';
 import { PageDispatcher } from './dispatchers/pageDispatcher';
-import { TimeoutError } from './utils/errors';
+import { helper } from './server/helper';
+import { rewriteErrorMessage } from './utils/stackTrace';
 
 export class BrowserServerLauncherImpl implements BrowserServerLauncher {
   private _browserName: 'chromium' | 'firefox' | 'webkit';
@@ -53,8 +54,8 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
       ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
       env: options.env ? envObjectToArray(options.env) : undefined,
     }, toProtocolLogger(options.logger)).catch(e => {
-      if (e instanceof TimeoutError)
-        e.message += `\nCall log:\n${metadata.log.join('\n')}`;
+      const log = helper.formatBrowserLogs(metadata.log);
+      rewriteErrorMessage(e, `Failed to launch browser.${log}`);
       throw e;
     });
 
