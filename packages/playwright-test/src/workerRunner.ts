@@ -165,6 +165,15 @@ export class WorkerRunner extends EventEmitter {
       return;
     annotations = annotations.concat(suite._annotations);
 
+    const allSkipped = suite.allTests().every(test => {
+      const runEntry = this._entries.get(test._id);
+      return !runEntry || test.expectedStatus === 'skipped';
+    });
+    if (allSkipped) {
+      // This avoids running beforeAll/afterAll hooks.
+      annotations.push({ type: 'skip' });
+    }
+
     for (const beforeAllModifier of suite._modifiers) {
       if (!this._fixtureRunner.dependsOnWorkerFixturesOnly(beforeAllModifier.fn, beforeAllModifier.location))
         continue;
