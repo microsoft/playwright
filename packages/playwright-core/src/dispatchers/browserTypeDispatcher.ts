@@ -63,6 +63,7 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.Brow
       maxPayload: 256 * 1024 * 1024, // 256Mb,
       handshakeTimeout: params.timeout,
       headers: paramsHeaders,
+      followRedirects: true,
     });
     const pipe = new JsonPipeDispatcher(this._scope);
     const openPromise = new ManualPromise<{ pipe: JsonPipeDispatcher }>();
