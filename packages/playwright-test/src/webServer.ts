@@ -91,6 +91,7 @@ export class WebServer {
 
   private async _waitForProcess() {
     await this._waitForAvailability();
+    // Setting the baseURL via the webServer is deprecated, but we still support it.
     if (this.config.port !== undefined)
       process.env.PLAYWRIGHT_TEST_BASE_URL = `http://localhost:${this.config.port}`;
   }

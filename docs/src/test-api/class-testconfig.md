@@ -572,8 +572,6 @@ If the port is specified, the server will wait for it to be available on `127.0.
 
 For continuous integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an existing server on the CI. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable.
 
-The `port` (but not the `url`) gets passed over to Playwright as a [`property: TestOptions.baseURL`]. For example port `8080` produces `baseURL` equal `http://localhost:8080`.
-
 :::note
 It is also recommended to specify [`property: TestOptions.baseURL`] in the config, so that tests could use relative urls.
 :::
@@ -589,7 +587,7 @@ const config: PlaywrightTestConfig = {
     reuseExistingServer: !process.env.CI,
   },
   use: {
-    baseURL: 'http://localhost:3000/',
+    baseURL: 'http://localhost:3000',
   },
 };
 export default config;
@@ -607,7 +605,7 @@ const config = {
     reuseExistingServer: !process.env.CI,
   },
   use: {
-    baseURL: 'http://localhost:3000/',
+    baseURL: 'http://localhost:3000',
   },
 };
 module.exports = config;

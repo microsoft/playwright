@@ -144,8 +144,6 @@ If `url` is specified in the config, test runner will wait for that `url` to ret
 
 For continuous integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an existing server on the CI. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable.
 
-The `port` (but not the `url`) gets passed over to Playwright as a [`property: TestOptions.baseURL`]. For example port `8080` produces `baseURL` equal `http://localhost:8080`.
-
 :::note
 It is also recommended to specify [`property: TestOptions.baseURL`] in the config, so that tests could use relative urls.
 :::
@@ -160,6 +158,9 @@ const config: PlaywrightTestConfig = {
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
   },
+  use: {
+    baseURL: 'http://localhost:3000'
+  }
 };
 export default config;
 ```
@@ -175,6 +176,9 @@ const config = {
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
   },
+  use: {
+    baseURL: 'http://localhost:3000'
+  }
 };
 module.exports = config;
 ```
@@ -185,7 +189,7 @@ Now you can use a relative path when navigating the page, or use `baseURL` fixtu
 // test.spec.ts
 import { test } from '@playwright/test';
 test('test', async ({ page, baseURL }) => {
-  // baseURL is taken directly from your web server,
+  // baseURL is taken directly from the playwright.config.ts,
   // e.g. http://localhost:3000
   await page.goto(baseURL + '/bar');
   // Alternatively, just use relative path, because baseURL is already
@@ -199,7 +203,7 @@ test('test', async ({ page, baseURL }) => {
 // test.spec.js
 const { test } = require('@playwright/test');
 test('test', async ({ page, baseURL }) => {
-  // baseURL is taken directly from your web server,
+  // baseURL is taken directly from the playwright.config.js,
   // e.g. http://localhost:3000
   await page.goto(baseURL + '/bar');
   // Alternatively, just use relative path, because baseURL is already

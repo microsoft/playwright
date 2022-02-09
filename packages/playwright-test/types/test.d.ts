@@ -582,10 +582,6 @@ interface TestConfig {
    * For continuous integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an
    * existing server on the CI. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable.
    *
-   * The `port` (but not the `url`) gets passed over to Playwright as a
-   * [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url). For example port `8080`
-   * produces `baseURL` equal `http://localhost:8080`.
-   *
    * > NOTE: It is also recommended to specify
    * [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url) in the config, so that
    * tests could use relative urls.
@@ -601,7 +597,7 @@ interface TestConfig {
    *     reuseExistingServer: !process.env.CI,
    *   },
    *   use: {
-   *     baseURL: 'http://localhost:3000/',
+   *     baseURL: 'http://localhost:3000',
    *   },
    * };
    * export default config;
@@ -1075,10 +1071,6 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * For continuous integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an
    * existing server on the CI. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable.
    *
-   * The `port` (but not the `url`) gets passed over to Playwright as a
-   * [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url). For example port `8080`
-   * produces `baseURL` equal `http://localhost:8080`.
-   *
    * > NOTE: It is also recommended to specify
    * [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url) in the config, so that
    * tests could use relative urls.
@@ -1094,7 +1086,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *     reuseExistingServer: !process.env.CI,
    *   },
    *   use: {
-   *     baseURL: 'http://localhost:3000/',
+   *     baseURL: 'http://localhost:3000',
    *   },
    * };
    * export default config;
