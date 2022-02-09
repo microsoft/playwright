@@ -164,12 +164,12 @@ export class Screenshotter {
               } else {
                 try {
                   animation.cancel();
+                  infiniteAnimationsToResume.add(animation);
                 } catch (e) {
                   // animation.cancel() should not throw for
                   // infinite animations, but we'd like to be on the
                   // safe side.
                 }
-                infiniteAnimationsToResume.add(animation);
               }
             }
           };
