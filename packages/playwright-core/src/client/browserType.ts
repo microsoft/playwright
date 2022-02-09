@@ -171,7 +171,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
         browser = Browser.from(playwright._initializer.preLaunchedBrowser!);
         browser._logger = logger;
         browser._shouldCloseConnectionOnClose = true;
-        browser._setBrowserType((playwright as any)[browser._name]);
+        browser._setBrowserType(this);
         browser._localUtils = this._playwright._utils;
         browser.on(Events.Browser.Disconnected, closePipe);
         return browser;
