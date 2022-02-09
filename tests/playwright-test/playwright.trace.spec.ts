@@ -54,6 +54,47 @@ test('should stop tracing with trace: on-first-retry, when not retrying', async 
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-shared-flaky-retry1', 'trace.zip'))).toBeTruthy();
 });
 
+test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { trace: 'on' } };
+    `,
+    'a.spec.ts': `
+      const { test } = pwt;
+
+      test('pass', async ({request, page}, testInfo) => {
+        await page.goto('about:blank');
+        await request.get('${server.EMPTY_PAGE}');
+      });
+
+      test('api pass', async ({playwright}, testInfo) => {
+        const request = await playwright.request.newContext();
+        await request.get('${server.EMPTY_PAGE}');
+      });
+
+      test('fail', async ({request, page}, testInfo) => {
+        await page.goto('about:blank');
+        await request.get('${server.EMPTY_PAGE}');
+        expect(1).toBe(2);
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(2);
+  expect(result.failed).toBe(1);
+  // One trace file for request context and one for each APIRequestContext
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'))).toBeTruthy();
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-pass', 'trace-1.zip'))).toBeTruthy();
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-api-pass', 'trace.zip'))).toBeTruthy();
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-api-pass', 'trace-1.zip'))).toBeFalsy();
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-fail', 'trace.zip'))).toBeTruthy();
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-fail', 'trace-1.zip'))).toBeTruthy();
+  // One leftover global APIRequestContext from 'api pass' test.
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-fail', 'trace-2.zip'))).toBeTruthy();
+});
+
+
 test('should not throw with trace: on-first-retry and two retries in the same worker', async ({ runInlineTest }, testInfo) => {
   const files = {};
   for (let i = 0; i < 6; i++) {

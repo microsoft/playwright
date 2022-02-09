@@ -74,13 +74,14 @@ export class APIRequest implements api.APIRequest {
     })).request);
     context._tracing._localUtils = this._playwright._utils;
     this._contexts.add(context);
+    context._request = this;
     await this._onDidCreateContext?.(context);
     return context;
   }
 }
 
 export class APIRequestContext extends ChannelOwner<channels.APIRequestContextChannel> implements api.APIRequestContext {
-  private _request?: APIRequest;
+  _request?: APIRequest;
   readonly _tracing: Tracing;
 
   static from(channel: channels.APIRequestContextChannel): APIRequestContext {
@@ -89,8 +90,6 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.APIRequestContextInitializer) {
     super(parent, type, guid, initializer, createInstrumentation());
-    if (parent instanceof APIRequest)
-      this._request = parent;
     this._tracing = Tracing.from(initializer.tracing);
   }
 

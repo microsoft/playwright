@@ -16,7 +16,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type { LaunchOptions, BrowserContextOptions, Page, BrowserContext, Video, APIRequestContext } from 'playwright-core';
+import type { LaunchOptions, BrowserContextOptions, Page, BrowserContext, Video, APIRequestContext, Tracing } from 'playwright-core';
 import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo } from '../types/test';
 import { rootTestType } from './testType';
 import { createGuid, removeFolders, debugMode } from 'playwright-core/lib/utils/utils';
@@ -249,41 +249,51 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       };
     };
 
+    const startTracing = async (tracing: Tracing) => {
+      if (captureTrace) {
+        const title = [path.relative(testInfo.project.testDir, testInfo.file) + ':' + testInfo.line, ...testInfo.titlePath.slice(1)].join(' › ');
+        if (!(tracing as any)[kTracingStarted]) {
+          await tracing.start({ ...traceOptions, title });
+          (tracing as any)[kTracingStarted] = true;
+        } else {
+          await tracing.startChunk({ title });
+        }
+      } else {
+        (tracing as any)[kTracingStarted] = false;
+        await tracing.stop();
+      }
+    };
+
     const onDidCreateBrowserContext = async (context: BrowserContext) => {
       createdContexts.add(context);
       context.setDefaultTimeout(testInfo.timeout === 0 ? 0 : (actionTimeout || 0));
       context.setDefaultNavigationTimeout(testInfo.timeout === 0 ? 0 : (navigationTimeout || actionTimeout || 0));
-      if (captureTrace) {
-        const title = [path.relative(testInfo.project.testDir, testInfo.file) + ':' + testInfo.line, ...testInfo.titlePath.slice(1)].join(' › ');
-        if (!(context.tracing as any)[kTracingStarted]) {
-          await context.tracing.start({ ...traceOptions, title });
-          (context.tracing as any)[kTracingStarted] = true;
-        } else {
-          await context.tracing.startChunk({ title });
-        }
-      } else {
-        (context.tracing as any)[kTracingStarted] = false;
-        await context.tracing.stop();
-      }
+      await startTracing(context.tracing);
       const listener = createInstrumentationListener(context);
       (context as any)._instrumentation.addListener(listener);
       (context.request as any)._instrumentation.addListener(listener);
     };
     const onDidCreateRequestContext = async (context: APIRequestContext) => {
+      const tracing = (context as any)._tracing as Tracing;
+      await startTracing(tracing);
       (context as any)._instrumentation.addListener(createInstrumentationListener());
     };
 
     const startedCollectingArtifacts = Symbol('startedCollectingArtifacts');
 
-    const onWillCloseContext = async (context: BrowserContext) => {
-      (context as any)[startedCollectingArtifacts] = true;
+    const stopTracing = async (tracing: Tracing) => {
+      (tracing as any)[startedCollectingArtifacts] = true;
       if (captureTrace) {
         // Export trace for now. We'll know whether we have to preserve it
         // after the test finishes.
         const tracePath = path.join(_artifactsDir(), createGuid() + '.zip');
         temporaryTraceFiles.push(tracePath);
-        await context.tracing.stopChunk({ path: tracePath });
+        await tracing.stopChunk({ path: tracePath });
       }
+    };
+
+    const onWillCloseContext = async (context: BrowserContext) => {
+      await stopTracing(context.tracing);
       if (screenshot === 'on' || screenshot === 'only-on-failure') {
         // Capture screenshot for now. We'll know whether we have to preserve them
         // after the test finishes.
@@ -295,6 +305,11 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       }
     };
 
+    const onWillCloseRequestContext =  async (context: APIRequestContext) => {
+      const tracing = (context as any)._tracing as Tracing;
+      await stopTracing(tracing);
+    };
+
     // 1. Setup instrumentation and process existing contexts.
     for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit]) {
       (browserType as any)._onDidCreateContext = onDidCreateBrowserContext;
@@ -304,7 +319,12 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       const existingContexts = Array.from((browserType as any)._contexts) as BrowserContext[];
       await Promise.all(existingContexts.map(onDidCreateBrowserContext));
     }
-    (playwright.request as any)._onDidCreateContext = onDidCreateRequestContext;
+    {
+      (playwright.request as any)._onDidCreateContext = onDidCreateRequestContext;
+      (playwright.request as any)._onWillCloseContext = onWillCloseRequestContext;
+      const existingApiRequests: APIRequestContext[] =  Array.from((playwright.request as any)._contexts as Set<APIRequestContext>);
+      await Promise.all(existingApiRequests.map(onDidCreateRequestContext));
+    }
 
     // 2. Run the test.
     await use();
@@ -340,25 +360,35 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       (browserType as any)._defaultLaunchOptions = undefined;
     }
     leftoverContexts.forEach(context => (context as any)._instrumentation.removeAllListeners());
-    (playwright.request as any)._onDidCreateContext = undefined;
     for (const context of (playwright.request as any)._contexts)
       context._instrumentation.removeAllListeners();
+    const leftoverApiRequests: APIRequestContext[] =  Array.from((playwright.request as any)._contexts as Set<APIRequestContext>);
+    (playwright.request as any)._onDidCreateContext = undefined;
+    (playwright.request as any)._onWillCloseContext = undefined;
 
-    // 5. Collect artifacts from any non-closed contexts.
-    await Promise.all(leftoverContexts.map(async context => {
+    const stopTraceChunk = async (tracing: Tracing): Promise<boolean> => {
       // When we timeout during context.close(), we might end up with context still alive
       // but artifacts being already collected. In this case, do not collect artifacts
       // for the second time.
-      if ((context as any)[startedCollectingArtifacts])
-        return;
-
+      if ((tracing as any)[startedCollectingArtifacts])
+        return false;
       if (preserveTrace)
-        await context.tracing.stopChunk({ path: addTraceAttachment() });
+        await tracing.stopChunk({ path: addTraceAttachment() });
       else if (captureTrace)
-        await context.tracing.stopChunk();
+        await tracing.stopChunk();
+      return true;
+    };
+
+    // 5. Collect artifacts from any non-closed contexts.
+    await Promise.all(leftoverContexts.map(async context => {
+      if (!await stopTraceChunk(context.tracing))
+        return;
       if (captureScreenshots)
         await Promise.all(context.pages().map(page => page.screenshot({ timeout: 5000, path: addScreenshotAttachment() }).catch(() => {})));
-    }));
+    }).concat(leftoverApiRequests.map(async context => {
+      const tracing = (context as any)._tracing as Tracing;
+      await stopTraceChunk(tracing);
+    })));
 
     // 6. Either remove or attach temporary traces and screenshots for contexts closed
     // before the test has finished.
