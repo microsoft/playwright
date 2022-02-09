@@ -15,11 +15,11 @@
  */
 
 import * as channels from '../protocol/channels';
+import { Browser } from '../server/browser';
 import { GlobalAPIRequestContext } from '../server/fetch';
 import { Playwright } from '../server/playwright';
 import { SocksProxy } from '../server/socksProxy';
 import * as types from '../server/types';
-import { debugLogger } from '../utils/debugLogger';
 import { AndroidDispatcher } from './androidDispatcher';
 import { BrowserTypeDispatcher } from './browserTypeDispatcher';
 import { Dispatcher, DispatcherScope } from './dispatcher';
@@ -27,15 +27,18 @@ import { ElectronDispatcher } from './electronDispatcher';
 import { LocalUtilsDispatcher } from './localUtilsDispatcher';
 import { APIRequestContextDispatcher } from './networkDispatchers';
 import { SelectorsDispatcher } from './selectorsDispatcher';
+import { ConnectedBrowserDispatcher } from './browserDispatcher';
 
 export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.PlaywrightChannel> implements channels.PlaywrightChannel {
   _type_Playwright;
+  private _browserDispatcher: ConnectedBrowserDispatcher | undefined;
   private _socksProxy: SocksProxy | undefined;
 
-  constructor(scope: DispatcherScope, playwright: Playwright, customSelectors?: channels.SelectorsChannel, preLaunchedBrowser?: channels.BrowserChannel) {
+  constructor(scope: DispatcherScope, playwright: Playwright, socksProxy?: SocksProxy, preLaunchedBrowser?: Browser) {
     const descriptors = require('../server/deviceDescriptors') as types.Devices;
     const deviceDescriptors = Object.entries(descriptors)
         .map(([name, descriptor]) => ({ name, descriptor }));
+    const browserDispatcher = preLaunchedBrowser ? new ConnectedBrowserDispatcher(scope, preLaunchedBrowser) : undefined;
     super(scope, playwright, 'Playwright', {
       chromium: new BrowserTypeDispatcher(scope, playwright.chromium),
       firefox: new BrowserTypeDispatcher(scope, playwright.firefox),
@@ -44,19 +47,17 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
       electron: new ElectronDispatcher(scope, playwright.electron),
       utils: new LocalUtilsDispatcher(scope),
       deviceDescriptors,
-      selectors: customSelectors || new SelectorsDispatcher(scope, playwright.selectors),
-      preLaunchedBrowser,
+      selectors: new SelectorsDispatcher(scope, browserDispatcher?.selectors || playwright.selectors),
+      preLaunchedBrowser: browserDispatcher,
     }, false);
     this._type_Playwright = true;
-  }
-
-  async enableSocksProxy() {
-    this._socksProxy = new SocksProxy();
-    this._object.options.socksProxyPort = await this._socksProxy.listen(0);
-    this._socksProxy.on(SocksProxy.Events.SocksRequested, data => this._dispatchEvent('socksRequested', data));
-    this._socksProxy.on(SocksProxy.Events.SocksData, data => this._dispatchEvent('socksData', data));
-    this._socksProxy.on(SocksProxy.Events.SocksClosed, data => this._dispatchEvent('socksClosed', data));
-    debugLogger.log('proxy', `Starting socks proxy server on port ${this._object.options.socksProxyPort}`);
+    this._browserDispatcher = browserDispatcher;
+    if (socksProxy) {
+      this._socksProxy = socksProxy;
+      socksProxy.on(SocksProxy.Events.SocksRequested, data => this._dispatchEvent('socksRequested', data));
+      socksProxy.on(SocksProxy.Events.SocksData, data => this._dispatchEvent('socksData', data));
+      socksProxy.on(SocksProxy.Events.SocksClosed, data => this._dispatchEvent('socksClosed', data));
+    }
   }
 
   async socksConnected(params: channels.PlaywrightSocksConnectedParams): Promise<void> {
@@ -86,5 +87,10 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
 
   async hideHighlight(params: channels.PlaywrightHideHighlightParams, metadata?: channels.Metadata): Promise<channels.PlaywrightHideHighlightResult> {
     await this._object.hideHighlight();
+  }
+
+  async cleanup() {
+    // Cleanup contexts upon disconnect.
+    await this._browserDispatcher?.cleanupContexts();
   }
 }

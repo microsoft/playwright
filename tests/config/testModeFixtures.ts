@@ -33,6 +33,7 @@ export const testModeTest = test.extend<{}, TestModeWorkerOptions & TestModeWork
       default: new DefaultTestMode(),
       service: new ServiceTestMode(),
       driver: new DriverTestMode(),
+      service2: new DefaultTestMode(),
     }[mode];
     require('playwright-core/lib/utils/utils').setUnderTest();
     const playwright = await testMode.setup();

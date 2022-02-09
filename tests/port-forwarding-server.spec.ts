@@ -20,8 +20,7 @@ import path from 'path';
 import net from 'net';
 
 import { contextTest, expect } from './config/browserTest';
-import { PlaywrightClient } from '../packages/playwright-core/lib/remote/playwrightClient';
-import type { Page } from 'playwright-core';
+import type { Page, Browser } from 'playwright-core';
 
 class OutOfProcessPlaywrightServer {
   private _driverProcess: childProcess.ChildProcess;
@@ -61,21 +60,25 @@ class OutOfProcessPlaywrightServer {
 }
 
 const it = contextTest.extend<{ pageFactory: (redirectPortForTest?: number) => Promise<Page> }>({
-  pageFactory: async ({ browserName, browserType }, run, testInfo) => {
+  pageFactory: async ({ browserType, browserName, channel }, run, testInfo) => {
     const playwrightServers: OutOfProcessPlaywrightServer[] = [];
+    const browsers: Browser[] = [];
     await run(async (redirectPortForTest?: number): Promise<Page> => {
       const server = new OutOfProcessPlaywrightServer(0, 3200 + testInfo.workerIndex);
       playwrightServers.push(server);
-      const service = await PlaywrightClient.connect({
-        wsEndpoint: await server.wsEndpoint(),
-      });
-      const playwright = service.playwright();
-      playwright._enablePortForwarding(redirectPortForTest);
-      const browser = await playwright[browserName].launch((browserType as any)._defaultLaunchOptions);
+      const browser = await browserType.connect({
+        wsEndpoint: await server.wsEndpoint() + '?browser=' + (channel || browserName),
+        __testHookPortForwarding: { redirectPortForTest },
+      } as any);
+      browsers.push(browser);
       return await browser.newPage();
     });
     for (const playwrightServer of playwrightServers)
       await playwrightServer.kill();
+    await Promise.all(browsers.map(async browser => {
+      if (browser.isConnected())
+        await new Promise(f => browser.once('disconnected', f));
+    }));
   },
 });
 

@@ -32,7 +32,7 @@ const getExecutablePath = (browserName: BrowserName) => {
 
 const mode = process.env.PW_OUT_OF_PROCESS_DRIVER ?
   'driver' :
-  (process.env.PWTEST_MODE || 'default') as ('default' | 'driver' | 'service');
+  (process.env.PWTEST_MODE || 'default') as ('default' | 'driver' | 'service' | 'service2');
 const headed = !!process.env.HEADFUL;
 const channel = process.env.PWTEST_CHANNEL as any;
 const video = !!process.env.PWTEST_VIDEO;
@@ -59,12 +59,23 @@ const config: Config<CoverageWorkerOptions & PlaywrightWorkerOptions & Playwrigh
     ['html', { open: 'on-failure' }]
   ],
   projects: [],
-  webServer: mode === 'service' ? {
+};
+
+if (mode === 'service') {
+  config.webServer = {
     command: 'npx playwright experimental-grid-server',
     port: 3333,
     reuseExistingServer: true,
-  } : undefined,
-};
+  };
+}
+
+if (mode === 'service2') {
+  config.webServer = {
+    command: 'npx playwright run-server 3333',
+    port: 3333,
+    reuseExistingServer: true,
+  };
+}
 
 const browserNames = ['chromium', 'webkit', 'firefox'] as BrowserName[];
 for (const browserName of browserNames) {
@@ -90,6 +101,9 @@ for (const browserName of browserNames) {
       },
       trace: trace ? 'on' : undefined,
       coverageName: browserName,
+      connectOptions: mode === 'service2' ? {
+        wsEndpoint: 'ws://localhost:3333/?browser=' + (channel || browserName),
+      } : undefined,
     },
     metadata: {
       platform: process.platform,
