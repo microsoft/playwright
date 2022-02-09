@@ -457,7 +457,7 @@ function determineUserAgent(): string {
     osIdentifier = 'windows';
     osVersion = `${version[0]}.${version[1]}`;
   } else if (process.platform === 'darwin') {
-    const version = execSync('sw_vers -productVersion').toString().trim().split('.');
+    const version = execSync('sw_vers -productVersion', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim().split('.');
     osIdentifier = 'macOS';
     osVersion = `${version[0]}.${version[1]}`;
   } else if (process.platform === 'linux') {
