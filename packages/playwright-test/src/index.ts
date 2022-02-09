@@ -87,7 +87,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       await removeFolders([dir]);
   }, { scope: 'worker' }],
 
-  _browserOptions: [async ({ headless, channel, launchOptions }, use) => {
+  _browserOptions: [async ({ playwright, headless, channel, launchOptions }, use) => {
     const options: LaunchOptions = {
       handleSIGINT: false,
       timeout: 0,
@@ -97,8 +97,13 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       options.headless = headless;
     if (channel !== undefined)
       options.channel = channel;
+
+    for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit])
+      (browserType as any)._defaultLaunchOptions = options;
     await use(options);
-  }, { scope: 'worker' }],
+    for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit])
+      (browserType as any)._defaultLaunchOptions = undefined;
+  }, { scope: 'worker', auto: true }],
 
   browser: [async ({ playwright, browserName }, use) => {
     if (!['chromium', 'firefox', 'webkit'].includes(browserName))
@@ -315,7 +320,6 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       (browserType as any)._onDidCreateContext = onDidCreateBrowserContext;
       (browserType as any)._onWillCloseContext = onWillCloseContext;
       (browserType as any)._defaultContextOptions = _combinedContextOptions;
-      (browserType as any)._defaultLaunchOptions = _browserOptions;
       const existingContexts = Array.from((browserType as any)._contexts) as BrowserContext[];
       await Promise.all(existingContexts.map(onDidCreateBrowserContext));
     }
@@ -357,7 +361,6 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       (browserType as any)._onDidCreateContext = undefined;
       (browserType as any)._onWillCloseContext = undefined;
       (browserType as any)._defaultContextOptions = undefined;
-      (browserType as any)._defaultLaunchOptions = undefined;
     }
     leftoverContexts.forEach(context => (context as any)._instrumentation.removeAllListeners());
     for (const context of (playwright.request as any)._contexts)
