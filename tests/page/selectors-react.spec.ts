@@ -58,6 +58,7 @@ for (const [name, url] of Object.entries(reacts)) {
     it('should query by props combinations', async ({ page }) => {
       expect(await page.$$eval(`_react=BookItem[name="The Great Gatsby"]`, els => els.length)).toBe(1);
       expect(await page.$$eval(`_react=BookItem[name="the great gatsby" i]`, els => els.length)).toBe(1);
+      expect(await page.$$eval(`_react=li[key="The Great Gatsby"]`, els => els.length)).toBe(1);
       expect(await page.$$eval(`_react=ColorButton[nested.index = 0]`, els => els.length)).toBe(1);
       expect(await page.$$eval(`_react=ColorButton[nested.nonexisting.index = 0]`, els => els.length)).toBe(0);
       expect(await page.$$eval(`_react=ColorButton[nested.index.nonexisting = 0]`, els => els.length)).toBe(0);

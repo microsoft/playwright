@@ -19,7 +19,7 @@ export type ParsedComponentAttribute = {
   jsonPath: string[],
   op: Operator,
   value: any,
-  caseSensetive: boolean,
+  caseSensitive: boolean,
 };
 
 export type ParsedComponentSelector = {
@@ -32,8 +32,8 @@ export function checkComponentAttribute(obj: any, attr: ParsedComponentAttribute
     if (obj !== undefined && obj !== null)
       obj = obj[token];
   }
-  const objValue = typeof obj === 'string' && !attr.caseSensetive ? obj.toUpperCase() : obj;
-  const attrValue = typeof attr.value === 'string' && !attr.caseSensetive ? attr.value.toUpperCase() : attr.value;
+  const objValue = typeof obj === 'string' && !attr.caseSensitive ? obj.toUpperCase() : obj;
+  const attrValue = typeof attr.value === 'string' && !attr.caseSensitive ? attr.value.toUpperCase() : attr.value;
 
   if (attr.op === '<truthy>')
     return !!objValue;
@@ -142,22 +142,22 @@ export function parseComponentSelector(selector: string): ParsedComponentSelecto
     // check property is truthy: [enabled]
     if (next() === ']') {
       eat1();
-      return { jsonPath, op: '<truthy>', value: null, caseSensetive: false };
+      return { jsonPath, op: '<truthy>', value: null, caseSensitive: false };
     }
 
     const operator = readOperator();
 
     let value = undefined;
-    let caseSensetive = true;
+    let caseSensitive = true;
     skipSpaces();
     if (next() === `'` || next() === `"`) {
       value = readQuotedString(next()).slice(1, -1);
       skipSpaces();
       if (next() === 'i' || next() === 'I') {
-        caseSensetive = false;
+        caseSensitive = false;
         eat1();
       } else if (next() === 's' || next() === 'S') {
-        caseSensetive = true;
+        caseSensitive = true;
         eat1();
       }
     } else {
@@ -181,7 +181,7 @@ export function parseComponentSelector(selector: string): ParsedComponentSelecto
     eat1();
     if (operator !== '=' && typeof value !== 'string')
       throw new Error(`Error while parsing selector \`${selector}\` - cannot use ${operator} in attribute with non-string matching value - ${value}`);
-    return { jsonPath, op: operator, value, caseSensetive };
+    return { jsonPath, op: operator, value, caseSensitive };
   }
 
   const result: ParsedComponentSelector = {
