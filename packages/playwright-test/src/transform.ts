@@ -120,11 +120,25 @@ function loadAndValidateTsconfigForFile(file: string): ParsedTsConfigData | unde
   return cachedTSConfigs.get(cwd);
 }
 
+const pathSeparator = process.platform === 'win32' ? ';' : ':';
+const scriptPreprocessor = process.env.PW_TEST_SOURCE_TRANSFORM ?
+  require(process.env.PW_TEST_SOURCE_TRANSFORM) : undefined;
+
 export function transformHook(code: string, filename: string, isModule = false): string {
   if (isComponentImport(filename))
     return componentStub();
 
-  const tsconfigData = loadAndValidateTsconfigForFile(filename);
+  // If we are not TypeScript and there is no applicable preprocessor - bail out.
+  const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx');
+  const hasPreprocessor =
+      process.env.PW_TEST_SOURCE_TRANSFORM &&
+      process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE &&
+      process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE.split(pathSeparator).some(f => filename.startsWith(f));
+
+  if (!isTypeScript && !hasPreprocessor)
+    return code;
+
+  const tsconfigData = isTypeScript ? loadAndValidateTsconfigForFile(filename) : undefined;
   const cachePath = calculateCachePath(tsconfigData, code, filename);
   const codePath = cachePath + '.js';
   const sourceMapPath = cachePath + '.map';
@@ -135,39 +149,44 @@ export function transformHook(code: string, filename: string, isModule = false):
   // Silence the annoying warning.
   process.env.BROWSERSLIST_IGNORE_OLD_DATA = 'true';
   const babel: typeof import('@babel/core') = require('@babel/core');
-  const plugins = [
-    [require.resolve('@babel/plugin-proposal-class-properties')],
-    [require.resolve('@babel/plugin-proposal-numeric-separator')],
-    [require.resolve('@babel/plugin-proposal-logical-assignment-operators')],
-    [require.resolve('@babel/plugin-proposal-nullish-coalescing-operator')],
-    [require.resolve('@babel/plugin-proposal-optional-chaining')],
-    [require.resolve('@babel/plugin-syntax-json-strings')],
-    [require.resolve('@babel/plugin-syntax-optional-catch-binding')],
-    [require.resolve('@babel/plugin-syntax-async-generators')],
-    [require.resolve('@babel/plugin-syntax-object-rest-spread')],
-    [require.resolve('@babel/plugin-proposal-export-namespace-from')],
-  ] as any;
+  const plugins = [];
 
-  if (tsconfigData) {
-    plugins.push([require.resolve('babel-plugin-module-resolver'), {
-      root: ['./'],
-      alias: tsconfigData.alias,
-      // Silences warning 'Could not resovle ...' that we trigger because we resolve
-      // into 'foo/bar', and not 'foo/bar.ts'.
-      loglevel: 'silent',
-    }]);
+  if (isTypeScript) {
+    plugins.push(
+        [require.resolve('@babel/plugin-proposal-class-properties')],
+        [require.resolve('@babel/plugin-proposal-numeric-separator')],
+        [require.resolve('@babel/plugin-proposal-logical-assignment-operators')],
+        [require.resolve('@babel/plugin-proposal-nullish-coalescing-operator')],
+        [require.resolve('@babel/plugin-proposal-optional-chaining')],
+        [require.resolve('@babel/plugin-syntax-json-strings')],
+        [require.resolve('@babel/plugin-syntax-optional-catch-binding')],
+        [require.resolve('@babel/plugin-syntax-async-generators')],
+        [require.resolve('@babel/plugin-syntax-object-rest-spread')],
+        [require.resolve('@babel/plugin-proposal-export-namespace-from')]
+    );
+
+    if (tsconfigData) {
+      plugins.push([require.resolve('babel-plugin-module-resolver'), {
+        root: ['./'],
+        alias: tsconfigData.alias,
+        // Silences warning 'Could not resovle ...' that we trigger because we resolve
+        // into 'foo/bar', and not 'foo/bar.ts'.
+        loglevel: 'silent',
+      }]);
+    }
+
+    if (!isModule) {
+      plugins.push([require.resolve('@babel/plugin-transform-modules-commonjs')]);
+      plugins.push([require.resolve('@babel/plugin-proposal-dynamic-import')]);
+    }
   }
 
   if (process.env.PW_COMPONENT_TESTING)
     plugins.unshift([require.resolve('@babel/plugin-transform-react-jsx')]);
 
-  if (!isModule) {
-    plugins.push([require.resolve('@babel/plugin-transform-modules-commonjs')]);
-    plugins.push([require.resolve('@babel/plugin-proposal-dynamic-import')]);
-  }
 
-  if (process.env.PW_TEST_SOURCE_TRANSFORM)
-    plugins.push([process.env.PW_TEST_SOURCE_TRANSFORM]);
+  if (hasPreprocessor)
+    plugins.push([scriptPreprocessor]);
 
   const result = babel.transformFileSync(filename, {
     babelrc: false,
@@ -193,7 +212,12 @@ export function transformHook(code: string, filename: string, isModule = false):
 }
 
 export function installTransform(): () => void {
-  return pirates.addHook((code: string, filename: string) => transformHook(code, filename), { exts: ['.ts', '.tsx'] });
+  const exts = ['.ts', '.tsx'];
+
+  // When script preprocessor is engaged, we transpile JS as well.
+  if (scriptPreprocessor)
+    exts.push('.js', '.mjs');
+  return pirates.addHook((code: string, filename: string) => transformHook(code, filename), { exts });
 }
 
 export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Location, ...args: A) => R): (...args: A) => R {
