@@ -105,8 +105,10 @@ export class ProgressController {
       metadata: this.metadata
     };
 
-    const timeoutError = new TimeoutError(`Timeout ${this._timeout}ms exceeded.`);
-    const timer = setTimeout(() => this._forceAbortPromise.reject(timeoutError), progress.timeUntilDeadline());
+    const timer = setTimeout(() => {
+      const timeoutError = new TimeoutError(`Timeout ${this._timeout}ms exceeded.\nCall log:\n${this.metadata.log.join('\n')}\n`);
+      this._forceAbortPromise.reject(timeoutError);
+    }, progress.timeUntilDeadline());
     try {
       const promise = task(progress);
       const result = await Promise.race([promise, this._forceAbortPromise]);
