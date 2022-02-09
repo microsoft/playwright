@@ -274,7 +274,7 @@ it('should provide a Response with a file URL', async ({ page, asset, isAndroid,
 
   const fileurl = url.pathToFileURL(asset('frames/two-frames.html')).href;
   const response = await page.goto(fileurl);
-  if (isElectron || (browserName === 'chromium' && browserMajorVersion >= 100) || (browserName === 'webkit' && isWindows))
+  if (isElectron || (browserName === 'chromium' && browserMajorVersion >= 99) || (browserName === 'webkit' && isWindows))
     expect(response.status()).toBe(200);
   else
     expect(response.status()).toBe(0);
