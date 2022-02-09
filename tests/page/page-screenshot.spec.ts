@@ -340,8 +340,12 @@ it.describe('page screenshot', () => {
   });
 });
 
-async function raf(page) {
-  await page.evaluate(() => new Promise(x => requestAnimationFrame(x)));
+async function rafraf(page) {
+  // Do a double raf since single raf does not
+  // actually guarantee a new animation frame.
+  await page.evaluate(() => new Promise(x => {
+    requestAnimationFrame(() => requestAnimationFrame(x));
+  }));
 }
 
 declare global {
@@ -359,7 +363,7 @@ it.describe('page screenshot animations', () => {
       disableAnimations: true,
     });
     for (let i = 0; i < 10; ++i) {
-      await raf(page);
+      await rafraf(page);
       const newScreenshot = await div.screenshot({
         disableAnimations: true,
       });
@@ -374,7 +378,7 @@ it.describe('page screenshot animations', () => {
       disableAnimations: true,
     });
     for (let i = 0; i < 10; ++i) {
-      await raf(page);
+      await rafraf(page);
       const newScreenshot = await div.screenshot({
         disableAnimations: true,
       });
@@ -388,7 +392,7 @@ it.describe('page screenshot animations', () => {
       disableAnimations: true,
     });
     for (let i = 0; i < 4; ++i) {
-      await raf(page);
+      await rafraf(page);
       const newScreenshot = await page.screenshot({
         disableAnimations: true,
       });
@@ -408,7 +412,7 @@ it.describe('page screenshot animations', () => {
         await page.$eval('div', el => el.style.removeProperty('animation'));
       },
     } as any);
-    await raf(page);
+    await rafraf(page);
     const buffer2 = await page.screenshot({
       disableAnimations: true,
     });
@@ -421,7 +425,7 @@ it.describe('page screenshot animations', () => {
       disableAnimations: true,
     });
     const buffer1 = await page.screenshot();
-    await raf(page);
+    await rafraf(page);
     const buffer2 = await page.screenshot();
     expect(buffer1.equals(buffer2)).toBe(false);
   });
@@ -433,7 +437,7 @@ it.describe('page screenshot animations', () => {
       disableAnimations: true,
     });
     for (let i = 0; i < 10; ++i) {
-      await raf(page);
+      await rafraf(page);
       const newScreenshot = await div.screenshot({
         disableAnimations: true,
       });
@@ -441,7 +445,7 @@ it.describe('page screenshot animations', () => {
     }
     // Should resume infinite web animation.
     const buffer1 = await page.screenshot();
-    await raf(page);
+    await rafraf(page);
     const buffer2 = await page.screenshot();
     expect(buffer1.equals(buffer2)).toBe(false);
   });
@@ -455,7 +459,7 @@ it.describe('page screenshot animations', () => {
 
     await it.step('make sure transition is actually running', async () => {
       const screenshot1 = await page.screenshot();
-      await raf(page);
+      await rafraf(page);
       const screenshot2 = await page.screenshot();
       expect(screenshot1.equals(screenshot2)).toBe(false);
     });
@@ -464,7 +468,7 @@ it.describe('page screenshot animations', () => {
     const screenshot1 = await div.screenshot({
       disableAnimations: true,
     });
-    await raf(page);
+    await rafraf(page);
     // Make sure finite transition is not restarted.
     const screenshot2 = await div.screenshot();
     expect(screenshot1.equals(screenshot2)).toBe(true);
@@ -488,7 +492,7 @@ it.describe('page screenshot animations', () => {
 
     await it.step('make sure transition is actually running', async () => {
       const screenshot1 = await page.screenshot();
-      await raf(page);
+      await rafraf(page);
       const screenshot2 = await page.screenshot();
       expect(screenshot1.equals(screenshot2)).toBe(false);
     });
@@ -521,7 +525,7 @@ it.describe('page screenshot animations', () => {
     const screenshot1 = await page.screenshot({
       disableAnimations: true,
     });
-    await raf(page);
+    await rafraf(page);
     const screenshot2 = await page.screenshot({
       disableAnimations: true,
     });
@@ -535,14 +539,14 @@ it.describe('page screenshot animations', () => {
     });
   });
 
-  it('should trigger particular events for finite animation', async ({ page, server }) => {
+  it('should trigger particular events for css transitions', async ({ page, server }) => {
     await page.goto(server.PREFIX + '/css-transition.html');
     const div = page.locator('div');
     await div.evaluate(async el => {
       window._EVENTS = [];
       el.addEventListener('transitionend', () => {
         window._EVENTS.push('transitionend');
-        console.log('transition ended');
+        console.log('transitionend');
       }, false);
       const animation = el.getAnimations()[0];
       animation.oncancel = () => window._EVENTS.push('oncancel');
@@ -552,21 +556,21 @@ it.describe('page screenshot animations', () => {
     });
     await Promise.all([
       page.screenshot({ disableAnimations: true }),
-      page.waitForEvent('console', msg => msg.text() === 'transition ended'),
+      page.waitForEvent('console', msg => msg.text() === 'transitionend'),
     ]);
     expect(await page.evaluate(() => window._EVENTS)).toEqual([
       'onfinish', 'transitionend'
     ]);
   });
 
-  it('should trigger particular events for INfinite animation', async ({ page, server }) => {
+  it('should trigger particular events for INfinite css animation', async ({ page, server }) => {
     await page.goto(server.PREFIX + '/rotate-z.html');
     const div = page.locator('div');
     await div.evaluate(async el => {
       window._EVENTS = [];
       el.addEventListener('animationcancel', () => {
         window._EVENTS.push('animationcancel');
-        console.log('animation canceled');
+        console.log('animationcancel');
       }, false);
       const animation = el.getAnimations()[0];
       animation.oncancel = () => window._EVENTS.push('oncancel');
@@ -576,10 +580,38 @@ it.describe('page screenshot animations', () => {
     });
     await Promise.all([
       page.screenshot({ disableAnimations: true }),
-      page.waitForEvent('console', msg => msg.text() === 'animation canceled'),
+      page.waitForEvent('console', msg => msg.text() === 'animationcancel'),
     ]);
     expect(await page.evaluate(() => window._EVENTS)).toEqual([
       'oncancel', 'animationcancel'
+    ]);
+  });
+
+  it('should trigger particular events for finite css animation', async ({ page, server }) => {
+    await page.goto(server.PREFIX + '/rotate-z.html');
+    const div = page.locator('div');
+    await div.evaluate(async el => {
+      window._EVENTS = [];
+      // Make CSS animation to be finite.
+      el.style.setProperty('animation-iteration-count', 1000);
+      el.addEventListener('animationend', () => {
+        window._EVENTS.push('animationend');
+        console.log('animationend');
+      }, false);
+      const animation = el.getAnimations()[0];
+      animation.oncancel = () => window._EVENTS.push('oncancel');
+      animation.onfinish = () => window._EVENTS.push('onfinish');
+      animation.onremove = () => window._EVENTS.push('onremove');
+      await animation.ready;
+    });
+    // Ensure CSS animation is finite.
+    expect(await div.evaluate(async el => Number.isFinite(el.getAnimations()[0].effect.getComputedTiming().endTime))).toBe(true);
+    await Promise.all([
+      page.screenshot({ disableAnimations: true }),
+      page.waitForEvent('console', msg => msg.text() === 'animationend'),
+    ]);
+    expect(await page.evaluate(() => window._EVENTS)).toEqual([
+      'onfinish', 'animationend'
     ]);
   });
 });
