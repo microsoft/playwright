@@ -17,8 +17,9 @@
 // @ts-check
 
 const path = require('path');
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const Documentation = require('./documentation');
-const XmlDoc = require('./xmlDocumentation')
+const XmlDoc = require('./xmlDocumentation');
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 const fs = require('fs');
 const { parseApi } = require('./api_parser');
@@ -100,10 +101,10 @@ function writeFile(kind, name, spec, body, folder, extendsName = null) {
   const out = [];
   // console.log(`Generating ${name}`);
 
-  if (spec)
+  if (spec) {
     out.push(...XmlDoc.renderXmlDoc(spec, maxDocumentationColumnWidth));
-  else {
-    let ownDocumentation = documentedResults.get(name);
+  } else {
+    const ownDocumentation = documentedResults.get(name);
     if (ownDocumentation) {
       out.push('/// <summary>');
       out.push(`/// ${ownDocumentation}`);
@@ -122,12 +123,12 @@ function writeFile(kind, name, spec, body, folder, extendsName = null) {
   out.push(...body);
   out.push('}');
 
-  let content = template.replace('[CONTENT]', out.join(EOL));
+  const content = template.replace('[CONTENT]', out.join(EOL));
   fs.writeFileSync(path.join(folder, name + '.cs'), content);
 }
 
 /**
- * @param {Documentation.Class} clazz 
+ * @param {Documentation.Class} clazz
  */
 function renderClass(clazz) {
   const name = classNameMap.get(clazz.name);
@@ -138,7 +139,7 @@ function renderClass(clazz) {
   for (const member of clazz.membersArray) {
     // Classes inherit it from IAsyncDisposable
     if (member.name === 'dispose')
-      continue
+      continue;
     if (member.alias.startsWith('RunAnd'))
       renderMember(member, clazz, { trimRunAndPrefix: true }, body);
     renderMember(member, clazz, {}, body);
@@ -162,15 +163,15 @@ function renderModelType(name, type) {
   // TODO: consider how this could be merged with the `translateType` check
   if (type.union
     && type.union[0].name === 'null'
-    && type.union.length == 2) {
+    && type.union.length === 2)
     type = type.union[1];
-  }
+
 
   if (type.name === 'Array') {
     throw new Error('Array at this stage is unexpected.');
   } else if (type.properties) {
     for (const member of type.properties) {
-      let fakeType = new Type(name, null);
+      const fakeType = new Type(name, null);
       renderMember(member, fakeType, {}, body);
     }
   } else {
@@ -188,10 +189,10 @@ function renderEnum(name, literals) {
   const body = [];
   for (let literal of literals) {
     // strip out the quotes
-    literal = literal.replace(/[\"]/g, ``)
-    let escapedName = literal.replace(/[-]/g, ' ')
-      .split(' ')
-      .map(word => customTypeNames.get(word) || word[0].toUpperCase() + word.substring(1)).join('');
+    literal = literal.replace(/[\"]/g, ``);
+    const escapedName = literal.replace(/[-]/g, ' ')
+        .split(' ')
+        .map(word => customTypeNames.get(word) || word[0].toUpperCase() + word.substring(1)).join('');
 
     body.push(`[EnumMember(Value = "${literal}")]`);
     body.push(`${escapedName},`);
@@ -213,20 +214,20 @@ function renderOptionType(name, type) {
   writeFile('public class', name, null, body, optionsDir);
 }
 
-for (const element of documentation.classesArray) {
+for (const element of documentation.classesArray)
   renderClass(element);
-}
 
-for (let [name, type] of optionTypes)
+
+for (const [name, type] of optionTypes)
   renderOptionType(name, type);
 
-for (let [name, type] of modelTypes)
+for (const [name, type] of modelTypes)
   renderModelType(name, type);
 
-for (let [name, literals] of enumTypes)
+for (const [name, literals] of enumTypes)
   renderEnum(name, literals);
 
-if (process.argv[3] !== "--skip-format") {
+if (process.argv[3] !== '--skip-format') {
   // run the formatting tool for .net, to ensure the files are prepped
   execSync(`dotnet format -f "${outputDir}" --include-generated --fix-whitespace`);
 }
@@ -238,9 +239,9 @@ function toArgumentName(name) {
   return name === 'event' ? `@${name}` : name;
 }
 
- /**
- * @param {Documentation.Member} member
- */
+/**
+* @param {Documentation.Member} member
+*/
 function toMemberName(member, makeAsync = false) {
   const assumedName = toTitleCase(member.alias || member.name);
   if (member.kind === 'interface')
@@ -273,10 +274,10 @@ function renderConstructors(name, type, out) {
   out.push(`if(clone == null) return;`);
 
   type.properties.forEach(p => {
-    let propType = translateType(p.type, type, t => generateNameDefault(p, name, t, type));
-    let propName = toMemberName(p);
+    const propType = translateType(p.type, type, t => generateNameDefault(p, name, t, type));
+    const propName = toMemberName(p);
     const overloads = getPropertyOverloads(propType, p, propName, p.type);
-    for (let { name } of overloads)
+    for (const { name } of overloads)
       out.push(`${name} = clone.${name};`);
   });
   out.push(`}`);
@@ -290,7 +291,7 @@ function renderConstructors(name, type, out) {
  * @param {string[]} out
  */
 function renderMember(member, parent, options, out) {
-  let name = toMemberName(member);
+  const name = toMemberName(member);
   if (member.kind === 'method') {
     renderMethod(member, parent, name, { mode: 'options', trimRunAndPrefix: options.trimRunAndPrefix }, out);
     return;
@@ -315,12 +316,14 @@ function renderMember(member, parent, options, out) {
       type = `IEnumerable<${parent.name}>`;
     }
     const overloads = getPropertyOverloads(type, member, name, parent);
-    for (let { type, name, jsonName } of overloads) {
+    for (const overload of overloads) {
+      const { name, jsonName } = overload;
+      let { type } = overload;
       out.push('');
       if (member.spec)
         out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
       if (!member.clazz)
-        out.push(`${member.required ? '[Required]\n' : ''}[JsonPropertyName("${jsonName}")]`)
+        out.push(`${member.required ? '[Required]\n' : ''}[JsonPropertyName("${jsonName}")]`);
       if (member.deprecated)
         out.push(`[System.Obsolete]`);
       if (!type.endsWith('?') && !member.required)
@@ -376,10 +379,10 @@ function generateNameDefault(member, name, t, parent) {
     return 'object';
 
   // we'd get this call for enums, primarily
-  let enumName = generateEnumNameIfApplicable(t);
+  const enumName = generateEnumNameIfApplicable(t);
   if (!enumName && member) {
     if (member.kind === 'method' || member.kind === 'property') {
-      let names = [
+      const names = [
         parent.alias || parent.name,
         toTitleCase(member.alias || member.name),
         toTitleCase(name),
@@ -387,15 +390,15 @@ function generateNameDefault(member, name, t, parent) {
       if (names[2] === names[1])
         names.pop(); // get rid of duplicates, cheaply
       let attemptedName = names.pop();
-      let typesDiffer = function (left, right) {
+      const typesDiffer = function(left, right) {
         if (left.expression && right.expression)
           return left.expression !== right.expression;
         return JSON.stringify(right.properties) !== JSON.stringify(left.properties);
-      }
+      };
       while (true) {
         // crude attempt at removing plurality
         if (attemptedName.endsWith('s')
-          && !["properties", "httpcredentials"].includes(attemptedName.toLowerCase()))
+          && !['properties', 'httpcredentials'].includes(attemptedName.toLowerCase()))
           attemptedName = attemptedName.substring(0, attemptedName.length - 1);
 
         // For some of these we don't want to generate generic types.
@@ -419,9 +422,9 @@ function generateNameDefault(member, name, t, parent) {
         if (attemptedName === 'HeadersArray')
           attemptedName = 'Header';
 
-        let probableType = modelTypes.get(attemptedName);
+        const probableType = modelTypes.get(attemptedName);
         if ((probableType && typesDiffer(t, probableType))
-          || (["Value"].includes(attemptedName))) {
+          || (['Value'].includes(attemptedName))) {
           if (!names.length)
             throw new Error(`Ran out of possible names: ${attemptedName}`);
           attemptedName = `${names.pop()}${attemptedName}`;
@@ -434,18 +437,18 @@ function generateNameDefault(member, name, t, parent) {
       return attemptedName;
     }
 
-    if (member.kind === 'event') {
+    if (member.kind === 'event')
       return `${name}Payload`;
-    }
+
   }
 
   return enumName || t.name;
 }
 
 /**
- * 
- * @param {Documentation.Type} type 
- * @returns 
+ *
+ * @param {Documentation.Type} type
+ * @returns
  */
 function generateEnumNameIfApplicable(type) {
   if (!type.union)
@@ -453,9 +456,9 @@ function generateEnumNameIfApplicable(type) {
 
   const potentialValues = type.union.filter(u => u.name.startsWith('"'));
   if ((potentialValues.length !== type.union.length)
-    && !(type.union[0].name === 'null' && potentialValues.length === type.union.length - 1)) {
+    && !(type.union[0].name === 'null' && potentialValues.length === type.union.length - 1))
     return null; // this isn't an enum, so we don't care, we let the caller generate the name
-  }
+
   return type.name;
 }
 
@@ -495,7 +498,7 @@ function renderMethod(member, parent, name, options, out) {
   // TODO: this is something that will probably go into the docs
   // translate simple getters into read-only properties, and simple
   // set-only methods to settable properties
-  if (member.args.size == 0
+  if (member.args.size === 0
     && type !== 'void'
     && !name.startsWith('Get')
     && !name.startsWith('PostDataJSON')
@@ -511,9 +514,9 @@ function renderMethod(member, parent, name, options, out) {
   }
 
   // HACK: special case for generics handling!
-  if (type === 'T') {
+  if (type === 'T')
     name = `${name}<T>`;
-  }
+
 
   // adjust the return type for async methods
   if (member.async) {
@@ -525,11 +528,11 @@ function renderMethod(member, parent, name, options, out) {
 
   // render args
   /** @type {string[]} */
-  let args = [];
+  const args = [];
   /** @type {string[]} */
-  let explodedArgs = [];
+  const explodedArgs = [];
   /** @type {Map<string, string>} */
-  let argTypeMap = new Map([]);
+  const argTypeMap = new Map([]);
   /**
    *
    * @param {string} innerArgType
@@ -540,11 +543,11 @@ function renderMethod(member, parent, name, options, out) {
   function pushArg(innerArgType, innerArgName, argument, isExploded = false) {
     if (innerArgType === 'null')
       return;
-    const requiredPrefix = (argument.required || isExploded) ? "" : "?";
-    const requiredSuffix = (argument.required || isExploded) ? "" : " = default";
-    var push = `${innerArgType}${requiredPrefix} ${innerArgName}${requiredSuffix}`;
+    const requiredPrefix = (argument.required || isExploded) ? '' : '?';
+    const requiredSuffix = (argument.required || isExploded) ? '' : ' = default';
+    const push = `${innerArgType}${requiredPrefix} ${innerArgName}${requiredSuffix}`;
     if (isExploded)
-      explodedArgs.push(push)
+      explodedArgs.push(push);
     else
       args.push(push);
     argTypeMap.set(push, innerArgName);
@@ -571,9 +574,9 @@ function renderMethod(member, parent, name, options, out) {
     }
 
     if (arg.type.expression === '[string]|[path]') {
-      let argName = toArgumentName(arg.name);
-      pushArg("string?", `${argName} = default`, arg);
-      pushArg("string?", `${argName}Path = default`, arg);
+      const argName = toArgumentName(arg.name);
+      pushArg('string?', `${argName} = default`, arg);
+      pushArg('string?', `${argName}Path = default`, arg);
       if (arg.spec) {
         addParamsDoc(argName, XmlDoc.renderTextOnly(arg.spec, maxDocumentationColumnWidth));
         addParamsDoc(`${argName}Path`, [`Instead of specifying <paramref name="${argName}"/>, gives the file name to load from.`]);
@@ -582,9 +585,9 @@ function renderMethod(member, parent, name, options, out) {
     } else if (arg.type.expression === '[boolean]|[Array]<[string]>') {
       // HACK: this hurts my brain too
       // we split this into two args, one boolean, with the logical name
-      let argName = toArgumentName(arg.name);
-      let leftArgType = translateType(arg.type.union[0], parent, (t) => { throw new Error('Not supported'); });
-      let rightArgType = translateType(arg.type.union[1], parent, (t) => { throw new Error('Not supported'); });
+      const argName = toArgumentName(arg.name);
+      const leftArgType = translateType(arg.type.union[0], parent, t => { throw new Error('Not supported'); });
+      const rightArgType = translateType(arg.type.union[1], parent, t => { throw new Error('Not supported'); });
 
       pushArg(leftArgType, argName, arg);
       pushArg(rightArgType, `${argName}Values`, arg);
@@ -596,15 +599,15 @@ function renderMethod(member, parent, name, options, out) {
     }
 
     const argName = toArgumentName(arg.alias || arg.name);
-    const argType = translateType(arg.type, parent, (t) => generateNameDefault(member, argName, t, parent));
+    const argType = translateType(arg.type, parent, t => generateNameDefault(member, argName, t, parent));
 
     if (argType === null && arg.type.union) {
       // we might have to split this into multiple arguments
-      let translatedArguments = arg.type.union.map(t => translateType(t, parent, (x) => generateNameDefault(member, argName, x, parent)));
+      const translatedArguments = arg.type.union.map(t => translateType(t, parent, x => generateNameDefault(member, argName, x, parent)));
       if (translatedArguments.includes(null))
         throw new Error('Unexpected null in translated argument types. Aborting.');
 
-      let argDocumentation = XmlDoc.renderTextOnly(arg.spec, maxDocumentationColumnWidth);
+      const argDocumentation = XmlDoc.renderTextOnly(arg.spec, maxDocumentationColumnWidth);
       for (const newArg of translatedArguments) {
         pushArg(newArg, argName, arg, true); // push the exploded arg
         addParamsDoc(argName, argDocumentation);
@@ -630,9 +633,9 @@ function renderMethod(member, parent, name, options, out) {
     modifiers = 'public ';
 
   member.argsArray
-    .sort((a, b) => b.alias === 'options' ? -1 : 0) //move options to the back to the arguments list
-    .forEach(processArg);
-  
+      .sort((a, b) => b.alias === 'options' ? -1 : 0) // move options to the back to the arguments list
+      .forEach(processArg);
+
   let body = ';';
   if (options.mode === 'base') {
     // Generate options -> named transition.
@@ -669,7 +672,7 @@ function renderMethod(member, parent, name, options, out) {
       out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
       paramDocs.forEach((value, i) => printArgDoc(i, value, out));
     }
-    if(member.deprecated)
+    if (member.deprecated)
       out.push(`[System.Obsolete]`);
     out.push(`${modifiers}${type} ${toAsync(name, member.async)}(${args.join(', ')})${body}`);
   } else {
@@ -677,17 +680,17 @@ function renderMethod(member, parent, name, options, out) {
     explodedArgs.forEach((explodedArg, argIndex) => {
       if (!options.nodocs)
         out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
-      let overloadedArgs = [];
-      for (var i = 0; i < args.length; i++) {
-        let arg = args[i];
+      const overloadedArgs = [];
+      for (let i = 0; i < args.length; i++) {
+        const arg = args[i];
         if (arg === 'EXPLODED_ARG' || arg === 'OPTIONAL_EXPLODED_ARG') {
           containsOptionalExplodedArgs = arg === 'OPTIONAL_EXPLODED_ARG';
-          let argType = argTypeMap.get(explodedArg);
+          const argType = argTypeMap.get(explodedArg);
           if (!options.nodocs)
             printArgDoc(argType, paramDocs.get(argType), out);
           overloadedArgs.push(explodedArg);
         } else {
-          let argType = argTypeMap.get(arg);
+          const argType = argTypeMap.get(arg);
           if (!options.nodocs)
             printArgDoc(argType, paramDocs.get(argType), out);
           overloadedArgs.push(arg);
@@ -703,13 +706,13 @@ function renderMethod(member, parent, name, options, out) {
     // That particular overload only contains the required arguments, or rather
     // contains all the arguments *except* the exploded ones.
     if (containsOptionalExplodedArgs) {
-      var filteredArgs = args.filter(x => x !== 'OPTIONAL_EXPLODED_ARG');
+      const filteredArgs = args.filter(x => x !== 'OPTIONAL_EXPLODED_ARG');
       if (!options.nodocs)
         out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
-      filteredArgs.forEach((arg) => {
+      filteredArgs.forEach(arg => {
         if (arg === 'EXPLODED_ARG')
           throw new Error(`Unsupported required union arg combined an optional union inside ${member.name}`);
-        let argType = argTypeMap.get(arg);
+        const argType = argTypeMap.get(arg);
         if (!options.nodocs)
           printArgDoc(argType, paramDocs.get(argType), out);
       });
@@ -741,7 +744,7 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
       console.warn(`${type.name} should be a 'string', but was a ${type.expression}`);
       return `string`;
     }
-    if (type.union.length == 2 && type.union[1].name === 'Array' && type.union[1].templates[0].name === type.union[0].name)
+    if (type.union.length === 2 && type.union[1].name === 'Array' && type.union[1].templates[0].name === type.union[0].name)
       return `IEnumerable<${type.union[0].name}>`; // an example of this is [string]|[Array]<[string]>
     if (type.expression === '[float]|"raf"')
       return `Polling`; // hardcoded because there's no other way to denote this
@@ -755,20 +758,20 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
   }
 
   if (type.name === 'Array') {
-    if (type.templates.length != 1)
+    if (type.templates.length !== 1)
       throw new Error(`Array (${type.name} from ${parent.name}) has more than 1 dimension. Panic.`);
 
-    let innerType = translateType(type.templates[0], parent, generateNameCallback, false, isReturnType);
+    const innerType = translateType(type.templates[0], parent, generateNameCallback, false, isReturnType);
     return isReturnType ? `IReadOnlyList<${innerType}>` : `IEnumerable<${innerType}>`;
   }
 
   if (type.name === 'Object') {
     // take care of some common cases
     // TODO: this can be genericized
-    if (type.templates && type.templates.length == 2) {
+    if (type.templates && type.templates.length === 2) {
       // get the inner types of both templates, and if they're strings, it's a keyvaluepair string, string,
-      let keyType = translateType(type.templates[0], parent, generateNameCallback, false, isReturnType);
-      let valueType = translateType(type.templates[1], parent, generateNameCallback, false, isReturnType);
+      const keyType = translateType(type.templates[0], parent, generateNameCallback, false, isReturnType);
+      const valueType = translateType(type.templates[1], parent, generateNameCallback, false, isReturnType);
       if (parent.name === 'Request' || parent.name === 'Response')
         return `Dictionary<${keyType}, ${valueType}>`;
       return `IEnumerable<KeyValuePair<${keyType}, ${valueType}>>`;
@@ -776,24 +779,24 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
 
     if ((type.name === 'Object')
       && !type.properties
-      && !type.union) {
+      && !type.union)
       return 'object';
-    }
+
     // this is an additional type that we need to generate
-    let objectName = generateNameCallback(type);
-    if (objectName === 'Object') {
+    const objectName = generateNameCallback(type);
+    if (objectName === 'Object')
       throw new Error('Object unexpected');
-    } else if (type.name === 'Object') {
+    else if (type.name === 'Object')
       registerModelType(objectName, type);
-    }
+
     return `${objectName}${optional ? '?' : ''}`;
   }
 
   if (type.name === 'Map') {
-    if (type.templates && type.templates.length == 2) {
+    if (type.templates && type.templates.length === 2) {
       // we map to a dictionary
-      let keyType = translateType(type.templates[0], parent, generateNameCallback, false, isReturnType);
-      let valueType = translateType(type.templates[1], parent, generateNameCallback, false, isReturnType);
+      const keyType = translateType(type.templates[0], parent, generateNameCallback, false, isReturnType);
+      const valueType = translateType(type.templates[1], parent, generateNameCallback, false, isReturnType);
       return `Dictionary<${keyType}, ${valueType}>`;
     } else {
       throw 'Map has invalid number of templates.';
@@ -806,7 +809,7 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
 
     let argsList = '';
     if (type.args) {
-      let translatedCallbackArguments = type.args.map(t => translateType(t, parent, generateNameCallback, false, isReturnType));
+      const translatedCallbackArguments = type.args.map(t => translateType(t, parent, generateNameCallback, false, isReturnType));
       if (translatedCallbackArguments.includes(null))
         throw new Error('There was an argument we could not parse. Aborting.');
 
@@ -817,8 +820,8 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
       // this is an Action
       return `Action<${argsList}>`;
     } else {
-      let returnType = translateType(type.returnType, parent, generateNameCallback, false, isReturnType);
-      if (returnType == null)
+      const returnType = translateType(type.returnType, parent, generateNameCallback, false, isReturnType);
+      if (returnType === null)
         throw new Error('Unexpected null as return type.');
 
       return `Func<${argsList}, ${returnType}>`;
@@ -828,13 +831,13 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
   if (type.templates) {
     // this should mean we have a generic type and we can translate that
     /** @type {string[]} */
-    var types = type.templates.map(template => translateType(template, parent));
-    return `${type.name}<${types.join(', ')}>`
+    const types = type.templates.map(template => translateType(template, parent));
+    return `${type.name}<${types.join(', ')}>`;
   }
 
   // there's a chance this is a name we've already seen before, so check
   // this is also where we map known types, like boolean -> bool, etc.
-  let name = classNameMap.get(type.name) || type.name;
+  const name = classNameMap.get(type.name) || type.name;
   return `${name}${optional ? '?' : ''}`;
 }
 
@@ -848,7 +851,7 @@ function registerModelType(typeName, type) {
   if (typeName.endsWith('Option'))
     return;
 
-  let potentialType = modelTypes.get(typeName);
+  const potentialType = modelTypes.get(typeName);
   if (potentialType) {
     // console.log(`Type ${typeName} already exists, so skipping...`);
     return;
