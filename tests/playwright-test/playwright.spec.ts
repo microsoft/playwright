@@ -568,9 +568,11 @@ test('should work with connectOptions', async ({ runInlineTest }) => {
     `,
     'a.test.ts': `
       const { test } = pwt;
+      test.use({ locale: 'fr-CH' });
       test('pass', async ({ page }) => {
         await page.setContent('<div>PASS</div>');
         await expect(page.locator('div')).toHaveText('PASS');
+        expect(await page.evaluate(() => navigator.language)).toBe('fr-CH');
       });
     `,
   });
