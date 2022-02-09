@@ -34,6 +34,7 @@ import { BrowserContext } from './server/browserContext';
 import { CRBrowser } from './server/chromium/crBrowser';
 import { CDPSessionDispatcher } from './dispatchers/cdpSessionDispatcher';
 import { PageDispatcher } from './dispatchers/pageDispatcher';
+import { TimeoutError } from './utils/errors';
 
 export class BrowserServerLauncherImpl implements BrowserServerLauncher {
   private _browserName: 'chromium' | 'firefox' | 'webkit';
@@ -45,12 +46,17 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
   async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
     const playwright = createPlaywright('javascript');
     // 1. Pre-launch the browser
-    const browser = await playwright[this._browserName].launch(internalCallMetadata(), {
+    const metadata = internalCallMetadata();
+    const browser = await playwright[this._browserName].launch(metadata, {
       ...options,
       ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
       ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
       env: options.env ? envObjectToArray(options.env) : undefined,
-    }, toProtocolLogger(options.logger));
+    }, toProtocolLogger(options.logger)).catch(e => {
+      if (e instanceof TimeoutError)
+        e.message += `\nCall log:\n${metadata.log.join('\n')}`;
+      throw e;
+    });
 
     let path = `/${createGuid()}`;
     if (options.wsPath)
