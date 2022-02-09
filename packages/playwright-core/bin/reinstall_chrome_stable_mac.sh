@@ -4,7 +4,7 @@ set -x
 
 rm -rf "/Applications/Google Chrome.app"
 cd /tmp
-curl -o ./googlechrome.dmg -k https://dl.google.com/chrome/mac/stable/GGRO/googlechrome.dmg
+curl -o ./googlechrome.dmg -k https://dl.google.com/chrome/mac/universal/stable/GGRO/googlechrome.dmg
 hdiutil attach -nobrowse -quiet -noautofsck -noautoopen -mountpoint /Volumes/googlechrome.dmg ./googlechrome.dmg
 cp -rf "/Volumes/googlechrome.dmg/Google Chrome.app" /Applications
 hdiutil detach /Volumes/googlechrome.dmg
