@@ -228,8 +228,8 @@ for (const [name, literals] of enumTypes)
   renderEnum(name, literals);
 
 if (process.argv[3] !== '--skip-format') {
-  // run the formatting tool for .net, to ensure the files are prepped
-  execSync(`dotnet format -f "${outputDir}" --include-generated --fix-whitespace`);
+  // run the formatting tool for .NET, to ensure the files are prepped
+  execSync(`dotnet format "${outputDir}"`);
 }
 
 /**
