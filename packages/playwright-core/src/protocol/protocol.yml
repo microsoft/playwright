@@ -1464,6 +1464,7 @@ Frame:
     highlight:
       parameters:
         selector: string
+        blackout: boolean
 
     getAttribute:
       parameters:

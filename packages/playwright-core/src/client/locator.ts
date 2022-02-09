@@ -113,7 +113,11 @@ export class Locator implements api.Locator {
   }
 
   async _highlight() {
-    return this._frame._highlight(this._selector);
+    return this._frame._highlight(this._selector, false /* blackout */);
+  }
+
+  async _blackout() {
+    return this._frame._highlight(this._selector, true /* blackout */);
   }
 
   locator(selector: string, options?: { hasText?: string | RegExp, has?: Locator }): Locator {
@@ -287,6 +291,10 @@ export class FrameLocator implements api.FrameLocator {
 
   locator(selector: string, options?: { hasText?: string | RegExp }): Locator {
     return new Locator(this._frame, this._frameSelector + ' >> control=enter-frame >> ' + selector, options);
+  }
+
+  async _blackout() {
+    return this._frame._highlight(this._frameSelector, true /* blackout */);
   }
 
   frameLocator(selector: string): FrameLocator {

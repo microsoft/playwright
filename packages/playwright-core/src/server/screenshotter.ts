@@ -67,6 +67,7 @@ export class Screenshotter {
 
   async screenshotPage(progress: Progress, options: types.ScreenshotOptions): Promise<Buffer> {
     const format = validateScreenshotOptions(options);
+    progress.cleanupWhenAborted(() => Promise.all(this._page.frames().map(frame => frame.hideHighlight(true /* blackout */).catch(() => {}))));
     return this._queue.postTask(async () => {
       const { viewportSize } = await this._originalViewportSize(progress);
 
@@ -88,6 +89,7 @@ export class Screenshotter {
 
   async screenshotElement(progress: Progress, handle: dom.ElementHandle, options: types.ElementScreenshotOptions = {}): Promise<Buffer> {
     const format = validateScreenshotOptions(options);
+    progress.cleanupWhenAborted(() => Promise.all(this._page.frames().map(frame => frame.hideHighlight(true /* blackout */).catch(() => {}))));
     return this._queue.postTask(async () => {
       const { viewportSize } = await this._originalViewportSize(progress);
 

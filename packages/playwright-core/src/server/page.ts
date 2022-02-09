@@ -524,7 +524,7 @@ export class Page extends SdkObject {
   }
 
   async hideHighlight() {
-    await Promise.all(this.frames().map(frame => frame.hideHighlight().catch(() => {})));
+    await Promise.all(this.frames().map(frame => frame.hideHighlight(false /* blackout */).catch(() => {})));
   }
 }
 

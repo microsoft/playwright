@@ -76,6 +76,7 @@ export class InjectedScript {
   onGlobalListenersRemoved = new Set<() => void>();
   private _hitTargetInterceptor: undefined | ((event: MouseEvent | PointerEvent | TouchEvent) => void);
   private _highlight: Highlight | undefined;
+  private _blackout: Highlight | undefined;
 
   constructor(stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine}[]) {
     this._evaluator = new SelectorEvaluatorImpl(new Map());
@@ -881,6 +882,14 @@ export class InjectedScript {
     this._runHighlightOnRaf(selector);
   }
 
+  blackout(selector: ParsedSelector) {
+    if (!this._blackout) {
+      this._blackout = new Highlight(false);
+      this._blackout.install();
+    }
+    this._blackout.blackoutElements(this.querySelectorAll(selector, document.documentElement));
+  }
+
   _runHighlightOnRaf(selector: ParsedSelector) {
     if (this._highlight)
       this._highlight.updateHighlight(this.querySelectorAll(selector, document.documentElement), stringifySelector(selector), false);
@@ -891,6 +900,13 @@ export class InjectedScript {
     if (this._highlight) {
       this._highlight.uninstall();
       delete this._highlight;
+    }
+  }
+
+  hideBlackouts() {
+    if (this._blackout) {
+      this._blackout.uninstall();
+      delete this._blackout;
     }
   }
 

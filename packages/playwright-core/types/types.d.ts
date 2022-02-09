@@ -15674,6 +15674,11 @@ interface PageWaitForFunctionOptions {
 
 export interface PageScreenshotOptions {
   /**
+   * Blackouts given set of elements for the screenshot.
+   */
+  blackout?: Array<Locator>;
+
+  /**
    * An object which specifies clipping of the resulting image. Should have the following fields:
    */
   clip?: {

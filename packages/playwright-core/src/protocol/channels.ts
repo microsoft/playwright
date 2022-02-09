@@ -2006,6 +2006,7 @@ export type FrameFrameElementResult = {
 };
 export type FrameHighlightParams = {
   selector: string,
+  blackout: boolean,
 };
 export type FrameHighlightOptions = {
 

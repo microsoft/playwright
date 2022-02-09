@@ -457,10 +457,13 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     await this._channel.setNetworkInterceptionEnabled({ enabled: false });
   }
 
-  async screenshot(options: channels.PageScreenshotOptions & { path?: string } = {}): Promise<Buffer> {
+  async screenshot(options: channels.PageScreenshotOptions & { path?: string, blackout?: api.Locator[] } = {}): Promise<Buffer> {
     const copy = { ...options };
     if (!copy.type)
       copy.type = determineScreenshotType(options);
+    if (options.blackout) {
+      await Promise.all(options.blackout.map(loc => (loc as any)._blackout().catch(() => {})));
+    }
     const result = await this._channel.screenshot(copy);
     const buffer = Buffer.from(result.binary, 'base64');
     if (options.path) {

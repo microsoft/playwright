@@ -233,7 +233,7 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel> im
   }
 
   async highlight(params: channels.FrameHighlightParams, metadata: CallMetadata): Promise<void> {
-    return await this._frame.highlight(params.selector);
+    return await this._frame.highlight(params.selector, params.blackout);
   }
 
   async expect(params: channels.FrameExpectParams, metadata: CallMetadata): Promise<channels.FrameExpectResult> {

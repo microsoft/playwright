@@ -1140,23 +1140,23 @@ export class Frame extends SdkObject {
     }, undefined, options);
   }
 
-  async highlight(selector: string) {
+  async highlight(selector: string, blackout: boolean) {
     const pair = await this.resolveFrameForSelectorNoWait(selector);
     if (!pair)
       return;
     const context = await this._utilityContext();
     const injectedScript = await context.injectedScript();
-    return await injectedScript.evaluate((injected, { parsed }) => {
-      return injected.highlight(parsed);
-    }, { parsed: pair.info.parsed });
+    return await injectedScript.evaluate((injected, { parsed, blackout }) => {
+      return blackout ? injected.blackout(parsed) : injected.highlight(parsed);
+    }, { parsed: pair.info.parsed, blackout });
   }
 
-  async hideHighlight() {
+  async hideHighlight(blackout: boolean) {
     const context = await this._utilityContext();
     const injectedScript = await context.injectedScript();
-    return await injectedScript.evaluate(injected => {
-      return injected.hideHighlight();
-    });
+    return await injectedScript.evaluate((injected, { blackout }) => {
+      return blackout ? injected.hideBlackouts() : injected.hideHighlight();
+    }, { blackout });
   }
 
   private async _elementState(metadata: CallMetadata, selector: string, state: ElementStateWithoutStable, options: types.QueryOnSelectorOptions = {}): Promise<boolean> {

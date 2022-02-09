@@ -17,6 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 import { verifyViewport } from '../config/utils';
+import { attachFrame } from '../config/utils';
 import path from 'path';
 import fs from 'fs';
 
@@ -337,5 +338,22 @@ it.describe('page screenshot', () => {
       reloadSeveralTimes(),
       screenshotSeveralTimes()
     ]);
+  });
+});
+
+it.only('should work', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/grid.html');
+  await attachFrame(page, 'frame1', server.PREFIX + '/grid.html');
+  await page.screenshot({
+    path: '/Users/andreylushnikov/prog/playwright/aaaa-1.png',
+    blackout: [
+      page.locator('div').nth(5),
+    ],
+  });
+  await page.screenshot({
+    path: '/Users/andreylushnikov/prog/playwright/aaaa-2.png',
+    blackout: [
+      page.frameLocator('id=frame1'),
+    ],
   });
 });

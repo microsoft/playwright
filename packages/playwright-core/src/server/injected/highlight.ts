@@ -113,6 +113,27 @@ export class Highlight {
     this._actionPointElement.hidden = true;
   }
 
+  blackoutElements(elements: Element[]) {
+    const boxes = elements.map(e => e.getBoundingClientRect());
+    const pool = this._highlightElements;
+    this._highlightElements = [];
+    for (const box of boxes) {
+      const highlightElement = pool.length ? pool.shift()! : this._createHighlightElement();
+      highlightElement.style.backgroundColor = '#000';
+      highlightElement.style.left = box.x + 'px';
+      highlightElement.style.top = box.y + 'px';
+      highlightElement.style.width = box.width + 'px';
+      highlightElement.style.height = box.height + 'px';
+      highlightElement.style.display = 'block';
+      this._highlightElements.push(highlightElement);
+    }
+
+    for (const highlightElement of pool) {
+      highlightElement.style.display = 'none';
+      this._highlightElements.push(highlightElement);
+    }
+  }
+
   updateHighlight(elements: Element[], selector: string, isRecording: boolean) {
     // Code below should trigger one layout and leave with the
     // destroyed layout.

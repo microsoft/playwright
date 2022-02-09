@@ -2683,6 +2683,11 @@ An object which specifies clipping of the resulting image. Should have the follo
 Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
 Defaults to `false`.
 
+### option: Page.screenshot.blackout
+- `blackout` <[Array]<[Locator]>>
+
+Blackouts given set of elements for the screenshot.
+
 ### option: Page.screenshot.timeout = %%-input-timeout-%%
 
 ## async method: Page.selectOption

@@ -738,6 +738,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.FrameFrameElementParams = tOptional(tObject({}));
   scheme.FrameHighlightParams = tObject({
     selector: tString,
+    blackout: tBoolean,
   });
   scheme.FrameGetAttributeParams = tObject({
     selector: tString,
