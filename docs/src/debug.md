@@ -121,7 +121,7 @@ npm run test
 ```
 
 ```bash bash-flavor=powershell lang=js
-env:PWDEBUG="console"
+$env:PWDEBUG="console"
 npm run test
 ```
 
