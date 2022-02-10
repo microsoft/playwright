@@ -15,7 +15,7 @@
  */
 
 // @ts-check
-const { XMLParser } = require('fast-xml-parser');
+const xml2js = require('xml2js');
 const fs = require('fs');
 const path = require('path');
 const { argv } = require('process');
@@ -72,19 +72,23 @@ const resourceDir = path.join(argv[2], 'chrome/app/resources/');
 if (!fs.existsSync(resourceDir))
     throw new Error(`Path ${resourceDir} does not exist`);
 
-const parser = new XMLParser({
-    ignoreAttributes : false
-});
+function parseXML(xml) {
+    let result;
+    xml2js.parseString(xml, {trim: true}, (err, r) => result = r);
+    return result;
+}
 
 const result = {};
 for (const platform of ['linux', 'mac', 'win']) {
     const f = path.join(resourceDir, `locale_settings_${platform}.grd`);
     const xmlDataStr = fs.readFileSync(f);
-    let jsonObj = parser.parse(xmlDataStr);
+    let jsonObj = parseXML(xmlDataStr);
+    if (!jsonObj)
+        throw new Error('Failed to parse ' + f);
     const fontFamilies = new ScriptFontFamilies();
-    const defaults = jsonObj.grit.release.messages.message;
+    const defaults = jsonObj.grit.release[0].messages[0].message;
     defaults.forEach(e => {
-        const name = e['@_name'];
+        const name = e['$']['name'];
         let scriptName = '';
         let familyName;
         for (const id of idToProtocol.keys()) {
@@ -105,8 +109,7 @@ for (const platform of ['linux', 'mac', 'win']) {
         // Skip things like IDS_NTP_FONT_FAMILY, IDS_MINIMUM_FONT_SIZE etc.
         if (!familyName)
             return;
-        // console.log(`${scriptName} ${familyName}: '${e['#text']}'`);
-        fontFamilies.setFont(scriptName, familyName, e['#text'])
+        fontFamilies.setFont(scriptName, familyName, e['_'])
     });
     result[platform] = fontFamilies.toJSON();
 }
