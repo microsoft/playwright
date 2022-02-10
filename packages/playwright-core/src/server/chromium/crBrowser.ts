@@ -48,8 +48,8 @@ export class CRBrowser extends Browser {
   private _userAgent: string = '';
 
   static async connect(transport: ConnectionTransport, options: BrowserOptions, devtools?: CRDevTools): Promise<CRBrowser> {
-    // Make a copy in case wee need to update `headful` property below.
-    options = Object.assign({}, options);
+    // Make a copy in case we need to update `headful` property below.
+    options = { ...options };
     const connection = new CRConnection(transport, options.protocolLogger, options.browserLogsCollector);
     const browser = new CRBrowser(connection, options);
     browser._devtools = devtools;
@@ -124,12 +124,12 @@ export class CRBrowser extends Browser {
     return this._userAgent;
   }
 
-  _platform(): 'Mac' | 'Linux' | 'Windows' {
+  _platform(): 'mac' | 'linux' | 'win' {
     if (this._userAgent.includes('Windows'))
-      return 'Windows';
+      return 'win';
     if (this._userAgent.includes('Macintosh'))
-      return 'Mac';
-    return 'Linux';
+      return 'mac';
+    return 'linux';
   }
 
   isClank(): boolean {
