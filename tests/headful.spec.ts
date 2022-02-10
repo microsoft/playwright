@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-import { playwrightTest as it, expect } from './config/browserTest';
-import { PNG } from 'pngjs';
 import pixelmatch from 'pixelmatch';
-import fs from 'fs';
+import { PNG } from 'pngjs';
+import { expect, playwrightTest as it } from './config/browserTest';
 
 it('should have default url when launching browser #smoke', async ({ browserType, createUserDataDir }) => {
   const browserContext = await browserType.launchPersistentContext(await createUserDataDir(), { headless: false });
