@@ -97,8 +97,12 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
       await remoteServer._start(childProcess, browserType, options);
       return remoteServer;
     });
-    if (remoteServer)
+    if (remoteServer) {
       await remoteServer.close();
+      // Give any connected browsers a chance to disconnect to avoid
+      // poisoning next test with quasy-alive browsers.
+      await new Promise(f => setTimeout(f, 1000));
+    }
   },
 });
 
