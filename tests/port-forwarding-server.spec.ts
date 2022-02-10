@@ -121,6 +121,24 @@ it('should proxy localhost requests #smoke', async ({ pageFactory, server, brows
   stopTestServer();
 });
 
+it('should proxy localhost requests from fetch api', async ({ pageFactory, server, browserName, platform }, workerInfo) => {
+  it.skip(browserName === 'webkit' && platform === 'darwin');
+
+  const { testServerPort, stopTestServer } = await startTestServer();
+  let reachedOriginalTarget = false;
+  server.setRoute('/foo.html', async (req, res) => {
+    reachedOriginalTarget = true;
+    res.end('<html><body></body></html>');
+  });
+  const examplePort = 20_000 + workerInfo.workerIndex * 3;
+  const page = await pageFactory(testServerPort);
+  const response = await page.request.get(`http://localhost:${examplePort}/foo.html`);
+  expect(response.status()).toBe(200);
+  expect(await response.text()).toContain('from-retargeted-server');
+  expect(reachedOriginalTarget).toBe(false);
+  stopTestServer();
+});
+
 it('should proxy local.playwright requests', async ({ pageFactory, server, browserName }, workerInfo) => {
   const { testServerPort, stopTestServer } = await startTestServer();
   let reachedOriginalTarget = false;
