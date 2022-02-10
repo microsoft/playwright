@@ -60,6 +60,8 @@ export class CRBrowser extends Browser {
     const version = await session.send('Browser.getVersion');
     browser._version = version.product.substring(version.product.indexOf('/') + 1);
     browser._userAgent = version.userAgent;
+    // We don't trust the option as it may lie in case of connectOverCDP where remote browser
+    // may have been launched with different options.
     browser.options.headful = !version.userAgent.includes('Headless');
     if (!options.persistent) {
       await session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
