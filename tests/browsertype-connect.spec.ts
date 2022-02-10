@@ -533,6 +533,7 @@ test('should save har', async ({ browserType, startRemoteServer, server }, testI
 });
 
 test('should record trace with sources', async ({ browserType, startRemoteServer, server }, testInfo) => {
+  test.skip(!!process.env.PWTEST_TRACE);
   const remoteServer = await startRemoteServer();
   const browser = await browserType.connect(remoteServer.wsEndpoint());
   const context = await browser.newContext();
