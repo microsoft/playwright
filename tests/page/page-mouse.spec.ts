@@ -118,7 +118,7 @@ it('should report correct buttons property', async ({ page }) => {
         type: event.type,
         button: event.button,
         buttons: event.buttons,
-      })
+      });
     };
     window.addEventListener('mousedown', handler, false);
     window.addEventListener('mouseup', handler, false);
