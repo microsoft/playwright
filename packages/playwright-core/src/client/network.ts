@@ -245,8 +245,12 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     if (options.response) {
       statusOption ||= options.response.status();
       headersOption ||= options.response.headers();
-      if (options.body === undefined && options.path === undefined && options.response instanceof APIResponse)
-        fetchResponseUid = (options.response as APIResponse)._fetchUid();
+      if (options.body === undefined && options.path === undefined && options.response instanceof APIResponse) {
+        if (options.response._request._connection === this._connection)
+          fetchResponseUid = (options.response as APIResponse)._fetchUid();
+        else
+          body = await options.response.body();
+      }
     }
 
     let isBase64 = false;
