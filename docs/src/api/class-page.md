@@ -2668,12 +2668,7 @@ The quality of the image, between 0-100. Not applicable to `png` images.
 When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to
 `false`.
 
-### option: Page.screenshot.disableAnimations
-- `disableAnimations` <[boolean]>
-
-When true, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment depending on their duration:
-- finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
-- infinite animations are canceled to initial state, and then played over after the screenshot.
+### option: Page.screenshot.disableAnimations = %%-screenshot-option-disable-animations-%%
 
 ### option: Page.screenshot.clip
 - `clip` <[Object]>

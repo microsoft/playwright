@@ -642,13 +642,7 @@ The quality of the image, between 0-100. Not applicable to `png` images.
 Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
 Defaults to `false`.
 
-### option: ElementHandle.screenshot.disableAnimations
-- `disableAnimations` <[boolean]>
-
-When true, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment depending on their duration:
-- finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
-- infinite animations are canceled to initial state, and then played over after the screenshot.
-
+### option: ElementHandle.screenshot.disableAnimations = %%-screenshot-option-disable-animations-%%
 
 ### option: ElementHandle.screenshot.timeout = %%-input-timeout-%%
 
