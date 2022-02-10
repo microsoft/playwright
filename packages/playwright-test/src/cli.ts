@@ -181,7 +181,7 @@ function forceRegExp(pattern: string): RegExp {
   const match = pattern.match(/^\/(.*)\/([gi]*)$/);
   if (match)
     return new RegExp(match[1], match[2]);
-  return new RegExp(pattern.replace(/\\/g, '\\\\'), 'gi');
+  return new RegExp(pattern, 'gi');
 }
 
 function overridesFromOptions(options: { [key: string]: any }): Config {
