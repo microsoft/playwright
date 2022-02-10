@@ -270,3 +270,22 @@ test('should print "no tests found" error', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('no tests found.');
 });
+
+test('should not crash on undefined body with manual attachments', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('one', async ({}, testInfo) => {
+        testInfo.attachments.push({
+          name: 'foo.txt',
+          body: undefined,
+          contentType: 'text/plain'
+        });
+        expect(1).toBe(2);
+      });
+    `,
+  });
+  expect(stripAnsi(result.output)).not.toContain('Error in reporter');
+  expect(result.failed).toBe(1);
+  expect(result.exitCode).toBe(1);
+});

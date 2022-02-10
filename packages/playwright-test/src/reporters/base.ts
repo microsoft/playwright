@@ -258,8 +258,8 @@ export function formatFailure(config: FullConfig, test: TestCase, options: {inde
             resultLines.push('');
           }
         } else {
-          if (attachment.contentType.startsWith('text/')) {
-            let text = attachment.body!.toString();
+          if (attachment.contentType.startsWith('text/') && attachment.body) {
+            let text = attachment.body.toString();
             if (text.length > 300)
               text = text.slice(0, 300) + '...';
             resultLines.push(colors.cyan(`    ${text}`));
