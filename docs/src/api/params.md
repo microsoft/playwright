@@ -646,11 +646,6 @@ method resolves immediately. Can be one of:
   * `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
   * `'networkidle'` - wait until there are no network connections for at least `500` ms.
 
-## screenshot-type
-- `type` <[ScreenshotType]<"png"|"jpeg">>
-
-Specify screenshot type, defaults to `png`.
-
 ## java-wait-for-event-callback
 * langs: java
 - `callback` <[Runnable]>
@@ -894,3 +889,27 @@ Note that outer and inner locators must belong to the same frame. Inner locator 
 When true, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment depending on their duration:
 - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
 - infinite animations are canceled to initial state, and then played over after the screenshot.
+
+## screenshot-option-omit-background
+- `omitBackground` <[boolean]>
+
+Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
+Defaults to `false`.
+
+## screenshot-option-quality
+- `quality` <[int]>
+
+The quality of the image, between 0-100. Not applicable to `png` images.
+
+### screenshot-option-path
+- `path` <[path]>
+
+The file path to save the image to. The screenshot type will be inferred from file extension. If [`option: path`] is a
+relative path, then it is resolved relative to the current working directory. If no path is provided, the image won't be
+saved to the disk.
+
+## screenshot-option-type
+- `type` <[ScreenshotType]<"png"|"jpeg">>
+
+Specify screenshot type, defaults to `png`.
+

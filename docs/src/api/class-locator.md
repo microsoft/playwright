@@ -600,25 +600,13 @@ Returns the buffer with the captured screenshot.
 This method waits for the [actionability](./actionability.md) checks, then scrolls element into view before taking a
 screenshot. If the element is detached from DOM, the method throws an error.
 
-### option: Locator.screenshot.path
-- `path` <[path]>
+### option: Locator.screenshot.path = %%-screenshot-option-path-%%
 
-The file path to save the image to. The screenshot type will be inferred from file extension. If [`option: path`] is a
-relative path, then it is resolved relative to the current working directory. If no path is provided, the image won't be
-saved to the disk.
+### option: Locator.screenshot.type = %%-screenshot-option-type-%%
 
-### option: Locator.screenshot.type = %%-screenshot-type-%%
+### option: Locator.screenshot.quality = %%-screenshot-option-quality-%%
 
-### option: Locator.screenshot.quality
-- `quality` <[int]>
-
-The quality of the image, between 0-100. Not applicable to `png` images.
-
-### option: Locator.screenshot.omitBackground
-- `omitBackground` <[boolean]>
-
-Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
-Defaults to `false`.
+### option: Locator.screenshot.omitBackground = %%-screenshot-option-omit-background-%%
 
 ### option: Locator.screenshot.disableAnimations = %%-screenshot-option-disable-animations-%%
 

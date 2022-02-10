@@ -2648,19 +2648,11 @@ How often a route should be used. By default it will be used every time.
 
 Returns the buffer with the captured screenshot.
 
-### option: Page.screenshot.path
-- `path` <[path]>
+### option: Page.screenshot.path = %%-screenshot-option-path-%%
 
-The file path to save the image to. The screenshot type will be inferred from file extension. If [`option: path`] is a
-relative path, then it is resolved relative to the current working directory. If no path is provided, the image won't be
-saved to the disk.
+### option: Page.screenshot.type = %%-screenshot-option-type-%%
 
-### option: Page.screenshot.type = %%-screenshot-type-%%
-
-### option: Page.screenshot.quality
-- `quality` <[int]>
-
-The quality of the image, between 0-100. Not applicable to `png` images.
+### option: Page.screenshot.quality = %%-screenshot-option-quality-%%
 
 ### option: Page.screenshot.fullPage
 - `fullPage` <[boolean]>
@@ -2679,11 +2671,7 @@ When true, takes a screenshot of the full scrollable page, instead of the curren
 
 An object which specifies clipping of the resulting image. Should have the following fields:
 
-### option: Page.screenshot.omitBackground
-- `omitBackground` <[boolean]>
-
-Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
-Defaults to `false`.
+### option: Page.screenshot.omitBackground = %%-screenshot-option-omit-background-%%
 
 ### option: Page.screenshot.timeout = %%-input-timeout-%%
 
