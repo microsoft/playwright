@@ -432,7 +432,7 @@ export class Runner {
     }, result);
 
     if (result.status !== 'passed') {
-      tearDown();
+      await tearDown();
       return;
     }
 
