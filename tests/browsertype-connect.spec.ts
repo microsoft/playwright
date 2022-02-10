@@ -555,3 +555,19 @@ test('should record trace with sources', async ({ browserType, startRemoteServer
   const thisFile = await fs.promises.readFile(__filename);
   expect(sourceFile).toEqual(thisFile);
 });
+
+test('should fulfill with global fetch result', async ({ browserType, startRemoteServer, playwright, server }) => {
+  const remoteServer = await startRemoteServer();
+  const browser = await browserType.connect(remoteServer.wsEndpoint());
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  await page.route('**/*', async route => {
+    const request = await playwright.request.newContext();
+    const response = await request.get(server.PREFIX + '/simple.json');
+    route.fulfill({ response });
+  });
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(response.status()).toBe(200);
+  expect(await response.json()).toEqual({ 'foo': 'bar' });
+});

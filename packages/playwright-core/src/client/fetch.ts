@@ -220,7 +220,7 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
 export class APIResponse implements api.APIResponse {
   private readonly _initializer: channels.APIResponse;
   private readonly _headers: RawHeaders;
-  private readonly _request: APIRequestContext;
+  readonly _request: APIRequestContext;
 
   constructor(context: APIRequestContext, initializer: channels.APIResponse) {
     this._request = context;
