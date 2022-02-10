@@ -2648,19 +2648,7 @@ How often a route should be used. By default it will be used every time.
 
 Returns the buffer with the captured screenshot.
 
-### option: Page.screenshot.path
-- `path` <[path]>
-
-The file path to save the image to. The screenshot type will be inferred from file extension. If [`option: path`] is a
-relative path, then it is resolved relative to the current working directory. If no path is provided, the image won't be
-saved to the disk.
-
-### option: Page.screenshot.type = %%-screenshot-type-%%
-
-### option: Page.screenshot.quality
-- `quality` <[int]>
-
-The quality of the image, between 0-100. Not applicable to `png` images.
+### option: Page.screenshot.-inline- = %%-screenshot-options-common-list-%%
 
 ### option: Page.screenshot.fullPage
 - `fullPage` <[boolean]>
@@ -2668,12 +2656,6 @@ The quality of the image, between 0-100. Not applicable to `png` images.
 When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to
 `false`.
 
-### option: Page.screenshot.disableAnimations
-- `disableAnimations` <[boolean]>
-
-When true, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment depending on their duration:
-- finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
-- infinite animations are canceled to initial state, and then played over after the screenshot.
 
 ### option: Page.screenshot.clip
 - `clip` <[Object]>
@@ -2683,14 +2665,6 @@ When true, stops CSS animations, CSS transitions and Web Animations. Animations 
   - `height` <[float]> height of clipping area
 
 An object which specifies clipping of the resulting image. Should have the following fields:
-
-### option: Page.screenshot.omitBackground
-- `omitBackground` <[boolean]>
-
-Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
-Defaults to `false`.
-
-### option: Page.screenshot.timeout = %%-input-timeout-%%
 
 ## async method: Page.selectOption
 - returns: <[Array]<[string]>>
