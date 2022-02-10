@@ -901,7 +901,7 @@ Defaults to `false`.
 
 The quality of the image, between 0-100. Not applicable to `png` images.
 
-### screenshot-option-path
+## screenshot-option-path
 - `path` <[path]>
 
 The file path to save the image to. The screenshot type will be inferred from file extension. If [`option: path`] is a
@@ -912,4 +912,12 @@ saved to the disk.
 - `type` <[ScreenshotType]<"png"|"jpeg">>
 
 Specify screenshot type, defaults to `png`.
+
+## screenshot-options-common-list
+- %%-screenshot-option-disable-animations-%%
+- %%-screenshot-option-omit-background-%%
+- %%-screenshot-option-quality-%%
+- %%-screenshot-option-path-%%
+- %%-screenshot-option-type-%%
+- %%-input-timeout-%%
 

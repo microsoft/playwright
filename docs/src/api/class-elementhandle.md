@@ -622,17 +622,7 @@ Returns the buffer with the captured screenshot.
 This method waits for the [actionability](./actionability.md) checks, then scrolls element into view before taking a
 screenshot. If the element is detached from DOM, the method throws an error.
 
-### option: ElementHandle.screenshot.path = %%-screenshot-option-path-%%
-
-### option: ElementHandle.screenshot.type = %%-screenshot-option-type-%%
-
-### option: ElementHandle.screenshot.quality = %%-screenshot-option-quality-%%
-
-### option: ElementHandle.screenshot.omitBackground = %%-screenshot-option-omit-background-%%
-
-### option: ElementHandle.screenshot.disableAnimations = %%-screenshot-option-disable-animations-%%
-
-### option: ElementHandle.screenshot.timeout = %%-input-timeout-%%
+### option: ElementHandle.screenshot.-inline- = %%-screenshot-options-common-list-%%
 
 ## async method: ElementHandle.scrollIntoViewIfNeeded
 

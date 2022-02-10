@@ -2648,11 +2648,7 @@ How often a route should be used. By default it will be used every time.
 
 Returns the buffer with the captured screenshot.
 
-### option: Page.screenshot.path = %%-screenshot-option-path-%%
-
-### option: Page.screenshot.type = %%-screenshot-option-type-%%
-
-### option: Page.screenshot.quality = %%-screenshot-option-quality-%%
+### option: Page.screenshot.-inline- = %%-screenshot-options-common-list-%%
 
 ### option: Page.screenshot.fullPage
 - `fullPage` <[boolean]>
@@ -2660,7 +2656,6 @@ Returns the buffer with the captured screenshot.
 When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to
 `false`.
 
-### option: Page.screenshot.disableAnimations = %%-screenshot-option-disable-animations-%%
 
 ### option: Page.screenshot.clip
 - `clip` <[Object]>
@@ -2670,10 +2665,6 @@ When true, takes a screenshot of the full scrollable page, instead of the curren
   - `height` <[float]> height of clipping area
 
 An object which specifies clipping of the resulting image. Should have the following fields:
-
-### option: Page.screenshot.omitBackground = %%-screenshot-option-omit-background-%%
-
-### option: Page.screenshot.timeout = %%-input-timeout-%%
 
 ## async method: Page.selectOption
 - returns: <[Array]<[string]>>

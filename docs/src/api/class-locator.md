@@ -600,17 +600,7 @@ Returns the buffer with the captured screenshot.
 This method waits for the [actionability](./actionability.md) checks, then scrolls element into view before taking a
 screenshot. If the element is detached from DOM, the method throws an error.
 
-### option: Locator.screenshot.path = %%-screenshot-option-path-%%
-
-### option: Locator.screenshot.type = %%-screenshot-option-type-%%
-
-### option: Locator.screenshot.quality = %%-screenshot-option-quality-%%
-
-### option: Locator.screenshot.omitBackground = %%-screenshot-option-omit-background-%%
-
-### option: Locator.screenshot.disableAnimations = %%-screenshot-option-disable-animations-%%
-
-### option: Locator.screenshot.timeout = %%-input-timeout-%%
+### option: Locator.screenshot.-inline- = %%-screenshot-options-common-list-%%
 
 ## async method: Locator.scrollIntoViewIfNeeded
 
