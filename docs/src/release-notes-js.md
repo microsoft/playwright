@@ -48,7 +48,7 @@ title: "Release notes"
         6 |
   ```
 
-  Read more in [our documentation](./test-assertions-js#custom-error-message)
+  Read more in [our documentation](./test-assertions#custom-error-message)
 - By default, tests in a single file are run in order. If you have many independent tests in a single file, you can now
   run them in parallel with [`method: Test.describe.configure`].
 
