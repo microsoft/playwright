@@ -611,7 +611,7 @@ function buildBasePlaywrightCLICommand(cliTargetLang: string | undefined): strin
     case 'java':
       return `mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="...options.."`;
     case 'csharp':
-      return `playwright`;
+      return `pwsh bin\\Debug\\netX\\playwright.ps1`;
     default:
       return `npx playwright`;
   }
