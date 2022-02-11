@@ -257,7 +257,7 @@ export function spawnAsync(cmd: string, args: string[], options: SpawnOptions = 
 
 // See https://joel.tools/microtasks/
 export function makeWaitForNextTask() {
-  // As of Mar 2021, Electorn v12 doesn't create new task with `setImmediate` despite
+  // As of Mar 2021, Electron v12 doesn't create new task with `setImmediate` despite
   // using Node 14 internally, so we fallback to `setTimeout(0)` instead.
   // @see https://github.com/electron/electron/issues/28261
   if ((process.versions as any).electron)
