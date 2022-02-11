@@ -68,7 +68,7 @@ title: "Release notes"
 - New [`method: Locator.page`]
 - [`method: Page.screenshot`] now automatically hides blinking caret
 - Playwright Codegen now generates locators and frame locators
-- `testConfig.webServer.url` is new, `testConfig.webServer.port` is now optional
+- New option `url`  in [`property: TestConfig.webServer`] to ensure your web server is ready before running the tests
 - New [`property: TestInfo.errors`]
 
 
