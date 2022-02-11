@@ -5,6 +5,79 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.19
+
+### Playwright Test Update
+
+- Playwright Test v1.19 now supports *soft assertions*. Failed soft assertions
+  **do not** terminate test execution, but mark the test as failed.
+
+  ```js
+  // Make a few checks that will not stop the test when failed...
+  await expect.soft(page.locator('#status')).toHaveText('Success');
+  await expect.soft(page.locator('#eta')).toHaveText('1 day');
+
+  // ... and continue the test to check more things.
+  await page.locator('#next-page').click();
+  await expect.soft(page.locator('#title')).toHaveText('Make another order');
+  ```
+
+  Read more in [our documentation](./test-assertions#soft-assertions)
+
+- You can now specify a **custom error message** as a second argument to the `expect` and `expect.soft` functions, for example:
+
+  ```js
+  await expect(page.locator('text=Name'), 'should be logged in').toBeVisible();
+  ```
+
+  The error would look like this:
+
+  ```bash
+      Error: should be logged in
+
+      Call log:
+        - expect.toBeVisible with timeout 5000ms
+        - waiting for selector "text=Name"
+
+
+        2 |
+        3 | test('example test', async({ page }) => {
+      > 4 |   await expect(page.locator('text=Name'), 'should be logged in').toBeVisible();
+          |                                                                  ^
+        5 | });
+        6 |
+  ```
+
+  Read more in [our documentation](./test-assertions#custom-error-message)
+- By default, tests in a single file are run in order. If you have many independent tests in a single file, you can now
+  run them in parallel with [`method: Test.describe.configure`].
+
+
+## Other Updates
+
+- Locator now supports a `has` option that makes sure it contains another locator inside:
+
+  ```js
+  await page.locator('article', {
+    has: page.locator('.highlight'),
+  }).click();
+  ```
+
+  Read more in [locator documentation](./api/class-locator#locator-locator-option-has)
+
+- New [`method: Locator.page`]
+- [`method: Page.screenshot`] and [`method: Locator.screenshot`] now automatically hide blinking caret
+- Playwright Codegen now generates locators and frame locators
+- New option `url`  in [`property: TestConfig.webServer`] to ensure your web server is ready before running the tests
+- New [`property: TestInfo.errors`] and [`property: TestResult.errors`] that contain all failed assertions and soft assertions.
+
+
+## Potentially breaking change in Playwright Test Global Setup
+
+It is unlikely that this change will affect you, no action is required if your tests keep running as they did.
+
+We've noticed that in rare cases, the set of tests to be executed was configured in the global setup by means of the environment variables. We also noticed some applications that were post processing the reporters' output in the global teardown. If you are doing one of the two, [learn more](https://github.com/microsoft/playwright/issues/12018)
+
 ## Version 1.18
 
 ### Locator Improvements
