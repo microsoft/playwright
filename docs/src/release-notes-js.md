@@ -53,7 +53,7 @@ title: "Release notes"
   run them in parallel with [`method: Test.describe.configure`].
 
 
-## Other Updates
+### Other Updates
 
 - Locator now supports a `has` option that makes sure it contains another locator inside:
 
@@ -72,7 +72,7 @@ title: "Release notes"
 - New [`property: TestInfo.errors`] and [`property: TestResult.errors`] that contain all failed assertions and soft assertions.
 
 
-## Potentially breaking change in Playwright Test Global Setup
+### Potentially breaking change in Playwright Test Global Setup
 
 It is unlikely that this change will affect you, no action is required if your tests keep running as they did.
 
