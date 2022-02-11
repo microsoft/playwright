@@ -40,7 +40,6 @@ export class CRBrowser extends Browser {
   _backgroundPages = new Map<string, CRPage>();
   _serviceWorkers = new Map<string, CRServiceWorker>();
   _devtools?: CRDevTools;
-  _isMac = false;
   private _version = '';
 
   private _tracingRecording = false;
@@ -49,6 +48,8 @@ export class CRBrowser extends Browser {
   private _userAgent: string = '';
 
   static async connect(transport: ConnectionTransport, options: BrowserOptions, devtools?: CRDevTools): Promise<CRBrowser> {
+    // Make a copy in case we need to update `headful` property below.
+    options = { ...options };
     const connection = new CRConnection(transport, options.protocolLogger, options.browserLogsCollector);
     const browser = new CRBrowser(connection, options);
     browser._devtools = devtools;
@@ -57,9 +58,11 @@ export class CRBrowser extends Browser {
       await (options as any).__testHookOnConnectToBrowser();
 
     const version = await session.send('Browser.getVersion');
-    browser._isMac = version.userAgent.includes('Macintosh');
     browser._version = version.product.substring(version.product.indexOf('/') + 1);
     browser._userAgent = version.userAgent;
+    // We don't trust the option as it may lie in case of connectOverCDP where remote browser
+    // may have been launched with different options.
+    browser.options.headful = !version.userAgent.includes('Headless');
     if (!options.persistent) {
       await session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
       return browser;
@@ -121,6 +124,14 @@ export class CRBrowser extends Browser {
 
   userAgent(): string {
     return this._userAgent;
+  }
+
+  _platform(): 'mac' | 'linux' | 'win' {
+    if (this._userAgent.includes('Windows'))
+      return 'win';
+    if (this._userAgent.includes('Macintosh'))
+      return 'mac';
+    return 'linux';
   }
 
   isClank(): boolean {
