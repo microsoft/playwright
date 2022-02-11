@@ -561,11 +561,6 @@ function test_playwright_cli_codegen_should_work {
     echo "ERROR: missing @playwright/test in the output"
     exit 1
   fi
-  if [[ "${OUTPUT}" != *"page.close"* ]]; then
-    echo "ERROR: missing page.close in the output"
-    exit 1
-  fi
-
   echo "Running playwright codegen --target=python"
   OUTPUT=$(PWTEST_CLI_EXIT=1 xvfb-run --auto-servernum -- bash -c "npx playwright codegen --target=python")
   if [[ "${OUTPUT}" != *"chromium.launch"* ]]; then
