@@ -106,7 +106,7 @@ Playwright Trace Viewer is now **available online** at https://trace.playwright.
 - Playwright now supports **Ubuntu 20.04 ARM64**. You can now run Playwright tests inside Docker on Apple M1 and on Raspberry Pi.
 - You can now use Playwright to install stable version of Edge on Linux:
     ```bash
-    npx playwright install msedge
+    pwsh bin\Debug\netX\playwright.ps1 install msedge
     ```
 
 
@@ -133,7 +133,7 @@ Read more about [`method: Locator.waitFor`].
 
 ### 🎭 Playwright Trace Viewer
 
-- run trace viewer with `npx playwright show-trace` and drop trace files to the trace viewer PWA
+- run trace viewer with `pwsh bin\Debug\netX\playwright.ps1 show-trace` and drop trace files to the trace viewer PWA
 - better visual attribution of action targets
 
 Read more about [Trace Viewer](./trace-viewer).
