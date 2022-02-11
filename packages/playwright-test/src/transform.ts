@@ -158,6 +158,7 @@ export function transformHook(code: string, filename: string, isModule = false):
         [require.resolve('@babel/plugin-proposal-logical-assignment-operators')],
         [require.resolve('@babel/plugin-proposal-nullish-coalescing-operator')],
         [require.resolve('@babel/plugin-proposal-optional-chaining')],
+        [require.resolve('@babel/plugin-proposal-private-methods')],
         [require.resolve('@babel/plugin-syntax-json-strings')],
         [require.resolve('@babel/plugin-syntax-optional-catch-binding')],
         [require.resolve('@babel/plugin-syntax-async-generators')],
