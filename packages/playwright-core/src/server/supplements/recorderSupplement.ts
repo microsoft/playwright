@@ -28,7 +28,7 @@ import { CSharpLanguageGenerator } from './recorder/csharp';
 import { PythonLanguageGenerator } from './recorder/python';
 import * as recorderSource from '../../generated/recorderSource';
 import * as consoleApiSource from '../../generated/consoleApiSource';
-import { RecorderApp } from './recorder/recorderApp';
+import { IRecorderApp, RecorderApp } from './recorder/recorderApp';
 import { CallMetadata, InstrumentationListener, SdkObject } from '../instrumentation';
 import { Point } from '../../common/types';
 import { CallLog, CallLogStatus, EventData, Mode, Source, UIState } from './recorder/recorderTypes';
@@ -46,7 +46,7 @@ export class RecorderSupplement implements InstrumentationListener {
   private _context: BrowserContext;
   private _mode: Mode;
   private _highlightedSelector = '';
-  private _recorderApp: RecorderApp | null = null;
+  private _recorderApp: IRecorderApp | null = null;
   private _currentCallsMetadata = new Map<CallMetadata, SdkObject>();
   private _recorderSources: Source[] = [];
   private _userSources = new Map<string, Source>();
@@ -317,7 +317,7 @@ class ContextRecorder extends EventEmitter {
 
     this._recorderSources = [];
     const generator = new CodeGenerator(context._browser.options.name, !!params.startRecording, params.launchOptions || {}, params.contextOptions || {}, params.device, params.saveStorage);
-    let text = '';
+    const throttledOutputFile = params.outputFile ? new ThrottledFile(params.outputFile) : null;
     generator.on('change', () => {
       this._recorderSources = [];
       for (const languageGenerator of orderedLanguages) {
@@ -330,21 +330,19 @@ class ContextRecorder extends EventEmitter {
         source.revealLine = source.text.split('\n').length - 1;
         this._recorderSources.push(source);
         if (languageGenerator === orderedLanguages[0])
-          text = source.text;
+          throttledOutputFile?.setContent(source.text);
       }
       this.emit(ContextRecorder.Events.Change, {
         sources: this._recorderSources,
         primaryFileName: primaryLanguage.fileName
       });
     });
-    if (params.outputFile) {
+    if (throttledOutputFile) {
       context.on(BrowserContext.Events.BeforeClose, () => {
-        fs.writeFileSync(params.outputFile!, text);
-        text = '';
+        throttledOutputFile.flush();
       });
       process.on('exit', () => {
-        if (text)
-          fs.writeFileSync(params.outputFile!, text);
+        throttledOutputFile.flush();
       });
     }
     this._generator = generator;
@@ -589,4 +587,30 @@ function languageForFile(file: string) {
   if (file.endsWith('.cs'))
     return 'csharp';
   return 'javascript';
+}
+
+class ThrottledFile {
+  private _file: string;
+  private _timer: NodeJS.Timeout | undefined;
+  private _text: string | undefined;
+
+  constructor(file: string) {
+    this._file = file;
+  }
+
+  setContent(text: string) {
+    this._text = text;
+    if (!this._timer)
+      this._timer = setTimeout(() => this.flush(), 1000);
+  }
+
+  flush(): void {
+    if (this._timer) {
+      clearTimeout(this._timer);
+      this._timer = undefined;
+    }
+    if (this._text)
+      fs.writeFileSync(this._file, this._text);
+    this._text = undefined;
+  }
 }
