@@ -58,7 +58,7 @@ title: "Release notes"
 - Locator now supports a `has` option that makes sure it contains another locator inside:
 
   ```js
-  await page.locator('div', {
+  await page.locator('article', {
     has: page.locator('span'),
   }).click();
   ```
