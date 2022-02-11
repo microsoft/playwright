@@ -19,6 +19,8 @@ import { Connection } from '../client/connection';
 import { Playwright } from '../client/playwright';
 import { makeWaitForNextTask } from '../utils/utils';
 
+// TODO: this file should be removed because it uses the old protocol.
+
 export type PlaywrightClientConnectOptions = {
   wsEndpoint: string;
   timeout?: number;

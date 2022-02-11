@@ -168,6 +168,8 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
           throw new Error('Malformed endpoint. Did you use launchServer method?');
         }
         playwright._setSelectors(this._playwright.selectors);
+        if ((params as any).__testHookPortForwarding)
+          playwright._enablePortForwarding((params as any).__testHookPortForwarding.redirectPortForTest);
         browser = Browser.from(playwright._initializer.preLaunchedBrowser!);
         browser._logger = logger;
         browser._shouldCloseConnectionOnClose = true;

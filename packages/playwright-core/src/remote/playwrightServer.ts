@@ -16,54 +16,34 @@
 
 import debug from 'debug';
 import * as http from 'http';
-import * as ws from 'ws';
-import { DispatcherConnection, Root } from '../dispatchers/dispatcher';
-import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
+import WebSocket from 'ws';
+import { DispatcherConnection, DispatcherScope, Root } from '../dispatchers/dispatcher';
+import { internalCallMetadata } from '../server/instrumentation';
 import { createPlaywright, Playwright } from '../server/playwright';
+import { Browser } from '../server/browser';
 import { gracefullyCloseAll } from '../utils/processLauncher';
+import { registry } from '../utils/registry';
+import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
+import { SocksProxy } from '../server/socksProxy';
 
 const debugLog = debug('pw:server');
 
-export interface PlaywrightServerDelegate {
-  path: string;
-  allowMultipleClients: boolean;
-  onConnect(connection: DispatcherConnection, forceDisconnect: () => void): Promise<() => any>;
-  onClose: () => any;
-}
-
 export class PlaywrightServer {
-  private _wsServer: ws.Server | undefined;
+  private _path: string;
+  private _maxClients: number;
+  private _browser: Browser | undefined;
+  private _wsServer: WebSocket.Server | undefined;
   private _clientsCount = 0;
-  private _delegate: PlaywrightServerDelegate;
 
-  static async startDefault(): Promise<PlaywrightServer> {
-    const cleanup = async () => {
-      await gracefullyCloseAll().catch(e => {});
-    };
-    const delegate: PlaywrightServerDelegate = {
-      path: '/ws',
-      allowMultipleClients: false,
-      onClose: cleanup,
-      onConnect: async (connection: DispatcherConnection) => {
-        let playwright: Playwright | undefined;
-        new Root(connection, async (rootScope): Promise<PlaywrightDispatcher> => {
-          playwright = createPlaywright('javascript');
-          const dispatcher = new PlaywrightDispatcher(rootScope, playwright);
-          if (process.env.PW_SOCKS_PROXY_PORT)
-            await dispatcher.enableSocksProxy();
-          return dispatcher;
-        });
-        return () => {
-          cleanup();
-          playwright?.selectors.unregisterAll();
-        };
-      },
-    };
-    return new PlaywrightServer(delegate);
+  static async startDefault(options: { path?: string, maxClients?: number } = {}): Promise<PlaywrightServer> {
+    const { path = '/ws', maxClients = 1 } = options;
+    return new PlaywrightServer(path, maxClients);
   }
 
-  constructor(delegate: PlaywrightServerDelegate) {
-    this._delegate = delegate;
+  constructor(path: string, maxClients: number, browser?: Browser) {
+    this._path = path;
+    this._maxClients = maxClients;
+    this._browser = browser;
   }
 
   async listen(port: number = 0): Promise<string> {
@@ -72,7 +52,6 @@ export class PlaywrightServer {
     });
     server.on('error', error => debugLog(error));
 
-    const path = this._delegate.path;
     const wsEndpoint = await new Promise<string>((resolve, reject) => {
       server.listen(port, () => {
         const address = server.address();
@@ -80,64 +59,170 @@ export class PlaywrightServer {
           reject(new Error('Could not bind server socket'));
           return;
         }
-        const wsEndpoint = typeof address === 'string' ? `${address}${path}` : `ws://127.0.0.1:${address.port}${path}`;
+        const wsEndpoint = typeof address === 'string' ? `${address}${this._path}` : `ws://127.0.0.1:${address.port}${this._path}`;
         resolve(wsEndpoint);
       }).on('error', reject);
     });
 
     debugLog('Listening at ' + wsEndpoint);
 
-    this._wsServer = new ws.Server({ server, path });
-    this._wsServer.on('connection', async socket => {
-      if (this._clientsCount && !this._delegate.allowMultipleClients) {
-        socket.close();
+    this._wsServer = new WebSocket.Server({ server, path: this._path });
+    const originalShouldHandle = this._wsServer.shouldHandle.bind(this._wsServer);
+    this._wsServer.shouldHandle = request => originalShouldHandle(request) && this._clientsCount < this._maxClients;
+    this._wsServer.on('connection', async (ws, request) => {
+      if (this._clientsCount >= this._maxClients) {
+        ws.close(1013, 'Playwright Server is busy');
         return;
       }
       this._clientsCount++;
-      debugLog('Incoming connection');
-
-      const connection = new DispatcherConnection();
-      connection.onmessage = message => {
-        if (socket.readyState !== ws.CLOSING)
-          socket.send(JSON.stringify(message));
-      };
-      socket.on('message', (message: string) => {
-        connection.dispatch(JSON.parse(Buffer.from(message).toString()));
-      });
-
-      const forceDisconnect = () => socket.close();
-      let onDisconnect = () => {};
-      const disconnected = () => {
-        this._clientsCount--;
-        // Avoid sending any more messages over closed socket.
-        connection.onmessage = () => {};
-        onDisconnect();
-      };
-      socket.on('close', () => {
-        debugLog('Client closed');
-        disconnected();
-      });
-      socket.on('error', error => {
-        debugLog('Client error ' + error);
-        disconnected();
-      });
-      onDisconnect = await this._delegate.onConnect(connection, forceDisconnect);
+      const connection = new Connection(ws, request, this._browser, () => this._clientsCount--);
+      (ws as any)[kConnectionSymbol] = connection;
     });
 
     return wsEndpoint;
   }
 
   async close() {
-    if (!this._wsServer)
+    const server = this._wsServer;
+    if (!server)
       return;
-    debugLog('Closing server');
-    const waitForClose = new Promise(f => this._wsServer!.close(f));
+    debugLog('closing websocket server');
+    const waitForClose = new Promise(f => server.close(f));
     // First disconnect all remaining clients.
-    for (const ws of this._wsServer!.clients)
-      ws.terminate();
+    await Promise.all(Array.from(server.clients).map(async ws => {
+      const connection = (ws as any)[kConnectionSymbol] as Connection | undefined;
+      if (connection)
+        await connection.close();
+      try {
+        ws.terminate();
+      } catch (e) {
+      }
+    }));
     await waitForClose;
-    await new Promise(f => this._wsServer!.options.server!.close(f));
+    debugLog('closing http server');
+    await new Promise(f => server.options.server!.close(f));
     this._wsServer = undefined;
-    await this._delegate.onClose();
+    debugLog('closed server');
+  }
+}
+
+let lastConnectionId = 0;
+const kConnectionSymbol = Symbol('kConnection');
+
+class Connection {
+  private _ws: WebSocket;
+  private _onClose: () => void;
+  private _dispatcherConnection: DispatcherConnection;
+  private _cleanups: (() => Promise<void>)[] = [];
+  private _id: number;
+  private _disconnected = false;
+
+  constructor(ws: WebSocket, request: http.IncomingMessage, browser: Browser | undefined, onClose: () => void) {
+    this._ws = ws;
+    this._onClose = onClose;
+    this._id = ++lastConnectionId;
+    debugLog(`[id=${this._id}] serving connection: ${request.url}`);
+
+    this._dispatcherConnection = new DispatcherConnection();
+    this._dispatcherConnection.onmessage = message => {
+      if (ws.readyState !== ws.CLOSING)
+        ws.send(JSON.stringify(message));
+    };
+    ws.on('message', (message: string) => {
+      this._dispatcherConnection.dispatch(JSON.parse(Buffer.from(message).toString()));
+    });
+
+    ws.on('close', () => this._onDisconnect());
+    ws.on('error', error => this._onDisconnect(error));
+
+    new Root(this._dispatcherConnection, async scope => {
+      if (browser)
+        return await this._initPreLaunchedBrowserMode(scope, browser);
+      const url = new URL('http://localhost' + (request.url || ''));
+      const header = request.headers['X-Playwright-Browser'];
+      const browserAlias = url.searchParams.get('browser') || (Array.isArray(header) ? header[0] : header);
+      if (!browserAlias)
+        return await this._initPlaywrightConnectMode(scope);
+      return await this._initLaunchBrowserMode(scope, browserAlias);
+    });
+  }
+
+  private async _initPlaywrightConnectMode(scope: DispatcherScope) {
+    debugLog(`[id=${this._id}] engaged playwright.connect mode`);
+    const playwright = createPlaywright('javascript');
+    // Close all launched browsers on disconnect.
+    this._cleanups.push(() => gracefullyCloseAll());
+
+    const socksProxy = await this._enableSocksProxyIfNeeded(playwright);
+    return new PlaywrightDispatcher(scope, playwright, socksProxy);
+  }
+
+  private async _initLaunchBrowserMode(scope: DispatcherScope, browserAlias: string) {
+    debugLog(`[id=${this._id}] engaged launch mode for "${browserAlias}"`);
+    const executable = registry.findExecutable(browserAlias);
+    if (!executable || !executable.browserName)
+      throw new Error(`Unsupported browser "${browserAlias}`);
+
+    const playwright = createPlaywright('javascript');
+    const socksProxy = await this._enableSocksProxyIfNeeded(playwright);
+    const browser = await playwright[executable.browserName].launch(internalCallMetadata(), {
+      channel: executable.type === 'channel' ? executable.name : undefined,
+    });
+
+    // Close the browser on disconnect.
+    // TODO: it is technically possible to launch more browsers over protocol.
+    this._cleanups.push(() => browser.close());
+    browser.on(Browser.Events.Disconnected, () => {
+      // Underlying browser did close for some reason - force disconnect the client.
+      this.close({ code: 1001, reason: 'Browser closed' });
+    });
+
+    return new PlaywrightDispatcher(scope, playwright, socksProxy, browser);
+  }
+
+  private async _initPreLaunchedBrowserMode(scope: DispatcherScope, browser: Browser) {
+    debugLog(`[id=${this._id}] engaged pre-launched mode`);
+    browser.on(Browser.Events.Disconnected, () => {
+      // Underlying browser did close for some reason - force disconnect the client.
+      this.close({ code: 1001, reason: 'Browser closed' });
+    });
+    const playwright = browser.options.rootSdkObject as Playwright;
+    const playwrightDispatcher = new PlaywrightDispatcher(scope, playwright, undefined, browser);
+    // In pre-launched mode, keep the browser and just cleanup new contexts.
+    // TODO: it is technically possible to launch more browsers over protocol.
+    this._cleanups.push(() => playwrightDispatcher.cleanup());
+    return playwrightDispatcher;
+  }
+
+  private async _enableSocksProxyIfNeeded(playwright: Playwright) {
+    if (!process.env.PW_SOCKS_PROXY_PORT)
+      return;
+    const socksProxy = new SocksProxy();
+    playwright.options.socksProxyPort = await socksProxy.listen(0);
+    debugLog(`[id=${this._id}] started socks proxy on port ${playwright.options.socksProxyPort}`);
+    this._cleanups.push(() => socksProxy.close());
+    return socksProxy;
+  }
+
+  private async _onDisconnect(error?: Error) {
+    this._disconnected = true;
+    debugLog(`[id=${this._id}] disconnected. error: ${error}`);
+    // Avoid sending any more messages over closed socket.
+    this._dispatcherConnection.onmessage = () => {};
+    debugLog(`[id=${this._id}] starting cleanup`);
+    for (const cleanup of this._cleanups)
+      await cleanup().catch(() => {});
+    this._onClose();
+    debugLog(`[id=${this._id}] finished cleanup`);
+  }
+
+  async close(reason?: { code: number, reason: string }) {
+    if (this._disconnected)
+      return;
+    debugLog(`[id=${this._id}] force closing connection: ${reason?.reason || ''} (${reason?.code || 0})`);
+    try {
+      this._ws.close(reason?.code, reason?.reason);
+    } catch (e) {
+    }
   }
 }

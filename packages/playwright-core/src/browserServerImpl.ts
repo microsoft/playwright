@@ -15,25 +15,14 @@
  */
 
 import { LaunchServerOptions, Logger } from './client/types';
-import { Browser } from './server/browser';
 import { EventEmitter } from 'ws';
-import { Dispatcher, DispatcherConnection, DispatcherScope, Root } from './dispatchers/dispatcher';
-import { BrowserContextDispatcher } from './dispatchers/browserContextDispatcher';
-import * as channels from './protocol/channels';
 import { BrowserServerLauncher, BrowserServer } from './client/browserType';
 import { envObjectToArray } from './client/clientHelper';
 import { createGuid } from './utils/utils';
-import { SelectorsDispatcher } from './dispatchers/selectorsDispatcher';
-import { Selectors } from './server/selectors';
 import { ProtocolLogger } from './server/types';
-import { CallMetadata, internalCallMetadata } from './server/instrumentation';
-import { createPlaywright, Playwright } from './server/playwright';
-import { PlaywrightDispatcher } from './dispatchers/playwrightDispatcher';
-import { PlaywrightServer, PlaywrightServerDelegate } from './remote/playwrightServer';
-import { BrowserContext } from './server/browserContext';
-import { CRBrowser } from './server/chromium/crBrowser';
-import { CDPSessionDispatcher } from './dispatchers/cdpSessionDispatcher';
-import { PageDispatcher } from './dispatchers/pageDispatcher';
+import { internalCallMetadata } from './server/instrumentation';
+import { createPlaywright } from './server/playwright';
+import { PlaywrightServer } from './remote/playwrightServer';
 import { helper } from './server/helper';
 import { rewriteErrorMessage } from './utils/stackTrace';
 
@@ -64,13 +53,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
       path = options.wsPath.startsWith('/') ? options.wsPath : `/${options.wsPath}`;
 
     // 2. Start the server
-    const delegate: PlaywrightServerDelegate = {
-      path,
-      allowMultipleClients: true,
-      onClose: () => {},
-      onConnect: this._onConnect.bind(this, playwright, browser),
-    };
-    const server = new PlaywrightServer(delegate);
+    const server = new PlaywrightServer(path, Infinity, browser);
     const wsEndpoint = await server.listen(options.port);
 
     // 3. Return the BrowserServer interface
@@ -85,82 +68,6 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
       browserServer.emit('close', exitCode, signal);
     };
     return browserServer;
-  }
-
-  private async _onConnect(playwright: Playwright, browser: Browser, connection: DispatcherConnection, forceDisconnect: () => void) {
-    let browserDispatcher: ConnectedBrowserDispatcher | undefined;
-    new Root(connection, async (scope: DispatcherScope): Promise<PlaywrightDispatcher> => {
-      const selectors = new Selectors();
-      const selectorsDispatcher = new SelectorsDispatcher(scope, selectors);
-      browserDispatcher = new ConnectedBrowserDispatcher(scope, browser, selectors);
-      browser.on(Browser.Events.Disconnected, () => {
-        // Underlying browser did close for some reason - force disconnect the client.
-        forceDisconnect();
-      });
-      return new PlaywrightDispatcher(scope, playwright, selectorsDispatcher, browserDispatcher);
-    });
-    return () => {
-      // Cleanup contexts upon disconnect.
-      browserDispatcher?.cleanupContexts().catch(e => {});
-    };
-  }
-}
-
-// This class implements multiplexing browser dispatchers over a single Browser instance.
-class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.BrowserChannel> implements channels.BrowserChannel {
-  _type_Browser = true;
-  private _contexts = new Set<BrowserContext>();
-  private _selectors: Selectors;
-
-  constructor(scope: DispatcherScope, browser: Browser, selectors: Selectors) {
-    super(scope, browser, 'Browser', { version: browser.version(), name: browser.options.name }, true);
-    this._selectors = selectors;
-  }
-
-  async newContext(params: channels.BrowserNewContextParams, metadata: CallMetadata): Promise<channels.BrowserNewContextResult> {
-    if (params.recordVideo)
-      params.recordVideo.dir = this._object.options.artifactsDir;
-    const context = await this._object.newContext(params);
-    this._contexts.add(context);
-    context._setSelectors(this._selectors);
-    context.on(BrowserContext.Events.Close, () => this._contexts.delete(context));
-    if (params.storageState)
-      await context.setStorageState(metadata, params.storageState);
-    return { context: new BrowserContextDispatcher(this._scope, context) };
-  }
-
-  async close(): Promise<void> {
-    // Client should not send us Browser.close.
-  }
-
-  async killForTests(): Promise<void> {
-    // Client should not send us Browser.killForTests.
-  }
-
-  async newBrowserCDPSession(): Promise<channels.BrowserNewBrowserCDPSessionResult> {
-    if (!this._object.options.isChromium)
-      throw new Error(`CDP session is only available in Chromium`);
-    const crBrowser = this._object as CRBrowser;
-    return { session: new CDPSessionDispatcher(this._scope, await crBrowser.newBrowserCDPSession()) };
-  }
-
-  async startTracing(params: channels.BrowserStartTracingParams): Promise<void> {
-    if (!this._object.options.isChromium)
-      throw new Error(`Tracing is only available in Chromium`);
-    const crBrowser = this._object as CRBrowser;
-    await crBrowser.startTracing(params.page ? (params.page as PageDispatcher)._object : undefined, params);
-  }
-
-  async stopTracing(): Promise<channels.BrowserStopTracingResult> {
-    if (!this._object.options.isChromium)
-      throw new Error(`Tracing is only available in Chromium`);
-    const crBrowser = this._object as CRBrowser;
-    const buffer = await crBrowser.stopTracing();
-    return { binary: buffer.toString('base64') };
-  }
-
-  async cleanupContexts() {
-    await Promise.all(Array.from(this._contexts).map(context => context.close(internalCallMetadata())));
   }
 }
 
