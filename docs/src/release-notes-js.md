@@ -22,7 +22,7 @@ title: "Release notes"
   await expect.soft(page.locator('#title')).toHaveText('Make another order');
   ```
 
-  Read more in [our documentation](./test-assertions-js#soft-assertions)
+  Read more in [our documentation](./test-assertions#soft-assertions)
 
 - You can now specify a **custom error message** as a second argument to the `expect` and `expect.soft` functions, for example:
 
