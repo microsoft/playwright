@@ -196,26 +196,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.RootInitializeParams = tObject({
     sdkLanguage: tString,
   });
-  scheme.PlaywrightSocksConnectedParams = tObject({
-    uid: tString,
-    host: tString,
-    port: tNumber,
-  });
-  scheme.PlaywrightSocksFailedParams = tObject({
-    uid: tString,
-    errorCode: tString,
-  });
-  scheme.PlaywrightSocksDataParams = tObject({
-    uid: tString,
-    data: tBinary,
-  });
-  scheme.PlaywrightSocksErrorParams = tObject({
-    uid: tString,
-    error: tString,
-  });
-  scheme.PlaywrightSocksEndParams = tObject({
-    uid: tString,
-  });
   scheme.PlaywrightNewRequestParams = tObject({
     baseURL: tOptional(tString),
     userAgent: tOptional(tString),
@@ -239,6 +219,26 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     tracesDir: tOptional(tString),
   });
   scheme.PlaywrightHideHighlightParams = tOptional(tObject({}));
+  scheme.SocksSupportSocksConnectedParams = tObject({
+    uid: tString,
+    host: tString,
+    port: tNumber,
+  });
+  scheme.SocksSupportSocksFailedParams = tObject({
+    uid: tString,
+    errorCode: tString,
+  });
+  scheme.SocksSupportSocksDataParams = tObject({
+    uid: tString,
+    data: tBinary,
+  });
+  scheme.SocksSupportSocksErrorParams = tObject({
+    uid: tString,
+    error: tString,
+  });
+  scheme.SocksSupportSocksEndParams = tObject({
+    uid: tString,
+  });
   scheme.SelectorsRegisterParams = tObject({
     name: tString,
     source: tString,
@@ -249,6 +249,8 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     headers: tOptional(tAny),
     slowMo: tOptional(tNumber),
     timeout: tOptional(tNumber),
+    enableSocksProxy: tOptional(tBoolean),
+    socksProxyRedirectPortForTest: tOptional(tNumber),
   });
   scheme.BrowserTypeLaunchParams = tObject({
     channel: tOptional(tString),

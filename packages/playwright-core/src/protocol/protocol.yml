@@ -483,34 +483,10 @@ Playwright:
     selectors: Selectors
     # Only present when connecting remotely via BrowserType.connect() method.
     preLaunchedBrowser: Browser?
+    # Only present when socks proxy is supported.
+    socksSupport: SocksSupport?
 
   commands:
-
-    socksConnected:
-      parameters:
-        uid: string
-        host: string
-        port: number
-
-    socksFailed:
-      parameters:
-        uid: string
-        errorCode: string
-
-    socksData:
-      parameters:
-        uid: string
-        data: binary
-
-    socksError:
-      parameters:
-        uid: string
-        error: string
-
-    socksEnd:
-      parameters:
-        uid: string
-
     newRequest:
       parameters:
         baseURL: string?
@@ -548,6 +524,35 @@ Playwright:
 
     hideHighlight:
 
+SocksSupport:
+  type: interface
+
+  commands:
+    socksConnected:
+      parameters:
+        uid: string
+        host: string
+        port: number
+
+    socksFailed:
+      parameters:
+        uid: string
+        errorCode: string
+
+    socksData:
+      parameters:
+        uid: string
+        data: binary
+
+    socksError:
+      parameters:
+        uid: string
+        error: string
+
+    socksEnd:
+      parameters:
+        uid: string
+
   events:
     socksRequested:
       parameters:
@@ -563,7 +568,6 @@ Playwright:
     socksClosed:
       parameters:
         uid: string
-
 
 Selectors:
   type: interface
@@ -592,6 +596,8 @@ BrowserType:
         headers: json?
         slowMo: number?
         timeout: number?
+        enableSocksProxy: boolean?
+        socksProxyRedirectPortForTest: number?
       returns:
         pipe: JsonPipe
 

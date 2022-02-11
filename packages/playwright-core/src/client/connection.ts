@@ -55,6 +55,9 @@ class Root extends ChannelOwner<channels.RootChannel> {
   }
 }
 
+class DummyChannelOwner<T> extends ChannelOwner<T> {
+}
+
 export class Connection extends EventEmitter {
   readonly _objects = new Map<string, ChannelOwner>();
   onmessage = (message: object): void => {};
@@ -253,6 +256,9 @@ export class Connection extends EventEmitter {
         break;
       case 'Selectors':
         result = new SelectorsOwner(parent, type, guid, initializer);
+        break;
+      case 'SocksSupport':
+        result = new DummyChannelOwner(parent, type, guid, initializer);
         break;
       case 'Tracing':
         result = new Tracing(parent, type, guid, initializer);

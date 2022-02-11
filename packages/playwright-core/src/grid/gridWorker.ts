@@ -20,7 +20,7 @@ import { DispatcherConnection, Root } from '../dispatchers/dispatcher';
 import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
 import { createPlaywright } from '../server/playwright';
 import { gracefullyCloseAll } from '../utils/processLauncher';
-import { SocksProxy } from '../server/socksProxy';
+import { SocksProxy } from '../utils/socksProxy';
 
 function launchGridWorker(gridURL: string, agentId: string, workerId: string) {
   const log = debug(`pw:grid:worker${workerId}`);

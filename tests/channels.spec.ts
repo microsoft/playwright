@@ -26,6 +26,8 @@ it.use({
   }
 });
 
+it.skip(({ mode }) => mode === 'service');
+
 it('should scope context handles', async ({ browserType, server }) => {
   const browser = await browserType.launch();
   const GOLDEN_PRECONDITION = {
