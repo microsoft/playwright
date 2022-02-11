@@ -52,7 +52,6 @@ title: "Release notes"
 - By default, tests in a single file are run in order. If you have many independent tests in a single file, you can now
   run them in parallel with [`method: Test.describe.configure`].
 
-
 ### Other Updates
 
 - Locator now supports a `has` option that makes sure it contains another locator inside:
@@ -77,6 +76,18 @@ title: "Release notes"
 It is unlikely that this change will affect you, no action is required if your tests keep running as they did.
 
 We've noticed that in rare cases, the set of tests to be executed was configured in the global setup by means of the environment variables. We also noticed some applications that were post processing the reporters' output in the global teardown. If you are doing one of the two, [learn more](https://github.com/microsoft/playwright/issues/12018)
+
+### Browser Versions
+
+- Chromium 100.0.4863.0
+- Mozilla Firefox 96.0.1
+- WebKit 15.4
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 98
+- Microsoft Edge 98
+
 
 ## Version 1.18
 

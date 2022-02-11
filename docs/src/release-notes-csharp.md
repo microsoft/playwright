@@ -5,6 +5,34 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.19
+
+### Highlights
+
+- Locator now supports a `has` option that makes sure it contains another locator inside:
+
+  ```csharp
+  await Page.Locator("article", new () { Has = Page.Locator(".highlight") }).ClickAsync();
+  ```
+
+  Read more in [locator documentation](./api/class-locator#locator-locator-option-has)
+
+- New [`method: Locator.page`]
+- [`method: Page.screenshot`] and [`method: Locator.screenshot`] now automatically hide blinking caret
+- Playwright Codegen now generates locators and frame locators
+
+### Browser Versions
+
+- Chromium 100.0.4863.0
+- Mozilla Firefox 96.0.1
+- WebKit 15.4
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 98
+- Microsoft Edge 98
+
+
 ## Version 1.18
 
 ### Locator Improvements
