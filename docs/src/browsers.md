@@ -138,30 +138,30 @@ you can still opt into stable channels on the bots that are typically free of su
 ### Prerequisites for .NET
 * langs: csharp
 
-All examples require the `Microsoft.Playwright.CLI` to be installed. You only have to do this once:
+To invoke Playwright CLI commands, you need to invoke a PowerShell script:
 
 ```bash
-dotnet tool install -g Microsoft.Playwright.CLI
+pwsh bin\Debug\netX\playwright.ps1 --help
 ```
 
 Playwright can install supported browsers by means of the CLI tool.
 
 ```bash csharp
 # Running without arguments will install all browsers
-playwright install
+pwsh bin\Debug\netX\playwright.ps1 install
 ```
 
 You can also install specific browsers by providing an argument:
 
 ```bash csharp
 # Install WebKit
-playwright install webkit
+pwsh bin\Debug\netX\playwright.ps1 install webkit
 ```
 
 See all supported browsers:
 
 ```bash csharp
-playwright install --help
+pwsh bin\Debug\netX\playwright.ps1 install --help
 ```
 
 ## Managing browser binaries
@@ -230,17 +230,17 @@ mvn test
 
 ```bash bash-flavor=bash lang=csharp
 PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers 
-playwright install
+pwsh bin\Debug\netX\playwright.ps1 install
 ```
 
 ```bash bash-flavor=batch lang=csharp
 set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
-playwright install
+pwsh bin\Debug\netX\playwright.ps1 install
 ```
 
 ```bash bash-flavor=powershell lang=csharp
 $env:PLAYWRIGHT_BROWSERS_PATH="$env:USERPROFILE\pw-browsers"
-playwright install
+pwsh bin\Debug\netX\playwright.ps1 install
 ```
 
 When running Playwright scripts, ask it to search for browsers in a shared location.
@@ -398,17 +398,17 @@ mvn test
 ```
 
 ```bash bash-flavor=bash lang=csharp
-HTTPS_PROXY=https://192.0.2.1 playwright install
+HTTPS_PROXY=https://192.0.2.1 pwsh bin\Debug\netX\playwright.ps1 install
 ```
 
 ```bash bash-flavor=batch lang=csharp
 set HTTPS_PROXY=https://192.0.2.1
-playwright install
+pwsh bin\Debug\netX\playwright.ps1 install
 ```
 
 ```bash bash-flavor=powershell lang=csharp
 $env:HTTPS_PROXY="https://192.0.2.1"
-playwright install
+pwsh bin\Debug\netX\playwright.ps1 install
 ```
 
 ## Download from artifact repository
@@ -479,17 +479,17 @@ mvn test
 ```
 
 ```bash bash-flavor=bash lang=csharp
-PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 playwright install
+PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 pwsh bin\Debug\netX\playwright.ps1 install
 ```
 
 ```bash bash-flavor=batch lang=csharp
 set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
-playwright install
+pwsh bin\Debug\netX\playwright.ps1 install
 ```
 
 ```bash bash-flavor=powershell lang=csharp
 $env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
-playwright install
+pwsh bin\Debug\netX\playwright.ps1 install
 ```
 
 It is also possible to use a per-browser download hosts using `PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST`, `PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST` and `PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST` env variables that
@@ -563,19 +563,19 @@ mvn test
 ```
 
 ```bash bash-flavor=bash lang=csharp
-PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 playwright install
+PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 pwsh bin\Debug\netX\playwright.ps1 install
 ```
 
 ```bash bash-flavor=batch lang=csharp
 set PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3
 set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
-playwright install
+pwsh bin\Debug\netX\playwright.ps1 install
 ```
 
 ```bash bash-flavor=powershell lang=csharp
 $env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
 $env:PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST="203.0.113.3"
-playwright install
+pwsh bin\Debug\netX\playwright.ps1 install
 ```
 
 ## Skip browser downloads
@@ -617,17 +617,17 @@ mvn test
 ```
 
 ```bash bash-flavor=bash lang=csharp
-PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 playwright install
+PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 pwsh bin\Debug\netX\playwright.ps1 install
 ```
 
 ```bash bash-flavor=batch lang=csharp
 set PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
-playwright install
+pwsh bin\Debug\netX\playwright.ps1 install
 ```
 
 ```bash bash-flavor=powershell lang=csharp
 $env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
-playwright install
+pwsh bin\Debug\netX\playwright.ps1 install
 ```
 
 ## Download single browser binary
