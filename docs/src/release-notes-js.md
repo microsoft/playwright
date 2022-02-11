@@ -66,7 +66,7 @@ title: "Release notes"
   Read more in [locator documentation](./api/class-locator#locator-locator-option-has)
 
 - New [`method: Locator.page`]
-- [`method: Page.screenshot`] now automatically hides blinking caret
+- [`method: Page.screenshot`] and [`method: Locator.screenshot`] now automatically hide blinking caret
 - Playwright Codegen now generates locators and frame locators
 - New option `url`  in [`property: TestConfig.webServer`] to ensure your web server is ready before running the tests
 - New [`property: TestInfo.errors`] and [`property: TestResult.errors`] that contain all failed assertions and soft assertions.
