@@ -12,7 +12,7 @@ title: "Release notes"
 - Locator now supports a `has` option that makes sure it contains another locator inside:
 
   ```csharp
-  await Page.Locator("article", new () { Has = Page.Locator(".highlight") }).click();
+  await Page.Locator("article", new () { Has = Page.Locator(".highlight") }).ClickAsync();
   ```
 
   Read more in [locator documentation](./api/class-locator#locator-locator-option-has)
