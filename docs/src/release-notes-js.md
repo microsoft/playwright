@@ -55,7 +55,7 @@ title: "Release notes"
 
 ## Other Updates
 
-- Each locator can now be optionally filtered by containment using the `has` option:
+- Locator now supports a `has` option that makes sure it contains another locator inside:
 
   ```js
   await page.locator('div', {
