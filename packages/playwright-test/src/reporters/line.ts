@@ -15,7 +15,7 @@
  */
 
 import colors from 'colors/safe';
-import { BaseReporter, fitToScreen, formatFailure, formatTestTitle } from './base';
+import { BaseReporter, formatFailure, formatTestTitle } from './base';
 import { FullConfig, TestCase, Suite, TestResult, FullResult } from '../../types/testReporter';
 
 class LineReporter extends BaseReporter {
@@ -51,7 +51,7 @@ class LineReporter extends BaseReporter {
     if (test && this._lastTest !== test) {
       // Write new header for the output.
       const title = colors.gray(formatTestTitle(this.config, test));
-      stream.write(fitToScreen(title, this.ttyWidth()) + `\n`);
+      stream.write(this.fitToScreen(title) + `\n`);
       this._lastTest = test;
     }
 
@@ -69,7 +69,7 @@ class LineReporter extends BaseReporter {
     if (process.env.PWTEST_SKIP_TEST_OUTPUT)
       process.stdout.write(`${title + suffix}\n`);
     else
-      process.stdout.write(`\u001B[1A\u001B[2K${fitToScreen(title, this.ttyWidth(), suffix) + colors.yellow(suffix)}\n`);
+      process.stdout.write(`\u001B[1A\u001B[2K${this.fitToScreen(title, suffix) + colors.yellow(suffix)}\n`);
 
     if (!this.willRetry(test) && (test.outcome() === 'flaky' || test.outcome() === 'unexpected')) {
       if (!process.env.PWTEST_SKIP_TEST_OUTPUT)

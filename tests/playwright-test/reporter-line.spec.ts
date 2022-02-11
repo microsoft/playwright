@@ -66,3 +66,19 @@ test('should print flaky failures', async ({ runInlineTest }) => {
   expect(result.flaky).toBe(1);
   expect(stripAnsi(result.output)).toContain('expect(testInfo.retry).toBe(1)');
 });
+
+test('should work without tty', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('one', async ({}) => {
+        expect(1).toBe(0);
+      });
+    `,
+  }, { reporter: 'line' }, { PWTEST_TTY_WIDTH: '0', PWTEST_SKIP_TEST_OUTPUT: undefined });
+  const text = stripAnsi(result.output);
+  expect(text).toContain('[1/1] a.test.js:6:7 › one');
+  expect(text).toContain('1 failed');
+  expect(text).toContain('1) a.test');
+  expect(result.exitCode).toBe(1);
+});
