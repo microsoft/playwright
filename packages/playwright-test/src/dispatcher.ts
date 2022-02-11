@@ -478,7 +478,7 @@ class Worker extends EventEmitter {
       detached: false,
       env: {
         FORCE_COLOR: '1',
-        DEBUG_COLORS: process.stdout.isTTY ? '1' : '0',
+        DEBUG_COLORS: '1',
         TEST_WORKER_INDEX: String(this.workerIndex),
         TEST_PARALLEL_INDEX: String(this.parallelIndex),
         ...process.env
