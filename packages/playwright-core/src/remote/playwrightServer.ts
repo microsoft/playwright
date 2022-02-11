@@ -166,7 +166,7 @@ class Connection {
     const playwright = createPlaywright('javascript');
     const socksProxy = await this._enableSocksProxyIfNeeded(playwright);
     const browser = await playwright[executable.browserName].launch(internalCallMetadata(), {
-      channel: executable.type === 'channel' ? executable.name : undefined,
+      channel: executable.type === 'browser' ? undefined : executable.name,
     });
 
     // Close the browser on disconnect.
