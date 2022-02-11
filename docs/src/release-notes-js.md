@@ -59,7 +59,7 @@ title: "Release notes"
 
   ```js
   await page.locator('article', {
-    has: page.locator('span'),
+    has: page.locator('.highlight'),
   }).click();
   ```
 
