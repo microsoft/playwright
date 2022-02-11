@@ -158,7 +158,7 @@ Playwright Trace Viewer is now **available online** at https://trace.playwright.
 - Playwright now supports **Ubuntu 20.04 ARM64**. You can now run Playwright tests inside Docker on Apple M1 and on Raspberry Pi.
 - You can now use Playwright to install stable version of Edge on Linux:
     ```bash
-    npx playwright install msedge
+    mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install msedge"
     ```
 
 
@@ -185,7 +185,7 @@ Read more about [`method: Locator.waitFor`].
 
 ### 🎭 Playwright Trace Viewer
 
-- run trace viewer with `npx playwright show-trace` and drop trace files to the trace viewer PWA
+- run trace viewer with `mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="show-trace"` and drop trace files to the trace viewer PWA
 - better visual attribution of action targets
 
 Read more about [Trace Viewer](./trace-viewer).
@@ -474,10 +474,7 @@ This version of Playwright was also tested against the following stable channels
 - [Selecting elements based on layout](./selectors.md#selecting-elements-based-on-layout) with `:left-of()`, `:right-of()`, `:above()` and `:below()`.
 - Playwright now includes [command line interface](./cli.md), former playwright-cli.
   ```bash js
-  npx playwright --help
-  ```
-  ```bash python
-  playwright --help
+  mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="--help"
   ```
 - [`method: Page.selectOption`] now waits for the options to be present.
 - New methods to [assert element state](./actionability#assertions) like [`method: Page.isEditable`].

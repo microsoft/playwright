@@ -151,7 +151,7 @@ playwright show-trace trace.zip
 ```
 
 ```bash csharp
-playwright show-trace trace.zip
+pwsh bin\Debug\netX\playwright.ps1 show-trace trace.zip
 ```
 
 ## Actions
@@ -218,5 +218,5 @@ playwright show-trace https://example.com/trace.zip
 ```
 
 ```bash csharp
-playwright show-trace https://example.com/trace.zip
+pwsh bin\Debug\netX\playwright.ps1 show-trace https://example.com/trace.zip
 ```
