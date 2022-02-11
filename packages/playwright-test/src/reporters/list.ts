@@ -17,7 +17,7 @@
 /* eslint-disable no-console */
 import colors from 'colors/safe';
 import milliseconds from 'ms';
-import { BaseReporter, fitToScreen, formatTestTitle } from './base';
+import { BaseReporter, formatTestTitle } from './base';
 import { FullConfig, FullResult, Suite, TestCase, TestResult, TestStep } from '../../types/testReporter';
 
 // Allow it in the Visual Studio Code Terminal and the new Windows Terminal
@@ -55,7 +55,7 @@ class ListReporter extends BaseReporter {
       }
       const line = '     ' + colors.gray(formatTestTitle(this.config, test));
       const suffix = this._retrySuffix(result);
-      process.stdout.write(this._fitToScreen(line, suffix) + suffix + '\n');
+      process.stdout.write(this.fitToScreen(line, suffix) + suffix + '\n');
     }
     this._testRows.set(test, this._lastRow++);
   }
@@ -142,7 +142,7 @@ class ListReporter extends BaseReporter {
       process.stdout.write(`\u001B[${this._lastRow - testRow}A`);
     // Erase line, go to the start
     process.stdout.write('\u001B[2K\u001B[0G');
-    process.stdout.write(this._fitToScreen(line, suffix) + suffix);
+    process.stdout.write(this.fitToScreen(line, suffix) + suffix);
     // Go down if needed.
     if (testRow !== this._lastRow)
       process.stdout.write(`\u001B[${this._lastRow - testRow}E`);
@@ -150,13 +150,6 @@ class ListReporter extends BaseReporter {
 
   private _retrySuffix(result: TestResult) {
     return (result.retry ? colors.yellow(` (retry #${result.retry})`) : '');
-  }
-
-  private _fitToScreen(line: string, suffix?: string): string {
-    const ttyWidth = this.ttyWidth();
-    if (!ttyWidth)
-      return line;
-    return fitToScreen(line, ttyWidth, suffix);
   }
 
   private _updateTestLineForTest(test: TestCase, line: string, suffix: string) {

@@ -107,8 +107,13 @@ export class BaseReporter implements Reporter  {
     this.result = result;
   }
 
-  protected ttyWidth() {
-    return this._ttyWidthForTest || (process.env.PWTEST_SKIP_TEST_OUTPUT ? 80 : process.stdout.columns || 0);
+  protected fitToScreen(line: string, suffix?: string): string {
+    const ttyWidth = this._ttyWidthForTest || (process.env.PWTEST_SKIP_TEST_OUTPUT ? 80 : process.stdout.columns || 0);
+    if (!ttyWidth) {
+      // Guard against the case where we cannot determine available width.
+      return line;
+    }
+    return fitToWidth(line, ttyWidth, suffix);
   }
 
   protected generateStartingMessage() {
@@ -431,7 +436,7 @@ export function stripAnsiEscapes(str: string): string {
 }
 
 // Leaves enough space for the "suffix" to also fit.
-export function fitToScreen(line: string, width: number, suffix?: string): string {
+function fitToWidth(line: string, width: number, suffix?: string): string {
   const suffixLength = suffix ? stripAnsiEscapes(suffix).length : 0;
   width -= suffixLength;
   if (line.length <= width)
