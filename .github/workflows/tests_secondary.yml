@@ -132,7 +132,8 @@ jobs:
         DEBUG: pw:install
     - run: npm run build
     - run: npx playwright install-deps
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash installation-tests/run_all_tests.sh
+    - name: INSTALLATION TESTS
+      run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash installation-tests/run_all_tests.sh
 
   headful_linux:
     name: "Headful Linux"

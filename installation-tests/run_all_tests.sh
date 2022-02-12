@@ -34,12 +34,13 @@ do
     gh_echo "::group::FAILED - $i"
     cecho "RED" "FAILED - $i"
     echo "${OUTPUT}"
+    gh_echo "::endgroup::"
   else
     gh_echo "::group::PASSED - $i"
     cecho "GREEN" "PASSED - $i"
     gh_echo "${OUTPUT}"
+    gh_echo "::endgroup::"
   fi
-  gh_echo "::endgroup::"
 done
 
 echo

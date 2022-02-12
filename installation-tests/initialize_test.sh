@@ -72,11 +72,6 @@ function initialize_test {
   unset PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD
   export PLAYWRIGHT_BROWSERS_PATH=0
 
-  # Polyfill XVFB on MacOS so that it's a noop
-  if [[ $(uname) == "Darwin" ]]; then
-    export PATH="$PWD/macos-stubs:${PATH}"
-  fi
-
   setup_env_variables
 
   if [[ "$1" != "--no-build" && "$2" != "--no-build" ]]; then
@@ -108,7 +103,6 @@ function initialize_test {
 
   # enable bash lines logging if --debug is passed
   if [[ $1 == "--debug" || $2 == "--debug" ]]; then
-    DEBUG_MODE=1
     set -x
   fi
 }
