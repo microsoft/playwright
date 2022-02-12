@@ -45,7 +45,6 @@ function complete_test {
 }
 
 function setup_env_variables() {
-  cd "$(dirname $0)"
   # Package paths.
   SCRIPTS_PATH="$(pwd -P)"
   TEST_ROOT="/tmp/playwright-installation-tests"
