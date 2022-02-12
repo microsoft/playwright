@@ -43,6 +43,7 @@ type TestData = {
 export class Dispatcher {
   private _workerSlots: { busy: boolean, worker?: Worker }[] = [];
   private _queue: TestGroup[] = [];
+  private _queueHashCount = new Map<string, number>();
   private _finished = new ManualPromise<void>();
   private _isStopped = false;
 
@@ -57,6 +58,7 @@ export class Dispatcher {
     this._reporter = reporter;
     this._queue = testGroups;
     for (const group of testGroups) {
+      this._queueHashCount.set(group.workerHash, 1 + (this._queueHashCount.get(group.workerHash) || 0));
       for (const test of group.tests) {
         this._testById.set(test._id, { test, resultByWorkerIndex: new Map() });
         for (let suite: Suite | undefined = test.parent; suite; suite = suite.parent) {
@@ -85,6 +87,7 @@ export class Dispatcher {
 
     // 3. Claim both the job and the worker, run the job and release the worker.
     this._queue.shift();
+    this._queueHashCount.set(job.workerHash, this._queueHashCount.get(job.workerHash)! - 1);
     this._workerSlots[index].busy = true;
     await this._startJobInWorker(index, job);
     this._workerSlots[index].busy = false;
@@ -139,6 +142,15 @@ export class Dispatcher {
         test._appendTestResult().status = 'skipped';
     }
     this._finished.resolve();
+  }
+
+  private _isWorkerRedundant(worker: Worker) {
+    let workersWithSameHash = 0;
+    for (const slot of this._workerSlots) {
+      if (slot.worker && !slot.worker.didSendStop() && slot.worker.hash() === worker.hash())
+        workersWithSameHash++;
+    }
+    return workersWithSameHash > this._queueHashCount.get(worker.hash())!;
   }
 
   async run() {
@@ -279,6 +291,8 @@ export class Dispatcher {
       // - we are here not because something failed
       // - no unrecoverable worker error
       if (!remaining.length && !failedTestIds.size && !params.fatalError) {
+        if (this._isWorkerRedundant(worker))
+          worker.stop();
         doneWithJob();
         return;
       }
@@ -382,6 +396,7 @@ export class Dispatcher {
 
       if (remaining.length) {
         this._queue.unshift({ ...testGroup, tests: remaining });
+        this._queueHashCount.set(testGroup.workerHash, this._queueHashCount.get(testGroup.workerHash)! + 1);
         // Perhaps we can immediately start the new job if there is a worker available?
         this._scheduleJob();
       }
