@@ -24,7 +24,7 @@ import { Browser } from '../server/browser';
 import { gracefullyCloseAll } from '../utils/processLauncher';
 import { registry } from '../utils/registry';
 import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
-import { SocksProxy } from '../server/socksProxy';
+import { SocksProxy } from '../utils/socksProxy';
 
 const debugLog = debug('pw:server');
 

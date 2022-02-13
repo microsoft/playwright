@@ -50,6 +50,7 @@ export type InitializerTraits<T> =
     T extends BrowserChannel ? BrowserInitializer :
     T extends BrowserTypeChannel ? BrowserTypeInitializer :
     T extends SelectorsChannel ? SelectorsInitializer :
+    T extends SocksSupportChannel ? SocksSupportInitializer :
     T extends PlaywrightChannel ? PlaywrightInitializer :
     T extends RootChannel ? RootInitializer :
     T extends LocalUtilsChannel ? LocalUtilsInitializer :
@@ -85,6 +86,7 @@ export type EventsTraits<T> =
     T extends BrowserChannel ? BrowserEvents :
     T extends BrowserTypeChannel ? BrowserTypeEvents :
     T extends SelectorsChannel ? SelectorsEvents :
+    T extends SocksSupportChannel ? SocksSupportEvents :
     T extends PlaywrightChannel ? PlaywrightEvents :
     T extends RootChannel ? RootEvents :
     T extends LocalUtilsChannel ? LocalUtilsEvents :
@@ -120,6 +122,7 @@ export type EventTargetTraits<T> =
     T extends BrowserChannel ? BrowserEventTarget :
     T extends BrowserTypeChannel ? BrowserTypeEventTarget :
     T extends SelectorsChannel ? SelectorsEventTarget :
+    T extends SocksSupportChannel ? SocksSupportEventTarget :
     T extends PlaywrightChannel ? PlaywrightEventTarget :
     T extends RootChannel ? RootEventTarget :
     T extends LocalUtilsChannel ? LocalUtilsEventTarget :
@@ -423,74 +426,15 @@ export type PlaywrightInitializer = {
   }[],
   selectors: SelectorsChannel,
   preLaunchedBrowser?: BrowserChannel,
+  socksSupport?: SocksSupportChannel,
 };
 export interface PlaywrightEventTarget {
-  on(event: 'socksRequested', callback: (params: PlaywrightSocksRequestedEvent) => void): this;
-  on(event: 'socksData', callback: (params: PlaywrightSocksDataEvent) => void): this;
-  on(event: 'socksClosed', callback: (params: PlaywrightSocksClosedEvent) => void): this;
 }
 export interface PlaywrightChannel extends PlaywrightEventTarget, Channel {
   _type_Playwright: boolean;
-  socksConnected(params: PlaywrightSocksConnectedParams, metadata?: Metadata): Promise<PlaywrightSocksConnectedResult>;
-  socksFailed(params: PlaywrightSocksFailedParams, metadata?: Metadata): Promise<PlaywrightSocksFailedResult>;
-  socksData(params: PlaywrightSocksDataParams, metadata?: Metadata): Promise<PlaywrightSocksDataResult>;
-  socksError(params: PlaywrightSocksErrorParams, metadata?: Metadata): Promise<PlaywrightSocksErrorResult>;
-  socksEnd(params: PlaywrightSocksEndParams, metadata?: Metadata): Promise<PlaywrightSocksEndResult>;
   newRequest(params: PlaywrightNewRequestParams, metadata?: Metadata): Promise<PlaywrightNewRequestResult>;
   hideHighlight(params?: PlaywrightHideHighlightParams, metadata?: Metadata): Promise<PlaywrightHideHighlightResult>;
 }
-export type PlaywrightSocksRequestedEvent = {
-  uid: string,
-  host: string,
-  port: number,
-};
-export type PlaywrightSocksDataEvent = {
-  uid: string,
-  data: Binary,
-};
-export type PlaywrightSocksClosedEvent = {
-  uid: string,
-};
-export type PlaywrightSocksConnectedParams = {
-  uid: string,
-  host: string,
-  port: number,
-};
-export type PlaywrightSocksConnectedOptions = {
-
-};
-export type PlaywrightSocksConnectedResult = void;
-export type PlaywrightSocksFailedParams = {
-  uid: string,
-  errorCode: string,
-};
-export type PlaywrightSocksFailedOptions = {
-
-};
-export type PlaywrightSocksFailedResult = void;
-export type PlaywrightSocksDataParams = {
-  uid: string,
-  data: Binary,
-};
-export type PlaywrightSocksDataOptions = {
-
-};
-export type PlaywrightSocksDataResult = void;
-export type PlaywrightSocksErrorParams = {
-  uid: string,
-  error: string,
-};
-export type PlaywrightSocksErrorOptions = {
-
-};
-export type PlaywrightSocksErrorResult = void;
-export type PlaywrightSocksEndParams = {
-  uid: string,
-};
-export type PlaywrightSocksEndOptions = {
-
-};
-export type PlaywrightSocksEndResult = void;
 export type PlaywrightNewRequestParams = {
   baseURL?: string,
   userAgent?: string,
@@ -543,9 +487,80 @@ export type PlaywrightHideHighlightOptions = {};
 export type PlaywrightHideHighlightResult = void;
 
 export interface PlaywrightEvents {
-  'socksRequested': PlaywrightSocksRequestedEvent;
-  'socksData': PlaywrightSocksDataEvent;
-  'socksClosed': PlaywrightSocksClosedEvent;
+}
+
+// ----------- SocksSupport -----------
+export type SocksSupportInitializer = {};
+export interface SocksSupportEventTarget {
+  on(event: 'socksRequested', callback: (params: SocksSupportSocksRequestedEvent) => void): this;
+  on(event: 'socksData', callback: (params: SocksSupportSocksDataEvent) => void): this;
+  on(event: 'socksClosed', callback: (params: SocksSupportSocksClosedEvent) => void): this;
+}
+export interface SocksSupportChannel extends SocksSupportEventTarget, Channel {
+  _type_SocksSupport: boolean;
+  socksConnected(params: SocksSupportSocksConnectedParams, metadata?: Metadata): Promise<SocksSupportSocksConnectedResult>;
+  socksFailed(params: SocksSupportSocksFailedParams, metadata?: Metadata): Promise<SocksSupportSocksFailedResult>;
+  socksData(params: SocksSupportSocksDataParams, metadata?: Metadata): Promise<SocksSupportSocksDataResult>;
+  socksError(params: SocksSupportSocksErrorParams, metadata?: Metadata): Promise<SocksSupportSocksErrorResult>;
+  socksEnd(params: SocksSupportSocksEndParams, metadata?: Metadata): Promise<SocksSupportSocksEndResult>;
+}
+export type SocksSupportSocksRequestedEvent = {
+  uid: string,
+  host: string,
+  port: number,
+};
+export type SocksSupportSocksDataEvent = {
+  uid: string,
+  data: Binary,
+};
+export type SocksSupportSocksClosedEvent = {
+  uid: string,
+};
+export type SocksSupportSocksConnectedParams = {
+  uid: string,
+  host: string,
+  port: number,
+};
+export type SocksSupportSocksConnectedOptions = {
+
+};
+export type SocksSupportSocksConnectedResult = void;
+export type SocksSupportSocksFailedParams = {
+  uid: string,
+  errorCode: string,
+};
+export type SocksSupportSocksFailedOptions = {
+
+};
+export type SocksSupportSocksFailedResult = void;
+export type SocksSupportSocksDataParams = {
+  uid: string,
+  data: Binary,
+};
+export type SocksSupportSocksDataOptions = {
+
+};
+export type SocksSupportSocksDataResult = void;
+export type SocksSupportSocksErrorParams = {
+  uid: string,
+  error: string,
+};
+export type SocksSupportSocksErrorOptions = {
+
+};
+export type SocksSupportSocksErrorResult = void;
+export type SocksSupportSocksEndParams = {
+  uid: string,
+};
+export type SocksSupportSocksEndOptions = {
+
+};
+export type SocksSupportSocksEndResult = void;
+
+export interface SocksSupportEvents {
+  'socksRequested': SocksSupportSocksRequestedEvent;
+  'socksData': SocksSupportSocksDataEvent;
+  'socksClosed': SocksSupportSocksClosedEvent;
 }
 
 // ----------- Selectors -----------
@@ -588,11 +603,15 @@ export type BrowserTypeConnectParams = {
   headers?: any,
   slowMo?: number,
   timeout?: number,
+  enableSocksProxy?: boolean,
+  socksProxyRedirectPortForTest?: number,
 };
 export type BrowserTypeConnectOptions = {
   headers?: any,
   slowMo?: number,
   timeout?: number,
+  enableSocksProxy?: boolean,
+  socksProxyRedirectPortForTest?: number,
 };
 export type BrowserTypeConnectResult = {
   pipe: JsonPipeChannel,
