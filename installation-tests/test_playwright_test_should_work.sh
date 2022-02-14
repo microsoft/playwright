@@ -1,8 +1,8 @@
 #!/bin/bash
 source ./initialize_test.sh && initialize_test "$@"
 
-npm install ${PLAYWRIGHT_CORE_TGZ}
-npm install ${PLAYWRIGHT_TEST_TGZ}
+npm_i playwright-core
+npm_i @playwright/test
 
 echo "Running playwright test without install"
 if npx playwright test -c .; then

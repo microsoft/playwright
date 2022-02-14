@@ -1,8 +1,8 @@
 #!/bin/bash
 source ./initialize_test.sh && initialize_test "$@"
 
-npm install ${PLAYWRIGHT_CORE_TGZ}
-OUTPUT=$(PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install --foreground-script ${PLAYWRIGHT_TGZ})
+npm_i playwright-core
+OUTPUT=$(PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm_i --foreground-script playwright)
 if [[ "${OUTPUT}" != *"Skipping browsers download because"* ]]; then
   echo "missing log message that browsers download is skipped"
   exit 1

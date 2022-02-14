@@ -29,8 +29,9 @@ function cecho(){
 }
 
 function report_test_result {
+  RV=$?
   set +x
-  if [[ $? == 0 ]]; then
+  if [[ $RV == 0 ]]; then
     echo
     cecho "GREEN" "<<<<<<<<<<<<"
     cecho "GREEN" "  Test '${TEST_FILE}' PASSED"
@@ -50,12 +51,12 @@ function setup_env_variables() {
   # Package paths.
   NODE_VERSION=$(node -e "console.log(process.version.slice(1).split('.')[0])")
 
-  PLAYWRIGHT_CORE_TGZ="${PWD}/output/playwright-core.tgz"
-  PLAYWRIGHT_TGZ="${PWD}/output/playwright.tgz"
-  PLAYWRIGHT_CHROMIUM_TGZ="${PWD}/output/playwright-chromium.tgz"
-  PLAYWRIGHT_WEBKIT_TGZ="${PWD}/output/playwright-webkit.tgz"
-  PLAYWRIGHT_FIREFOX_TGZ="${PWD}/output/playwright-firefox.tgz"
-  PLAYWRIGHT_TEST_TGZ="${PWD}/output/playwright-test.tgz"
+  export PLAYWRIGHT_CORE_TGZ="${PWD}/output/playwright-core.tgz"
+  export PLAYWRIGHT_TGZ="${PWD}/output/playwright.tgz"
+  export PLAYWRIGHT_CHROMIUM_TGZ="${PWD}/output/playwright-chromium.tgz"
+  export PLAYWRIGHT_WEBKIT_TGZ="${PWD}/output/playwright-webkit.tgz"
+  export PLAYWRIGHT_FIREFOX_TGZ="${PWD}/output/playwright-firefox.tgz"
+  export PLAYWRIGHT_TEST_TGZ="${PWD}/output/playwright-test.tgz"
   PLAYWRIGHT_CHECKOUT="${PWD}/.."
 }
 
@@ -75,6 +76,19 @@ function initialize_test {
 
   local SCRIPTS_PATH="$(pwd -P)"
   setup_env_variables
+  TEST_FILE=$(basename $0)
+  TEST_NAME=$(basename ${0%%.sh})
+
+  # Check if test tries to install some playwright-family package
+  # fron NPM registry.
+  if grep 'npm i.*playwright' "$0" 2>&1 >/dev/null; then
+    # If it does, this is an error: we should always install local packages using
+    # the `npm_i` script.
+    cecho "RED" "ERROR: test tries to install playwright-family package from NPM registry!"
+    cecho "RED" "       Do not use NPM to install playwright packages!"
+    cecho "RED" "       Instead, use 'npm_i' command to install local package"
+    exit 1
+  fi
 
   if [[ "$1" != "--no-build" && "$2" != "--no-build" ]]; then
     echo 'Building packages... NOTE: run with `--no-build` to reuse previous builds'
@@ -94,8 +108,6 @@ function initialize_test {
     clean_test_root
   fi
   cd ${TEST_FRAMEWORK_RUN_ROOT}
-  TEST_FILE=$(basename $0)
-  TEST_NAME=$(basename ${0%%.sh})
 
   cecho "YELLOW" ">>>>>>>>>>>>"
   cecho "YELLOW" "  Running test - '${TEST_FILE}'"
@@ -103,6 +115,7 @@ function initialize_test {
   mkdir ${TEST_NAME} && cd ${TEST_NAME} && npm init -y 1>/dev/null 2>/dev/null
 
   cp "${SCRIPTS_PATH}/fixture-scripts/"* .
+  export PATH="${SCRIPTS_PATH}/bin:${PATH}"
 
   # Enable bash lines logging.
   set -x

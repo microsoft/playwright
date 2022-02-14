@@ -4,15 +4,15 @@ source ./initialize_test.sh && initialize_test "$@"
 # @types/node@14.18.9 is the last version which is compatibel with typescript@3.7.5.
 # After @types/node@14.18.9 URLSearchParams from @types/node conflicts with typescript's
 # shipped types and it results in a type error / build failure.
-npm install -D @types/node@14.18.9
+npm i -D @types/node@14.18.9
 
 # install all packages.
-npm install ${PLAYWRIGHT_CORE_TGZ}
-PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_TGZ}
-PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_FIREFOX_TGZ}
-PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_WEBKIT_TGZ}
-PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_CHROMIUM_TGZ}
-PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_TEST_TGZ}
+npm_i playwright-core
+PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm_i playwright
+PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm_i playwright-firefox
+PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm_i playwright-webkit
+PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm_i playwright-chromium
+PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm_i @playwright/test
 
 # typecheck all packages.
 for PKG_NAME in "playwright" \

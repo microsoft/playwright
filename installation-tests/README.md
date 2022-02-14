@@ -16,3 +16,5 @@ To run all tests:
 ```bash
 ./run_all_tests.sh
 ```
+
+To install local builds of `playwright` packages in tests, do `npm_i playwright`.
