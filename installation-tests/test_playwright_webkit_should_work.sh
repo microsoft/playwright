@@ -15,7 +15,6 @@ if [[ "${OUTPUT}" != *"webkit"* ]]; then
   echo "ERROR: should download webkit"
   exit 1
 fi
-copy_test_scripts
 
 echo "Running sanity.js"
 node sanity.js playwright-webkit

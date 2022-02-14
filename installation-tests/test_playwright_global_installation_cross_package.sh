@@ -13,8 +13,6 @@ if [[ ! -d "${BROWSERS}" ]]; then
   exit 1
 fi
 
-copy_test_scripts
-
 echo "Running sanity.js"
 # Every package should be able to launch.
 PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" node sanity.js playwright-chromium all

@@ -1,8 +1,6 @@
 #!/bin/bash
 source ./initialize_test.sh && initialize_test "$@"
 
-copy_test_scripts
-
 BROWSERS="$(pwd -P)/browsers"
 npm install ${PLAYWRIGHT_CORE_TGZ}
 PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" npm install ${PLAYWRIGHT_TGZ}

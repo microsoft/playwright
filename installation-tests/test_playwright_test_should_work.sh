@@ -3,7 +3,6 @@ source ./initialize_test.sh && initialize_test "$@"
 
 npm install ${PLAYWRIGHT_CORE_TGZ}
 npm install ${PLAYWRIGHT_TEST_TGZ}
-copy_test_scripts
 
 echo "Running playwright test without install"
 if npx playwright test -c .; then
