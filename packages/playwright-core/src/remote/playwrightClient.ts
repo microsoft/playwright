@@ -49,7 +49,7 @@ export class PlaywrightClient {
     const playwrightClientPromise = new Promise<PlaywrightClient>((resolve, reject) => {
       let playwright: Playwright;
       ws.on('open', async () => {
-        playwright = await connection.initializePlaywright();
+        playwright = await connection.initializePlaywright({ sdkLanguage: 'javascript', enableSocksProxy: true });
         resolve(new PlaywrightClient(playwright, ws));
       });
       ws.on('close', (code, reason) => connection.close(reason.toString()));

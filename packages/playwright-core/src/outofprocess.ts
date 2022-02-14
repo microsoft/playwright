@@ -53,7 +53,7 @@ class PlaywrightClient {
     this._transport.onmessage = message => connection.dispatch(JSON.parse(message));
     this._transport.onclose = () => this._closePromise.resolve();
 
-    this._playwright = connection.initializePlaywright();
+    this._playwright = connection.initializePlaywright({ sdkLanguage: 'javascript' });
   }
 
   async stop() {

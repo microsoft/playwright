@@ -438,6 +438,7 @@ Root:
     initialize:
       parameters:
         sdkLanguage: string
+        enableSocksProxy: boolean?
       returns:
         playwright: Playwright
 

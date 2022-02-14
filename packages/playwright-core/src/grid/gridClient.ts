@@ -38,7 +38,7 @@ export class GridClient {
     connection.onmessage = (message: Object) => ws.send(JSON.stringify(message));
     ws.on('message', message => connection.dispatch(JSON.parse(message.toString())));
     ws.on('close', (code, reason) => connection.close(reason.toString()));
-    const playwright = await connection.initializePlaywright();
+    const playwright = await connection.initializePlaywright({ sdkLanguage: 'javascript', enableSocksProxy: true });
     playwright._enablePortForwarding();
     return new GridClient(ws, playwright);
   }

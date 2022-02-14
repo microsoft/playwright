@@ -387,9 +387,10 @@ export interface RootChannel extends RootEventTarget, Channel {
 }
 export type RootInitializeParams = {
   sdkLanguage: string,
+  enableSocksProxy?: boolean,
 };
 export type RootInitializeOptions = {
-
+  enableSocksProxy?: boolean,
 };
 export type RootInitializeResult = {
   playwright: PlaywrightChannel,

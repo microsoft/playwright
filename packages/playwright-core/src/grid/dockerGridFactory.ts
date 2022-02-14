@@ -73,9 +73,7 @@ async function launchDockerGridAgent(agentId: string, gridURL: string): Promise<
       `<3 Playwright Team`,
     ].join('\n'), 1));
   }
-  const Env = [
-    'PW_SOCKS_PROXY_PORT=1', // Enable port forwarding over PlaywrightClient
-  ];
+  const Env: string[] = [];
   const forwardIfDefined = (envName: string) => {
     if (process.env[envName])
       Env.push(`CI=${process.env[envName]}`);

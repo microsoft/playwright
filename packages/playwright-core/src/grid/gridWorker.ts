@@ -29,8 +29,8 @@ function launchGridWorker(gridURL: string, agentId: string, workerId: string) {
   const dispatcherConnection = new DispatcherConnection();
   dispatcherConnection.onmessage = message => ws.send(JSON.stringify(message));
   ws.once('open', () => {
-    new Root(dispatcherConnection, async rootScope => {
-      const playwright = createPlaywright('javascript');
+    new Root(dispatcherConnection, async (rootScope, params) => {
+      const playwright = createPlaywright(params.sdkLanguage);
       const socksProxy = new SocksProxy();
       playwright.options.socksProxyPort = await socksProxy.listen(0);
       return new PlaywrightDispatcher(rootScope, playwright, socksProxy);

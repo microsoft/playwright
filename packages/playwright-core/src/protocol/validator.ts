@@ -195,6 +195,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.RootInitializeParams = tObject({
     sdkLanguage: tString,
+    enableSocksProxy: tOptional(tBoolean),
   });
   scheme.PlaywrightNewRequestParams = tObject({
     baseURL: tOptional(tString),

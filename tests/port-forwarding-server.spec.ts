@@ -26,14 +26,11 @@ class OutOfProcessPlaywrightServer {
   private _driverProcess: childProcess.ChildProcess;
   private _receivedPortPromise: Promise<string>;
 
-  constructor(port: number, proxyPort: number) {
+  constructor(port: number) {
     this._driverProcess = childProcess.fork(path.join(__dirname, '..', 'packages', 'playwright-core', 'lib', 'cli', 'cli.js'), ['run-server', port.toString()], {
       stdio: 'pipe',
       detached: true,
-      env: {
-        ...process.env,
-        PW_SOCKS_PROXY_PORT: '1'
-      }
+      env: process.env,
     });
     this._driverProcess.unref();
     this._receivedPortPromise = new Promise<string>((resolve, reject) => {
@@ -64,7 +61,7 @@ const it = contextTest.extend<{ pageFactory: (redirectPortForTest?: number) => P
     const playwrightServers: OutOfProcessPlaywrightServer[] = [];
     const browsers: Browser[] = [];
     await run(async (redirectPortForTest?: number): Promise<Page> => {
-      const server = new OutOfProcessPlaywrightServer(0, 3200 + testInfo.workerIndex);
+      const server = new OutOfProcessPlaywrightServer(0);
       playwrightServers.push(server);
       const browser = await browserType.connect({
         wsEndpoint: await server.wsEndpoint() + '?browser=' + (channel || browserName),

@@ -48,10 +48,8 @@ class Root extends ChannelOwner<channels.RootChannel> {
     super(connection, 'Root', '', {});
   }
 
-  async initialize(): Promise<Playwright> {
-    return Playwright.from((await this._channel.initialize({
-      sdkLanguage: 'javascript',
-    })).playwright);
+  async initialize(params: channels.RootInitializeParams): Promise<Playwright> {
+    return Playwright.from((await this._channel.initialize(params)).playwright);
   }
 }
 
@@ -80,8 +78,8 @@ export class Connection extends EventEmitter {
     return this._isRemote;
   }
 
-  async initializePlaywright(): Promise<Playwright> {
-    return await this._rootObject.initialize();
+  async initializePlaywright(params: channels.RootInitializeParams): Promise<Playwright> {
+    return await this._rootObject.initialize(params);
   }
 
   pendingProtocolCalls(): ParsedStackTrace[] {

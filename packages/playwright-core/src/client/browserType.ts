@@ -167,7 +167,10 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
         if ((params as any).__testHookBeforeCreateBrowser)
           await (params as any).__testHookBeforeCreateBrowser();
 
-        const playwright = await connection!.initializePlaywright();
+        const playwright = await connection!.initializePlaywright({
+          sdkLanguage: 'javascript',
+          enableSocksProxy: connectParams.enableSocksProxy,
+        });
         if (!playwright._initializer.preLaunchedBrowser) {
           closePipe();
           throw new Error('Malformed endpoint. Did you use launchServer method?');
