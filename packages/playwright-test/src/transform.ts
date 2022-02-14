@@ -189,27 +189,33 @@ export function transformHook(code: string, filename: string, isModule = false):
   if (hasPreprocessor)
     plugins.push([scriptPreprocessor]);
 
-  const result = babel.transformFileSync(filename, {
-    babelrc: false,
-    configFile: false,
-    assumptions: {
-      // Without this, babel defines a top level function that
-      // breaks playwright evaluates.
-      setPublicClassFields: true,
-    },
-    presets: [
-      [require.resolve('@babel/preset-typescript'), { onlyRemoveTypeImports: true }],
-    ],
-    plugins,
-    sourceMaps: 'both',
-  } as babel.TransformOptions)!;
-  if (result.code) {
-    fs.mkdirSync(path.dirname(cachePath), { recursive: true });
-    if (result.map)
-      fs.writeFileSync(sourceMapPath, JSON.stringify(result.map), 'utf8');
-    fs.writeFileSync(codePath, result.code, 'utf8');
+  try {
+    const result = babel.transformFileSync(filename, {
+      babelrc: false,
+      configFile: false,
+      assumptions: {
+        // Without this, babel defines a top level function that
+        // breaks playwright evaluates.
+        setPublicClassFields: true,
+      },
+      presets: [
+        [require.resolve('@babel/preset-typescript'), { onlyRemoveTypeImports: true }],
+      ],
+      plugins,
+      sourceMaps: 'both',
+    } as babel.TransformOptions)!;
+    if (result.code) {
+      fs.mkdirSync(path.dirname(cachePath), { recursive: true });
+      if (result.map)
+        fs.writeFileSync(sourceMapPath, JSON.stringify(result.map), 'utf8');
+      fs.writeFileSync(codePath, result.code, 'utf8');
+    }
+    return result.code || '';
+  } catch (e) {
+    // Re-throw error with a playwright-test stack
+    // that could be filtered out.
+    throw new Error(e.message);
   }
-  return result.code || '';
 }
 
 export function installTransform(): () => void {
