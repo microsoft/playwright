@@ -314,6 +314,21 @@ test('should filter out event emitter from stack traces', async ({ runInlineTest
   expect(outputWithoutGoodStackFrames).not.toContain('EventEmitter.emit');
 });
 
+test('should filter out syntax error stack traces', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'expect-test.spec.ts': `
+      const { test } = pwt;
+      test('should work', ({}) => {
+        // syntax error: cannot have await in non-async function
+        await Proimse.resolve();
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(stripAnsi(result.output)).not.toContain('babel');
+  expect(stripAnsi(result.output)).not.toContain('    at ');
+});
+
 test('should filter stack trace for raw errors', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'expect-test.spec.ts': `

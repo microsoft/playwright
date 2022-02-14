@@ -25,6 +25,7 @@ import { isInternalFileName } from 'playwright-core/lib/utils/stackTrace';
 
 const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core'));
 const EXPECT_PATH = path.dirname(require.resolve('expect'));
+const BABEL_PARSER_PATH = path.dirname(require.resolve('@babel/parser'));
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
 
 function filterStackTrace(e: Error) {
@@ -47,7 +48,11 @@ function filterStackTrace(e: Error) {
       const functionName = callSite.getFunctionName() || undefined;
       if (!fileName)
         return true;
-      return !fileName.startsWith(PLAYWRIGHT_TEST_PATH) && !fileName.startsWith(PLAYWRIGHT_CORE_PATH) && !fileName.startsWith(EXPECT_PATH) && !isInternalFileName(fileName, functionName);
+      return !fileName.startsWith(PLAYWRIGHT_TEST_PATH) &&
+             !fileName.startsWith(PLAYWRIGHT_CORE_PATH) &&
+             !fileName.startsWith(EXPECT_PATH) &&
+             !fileName.startsWith(BABEL_PARSER_PATH) &&
+             !isInternalFileName(fileName, functionName);
     }));
   };
   // eslint-disable-next-line
