@@ -1,6 +1,6 @@
 # Installation Tests
 
-These tests check end-2-end installation and operation of Playwright.
+These tests check end-to-end installation and operation of Playwright.
 Each test is set with a separate folder that contains all scripts from
 `fixture-scripts` folder and dummy package.json.
 
