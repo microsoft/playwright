@@ -596,7 +596,6 @@ BrowserType:
         headers: json?
         slowMo: number?
         timeout: number?
-        enableSocksProxy: boolean?
         socksProxyRedirectPortForTest: number?
       returns:
         pipe: JsonPipe

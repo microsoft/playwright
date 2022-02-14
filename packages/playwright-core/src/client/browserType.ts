@@ -129,10 +129,8 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       const deadline = params.timeout ? monotonicTime() + params.timeout : 0;
       let browser: Browser;
       const connectParams: channels.BrowserTypeConnectParams = { wsEndpoint, headers: params.headers, slowMo: params.slowMo, timeout: params.timeout };
-      if ((params as any).__testHookPortForwarding) {
-        connectParams.enableSocksProxy = true;
-        connectParams.socksProxyRedirectPortForTest = (params as any).__testHookPortForwarding.redirectPortForTest;
-      }
+      if ((params as any).__testHookRedirectPortForwarding)
+        connectParams.socksProxyRedirectPortForTest = (params as any).__testHookRedirectPortForwarding;
       const { pipe } = await this._channel.connect(connectParams);
       const closePipe = () => pipe.close().catch(() => {});
       const connection = new Connection();

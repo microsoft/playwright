@@ -93,7 +93,7 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.Brow
       waitForNextTask(() => {
         try {
           const json = JSON.parse(event.data as string);
-          if (params.enableSocksProxy && json.method === '__create__' && json.params.type === 'SocksSupport')
+          if (json.method === '__create__' && json.params.type === 'SocksSupport')
             socksInterceptor = new SocksInterceptor(ws, params.socksProxyRedirectPortForTest, json.params.guid);
           if (!socksInterceptor?.interceptMessage(json))
             pipe.dispatch(json);

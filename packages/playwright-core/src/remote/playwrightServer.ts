@@ -31,18 +31,20 @@ const debugLog = debug('pw:server');
 export class PlaywrightServer {
   private _path: string;
   private _maxClients: number;
+  private _enableSocksProxy: boolean;
   private _browser: Browser | undefined;
   private _wsServer: WebSocket.Server | undefined;
   private _clientsCount = 0;
 
-  static async startDefault(options: { path?: string, maxClients?: number } = {}): Promise<PlaywrightServer> {
-    const { path = '/ws', maxClients = 1 } = options;
-    return new PlaywrightServer(path, maxClients);
+  static async startDefault(options: { path?: string, maxClients?: number, enableSocksProxy?: boolean } = {}): Promise<PlaywrightServer> {
+    const { path = '/ws', maxClients = 1, enableSocksProxy = true } = options;
+    return new PlaywrightServer(path, maxClients, enableSocksProxy);
   }
 
-  constructor(path: string, maxClients: number, browser?: Browser) {
+  constructor(path: string, maxClients: number, enableSocksProxy: boolean, browser?: Browser) {
     this._path = path;
     this._maxClients = maxClients;
+    this._enableSocksProxy = enableSocksProxy;
     this._browser = browser;
   }
 
@@ -75,7 +77,7 @@ export class PlaywrightServer {
         return;
       }
       this._clientsCount++;
-      const connection = new Connection(ws, request, this._browser, () => this._clientsCount--);
+      const connection = new Connection(ws, request, this._enableSocksProxy, this._browser, () => this._clientsCount--);
       (ws as any)[kConnectionSymbol] = connection;
     });
 
@@ -117,7 +119,7 @@ class Connection {
   private _id: number;
   private _disconnected = false;
 
-  constructor(ws: WebSocket, request: http.IncomingMessage, browser: Browser | undefined, onClose: () => void) {
+  constructor(ws: WebSocket, request: http.IncomingMessage, enableSocksProxy: boolean, browser: Browser | undefined, onClose: () => void) {
     this._ws = ws;
     this._onClose = onClose;
     this._id = ++lastConnectionId;
@@ -139,32 +141,34 @@ class Connection {
       if (browser)
         return await this._initPreLaunchedBrowserMode(scope, browser);
       const url = new URL('http://localhost' + (request.url || ''));
-      const header = request.headers['X-Playwright-Browser'];
-      const browserAlias = url.searchParams.get('browser') || (Array.isArray(header) ? header[0] : header);
+      const browserHeader = request.headers['X-Playwright-Browser'];
+      const browserAlias = url.searchParams.get('browser') || (Array.isArray(browserHeader) ? browserHeader[0] : browserHeader);
+      const proxyHeader = request.headers['X-Playwright-Proxy'];
+      const proxyValue = url.searchParams.get('proxy') || (Array.isArray(proxyHeader) ? proxyHeader[0] : proxyHeader);
       if (!browserAlias)
-        return await this._initPlaywrightConnectMode(scope);
-      return await this._initLaunchBrowserMode(scope, browserAlias);
+        return await this._initPlaywrightConnectMode(scope, enableSocksProxy && proxyValue === '*');
+      return await this._initLaunchBrowserMode(scope, enableSocksProxy && proxyValue === '*', browserAlias);
     });
   }
 
-  private async _initPlaywrightConnectMode(scope: DispatcherScope) {
+  private async _initPlaywrightConnectMode(scope: DispatcherScope, enableSocksProxy: boolean) {
     debugLog(`[id=${this._id}] engaged playwright.connect mode`);
     const playwright = createPlaywright('javascript');
     // Close all launched browsers on disconnect.
     this._cleanups.push(() => gracefullyCloseAll());
 
-    const socksProxy = await this._enableSocksProxyIfNeeded(playwright);
+    const socksProxy = enableSocksProxy ? await this._enableSocksProxy(playwright) : undefined;
     return new PlaywrightDispatcher(scope, playwright, socksProxy);
   }
 
-  private async _initLaunchBrowserMode(scope: DispatcherScope, browserAlias: string) {
+  private async _initLaunchBrowserMode(scope: DispatcherScope, enableSocksProxy: boolean, browserAlias: string) {
     debugLog(`[id=${this._id}] engaged launch mode for "${browserAlias}"`);
     const executable = registry.findExecutable(browserAlias);
     if (!executable || !executable.browserName)
       throw new Error(`Unsupported browser "${browserAlias}`);
 
     const playwright = createPlaywright('javascript');
-    const socksProxy = await this._enableSocksProxyIfNeeded(playwright);
+    const socksProxy = enableSocksProxy ? await this._enableSocksProxy(playwright) : undefined;
     const browser = await playwright[executable.browserName].launch(internalCallMetadata(), {
       channel: executable.type === 'browser' ? undefined : executable.name,
     });
@@ -194,9 +198,7 @@ class Connection {
     return playwrightDispatcher;
   }
 
-  private async _enableSocksProxyIfNeeded(playwright: Playwright) {
-    if (!process.env.PW_SOCKS_PROXY_PORT)
-      return;
+  private async _enableSocksProxy(playwright: Playwright) {
     const socksProxy = new SocksProxy();
     playwright.options.socksProxyPort = await socksProxy.listen(0);
     debugLog(`[id=${this._id}] started socks proxy on port ${playwright.options.socksProxyPort}`);
