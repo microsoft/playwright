@@ -882,8 +882,9 @@ export class InjectedScript {
   }
 
   _runHighlightOnRaf(selector: ParsedSelector) {
-    if (this._highlight)
-      this._highlight.updateHighlight(this.querySelectorAll(selector, document.documentElement), stringifySelector(selector), false);
+    if (!this._highlight)
+      return;
+    this._highlight.updateHighlight(this.querySelectorAll(selector, document.documentElement), stringifySelector(selector), false);
     requestAnimationFrame(() => this._runHighlightOnRaf(selector));
   }
 

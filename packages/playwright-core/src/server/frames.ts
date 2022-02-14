@@ -1144,7 +1144,7 @@ export class Frame extends SdkObject {
     const pair = await this.resolveFrameForSelectorNoWait(selector);
     if (!pair)
       return;
-    const context = await this._utilityContext();
+    const context = await pair.frame._utilityContext();
     const injectedScript = await context.injectedScript();
     return await injectedScript.evaluate((injected, { parsed }) => {
       return injected.highlight(parsed);
