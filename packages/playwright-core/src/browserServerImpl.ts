@@ -53,7 +53,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
       path = options.wsPath.startsWith('/') ? options.wsPath : `/${options.wsPath}`;
 
     // 2. Start the server
-    const server = new PlaywrightServer(path, Infinity, browser);
+    const server = new PlaywrightServer(path, Infinity, false, browser);
     const wsEndpoint = await server.listen(options.port);
 
     // 3. Return the BrowserServer interface

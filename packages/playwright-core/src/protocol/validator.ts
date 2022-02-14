@@ -249,7 +249,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     headers: tOptional(tAny),
     slowMo: tOptional(tNumber),
     timeout: tOptional(tNumber),
-    enableSocksProxy: tOptional(tBoolean),
     socksProxyRedirectPortForTest: tOptional(tNumber),
   });
   scheme.BrowserTypeLaunchParams = tObject({

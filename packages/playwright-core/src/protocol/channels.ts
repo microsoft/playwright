@@ -603,14 +603,12 @@ export type BrowserTypeConnectParams = {
   headers?: any,
   slowMo?: number,
   timeout?: number,
-  enableSocksProxy?: boolean,
   socksProxyRedirectPortForTest?: number,
 };
 export type BrowserTypeConnectOptions = {
   headers?: any,
   slowMo?: number,
   timeout?: number,
-  enableSocksProxy?: boolean,
   socksProxyRedirectPortForTest?: number,
 };
 export type BrowserTypeConnectResult = {
