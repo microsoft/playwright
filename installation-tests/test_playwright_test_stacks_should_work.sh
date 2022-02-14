@@ -1,8 +1,8 @@
 #!/bin/bash
 source ./initialize_test.sh && initialize_test "$@"
 
-npm install ${PLAYWRIGHT_CORE_TGZ}
-npm install ${PLAYWRIGHT_TEST_TGZ}
+npm_i playwright-core
+npm_i @playwright/test
 PLAYWRIGHT_BROWSERS_PATH="0" npx playwright install chromium
 
 echo "Running playwright test"

@@ -4,8 +4,8 @@ source ./initialize_test.sh && initialize_test "$@"
 # Make sure that browsers path is resolved relative to the `npm install` call location.
 mkdir foo
 cd foo
-npm install ${PLAYWRIGHT_CORE_TGZ}
-PLAYWRIGHT_BROWSERS_PATH="../relative" npm install ${PLAYWRIGHT_TGZ}
+npm_i playwright-core
+PLAYWRIGHT_BROWSERS_PATH="../relative" npm_i playwright
 cd ..
 
 echo "Running sanity.js"

@@ -6,8 +6,8 @@ source ./initialize_test.sh && initialize_test "$@"
 BROWSERS="$(pwd -P)/browsers"
 
 mkdir install-1 && pushd install-1 && npm init -y
-npm install ${PLAYWRIGHT_CORE_TGZ}
-PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" npm install ${PLAYWRIGHT_TGZ}
+npm_i playwright-core
+PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" npm_i playwright
 # Note: the `npm install` would not actually crash, the error
 # is merely logged to the console. To reproduce the error, we should make
 # sure that script's install.js can be run subsequently without unhandled promise rejections.

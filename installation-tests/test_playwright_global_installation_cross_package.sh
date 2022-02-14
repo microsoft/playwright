@@ -1,13 +1,13 @@
 #!/bin/bash
 source ./initialize_test.sh && initialize_test "$@"
 
-npm install ${PLAYWRIGHT_CORE_TGZ}
-PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_FIREFOX_TGZ}
-PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_WEBKIT_TGZ}
-PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_CHROMIUM_TGZ}
+npm_i playwright-core
+PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm_i playwright-firefox
+PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm_i playwright-webkit
+PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm_i playwright-chromium
 
 BROWSERS="$(pwd -P)/browsers"
-PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" npm install ${PLAYWRIGHT_TGZ}
+PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" npm_i playwright
 if [[ ! -d "${BROWSERS}" ]]; then
   echo "Directory for shared browsers was not created!"
   exit 1
