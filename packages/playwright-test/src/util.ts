@@ -47,7 +47,10 @@ function filterStackTrace(e: Error) {
       const functionName = callSite.getFunctionName() || undefined;
       if (!fileName)
         return true;
-      return !fileName.startsWith(PLAYWRIGHT_TEST_PATH) && !fileName.startsWith(PLAYWRIGHT_CORE_PATH) && !fileName.startsWith(EXPECT_PATH) && !isInternalFileName(fileName, functionName);
+      return !fileName.startsWith(PLAYWRIGHT_TEST_PATH) &&
+             !fileName.startsWith(PLAYWRIGHT_CORE_PATH) &&
+             !fileName.startsWith(EXPECT_PATH) &&
+             !isInternalFileName(fileName, functionName);
     }));
   };
   // eslint-disable-next-line
