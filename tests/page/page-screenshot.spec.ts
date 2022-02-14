@@ -357,8 +357,8 @@ it.describe('page screenshot', () => {
 
     it('should work with elementhandle', async ({ page, server }) => {
       await page.goto(server.PREFIX + '/grid.html');
-      const bodyLocator = page.locator('body');
-      expect(await bodyLocator.screenshot({
+      const bodyHandle = await page.$('body');
+      expect(await bodyHandle.screenshot({
         mask: [ page.locator('div').nth(5) ],
       })).toMatchSnapshot('mask-should-work-with-elementhandle.png');
     });
