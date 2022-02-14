@@ -277,8 +277,8 @@ export class Locator implements api.Locator {
 }
 
 export class FrameLocator implements api.FrameLocator {
-  _frame: Frame;
-  _frameSelector: string;
+  private _frame: Frame;
+  private _frameSelector: string;
 
   constructor(frame: Frame, selector: string) {
     this._frame = frame;

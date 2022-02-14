@@ -72,7 +72,7 @@ export class Screenshotter {
     return fullPageSize!;
   }
 
-  async screenshotPage(progress: Progress, options: types.ScreenshotOptions & ScreenshotMaskOption ): Promise<Buffer> {
+  async screenshotPage(progress: Progress, options: types.ScreenshotOptions & ScreenshotMaskOption): Promise<Buffer> {
     const format = validateScreenshotOptions(options);
     return this._queue.postTask(async () => {
       const { viewportSize } = await this._originalViewportSize(progress);

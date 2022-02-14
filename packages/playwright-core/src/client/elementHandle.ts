@@ -16,7 +16,7 @@
 
 import * as channels from '../protocol/channels';
 import { Frame } from './frame';
-import { Locator, FrameLocator } from './locator';
+import { Locator } from './locator';
 import { JSHandle, serializeArgument, parseResult } from './jsHandle';
 import { ChannelOwner } from './channelOwner';
 import { SelectOption, FilePayload, Rect, SelectOptionOptions } from './types';
