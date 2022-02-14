@@ -1,8 +1,8 @@
 #!/bin/bash
 source ./initialize_test.sh && initialize_test "$@"
 
-npm i playwright-core
-OUTPUT=$(npm i --foreground-script playwright)
+npm_i playwright-core
+OUTPUT=$(npm_i --foreground-script playwright)
 if [[ "${OUTPUT}" != *"chromium"* ]]; then
   echo "ERROR: should download chromium"
   exit 1

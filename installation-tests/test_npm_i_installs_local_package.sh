@@ -4,7 +4,7 @@ source ./initialize_test.sh && initialize_test "$@"
 
 PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm_i playwright{,-core,-webkit,-firefox,-chromium}
 # test subshell installation
-OUTPUT=$(npm i --foreground-script @playwright/test)
+OUTPUT=$(npm_i --foreground-script @playwright/test)
 
 SCRIPT=$(cat <<EOF
   const packageJSON = require('./package.json');
