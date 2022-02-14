@@ -4,7 +4,6 @@ source ./initialize_test.sh && initialize_test "$@"
 npm install ${PLAYWRIGHT_CORE_TGZ}
 npm install ${PLAYWRIGHT_TEST_TGZ}
 PLAYWRIGHT_BROWSERS_PATH="0" npx playwright install chromium
-copy_test_scripts
 
 echo "Running playwright test"
 OUTPUT=$(DEBUG=pw:api npx playwright test -c . failing.spec.js 2>&1 || true)

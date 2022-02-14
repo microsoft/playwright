@@ -3,7 +3,6 @@ source ./initialize_test.sh && initialize_test "$@"
 
 npm install ${PLAYWRIGHT_CORE_TGZ}
 npm install ${PLAYWRIGHT_TGZ}
-copy_test_scripts
 
 OUTPUT="$(node validate-dependencies.js)"
 if [[ "${OUTPUT}" != *"PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS"* ]]; then

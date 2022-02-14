@@ -3,6 +3,8 @@
 # break script execution if some command returns non-zero exit code
 set -e
 
+TEST_FRAMEWORK_RUN_ROOT="/tmp/playwright-installation-tests"
+
 function build_packages() {
   local PACKAGE_BUILDER="../../utils/pack_package.js"
   rm -rf ./output
@@ -26,7 +28,7 @@ function cecho(){
   printf "${!1}${2} ${NC}\n"
 }
 
-function complete_test {
+function report_test_result {
   set +x
   if [[ $? == 0 ]]; then
     echo
@@ -37,7 +39,7 @@ function complete_test {
     cecho "RED" "<<<<<<<<<<<<"
     cecho "RED" "  Test '${TEST_FILE}' FAILED"
     cecho "RED" "  To debug locally, run:"
-    cecho "RED" "       bash ${TEST_PATH} --debug"
+    cecho "RED" "       bash ${TEST_FILE}"
     cecho "RED" "<<<<<<<<<<<<"
     echo
   fi
@@ -46,8 +48,6 @@ function complete_test {
 
 function setup_env_variables() {
   # Package paths.
-  SCRIPTS_PATH="$(pwd -P)"
-  TEST_ROOT="/tmp/playwright-installation-tests"
   NODE_VERSION=$(node -e "console.log(process.version.slice(1).split('.')[0])")
 
   PLAYWRIGHT_CORE_TGZ="${PWD}/output/playwright-core.tgz"
@@ -56,15 +56,16 @@ function setup_env_variables() {
   PLAYWRIGHT_WEBKIT_TGZ="${PWD}/output/playwright-webkit.tgz"
   PLAYWRIGHT_FIREFOX_TGZ="${PWD}/output/playwright-firefox.tgz"
   PLAYWRIGHT_TEST_TGZ="${PWD}/output/playwright-test.tgz"
+  PLAYWRIGHT_CHECKOUT="${PWD}/.."
 }
 
 function clean_test_root() {
-  rm -rf "${TEST_ROOT}"
-  mkdir -p "${TEST_ROOT}"
+  rm -rf "${TEST_FRAMEWORK_RUN_ROOT}"
+  mkdir -p "${TEST_FRAMEWORK_RUN_ROOT}"
 }
 
 function initialize_test {
-  trap "complete_test;cd $(pwd -P)" EXIT
+  trap "report_test_result;cd $(pwd -P)" EXIT
   cd "$(dirname $0)"
 
   # cleanup environment
@@ -72,6 +73,7 @@ function initialize_test {
   unset PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD
   export PLAYWRIGHT_BROWSERS_PATH=0
 
+  local SCRIPTS_PATH="$(pwd -P)"
   setup_env_variables
 
   if [[ "$1" != "--no-build" && "$2" != "--no-build" ]]; then
@@ -91,40 +93,18 @@ function initialize_test {
   if [[ "$1" != "--do-not-clean-test-root" && "$2" != "--do-not-clean-test-root" ]]; then
     clean_test_root
   fi
-  cd ${TEST_ROOT}
+  cd ${TEST_FRAMEWORK_RUN_ROOT}
   TEST_FILE=$(basename $0)
   TEST_NAME=$(basename ${0%%.sh})
-  TEST_PATH="${PWD}/${TEST_FILE}"
 
   cecho "YELLOW" ">>>>>>>>>>>>"
   cecho "YELLOW" "  Running test - '${TEST_FILE}'"
   cecho "YELLOW" ">>>>>>>>>>>>"
   mkdir ${TEST_NAME} && cd ${TEST_NAME} && npm init -y 1>/dev/null 2>/dev/null
 
-  # enable bash lines logging if --debug is passed
-  if [[ $1 == "--debug" || $2 == "--debug" ]]; then
-    set -x
-  fi
-}
+  cp "${SCRIPTS_PATH}/fixture-scripts/"* .
 
-function copy_test_scripts {
-  cp "${SCRIPTS_PATH}/inspector-custom-executable.js" .
-  cp "${SCRIPTS_PATH}/sanity.js" .
-  cp "${SCRIPTS_PATH}/screencast.js" .
-  cp "${SCRIPTS_PATH}/validate-dependencies.js" .
-  cp "${SCRIPTS_PATH}/validate-dependencies-skip-executable-path.js" .
-  cp "${SCRIPTS_PATH}/esm.mjs" .
-  cp "${SCRIPTS_PATH}/esm-playwright.mjs" .
-  cp "${SCRIPTS_PATH}/esm-playwright-chromium.mjs" .
-  cp "${SCRIPTS_PATH}/esm-playwright-firefox.mjs" .
-  cp "${SCRIPTS_PATH}/esm-playwright-webkit.mjs" .
-  cp "${SCRIPTS_PATH}/esm-playwright-test.mjs" .
-  cp "${SCRIPTS_PATH}/sanity-electron.js" .
-  cp "${SCRIPTS_PATH}/electron-app.js" .
-  cp "${SCRIPTS_PATH}/driver-client.js" .
-  cp "${SCRIPTS_PATH}/sample.spec.js" .
-  cp "${SCRIPTS_PATH}/failing.spec.js" .
-  cp "${SCRIPTS_PATH}/read-json-report.js" .
-  cp "${SCRIPTS_PATH}/playwright-test-types.ts" .
+  # Enable bash lines logging.
+  set -x
 }
 

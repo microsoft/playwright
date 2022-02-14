@@ -1,4 +1,4 @@
-const playwright = require('playwright');
+const playwright = require('playwright-core');
 const { execSync } = require('child_process');
 const path = require('path');
 

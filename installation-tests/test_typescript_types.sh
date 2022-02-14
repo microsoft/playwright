@@ -1,7 +1,6 @@
 #!/bin/bash
 source ./initialize_test.sh && initialize_test "$@"
 
-copy_test_scripts
 # @types/node@14.18.9 is the last version which is compatibel with typescript@3.7.5.
 # After @types/node@14.18.9 URLSearchParams from @types/node conflicts with typescript's
 # shipped types and it results in a type error / build failure.

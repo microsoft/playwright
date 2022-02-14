@@ -44,7 +44,6 @@ if [[ "${OUTPUT}" != *"firefox"* ]]; then
   exit 1
 fi
 
-copy_test_scripts
 echo "Running sanity.js"
 node sanity.js playwright none
 PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" node sanity.js playwright
