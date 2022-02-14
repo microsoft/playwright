@@ -34,7 +34,7 @@ import { CallMetadata, internalCallMetadata, SdkObject } from './instrumentation
 import type InjectedScript from './injected/injectedScript';
 import type { ElementStateWithoutStable, FrameExpectParams, InjectedScriptPoll, InjectedScriptProgress } from './injected/injectedScript';
 import { isSessionClosedError } from './protocolError';
-import { isInvalidSelectorError, splitSelectorByFrame, stringifySelector } from './common/selectorParser';
+import { isInvalidSelectorError, splitSelectorByFrame, stringifySelector, ParsedSelector } from './common/selectorParser';
 import { SelectorInfo } from './selectors';
 
 type ContextData = {
@@ -784,6 +784,14 @@ export class Frame extends SdkObject {
     const result = await arrayHandle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
     arrayHandle.dispose();
     return result;
+  }
+
+  async maskSelectors(selectors: ParsedSelector[]): Promise<void> {
+    const context = await this._utilityContext();
+    const injectedScript = await context.injectedScript();
+    await injectedScript.evaluate((injected, { parsed }) => {
+      injected.maskSelectors(parsed);
+    }, { parsed: selectors });
   }
 
   async querySelectorAll(selector: string): Promise<dom.ElementHandle<Element>[]> {

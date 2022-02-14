@@ -8071,6 +8071,12 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     disableAnimations?: boolean;
 
     /**
+     * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
+     * `#FF00FF` that completely covers its bounding box.
+     */
+    mask?: Array<Locator>;
+
+    /**
      * Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
      * Defaults to `false`.
      */
@@ -9372,6 +9378,12 @@ export interface Locator {
      * their duration:
      */
     disableAnimations?: boolean;
+
+    /**
+     * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
+     * `#FF00FF` that completely covers its bounding box.
+     */
+    mask?: Array<Locator>;
 
     /**
      * Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
@@ -15721,6 +15733,12 @@ export interface PageScreenshotOptions {
    * `false`.
    */
   fullPage?: boolean;
+
+  /**
+   * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
+   * `#FF00FF` that completely covers its bounding box.
+   */
+  mask?: Array<Locator>;
 
   /**
    * Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.

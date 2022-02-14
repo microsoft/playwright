@@ -913,11 +913,18 @@ saved to the disk.
 
 Specify screenshot type, defaults to `png`.
 
+## screenshot-option-mask
+- `mask` <[Array]<[Locator]>>
+
+Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with
+a pink box `#FF00FF` that completely covers its bounding box.
+
 ## screenshot-options-common-list
 - %%-screenshot-option-disable-animations-%%
 - %%-screenshot-option-omit-background-%%
 - %%-screenshot-option-quality-%%
 - %%-screenshot-option-path-%%
 - %%-screenshot-option-type-%%
+- %%-screenshot-option-mask-%%
 - %%-input-timeout-%%
 

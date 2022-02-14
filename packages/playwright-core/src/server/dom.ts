@@ -18,6 +18,7 @@ import * as mime from 'mime';
 import * as injectedScriptSource from '../generated/injectedScriptSource';
 import * as channels from '../protocol/channels';
 import { isSessionClosedError } from './protocolError';
+import { ScreenshotMaskOption } from './screenshotter';
 import * as frames from './frames';
 import type { InjectedScript, InjectedScriptPoll, LogEntry, HitTargetInterceptionResult } from './injected/injectedScript';
 import { CallMetadata } from './instrumentation';
@@ -772,7 +773,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page._delegate.getBoundingBox(this);
   }
 
-  async screenshot(metadata: CallMetadata, options: types.ElementScreenshotOptions = {}): Promise<Buffer> {
+  async screenshot(metadata: CallMetadata, options: types.ElementScreenshotOptions & ScreenshotMaskOption = {}): Promise<Buffer> {
     const controller = new ProgressController(metadata, this);
     return controller.run(
         progress => this._page._screenshotter.screenshotElement(progress, this, options),

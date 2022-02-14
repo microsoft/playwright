@@ -15,6 +15,7 @@
  */
 
 import { ElementHandle } from '../server/dom';
+import { Frame } from '../server/frames';
 import * as js from '../server/javascript';
 import * as channels from '../protocol/channels';
 import { DispatcherScope, existingDispatcher, lookupNullableDispatcher } from './dispatcher';
@@ -171,7 +172,11 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements chann
   }
 
   async screenshot(params: channels.ElementHandleScreenshotParams, metadata: CallMetadata): Promise<channels.ElementHandleScreenshotResult> {
-    return { binary: (await this._elementHandle.screenshot(metadata, params)).toString('base64') };
+    const mask: { frame: Frame, selector: string }[] = (params.mask || []).map(({ frame, selector }) => ({
+      frame: (frame as FrameDispatcher)._object,
+      selector,
+    }));
+    return { binary: (await this._elementHandle.screenshot(metadata, { ...params, mask })).toString('base64') };
   }
 
   async querySelector(params: channels.ElementHandleQuerySelectorParams, metadata: CallMetadata): Promise<channels.ElementHandleQuerySelectorResult> {

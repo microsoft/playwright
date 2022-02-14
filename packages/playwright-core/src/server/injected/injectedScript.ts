@@ -873,6 +873,17 @@ export class InjectedScript {
     return error;
   }
 
+  maskSelectors(selectors: ParsedSelector[]) {
+    if (this._highlight)
+      this.hideHighlight();
+    this._highlight = new Highlight(false);
+    this._highlight.install();
+    const elements = [];
+    for (const selector of selectors)
+      elements.push(this.querySelectorAll(selector, document.documentElement));
+    this._highlight.maskElements(elements.flat());
+  }
+
   highlight(selector: ParsedSelector) {
     if (!this._highlight) {
       this._highlight = new Highlight(false);
