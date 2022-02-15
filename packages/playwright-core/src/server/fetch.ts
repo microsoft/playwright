@@ -18,7 +18,7 @@ import * as http from 'http';
 import * as https from 'https';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { SocksProxyAgent } from 'socks-proxy-agent';
-import { pipeline, Readable, Transform } from 'stream';
+import { pipeline, Readable, Transform, TransformCallback } from 'stream';
 import url from 'url';
 import zlib from 'zlib';
 import { HTTPCredentials } from '../../types/types';
@@ -341,13 +341,6 @@ export abstract class APIRequestContext extends SdkObject {
           });
         };
 
-        // These requests don't have response body.
-        if (['HEAD', 'PUT', 'TRACE'].includes(options.method!)) {
-          notifyBodyFinished();
-          request.destroy();
-          return;
-        }
-
         let body: Readable = response;
         let transform: Transform | undefined;
         const encoding = response.headers['content-encoding'];
@@ -362,7 +355,9 @@ export abstract class APIRequestContext extends SdkObject {
           transform = zlib.createInflate();
         }
         if (transform) {
-          body = pipeline(response, transform, e => {
+          // Brotli and deflate decompressors throw if the input stream is empty.
+          const emptyStreamTransform = new SafeEmptyStreamTransform(notifyBodyFinished);
+          body = pipeline(response, emptyStreamTransform, transform, e => {
             if (e)
               reject(new Error(`failed to decompress '${encoding}' encoding: ${e}`));
           });
@@ -404,6 +399,26 @@ export abstract class APIRequestContext extends SdkObject {
         request.write(postData);
       request.end();
     });
+  }
+}
+
+class SafeEmptyStreamTransform extends Transform {
+  private _receivedSomeData: boolean = false;
+  private _onEmptyStreamCallback: () => void;
+
+  constructor(onEmptyStreamCallback: () => void) {
+    super();
+    this._onEmptyStreamCallback = onEmptyStreamCallback;
+  }
+  override _transform(chunk: any, encoding: BufferEncoding, callback: TransformCallback): void {
+    this._receivedSomeData = true;
+    callback(null, chunk);
+  }
+  override _flush(callback: TransformCallback): void {
+    if (this._receivedSomeData)
+      callback(null);
+    else
+      this._onEmptyStreamCallback();
   }
 }
 
