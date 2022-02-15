@@ -50,7 +50,7 @@ for (const method of ['fetch', 'delete', 'get', 'head', 'patch', 'post', 'put'] 
     expect(response.ok()).toBeTruthy();
     expect(response.headers()['content-type']).toBe('application/json; charset=utf-8');
     expect(response.headersArray()).toContainEqual({ name: 'Content-Type', value: 'application/json; charset=utf-8' });
-    expect(await response.text()).toBe(['head', 'put'].includes(method) ? '' : '{"foo": "bar"}\n');
+    expect(await response.text()).toBe('head' === method ? '' : '{"foo": "bar"}\n');
   });
 }
 

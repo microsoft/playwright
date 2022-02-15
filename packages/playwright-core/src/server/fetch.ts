@@ -356,8 +356,8 @@ export abstract class APIRequestContext extends SdkObject {
         }
         if (transform) {
           // Brotli and deflate decompressors throw if the input stream is empty.
-          transform = new SafeEmptyStreamTransform(transform, notifyBodyFinished);
-          body = pipeline(response, transform, e => {
+          const emptyStreamTransform = new SafeEmptyStreamTransform(notifyBodyFinished);
+          body = pipeline(response, emptyStreamTransform, transform, e => {
             if (e)
               reject(new Error(`failed to decompress '${encoding}' encoding: ${e}`));
           });
@@ -403,22 +403,20 @@ export abstract class APIRequestContext extends SdkObject {
 }
 
 class SafeEmptyStreamTransform extends Transform {
-  private _original: Transform;
   private _receivedSomeData: boolean = false;
   private _onEmptyStreamCallback: () => void;
 
-  constructor(original: Transform, onEmptyStreamCallback: () => void) {
+  constructor(onEmptyStreamCallback: () => void) {
     super();
-    this._original = original;
     this._onEmptyStreamCallback = onEmptyStreamCallback;
   }
   override _transform(chunk: any, encoding: BufferEncoding, callback: TransformCallback): void {
     this._receivedSomeData = true;
-    this._original._transform(chunk, encoding, callback);
+    callback(null, chunk);
   }
   override _flush(callback: TransformCallback): void {
     if (this._receivedSomeData)
-      this._original._flush(callback);
+      callback(null);
     else
       this._onEmptyStreamCallback();
   }
