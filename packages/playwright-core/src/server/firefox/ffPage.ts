@@ -53,6 +53,7 @@ export class FFPage implements PageDelegate {
   private _eventListeners: RegisteredListener[];
   private _workers = new Map<string, { frameId: string, session: FFSession }>();
   private _screencastId: string | undefined;
+  private _initScripts: { script: string, worldName?: string }[] = [];
 
   constructor(session: FFSession, browserContext: FFBrowserContext, opener: FFPage | null) {
     this._session = session;
@@ -112,7 +113,7 @@ export class FFPage implements PageDelegate {
     });
     // Ideally, we somehow ensure that utility world is created before Page.ready arrives, but currently it is racy.
     // Therefore, we can end up with an initialized page without utility world, although very unlikely.
-    this._session.send('Page.addScriptToEvaluateOnNewDocument', { script: '', worldName: UTILITY_WORLD_NAME }).catch(e => this._markAsError(e));
+    this.evaluateOnNewDocument('', UTILITY_WORLD_NAME).catch(e => this._markAsError(e));
   }
 
   async _markAsError(error: Error) {
@@ -393,8 +394,9 @@ export class FFPage implements PageDelegate {
     return success;
   }
 
-  async evaluateOnNewDocument(source: string): Promise<void> {
-    await this._session.send('Page.addScriptToEvaluateOnNewDocument', { script: source });
+  async evaluateOnNewDocument(script: string, worldName?: string): Promise<void> {
+    this._initScripts.push({ script, worldName });
+    await this._session.send('Page.setInitScripts', { scripts: this._initScripts });
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
