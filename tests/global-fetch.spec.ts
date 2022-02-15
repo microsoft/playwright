@@ -50,7 +50,7 @@ for (const method of ['fetch', 'delete', 'get', 'head', 'patch', 'post', 'put'] 
     expect(response.ok()).toBeTruthy();
     expect(response.headers()['content-type']).toBe('application/json; charset=utf-8');
     expect(response.headersArray()).toContainEqual({ name: 'Content-Type', value: 'application/json; charset=utf-8' });
-    expect(await response.text()).toBe(['head', 'put'].includes(method) ? '' : '{"foo": "bar"}\n');
+    expect(await response.text()).toBe('head' === method ? '' : '{"foo": "bar"}\n');
   });
 }
 
@@ -360,6 +360,21 @@ it('should not fail on empty body with encoding', async ({ playwright, server })
       expect(response.status()).toBe(200);
       expect((await response.body()).length).toBe(0);
     }
+  }
+  await request.dispose();
+});
+
+it('should return body for failing requests', async ({ playwright, server }) => {
+  const request = await playwright.request.newContext();
+  for (const method of ['head', 'put', 'trace']) {
+    server.setRoute('/empty.html', (req, res) => {
+      res.writeHead(404, { 'Content-Length': 10, 'Content-Type': 'text/plain' });
+      res.end('Not found.');
+    });
+    const response = await request.fetch(server.EMPTY_PAGE, { method });
+    expect(response.status()).toBe(404);
+    // HEAD response returns empty body in node http module.
+    expect(await response.text()).toBe(method === 'head' ? '' : 'Not found.');
   }
   await request.dispose();
 });
