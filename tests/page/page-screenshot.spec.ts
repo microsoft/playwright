@@ -341,6 +341,7 @@ it.describe('page screenshot', () => {
 
   it.describe('mask option', () => {
     it('should work', async ({ page, server }) => {
+      await page.setViewportSize({ width: 500, height: 500 });
       await page.goto(server.PREFIX + '/grid.html');
       expect(await page.screenshot({
         mask: [ page.locator('div').nth(5) ],
@@ -348,6 +349,7 @@ it.describe('page screenshot', () => {
     });
 
     it('should work with locator', async ({ page, server }) => {
+      await page.setViewportSize({ width: 500, height: 500 });
       await page.goto(server.PREFIX + '/grid.html');
       const bodyLocator = page.locator('body');
       expect(await bodyLocator.screenshot({
@@ -356,6 +358,7 @@ it.describe('page screenshot', () => {
     });
 
     it('should work with elementhandle', async ({ page, server }) => {
+      await page.setViewportSize({ width: 500, height: 500 });
       await page.goto(server.PREFIX + '/grid.html');
       const bodyHandle = await page.$('body');
       expect(await bodyHandle.screenshot({
@@ -364,6 +367,7 @@ it.describe('page screenshot', () => {
     });
 
     it('should mask multiple elements', async ({ page, server }) => {
+      await page.setViewportSize({ width: 500, height: 500 });
       await page.goto(server.PREFIX + '/grid.html');
       expect(await page.screenshot({
         mask: [
@@ -374,6 +378,7 @@ it.describe('page screenshot', () => {
     });
 
     it('should mask inside iframe', async ({ page, server }) => {
+      await page.setViewportSize({ width: 500, height: 500 });
       await page.goto(server.PREFIX + '/grid.html');
       await attachFrame(page, 'frame1', server.PREFIX + '/grid.html');
       await page.addStyleTag({ content: 'iframe { border: none; }' });
@@ -386,6 +391,7 @@ it.describe('page screenshot', () => {
     });
 
     it('should mask in parallel', async ({ page, server }) => {
+      await page.setViewportSize({ width: 500, height: 500 });
       await attachFrame(page, 'frame1', server.PREFIX + '/grid.html');
       await attachFrame(page, 'frame2', server.PREFIX + '/grid.html');
       await page.addStyleTag({ content: 'iframe { border: none; }' });
@@ -402,6 +408,7 @@ it.describe('page screenshot', () => {
     });
 
     it('should remove mask after screenshot', async ({ page, server }) => {
+      await page.setViewportSize({ width: 500, height: 500 });
       await page.goto(server.PREFIX + '/grid.html');
       const screenshot1 = await page.screenshot();
       await page.screenshot({
