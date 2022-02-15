@@ -414,6 +414,10 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
         // Process iframe src attribute before bailing out since it depends on a symbol, not the DOM.
         if (nodeName === 'IFRAME' || nodeName === 'FRAME') {
           const element = node as Element;
+          // Skip iframes which are not inside document's body as they are not visisble.
+          // See https://github.com/microsoft/playwright/issues/12005.
+          if (!element.closest('body'))
+            return;
           const frameId = (element as any)[kSnapshotFrameId];
           const name = 'src';
           const value = frameId ? `/snapshot/${frameId}` : '';
