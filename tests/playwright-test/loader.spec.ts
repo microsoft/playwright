@@ -267,6 +267,24 @@ test('should import esm from ts when package.json has type module in experimenta
   expect(result.exitCode).toBe(0);
 });
 
+test('should propagate subprocess exit code in experimental mode', async ({ runInlineTest }) => {
+  // We only support experimental esm mode on Node 16+
+  test.skip(parseInt(process.version.slice(1), 10) < 16);
+  const result = await runInlineTest({
+    'package.json': JSON.stringify({ type: 'module' }),
+    'a.test.ts': `
+      const { test } = pwt;
+      test('failing test', ({}, testInfo) => {
+        expect(1).toBe(2);
+      });
+    `,
+  }, {}, {
+    PW_EXPERIMENTAL_TS_ESM: true
+  });
+
+  expect(result.exitCode).toBe(1);
+});
+
 test('should filter stack trace for simple expect', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'expect-test.spec.ts': `
