@@ -376,6 +376,7 @@ it.describe('page screenshot', () => {
     it('should mask inside iframe', async ({ page, server }) => {
       await page.goto(server.PREFIX + '/grid.html');
       await attachFrame(page, 'frame1', server.PREFIX + '/grid.html');
+      await page.addStyleTag({ content: 'iframe { border: none; }' });
       expect(await page.screenshot({
         mask: [
           page.locator('div').nth(5),
@@ -387,6 +388,7 @@ it.describe('page screenshot', () => {
     it('should mask in parallel', async ({ page, server }) => {
       await attachFrame(page, 'frame1', server.PREFIX + '/grid.html');
       await attachFrame(page, 'frame2', server.PREFIX + '/grid.html');
+      await page.addStyleTag({ content: 'iframe { border: none; }' });
       const screenshots = await Promise.all([
         page.screenshot({
           mask: [ page.frameLocator('#frame1').locator('div').nth(1) ],
