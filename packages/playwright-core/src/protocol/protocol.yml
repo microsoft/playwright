@@ -1003,6 +1003,13 @@ Page:
         fullPage: boolean?
         disableAnimations: boolean?
         clip: Rect?
+        mask:
+          type: array?
+          items:
+            type: object
+            properties:
+              frame: Frame
+              selector: string
       returns:
         binary: binary
 
@@ -2155,6 +2162,13 @@ ElementHandle:
         quality: number?
         omitBackground: boolean?
         disableAnimations: boolean?
+        mask:
+          type: array?
+          items:
+            type: object
+            properties:
+              frame: Frame
+              selector: string
       returns:
         binary: binary
 

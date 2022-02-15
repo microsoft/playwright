@@ -16,6 +16,7 @@
 
 import * as channels from '../protocol/channels';
 import { Frame } from './frame';
+import { Locator } from './locator';
 import { JSHandle, serializeArgument, parseResult } from './jsHandle';
 import { ChannelOwner } from './channelOwner';
 import { SelectOption, FilePayload, Rect, SelectOptionOptions } from './types';
@@ -173,10 +174,16 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
     return value === undefined ? null : value;
   }
 
-  async screenshot(options: channels.ElementHandleScreenshotOptions & { path?: string } = {}): Promise<Buffer> {
-    const copy = { ...options };
+  async screenshot(options: Omit<channels.ElementHandleScreenshotOptions, 'mask'> & { path?: string, mask?: Locator[] } = {}): Promise<Buffer> {
+    const copy: channels.ElementHandleScreenshotOptions = { ...options, mask: undefined };
     if (!copy.type)
       copy.type = determineScreenshotType(options);
+    if (options.mask) {
+      copy.mask = options.mask.map(locator => ({
+        frame: locator._frame._channel,
+        selector: locator._selector,
+      }));
+    }
     const result = await this._elementChannel.screenshot(copy);
     const buffer = Buffer.from(result.binary, 'base64');
     if (options.path) {

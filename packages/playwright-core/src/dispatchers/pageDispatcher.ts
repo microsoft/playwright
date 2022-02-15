@@ -151,7 +151,11 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel> imple
   }
 
   async screenshot(params: channels.PageScreenshotParams, metadata: CallMetadata): Promise<channels.PageScreenshotResult> {
-    return { binary: (await this._page.screenshot(metadata, params)).toString('base64') };
+    const mask: { frame: Frame, selector: string }[] = (params.mask || []).map(({ frame, selector }) => ({
+      frame: (frame as FrameDispatcher)._object,
+      selector,
+    }));
+    return { binary: (await this._page.screenshot(metadata, { ...params, mask })).toString('base64') };
   }
 
   async close(params: channels.PageCloseParams, metadata: CallMetadata): Promise<void> {

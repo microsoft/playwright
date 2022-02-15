@@ -20,7 +20,7 @@ import * as frames from './frames';
 import * as input from './input';
 import * as js from './javascript';
 import * as network from './network';
-import { Screenshotter } from './screenshotter';
+import { Screenshotter, ScreenshotMaskOption } from './screenshotter';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import * as types from './types';
 import { BrowserContext } from './browserContext';
@@ -424,7 +424,7 @@ export class Page extends SdkObject {
     route.continue();
   }
 
-  async screenshot(metadata: CallMetadata, options: types.ScreenshotOptions = {}): Promise<Buffer> {
+  async screenshot(metadata: CallMetadata, options: types.ScreenshotOptions & ScreenshotMaskOption = {}): Promise<Buffer> {
     const controller = new ProgressController(metadata, this);
     return controller.run(
         progress => this._screenshotter.screenshotPage(progress, options),

@@ -26,8 +26,8 @@ import { parseResult, serializeArgument } from './jsHandle';
 import { escapeWithQuotes } from '../utils/stringUtils';
 
 export class Locator implements api.Locator {
-  private _frame: Frame;
-  private _selector: string;
+  _frame: Frame;
+  _selector: string;
 
   constructor(frame: Frame, selector: string, options?: { hasText?: string | RegExp, has?: Locator }) {
     this._frame = frame;
@@ -200,7 +200,7 @@ export class Locator implements api.Locator {
     return this._frame.press(this._selector, key, { strict: true, ...options });
   }
 
-  async screenshot(options: channels.ElementHandleScreenshotOptions & { path?: string } = {}): Promise<Buffer> {
+  async screenshot(options: Omit<channels.ElementHandleScreenshotOptions, 'mask'> & { path?: string, mask?: Locator[] } = {}): Promise<Buffer> {
     return this._withElement((h, timeout) => h.screenshot({ ...options, timeout }), options.timeout);
   }
 

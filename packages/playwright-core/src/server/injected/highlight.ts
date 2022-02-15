@@ -175,6 +175,28 @@ export class Highlight {
     }
   }
 
+  maskElements(elements: Element[]) {
+    const boxes = elements.map(e => e.getBoundingClientRect());
+    const pool = this._highlightElements;
+    this._highlightElements = [];
+    for (const box of boxes) {
+      const highlightElement = pool.length ? pool.shift()! : this._createHighlightElement();
+      highlightElement.style.backgroundColor = '#F0F';
+      highlightElement.style.left = box.x + 'px';
+      highlightElement.style.top = box.y + 'px';
+      highlightElement.style.width = box.width + 'px';
+      highlightElement.style.height = box.height + 'px';
+      highlightElement.style.display = 'block';
+      this._highlightElements.push(highlightElement);
+    }
+
+    for (const highlightElement of pool) {
+      highlightElement.style.display = 'none';
+      this._highlightElements.push(highlightElement);
+    }
+  }
+
+
   private _createHighlightElement(): HTMLElement {
     const highlightElement = document.createElement('x-pw-highlight');
     highlightElement.style.position = 'absolute';

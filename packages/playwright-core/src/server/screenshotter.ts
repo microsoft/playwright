@@ -18,15 +18,22 @@
 import * as dom from './dom';
 import { helper } from './helper';
 import { Page } from './page';
+import { Frame } from './frames';
+import { ParsedSelector } from './common/selectorParser';
 import * as types from './types';
 import { Progress } from './progress';
 import { assert } from '../utils/utils';
+import { MultiMap } from '../utils/multimap';
 
 declare global {
   interface Window {
     __cleanupScreenshot?: () => void;
   }
 }
+
+export type ScreenshotMaskOption = {
+  mask?: { frame: Frame, selector: string}[],
+};
 
 export class Screenshotter {
   private _queue = new TaskQueue();
@@ -65,7 +72,7 @@ export class Screenshotter {
     return fullPageSize!;
   }
 
-  async screenshotPage(progress: Progress, options: types.ScreenshotOptions): Promise<Buffer> {
+  async screenshotPage(progress: Progress, options: types.ScreenshotOptions & ScreenshotMaskOption): Promise<Buffer> {
     const format = validateScreenshotOptions(options);
     return this._queue.postTask(async () => {
       const { viewportSize } = await this._originalViewportSize(progress);
@@ -92,7 +99,7 @@ export class Screenshotter {
     });
   }
 
-  async screenshotElement(progress: Progress, handle: dom.ElementHandle, options: types.ElementScreenshotOptions = {}): Promise<Buffer> {
+  async screenshotElement(progress: Progress, handle: dom.ElementHandle, options: types.ElementScreenshotOptions & ScreenshotMaskOption = {}): Promise<Buffer> {
     const format = validateScreenshotOptions(options);
     return this._queue.postTask(async () => {
       const { viewportSize } = await this._originalViewportSize(progress);
@@ -210,7 +217,22 @@ export class Screenshotter {
     }));
   }
 
-  private async _screenshot(progress: Progress, format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, fitsViewport: boolean | undefined, options: types.ElementScreenshotOptions): Promise<Buffer> {
+  async _maskElements(progress: Progress, options: ScreenshotMaskOption) {
+    const framesToParsedSelectors: MultiMap<Frame, ParsedSelector> = new MultiMap();
+    await Promise.all((options.mask || []).map(async ({ frame, selector }) => {
+      const pair = await frame.resolveFrameForSelectorNoWait(selector);
+      if (pair)
+        framesToParsedSelectors.set(pair.frame, pair.info.parsed);
+    }));
+    progress.throwIfAborted(); // Avoid extra work.
+
+    await Promise.all([...framesToParsedSelectors.keys()].map(async frame => {
+      await frame.maskSelectors(framesToParsedSelectors.get(frame));
+    }));
+    progress.cleanupWhenAborted(() => this._page.hideHighlight());
+  }
+
+  private async _screenshot(progress: Progress, format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, fitsViewport: boolean | undefined, options: types.ElementScreenshotOptions & ScreenshotMaskOption): Promise<Buffer> {
     if ((options as any).__testHookBeforeScreenshot)
       await (options as any).__testHookBeforeScreenshot();
     progress.throwIfAborted(); // Screenshotting is expensive - avoid extra work.
@@ -221,8 +243,15 @@ export class Screenshotter {
     }
     progress.throwIfAborted(); // Avoid extra work.
 
+    await this._maskElements(progress, options);
+    progress.throwIfAborted(); // Avoid extra work.
+
     const buffer = await this._page._delegate.takeScreenshot(progress, format, documentRect, viewportRect, options.quality, fitsViewport);
     progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
+
+    await this._page.hideHighlight();
+    progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
+
     if (shouldSetDefaultBackground)
       await this._page._delegate.setBackgroundColor();
     progress.throwIfAborted(); // Avoid side effects.
