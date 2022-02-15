@@ -19,6 +19,7 @@ import { test as it, expect } from './pageTest';
 import { verifyViewport, attachFrame } from '../config/utils';
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 
 it.describe('page screenshot', () => {
   it.skip(({ browserName, headless }) => browserName === 'firefox' && !headless, 'Firefox headed produces a different image.');
@@ -188,7 +189,7 @@ it.describe('page screenshot', () => {
     expect(screenshot).toMatchSnapshot('screenshot-canvas.png', { threshold: 0.4 });
   });
 
-  it('should capture canvas changes', async ({ page, isElectron }) => {
+  it('should capture canvas changes', async ({ page, isElectron, isMac }) => {
     it.fail(browserName === 'webkit' && isMac && parseInt(os.release(), 10) <= 20, 'https://github.com/microsoft/playwright/issues/8796');
     it.skip(isElectron);
     await page.goto('data:text/html,<canvas></canvas>');
