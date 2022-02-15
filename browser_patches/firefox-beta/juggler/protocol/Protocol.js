@@ -97,6 +97,10 @@ pageTypes.Clip = {
   height: t.Number,
 };
 
+pageTypes.InitScript = {
+  script: t.String,
+  worldName: t.Optional(t.String),
+};
 
 const runtimeTypes = {};
 runtimeTypes.RemoteObject = {
@@ -381,10 +385,10 @@ const Browser = {
         hidden: t.Boolean,
       }
     },
-    'addScriptToEvaluateOnNewDocument': {
+    'setInitScripts': {
       params: {
         browserContextId: t.Optional(t.String),
-        script: t.String,
+        scripts: t.Array(pageTypes.InitScript),
       }
     },
     'addBinding': {
@@ -802,10 +806,9 @@ const Page = {
         rect: t.Optional(pageTypes.Rect),
       },
     },
-    'addScriptToEvaluateOnNewDocument': {
+    'setInitScripts': {
       params: {
-        script: t.String,
-        worldName: t.Optional(t.String),
+        scripts: t.Array(pageTypes.InitScript)
       }
     },
     'navigate': {

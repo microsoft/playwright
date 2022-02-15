@@ -253,8 +253,8 @@ class BrowserHandler {
     await this._targetRegistry.browserContextForId(browserContextId).applySetting('scrollbarsHidden', nullToUndefined(hidden));
   }
 
-  async ['Browser.addScriptToEvaluateOnNewDocument']({browserContextId, script}) {
-    await this._targetRegistry.browserContextForId(browserContextId).addScriptToEvaluateOnNewDocument(script);
+  async ['Browser.setInitScripts']({browserContextId, scripts}) {
+    await this._targetRegistry.browserContextForId(browserContextId).setInitScripts(scripts);
   }
 
   async ['Browser.addBinding']({browserContextId, worldName, name, script}) {
