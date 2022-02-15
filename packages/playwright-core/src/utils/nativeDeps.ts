@@ -294,6 +294,7 @@ export const deps: any = {
       'libxi6',
       'libxrender1',
       'libxt6',
+      'libxtst6'
     ],
     webkit: [
       'gstreamer1.0-libav',
@@ -646,7 +647,6 @@ deps['ubuntu20.04-arm64'] = {
   chromium: [...deps['ubuntu20.04'].chromium],
   firefox: [
     ...deps['ubuntu20.04'].firefox,
-    'libxtst6'
   ],
   webkit: [
     ...deps['ubuntu20.04'].webkit,
