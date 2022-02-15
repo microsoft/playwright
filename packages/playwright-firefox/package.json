@@ -1,6 +1,6 @@
 {
   "name": "playwright-firefox",
-  "version": "1.19.0",
+  "version": "1.19.1",
   "description": "A high-level API to automate Firefox",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
@@ -26,6 +26,6 @@
     "install": "node install.js"
   },
   "dependencies": {
-    "playwright-core": "1.19.0"
+    "playwright-core": "1.19.1"
   }
 }
