@@ -598,6 +598,7 @@ it.describe('page screenshot animations', () => {
     await page.goto(server.PREFIX + '/rotate-z.html');
     await page.evaluate(async () => {
       window.animation = document.getAnimations()[0];
+      await window.animation.ready;
       window.animation.updatePlaybackRate(0);
       await window.animation.ready;
       window.animation.currentTime = 500;
