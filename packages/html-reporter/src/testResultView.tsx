@@ -75,12 +75,12 @@ export const TestResultView: React.FC<{
     </AutoChip>}
 
     {!!traces.length && <AutoChip header='Traces'>
-      {traces.map((a, i) => <div key={`trace-${i}`}>
-        <a href={`trace/index.html?trace=${new URL(a.path!, window.location.href)}`}>
+      {<div>
+        <a href={`trace/index.html?${traces.map((a, i) => `trace=${new URL(a.path!, window.location.href)}`).join('&')}`}>
           <img src={traceImage} style={{ width: 192, height: 117, marginLeft: 20 }} />
         </a>
-        <AttachmentLink attachment={a}></AttachmentLink>
-      </div>)}
+        {traces.map((a, i) => <AttachmentLink key={`trace-${i}`} attachment={a} linkName={traces.length === 1 ? 'trace' : `trace-${i + 1}`}></AttachmentLink>)}
+      </div>}
     </AutoChip>}
 
     {!!videos.length && <AutoChip header='Videos'>
