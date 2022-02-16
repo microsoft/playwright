@@ -279,6 +279,40 @@ test('should show trace title', async ({ runInlineTest, page, showReport }) => {
   await expect(page.locator('.workbench .title')).toHaveText('a.test.js:6 › passes');
 });
 
+test('should show multi trace source', async ({ runInlineTest, page, server, showReport }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = { use: { trace: 'on' } };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('passes', async ({ playwright, page }) => {
+        await page.evaluate('2 + 2');
+        const request = await playwright.request.newContext();
+        await request.get('${server.EMPTY_PAGE}');
+        await request.dispose();
+      });
+    `,
+  }, { reporter: 'dot,html' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+
+  await showReport();
+  await page.click('text=passes');
+  // Expect one image-link to trace viewer and 2 separate download links
+  await expect(page.locator('img')).toHaveCount(1);
+  await expect(page.locator('a', { hasText: 'trace' })).toHaveText(['trace-1', 'trace-2']);
+
+  await page.click('img');
+  await page.click('.action-title >> text=page.evaluate');
+  await page.click('text=Source');
+  await expect(page.locator('.source-line-running')).toContainText('page.evaluate');
+
+  await page.click('.action-title >> text=apiRequestContext.get');
+  await page.click('text=Source');
+  await expect(page.locator('.source-line-running')).toContainText('request.get');
+});
+
 test('should show timed out steps', async ({ runInlineTest, page, showReport }) => {
   const result = await runInlineTest({
     'playwright.config.js': `
