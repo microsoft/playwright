@@ -281,7 +281,7 @@ it('headless and headful should use same default fonts', async ({ page, headless
     const [image1, image2] = (await Promise.all([
       page.screenshot(), headedPage.screenshot()
     ])).map(buffer => PNG.sync.read(buffer));
-    const count = pixelmatch(image1.data, image2.data, null, image1.width, image2.height, { threshold: 0.01 });
+    const count = pixelmatch(image1.data, image2.data, null, image1.width, image2.height, { threshold: 0 });
     expect(count).toBe(0);
   }
   await headedBrowser.close();

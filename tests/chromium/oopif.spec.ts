@@ -153,7 +153,7 @@ it('should take screenshot', async ({ page, browser, server }) => {
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(page.frames().length).toBe(2);
   expect(await countOOPIFs(browser)).toBe(1);
-  expect(await page.screenshot()).toMatchSnapshot('screenshot-oopif.png', { threshold: 0.3 });
+  expect(await page.screenshot()).toMatchSnapshot('screenshot-oopif.png', { threshold: 0 });
 });
 
 it('should load oopif iframes with subresources and route', async function({ page, browser, server }) {

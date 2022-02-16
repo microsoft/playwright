@@ -186,7 +186,7 @@ it.describe('page screenshot', () => {
     await page.setViewportSize({ width: 500, height: 500 });
     await page.goto(server.PREFIX + '/screenshots/canvas.html');
     const screenshot = await page.screenshot();
-    expect(screenshot).toMatchSnapshot('screenshot-canvas.png', { threshold: 0.4 });
+    expect(screenshot).toMatchSnapshot('screenshot-canvas.png', { threshold: 0 });
   });
 
   it('should capture canvas changes', async ({ page, isElectron, browserName, isMac }) => {
