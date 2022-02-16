@@ -219,6 +219,33 @@ program
     });
 
 program
+    .command('run-driver', { hidden: true })
+    .action(function(options) {
+      runDriver();
+    });
+
+program
+    .command('run-server', { hidden: true })
+    .option('--port <port>', 'Server port')
+    .action(function(options) {
+      runServer(options.port ? +options.port : undefined).catch(logErrorAndExit);
+    });
+
+program
+    .command('print-api-json', { hidden: true })
+    .action(function(options) {
+      printApiJson();
+    });
+
+program
+    .command('launch-server', { hidden: true })
+    .requiredOption('--browser <browserName>', 'Browser name, one of "chromium", "firefox" or "webkit"')
+    .option('--config <path-to-config-file>', 'JSON file with launchServer options')
+    .action(function(options) {
+      launchBrowserServer(options.browserName, options.config);
+    });
+
+program
     .command('show-trace [trace...]')
     .option('-b, --browser <browserType>', 'browser to use, one of cr, chromium, ff, firefox, wk, webkit', 'chromium')
     .description('Show trace viewer')
@@ -270,17 +297,7 @@ if (!process.env.PW_LANG_NAME) {
   }
 }
 
-if (process.argv[2] === 'run-driver')
-  runDriver();
-else if (process.argv[2] === 'run-server')
-  runServer(process.argv[3] ? +process.argv[3] : undefined).catch(logErrorAndExit);
-else if (process.argv[2] === 'print-api-json')
-  printApiJson();
-else if (process.argv[2] === 'launch-server')
-  launchBrowserServer(process.argv[3], process.argv[4]).catch(logErrorAndExit);
-else
-  program.parse(process.argv);
-
+program.parse(process.argv);
 
 type Options = {
   browser: string;

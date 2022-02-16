@@ -27,7 +27,7 @@ class OutOfProcessPlaywrightServer {
   private _receivedPortPromise: Promise<string>;
 
   constructor(port: number, proxyPort: number) {
-    this._driverProcess = childProcess.fork(path.join(__dirname, '..', 'packages', 'playwright-core', 'lib', 'cli', 'cli.js'), ['run-server', port.toString()], {
+    this._driverProcess = childProcess.fork(path.join(__dirname, '..', 'packages', 'playwright-core', 'lib', 'cli', 'cli.js'), ['run-server', '--port', port.toString()], {
       stdio: 'pipe',
       detached: true,
       env: {
