@@ -29,6 +29,7 @@
   "dependencies": {
     "@babel/code-frame": "7.16.7",
     "@babel/core": "7.16.12",
+    "@babel/helper-plugin-utils": "7.16.7",
     "@babel/plugin-proposal-class-properties": "7.16.7",
     "@babel/plugin-proposal-dynamic-import": "7.16.7",
     "@babel/plugin-proposal-export-namespace-from": "7.16.7",
@@ -43,7 +44,6 @@
     "@babel/plugin-syntax-object-rest-spread": "7.8.3",
     "@babel/plugin-syntax-optional-catch-binding": "7.8.3",
     "@babel/plugin-transform-modules-commonjs": "7.16.8",
-    "@babel/plugin-transform-react-jsx": "7.16.7",
     "@babel/preset-typescript": "7.16.7",
     "babel-plugin-module-resolver": "4.1.0",
     "colors": "1.4.0",

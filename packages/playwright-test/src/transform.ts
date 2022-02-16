@@ -182,9 +182,7 @@ export function transformHook(code: string, filename: string, isModule = false):
     }
   }
 
-  if (process.env.PW_COMPONENT_TESTING)
-    plugins.unshift([require.resolve('@babel/plugin-transform-react-jsx')]);
-
+  plugins.unshift([require.resolve('./tsxTransform')]);
 
   if (hasPreprocessor)
     plugins.push([scriptPreprocessor]);
@@ -251,15 +249,17 @@ export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Lo
   };
 }
 
-// Experimental components support for internal testing.
+
+let currentlyLoadingTestFile: string | null = null;
+
+export function setCurrentlyLoadingTestFile(file: string | null) {
+  currentlyLoadingTestFile = file;
+}
+
 function isComponentImport(filename: string): boolean {
-  if (!process.env.PW_COMPONENT_TESTING)
+  if (filename === currentlyLoadingTestFile)
     return false;
-  if (filename.endsWith('.tsx') && !filename.endsWith('spec.tsx') && !filename.endsWith('test.tsx'))
-    return true;
-  if (filename.endsWith('.jsx') && !filename.endsWith('spec.jsx') && !filename.endsWith('test.jsx'))
-    return true;
-  return false;
+  return filename.endsWith('.tsx') || filename.endsWith('.jsx');
 }
 
 function componentStub(): string {
