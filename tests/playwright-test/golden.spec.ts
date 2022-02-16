@@ -72,6 +72,18 @@ test('should generate default name', async ({ runInlineTest }, testInfo) => {
   expect(fs.existsSync(testInfo.outputPath('a.spec.js-snapshots', 'is-a-test-5.bin'))).toBe(true);
 });
 
+test('should compile without name', async ({ runTSC }) => {
+  const result = await runTSC({
+    'a.spec.js': `
+      const { test, expect } = pwt;
+      test('is a test', async ({ page }) => {
+        expect('foo').toMatchSnapshot();
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
+
 test('should fail on wrong golden', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...files,
