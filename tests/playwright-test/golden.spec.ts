@@ -361,20 +361,6 @@ test('should use provided name', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should throw without a name', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    ...files,
-    'a.spec.js': `
-      const { test } = require('./helper');
-      test('is a test', ({}) => {
-        expect('Hello world').toMatchSnapshot();
-      });
-    `
-  });
-  expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('toMatchSnapshot() requires a "name" parameter');
-});
-
 test('should use provided name via options', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...files,
