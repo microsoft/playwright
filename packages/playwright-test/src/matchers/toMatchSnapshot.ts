@@ -17,7 +17,7 @@
 import type { Expect } from '../types';
 import { currentTestInfo } from '../globals';
 import { compare } from './golden';
-import { addSuffixToFilePath } from '../util';
+import { addSuffixToFilePath, sanitizeForFilePath, trimLongString } from '../util';
 
 // from expect/build/types
 type SyncExpectationResult = {
@@ -26,6 +26,7 @@ type SyncExpectationResult = {
 };
 
 type NameOrSegments = string | string[];
+const SNAPSHOT_COUNTER: unique symbol = Symbol('noname-snapshot-counter');
 export function toMatchSnapshot(this: ReturnType<Expect['getState']>, received: Buffer | string, nameOrOptions: NameOrSegments | { name: NameOrSegments, threshold?: number }, optOptions: { threshold?: number } = {}): SyncExpectationResult {
   let options: { name: NameOrSegments, threshold?: number };
   const testInfo = currentTestInfo();
@@ -35,8 +36,15 @@ export function toMatchSnapshot(this: ReturnType<Expect['getState']>, received: 
     options = { name: nameOrOptions, ...optOptions };
   else
     options = { ...nameOrOptions };
-  if (!options.name)
-    throw new Error(`toMatchSnapshot() requires a "name" parameter`);
+  if (!options.name) {
+    (testInfo as any)[SNAPSHOT_COUNTER] = ((testInfo as any)[SNAPSHOT_COUNTER] || 0) + 1;
+    const fullTitleWithoutSpec = [
+      ...testInfo.titlePath.slice(1),
+      (testInfo as any)[SNAPSHOT_COUNTER],
+    ].join(' ');
+    const extension = Buffer.isBuffer(received) ? '.png' : '.txt';
+    options.name = sanitizeForFilePath(trimLongString(fullTitleWithoutSpec)) + extension;
+  }
 
   const projectThreshold = testInfo.project.expect?.toMatchSnapshot?.threshold;
   if (options.threshold === undefined && projectThreshold !== undefined)

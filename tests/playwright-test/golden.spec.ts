@@ -44,6 +44,27 @@ test('should support golden', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
+test('should generate default name', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    ...files,
+    'a.spec.js': `
+      const { test } = require('./helper');
+      test('is a test', async ({ page }) => {
+        expect.soft('foo').toMatchSnapshot();
+        expect.soft('bar').toMatchSnapshot();
+        expect.soft(await page.screenshot()).toMatchSnapshot();
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-actual.txt'))).toBe(true);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-2-actual.txt'))).toBe(true);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-3-actual.png'))).toBe(true);
+  expect(fs.existsSync(testInfo.outputPath('a.spec.js-snapshots', 'is-a-test-1.txt'))).toBe(true);
+  expect(fs.existsSync(testInfo.outputPath('a.spec.js-snapshots', 'is-a-test-2.txt'))).toBe(true);
+  expect(fs.existsSync(testInfo.outputPath('a.spec.js-snapshots', 'is-a-test-3.png'))).toBe(true);
+});
+
 test('should fail on wrong golden', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...files,
