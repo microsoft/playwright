@@ -264,20 +264,12 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
       }
     }
 
-    private _isInsideHeadTag(e: Element): boolean {
-      while (e) {
-        if (e.closest('head'))
-          return true;
-        e = (e.getRootNode() as any).host;
-      }
-      return false;
-    }
-
     captureSnapshot(): SnapshotData | undefined {
       const timestamp = performance.now();
       const snapshotNumber = ++this._lastSnapshotNumber;
       let nodeCounter = 0;
       let shadowDomNesting = 0;
+      let headNesting = 0;
 
       // Ensure we are up to date.
       this._handleMutations(this._observer.takeRecords());
@@ -304,7 +296,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
           return;
         // Skip iframes which are inside document's head as they are not visisble.
         // See https://github.com/microsoft/playwright/issues/12005.
-        if ((nodeName === 'IFRAME' || nodeName === 'FRAME') && this._isInsideHeadTag(node as Element))
+        if ((nodeName === 'IFRAME' || nodeName === 'FRAME') && headNesting)
           return;
 
         const data = ensureCachedData(node);
@@ -405,12 +397,15 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
           result.push(value);
         } else {
           if (nodeName === 'HEAD') {
+            ++headNesting;
             // Insert fake <base> first, to ensure all <link> elements use the proper base uri.
             this._fakeBase.setAttribute('href', document.baseURI);
             visitChild(this._fakeBase);
           }
           for (let child = node.firstChild; child; child = child.nextSibling)
             visitChild(child);
+          if (nodeName === 'HEAD')
+            --headNesting;
           expectValue(kEndOfList);
           let documentOrShadowRoot = null;
           if (node.ownerDocument!.documentElement === node)
