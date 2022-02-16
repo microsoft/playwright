@@ -272,7 +272,7 @@ export class Recorder {
     if (['INPUT', 'TEXTAREA'].includes(target.nodeName)) {
       const inputElement = target as HTMLInputElement;
       const elementType = (inputElement.type || '').toLowerCase();
-      if (elementType === 'checkbox') {
+      if (['checkbox', 'radio'].includes(elementType)) {
         // Checkbox is handled in click, we can't let input trigger on checkbox - that would mean we dispatched click events while recording.
         return;
       }
@@ -457,7 +457,7 @@ function asCheckbox(node: Node | null): HTMLInputElement | null {
   if (!node || node.nodeName !== 'INPUT')
     return null;
   const inputElement = node as HTMLInputElement;
-  return inputElement.type === 'checkbox' ? inputElement : null;
+  return ['checkbox', 'radio'].includes(inputElement.type) ? inputElement : null;
 }
 
 function addEventListener(target: EventTarget, eventName: string, listener: EventListener, useCapture?: boolean): () => void {
