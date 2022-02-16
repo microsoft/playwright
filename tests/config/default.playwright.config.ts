@@ -71,7 +71,7 @@ if (mode === 'service') {
 
 if (mode === 'service2') {
   config.webServer = {
-    command: 'npx playwright run-server 3333',
+    command: 'npx playwright run-server --port=3333',
     port: 3333,
     reuseExistingServer: true,
   };
