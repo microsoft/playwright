@@ -20,14 +20,14 @@ import { startHtmlReportServer } from '../../packages/playwright-test/lib/report
 
 const test = baseTest.extend<{ showReport: () => Promise<void> }>({
   showReport: async ({ page }, use, testInfo) => {
-    let server: HttpServer;
+    let server: HttpServer | undefined;
     await use(async () => {
       const reportFolder = testInfo.outputPath('playwright-report');
       server = startHtmlReportServer(reportFolder);
       const location = await server.start();
       await page.goto(location);
     });
-    await server.stop();
+    await server?.stop();
   }
 });
 
