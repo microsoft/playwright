@@ -455,3 +455,27 @@ test('should not report fixture teardown error twice', async ({ runInlineTest })
   expect(stripAnsi(result.output)).toContain(`throw new Error('Oh my error')`);
   expect(countTimes(result.output, 'Oh my error')).toBe(2);
 });
+
+test('should handle fixture teardown error after test timeout and continue', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const test = pwt.test.extend({
+        fixture: async ({ }, use) => {
+          await use();
+          throw new Error('Oh my error');
+        },
+      });
+      test('bad', async ({ fixture }) => {
+        test.setTimeout(100);
+        await new Promise(f => setTimeout(f, 500));
+      });
+      test('good', async ({}) => {
+      });
+    `,
+  }, { reporter: 'list', workers: '1' });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('Timeout of 100ms exceeded');
+  expect(result.output).toContain('Error: Oh my error');
+});
