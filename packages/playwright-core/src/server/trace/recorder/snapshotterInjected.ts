@@ -302,6 +302,10 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
           return;
         if (nodeName === 'META' && (node as HTMLMetaElement).httpEquiv.toLowerCase() === 'content-security-policy')
           return;
+        // Skip iframes which are inside document's head as they are not visisble.
+        // See https://github.com/microsoft/playwright/issues/12005.
+        if ((nodeName === 'IFRAME' || nodeName === 'FRAME') && this._isInsideHeadTag(node as Element))
+          return;
 
         const data = ensureCachedData(node);
         const values: any[] = [];
@@ -423,10 +427,6 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
         // Process iframe src attribute before bailing out since it depends on a symbol, not the DOM.
         if (nodeName === 'IFRAME' || nodeName === 'FRAME') {
           const element = node as Element;
-          // Skip iframes which are inside document's head as they are not visisble.
-          // See https://github.com/microsoft/playwright/issues/12005.
-          if (this._isInsideHeadTag(element))
-            return;
           const frameId = (element as any)[kSnapshotFrameId];
           const name = 'src';
           const value = frameId ? `/snapshot/${frameId}` : '';
