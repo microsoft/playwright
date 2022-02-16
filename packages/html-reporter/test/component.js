@@ -57,15 +57,21 @@ const Component = ({ style, children }) => {
 
 const registry = new Map();
 
-export const registerComponent = (name, component) => {
-  registry.set(name, component);
+export const registerComponent = (name, componentFunc) => {
+  registry.set(name, componentFunc);
 };
 
-function render(name, params) {
-  const component = registry.get(name);
-  ReactDOM.render(
-      React.createElement(Component, null, React.createElement(component, params || null)),
-      document.getElementById('root'));
+function render(component) {
+  const componentFunc = registry.get(component.type) || component.type;
+  return React.createElement(componentFunc, component.props, ...component.children.map(child => {
+    if (typeof child === 'string')
+      return child;
+    return render(child);
+  }));
 }
 
-window.__playwright_render = render;
+window.__playwright_render = component => {
+  ReactDOM.render(
+    React.createElement(Component, null, render(component)),
+    document.getElementById('root'));
+};

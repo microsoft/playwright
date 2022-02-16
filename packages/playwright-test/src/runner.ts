@@ -221,7 +221,7 @@ export class Runner {
       const allFiles = await collectFiles(project.config.testDir);
       const testMatch = createFileMatcher(project.config.testMatch);
       const testIgnore = createFileMatcher(project.config.testIgnore);
-      const extensions = ['.js', '.ts', '.mjs', ...(process.env.PW_COMPONENT_TESTING ? ['.tsx', '.jsx'] : [])];
+      const extensions = ['.js', '.ts', '.mjs', '.tsx', '.jsx'];
       const testFileExtension = (file: string) => extensions.includes(path.extname(file));
       const testFiles = allFiles.filter(file => !testIgnore(file) && testMatch(file) && testFileFilter(file) && testFileExtension(file));
       files.set(project, testFiles);

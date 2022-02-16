@@ -17,32 +17,37 @@
 import * as path from 'path';
 import { test as baseTest, Locator } from '@playwright/test';
 
+type Component = {
+  type: string;
+  props: Object;
+  children: Object[];
+};
+
 declare global {
   interface Window {
-    __playwright_render: (component: string, props: any) => void;
+    __playwright_render: (component: Component) => void;
   }
 }
 
 type TestFixtures = {
-  render: (component: { type: string, props: Object }) => Promise<Locator>;
-  capture: (locator: Locator, name: string) => Promise<void>;
+  mount: (component: any) => Promise<Locator>;
   webpack: string;
 };
 
 export const test = baseTest.extend<TestFixtures>({
   webpack: '',
-  render: async ({ page, webpack }, use) => {
+  mount: async ({ page, webpack }, use) => {
     const webpackConfig = require(webpack);
     const outputPath = webpackConfig.output.path;
     const filename = webpackConfig.output.filename.replace('[name]', 'playwright');
-    await use(async (component: { type: string, props: Object }) => {
+    await use(async (component: Component) => {
       await page.route('http://component/index.html', route => {
         route.fulfill({
           body: `<html>
-            <meta name='color-scheme' content='dark light'>
-            <style>html, body { padding: 0; margin: 0; background: #aaa; }</style>
-            <div id='root' style='width: 100%; height: 100%;'></div>
-          </html>`,
+              <meta name='color-scheme' content='dark light'>
+              <style>html, body { padding: 0; margin: 0; background: #aaa; }</style>
+              <div id='root' style='width: 100%; height: 100%;'></div>
+            </html>`,
           contentType: 'text/html'
         });
       });
@@ -64,23 +69,11 @@ export const test = baseTest.extend<TestFixtures>({
           if (typeof value === 'string' && (value as string).startsWith('__pw_func_'))
             (props as any)[key] = (window as any)[value];
         }
-        window.__playwright_render(v.type, props);
-      }, { type: component.type, props });
+        window.__playwright_render({ ...v, props });
+      }, { ...component, props });
       return page.locator('#pw-root');
     });
   },
-
-  capture: async ({}, use, testInfo) => {
-    await use(async (locator: Locator, name: string) => {
-      const screenshotPath = path.join(__dirname, '..', 'screenshots', sanitizeForFilePath(path.basename(testInfo.file) + '-' + testInfo.title + '-' + name) + '.png');
-      testInfo.attachments.push({ name, path: screenshotPath, contentType: 'image/png' });
-      await locator.screenshot({ path: screenshotPath });
-    });
-  }
 });
-
-export function sanitizeForFilePath(s: string) {
-  return s.replace(/[\x00-\x2C\x2E-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F]+/g, '-');
-}
 
 export { expect } from '@playwright/test';
