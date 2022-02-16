@@ -26,7 +26,7 @@ type SyncExpectationResult = {
 };
 
 type NameOrSegments = string | string[];
-const SNAPSHOT_COUNTER: unique symbol = Symbol('noname-snapshot-counter');
+const SNAPSHOT_COUNTER = Symbol('noname-snapshot-counter');
 export function toMatchSnapshot(this: ReturnType<Expect['getState']>, received: Buffer | string, nameOrOptions: NameOrSegments | { name: NameOrSegments, threshold?: number }, optOptions: { threshold?: number } = {}): SyncExpectationResult {
   let options: { name: NameOrSegments, threshold?: number };
   const testInfo = currentTestInfo();
