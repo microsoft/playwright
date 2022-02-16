@@ -20,7 +20,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { program, Command } from 'commander';
-import { runDriver, runServer, printApiJson, launchBrowserServer } from './driver';
+import { runDriver, runServer, printApiJson, launchBrowserServer, runServerProxy } from './driver';
 import { showTraceViewer } from '../server/trace/viewer/traceViewer';
 import * as playwright from '../..';
 import { BrowserContext } from '../client/browserContext';
@@ -273,7 +273,9 @@ if (!process.env.PW_LANG_NAME) {
 if (process.argv[2] === 'run-driver')
   runDriver();
 else if (process.argv[2] === 'run-server')
-  runServer(process.argv[3] ? +process.argv[3] : undefined).catch(logErrorAndExit);
+  runServer(process.argv[3] ? +process.argv[3] : undefined, process.argv[4] ? +process.argv[4] : undefined).catch(logErrorAndExit);
+else if (process.argv[2] === 'run-server-proxy')
+  runServerProxy(process.argv[3], process.argv[4] ? +process.argv[4] : undefined).catch(logErrorAndExit);
 else if (process.argv[2] === 'print-api-json')
   printApiJson();
 else if (process.argv[2] === 'launch-server')

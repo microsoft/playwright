@@ -219,6 +219,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     tracesDir: tOptional(tString),
   });
   scheme.PlaywrightHideHighlightParams = tOptional(tObject({}));
+  scheme.PlaywrightCleanupPreLaunchedBrowserParams = tOptional(tObject({}));
   scheme.SocksSupportSocksConnectedParams = tObject({
     uid: tString,
     host: tString,

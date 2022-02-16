@@ -194,7 +194,7 @@ class Connection {
     const playwrightDispatcher = new PlaywrightDispatcher(scope, playwright, undefined, browser);
     // In pre-launched mode, keep the browser and just cleanup new contexts.
     // TODO: it is technically possible to launch more browsers over protocol.
-    this._cleanups.push(() => playwrightDispatcher.cleanup());
+    this._cleanups.push(() => playwrightDispatcher.cleanupPreLaunchedBrowser({}));
     return playwrightDispatcher;
   }
 

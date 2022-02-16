@@ -434,6 +434,7 @@ export interface PlaywrightChannel extends PlaywrightEventTarget, Channel {
   _type_Playwright: boolean;
   newRequest(params: PlaywrightNewRequestParams, metadata?: Metadata): Promise<PlaywrightNewRequestResult>;
   hideHighlight(params?: PlaywrightHideHighlightParams, metadata?: Metadata): Promise<PlaywrightHideHighlightResult>;
+  cleanupPreLaunchedBrowser(params?: PlaywrightCleanupPreLaunchedBrowserParams, metadata?: Metadata): Promise<PlaywrightCleanupPreLaunchedBrowserResult>;
 }
 export type PlaywrightNewRequestParams = {
   baseURL?: string,
@@ -485,6 +486,9 @@ export type PlaywrightNewRequestResult = {
 export type PlaywrightHideHighlightParams = {};
 export type PlaywrightHideHighlightOptions = {};
 export type PlaywrightHideHighlightResult = void;
+export type PlaywrightCleanupPreLaunchedBrowserParams = {};
+export type PlaywrightCleanupPreLaunchedBrowserOptions = {};
+export type PlaywrightCleanupPreLaunchedBrowserResult = void;
 
 export interface PlaywrightEvents {
 }

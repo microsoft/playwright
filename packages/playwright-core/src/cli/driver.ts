@@ -24,6 +24,7 @@ import { DispatcherConnection, Root } from '../dispatchers/dispatcher';
 import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
 import { IpcTransport, PipeTransport } from '../protocol/transport';
 import { PlaywrightServer } from '../remote/playwrightServer';
+import { PlaywrightServerProxy } from '../remote/playwrightServerProxy';
 import { createPlaywright } from '../server/playwright';
 import { gracefullyCloseAll } from '../utils/processLauncher';
 
@@ -52,10 +53,17 @@ export function runDriver() {
   };
 }
 
-export async function runServer(port: number | undefined) {
-  const server = await PlaywrightServer.startDefault({ path: '/', maxClients: Infinity });
+export async function runServer(port: number | undefined, maxClients: number | undefined) {
+  const server = await PlaywrightServer.startDefault({ path: '/', maxClients: maxClients || Infinity });
   const wsEndpoint = await server.listen(port);
   process.on('exit', () => server.close().catch(console.error));
+  console.log('Listening on ' + wsEndpoint);  // eslint-disable-line no-console
+}
+
+export async function runServerProxy(serverAddress: string, port: number | undefined) {
+  const proxy = new PlaywrightServerProxy({ path: '/', serverAddress, connectTimeout: 30000 });
+  const wsEndpoint = await proxy.listen(port);
+  process.on('exit', () => proxy.close().catch(console.error));
   console.log('Listening on ' + wsEndpoint);  // eslint-disable-line no-console
 }
 

@@ -64,8 +64,7 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
     await this._object.hideHighlight();
   }
 
-  async cleanup() {
-    // Cleanup contexts upon disconnect.
+  async cleanupPreLaunchedBrowser(params: channels.PlaywrightCleanupPreLaunchedBrowserParams, metadata?: channels.Metadata) {
     await this._browserDispatcher?.cleanupContexts();
   }
 }
