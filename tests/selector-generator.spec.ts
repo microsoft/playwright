@@ -43,6 +43,11 @@ it.describe('selector generator', () => {
     expect(await generate(page, 'div')).toBe('text=Text some more text');
   });
 
+  it('should not escape spaces inside attribute selectors', async ({ page }) => {
+    await page.setContent(`<input placeholder="Foo b ar"/>`);
+    expect(await generate(page, 'input')).toBe('[placeholder="Foo b ar"]');
+  });
+
   it('should generate text for <input type=button>', async ({ page }) => {
     await page.setContent(`<input type=button value="Click me">`);
     expect(await generate(page, 'input')).toBe('text=Click me');
