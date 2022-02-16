@@ -386,15 +386,24 @@ test('should not hang for clicks that open dialogs', async ({ context, page }) =
   await context.tracing.stop();
 });
 
-test('should ignore iframes not in body', async ({ context, page, server }, testInfo) => {
-  await page.goto(server.EMPTY_PAGE);
-  await page.evaluate(() => document.head.appendChild(document.createElement('iframe')));
+test('should ignore iframes in head', async ({ context, page, server }, testInfo) => {
+  await page.goto(server.PREFIX + '/input/button.html');
+  await page.evaluate(() => {
+    document.head.appendChild(document.createElement('iframe'));
+    // Add iframe in a shadow tree.
+    const div = document.createElement('div');
+    document.head.appendChild(div);
+    const shadow = div.attachShadow({ mode: 'open' });
+    shadow.appendChild(document.createElement('iframe'));
+  });
+
   await context.tracing.start({ screenshots: true, snapshots: true });
-  await page.click('body');
+  await page.click('button');
   await context.tracing.stopChunk({ path: testInfo.outputPath('trace.zip') });
 
   const trace = await parseTrace(testInfo.outputPath('trace.zip'));
   expect(trace.events.find(e => e.metadata?.apiName === 'page.click')).toBeTruthy();
+  expect(trace.events.find(e => e.type === 'frame-snapshot')).toBeTruthy();
   expect(trace.events.find(e => e.type === 'frame-snapshot' && JSON.stringify(e.snapshot.html).includes('IFRAME'))).toBeFalsy();
 });
 
