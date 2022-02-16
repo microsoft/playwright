@@ -115,7 +115,7 @@ export function compare(
     const commonMissingSnapshotMessage = `${snapshotFile} is missing in snapshots`;
     if (withNegateComparison) {
       const message = `${commonMissingSnapshotMessage}${isWriteMissingMode ? ', matchers using ".not" won\'t write them automatically.' : '.'}`;
-      return { pass: true , message };
+      return { pass: true , message, snapshotFile };
     }
     if (isWriteMissingMode) {
       fs.mkdirSync(path.dirname(snapshotFile), { recursive: true });
@@ -126,13 +126,13 @@ export function compare(
     const message = `${commonMissingSnapshotMessage}${isWriteMissingMode ? ', writing actual.' : '.'}`;
     if (updateSnapshots === 'all') {
       console.log(message);
-      return { pass: true, message };
+      return { pass: true, message, snapshotFile };
     }
     if (updateSnapshots === 'missing') {
       testInfo._failWithError(serializeError(new Error(message)), false /* isHardError */);
-      return { pass: true };
+      return { pass: true, snapshotFile };
     }
-    return { pass: false, message };
+    return { pass: false, message, snapshotFile };
   }
 
   const expected = fs.readFileSync(snapshotFile);
@@ -157,15 +157,17 @@ export function compare(
       return {
         pass: true,
         message,
+        snapshotFile,
       };
     }
 
-    return { pass: true };
+    return { pass: true, snapshotFile };
   }
 
   if (withNegateComparison) {
     return {
       pass: false,
+      snapshotFile,
     };
   }
 
@@ -175,6 +177,7 @@ export function compare(
     console.log(snapshotFile + ' does not match, writing actual.');
     return {
       pass: true,
+      snapshotFile,
       message: snapshotFile + ' running with --update-snapshots, writing actual.'
     };
   }
@@ -204,6 +207,7 @@ export function compare(
     message: output.join('\n'),
     expectedPath,
     actualPath,
+    snapshotFile,
     diffPath: result.diff ? diffPath : undefined,
     mimeType
   };

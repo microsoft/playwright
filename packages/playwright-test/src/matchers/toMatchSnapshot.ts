@@ -48,7 +48,7 @@ export function toMatchSnapshot(this: ReturnType<Expect['getState']>, received: 
   let updateSnapshots = testInfo.config.updateSnapshots;
   if (updateSnapshots === 'missing' && testInfo.retry < testInfo.project.retries)
     updateSnapshots = 'none';
-  const { pass, message, expectedPath, actualPath, diffPath, mimeType } = compare(
+  const { pass, message, expectedPath, actualPath, diffPath, snapshotFile, mimeType } = compare(
       received,
       pathSegments,
       testInfo,
@@ -57,6 +57,8 @@ export function toMatchSnapshot(this: ReturnType<Expect['getState']>, received: 
       options
   );
   const contentType = mimeType || 'application/octet-stream';
+  if (updateSnapshots === 'all')
+    testInfo.attachments.push({ name: 'snapshot - ' + options.name, contentType, path: snapshotFile });
   if (expectedPath)
     testInfo.attachments.push({ name: 'expected', contentType, path: expectedPath });
   if (actualPath)
