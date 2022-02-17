@@ -27,6 +27,7 @@ test('should print the correct imports and context options', async ({ runCLI, ch
   const cli = runCLI(['--target=java', emptyHTML]);
   const expectedResult = `import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.*;
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 import java.util.*;
 
 public class Example {

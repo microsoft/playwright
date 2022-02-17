@@ -89,7 +89,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
     formatter.add(code);
 
     if (signals.assertNavigation)
-      formatter.add(`// assert ${pageAlias}.url().equals(${quote(signals.assertNavigation.url)});`);
+      formatter.add(`// assertThat(${pageAlias}).hasURL(${quote(signals.assertNavigation.url)});`);
     return formatter.format();
   }
 
@@ -141,6 +141,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
     formatter.add(`
     import com.microsoft.playwright.*;
     import com.microsoft.playwright.options.*;
+    import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
     import java.util.*;
 
     public class Example {
