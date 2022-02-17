@@ -81,7 +81,7 @@ function compareImages(actualBuffer: Buffer | string, expectedBuffer: Buffer, mi
   const count = pixelmatch(expected.data, actual.data, diff.data, expected.width, expected.height, thresholdOptions);
 
   const pixelCount1 = options.pixelCount;
-  const pixelCount2 = options.pixelRatio ? expected.width * expected.height * options.pixelRatio : undefined;
+  const pixelCount2 = options.pixelRatio !== undefined ? expected.width * expected.height * options.pixelRatio : undefined;
   let pixelCount;
   if (pixelCount1 !== undefined && pixelCount2 !== undefined)
     pixelCount = Math.min(pixelCount1, pixelCount2);

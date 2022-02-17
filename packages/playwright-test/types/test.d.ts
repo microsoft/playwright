@@ -52,7 +52,7 @@ type ExpectSettings = {
      */
     pixelCount?: number,
     /**
-     * A ratio from `0` to `1` of all pixels on the image that could be different, unset by default.
+     * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
      */
     pixelRatio?: number,
   }

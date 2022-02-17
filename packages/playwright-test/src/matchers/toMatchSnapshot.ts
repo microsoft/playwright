@@ -45,20 +45,13 @@ export function toMatchSnapshot(this: ReturnType<Expect['getState']>, received: 
     options.name = sanitizeForFilePath(trimLongString(fullTitleWithoutSpec)) + determineFileExtension(received);
   }
 
-  const projectThreshold = testInfo.project.expect?.toMatchSnapshot?.threshold;
-  if (options.threshold === undefined && projectThreshold !== undefined)
-    options.threshold = projectThreshold;
-
-  const projectPixelDelta = testInfo.project.expect?.toMatchSnapshot?.pixelCount;
-  if (options.pixelCount === undefined && projectPixelDelta !== undefined)
-    options.pixelCount = projectPixelDelta;
+  options = {
+    ...(testInfo.project.expect?.toMatchSnapshot || {}),
+    ...options,
+  };
 
   if (options.pixelCount !== undefined && options.pixelCount < 0)
     throw new Error('`pixelCount` option value must be non-negative integer');
-
-  const projectPixelPercent = testInfo.project.expect?.toMatchSnapshot?.pixelRatio;
-  if (options.pixelRatio === undefined && projectPixelPercent !== undefined)
-    options.pixelRatio = projectPixelPercent;
 
   if (options.pixelRatio !== undefined && (options.pixelRatio < 0 || options.pixelRatio > 1))
     throw new Error('`pixelRatio` option value must be between 0 and 1');
