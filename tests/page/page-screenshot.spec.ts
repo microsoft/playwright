@@ -34,6 +34,16 @@ it.describe('page screenshot', () => {
 
   it('should not capture blinking caret', async ({ page, server }) => {
     await page.setContent(`
+      <!-- Refer to stylesheet from other origin. Accessing this
+           stylesheet rules will throw.
+      -->
+      <link rel=stylesheet href="${server.CROSS_PROCESS_PREFIX + '/injectedstyle.css'}">
+      <!-- make life harder: define caret color in stylesheet -->
+      <style>
+        div {
+          caret-color: #000 !important;
+        }
+      </style>
       <div contenteditable="true"></div>
     `);
     const div = page.locator('div');
