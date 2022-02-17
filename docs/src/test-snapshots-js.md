@@ -67,7 +67,7 @@ npx playwright test --update-snapshots
 > Note that `snapshotName` also accepts an array of path segments to the snapshot file such as `expect(value).toMatchSnapshot(['relative', 'path', 'to', 'snapshot.png'])`.
 > However, this path must stay within the snapshots directory for each test file (i.e. `a.spec.js-snapshots`), otherwise it will throw.
 
-Playwright Test uses the [pixelmatch](https://github.com/mapbox/pixelmatch) library. You can pass comparison `threshold` as an option.
+Playwright Test uses the [pixelmatch](https://github.com/mapbox/pixelmatch) library. You can [pass various options](./test-assertions#expectvaluetomatchsnapshotname-options) to modify its behavior:
 
 ```js js-flavor=js
 // example.spec.js
@@ -75,7 +75,7 @@ const { test, expect } = require('@playwright/test');
 
 test('example test', async ({ page }) => {
   await page.goto('https://playwright.dev');
-  expect(await page.screenshot()).toMatchSnapshot('home.png', { threshold: 0.2 });
+  expect(await page.screenshot()).toMatchSnapshot('home.png', { pixelCount: 100 });
 });
 ```
 
@@ -85,7 +85,7 @@ import { test, expect } from '@playwright/test';
 
 test('example test', async ({ page }) => {
   await page.goto('https://playwright.dev');
-  expect(await page.screenshot()).toMatchSnapshot('home.png', { threshold: 0.2 });
+  expect(await page.screenshot()).toMatchSnapshot('home.png', { pixelCount: 100 });
 });
 ```
 
@@ -94,7 +94,7 @@ If you'd like to share the default value among all the tests in the project, you
 ```js js-flavor=js
 module.exports = {
   expect: {
-    toMatchSnapshot: { threshold: 0.1 },
+    toMatchSnapshot: { pixelCount: 100 },
   },
 };
 ```
@@ -103,7 +103,7 @@ module.exports = {
 import { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   expect: {
-    toMatchSnapshot: { threshold: 0.1 },
+    toMatchSnapshot: { pixelCount: 100 },
   },
 };
 export default config;

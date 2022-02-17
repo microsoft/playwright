@@ -79,7 +79,9 @@ declare global {
        */
       toMatchSnapshot(options?: {
         name?: string | string[],
-        threshold?: number
+        threshold?: number,
+        pixelCount?: number,
+        pixelRatio?: number,
       }): R;
       /**
        * Match snapshot

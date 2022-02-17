@@ -57,7 +57,7 @@ function compareBuffersOrStrings(actualBuffer: Buffer | string, expectedBuffer: 
   return null;
 }
 
-function compareImages(actualBuffer: Buffer | string, expectedBuffer: Buffer, mimeType: string, options = {}): { diff?: Buffer; errorMessage?: string; } | null {
+function compareImages(actualBuffer: Buffer | string, expectedBuffer: Buffer, mimeType: string, options: { threshold?: number, pixelCount?: number, pixelRatio?: number } = {}): { diff?: Buffer; errorMessage?: string; } | null {
   if (!actualBuffer || !(actualBuffer instanceof Buffer))
     return { errorMessage: 'Actual result should be a Buffer.' };
 
@@ -79,7 +79,15 @@ function compareImages(actualBuffer: Buffer | string, expectedBuffer: Buffer, mi
     return result.code !== BlinkDiff.RESULT_IDENTICAL ? { diff: PNG.sync.write(diff._imageOutput.getImage()) } : null;
   }
   const count = pixelmatch(expected.data, actual.data, diff.data, expected.width, expected.height, thresholdOptions);
-  return count > 0 ? { diff: PNG.sync.write(diff) } : null;
+
+  const pixelCount1 = options.pixelCount;
+  const pixelCount2 = options.pixelRatio !== undefined ? expected.width * expected.height * options.pixelRatio : undefined;
+  let pixelCount;
+  if (pixelCount1 !== undefined && pixelCount2 !== undefined)
+    pixelCount = Math.min(pixelCount1, pixelCount2);
+  else
+    pixelCount = pixelCount1 ?? pixelCount2 ?? 0;
+  return count > pixelCount ? { diff: PNG.sync.write(diff) } : null;
 }
 
 function compareText(actual: Buffer | string, expectedBuffer: Buffer): { diff?: Buffer; errorMessage?: string; diffExtension?: string; } | null {
@@ -102,7 +110,7 @@ export function compare(
   testInfo: TestInfoImpl,
   updateSnapshots: UpdateSnapshots,
   withNegateComparison: boolean,
-  options?: { threshold?: number }
+  options?: { threshold?: number, pixelCount?: number, pixelRatio?: number }
 ): { pass: boolean; message?: string; expectedPath?: string, actualPath?: string, diffPath?: string, mimeType?: string } {
   const snapshotFile = testInfo.snapshotPath(...pathSegments);
   const outputFile = testInfo.outputPath(...pathSegments);

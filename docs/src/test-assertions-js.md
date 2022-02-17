@@ -347,7 +347,9 @@ await expect(page).toHaveURL(/.*checkout/);
 ## expect(value).toMatchSnapshot(name[, options])
 - `name` <[string] | [Array]<[string]>> Snapshot name.
 - `options`
-  - `threshold` <[float]> Image matching threshold between zero (strict) and one (lax), default is configurable with [`property: TestConfig.expect`].
+  - `threshold` <[float]> an acceptable percieved color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between pixels in compared images, between zero (strict) and one (lax), default is configurable with [`property: TestConfig.expect`]. Defaults to `0.2`.
+  - `pixelCount` <[int]> an acceptable amount of pixels that could be different, unset by default.
+  - `pixelRatio` <[float]> an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
 
 Ensures that passed value, either a [string] or a [Buffer], matches the expected snapshot stored in the test snapshots directory.
 

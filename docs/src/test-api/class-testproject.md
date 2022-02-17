@@ -108,7 +108,9 @@ export default config;
 - type: <[Object]>
   - `timeout` <[int]> Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
   - `toMatchSnapshot` <[Object]>
-    - `threshold` <[float]> Image matching threshold between zero (strict) and one (lax).
+    - `threshold` <[float]> an acceptable percieved color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between pixels in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
+    - `pixelCount` <[int]> an acceptable amount of pixels that could be different, unset by default.
+    - `pixelRatio` <[float]> an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
 
 Configuration for the `expect` assertion library.
 

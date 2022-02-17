@@ -39,11 +39,22 @@ export type UpdateSnapshots = 'all' | 'none' | 'missing';
 type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K] } & { [K in keyof TestArgs]?: TestArgs[K] };
 
 type ExpectSettings = {
-  // Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
+  /**
+   * Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
+   */
   timeout?: number;
   toMatchSnapshot?: {
-    // Pixel match threshold.
-    threshold?: number
+    /** An acceptable percieved color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between pixels in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
+     */
+    threshold?: number,
+    /**
+     * An acceptable amount of pixels that could be different, unset by default.
+     */
+    pixelCount?: number,
+    /**
+     * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
+     */
+    pixelRatio?: number,
   }
 };
 
