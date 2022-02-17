@@ -145,27 +145,27 @@ function buildCandidates(injectedScript: InjectedScript, element: Element): Sele
   const candidates: SelectorToken[] = [];
   for (const attribute of ['data-testid', 'data-test-id', 'data-test']) {
     if (element.hasAttribute(attribute))
-      candidates.push({ engine: 'css', selector: `[${attribute}=${quoteString(element.getAttribute(attribute)!)}]`, score: 1 });
+      candidates.push({ engine: 'css', selector: `[${attribute}=${quoteAttributeValue(element.getAttribute(attribute)!)}]`, score: 1 });
   }
 
   if (element.nodeName === 'INPUT') {
     const input = element as HTMLInputElement;
     if (input.placeholder)
-      candidates.push({ engine: 'css', selector: `[placeholder=${quoteString(input.placeholder)}]`, score: 10 });
+      candidates.push({ engine: 'css', selector: `[placeholder=${quoteAttributeValue(input.placeholder)}]`, score: 10 });
   }
   if (element.hasAttribute('aria-label'))
-    candidates.push({ engine: 'css', selector: `[aria-label=${quoteString(element.getAttribute('aria-label')!)}]`, score: 10 });
+    candidates.push({ engine: 'css', selector: `[aria-label=${quoteAttributeValue(element.getAttribute('aria-label')!)}]`, score: 10 });
   if (element.getAttribute('alt') && ['APPLET', 'AREA', 'IMG', 'INPUT'].includes(element.nodeName))
-    candidates.push({ engine: 'css', selector: `${cssEscape(element.nodeName.toLowerCase())}[alt=${quoteString(element.getAttribute('alt')!)}]`, score: 10 });
+    candidates.push({ engine: 'css', selector: `${cssEscape(element.nodeName.toLowerCase())}[alt=${quoteAttributeValue(element.getAttribute('alt')!)}]`, score: 10 });
 
   if (element.hasAttribute('role'))
-    candidates.push({ engine: 'css', selector: `${cssEscape(element.nodeName.toLowerCase())}[role=${quoteString(element.getAttribute('role')!)}]` , score: 50 });
+    candidates.push({ engine: 'css', selector: `${cssEscape(element.nodeName.toLowerCase())}[role=${quoteAttributeValue(element.getAttribute('role')!)}]` , score: 50 });
 
   if (element.getAttribute('name') && ['BUTTON', 'FORM', 'FIELDSET', 'IFRAME', 'INPUT', 'KEYGEN', 'OBJECT', 'OUTPUT', 'SELECT', 'TEXTAREA', 'MAP', 'META', 'PARAM'].includes(element.nodeName))
-    candidates.push({ engine: 'css', selector: `${cssEscape(element.nodeName.toLowerCase())}[name=${quoteString(element.getAttribute('name')!)}]`, score: 50 });
+    candidates.push({ engine: 'css', selector: `${cssEscape(element.nodeName.toLowerCase())}[name=${quoteAttributeValue(element.getAttribute('name')!)}]`, score: 50 });
   if (['INPUT', 'TEXTAREA'].includes(element.nodeName) && element.getAttribute('type') !== 'hidden') {
     if (element.getAttribute('type'))
-      candidates.push({ engine: 'css', selector: `${cssEscape(element.nodeName.toLowerCase())}[type=${quoteString(element.getAttribute('type')!)}]`, score: 50 });
+      candidates.push({ engine: 'css', selector: `${cssEscape(element.nodeName.toLowerCase())}[type=${quoteAttributeValue(element.getAttribute('type')!)}]`, score: 50 });
   }
   if (['INPUT', 'TEXTAREA', 'SELECT'].includes(element.nodeName))
     candidates.push({ engine: 'css', selector: cssEscape(element.nodeName.toLowerCase()), score: 50 });
@@ -195,7 +195,7 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, a
   if (allowHasText && escaped === text) {
     let prefix = element.nodeName.toLowerCase();
     if (element.hasAttribute('role'))
-      prefix += `[role=${quoteString(element.getAttribute('role')!)}]`;
+      prefix += `[role=${quoteAttributeValue(element.getAttribute('role')!)}]`;
     candidates.push({ engine: 'css', selector: `${prefix}:has-text("${text}")`, score: 30 });
   }
   return candidates;
@@ -294,8 +294,8 @@ function escapeForRegex(text: string): string {
   return text.replace(/[.*+?^>${}()|[\]\\]/g, '\\$&');
 }
 
-function quoteString(text: string): string {
-  return `"${cssEscape(text)}"`;
+function quoteAttributeValue(text: string): string {
+  return `"${cssEscape(text).replace(/\\ /g, ' ')}"`;
 }
 
 function joinTokens(tokens: SelectorToken[]): string {
