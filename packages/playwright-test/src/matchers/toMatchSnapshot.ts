@@ -27,8 +27,8 @@ type SyncExpectationResult = {
 
 type NameOrSegments = string | string[];
 const SNAPSHOT_COUNTER = Symbol('noname-snapshot-counter');
-export function toMatchSnapshot(this: ReturnType<Expect['getState']>, received: Buffer | string, nameOrOptions: NameOrSegments | { name: NameOrSegments, threshold?: number }, optOptions: { threshold?: number } = {}): SyncExpectationResult {
-  let options: { name: NameOrSegments, threshold?: number };
+export function toMatchSnapshot(this: ReturnType<Expect['getState']>, received: Buffer | string, nameOrOptions: NameOrSegments | { name: NameOrSegments, threshold?: number }, optOptions: { threshold?: number, pixelCount?: number, pixelRatio?: number } = {}): SyncExpectationResult {
+  let options: { name: NameOrSegments, threshold?: number, pixelCount?: number, pixelRatio?: number };
   const testInfo = currentTestInfo();
   if (!testInfo)
     throw new Error(`toMatchSnapshot() must be called during the test`);
@@ -48,6 +48,20 @@ export function toMatchSnapshot(this: ReturnType<Expect['getState']>, received: 
   const projectThreshold = testInfo.project.expect?.toMatchSnapshot?.threshold;
   if (options.threshold === undefined && projectThreshold !== undefined)
     options.threshold = projectThreshold;
+
+  const projectPixelDelta = testInfo.project.expect?.toMatchSnapshot?.pixelCount;
+  if (options.pixelCount === undefined && projectPixelDelta !== undefined)
+    options.pixelCount = projectPixelDelta;
+
+  if (options.pixelCount !== undefined && options.pixelCount < 0)
+    throw new Error('`pixelCount` option value must be non-negative integer');
+
+  const projectPixelPercent = testInfo.project.expect?.toMatchSnapshot?.pixelRatio;
+  if (options.pixelRatio === undefined && projectPixelPercent !== undefined)
+    options.pixelRatio = projectPixelPercent;
+
+  if (options.pixelRatio !== undefined && (options.pixelRatio < 0 || options.pixelRatio > 1))
+    throw new Error('`pixelRatio` option value must be between 0 and 1');
 
   // sanitizes path if string
   const pathSegments = Array.isArray(options.name) ? options.name : [addSuffixToFilePath(options.name, '', undefined, true)];
