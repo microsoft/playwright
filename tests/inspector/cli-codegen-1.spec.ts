@@ -624,17 +624,17 @@ test.describe('cli codegen', () => {
     expect(sources.get('Java').text).toContain(`
       // Click text=link
       page.locator("text=link").click();
-      // assert page.url().equals("about:blank#foo");`);
+      // assertThat(page).hasURL("about:blank#foo");`);
 
     expect(sources.get('Python').text).toContain(`
     # Click text=link
     page.locator(\"text=link\").click()
-    # assert page.url == \"about:blank#foo\"`);
+    # expect(page).to_have_url(\"about:blank#foo\")`);
 
     expect(sources.get('Python Async').text).toContain(`
     # Click text=link
     await page.locator(\"text=link\").click()
-    # assert page.url == \"about:blank#foo\"`);
+    # await expect(page).to_have_url(\"about:blank#foo\")`);
 
     expect(sources.get('C#').text).toContain(`
         // Click text=link

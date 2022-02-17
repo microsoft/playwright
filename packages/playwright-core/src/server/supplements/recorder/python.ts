@@ -98,7 +98,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
     formatter.add(code);
 
     if (signals.assertNavigation)
-      formatter.add(`  # assert ${pageAlias}.url == ${quote(signals.assertNavigation.url)}`);
+      formatter.add(`  # ${this._awaitPrefix}expect(${pageAlias}).to_have_url(${quote(signals.assertNavigation.url)})`);
     return formatter.format();
   }
 
@@ -151,7 +151,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
       formatter.add(`
 import asyncio
 
-from playwright.async_api import Playwright, async_playwright
+from playwright.async_api import Playwright, async_playwright, expect
 
 
 async def run(playwright: Playwright) -> None {
@@ -159,7 +159,7 @@ async def run(playwright: Playwright) -> None {
     context = await browser.new_context(${formatContextOptions(options.contextOptions, options.deviceName)})`);
     } else {
       formatter.add(`
-from playwright.sync_api import Playwright, sync_playwright
+from playwright.sync_api import Playwright, sync_playwright, expect
 
 
 def run(playwright: Playwright) -> None {
