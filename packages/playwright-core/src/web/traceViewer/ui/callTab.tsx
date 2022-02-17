@@ -82,7 +82,7 @@ function toString(metadata: CallMetadata, name: string, value: any): { title: st
       value = parseSerializedValue(value, new Array(10).fill({ handle: '<handle>' }));
   }
   const type = typeof value;
-  if (type !== 'object')
+  if (type !== 'object' || value === null)
     return { title: String(value), type };
   if (value.guid)
     return { title: '<handle>', type: 'handle' };

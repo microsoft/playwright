@@ -145,6 +145,8 @@ test.beforeAll(async function recordTrace({ browser, browserName, browserType, s
     });
   }, { a: 'paramA', b: 4 });
 
+  await page.evaluate(() => 1 + 1, null);
+
   async function doClick() {
     await page.click('"Click"');
   }
@@ -191,6 +193,7 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
     /page.gotodata:text\/html,<html>Hello world<\/html>/,
     /page.setContent/,
     /expect.toHaveTextbutton/,
+    /page.evaluate/,
     /page.evaluate/,
     /page.click"Click"/,
     /page.waitForEvent/,
@@ -251,6 +254,20 @@ test('should show params and return value', async ({ showTraceViewer, browserNam
     'isFunction: true',
     'arg: {"a":"paramA","b":4}',
     'value: "return paramA"'
+  ]);
+});
+
+test('should show null as a param', async ({ showTraceViewer, browserName }) => {
+  const traceViewer = await showTraceViewer([traceFile]);
+  await traceViewer.selectAction('page.evaluate', 1);
+  await expect(traceViewer.callLines).toHaveText([
+    /page.evaluate/,
+    /wall time: [0-9/:,APM ]+/,
+    /duration: [\d]+ms/,
+    'expression: "() => 1 + 1"',
+    'isFunction: true',
+    'arg: null',
+    'value: 2'
   ]);
 });
 
