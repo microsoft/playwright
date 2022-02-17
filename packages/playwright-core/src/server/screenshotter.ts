@@ -133,11 +133,9 @@ export class Screenshotter {
       await frame.nonStallingEvaluateInExistingContext('(' + (function(disableAnimations: boolean) {
         const styleTag = document.createElement('style');
         styleTag.textContent = `
-          *,
-          * > *,
-          * > * > *,
-          * > * > * > *,
-          * > * > * > * > * { caret-color: transparent !important; }
+          *:not(#playwright-aaaaaaaaaa.playwright-bbbbbbbbbbb.playwright-cccccccccc.playwright-dddddddddd.playwright-eeeeeeeee) {
+            caret-color: transparent !important;
+          }
         `;
         document.documentElement.append(styleTag);
         const infiniteAnimationsToResume: Set<Animation> = new Set();
