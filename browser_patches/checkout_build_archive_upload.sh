@@ -100,14 +100,14 @@ elif [[ "$BUILD_FLAVOR" == "chromium-mac" ]]; then
   EXTRA_BUILD_ARGS="--compile-mac --full"
   EXTRA_ARCHIVE_ARGS="--compile-mac"
   EXPECTED_HOST_OS="Darwin"
-  EXPECTED_HOST_OS_VERSION="10.15"
+  EXPECTED_HOST_OS_VERSION="12.2"
   BUILD_BLOB_NAME="chromium-mac.zip"
 elif [[ "$BUILD_FLAVOR" == "chromium-mac-arm64" ]]; then
   BROWSER_NAME="chromium"
   EXTRA_BUILD_ARGS="--compile-mac-arm64 --full"
   EXTRA_ARCHIVE_ARGS="--compile-mac-arm64"
   EXPECTED_HOST_OS="Darwin"
-  EXPECTED_HOST_OS_VERSION="10.15"
+  EXPECTED_HOST_OS_VERSION="12.2"
   BUILD_BLOB_NAME="chromium-mac-arm64.zip"
 elif [[ "$BUILD_FLAVOR" == "chromium-linux" ]]; then
   BROWSER_NAME="chromium"
