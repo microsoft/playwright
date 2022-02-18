@@ -189,17 +189,12 @@ function commitComparatorResult(
   withNegateComparison: boolean,
 ) {
   if (!result) {
-    if (withNegateComparison) {
-      const message = [
-        colors.red('Snapshot comparison failed:'),
-        '',
-        indent('Expected result should be different from the actual one.', '  '),
-      ].join('\n');
-      return {
-        pass: true, message: () => message,
-      };
-    }
-    return { pass: true, message: () => '' };
+    const message = withNegateComparison ? [
+      colors.red('Snapshot comparison failed:'),
+      '',
+      indent('Expected result should be different from the actual one.', '  '),
+    ].join('\n') : '';
+    return { pass: true, message: () => message };
   }
 
   if (withNegateComparison)
@@ -215,12 +210,10 @@ function commitComparatorResult(
     };
   }
 
-  fs.mkdirSync(path.dirname(expectedPath), { recursive: true });
-  fs.mkdirSync(path.dirname(actualPath), { recursive: true });
-  fs.writeFileSync(expectedPath, expected);
-  fs.writeFileSync(actualPath, actual);
+  writeAttachment(testInfo, 'expected', mimeType, expectedPath, expected);
+  writeAttachment(testInfo, 'actual', mimeType, actualPath, actual);
   if (result.diff)
-    fs.writeFileSync(diffPath, result.diff);
+    writeAttachment(testInfo, 'diff', mimeType, diffPath, result.diff);
 
   const output = [
     colors.red(`Snapshot comparison failed:`),
@@ -235,15 +228,16 @@ function commitComparatorResult(
   if (result.diff)
     output.push(`    Diff: ${colors.yellow(diffPath)}`);
 
-  testInfo.attachments.push({ name: 'expected', contentType: mimeType, path: expectedPath });
-  testInfo.attachments.push({ name: 'actual', contentType: mimeType, path: actualPath });
-  if (result.diff)
-    testInfo.attachments.push({ name: 'diff', contentType: mimeType, path: diffPath });
-
   return {
     pass: false,
     message: () => output.join('\n'),
   };
+}
+
+function writeAttachment(testInfo: TestInfoImpl, name: string, contentType: string, aPath: string, body: Buffer | string) {
+  fs.mkdirSync(path.dirname(aPath), { recursive: true });
+  fs.writeFileSync(aPath, body);
+  testInfo.attachments.push({ name, contentType, path: aPath });
 }
 
 function indent(lines: string, tab: string) {
