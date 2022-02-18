@@ -176,6 +176,6 @@ test('test.use() should throw if called from beforeAll ', async ({ runInlineTest
     `,
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('test.use() can only be called in a test file and can only be nested in test.describe()');
+  expect(result.output).toContain('Playwright Test did not expect test.use() to be called here');
 });
 

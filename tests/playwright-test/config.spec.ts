@@ -218,7 +218,7 @@ test('should throw when test() is called in config file', async ({ runInlineTest
       });
     `,
   });
-  expect(result.output).toContain('test() can only be called in a test file');
+  expect(result.output).toContain('Playwright Test did not expect test() to be called here');
 });
 
 test('should filter by project, case-insensitive', async ({ runInlineTest }) => {

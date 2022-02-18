@@ -197,7 +197,7 @@ test('beforeAll from a helper file should throw', async ({ runInlineTest }) => {
     `,
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('beforeAll hook can only be called in a test file');
+  expect(result.output).toContain('Playwright Test did not expect test.beforeAll() to be called here');
 });
 
 test('beforeAll hooks are skipped when no tests in the suite are run', async ({ runInlineTest }) => {
