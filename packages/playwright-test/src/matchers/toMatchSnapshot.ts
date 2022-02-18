@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-/* eslint-disable no-console */
 import type { Expect } from '../types';
 import { currentTestInfo } from '../globals';
 import { mimeTypeToComparator, ComparatorResult, ImageComparatorOptions } from './comparators';
@@ -23,6 +22,7 @@ import { UpdateSnapshots } from '../types';
 import colors from 'colors/safe';
 import fs from 'fs';
 import path from 'path';
+import * as mime from 'mime';
 import { TestInfoImpl } from '../testInfo';
 
 // from expect/build/types
@@ -31,25 +31,14 @@ type SyncExpectationResult = {
   message: () => string;
 };
 
-const extensionToMimeType: { [key: string]: string } = {
-  'dat': 'application/octet-string',
-  'jpeg': 'image/jpeg',
-  'jpg': 'image/jpeg',
-  'png': 'image/png',
-  'txt': 'text/plain',
-};
-
-
 type NameOrSegments = string | string[];
 const SNAPSHOT_COUNTER = Symbol('noname-snapshot-counter');
-
-type MatchSnapshotOptions = { threshold?: number, pixelCount?: number, pixelRatio?: number };
 
 function parseMatchSnapshotOptions(
   testInfo: TestInfoImpl,
   anonymousSnapshotExtension: string,
-  nameOrOptions: NameOrSegments | { name: NameOrSegments } & MatchSnapshotOptions,
-  optOptions: MatchSnapshotOptions = {},
+  nameOrOptions: NameOrSegments | { name: NameOrSegments } & ImageComparatorOptions,
+  optOptions: ImageComparatorOptions = {},
 ) {
   let options: { name: NameOrSegments } & ImageComparatorOptions;
   if (Array.isArray(nameOrOptions) || typeof nameOrOptions === 'string')
@@ -87,7 +76,7 @@ function parseMatchSnapshotOptions(
   let updateSnapshots = testInfo.config.updateSnapshots;
   if (updateSnapshots === 'missing' && testInfo.retry < testInfo.project.retries)
     updateSnapshots = 'none';
-  const mimeType = extensionToMimeType[path.extname(snapshotPath).substring(1)] ?? 'application/octet-string';
+  const mimeType = mime.getType(path.basename(snapshotPath)) ?? 'application/octet-string';
   const comparator = mimeTypeToComparator[mimeType];
   if (!comparator)
     throw new Error('Failed to find comparator with type ' + mimeType + ': ' + snapshotPath);
@@ -107,8 +96,8 @@ function parseMatchSnapshotOptions(
 export function toMatchSnapshot(
   this: ReturnType<Expect['getState']>,
   received: Buffer | string,
-  nameOrOptions: NameOrSegments | { name: NameOrSegments } & MatchSnapshotOptions,
-  optOptions: MatchSnapshotOptions = {}
+  nameOrOptions: NameOrSegments | { name: NameOrSegments } & ImageComparatorOptions,
+  optOptions: ImageComparatorOptions = {}
 ): SyncExpectationResult {
   const testInfo = currentTestInfo();
   if (!testInfo)
@@ -158,13 +147,12 @@ function commitMissingSnapshot(
     return { pass: true , message: () => message };
   }
   if (isWriteMissingMode) {
-    fs.mkdirSync(path.dirname(snapshotPath), { recursive: true });
-    fs.mkdirSync(path.dirname(actualPath), { recursive: true });
-    fs.writeFileSync(snapshotPath, actual);
-    fs.writeFileSync(actualPath, actual);
+    writeFileSync(snapshotPath, actual);
+    writeFileSync(actualPath, actual);
   }
   const message = `${commonMissingSnapshotMessage}${isWriteMissingMode ? ', writing actual.' : '.'}`;
   if (updateSnapshots === 'all') {
+    /* eslint-disable no-console */
     console.log(message);
     return { pass: true, message: () => message };
   }
@@ -201,8 +189,8 @@ function commitComparatorResult(
     return { pass: false, message: () => '' };
 
   if (updateSnapshots === 'all') {
-    fs.mkdirSync(path.dirname(snapshotPath), { recursive: true });
-    fs.writeFileSync(snapshotPath, actual);
+    writeFileSync(snapshotPath, actual);
+    /* eslint-disable no-console */
     console.log(snapshotPath + ' does not match, writing actual.');
     return {
       pass: true,
@@ -234,9 +222,13 @@ function commitComparatorResult(
   };
 }
 
-function writeAttachment(testInfo: TestInfoImpl, name: string, contentType: string, aPath: string, body: Buffer | string) {
+function writeFileSync(aPath: string, content: Buffer | string) {
   fs.mkdirSync(path.dirname(aPath), { recursive: true });
-  fs.writeFileSync(aPath, body);
+  fs.writeFileSync(aPath, content);
+}
+
+function writeAttachment(testInfo: TestInfoImpl, name: string, contentType: string, aPath: string, body: Buffer | string) {
+  writeFileSync(aPath, body);
   testInfo.attachments.push({ name, contentType, path: aPath });
 }
 
