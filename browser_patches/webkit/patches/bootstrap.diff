@@ -2433,19 +2433,6 @@ index ccb086858c1c9cc311a87fb39588768881090ee7..0eb7ae3219fa283b2dd083b6b3a1d642
 +JSTouchEvent.cpp
 +JSTouchList.cpp
 +// Playwright end
-diff --git a/Source/WebCore/SourcesGTK.txt b/Source/WebCore/SourcesGTK.txt
-index c7044912d31213df8355bf1605abbcf54db8ca7c..4e30335cfad9ed79b0573731f52412cbb9d26b36 100644
---- a/Source/WebCore/SourcesGTK.txt
-+++ b/Source/WebCore/SourcesGTK.txt
-@@ -103,7 +103,7 @@ platform/graphics/egl/GLContextEGLX11.cpp @no-unify
- 
- platform/graphics/gbm/GBMDevice.cpp
- 
--platform/graphics/glx/GLContextGLX.cpp
-+platform/graphics/glx/GLContextGLX.cpp @no-unify
- 
- platform/graphics/gtk/ColorGtk.cpp
- platform/graphics/gtk/DisplayRefreshMonitorGtk.cpp
 diff --git a/Source/WebCore/SourcesWPE.txt b/Source/WebCore/SourcesWPE.txt
 index 57fa7ca67c4dea4a9e5b9845e72ae25873d8cf55..80b49517655ef1dae7f6e21c3672431d90c7ecf0 100644
 --- a/Source/WebCore/SourcesWPE.txt
@@ -10458,10 +10445,24 @@ index 026121d114c5fcad84c1396be8d692625beaa3bd..edd6e5cae033124c589959a42522fde0
  }
  #endif
 diff --git a/Source/WebKit/UIProcess/API/C/WKPage.cpp b/Source/WebKit/UIProcess/API/C/WKPage.cpp
-index 6047c5fa4e736867566222d63f66572af94cd810..2028199bd8a10b9fb27d89acb25992c852725b2f 100644
+index 6047c5fa4e736867566222d63f66572af94cd810..5c8e08f41e2f91db30fdd649db24ae59f9905286 100644
 --- a/Source/WebKit/UIProcess/API/C/WKPage.cpp
 +++ b/Source/WebKit/UIProcess/API/C/WKPage.cpp
-@@ -1805,6 +1805,8 @@ void WKPageSetPageUIClient(WKPageRef pageRef, const WKPageUIClientBase* wkClient
+@@ -1776,6 +1776,13 @@ void WKPageSetPageUIClient(WKPageRef pageRef, const WKPageUIClientBase* wkClient
+             completionHandler(String());
+         }
+ 
++        void handleJavaScriptDialog(WebPageProxy& page, bool accept, const String& value) final {
++            if (m_client.handleJavaScriptDialog) {
++                m_client.handleJavaScriptDialog(toAPI(&page), accept, toAPI(value.impl()), m_client.base.clientInfo);
++                return;
++            }
++        }
++
+         void setStatusText(WebPageProxy* page, const String& text) final
+         {
+             if (!m_client.setStatusText)
+@@ -1805,6 +1812,8 @@ void WKPageSetPageUIClient(WKPageRef pageRef, const WKPageUIClientBase* wkClient
          {
              if (!m_client.didNotHandleKeyEvent)
                  return;
@@ -10471,7 +10472,7 @@ index 6047c5fa4e736867566222d63f66572af94cd810..2028199bd8a10b9fb27d89acb25992c8
          }
  
 diff --git a/Source/WebKit/UIProcess/API/C/WKPageUIClient.h b/Source/WebKit/UIProcess/API/C/WKPageUIClient.h
-index e33187477d3d6e7614b8918d467b30847f943864..5149d29bf4e2ef53e7d28505f7e47da202113f54 100644
+index e33187477d3d6e7614b8918d467b30847f943864..bb33c08642896ead0f8b0c43a3c773a47fc676bf 100644
 --- a/Source/WebKit/UIProcess/API/C/WKPageUIClient.h
 +++ b/Source/WebKit/UIProcess/API/C/WKPageUIClient.h
 @@ -90,6 +90,7 @@ typedef void (*WKPageRunBeforeUnloadConfirmPanelCallback)(WKPageRef page, WKStri
@@ -10507,6 +10508,14 @@ index e33187477d3d6e7614b8918d467b30847f943864..5149d29bf4e2ef53e7d28505f7e47da2
      // Version 15.
      WKPageDecidePolicyForSpeechRecognitionPermissionRequestCallback     decidePolicyForSpeechRecognitionPermissionRequest;
 @@ -1687,6 +1691,7 @@ typedef struct WKPageUIClientV17 {
+ 
+     // Version 14.
+     WKPageRunWebAuthenticationPanelCallback                             runWebAuthenticationPanel;
++    WKPageHandleJavaScriptDialogCallback                                handleJavaScriptDialog;
+ 
+     // Version 15.
+     WKPageDecidePolicyForSpeechRecognitionPermissionRequestCallback     decidePolicyForSpeechRecognitionPermissionRequest;
+@@ -1803,6 +1808,7 @@ typedef struct WKPageUIClientV18 {
  
      // Version 14.
      WKPageRunWebAuthenticationPanelCallback                             runWebAuthenticationPanel;
@@ -22061,6 +22070,18 @@ index f6b59db3c0eeb0612f25e85b29495cd990add74d..69df426e74d2f1336a24e744ae25915b
  )
  
  list(APPEND WebKitTestRunnerInjectedBundle_LIBRARIES
+diff --git a/Tools/WebKitTestRunner/TestController.cpp b/Tools/WebKitTestRunner/TestController.cpp
+index 500c71d5a4a17a183876b99b9ff0623bf6426266..08597fc8a2cbc444b27a3700a520856bad912e34 100644
+--- a/Tools/WebKitTestRunner/TestController.cpp
++++ b/Tools/WebKitTestRunner/TestController.cpp
+@@ -833,6 +833,7 @@ void TestController::createWebViewWithOptions(const TestOptions& options)
+         0, // requestStorageAccessConfirm
+         shouldAllowDeviceOrientationAndMotionAccess,
+         runWebAuthenticationPanel,
++        0, // handleJavaScriptDialog
+         decidePolicyForSpeechRecognitionPermissionRequest,
+         decidePolicyForMediaKeySystemPermissionRequest,
+         nullptr, // requestWebAuthenticationNoGesture
 diff --git a/Tools/WebKitTestRunner/mac/EventSenderProxy.mm b/Tools/WebKitTestRunner/mac/EventSenderProxy.mm
 index 7e7585e699663e5bdc8284e4e3540818742102ab..54d1853f259e824e5731bd39825c37629ab7ae5e 100644
 --- a/Tools/WebKitTestRunner/mac/EventSenderProxy.mm
