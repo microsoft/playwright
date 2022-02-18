@@ -17,23 +17,15 @@
 import http from 'http';
 import https from 'https';
 import net from 'net';
-import os from 'os';
-import stream from 'stream';
 import debug from 'debug';
 import { raceAgainstTimeout } from 'playwright-core/lib/utils/async';
 import { WebServerConfig } from './types';
 import { launchProcess } from 'playwright-core/lib/utils/processLauncher';
+import { Reporter } from '../types/testReporter';
 
 const DEFAULT_ENVIRONMENT_VARIABLES = {
   'BROWSER': 'none', // Disable that create-react-app will open the page in the browser
 };
-
-const newProcessLogPrefixer = () => new stream.Transform({
-  transform(this: stream.Transform, chunk: Buffer, encoding: string, callback: stream.TransformCallback) {
-    this.push(chunk.toString().split(os.EOL).map((line: string): string => line ? `[WebServer] ${line}` : line).join(os.EOL));
-    callback();
-  },
-});
 
 const debugWebServer = debug('pw:webserver');
 
@@ -41,12 +33,13 @@ export class WebServer {
   private _isAvailable: () => Promise<boolean>;
   private _killProcess?: () => Promise<void>;
   private _processExitedPromise!: Promise<any>;
-  constructor(private readonly config: WebServerConfig) {
+
+  constructor(private readonly config: WebServerConfig, private readonly reporter: Reporter) {
     this._isAvailable = getIsAvailableFunction(config);
   }
 
-  public static async create(config: WebServerConfig): Promise<WebServer> {
-    const webServer = new WebServer(config);
+  public static async create(config: WebServerConfig, reporter: Reporter): Promise<WebServer> {
+    const webServer = new WebServer(config, reporter);
     try {
       await webServer._startProcess();
       await webServer._waitForProcess();
@@ -85,8 +78,11 @@ export class WebServer {
     });
     this._killProcess = kill;
 
-    launchedProcess.stderr!.pipe(newProcessLogPrefixer()).pipe(process.stderr);
-    launchedProcess.stdout!.on('data', (line: Buffer) => debugWebServer(line.toString()));
+    launchedProcess.stderr!.on('data', line => this.reporter.onStdErr?.('[WebServer] ' + line.toString()));
+    launchedProcess.stdout!.on('data', line => {
+      if (debugWebServer.enabled)
+        this.reporter.onStdOut?.('[WebServer] ' + line.toString());
+    });
   }
 
   private async _waitForProcess() {

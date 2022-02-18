@@ -426,7 +426,7 @@ export class Runner {
     await this._runAndReportError(async () => {
       for (const internalGlobalSetup of this._internalGlobalSetups)
         internalGlobalTeardowns.push(await internalGlobalSetup());
-      webServer = config.webServer ? await WebServer.create(config.webServer) : undefined;
+      webServer = config.webServer ? await WebServer.create(config.webServer, this._reporter) : undefined;
       if (config.globalSetup)
         globalSetupResult = await (await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup'))(this._loader.fullConfig());
     }, result);
