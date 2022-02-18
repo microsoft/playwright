@@ -16,7 +16,7 @@
 
 import type { Expect } from '../types';
 import { currentTestInfo } from '../globals';
-import { mimeTypeToComparator, ComparatorResult, ImageComparatorOptions } from './comparators';
+import { mimeTypeToComparator, ComparatorResult, ImageComparatorOptions } from 'playwright-core/lib/utils/comparators';
 import { addSuffixToFilePath, serializeError, sanitizeForFilePath, trimLongString } from '../util';
 import { UpdateSnapshots } from '../types';
 import colors from 'colors/safe';

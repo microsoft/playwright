@@ -19,8 +19,6 @@ import colors from 'colors/safe';
 import jpeg from 'jpeg-js';
 import pixelmatch from 'pixelmatch';
 import { diff_match_patch, DIFF_INSERT, DIFF_DELETE, DIFF_EQUAL } from '../third_party/diff_match_patch';
-import BlinkDiff from '../third_party/blink-diff';
-import PNGImage from '../third_party/png-js';
 
 // Note: we require the pngjs version of pixelmatch to avoid version mismatches.
 const { PNG } = require(require.resolve('pngjs', { paths: [require.resolve('pixelmatch')] })) as typeof import('pngjs');
@@ -58,14 +56,6 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
   }
   const diff = new PNG({ width: expected.width, height: expected.height });
   const thresholdOptions = { threshold: 0.2, ...options };
-  if (process.env.PW_USE_BLINK_DIFF && mimeType === 'image/png') {
-    const diff = new BlinkDiff({
-      imageA: new PNGImage(expected as any),
-      imageB: new PNGImage(actual as any),
-    });
-    const result = diff.runSync();
-    return result.code !== BlinkDiff.RESULT_IDENTICAL ? { diff: PNG.sync.write(diff._imageOutput.getImage()) } : null;
-  }
   const count = pixelmatch(expected.data, actual.data, diff.data, expected.width, expected.height, thresholdOptions);
 
   const pixelCount1 = options.pixelCount;
