@@ -47,7 +47,7 @@ type MatchSnapshotOptions = { threshold?: number, pixelCount?: number, pixelRati
 
 function parseMatchSnapshotOptions(
   testInfo: TestInfoImpl,
-  snapshotExtension: string,
+  anonymousSnapshotExtension: string,
   nameOrOptions: NameOrSegments | { name: NameOrSegments } & MatchSnapshotOptions,
   optOptions: MatchSnapshotOptions = {},
 ) {
@@ -62,7 +62,7 @@ function parseMatchSnapshotOptions(
       ...testInfo.titlePath.slice(1),
       (testInfo as any)[SNAPSHOT_COUNTER],
     ].join(' ');
-    options.name = sanitizeForFilePath(trimLongString(fullTitleWithoutSpec)) + '.' + snapshotExtension;
+    options.name = sanitizeForFilePath(trimLongString(fullTitleWithoutSpec)) + '.' + anonymousSnapshotExtension;
   }
 
   options = {
@@ -87,7 +87,7 @@ function parseMatchSnapshotOptions(
   let updateSnapshots = testInfo.config.updateSnapshots;
   if (updateSnapshots === 'missing' && testInfo.retry < testInfo.project.retries)
     updateSnapshots = 'none';
-  const mimeType = extensionToMimeType[snapshotExtension] ?? 'application/octet-string';
+  const mimeType = extensionToMimeType[path.extname(snapshotPath).substring(1)] ?? 'application/octet-string';
   const comparator = mimeTypeToComparator[mimeType];
   if (!comparator)
     throw new Error('Failed to find comparator with type ' + mimeType + ': ' + snapshotPath);
@@ -249,7 +249,6 @@ function commitComparatorResult(
 function indent(lines: string, tab: string) {
   return lines.replace(/^(?=.+$)/gm, tab);
 }
-
 
 function determineFileExtension(file: string | Buffer): string {
   if (typeof file === 'string')

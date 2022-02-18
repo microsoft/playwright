@@ -270,7 +270,6 @@ export function toHaveURL(
   }, expected, options);
 }
 
-
 export async function toBeOK(
   this: ReturnType<Expect['getState']>,
   response: APIResponseEx
