@@ -36,6 +36,7 @@ import type { ElementStateWithoutStable, FrameExpectParams, InjectedScriptPoll, 
 import { isSessionClosedError } from './protocolError';
 import { isInvalidSelectorError, splitSelectorByFrame, stringifySelector, ParsedSelector } from './common/selectorParser';
 import { SelectorInfo } from './selectors';
+import { ScreenshotOptions } from './screenshotter';
 
 type ContextData = {
   contextPromise: ManualPromise<dom.FrameExecutionContext | Error>;
@@ -1057,6 +1058,13 @@ export class Frame extends SdkObject {
     });
   }
 
+  async rafrafScreenshotElementWithProgress(progress: Progress, selector: string, options: ScreenshotOptions): Promise<Buffer> {
+    return await this._retryWithProgressIfNotConnected(progress, selector, true /* strict */, async handle => {
+      await handle.frame().rafraf();
+      return await this._page._screenshotter.screenshotElement(progress, handle, options);
+    });
+  }
+
   async click(metadata: CallMetadata, selector: string, options: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
@@ -1369,6 +1377,11 @@ export class Frame extends SdkObject {
   async title(): Promise<string> {
     const context = await this._utilityContext();
     return context.evaluate(() => document.title);
+  }
+
+  async rafraf(): Promise<void> {
+    const context = await this._utilityContext();
+    return context.evaluate(() => new Promise(x => requestAnimationFrame(() => requestAnimationFrame(() => x()))));
   }
 
   _onDetached() {

@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
+import { Locator, Page } from 'playwright-core';
 import type { Expect } from '../types';
 import { currentTestInfo } from '../globals';
 import { mimeTypeToComparator, ImageComparatorOptions, Comparator } from 'playwright-core/lib/utils/comparators';
-import { addSuffixToFilePath, serializeError, sanitizeForFilePath, trimLongString, callLogText } from '../util';
+import { addSuffixToFilePath, serializeError, sanitizeForFilePath, trimLongString, callLogText, currentExpectTimeout } from '../util';
 import { UpdateSnapshots } from '../types';
 import colors from 'colors/safe';
 import fs from 'fs';
@@ -31,8 +32,16 @@ type SyncExpectationResult = {
   message: () => string;
 };
 
+type HaveScreenshotOptions = ImageComparatorOptions & {
+  timeout?: number,
+};
+
 type NameOrSegments = string | string[];
 const SNAPSHOT_COUNTER = Symbol('noname-snapshot-counter');
+
+interface PageEx extends Page {
+  _expectScreenshot(options: any): Promise<{ actual?: Buffer, previous?: Buffer, diff?: Buffer, errorMessage?: string, log?: string[] }>;
+}
 
 class SnapshotHelper<T extends ImageComparatorOptions> {
   readonly testInfo: TestInfoImpl;
@@ -230,6 +239,86 @@ export function toMatchSnapshot(
   }
 
   return helper.handleDifferent(received, expected, result.diff, result.errorMessage, undefined);
+}
+
+export async function toHaveScreenshot(
+  this: ReturnType<Expect['getState']>,
+  pageOrLocator: Page | Locator,
+  nameOrOptions: NameOrSegments | { name?: NameOrSegments } & HaveScreenshotOptions = {},
+  optOptions: HaveScreenshotOptions = {}
+): Promise<SyncExpectationResult> {
+  const testInfo = currentTestInfo();
+  if (!testInfo)
+    throw new Error(`toHaveScreenshot() must be called during the test`);
+  const helper = new SnapshotHelper(testInfo, 'png', nameOrOptions, optOptions);
+  const [page, locator] = pageOrLocator.constructor.name === 'Page' ? [(pageOrLocator as PageEx), undefined] : [(pageOrLocator as Locator).page() as PageEx, pageOrLocator as Locator];
+
+  if (this.isNot) {
+    if (!fs.existsSync(helper.snapshotPath))
+      return helper.handleMissingNegated();
+
+    // Having `errorMessage` means we timed out while waiting
+    // for screenshots not to match, so screnshots
+    // are actually the same in the end.
+    const isDifferent = !(await page._expectScreenshot({
+      expected: await fs.promises.readFile(helper.snapshotPath),
+      isNot: true,
+      locator,
+      comparatorOptions: helper.comparatorOptions,
+      timeout: currentExpectTimeout(helper.comparatorOptions),
+    })).errorMessage;
+    return isDifferent ? helper.handleDifferentNegated() : helper.handleMatchingNegated();
+  }
+
+  if (helper.updateSnapshots === 'all' || !fs.existsSync(helper.snapshotPath)) {
+    // Regenerate a new screenshot by waiting until two screenshots are the same.
+    const timeout = currentExpectTimeout(helper.comparatorOptions);
+    const { actual, previous, diff, errorMessage, log } = await page._expectScreenshot({
+      expected: undefined,
+      isNot: false,
+      locator,
+      comparatorOptions: helper.comparatorOptions,
+      timeout,
+    });
+    // We tried re-generating new snapshot but failed.
+    // This can be due to e.g. spinning animation, so we want to show it as a diff.
+    if (errorMessage) {
+      return actual && previous ?
+        helper.handleDifferent(actual, previous, diff, undefined, log,
+            `Failed to generate new snapshot in ${timeout}ms because ${locator ? 'element' : 'page'} keeps changing:`) :
+        helper.handleDifferent(actual, previous, diff, errorMessage, log,
+            `Timed out while trying to generate new snapshot:`);
+    }
+
+    // We successfully (re-)generated new snapshot.
+    if (!fs.existsSync(helper.snapshotPath))
+      return helper.handleMissing(actual!);
+
+    writeFileSync(helper.snapshotPath, actual!);
+    /* eslint-disable no-console */
+    console.log(helper.snapshotPath + ' is re-generated, writing actual.');
+    return {
+      pass: true,
+      message: () => helper.snapshotPath + ' running with --update-snapshots, writing actual.'
+    };
+  }
+
+  // General case:
+  // - snapshot exists
+  // - regular matcher (i.e. not a `.not`)
+  // - no flags to update screenshots
+  const expected = await fs.promises.readFile(helper.snapshotPath);
+  const { actual, diff, errorMessage, log } = await page._expectScreenshot({
+    expected,
+    isNot: false,
+    locator,
+    comparatorOptions: helper.comparatorOptions,
+    timeout: currentExpectTimeout(helper.comparatorOptions),
+  });
+
+  return errorMessage ?
+    helper.handleDifferent(actual, expected, diff, errorMessage, log) :
+    helper.handleMatching();
 }
 
 function writeFileSync(aPath: string, content: Buffer | string) {

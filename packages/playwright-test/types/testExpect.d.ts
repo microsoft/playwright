@@ -88,6 +88,8 @@ declare global {
        */
       toMatchSnapshot(name: string | string[], options?: {
         threshold?: number
+        pixelCount?: number,
+        pixelRatio?: number,
       }): R;
     }
   }
@@ -178,6 +180,33 @@ interface LocatorMatchers {
    * Asserts given DOM node visible on the screen.
    */
   toBeVisible(options?: { timeout?: number }): Promise<Locator>;
+
+  /**
+   * Match snapshot
+   */
+  toHaveScreenshot(options?: {
+    name?: string | string[],
+    threshold?: number,
+    pixelCount?: number,
+    pixelRatio?: number,
+    disableAnimations?: boolean;
+    mask?: Array<Locator>;
+    omitBackground?: boolean;
+    timeout?: number;
+  }): Promise<Locator>;
+
+  /**
+   * Match snapshot
+   */
+  toHaveScreenshot(name: string | string[], options?: {
+    threshold?: number
+    pixelCount?: number,
+    pixelRatio?: number,
+    disableAnimations?: boolean;
+    mask?: Array<Locator>;
+    omitBackground?: boolean;
+    timeout?: number;
+  }): Promise<Locator>;
 }
 interface PageMatchers {
   /**
@@ -189,6 +218,33 @@ interface PageMatchers {
   * Asserts page's URL.
   */
   toHaveURL(expected: string | RegExp, options?: { timeout?: number }): Promise<Page>;
+
+  /**
+   * Match snapshot
+   */
+  toHaveScreenshot(options?: {
+    name?: string | string[],
+    threshold?: number,
+    pixelCount?: number,
+    pixelRatio?: number,
+    disableAnimations?: boolean;
+    mask?: Array<Locator>;
+    omitBackground?: boolean;
+    timeout?: number;
+  }): Promise<Page>;
+
+  /**
+   * Match snapshot
+   */
+  toHaveScreenshot(name: string | string[], options?: {
+    threshold?: number
+    pixelCount?: number,
+    pixelRatio?: number,
+    disableAnimations?: boolean;
+    mask?: Array<Locator>;
+    omitBackground?: boolean;
+    timeout?: number;
+  }): Promise<Page>;
 }
 
 interface APIResponseMatchers {

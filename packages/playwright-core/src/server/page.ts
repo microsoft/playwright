@@ -31,11 +31,12 @@ import { Progress, ProgressController } from './progress';
 import { assert, isError } from '../utils/utils';
 import { ManualPromise } from '../utils/async';
 import { debugLogger } from '../utils/debugLogger';
+import { mimeTypeToComparator, ImageComparatorOptions, ComparatorResult } from '../utils/comparators';
 import { SelectorInfo, Selectors } from './selectors';
 import { CallMetadata, SdkObject } from './instrumentation';
 import { Artifact } from './artifact';
-import { ParsedSelector } from './common/selectorParser';
 import { TimeoutOptions } from '../common/types';
+import { isInvalidSelectorError, ParsedSelector } from './common/selectorParser';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -92,6 +93,18 @@ type PageState = {
   reducedMotion: types.ReducedMotion | null;
   forcedColors: types.ForcedColors | null;
   extraHTTPHeaders: types.HeadersArray | null;
+};
+
+type ExpectScreenshotOptions = {
+  timeout?: number,
+  expected?: Buffer,
+  isNot?: boolean,
+  locator?: {
+    frame: frames.Frame,
+    selector: string,
+  },
+  comparatorOptions?: ImageComparatorOptions,
+  screenshotOptions?: ScreenshotOptions,
 };
 
 export class Page extends SdkObject {
@@ -425,7 +438,54 @@ export class Page extends SdkObject {
     route.continue();
   }
 
-  async screenshot(metadata: CallMetadata, options: ScreenshotOptions & TimeoutOptions): Promise<Buffer> {
+  async expectScreenshot(metadata: CallMetadata, options: ExpectScreenshotOptions = {}): Promise<{ actual?: Buffer, previous?: Buffer, diff?: Buffer, errorMessage?: string, log?: string[] }> {
+    const locator = options.locator;
+    const rafrafScreenshot = locator ? async (progress: Progress) => {
+      return await locator.frame.rafrafScreenshotElementWithProgress(progress, locator.selector, options.screenshotOptions || {});
+    } : async (progress: Progress) => {
+      await this.mainFrame().rafraf();
+      return await this._screenshotter.screenshotPage(progress, options.screenshotOptions || {});
+    };
+
+    const comparator = mimeTypeToComparator['image/png'];
+    const controller = new ProgressController(metadata, this);
+    let actual: Buffer | undefined;
+    let previous: Buffer | undefined;
+    const isGeneratingNewScreenshot = !options.expected;
+    if (isGeneratingNewScreenshot && options.isNot)
+      return { errorMessage: '"not" matcher requires expected result' };
+    let result: ComparatorResult = null;
+    return controller.run(async progress => {
+      if (isGeneratingNewScreenshot) {
+        actual = await rafrafScreenshot(progress);
+        progress.throwIfAborted();
+        // Wait before trying one more screenshot.
+        await new Promise(x => setTimeout(x, 150));
+        progress.throwIfAborted();
+      }
+      while (true) {
+        if (isGeneratingNewScreenshot)
+          previous = actual;
+        actual = await rafrafScreenshot(progress);
+        result = comparator(actual, isGeneratingNewScreenshot ? previous! : options.expected!, options.comparatorOptions);
+        if (!!result === !!options.isNot)
+          break;
+        progress.throwIfAborted();
+        // Wait before trying one more screenshot.
+        await new Promise(x => setTimeout(x, 150));
+        progress.throwIfAborted();
+      }
+      return isGeneratingNewScreenshot ? { actual } : {};
+    }, this._timeoutSettings.timeout(options)).catch(e => {
+      // Q: Why not throw upon isSessionClosedError(e) as in other places?
+      // A: We want user to receive a friendly message containing the last intermediate result.
+      if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
+        throw e;
+      return { diff: result?.diff, errorMessage: result?.errorMessage ?? e.message, actual, previous, log: metadata.log };
+    });
+  }
+
+  async screenshot(metadata: CallMetadata, options: ScreenshotOptions & TimeoutOptions = {}): Promise<Buffer> {
     const controller = new ProgressController(metadata, this);
     return controller.run(
         progress => this._screenshotter.screenshotPage(progress, options),

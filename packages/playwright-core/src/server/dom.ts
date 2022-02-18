@@ -128,6 +128,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     this._initializePreview().catch(e => {});
   }
 
+  frame(): frames.Frame {
+    return this._frame;
+  }
+
   async _initializePreview() {
     const utility = await this._context.injectedScript();
     this._setPreview(await utility.evaluate((injected, e) => 'JSHandle@' + injected.previewNode(e), this));

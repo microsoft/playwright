@@ -62,6 +62,13 @@ type PDFOptions = Omit<channels.PagePdfParams, 'width' | 'height' | 'margin'> & 
 };
 type Listener = (...args: any[]) => void;
 
+type ExpectScreenshotOptions = Omit<channels.PageExpectScreenshotOptions, 'screenshotOptions' | 'locator' | 'expected'> & {
+  expected?: Buffer,
+  locator?: Locator,
+  isNot?: boolean,
+  screenshotOptions: Omit<channels.PageExpectScreenshotOptions['screenshotOptions'], 'mask'> & { mask?: Locator[] }
+};
+
 export class Page extends ChannelOwner<channels.PageChannel> implements api.Page {
   private _browserContext: BrowserContext;
   _ownedContext: BrowserContext | undefined;
@@ -474,6 +481,36 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       await fs.promises.writeFile(options.path, buffer);
     }
     return buffer;
+  }
+
+  async _expectScreenshot(options: ExpectScreenshotOptions): Promise<{ actual?: Buffer, previous?: Buffer, diff?: Buffer, errorMessage?: string , log?: string[]}> {
+    const mask = options.screenshotOptions?.mask ? options.screenshotOptions?.mask.map(locator => ({
+      frame: locator._frame._channel,
+      selector: locator._selector,
+    })) : undefined;
+    const locator = options.locator ? {
+      frame: options.locator._frame._channel,
+      selector: options.locator._selector,
+    } : undefined;
+    const expected = options.expected ? options.expected.toString('base64') : undefined;
+
+    const result = await this._channel.expectScreenshot({
+      ...options,
+      isNot: !!options.isNot,
+      expected,
+      locator,
+      screenshotOptions: {
+        ...options.screenshotOptions,
+        mask,
+      }
+    });
+    return {
+      log: result.log,
+      actual: result.actual ? Buffer.from(result.actual, 'base64') : undefined,
+      previous: result.previous ? Buffer.from(result.previous, 'base64') : undefined,
+      diff: result.diff ? Buffer.from(result.diff, 'base64') : undefined,
+      errorMessage: result.errorMessage,
+    };
   }
 
   async title(): Promise<string> {

@@ -990,6 +990,45 @@ Page:
       tracing:
         snapshot: true
 
+    expectScreenshot:
+      parameters:
+        expected: binary?
+        timeout: number?
+        isNot: boolean
+        locator:
+          type: object?
+          properties:
+            frame: Frame
+            selector: string
+        comparatorOptions:
+          type: object?
+          properties:
+            pixelCount: number?
+            pixelRatio: number?
+            threshold: number?
+        screenshotOptions:
+          type: object?
+          properties:
+            omitBackground: boolean?
+            fullPage: boolean?
+            disableAnimations: boolean?
+            clip: Rect?
+            mask:
+              type: array?
+              items:
+                type: object
+                properties:
+                  frame: Frame
+                  selector: string
+      returns:
+        diff: binary?
+        errorMessage: string?
+        actual: binary?
+        previous: binary?
+        log:
+          type: array?
+          items: string
+
     screenshot:
       parameters:
         timeout: number?

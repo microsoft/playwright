@@ -540,6 +540,30 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     timeout: tOptional(tNumber),
     waitUntil: tOptional(tType('LifecycleEvent')),
   });
+  scheme.PageExpectScreenshotParams = tObject({
+    expected: tOptional(tBinary),
+    timeout: tOptional(tNumber),
+    isNot: tBoolean,
+    locator: tOptional(tObject({
+      frame: tChannel('Frame'),
+      selector: tString,
+    })),
+    comparatorOptions: tOptional(tObject({
+      pixelCount: tOptional(tNumber),
+      pixelRatio: tOptional(tNumber),
+      threshold: tOptional(tNumber),
+    })),
+    screenshotOptions: tOptional(tObject({
+      omitBackground: tOptional(tBoolean),
+      fullPage: tOptional(tBoolean),
+      disableAnimations: tOptional(tBoolean),
+      clip: tOptional(tType('Rect')),
+      mask: tOptional(tArray(tObject({
+        frame: tChannel('Frame'),
+        selector: tString,
+      }))),
+    })),
+  });
   scheme.PageScreenshotParams = tObject({
     timeout: tOptional(tNumber),
     type: tOptional(tEnum(['png', 'jpeg'])),
