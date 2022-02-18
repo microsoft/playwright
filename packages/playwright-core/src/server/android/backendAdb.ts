@@ -16,18 +16,20 @@
 
 import assert from 'assert';
 import debug from 'debug';
+import * as types from '../types';
 import * as net from 'net';
 import { EventEmitter } from 'events';
 import { Backend, DeviceBackend, SocketBackend } from './android';
 import { createGuid } from '../../utils/utils';
 
 export class AdbBackend implements Backend {
-  async devices(): Promise<DeviceBackend[]> {
-    const result = await runCommand('host:devices');
+  async devices(options: types.DeviceOptions = {}): Promise<DeviceBackend[]> {
+    const port  = options.port ? options.port : 5037;
+    const result = await runCommand('host:devices', port);
     const lines = result.toString().trim().split('\n');
     return lines.map(line => {
       const [serial, status] = line.trim().split('\t');
-      return new AdbDevice(serial, status);
+      return new AdbDevice(serial, status, port);
     });
   }
 }
@@ -35,10 +37,12 @@ export class AdbBackend implements Backend {
 class AdbDevice implements DeviceBackend {
   readonly serial: string;
   readonly status: string;
+  readonly port: number;
 
-  constructor(serial: string, status: string) {
+  constructor(serial: string, status: string, port: number) {
     this.serial = serial;
     this.status = status;
+    this.port = port;
   }
 
   async init() {
@@ -48,19 +52,19 @@ class AdbDevice implements DeviceBackend {
   }
 
   runCommand(command: string): Promise<Buffer> {
-    return runCommand(command, this.serial);
+    return runCommand(command, this.port, this.serial);
   }
 
   async open(command: string): Promise<SocketBackend> {
-    const result = await open(command, this.serial);
+    const result = await open(command, this.port, this.serial);
     result.becomeSocket();
     return result;
   }
 }
 
-async function runCommand(command: string, serial?: string): Promise<Buffer> {
+async function runCommand(command: string, port: number = 5037, serial?: string): Promise<Buffer> {
   debug('pw:adb:runCommand')(command, serial);
-  const socket = new BufferedSocketWrapper(command, net.createConnection({ port: 5037 }));
+  const socket = new BufferedSocketWrapper(command, net.createConnection({ port: port }));
   if (serial) {
     await socket.write(encodeMessage(`host:transport:${serial}`));
     const status = await socket.read(4);
@@ -80,8 +84,8 @@ async function runCommand(command: string, serial?: string): Promise<Buffer> {
   return commandOutput;
 }
 
-async function open(command: string, serial?: string): Promise<BufferedSocketWrapper> {
-  const socket = new BufferedSocketWrapper(command, net.createConnection({ port: 5037 }));
+async function open(command: string, port: number = 5037, serial?: string): Promise<BufferedSocketWrapper> {
+  const socket = new BufferedSocketWrapper(command, net.createConnection({ port: port }));
   if (serial) {
     await socket.write(encodeMessage(`host:transport:${serial}`));
     const status = await socket.read(4);

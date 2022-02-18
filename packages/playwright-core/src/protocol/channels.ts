@@ -3537,11 +3537,15 @@ export interface AndroidEventTarget {
 }
 export interface AndroidChannel extends AndroidEventTarget, Channel {
   _type_Android: boolean;
-  devices(params?: AndroidDevicesParams, metadata?: Metadata): Promise<AndroidDevicesResult>;
+  devices(params: AndroidDevicesParams, metadata?: Metadata): Promise<AndroidDevicesResult>;
   setDefaultTimeoutNoReply(params: AndroidSetDefaultTimeoutNoReplyParams, metadata?: Metadata): Promise<AndroidSetDefaultTimeoutNoReplyResult>;
 }
-export type AndroidDevicesParams = {};
-export type AndroidDevicesOptions = {};
+export type AndroidDevicesParams = {
+  port?: number,
+};
+export type AndroidDevicesOptions = {
+  port?: number,
+};
 export type AndroidDevicesResult = {
   devices: AndroidDeviceChannel[],
 };

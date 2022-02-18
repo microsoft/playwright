@@ -47,8 +47,8 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
     this._channel.setDefaultTimeoutNoReply({ timeout });
   }
 
-  async devices(): Promise<AndroidDevice[]> {
-    const { devices } = await this._channel.devices();
+  async devices(options: types.DeviceOptions): Promise<AndroidDevice[]> {
+    const { devices } = await this._channel.devices(options);
     return devices.map(d => AndroidDevice.from(d));
   }
 }

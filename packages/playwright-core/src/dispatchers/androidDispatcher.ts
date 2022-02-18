@@ -27,7 +27,7 @@ export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidChann
   }
 
   async devices(params: channels.AndroidDevicesParams): Promise<channels.AndroidDevicesResult> {
-    const devices = await this._object.devices();
+    const devices = await this._object.devices(params);
     return {
       devices: devices.map(d => AndroidDeviceDispatcher.from(this._scope, d))
     };

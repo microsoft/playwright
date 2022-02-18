@@ -2739,6 +2739,8 @@ Android:
   commands:
 
     devices:
+      parameters:
+        port: number?
       returns:
         devices:
           type: array

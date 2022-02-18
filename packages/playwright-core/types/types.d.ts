@@ -11054,8 +11054,14 @@ export {};
 export interface Android {
   /**
    * Returns the list of detected Android devices.
+   * @param options
    */
-  devices(): Promise<Array<AndroidDevice>>;
+  devices(options?: {
+    /**
+     * Optional port to establish ADB server connection.
+     */
+    port?: number;
+  }): Promise<Array<AndroidDevice>>;
 
   /**
    * This setting will change the default maximum time for all the methods accepting `timeout` option.
@@ -11066,7 +11072,7 @@ export interface Android {
 
 /**
  * [AndroidDevice] represents a connected device, either real hardware or emulated. Devices can be obtained using
- * [android.devices()](https://playwright.dev/docs/api/class-android#android-devices).
+ * [android.devices([options])](https://playwright.dev/docs/api/class-android#android-devices).
  */
 export interface AndroidDevice {
   /**

@@ -1247,7 +1247,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     arg: tType('SerializedArgument'),
   });
   scheme.ElectronApplicationCloseParams = tOptional(tObject({}));
-  scheme.AndroidDevicesParams = tOptional(tObject({}));
+  scheme.AndroidDevicesParams = tObject({
+    port: tOptional(tNumber),
+  });
   scheme.AndroidSetDefaultTimeoutNoReplyParams = tObject({
     timeout: tNumber,
   });

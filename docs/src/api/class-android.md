@@ -82,6 +82,11 @@ PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright
 
 Returns the list of detected Android devices.
 
+### option: Android.devices.port
+- `port` <[int]>
+
+Optional port to establish ADB server connection.
+
 ## method: Android.setDefaultTimeout
 
 This setting will change the default maximum time for all the methods accepting [`param: timeout`] option.

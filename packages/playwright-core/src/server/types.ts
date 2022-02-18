@@ -100,6 +100,10 @@ export const reducedMotions: Set<ReducedMotion> = new Set(['no-preference', 'red
 export type ForcedColors = 'active' | 'none';
 export const forcedColors: Set<ForcedColors> = new Set(['active', 'none']);
 
+export type DeviceOptions = {
+  port?: number
+};
+
 export type DeviceDescriptor = {
   userAgent: string,
   viewport: Size,

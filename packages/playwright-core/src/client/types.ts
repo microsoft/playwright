@@ -115,3 +115,6 @@ export type RemoteAddr = channels.RemoteAddr;
 export type SecurityDetails = channels.SecurityDetails;
 
 export type FrameExpectOptions = channels.FrameExpectOptions & { isNot?: boolean };
+export type DeviceOptions = {
+  port?: number
+};
