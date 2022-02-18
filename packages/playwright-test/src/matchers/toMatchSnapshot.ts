@@ -38,7 +38,7 @@ function parseMatchSnapshotOptions(
   testInfo: TestInfoImpl,
   anonymousSnapshotExtension: string,
   nameOrOptions: NameOrSegments | { name?: NameOrSegments } & ImageComparatorOptions,
-  optOptions: ImageComparatorOptions = {},
+  optOptions: ImageComparatorOptions,
 ) {
   let options: ImageComparatorOptions;
   let name: NameOrSegments | undefined;
@@ -101,7 +101,7 @@ function parseMatchSnapshotOptions(
 export function toMatchSnapshot(
   this: ReturnType<Expect['getState']>,
   received: Buffer | string,
-  nameOrOptions: NameOrSegments | { name: NameOrSegments } & ImageComparatorOptions,
+  nameOrOptions: NameOrSegments | { name?: NameOrSegments } & ImageComparatorOptions = {},
   optOptions: ImageComparatorOptions = {}
 ): SyncExpectationResult {
   const testInfo = currentTestInfo();
