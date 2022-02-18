@@ -20,12 +20,12 @@ import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { CallMetadata } from '../server/instrumentation';
-import WebSocket from 'ws';
 import { JsonPipeDispatcher } from '../dispatchers/jsonPipeDispatcher';
-import { getUserAgent, makeWaitForNextTask } from '../utils/utils';
-import { ManualPromise } from '../utils/async';
+import { getUserAgent } from '../utils/utils';
 import * as socks from '../utils/socksProxy';
 import EventEmitter from 'events';
+import { ProgressController } from '../server/progress';
+import { WebSocketTransport } from '../server/transport';
 
 export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.BrowserTypeChannel> implements channels.BrowserTypeChannel {
   _type_BrowserType = true;
@@ -55,54 +55,41 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.Brow
     };
   }
 
-  async connect(params: channels.BrowserTypeConnectParams): Promise<channels.BrowserTypeConnectResult> {
-    const waitForNextTask = params.slowMo
-      ? (cb: () => any) => setTimeout(cb, params.slowMo)
-      : makeWaitForNextTask();
-    const paramsHeaders = Object.assign({ 'User-Agent': getUserAgent() }, params.headers || {});
-    const ws = new WebSocket(params.wsEndpoint, [], {
-      perMessageDeflate: false,
-      maxPayload: 256 * 1024 * 1024, // 256Mb,
-      handshakeTimeout: params.timeout,
-      headers: paramsHeaders,
-      followRedirects: true,
-    });
-    let socksInterceptor: SocksInterceptor | undefined;
-    const pipe = new JsonPipeDispatcher(this._scope);
-    const openPromise = new ManualPromise<{ pipe: JsonPipeDispatcher }>();
-    ws.on('open', () => openPromise.resolve({ pipe }));
-    ws.on('close', () => {
-      socksInterceptor?.cleanup();
-      pipe.wasClosed();
-    });
-    ws.on('error', error => {
-      socksInterceptor?.cleanup();
-      if (openPromise.isDone()) {
-        pipe.wasClosed(error);
-      } else {
-        pipe.dispose();
-        openPromise.reject(error);
-      }
-    });
-    pipe.on('close', () => {
-      socksInterceptor?.cleanup();
-      ws.close();
-    });
-    pipe.on('message', message => ws.send(JSON.stringify(message)));
-    ws.addEventListener('message', event => {
-      waitForNextTask(() => {
-        try {
-          const json = JSON.parse(event.data as string);
-          if (json.method === '__create__' && json.params.type === 'SocksSupport')
-            socksInterceptor = new SocksInterceptor(ws, params.socksProxyRedirectPortForTest, json.params.guid);
-          if (!socksInterceptor?.interceptMessage(json))
+  async connect(params: channels.BrowserTypeConnectParams, metadata: CallMetadata): Promise<channels.BrowserTypeConnectResult> {
+    const controller = new ProgressController(metadata, this._object);
+    controller.setLogName('browser');
+    return await controller.run(async progress => {
+      const paramsHeaders = Object.assign({ 'User-Agent': getUserAgent() }, params.headers || {});
+      const transport = await WebSocketTransport.connect(progress, params.wsEndpoint, paramsHeaders, true);
+      let socksInterceptor: SocksInterceptor | undefined;
+      const pipe = new JsonPipeDispatcher(this._scope);
+      transport.onmessage = json => {
+        if (json.method === '__create__' && json.params.type === 'SocksSupport')
+          socksInterceptor = new SocksInterceptor(transport, params.socksProxyRedirectPortForTest, json.params.guid);
+        if (socksInterceptor?.interceptMessage(json))
+          return;
+        const cb = () => {
+          try {
             pipe.dispatch(json);
-        } catch (e) {
-          ws.close();
-        }
+          } catch (e) {
+            transport.close();
+          }
+        };
+        if (params.slowMo)
+          setTimeout(cb, params.slowMo);
+        else
+          cb();
+      };
+      pipe.on('message', message => {
+        transport.send(message);
       });
-    });
-    return openPromise;
+      transport.onclose = () => {
+        socksInterceptor?.cleanup();
+        pipe.wasClosed();
+      };
+      pipe.on('close', () => transport.close());
+      return { pipe };
+    }, params.timeout || 0);
   }
 }
 
@@ -112,7 +99,7 @@ class SocksInterceptor {
   private _socksSupportObjectGuid: string;
   private _ids = new Set<number>();
 
-  constructor(ws: WebSocket, redirectPortForTest: number | undefined, socksSupportObjectGuid: string) {
+  constructor(transport: WebSocketTransport, redirectPortForTest: number | undefined, socksSupportObjectGuid: string) {
     this._handler = new socks.SocksProxyHandler(redirectPortForTest);
     this._socksSupportObjectGuid = socksSupportObjectGuid;
 
@@ -125,7 +112,7 @@ class SocksInterceptor {
           try {
             const id = --lastId;
             this._ids.add(id);
-            ws.send(JSON.stringify({ id, guid: socksSupportObjectGuid, method: prop, params, metadata: { stack: [], apiName: '', internal: true } }));
+            transport.send({ id, guid: socksSupportObjectGuid, method: prop, params, metadata: { stack: [], apiName: '', internal: true } } as any);
           } catch (e) {
           }
         };
