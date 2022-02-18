@@ -3,7 +3,9 @@ id: selenium-grid
 title: "Selenium Grid"
 ---
 
-Playwright can connect to [Selenium Grid Hub](https://www.selenium.dev/documentation/grid/) that runs **Selenium 4** to launch **Chrome** browser, instead of running browser on the local machine. To enable this mode, set `SELENIUM_REMOTE_URL` environment variable pointing to your Selenium Grid Hub.
+## Selenium 4
+
+Playwright can connect to [Selenium Grid Hub](https://www.selenium.dev/documentation/grid/) that runs Selenium 4 to launch **Chrome** or **Microsoft Edge** browser, instead of running browser on the local machine. To enable this mode, set `SELENIUM_REMOTE_URL` environment variable pointing to your Selenium Grid Hub.
 
 ```bash js
 # Playwright Test
@@ -59,8 +61,8 @@ SELENIUM_REMOTE_URL=http://internal.grid:4444/wd/hub SELENIUM_REMOTE_CAPABILITIE
 SELENIUM_REMOTE_URL=http://internal.grid:4444/wd/hub SELENIUM_REMOTE_CAPABILITIES="{'mygrid:options':{os:'windows',username:'John',password:'secure'}}" dotnet test
 ```
 
-:::note
-Internally, Playwright connects to the browser using [Chrome DevTools Protocol](https://chromedevtools.github.io/devtools-protocol/) websocket. Selenium 4 hub exposes this capability.
+## Selenium 3
 
-Selenium 3 is supported in a best-effort manner. Grid nodes must be directly accessible from the machine that runs Playwright.
-:::
+Internally, Playwright connects to the browser using [Chrome DevTools Protocol](https://chromedevtools.github.io/devtools-protocol/) websocket. Selenium 4 hub exposes this capability, while Selenium 3 does not.
+
+This means that Selenium 3 is supported in a best-effort manner, where Playwright tries to connect to the grid node directly. Grid nodes must be directly accessible from the machine that runs Playwright.
