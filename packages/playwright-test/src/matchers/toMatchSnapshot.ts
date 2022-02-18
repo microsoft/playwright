@@ -37,21 +37,26 @@ const SNAPSHOT_COUNTER = Symbol('noname-snapshot-counter');
 function parseMatchSnapshotOptions(
   testInfo: TestInfoImpl,
   anonymousSnapshotExtension: string,
-  nameOrOptions: NameOrSegments | { name: NameOrSegments } & ImageComparatorOptions,
+  nameOrOptions: NameOrSegments | { name?: NameOrSegments } & ImageComparatorOptions,
   optOptions: ImageComparatorOptions = {},
 ) {
-  let options: { name: NameOrSegments } & ImageComparatorOptions;
-  if (Array.isArray(nameOrOptions) || typeof nameOrOptions === 'string')
-    options = { name: nameOrOptions, ...optOptions };
-  else
+  let options: ImageComparatorOptions;
+  let name: NameOrSegments | undefined;
+  if (Array.isArray(nameOrOptions) || typeof nameOrOptions === 'string') {
+    name = nameOrOptions;
+    options = optOptions;
+  } else {
+    name = nameOrOptions.name;
     options = { ...nameOrOptions };
-  if (!options.name) {
+    delete (options as any).name;
+  }
+  if (!name) {
     (testInfo as any)[SNAPSHOT_COUNTER] = ((testInfo as any)[SNAPSHOT_COUNTER] || 0) + 1;
     const fullTitleWithoutSpec = [
       ...testInfo.titlePath.slice(1),
       (testInfo as any)[SNAPSHOT_COUNTER],
     ].join(' ');
-    options.name = sanitizeForFilePath(trimLongString(fullTitleWithoutSpec)) + '.' + anonymousSnapshotExtension;
+    name = sanitizeForFilePath(trimLongString(fullTitleWithoutSpec)) + '.' + anonymousSnapshotExtension;
   }
 
   options = {
@@ -66,7 +71,7 @@ function parseMatchSnapshotOptions(
     throw new Error('`pixelRatio` option value must be between 0 and 1');
 
   // sanitizes path if string
-  const pathSegments = Array.isArray(options.name) ? options.name : [addSuffixToFilePath(options.name, '', undefined, true)];
+  const pathSegments = Array.isArray(name) ? name : [addSuffixToFilePath(name, '', undefined, true)];
   const snapshotPath = testInfo.snapshotPath(...pathSegments);
   const outputFile = testInfo.outputPath(...pathSegments);
   const expectedPath = addSuffixToFilePath(outputFile, '-expected');
