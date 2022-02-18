@@ -896,12 +896,12 @@ page.locator(":nth-match(:text('Buy'), 3)").click();
 
 ```python async
 # Click the third "Buy" button
-await page.locator(":nth-match(:text('Buy'), 3).click()"
+await page.locator(":nth-match(:text('Buy'), 3)").click()
 ```
 
 ```python sync
 # Click the third "Buy" button
-page.locator(":nth-match(:text('Buy'), 3).click()"
+page.locator(":nth-match(:text('Buy'), 3)").click()
 ```
 
 ```csharp
