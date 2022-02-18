@@ -52,9 +52,9 @@ export class WebSocketTransport implements ConnectionTransport {
   onclose?: () => void;
   readonly wsEndpoint: string;
 
-  static async connect(progress: Progress, url: string, headers?: { [key: string]: string; }): Promise<WebSocketTransport> {
+  static async connect(progress: Progress, url: string, headers?: { [key: string]: string; }, followRedirects?: boolean): Promise<WebSocketTransport> {
     progress.log(`<ws connecting> ${url}`);
-    const transport = new WebSocketTransport(progress, url, headers);
+    const transport = new WebSocketTransport(progress, url, headers, followRedirects);
     let success = false;
     progress.cleanupWhenAborted(async () => {
       if (!success)
@@ -75,13 +75,14 @@ export class WebSocketTransport implements ConnectionTransport {
     return transport;
   }
 
-  constructor(progress: Progress, url: string, headers?: { [key: string]: string; }) {
+  constructor(progress: Progress, url: string, headers?: { [key: string]: string; }, followRedirects?: boolean) {
     this.wsEndpoint = url;
     this._ws = new WebSocket(url, [], {
       perMessageDeflate: false,
       maxPayload: 256 * 1024 * 1024, // 256Mb,
       handshakeTimeout: progress.timeUntilDeadline(),
-      headers
+      headers,
+      followRedirects,
     });
     this._progress = progress;
     // The 'ws' module in node sometimes sends us multiple messages in a single task.
@@ -102,12 +103,12 @@ export class WebSocketTransport implements ConnectionTransport {
     });
 
     this._ws.addEventListener('close', event => {
-      this._progress && this._progress.log(`<ws disconnected> ${url}`);
+      this._progress && this._progress.log(`<ws disconnected> ${url} code=${event.code} reason=${event.reason}`);
       if (this.onclose)
         this.onclose.call(null);
     });
     // Prevent Error: read ECONNRESET.
-    this._ws.addEventListener('error', () => {});
+    this._ws.addEventListener('error', error => this._progress && this._progress.log(`<ws error> ${error}`));
   }
 
   send(message: ProtocolRequest) {
@@ -120,6 +121,8 @@ export class WebSocketTransport implements ConnectionTransport {
   }
 
   async closeAndWait() {
+    if (this._ws.readyState === WebSocket.CLOSED)
+      return;
     const promise = new Promise(f => this._ws.once('close', f));
     this.close();
     await promise; // Make sure to await the actual disconnect.

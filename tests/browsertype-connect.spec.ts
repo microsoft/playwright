@@ -107,7 +107,7 @@ test('should timeout in socket while connecting', async ({ browserType, startRem
     wsEndpoint: `ws://localhost:${server.PORT}/ws-slow`,
     timeout: 1000,
   }).catch(e => e);
-  expect(e.message).toContain('browserType.connect: Opening handshake has timed out');
+  expect(e.message).toContain('browserType.connect: Timeout 1000ms exceeded');
 });
 
 test('should timeout in connect while connecting', async ({ browserType, startRemoteServer, server }) => {
