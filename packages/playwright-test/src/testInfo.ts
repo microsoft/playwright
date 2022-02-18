@@ -117,7 +117,7 @@ export class TestInfoImpl implements TestInfo {
       const sanitizedRelativePath = relativeTestFilePath.replace(process.platform === 'win32' ? new RegExp('\\\\', 'g') : new RegExp('/', 'g'), '-');
       const fullTitleWithoutSpec = test.titlePath().slice(1).join(' ') + (test._type === 'test' ? '' : '-worker' + this.workerIndex);
 
-      let testOutputDir = sanitizedRelativePath + '-' + sanitizeForFilePath(trimLongString(fullTitleWithoutSpec));
+      let testOutputDir = trimLongString(sanitizedRelativePath + '-' + sanitizeForFilePath(fullTitleWithoutSpec));
       if (uniqueProjectNamePathSegment)
         testOutputDir += '-' + sanitizeForFilePath(uniqueProjectNamePathSegment);
       if (this.retry)
