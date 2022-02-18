@@ -106,11 +106,18 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       (browserType as any)._defaultLaunchOptions = undefined;
   }, { scope: 'worker', auto: true }],
 
-  browser: [async ({ playwright, browserName, connectOptions }, use) => {
+  browser: [async ({ playwright, browserName, channel, headless, connectOptions }, use) => {
     if (!['chromium', 'firefox', 'webkit'].includes(browserName))
       throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
     if (connectOptions) {
-      const browser = await playwright[browserName].connect(connectOptions);
+      const browser = await playwright[browserName].connect({
+        wsEndpoint: connectOptions.wsEndpoint,
+        headers: {
+          'x-playwright-browser': channel || browserName,
+          'x-playwright-headless': headless ? '1' : '0',
+          ...connectOptions.headers,
+        }
+      });
       await use(browser);
       await browser.close();
       return;

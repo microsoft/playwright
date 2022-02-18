@@ -141,9 +141,9 @@ class Connection {
       if (browser)
         return await this._initPreLaunchedBrowserMode(scope, browser);
       const url = new URL('http://localhost' + (request.url || ''));
-      const browserHeader = request.headers['X-Playwright-Browser'];
+      const browserHeader = request.headers['x-playwright-browser'];
       const browserAlias = url.searchParams.get('browser') || (Array.isArray(browserHeader) ? browserHeader[0] : browserHeader);
-      const proxyHeader = request.headers['X-Playwright-Proxy'];
+      const proxyHeader = request.headers['x-playwright-proxy'];
       const proxyValue = url.searchParams.get('proxy') || (Array.isArray(proxyHeader) ? proxyHeader[0] : proxyHeader);
       if (!browserAlias)
         return await this._initPlaywrightConnectMode(scope, enableSocksProxy && proxyValue === '*');
