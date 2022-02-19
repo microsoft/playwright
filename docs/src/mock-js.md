@@ -1,11 +1,11 @@
 ---
-id: pom
-title: "Page Object Models"
+id: mock
+title: "Mock APIs"
 ---
 
 Playwright provides native support for most of the browser features. However, there are some experimental APIs
 and APIs which are not (yet) fully supported by all browsers. Playwright usually doesn't provide dedicated
-atomation APIs in such cases. You can use mocks to test behavior of your application in such cases. Thid documents
+atomation APIs in such cases. You can use mocks to test behavior of your application in such cases. This guide
 gives a few examples.
 
 <!-- TOC -->
@@ -38,31 +38,31 @@ await page.addInitScript(() => {
 Once this is done you can navigate the page and check its UI state:
 
 ```js
-test('show battery status', async ({ page }) => {
+// Configure mock API before each test.
+test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
-    const mockBatteryInfo = {
+    const mockBattery = {
       level: 0.90,
       charging: true,
-      chargingTime: 1800,
+      chargingTime: 1800, // seconds
       dischargingTime: Infinity,
       addEventListener: () => { }
-    }
+    };
     // Override the method to always return mock battery info.
     window.navigator.getBattery = async () => mockBattery;
-    // application tries navigator.battery first
-    // so we delete this method
-    delete window.navigator.battery
   });
+});
 
+test('show battery status', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('.battery-percentage')).toHaveText('90%');
   await expect(page.locator('.battery-status')).toHaveText('Adapter');
   await expect(page.locator('.battery-fully')).toHaveText('00:30');
-})
+});
 
 ```
 
-## Golden tests
+## Verifying API calls
 
 Sometimes it is useful to check if the page made all expected APIs calls. You can
 record all API method invocations and then compare them with golden result.
@@ -73,7 +73,7 @@ the page back to the test code:
 test('log battery calls', async ({ page }) => {
   const log = [];
   // Expose function for pushing messages to the Node.js script.
-  await page.exposeFunction('pwlog', msg => log.push(msg));
+  await page.exposeFunction('logCall', msg => log.push(msg));
   await page.addInitScript(() => {
     const mockBattery = {
       level: 0.75,
@@ -81,14 +81,13 @@ test('log battery calls', async ({ page }) => {
       chargingTime: 1800,
       dischargingTime: Infinity,
       // Log addEventListener calls.
-      addEventListener: (name, cb) => pwlog(`addEventListener:${name}`)
+      addEventListener: (name, cb) => logCall(`addEventListener:${name}`)
     };
     // Override the method to always return mock battery info.
     window.navigator.getBattery = async () => {
-      pwlog('getBattery')
+      logCall('getBattery');
       return mockBattery;
     };
-    delete window.navigator.battery;
   });
 
   await page.goto('/');
@@ -141,10 +140,6 @@ test('update battery status (no golden)', async ({ page }) => {
     window.navigator.getBattery = async () => mockBattery;
     // Save the mock object on window for easier access.
     window.mockBattery = mockBattery;
-
-    // application tries navigator.battery first
-    // so we delete this method
-    delete window.navigator.battery;
   });
 
   await page.goto('/');
