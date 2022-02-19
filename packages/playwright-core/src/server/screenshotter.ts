@@ -16,6 +16,7 @@
  */
 
 import * as dom from './dom';
+import { Rect } from '../common/types';
 import { helper } from './helper';
 import { Page } from './page';
 import { Frame } from './frames';
@@ -31,8 +32,14 @@ declare global {
   }
 }
 
-export type ScreenshotMaskOption = {
+export type ScreenshotOptions = {
+  type?: 'png' | 'jpeg',
+  quality?: number,
+  omitBackground?: boolean,
+  disableAnimations?: boolean,
   mask?: { frame: Frame, selector: string}[],
+  fullPage?: boolean,
+  clip?: Rect,
 };
 
 export class Screenshotter {
@@ -72,7 +79,7 @@ export class Screenshotter {
     return fullPageSize!;
   }
 
-  async screenshotPage(progress: Progress, options: types.ScreenshotOptions & ScreenshotMaskOption): Promise<Buffer> {
+  async screenshotPage(progress: Progress, options: ScreenshotOptions): Promise<Buffer> {
     const format = validateScreenshotOptions(options);
     return this._queue.postTask(async () => {
       const { viewportSize } = await this._originalViewportSize(progress);
@@ -99,7 +106,7 @@ export class Screenshotter {
     });
   }
 
-  async screenshotElement(progress: Progress, handle: dom.ElementHandle, options: types.ElementScreenshotOptions & ScreenshotMaskOption = {}): Promise<Buffer> {
+  async screenshotElement(progress: Progress, handle: dom.ElementHandle, options: ScreenshotOptions): Promise<Buffer> {
     const format = validateScreenshotOptions(options);
     return this._queue.postTask(async () => {
       const { viewportSize } = await this._originalViewportSize(progress);
@@ -215,7 +222,7 @@ export class Screenshotter {
     }));
   }
 
-  async _maskElements(progress: Progress, options: ScreenshotMaskOption) {
+  async _maskElements(progress: Progress, options: ScreenshotOptions) {
     const framesToParsedSelectors: MultiMap<Frame, ParsedSelector> = new MultiMap();
     await Promise.all((options.mask || []).map(async ({ frame, selector }) => {
       const pair = await frame.resolveFrameForSelectorNoWait(selector);
@@ -230,7 +237,7 @@ export class Screenshotter {
     progress.cleanupWhenAborted(() => this._page.hideHighlight());
   }
 
-  private async _screenshot(progress: Progress, format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, fitsViewport: boolean | undefined, options: types.ElementScreenshotOptions & ScreenshotMaskOption): Promise<Buffer> {
+  private async _screenshot(progress: Progress, format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, fitsViewport: boolean | undefined, options: ScreenshotOptions): Promise<Buffer> {
     if ((options as any).__testHookBeforeScreenshot)
       await (options as any).__testHookBeforeScreenshot();
     progress.throwIfAborted(); // Screenshotting is expensive - avoid extra work.
@@ -287,7 +294,7 @@ function trimClipToSize(clip: types.Rect, size: types.Size): types.Rect {
   return result;
 }
 
-function validateScreenshotOptions(options: types.ScreenshotOptions): 'png' | 'jpeg' {
+function validateScreenshotOptions(options: ScreenshotOptions): 'png' | 'jpeg' {
   let format: 'png' | 'jpeg' | null = null;
   // options.type takes precedence over inferring the type from options.path
   // because it may be a 0-length file with no extension created beforehand (i.e. as a temp file).

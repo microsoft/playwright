@@ -47,18 +47,6 @@ export type PointerActionWaitOptions = TimeoutOptions & ForceOptions & StrictOpt
   trial?: boolean;
 };
 
-export type ElementScreenshotOptions = TimeoutOptions & {
-  type?: 'png' | 'jpeg',
-  quality?: number,
-  omitBackground?: boolean,
-  disableAnimations?: boolean,
-};
-
-export type ScreenshotOptions = ElementScreenshotOptions & {
-  fullPage?: boolean,
-  clip?: Rect,
-};
-
 export type PageScreencastOptions = {
   width: number,
   height: number,
