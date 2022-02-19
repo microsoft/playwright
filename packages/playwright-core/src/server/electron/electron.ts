@@ -127,10 +127,15 @@ export class Electron extends SdkObject {
       const artifactsDir = await fs.promises.mkdtemp(ARTIFACTS_FOLDER);
 
       const browserLogsCollector = new RecentLogsCollector();
+      const env = options.env ? envArrayToObject(options.env) : process.env;
+      // When debugging Playwright test that runs Electron, NODE_OPTIONS
+      // will make the debugger attach to Electron's Node. But Playwright
+      // also needs to attach to drive the automation. Disable external debugging.
+      delete env.NODE_OPTIONS;
       const { launchedProcess, gracefullyClose, kill } = await launchProcess({
         command: options.executablePath || require('electron/index.js'),
         args: electronArguments,
-        env: options.env ? envArrayToObject(options.env) : process.env,
+        env,
         log: (message: string) => {
           progress.log(message);
           browserLogsCollector.log(message);
