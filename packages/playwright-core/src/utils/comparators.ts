@@ -25,7 +25,12 @@ import { diff_match_patch, DIFF_INSERT, DIFF_DELETE, DIFF_EQUAL } from '../third
 // Note: we require the pngjs version of pixelmatch to avoid version mismatches.
 const { PNG } = require(require.resolve('pngjs', { paths: [require.resolve('pixelmatch')] })) as typeof import('pngjs');
 
-export type ImageComparatorOptions = {threshold?: number, pixelCount?: number, pixelRatio?: number};
+export type ImageComparatorOptions = {
+  threshold?: number,
+  pixelCount?: number,
+  pixelRatio?: number,
+  ssim?: Partial<Options>,
+};
 export type ComparatorResult = {diff?: Buffer; errorMessage?: string;} | null;
 export type Comparator = (actualBuffer: Buffer | string, expectedBuffer: Buffer, options?: any) => ComparatorResult;
 export const mimeTypeToComparator: {[key: string]: Comparator} = {
@@ -70,8 +75,8 @@ function compareImages(
   const diff = new PNG({ width: expected.width, height: expected.height });
   const thresholdOptions = { threshold: 0.2, ...options };
   const count =
-    process.env['USE_SSIM'] && actual instanceof PNG && expected instanceof PNG
-      ? compareWithSsim(actual, expected, diff.data, {} as any)
+    options.ssim && actual instanceof PNG && expected instanceof PNG
+      ? compareWithSsim(actual, expected, diff.data, options.ssim)
       : pixelmatch(
           expected.data,
           actual.data,
@@ -97,7 +102,7 @@ function compareWithSsim(
   actual: PNGWithMetadata,
   expected: PNGWithMetadata,
   output: Buffer,
-  options: Options
+  options: Partial<Options>,
 ): number {
   const width = expected.width;
   const height = expected.height;
@@ -111,7 +116,7 @@ function compareWithSsim(
     width: actual.width,
     height: actual.height,
   };
-  const { ssim_map, mssim } = ssim(test, reference, {});
+  const { ssim_map, mssim } = ssim(test, reference, options);
   const diffPixels = (1 - mssim) * width * height;
   const diffRgbaPixels = new DataView(output.buffer, output.byteOffset);
 
@@ -119,7 +124,8 @@ function compareWithSsim(
     for (let pos = 0; pos !== width; ++pos) {
       const rpos = ln * width + pos;
       // initial value is transparent.  We'll add in the SSIM offset.
-      const diffResult = Math.floor(
+      // red (ff) green (00) blue (00) alpha (00)
+      const diffResult = 0xff000000 + Math.floor(
           0xff *
         (1 -
           ssim_map.data[
@@ -127,9 +133,8 @@ function compareWithSsim(
           Math.round((ssim_map.width * pos) / width)
           ])
       );
-      // red (ff) green (00) blue (00) alpha (00)
       const diffValue = handleTransparent(
-          0xff000000 + diffResult,
+          diffResult,
           actual.data,
           rpos * 4
       );
